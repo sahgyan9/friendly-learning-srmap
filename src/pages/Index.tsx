@@ -4,6 +4,7 @@ import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
 import SearchBar from "@/components/SearchBar";
 import MentorCard from "@/components/MentorCard";
+import { Button } from "@/components/ui/button";
 import { mentors, Mentor } from "@/data/mentors";
 
 const Index = () => {
