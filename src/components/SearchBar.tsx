@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Search, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -17,12 +17,14 @@ const SearchBar = ({ onSearch }: SearchBarProps) => {
     "Find a mentor for Data Structures",
     "Looking for help with Circuit Design",
   ];
+
+  // Update search results as user types
+  useEffect(() => {
+    onSearch(query);
+  }, [query, onSearch]);
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (query.trim()) {
-      onSearch(query);
-    }
   };
 
   const clearSearch = () => {
@@ -31,12 +33,12 @@ const SearchBar = ({ onSearch }: SearchBarProps) => {
   };
 
   // Rotate through placeholders
-  useState(() => {
+  useEffect(() => {
     const interval = setInterval(() => {
       setPlaceholderIndex((prev) => (prev + 1) % placeholders.length);
     }, 4000);
     return () => clearInterval(interval);
-  });
+  }, []);
 
   return (
     <div className="w-full max-w-3xl mx-auto mb-10">
@@ -83,7 +85,6 @@ const SearchBar = ({ onSearch }: SearchBarProps) => {
             key={tag}
             onClick={() => {
               setQuery(tag);
-              onSearch(tag);
             }}
             className="text-xs px-3 py-1 rounded-full bg-secondary text-secondary-foreground hover:bg-primary/10 hover:text-primary transition-colors"
           >
