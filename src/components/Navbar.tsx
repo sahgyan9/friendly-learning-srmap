@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Menu, X, User, MessageCircle } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -26,37 +27,41 @@ const Navbar = () => {
     >
       <div className="container mx-auto px-4 md:px-6">
         <div className="flex items-center justify-between">
-          <a
-            href="/"
+          <Link
+            to="/"
             className="text-xl md:text-2xl font-bold text-primary tracking-tight flex items-center"
           >
             <span className="mr-1">Friendly</span>
             <span className="text-gray-700">Learning</span>
-          </a>
+          </Link>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-1">
-            <Button variant="ghost" className="text-gray-700 hover:text-primary">
-              Home
+            <Button variant="ghost" asChild className="text-gray-700 hover:text-primary">
+              <Link to="/">Home</Link>
             </Button>
-            <Button variant="ghost" className="text-gray-700 hover:text-primary">
-              About
+            <Button variant="ghost" asChild className="text-gray-700 hover:text-primary">
+              <Link to="/about">About</Link>
             </Button>
-            <Button variant="ghost" className="text-gray-700 hover:text-primary">
-              Mentors
+            <Button variant="ghost" asChild className="text-gray-700 hover:text-primary">
+              <Link to="/mentors">Mentors</Link>
             </Button>
-            <Button variant="ghost" className="text-gray-700 hover:text-primary">
-              Contact
+            <Button variant="ghost" asChild className="text-gray-700 hover:text-primary">
+              <Link to="/contact">Contact</Link>
             </Button>
 
             <div className="ml-4 flex space-x-2">
-              <Button variant="outline" size="sm" className="flex items-center gap-1">
-                <MessageCircle className="h-4 w-4" />
-                Messages
+              <Button variant="outline" size="sm" asChild className="flex items-center gap-1">
+                <Link to="/messages">
+                  <MessageCircle className="h-4 w-4" />
+                  Messages
+                </Link>
               </Button>
-              <Button variant="default" size="sm" className="flex items-center gap-1">
-                <User className="h-4 w-4" />
-                Sign In
+              <Button variant="default" size="sm" asChild className="flex items-center gap-1">
+                <Link to="/signin">
+                  <User className="h-4 w-4" />
+                  Sign In
+                </Link>
               </Button>
             </div>
           </nav>
@@ -79,27 +84,31 @@ const Navbar = () => {
         {isMobileMenuOpen && (
           <nav className="md:hidden mt-4 py-4 px-2 bg-white/95 backdrop-blur-md rounded-lg shadow-lg animate-fade-in">
             <div className="flex flex-col space-y-3">
-              <Button variant="ghost" className="justify-start text-gray-700 hover:text-primary">
-                Home
+              <Button variant="ghost" asChild className="justify-start text-gray-700 hover:text-primary">
+                <Link to="/">Home</Link>
               </Button>
-              <Button variant="ghost" className="justify-start text-gray-700 hover:text-primary">
-                About
+              <Button variant="ghost" asChild className="justify-start text-gray-700 hover:text-primary">
+                <Link to="/about">About</Link>
               </Button>
-              <Button variant="ghost" className="justify-start text-gray-700 hover:text-primary">
-                Mentors
+              <Button variant="ghost" asChild className="justify-start text-gray-700 hover:text-primary">
+                <Link to="/mentors">Mentors</Link>
               </Button>
-              <Button variant="ghost" className="justify-start text-gray-700 hover:text-primary">
-                Contact
+              <Button variant="ghost" asChild className="justify-start text-gray-700 hover:text-primary">
+                <Link to="/contact">Contact</Link>
               </Button>
               
               <div className="pt-2 flex flex-col space-y-2">
-                <Button variant="outline" size="sm" className="flex items-center gap-1 justify-center">
-                  <MessageCircle className="h-4 w-4" />
-                  Messages
+                <Button variant="outline" size="sm" asChild className="flex items-center gap-1 justify-center">
+                  <Link to="/messages">
+                    <MessageCircle className="h-4 w-4" />
+                    Messages
+                  </Link>
                 </Button>
-                <Button variant="default" size="sm" className="flex items-center gap-1 justify-center">
-                  <User className="h-4 w-4" />
-                  Sign In
+                <Button variant="default" size="sm" asChild className="flex items-center gap-1 justify-center">
+                  <Link to="/signin">
+                    <User className="h-4 w-4" />
+                    Sign In
+                  </Link>
                 </Button>
               </div>
             </div>

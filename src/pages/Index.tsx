@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
 import SearchBar from "@/components/SearchBar";
@@ -136,11 +137,11 @@ const Index = () => {
                 Join hundreds of students who are already benefiting from personalized mentorship.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button size="lg" className="w-full sm:w-auto">
-                  Get Started
+                <Button size="lg" asChild className="w-full sm:w-auto">
+                  <Link to="/signup">Get Started</Link>
                 </Button>
-                <Button size="lg" variant="outline" className="w-full sm:w-auto">
-                  Learn More
+                <Button size="lg" variant="outline" asChild className="w-full sm:w-auto">
+                  <Link to="/about">Learn More</Link>
                 </Button>
               </div>
             </div>
@@ -153,28 +154,28 @@ const Index = () => {
         <div className="container px-4 md:px-6">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="mb-4 md:mb-0">
-              <div className="text-xl font-bold text-primary tracking-tight flex items-center">
+              <Link to="/" className="text-xl font-bold text-primary tracking-tight flex items-center">
                 <span className="mr-1">Friendly</span>
                 <span className="text-gray-700">Learning</span>
-              </div>
+              </Link>
               <p className="text-sm text-muted-foreground mt-1">
                 Connecting students with mentors at SRM AP
               </p>
             </div>
             
             <div className="flex space-x-6">
-              <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
+              <Link to="/about" className="text-muted-foreground hover:text-primary transition-colors">
                 About
-              </a>
-              <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
+              </Link>
+              <Link to="/privacy" className="text-muted-foreground hover:text-primary transition-colors">
                 Privacy
-              </a>
-              <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
+              </Link>
+              <Link to="/terms" className="text-muted-foreground hover:text-primary transition-colors">
                 Terms
-              </a>
-              <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
+              </Link>
+              <Link to="/contact" className="text-muted-foreground hover:text-primary transition-colors">
                 Contact
-              </a>
+              </Link>
             </div>
           </div>
           
