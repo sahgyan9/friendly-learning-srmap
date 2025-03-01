@@ -9,7 +9,7 @@ interface MentorCardProps {
 }
 
 const MentorCard = ({ mentor }: MentorCardProps) => {
-  const { name, department, skills, rating, profileImage, reviewCount } = mentor;
+  const { name, department, skills, rating, profileImage } = mentor;
 
   return (
     <div className="glass-card rounded-xl p-6 transition-all duration-300 hover:shadow-xl animate-scale-in">
@@ -28,12 +28,7 @@ const MentorCard = ({ mentor }: MentorCardProps) => {
         </div>
         
         <h3 className="text-lg font-semibold mb-1 text-gray-900">{name}</h3>
-        <p className="text-sm text-muted-foreground mb-2">{department}</p>
-        
-        {/* Reviews count */}
-        <span className="text-xs text-muted-foreground mb-4">
-          {reviewCount} reviews
-        </span>
+        <p className="text-sm text-muted-foreground mb-4">{department}</p>
       </div>
       
       {/* Skills */}
