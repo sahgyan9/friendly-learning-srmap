@@ -1,10 +1,11 @@
-
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const SignIn = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: "",
     password: ""
@@ -18,13 +19,36 @@ const SignIn = () => {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real app with Supabase, you would handle authentication here
-    console.log("Login attempt with:", formData);
-    toast.info("Sign-in functionality will be implemented with Supabase authentication.");
-    // For now, just provide feedback
-    toast.success("Signed in successfully!");
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: formData.email,
+        password: formData.password,
+      });
+
+      if (error) throw error;
+
+      toast.success("Signed in successfully!");
+      navigate('/');
+    } catch (error: any) {
+      toast.error(error.message || "Error signing in");
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/`,
+        },
+      });
+
+      if (error) throw error;
+    } catch (error: any) {
+      toast.error(error.message || "Error signing in with Google");
+    }
   };
 
   return (
@@ -123,7 +147,7 @@ const SignIn = () => {
               <Button
                 variant="outline"
                 className="w-full"
-                onClick={() => toast.info("Google authentication will be implemented with Supabase.")}
+                onClick={handleGoogleSignIn}
               >
                 Google
               </Button>
