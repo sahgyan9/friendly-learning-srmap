@@ -6,11 +6,16 @@ import MentorCard from "@/components/MentorCard";
 import { Link } from "react-router-dom";
 import { mentors, Mentor } from "@/data/mentors";
 import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/use-toast";
+import { Loader2 } from "lucide-react";
 
 const Mentors = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredMentors, setFilteredMentors] = useState<Mentor[]>(mentors);
   const [isAiSearch, setIsAiSearch] = useState(false);
+  const [isPopulating, setIsPopulating] = useState(false);
+  const { toast } = useToast();
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
@@ -66,6 +71,43 @@ const Mentors = () => {
     setFilteredMentors(mappedMentors);
   };
 
+  const populateDatabase = async () => {
+    setIsPopulating(true);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('populate-mentors', {
+        body: { clear: true }
+      });
+      
+      if (error) {
+        console.error("Error populating database:", error);
+        toast({
+          title: "Error",
+          description: "Failed to populate database. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      toast({
+        title: "Success",
+        description: "Mentor database has been populated successfully!",
+        variant: "default",
+      });
+      
+      console.log("Database populated:", data);
+    } catch (err) {
+      console.error("Exception populating database:", err);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsPopulating(false);
+    }
+  };
+
   return (
     <div className="min-h-screen">
       <Navbar />
@@ -78,6 +120,21 @@ const Mentors = () => {
               Browse our extensive list of qualified mentors or use the search to find 
               someone with the specific skills you need.
             </p>
+            
+            <div className="mt-4">
+              <Button 
+                onClick={populateDatabase}
+                variant="outline"
+                disabled={isPopulating}
+                className="flex items-center gap-2"
+              >
+                {isPopulating && <Loader2 className="h-4 w-4 animate-spin" />}
+                {isPopulating ? "Populating Database..." : "Populate Mentor Database"}
+              </Button>
+              <p className="text-xs text-muted-foreground mt-2">
+                Click to add sample mentors to the database for AI Search
+              </p>
+            </div>
           </div>
           
           {/* Search */}

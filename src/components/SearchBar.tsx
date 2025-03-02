@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Search, XCircle, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
@@ -23,10 +23,15 @@ const SearchBar = ({ onSearch, onGeminiSearch }: SearchBarProps) => {
     "Looking for help with Circuit Design",
   ];
 
-  // Update search results as user types
+  // Memoize the search callback to prevent infinite loops
+  const handleSearchChange = useCallback((q: string) => {
+    onSearch(q);
+  }, [onSearch]);
+
+  // Update search results as user types - with dependency array to prevent infinite loops
   useEffect(() => {
-    onSearch(query);
-  }, [query, onSearch]);
+    handleSearchChange(query);
+  }, [query, handleSearchChange]);
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,7 +39,7 @@ const SearchBar = ({ onSearch, onGeminiSearch }: SearchBarProps) => {
 
   const clearSearch = () => {
     setQuery("");
-    onSearch("");
+    // onSearch(""); - this is now handled by the effect
   };
 
   const handleGeminiSearch = async () => {
@@ -103,7 +108,7 @@ const SearchBar = ({ onSearch, onGeminiSearch }: SearchBarProps) => {
       setPlaceholderIndex((prev) => (prev + 1) % placeholders.length);
     }, 4000);
     return () => clearInterval(interval);
-  }, []);
+  }, [placeholders.length]);
 
   return (
     <div className="w-full max-w-3xl mx-auto mb-10">
