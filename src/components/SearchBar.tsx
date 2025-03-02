@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { Search, XCircle, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface SearchBarProps {
   onSearch: (query: string) => void;

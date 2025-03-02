@@ -39,6 +39,25 @@ const Index = () => {
     setFilteredMentors(filtered);
   };
 
+  const handleGeminiSearch = (geminiResults: any[]) => {
+    // Map the Supabase mentor format to the local format if needed
+    const mappedMentors = geminiResults.map(dbMentor => {
+      return {
+        id: dbMentor.id,
+        name: dbMentor.name,
+        department: dbMentor.department,
+        skills: dbMentor.skills,
+        rating: dbMentor.rating,
+        profileImage: dbMentor.profile_image,
+        linkedinUrl: dbMentor.linkedin_url,
+        bio: dbMentor.bio,
+        reviewCount: dbMentor.review_count
+      } as Mentor;
+    });
+    
+    setFilteredMentors(mappedMentors);
+  };
+
   return (
     <div className="min-h-screen">
       <Navbar />
@@ -58,7 +77,7 @@ const Index = () => {
             </div>
             
             {/* Search */}
-            <SearchBar onSearch={handleSearch} />
+            <SearchBar onSearch={handleSearch} onGeminiSearch={handleGeminiSearch} />
             
             {/* Mentors Grid */}
             {filteredMentors.length > 0 ? (
