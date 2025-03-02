@@ -5,13 +5,16 @@ import SearchBar from "@/components/SearchBar";
 import MentorCard from "@/components/MentorCard";
 import { Link } from "react-router-dom";
 import { mentors, Mentor } from "@/data/mentors";
+import { supabase } from "@/integrations/supabase/client";
 
 const Mentors = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredMentors, setFilteredMentors] = useState<Mentor[]>(mentors);
+  const [isAiSearch, setIsAiSearch] = useState(false);
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
+    setIsAiSearch(false);
     
     if (!query) {
       setFilteredMentors(mentors);
@@ -37,6 +40,32 @@ const Mentors = () => {
     setFilteredMentors(filtered);
   };
 
+  const handleGeminiSearch = (geminiResults: any[]) => {
+    setIsAiSearch(true);
+    
+    if (!geminiResults || geminiResults.length === 0) {
+      setFilteredMentors([]);
+      return;
+    }
+
+    // Map the Supabase mentor format to the local format
+    const mappedMentors = geminiResults.map(dbMentor => {
+      return {
+        id: dbMentor.id,
+        name: dbMentor.name,
+        department: dbMentor.department,
+        skills: dbMentor.skills,
+        rating: dbMentor.rating,
+        profileImage: dbMentor.profile_image,
+        linkedinUrl: dbMentor.linkedin_url,
+        bio: dbMentor.bio,
+        reviewCount: dbMentor.review_count
+      } as Mentor;
+    });
+    
+    setFilteredMentors(mappedMentors);
+  };
+
   return (
     <div className="min-h-screen">
       <Navbar />
@@ -52,7 +81,19 @@ const Mentors = () => {
           </div>
           
           {/* Search */}
-          <SearchBar onSearch={handleSearch} />
+          <SearchBar onSearch={handleSearch} onGeminiSearch={handleGeminiSearch} />
+          
+          {/* AI Search Badge */}
+          {isAiSearch && (
+            <div className="flex items-center justify-center mb-8 gap-2">
+              <span className="inline-flex items-center px-3 py-1 rounded-full bg-primary/10 text-primary">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
+                </svg>
+                AI-Powered Search Results
+              </span>
+            </div>
+          )}
           
           {/* Mentors Grid */}
           {filteredMentors.length > 0 ? (

@@ -1,15 +1,19 @@
 
 import { useState, useEffect } from "react";
-import { Search, XCircle } from "lucide-react";
+import { Search, XCircle, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/use-toast";
 
 interface SearchBarProps {
   onSearch: (query: string) => void;
+  onGeminiSearch: (mentors: any[]) => void;
 }
 
-const SearchBar = ({ onSearch }: SearchBarProps) => {
+const SearchBar = ({ onSearch, onGeminiSearch }: SearchBarProps) => {
   const [query, setQuery] = useState("");
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
+  const [isGeminiSearching, setIsGeminiSearching] = useState(false);
+  const { toast } = useToast();
   
   const placeholders = [
     "Search for mentors by name or skills...",
@@ -30,6 +34,66 @@ const SearchBar = ({ onSearch }: SearchBarProps) => {
   const clearSearch = () => {
     setQuery("");
     onSearch("");
+  };
+
+  const handleGeminiSearch = async () => {
+    if (!query.trim()) {
+      toast({
+        title: "Empty search",
+        description: "Please enter a search query first",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsGeminiSearching(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('gemini-search', {
+        body: { query: query.trim() }
+      });
+
+      if (error) {
+        console.error("Gemini search error:", error);
+        toast({
+          title: "Search failed",
+          description: "Couldn't connect to Gemini AI. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (data.error) {
+        console.error("Gemini API error:", data.error);
+        toast({
+          title: "AI search error",
+          description: data.error,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (data.mentors && data.mentors.length > 0) {
+        onGeminiSearch(data.mentors);
+        toast({
+          title: "AI Search Results",
+          description: `Found ${data.mentors.length} mentors that match your query`,
+        });
+      } else {
+        toast({
+          title: "No results found",
+          description: "Try a different search term or browse all mentors",
+        });
+      }
+    } catch (err) {
+      console.error("Error during Gemini search:", err);
+      toast({
+        title: "Search error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeminiSearching(false);
+    }
   };
 
   // Rotate through placeholders
@@ -75,6 +139,20 @@ const SearchBar = ({ onSearch }: SearchBarProps) => {
           className="ml-2 px-6"
         >
           Search
+        </Button>
+
+        <Button
+          type="button"
+          variant="outline"
+          className="ml-2 flex items-center gap-1.5 text-primary border-primary hover:bg-primary/10"
+          onClick={handleGeminiSearch}
+          disabled={isGeminiSearching}
+        >
+          <Sparkles className="h-4 w-4" />
+          AI Search
+          {isGeminiSearching && (
+            <span className="ml-1 h-4 w-4 animate-spin rounded-full border-2 border-primary border-r-transparent" />
+          )}
         </Button>
       </form>
       
