@@ -20,6 +20,7 @@ const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/
 
 // Helper function to fetch mentors
 async function fetchMentors() {
+  console.log("Fetching mentors from database");
   const { data, error } = await supabaseClient
     .from('mentors')
     .select('*');
@@ -39,6 +40,8 @@ async function searchWithGeminiAI(query: string, mentors: any[]) {
     console.error("Google API key is not set");
     return { error: "API key not configured" };
   }
+
+  console.log("Using Gemini API key:", GOOGLE_API_KEY ? "Key is set" : "Key is missing");
 
   try {
     const mentorsContext = mentors.map(mentor => {
@@ -63,6 +66,7 @@ async function searchWithGeminiAI(query: string, mentors: any[]) {
       Try to understand not just keywords, but the intent behind the query. For example, if they ask for "programming help", consider mentors with skills like Python, Java, Web Development, etc.
     `;
 
+    console.log("Sending request to Gemini API");
     // Make the API call to Gemini
     const response = await fetch(`${GEMINI_API_URL}?key=${GOOGLE_API_KEY}`, {
       method: 'POST',
@@ -87,14 +91,15 @@ async function searchWithGeminiAI(query: string, mentors: any[]) {
     if (!response.ok) {
       const errorText = await response.text();
       console.error("Gemini API error:", errorText);
-      return { error: "Error communicating with Gemini API" };
+      return { error: "Error communicating with Gemini API", details: errorText };
     }
 
     const data = await response.json();
-    console.log("Gemini response:", JSON.stringify(data));
+    console.log("Gemini response received");
 
     // Extract the response text
     const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    console.log("Gemini raw response:", responseText);
     
     // Parse the JSON array of mentor IDs from the response
     try {
@@ -106,6 +111,7 @@ async function searchWithGeminiAI(query: string, mentors: any[]) {
       }
       
       const mentorIds = JSON.parse(jsonMatch[0]);
+      console.log("Extracted mentor IDs:", mentorIds);
       return { ids: mentorIds };
     } catch (err) {
       console.error("Error parsing mentor IDs from Gemini response:", err);
@@ -113,7 +119,7 @@ async function searchWithGeminiAI(query: string, mentors: any[]) {
     }
   } catch (error) {
     console.error("Error in Gemini search:", error);
-    return { error: "Gemini search failed" };
+    return { error: "Gemini search failed", details: error.message };
   }
 }
 
@@ -140,18 +146,22 @@ serve(async (req) => {
     const mentors = await fetchMentors();
     
     if (mentors.length === 0) {
+      console.log("No mentors found in database");
       return new Response(
-        JSON.stringify({ error: "No mentors found in database" }),
+        JSON.stringify({ error: "No mentors found in database. Please populate the database first." }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 }
       );
     }
+
+    console.log(`Found ${mentors.length} mentors in database`);
 
     // Use Gemini to search through mentors
     const geminiResult = await searchWithGeminiAI(query, mentors);
     
     if (geminiResult.error) {
+      console.error("Gemini search error:", geminiResult.error);
       return new Response(
-        JSON.stringify({ error: geminiResult.error, raw: geminiResult.raw }),
+        JSON.stringify({ error: geminiResult.error, raw: geminiResult.raw, details: geminiResult.details }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
       );
     }
@@ -163,6 +173,8 @@ serve(async (req) => {
     const filteredMentors = mentors.filter((mentor) => 
       mentorIds.includes(mentor.id)
     );
+    
+    console.log(`Returning ${filteredMentors.length} mentors as search results`);
     
     // Return the results
     return new Response(
@@ -176,7 +188,7 @@ serve(async (req) => {
   } catch (error) {
     console.error("Error processing search request:", error);
     return new Response(
-      JSON.stringify({ error: "Internal server error" }),
+      JSON.stringify({ error: "Internal server error", details: error.message }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     );
   }
