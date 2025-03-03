@@ -4,10 +4,11 @@ import { Search, XCircle, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import type { Mentor } from "@/types/mentor";
 
 interface SearchBarProps {
   onSearch: (query: string) => void;
-  onGeminiSearch: (mentors: any[]) => void;
+  onGeminiSearch: (mentors: Mentor[]) => void;
 }
 
 const SearchBar = ({ onSearch, onGeminiSearch }: SearchBarProps) => {
