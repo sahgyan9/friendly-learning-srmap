@@ -29,7 +29,8 @@ async function fetchMentors() {
     return [];
   }
 
-  return data;
+  console.log("Fetched mentors:", data?.length || 0);
+  return data || [];
 }
 
 // Helper function to use Gemini to analyze query and find mentors
