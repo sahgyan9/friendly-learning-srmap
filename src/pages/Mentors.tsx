@@ -1,16 +1,70 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import SearchBar from "@/components/SearchBar";
 import MentorCard from "@/components/MentorCard";
 import { Link } from "react-router-dom";
-import { mentors, Mentor } from "@/data/mentors";
+import { Mentor } from "@/data/mentors";
 import { supabase } from "@/integrations/supabase/client";
+import { Toaster } from "@/components/ui/toaster";
+import { toast } from "@/hooks/use-toast";
 
 const Mentors = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [filteredMentors, setFilteredMentors] = useState<Mentor[]>(mentors);
+  const [mentors, setMentors] = useState<Mentor[]>([]);
+  const [filteredMentors, setFilteredMentors] = useState<Mentor[]>([]);
   const [isAiSearch, setIsAiSearch] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch mentors from Supabase
+  useEffect(() => {
+    const fetchMentors = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('mentors')
+          .select('*');
+        
+        if (error) {
+          console.error("Error fetching mentors:", error);
+          toast({
+            title: "Error",
+            description: "Failed to load mentors. Please try again later.",
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        if (data) {
+          // Map Supabase data to Mentor type
+          const mappedMentors = data.map(mentor => ({
+            id: mentor.id,
+            name: mentor.name,
+            department: mentor.department,
+            skills: mentor.skills,
+            rating: mentor.rating,
+            profileImage: mentor.profile_image,
+            linkedinUrl: mentor.linkedin_url,
+            bio: mentor.bio,
+            reviewCount: mentor.review_count
+          } as Mentor));
+          
+          setMentors(mappedMentors);
+          setFilteredMentors(mappedMentors);
+        }
+      } catch (error) {
+        console.error("Unexpected error fetching mentors:", error);
+        toast({
+          title: "Error",
+          description: "An unexpected error occurred. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchMentors();
+  }, []);
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
@@ -69,6 +123,7 @@ const Mentors = () => {
   return (
     <div className="min-h-screen">
       <Navbar />
+      <Toaster />
       
       <main className="pt-24 pb-16">
         <div className="container px-4 md:px-6">
@@ -95,20 +150,30 @@ const Mentors = () => {
             </div>
           )}
           
-          {/* Mentors Grid */}
-          {filteredMentors.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
-              {filteredMentors.map((mentor) => (
-                <MentorCard key={mentor.id} mentor={mentor} />
-              ))}
-            </div>
-          ) : (
+          {/* Loading State */}
+          {isLoading && (
             <div className="text-center py-12">
-              <h3 className="text-xl font-medium mb-2">No mentors found</h3>
-              <p className="text-muted-foreground">
-                Try adjusting your search or browse all available mentors.
-              </p>
+              <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]" />
+              <p className="mt-4 text-muted-foreground">Loading mentors...</p>
             </div>
+          )}
+          
+          {/* Mentors Grid */}
+          {!isLoading && (
+            filteredMentors.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
+                {filteredMentors.map((mentor) => (
+                  <MentorCard key={mentor.id} mentor={mentor} />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <h3 className="text-xl font-medium mb-2">No mentors found</h3>
+                <p className="text-muted-foreground">
+                  Try adjusting your search or browse all available mentors.
+                </p>
+              </div>
+            )
           )}
         </div>
       </main>
