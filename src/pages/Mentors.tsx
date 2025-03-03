@@ -1,33 +1,89 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import SearchBar from "@/components/SearchBar";
 import MentorCard from "@/components/MentorCard";
 import { Link } from "react-router-dom";
-import { mentors, Mentor } from "@/data/mentors";
-import { supabase } from "@/integrations/supabase/client";
+import { mentors as localMentors } from "@/data/mentors";
+import { supabase, getMentors } from "@/integrations/supabase/client";
+import { Mentor } from "@/types/mentor";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { Loader2 } from "lucide-react";
 
 const Mentors = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [filteredMentors, setFilteredMentors] = useState<Mentor[]>(mentors);
+  const [filteredMentors, setFilteredMentors] = useState<Mentor[]>([]);
   const [isAiSearch, setIsAiSearch] = useState(false);
   const [isPopulating, setIsPopulating] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+
+  // Fetch mentors from Supabase on component mount
+  useEffect(() => {
+    const fetchMentors = async () => {
+      setIsLoading(true);
+      try {
+        const { data, error } = await getMentors();
+        
+        if (error) {
+          console.error("Error fetching mentors:", error);
+          toast({
+            title: "Error",
+            description: "Failed to load mentors. Using local data instead.",
+            variant: "destructive",
+          });
+          setFilteredMentors(convertLocalMentorsFormat(localMentors));
+          return;
+        }
+        
+        if (data && data.length > 0) {
+          setFilteredMentors(data);
+        } else {
+          // If no data in Supabase, use local data
+          setFilteredMentors(convertLocalMentorsFormat(localMentors));
+        }
+      } catch (err) {
+        console.error("Exception fetching mentors:", err);
+        setFilteredMentors(convertLocalMentorsFormat(localMentors));
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchMentors();
+  }, [toast]);
+
+  // Convert local mentor format to match Supabase format
+  const convertLocalMentorsFormat = (localData: any[]): Mentor[] => {
+    return localData.map(mentor => ({
+      id: mentor.id,
+      name: mentor.name,
+      department: mentor.department,
+      skills: mentor.skills,
+      rating: mentor.rating,
+      profile_image: mentor.profileImage,
+      linkedin_url: mentor.linkedinUrl,
+      bio: mentor.bio,
+      review_count: mentor.reviewCount,
+      created_at: new Date().toISOString()
+    }));
+  };
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
     setIsAiSearch(false);
     
     if (!query) {
-      setFilteredMentors(mentors);
+      // Fetch all mentors again when search is cleared
+      getMentors().then(({ data }) => {
+        if (data) setFilteredMentors(data);
+      });
       return;
     }
     
     const lowerCaseQuery = query.toLowerCase();
-    const filtered = mentors.filter((mentor) => {
+    const filtered = filteredMentors.filter((mentor) => {
       // Search by name
       if (mentor.name.toLowerCase().includes(lowerCaseQuery)) return true;
       
@@ -52,23 +108,8 @@ const Mentors = () => {
       setFilteredMentors([]);
       return;
     }
-
-    // Map the Supabase mentor format to the local format
-    const mappedMentors = geminiResults.map(dbMentor => {
-      return {
-        id: dbMentor.id,
-        name: dbMentor.name,
-        department: dbMentor.department,
-        skills: dbMentor.skills,
-        rating: dbMentor.rating,
-        profileImage: dbMentor.profile_image,
-        linkedinUrl: dbMentor.linkedin_url,
-        bio: dbMentor.bio,
-        reviewCount: dbMentor.review_count
-      } as Mentor;
-    });
     
-    setFilteredMentors(mappedMentors);
+    setFilteredMentors(geminiResults);
   };
 
   const populateDatabase = async () => {
@@ -152,20 +193,30 @@ const Mentors = () => {
             </div>
           )}
           
-          {/* Mentors Grid */}
-          {filteredMentors.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
-              {filteredMentors.map((mentor) => (
-                <MentorCard key={mentor.id} mentor={mentor} />
-              ))}
+          {/* Loading State */}
+          {isLoading ? (
+            <div className="flex justify-center items-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <span className="ml-2 text-lg">Loading mentors...</span>
             </div>
           ) : (
-            <div className="text-center py-12">
-              <h3 className="text-xl font-medium mb-2">No mentors found</h3>
-              <p className="text-muted-foreground">
-                Try adjusting your search or browse all available mentors.
-              </p>
-            </div>
+            <>
+              {/* Mentors Grid */}
+              {filteredMentors.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {filteredMentors.map((mentor) => (
+                    <MentorCard key={mentor.id} mentor={mentor} />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <h3 className="text-xl font-medium mb-2">No mentors found</h3>
+                  <p className="text-muted-foreground">
+                    Try adjusting your search or browse all available mentors.
+                  </p>
+                </div>
+              )}
+            </>
           )}
         </div>
       </main>
