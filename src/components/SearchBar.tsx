@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Search, XCircle, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
@@ -23,27 +23,18 @@ const SearchBar = ({ onSearch, onGeminiSearch }: SearchBarProps) => {
     "Looking for help with Circuit Design",
   ];
 
-  // Memoize the search callback to prevent infinite loops
-  const handleSearchChange = useCallback((q: string) => {
-    onSearch(q);
-  }, [onSearch]);
-
-  // Update search results as user types - with dependency array to prevent infinite loops
+  // Update search results as user types
   useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      handleSearchChange(query);
-    }, 300); // Add a small debounce
-    
-    return () => clearTimeout(timeoutId);
-  }, [query, handleSearchChange]);
+    onSearch(query);
+  }, [query, onSearch]);
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    handleSearchChange(query);
   };
 
   const clearSearch = () => {
     setQuery("");
+    onSearch("");
   };
 
   const handleGeminiSearch = async () => {
@@ -58,43 +49,31 @@ const SearchBar = ({ onSearch, onGeminiSearch }: SearchBarProps) => {
 
     setIsGeminiSearching(true);
     try {
-      console.log("Calling Gemini search with query:", query.trim());
       const { data, error } = await supabase.functions.invoke('gemini-search', {
         body: { query: query.trim() }
       });
-
-      console.log("Gemini search response:", { data, error });
 
       if (error) {
         console.error("Gemini search error:", error);
         toast({
           title: "Search failed",
-          description: "Couldn't connect to Gemini AI. Please try again and check if you've populated the mentor database.",
+          description: "Couldn't connect to Gemini AI. Please try again.",
           variant: "destructive",
         });
         return;
       }
 
       if (data.error) {
-        console.error("Gemini API error:", data.error, data.details);
-        let errorMessage = data.error;
-        
-        if (data.error.includes("No mentors found")) {
-          errorMessage = "No mentors found in database. Please populate the database first using the button on the mentors page.";
-        } else if (data.error.includes("API key not configured")) {
-          errorMessage = "Gemini API key is not properly configured. Please contact the administrator.";
-        }
-        
+        console.error("Gemini API error:", data.error);
         toast({
           title: "AI search error",
-          description: errorMessage,
+          description: data.error,
           variant: "destructive",
         });
         return;
       }
 
       if (data.mentors && data.mentors.length > 0) {
-        console.log("Found mentors:", data.mentors);
         onGeminiSearch(data.mentors);
         toast({
           title: "AI Search Results",
@@ -124,7 +103,7 @@ const SearchBar = ({ onSearch, onGeminiSearch }: SearchBarProps) => {
       setPlaceholderIndex((prev) => (prev + 1) % placeholders.length);
     }, 4000);
     return () => clearInterval(interval);
-  }, [placeholders.length]);
+  }, []);
 
   return (
     <div className="w-full max-w-3xl mx-auto mb-10">
