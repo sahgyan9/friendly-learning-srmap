@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
@@ -6,11 +5,24 @@ import Hero from "@/components/Hero";
 import SearchBar from "@/components/SearchBar";
 import MentorCard from "@/components/MentorCard";
 import { Button } from "@/components/ui/button";
-import { mentors, Mentor } from "@/data/mentors";
+import { Mentor } from "@/types/mentor";
+import { mentors } from "@/data/mentors";
 
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [filteredMentors, setFilteredMentors] = useState<Mentor[]>(mentors);
+  const [filteredMentors, setFilteredMentors] = useState<Mentor[]>(
+    mentors.map(mentor => ({
+      id: mentor.id,
+      name: mentor.name,
+      department: mentor.department,
+      skills: mentor.skills,
+      rating: mentor.rating,
+      profile_image: mentor.profileImage,
+      linkedin_url: mentor.linkedinUrl,
+      bio: mentor.bio,
+      review_count: mentor.reviewCount,
+    }))
+  );
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
@@ -22,13 +34,8 @@ const Index = () => {
     
     const lowerCaseQuery = query.toLowerCase();
     const filtered = mentors.filter((mentor) => {
-      // Search by name
       if (mentor.name.toLowerCase().includes(lowerCaseQuery)) return true;
-      
-      // Search by department
       if (mentor.department.toLowerCase().includes(lowerCaseQuery)) return true;
-      
-      // Search by skills
       if (mentor.skills.some(skill => 
         skill.toLowerCase().includes(lowerCaseQuery)
       )) return true;
@@ -40,7 +47,6 @@ const Index = () => {
   };
 
   const handleGeminiSearch = (geminiResults: any[]) => {
-    // Map the Supabase mentor format to the local format
     const mappedMentors = geminiResults.map(dbMentor => {
       return {
         id: dbMentor.id,
@@ -66,7 +72,6 @@ const Index = () => {
       <main>
         <Hero />
         
-        {/* Mentors Section */}
         <section className="py-16 bg-gray-50">
           <div className="container px-4 md:px-6">
             <div className="text-center mb-12">
@@ -77,10 +82,8 @@ const Index = () => {
               </p>
             </div>
             
-            {/* Search */}
             <SearchBar onSearch={handleSearch} onGeminiSearch={handleGeminiSearch} />
             
-            {/* Mentors Grid */}
             {filteredMentors.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
                 {filteredMentors.map((mentor) => (
@@ -98,7 +101,6 @@ const Index = () => {
           </div>
         </section>
         
-        {/* Features Section */}
         <section className="py-16">
           <div className="container px-4 md:px-6">
             <div className="text-center mb-12">
@@ -148,7 +150,6 @@ const Index = () => {
           </div>
         </section>
         
-        {/* CTA Section */}
         <section className="py-16 bg-primary/5">
           <div className="container px-4 md:px-6">
             <div className="max-w-3xl mx-auto text-center">
@@ -169,7 +170,6 @@ const Index = () => {
         </section>
       </main>
       
-      {/* Footer */}
       <footer className="py-8 bg-white border-t border-gray-200">
         <div className="container px-4 md:px-6">
           <div className="flex flex-col md:flex-row justify-between items-center">
