@@ -1,12 +1,14 @@
 
-import { useState, useEffect, useRef } from "react";
-import { X, Send, Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { X } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Mentor } from "@/types/mentor";
 import { Message } from "@/types/chat";
 import { toast } from "sonner";
 import { getOrCreateConversation, getConversationMessages, sendMessage } from "@/integrations/supabase/client";
+import MessageList from "@/components/chat/MessageList";
+import MessageInput from "@/components/chat/MessageInput";
 
 // Mock authenticated user for demo purposes
 // In a real app, this would come from your auth system
@@ -24,26 +26,16 @@ interface ChatModalProps {
 }
 
 const ChatModal = ({ isOpen, onClose, mentor }: ChatModalProps) => {
-  const [message, setMessage] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
     if (isOpen && mentor) {
       initializeChat();
     }
   }, [isOpen, mentor]);
-  
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-  
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
   
   const initializeChat = async () => {
     setLoading(true);
@@ -86,10 +78,8 @@ const ChatModal = ({ isOpen, onClose, mentor }: ChatModalProps) => {
     }
   };
   
-  const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!message.trim() || !conversationId) return;
+  const handleSendMessage = async (content: string) => {
+    if (!conversationId) return;
     
     setSending(true);
     try {
@@ -97,7 +87,7 @@ const ChatModal = ({ isOpen, onClose, mentor }: ChatModalProps) => {
         conversationId,
         MOCK_USER.id,
         mentor.id,
-        message
+        content
       );
       
       if (error) {
@@ -108,7 +98,6 @@ const ChatModal = ({ isOpen, onClose, mentor }: ChatModalProps) => {
       
       if (data) {
         setMessages(prev => [...prev, data]);
-        setMessage("");
       }
     } catch (err) {
       console.error("Exception sending message:", err);
@@ -116,11 +105,6 @@ const ChatModal = ({ isOpen, onClose, mentor }: ChatModalProps) => {
     } finally {
       setSending(false);
     }
-  };
-  
-  const formatTime = (timestamp: string) => {
-    const date = new Date(timestamp);
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
   
   return (
@@ -146,72 +130,20 @@ const ChatModal = ({ isOpen, onClose, mentor }: ChatModalProps) => {
         <div className="flex flex-col h-full">
           {/* Messages area */}
           <div className="flex-1 overflow-y-auto p-4">
-            {loading ? (
-              <div className="h-full flex items-center justify-center">
-                <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                <span className="ml-2">Loading messages...</span>
-              </div>
-            ) : messages.length === 0 ? (
-              <div className="h-full flex items-center justify-center flex-col text-center px-4">
-                <p className="text-muted-foreground mb-2">No messages yet</p>
-                <p className="text-sm text-muted-foreground">
-                  Start your conversation with {mentor.name} by sending a message below.
-                </p>
-              </div>
-            ) : (
-              <div className="flex flex-col gap-3">
-                {messages.map((msg) => {
-                  const isMine = msg.sender_id === MOCK_USER.id;
-                  return (
-                    <div 
-                      key={msg.id} 
-                      className={`flex ${isMine ? "justify-end" : "justify-start"}`}
-                    >
-                      <div className="flex flex-col max-w-[75%]">
-                        <div 
-                          className={`p-3 rounded-lg ${
-                            isMine 
-                              ? "bg-primary text-primary-foreground" 
-                              : "bg-muted"
-                          }`}
-                        >
-                          <p className="text-sm">{msg.content}</p>
-                        </div>
-                        <span className="text-xs text-muted-foreground mt-1 px-1">
-                          {formatTime(msg.sent_at)}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
-                <div ref={messagesEndRef} />
-              </div>
-            )}
+            <MessageList 
+              messages={messages} 
+              loading={loading} 
+              currentUserId={MOCK_USER.id}
+            />
           </div>
           
           {/* Message input */}
           <div className="p-3 border-t">
-            <form onSubmit={handleSendMessage} className="flex gap-2">
-              <input
-                type="text"
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                placeholder="Type your message..."
-                className="flex-1 p-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                disabled={loading || sending}
-              />
-              <Button 
-                type="submit" 
-                size="sm" 
-                disabled={loading || sending || !message.trim()}
-              >
-                {sending ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Send className="h-4 w-4" />
-                )}
-              </Button>
-            </form>
+            <MessageInput 
+              onSendMessage={handleSendMessage}
+              disabled={loading}
+              sending={sending}
+            />
           </div>
         </div>
       </DialogContent>

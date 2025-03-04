@@ -1,15 +1,16 @@
-
 import { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { Send, Loader2, Search } from "lucide-react";
 import { getUserConversations, getConversationMessages, sendMessage, markMessagesAsRead } from "@/integrations/supabase/client";
 import { Message, Conversation } from "@/types/chat";
+import MessageList from "@/components/chat/MessageList";
+import MessageInput from "@/components/chat/MessageInput";
+import ConversationList from "@/components/chat/ConversationList";
+import ChatHeader from "@/components/chat/ChatHeader";
+import { Link } from "react-router-dom";
 
-// Mock authenticated user for demo purposes
-// In a real app, this would come from your auth system
 const MOCK_USER = {
   id: "user-123",
   name: "Current User",
@@ -26,7 +27,6 @@ const Messages = () => {
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [isSending, setIsSending] = useState(false);
 
-  // Load conversations
   useEffect(() => {
     const fetchConversations = async () => {
       setIsLoadingConversations(true);
@@ -41,7 +41,6 @@ const Messages = () => {
         
         if (data) {
           setConversations(data);
-          // Activate the first chat if there is one and none is active
           if (data.length > 0 && !activeChat) {
             setActiveChat(data[0].id);
           }
@@ -57,7 +56,6 @@ const Messages = () => {
     fetchConversations();
   }, []);
 
-  // Load messages when active chat changes
   useEffect(() => {
     if (activeChat) {
       fetchMessages(activeChat);
@@ -78,7 +76,6 @@ const Messages = () => {
       if (data) {
         setMessages(data);
         
-        // Mark messages as read
         await markMessagesAsRead(conversationId, MOCK_USER.id);
       }
     } catch (err) {
@@ -89,9 +86,8 @@ const Messages = () => {
     }
   };
 
-  const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!message.trim() || !activeChat) return;
+  const handleSendMessage = async (content: string) => {
+    if (!activeChat) return;
     
     setIsSending(true);
     try {
@@ -106,7 +102,7 @@ const Messages = () => {
         activeChat,
         MOCK_USER.id,
         receiverId,
-        message
+        content
       );
       
       if (error) {
@@ -117,13 +113,11 @@ const Messages = () => {
       
       if (data) {
         setMessages(prev => [...prev, data]);
-        setMessage("");
         
-        // Update conversation in the list
         setConversations(prev => 
           prev.map(conv => 
             conv.id === activeChat 
-              ? { ...conv, last_message: message, last_updated: new Date().toISOString() }
+              ? { ...conv, last_message: content, last_updated: new Date().toISOString() }
               : conv
           )
         );
@@ -151,18 +145,26 @@ const Messages = () => {
     }
   };
 
-  // Get the other user in the conversation (not the current user)
   const getOtherUser = (conversation: Conversation) => {
     return conversation.user1_id === MOCK_USER.id ? conversation.user2 : conversation.user1;
   };
 
-  // Filter conversations by search query
+  const hasUnreadMessages = (conversationId: string) => {
+    return messages.some(msg => 
+      msg.conversation_id === conversationId && 
+      msg.receiver_id === MOCK_USER.id && 
+      !msg.is_read
+    );
+  };
+
   const filteredConversations = searchQuery.trim()
     ? conversations.filter(conv => {
         const otherUser = getOtherUser(conv);
         return otherUser?.name.toLowerCase().includes(searchQuery.toLowerCase());
       })
     : conversations;
+
+  const currentConversation = conversations.find(c => c.id === activeChat);
 
   return (
     <div className="min-h-screen">
@@ -173,7 +175,6 @@ const Messages = () => {
           <h1 className="text-3xl font-bold mb-8">Messages</h1>
           
           <div className="bg-white border border-gray-200 rounded-lg shadow-sm h-[calc(100vh-200px)] flex">
-            {/* Messages sidebar */}
             <div className="w-full md:w-1/3 border-r border-gray-200 overflow-y-auto">
               <div className="p-4 border-b border-gray-200">
                 <div className="relative">
@@ -188,154 +189,41 @@ const Messages = () => {
                 </div>
               </div>
               
-              <div>
-                {isLoadingConversations ? (
-                  <div className="flex justify-center items-center py-8">
-                    <Loader2 className="h-5 w-5 animate-spin text-primary" />
-                    <span className="ml-2">Loading conversations...</span>
-                  </div>
-                ) : filteredConversations.length === 0 ? (
-                  <div className="text-center py-8 px-4">
-                    {searchQuery.trim() ? (
-                      <p className="text-muted-foreground">No conversations match your search</p>
-                    ) : (
-                      <>
-                        <p className="text-muted-foreground mb-2">No conversations yet</p>
-                        <p className="text-sm text-muted-foreground">
-                          Connect with mentors to start chatting
-                        </p>
-                        <Button className="mt-4" asChild>
-                          <Link to="/mentors">Find Mentors</Link>
-                        </Button>
-                      </>
-                    )}
-                  </div>
-                ) : (
-                  filteredConversations.map(conversation => {
-                    const otherUser = getOtherUser(conversation);
-                    // Check if there are unread messages from this conversation
-                    const hasUnread = messages.some(msg => 
-                      msg.conversation_id === conversation.id && 
-                      msg.receiver_id === MOCK_USER.id && 
-                      !msg.is_read
-                    );
-                    
-                    return (
-                      <div 
-                        key={conversation.id}
-                        onClick={() => setActiveChat(conversation.id)}
-                        className={`flex items-center gap-3 p-4 border-b border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors ${activeChat === conversation.id ? 'bg-primary/5' : ''}`}
-                      >
-                        <div className="flex-shrink-0">
-                          <img 
-                            src={otherUser?.profile_image} 
-                            alt={otherUser?.name} 
-                            className="w-12 h-12 rounded-full"
-                          />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex justify-between items-baseline">
-                            <h3 className="text-sm font-semibold truncate">{otherUser?.name}</h3>
-                            <span className="text-xs text-gray-500">
-                              {formatTime(conversation.last_updated)}
-                            </span>
-                          </div>
-                          <p className="text-sm text-gray-600 truncate">{conversation.last_message}</p>
-                        </div>
-                        {hasUnread && (
-                          <div className="w-2 h-2 bg-primary rounded-full"></div>
-                        )}
-                      </div>
-                    );
-                  })
-                )}
-              </div>
+              <ConversationList 
+                conversations={conversations}
+                filteredConversations={filteredConversations}
+                activeChat={activeChat}
+                isLoading={isLoadingConversations}
+                searchQuery={searchQuery}
+                formatTime={formatTime}
+                getOtherUser={getOtherUser}
+                setActiveChat={setActiveChat}
+                hasUnreadMessages={hasUnreadMessages}
+              />
             </div>
             
-            {/* Chat area */}
             <div className="hidden md:flex flex-col flex-1">
               {activeChat && conversations.length > 0 ? (
                 <>
-                  {/* Chat header */}
-                  {(() => {
-                    const currentConversation = conversations.find(c => c.id === activeChat);
-                    if (!currentConversation) return null;
-                    
-                    const otherUser = getOtherUser(currentConversation);
-                    
-                    return (
-                      <div className="p-4 border-b border-gray-200">
-                        <div className="flex items-center gap-3">
-                          <img 
-                            src={otherUser?.profile_image} 
-                            alt={otherUser?.name} 
-                            className="w-10 h-10 rounded-full"
-                          />
-                          <h3 className="font-semibold">{otherUser?.name}</h3>
-                        </div>
-                      </div>
-                    );
-                  })()}
+                  <ChatHeader 
+                    conversation={currentConversation} 
+                    getOtherUser={getOtherUser} 
+                  />
                   
-                  {/* Messages */}
                   <div className="flex-1 overflow-y-auto p-4">
-                    {isLoadingMessages ? (
-                      <div className="flex justify-center items-center h-full">
-                        <Loader2 className="h-5 w-5 animate-spin text-primary" />
-                        <span className="ml-2">Loading messages...</span>
-                      </div>
-                    ) : messages.length === 0 ? (
-                      <div className="flex flex-col items-center justify-center h-full text-center">
-                        <p className="text-muted-foreground mb-2">No messages yet</p>
-                        <p className="text-sm text-muted-foreground">
-                          Start the conversation by sending a message
-                        </p>
-                      </div>
-                    ) : (
-                      <div className="flex flex-col gap-4">
-                        {messages.map(msg => (
-                          <div key={msg.id} className={`flex ${msg.sender_id === MOCK_USER.id ? 'justify-end' : 'justify-start'}`}>
-                            <div className="self-start max-w-[70%]">
-                              <div className={`${
-                                msg.sender_id === MOCK_USER.id
-                                  ? 'bg-primary text-primary-foreground'
-                                  : 'bg-gray-100'
-                              } p-3 rounded-lg`}>
-                                <p className="text-sm">{msg.content}</p>
-                              </div>
-                              <span className="text-xs text-gray-500 mt-1 block">
-                                {formatTime(msg.sent_at)}
-                              </span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                    <MessageList 
+                      messages={messages}
+                      loading={isLoadingMessages}
+                      currentUserId={MOCK_USER.id}
+                    />
                   </div>
                   
-                  {/* Message input */}
                   <div className="p-4 border-t border-gray-200">
-                    <form onSubmit={handleSendMessage} className="flex gap-2">
-                      <input
-                        type="text"
-                        value={message}
-                        onChange={(e) => setMessage(e.target.value)}
-                        placeholder="Type your message..."
-                        className="flex-1 p-2 border border-gray-300 rounded-md"
-                        disabled={isLoadingMessages || isSending}
-                      />
-                      <Button 
-                        type="submit" 
-                        disabled={!message.trim() || isLoadingMessages || isSending}
-                      >
-                        {isSending ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Send className="h-4 w-4 mr-2" />
-                        )}
-                        Send
-                      </Button>
-                    </form>
+                    <MessageInput 
+                      onSendMessage={handleSendMessage}
+                      disabled={isLoadingMessages}
+                      sending={isSending}
+                    />
                   </div>
                 </>
               ) : (
