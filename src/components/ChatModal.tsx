@@ -1,9 +1,9 @@
-
 import { useState, useEffect, useRef } from "react";
 import { X, Send, Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Mentor } from "@/types/mentor";
+import { Message } from "@/types/chat";
 import { toast } from "sonner";
 import { getOrCreateConversation, getConversationMessages, sendMessage } from "@/integrations/supabase/client";
 
@@ -20,15 +20,6 @@ interface ChatModalProps {
   isOpen: boolean;
   onClose: () => void;
   mentor: Mentor;
-}
-
-interface Message {
-  id: string;
-  content: string;
-  sender_id: string;
-  receiver_id: string;
-  sent_at: string;
-  is_read: boolean;
 }
 
 const ChatModal = ({ isOpen, onClose, mentor }: ChatModalProps) => {
@@ -83,7 +74,7 @@ const ChatModal = ({ isOpen, onClose, mentor }: ChatModalProps) => {
         }
         
         if (messageData) {
-          setMessages(messageData);
+          setMessages(messageData as Message[]);
         }
       }
     } catch (err) {
@@ -115,7 +106,7 @@ const ChatModal = ({ isOpen, onClose, mentor }: ChatModalProps) => {
       }
       
       if (data) {
-        setMessages(prev => [...prev, data]);
+        setMessages(prev => [...prev, data as Message]);
         setMessage("");
       }
     } catch (err) {

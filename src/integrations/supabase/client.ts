@@ -82,7 +82,9 @@ export async function getMentorById(id: string) {
   return { data, error };
 }
 
-// Chat functionality
+// Chat functionality - Using generic types for tables not in the Database type
+
+// Get or create a conversation between two users
 export async function getOrCreateConversation(user1Id: string, user2Id: string) {
   // First check if a conversation already exists
   const { data: existingConversation, error: searchError } = await supabase
@@ -112,6 +114,7 @@ export async function getOrCreateConversation(user1Id: string, user2Id: string) 
   return { data: newConversation, error: createError };
 }
 
+// Get messages for a conversation
 export async function getConversationMessages(conversationId: string) {
   const { data, error } = await supabase
     .from('messages')
@@ -122,6 +125,7 @@ export async function getConversationMessages(conversationId: string) {
   return { data, error };
 }
 
+// Send a message in a conversation
 export async function sendMessage(conversationId: string, senderId: string, receiverId: string, content: string) {
   // Insert the message
   const { data: message, error: messageError } = await supabase
@@ -158,6 +162,7 @@ export async function sendMessage(conversationId: string, senderId: string, rece
   return { data: message, error: updateError };
 }
 
+// Get all conversations for a user
 export async function getUserConversations(userId: string) {
   const { data, error } = await supabase
     .from('conversations')
@@ -172,6 +177,7 @@ export async function getUserConversations(userId: string) {
   return { data, error };
 }
 
+// Mark messages as read
 export async function markMessagesAsRead(conversationId: string, userId: string) {
   const { error } = await supabase
     .from('messages')

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
@@ -6,6 +5,7 @@ import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { Send, Loader2, Search } from "lucide-react";
 import { getUserConversations, getConversationMessages, sendMessage, markMessagesAsRead } from "@/integrations/supabase/client";
+import { Message, Conversation } from "@/types/chat";
 
 // Mock authenticated user for demo purposes
 // In a real app, this would come from your auth system
@@ -14,34 +14,6 @@ const MOCK_USER = {
   name: "Current User",
   profile_image: "https://ui-avatars.com/api/?name=Current+User&background=6366F1&color=fff"
 };
-
-interface Message {
-  id: string;
-  content: string;
-  sender_id: string;
-  receiver_id: string;
-  sent_at: string;
-  is_read: boolean;
-  conversation_id: string;
-}
-
-interface Conversation {
-  id: string;
-  user1_id: string;
-  user2_id: string;
-  last_message: string;
-  last_updated: string;
-  user1: {
-    id: string;
-    name: string;
-    profile_image: string;
-  };
-  user2: {
-    id: string;
-    name: string;
-    profile_image: string;
-  };
-}
 
 const Messages = () => {
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -67,7 +39,7 @@ const Messages = () => {
         }
         
         if (data) {
-          setConversations(data);
+          setConversations(data as unknown as Conversation[]);
           // Activate the first chat if there is one and none is active
           if (data.length > 0 && !activeChat) {
             setActiveChat(data[0].id);
@@ -103,7 +75,7 @@ const Messages = () => {
       }
       
       if (data) {
-        setMessages(data);
+        setMessages(data as Message[]);
         
         // Mark messages as read
         await markMessagesAsRead(conversationId, MOCK_USER.id);
@@ -143,7 +115,7 @@ const Messages = () => {
       }
       
       if (data) {
-        setMessages(prev => [...prev, data]);
+        setMessages(prev => [...prev, data as Message]);
         setMessage("");
         
         // Update conversation in the list
@@ -187,7 +159,7 @@ const Messages = () => {
   const filteredConversations = searchQuery.trim()
     ? conversations.filter(conv => {
         const otherUser = getOtherUser(conv);
-        return otherUser.name.toLowerCase().includes(searchQuery.toLowerCase());
+        return otherUser?.name.toLowerCase().includes(searchQuery.toLowerCase());
       })
     : conversations;
 
@@ -255,14 +227,14 @@ const Messages = () => {
                       >
                         <div className="flex-shrink-0">
                           <img 
-                            src={otherUser.profile_image} 
-                            alt={otherUser.name} 
+                            src={otherUser?.profile_image} 
+                            alt={otherUser?.name} 
                             className="w-12 h-12 rounded-full"
                           />
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex justify-between items-baseline">
-                            <h3 className="text-sm font-semibold truncate">{otherUser.name}</h3>
+                            <h3 className="text-sm font-semibold truncate">{otherUser?.name}</h3>
                             <span className="text-xs text-gray-500">
                               {formatTime(conversation.last_updated)}
                             </span>
@@ -294,11 +266,11 @@ const Messages = () => {
                       <div className="p-4 border-b border-gray-200">
                         <div className="flex items-center gap-3">
                           <img 
-                            src={otherUser.profile_image} 
-                            alt={otherUser.name} 
+                            src={otherUser?.profile_image} 
+                            alt={otherUser?.name} 
                             className="w-10 h-10 rounded-full"
                           />
-                          <h3 className="font-semibold">{otherUser.name}</h3>
+                          <h3 className="font-semibold">{otherUser?.name}</h3>
                         </div>
                       </div>
                     );
