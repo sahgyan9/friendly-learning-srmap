@@ -9,7 +9,7 @@ interface MentorCardProps {
 }
 
 const MentorCard = ({ mentor }: MentorCardProps) => {
-  const { name, department, skills, rating, profile_image } = mentor;
+  const { name, department, skills, rating, profile_image, review_count } = mentor;
 
   return (
     <div className="glass-card rounded-xl p-6 transition-all duration-300 hover:shadow-xl animate-scale-in">

@@ -28,7 +28,17 @@ const Index = () => {
     setSearchQuery(query);
     
     if (!query) {
-      setFilteredMentors(mentors);
+      setFilteredMentors(mentors.map(mentor => ({
+        id: mentor.id,
+        name: mentor.name,
+        department: mentor.department,
+        skills: mentor.skills,
+        rating: mentor.rating,
+        profile_image: mentor.profileImage,
+        linkedin_url: mentor.linkedinUrl,
+        bio: mentor.bio,
+        review_count: mentor.reviewCount,
+      })));
       return;
     }
     
@@ -43,7 +53,17 @@ const Index = () => {
       return false;
     });
     
-    setFilteredMentors(filtered);
+    setFilteredMentors(filtered.map(mentor => ({
+      id: mentor.id,
+      name: mentor.name,
+      department: mentor.department,
+      skills: mentor.skills,
+      rating: mentor.rating,
+      profile_image: mentor.profileImage,
+      linkedin_url: mentor.linkedinUrl,
+      bio: mentor.bio,
+      review_count: mentor.reviewCount,
+    })));
   };
 
   const handleGeminiSearch = (geminiResults: any[]) => {
