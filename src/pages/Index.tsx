@@ -40,7 +40,7 @@ const Index = () => {
   };
 
   const handleGeminiSearch = (geminiResults: any[]) => {
-    // Map the Supabase mentor format to the local format if needed
+    // Map the Supabase mentor format to the local format
     const mappedMentors = geminiResults.map(dbMentor => {
       return {
         id: dbMentor.id,
@@ -48,10 +48,11 @@ const Index = () => {
         department: dbMentor.department,
         skills: dbMentor.skills,
         rating: dbMentor.rating,
-        profileImage: dbMentor.profile_image,
-        linkedinUrl: dbMentor.linkedin_url,
+        profile_image: dbMentor.profile_image,
+        linkedin_url: dbMentor.linkedin_url,
         bio: dbMentor.bio,
-        reviewCount: dbMentor.review_count
+        review_count: dbMentor.review_count,
+        created_at: dbMentor.created_at
       } as Mentor;
     });
     
