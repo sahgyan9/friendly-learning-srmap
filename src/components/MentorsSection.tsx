@@ -1,9 +1,9 @@
-
 import { useState } from "react";
 import SearchBar from "@/components/SearchBar";
 import MentorCard from "@/components/MentorCard";
 import { Mentor } from "@/types/mentor";
 import { mentors } from "@/data/mentors";
+import { getMentors, searchMentors } from "@/integrations/supabase/services/mentors";
 
 const MentorsSection = () => {
   const [searchQuery, setSearchQuery] = useState("");
