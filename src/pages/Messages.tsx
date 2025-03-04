@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
@@ -39,7 +40,7 @@ const Messages = () => {
         }
         
         if (data) {
-          setConversations(data as unknown as Conversation[]);
+          setConversations(data);
           // Activate the first chat if there is one and none is active
           if (data.length > 0 && !activeChat) {
             setActiveChat(data[0].id);
@@ -75,7 +76,7 @@ const Messages = () => {
       }
       
       if (data) {
-        setMessages(data as Message[]);
+        setMessages(data);
         
         // Mark messages as read
         await markMessagesAsRead(conversationId, MOCK_USER.id);
@@ -115,7 +116,7 @@ const Messages = () => {
       }
       
       if (data) {
-        setMessages(prev => [...prev, data as Message]);
+        setMessages(prev => [...prev, data]);
         setMessage("");
         
         // Update conversation in the list

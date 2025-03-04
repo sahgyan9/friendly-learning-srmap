@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { X, Send, Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -74,7 +75,7 @@ const ChatModal = ({ isOpen, onClose, mentor }: ChatModalProps) => {
         }
         
         if (messageData) {
-          setMessages(messageData as Message[]);
+          setMessages(messageData);
         }
       }
     } catch (err) {
@@ -106,7 +107,7 @@ const ChatModal = ({ isOpen, onClose, mentor }: ChatModalProps) => {
       }
       
       if (data) {
-        setMessages(prev => [...prev, data as Message]);
+        setMessages(prev => [...prev, data]);
         setMessage("");
       }
     } catch (err) {
