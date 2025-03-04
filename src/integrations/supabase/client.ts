@@ -100,7 +100,7 @@ export async function getOrCreateConversation(user1Id: string, user2Id: string) 
       return { data: null, error };
     }
 
-    if (data && data.length > 0) {
+    if (data && Array.isArray(data) && data.length > 0) {
       return { data: data[0] as Conversation, error: null };
     }
 
@@ -198,13 +198,13 @@ export async function getUserConversations(userId: string) {
 // Mark messages as read
 export async function markMessagesAsRead(conversationId: string, userId: string) {
   try {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .rpc('mark_messages_as_read', {
         conversation_id: conversationId,
         user_id: userId
       });
 
-    return { error };
+    return { data, error };
   } catch (err) {
     console.error('Exception in markMessagesAsRead:', err);
     return { error: err as Error };
