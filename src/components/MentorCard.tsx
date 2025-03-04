@@ -3,13 +3,14 @@ import { Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Mentor } from "@/types/mentor";
+import { Link } from "react-router-dom";
 
 interface MentorCardProps {
   mentor: Mentor;
 }
 
 const MentorCard = ({ mentor }: MentorCardProps) => {
-  const { name, department, skills, rating, profile_image, review_count } = mentor;
+  const { id, name, department, skills, rating, profile_image, review_count } = mentor;
 
   return (
     <div className="glass-card rounded-xl p-6 transition-all duration-300 hover:shadow-xl animate-scale-in">
@@ -58,8 +59,11 @@ const MentorCard = ({ mentor }: MentorCardProps) => {
       <Button 
         variant="default" 
         className="w-full"
+        asChild
       >
-        Connect
+        <Link to={`/mentor/${id}`}>
+          Connect
+        </Link>
       </Button>
     </div>
   );

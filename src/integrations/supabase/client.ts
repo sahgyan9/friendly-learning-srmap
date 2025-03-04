@@ -70,3 +70,115 @@ export async function searchMentors(query: string) {
   
   return { data: uniqueResults, error };
 }
+
+// Get a single mentor by ID
+export async function getMentorById(id: string) {
+  const { data, error } = await supabase
+    .from('mentors')
+    .select('*')
+    .eq('id', id)
+    .single();
+  
+  return { data, error };
+}
+
+// Chat functionality
+export async function getOrCreateConversation(user1Id: string, user2Id: string) {
+  // First check if a conversation already exists
+  const { data: existingConversation, error: searchError } = await supabase
+    .from('conversations')
+    .select('*')
+    .or(`and(user1_id.eq.${user1Id},user2_id.eq.${user2Id}),and(user1_id.eq.${user2Id},user2_id.eq.${user1Id})`)
+    .single();
+
+  if (searchError && searchError.code !== 'PGRST116') {
+    console.error('Error searching for conversation:', searchError);
+    return { data: null, error: searchError };
+  }
+
+  if (existingConversation) {
+    return { data: existingConversation, error: null };
+  }
+
+  // If no conversation exists, create a new one
+  const { data: newConversation, error: createError } = await supabase
+    .from('conversations')
+    .insert([
+      { user1_id: user1Id, user2_id: user2Id }
+    ])
+    .select()
+    .single();
+
+  return { data: newConversation, error: createError };
+}
+
+export async function getConversationMessages(conversationId: string) {
+  const { data, error } = await supabase
+    .from('messages')
+    .select('*')
+    .eq('conversation_id', conversationId)
+    .order('sent_at', { ascending: true });
+
+  return { data, error };
+}
+
+export async function sendMessage(conversationId: string, senderId: string, receiverId: string, content: string) {
+  // Insert the message
+  const { data: message, error: messageError } = await supabase
+    .from('messages')
+    .insert([
+      { 
+        conversation_id: conversationId,
+        sender_id: senderId,
+        receiver_id: receiverId,
+        content
+      }
+    ])
+    .select()
+    .single();
+
+  if (messageError) {
+    console.error('Error sending message:', messageError);
+    return { data: null, error: messageError };
+  }
+
+  // Update the conversation with the last message
+  const { error: updateError } = await supabase
+    .from('conversations')
+    .update({ 
+      last_message: content,
+      last_updated: new Date().toISOString()
+    })
+    .eq('id', conversationId);
+
+  if (updateError) {
+    console.error('Error updating conversation:', updateError);
+  }
+
+  return { data: message, error: updateError };
+}
+
+export async function getUserConversations(userId: string) {
+  const { data, error } = await supabase
+    .from('conversations')
+    .select(`
+      *,
+      user1:user1_id(id, name, profile_image),
+      user2:user2_id(id, name, profile_image)
+    `)
+    .or(`user1_id.eq.${userId},user2_id.eq.${userId}`)
+    .order('last_updated', { ascending: false });
+
+  return { data, error };
+}
+
+export async function markMessagesAsRead(conversationId: string, userId: string) {
+  const { error } = await supabase
+    .from('messages')
+    .update({ is_read: true })
+    .eq('conversation_id', conversationId)
+    .eq('receiver_id', userId)
+    .eq('is_read', false);
+
+  return { error };
+}
