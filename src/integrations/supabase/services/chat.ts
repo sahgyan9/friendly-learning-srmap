@@ -6,13 +6,10 @@ import type { Message, Conversation } from '@/types/chat';
 export async function getOrCreateConversation(user1Id: string, user2Id: string) {
   try {
     // First check if a conversation already exists
-    const { data, error } = await supabase.rpc(
+    const { data, error } = await supabase.rpc<Conversation[]>(
       'get_conversation', 
       { user1: user1Id, user2: user2Id }
-    ) as unknown as { 
-      data: Conversation[] | null, 
-      error: Error | null 
-    };
+    );
 
     if (error) {
       console.error('Error searching for conversation:', error);
@@ -24,13 +21,10 @@ export async function getOrCreateConversation(user1Id: string, user2Id: string) 
     }
 
     // If no conversation exists, create a new one
-    const { data: newConversation, error: createError } = await supabase.rpc(
+    const { data: newConversation, error: createError } = await supabase.rpc<Conversation>(
       'create_conversation',
       { user1_id: user1Id, user2_id: user2Id }
-    ) as unknown as {
-      data: Conversation | null,
-      error: Error | null
-    };
+    );
 
     return { 
       data: newConversation as Conversation, 
@@ -45,13 +39,10 @@ export async function getOrCreateConversation(user1Id: string, user2Id: string) 
 // Get messages for a conversation
 export async function getConversationMessages(conversationId: string) {
   try {
-    const { data, error } = await supabase.rpc(
+    const { data, error } = await supabase.rpc<Message[]>(
       'get_conversation_messages', 
       { conversation_id: conversationId }
-    ) as unknown as {
-      data: Message[] | null,
-      error: Error | null
-    };
+    );
 
     return { 
       data: data as Message[], 
@@ -67,7 +58,7 @@ export async function getConversationMessages(conversationId: string) {
 export async function sendMessage(conversationId: string, senderId: string, receiverId: string, content: string) {
   try {
     // Insert the message
-    const { data, error: messageError } = await supabase.rpc(
+    const { data, error: messageError } = await supabase.rpc<Message>(
       'send_message',
       {
         conversation_id: conversationId,
@@ -75,10 +66,7 @@ export async function sendMessage(conversationId: string, senderId: string, rece
         receiver_id: receiverId,
         content: content
       }
-    ) as unknown as {
-      data: Message | null,
-      error: Error | null
-    };
+    );
 
     if (messageError) {
       console.error('Error sending message:', messageError);
@@ -86,15 +74,13 @@ export async function sendMessage(conversationId: string, senderId: string, rece
     }
 
     // Update the conversation with the last message
-    const { error: updateError } = await supabase.rpc(
+    const { error: updateError } = await supabase.rpc<Conversation>(
       'update_conversation',
       {
         conversation_id: conversationId,
         last_message: content
       }
-    ) as unknown as {
-      error: Error | null
-    };
+    );
 
     if (updateError) {
       console.error('Error updating conversation:', updateError);
@@ -113,13 +99,10 @@ export async function sendMessage(conversationId: string, senderId: string, rece
 // Get all conversations for a user
 export async function getUserConversations(userId: string) {
   try {
-    const { data, error } = await supabase.rpc(
+    const { data, error } = await supabase.rpc<Conversation[]>(
       'get_user_conversations', 
       { user_id: userId }
-    ) as unknown as {
-      data: Conversation[] | null,
-      error: Error | null
-    };
+    );
 
     return { 
       data: data as Conversation[], 
@@ -134,16 +117,13 @@ export async function getUserConversations(userId: string) {
 // Mark messages as read
 export async function markMessagesAsRead(conversationId: string, userId: string) {
   try {
-    const { data, error } = await supabase.rpc(
+    const { data, error } = await supabase.rpc<Message[]>(
       'mark_messages_as_read',
       {
         conversation_id: conversationId,
         user_id: userId
       }
-    ) as unknown as {
-      data: Message[] | null,
-      error: Error | null
-    };
+    );
 
     return { data, error };
   } catch (err) {
