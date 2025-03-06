@@ -7,6 +7,8 @@ import ChatContainer from "@/components/chat/ChatContainer";
 import ChatFooter from "@/components/chat/ChatFooter";
 import { useMessages } from "@/hooks/use-messages";
 import { formatMessageTime } from "@/utils/date-utils";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Loader2 } from "lucide-react";
 
 // Use the sample user we created in Supabase
 const SAMPLE_USER = {
@@ -59,6 +61,25 @@ const Messages = () => {
         return otherUser?.name.toLowerCase().includes(searchQuery.toLowerCase());
       })
     : conversations;
+
+  if (error) {
+    return (
+      <div className="min-h-screen">
+        <Navbar />
+        <main className="pt-24 pb-16">
+          <div className="container px-4 md:px-6">
+            <h1 className="text-3xl font-bold mb-8">Messages</h1>
+            <Alert variant="destructive" className="mb-4">
+              <AlertDescription>
+                Error loading conversations: {error.message || "Unknown error"}. Please try again later.
+              </AlertDescription>
+            </Alert>
+          </div>
+        </main>
+        <ChatFooter />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen">

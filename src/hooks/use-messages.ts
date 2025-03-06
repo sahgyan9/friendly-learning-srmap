@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Message, Conversation } from "@/types/chat";
@@ -23,6 +22,7 @@ export const useMessages = (userId: string) => {
       setIsLoadingConversations(true);
       setError(null);
       try {
+        console.log("Fetching conversations for user:", userId);
         const { data, error } = await getUserConversations(userId);
         
         if (error) {
@@ -36,6 +36,8 @@ export const useMessages = (userId: string) => {
           setConversations(data);
           if (data.length > 0 && !activeChat) {
             setActiveChat(data[0].id);
+          } else {
+            console.log("No conversations data returned");
           }
         }
       } catch (err) {
@@ -110,7 +112,6 @@ export const useMessages = (userId: string) => {
       if (data) {
         setMessages(prev => [...prev, data]);
         
-        // Update the conversation list with the new message
         setConversations(prev => 
           prev.map(conv => 
             conv.id === activeChat 

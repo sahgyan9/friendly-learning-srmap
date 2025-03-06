@@ -110,7 +110,7 @@ export async function getUserConversations(userId: string) {
         *,
         user1:users!conversations_user1_id_fkey(id, name, profile_image),
         user2:users!conversations_user2_id_fkey(id, name, profile_image),
-        last_message:messages(*)
+        last_message:messages!messages_conversation_id_fkey(*)
       `)
       .or(`user1_id.eq.${userId},user2_id.eq.${userId}`)
       .order('last_updated', { ascending: false });
