@@ -7,11 +7,11 @@ import ChatFooter from "@/components/chat/ChatFooter";
 import { useMessages } from "@/hooks/use-messages";
 import { formatMessageTime } from "@/utils/date-utils";
 
-// Mock authenticated user for demo purposes
-const MOCK_USER = {
-  id: "user-123",
-  name: "Current User",
-  profile_image: "https://ui-avatars.com/api/?name=Current+User&background=6366F1&color=fff"
+// Use the sample user we created in Supabase
+const SAMPLE_USER = {
+  id: "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11", // John Student
+  name: "John Student",
+  profile_image: "https://ui-avatars.com/api/?name=John+Student&background=6366F1&color=fff"
 };
 
 const Messages = () => {
@@ -26,16 +26,16 @@ const Messages = () => {
     isSending,
     setActiveChat,
     sendMessage
-  } = useMessages(MOCK_USER.id);
+  } = useMessages(SAMPLE_USER.id);
 
   const getOtherUser = (conversation: Conversation) => {
-    return conversation.user1_id === MOCK_USER.id ? conversation.user2 : conversation.user1;
+    return conversation.user1_id === SAMPLE_USER.id ? conversation.user2 : conversation.user1;
   };
 
   const hasUnreadMessages = (conversationId: string) => {
     return messages.some(msg => 
       msg.conversation_id === conversationId && 
-      msg.receiver_id === MOCK_USER.id && 
+      msg.receiver_id === SAMPLE_USER.id && 
       !msg.is_read
     );
   };
@@ -65,7 +65,7 @@ const Messages = () => {
             isSending={isSending}
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
-            currentUserId={MOCK_USER.id}
+            currentUserId={SAMPLE_USER.id}
             formatTime={formatMessageTime}
             getOtherUser={getOtherUser}
             setActiveChat={setActiveChat}
