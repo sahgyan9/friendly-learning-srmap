@@ -13,7 +13,7 @@ export interface Conversation {
   id: string;
   user1_id: string;
   user2_id: string;
-  last_message: string;
+  last_message_id: string;
   last_updated: string;
   user1?: {
     id: string;
@@ -25,4 +25,5 @@ export interface Conversation {
     name: string;
     profile_image: string;
   };
+  last_message?: Message;
 }

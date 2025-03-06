@@ -12,26 +12,33 @@ export type Database = {
       conversations: {
         Row: {
           id: string
-          last_message: string | null
+          last_message_id: string | null
           last_updated: string | null
           user1_id: string | null
           user2_id: string | null
         }
         Insert: {
           id?: string
-          last_message?: string | null
+          last_message_id?: string | null
           last_updated?: string | null
           user1_id?: string | null
           user2_id?: string | null
         }
         Update: {
           id?: string
-          last_message?: string | null
+          last_message_id?: string | null
           last_updated?: string | null
           user1_id?: string | null
           user2_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "conversations_last_message_id_fkey"
+            columns: ["last_message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "conversations_user1_id_fkey"
             columns: ["user1_id"]
@@ -171,7 +178,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      update_conversation: {
+        Args: {
+          conversation_id: string
+          message_id: string
+        }
+        Returns: {
+          id: string
+          last_message_id: string | null
+          last_updated: string | null
+          user1_id: string | null
+          user2_id: string | null
+        }
+      }
     }
     Enums: {
       [_ in never]: never

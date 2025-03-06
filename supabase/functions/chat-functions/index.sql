@@ -47,10 +47,10 @@ AS $$
   RETURNING *;
 $$;
 
--- RPC function to update conversation last_message and last_updated
+-- RPC function to update conversation last_message_id and last_updated
 CREATE OR REPLACE FUNCTION public.update_conversation(
   conversation_id UUID,
-  last_message TEXT
+  message_id UUID
 )
 RETURNS public.conversations
 LANGUAGE sql
@@ -58,7 +58,7 @@ SECURITY DEFINER
 AS $$
   UPDATE public.conversations
   SET 
-    last_message = update_conversation.last_message,
+    last_message_id = message_id,
     last_updated = NOW()
   WHERE id = conversation_id
   RETURNING *;
@@ -70,9 +70,11 @@ RETURNS SETOF public.conversations
 LANGUAGE sql
 SECURITY DEFINER
 AS $$
-  SELECT * FROM public.conversations
-  WHERE user1_id = user_id OR user2_id = user_id
-  ORDER BY last_updated DESC;
+  SELECT c.*, m.content as last_message 
+  FROM public.conversations c
+  LEFT JOIN public.messages m ON c.last_message_id = m.id
+  WHERE c.user1_id = user_id OR c.user2_id = user_id
+  ORDER BY c.last_updated DESC;
 $$;
 
 -- RPC function to mark messages as read

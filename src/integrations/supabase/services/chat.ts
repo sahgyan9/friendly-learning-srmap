@@ -73,12 +73,12 @@ export async function sendMessage(conversationId: string, senderId: string, rece
       return { data: null, error: messageError };
     }
 
-    // Update the conversation with the last message
-    const { error: updateError } = await supabase.rpc<Conversation, { conversation_id: string, last_message: string }>(
+    // Update the conversation with the last message ID
+    const { error: updateError } = await supabase.rpc<Conversation, { conversation_id: string, message_id: string }>(
       'update_conversation',
       {
         conversation_id: conversationId,
-        last_message: content
+        message_id: data?.id
       }
     );
 
