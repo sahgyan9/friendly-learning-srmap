@@ -108,10 +108,17 @@ export async function getUserConversations(userId: string) {
       .from('conversations')
       .select(`
         *,
-        last_message: messages!last_message_id(*)
+        user1:user1_id(id, name, profile_image),
+        user2:user2_id(id, name, profile_image),
+        last_message:last_message_id(*)
       `)
       .or(`user1_id.eq.${userId},user2_id.eq.${userId}`)
       .order('last_updated', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching conversations:', error);
+      return { data: null, error };
+    }
 
     return { 
       data: data as Conversation[], 

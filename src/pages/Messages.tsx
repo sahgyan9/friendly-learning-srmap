@@ -1,5 +1,6 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
 import { Conversation } from "@/types/chat";
 import ChatContainer from "@/components/chat/ChatContainer";
@@ -24,9 +25,16 @@ const Messages = () => {
     isLoadingConversations,
     isLoadingMessages,
     isSending,
+    error,
     setActiveChat,
     sendMessage
   } = useMessages(SAMPLE_USER.id);
+
+  useEffect(() => {
+    if (error) {
+      toast.error(`Error: ${error.message || 'Failed to load conversations'}`);
+    }
+  }, [error]);
 
   const getOtherUser = (conversation: Conversation) => {
     return conversation.user1_id === SAMPLE_USER.id ? conversation.user2 : conversation.user1;
