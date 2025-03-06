@@ -6,7 +6,7 @@ import type { Message, Conversation } from '@/types/chat';
 export async function getOrCreateConversation(user1Id: string, user2Id: string) {
   try {
     // First check if a conversation already exists
-    const { data, error } = await supabase.rpc<Conversation[], { user1: string, user2: string }>(
+    const { data, error } = await supabase.rpc(
       'get_conversation', 
       { user1: user1Id, user2: user2Id }
     );
@@ -21,7 +21,7 @@ export async function getOrCreateConversation(user1Id: string, user2Id: string) 
     }
 
     // If no conversation exists, create a new one
-    const { data: newConversation, error: createError } = await supabase.rpc<Conversation, { user1_id: string, user2_id: string }>(
+    const { data: newConversation, error: createError } = await supabase.rpc(
       'create_conversation',
       { user1_id: user1Id, user2_id: user2Id }
     );
@@ -39,7 +39,7 @@ export async function getOrCreateConversation(user1Id: string, user2Id: string) 
 // Get messages for a conversation
 export async function getConversationMessages(conversationId: string) {
   try {
-    const { data, error } = await supabase.rpc<Message[], { conversation_id: string }>(
+    const { data, error } = await supabase.rpc(
       'get_conversation_messages', 
       { conversation_id: conversationId }
     );
@@ -58,7 +58,7 @@ export async function getConversationMessages(conversationId: string) {
 export async function sendMessage(conversationId: string, senderId: string, receiverId: string, content: string) {
   try {
     // Insert the message
-    const { data, error: messageError } = await supabase.rpc<Message, { conversation_id: string, sender_id: string, receiver_id: string, content: string }>(
+    const { data, error: messageError } = await supabase.rpc(
       'send_message',
       {
         conversation_id: conversationId,
@@ -74,11 +74,11 @@ export async function sendMessage(conversationId: string, senderId: string, rece
     }
 
     // Update the conversation with the last message ID
-    const { error: updateError } = await supabase.rpc<Conversation, { conversation_id: string, message_id: string }>(
+    const { error: updateError } = await supabase.rpc(
       'update_conversation',
       {
         conversation_id: conversationId,
-        message_id: data?.id
+        message_id: data?.id as string
       }
     );
 
@@ -99,7 +99,7 @@ export async function sendMessage(conversationId: string, senderId: string, rece
 // Get all conversations for a user
 export async function getUserConversations(userId: string) {
   try {
-    const { data, error } = await supabase.rpc<Conversation[], { user_id: string }>(
+    const { data, error } = await supabase.rpc(
       'get_user_conversations', 
       { user_id: userId }
     );
@@ -117,7 +117,7 @@ export async function getUserConversations(userId: string) {
 // Mark messages as read
 export async function markMessagesAsRead(conversationId: string, userId: string) {
   try {
-    const { data, error } = await supabase.rpc<Message[], { conversation_id: string, user_id: string }>(
+    const { data, error } = await supabase.rpc(
       'mark_messages_as_read',
       {
         conversation_id: conversationId,

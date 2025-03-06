@@ -62,6 +62,7 @@ const ConversationList = ({
       {filteredConversations.map(conversation => {
         const otherUser = getOtherUser(conversation);
         const hasUnread = hasUnreadMessages(conversation.id);
+        const lastMessageContent = conversation.last_message ? conversation.last_message.content : "";
         
         return (
           <div 
@@ -83,7 +84,7 @@ const ConversationList = ({
                   {formatTime(conversation.last_updated)}
                 </span>
               </div>
-              <p className="text-sm text-gray-600 truncate">{conversation.last_message}</p>
+              <p className="text-sm text-gray-600 truncate">{lastMessageContent}</p>
             </div>
             {hasUnread && (
               <div className="w-2 h-2 bg-primary rounded-full"></div>
