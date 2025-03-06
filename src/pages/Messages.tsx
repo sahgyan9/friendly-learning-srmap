@@ -33,8 +33,13 @@ const Messages = () => {
   useEffect(() => {
     if (error) {
       toast.error(`Error: ${error.message || 'Failed to load conversations'}`);
+      console.error("Error in Messages component:", error);
     }
   }, [error]);
+
+  useEffect(() => {
+    console.log("Current conversations:", conversations);
+  }, [conversations]);
 
   const getOtherUser = (conversation: Conversation) => {
     return conversation.user1_id === SAMPLE_USER.id ? conversation.user2 : conversation.user1;

@@ -108,9 +108,9 @@ export async function getUserConversations(userId: string) {
       .from('conversations')
       .select(`
         *,
-        user1:user1_id(id, name, profile_image),
-        user2:user2_id(id, name, profile_image),
-        last_message:last_message_id(*)
+        user1:users!conversations_user1_id_fkey(id, name, profile_image),
+        user2:users!conversations_user2_id_fkey(id, name, profile_image),
+        last_message:messages(*)
       `)
       .or(`user1_id.eq.${userId},user2_id.eq.${userId}`)
       .order('last_updated', { ascending: false });
