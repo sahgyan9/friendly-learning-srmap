@@ -112,7 +112,7 @@ export async function getUserConversations(userId: string) {
         *,
         user1:users!conversations_user1_id_fkey(id, name, profile_image),
         user2:users!conversations_user2_id_fkey(id, name, profile_image),
-        last_message:messages!messages_conversation_id_fkey(*)
+        last_message:messages(*)
       `)
       .or(`user1_id.eq.${userId},user2_id.eq.${userId}`)
       .order('last_updated', { ascending: false });
@@ -137,7 +137,7 @@ export async function getUserConversations(userId: string) {
         last_updated: item.last_updated,
         user1: item.user1,
         user2: item.user2,
-        last_message: lastMessage as Message | undefined
+        last_message: lastMessage || undefined
       };
     });
 
