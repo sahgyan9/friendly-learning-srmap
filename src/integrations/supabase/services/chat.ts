@@ -104,6 +104,8 @@ export async function sendMessage(conversationId: string, senderId: string, rece
 // Get all conversations for a user
 export async function getUserConversations(userId: string) {
   try {
+    console.log("Getting conversations for user ID:", userId);
+    
     const { data, error } = await supabase
       .from('conversations')
       .select(`
@@ -120,10 +122,27 @@ export async function getUserConversations(userId: string) {
       return { data: null, error };
     }
 
-    return { 
-      data: data as Conversation[], 
-      error 
-    };
+    // Transform the data to match the Conversation type
+    const transformedData: Conversation[] = data.map(item => {
+      // Get the latest message if there are multiple messages
+      const lastMessage = Array.isArray(item.last_message) && item.last_message.length > 0
+        ? item.last_message.sort((a, b) => new Date(b.sent_at).getTime() - new Date(a.sent_at).getTime())[0]
+        : null;
+
+      return {
+        id: item.id,
+        user1_id: item.user1_id,
+        user2_id: item.user2_id,
+        last_message_id: item.last_message_id,
+        last_updated: item.last_updated,
+        user1: item.user1,
+        user2: item.user2,
+        last_message: lastMessage as Message | undefined
+      };
+    });
+
+    console.log("Transformed conversations data:", transformedData);
+    return { data: transformedData, error: null };
   } catch (err) {
     console.error('Exception in getUserConversations:', err);
     return { data: null, error: err as Error };
