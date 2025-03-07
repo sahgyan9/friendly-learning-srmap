@@ -47,9 +47,9 @@ const ChatModal = ({ isOpen, onClose, mentor }: ChatModalProps) => {
       // For demo purposes, we simulate a conversation initialization
       console.log("Initializing chat between:", MOCK_USER.id, "and", mentor.id);
       
-      // Create a simulated conversation ID using both user IDs
-      // This is just for demo purposes since we can't actually create a conversation due to RLS
-      const simulatedConversationId = `${MOCK_USER.id}-${mentor.id}`;
+      // Generate a UUID for the simulated conversation to ensure UUID compatibility
+      // We're using a fixed UUID for demo consistency
+      const simulatedConversationId = "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22";
       setConversationId(simulatedConversationId);
       
       // Try to get or create a real conversation (for when proper auth is implemented)
@@ -124,7 +124,11 @@ const ChatModal = ({ isOpen, onClose, mentor }: ChatModalProps) => {
         
         if (error) {
           console.error("Error sending message:", error);
-          if (!error.message.includes("row-level security")) {
+          if (error.message.includes("row-level security")) {
+            console.log("Row-level security error detected - message added locally for demo");
+          } else if (error.message.includes("invalid input syntax for type uuid")) {
+            console.log("UUID format error - message added locally for demo");
+          } else {
             toast.error("Failed to send message to server");
           }
         }
