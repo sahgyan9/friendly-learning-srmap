@@ -12,9 +12,10 @@ import MessageInput from "@/components/chat/MessageInput";
 
 // Mock authenticated user for demo purposes
 // In a real app, this would come from your auth system
+// Using the sample user ID from the Messages page to ensure compatibility
 const MOCK_USER = {
-  id: "user-123",
-  name: "Current User",
+  id: "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11", // Using valid UUID format from Messages page
+  name: "John Student",
   profile_image: "https://ui-avatars.com/api/?name=Current+User&background=6366F1&color=fff",
   role: "student"
 };
