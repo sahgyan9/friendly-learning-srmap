@@ -2,8 +2,11 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
 
 const Hero = () => {
+  const { isMentor } = useAuth();
+  
   return (
     <section className="relative pt-24 pb-16 md:pt-32 md:pb-24 overflow-hidden">
       {/* Background decoration */}
@@ -34,11 +37,13 @@ const Hero = () => {
                 Find a Mentor <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
-            <Button size="lg" variant="outline" className="w-full sm:w-auto" asChild>
-              <Link to="/become-mentor">
-                Become a Mentor
-              </Link>
-            </Button>
+            {!isMentor && (
+              <Button size="lg" variant="outline" className="w-full sm:w-auto" asChild>
+                <Link to="/become-mentor">
+                  Become a Mentor
+                </Link>
+              </Button>
+            )}
           </div>
           
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 px-4 max-w-3xl mx-auto animate-fade-up" style={{animationDelay: "0.4s"}}>
