@@ -37,15 +37,13 @@ const SignUp = () => {
     
     try {
       // Register the user with Supabase auth
-      // Adding emailRedirectTo option to explicitly set redirect URL
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
         options: {
           data: {
             full_name: formData.name,
-          },
-          emailRedirectTo: `${window.location.origin}/signin`,
+          }
         }
       });
 
@@ -64,16 +62,8 @@ const SignUp = () => {
 
         if (profileError) throw profileError;
 
-        // Check if email confirmation is required
-        if (authData.session) {
-          // If session exists, user can log in immediately
-          toast.success("Account created successfully! You're now signed in.");
-          navigate('/');
-        } else {
-          // If no session, email confirmation is probably required
-          toast.success("Account created successfully! Please check your email for verification.");
-          navigate('/signin');
-        }
+        toast.success("Account created successfully! Please check your email for verification.");
+        navigate('/signin');
       }
     } catch (error: any) {
       console.error('Error during signup:', error);

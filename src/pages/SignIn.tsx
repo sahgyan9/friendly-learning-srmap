@@ -56,16 +56,7 @@ const SignIn = () => {
         password: formData.password,
       });
 
-      if (error) {
-        if (error.message.includes('Email not confirmed')) {
-          toast.error("Please confirm your email before signing in. Check your inbox.");
-        } else if (error.message.includes('Invalid login credentials')) {
-          toast.error("Incorrect email or password.");
-        } else {
-          throw error;
-        }
-        return;
-      }
+      if (error) throw error;
 
       toast.success("Signed in successfully!");
       navigate('/');
