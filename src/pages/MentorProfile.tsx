@@ -1,14 +1,13 @@
-
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { Star, Mail, Linkedin, MessageCircle, ArrowLeft, Loader2 } from "lucide-react";
+import { Star, Linkedin, MessageCircle, ArrowLeft, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
 import { getMentorById } from "@/integrations/supabase/client";
 import { Mentor } from "@/types/mentor";
-import ChatModal from "@/components/ChatModal";
+import ChatModal from "@/components/chat/modals/ChatModal";
 
 const MentorProfile = () => {
   const { id } = useParams<{ id: string }>();
@@ -47,7 +46,6 @@ const MentorProfile = () => {
   }, [id]);
 
   const openChatModal = () => {
-    // Check if user is authenticated (can be added later with auth integration)
     setIsChatOpen(true);
   };
 
@@ -94,7 +92,6 @@ const MentorProfile = () => {
       <main className="pt-24 pb-16">
         <div className="container px-4 md:px-6">
           <div className="max-w-4xl mx-auto">
-            {/* Back Navigation */}
             <div className="mb-8">
               <Button variant="ghost" asChild className="px-0 text-muted-foreground">
                 <Link to="/mentors">
@@ -104,7 +101,6 @@ const MentorProfile = () => {
               </Button>
             </div>
             
-            {/* Profile Header */}
             <div className="flex flex-col md:flex-row gap-8 mb-10">
               <div className="flex-shrink-0">
                 <div className="relative">
@@ -154,20 +150,16 @@ const MentorProfile = () => {
               </div>
             </div>
             
-            {/* Bio Section */}
             <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 mb-10">
               <h2 className="text-xl font-semibold mb-4">About</h2>
               <p className="text-gray-700 leading-relaxed">
                 {mentor.bio || "This mentor hasn't added a bio yet."}
               </p>
             </div>
-            
-            {/* Additional sections can be added here */}
           </div>
         </div>
       </main>
       
-      {/* Chat Modal */}
       {isChatOpen && mentor && (
         <ChatModal 
           isOpen={isChatOpen} 

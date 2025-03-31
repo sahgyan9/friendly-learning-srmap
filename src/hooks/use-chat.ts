@@ -1,55 +1,27 @@
 
-import { useState, useEffect } from "react";
-import { X } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Mentor } from "@/types/mentor";
-import { Message } from "@/types/chat";
+import { useState } from "react";
 import { toast } from "sonner";
+import { Message } from "@/types/chat";
 import { getOrCreateConversation, getConversationMessages, sendMessage } from "@/integrations/supabase/client";
-import MessageList from "@/components/chat/MessageList";
-import MessageInput from "@/components/chat/MessageInput";
 
-// Mock authenticated user for demo purposes
-// In a real app, this would come from your auth system
-// Using the sample user ID from the Messages page to ensure compatibility
-const MOCK_USER = {
-  id: "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11", // Using valid UUID format from Messages page
-  name: "John Student",
-  profile_image: "https://ui-avatars.com/api/?name=Current+User&background=6366F1&color=fff",
-  role: "student"
-};
-
-interface ChatModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  mentor: Mentor;
-}
-
-const ChatModal = ({ isOpen, onClose, mentor }: ChatModalProps) => {
+export const useChat = (userId: string, mentorId: string) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   
-  useEffect(() => {
-    if (isOpen && mentor) {
-      initializeChat();
-    }
-  }, [isOpen, mentor]);
-  
   const initializeChat = async () => {
     setLoading(true);
     setError(null);
     try {
-      console.log("Initializing chat between:", MOCK_USER.id, "and", mentor.id);
+      console.log("Initializing chat between:", userId, "and", mentorId);
       
       // Try to get or create a real conversation
       try {
         const { data: conversation, error } = await getOrCreateConversation(
-          MOCK_USER.id, 
-          mentor.id
+          userId, 
+          mentorId
         );
         
         if (error) {
@@ -86,6 +58,23 @@ const ChatModal = ({ isOpen, onClose, mentor }: ChatModalProps) => {
         console.error("Exception initializing chat:", err);
         setError("An unexpected error occurred. Please try again later.");
       }
+
+      // Check localStorage for demo messages
+      if (conversationId) {
+        try {
+          const storedMessages = localStorage.getItem('demo-messages');
+          if (storedMessages) {
+            const parsedMessages = JSON.parse(storedMessages);
+            const messagesForConversation = parsedMessages[conversationId];
+            if (messagesForConversation && Array.isArray(messagesForConversation)) {
+              console.log("Using demo messages from localStorage:", messagesForConversation);
+              setMessages(messagesForConversation);
+            }
+          }
+        } catch (localStorageErr) {
+          console.error("Error parsing localStorage messages:", localStorageErr);
+        }
+      }
     } finally {
       setLoading(false);
     }
@@ -100,8 +89,8 @@ const ChatModal = ({ isOpen, onClose, mentor }: ChatModalProps) => {
       const tempMessage: Message = {
         id: `temp-${Date.now()}`,
         conversation_id: conversationId,
-        sender_id: MOCK_USER.id,
-        receiver_id: mentor.id,
+        sender_id: userId,
+        receiver_id: mentorId,
         content: content,
         sent_at: new Date().toISOString(),
         is_read: false
@@ -113,8 +102,8 @@ const ChatModal = ({ isOpen, onClose, mentor }: ChatModalProps) => {
       try {
         const { data, error } = await sendMessage(
           conversationId,
-          MOCK_USER.id,
-          mentor.id,
+          userId,
+          mentorId,
           content
         );
         
@@ -130,19 +119,19 @@ const ChatModal = ({ isOpen, onClose, mentor }: ChatModalProps) => {
             if (!storedConversations[conversationId]) {
               storedConversations[conversationId] = {
                 id: conversationId,
-                user1_id: MOCK_USER.id,
-                user2_id: mentor.id,
+                user1_id: userId,
+                user2_id: mentorId,
                 last_message_id: tempMessage.id,
                 last_updated: new Date().toISOString(),
                 user1: {
-                  id: MOCK_USER.id,
-                  name: MOCK_USER.name,
-                  profile_image: MOCK_USER.profile_image
+                  id: userId,
+                  name: "John Student",
+                  profile_image: "https://ui-avatars.com/api/?name=John+Student&background=6366F1&color=fff"
                 },
                 user2: {
-                  id: mentor.id,
-                  name: mentor.name,
-                  profile_image: mentor.profile_image
+                  id: mentorId,
+                  name: "Mentor Name", // This will be overwritten in the Messages page
+                  profile_image: "https://ui-avatars.com/api/?name=Mentor&background=6366F1&color=fff" // This will be overwritten
                 },
                 last_message: tempMessage
               };
@@ -182,62 +171,14 @@ const ChatModal = ({ isOpen, onClose, mentor }: ChatModalProps) => {
       setSending(false);
     }
   };
-  
-  return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[500px] p-0 h-[600px] max-h-[80vh]">
-        <DialogHeader className="p-4 border-b">
-          <div className="flex items-center">
-            <img 
-              src={mentor.profile_image} 
-              alt={mentor.name} 
-              className="h-10 w-10 rounded-full mr-3"
-            />
-            <div className="flex-1">
-              <DialogTitle className="text-lg">{mentor.name}</DialogTitle>
-              <p className="text-sm text-muted-foreground">{mentor.department}</p>
-            </div>
-            <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8">
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-        </DialogHeader>
-        
-        <div className="flex flex-col h-full">
-          {error ? (
-            <div className="flex-1 flex items-center justify-center p-4">
-              <div className="text-center">
-                <p className="text-red-500 mb-2">{error}</p>
-                <Button variant="outline" onClick={initializeChat}>
-                  Try Again
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <>
-              {/* Messages area */}
-              <div className="flex-1 overflow-y-auto p-4">
-                <MessageList 
-                  messages={messages} 
-                  loading={loading} 
-                  currentUserId={MOCK_USER.id}
-                />
-              </div>
-              
-              {/* Message input */}
-              <div className="p-3 border-t">
-                <MessageInput 
-                  onSendMessage={handleSendMessage}
-                  disabled={loading || !!error}
-                  sending={sending}
-                />
-              </div>
-            </>
-          )}
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-};
 
-export default ChatModal;
+  return {
+    messages,
+    loading,
+    sending,
+    error,
+    conversationId,
+    initializeChat,
+    handleSendMessage,
+  };
+};
