@@ -21,8 +21,13 @@ const MessageList = ({ messages, loading, currentUserId }: MessageListProps) => 
   };
   
   const formatTime = (timestamp: string) => {
-    const date = new Date(timestamp);
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    try {
+      const date = new Date(timestamp);
+      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } catch (e) {
+      console.error("Invalid timestamp format:", timestamp);
+      return "";
+    }
   };
   
   if (loading) {
@@ -62,7 +67,7 @@ const MessageList = ({ messages, loading, currentUserId }: MessageListProps) => 
                     : "bg-muted"
                 }`}
               >
-                <p className="text-sm">{msg.content}</p>
+                <p className="text-sm break-words">{msg.content}</p>
               </div>
               <span className="text-xs text-muted-foreground mt-1 px-1">
                 {formatTime(msg.sent_at)}

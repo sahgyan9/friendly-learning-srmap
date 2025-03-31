@@ -5,6 +5,8 @@ import type { Message, Conversation } from '@/types/chat';
 // Get or create a conversation between two users
 export async function getOrCreateConversation(user1Id: string, user2Id: string) {
   try {
+    console.log("Attempting to find or create conversation between:", user1Id, "and", user2Id);
+    
     // First check if a conversation already exists
     const { data, error } = await supabase
       .from('conversations')
@@ -19,15 +21,24 @@ export async function getOrCreateConversation(user1Id: string, user2Id: string) 
     }
 
     if (data && Array.isArray(data) && data.length > 0) {
+      console.log("Found existing conversation:", data[0]);
       return { data: data[0] as Conversation, error: null };
     }
 
+    console.log("No existing conversation found, creating a new one");
+    
     // If no conversation exists, create a new one
     const { data: newConversation, error: createError } = await supabase
       .from('conversations')
       .insert([{ user1_id: user1Id, user2_id: user2Id }])
       .select()
       .single();
+
+    if (createError) {
+      console.error('Error creating conversation:', createError);
+    } else if (newConversation) {
+      console.log("Successfully created new conversation:", newConversation);
+    }
 
     return { 
       data: newConversation as Conversation, 
@@ -42,11 +53,19 @@ export async function getOrCreateConversation(user1Id: string, user2Id: string) 
 // Get messages for a conversation
 export async function getConversationMessages(conversationId: string) {
   try {
+    console.log("Fetching messages for conversation:", conversationId);
+    
     const { data, error } = await supabase
       .from('messages')
       .select('*')
       .eq('conversation_id', conversationId)
       .order('sent_at', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching conversation messages:', error);
+    } else {
+      console.log(`Retrieved ${data?.length || 0} messages for conversation ${conversationId}`);
+    }
 
     return { 
       data: data as Message[], 
@@ -61,6 +80,9 @@ export async function getConversationMessages(conversationId: string) {
 // Send a message in a conversation
 export async function sendMessage(conversationId: string, senderId: string, receiverId: string, content: string) {
   try {
+    console.log("Sending message in conversation:", conversationId);
+    console.log("From:", senderId, "To:", receiverId);
+    
     // Insert the message
     const { data, error: messageError } = await supabase
       .from('messages')
@@ -77,6 +99,8 @@ export async function sendMessage(conversationId: string, senderId: string, rece
       console.error('Error sending message:', messageError);
       return { data: null, error: messageError };
     }
+
+    console.log("Message sent successfully:", data);
 
     // Update the conversation with the last message ID
     const { error: updateError } = await supabase
@@ -106,7 +130,6 @@ export async function getUserConversations(userId: string) {
   try {
     console.log("Getting conversations for user ID:", userId);
     
-    // Use a simpler query approach to avoid the relationship ambiguity
     const { data: conversationsData, error: conversationsError } = await supabase
       .from('conversations')
       .select(`
@@ -122,10 +145,12 @@ export async function getUserConversations(userId: string) {
       return { data: null, error: conversationsError };
     }
 
+    console.log(`Retrieved ${conversationsData?.length || 0} conversations for user ${userId}`);
+
     // Fetch the last message separately for each conversation
     const enhancedConversations: Conversation[] = [];
     
-    for (const conversation of conversationsData) {
+    for (const conversation of conversationsData || []) {
       // If there's a last_message_id, fetch that specific message
       if (conversation.last_message_id) {
         const { data: messageData, error: messageError } = await supabase
@@ -151,7 +176,6 @@ export async function getUserConversations(userId: string) {
       }
     }
 
-    console.log("Enhanced conversations data:", enhancedConversations);
     return { data: enhancedConversations, error: null };
   } catch (err) {
     console.error('Exception in getUserConversations:', err);
@@ -162,12 +186,20 @@ export async function getUserConversations(userId: string) {
 // Mark messages as read
 export async function markMessagesAsRead(conversationId: string, userId: string) {
   try {
+    console.log("Marking messages as read for user:", userId, "in conversation:", conversationId);
+    
     const { data, error } = await supabase
       .from('messages')
       .update({ is_read: true })
       .eq('conversation_id', conversationId)
       .eq('receiver_id', userId)
       .eq('is_read', false);
+
+    if (error) {
+      console.error('Error marking messages as read:', error);
+    } else {
+      console.log(`Marked ${data?.length || 0} messages as read`);
+    }
 
     return { data, error };
   } catch (err) {

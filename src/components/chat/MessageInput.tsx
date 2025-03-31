@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { Send, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 
 interface MessageInputProps {
   onSendMessage: (content: string) => Promise<void>;
@@ -17,21 +18,28 @@ const MessageInput = ({ onSendMessage, disabled, sending }: MessageInputProps) =
     if (!message.trim() || disabled || sending) return;
     
     try {
-      await onSendMessage(message);
+      await onSendMessage(message.trim());
       setMessage("");
     } catch (error) {
       console.error("Failed to send message:", error);
     }
   };
   
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit(e);
+    }
+  };
+  
   return (
     <form onSubmit={handleSubmit} className="flex gap-2">
-      <input
-        type="text"
+      <Textarea
         value={message}
         onChange={(e) => setMessage(e.target.value)}
+        onKeyDown={handleKeyDown}
         placeholder="Type your message..."
-        className="flex-1 p-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+        className="flex-1 min-h-[40px] p-2 resize-none"
         disabled={disabled || sending}
       />
       <Button 

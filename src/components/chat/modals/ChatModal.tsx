@@ -3,19 +3,10 @@ import { useState, useEffect } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Mentor } from "@/types/mentor";
 import { useChat } from "@/hooks/use-chat";
+import { useAuth } from "@/context/AuthContext";
 import ChatModalHeader from "./ChatModalHeader";
 import ChatModalContent from "./ChatModalContent";
 import ChatModalError from "./ChatModalError";
-
-// Mock authenticated user for demo purposes
-// In a real app, this would come from your auth system
-// Using the sample user ID from the Messages page to ensure compatibility
-const MOCK_USER = {
-  id: "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11", // Using valid UUID format from Messages page
-  name: "John Student",
-  profile_image: "https://ui-avatars.com/api/?name=Current+User&background=6366F1&color=fff",
-  role: "student"
-};
 
 interface ChatModalProps {
   isOpen: boolean;
@@ -24,6 +15,10 @@ interface ChatModalProps {
 }
 
 const ChatModal = ({ isOpen, onClose, mentor }: ChatModalProps) => {
+  const { user } = useAuth();
+  
+  const userId = user?.id || "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"; // Fallback for demo
+  
   const {
     messages,
     loading,
@@ -32,13 +27,14 @@ const ChatModal = ({ isOpen, onClose, mentor }: ChatModalProps) => {
     conversationId,
     initializeChat,
     handleSendMessage,
-  } = useChat(MOCK_USER.id, mentor.id);
+  } = useChat(userId, mentor.id);
   
   useEffect(() => {
     if (isOpen && mentor) {
+      console.log("Initializing chat with mentor:", mentor.name);
       initializeChat();
     }
-  }, [isOpen, mentor]);
+  }, [isOpen, mentor, initializeChat]);
   
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -53,7 +49,7 @@ const ChatModal = ({ isOpen, onClose, mentor }: ChatModalProps) => {
               messages={messages}
               loading={loading}
               sending={sending}
-              currentUserId={MOCK_USER.id}
+              currentUserId={userId}
               onSendMessage={handleSendMessage}
             />
           )}
