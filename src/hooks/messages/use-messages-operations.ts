@@ -7,7 +7,7 @@ import {
   getConversationMessages,
   sendMessage as sendMessageAPI,
   markMessagesAsRead
-} from "@/integrations/supabase/client";
+} from "@/integrations/supabase/services/chat";
 
 /**
  * Hook for message operations like fetching and sending

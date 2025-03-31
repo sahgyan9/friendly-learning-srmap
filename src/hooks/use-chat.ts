@@ -2,7 +2,11 @@
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { Message } from "@/types/chat";
-import { getOrCreateConversation, getConversationMessages, sendMessage } from "@/integrations/supabase/services/chat";
+import { 
+  getOrCreateConversation,
+  getConversationMessages, 
+  sendMessage 
+} from "@/integrations/supabase/services/chat";
 import { useDemoMessages } from "./messages/use-demo-messages";
 
 export const useChat = (userId: string, mentorId: string) => {
