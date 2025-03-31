@@ -79,6 +79,7 @@ const SignIn = () => {
 
   const handleGoogleSignIn = async () => {
     try {
+      setIsLoading(true);
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -89,6 +90,7 @@ const SignIn = () => {
       if (error) throw error;
     } catch (error: any) {
       toast.error(error.message || "Error signing in with Google");
+      setIsLoading(false);
     }
   };
 
@@ -188,6 +190,7 @@ const SignIn = () => {
                 variant="outline"
                 className="w-full"
                 onClick={handleGoogleSignIn}
+                disabled={isLoading}
               >
                 Google
               </Button>

@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -16,6 +16,18 @@ const SignUp = () => {
     confirmPassword: ""
   });
   const [isLoading, setIsLoading] = useState(false);
+
+  // Check if user is already logged in
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (data.session) {
+        navigate('/');
+      }
+    };
+    
+    checkSession();
+  }, [navigate]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -37,7 +49,6 @@ const SignUp = () => {
     
     try {
       // Register the user with Supabase auth
-      // Adding emailRedirectTo option to explicitly set redirect URL
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
@@ -77,8 +88,30 @@ const SignUp = () => {
       }
     } catch (error: any) {
       console.error('Error during signup:', error);
-      toast.error(error.message || "Error creating account");
+      
+      if (error.message.includes('User already registered')) {
+        toast.error("An account with this email already exists. Please sign in instead.");
+      } else {
+        toast.error(error.message || "Error creating account");
+      }
     } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleSignUp = async () => {
+    try {
+      setIsLoading(true);
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/`,
+        },
+      });
+
+      if (error) throw error;
+    } catch (error: any) {
+      toast.error(error.message || "Error signing up with Google");
       setIsLoading(false);
     }
   };
@@ -184,7 +217,8 @@ const SignUp = () => {
               <Button
                 variant="outline"
                 className="w-full"
-                onClick={() => toast.info("Google authentication coming soon")}
+                onClick={handleGoogleSignUp}
+                disabled={isLoading}
               >
                 Google
               </Button>

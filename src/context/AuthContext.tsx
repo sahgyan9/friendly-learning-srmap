@@ -33,15 +33,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     // Set up auth state listener first
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
+        console.log("Auth event:", event);
         setSession(session);
         setUser(session?.user ?? null);
         
         // Fetch user profile when session changes
         if (session?.user) {
-          setTimeout(() => {
-            fetchUserProfile(session.user.id);
-          }, 0);
+          // For Google Auth or other OAuth providers, we need to create a profile if it doesn't exist
+          if (event === 'SIGNED_IN') {
+            setTimeout(() => {
+              checkAndCreateUserProfile(session.user);
+            }, 0);
+          } else {
+            setTimeout(() => {
+              fetchUserProfile(session.user.id);
+            }, 0);
+          }
         } else {
           setProfile(null);
           setLoading(false);
@@ -65,6 +73,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       subscription.unsubscribe();
     };
   }, []);
+
+  const checkAndCreateUserProfile = async (user: User) => {
+    try {
+      // First check if profile exists
+      const { data: existingProfile, error: fetchError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', user.id)
+        .maybeSingle();
+      
+      if (fetchError) throw fetchError;
+
+      // If profile doesn't exist, create one
+      if (!existingProfile) {
+        const userData = {
+          id: user.id,
+          name: user.user_metadata.full_name || user.user_metadata.name || 'User',
+          email: user.email || '',
+          role: 'student' // Default role
+        };
+
+        const { error: insertError } = await supabase
+          .from('users')
+          .insert(userData);
+        
+        if (insertError) throw insertError;
+        
+        setProfile(userData);
+      } else {
+        setProfile(existingProfile);
+      }
+    } catch (error) {
+      console.error('Error checking/creating user profile:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchUserProfile = async (userId: string) => {
     try {
