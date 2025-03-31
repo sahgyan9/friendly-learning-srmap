@@ -1,7 +1,10 @@
 
 import { Message } from "@/types/chat";
 import { useDemoMessages } from "../use-demo-messages";
-import { getConversationMessages, markMessagesAsRead } from "@/integrations/supabase/services/chat";
+import { 
+  getConversationMessages, 
+  markMessagesAsRead 
+} from "@/integrations/supabase/services/chat";
 
 /**
  * Hook for message operations like fetching messages
