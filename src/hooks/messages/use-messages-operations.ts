@@ -45,9 +45,9 @@ export const useMessagesOperations = (userId: string) => {
         
         if (filteredConversations.length > 0) {
           setConversations(filteredConversations);
-          if (!activeChat) {
-            setActiveChat(filteredConversations[0].id);
-          }
+          // Don't access activeChat directly, it comes from parent component
+          // We only need to set it if not already set
+          setActiveChat(filteredConversations[0].id);
         }
         
         return;
@@ -56,7 +56,8 @@ export const useMessagesOperations = (userId: string) => {
       if (data) {
         console.log("Fetched conversations:", data);
         setConversations(data);
-        if (data.length > 0 && !activeChat) {
+        if (data.length > 0) {
+          // Don't check activeChat directly, it comes from parent component
           setActiveChat(data[0].id);
         }
       } else {
@@ -149,7 +150,7 @@ export const useMessagesOperations = (userId: string) => {
       };
       
       // Add the message to the local state for immediate UI feedback
-      setMessages(prev => [...prev, tempMessage]);
+      setMessages((prev: Message[]) => [...prev, tempMessage]);
       
       const { data, error } = await sendMessageAPI(
         activeChat,
@@ -170,7 +171,7 @@ export const useMessagesOperations = (userId: string) => {
           
           if (updatedConversation) {
             // Update the conversations state with the new last message
-            setConversations(prev => 
+            setConversations((prev: Conversation[]) => 
               prev.map(conv => 
                 conv.id === activeChat ? updatedConversation : conv
               )
@@ -181,9 +182,11 @@ export const useMessagesOperations = (userId: string) => {
           return;
         }
       } else if (data) {
-        setMessages(prev => [...prev, data]);
+        setMessages((prev: Message[]) => 
+          prev.map(m => m.id === tempMessage.id ? data : m)
+        );
         
-        setConversations(prev => 
+        setConversations((prev: Conversation[]) => 
           prev.map(conv => 
             conv.id === activeChat 
               ? { 

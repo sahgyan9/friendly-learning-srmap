@@ -106,7 +106,7 @@ export async function sendMessage(conversationId: string, senderId: string, rece
     const { error: updateError } = await supabase
       .from('conversations')
       .update({
-        last_message_id: data?.id, // Use optional chaining here
+        last_message_id: data?.id, // Fixed: Using optional chaining to safely access id
         last_updated: new Date().toISOString()
       })
       .eq('id', conversationId);
