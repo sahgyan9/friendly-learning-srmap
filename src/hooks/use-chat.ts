@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { Message } from "@/types/chat";
 import { getOrCreateConversation, getConversationMessages, sendMessage } from "@/integrations/supabase/services/chat";
+import { useDemoMessages } from "./messages/use-demo-messages";
 
 export const useChat = (userId: string, mentorId: string) => {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -10,6 +11,8 @@ export const useChat = (userId: string, mentorId: string) => {
   const [sending, setSending] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  
+  const { getDemoMessages, saveDemoMessage } = useDemoMessages();
   
   const initializeChat = useCallback(async () => {
     setLoading(true);
@@ -32,18 +35,10 @@ export const useChat = (userId: string, mentorId: string) => {
           setConversationId(demoConversationId);
           
           // Load any stored messages for this conversation
-          const storedMessages = localStorage.getItem('demo-messages');
-          if (storedMessages) {
-            try {
-              const parsedMessages = JSON.parse(storedMessages);
-              const messagesForConversation = parsedMessages[demoConversationId];
-              if (messagesForConversation && Array.isArray(messagesForConversation)) {
-                console.log("Using demo messages from localStorage:", messagesForConversation);
-                setMessages(messagesForConversation);
-              }
-            } catch (localStorageErr) {
-              console.error("Error parsing localStorage messages:", localStorageErr);
-            }
+          const demoMessages = getDemoMessages(demoConversationId);
+          if (demoMessages && demoMessages.length > 0) {
+            console.log("Using demo messages from localStorage:", demoMessages);
+            setMessages(demoMessages);
           }
         } else {
           toast.error("Failed to initialize chat");
@@ -71,7 +66,7 @@ export const useChat = (userId: string, mentorId: string) => {
     } finally {
       setLoading(false);
     }
-  }, [userId, mentorId]);
+  }, [userId, mentorId, getDemoMessages]);
   
   const handleSendMessage = useCallback(async (content: string) => {
     if (!conversationId) {
@@ -96,49 +91,8 @@ export const useChat = (userId: string, mentorId: string) => {
       
       // Check if using demo mode (localStorage)
       if (conversationId.startsWith('demo-')) {
-        // Store conversation in localStorage to simulate persistence
-        const storedConversations = localStorage.getItem('demo-conversations') 
-          ? JSON.parse(localStorage.getItem('demo-conversations') || '{}') 
-          : {};
-        
-        if (!storedConversations[conversationId]) {
-          storedConversations[conversationId] = {
-            id: conversationId,
-            user1_id: userId,
-            user2_id: mentorId,
-            last_message_id: tempMessage.id,
-            last_updated: new Date().toISOString(),
-            user1: {
-              id: userId,
-              name: "John Student",
-              profile_image: "https://ui-avatars.com/api/?name=John+Student&background=6366F1&color=fff"
-            },
-            user2: {
-              id: mentorId,
-              name: "Mentor Name",
-              profile_image: "https://ui-avatars.com/api/?name=Mentor&background=6366F1&color=fff"
-            },
-            last_message: tempMessage
-          };
-        } else {
-          storedConversations[conversationId].last_message = tempMessage;
-          storedConversations[conversationId].last_updated = new Date().toISOString();
-          storedConversations[conversationId].last_message_id = tempMessage.id;
-        }
-        
-        // Store messages
-        const storedMessages = localStorage.getItem('demo-messages') 
-          ? JSON.parse(localStorage.getItem('demo-messages') || '{}') 
-          : {};
-        
-        if (!storedMessages[conversationId]) {
-          storedMessages[conversationId] = [];
-        }
-        
-        storedMessages[conversationId].push(tempMessage);
-        
-        localStorage.setItem('demo-conversations', JSON.stringify(storedConversations));
-        localStorage.setItem('demo-messages', JSON.stringify(storedMessages));
+        // Store in localStorage
+        saveDemoMessage(conversationId, tempMessage, userId, mentorId);
         
         // Simulate a delay
         await new Promise(resolve => setTimeout(resolve, 500));
@@ -159,18 +113,7 @@ export const useChat = (userId: string, mentorId: string) => {
         
         // Fall back to localStorage if there's an error
         const demoConversationId = `demo-${userId}-${mentorId}`;
-        
-        // Store messages
-        const storedMessages = localStorage.getItem('demo-messages') 
-          ? JSON.parse(localStorage.getItem('demo-messages') || '{}') 
-          : {};
-        
-        if (!storedMessages[demoConversationId]) {
-          storedMessages[demoConversationId] = [];
-        }
-        
-        storedMessages[demoConversationId].push(tempMessage);
-        localStorage.setItem('demo-messages', JSON.stringify(storedMessages));
+        saveDemoMessage(demoConversationId, tempMessage, userId, mentorId);
       } else if (data) {
         console.log("Message sent successfully:", data);
         // Replace the temp message with the real one
@@ -182,7 +125,7 @@ export const useChat = (userId: string, mentorId: string) => {
     } finally {
       setSending(false);
     }
-  }, [conversationId, userId, mentorId]);
+  }, [conversationId, userId, mentorId, saveDemoMessage]);
 
   return {
     messages,

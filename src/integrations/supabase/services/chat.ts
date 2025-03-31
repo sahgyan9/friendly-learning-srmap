@@ -68,12 +68,12 @@ export async function getConversationMessages(conversationId: string) {
     }
 
     return { 
-      data: data as Message[], 
+      data: data as Message[] || [], // Ensure we return an empty array if data is null
       error 
     };
   } catch (err) {
     console.error('Exception in getConversationMessages:', err);
-    return { data: null, error: err as Error };
+    return { data: [] as Message[], error: err as Error }; // Return empty array if there's an error
   }
 }
 
@@ -106,7 +106,7 @@ export async function sendMessage(conversationId: string, senderId: string, rece
     const { error: updateError } = await supabase
       .from('conversations')
       .update({
-        last_message_id: data.id,
+        last_message_id: data?.id, // Use optional chaining here
         last_updated: new Date().toISOString()
       })
       .eq('id', conversationId);
