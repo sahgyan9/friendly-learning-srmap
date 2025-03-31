@@ -1,8 +1,11 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 const SignIn = () => {
   const navigate = useNavigate();
@@ -10,6 +13,30 @@ const SignIn = () => {
     email: "",
     password: ""
   });
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Check if user is already logged in
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (data.session) {
+        navigate('/');
+      }
+    };
+    
+    checkSession();
+  }, [navigate]);
+
+  // Set up auth state listener
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        navigate('/');
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -21,6 +48,8 @@ const SignIn = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
+    
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email: formData.email,
@@ -32,7 +61,10 @@ const SignIn = () => {
       toast.success("Signed in successfully!");
       navigate('/');
     } catch (error: any) {
+      console.error('Error during sign in:', error);
       toast.error(error.message || "Error signing in");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -71,10 +103,10 @@ const SignIn = () => {
         </div>
         
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="rounded-md shadow-sm -space-y-px">
+          <div className="space-y-4">
             <div>
-              <label htmlFor="email-address" className="sr-only">Email address</label>
-              <input
+              <Label htmlFor="email-address">Email address</Label>
+              <Input
                 id="email-address"
                 name="email"
                 type="email"
@@ -82,13 +114,12 @@ const SignIn = () => {
                 required
                 value={formData.email}
                 onChange={handleChange}
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
                 placeholder="Email address"
               />
             </div>
             <div>
-              <label htmlFor="password" className="sr-only">Password</label>
-              <input
+              <Label htmlFor="password">Password</Label>
+              <Input
                 id="password"
                 name="password"
                 type="password"
@@ -96,7 +127,6 @@ const SignIn = () => {
                 required
                 value={formData.password}
                 onChange={handleChange}
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
                 placeholder="Password"
               />
             </div>
@@ -116,7 +146,7 @@ const SignIn = () => {
             </div>
 
             <div className="text-sm">
-              <a href="#" className="font-medium text-primary hover:text-primary/80">
+              <a href="#" onClick={() => toast.info("Password reset functionality coming soon")} className="font-medium text-primary hover:text-primary/80">
                 Forgot your password?
               </a>
             </div>
@@ -126,8 +156,9 @@ const SignIn = () => {
             <Button
               type="submit"
               className="w-full flex justify-center py-2 px-4"
+              disabled={isLoading}
             >
-              Sign in
+              {isLoading ? "Signing in..." : "Sign in"}
             </Button>
           </div>
         </form>
@@ -156,7 +187,7 @@ const SignIn = () => {
               <Button
                 variant="outline"
                 className="w-full"
-                onClick={() => toast.info("GitHub authentication will be implemented with Supabase.")}
+                onClick={() => toast.info("GitHub authentication coming soon")}
               >
                 GitHub
               </Button>

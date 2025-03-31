@@ -3,21 +3,25 @@ import { useState } from "react";
 import Navbar from "@/components/Navbar";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { addMentor } from "@/integrations/supabase/client";
+import { useAuth } from "@/context/AuthContext";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Loader2 } from "lucide-react";
 
 const BecomeMentor = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const { user, profile } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
-    name: "",
+    name: profile?.name || "",
     department: "",
     skills: "",
     bio: "",
     linkedin_url: "",
-    profile_image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=crop&w=256&q=80",
-    rating: 4.0
+    profile_image: profile?.profile_image || "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=crop&w=256&q=80",
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -30,6 +34,12 @@ const BecomeMentor = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!user) {
+      toast.error("You must be logged in to become a mentor");
+      return;
+    }
+    
     setIsSubmitting(true);
     
     try {
@@ -45,31 +55,37 @@ const BecomeMentor = () => {
       }
       
       const mentorData = {
+        id: user.id, // Use the user's ID for the mentor record
         name: formData.name,
         department: formData.department,
         skills: skillsArray,
         bio: formData.bio,
         linkedin_url: formData.linkedin_url || null,
         profile_image: formData.profile_image,
-        rating: formData.rating
+        rating: 4.0,
+        review_count: 0
       };
       
+      // First, update the user's role to 'mentor' in the users table
+      const { error: userError } = await supabase
+        .from('users')
+        .update({ role: 'mentor' })
+        .eq('id', user.id);
+      
+      if (userError) throw userError;
+      
+      // Then add the mentor record
       const { error } = await addMentor(mentorData);
       
       if (error) throw error;
       
-      toast({
-        title: "Success!",
-        description: "Your mentor profile has been created successfully.",
-      });
+      toast.success("Your mentor profile has been created successfully!");
       
-      navigate('/mentors');
+      // Navigate to the user's profile page
+      navigate('/profile');
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to create mentor profile",
-        variant: "destructive",
-      });
+      console.error("Error creating mentor profile:", error);
+      toast.error(error.message || "Failed to create mentor profile");
     } finally {
       setIsSubmitting(false);
     }
@@ -92,31 +108,25 @@ const BecomeMentor = () => {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid gap-6 md:grid-cols-2">
                 <div className="space-y-2">
-                  <label htmlFor="name" className="text-sm font-medium">
-                    Full Name <span className="text-red-500">*</span>
-                  </label>
-                  <input
+                  <Label htmlFor="name">Full Name <span className="text-red-500">*</span></Label>
+                  <Input
                     id="name"
                     name="name"
-                    type="text"
-                    required
                     value={formData.name}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                    required
                     placeholder="Your full name"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <label htmlFor="department" className="text-sm font-medium">
-                    Department <span className="text-red-500">*</span>
-                  </label>
+                  <Label htmlFor="department">Department <span className="text-red-500">*</span></Label>
                   <select
                     id="department"
                     name="department"
-                    required
                     value={formData.department}
                     onChange={handleChange}
+                    required
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                   >
                     <option value="">Select Department</option>
@@ -134,48 +144,38 @@ const BecomeMentor = () => {
               </div>
 
               <div className="space-y-2">
-                <label htmlFor="skills" className="text-sm font-medium">
-                  Skills <span className="text-red-500">*</span>
-                </label>
-                <input
+                <Label htmlFor="skills">Skills <span className="text-red-500">*</span></Label>
+                <Input
                   id="skills"
                   name="skills"
-                  type="text"
-                  required
                   value={formData.skills}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                  required
                   placeholder="Python, Data Structures, Machine Learning (comma separated)"
                 />
                 <p className="text-xs text-gray-500">List your areas of expertise (comma separated)</p>
               </div>
 
               <div className="space-y-2">
-                <label htmlFor="bio" className="text-sm font-medium">
-                  Bio
-                </label>
-                <textarea
+                <Label htmlFor="bio">Bio</Label>
+                <Textarea
                   id="bio"
                   name="bio"
-                  rows={4}
                   value={formData.bio}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                  rows={4}
                   placeholder="Tell students about yourself, your experience, and how you can help them"
-                ></textarea>
+                />
               </div>
 
               <div className="space-y-2">
-                <label htmlFor="linkedin_url" className="text-sm font-medium">
-                  LinkedIn Profile URL
-                </label>
-                <input
+                <Label htmlFor="linkedin_url">LinkedIn Profile URL</Label>
+                <Input
                   id="linkedin_url"
                   name="linkedin_url"
                   type="url"
                   value={formData.linkedin_url}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                   placeholder="https://linkedin.com/in/yourprofile"
                 />
               </div>
@@ -184,49 +184,21 @@ const BecomeMentor = () => {
                 <Button type="button" variant="outline" asChild>
                   <Link to="/">Cancel</Link>
                 </Button>
-                <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? "Submitting..." : "Submit Application"}
+                <Button type="submit" disabled={isSubmitting} className="flex items-center gap-2">
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Submitting...
+                    </>
+                  ) : (
+                    "Submit Application"
+                  )}
                 </Button>
               </div>
             </form>
           </div>
         </div>
       </main>
-      
-      <footer className="py-8 bg-white border-t border-gray-200 mt-16">
-        <div className="container px-4 md:px-6">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="mb-4 md:mb-0">
-              <Link to="/" className="text-xl font-bold text-primary tracking-tight flex items-center">
-                <span className="mr-1">Friendly</span>
-                <span className="text-gray-700">Learning</span>
-              </Link>
-              <p className="text-sm text-muted-foreground mt-1">
-                Connecting students with mentors at SRM AP
-              </p>
-            </div>
-            
-            <div className="flex space-x-6">
-              <Link to="/about" className="text-muted-foreground hover:text-primary transition-colors">
-                About
-              </Link>
-              <Link to="/privacy" className="text-muted-foreground hover:text-primary transition-colors">
-                Privacy
-              </Link>
-              <Link to="/terms" className="text-muted-foreground hover:text-primary transition-colors">
-                Terms
-              </Link>
-              <Link to="/contact" className="text-muted-foreground hover:text-primary transition-colors">
-                Contact
-              </Link>
-            </div>
-          </div>
-          
-          <div className="mt-8 pt-8 border-t border-gray-200 text-center text-sm text-muted-foreground">
-            <p>© {new Date().getFullYear()} Friendly Learning. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 };

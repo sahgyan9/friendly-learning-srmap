@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Star, Linkedin, MessageCircle, ArrowLeft, Loader2 } from "lucide-react";
@@ -8,12 +9,14 @@ import Navbar from "@/components/Navbar";
 import { getMentorById } from "@/integrations/supabase/client";
 import { Mentor } from "@/types/mentor";
 import ChatModal from "@/components/chat/modals/ChatModal";
+import { useAuth } from "@/context/AuthContext";
 
 const MentorProfile = () => {
   const { id } = useParams<{ id: string }>();
   const [mentor, setMentor] = useState<Mentor | null>(null);
   const [loading, setLoading] = useState(true);
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const { user } = useAuth();
 
   useEffect(() => {
     const fetchMentor = async () => {
@@ -46,8 +49,15 @@ const MentorProfile = () => {
   }, [id]);
 
   const openChatModal = () => {
+    if (!user) {
+      toast.error("Please sign in to connect with mentors");
+      return;
+    }
+    
     setIsChatOpen(true);
   };
+
+  const isOwnProfile = user && mentor && user.id === mentor.id;
 
   if (loading) {
     return (
@@ -130,13 +140,24 @@ const MentorProfile = () => {
                 </div>
                 
                 <div className="flex flex-col sm:flex-row gap-3 mt-auto">
-                  <Button 
-                    onClick={openChatModal}
-                    className="flex items-center gap-2"
-                  >
-                    <MessageCircle className="h-4 w-4" />
-                    Connect with Mentor
-                  </Button>
+                  {isOwnProfile ? (
+                    <Button 
+                      asChild
+                      className="flex items-center gap-2"
+                    >
+                      <Link to="/profile">
+                        Edit Profile
+                      </Link>
+                    </Button>
+                  ) : (
+                    <Button 
+                      onClick={openChatModal}
+                      className="flex items-center gap-2"
+                    >
+                      <MessageCircle className="h-4 w-4" />
+                      Connect with Mentor
+                    </Button>
+                  )}
                   
                   {mentor.linkedin_url && (
                     <Button variant="outline" asChild className="flex items-center gap-2">

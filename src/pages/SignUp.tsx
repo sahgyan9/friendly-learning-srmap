@@ -1,16 +1,21 @@
 
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 const SignUp = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: "",
     confirmPassword: ""
   });
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -20,19 +25,52 @@ const SignUp = () => {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (formData.password !== formData.confirmPassword) {
       toast.error("Passwords don't match");
       return;
     }
+
+    setIsLoading(true);
     
-    // In a real app with Supabase, you would handle registration here
-    console.log("Registration with:", formData);
-    toast.info("Sign-up functionality will be implemented with Supabase authentication.");
-    // For now, just provide feedback
-    toast.success("Account created successfully!");
+    try {
+      // Register the user with Supabase auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: {
+          data: {
+            full_name: formData.name,
+          }
+        }
+      });
+
+      if (authError) throw authError;
+
+      if (authData.user) {
+        // Create user profile in the users table
+        const { error: profileError } = await supabase
+          .from('users')
+          .insert({
+            id: authData.user.id,
+            name: formData.name,
+            email: formData.email,
+            role: 'student' // Default role
+          });
+
+        if (profileError) throw profileError;
+
+        toast.success("Account created successfully! Please check your email for verification.");
+        navigate('/signin');
+      }
+    } catch (error: any) {
+      console.error('Error during signup:', error);
+      toast.error(error.message || "Error creating account");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -55,10 +93,10 @@ const SignUp = () => {
         </div>
         
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="rounded-md shadow-sm -space-y-px">
+          <div className="space-y-4">
             <div>
-              <label htmlFor="name" className="sr-only">Full name</label>
-              <input
+              <Label htmlFor="name">Full name</Label>
+              <Input
                 id="name"
                 name="name"
                 type="text"
@@ -66,13 +104,12 @@ const SignUp = () => {
                 required
                 value={formData.name}
                 onChange={handleChange}
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
-                placeholder="Full name"
+                placeholder="Your full name"
               />
             </div>
             <div>
-              <label htmlFor="email-address" className="sr-only">Email address</label>
-              <input
+              <Label htmlFor="email-address">Email address</Label>
+              <Input
                 id="email-address"
                 name="email"
                 type="email"
@@ -80,13 +117,12 @@ const SignUp = () => {
                 required
                 value={formData.email}
                 onChange={handleChange}
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
                 placeholder="Email address"
               />
             </div>
             <div>
-              <label htmlFor="password" className="sr-only">Password</label>
-              <input
+              <Label htmlFor="password">Password</Label>
+              <Input
                 id="password"
                 name="password"
                 type="password"
@@ -94,13 +130,12 @@ const SignUp = () => {
                 required
                 value={formData.password}
                 onChange={handleChange}
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
                 placeholder="Password"
               />
             </div>
             <div>
-              <label htmlFor="confirmPassword" className="sr-only">Confirm password</label>
-              <input
+              <Label htmlFor="confirmPassword">Confirm password</Label>
+              <Input
                 id="confirmPassword"
                 name="confirmPassword"
                 type="password"
@@ -108,7 +143,6 @@ const SignUp = () => {
                 required
                 value={formData.confirmPassword}
                 onChange={handleChange}
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
                 placeholder="Confirm password"
               />
             </div>
@@ -118,8 +152,9 @@ const SignUp = () => {
             <Button
               type="submit"
               className="w-full flex justify-center py-2 px-4"
+              disabled={isLoading}
             >
-              Sign up
+              {isLoading ? "Creating account..." : "Sign up"}
             </Button>
           </div>
         </form>
@@ -139,7 +174,7 @@ const SignUp = () => {
               <Button
                 variant="outline"
                 className="w-full"
-                onClick={() => toast.info("Google authentication will be implemented with Supabase.")}
+                onClick={() => toast.info("Google authentication coming soon")}
               >
                 Google
               </Button>
@@ -148,7 +183,7 @@ const SignUp = () => {
               <Button
                 variant="outline"
                 className="w-full"
-                onClick={() => toast.info("GitHub authentication will be implemented with Supabase.")}
+                onClick={() => toast.info("GitHub authentication coming soon")}
               >
                 GitHub
               </Button>
