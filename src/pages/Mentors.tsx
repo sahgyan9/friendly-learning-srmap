@@ -1,8 +1,9 @@
+
 import { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import SearchBar from "@/components/SearchBar";
 import { mentors as localMentors } from "@/data/mentors";
-import { supabase, getMentors } from "@/integrations/supabase/client";
+import { getMentors } from "@/integrations/supabase/services/mentors";
 import { Mentor } from "@/types/mentor";
 import { useToast } from "@/components/ui/use-toast";
 

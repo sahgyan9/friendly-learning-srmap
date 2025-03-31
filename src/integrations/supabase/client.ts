@@ -1,3 +1,4 @@
+
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.STORYBOOK_NEXT_PUBLIC_SUPABASE_URL;
@@ -15,3 +16,6 @@ export const supabase = createClient(supabaseUrl, supabaseKey);
 
 // Re-export chat services
 export * from "./services/chat";
+
+// Re-export mentor services
+export * from "./services/mentors";
