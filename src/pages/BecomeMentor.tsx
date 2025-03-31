@@ -4,7 +4,7 @@ import Navbar from "@/components/Navbar";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { addMentor } from "@/integrations/supabase/client";
+import { addMentor, supabase } from "@/integrations/supabase/client"; // Added supabase import here
 import { useAuth } from "@/context/AuthContext";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
