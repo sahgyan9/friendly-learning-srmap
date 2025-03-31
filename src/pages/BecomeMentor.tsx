@@ -23,7 +23,10 @@ const BecomeMentor = () => {
       
       <main className="container px-4 py-16 md:py-24 mx-auto">
         <div className="max-w-3xl mx-auto">
-          <MentorFormHeader />
+          <MentorFormHeader 
+            title="Become a Mentor"
+            description="Share your knowledge and help other students excel in their academic journey."
+          />
           
           <div className="bg-white rounded-lg shadow-sm p-6 md:p-8">
             {user ? (

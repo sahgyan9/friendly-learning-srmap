@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import SearchBar from "@/components/SearchBar";
@@ -118,7 +117,10 @@ const Mentors = () => {
       
       <main className="pt-24 pb-16">
         <div className="container px-4 md:px-6">
-          <MentorsHeader />
+          <MentorsHeader 
+            title="Find Your Mentor" 
+            description="Browse our extensive list of qualified mentors or use the search to find someone with the specific skills you need."
+          />
           
           {/* Search */}
           <SearchBar onSearch={handleSearch} onGeminiSearch={handleGeminiSearch} />
