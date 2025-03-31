@@ -1,5 +1,5 @@
 
-import { Star, MessageCircle, Linkedin } from "lucide-react";
+import { MessageCircle, Linkedin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Mentor } from "@/types/mentor";
@@ -17,34 +17,6 @@ const MentorCard = ({ mentor }: MentorCardProps) => {
   const { id, name, department, skills, rating, profile_image } = mentor;
   const [isChatOpen, setIsChatOpen] = useState(false);
   const { user } = useAuth();
-
-  // Render stars based on rating
-  const renderStars = () => {
-    const stars = [];
-    const fullStars = Math.floor(rating);
-    const hasHalfStar = rating % 1 >= 0.5;
-    
-    for (let i = 0; i < fullStars; i++) {
-      stars.push(
-        <Star key={`full-${i}`} className="h-5 w-5 text-yellow-400 fill-yellow-400" />
-      );
-    }
-    
-    if (hasHalfStar) {
-      stars.push(
-        <Star key="half" className="h-5 w-5 text-yellow-400 fill-yellow-400/50" />
-      );
-    }
-    
-    const remainingStars = 5 - stars.length;
-    for (let i = 0; i < remainingStars; i++) {
-      stars.push(
-        <Star key={`empty-${i}`} className="h-5 w-5 text-yellow-400" />
-      );
-    }
-    
-    return stars;
-  };
 
   const handleConnectClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -77,10 +49,18 @@ const MentorCard = ({ mentor }: MentorCardProps) => {
             <Linkedin className="h-5 w-5 text-blue-600" />
           </div>
           
-          {/* Rating */}
+          {/* Rating - Simplified to match screenshot */}
           <div className="flex items-center mt-1 mb-4">
-            {renderStars()}
-            <span className="ml-1.5 text-sm font-medium text-gray-700">{rating.toFixed(1)}</span>
+            <div className="flex items-center gap-1 bg-amber-50 px-2 py-0.5 rounded-full">
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                className="h-4 w-4 text-amber-400 fill-amber-400"
+                viewBox="0 0 24 24"
+              >
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+              </svg>
+              <span className="text-sm font-medium text-gray-700">{rating.toFixed(1)}</span>
+            </div>
           </div>
         </div>
       </div>
