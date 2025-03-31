@@ -4,6 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Mentor } from "@/types/mentor";
 import { Link } from "react-router-dom";
+import { useState } from "react";
+import ChatModal from "@/components/chat/modals/ChatModal";
+import { useAuth } from "@/context/AuthContext";
+import { toast } from "sonner";
 
 interface MentorCardProps {
   mentor: Mentor;
@@ -11,6 +15,8 @@ interface MentorCardProps {
 
 const MentorCard = ({ mentor }: MentorCardProps) => {
   const { id, name, department, skills, rating, profile_image } = mentor;
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const { user } = useAuth();
 
   // Render stars based on rating
   const renderStars = () => {
@@ -38,6 +44,17 @@ const MentorCard = ({ mentor }: MentorCardProps) => {
     }
     
     return stars;
+  };
+
+  const handleConnectClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    
+    if (!user) {
+      toast.error("Please sign in to connect with mentors");
+      return;
+    }
+    
+    setIsChatOpen(true);
   };
 
   return (
@@ -106,14 +123,21 @@ const MentorCard = ({ mentor }: MentorCardProps) => {
         <Button 
           variant="default" 
           className="flex-1 flex items-center justify-center gap-2"
-          asChild
+          onClick={handleConnectClick}
         >
-          <Link to={`/mentor/${id}`}>
-            <MessageCircle className="h-4 w-4" />
-            Connect
-          </Link>
+          <MessageCircle className="h-4 w-4" />
+          Connect
         </Button>
       </div>
+
+      {/* Chat Modal */}
+      {isChatOpen && (
+        <ChatModal 
+          isOpen={isChatOpen} 
+          onClose={() => setIsChatOpen(false)} 
+          mentor={mentor}
+        />
+      )}
     </div>
   );
 };
