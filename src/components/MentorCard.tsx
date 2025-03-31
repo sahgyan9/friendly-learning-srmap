@@ -14,7 +14,7 @@ interface MentorCardProps {
 }
 
 const MentorCard = ({ mentor }: MentorCardProps) => {
-  const { id, name, department, skills, rating, profile_image } = mentor;
+  const { id, name, department, skills, rating, profile_image, linkedin_url } = mentor;
   const [isChatOpen, setIsChatOpen] = useState(false);
   const { user } = useAuth();
 
@@ -27,6 +27,14 @@ const MentorCard = ({ mentor }: MentorCardProps) => {
     }
     
     setIsChatOpen(true);
+  };
+
+  const handleLinkedInClick = (e: React.MouseEvent) => {
+    if (!linkedin_url) {
+      e.preventDefault();
+      toast.error("LinkedIn profile not available for this mentor");
+      return;
+    }
   };
 
   return (
@@ -46,7 +54,20 @@ const MentorCard = ({ mentor }: MentorCardProps) => {
               <h3 className="text-lg font-semibold text-gray-900">{name}</h3>
               <p className="text-sm text-gray-500">{department}</p>
             </div>
-            <Linkedin className="h-5 w-5 text-blue-600" />
+            {linkedin_url ? (
+              <a 
+                href={linkedin_url} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                onClick={handleLinkedInClick}
+                className="hover:text-blue-700 transition-colors"
+                aria-label={`${name}'s LinkedIn profile`}
+              >
+                <Linkedin className="h-5 w-5 text-blue-600" />
+              </a>
+            ) : (
+              <Linkedin className="h-5 w-5 text-blue-600 opacity-50" />
+            )}
           </div>
           
           {/* Rating - Simplified to match screenshot */}
