@@ -19,10 +19,10 @@ export const useMessagesOperations = (userId: string) => {
    * Fetch user conversations
    */
   const fetchConversations = async (
-    setConversations: (conversations: Conversation[]) => void,
-    setActiveChat: (chatId: string | null) => void,
-    setIsLoadingConversations: (loading: boolean) => void,
-    setError: (error: Error | null) => void
+    setConversations: React.Dispatch<React.SetStateAction<Conversation[]>>,
+    setActiveChat: React.Dispatch<React.SetStateAction<string | null>>,
+    setIsLoadingConversations: React.Dispatch<React.SetStateAction<boolean>>,
+    setError: React.Dispatch<React.SetStateAction<Error | null>>
   ) => {
     setIsLoadingConversations(true);
     setError(null);
@@ -76,9 +76,9 @@ export const useMessagesOperations = (userId: string) => {
    */
   const fetchMessages = async (
     conversationId: string,
-    setMessages: (messages: Message[]) => void,
-    setIsLoadingMessages: (loading: boolean) => void,
-    setError: (error: Error | null) => void
+    setMessages: React.Dispatch<React.SetStateAction<Message[]>>,
+    setIsLoadingMessages: React.Dispatch<React.SetStateAction<boolean>>,
+    setError: React.Dispatch<React.SetStateAction<Error | null>>
   ) => {
     setIsLoadingMessages(true);
     setError(null);
@@ -121,10 +121,10 @@ export const useMessagesOperations = (userId: string) => {
     activeChat: string | null,
     content: string,
     conversations: Conversation[],
-    setMessages: (messages: Message[]) => void,
-    setConversations: (conversations: Conversation[]) => void,
-    setIsSending: (sending: boolean) => void,
-    setError: (error: Error | null) => void
+    setMessages: React.Dispatch<React.SetStateAction<Message[]>>,
+    setConversations: React.Dispatch<React.SetStateAction<Conversation[]>>,
+    setIsSending: React.Dispatch<React.SetStateAction<boolean>>,
+    setError: React.Dispatch<React.SetStateAction<Error | null>>
   ) => {
     if (!activeChat) return;
     
@@ -150,7 +150,7 @@ export const useMessagesOperations = (userId: string) => {
       };
       
       // Add the message to the local state for immediate UI feedback
-      setMessages((prev: Message[]) => [...prev, tempMessage]);
+      setMessages(prevMessages => [...prevMessages, tempMessage]);
       
       const { data, error } = await sendMessageAPI(
         activeChat,
@@ -171,8 +171,8 @@ export const useMessagesOperations = (userId: string) => {
           
           if (updatedConversation) {
             // Update the conversations state with the new last message
-            setConversations((prev: Conversation[]) => 
-              prev.map(conv => 
+            setConversations(prevConversations => 
+              prevConversations.map(conv => 
                 conv.id === activeChat ? updatedConversation : conv
               )
             );
@@ -182,12 +182,12 @@ export const useMessagesOperations = (userId: string) => {
           return;
         }
       } else if (data) {
-        setMessages((prev: Message[]) => 
-          prev.map(m => m.id === tempMessage.id ? data : m)
+        setMessages(prevMessages => 
+          prevMessages.map(m => m.id === tempMessage.id ? data : m)
         );
         
-        setConversations((prev: Conversation[]) => 
-          prev.map(conv => 
+        setConversations(prevConversations => 
+          prevConversations.map(conv => 
             conv.id === activeChat 
               ? { 
                   ...conv, 
