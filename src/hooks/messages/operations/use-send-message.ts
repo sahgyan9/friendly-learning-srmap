@@ -58,7 +58,7 @@ export const useSendMessage = (userId: string) => {
         console.error("Error sending message:", error);
         
         // Fall back to localStorage for demo
-        if (error.message && (error.message.includes("row-level security") || error.message.includes("invalid input syntax for type uuid"))) {
+        if (error.message.includes("row-level security") || error.message.includes("invalid input syntax for type uuid")) {
           console.log("Using localStorage for demo messaging");
           
           // Save to localStorage and get updated conversation

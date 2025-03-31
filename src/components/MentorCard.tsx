@@ -1,5 +1,5 @@
 
-import { MessageCircle, Linkedin } from "lucide-react";
+import { Star, MessageCircle, Linkedin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Mentor } from "@/types/mentor";
@@ -17,6 +17,34 @@ const MentorCard = ({ mentor }: MentorCardProps) => {
   const { id, name, department, skills, rating, profile_image } = mentor;
   const [isChatOpen, setIsChatOpen] = useState(false);
   const { user } = useAuth();
+
+  // Render stars based on rating
+  const renderStars = () => {
+    const stars = [];
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 >= 0.5;
+    
+    for (let i = 0; i < fullStars; i++) {
+      stars.push(
+        <Star key={`full-${i}`} className="h-5 w-5 text-yellow-400 fill-yellow-400" />
+      );
+    }
+    
+    if (hasHalfStar) {
+      stars.push(
+        <Star key="half" className="h-5 w-5 text-yellow-400 fill-yellow-400/50" />
+      );
+    }
+    
+    const remainingStars = 5 - stars.length;
+    for (let i = 0; i < remainingStars; i++) {
+      stars.push(
+        <Star key={`empty-${i}`} className="h-5 w-5 text-yellow-400" />
+      );
+    }
+    
+    return stars;
+  };
 
   const handleConnectClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -49,11 +77,10 @@ const MentorCard = ({ mentor }: MentorCardProps) => {
             <Linkedin className="h-5 w-5 text-blue-600" />
           </div>
           
-          {/* Simple Rating */}
+          {/* Rating */}
           <div className="flex items-center mt-1 mb-4">
-            <span className="text-sm font-medium text-yellow-500 bg-yellow-50 px-2 py-0.5 rounded-md">
-              {rating.toFixed(1)} / 5.0
-            </span>
+            {renderStars()}
+            <span className="ml-1.5 text-sm font-medium text-gray-700">{rating.toFixed(1)}</span>
           </div>
         </div>
       </div>

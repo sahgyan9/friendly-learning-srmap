@@ -32,7 +32,7 @@ export const useChat = (userId: string, mentorId: string) => {
       
       if (error) {
         console.error("Error initializing chat:", error);
-        if (error.message && error.message.includes("row-level security") || error.message.includes("invalid input syntax for type uuid")) {
+        if (error.message && error.message.includes("row-level security")) {
           console.log("Row-level security error detected - using simulated conversation for demo");
           // Generate a consistent ID based on user and mentor IDs
           const demoConversationId = `demo-${userId}-${mentorId}`;

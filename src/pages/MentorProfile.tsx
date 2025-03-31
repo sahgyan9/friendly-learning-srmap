@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
-import { getMentorById } from "@/integrations/supabase/services/mentors";
+import { getMentorById } from "@/integrations/supabase/client";
 import { Mentor } from "@/types/mentor";
 import ChatModal from "@/components/chat/modals/ChatModal";
 import { useAuth } from "@/context/AuthContext";
