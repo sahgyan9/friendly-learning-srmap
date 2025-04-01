@@ -14,7 +14,6 @@ export async function getUserConversations(userId: string) {
         user1:users!conversations_user1_id_fkey(id, name, profile_image),
         user2:users!conversations_user2_id_fkey(id, name, profile_image)
       `)
-      .or(`user1_id.eq.${userId},user2_id.eq.${userId}`)
       .order('last_updated', { ascending: false });
 
     if (conversationsError) {
@@ -22,7 +21,7 @@ export async function getUserConversations(userId: string) {
       return { data: null, error: conversationsError };
     }
 
-    console.log(`Retrieved ${conversationsData?.length || 0} conversations for user ${userId}`);
+    console.log(`Retrieved ${conversationsData?.length || 0} conversations`);
 
     // Fetch the last message separately for each conversation
     const enhancedConversations: Conversation[] = [];
@@ -34,7 +33,7 @@ export async function getUserConversations(userId: string) {
           .from('messages')
           .select('*')
           .eq('id', conversation.last_message_id)
-          .single();
+          .maybeSingle();
           
         if (messageError) {
           console.error(`Error fetching last message for conversation ${conversation.id}:`, messageError);
@@ -91,6 +90,12 @@ export async function markMessagesAsRead(conversationId: string, userId: string)
       .eq('receiver_id', userId)
       .eq('is_read', false);
     
+    if (error) {
+      console.error('Error marking messages as read:', error);
+    } else {
+      console.log(`Marked ${data?.length || 0} messages as read`);
+    }
+    
     return { data, error };
   } catch (err) {
     console.error('Exception in markMessagesAsRead:', err);
@@ -106,6 +111,8 @@ export async function sendMessage(
   content: string
 ) {
   try {
+    console.log(`Sending message in conversation ${conversationId} from ${senderId} to ${receiverId}`);
+    
     // 1. Insert the message
     const { data: messageData, error: messageError } = await supabase
       .from('messages')
@@ -114,8 +121,6 @@ export async function sendMessage(
         sender_id: senderId,
         receiver_id: receiverId,
         content,
-        sent_at: new Date().toISOString(),
-        is_read: false
       })
       .select()
       .single();
@@ -130,12 +135,16 @@ export async function sendMessage(
       return { data: null, error: new Error('No data returned after sending message') };
     }
 
+    console.log('Message sent successfully:', messageData);
+
     // 2. Update the conversation's last_message_id and last_updated
-    const { data: conversationData, error: conversationError } = await supabase
-      .rpc('update_conversation', {
-        conversation_id: conversationId,
-        message_id: messageData.id
-      });
+    const { error: conversationError } = await supabase
+      .from('conversations')
+      .update({ 
+        last_message_id: messageData.id,
+        last_updated: new Date().toISOString()
+      })
+      .eq('id', conversationId);
       
     if (conversationError) {
       console.error('Error updating conversation:', conversationError);
@@ -152,22 +161,28 @@ export async function sendMessage(
 // Get or create a conversation between two users
 export async function getOrCreateConversation(user1Id: string, user2Id: string) {
   try {
+    console.log(`Looking for conversation between ${user1Id} and ${user2Id}`);
+    
     // First, check if a conversation already exists
     const { data: existingConversation, error: findError } = await supabase
       .from('conversations')
-      .select('*')
+      .select(`
+        *,
+        user1:users!conversations_user1_id_fkey(id, name, profile_image),
+        user2:users!conversations_user2_id_fkey(id, name, profile_image)
+      `)
       .or(`and(user1_id.eq.${user1Id},user2_id.eq.${user2Id}),and(user1_id.eq.${user2Id},user2_id.eq.${user1Id})`)
-      .single();
+      .maybeSingle();
       
-    if (!findError && existingConversation) {
-      console.log('Found existing conversation:', existingConversation);
-      return { data: existingConversation, error: null };
-    }
-    
     if (findError && findError.code !== 'PGRST116') {
       // If error is not "no rows returned", something went wrong
       console.error('Error finding conversation:', findError);
       return { data: null, error: findError };
+    }
+    
+    if (existingConversation) {
+      console.log('Found existing conversation:', existingConversation);
+      return { data: existingConversation, error: null };
     }
     
     // No existing conversation, create a new one
@@ -179,7 +194,11 @@ export async function getOrCreateConversation(user1Id: string, user2Id: string) 
         user2_id: user2Id,
         last_updated: new Date().toISOString()
       })
-      .select()
+      .select(`
+        *,
+        user1:users!conversations_user1_id_fkey(id, name, profile_image),
+        user2:users!conversations_user2_id_fkey(id, name, profile_image)
+      `)
       .single();
       
     if (createError) {
@@ -187,6 +206,7 @@ export async function getOrCreateConversation(user1Id: string, user2Id: string) 
       return { data: null, error: createError };
     }
     
+    console.log('Created new conversation:', newConversation);
     return { data: newConversation, error: null };
   } catch (err) {
     console.error('Exception in getOrCreateConversation:', err);
