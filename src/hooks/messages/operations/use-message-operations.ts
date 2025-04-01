@@ -22,34 +22,17 @@ export const useMessageOperations = (userId: string) => {
     setError(null);
     
     try {
-      console.log(`Fetching messages for conversation ${conversationId} for user ${userId}`);
-      
-      if (!userId) {
-        throw new Error("User ID is required to fetch messages");
-      }
-      
-      // Check if this is a demo conversation
-      if (conversationId.startsWith('demo-')) {
-        console.log("Using demo messages from localStorage");
-        const demoMessages = getDemoMessages(conversationId);
-        setMessages(demoMessages);
-        setIsLoadingMessages(false);
-        return;
-      }
-
       const { data, error } = await getConversationMessages(conversationId);
       
       if (error) {
         console.error("Error fetching messages:", error);
         setError(error);
         
-        // Check for auth errors and fall back to demo mode
-        if (error.message?.includes("auth") || error.message?.includes("not authorized")) {
-          console.log("Authorization error - using demo messages from localStorage");
-          const demoMessages = getDemoMessages(conversationId);
-          if (demoMessages.length > 0) {
-            setMessages(demoMessages);
-          }
+        // Check for demo messages in localStorage as a fallback
+        const demoMessages = getDemoMessages(conversationId);
+        if (demoMessages.length > 0) {
+          console.log("Using demo messages from localStorage:", demoMessages);
+          setMessages(demoMessages);
         }
         
         return;
@@ -59,11 +42,7 @@ export const useMessageOperations = (userId: string) => {
         console.log("Fetched messages:", data);
         setMessages(data);
         
-        // Mark messages as read
         await markMessagesAsRead(conversationId, userId);
-      } else {
-        console.log("No messages found for this conversation");
-        setMessages([]);
       }
     } catch (err) {
       console.error("Exception fetching messages:", err);

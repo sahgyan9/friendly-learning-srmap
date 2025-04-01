@@ -24,50 +24,40 @@ export const useConversationOperations = (userId: string) => {
     
     try {
       console.log("Fetching conversations for user:", userId);
-      
-      if (!userId) {
-        throw new Error("User ID is required to fetch conversations");
-      }
-      
       const { data, error } = await getUserConversations(userId);
       
       if (error) {
         console.error("Error fetching conversations:", error);
+        setError(error);
         
-        // For auth errors or other issues, fall back to demo data
-        if (error.message?.includes("auth") || error.message?.includes("not authorized")) {
-          console.log("Authorization error - using demo conversations from localStorage");
-          const demoConversations = getDemoConversations();
-          
-          // Filter conversations related to this user
-          const filteredConversations = demoConversations.filter(
-            c => c.user1_id === userId || c.user2_id === userId
-          );
-          
-          if (filteredConversations.length > 0) {
-            setConversations(filteredConversations);
-            setActiveChat(filteredConversations[0].id);
-          }
-        } else {
-          setError(error);
+        // Check for demo data in localStorage as a fallback
+        const demoConversations = getDemoConversations();
+        
+        // Filter conversations related to this user
+        const filteredConversations = demoConversations.filter(
+          c => c.user1_id === userId || c.user2_id === userId
+        );
+        
+        if (filteredConversations.length > 0) {
+          setConversations(filteredConversations);
+          setActiveChat(filteredConversations[0].id);
         }
         
         return;
       }
       
-      if (data && data.length > 0) {
+      if (data) {
         console.log("Fetched conversations:", data);
         setConversations(data);
-        setActiveChat(data[0].id);
+        if (data.length > 0) {
+          setActiveChat(data[0].id);
+        }
       } else {
-        console.log("No conversations found for user:", userId);
-        setConversations([]);
-        setActiveChat(null);
+        console.log("No conversations data returned");
       }
     } catch (err) {
       console.error("Exception fetching conversations:", err);
       setError(err as Error);
-      toast.error("Failed to load your conversations");
     } finally {
       setIsLoadingConversations(false);
     }

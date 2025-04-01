@@ -5,8 +5,7 @@ import { Message } from "@/types/chat";
 import { 
   getOrCreateConversation,
   getConversationMessages, 
-  sendMessage,
-  markMessagesAsRead 
+  sendMessage 
 } from "@/integrations/supabase/services/chat";
 import { useDemoMessages } from "./messages/use-demo-messages";
 
@@ -25,10 +24,6 @@ export const useChat = (userId: string, mentorId: string) => {
     try {
       console.log("Initializing chat between:", userId, "and", mentorId);
       
-      if (!userId) {
-        throw new Error("User ID is required");
-      }
-      
       // Try to get or create a real conversation
       const { data: conversation, error } = await getOrCreateConversation(
         userId, 
@@ -37,25 +32,23 @@ export const useChat = (userId: string, mentorId: string) => {
       
       if (error) {
         console.error("Error initializing chat:", error);
-        
-        // If the error is related to auth issues, use demo mode
-        if (error.message?.includes("auth") || error.message?.includes("not authorized")) {
-          console.log("Authorization error detected - using simulated conversation for demo");
+        if (error.message && error.message.includes("row-level security")) {
+          console.log("Row-level security error detected - using simulated conversation for demo");
+          // Generate a consistent ID based on user and mentor IDs
           const demoConversationId = `demo-${userId}-${mentorId}`;
           setConversationId(demoConversationId);
           
           // Load any stored messages for this conversation
           const demoMessages = getDemoMessages(demoConversationId);
-          setMessages(demoMessages);
-          return;
+          if (demoMessages && demoMessages.length > 0) {
+            console.log("Using demo messages from localStorage:", demoMessages);
+            setMessages(demoMessages);
+          }
         } else {
           toast.error("Failed to initialize chat");
           setError("Failed to initialize chat. Please try again later.");
-          return;
         }
-      } 
-      
-      if (conversation) {
+      } else if (conversation) {
         console.log("Conversation created/retrieved successfully:", conversation);
         setConversationId(conversation.id);
         
@@ -69,12 +62,9 @@ export const useChat = (userId: string, mentorId: string) => {
         } else if (messageData) {
           setMessages(messageData);
           console.log("Fetched messages:", messageData);
-          
-          // Mark messages as read
-          await markMessagesAsRead(conversation.id, userId);
         }
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error("Exception initializing chat:", err);
       setError("An unexpected error occurred. Please try again later.");
     } finally {
@@ -125,11 +115,9 @@ export const useChat = (userId: string, mentorId: string) => {
         console.error("Error sending message:", error);
         toast.error("Failed to send message");
         
-        if (error.message?.includes("auth") || error.message?.includes("not authorized")) {
-          // Fall back to localStorage if there's an auth error
-          const demoConversationId = `demo-${userId}-${mentorId}`;
-          saveDemoMessage(demoConversationId, tempMessage, userId, mentorId);
-        }
+        // Fall back to localStorage if there's an error
+        const demoConversationId = `demo-${userId}-${mentorId}`;
+        saveDemoMessage(demoConversationId, tempMessage, userId, mentorId);
       } else if (data) {
         console.log("Message sent successfully:", data);
         // Replace the temp message with the real one
