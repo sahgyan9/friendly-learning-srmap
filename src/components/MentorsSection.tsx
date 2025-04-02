@@ -1,66 +1,85 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import SearchBar from "@/components/SearchBar";
 import MentorCard from "@/components/MentorCard";
 import { Mentor } from "@/types/mentor";
-import { mentors } from "@/data/mentors";
 import { getMentors, searchMentors } from "@/integrations/supabase/services/mentors";
+import { useToast } from "@/components/ui/use-toast";
+import { Loader2 } from "lucide-react";
 
 const MentorsSection = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [filteredMentors, setFilteredMentors] = useState<Mentor[]>(
-    mentors.map(mentor => ({
-      id: mentor.id,
-      name: mentor.name,
-      department: mentor.department,
-      skills: mentor.skills,
-      rating: mentor.rating,
-      profile_image: mentor.profileImage,
-      linkedin_url: mentor.linkedinUrl,
-      bio: mentor.bio,
-      review_count: mentor.reviewCount,
-    }))
-  );
+  const [filteredMentors, setFilteredMentors] = useState<Mentor[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
 
-  const handleSearch = (query: string) => {
+  // Fetch mentors from Supabase on component mount
+  useEffect(() => {
+    const fetchMentors = async () => {
+      setIsLoading(true);
+      try {
+        const { data, error } = await getMentors();
+        
+        if (error) {
+          console.error("Error fetching mentors:", error);
+          toast({
+            title: "Error",
+            description: "Failed to load mentors.",
+            variant: "destructive",
+          });
+          setFilteredMentors([]);
+          return;
+        }
+        
+        if (data && data.length > 0) {
+          setFilteredMentors(data);
+        } else {
+          setFilteredMentors([]);
+          toast({
+            title: "No mentors found",
+            description: "There are currently no mentors available.",
+          });
+        }
+      } catch (err) {
+        console.error("Exception fetching mentors:", err);
+        setFilteredMentors([]);
+        toast({
+          title: "Error",
+          description: "An unexpected error occurred.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchMentors();
+  }, [toast]);
+
+  const handleSearch = async (query: string) => {
     setSearchQuery(query);
     
     if (!query) {
-      setFilteredMentors(mentors.map(mentor => ({
-        id: mentor.id,
-        name: mentor.name,
-        department: mentor.department,
-        skills: mentor.skills,
-        rating: mentor.rating,
-        profile_image: mentor.profileImage,
-        linkedin_url: mentor.linkedinUrl,
-        bio: mentor.bio,
-        review_count: mentor.reviewCount,
-      })));
+      // Fetch all mentors again when search is cleared
+      const { data } = await getMentors();
+      if (data) setFilteredMentors(data);
       return;
     }
     
-    const lowerCaseQuery = query.toLowerCase();
-    const filtered = mentors.filter((mentor) => {
-      if (mentor.name.toLowerCase().includes(lowerCaseQuery)) return true;
-      if (mentor.department.toLowerCase().includes(lowerCaseQuery)) return true;
-      if (mentor.skills.some(skill => 
-        skill.toLowerCase().includes(lowerCaseQuery)
-      )) return true;
-      
-      return false;
-    });
+    // Use the searchMentors function from Supabase services
+    const { data, error } = await searchMentors(query);
     
-    setFilteredMentors(filtered.map(mentor => ({
-      id: mentor.id,
-      name: mentor.name,
-      department: mentor.department,
-      skills: mentor.skills,
-      rating: mentor.rating,
-      profile_image: mentor.profileImage,
-      linkedin_url: mentor.linkedinUrl,
-      bio: mentor.bio,
-      review_count: mentor.reviewCount,
-    })));
+    if (error) {
+      console.error("Error searching mentors:", error);
+      toast({
+        title: "Search Error",
+        description: "Failed to search mentors. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setFilteredMentors(data || []);
   };
 
   const handleGeminiSearch = (geminiResults: any[]) => {
@@ -95,7 +114,12 @@ const MentorsSection = () => {
         
         <SearchBar onSearch={handleSearch} onGeminiSearch={handleGeminiSearch} />
         
-        {filteredMentors.length > 0 ? (
+        {isLoading ? (
+          <div className="flex justify-center items-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <span className="ml-2 text-lg">Loading mentors...</span>
+          </div>
+        ) : filteredMentors.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredMentors.map((mentor) => (
               <MentorCard key={mentor.id} mentor={mentor} />

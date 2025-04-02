@@ -1,8 +1,8 @@
+
 import { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import SearchBar from "@/components/SearchBar";
-import { mentors as localMentors } from "@/data/mentors";
-import { supabase, getMentors } from "@/integrations/supabase/client";
+import { getMentors, searchMentors } from "@/integrations/supabase/client";
 import { Mentor } from "@/types/mentor";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -29,22 +29,25 @@ const Mentors = () => {
           console.error("Error fetching mentors:", error);
           toast({
             title: "Error",
-            description: "Failed to load mentors. Using local data instead.",
+            description: "Failed to load mentors.",
             variant: "destructive",
           });
-          setFilteredMentors(convertLocalMentorsFormat(localMentors));
+          setFilteredMentors([]);
           return;
         }
         
         if (data && data.length > 0) {
           setFilteredMentors(data);
         } else {
-          // If no data in Supabase, use local data
-          setFilteredMentors(convertLocalMentorsFormat(localMentors));
+          setFilteredMentors([]);
+          toast({
+            title: "No mentors found",
+            description: "There are currently no mentors available.",
+          });
         }
       } catch (err) {
         console.error("Exception fetching mentors:", err);
-        setFilteredMentors(convertLocalMentorsFormat(localMentors));
+        setFilteredMentors([]);
       } finally {
         setIsLoading(false);
       }
@@ -53,51 +56,26 @@ const Mentors = () => {
     fetchMentors();
   }, [toast]);
 
-  // Convert local mentor format to match Supabase format
-  const convertLocalMentorsFormat = (localData: any[]): Mentor[] => {
-    return localData.map(mentor => ({
-      id: mentor.id,
-      name: mentor.name,
-      department: mentor.department,
-      skills: mentor.skills,
-      rating: mentor.rating,
-      profile_image: mentor.profileImage,
-      linkedin_url: mentor.linkedinUrl,
-      bio: mentor.bio,
-      review_count: mentor.reviewCount,
-      created_at: new Date().toISOString()
-    }));
-  };
-
-  const handleSearch = (query: string) => {
+  const handleSearch = async (query: string) => {
     setSearchQuery(query);
     setIsAiSearch(false);
     
     if (!query) {
       // Fetch all mentors again when search is cleared
-      getMentors().then(({ data }) => {
-        if (data) setFilteredMentors(data);
-      });
+      const { data } = await getMentors();
+      if (data) setFilteredMentors(data);
       return;
     }
     
-    const lowerCaseQuery = query.toLowerCase();
-    const filtered = filteredMentors.filter((mentor) => {
-      // Search by name
-      if (mentor.name.toLowerCase().includes(lowerCaseQuery)) return true;
-      
-      // Search by department
-      if (mentor.department.toLowerCase().includes(lowerCaseQuery)) return true;
-      
-      // Search by skills
-      if (mentor.skills.some(skill => 
-        skill.toLowerCase().includes(lowerCaseQuery)
-      )) return true;
-      
-      return false;
-    });
+    // Use Supabase search function
+    const { data, error } = await searchMentors(query);
     
-    setFilteredMentors(filtered);
+    if (error) {
+      console.error("Error searching mentors:", error);
+      return;
+    }
+    
+    setFilteredMentors(data || []);
   };
 
   const handleGeminiSearch = (geminiResults: any[]) => {
