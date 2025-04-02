@@ -1,5 +1,8 @@
 
 import { supabase } from '../client';
+import type { Database } from '../types';
+
+type UserProfile = Database['public']['Tables']['users']['Row'];
 
 /**
  * Create or update a user profile
@@ -55,7 +58,7 @@ export const getUserProfile = async (userId: string) => {
 /**
  * Update a user's profile
  */
-export const updateUserProfile = async (userId: string, updates: any) => {
+export const updateUserProfile = async (userId: string, updates: Partial<UserProfile>) => {
   try {
     const { data, error } = await supabase
       .from('users')

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -11,6 +10,9 @@ import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
+import type { Database } from "@/integrations/supabase/types";
+
+type UserRecord = Database['public']['Tables']['users']['Row'];
 
 const UserProfile = () => {
   const navigate = useNavigate();
@@ -51,9 +53,10 @@ const UserProfile = () => {
     
     try {
       const { data, error } = await supabase
-        .from('mentors')
+        .from('users')
         .select('*')
         .eq('id', user.id)
+        .eq('is_mentor', true)
         .single();
       
       if (error) {
@@ -74,7 +77,7 @@ const UserProfile = () => {
           department: data.department || "",
           skills: data.skills?.join(', ') || "",
           linkedin_url: data.linkedin_url || "",
-          profile_image: data.profile_image || prev.profile_image
+          profile_image: data.profile_pic_url || prev.profile_image
         }));
       }
     } catch (error) {
@@ -157,7 +160,7 @@ const UserProfile = () => {
         .from('users')
         .update({
           name: formData.name,
-          profile_image: profileImageUrl
+          profile_pic_url: profileImageUrl
         })
         .eq('id', user.id);
       
@@ -171,14 +174,14 @@ const UserProfile = () => {
           .filter(skill => skill.length > 0);
         
         const { error: mentorError } = await supabase
-          .from('mentors')
+          .from('users')
           .update({
             name: formData.name,
             bio: formData.bio,
             department: formData.department,
             skills: skillsArray,
             linkedin_url: formData.linkedin_url,
-            profile_image: profileImageUrl
+            profile_pic_url: profileImageUrl
           })
           .eq('id', user.id);
         

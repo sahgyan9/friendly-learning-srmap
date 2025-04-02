@@ -1,6 +1,10 @@
 
 import { supabase } from '../client';
 import { Message, Conversation } from '@/types/chat';
+import type { Database } from '../types';
+
+type MessageRecord = Database['public']['Tables']['messages']['Row'];
+type UserRecord = Database['public']['Tables']['users']['Row'];
 
 /**
  * Get all conversations for a user
@@ -29,7 +33,7 @@ export const getUserConversations = async (userId: string) => {
     // Group by conversation partner
     const conversations: Record<string, any> = {};
     
-    data?.forEach((message) => {
+    data?.forEach((message: any) => {
       const partnerId = message.sender_id === userId ? message.receiver_id : message.sender_id;
       
       if (!conversations[partnerId]) {
@@ -82,7 +86,7 @@ export const getConversationMessages = async (conversationId: string) => {
     }
 
     // Map to our Message type
-    const messages = data?.map(msg => ({
+    const messages = data?.map((msg: MessageRecord) => ({
       id: msg.id,
       conversation_id: conversationId,
       sender_id: msg.sender_id,
@@ -149,13 +153,13 @@ export const sendMessage = async (
 
     // Map to our Message type
     const message: Message = {
-      id: data.id,
+      id: data!.id,
       conversation_id: conversationId,
-      sender_id: data.sender_id,
-      receiver_id: data.receiver_id,
-      content: data.message_text,
-      sent_at: data.timestamp,
-      is_read: data.is_read
+      sender_id: data!.sender_id,
+      receiver_id: data!.receiver_id,
+      content: data!.message_text,
+      sent_at: data!.timestamp,
+      is_read: data!.is_read
     };
 
     return { data: message, error: null };

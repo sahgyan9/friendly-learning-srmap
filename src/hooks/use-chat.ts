@@ -1,8 +1,12 @@
+
 import { useState, useCallback, useEffect } from "react";
 import { toast } from "sonner";
 import { Message } from "@/types/chat";
 import { supabase } from "@/integrations/supabase/client";
 import { sendMessage } from "@/integrations/supabase/services/chat";
+import type { Database } from "@/integrations/supabase/types";
+
+type MessageRecord = Database['public']['Tables']['messages']['Row'];
 
 export const useChat = (userId: string, mentorId: string) => {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -42,7 +46,7 @@ export const useChat = (userId: string, mentorId: string) => {
         if (messagesError) throw messagesError;
         
         // Transform to our Message type
-        const formattedMessages: Message[] = messagesData.map(msg => ({
+        const formattedMessages: Message[] = messagesData.map((msg: MessageRecord) => ({
           id: msg.id,
           conversation_id: mentorId,
           sender_id: msg.sender_id,
@@ -94,7 +98,7 @@ export const useChat = (userId: string, mentorId: string) => {
         filter: `sender_id=eq.${mentorId},receiver_id=eq.${userId}`
       }, (payload) => {
         console.log('New message received:', payload);
-        const newMsg = payload.new;
+        const newMsg = payload.new as MessageRecord;
         
         // Add the new message to the state
         const message: Message = {

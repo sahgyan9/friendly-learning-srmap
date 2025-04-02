@@ -1,6 +1,10 @@
 
 import { supabase } from '../client';
 import { Mentor } from '@/types/mentor';
+import type { Database } from '../types';
+
+type UserRecord = Database['public']['Tables']['users']['Row'];
+type MentorRequest = Database['public']['Tables']['mentor_requests']['Row'];
 
 /**
  * Get all mentors
