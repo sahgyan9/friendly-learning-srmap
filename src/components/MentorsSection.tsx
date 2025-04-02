@@ -1,103 +1,80 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import SearchBar from "@/components/SearchBar";
 import MentorCard from "@/components/MentorCard";
 import { Mentor } from "@/types/mentor";
-import { getMentors, searchMentors } from "@/integrations/supabase/services/mentors";
 import { useToast } from "@/components/ui/use-toast";
 import { Loader2 } from "lucide-react";
 
+// Mock data for mentors
+const mockMentors: Mentor[] = [
+  {
+    id: "1",
+    name: "Jane Smith",
+    department: "Computer Science",
+    skills: ["JavaScript", "React", "Node.js"],
+    rating: 4.8,
+    profile_image: "https://ui-avatars.com/api/?name=Jane+Smith&background=6366F1&color=fff",
+    linkedin_url: "https://linkedin.com/in/janesmith",
+    bio: "Experienced web developer with 5 years of experience in frontend technologies.",
+    review_count: 24,
+    created_at: "2023-01-15T00:00:00Z"
+  },
+  {
+    id: "2",
+    name: "Mark Johnson",
+    department: "Data Science",
+    skills: ["Python", "Machine Learning", "Data Analysis"],
+    rating: 4.9,
+    profile_image: "https://ui-avatars.com/api/?name=Mark+Johnson&background=6366F1&color=fff",
+    linkedin_url: "https://linkedin.com/in/markjohnson",
+    bio: "Data scientist passionate about AI and machine learning applications.",
+    review_count: 31,
+    created_at: "2023-02-10T00:00:00Z"
+  },
+  {
+    id: "3",
+    name: "Sarah Williams",
+    department: "UI/UX Design",
+    skills: ["Figma", "Adobe XD", "UI Design", "UX Research"],
+    rating: 4.7,
+    profile_image: "https://ui-avatars.com/api/?name=Sarah+Williams&background=6366F1&color=fff",
+    linkedin_url: "https://linkedin.com/in/sarahwilliams",
+    bio: "Creative designer with a focus on user-centered design principles.",
+    review_count: 19,
+    created_at: "2023-03-05T00:00:00Z"
+  }
+];
+
 const MentorsSection = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [filteredMentors, setFilteredMentors] = useState<Mentor[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [filteredMentors, setFilteredMentors] = useState<Mentor[]>(mockMentors);
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  // Fetch mentors from Supabase on component mount
-  useEffect(() => {
-    const fetchMentors = async () => {
-      setIsLoading(true);
-      try {
-        const { data, error } = await getMentors();
-        
-        if (error) {
-          console.error("Error fetching mentors:", error);
-          toast({
-            title: "Error",
-            description: "Failed to load mentors.",
-            variant: "destructive",
-          });
-          setFilteredMentors([]);
-          return;
-        }
-        
-        if (data && data.length > 0) {
-          setFilteredMentors(data);
-        } else {
-          setFilteredMentors([]);
-          toast({
-            title: "No mentors found",
-            description: "There are currently no mentors available.",
-          });
-        }
-      } catch (err) {
-        console.error("Exception fetching mentors:", err);
-        setFilteredMentors([]);
-        toast({
-          title: "Error",
-          description: "An unexpected error occurred.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchMentors();
-  }, [toast]);
-
-  const handleSearch = async (query: string) => {
+  // Simple local search function
+  const handleSearch = (query: string) => {
     setSearchQuery(query);
     
     if (!query) {
-      // Fetch all mentors again when search is cleared
-      const { data } = await getMentors();
-      if (data) setFilteredMentors(data);
+      setFilteredMentors(mockMentors);
       return;
     }
     
-    // Use the searchMentors function from Supabase services
-    const { data, error } = await searchMentors(query);
+    const lowerCaseQuery = query.toLowerCase();
+    const results = mockMentors.filter(mentor => 
+      mentor.name.toLowerCase().includes(lowerCaseQuery) ||
+      mentor.department.toLowerCase().includes(lowerCaseQuery) ||
+      mentor.skills.some(skill => skill.toLowerCase().includes(lowerCaseQuery)) ||
+      (mentor.bio && mentor.bio.toLowerCase().includes(lowerCaseQuery))
+    );
     
-    if (error) {
-      console.error("Error searching mentors:", error);
-      toast({
-        title: "Search Error",
-        description: "Failed to search mentors. Please try again.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    setFilteredMentors(data || []);
+    setFilteredMentors(results);
   };
 
   const handleGeminiSearch = (geminiResults: any[]) => {
-    const mappedMentors = geminiResults.map(dbMentor => {
-      return {
-        id: dbMentor.id,
-        name: dbMentor.name,
-        department: dbMentor.department,
-        skills: dbMentor.skills,
-        rating: dbMentor.rating,
-        profile_image: dbMentor.profile_image,
-        linkedin_url: dbMentor.linkedin_url,
-        bio: dbMentor.bio,
-        review_count: dbMentor.review_count,
-        created_at: dbMentor.created_at
-      } as Mentor;
-    });
-    
+    // Simulate finding matches in our mock data
+    const mappedMentors = mockMentors.slice(0, geminiResults.length > 0 ? geminiResults.length : 1);
     setFilteredMentors(mappedMentors);
   };
 

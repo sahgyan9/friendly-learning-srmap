@@ -6,10 +6,49 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
-import { getMentorById } from "@/integrations/supabase/client";
 import { Mentor } from "@/types/mentor";
 import ChatModal from "@/components/chat/modals/ChatModal";
 import { useAuth } from "@/context/AuthContext";
+
+// Mock data for mentors
+const mockMentors: Mentor[] = [
+  {
+    id: "1",
+    name: "Jane Smith",
+    department: "Computer Science",
+    skills: ["JavaScript", "React", "Node.js"],
+    rating: 4.8,
+    profile_image: "https://ui-avatars.com/api/?name=Jane+Smith&background=6366F1&color=fff",
+    linkedin_url: "https://linkedin.com/in/janesmith",
+    bio: "Experienced web developer with 5 years of experience in frontend technologies.",
+    review_count: 24,
+    created_at: "2023-01-15T00:00:00Z"
+  },
+  {
+    id: "2",
+    name: "Mark Johnson",
+    department: "Data Science",
+    skills: ["Python", "Machine Learning", "Data Analysis"],
+    rating: 4.9,
+    profile_image: "https://ui-avatars.com/api/?name=Mark+Johnson&background=6366F1&color=fff",
+    linkedin_url: "https://linkedin.com/in/markjohnson",
+    bio: "Data scientist passionate about AI and machine learning applications.",
+    review_count: 31,
+    created_at: "2023-02-10T00:00:00Z"
+  },
+  {
+    id: "3",
+    name: "Sarah Williams",
+    department: "UI/UX Design",
+    skills: ["Figma", "Adobe XD", "UI Design", "UX Research"],
+    rating: 4.7,
+    profile_image: "https://ui-avatars.com/api/?name=Sarah+Williams&background=6366F1&color=fff",
+    linkedin_url: "https://linkedin.com/in/sarahwilliams",
+    bio: "Creative designer with a focus on user-centered design principles.",
+    review_count: 19,
+    created_at: "2023-03-05T00:00:00Z"
+  }
+];
 
 const MentorProfile = () => {
   const { id } = useParams<{ id: string }>();
@@ -19,28 +58,24 @@ const MentorProfile = () => {
   const { user } = useAuth();
 
   useEffect(() => {
+    // Simulate API fetch delay
     const fetchMentor = async () => {
-      if (!id) return;
-      
       setLoading(true);
       try {
-        const { data, error } = await getMentorById(id);
-        
-        if (error) {
-          console.error("Error fetching mentor:", error);
-          toast.error("Failed to load mentor profile");
-          return;
-        }
-        
-        if (data) {
-          setMentor(data);
-        } else {
-          toast.error("Mentor not found");
-        }
+        // Find mentor in mock data
+        setTimeout(() => {
+          const foundMentor = mockMentors.find(m => m.id === id);
+          
+          if (foundMentor) {
+            setMentor(foundMentor);
+          } else {
+            toast.error("Mentor not found");
+          }
+          setLoading(false);
+        }, 500);
       } catch (err) {
-        console.error("Exception fetching mentor:", err);
+        console.error("Error fetching mentor:", err);
         toast.error("An unexpected error occurred");
-      } finally {
         setLoading(false);
       }
     };

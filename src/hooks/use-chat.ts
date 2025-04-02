@@ -1,13 +1,7 @@
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { toast } from "sonner";
 import { Message } from "@/types/chat";
-import { 
-  getOrCreateConversation,
-  getConversationMessages, 
-  sendMessage 
-} from "@/integrations/supabase/services/chat";
-import { useDemoMessages } from "./messages/use-demo-messages";
 
 export const useChat = (userId: string, mentorId: string) => {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -16,62 +10,31 @@ export const useChat = (userId: string, mentorId: string) => {
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   
-  const { getDemoMessages, saveDemoMessage } = useDemoMessages();
-  
+  // Initialize chat (simulate backend interaction)
   const initializeChat = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       console.log("Initializing chat between:", userId, "and", mentorId);
       
-      // Try to get or create a real conversation
-      const { data: conversation, error } = await getOrCreateConversation(
-        userId, 
-        mentorId
-      );
+      // Generate a consistent ID based on user and mentor IDs
+      const demoConversationId = `demo-${userId}-${mentorId}`;
+      setConversationId(demoConversationId);
       
-      if (error) {
-        console.error("Error initializing chat:", error);
-        if (error.message && error.message.includes("row-level security")) {
-          console.log("Row-level security error detected - using simulated conversation for demo");
-          // Generate a consistent ID based on user and mentor IDs
-          const demoConversationId = `demo-${userId}-${mentorId}`;
-          setConversationId(demoConversationId);
-          
-          // Load any stored messages for this conversation
-          const demoMessages = getDemoMessages(demoConversationId);
-          if (demoMessages && demoMessages.length > 0) {
-            console.log("Using demo messages from localStorage:", demoMessages);
-            setMessages(demoMessages);
-          }
-        } else {
-          toast.error("Failed to initialize chat");
-          setError("Failed to initialize chat. Please try again later.");
-        }
-      } else if (conversation) {
-        console.log("Conversation created/retrieved successfully:", conversation);
-        setConversationId(conversation.id);
-        
-        const { data: messageData, error: messagesError } = await getConversationMessages(
-          conversation.id
-        );
-        
-        if (messagesError) {
-          console.error("Error fetching messages:", messagesError);
-          toast.error("Error loading messages");
-        } else if (messageData) {
-          setMessages(messageData);
-          console.log("Fetched messages:", messageData);
-        }
-      }
+      // Simulate API call delay
+      setTimeout(() => {
+        setMessages([]);
+        setLoading(false);
+      }, 1000);
+      
     } catch (err) {
       console.error("Exception initializing chat:", err);
       setError("An unexpected error occurred. Please try again later.");
-    } finally {
       setLoading(false);
     }
-  }, [userId, mentorId, getDemoMessages]);
+  }, [userId, mentorId]);
   
+  // Send message (simulate backend interaction)
   const handleSendMessage = useCallback(async (content: string) => {
     if (!conversationId) {
       toast.error("Chat not initialized");
@@ -93,43 +56,31 @@ export const useChat = (userId: string, mentorId: string) => {
       
       setMessages(prev => [...prev, tempMessage]);
       
-      // Check if using demo mode (localStorage)
-      if (conversationId.startsWith('demo-')) {
-        // Store in localStorage
-        saveDemoMessage(conversationId, tempMessage, userId, mentorId);
-        
-        // Simulate a delay
-        await new Promise(resolve => setTimeout(resolve, 500));
-        return;
-      }
+      // Simulate a delay
+      await new Promise(resolve => setTimeout(resolve, 500));
       
-      // Send the message to the real backend
-      const { data, error } = await sendMessage(
-        conversationId,
-        userId,
-        mentorId,
-        content
-      );
-      
-      if (error) {
-        console.error("Error sending message:", error);
-        toast.error("Failed to send message");
+      // Simulate mentor response after a delay
+      setTimeout(() => {
+        const responseMessage: Message = {
+          id: `response-${Date.now()}`,
+          conversation_id: conversationId,
+          sender_id: mentorId,
+          receiver_id: userId,
+          content: "Thanks for reaching out! This is a simulated response.",
+          sent_at: new Date().toISOString(),
+          is_read: false
+        };
         
-        // Fall back to localStorage if there's an error
-        const demoConversationId = `demo-${userId}-${mentorId}`;
-        saveDemoMessage(demoConversationId, tempMessage, userId, mentorId);
-      } else if (data) {
-        console.log("Message sent successfully:", data);
-        // Replace the temp message with the real one
-        setMessages(prev => prev.map(m => m.id === tempMessage.id ? data : m));
-      }
+        setMessages(prev => [...prev, responseMessage]);
+      }, 2000);
+      
     } catch (err) {
       console.error("Exception sending message:", err);
       toast.error("An error occurred while sending your message");
     } finally {
       setSending(false);
     }
-  }, [conversationId, userId, mentorId, saveDemoMessage]);
+  }, [conversationId, userId, mentorId]);
 
   return {
     messages,
