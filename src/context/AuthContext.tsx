@@ -1,3 +1,4 @@
+
 import { createContext, useState, useContext, useEffect, ReactNode } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -33,6 +34,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
 
   useEffect(() => {
+    console.log("AuthProvider init");
     // Set up auth state listener first
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
@@ -42,6 +44,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
         // Fetch user profile when session changes
         if (session?.user) {
+          console.log("User authenticated:", session.user.email);
           // For Google Auth or other OAuth providers, we need to create a profile if it doesn't exist
           if (event === 'SIGNED_IN') {
             setTimeout(() => {
@@ -61,6 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log("Existing session check:", session ? "Found" : "None");
       setSession(session);
       setUser(session?.user ?? null);
       
@@ -78,6 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const checkAndCreateUserProfile = async (user: User) => {
     try {
+      console.log("Checking if profile exists for:", user.email);
       // First check if profile exists
       const { data: existingProfile, error: fetchError } = await getUserProfile(user.id);
       
@@ -85,6 +90,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // If profile doesn't exist, create one
       if (!existingProfile) {
+        console.log("No profile found, creating new profile");
         const userData = {
           id: user.id,
           name: user.user_metadata.full_name || user.user_metadata.name || 'User',
@@ -100,7 +106,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             email: userData.email,
           });
         
-        if (insertError) throw insertError;
+        if (insertError) {
+          console.error("Error creating user profile:", insertError);
+          throw insertError;
+        }
         
         setProfile({
           id: userData.id,
@@ -109,6 +118,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           role: 'student',
         });
       } else {
+        console.log("Found existing profile:", existingProfile.name);
         setProfile({
           id: existingProfile.id,
           name: existingProfile.name,
@@ -126,12 +136,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const fetchUserProfile = async (userId: string) => {
     try {
+      console.log("Fetching profile for user ID:", userId);
       const { data, error } = await getUserProfile(userId);
       
       if (error) {
         console.error('Error fetching user profile:', error);
         setProfile(null);
       } else if (data) {
+        console.log("Profile fetched successfully:", data.name);
         setProfile({
           id: data.id,
           name: data.name,
@@ -141,6 +153,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
       } else {
         // User doesn't have a profile yet
+        console.log("No profile found for user");
         setProfile(null);
       }
     } catch (error) {

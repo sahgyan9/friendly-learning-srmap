@@ -30,6 +30,7 @@ const SignIn = () => {
   // Set up auth state listener
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("Auth event:", event);
       if (event === 'SIGNED_IN' && session) {
         navigate('/');
       }
@@ -51,22 +52,25 @@ const SignIn = () => {
     setIsLoading(true);
     
     try {
+      console.log("Attempting to sign in with:", formData.email);
       const { data, error } = await supabase.auth.signInWithPassword({
         email: formData.email,
         password: formData.password,
       });
 
       if (error) {
+        console.error("Sign-in error:", error);
         if (error.message.includes('Email not confirmed')) {
           toast.error("Please confirm your email before signing in. Check your inbox.");
         } else if (error.message.includes('Invalid login credentials')) {
           toast.error("Incorrect email or password.");
         } else {
-          throw error;
+          toast.error(error.message || "Error signing in");
         }
         return;
       }
 
+      console.log("Sign in successful:", data);
       toast.success("Signed in successfully!");
       navigate('/');
     } catch (error: any) {

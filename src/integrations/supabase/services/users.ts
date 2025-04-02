@@ -20,6 +20,7 @@ export const upsertUserProfile = async (
   }
 ) => {
   try {
+    console.log("Upserting user profile:", id, profileData);
     const { data, error } = await supabase
       .from('users')
       .upsert({
@@ -42,13 +43,15 @@ export const upsertUserProfile = async (
  */
 export const getUserProfile = async (userId: string) => {
   try {
+    console.log("Getting user profile for:", userId);
     const { data, error } = await supabase
       .from('users')
       .select('*')
       .eq('id', userId)
       .single();
 
-    if (error && error.code !== 'PGRST116') throw error;
+    if (error && error.code !== 'PGRST116') throw error; // PGRST116 is "no rows returned" error
+    console.log("User profile result:", data || "Not found");
     return { data, error: null };
   } catch (error) {
     console.error("Error fetching user profile:", error);
@@ -61,6 +64,7 @@ export const getUserProfile = async (userId: string) => {
  */
 export const updateUserProfile = async (userId: string, updates: Partial<UserProfile>) => {
   try {
+    console.log("Updating user profile:", userId, updates);
     const { data, error } = await supabase
       .from('users')
       .update(updates)
