@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
@@ -143,11 +142,9 @@ const Messages = () => {
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   
-  // Load messages when active chat changes
   useEffect(() => {
     if (activeChat) {
       setIsLoadingMessages(true);
-      // Simulate API call
       setTimeout(() => {
         const chatMessages = mockMessages[activeChat as keyof typeof mockMessages] || [];
         setMessages(chatMessages);
@@ -170,12 +167,11 @@ const Messages = () => {
     );
   };
 
-  const sendMessage = (content: string) => {
+  const sendMessage = async (content: string): Promise<void> => {
     if (!activeChat) return;
     
     setIsSending(true);
     
-    // Get the conversation to find the other user's ID
     const conversation = conversations.find(c => c.id === activeChat);
     if (!conversation) {
       toast.error("Conversation not found");
@@ -187,7 +183,6 @@ const Messages = () => {
       ? conversation.user2_id 
       : conversation.user1_id;
     
-    // Create a new message
     const newMessage = {
       id: `new-${Date.now()}`,
       conversation_id: activeChat,
@@ -198,10 +193,8 @@ const Messages = () => {
       is_read: false
     };
     
-    // Add message to the UI immediately
     setMessages(prev => [...prev, newMessage]);
     
-    // Update the conversation's last message
     setConversations(prevConversations => {
       return prevConversations.map(conv => {
         if (conv.id === activeChat) {
@@ -216,43 +209,43 @@ const Messages = () => {
       });
     });
     
-    // Simulate saving to backend
-    setTimeout(() => {
-      setIsSending(false);
-      
-      // Simulate response after a delay
-      if (Math.random() > 0.3) { // 70% chance of response
-        setTimeout(() => {
-          const mentor = getOtherUser(conversation);
-          const responseMessage = {
-            id: `response-${Date.now()}`,
-            conversation_id: activeChat,
-            sender_id: receiverId,
-            receiver_id: SAMPLE_USER.id,
-            content: `Thanks for your message! This is an automated response from ${mentor?.name}.`,
-            sent_at: new Date().toISOString(),
-            is_read: false
-          };
-          
-          setMessages(prev => [...prev, responseMessage]);
-          
-          // Update the conversation's last message
-          setConversations(prevConversations => {
-            return prevConversations.map(conv => {
-              if (conv.id === activeChat) {
-                return {
-                  ...conv,
-                  last_message: responseMessage,
-                  last_message_id: responseMessage.id,
-                  last_updated: responseMessage.sent_at
-                };
-              }
-              return conv;
+    return new Promise<void>((resolve) => {
+      setTimeout(() => {
+        setIsSending(false);
+        
+        if (Math.random() > 0.3) {
+          setTimeout(() => {
+            const mentor = getOtherUser(conversation);
+            const responseMessage = {
+              id: `response-${Date.now()}`,
+              conversation_id: activeChat,
+              sender_id: receiverId,
+              receiver_id: SAMPLE_USER.id,
+              content: `Thanks for your message! This is an automated response from ${mentor?.name}.`,
+              sent_at: new Date().toISOString(),
+              is_read: false
+            };
+            
+            setMessages(prev => [...prev, responseMessage]);
+            
+            setConversations(prevConversations => {
+              return prevConversations.map(conv => {
+                if (conv.id === activeChat) {
+                  return {
+                    ...conv,
+                    last_message: responseMessage,
+                    last_message_id: responseMessage.id,
+                    last_updated: responseMessage.sent_at
+                  };
+                }
+                return conv;
+              });
             });
-          });
-        }, 3000);
-      }
-    }, 1000);
+          }, 3000);
+        }
+        resolve();
+      }, 1000);
+    });
   };
 
   const filteredConversations = searchQuery.trim()
