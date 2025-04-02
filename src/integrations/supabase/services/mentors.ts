@@ -108,7 +108,8 @@ export const addMentor = async (mentorData: Mentor) => {
         department: mentorData.department,
         skills: mentorData.skills,
         linkedin_url: mentorData.linkedin_url,
-        profile_pic_url: mentorData.profile_image
+        profile_pic_url: mentorData.profile_image,
+        bio: mentorData.bio
       })
       .eq('id', mentorData.id);
 

@@ -130,6 +130,7 @@ export type Database = {
       }
       users: {
         Row: {
+          bio: string | null
           created_at: string
           department: string | null
           email: string
@@ -142,6 +143,7 @@ export type Database = {
           skills: string[] | null
         }
         Insert: {
+          bio?: string | null
           created_at?: string
           department?: string | null
           email: string
@@ -154,6 +156,7 @@ export type Database = {
           skills?: string[] | null
         }
         Update: {
+          bio?: string | null
           created_at?: string
           department?: string | null
           email?: string

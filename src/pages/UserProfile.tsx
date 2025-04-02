@@ -202,6 +202,45 @@ const UserProfile = () => {
     }
   };
 
+  const fetchUserProfile = async (userId: string) => {
+    try {
+      const { data, error } = await getUserProfile(userId);
+      
+      if (error) {
+        console.error('Error fetching user profile:', error);
+        setProfile(null);
+      } else if (data) {
+        setProfile({
+          id: data.id,
+          name: data.name,
+          email: data.email,
+          role: data.is_mentor ? 'mentor' : 'student',
+          profile_image: data.profile_pic_url,
+        });
+        
+        // If it's a mentor profile, update form with bio data
+        if (data.is_mentor) {
+          setFormData(prev => ({
+            ...prev,
+            bio: data.bio || "",
+            department: data.department || "",
+            skills: data.skills?.join(', ') || "",
+            linkedin_url: data.linkedin_url || "",
+            profile_image: data.profile_pic_url || ""
+          }));
+        }
+      } else {
+        // User doesn't have a profile yet
+        setProfile(null);
+      }
+    } catch (error) {
+      console.error('Unexpected error fetching user profile:', error);
+      setProfile(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (authLoading) {
     return (
       <div className="min-h-screen">

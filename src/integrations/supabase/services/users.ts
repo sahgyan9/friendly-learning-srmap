@@ -16,6 +16,7 @@ export const upsertUserProfile = async (
     skills?: string[];
     linkedin_url?: string;
     profile_pic_url?: string;
+    bio?: string;
   }
 ) => {
   try {
