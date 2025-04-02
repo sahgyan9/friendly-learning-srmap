@@ -83,7 +83,7 @@ const MentorProfileForm = ({ userId, initialData }: MentorProfileFormProps) => {
       // First, update the user's role to 'mentor' in the users table
       const { error: userError } = await supabase
         .from('users')
-        .update({ role: 'mentor' })
+        .update({ is_mentor: true })
         .eq('id', userId);
       
       if (userError) throw userError;

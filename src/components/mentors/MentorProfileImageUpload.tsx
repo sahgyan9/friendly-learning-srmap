@@ -33,6 +33,19 @@ const MentorProfileImageUpload = ({
     try {
       setUploading(true);
       
+      // Create storage bucket if it doesn't exist
+      const { data: bucketData, error: bucketError } = await supabase
+        .storage
+        .getBucket('profiles');
+        
+      if (bucketError && bucketError.message.includes('does not exist')) {
+        // Create the bucket
+        await supabase.storage.createBucket('profiles', {
+          public: true,
+          fileSizeLimit: 5242880, // 5MB
+        });
+      }
+      
       // Generate a unique file name to avoid collisions
       const fileExt = file.name.split('.').pop();
       const fileName = `profile-images/${userId}-${uuidv4()}.${fileExt}`;

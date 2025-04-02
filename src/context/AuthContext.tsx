@@ -3,6 +3,7 @@ import { createContext, useState, useContext, useEffect, ReactNode } from "react
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
+import { getUserProfile } from "@/integrations/supabase/services/users";
 
 interface UserProfile {
   id: string;
@@ -78,11 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const checkAndCreateUserProfile = async (user: User) => {
     try {
       // First check if profile exists
-      const { data: existingProfile, error: fetchError } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', user.id)
-        .maybeSingle();
+      const { data: existingProfile, error: fetchError } = await getUserProfile(user.id);
       
       if (fetchError) throw fetchError;
 
@@ -97,13 +94,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         const { error: insertError } = await supabase
           .from('users')
-          .insert(userData);
+          .insert({
+            id: userData.id,
+            name: userData.name,
+            email: userData.email,
+          });
         
         if (insertError) throw insertError;
         
-        setProfile(userData);
+        setProfile({
+          id: userData.id,
+          name: userData.name,
+          email: userData.email,
+          role: 'student',
+        });
       } else {
-        setProfile(existingProfile);
+        setProfile({
+          id: existingProfile.id,
+          name: existingProfile.name,
+          email: existingProfile.email,
+          role: existingProfile.is_mentor ? 'mentor' : 'student',
+          profile_image: existingProfile.profile_pic_url,
+        });
       }
     } catch (error) {
       console.error('Error checking/creating user profile:', error);
@@ -114,17 +126,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const fetchUserProfile = async (userId: string) => {
     try {
-      const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', userId)
-        .maybeSingle();
+      const { data, error } = await getUserProfile(userId);
       
       if (error) {
         console.error('Error fetching user profile:', error);
         setProfile(null);
+      } else if (data) {
+        setProfile({
+          id: data.id,
+          name: data.name,
+          email: data.email,
+          role: data.is_mentor ? 'mentor' : 'student',
+          profile_image: data.profile_pic_url,
+        });
       } else {
-        setProfile(data);
+        // User doesn't have a profile yet
+        setProfile(null);
       }
     } catch (error) {
       console.error('Unexpected error fetching user profile:', error);

@@ -9,7 +9,164 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      mentor_requests: {
+        Row: {
+          id: string
+          id_card_url: string
+          processed_at: string | null
+          status: string
+          submitted_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          id_card_url: string
+          processed_at?: string | null
+          status?: string
+          submitted_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          id_card_url?: string
+          processed_at?: string | null
+          status?: string
+          submitted_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mentor_requests_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      messages: {
+        Row: {
+          id: string
+          is_read: boolean | null
+          message_text: string
+          receiver_id: string
+          sender_id: string
+          timestamp: string
+        }
+        Insert: {
+          id?: string
+          is_read?: boolean | null
+          message_text: string
+          receiver_id: string
+          sender_id: string
+          timestamp?: string
+        }
+        Update: {
+          id?: string
+          is_read?: boolean | null
+          message_text?: string
+          receiver_id?: string
+          sender_id?: string
+          timestamp?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_receiver_id_fkey"
+            columns: ["receiver_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ratings: {
+        Row: {
+          id: string
+          mentee_id: string
+          mentor_id: string
+          rating: number
+          review_text: string | null
+          timestamp: string
+        }
+        Insert: {
+          id?: string
+          mentee_id: string
+          mentor_id: string
+          rating: number
+          review_text?: string | null
+          timestamp?: string
+        }
+        Update: {
+          id?: string
+          mentee_id?: string
+          mentor_id?: string
+          rating?: number
+          review_text?: string | null
+          timestamp?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ratings_mentee_id_fkey"
+            columns: ["mentee_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ratings_mentor_id_fkey"
+            columns: ["mentor_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      users: {
+        Row: {
+          created_at: string
+          department: string | null
+          email: string
+          id: string
+          is_admin: boolean | null
+          is_mentor: boolean | null
+          linkedin_url: string | null
+          name: string
+          profile_pic_url: string | null
+          skills: string[] | null
+        }
+        Insert: {
+          created_at?: string
+          department?: string | null
+          email: string
+          id: string
+          is_admin?: boolean | null
+          is_mentor?: boolean | null
+          linkedin_url?: string | null
+          name: string
+          profile_pic_url?: string | null
+          skills?: string[] | null
+        }
+        Update: {
+          created_at?: string
+          department?: string | null
+          email?: string
+          id?: string
+          is_admin?: boolean | null
+          is_mentor?: boolean | null
+          linkedin_url?: string | null
+          name?: string
+          profile_pic_url?: string | null
+          skills?: string[] | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

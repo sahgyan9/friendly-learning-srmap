@@ -1,99 +1,100 @@
 
+import { useState, useEffect } from "react";
 import { Message, Conversation } from "@/types/chat";
 
 /**
- * Utility functions for handling demo messages in localStorage
+ * Demo hook for storing messages locally when Supabase is not available
  */
 export const useDemoMessages = () => {
-  /**
-   * Gets demo conversations from localStorage
-   */
-  const getDemoConversations = () => {
+  // Get demo conversations from localStorage
+  const getDemoConversations = (): Conversation[] => {
     try {
-      const storedConversations = localStorage.getItem('demo-conversations');
-      if (storedConversations) {
-        const parsedConversations = JSON.parse(storedConversations);
-        return Object.values(parsedConversations) as Conversation[];
-      }
-    } catch (err) {
-      console.error("Error parsing localStorage conversations:", err);
+      const storedConversations = localStorage.getItem("demo_conversations");
+      return storedConversations ? JSON.parse(storedConversations) : [];
+    } catch (error) {
+      console.error("Error parsing demo conversations:", error);
+      return [];
     }
-    return [];
   };
 
-  /**
-   * Gets demo messages for a conversation from localStorage
-   */
-  const getDemoMessages = (conversationId: string) => {
+  // Get demo messages for a specific conversation
+  const getDemoMessages = (conversationId: string): Message[] => {
     try {
-      const storedMessages = localStorage.getItem('demo-messages');
-      if (storedMessages) {
-        const parsedMessages = JSON.parse(storedMessages);
-        return parsedMessages[conversationId] || [];
-      }
-    } catch (err) {
-      console.error("Error parsing localStorage messages:", err);
+      const storedMessages = localStorage.getItem(`demo_messages_${conversationId}`);
+      return storedMessages ? JSON.parse(storedMessages) : [];
+    } catch (error) {
+      console.error("Error parsing demo messages:", error);
+      return [];
     }
-    return [];
   };
 
-  /**
-   * Saves a demo message to localStorage
-   */
+  // Save a demo message
   const saveDemoMessage = (
     conversationId: string,
     message: Message,
     userId: string,
     receiverId: string
-  ) => {
+  ): Conversation | null => {
     try {
-      // Store messages
-      const storedMessages = localStorage.getItem('demo-messages')
-        ? JSON.parse(localStorage.getItem('demo-messages') || '{}')
-        : {};
+      // Get existing messages for this conversation
+      const existingMessages = getDemoMessages(conversationId);
+      const updatedMessages = [...existingMessages, message];
       
-      if (!storedMessages[conversationId]) {
-        storedMessages[conversationId] = [];
-      }
+      // Store updated messages
+      localStorage.setItem(
+        `demo_messages_${conversationId}`,
+        JSON.stringify(updatedMessages)
+      );
+
+      // Update conversations list
+      const conversations = getDemoConversations();
+      let conversation = conversations.find(c => c.id === conversationId);
       
-      storedMessages[conversationId].push(message);
-      localStorage.setItem('demo-messages', JSON.stringify(storedMessages));
-      
-      // Update conversation with last message
-      const storedConversations = localStorage.getItem('demo-conversations')
-        ? JSON.parse(localStorage.getItem('demo-conversations') || '{}')
-        : {};
-      
-      if (!storedConversations[conversationId]) {
-        storedConversations[conversationId] = {
+      if (!conversation) {
+        // Create new conversation
+        conversation = {
           id: conversationId,
           user1_id: userId,
           user2_id: receiverId,
           last_message_id: message.id,
-          last_updated: new Date().toISOString(),
+          last_updated: message.sent_at,
           user1: {
             id: userId,
-            name: "John Student",
-            profile_image: "https://ui-avatars.com/api/?name=John+Student&background=6366F1&color=fff"
+            name: "You",
+            profile_image: "https://ui-avatars.com/api/?name=You&background=6366F1&color=fff"
           },
           user2: {
             id: receiverId,
-            name: "Mentor Name",
-            profile_image: "https://ui-avatars.com/api/?name=Mentor&background=6366F1&color=fff"
+            name: "Contact",
+            profile_image: "https://ui-avatars.com/api/?name=Contact&background=6366F1&color=fff"
           },
           last_message: message
         };
+        
+        const updatedConversations = [...conversations, conversation];
+        localStorage.setItem(
+          "demo_conversations", 
+          JSON.stringify(updatedConversations)
+        );
       } else {
-        storedConversations[conversationId].last_message = message;
-        storedConversations[conversationId].last_updated = new Date().toISOString();
-        storedConversations[conversationId].last_message_id = message.id;
+        // Update existing conversation
+        conversation.last_message = message;
+        conversation.last_message_id = message.id;
+        conversation.last_updated = message.sent_at;
+        
+        const updatedConversations = conversations.map(c => 
+          c.id === conversationId ? conversation : c
+        );
+        
+        localStorage.setItem(
+          "demo_conversations", 
+          JSON.stringify(updatedConversations)
+        );
       }
       
-      localStorage.setItem('demo-conversations', JSON.stringify(storedConversations));
-      
-      return storedConversations[conversationId] as Conversation;
-    } catch (err) {
-      console.error("Error updating localStorage:", err);
+      return conversation;
+    } catch (error) {
+      console.error("Error saving demo message:", error);
       return null;
     }
   };
