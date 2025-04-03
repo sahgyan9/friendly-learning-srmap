@@ -49,30 +49,34 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     
     // For Slot components, we need to ensure we're passing a single child
     if (asChild) {
-      // Important: When using asChild, we need to clone the child element
-      // and pass down our props to it, rather than wrapping in additional elements
-      return (
-        <Comp
-          className={cn(buttonVariants({ variant, size, className }))}
-          ref={ref}
-          disabled={isLoading || props.disabled}
-          {...props}
-        >
-          {React.isValidElement(children) && 
-            React.cloneElement(children, {
-              // We pass attributes to the child but don't wrap with any additional elements
-              ...children.props,
-              // If loading, we'll handle it in the child's content
-              children: isLoading ? (
-                <React.Fragment>
-                  <Loader2 className="animate-spin" />
-                  {children.props.children}
-                </React.Fragment>
-              ) : children.props.children,
-            })
-          }
-        </Comp>
-      )
+      // Important: When using asChild, the child must be a valid React element
+      if (!React.isValidElement(children)) {
+        console.error("Button: asChild requires a valid React element as child");
+        return null;
+      }
+      
+      // Clone the child element and modify its props
+      const childProps = {
+        ...children.props,
+        className: cn(buttonVariants({ variant, size, className }), children.props.className),
+        ref,
+        disabled: isLoading || props.disabled,
+        ...props,
+      };
+      
+      // Create the appropriate child content based on loading state
+      const childContent = isLoading ? (
+        <React.Fragment>
+          <Loader2 className="animate-spin" />
+          {children.props.children}
+        </React.Fragment>
+      ) : children.props.children;
+      
+      // Return the cloned child with updated props and content
+      return React.cloneElement(children, {
+        ...childProps,
+        children: childContent,
+      });
     }
     
     // For regular buttons, we can use the motion.div wrapper

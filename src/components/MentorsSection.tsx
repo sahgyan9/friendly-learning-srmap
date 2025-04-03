@@ -1,16 +1,20 @@
 
-import { useState, useEffect } from "react";
-import SearchBar from "@/components/SearchBar";
-import MentorCard from "@/components/MentorCard";
-import { Mentor } from "@/types/mentor";
-import { getMentors, searchMentors } from "@/integrations/supabase/services/mentors";
+import { useState, useEffect, Suspense, lazy } from "react";
+import { getMentors } from "@/integrations/supabase/services/mentors";
 import { useToast } from "@/components/ui/use-toast";
 import { Loader2 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Mentor } from "@/types/mentor";
+
+// Lazy load heavy components
+const SearchBar = lazy(() => import("@/components/SearchBar"));
+const MentorCard = lazy(() => import("@/components/MentorCard"));
 
 const MentorsSection = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredMentors, setFilteredMentors] = useState<Mentor[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAiSearch, setIsAiSearch] = useState(false);
   const { toast } = useToast();
 
   // Fetch mentors from Supabase on component mount
@@ -32,7 +36,8 @@ const MentorsSection = () => {
         }
         
         if (data && data.length > 0) {
-          setFilteredMentors(data);
+          // Only display a limited number initially for faster rendering
+          setFilteredMentors(data.slice(0, 8));
         } else {
           setFilteredMentors([]);
           toast({
@@ -58,16 +63,18 @@ const MentorsSection = () => {
 
   const handleSearch = async (query: string) => {
     setSearchQuery(query);
+    setIsAiSearch(false);
     
     if (!query) {
       // Fetch all mentors again when search is cleared
       const { data } = await getMentors();
-      if (data) setFilteredMentors(data);
+      if (data) setFilteredMentors(data.slice(0, 8));
       return;
     }
     
     // Use the searchMentors function from Supabase services
-    const { data, error } = await searchMentors(query);
+    const { data, error } = await import("@/integrations/supabase/services/mentors")
+      .then(module => module.searchMentors(query));
     
     if (error) {
       console.error("Error searching mentors:", error);
@@ -83,6 +90,8 @@ const MentorsSection = () => {
   };
 
   const handleGeminiSearch = (geminiResults: any[]) => {
+    setIsAiSearch(true);
+    
     const mappedMentors = geminiResults.map(dbMentor => {
       return {
         id: dbMentor.id,
@@ -101,6 +110,49 @@ const MentorsSection = () => {
     setFilteredMentors(mappedMentors);
   };
 
+  // SearchBar skeleton component
+  const SearchBarSkeleton = () => (
+    <div className="w-full max-w-3xl mx-auto mb-10">
+      <div className="flex items-center gap-2">
+        <Skeleton className="h-12 flex-1 rounded-xl" />
+        <Skeleton className="h-12 w-24 rounded-md" />
+        <Skeleton className="h-12 w-32 rounded-md" />
+      </div>
+      <div className="mt-2 flex gap-2">
+        <Skeleton className="h-6 w-16" />
+        <Skeleton className="h-6 w-20" />
+        <Skeleton className="h-6 w-32" />
+        <Skeleton className="h-6 w-28" />
+      </div>
+    </div>
+  );
+
+  // MentorCard skeleton component
+  const MentorCardSkeleton = () => (
+    <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 h-[260px]">
+      <div className="flex items-start gap-4">
+        <Skeleton className="w-16 h-16 rounded-full" />
+        <div className="flex-1">
+          <Skeleton className="h-6 w-32 mb-2" />
+          <Skeleton className="h-4 w-24 mb-2" />
+          <Skeleton className="h-5 w-16" />
+        </div>
+      </div>
+      <div className="mt-4 mb-5">
+        <Skeleton className="h-4 w-16 mb-2" />
+        <div className="flex gap-2">
+          <Skeleton className="h-6 w-16 rounded-full" />
+          <Skeleton className="h-6 w-20 rounded-full" />
+          <Skeleton className="h-6 w-14 rounded-full" />
+        </div>
+      </div>
+      <div className="flex gap-2 mt-4">
+        <Skeleton className="h-10 flex-1 rounded-md" />
+        <Skeleton className="h-10 flex-1 rounded-md" />
+      </div>
+    </div>
+  );
+
   return (
     <section className="py-16 bg-gray-50">
       <div className="container px-4 md:px-6">
@@ -112,18 +164,23 @@ const MentorsSection = () => {
           </p>
         </div>
         
-        <SearchBar onSearch={handleSearch} onGeminiSearch={handleGeminiSearch} />
+        <Suspense fallback={<SearchBarSkeleton />}>
+          <SearchBar onSearch={handleSearch} onGeminiSearch={handleGeminiSearch} />
+        </Suspense>
         
         {isLoading ? (
-          <div className="flex justify-center items-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <span className="ml-2 text-lg">Loading mentors...</span>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
+            {[...Array(8)].map((_, index) => (
+              <MentorCardSkeleton key={index} />
+            ))}
           </div>
         ) : filteredMentors.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredMentors.map((mentor) => (
-              <MentorCard key={mentor.id} mentor={mentor} />
-            ))}
+            <Suspense fallback={<div className="col-span-full flex justify-center py-8"><Loader2 className="animate-spin h-8 w-8" /></div>}>
+              {filteredMentors.map((mentor) => (
+                <MentorCard key={mentor.id} mentor={mentor} />
+              ))}
+            </Suspense>
           </div>
         ) : (
           <div className="text-center py-12">
@@ -131,6 +188,18 @@ const MentorsSection = () => {
             <p className="text-muted-foreground">
               Try adjusting your search or browse all available mentors.
             </p>
+          </div>
+        )}
+        
+        {/* View all mentors link */}
+        {filteredMentors.length > 0 && (
+          <div className="text-center mt-8">
+            <a 
+              href="/mentors" 
+              className="text-primary font-medium hover:underline"
+            >
+              View all mentors →
+            </a>
           </div>
         )}
       </div>
