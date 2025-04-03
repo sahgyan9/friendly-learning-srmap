@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { addMentor } from "@/integrations/supabase/services/mentors";
 import MentorProfileImageUpload from "./MentorProfileImageUpload";
+import { useAuth } from "@/context/AuthContext";
 
 interface MentorFormData {
   name: string;
@@ -30,6 +31,7 @@ const MentorProfileForm = ({ userId, initialData }: MentorProfileFormProps) => {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<MentorFormData>(initialData);
+  const { refreshProfile } = useAuth();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -95,6 +97,9 @@ const MentorProfileForm = ({ userId, initialData }: MentorProfileFormProps) => {
       
       toast.success("Your mentor profile has been created successfully!");
       
+      // Refresh the auth context to update role information
+      await refreshProfile();
+      
       // Navigate to the user's profile page
       navigate('/profile');
     } catch (error: any) {
@@ -135,7 +140,7 @@ const MentorProfileForm = ({ userId, initialData }: MentorProfileFormProps) => {
             value={formData.department}
             onChange={handleChange}
             required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full px-3 py-2 border border-input bg-transparent rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
           >
             <option value="">Select Department</option>
             <option value="Computer Science">Computer Science</option>
@@ -161,7 +166,7 @@ const MentorProfileForm = ({ userId, initialData }: MentorProfileFormProps) => {
           required
           placeholder="Python, Data Structures, Machine Learning (comma separated)"
         />
-        <p className="text-xs text-gray-500">List your areas of expertise (comma separated)</p>
+        <p className="text-xs text-muted-foreground">List your areas of expertise (comma separated)</p>
       </div>
 
       <div className="space-y-2">

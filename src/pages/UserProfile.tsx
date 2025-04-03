@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Camera, Loader2, Save } from "lucide-react";
+import { Camera, Loader2, Save, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,7 +14,7 @@ import { useAuth } from "@/context/AuthContext";
 
 const UserProfile = () => {
   const navigate = useNavigate();
-  const { user, profile, loading: authLoading } = useAuth();
+  const { user, profile, loading: authLoading, refreshProfile, isMentor } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [isMentorProfile, setIsMentorProfile] = useState(false);
   const [mentorData, setMentorData] = useState<any>(null);
@@ -42,9 +42,11 @@ const UserProfile = () => {
       }));
 
       // Check if the user is a mentor
-      checkMentorStatus();
+      if (isMentor) {
+        checkMentorStatus();
+      }
     }
-  }, [profile]);
+  }, [profile, isMentor]);
 
   const checkMentorStatus = async () => {
     if (!user) return;
@@ -132,6 +134,12 @@ const UserProfile = () => {
     }
   };
 
+  const handleRefreshProfile = async () => {
+    toast.info("Refreshing profile data...");
+    await refreshProfile();
+    toast.success("Profile data refreshed");
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -186,10 +194,9 @@ const UserProfile = () => {
       }
       
       toast.success('Profile updated successfully');
-      // Refresh the page to show updated profile
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
+      
+      // Refresh the profile to show updated data
+      await refreshProfile();
       
     } catch (error: any) {
       console.error('Error updating profile:', error);
@@ -201,7 +208,7 @@ const UserProfile = () => {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen">
+      <div className="min-h-screen bg-background">
         <Navbar />
         <div className="container px-4 md:px-6 pt-24 pb-16 flex justify-center items-center min-h-[60vh]">
           <div className="flex flex-col items-center">
@@ -214,26 +221,39 @@ const UserProfile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <Navbar />
       
       <main className="container px-4 py-16 md:py-24 mx-auto">
         <div className="max-w-3xl mx-auto">
           <div className="mb-8 text-center">
-            <h1 className="text-3xl font-bold">Your Profile</h1>
+            <div className="flex items-center justify-center gap-2">
+              <h1 className="text-3xl font-bold">Your Profile</h1>
+              <Button 
+                variant="outline" 
+                size="icon" 
+                onClick={handleRefreshProfile} 
+                title="Refresh profile data"
+                className="ml-2"
+              >
+                <RefreshCw className="h-4 w-4" />
+              </Button>
+            </div>
             <p className="text-muted-foreground mt-2">
-              {isMentorProfile ? "You're registered as a mentor. Edit your profile details below." : "Manage your account information"}
+              {isMentor 
+                ? "You're registered as a mentor. Edit your profile details below." 
+                : "Manage your account information"}
             </p>
           </div>
           
-          <div className="bg-white rounded-lg shadow-sm p-6 md:p-8">
+          <div className="bg-card rounded-lg shadow-sm p-6 md:p-8 border border-border">
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Profile Image */}
               <div className="flex flex-col items-center mb-8">
                 <div className="relative">
                   <Avatar className="w-32 h-32">
                     <AvatarImage src={previewUrl || formData.profile_image} alt={formData.name} />
-                    <AvatarFallback>{formData.name?.substring(0, 2).toUpperCase()}</AvatarFallback>
+                    <AvatarFallback>{formData.name?.substring(0, 2).toUpperCase() || 'U'}</AvatarFallback>
                   </Avatar>
                   <label 
                     htmlFor="profile-image"
@@ -273,7 +293,7 @@ const UserProfile = () => {
                     name="email"
                     value={formData.email}
                     disabled
-                    className="bg-gray-50"
+                    className="bg-muted"
                   />
                 </div>
               </div>
@@ -329,8 +349,8 @@ const UserProfile = () => {
                 </>
               )}
               
-              {!isMentorProfile && (
-                <div className="py-4 border-t border-gray-100">
+              {!isMentorProfile && !isMentor && (
+                <div className="py-4 border-t border-border">
                   <p className="text-sm text-muted-foreground mb-3">
                     Want to help other students? Apply to become a mentor!
                   </p>

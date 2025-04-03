@@ -3,6 +3,7 @@ import { createContext, useState, useContext, useEffect, ReactNode } from "react
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 interface UserProfile {
   id: string;
@@ -77,6 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const checkAndCreateUserProfile = async (user: User) => {
     try {
+      setLoading(true);
       // First check if profile exists
       const { data: existingProfile, error: fetchError } = await supabase
         .from('users')
@@ -88,9 +90,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // If profile doesn't exist, create one
       if (!existingProfile) {
+        const name = user.user_metadata.full_name || 
+                     user.user_metadata.name || 
+                     user.user_metadata.email?.split('@')[0] || 
+                     'User';
+        
         const userData = {
           id: user.id,
-          name: user.user_metadata.full_name || user.user_metadata.name || 'User',
+          name: name,
           email: user.email || '',
           role: 'student' // Default role
         };
@@ -102,11 +109,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (insertError) throw insertError;
         
         setProfile(userData);
+        toast.success("Welcome! Your profile has been created.");
       } else {
         setProfile(existingProfile);
       }
     } catch (error) {
       console.error('Error checking/creating user profile:', error);
+      toast.error("Failed to load your profile. Please try refreshing the page.");
     } finally {
       setLoading(false);
     }
@@ -114,6 +123,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const fetchUserProfile = async (userId: string) => {
     try {
+      setLoading(true);
       const { data, error } = await supabase
         .from('users')
         .select('*')
@@ -123,14 +133,54 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (error) {
         console.error('Error fetching user profile:', error);
         setProfile(null);
+        toast.error("Failed to load your profile data");
       } else {
         setProfile(data);
+        console.log("Profile data loaded:", data);
+        
+        // After fetching basic profile, check if the user is a mentor
+        if (data) {
+          checkMentorStatus(userId);
+        }
       }
     } catch (error) {
       console.error('Unexpected error fetching user profile:', error);
       setProfile(null);
+      toast.error("An error occurred while loading your profile");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const checkMentorStatus = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('mentors')
+        .select('*')
+        .eq('id', userId)
+        .maybeSingle();
+      
+      if (error && error.code !== 'PGRST116') {
+        // PGRST116 is "not found" which is expected if user is not a mentor
+        console.error('Error checking mentor status:', error);
+      } 
+      
+      if (data) {
+        // Update user role to mentor if they are in the mentors table
+        const { error: updateError } = await supabase
+          .from('users')
+          .update({ role: 'mentor' })
+          .eq('id', userId);
+        
+        if (updateError) {
+          console.error('Error updating user role:', updateError);
+        } else {
+          // Refresh profile to get updated role
+          fetchUserProfile(userId);
+        }
+      }
+    } catch (error) {
+      console.error('Error in mentor status check:', error);
     }
   };
 
