@@ -47,8 +47,8 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild = false, isLoading = false, children, ...props }, ref) => {
     const Comp = asChild ? Slot : "button"
     
-    // Fix: Don't use motion.div wrapper when asChild=true
     if (asChild) {
+      // When using as a slot, just return the component directly without motion wrapper
       return (
         <Comp
           className={cn(buttonVariants({ variant, size, className }))}
@@ -56,13 +56,19 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           disabled={isLoading || props.disabled}
           {...props}
         >
-          {isLoading && <Loader2 className="animate-spin" />}
-          {children}
+          {isLoading ? (
+            <>
+              <Loader2 className="animate-spin" />
+              {children}
+            </>
+          ) : (
+            children
+          )}
         </Comp>
       )
     }
     
-    // Only use motion.div for regular buttons
+    // For regular buttons, use the motion.div wrapper
     return (
       <motion.div
         whileHover={{ scale: 1.03 }}
@@ -75,8 +81,14 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           disabled={isLoading || props.disabled}
           {...props}
         >
-          {isLoading && <Loader2 className="animate-spin mr-1" />}
-          {children}
+          {isLoading ? (
+            <>
+              <Loader2 className="animate-spin" />
+              {children}
+            </>
+          ) : (
+            children
+          )}
         </Comp>
       </motion.div>
     )
