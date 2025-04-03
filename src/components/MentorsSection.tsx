@@ -6,14 +6,11 @@ import { Mentor } from "@/types/mentor";
 import { getMentors, searchMentors } from "@/integrations/supabase/services/mentors";
 import { useToast } from "@/components/ui/use-toast";
 import { Loader2 } from "lucide-react";
-import LearningSuggestions from "@/components/mentors/LearningSuggestions";
 
 const MentorsSection = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredMentors, setFilteredMentors] = useState<Mentor[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isAiSearch, setIsAiSearch] = useState(false);
-  const [learningSuggestions, setLearningSuggestions] = useState<any[]>([]);
   const { toast } = useToast();
 
   // Fetch mentors from Supabase on component mount
@@ -61,8 +58,6 @@ const MentorsSection = () => {
 
   const handleSearch = async (query: string) => {
     setSearchQuery(query);
-    setIsAiSearch(false);
-    setLearningSuggestions([]);
     
     if (!query) {
       // Fetch all mentors again when search is cleared
@@ -87,16 +82,23 @@ const MentorsSection = () => {
     setFilteredMentors(data || []);
   };
 
-  const handleGeminiSearch = (geminiResults: Mentor[], suggestions: any[] = []) => {
-    setIsAiSearch(true);
+  const handleGeminiSearch = (geminiResults: any[]) => {
+    const mappedMentors = geminiResults.map(dbMentor => {
+      return {
+        id: dbMentor.id,
+        name: dbMentor.name,
+        department: dbMentor.department,
+        skills: dbMentor.skills,
+        rating: dbMentor.rating,
+        profile_image: dbMentor.profile_image,
+        linkedin_url: dbMentor.linkedin_url,
+        bio: dbMentor.bio,
+        review_count: dbMentor.review_count,
+        created_at: dbMentor.created_at
+      } as Mentor;
+    });
     
-    if (!geminiResults || geminiResults.length === 0) {
-      setFilteredMentors([]);
-      return;
-    }
-    
-    setFilteredMentors(geminiResults);
-    setLearningSuggestions(suggestions);
+    setFilteredMentors(mappedMentors);
   };
 
   return (
@@ -117,28 +119,19 @@ const MentorsSection = () => {
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
             <span className="ml-2 text-lg">Loading mentors...</span>
           </div>
+        ) : filteredMentors.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
+            {filteredMentors.map((mentor) => (
+              <MentorCard key={mentor.id} mentor={mentor} />
+            ))}
+          </div>
         ) : (
-          <>
-            {/* Learning Suggestions */}
-            {isAiSearch && learningSuggestions && learningSuggestions.length > 0 && (
-              <LearningSuggestions suggestions={learningSuggestions} />
-            )}
-            
-            {filteredMentors.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
-                {filteredMentors.map((mentor) => (
-                  <MentorCard key={mentor.id} mentor={mentor} />
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-12">
-                <h3 className="text-xl font-medium mb-2">No mentors found</h3>
-                <p className="text-muted-foreground">
-                  Try adjusting your search or browse all available mentors.
-                </p>
-              </div>
-            )}
-          </>
+          <div className="text-center py-12">
+            <h3 className="text-xl font-medium mb-2">No mentors found</h3>
+            <p className="text-muted-foreground">
+              Try adjusting your search or browse all available mentors.
+            </p>
+          </div>
         )}
       </div>
     </section>

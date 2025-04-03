@@ -1,6 +1,6 @@
+
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
-import { HfInference } from 'https://esm.sh/@huggingface/inference@2.5.0';
 
 // CORS headers
 const corsHeaders = {
@@ -14,10 +14,9 @@ const supabaseClient = createClient(
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 );
 
-// The Google API key (still used for mentor search) and Hugging Face API token
-const GOOGLE_API_KEY = Deno.env.get('GEMINI_API_KEY') ?? '';
+// The Google API key and Gemini API URL
+const GOOGLE_API_KEY = Deno.env.get('GOOGLE_API_KEY') ?? '';
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
-const HUGGING_FACE_API_TOKEN = Deno.env.get('HUGGING_FACE_API_KEY') ?? '';
 
 // Helper function to fetch mentors
 async function fetchMentors() {
@@ -118,82 +117,6 @@ async function searchWithGeminiAI(query: string, mentors: any[]) {
   }
 }
 
-// Generate learning suggestions based on query using Hugging Face API
-async function generateLearningSuggestions(query: string) {
-  if (!HUGGING_FACE_API_TOKEN) {
-    console.error("Hugging Face API token is not set");
-    return { error: "API token not configured" };
-  }
-
-  try {
-    const hf = new HfInference(HUGGING_FACE_API_TOKEN);
-    
-    const prompt = `
-      You are an educational advisor for university students. Based on this search query: "${query}", 
-      provide 3 specific learning suggestions that would help a student develop skills in this area.
-      
-      Format your response as a JSON array with exactly 3 items. Each item should have:
-      1. "title": A brief title for the learning resource or activity (max 10 words)
-      2. "description": A brief description of what to learn and why it's valuable (max 30 words)
-      3. "type": Either "course", "project", "exercise", "resource", or "practice"
-      
-      Example format:
-      [
-        {
-          "title": "Title 1",
-          "description": "Description 1",
-          "type": "course"
-        },
-        {
-          "title": "Title 2",
-          "description": "Description 2",
-          "type": "project"
-        },
-        {
-          "title": "Title 3",
-          "description": "Description 3",
-          "type": "resource"
-        }
-      ]
-      
-      Make sure your suggestions are specific and practical. Return only the JSON array, no additional text.
-    `;
-
-    // Use Hugging Face text generation API
-    const response = await hf.textGeneration({
-      model: "mistralai/Mixtral-8x7B-Instruct-v0.1",
-      inputs: prompt,
-      parameters: {
-        max_new_tokens: 512,
-        temperature: 0.2,
-      },
-    });
-
-    console.log("Hugging Face learning suggestions response:", response);
-    
-    // Extract the response text and parse the JSON
-    const responseText = response.generated_text || "";
-    
-    try {
-      // Find JSON array in the response text using regex
-      const jsonMatch = responseText.match(/\[.*\]/s);
-      if (!jsonMatch) {
-        console.error("No JSON array found in learning suggestions response");
-        return { suggestions: [] };
-      }
-      
-      const suggestions = JSON.parse(jsonMatch[0]);
-      return { suggestions };
-    } catch (err) {
-      console.error("Error parsing learning suggestions from Hugging Face response:", err);
-      return { error: "Failed to parse Hugging Face learning suggestions response", raw: responseText };
-    }
-  } catch (error) {
-    console.error("Error in Hugging Face learning suggestions:", error);
-    return { error: "Hugging Face learning suggestions failed", details: error.message };
-  }
-}
-
 serve(async (req) => {
   // Handle CORS preflight request
   if (req.method === 'OPTIONS') {
@@ -223,9 +146,6 @@ serve(async (req) => {
       );
     }
 
-    // Get learning suggestions in parallel with mentor search
-    const learningSuggestionsPromise = generateLearningSuggestions(query);
-
     // Use Gemini to search through mentors
     const geminiResult = await searchWithGeminiAI(query, mentors);
     
@@ -243,25 +163,20 @@ serve(async (req) => {
     const filteredMentors = mentors.filter((mentor) => 
       mentorIds.includes(mentor.id)
     );
-
-    // Wait for learning suggestions to complete
-    const learningSuggestionsResult = await learningSuggestionsPromise;
-    const learningSuggestions = learningSuggestionsResult.suggestions || [];
     
     // Return the results
     return new Response(
       JSON.stringify({ 
         mentors: filteredMentors,
         query: query,
-        totalResults: filteredMentors.length,
-        learningSuggestions
+        totalResults: filteredMentors.length
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
     console.error("Error processing search request:", error);
     return new Response(
-      JSON.stringify({ error: "Internal server error", details: error.message }),
+      JSON.stringify({ error: "Internal server error" }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     );
   }

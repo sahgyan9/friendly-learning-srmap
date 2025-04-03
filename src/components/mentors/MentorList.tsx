@@ -2,16 +2,14 @@
 import { Loader2 } from "lucide-react";
 import MentorCard from "@/components/MentorCard";
 import { Mentor } from "@/types/mentor";
-import LearningSuggestions from "@/components/mentors/LearningSuggestions";
 
 interface MentorListProps {
   isLoading: boolean;
   mentors: Mentor[];
   isAiSearch: boolean;
-  learningSuggestions?: any[];
 }
 
-const MentorList = ({ isLoading, mentors, isAiSearch, learningSuggestions = [] }: MentorListProps) => {
+const MentorList = ({ isLoading, mentors, isAiSearch }: MentorListProps) => {
   if (isLoading) {
     return (
       <div className="flex justify-center items-center py-12">
@@ -44,11 +42,6 @@ const MentorList = ({ isLoading, mentors, isAiSearch, learningSuggestions = [] }
             AI-Powered Search Results
           </span>
         </div>
-      )}
-
-      {/* Learning Suggestions */}
-      {isAiSearch && learningSuggestions && learningSuggestions.length > 0 && (
-        <LearningSuggestions suggestions={learningSuggestions} />
       )}
 
       {/* Mentors Grid */}
