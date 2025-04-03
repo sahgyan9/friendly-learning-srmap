@@ -1,8 +1,11 @@
+
 import React from "react";
 import { Link } from "react-router-dom";
 import Logo from "./Logo";
+
 const Footer = () => {
-  return <footer className="py-8 border-t border-gray-200 bg-slate-700">
+  return (
+    <footer className="py-8 bg-white border-t border-gray-200">
       <div className="container px-4 md:px-6">
         <div className="flex flex-col md:flex-row justify-between items-center">
           <div className="mb-4 md:mb-0">
@@ -32,6 +35,8 @@ const Footer = () => {
           <p>© {new Date().getFullYear()} Friendly Learning. All rights reserved.</p>
         </div>
       </div>
-    </footer>;
+    </footer>
+  );
 };
+
 export default Footer;
