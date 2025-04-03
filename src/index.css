@@ -49,10 +49,10 @@
     --background: 222 47% 11%;
     --foreground: 210 40% 98%;
 
-    --card: 222 47% 11%;
+    --card: 240 10% 8%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 222 47% 11%;
+    --popover: 240 10% 8%;
     --popover-foreground: 210 40% 98%;
 
     --primary: 210 40% 98%;
@@ -62,17 +62,27 @@
     --secondary-foreground: 210 40% 98%;
 
     --muted: 217 33% 18%;
-    --muted-foreground: 215 20% 65%;
+    --muted-foreground: 215 20% 75%;
 
     --accent: 217 33% 18%;
     --accent-foreground: 210 40% 98%;
 
-    --destructive: 0 63% 31%;
+    --destructive: 0 63% 50%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 217 33% 18%;
-    --input: 217 33% 18%;
+    --border: 217 33% 25%;
+    --input: 217 33% 25%;
     --ring: 213 27% 84%;
+    
+    /* Added better sidebar dark mode variables */
+    --sidebar-background: 240 10% 8%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 210 40% 98%;
+    --sidebar-primary-foreground: 240 10% 8%;
+    --sidebar-accent: 240 10% 15%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 240 10% 20%;
+    --sidebar-ring: 213 27% 84%;
   }
 }
 
@@ -92,7 +102,7 @@
   }
 
   ::-webkit-scrollbar-track {
-    @apply bg-secondary rounded-md;
+    @apply bg-secondary/50 rounded-md;
   }
 
   ::-webkit-scrollbar-thumb {
@@ -102,11 +112,24 @@
   ::-webkit-scrollbar-thumb:hover {
     @apply bg-primary/50;
   }
+  
+  /* Ensure text is visible on dark backgrounds */
+  .dark .text-gray-700 {
+    @apply text-gray-300;
+  }
+  
+  .dark .text-gray-800 {
+    @apply text-gray-200;
+  }
+  
+  .dark .text-gray-900 {
+    @apply text-gray-100;
+  }
 }
 
 @layer components {
   .glass-card {
-    @apply bg-white/80 dark:bg-black/50 backdrop-blur-md border border-white/20 dark:border-white/10 shadow-lg;
+    @apply bg-white/80 dark:bg-gray-900/50 backdrop-blur-md border border-white/20 dark:border-white/10 shadow-lg;
   }
   
   .text-balance {
@@ -134,5 +157,10 @@
   /* Updated card styles for dark mode */
   .card-gradient {
     @apply bg-gradient-to-br from-card to-secondary/80 dark:from-gray-800 dark:to-gray-900 backdrop-blur-sm;
+  }
+  
+  /* Fix for dropdown menus in dark mode */
+  .dark [data-radix-popper-content-wrapper] {
+    @apply bg-popover text-popover-foreground border border-border shadow-lg;
   }
 }

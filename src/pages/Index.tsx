@@ -32,50 +32,50 @@ const Index = () => {
     }
   };
   
-  // Skeleton loader for MentorsSection
+  // Skeleton loader for MentorsSection with dark mode support
   const MentorsSectionSkeleton = () => (
-    <div className="py-16 bg-gray-50">
+    <div className="py-16 bg-gray-50 dark:bg-gray-900/60">
       <div className="container px-4 md:px-6">
         <div className="text-center mb-12">
-          <Skeleton className="h-8 w-64 mx-auto mb-4" />
-          <Skeleton className="h-4 w-full max-w-2xl mx-auto" />
+          <Skeleton className="h-8 w-64 mx-auto mb-4 dark:bg-gray-800" />
+          <Skeleton className="h-4 w-full max-w-2xl mx-auto dark:bg-gray-800" />
         </div>
         
         <div className="w-full max-w-3xl mx-auto mb-10">
-          <Skeleton className="h-12 w-full rounded-xl mb-2" />
+          <Skeleton className="h-12 w-full rounded-xl mb-2 dark:bg-gray-800" />
           <div className="flex gap-2">
-            <Skeleton className="h-6 w-16" />
-            <Skeleton className="h-6 w-20" />
-            <Skeleton className="h-6 w-32" />
+            <Skeleton className="h-6 w-16 dark:bg-gray-800" />
+            <Skeleton className="h-6 w-20 dark:bg-gray-800" />
+            <Skeleton className="h-6 w-32 dark:bg-gray-800" />
           </div>
         </div>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
           {[...Array(8)].map((_, index) => (
-            <Skeleton key={index} className="h-[260px] rounded-xl" />
+            <Skeleton key={index} className="h-[260px] rounded-xl dark:bg-gray-800" />
           ))}
         </div>
       </div>
     </div>
   );
   
-  // Skeleton loader for WhyFriendlyLearning
+  // Skeleton loader for WhyFriendlyLearning with dark mode support
   const WhyFriendlyLearningSkeleton = () => (
-    <div className="py-16">
+    <div className="py-16 dark:bg-gray-900/40">
       <div className="container px-4 md:px-6">
         <div className="text-center mb-12">
-          <Skeleton className="h-8 w-80 mx-auto mb-4" />
-          <Skeleton className="h-4 w-full max-w-2xl mx-auto" />
+          <Skeleton className="h-8 w-80 mx-auto mb-4 dark:bg-gray-800" />
+          <Skeleton className="h-4 w-full max-w-2xl mx-auto dark:bg-gray-800" />
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {[...Array(3)].map((_, index) => (
             <div key={index} className="p-6 rounded-lg">
-              <Skeleton className="h-12 w-12 rounded-full mb-4" />
-              <Skeleton className="h-6 w-48 mb-3" />
-              <Skeleton className="h-4 w-full mb-2" />
-              <Skeleton className="h-4 w-full mb-2" />
-              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-12 w-12 rounded-full mb-4 dark:bg-gray-800" />
+              <Skeleton className="h-6 w-48 mb-3 dark:bg-gray-800" />
+              <Skeleton className="h-4 w-full mb-2 dark:bg-gray-800" />
+              <Skeleton className="h-4 w-full mb-2 dark:bg-gray-800" />
+              <Skeleton className="h-4 w-3/4 dark:bg-gray-800" />
             </div>
           ))}
         </div>

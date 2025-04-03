@@ -36,7 +36,7 @@ const DarkModeToggle = () => {
     <Toggle 
       pressed={isDarkMode}
       onPressedChange={toggleTheme} 
-      className="relative h-10 w-10 rounded-full border border-input bg-background hover:bg-accent hover:text-accent-foreground"
+      className="relative h-10 w-10 rounded-full border border-input bg-background hover:bg-accent hover:text-accent-foreground dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700"
       aria-label="Toggle dark mode"
     >
       <motion.div
@@ -49,7 +49,7 @@ const DarkModeToggle = () => {
         transition={{ duration: 0.3 }}
         className="flex items-center justify-center"
       >
-        {isDarkMode ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+        {isDarkMode ? <Moon className="h-5 w-5 text-yellow-200" /> : <Sun className="h-5 w-5" />}
       </motion.div>
     </Toggle>
   );

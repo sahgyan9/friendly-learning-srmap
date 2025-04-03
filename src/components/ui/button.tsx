@@ -1,4 +1,3 @@
-
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { cva, type VariantProps } from "class-variance-authority"
@@ -16,10 +15,10 @@ const buttonVariants = cva(
         destructive:
           "bg-destructive text-destructive-foreground hover:bg-destructive/90 active:scale-95 transition-all duration-200",
         outline:
-          "border border-input bg-background hover:bg-accent hover:text-accent-foreground active:scale-95 transition-all duration-200",
+          "border border-input bg-background hover:bg-accent hover:text-accent-foreground active:scale-95 transition-all duration-200 dark:border-gray-700 dark:hover:bg-gray-800",
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-secondary/80 active:scale-95 transition-all duration-200",
-        ghost: "hover:bg-accent hover:text-accent-foreground active:scale-95 transition-all duration-200",
+        ghost: "hover:bg-accent hover:text-accent-foreground active:scale-95 transition-all duration-200 dark:hover:bg-gray-800",
         link: "text-primary underline-offset-4 hover:underline active:scale-95 transition-all duration-200",
       },
       size: {
@@ -47,7 +46,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild = false, isLoading = false, children, ...props }, ref) => {
     const Comp = asChild ? Slot : "button"
     
-    // For Slot components, we need to ensure we're passing a single child
+    // For Slot components (asChild=true)
     if (asChild) {
       // Important: When using asChild, the child must be a valid React element
       if (!React.isValidElement(children)) {
@@ -64,22 +63,24 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         ...props,
       };
       
-      // Create the appropriate child content based on loading state
-      const childContent = isLoading ? (
-        <React.Fragment>
-          <Loader2 className="animate-spin" />
-          {children.props.children}
-        </React.Fragment>
-      ) : children.props.children;
+      // When loading, wrap the children in a fragment with the loader
+      if (isLoading) {
+        return React.cloneElement(children, {
+          ...childProps,
+          children: React.createElement(
+            React.Fragment,
+            null,
+            React.createElement(Loader2, { className: "animate-spin mr-2" }),
+            children.props.children
+          ),
+        });
+      }
       
-      // Return the cloned child with updated props and content
-      return React.cloneElement(children, {
-        ...childProps,
-        children: childContent,
-      });
+      // When not loading, clone with unchanged children
+      return React.cloneElement(children, childProps);
     }
     
-    // For regular buttons, we can use the motion.div wrapper
+    // For regular buttons
     return (
       <motion.div
         whileHover={{ scale: 1.03 }}
