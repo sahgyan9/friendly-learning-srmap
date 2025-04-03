@@ -47,8 +47,10 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild = false, isLoading = false, children, ...props }, ref) => {
     const Comp = asChild ? Slot : "button"
     
+    // For Slot components, we need to ensure we're passing a single child
     if (asChild) {
-      // When using as a slot, just return the component directly without motion wrapper
+      // Important: When using asChild, we need to clone the child element
+      // and pass down our props to it, rather than wrapping in additional elements
       return (
         <Comp
           className={cn(buttonVariants({ variant, size, className }))}
@@ -56,19 +58,24 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           disabled={isLoading || props.disabled}
           {...props}
         >
-          {isLoading ? (
-            <>
-              <Loader2 className="animate-spin" />
-              {children}
-            </>
-          ) : (
-            children
-          )}
+          {React.isValidElement(children) && 
+            React.cloneElement(children, {
+              // We pass attributes to the child but don't wrap with any additional elements
+              ...children.props,
+              // If loading, we'll handle it in the child's content
+              children: isLoading ? (
+                <React.Fragment>
+                  <Loader2 className="animate-spin" />
+                  {children.props.children}
+                </React.Fragment>
+              ) : children.props.children,
+            })
+          }
         </Comp>
       )
     }
     
-    // For regular buttons, use the motion.div wrapper
+    // For regular buttons, we can use the motion.div wrapper
     return (
       <motion.div
         whileHover={{ scale: 1.03 }}
@@ -81,14 +88,8 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           disabled={isLoading || props.disabled}
           {...props}
         >
-          {isLoading ? (
-            <>
-              <Loader2 className="animate-spin" />
-              {children}
-            </>
-          ) : (
-            children
-          )}
+          {isLoading && <Loader2 className="animate-spin mr-2" />}
+          {children}
         </Comp>
       </motion.div>
     )
