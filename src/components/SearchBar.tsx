@@ -8,7 +8,7 @@ import type { Mentor } from "@/types/mentor";
 
 interface SearchBarProps {
   onSearch: (query: string) => void;
-  onGeminiSearch: (mentors: Mentor[]) => void;
+  onGeminiSearch: (mentors: Mentor[], learningSuggestions?: any[]) => void;
 }
 
 const SearchBar = ({ onSearch, onGeminiSearch }: SearchBarProps) => {
@@ -80,7 +80,8 @@ const SearchBar = ({ onSearch, onGeminiSearch }: SearchBarProps) => {
       }
 
       if (data.mentors && data.mentors.length > 0) {
-        onGeminiSearch(data.mentors);
+        // Pass both mentors and learning suggestions to the callback
+        onGeminiSearch(data.mentors, data.learningSuggestions || []);
         toast({
           title: "AI Search Results",
           description: `Found ${data.mentors.length} mentors that match your query`,

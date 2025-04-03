@@ -17,6 +17,7 @@ const Mentors = () => {
   const [filteredMentors, setFilteredMentors] = useState<Mentor[]>([]);
   const [isAiSearch, setIsAiSearch] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [learningSuggestions, setLearningSuggestions] = useState<any[]>([]);
   const { toast } = useToast();
 
   // Fade in animation variants
@@ -82,6 +83,7 @@ const Mentors = () => {
   const handleSearch = async (query: string) => {
     setSearchQuery(query);
     setIsAiSearch(false);
+    setLearningSuggestions([]);
     
     if (!query) {
       // Fetch all mentors again when search is cleared
@@ -101,7 +103,7 @@ const Mentors = () => {
     setFilteredMentors(data || []);
   };
 
-  const handleGeminiSearch = (geminiResults: any[]) => {
+  const handleGeminiSearch = (geminiResults: Mentor[], suggestions: any[] = []) => {
     setIsAiSearch(true);
     
     if (!geminiResults || geminiResults.length === 0) {
@@ -110,6 +112,7 @@ const Mentors = () => {
     }
     
     setFilteredMentors(geminiResults);
+    setLearningSuggestions(suggestions);
   };
 
   return (
@@ -140,7 +143,8 @@ const Mentors = () => {
             <MentorList 
               isLoading={isLoading} 
               mentors={filteredMentors} 
-              isAiSearch={isAiSearch} 
+              isAiSearch={isAiSearch}
+              learningSuggestions={learningSuggestions}
             />
           </motion.div>
         </div>

@@ -15,7 +15,7 @@ const supabaseClient = createClient(
 );
 
 // The Google API key and Gemini API URL
-const GOOGLE_API_KEY = Deno.env.get('GOOGLE_API_KEY') ?? '';
+const GOOGLE_API_KEY = Deno.env.get('GEMINI_API_KEY') ?? '';
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
 
 // Helper function to fetch mentors
@@ -117,6 +117,99 @@ async function searchWithGeminiAI(query: string, mentors: any[]) {
   }
 }
 
+// Generate learning suggestions based on query
+async function generateLearningSuggestions(query: string) {
+  if (!GOOGLE_API_KEY) {
+    console.error("Google API key is not set");
+    return { error: "API key not configured" };
+  }
+
+  try {
+    const prompt = `
+      You are an educational advisor for university students. Based on this search query: "${query}", 
+      provide 3 specific learning suggestions that would help a student develop skills in this area.
+      
+      Format your response as a JSON array with exactly 3 items. Each item should have:
+      1. "title": A brief title for the learning resource or activity (max 10 words)
+      2. "description": A brief description of what to learn and why it's valuable (max 30 words)
+      3. "type": Either "course", "project", "exercise", "resource", or "practice"
+      
+      Example format:
+      [
+        {
+          "title": "Title 1",
+          "description": "Description 1",
+          "type": "course"
+        },
+        {
+          "title": "Title 2",
+          "description": "Description 2",
+          "type": "project"
+        },
+        {
+          "title": "Title 3",
+          "description": "Description 3",
+          "type": "resource"
+        }
+      ]
+      
+      Make sure your suggestions are specific and practical. Return only the JSON array, no additional text.
+    `;
+
+    // Make the API call to Gemini
+    const response = await fetch(`${GEMINI_API_URL}?key=${GOOGLE_API_KEY}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        contents: [
+          {
+            parts: [
+              { text: prompt }
+            ]
+          }
+        ],
+        generationConfig: {
+          temperature: 0.2,
+          maxOutputTokens: 1024,
+        }
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Gemini API error for learning suggestions:", errorText);
+      return { error: "Error communicating with Gemini API" };
+    }
+
+    const data = await response.json();
+    console.log("Gemini learning suggestions response:", JSON.stringify(data));
+
+    // Extract the response text
+    const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    
+    // Parse the JSON array of suggestions from the response
+    try {
+      // Find JSON array in the response
+      const jsonMatch = responseText.match(/\[.*\]/s);
+      if (!jsonMatch) {
+        console.error("No JSON array found in learning suggestions response");
+        return { suggestions: [] };
+      }
+      
+      const suggestions = JSON.parse(jsonMatch[0]);
+      return { suggestions };
+    } catch (err) {
+      console.error("Error parsing learning suggestions from Gemini response:", err);
+      return { error: "Failed to parse Gemini learning suggestions response", raw: responseText };
+    }
+  } catch (error) {
+    console.error("Error in Gemini learning suggestions:", error);
+    return { error: "Gemini learning suggestions failed" };
+  }
+}
+
 serve(async (req) => {
   // Handle CORS preflight request
   if (req.method === 'OPTIONS') {
@@ -146,6 +239,9 @@ serve(async (req) => {
       );
     }
 
+    // Get learning suggestions in parallel with mentor search
+    const learningSuggestionsPromise = generateLearningSuggestions(query);
+
     // Use Gemini to search through mentors
     const geminiResult = await searchWithGeminiAI(query, mentors);
     
@@ -163,13 +259,18 @@ serve(async (req) => {
     const filteredMentors = mentors.filter((mentor) => 
       mentorIds.includes(mentor.id)
     );
+
+    // Wait for learning suggestions to complete
+    const learningSuggestionsResult = await learningSuggestionsPromise;
+    const learningSuggestions = learningSuggestionsResult.suggestions || [];
     
     // Return the results
     return new Response(
       JSON.stringify({ 
         mentors: filteredMentors,
         query: query,
-        totalResults: filteredMentors.length
+        totalResults: filteredMentors.length,
+        learningSuggestions
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
