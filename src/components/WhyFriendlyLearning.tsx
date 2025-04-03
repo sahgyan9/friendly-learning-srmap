@@ -8,7 +8,7 @@ interface FeatureCardProps {
 }
 
 const FeatureCard = ({ icon, title, description }: FeatureCardProps) => (
-  <div className="p-6 rounded-xl bg-white shadow-sm border border-gray-100 text-center">
+  <div className="p-6 rounded-xl bg-card shadow-sm border border-border text-center">
     <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
       {icon}
     </div>
@@ -19,7 +19,7 @@ const FeatureCard = ({ icon, title, description }: FeatureCardProps) => (
 
 const WhyFriendlyLearning = () => {
   return (
-    <section className="py-16">
+    <section className="py-16 bg-background dark:bg-gray-900/40">
       <div className="container px-4 md:px-6">
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold mb-4">Why Friendly Learning?</h2>

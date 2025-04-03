@@ -5,7 +5,7 @@ import Logo from "../Logo";
 
 const MentorsFooter = () => {
   return (
-    <footer className="py-8 bg-white border-t border-gray-200">
+    <footer className="py-8 bg-background border-t border-border">
       <div className="container px-4 md:px-6">
         <div className="flex flex-col md:flex-row justify-between items-center">
           <div className="mb-4 md:mb-0">
@@ -27,11 +27,10 @@ const MentorsFooter = () => {
             <Link to="/mentors" className="text-muted-foreground hover:text-primary transition-colors">
               Mentors
             </Link>
-            {/* Removed links to non-existent pages */}
           </div>
         </div>
         
-        <div className="mt-8 pt-8 border-t border-gray-200 text-center text-sm text-muted-foreground">
+        <div className="mt-8 pt-8 border-t border-border text-center text-sm text-muted-foreground">
           <p>© {new Date().getFullYear()} Friendly Learning. All rights reserved.</p>
         </div>
       </div>
