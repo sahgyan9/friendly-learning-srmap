@@ -1,6 +1,6 @@
-
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
+import { HfInference } from 'https://esm.sh/@huggingface/inference@2.5.0';
 
 // CORS headers
 const corsHeaders = {
@@ -14,9 +14,10 @@ const supabaseClient = createClient(
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 );
 
-// The Google API key and Gemini API URL
+// The Google API key (still used for mentor search) and Hugging Face API token
 const GOOGLE_API_KEY = Deno.env.get('GEMINI_API_KEY') ?? '';
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
+const HUGGING_FACE_API_TOKEN = Deno.env.get('HUGGING_FACE_API_KEY') ?? '';
 
 // Helper function to fetch mentors
 async function fetchMentors() {
@@ -117,14 +118,16 @@ async function searchWithGeminiAI(query: string, mentors: any[]) {
   }
 }
 
-// Generate learning suggestions based on query
+// Generate learning suggestions based on query using Hugging Face API
 async function generateLearningSuggestions(query: string) {
-  if (!GOOGLE_API_KEY) {
-    console.error("Google API key is not set");
-    return { error: "API key not configured" };
+  if (!HUGGING_FACE_API_TOKEN) {
+    console.error("Hugging Face API token is not set");
+    return { error: "API token not configured" };
   }
 
   try {
+    const hf = new HfInference(HUGGING_FACE_API_TOKEN);
+    
     const prompt = `
       You are an educational advisor for university students. Based on this search query: "${query}", 
       provide 3 specific learning suggestions that would help a student develop skills in this area.
@@ -156,42 +159,23 @@ async function generateLearningSuggestions(query: string) {
       Make sure your suggestions are specific and practical. Return only the JSON array, no additional text.
     `;
 
-    // Make the API call to Gemini
-    const response = await fetch(`${GEMINI_API_URL}?key=${GOOGLE_API_KEY}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
+    // Use Hugging Face text generation API
+    const response = await hf.textGeneration({
+      model: "mistralai/Mixtral-8x7B-Instruct-v0.1",
+      inputs: prompt,
+      parameters: {
+        max_new_tokens: 512,
+        temperature: 0.2,
       },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [
-              { text: prompt }
-            ]
-          }
-        ],
-        generationConfig: {
-          temperature: 0.2,
-          maxOutputTokens: 1024,
-        }
-      }),
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("Gemini API error for learning suggestions:", errorText);
-      return { error: "Error communicating with Gemini API" };
-    }
-
-    const data = await response.json();
-    console.log("Gemini learning suggestions response:", JSON.stringify(data));
-
-    // Extract the response text
-    const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    console.log("Hugging Face learning suggestions response:", response);
     
-    // Parse the JSON array of suggestions from the response
+    // Extract the response text and parse the JSON
+    const responseText = response.generated_text || "";
+    
     try {
-      // Find JSON array in the response
+      // Find JSON array in the response text using regex
       const jsonMatch = responseText.match(/\[.*\]/s);
       if (!jsonMatch) {
         console.error("No JSON array found in learning suggestions response");
@@ -201,12 +185,12 @@ async function generateLearningSuggestions(query: string) {
       const suggestions = JSON.parse(jsonMatch[0]);
       return { suggestions };
     } catch (err) {
-      console.error("Error parsing learning suggestions from Gemini response:", err);
-      return { error: "Failed to parse Gemini learning suggestions response", raw: responseText };
+      console.error("Error parsing learning suggestions from Hugging Face response:", err);
+      return { error: "Failed to parse Hugging Face learning suggestions response", raw: responseText };
     }
   } catch (error) {
-    console.error("Error in Gemini learning suggestions:", error);
-    return { error: "Gemini learning suggestions failed" };
+    console.error("Error in Hugging Face learning suggestions:", error);
+    return { error: "Hugging Face learning suggestions failed", details: error.message };
   }
 }
 
@@ -277,7 +261,7 @@ serve(async (req) => {
   } catch (error) {
     console.error("Error processing search request:", error);
     return new Response(
-      JSON.stringify({ error: "Internal server error" }),
+      JSON.stringify({ error: "Internal server error", details: error.message }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     );
   }
