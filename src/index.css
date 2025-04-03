@@ -82,7 +82,7 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground transition-colors duration-300;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 
@@ -106,10 +106,33 @@
 
 @layer components {
   .glass-card {
-    @apply bg-white/80 backdrop-blur-md border border-white/20 shadow-lg;
+    @apply bg-white/80 dark:bg-black/50 backdrop-blur-md border border-white/20 dark:border-white/10 shadow-lg;
   }
   
   .text-balance {
     text-wrap: balance;
+  }
+
+  /* Button animations */
+  .button-hover {
+    @apply hover:scale-105 transition-transform duration-200;
+  }
+  
+  .button-tap {
+    @apply active:scale-95 transition-transform duration-200;
+  }
+  
+  /* Loading animations */
+  .loading-pulse {
+    @apply animate-pulse;
+  }
+  
+  .loading-spin {
+    @apply animate-spin;
+  }
+
+  /* Updated card styles for dark mode */
+  .card-gradient {
+    @apply bg-gradient-to-br from-card to-secondary/80 dark:from-gray-800 dark:to-gray-900 backdrop-blur-sm;
   }
 }

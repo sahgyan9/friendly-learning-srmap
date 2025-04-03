@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Menu, X, User, MessageCircle, LogOut } from "lucide-react";
@@ -15,6 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import Logo from "./Logo";
 import { motion } from "framer-motion";
+import DarkModeToggle from "./DarkModeToggle";
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -43,7 +43,7 @@ const Navbar = () => {
     <header
       className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${
         isScrolled
-          ? "py-3 bg-white/90 backdrop-blur-md shadow-sm"
+          ? "py-3 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md shadow-sm"
           : "py-5 bg-transparent"
       }`}
     >
@@ -60,20 +60,22 @@ const Navbar = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.1 }}
           >
-            <Button variant="ghost" asChild className="text-gray-700 hover:text-primary">
+            <Button variant="ghost" asChild className="text-gray-700 dark:text-gray-200 hover:text-primary">
               <Link to="/">Home</Link>
             </Button>
-            <Button variant="ghost" asChild className="text-gray-700 hover:text-primary">
+            <Button variant="ghost" asChild className="text-gray-700 dark:text-gray-200 hover:text-primary">
               <Link to="/about">About</Link>
             </Button>
-            <Button variant="ghost" asChild className="text-gray-700 hover:text-primary">
+            <Button variant="ghost" asChild className="text-gray-700 dark:text-gray-200 hover:text-primary">
               <Link to="/mentors">Mentors</Link>
             </Button>
-            <Button variant="ghost" asChild className="text-gray-700 hover:text-primary">
+            <Button variant="ghost" asChild className="text-gray-700 dark:text-gray-200 hover:text-primary">
               <Link to="/contact">Contact</Link>
             </Button>
 
             <div className="ml-4 flex items-center space-x-2">
+              <DarkModeToggle />
+              
               {!loading && user ? (
                 <>
                   <Button variant="outline" size="sm" asChild className="flex items-center gap-1">
@@ -139,18 +141,21 @@ const Navbar = () => {
           </motion.nav>
 
           {/* Mobile Navigation Toggle */}
-          <motion.button
-            whileTap={{ scale: 0.9 }}
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="md:hidden text-gray-700 focus:outline-none"
-            aria-label="Toggle navigation menu"
-          >
-            {isMobileMenuOpen ? (
-              <X className="h-6 w-6" />
-            ) : (
-              <Menu className="h-6 w-6" />
-            )}
-          </motion.button>
+          <div className="md:hidden flex items-center gap-2">
+            <DarkModeToggle />
+            <motion.button
+              whileTap={{ scale: 0.9 }}
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="text-gray-700 dark:text-gray-200 focus:outline-none"
+              aria-label="Toggle navigation menu"
+            >
+              {isMobileMenuOpen ? (
+                <X className="h-6 w-6" />
+              ) : (
+                <Menu className="h-6 w-6" />
+              )}
+            </motion.button>
+          </div>
         </div>
 
         {/* Mobile Navigation Menu */}
@@ -159,19 +164,19 @@ const Navbar = () => {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
-            className="md:hidden mt-4 py-4 px-2 bg-white/95 backdrop-blur-md rounded-lg shadow-lg"
+            className="md:hidden mt-4 py-4 px-2 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md rounded-lg shadow-lg"
           >
             <div className="flex flex-col space-y-3">
-              <Button variant="ghost" asChild className="justify-start text-gray-700 hover:text-primary">
+              <Button variant="ghost" asChild className="justify-start text-gray-700 dark:text-gray-200 hover:text-primary">
                 <Link to="/">Home</Link>
               </Button>
-              <Button variant="ghost" asChild className="justify-start text-gray-700 hover:text-primary">
+              <Button variant="ghost" asChild className="justify-start text-gray-700 dark:text-gray-200 hover:text-primary">
                 <Link to="/about">About</Link>
               </Button>
-              <Button variant="ghost" asChild className="justify-start text-gray-700 hover:text-primary">
+              <Button variant="ghost" asChild className="justify-start text-gray-700 dark:text-gray-200 hover:text-primary">
                 <Link to="/mentors">Mentors</Link>
               </Button>
-              <Button variant="ghost" asChild className="justify-start text-gray-700 hover:text-primary">
+              <Button variant="ghost" asChild className="justify-start text-gray-700 dark:text-gray-200 hover:text-primary">
                 <Link to="/contact">Contact</Link>
               </Button>
               
