@@ -59,6 +59,8 @@ const MentorProfileForm = ({ userId, initialData }: MentorProfileFormProps) => {
     setIsSubmitting(true);
     
     try {
+      console.log("Submitting mentor application:", formData);
+      
       // Convert skills string to array
       const skillsArray = formData.skills
         .split(',')
@@ -82,18 +84,26 @@ const MentorProfileForm = ({ userId, initialData }: MentorProfileFormProps) => {
         review_count: 0
       };
       
+      console.log("Creating mentor with data:", mentorData);
+      
       // First, update the user's role to 'mentor' in the users table
       const { error: userError } = await supabase
         .from('users')
         .update({ role: 'mentor' })
         .eq('id', userId);
       
-      if (userError) throw userError;
+      if (userError) {
+        console.error("Error updating user role:", userError);
+        throw userError;
+      }
       
       // Then add the mentor record
       const { error } = await addMentor(mentorData);
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error adding mentor:", error);
+        throw error;
+      }
       
       toast.success("Your mentor profile has been created successfully!");
       

@@ -34,6 +34,7 @@ const UserProfile = () => {
 
   useEffect(() => {
     if (profile) {
+      console.log("Setting form data from profile:", profile);
       setFormData(prev => ({
         ...prev,
         name: profile.name || "",
@@ -52,11 +53,12 @@ const UserProfile = () => {
     if (!user) return;
     
     try {
+      console.log("Checking mentor status for:", user.id);
       const { data, error } = await supabase
         .from('mentors')
         .select('*')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
       
       if (error) {
         if (error.code !== 'PGRST116') { // Not found error
@@ -67,6 +69,7 @@ const UserProfile = () => {
       }
       
       if (data) {
+        console.log("Mentor data found:", data);
         setIsMentorProfile(true);
         setMentorData(data);
         // Update form with mentor data
@@ -143,8 +146,8 @@ const UserProfile = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!user || !profile) {
-      toast.error('User profile not loaded');
+    if (!user) {
+      toast.error('You must be logged in to update your profile');
       return;
     }
     
@@ -159,6 +162,11 @@ const UserProfile = () => {
           profileImageUrl = uploadedUrl;
         }
       }
+      
+      console.log("Updating user profile with data:", {
+        name: formData.name,
+        profile_image: profileImageUrl
+      });
       
       // Update user profile
       const { error: profileError } = await supabase
@@ -177,6 +185,15 @@ const UserProfile = () => {
           .split(',')
           .map(skill => skill.trim())
           .filter(skill => skill.length > 0);
+        
+        console.log("Updating mentor profile with data:", {
+          name: formData.name,
+          bio: formData.bio,
+          department: formData.department,
+          skills: skillsArray,
+          linkedin_url: formData.linkedin_url,
+          profile_image: profileImageUrl
+        });
         
         const { error: mentorError } = await supabase
           .from('mentors')
@@ -218,6 +235,11 @@ const UserProfile = () => {
         </div>
       </div>
     );
+  }
+
+  if (!user) {
+    navigate('/signin');
+    return null;
   }
 
   return (
@@ -349,7 +371,7 @@ const UserProfile = () => {
                 </>
               )}
               
-              {!isMentorProfile && !isMentor && (
+              {(!isMentorProfile && !isMentor) ? (
                 <div className="py-4 border-t border-border">
                   <p className="text-sm text-muted-foreground mb-3">
                     Want to help other students? Apply to become a mentor!
@@ -362,7 +384,7 @@ const UserProfile = () => {
                     Become a Mentor
                   </Button>
                 </div>
-              )}
+              ) : null}
               
               <div className="flex justify-end pt-4">
                 <Button 
