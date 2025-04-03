@@ -12,10 +12,10 @@ const CallToAction = () => {
             Join hundreds of students who are already benefiting from personalized mentorship.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" asChild className="w-full sm:w-auto">
+            <Button size="lg" asChild>
               <Link to="/signup">Get Started</Link>
             </Button>
-            <Button size="lg" variant="outline" asChild className="w-full sm:w-auto">
+            <Button size="lg" variant="outline" asChild>
               <Link to="/about">Learn More</Link>
             </Button>
           </div>
