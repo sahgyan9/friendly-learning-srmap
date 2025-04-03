@@ -26,7 +26,10 @@ const MentorCard = ({ mentor }: MentorCardProps) => {
       return;
     }
     
-    setIsChatOpen(true);
+    // Delay slightly to prevent any race conditions
+    setTimeout(() => {
+      setIsChatOpen(true);
+    }, 100);
   };
 
   const handleLinkedInClick = (e: React.MouseEvent) => {
@@ -37,10 +40,14 @@ const MentorCard = ({ mentor }: MentorCardProps) => {
     }
   };
 
+  const handleCloseChatModal = () => {
+    setIsChatOpen(false);
+  };
+
   return (
     <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+      {/* Profile Image and Details */}
       <div className="flex items-start gap-4">
-        {/* Profile Image */}
         <img
           src={profile_image}
           alt={name}
@@ -70,7 +77,7 @@ const MentorCard = ({ mentor }: MentorCardProps) => {
             )}
           </div>
           
-          {/* Rating - Simplified to match screenshot */}
+          {/* Rating */}
           <div className="flex items-center mt-1 mb-4">
             <div className="flex items-center gap-1 bg-amber-50 px-2 py-0.5 rounded-full">
               <svg 
@@ -131,11 +138,11 @@ const MentorCard = ({ mentor }: MentorCardProps) => {
         </Button>
       </div>
 
-      {/* Chat Modal */}
+      {/* Chat Modal - Only render when needed */}
       {isChatOpen && (
         <ChatModal 
           isOpen={isChatOpen} 
-          onClose={() => setIsChatOpen(false)} 
+          onClose={handleCloseChatModal} 
           mentor={mentor}
         />
       )}

@@ -29,12 +29,9 @@ const ChatModal = ({ isOpen, onClose, mentor }: ChatModalProps) => {
     handleSendMessage,
   } = useChat(userId, mentor.id);
   
-  useEffect(() => {
-    if (isOpen && mentor) {
-      console.log("Initializing chat with mentor:", mentor.name);
-      initializeChat();
-    }
-  }, [isOpen, mentor, initializeChat]);
+  const handleRetry = () => {
+    initializeChat();
+  };
   
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -43,7 +40,7 @@ const ChatModal = ({ isOpen, onClose, mentor }: ChatModalProps) => {
         
         <div className="flex flex-col h-full">
           {error ? (
-            <ChatModalError error={error} onRetry={initializeChat} />
+            <ChatModalError error={error} onRetry={handleRetry} />
           ) : (
             <ChatModalContent 
               messages={messages}

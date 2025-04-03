@@ -21,14 +21,22 @@ export const useSendMessage = (userId: string) => {
     setIsSending: React.Dispatch<React.SetStateAction<boolean>>,
     setError: React.Dispatch<React.SetStateAction<Error | null>>
   ) => {
-    if (!activeChat) return;
+    if (!activeChat) {
+      console.error("No active chat to send message to");
+      setError(new Error("No active chat"));
+      return;
+    }
     
     setIsSending(true);
     setError(null);
     
     try {
       const currentConversation = conversations.find(c => c.id === activeChat);
-      if (!currentConversation) return;
+      if (!currentConversation) {
+        console.error("Conversation not found:", activeChat);
+        setError(new Error("Conversation not found"));
+        return;
+      }
       
       const receiverId = currentConversation.user1_id === userId 
         ? currentConversation.user2_id 
@@ -47,6 +55,41 @@ export const useSendMessage = (userId: string) => {
       // Add the message to the local state for immediate UI feedback
       setMessages(prev => [...prev, tempMessage]);
       
+      // Check if we're dealing with a demo conversation ID
+      if (activeChat.startsWith('demo-')) {
+        console.log("Using localStorage for demo messaging (demo ID detected)");
+        
+        // Save to localStorage and get updated conversation
+        const updatedConversation = saveDemoMessage(activeChat, tempMessage, userId, receiverId);
+        
+        if (updatedConversation) {
+          // Update the conversations state with the new last message
+          setConversations(prev => 
+            prev.map(conv => 
+              conv.id === activeChat ? updatedConversation : conv
+            )
+          );
+        }
+        
+        // Simulate a response after a delay
+        setTimeout(() => {
+          const responseMessage: Message = {
+            id: `demo-response-${Date.now()}`,
+            conversation_id: activeChat,
+            sender_id: receiverId,
+            receiver_id: userId,
+            content: `Thank you for your message: "${content}". I'll get back to you soon.`,
+            sent_at: new Date().toISOString(),
+            is_read: false
+          };
+          saveDemoMessage(activeChat, responseMessage, receiverId, userId);
+          setMessages(prev => [...prev, responseMessage]);
+        }, 1500);
+        
+        return;
+      }
+      
+      // If not a demo conversation, try the API
       const { data, error } = await sendMessageAPI(
         activeChat,
         userId,
@@ -61,17 +104,35 @@ export const useSendMessage = (userId: string) => {
         if (error.message.includes("row-level security") || error.message.includes("invalid input syntax for type uuid")) {
           console.log("Using localStorage for demo messaging");
           
+          // Create a demo conversation ID
+          const demoConversationId = `demo-${userId}-${receiverId}`;
+          
           // Save to localStorage and get updated conversation
-          const updatedConversation = saveDemoMessage(activeChat, tempMessage, userId, receiverId);
+          const updatedConversation = saveDemoMessage(demoConversationId, tempMessage, userId, receiverId);
           
           if (updatedConversation) {
             // Update the conversations state with the new last message
             setConversations(prev => 
               prev.map(conv => 
-                conv.id === activeChat ? updatedConversation : conv
+                conv.id === activeChat ? { ...updatedConversation, id: activeChat } : conv
               )
             );
           }
+          
+          // Simulate a response
+          setTimeout(() => {
+            const responseMessage: Message = {
+              id: `demo-response-${Date.now()}`,
+              conversation_id: demoConversationId,
+              sender_id: receiverId,
+              receiver_id: userId,
+              content: `Thank you for your message: "${content}". I'll get back to you soon.`,
+              sent_at: new Date().toISOString(),
+              is_read: false
+            };
+            saveDemoMessage(demoConversationId, responseMessage, receiverId, userId);
+            setMessages(prev => [...prev, responseMessage]);
+          }, 1500);
         } else {
           setError(error);
           return;

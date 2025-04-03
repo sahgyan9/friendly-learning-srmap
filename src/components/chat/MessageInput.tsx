@@ -12,16 +12,20 @@ interface MessageInputProps {
 
 const MessageInput = ({ onSendMessage, disabled, sending }: MessageInputProps) => {
   const [message, setMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!message.trim() || disabled || sending) return;
+    if (!message.trim() || disabled || sending || isSubmitting) return;
     
+    setIsSubmitting(true);
     try {
       await onSendMessage(message.trim());
       setMessage("");
     } catch (error) {
       console.error("Failed to send message:", error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
   
@@ -40,14 +44,14 @@ const MessageInput = ({ onSendMessage, disabled, sending }: MessageInputProps) =
         onKeyDown={handleKeyDown}
         placeholder="Type your message..."
         className="flex-1 min-h-[40px] p-2 resize-none"
-        disabled={disabled || sending}
+        disabled={disabled || sending || isSubmitting}
       />
       <Button 
         type="submit" 
         size="sm" 
-        disabled={disabled || sending || !message.trim()}
+        disabled={disabled || sending || isSubmitting || !message.trim()}
       >
-        {sending ? (
+        {sending || isSubmitting ? (
           <Loader2 className="h-4 w-4 animate-spin" />
         ) : (
           <Send className="h-4 w-4" />

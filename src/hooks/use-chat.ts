@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { toast } from "sonner";
 import { Message } from "@/types/chat";
 import { 
@@ -15,12 +15,21 @@ export const useChat = (userId: string, mentorId: string) => {
   const [sending, setSending] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [initialized, setInitialized] = useState(false);
+  
+  // Use ref to prevent multiple initializations
+  const initializingRef = useRef(false);
   
   const { getDemoMessages, saveDemoMessage } = useDemoMessages();
   
   const initializeChat = useCallback(async () => {
+    // Prevent concurrent initialization attempts
+    if (initializingRef.current) return;
+    
+    initializingRef.current = true;
     setLoading(true);
     setError(null);
+    
     try {
       console.log("Initializing chat between:", userId, "and", mentorId);
       
@@ -44,6 +53,7 @@ export const useChat = (userId: string, mentorId: string) => {
             console.log("Using demo messages from localStorage:", demoMessages);
             setMessages(demoMessages);
           }
+          setInitialized(true);
         } else {
           toast.error("Failed to initialize chat");
           setError("Failed to initialize chat. Please try again later.");
@@ -63,14 +73,23 @@ export const useChat = (userId: string, mentorId: string) => {
           setMessages(messageData);
           console.log("Fetched messages:", messageData);
         }
+        setInitialized(true);
       }
     } catch (err) {
       console.error("Exception initializing chat:", err);
       setError("An unexpected error occurred. Please try again later.");
     } finally {
       setLoading(false);
+      initializingRef.current = false;
     }
   }, [userId, mentorId, getDemoMessages]);
+  
+  // Only initialize once when the modal opens
+  useEffect(() => {
+    if (!initialized && userId && mentorId) {
+      initializeChat();
+    }
+  }, [initialized, userId, mentorId, initializeChat]);
   
   const handleSendMessage = useCallback(async (content: string) => {
     if (!conversationId) {
@@ -100,6 +119,22 @@ export const useChat = (userId: string, mentorId: string) => {
         
         // Simulate a delay
         await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Simulate a response from the mentor after a brief delay
+        setTimeout(() => {
+          const responseMessage: Message = {
+            id: `demo-response-${Date.now()}`,
+            conversation_id: conversationId,
+            sender_id: mentorId,
+            receiver_id: userId,
+            content: `Thanks for your message: "${content}". I'll get back to you soon.`,
+            sent_at: new Date().toISOString(),
+            is_read: false
+          };
+          saveDemoMessage(conversationId, responseMessage, mentorId, userId);
+          setMessages(prev => [...prev, responseMessage]);
+        }, 1500);
+        
         return;
       }
       
@@ -118,6 +153,21 @@ export const useChat = (userId: string, mentorId: string) => {
         // Fall back to localStorage if there's an error
         const demoConversationId = `demo-${userId}-${mentorId}`;
         saveDemoMessage(demoConversationId, tempMessage, userId, mentorId);
+        
+        // Simulate a response in demo mode
+        setTimeout(() => {
+          const responseMessage: Message = {
+            id: `demo-response-${Date.now()}`,
+            conversation_id: demoConversationId,
+            sender_id: mentorId,
+            receiver_id: userId,
+            content: `Thanks for your message: "${content}". I'll get back to you soon.`,
+            sent_at: new Date().toISOString(),
+            is_read: false
+          };
+          saveDemoMessage(demoConversationId, responseMessage, mentorId, userId);
+          setMessages(prev => [...prev, responseMessage]);
+        }, 1500);
       } else if (data) {
         console.log("Message sent successfully:", data);
         // Replace the temp message with the real one
