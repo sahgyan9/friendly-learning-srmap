@@ -3,10 +3,14 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-const SUPABASE_URL = "https://qyihjqhwtdxmsxxlkeim.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF5aWhqcWh3dGR4bXN4eGxrZWltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM2MTI2MTgsImV4cCI6MjA1OTE4ODYxOH0.5EdxitUJpcSb68i5ZBBrXeRVPiUQU_4bV014Z9YHPDQ";
+const SUPABASE_URL = "https://ruapdkrgcbqrhvsayvpf.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1YXBka3JnY2Jxcmh2c2F5dnBmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDA4ODU5NzMsImV4cCI6MjA1NjQ2MTk3M30.V5jQfO-__C1gSbX33c2M-iBouFVWbO1bSPnRlc9iw1s";
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+
+// Re-export all service modules for convenience
+export * from './services/mentors';
+export * from './services/chat';

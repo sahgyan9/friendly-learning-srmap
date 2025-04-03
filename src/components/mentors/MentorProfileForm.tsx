@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -10,7 +11,6 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { addMentor } from "@/integrations/supabase/services/mentors";
 import MentorProfileImageUpload from "./MentorProfileImageUpload";
-import type { Database } from "@/integrations/supabase/types";
 
 interface MentorFormData {
   name: string;
@@ -83,7 +83,7 @@ const MentorProfileForm = ({ userId, initialData }: MentorProfileFormProps) => {
       // First, update the user's role to 'mentor' in the users table
       const { error: userError } = await supabase
         .from('users')
-        .update({ is_mentor: true })
+        .update({ role: 'mentor' })
         .eq('id', userId);
       
       if (userError) throw userError;

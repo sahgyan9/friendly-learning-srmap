@@ -5,18 +5,20 @@ import Navbar from "@/components/Navbar";
 import { Conversation } from "@/types/chat";
 import ChatContainer from "@/components/chat/ChatContainer";
 import ChatFooter from "@/components/chat/ChatFooter";
+import { useMessages } from "@/hooks/use-messages";
 import { formatMessageTime } from "@/utils/date-utils";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2 } from "lucide-react";
-import { useAuth } from "@/context/AuthContext";
-import { useMessages } from "@/hooks/use-messages";
+
+// Use the sample user we created in Supabase
+const SAMPLE_USER = {
+  id: "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11", // John Student
+  name: "John Student",
+  profile_image: "https://ui-avatars.com/api/?name=John+Student&background=6366F1&color=fff"
+};
 
 const Messages = () => {
-  const { user, loading: authLoading } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
-
-  // Use user ID from authentication, or default to demo user ID
-  const userId = user?.id || "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11";
   
   const {
     conversations,
@@ -28,62 +30,37 @@ const Messages = () => {
     error,
     setActiveChat,
     sendMessage
-  } = useMessages(userId);
+  } = useMessages(SAMPLE_USER.id);
 
-  // Filter conversations based on search query
+  useEffect(() => {
+    if (error) {
+      toast.error(`Error: ${error.message || 'Failed to load conversations'}`);
+      console.error("Error in Messages component:", error);
+    }
+  }, [error]);
+
+  useEffect(() => {
+    console.log("Current conversations:", conversations);
+  }, [conversations]);
+
+  const getOtherUser = (conversation: Conversation) => {
+    return conversation.user1_id === SAMPLE_USER.id ? conversation.user2 : conversation.user1;
+  };
+
+  const hasUnreadMessages = (conversationId: string) => {
+    return messages.some(msg => 
+      msg.conversation_id === conversationId && 
+      msg.receiver_id === SAMPLE_USER.id && 
+      !msg.is_read
+    );
+  };
+
   const filteredConversations = searchQuery.trim()
     ? conversations.filter(conv => {
         const otherUser = getOtherUser(conv);
         return otherUser?.name.toLowerCase().includes(searchQuery.toLowerCase());
       })
     : conversations;
-
-  const getOtherUser = (conversation: Conversation) => {
-    return conversation.user1_id === userId ? conversation.user2 : conversation.user1;
-  };
-
-  const hasUnreadMessages = (conversationId: string) => {
-    const conversation = conversations.find(c => c.id === conversationId);
-    if (!conversation) return false;
-    
-    // Check if the last message is from the other user and is unread
-    return (
-      conversation.last_message &&
-      conversation.last_message.receiver_id === userId && 
-      !conversation.last_message.is_read
-    );
-  };
-
-  if (authLoading) {
-    return (
-      <div className="min-h-screen">
-        <Navbar />
-        <main className="pt-24 pb-16">
-          <div className="container px-4 md:px-6 flex justify-center items-center">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          </div>
-        </main>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return (
-      <div className="min-h-screen">
-        <Navbar />
-        <main className="pt-24 pb-16">
-          <div className="container px-4 md:px-6">
-            <Alert className="mb-4">
-              <AlertDescription>
-                Please sign in to view your messages.
-              </AlertDescription>
-            </Alert>
-          </div>
-        </main>
-        <ChatFooter />
-      </div>
-    );
-  }
 
   if (error) {
     return (
@@ -122,7 +99,7 @@ const Messages = () => {
             isSending={isSending}
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
-            currentUserId={userId}
+            currentUserId={SAMPLE_USER.id}
             formatTime={formatMessageTime}
             getOtherUser={getOtherUser}
             setActiveChat={setActiveChat}

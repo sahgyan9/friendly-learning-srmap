@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import SearchBar from "@/components/SearchBar";
+import { getMentors, searchMentors } from "@/integrations/supabase/client";
 import { Mentor } from "@/types/mentor";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -10,72 +11,71 @@ import MentorList from "@/components/mentors/MentorList";
 import MentorsHeader from "@/components/mentors/MentorsHeader";
 import MentorsFooter from "@/components/mentors/MentorsFooter";
 
-// Mock data for mentors
-const mockMentors: Mentor[] = [
-  {
-    id: "1",
-    name: "Jane Smith",
-    department: "Computer Science",
-    skills: ["JavaScript", "React", "Node.js"],
-    rating: 4.8,
-    profile_image: "https://ui-avatars.com/api/?name=Jane+Smith&background=6366F1&color=fff",
-    linkedin_url: "https://linkedin.com/in/janesmith",
-    bio: "Experienced web developer with 5 years of experience in frontend technologies.",
-    review_count: 24,
-    created_at: "2023-01-15T00:00:00Z"
-  },
-  {
-    id: "2",
-    name: "Mark Johnson",
-    department: "Data Science",
-    skills: ["Python", "Machine Learning", "Data Analysis"],
-    rating: 4.9,
-    profile_image: "https://ui-avatars.com/api/?name=Mark+Johnson&background=6366F1&color=fff",
-    linkedin_url: "https://linkedin.com/in/markjohnson",
-    bio: "Data scientist passionate about AI and machine learning applications.",
-    review_count: 31,
-    created_at: "2023-02-10T00:00:00Z"
-  },
-  {
-    id: "3",
-    name: "Sarah Williams",
-    department: "UI/UX Design",
-    skills: ["Figma", "Adobe XD", "UI Design", "UX Research"],
-    rating: 4.7,
-    profile_image: "https://ui-avatars.com/api/?name=Sarah+Williams&background=6366F1&color=fff",
-    linkedin_url: "https://linkedin.com/in/sarahwilliams",
-    bio: "Creative designer with a focus on user-centered design principles.",
-    review_count: 19,
-    created_at: "2023-03-05T00:00:00Z"
-  }
-];
-
 const Mentors = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [filteredMentors, setFilteredMentors] = useState<Mentor[]>(mockMentors);
+  const [filteredMentors, setFilteredMentors] = useState<Mentor[]>([]);
   const [isAiSearch, setIsAiSearch] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
-  // Simple local search function
-  const handleSearch = (query: string) => {
+  // Fetch mentors from Supabase on component mount
+  useEffect(() => {
+    const fetchMentors = async () => {
+      setIsLoading(true);
+      try {
+        const { data, error } = await getMentors();
+        
+        if (error) {
+          console.error("Error fetching mentors:", error);
+          toast({
+            title: "Error",
+            description: "Failed to load mentors.",
+            variant: "destructive",
+          });
+          setFilteredMentors([]);
+          return;
+        }
+        
+        if (data && data.length > 0) {
+          setFilteredMentors(data);
+        } else {
+          setFilteredMentors([]);
+          toast({
+            title: "No mentors found",
+            description: "There are currently no mentors available.",
+          });
+        }
+      } catch (err) {
+        console.error("Exception fetching mentors:", err);
+        setFilteredMentors([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchMentors();
+  }, [toast]);
+
+  const handleSearch = async (query: string) => {
     setSearchQuery(query);
     setIsAiSearch(false);
     
     if (!query) {
-      setFilteredMentors(mockMentors);
+      // Fetch all mentors again when search is cleared
+      const { data } = await getMentors();
+      if (data) setFilteredMentors(data);
       return;
     }
     
-    const lowerCaseQuery = query.toLowerCase();
-    const results = mockMentors.filter(mentor => 
-      mentor.name.toLowerCase().includes(lowerCaseQuery) ||
-      mentor.department.toLowerCase().includes(lowerCaseQuery) ||
-      mentor.skills.some(skill => skill.toLowerCase().includes(lowerCaseQuery)) ||
-      (mentor.bio && mentor.bio.toLowerCase().includes(lowerCaseQuery))
-    );
+    // Use Supabase search function
+    const { data, error } = await searchMentors(query);
     
-    setFilteredMentors(results);
+    if (error) {
+      console.error("Error searching mentors:", error);
+      return;
+    }
+    
+    setFilteredMentors(data || []);
   };
 
   const handleGeminiSearch = (geminiResults: any[]) => {
@@ -86,12 +86,7 @@ const Mentors = () => {
       return;
     }
     
-    // Simulate finding matches in our mock data
-    const results = mockMentors.filter(mentor => 
-      geminiResults.some(result => result.name === mentor.name)
-    );
-    
-    setFilteredMentors(results.length > 0 ? results : mockMentors.slice(0, 1));
+    setFilteredMentors(geminiResults);
   };
 
   return (

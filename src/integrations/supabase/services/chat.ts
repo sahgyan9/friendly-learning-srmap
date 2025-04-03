@@ -1,170 +1,195 @@
 
-import { supabase } from '../client';
-import { Message, Conversation } from '@/types/chat';
-import type { Database } from '../types';
+import { supabase } from "@/integrations/supabase/client";
+import { Conversation, Message } from "@/types/chat";
 
-type MessageRecord = Database['public']['Tables']['messages']['Row'];
-type UserRecord = Database['public']['Tables']['users']['Row'];
-
-/**
- * Get all conversations for a user
- */
-export const getUserConversations = async (userId: string) => {
+// Get all conversations for a user
+export async function getUserConversations(userId: string) {
   try {
-    // Get all conversations where user is either user1 or user2
-    const { data, error } = await supabase
-      .from('messages')
+    console.log("Getting conversations for user ID:", userId);
+    
+    const { data: conversationsData, error: conversationsError } = await supabase
+      .from('conversations')
       .select(`
-        sender_id,
-        receiver_id,
-        message_text,
-        timestamp,
-        is_read,
-        sender:sender_id(id, name, profile_pic_url),
-        receiver:receiver_id(id, name, profile_pic_url)
+        *,
+        user1:users!conversations_user1_id_fkey(id, name, profile_image),
+        user2:users!conversations_user2_id_fkey(id, name, profile_image)
       `)
-      .or(`sender_id.eq.${userId},receiver_id.eq.${userId}`)
-      .order('timestamp', { ascending: false });
+      .or(`user1_id.eq.${userId},user2_id.eq.${userId}`)
+      .order('last_updated', { ascending: false });
 
-    if (error) {
-      throw error;
+    if (conversationsError) {
+      console.error('Error fetching conversations:', conversationsError);
+      return { data: null, error: conversationsError };
     }
 
-    // Group by conversation partner
-    const conversations: Record<string, any> = {};
+    console.log(`Retrieved ${conversationsData?.length || 0} conversations for user ${userId}`);
+
+    // Fetch the last message separately for each conversation
+    const enhancedConversations: Conversation[] = [];
     
-    data?.forEach((message: any) => {
-      const partnerId = message.sender_id === userId ? message.receiver_id : message.sender_id;
-      
-      if (!conversations[partnerId]) {
-        const partner = message.sender_id === userId ? message.receiver : message.sender;
-        conversations[partnerId] = {
-          id: partnerId, // Using partner ID as conversation ID for simplicity
-          user1_id: userId,
-          user2_id: partnerId,
-          user1: null, // Current user
-          user2: {
-            id: partner?.id,
-            name: partner?.name,
-            profile_image: partner?.profile_pic_url || `https://ui-avatars.com/api/?name=${partner?.name}&background=6366F1&color=fff`
-          },
-          last_message: {
-            id: message.id,
-            conversation_id: partnerId,
-            sender_id: message.sender_id,
-            receiver_id: message.receiver_id,
-            content: message.message_text,
-            sent_at: message.timestamp,
-            is_read: message.is_read
-          },
-          last_message_id: message.id,
-          last_updated: message.timestamp
-        };
+    for (const conversation of conversationsData || []) {
+      // If there's a last_message_id, fetch that specific message
+      if (conversation.last_message_id) {
+        const { data: messageData, error: messageError } = await supabase
+          .from('messages')
+          .select('*')
+          .eq('id', conversation.last_message_id)
+          .single();
+          
+        if (messageError) {
+          console.error(`Error fetching last message for conversation ${conversation.id}:`, messageError);
+        }
+        
+        enhancedConversations.push({
+          ...conversation,
+          last_message: messageData || undefined
+        });
+      } else {
+        // No last message, just add the conversation as is
+        enhancedConversations.push({
+          ...conversation,
+          last_message: undefined
+        });
       }
-    });
+    }
 
-    return { data: Object.values(conversations), error: null };
-  } catch (error) {
-    console.error("Error fetching conversations:", error);
-    return { data: null, error };
+    return { data: enhancedConversations, error: null };
+  } catch (err) {
+    console.error('Exception in getUserConversations:', err);
+    return { data: null, error: err as Error };
   }
-};
+}
 
-/**
- * Get all messages in a conversation
- */
-export const getConversationMessages = async (conversationId: string) => {
+// Get conversation messages
+export async function getConversationMessages(conversationId: string) {
   try {
     const { data, error } = await supabase
       .from('messages')
       .select('*')
-      .or(`sender_id.eq.${conversationId},receiver_id.eq.${conversationId}`)
-      .order('timestamp', { ascending: true });
-
+      .eq('conversation_id', conversationId)
+      .order('sent_at', { ascending: true });
+      
     if (error) {
-      throw error;
+      console.error('Error fetching messages:', error);
+      return { data: null, error };
     }
-
-    // Map to our Message type
-    const messages = data?.map((msg: MessageRecord) => ({
-      id: msg.id,
-      conversation_id: conversationId,
-      sender_id: msg.sender_id,
-      receiver_id: msg.receiver_id,
-      content: msg.message_text,
-      sent_at: msg.timestamp,
-      is_read: msg.is_read
-    }));
-
-    return { data: messages, error: null };
-  } catch (error) {
-    console.error("Error fetching messages:", error);
-    return { data: null, error };
+    
+    return { data, error: null };
+  } catch (err) {
+    console.error('Exception in getConversationMessages:', err);
+    return { data: null, error: err as Error };
   }
-};
+}
 
-/**
- * Mark all messages in a conversation as read
- */
-export const markMessagesAsRead = async (conversationId: string, userId: string) => {
+// Mark messages as read
+export async function markMessagesAsRead(conversationId: string, userId: string) {
   try {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('messages')
       .update({ is_read: true })
-      .eq('sender_id', conversationId)
+      .eq('conversation_id', conversationId)
       .eq('receiver_id', userId)
       .eq('is_read', false);
-
-    if (error) {
-      throw error;
-    }
-
-    return { success: true, error: null };
-  } catch (error) {
-    console.error("Error marking messages as read:", error);
-    return { success: false, error };
+    
+    return { data, error };
+  } catch (err) {
+    console.error('Exception in markMessagesAsRead:', err);
+    return { data: null, error: err as Error };
   }
-};
+}
 
-/**
- * Send a new message
- */
-export const sendMessage = async (
+// Send a message
+export async function sendMessage(
   conversationId: string,
   senderId: string,
   receiverId: string,
   content: string
-) => {
+) {
   try {
-    const { data, error } = await supabase
+    // 1. Insert the message
+    const { data: messageData, error: messageError } = await supabase
       .from('messages')
       .insert({
+        conversation_id: conversationId,
         sender_id: senderId,
         receiver_id: receiverId,
-        message_text: content,
+        content,
+        sent_at: new Date().toISOString(),
         is_read: false
       })
       .select()
       .single();
-
-    if (error) {
-      throw error;
+    
+    if (messageError) {
+      console.error('Error sending message:', messageError);
+      return { data: null, error: messageError };
+    }
+    
+    if (!messageData) {
+      console.error('No data returned after sending message');
+      return { data: null, error: new Error('No data returned after sending message') };
     }
 
-    // Map to our Message type
-    const message: Message = {
-      id: data!.id,
-      conversation_id: conversationId,
-      sender_id: data!.sender_id,
-      receiver_id: data!.receiver_id,
-      content: data!.message_text,
-      sent_at: data!.timestamp,
-      is_read: data!.is_read
-    };
-
-    return { data: message, error: null };
-  } catch (error) {
-    console.error("Error sending message:", error);
-    return { data: null, error };
+    // 2. Update the conversation's last_message_id and last_updated
+    const { data: conversationData, error: conversationError } = await supabase
+      .rpc('update_conversation', {
+        conversation_id: conversationId,
+        message_id: messageData.id
+      });
+      
+    if (conversationError) {
+      console.error('Error updating conversation:', conversationError);
+      // We still return the message data even if conversation update fails
+    }
+    
+    return { data: messageData, error: null };
+  } catch (err) {
+    console.error('Exception in sendMessage:', err);
+    return { data: null, error: err as Error };
   }
-};
+}
+
+// Get or create a conversation between two users
+export async function getOrCreateConversation(user1Id: string, user2Id: string) {
+  try {
+    // First, check if a conversation already exists
+    const { data: existingConversation, error: findError } = await supabase
+      .from('conversations')
+      .select('*')
+      .or(`and(user1_id.eq.${user1Id},user2_id.eq.${user2Id}),and(user1_id.eq.${user2Id},user2_id.eq.${user1Id})`)
+      .single();
+      
+    if (!findError && existingConversation) {
+      console.log('Found existing conversation:', existingConversation);
+      return { data: existingConversation, error: null };
+    }
+    
+    if (findError && findError.code !== 'PGRST116') {
+      // If error is not "no rows returned", something went wrong
+      console.error('Error finding conversation:', findError);
+      return { data: null, error: findError };
+    }
+    
+    // No existing conversation, create a new one
+    console.log('Creating new conversation between', user1Id, 'and', user2Id);
+    const { data: newConversation, error: createError } = await supabase
+      .from('conversations')
+      .insert({
+        user1_id: user1Id,
+        user2_id: user2Id,
+        last_updated: new Date().toISOString()
+      })
+      .select()
+      .single();
+      
+    if (createError) {
+      console.error('Error creating conversation:', createError);
+      return { data: null, error: createError };
+    }
+    
+    return { data: newConversation, error: null };
+  } catch (err) {
+    console.error('Exception in getOrCreateConversation:', err);
+    return { data: null, error: err as Error };
+  }
+}

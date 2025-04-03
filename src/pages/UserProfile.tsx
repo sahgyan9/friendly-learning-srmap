@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -10,9 +11,6 @@ import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
-import type { Database } from "@/integrations/supabase/types";
-
-type UserRecord = Database['public']['Tables']['users']['Row'];
 
 const UserProfile = () => {
   const navigate = useNavigate();
@@ -53,10 +51,9 @@ const UserProfile = () => {
     
     try {
       const { data, error } = await supabase
-        .from('users')
+        .from('mentors')
         .select('*')
         .eq('id', user.id)
-        .eq('is_mentor', true)
         .single();
       
       if (error) {
@@ -77,7 +74,7 @@ const UserProfile = () => {
           department: data.department || "",
           skills: data.skills?.join(', ') || "",
           linkedin_url: data.linkedin_url || "",
-          profile_image: data.profile_pic_url || prev.profile_image
+          profile_image: data.profile_image || prev.profile_image
         }));
       }
     } catch (error) {
@@ -160,7 +157,7 @@ const UserProfile = () => {
         .from('users')
         .update({
           name: formData.name,
-          profile_pic_url: profileImageUrl
+          profile_image: profileImageUrl
         })
         .eq('id', user.id);
       
@@ -174,14 +171,14 @@ const UserProfile = () => {
           .filter(skill => skill.length > 0);
         
         const { error: mentorError } = await supabase
-          .from('users')
+          .from('mentors')
           .update({
             name: formData.name,
             bio: formData.bio,
             department: formData.department,
             skills: skillsArray,
             linkedin_url: formData.linkedin_url,
-            profile_pic_url: profileImageUrl
+            profile_image: profileImageUrl
           })
           .eq('id', user.id);
         
@@ -199,45 +196,6 @@ const UserProfile = () => {
       toast.error(error.message || 'Error updating profile');
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const fetchUserProfile = async (userId: string) => {
-    try {
-      const { data, error } = await getUserProfile(userId);
-      
-      if (error) {
-        console.error('Error fetching user profile:', error);
-        setProfile(null);
-      } else if (data) {
-        setProfile({
-          id: data.id,
-          name: data.name,
-          email: data.email,
-          role: data.is_mentor ? 'mentor' : 'student',
-          profile_image: data.profile_pic_url,
-        });
-        
-        // If it's a mentor profile, update form with bio data
-        if (data.is_mentor) {
-          setFormData(prev => ({
-            ...prev,
-            bio: data.bio || "",
-            department: data.department || "",
-            skills: data.skills?.join(', ') || "",
-            linkedin_url: data.linkedin_url || "",
-            profile_image: data.profile_pic_url || ""
-          }));
-        }
-      } else {
-        // User doesn't have a profile yet
-        setProfile(null);
-      }
-    } catch (error) {
-      console.error('Unexpected error fetching user profile:', error);
-      setProfile(null);
-    } finally {
-      setLoading(false);
     }
   };
 

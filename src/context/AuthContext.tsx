@@ -3,8 +3,6 @@ import { createContext, useState, useContext, useEffect, ReactNode } from "react
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { getUserProfile } from "@/integrations/supabase/services/users";
-import type { Database } from "@/integrations/supabase/types";
 
 interface UserProfile {
   id: string;
@@ -34,7 +32,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
 
   useEffect(() => {
-    console.log("AuthProvider init");
     // Set up auth state listener first
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
@@ -44,7 +41,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
         // Fetch user profile when session changes
         if (session?.user) {
-          console.log("User authenticated:", session.user.email);
           // For Google Auth or other OAuth providers, we need to create a profile if it doesn't exist
           if (event === 'SIGNED_IN') {
             setTimeout(() => {
@@ -64,7 +60,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log("Existing session check:", session ? "Found" : "None");
       setSession(session);
       setUser(session?.user ?? null);
       
@@ -82,15 +77,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const checkAndCreateUserProfile = async (user: User) => {
     try {
-      console.log("Checking if profile exists for:", user.email);
       // First check if profile exists
-      const { data: existingProfile, error: fetchError } = await getUserProfile(user.id);
+      const { data: existingProfile, error: fetchError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', user.id)
+        .maybeSingle();
       
       if (fetchError) throw fetchError;
 
       // If profile doesn't exist, create one
       if (!existingProfile) {
-        console.log("No profile found, creating new profile");
         const userData = {
           id: user.id,
           name: user.user_metadata.full_name || user.user_metadata.name || 'User',
@@ -100,32 +97,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         const { error: insertError } = await supabase
           .from('users')
-          .insert({
-            id: userData.id,
-            name: userData.name,
-            email: userData.email,
-          });
+          .insert(userData);
         
-        if (insertError) {
-          console.error("Error creating user profile:", insertError);
-          throw insertError;
-        }
+        if (insertError) throw insertError;
         
-        setProfile({
-          id: userData.id,
-          name: userData.name,
-          email: userData.email,
-          role: 'student',
-        });
+        setProfile(userData);
       } else {
-        console.log("Found existing profile:", existingProfile.name);
-        setProfile({
-          id: existingProfile.id,
-          name: existingProfile.name,
-          email: existingProfile.email,
-          role: existingProfile.is_mentor ? 'mentor' : 'student',
-          profile_image: existingProfile.profile_pic_url,
-        });
+        setProfile(existingProfile);
       }
     } catch (error) {
       console.error('Error checking/creating user profile:', error);
@@ -136,25 +114,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const fetchUserProfile = async (userId: string) => {
     try {
-      console.log("Fetching profile for user ID:", userId);
-      const { data, error } = await getUserProfile(userId);
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', userId)
+        .maybeSingle();
       
       if (error) {
         console.error('Error fetching user profile:', error);
         setProfile(null);
-      } else if (data) {
-        console.log("Profile fetched successfully:", data.name);
-        setProfile({
-          id: data.id,
-          name: data.name,
-          email: data.email,
-          role: data.is_mentor ? 'mentor' : 'student',
-          profile_image: data.profile_pic_url,
-        });
       } else {
-        // User doesn't have a profile yet
-        console.log("No profile found for user");
-        setProfile(null);
+        setProfile(data);
       }
     } catch (error) {
       console.error('Unexpected error fetching user profile:', error);
