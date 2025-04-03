@@ -5,6 +5,7 @@ import SearchBar from "@/components/SearchBar";
 import { getMentors, searchMentors } from "@/integrations/supabase/services/mentors";
 import { Mentor } from "@/types/mentor";
 import { useToast } from "@/components/ui/use-toast";
+import { motion } from "framer-motion";
 
 // Import refactored components
 import MentorList from "@/components/mentors/MentorList";
@@ -17,6 +18,28 @@ const Mentors = () => {
   const [isAiSearch, setIsAiSearch] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+
+  // Fade in animation variants
+  const pageVariants = {
+    hidden: { opacity: 0 },
+    visible: { 
+      opacity: 1,
+      transition: { 
+        duration: 0.6,
+        when: "beforeChildren",
+        staggerChildren: 0.2
+      }
+    }
+  };
+  
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: { duration: 0.5 }
+    }
+  };
 
   // Fetch mentors from Supabase on component mount
   useEffect(() => {
@@ -90,30 +113,41 @@ const Mentors = () => {
   };
 
   return (
-    <div className="min-h-screen">
+    <motion.div 
+      className="min-h-screen"
+      initial="hidden"
+      animate="visible"
+      variants={pageVariants}
+    >
       <Navbar />
       
       <main className="pt-24 pb-16">
         <div className="container px-4 md:px-6">
-          <MentorsHeader 
-            title="Find Your Mentor" 
-            description="Browse our extensive list of qualified mentors or use the search to find someone with the specific skills you need."
-          />
+          <motion.div variants={itemVariants}>
+            <MentorsHeader 
+              title="Find Your Mentor" 
+              description="Browse our extensive list of qualified mentors or use the search to find someone with the specific skills you need."
+            />
+          </motion.div>
           
           {/* Search */}
-          <SearchBar onSearch={handleSearch} onGeminiSearch={handleGeminiSearch} />
+          <motion.div variants={itemVariants}>
+            <SearchBar onSearch={handleSearch} onGeminiSearch={handleGeminiSearch} />
+          </motion.div>
           
           {/* Mentors List */}
-          <MentorList 
-            isLoading={isLoading} 
-            mentors={filteredMentors} 
-            isAiSearch={isAiSearch} 
-          />
+          <motion.div variants={itemVariants}>
+            <MentorList 
+              isLoading={isLoading} 
+              mentors={filteredMentors} 
+              isAiSearch={isAiSearch} 
+            />
+          </motion.div>
         </div>
       </main>
       
       <MentorsFooter />
-    </div>
+    </motion.div>
   );
 };
 

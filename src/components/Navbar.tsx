@@ -13,6 +13,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import Logo from "./Logo";
+import { motion } from "framer-motion";
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -47,16 +49,17 @@ const Navbar = () => {
     >
       <div className="container mx-auto px-4 md:px-6">
         <div className="flex items-center justify-between">
-          <Link
-            to="/"
-            className="text-xl md:text-2xl font-bold text-primary tracking-tight flex items-center"
-          >
-            <span className="mr-1">Friendly</span>
-            <span className="text-gray-700">Learning</span>
+          <Link to="/">
+            <Logo />
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-1">
+          <motion.nav 
+            className="hidden md:flex items-center space-x-1"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.1 }}
+          >
             <Button variant="ghost" asChild className="text-gray-700 hover:text-primary">
               <Link to="/">Home</Link>
             </Button>
@@ -120,18 +123,24 @@ const Navbar = () => {
                   </DropdownMenu>
                 </>
               ) : (
-                <Button variant="default" size="sm" asChild className="flex items-center gap-1">
-                  <Link to="/signin">
-                    <User className="h-4 w-4" />
-                    Sign In
-                  </Link>
-                </Button>
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <Button variant="default" size="sm" asChild className="flex items-center gap-1">
+                    <Link to="/signin">
+                      <User className="h-4 w-4" />
+                      Sign In
+                    </Link>
+                  </Button>
+                </motion.div>
               )}
             </div>
-          </nav>
+          </motion.nav>
 
           {/* Mobile Navigation Toggle */}
-          <button
+          <motion.button
+            whileTap={{ scale: 0.9 }}
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             className="md:hidden text-gray-700 focus:outline-none"
             aria-label="Toggle navigation menu"
@@ -141,12 +150,17 @@ const Navbar = () => {
             ) : (
               <Menu className="h-6 w-6" />
             )}
-          </button>
+          </motion.button>
         </div>
 
         {/* Mobile Navigation Menu */}
         {isMobileMenuOpen && (
-          <nav className="md:hidden mt-4 py-4 px-2 bg-white/95 backdrop-blur-md rounded-lg shadow-lg animate-fade-in">
+          <motion.nav 
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            className="md:hidden mt-4 py-4 px-2 bg-white/95 backdrop-blur-md rounded-lg shadow-lg"
+          >
             <div className="flex flex-col space-y-3">
               <Button variant="ghost" asChild className="justify-start text-gray-700 hover:text-primary">
                 <Link to="/">Home</Link>
@@ -209,7 +223,7 @@ const Navbar = () => {
                 )}
               </div>
             </div>
-          </nav>
+          </motion.nav>
         )}
       </div>
     </header>

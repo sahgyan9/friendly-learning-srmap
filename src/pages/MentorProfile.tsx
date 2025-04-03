@@ -10,6 +10,7 @@ import { getMentorById } from "@/integrations/supabase/services/mentors";
 import { Mentor } from "@/types/mentor";
 import ChatModal from "@/components/chat/modals/ChatModal";
 import { useAuth } from "@/context/AuthContext";
+import { motion } from "framer-motion";
 
 const MentorProfile = () => {
   const { id } = useParams<{ id: string }>();
@@ -59,15 +60,42 @@ const MentorProfile = () => {
 
   const isOwnProfile = user && mentor && user.id === mentor.id;
 
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { 
+      opacity: 1,
+      transition: { 
+        when: "beforeChildren", 
+        staggerChildren: 0.1,
+        duration: 0.5
+      }
+    }
+  };
+  
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: { duration: 0.5 }
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen">
         <Navbar />
         <div className="container px-4 md:px-6 pt-24 pb-16 flex justify-center items-center min-h-[60vh]">
-          <div className="flex flex-col items-center">
+          <motion.div 
+            className="flex flex-col items-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5 }}
+          >
             <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
             <p className="text-lg text-muted-foreground">Loading mentor profile...</p>
-          </div>
+          </motion.div>
         </div>
       </div>
     );
@@ -77,20 +105,27 @@ const MentorProfile = () => {
     return (
       <div className="min-h-screen">
         <Navbar />
-        <div className="container px-4 md:px-6 pt-24 pb-16">
+        <motion.div 
+          className="container px-4 md:px-6 pt-24 pb-16"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5 }}
+        >
           <div className="max-w-3xl mx-auto text-center py-12">
             <h1 className="text-3xl font-bold mb-4">Mentor Not Found</h1>
             <p className="text-muted-foreground mb-8">
               The mentor profile you're looking for doesn't exist or has been removed.
             </p>
-            <Button asChild>
-              <Link to="/mentors">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Mentors
-              </Link>
-            </Button>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Button asChild>
+                <Link to="/mentors">
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Back to Mentors
+                </Link>
+              </Button>
+            </motion.div>
           </div>
-        </div>
+        </motion.div>
       </div>
     );
   }
@@ -101,83 +136,138 @@ const MentorProfile = () => {
       
       <main className="pt-24 pb-16">
         <div className="container px-4 md:px-6">
-          <div className="max-w-4xl mx-auto">
-            <div className="mb-8">
+          <motion.div 
+            className="max-w-4xl mx-auto"
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+          >
+            <motion.div className="mb-8" variants={itemVariants}>
               <Button variant="ghost" asChild className="px-0 text-muted-foreground">
                 <Link to="/mentors">
                   <ArrowLeft className="mr-2 h-4 w-4" />
                   Back to Mentors
                 </Link>
               </Button>
-            </div>
+            </motion.div>
             
-            <div className="flex flex-col md:flex-row gap-8 mb-10">
-              <div className="flex-shrink-0">
+            <motion.div 
+              className="flex flex-col md:flex-row gap-8 mb-10"
+              variants={itemVariants}
+            >
+              <motion.div 
+                className="flex-shrink-0"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5 }}
+              >
                 <div className="relative">
-                  <img 
+                  <motion.img 
                     src={mentor.profile_image} 
                     alt={mentor.name}
                     className="w-36 h-36 md:w-48 md:h-48 rounded-xl object-cover shadow-lg"
+                    whileHover={{ scale: 1.05 }}
+                    transition={{ type: "spring", stiffness: 300 }}
                   />
-                  <div className="absolute -bottom-2 -right-2 flex items-center bg-white rounded-full px-3 py-1 shadow-sm border border-gray-100">
+                  <motion.div 
+                    className="absolute -bottom-2 -right-2 flex items-center bg-white rounded-full px-3 py-1 shadow-sm border border-gray-100"
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.3, duration: 0.4 }}
+                  >
                     <Star className="w-4 h-4 text-yellow-400 mr-1.5" />
                     <span className="text-sm font-medium">{mentor.rating.toFixed(1)}</span>
                     <span className="text-xs text-muted-foreground ml-1">({mentor.review_count})</span>
-                  </div>
+                  </motion.div>
                 </div>
-              </div>
+              </motion.div>
               
               <div className="flex-1">
-                <h1 className="text-3xl font-bold mb-2">{mentor.name}</h1>
-                <p className="text-lg text-muted-foreground mb-4">{mentor.department}</p>
+                <motion.h1 
+                  className="text-3xl font-bold mb-2"
+                  variants={itemVariants}
+                >
+                  {mentor.name}
+                </motion.h1>
+                <motion.p 
+                  className="text-lg text-muted-foreground mb-4"
+                  variants={itemVariants}
+                >
+                  {mentor.department}
+                </motion.p>
                 
-                <div className="flex flex-wrap gap-2 mb-6">
-                  {mentor.skills.map((skill) => (
-                    <Badge key={skill} variant="secondary" className="text-sm">
-                      {skill}
-                    </Badge>
+                <motion.div 
+                  className="flex flex-wrap gap-2 mb-6"
+                  variants={itemVariants}
+                >
+                  {mentor.skills.map((skill, index) => (
+                    <motion.div
+                      key={skill}
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.2 + (index * 0.05), duration: 0.3 }}
+                    >
+                      <Badge variant="secondary" className="text-sm">
+                        {skill}
+                      </Badge>
+                    </motion.div>
                   ))}
-                </div>
+                </motion.div>
                 
-                <div className="flex flex-col sm:flex-row gap-3 mt-auto">
+                <motion.div 
+                  className="flex flex-col sm:flex-row gap-3 mt-auto"
+                  variants={itemVariants}
+                >
                   {isOwnProfile ? (
-                    <Button 
-                      asChild
-                      className="flex items-center gap-2"
-                    >
-                      <Link to="/profile">
-                        Edit Profile
-                      </Link>
-                    </Button>
+                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                      <Button 
+                        asChild
+                        className="flex items-center gap-2"
+                      >
+                        <Link to="/profile">
+                          Edit Profile
+                        </Link>
+                      </Button>
+                    </motion.div>
                   ) : (
-                    <Button 
-                      onClick={openChatModal}
-                      className="flex items-center gap-2"
-                    >
-                      <MessageCircle className="h-4 w-4" />
-                      Connect with Mentor
-                    </Button>
+                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                      <Button 
+                        onClick={openChatModal}
+                        className="flex items-center gap-2"
+                      >
+                        <MessageCircle className="h-4 w-4" />
+                        Connect with Mentor
+                      </Button>
+                    </motion.div>
                   )}
                   
                   {mentor.linkedin_url && (
-                    <Button variant="outline" asChild className="flex items-center gap-2">
-                      <a href={mentor.linkedin_url} target="_blank" rel="noopener noreferrer">
-                        <Linkedin className="h-4 w-4" />
-                        LinkedIn Profile
-                      </a>
-                    </Button>
+                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                      <Button variant="outline" asChild className="flex items-center gap-2">
+                        <a href={mentor.linkedin_url} target="_blank" rel="noopener noreferrer">
+                          <Linkedin className="h-4 w-4" />
+                          LinkedIn Profile
+                        </a>
+                      </Button>
+                    </motion.div>
                   )}
-                </div>
+                </motion.div>
               </div>
-            </div>
+            </motion.div>
             
-            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 mb-10">
+            <motion.div 
+              className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 mb-10"
+              variants={itemVariants}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+            >
               <h2 className="text-xl font-semibold mb-4">About</h2>
               <p className="text-gray-700 leading-relaxed">
                 {mentor.bio || "This mentor hasn't added a bio yet."}
               </p>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         </div>
       </main>
       
