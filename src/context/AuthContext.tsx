@@ -42,12 +42,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
         // Fetch user profile when session changes
         if (session?.user) {
-          console.log("User authenticated, fetching profile");
           // For Google Auth or other OAuth providers, we need to create a profile if it doesn't exist
           if (event === 'SIGNED_IN') {
-            await checkAndCreateUserProfile(session.user);
+            setTimeout(() => {
+              checkAndCreateUserProfile(session.user);
+            }, 0);
           } else {
-            await fetchUserProfile(session.user.id);
+            setTimeout(() => {
+              fetchUserProfile(session.user.id);
+            }, 0);
           }
         } else {
           setProfile(null);
@@ -62,7 +65,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        console.log("Existing session found, fetching profile for user:", session.user.id);
         fetchUserProfile(session.user.id);
       } else {
         setLoading(false);
@@ -77,28 +79,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const checkAndCreateUserProfile = async (user: User) => {
     try {
       setLoading(true);
-      console.log("Checking if profile exists for user:", user.id);
-      
-      // First check if profile exists using service role client to bypass RLS
+      // First check if profile exists
       const { data: existingProfile, error: fetchError } = await supabase
         .from('users')
         .select('*')
         .eq('id', user.id)
         .maybeSingle();
       
-      if (fetchError) {
-        console.error("Error fetching user profile:", fetchError);
-        throw fetchError;
-      }
+      if (fetchError) throw fetchError;
 
       // If profile doesn't exist, create one
       if (!existingProfile) {
-        console.log("Profile doesn't exist, creating new profile for user:", user.id);
-        
-        // Extract name from metadata or email
         const name = user.user_metadata.full_name || 
                      user.user_metadata.name || 
-                     user.email?.split('@')[0] || 
+                     user.user_metadata.email?.split('@')[0] || 
                      'User';
         
         const userData = {
@@ -108,25 +102,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           role: 'student' // Default role
         };
 
-        console.log("Creating new user profile with data:", userData);
-        
         const { error: insertError } = await supabase
           .from('users')
           .insert(userData);
         
-        if (insertError) {
-          console.error("Error creating user profile:", insertError);
-          throw insertError;
-        }
+        if (insertError) throw insertError;
         
         setProfile(userData);
         toast.success("Welcome! Your profile has been created.");
       } else {
-        console.log("Existing profile found:", existingProfile);
         setProfile(existingProfile);
-        
-        // After loading basic profile, check if the user is a mentor
-        checkMentorStatus(user.id);
       }
     } catch (error) {
       console.error('Error checking/creating user profile:', error);
@@ -139,8 +124,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const fetchUserProfile = async (userId: string) => {
     try {
       setLoading(true);
-      console.log("Fetching user profile for user:", userId);
-      
       const { data, error } = await supabase
         .from('users')
         .select('*')
@@ -151,16 +134,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.error('Error fetching user profile:', error);
         setProfile(null);
         toast.error("Failed to load your profile data");
-      } else if (data) {
-        console.log("Profile data loaded:", data);
+      } else {
         setProfile(data);
+        console.log("Profile data loaded:", data);
         
         // After fetching basic profile, check if the user is a mentor
-        checkMentorStatus(userId);
-      } else {
-        console.log("No profile found, creating one");
-        if (user) {
-          await checkAndCreateUserProfile(user);
+        if (data) {
+          checkMentorStatus(userId);
         }
       }
     } catch (error) {
@@ -174,23 +154,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const checkMentorStatus = async (userId: string) => {
     try {
-      console.log("Checking if user is a mentor:", userId);
       const { data, error } = await supabase
         .from('mentors')
         .select('*')
         .eq('id', userId)
         .maybeSingle();
       
-      if (error) {
-        if (error.code !== 'PGRST116') { // PGRST116 is "not found" which is expected if user is not a mentor
-          console.error('Error checking mentor status:', error);
-        } else {
-          console.log("User is not a mentor");
-        }
+      if (error && error.code !== 'PGRST116') {
+        // PGRST116 is "not found" which is expected if user is not a mentor
+        console.error('Error checking mentor status:', error);
       } 
       
       if (data) {
-        console.log("User is a mentor:", data);
         // Update user role to mentor if they are in the mentors table
         const { error: updateError } = await supabase
           .from('users')
@@ -200,9 +175,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (updateError) {
           console.error('Error updating user role:', updateError);
         } else {
-          console.log("Updated user role to mentor");
           // Refresh profile to get updated role
-          await fetchUserProfile(userId);
+          fetchUserProfile(userId);
         }
       }
     } catch (error) {
@@ -212,7 +186,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refreshProfile = async () => {
     if (user) {
-      console.log("Refreshing profile for user:", user.id);
       await fetchUserProfile(user.id);
     }
   };
@@ -228,13 +201,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Determine if the user is a mentor
   const isMentor = profile?.role === 'mentor';
-  
-  console.log("Auth context state:", { 
-    user: user?.id, 
-    profile: profile?.id, 
-    isMentor,
-    loading 
-  });
 
   const value = {
     session,
