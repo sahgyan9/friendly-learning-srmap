@@ -64,7 +64,7 @@ const MessageList = ({ messages, loading, currentUserId }: MessageListProps) => 
                 className={`p-3 rounded-lg ${
                   isMine 
                     ? "bg-primary text-primary-foreground" 
-                    : "bg-muted"
+                    : "bg-muted dark:bg-gray-800"
                 }`}
               >
                 <p className="text-sm break-words">{msg.content}</p>

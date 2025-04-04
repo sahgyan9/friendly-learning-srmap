@@ -22,6 +22,17 @@ export const useMessageOperations = (userId: string) => {
     setError(null);
     
     try {
+      // Handle demo conversation IDs differently
+      if (conversationId.startsWith('demo-')) {
+        const demoMessages = getDemoMessages(conversationId);
+        if (demoMessages.length > 0) {
+          console.log("Using demo messages from localStorage:", demoMessages);
+          setMessages(demoMessages);
+        }
+        setIsLoadingMessages(false);
+        return;
+      }
+      
       const { data, error } = await getConversationMessages(conversationId);
       
       if (error) {
@@ -42,7 +53,10 @@ export const useMessageOperations = (userId: string) => {
         console.log("Fetched messages:", data);
         setMessages(data);
         
-        await markMessagesAsRead(conversationId, userId);
+        // Mark messages as read if the user ID is valid
+        if (userId && !userId.startsWith('demo-')) {
+          await markMessagesAsRead(conversationId, userId);
+        }
       }
     } catch (err) {
       console.error("Exception fetching messages:", err);

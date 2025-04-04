@@ -22,8 +22,27 @@ export const useConversationOperations = (userId: string) => {
     setIsLoadingConversations(true);
     setError(null);
     
+    // Return early if no userId is provided
+    if (!userId) {
+      console.log("No user ID provided, skipping conversation fetch");
+      setIsLoadingConversations(false);
+      return;
+    }
+    
     try {
       console.log("Fetching conversations for user:", userId);
+      
+      // For Demo ID, use localStorage
+      if (userId.startsWith('demo-')) {
+        const demoConversations = getDemoConversations();
+        setConversations(demoConversations);
+        if (demoConversations.length > 0) {
+          setActiveChat(demoConversations[0].id);
+        }
+        setIsLoadingConversations(false);
+        return;
+      }
+      
       const { data, error } = await getUserConversations(userId);
       
       if (error) {

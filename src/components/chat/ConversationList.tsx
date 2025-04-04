@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { Conversation } from "@/types/chat";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface ConversationListProps {
   conversations: Conversation[];
@@ -57,6 +58,15 @@ const ConversationList = ({
     );
   }
   
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(part => part[0])
+      .join('')
+      .toUpperCase()
+      .substring(0, 2);
+  };
+
   return (
     <div>
       {filteredConversations.map(conversation => {
@@ -68,23 +78,22 @@ const ConversationList = ({
           <div 
             key={conversation.id}
             onClick={() => setActiveChat(conversation.id)}
-            className={`flex items-center gap-3 p-4 border-b border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors ${activeChat === conversation.id ? 'bg-primary/5' : ''}`}
+            className={`flex items-center gap-3 p-4 border-b border-gray-200 dark:border-gray-800 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors ${activeChat === conversation.id ? 'bg-primary/5 dark:bg-primary/10' : ''}`}
           >
             <div className="flex-shrink-0">
-              <img 
-                src={otherUser?.profile_image} 
-                alt={otherUser?.name} 
-                className="w-12 h-12 rounded-full"
-              />
+              <Avatar className="h-12 w-12">
+                <AvatarImage src={otherUser?.profile_image} alt={otherUser?.name || "User"} />
+                <AvatarFallback>{otherUser?.name ? getInitials(otherUser.name) : 'U'}</AvatarFallback>
+              </Avatar>
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex justify-between items-baseline">
-                <h3 className="text-sm font-semibold truncate">{otherUser?.name}</h3>
-                <span className="text-xs text-gray-500">
+                <h3 className="text-sm font-semibold truncate">{otherUser?.name || "Unknown User"}</h3>
+                <span className="text-xs text-gray-500 dark:text-gray-400">
                   {formatTime(conversation.last_updated)}
                 </span>
               </div>
-              <p className="text-sm text-gray-600 truncate">{lastMessageContent}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-300 truncate">{lastMessageContent}</p>
             </div>
             {hasUnread && (
               <div className="w-2 h-2 bg-primary rounded-full"></div>

@@ -2,23 +2,20 @@
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
-import { Conversation } from "@/types/chat";
 import ChatContainer from "@/components/chat/ChatContainer";
 import ChatFooter from "@/components/chat/ChatFooter";
+import { useAuth } from "@/context/AuthContext";
 import { useMessages } from "@/hooks/use-messages";
 import { formatMessageTime } from "@/utils/date-utils";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2 } from "lucide-react";
 
-// Use the sample user we created in Supabase
-const SAMPLE_USER = {
-  id: "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11", // John Student
-  name: "John Student",
-  profile_image: "https://ui-avatars.com/api/?name=John+Student&background=6366F1&color=fff"
-};
-
 const Messages = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const { user } = useAuth();
+  
+  // Use the real user ID from auth context instead of the sample user
+  const userId = user?.id || "";
   
   const {
     conversations,
@@ -30,7 +27,7 @@ const Messages = () => {
     error,
     setActiveChat,
     sendMessage
-  } = useMessages(SAMPLE_USER.id);
+  } = useMessages(userId);
 
   useEffect(() => {
     if (error) {
@@ -43,14 +40,14 @@ const Messages = () => {
     console.log("Current conversations:", conversations);
   }, [conversations]);
 
-  const getOtherUser = (conversation: Conversation) => {
-    return conversation.user1_id === SAMPLE_USER.id ? conversation.user2 : conversation.user1;
+  const getOtherUser = (conversation) => {
+    return conversation.user1_id === userId ? conversation.user2 : conversation.user1;
   };
 
-  const hasUnreadMessages = (conversationId: string) => {
+  const hasUnreadMessages = (conversationId) => {
     return messages.some(msg => 
       msg.conversation_id === conversationId && 
-      msg.receiver_id === SAMPLE_USER.id && 
+      msg.receiver_id === userId && 
       !msg.is_read
     );
   };
@@ -81,6 +78,25 @@ const Messages = () => {
     );
   }
 
+  if (!user) {
+    return (
+      <div className="min-h-screen">
+        <Navbar />
+        <main className="pt-24 pb-16">
+          <div className="container px-4 md:px-6">
+            <h1 className="text-3xl font-bold mb-8">Messages</h1>
+            <Alert className="mb-4">
+              <AlertDescription>
+                Please sign in to view your messages.
+              </AlertDescription>
+            </Alert>
+          </div>
+        </main>
+        <ChatFooter />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen">
       <Navbar />
@@ -99,7 +115,7 @@ const Messages = () => {
             isSending={isSending}
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
-            currentUserId={SAMPLE_USER.id}
+            currentUserId={userId}
             formatTime={formatMessageTime}
             getOtherUser={getOtherUser}
             setActiveChat={setActiveChat}

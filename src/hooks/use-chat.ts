@@ -5,7 +5,8 @@ import { Message } from "@/types/chat";
 import { 
   getOrCreateConversation,
   getConversationMessages, 
-  sendMessage 
+  sendMessage,
+  markMessagesAsRead 
 } from "@/integrations/supabase/services/chat";
 import { useDemoMessages } from "./messages/use-demo-messages";
 
@@ -24,7 +25,7 @@ export const useChat = (userId: string, mentorId: string) => {
   
   const initializeChat = useCallback(async () => {
     // Prevent concurrent initialization attempts
-    if (initializingRef.current) return;
+    if (initializingRef.current || !userId) return;
     
     initializingRef.current = true;
     setLoading(true);
@@ -72,6 +73,9 @@ export const useChat = (userId: string, mentorId: string) => {
         } else if (messageData) {
           setMessages(messageData);
           console.log("Fetched messages:", messageData);
+          
+          // Mark messages as read
+          await markMessagesAsRead(conversation.id, userId);
         }
         setInitialized(true);
       }
@@ -92,7 +96,7 @@ export const useChat = (userId: string, mentorId: string) => {
   }, [initialized, userId, mentorId, initializeChat]);
   
   const handleSendMessage = useCallback(async (content: string) => {
-    if (!conversationId) {
+    if (!conversationId || !userId) {
       toast.error("Chat not initialized");
       return;
     }
