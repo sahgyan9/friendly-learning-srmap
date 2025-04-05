@@ -16,7 +16,8 @@ const supabaseClient = createClient(
 
 // The Google API key and Gemini API URL
 const GOOGLE_API_KEY = Deno.env.get('GOOGLE_API_KEY') ?? '';
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
+const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+
 
 // Helper function to fetch mentors
 async function fetchMentors() {
