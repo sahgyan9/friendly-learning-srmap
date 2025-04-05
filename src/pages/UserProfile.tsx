@@ -201,7 +201,7 @@ const UserProfile = () => {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen">
+      <div className="min-h-screen bg-background">
         <Navbar />
         <div className="container px-4 md:px-6 pt-24 pb-16 flex justify-center items-center min-h-[60vh]">
           <div className="flex flex-col items-center">
@@ -214,19 +214,19 @@ const UserProfile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <Navbar />
       
       <main className="container px-4 py-16 md:py-24 mx-auto">
         <div className="max-w-3xl mx-auto">
           <div className="mb-8 text-center">
-            <h1 className="text-3xl font-bold">Your Profile</h1>
+            <h1 className="text-3xl font-bold text-foreground">Your Profile</h1>
             <p className="text-muted-foreground mt-2">
               {isMentorProfile ? "You're registered as a mentor. Edit your profile details below." : "Manage your account information"}
             </p>
           </div>
           
-          <div className="bg-white rounded-lg shadow-sm p-6 md:p-8">
+          <div className="bg-card rounded-lg shadow-sm p-6 md:p-8 border border-border">
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Profile Image */}
               <div className="flex flex-col items-center mb-8">
@@ -237,7 +237,7 @@ const UserProfile = () => {
                   </Avatar>
                   <label 
                     htmlFor="profile-image"
-                    className="absolute bottom-0 right-0 bg-primary text-white p-2 rounded-full cursor-pointer hover:bg-primary/90 transition-colors"
+                    className="absolute bottom-0 right-0 bg-primary text-primary-foreground p-2 rounded-full cursor-pointer hover:bg-primary/90 transition-colors"
                   >
                     <Camera className="h-4 w-4" />
                     <input
@@ -256,7 +256,7 @@ const UserProfile = () => {
               
               <div className="grid gap-6 md:grid-cols-2">
                 <div>
-                  <Label htmlFor="name">Full name</Label>
+                  <Label htmlFor="name" className="text-foreground">Full name</Label>
                   <Input
                     id="name"
                     name="name"
@@ -267,13 +267,13 @@ const UserProfile = () => {
                 </div>
                 
                 <div>
-                  <Label htmlFor="email">Email address</Label>
+                  <Label htmlFor="email" className="text-foreground">Email address</Label>
                   <Input
                     id="email"
                     name="email"
                     value={formData.email}
                     disabled
-                    className="bg-gray-50"
+                    className="bg-muted"
                   />
                 </div>
               </div>
@@ -282,7 +282,7 @@ const UserProfile = () => {
               {isMentorProfile && (
                 <>
                   <div>
-                    <Label htmlFor="bio">Bio</Label>
+                    <Label htmlFor="bio" className="text-foreground">Bio</Label>
                     <Textarea
                       id="bio"
                       name="bio"
@@ -290,12 +290,13 @@ const UserProfile = () => {
                       onChange={handleChange}
                       rows={4}
                       placeholder="Tell students about yourself, your experience, and how you can help them"
+                      className="bg-background text-foreground"
                     />
                   </div>
                   
                   <div className="grid gap-6 md:grid-cols-2">
                     <div>
-                      <Label htmlFor="department">Department</Label>
+                      <Label htmlFor="department" className="text-foreground">Department</Label>
                       <Input
                         id="department"
                         name="department"
@@ -305,7 +306,7 @@ const UserProfile = () => {
                     </div>
                     
                     <div>
-                      <Label htmlFor="skills">Skills (comma separated)</Label>
+                      <Label htmlFor="skills" className="text-foreground">Skills (comma separated)</Label>
                       <Input
                         id="skills"
                         name="skills"
@@ -317,7 +318,7 @@ const UserProfile = () => {
                   </div>
                   
                   <div>
-                    <Label htmlFor="linkedin_url">LinkedIn URL</Label>
+                    <Label htmlFor="linkedin_url" className="text-foreground">LinkedIn URL</Label>
                     <Input
                       id="linkedin_url"
                       name="linkedin_url"
@@ -330,7 +331,7 @@ const UserProfile = () => {
               )}
               
               {!isMentorProfile && (
-                <div className="py-4 border-t border-gray-100">
+                <div className="py-4 border-t border-border">
                   <p className="text-sm text-muted-foreground mb-3">
                     Want to help other students? Apply to become a mentor!
                   </p>
