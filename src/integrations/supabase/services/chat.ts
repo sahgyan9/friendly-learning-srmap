@@ -11,8 +11,8 @@ export async function getUserConversations(userId: string) {
       .from('conversations')
       .select(`
         *,
-        user1:users!conversations_user1_id_fkey(id, name, profile_image),
-        user2:users!conversations_user2_id_fkey(id, name, profile_image)
+        user1:profiles!conversations_user1_id_fkey(id, name, profile_image),
+        user2:profiles!conversations_user2_id_fkey(id, name, profile_image)
       `)
       .or(`user1_id.eq.${userId},user2_id.eq.${userId}`)
       .order('last_updated', { ascending: false });
@@ -23,6 +23,40 @@ export async function getUserConversations(userId: string) {
     }
 
     console.log(`Retrieved ${conversationsData?.length || 0} conversations for user ${userId}`);
+
+    // If the conversations query returns empty results, try to fetch from users table directly
+    if (!conversationsData || conversationsData.length === 0) {
+      return { data: [], error: null };
+    }
+
+    // Fix any missing user data by fetching directly from the users table
+    for (const conversation of conversationsData) {
+      // Check and fetch user1 data if missing
+      if (!conversation.user1 && conversation.user1_id) {
+        const { data: user1Data } = await supabase
+          .from('users')
+          .select('id, name, profile_image')
+          .eq('id', conversation.user1_id)
+          .single();
+        
+        if (user1Data) {
+          conversation.user1 = user1Data;
+        }
+      }
+      
+      // Check and fetch user2 data if missing
+      if (!conversation.user2 && conversation.user2_id) {
+        const { data: user2Data } = await supabase
+          .from('users')
+          .select('id, name, profile_image')
+          .eq('id', conversation.user2_id)
+          .single();
+        
+        if (user2Data) {
+          conversation.user2 = user2Data;
+        }
+      }
+    }
 
     // Fetch the last message separately for each conversation
     const enhancedConversations: Conversation[] = [];
