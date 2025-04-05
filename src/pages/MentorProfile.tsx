@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Star, Linkedin, MessageCircle, ArrowLeft, Loader2 } from "lucide-react";
@@ -22,17 +21,17 @@ const MentorProfile = () => {
   useEffect(() => {
     const fetchMentor = async () => {
       if (!id) return;
-      
+
       setLoading(true);
       try {
         const { data, error } = await getMentorById(id);
-        
+
         if (error) {
           console.error("Error fetching mentor:", error);
           toast.error("Failed to load mentor profile");
           return;
         }
-        
+
         if (data) {
           setMentor(data);
         } else {
@@ -54,7 +53,7 @@ const MentorProfile = () => {
       toast.error("Please sign in to connect with mentors");
       return;
     }
-    
+
     setIsChatOpen(true);
   };
 
@@ -63,20 +62,20 @@ const MentorProfile = () => {
   // Animation variants
   const containerVariants = {
     hidden: { opacity: 0 },
-    visible: { 
+    visible: {
       opacity: 1,
-      transition: { 
-        when: "beforeChildren", 
+      transition: {
+        when: "beforeChildren",
         staggerChildren: 0.1,
         duration: 0.5
       }
     }
   };
-  
+
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
-    visible: { 
-      opacity: 1, 
+    visible: {
+      opacity: 1,
       y: 0,
       transition: { duration: 0.5 }
     }
@@ -87,7 +86,7 @@ const MentorProfile = () => {
       <div className="min-h-screen">
         <Navbar />
         <div className="container px-4 md:px-6 pt-24 pb-16 flex justify-center items-center min-h-[60vh]">
-          <motion.div 
+          <motion.div
             className="flex flex-col items-center"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -105,7 +104,7 @@ const MentorProfile = () => {
     return (
       <div className="min-h-screen">
         <Navbar />
-        <motion.div 
+        <motion.div
           className="container px-4 md:px-6 pt-24 pb-16"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -133,10 +132,10 @@ const MentorProfile = () => {
   return (
     <div className="min-h-screen">
       <Navbar />
-      
+
       <main className="pt-24 pb-16">
         <div className="container px-4 md:px-6">
-          <motion.div 
+          <motion.div
             className="max-w-4xl mx-auto"
             variants={containerVariants}
             initial="hidden"
@@ -150,26 +149,26 @@ const MentorProfile = () => {
                 </Link>
               </Button>
             </motion.div>
-            
-            <motion.div 
+
+            <motion.div
               className="flex flex-col md:flex-row gap-8 mb-10"
               variants={itemVariants}
             >
-              <motion.div 
+              <motion.div
                 className="flex-shrink-0"
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.5 }}
               >
                 <div className="relative">
-                  <motion.img 
-                    src={mentor.profile_image} 
+                  <motion.img
+                    src={mentor.profile_image}
                     alt={mentor.name}
                     className="w-36 h-36 md:w-48 md:h-48 rounded-xl object-cover shadow-lg"
                     whileHover={{ scale: 1.05 }}
                     transition={{ type: "spring", stiffness: 300 }}
                   />
-                  <motion.div 
+                  <motion.div
                     className="absolute -bottom-2 -right-2 flex items-center bg-white rounded-full px-3 py-1 shadow-sm border border-gray-100"
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
@@ -181,22 +180,22 @@ const MentorProfile = () => {
                   </motion.div>
                 </div>
               </motion.div>
-              
+
               <div className="flex-1">
-                <motion.h1 
+                <motion.h1
                   className="text-3xl font-bold mb-2"
                   variants={itemVariants}
                 >
                   {mentor.name}
                 </motion.h1>
-                <motion.p 
+                <motion.p
                   className="text-lg text-muted-foreground mb-4"
                   variants={itemVariants}
                 >
                   {mentor.department}
                 </motion.p>
-                
-                <motion.div 
+
+                <motion.div
                   className="flex flex-wrap gap-2 mb-6"
                   variants={itemVariants}
                 >
@@ -213,14 +212,14 @@ const MentorProfile = () => {
                     </motion.div>
                   ))}
                 </motion.div>
-                
-                <motion.div 
+
+                <motion.div
                   className="flex flex-col sm:flex-row gap-3 mt-auto"
                   variants={itemVariants}
                 >
                   {isOwnProfile ? (
                     <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                      <Button 
+                      <Button
                         asChild
                         className="flex items-center gap-2"
                       >
@@ -231,7 +230,7 @@ const MentorProfile = () => {
                     </motion.div>
                   ) : (
                     <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                      <Button 
+                      <Button
                         onClick={openChatModal}
                         className="flex items-center gap-2"
                       >
@@ -240,7 +239,7 @@ const MentorProfile = () => {
                       </Button>
                     </motion.div>
                   )}
-                  
+
                   {mentor.linkedin_url && (
                     <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                       <Button variant="outline" asChild className="flex items-center gap-2">
@@ -254,27 +253,27 @@ const MentorProfile = () => {
                 </motion.div>
               </div>
             </motion.div>
-            
-            <motion.div 
-              className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 mb-10"
+
+            <motion.div
+              className="bg-card p-6 rounded-lg shadow-sm border border-border mb-10"
               variants={itemVariants}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.4 }}
             >
-              <h2 className="text-xl font-semibold mb-4">About</h2>
-              <p className="text-gray-700 leading-relaxed">
+              <h2 className="text-xl font-semibold mb-4 text-foreground">About</h2>
+              <p className="text-muted-foreground leading-relaxed">
                 {mentor.bio || "This mentor hasn't added a bio yet."}
               </p>
             </motion.div>
           </motion.div>
         </div>
       </main>
-      
+
       {isChatOpen && mentor && (
-        <ChatModal 
-          isOpen={isChatOpen} 
-          onClose={() => setIsChatOpen(false)} 
+        <ChatModal
+          isOpen={isChatOpen}
+          onClose={() => setIsChatOpen(false)}
           mentor={mentor}
         />
       )}
