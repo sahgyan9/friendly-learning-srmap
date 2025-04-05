@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Conversation, Message } from "@/types/chat";
 
@@ -6,13 +5,29 @@ import { Conversation, Message } from "@/types/chat";
 export async function getUserConversations(userId: string) {
   try {
     console.log("Getting conversations for user ID:", userId);
-    
+
     const { data: conversationsData, error: conversationsError } = await supabase
       .from('conversations')
       .select(`
         *,
-        user1:users!conversations_user1_id_fkey(id, name, profile_image),
-        user2:users!conversations_user2_id_fkey(id, name, profile_image)
+        user1:users!conversations_user1_id_fkey (
+          id,
+          name,
+          profile_image,
+          role
+        ),
+        user2:users!conversations_user2_id_fkey (
+          id,
+          name,
+          profile_image,
+          role
+        ),
+        last_message:messages (
+          id,
+          content,
+          sent_at,
+          is_read
+        )
       `)
       .or(`user1_id.eq.${userId},user2_id.eq.${userId}`)
       .order('last_updated', { ascending: false });
@@ -24,34 +39,34 @@ export async function getUserConversations(userId: string) {
 
     console.log(`Retrieved ${conversationsData?.length || 0} conversations for user ${userId}`);
 
-    // Fetch the last message separately for each conversation
-    const enhancedConversations: Conversation[] = [];
-    
-    for (const conversation of conversationsData || []) {
-      // If there's a last_message_id, fetch that specific message
-      if (conversation.last_message_id) {
-        const { data: messageData, error: messageError } = await supabase
-          .from('messages')
-          .select('*')
-          .eq('id', conversation.last_message_id)
-          .single();
-          
-        if (messageError) {
-          console.error(`Error fetching last message for conversation ${conversation.id}:`, messageError);
-        }
-        
-        enhancedConversations.push({
-          ...conversation,
-          last_message: messageData || undefined
-        });
-      } else {
-        // No last message, just add the conversation as is
-        enhancedConversations.push({
-          ...conversation,
-          last_message: undefined
-        });
+    // Ensure user data is properly structured
+    const enhancedConversations = conversationsData?.map(conversation => {
+      // Make sure user1 and user2 are properly populated
+      if (!conversation.user1) {
+        conversation.user1 = {
+          id: conversation.user1_id,
+          name: "Unknown User",
+          profile_image: null
+        };
       }
-    }
+      if (!conversation.user2) {
+        conversation.user2 = {
+          id: conversation.user2_id,
+          name: "Unknown User",
+          profile_image: null
+        };
+      }
+
+      // Get the last message if it exists
+      const lastMessage = Array.isArray(conversation.last_message) && conversation.last_message.length > 0
+        ? conversation.last_message[0]
+        : null;
+
+      return {
+        ...conversation,
+        last_message: lastMessage
+      };
+    }) || [];
 
     return { data: enhancedConversations, error: null };
   } catch (err) {
@@ -68,12 +83,12 @@ export async function getConversationMessages(conversationId: string) {
       .select('*')
       .eq('conversation_id', conversationId)
       .order('sent_at', { ascending: true });
-      
+
     if (error) {
       console.error('Error fetching messages:', error);
       return { data: null, error };
     }
-    
+
     return { data, error: null };
   } catch (err) {
     console.error('Exception in getConversationMessages:', err);
@@ -90,7 +105,7 @@ export async function markMessagesAsRead(conversationId: string, userId: string)
       .eq('conversation_id', conversationId)
       .eq('receiver_id', userId)
       .eq('is_read', false);
-    
+
     return { data, error };
   } catch (err) {
     console.error('Exception in markMessagesAsRead:', err);
@@ -119,12 +134,12 @@ export async function sendMessage(
       })
       .select()
       .single();
-    
+
     if (messageError) {
       console.error('Error sending message:', messageError);
       return { data: null, error: messageError };
     }
-    
+
     if (!messageData) {
       console.error('No data returned after sending message');
       return { data: null, error: new Error('No data returned after sending message') };
@@ -136,12 +151,12 @@ export async function sendMessage(
         conversation_id: conversationId,
         message_id: messageData.id
       });
-      
+
     if (conversationError) {
       console.error('Error updating conversation:', conversationError);
       // We still return the message data even if conversation update fails
     }
-    
+
     return { data: messageData, error: null };
   } catch (err) {
     console.error('Exception in sendMessage:', err);
@@ -158,18 +173,18 @@ export async function getOrCreateConversation(user1Id: string, user2Id: string) 
       .select('*')
       .or(`and(user1_id.eq.${user1Id},user2_id.eq.${user2Id}),and(user1_id.eq.${user2Id},user2_id.eq.${user1Id})`)
       .single();
-      
+
     if (!findError && existingConversation) {
       console.log('Found existing conversation:', existingConversation);
       return { data: existingConversation, error: null };
     }
-    
+
     if (findError && findError.code !== 'PGRST116') {
       // If error is not "no rows returned", something went wrong
       console.error('Error finding conversation:', findError);
       return { data: null, error: findError };
     }
-    
+
     // No existing conversation, create a new one
     console.log('Creating new conversation between', user1Id, 'and', user2Id);
     const { data: newConversation, error: createError } = await supabase
@@ -181,12 +196,12 @@ export async function getOrCreateConversation(user1Id: string, user2Id: string) 
       })
       .select()
       .single();
-      
+
     if (createError) {
       console.error('Error creating conversation:', createError);
       return { data: null, error: createError };
     }
-    
+
     return { data: newConversation, error: null };
   } catch (err) {
     console.error('Exception in getOrCreateConversation:', err);
