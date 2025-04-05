@@ -169,13 +169,13 @@ const MentorProfile = () => {
                     transition={{ type: "spring", stiffness: 300 }}
                   />
                   <motion.div
-                    className="absolute -bottom-2 -right-2 flex items-center bg-card rounded-full px-3 py-1 shadow-sm border border-border"
+                    className="absolute -bottom-2 -right-2 flex items-center bg-white rounded-full px-3 py-1 shadow-sm border border-gray-100"
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: 0.3, duration: 0.4 }}
                   >
                     <Star className="w-4 h-4 text-yellow-400 mr-1.5" />
-                    <span className="text-sm font-medium text-foreground">{mentor.rating.toFixed(1)}</span>
+                    <span className="text-sm font-medium">{mentor.rating.toFixed(1)}</span>
                     <span className="text-xs text-muted-foreground ml-1">({mentor.review_count})</span>
                   </motion.div>
                 </div>
@@ -183,7 +183,7 @@ const MentorProfile = () => {
 
               <div className="flex-1">
                 <motion.h1
-                  className="text-3xl font-bold mb-2 text-foreground"
+                  className="text-3xl font-bold mb-2"
                   variants={itemVariants}
                 >
                   {mentor.name}
