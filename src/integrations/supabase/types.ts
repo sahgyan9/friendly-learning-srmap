@@ -178,6 +178,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      delete_all_messages: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       update_conversation: {
         Args: {
           conversation_id: string
