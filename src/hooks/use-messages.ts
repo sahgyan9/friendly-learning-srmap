@@ -1,7 +1,6 @@
-
 import { useEffect } from "react";
 import { useMessagesState } from "./messages/use-messages-state";
-import { useMessagesOperations } from "./messages/use-messages-operations";
+import { useMessageOperations } from "./messages/use-messages-operations";
 
 /**
  * Hook for managing conversations and messages
@@ -28,7 +27,7 @@ export const useMessages = (userId: string) => {
     fetchConversations,
     fetchMessages,
     sendMessage: sendMessageOperation
-  } = useMessagesOperations(userId);
+  } = useMessageOperations(userId);
 
   // Fetch conversations on initial load
   useEffect(() => {
