@@ -11,8 +11,8 @@ export async function getUserConversations(userId: string) {
       .from('conversations')
       .select(`
         *,
-        user1:profiles!conversations_user1_id_fkey(id, name, profile_image),
-        user2:profiles!conversations_user2_id_fkey(id, name, profile_image)
+        user1:users!conversations_user1_id_fkey(id, name, profile_image),
+        user2:users!conversations_user2_id_fkey(id, name, profile_image)
       `)
       .or(`user1_id.eq.${userId},user2_id.eq.${userId}`)
       .order('last_updated', { ascending: false });
@@ -40,7 +40,8 @@ export async function getUserConversations(userId: string) {
           .single();
         
         if (user1Data) {
-          conversation.user1 = user1Data;
+          // Type assertion to match the expected structure
+          conversation.user1 = user1Data as any;
         }
       }
       
@@ -53,7 +54,8 @@ export async function getUserConversations(userId: string) {
           .single();
         
         if (user2Data) {
-          conversation.user2 = user2Data;
+          // Type assertion to match the expected structure
+          conversation.user2 = user2Data as any;
         }
       }
     }
@@ -74,16 +76,17 @@ export async function getUserConversations(userId: string) {
           console.error(`Error fetching last message for conversation ${conversation.id}:`, messageError);
         }
         
+        // Use type assertion to ensure type compatibility
         enhancedConversations.push({
           ...conversation,
           last_message: messageData || undefined
-        });
+        } as Conversation);
       } else {
         // No last message, just add the conversation as is
         enhancedConversations.push({
           ...conversation,
           last_message: undefined
-        });
+        } as Conversation);
       }
     }
 
