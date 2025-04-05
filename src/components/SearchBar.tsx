@@ -1,182 +1,304 @@
-
-import { useState, useEffect, useCallback } from "react";
-import { Search, XCircle, Sparkles } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Search, Sparkles, X, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import type { Mentor } from "@/types/mentor";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+  SheetPortal,
+} from "@/components/ui/sheet";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface SearchBarProps {
-  onSearch: (query: string) => void;
-  onGeminiSearch: (mentors: Mentor[]) => void;
+  onSearch: (query: string, filters: SearchFilters) => void;
+  onGeminiSearch: (query: string) => void;
 }
+
+interface SearchFilters {
+  department?: string;
+  skills?: string[];
+  rating?: number;
+}
+
+const departments = [
+  "All Departments",
+  "Computer Science",
+  "Electrical Engineering",
+  "Mechanical Engineering",
+  "Civil Engineering",
+  "Business Administration",
+  "Physics",
+  "Mathematics",
+  "Chemistry",
+  "Biology",
+];
 
 const SearchBar = ({ onSearch, onGeminiSearch }: SearchBarProps) => {
   const [query, setQuery] = useState("");
-  const [placeholderIndex, setPlaceholderIndex] = useState(0);
-  const [isGeminiSearching, setIsGeminiSearching] = useState(false);
-  const { toast } = useToast();
-  
-  const placeholders = [
-    "Search for mentors by name or skills...",
-    "Who can help me with Python?",
-    "Find a mentor for Data Structures",
-    "Looking for help with Circuit Design",
-  ];
+  const [filters, setFilters] = useState<SearchFilters>({});
+  const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
-  // Memoize the search callback to prevent infinite loops
-  const handleSearchChange = useCallback((q: string) => {
-    onSearch(q);
-  }, [onSearch]);
-
-  // Update search results as user types - with dependency array to prevent infinite loops
-  useEffect(() => {
-    handleSearchChange(query);
-  }, [query, handleSearchChange]);
-  
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSearch = () => {
+    onSearch(query, {
+      ...filters,
+      skills: selectedSkills,
+    });
   };
 
-  const clearSearch = () => {
-    setQuery("");
-    // onSearch(""); - this is now handled by the effect
-  };
-
-  const handleGeminiSearch = async () => {
-    if (!query.trim()) {
-      toast({
-        title: "Empty search",
-        description: "Please enter a search query first",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsGeminiSearching(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('gemini-search', {
-        body: { query: query.trim() }
-      });
-
-      if (error) {
-        console.error("Gemini search error:", error);
-        toast({
-          title: "Search failed",
-          description: "Couldn't connect to Gemini AI. Please try again.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      if (data.error) {
-        console.error("Gemini API error:", data.error);
-        toast({
-          title: "AI search error",
-          description: data.error,
-          variant: "destructive",
-        });
-        return;
-      }
-
-      if (data.mentors && data.mentors.length > 0) {
-        onGeminiSearch(data.mentors);
-        toast({
-          title: "AI Search Results",
-          description: `Found ${data.mentors.length} mentors that match your query`,
-        });
-      } else {
-        toast({
-          title: "No results found",
-          description: "Try a different search term or browse all mentors",
-        });
-      }
-    } catch (err) {
-      console.error("Error during Gemini search:", err);
-      toast({
-        title: "Search error",
-        description: "An unexpected error occurred. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsGeminiSearching(false);
+  const handleGeminiSearch = () => {
+    if (query.trim()) {
+      onGeminiSearch(query);
     }
   };
 
-  // Rotate through placeholders
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      handleSearch();
+    }
+  };
+
+  const addSkill = (skill: string) => {
+    if (skill && !selectedSkills.includes(skill)) {
+      setSelectedSkills([...selectedSkills, skill]);
+    }
+  };
+
+  const removeSkill = (skill: string) => {
+    setSelectedSkills(selectedSkills.filter((s) => s !== skill));
+  };
+
   useEffect(() => {
-    const interval = setInterval(() => {
-      setPlaceholderIndex((prev) => (prev + 1) % placeholders.length);
-    }, 4000);
-    return () => clearInterval(interval);
-  }, [placeholders.length]);
+    // Auto-focus search input on desktop
+    if (window.innerWidth >= 768 && searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, []);
 
   return (
-    <div className="w-full max-w-3xl mx-auto mb-10">
-      <form 
-        onSubmit={handleSubmit}
-        className="relative flex items-center transition-all duration-300 group"
-      >
+    <div className="w-full max-w-3xl mx-auto space-y-4">
+      <div className="flex flex-col sm:flex-row gap-2">
         <div className="relative flex-1">
-          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500">
-            <Search className="h-5 w-5" />
-          </div>
-          
-          <input
+          <Input
+            ref={searchInputRef}
             type="text"
+            placeholder="Search mentors by name, skills, or department..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder={placeholders[placeholderIndex]}
-            className="w-full pl-12 pr-12 py-3.5 rounded-xl bg-card border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 shadow-sm transition-all duration-200 placeholder:text-gray-400 dark:placeholder:text-gray-500"
+            onKeyPress={handleKeyPress}
+            className="w-full pl-10 pr-4 h-12 rounded-xl"
           />
-          
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
           {query && (
             <button
-              type="button"
-              onClick={clearSearch}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+              onClick={() => setQuery("")}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
             >
-              <XCircle className="h-5 w-5" />
+              <X className="h-4 w-4" />
             </button>
           )}
         </div>
-        
-        <Button 
-          type="submit"
-          className="ml-2 px-6"
-        >
-          Search
-        </Button>
 
-        <Button
-          type="button"
-          variant="outline"
-          className="ml-2 flex items-center gap-1.5 text-primary border-primary hover:bg-primary/10"
-          onClick={handleGeminiSearch}
-          disabled={isGeminiSearching}
-        >
-          <Sparkles className="h-4 w-4" />
-          AI Search
-          {isGeminiSearching && (
-            <span className="ml-1 h-4 w-4 animate-spin rounded-full border-2 border-primary border-r-transparent" />
-          )}
-        </Button>
-      </form>
-      
-      <div className="mt-2 flex flex-wrap gap-2 px-1">
-        <span className="text-sm text-muted-foreground">Popular:</span>
-        {["Python", "Data Structures", "Machine Learning", "Web Development"].map((tag) => (
-          <button
-            key={tag}
-            onClick={() => {
-              setQuery(tag);
-            }}
-            className="text-xs px-3 py-1 rounded-full bg-secondary text-secondary-foreground hover:bg-primary/10 hover:text-primary transition-colors"
+        <div className="flex gap-2">
+          <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+            <SheetTrigger asChild>
+              <Button
+                variant="outline"
+                size="lg"
+                className="w-full sm:w-auto gap-2"
+              >
+                <Filter className="h-4 w-4" />
+                Filters
+              </Button>
+            </SheetTrigger>
+            <SheetContent>
+              <div className="w-full sm:w-80">
+                <SheetHeader>
+                  <SheetTitle>Search Filters</SheetTitle>
+                </SheetHeader>
+                <div className="py-6 space-y-6">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Department</label>
+                    <Select
+                      value={filters.department || ""}
+                      onValueChange={(value) =>
+                        setFilters({ ...filters, department: value })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select department" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {departments.map((dept) => (
+                          <SelectItem key={dept} value={dept}>
+                            {dept}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Skills</label>
+                    <div className="flex flex-wrap gap-2">
+                      <Input
+                        placeholder="Add a skill and press Enter"
+                        onKeyPress={(e) => {
+                          if (e.key === "Enter") {
+                            const input = e.currentTarget;
+                            addSkill(input.value);
+                            input.value = "";
+                          }
+                        }}
+                        className="flex-1"
+                      />
+                    </div>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      <AnimatePresence>
+                        {selectedSkills.map((skill) => (
+                          <motion.div
+                            key={skill}
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.8 }}
+                            transition={{ duration: 0.2 }}
+                          >
+                            <Badge
+                              variant="secondary"
+                              className="px-2 py-1 cursor-pointer"
+                              onClick={() => removeSkill(skill)}
+                            >
+                              {skill}
+                              <X className="h-3 w-3 ml-1" />
+                            </Badge>
+                          </motion.div>
+                        ))}
+                      </AnimatePresence>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Minimum Rating</label>
+                    <Select
+                      value={filters.rating?.toString() || ""}
+                      onValueChange={(value) =>
+                        setFilters({ ...filters, rating: Number(value) })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select minimum rating" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {[0, 3, 3.5, 4, 4.5].map((rating) => (
+                          <SelectItem key={rating} value={rating.toString()}>
+                            {rating === 0 ? "Any rating" : `${rating}+ stars`}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <Button
+                    className="w-full"
+                    onClick={() => {
+                      handleSearch();
+                      setIsFilterOpen(false);
+                    }}
+                  >
+                    Apply Filters
+                  </Button>
+                </div>
+              </div>
+            </SheetContent>
+          </Sheet>
+
+          <Button
+            variant="default"
+            size="lg"
+            className="w-full sm:w-auto gap-2"
+            onClick={handleGeminiSearch}
+            disabled={!query.trim()}
           >
-            {tag}
-          </button>
-        ))}
+            <Sparkles className="h-4 w-4" />
+            AI Search
+          </Button>
+        </div>
       </div>
+
+      {/* Active Filters */}
+      <AnimatePresence>
+        {(selectedSkills.length > 0 ||
+          filters.department ||
+          filters.rating) && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="flex flex-wrap gap-2"
+            >
+              {filters.department && (
+                <Badge
+                  variant="outline"
+                  className="px-2 py-1 cursor-pointer"
+                  onClick={() =>
+                    setFilters({ ...filters, department: undefined })
+                  }
+                >
+                  {filters.department}
+                  <X className="h-3 w-3 ml-1" />
+                </Badge>
+              )}
+              {filters.rating && (
+                <Badge
+                  variant="outline"
+                  className="px-2 py-1 cursor-pointer"
+                  onClick={() => setFilters({ ...filters, rating: undefined })}
+                >
+                  {filters.rating}+ stars
+                  <X className="h-3 w-3 ml-1" />
+                </Badge>
+              )}
+              {selectedSkills.map((skill) => (
+                <Badge
+                  key={skill}
+                  variant="outline"
+                  className="px-2 py-1 cursor-pointer"
+                  onClick={() => removeSkill(skill)}
+                >
+                  {skill}
+                  <X className="h-3 w-3 ml-1" />
+                </Badge>
+              ))}
+              {(selectedSkills.length > 0 ||
+                filters.department ||
+                filters.rating) && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 px-2 text-xs"
+                    onClick={() => {
+                      setSelectedSkills([]);
+                      setFilters({});
+                    }}
+                  >
+                    Clear all
+                  </Button>
+                )}
+            </motion.div>
+          )}
+      </AnimatePresence>
     </div>
   );
 };
