@@ -13,7 +13,7 @@ const supabaseClient = createClient(
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 );
 
-// Gemini configuration - updated to use gemini-2.0-flash
+// Gemini configuration - using your verified settings
 const GEMINI_API_KEY = Deno.env.get('Gemini_API_Key') ?? '';
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
 
@@ -31,32 +31,32 @@ async function fetchMentors() {
 
 async function searchWithGeminiAI(query: string, mentors: any[]) {
   if (!GEMINI_API_KEY) {
-    console.error("Gemini API key is not set");
+    console.error("ERROR: Gemini API key is missing. Check Supabase Secrets.");
     return { error: "API key not configured" };
   }
 
   try {
-    // Prepare mentor context
+    console.log("Calling Gemini API with key:", GEMINI_API_KEY.slice(0, 5) + "...");
+    
+    // Prepare mentor data for the prompt
     const mentorsContext = mentors.map(mentor => ({
+      id: mentor.id,
       name: mentor.name,
       department: mentor.department,
       skills: mentor.skills,
-      rating: mentor.rating,
-      bio: mentor.bio || 'No bio available',
-      id: mentor.id
+      rating: mentor.rating
     }));
 
     const prompt = {
       contents: [{
         parts: [{
-          text: `You are a mentorship matching AI. Given this query: "${query}", and these mentors (in JSON format):
-          
+          text: `Given this query: "${query}", and these mentors (in JSON format): 
           ${JSON.stringify(mentorsContext, null, 2)}
           
           Return ONLY a JSON array of relevant mentor IDs in this exact format:
           [{"id":"..."},{"id":"..."}]
           
-          Consider skills, department, and bio when matching.`
+          Do not include any explanations or other text.`
         }]
       }],
       generationConfig: {
@@ -68,21 +68,25 @@ async function searchWithGeminiAI(query: string, mentors: any[]) {
     const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(prompt)
+      body: JSON.stringify(prompt),
     });
 
+    console.log("API Status:", response.status);
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("Gemini API error:", errorText);
-      return { error: "Error from Gemini API", details: errorText };
+      console.error("Gemini API Error:", errorText);
+      return { error: "API request failed", details: errorText };
     }
 
     const data = await response.json();
-    console.log("Full Gemini response:", JSON.stringify(data, null, 2));
+    console.log("API Response:", JSON.stringify(data, null, 2));
 
     // Extract and parse the response
-    const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
-    
+    const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+    if (!responseText) {
+      return { error: "No text in response", raw: data };
+    }
+
     try {
       // First try to parse directly
       const result = JSON.parse(responseText);
@@ -98,12 +102,12 @@ async function searchWithGeminiAI(query: string, mentors: any[]) {
       
       throw new Error("No valid JSON array found in response");
     } catch (e) {
-      console.error("Response parsing error:", e, "\nResponse text:", responseText);
-      return { error: "Failed to parse response", raw: responseText };
+      console.error("Failed to parse response. Raw text:", responseText);
+      return { error: "Response parsing failed", raw: responseText };
     }
   } catch (error) {
-    console.error("Gemini search error:", error);
-    return { error: "Search failed", details: error.message };
+    console.error("Network Error:", error);
+    return { error: "Failed to connect to Gemini", details: error.message };
   }
 }
 
@@ -123,6 +127,8 @@ serve(async (req) => {
       );
     }
 
+    console.log(`Received query: "${query}"`);
+    
     // Get mentors
     const mentors = await fetchMentors();
     if (!mentors.length) {
