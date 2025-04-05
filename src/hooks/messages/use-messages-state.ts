@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Conversation, Message } from "@/types/chat";
 
@@ -5,28 +6,31 @@ import { Conversation, Message } from "@/types/chat";
  * Hook for managing message-related state
  */
 export const useMessagesState = () => {
-  const [messages, setMessages] = useState<Message[]>([]);
   const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [activeChat, setActiveChat] = useState<string | null>(null);
+  const [isLoadingConversations, setIsLoadingConversations] = useState(true);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
-  const [isLoadingConversations, setIsLoadingConversations] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
   return {
-    messages,
-    setMessages,
+    // State
     conversations,
-    setConversations,
+    messages,
     activeChat,
-    setActiveChat,
-    isLoadingMessages,
-    setIsLoadingMessages,
     isLoadingConversations,
-    setIsLoadingConversations,
+    isLoadingMessages,
     isSending,
-    setIsSending,
     error,
+    
+    // State setters
+    setConversations,
+    setMessages,
+    setActiveChat,
+    setIsLoadingConversations,
+    setIsLoadingMessages,
+    setIsSending,
     setError,
   };
 };

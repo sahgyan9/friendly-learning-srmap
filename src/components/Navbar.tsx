@@ -4,7 +4,7 @@ import { Menu, X, User, MessageCircle, LogOut } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
+import { 
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -41,10 +41,11 @@ const Navbar = () => {
 
   return (
     <header
-      className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${isScrolled
+      className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${
+        isScrolled
           ? "py-3 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md shadow-sm"
           : "py-5 bg-transparent"
-        }`}
+      }`}
     >
       <div className="container mx-auto px-4 md:px-6">
         <div className="flex items-center justify-between">
@@ -53,7 +54,7 @@ const Navbar = () => {
           </Link>
 
           {/* Desktop Navigation */}
-          <motion.nav
+          <motion.nav 
             className="hidden md:flex items-center space-x-1"
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -74,7 +75,7 @@ const Navbar = () => {
 
             <div className="ml-4 flex items-center space-x-2">
               <DarkModeToggle />
-
+              
               {!loading && user ? (
                 <>
                   <Button variant="outline" size="sm" asChild className="flex items-center gap-1">
@@ -83,7 +84,7 @@ const Navbar = () => {
                       Messages
                     </Link>
                   </Button>
-
+                  
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" size="sm" className="rounded-full p-0 h-10 w-10">
@@ -159,7 +160,7 @@ const Navbar = () => {
 
         {/* Mobile Navigation Menu */}
         {isMobileMenuOpen && (
-          <motion.nav
+          <motion.nav 
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
@@ -178,7 +179,7 @@ const Navbar = () => {
               <Button variant="ghost" asChild className="justify-start text-gray-700 dark:text-gray-200 hover:text-primary">
                 <Link to="/contact">Contact</Link>
               </Button>
-
+              
               <div className="pt-2 flex flex-col space-y-2">
                 {!loading && user ? (
                   <>
@@ -192,23 +193,23 @@ const Navbar = () => {
                         <p className="text-xs text-muted-foreground">{profile?.email}</p>
                       </div>
                     </div>
-
+                    
                     <Button variant="outline" size="sm" asChild className="justify-center">
                       <Link to="/profile">My Profile</Link>
                     </Button>
-
+                    
                     <Button variant="outline" size="sm" asChild className="justify-center">
                       <Link to="/messages">Messages</Link>
                     </Button>
-
+                    
                     {profile?.role !== 'mentor' && (
                       <Button variant="outline" size="sm" asChild className="justify-center">
                         <Link to="/become-mentor">Become a Mentor</Link>
                       </Button>
                     )}
-
-                    <Button
-                      variant="outline"
+                    
+                    <Button 
+                      variant="outline" 
                       size="sm"
                       className="justify-center text-red-500 border-red-200 hover:bg-red-50"
                       onClick={signOut}
