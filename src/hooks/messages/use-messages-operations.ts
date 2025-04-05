@@ -6,7 +6,7 @@ import { toast } from "sonner";
 /**
  * Hook for message operations like fetching messages
  */
-export const useMessageOperations = () => {
+export const useMessageOperations = (userId: string) => {
   const fetchMessages = useCallback(async (conversationId: string): Promise<Message[]> => {
     try {
       const { data, error } = await getConversationMessages(conversationId);
@@ -30,7 +30,19 @@ export const useMessageOperations = () => {
     }
   }, []);
 
+  const fetchConversations = useCallback(async () => {
+    // TODO: Implement conversation fetching
+    return [];
+  }, []);
+
+  const sendMessage = useCallback(async (content: string, conversationId: string) => {
+    // TODO: Implement message sending
+    return null;
+  }, []);
+
   return {
     fetchMessages,
+    fetchConversations,
+    sendMessage
   };
 };
