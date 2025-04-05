@@ -22,7 +22,7 @@ export async function getUserConversations(userId: string) {
           profile_image,
           role
         ),
-        last_message:messages (
+        last_message:messages!conversations_last_message_id_fkey (
           id,
           content,
           sent_at,
@@ -58,9 +58,7 @@ export async function getUserConversations(userId: string) {
       }
 
       // Get the last message if it exists
-      const lastMessage = Array.isArray(conversation.last_message) && conversation.last_message.length > 0
-        ? conversation.last_message[0]
-        : null;
+      const lastMessage = conversation.last_message || null;
 
       return {
         ...conversation,
