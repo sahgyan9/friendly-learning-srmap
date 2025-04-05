@@ -55,11 +55,6 @@ export const useMessages = (userId: string) => {
     );
   };
 
-  // Function to refresh conversations list
-  const refreshConversations = () => {
-    fetchConversations(setConversations, setActiveChat, setIsLoadingConversations, setError);
-  };
-
   return {
     conversations,
     messages,
@@ -70,6 +65,5 @@ export const useMessages = (userId: string) => {
     error,
     setActiveChat,
     sendMessage,
-    refreshConversations
   };
 };

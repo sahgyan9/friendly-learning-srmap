@@ -4,7 +4,6 @@ import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
 import ChatContainer from "@/components/chat/ChatContainer";
 import ChatFooter from "@/components/chat/ChatFooter";
-import AdminClearMessages from "@/components/chat/AdminClearMessages";
 import { useAuth } from "@/context/AuthContext";
 import { useMessages } from "@/hooks/use-messages";
 import { formatMessageTime } from "@/utils/date-utils";
@@ -27,8 +26,7 @@ const Messages = () => {
     isSending,
     error,
     setActiveChat,
-    sendMessage,
-    refreshConversations
+    sendMessage
   } = useMessages(userId);
 
   useEffect(() => {
@@ -105,12 +103,7 @@ const Messages = () => {
       
       <main className="pt-24 pb-16">
         <div className="container px-4 md:px-6">
-          <div className="flex justify-between items-center mb-8">
-            <h1 className="text-3xl font-bold">Messages</h1>
-            
-            {/* Add admin clear messages button */}
-            <AdminClearMessages onSuccess={refreshConversations} />
-          </div>
+          <h1 className="text-3xl font-bold mb-8">Messages</h1>
           
           <ChatContainer
             conversations={conversations}
