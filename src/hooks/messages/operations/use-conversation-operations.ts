@@ -1,88 +1,36 @@
-
-import { toast } from "sonner";
+import { useCallback } from "react";
 import { Conversation } from "@/types/chat";
-import { useDemoMessages } from "../use-demo-messages";
 import { getUserConversations } from "@/integrations/supabase/services/chat";
+import { toast } from "sonner";
 
 /**
  * Hook for conversation operations
  */
-export const useConversationOperations = (userId: string) => {
-  const { getDemoConversations } = useDemoMessages();
-
-  /**
-   * Fetch user conversations
-   */
-  const fetchConversations = async (
-    setConversations: React.Dispatch<React.SetStateAction<Conversation[]>>,
-    setActiveChat: React.Dispatch<React.SetStateAction<string | null>>,
-    setIsLoadingConversations: React.Dispatch<React.SetStateAction<boolean>>,
-    setError: React.Dispatch<React.SetStateAction<Error | null>>
-  ) => {
-    setIsLoadingConversations(true);
-    setError(null);
-    
-    // Return early if no userId is provided
-    if (!userId) {
-      console.log("No user ID provided, skipping conversation fetch");
-      setIsLoadingConversations(false);
-      return;
-    }
-    
+export const useConversationOperations = () => {
+  const fetchUserConversations = useCallback(async (userId: string): Promise<Conversation[]> => {
     try {
-      console.log("Fetching conversations for user:", userId);
-      
-      // For Demo ID, use localStorage
-      if (userId.startsWith('demo-')) {
-        const demoConversations = getDemoConversations();
-        setConversations(demoConversations);
-        if (demoConversations.length > 0) {
-          setActiveChat(demoConversations[0].id);
-        }
-        setIsLoadingConversations(false);
-        return;
-      }
-      
       const { data, error } = await getUserConversations(userId);
-      
+
       if (error) {
         console.error("Error fetching conversations:", error);
-        setError(error);
-        
-        // Check for demo data in localStorage as a fallback
-        const demoConversations = getDemoConversations();
-        
-        // Filter conversations related to this user
-        const filteredConversations = demoConversations.filter(
-          c => c.user1_id === userId || c.user2_id === userId
-        );
-        
-        if (filteredConversations.length > 0) {
-          setConversations(filteredConversations);
-          setActiveChat(filteredConversations[0].id);
-        }
-        
-        return;
+        toast.error("Failed to load conversations");
+        return [];
       }
-      
-      if (data) {
-        console.log("Fetched conversations:", data);
-        setConversations(data);
-        if (data.length > 0) {
-          setActiveChat(data[0].id);
-        }
-      } else {
-        console.log("No conversations data returned");
+
+      if (!data) {
+        console.log("No conversations found for user:", userId);
+        return [];
       }
+
+      return data;
     } catch (err) {
       console.error("Exception fetching conversations:", err);
-      setError(err as Error);
-    } finally {
-      setIsLoadingConversations(false);
+      toast.error("An error occurred while loading conversations");
+      return [];
     }
-  };
+  }, []);
 
   return {
-    fetchConversations
+    fetchUserConversations,
   };
 };
