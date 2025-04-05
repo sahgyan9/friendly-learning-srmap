@@ -13,7 +13,6 @@ const ChatHeader = ({ conversation, getOtherUser }: ChatHeaderProps) => {
   const otherUser = getOtherUser(conversation);
   
   const getInitials = (name: string) => {
-    if (!name || name === "Unknown User") return "U";
     return name
       .split(' ')
       .map(part => part[0])

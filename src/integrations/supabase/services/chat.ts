@@ -24,42 +24,6 @@ export async function getUserConversations(userId: string) {
 
     console.log(`Retrieved ${conversationsData?.length || 0} conversations for user ${userId}`);
 
-    // If the conversations query returns empty results, try to fetch from users table directly
-    if (!conversationsData || conversationsData.length === 0) {
-      return { data: [], error: null };
-    }
-
-    // Fix any missing user data by fetching directly from the users table
-    for (const conversation of conversationsData) {
-      // Check and fetch user1 data if missing
-      if (!conversation.user1 && conversation.user1_id) {
-        const { data: user1Data } = await supabase
-          .from('users')
-          .select('id, name, profile_image')
-          .eq('id', conversation.user1_id)
-          .single();
-        
-        if (user1Data) {
-          // Type assertion to match the expected structure
-          conversation.user1 = user1Data as any;
-        }
-      }
-      
-      // Check and fetch user2 data if missing
-      if (!conversation.user2 && conversation.user2_id) {
-        const { data: user2Data } = await supabase
-          .from('users')
-          .select('id, name, profile_image')
-          .eq('id', conversation.user2_id)
-          .single();
-        
-        if (user2Data) {
-          // Type assertion to match the expected structure
-          conversation.user2 = user2Data as any;
-        }
-      }
-    }
-
     // Fetch the last message separately for each conversation
     const enhancedConversations: Conversation[] = [];
     
@@ -76,17 +40,16 @@ export async function getUserConversations(userId: string) {
           console.error(`Error fetching last message for conversation ${conversation.id}:`, messageError);
         }
         
-        // Use type assertion to ensure type compatibility
         enhancedConversations.push({
           ...conversation,
           last_message: messageData || undefined
-        } as Conversation);
+        });
       } else {
         // No last message, just add the conversation as is
         enhancedConversations.push({
           ...conversation,
           last_message: undefined
-        } as Conversation);
+        });
       }
     }
 

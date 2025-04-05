@@ -41,20 +41,7 @@ const Messages = () => {
   }, [conversations]);
 
   const getOtherUser = (conversation) => {
-    // First check if the conversation has valid user data
-    if (conversation.user1_id === userId) {
-      return conversation.user2 || { 
-        id: conversation.user2_id,
-        name: "Unknown User", 
-        profile_image: null 
-      };
-    } else {
-      return conversation.user1 || { 
-        id: conversation.user1_id,
-        name: "Unknown User", 
-        profile_image: null 
-      };
-    }
+    return conversation.user1_id === userId ? conversation.user2 : conversation.user1;
   };
 
   const hasUnreadMessages = (conversationId) => {
