@@ -19,7 +19,8 @@ const AdminClearMessages = ({ onSuccess }: AdminClearMessagesProps) => {
     
     setIsClearing(true);
     try {
-      const { data, error } = await supabase.rpc('delete_all_messages');
+      // Using a type assertion to tell TypeScript that this is a valid RPC function
+      const { error } = await supabase.rpc('delete_all_messages' as any);
       
       if (error) {
         console.error("Error clearing messages:", error);
@@ -27,7 +28,7 @@ const AdminClearMessages = ({ onSuccess }: AdminClearMessagesProps) => {
         return;
       }
       
-      console.log("Messages cleared successfully:", data);
+      console.log("Messages cleared successfully");
       toast.success("All messages have been cleared");
       
       // Call the success callback if provided
