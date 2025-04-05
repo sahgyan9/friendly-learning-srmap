@@ -1,20 +1,36 @@
-
-import { Conversation, Message } from "@/types/chat";
-import { useConversationOperations } from "./operations/use-conversation-operations";
-import { useMessageOperations } from "./operations/use-message-operations";
-import { useSendMessage } from "./operations/use-send-message";
+import { useCallback } from "react";
+import { Message } from "@/types/chat";
+import { getConversationMessages } from "@/integrations/supabase/services/chat";
+import { toast } from "sonner";
 
 /**
- * Hook for message operations like fetching and sending
+ * Hook for message operations like fetching messages
  */
-export const useMessagesOperations = (userId: string) => {
-  const { fetchConversations } = useConversationOperations(userId);
-  const { fetchMessages } = useMessageOperations(userId);
-  const { sendMessage } = useSendMessage(userId);
+export const useMessageOperations = () => {
+  const fetchMessages = useCallback(async (conversationId: string): Promise<Message[]> => {
+    try {
+      const { data, error } = await getConversationMessages(conversationId);
+
+      if (error) {
+        console.error("Error fetching messages:", error);
+        toast.error("Failed to load messages");
+        return [];
+      }
+
+      if (!data) {
+        console.log("No messages found for conversation:", conversationId);
+        return [];
+      }
+
+      return data;
+    } catch (err) {
+      console.error("Exception fetching messages:", err);
+      toast.error("An error occurred while loading messages");
+      return [];
+    }
+  }, []);
 
   return {
-    fetchConversations,
     fetchMessages,
-    sendMessage
   };
 };
