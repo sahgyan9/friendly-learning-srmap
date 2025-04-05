@@ -13,20 +13,24 @@ export async function getUserConversations(userId: string) {
         user1:users!conversations_user1_id_fkey (
           id,
           name,
-          profile_image,
-          role
+          email,
+          role,
+          profile_image
         ),
         user2:users!conversations_user2_id_fkey (
           id,
           name,
-          profile_image,
-          role
+          email,
+          role,
+          profile_image
         ),
         last_message:messages!conversations_last_message_id_fkey (
           id,
           content,
           sent_at,
-          is_read
+          is_read,
+          sender_id,
+          receiver_id
         )
       `)
       .or(`user1_id.eq.${userId},user2_id.eq.${userId}`)
@@ -41,18 +45,24 @@ export async function getUserConversations(userId: string) {
 
     // Ensure user data is properly structured
     const enhancedConversations = conversationsData?.map(conversation => {
-      // Make sure user1 and user2 are properly populated
+      // For user1
       if (!conversation.user1) {
         conversation.user1 = {
-          id: conversation.user1_id,
+          id: conversation.user1_id || '',
           name: "Unknown User",
+          email: "",
+          role: "unknown",
           profile_image: null
         };
       }
+
+      // For user2
       if (!conversation.user2) {
         conversation.user2 = {
-          id: conversation.user2_id,
+          id: conversation.user2_id || '',
           name: "Unknown User",
+          email: "",
+          role: "unknown",
           profile_image: null
         };
       }
