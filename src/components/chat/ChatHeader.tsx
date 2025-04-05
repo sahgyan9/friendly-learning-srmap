@@ -22,13 +22,13 @@ const ChatHeader = ({ conversation, getOtherUser }: ChatHeaderProps) => {
   };
 
   return (
-    <div className="flex items-center p-4 border-b border-gray-200 dark:border-gray-800">
+    <div className="flex items-center p-4 border-b border-border bg-card">
       <Avatar className="h-10 w-10 mr-3">
         <AvatarImage src={otherUser?.profile_image} alt={otherUser?.name || "User"} />
         <AvatarFallback>{otherUser?.name ? getInitials(otherUser.name) : 'U'}</AvatarFallback>
       </Avatar>
       <div>
-        <h3 className="font-medium">{otherUser?.name || "Unknown User"}</h3>
+        <h3 className="font-medium text-foreground">{otherUser?.name || "Unknown User"}</h3>
         <p className="text-xs text-muted-foreground">{otherUser?.role || ""}</p>
       </div>
     </div>

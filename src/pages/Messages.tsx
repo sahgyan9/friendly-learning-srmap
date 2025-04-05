@@ -61,7 +61,7 @@ const Messages = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen">
+      <div className="min-h-screen bg-background text-foreground">
         <Navbar />
         <main className="pt-24 pb-16">
           <div className="container px-4 md:px-6">
@@ -80,7 +80,7 @@ const Messages = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen">
+      <div className="min-h-screen bg-background text-foreground">
         <Navbar />
         <main className="pt-24 pb-16">
           <div className="container px-4 md:px-6">
@@ -98,7 +98,7 @@ const Messages = () => {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-background text-foreground">
       <Navbar />
       
       <main className="pt-24 pb-16">

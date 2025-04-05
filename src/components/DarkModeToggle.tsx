@@ -8,10 +8,12 @@ const DarkModeToggle = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
   
   useEffect(() => {
-    // Check if user prefers dark mode or has previously set it
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    // Check if user has previously set a theme
     const storedTheme = localStorage.getItem('theme');
-    const initialDarkMode = storedTheme === 'dark' || (!storedTheme && prefersDark);
+    
+    // Default to light mode (not dark mode)
+    // Only use dark mode if explicitly set in localStorage
+    const initialDarkMode = storedTheme === 'dark';
     
     setIsDarkMode(initialDarkMode);
     applyTheme(initialDarkMode);
