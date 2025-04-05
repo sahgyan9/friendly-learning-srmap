@@ -1,49 +1,38 @@
+
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { Star, Linkedin, MessageCircle, ArrowLeft, Loader2, Plus } from "lucide-react";
+import { Star, Linkedin, MessageCircle, ArrowLeft, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
 import { getMentorById } from "@/integrations/supabase/services/mentors";
-import { Mentor, Ad } from "@/types/mentor";
+import { Mentor } from "@/types/mentor";
 import ChatModal from "@/components/chat/modals/ChatModal";
 import { useAuth } from "@/context/AuthContext";
 import { motion } from "framer-motion";
-import CreateAdForm from "@/components/ads/CreateAdForm";
-import AdCard from "@/components/ads/AdCard";
-import { supabase } from "@/integrations/supabase/client";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 
 const MentorProfile = () => {
   const { id } = useParams<{ id: string }>();
   const [mentor, setMentor] = useState<Mentor | null>(null);
   const [loading, setLoading] = useState(true);
   const [isChatOpen, setIsChatOpen] = useState(false);
-  const [isCreateAdOpen, setIsCreateAdOpen] = useState(false);
-  const [ads, setAds] = useState<Ad[]>([]);
   const { user } = useAuth();
 
   useEffect(() => {
     const fetchMentor = async () => {
       if (!id) return;
-
+      
       setLoading(true);
       try {
         const { data, error } = await getMentorById(id);
-
+        
         if (error) {
           console.error("Error fetching mentor:", error);
           toast.error("Failed to load mentor profile");
           return;
         }
-
+        
         if (data) {
           setMentor(data);
         } else {
@@ -60,53 +49,34 @@ const MentorProfile = () => {
     fetchMentor();
   }, [id]);
 
-  useEffect(() => {
-    const fetchAds = async () => {
-      try {
-        const { data, error } = await supabase
-          .from("ads")
-          .select("*")
-          .order("created_at", { ascending: false });
-
-        if (error) throw error;
-        setAds(data || []);
-      } catch (error) {
-        console.error("Error fetching ads:", error);
-      }
-    };
-
-    fetchAds();
-  }, []);
-
   const openChatModal = () => {
     if (!user) {
       toast.error("Please sign in to connect with mentors");
       return;
     }
-
+    
     setIsChatOpen(true);
   };
 
   const isOwnProfile = user && mentor && user.id === mentor.id;
-  const isAdmin = user?.email === "sahgyan9@gmail.com";
 
   // Animation variants
   const containerVariants = {
     hidden: { opacity: 0 },
-    visible: {
+    visible: { 
       opacity: 1,
-      transition: {
-        when: "beforeChildren",
+      transition: { 
+        when: "beforeChildren", 
         staggerChildren: 0.1,
         duration: 0.5
       }
     }
   };
-
+  
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
+    visible: { 
+      opacity: 1, 
       y: 0,
       transition: { duration: 0.5 }
     }
@@ -117,7 +87,7 @@ const MentorProfile = () => {
       <div className="min-h-screen">
         <Navbar />
         <div className="container px-4 md:px-6 pt-24 pb-16 flex justify-center items-center min-h-[60vh]">
-          <motion.div
+          <motion.div 
             className="flex flex-col items-center"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -135,7 +105,7 @@ const MentorProfile = () => {
     return (
       <div className="min-h-screen">
         <Navbar />
-        <motion.div
+        <motion.div 
           className="container px-4 md:px-6 pt-24 pb-16"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -163,134 +133,151 @@ const MentorProfile = () => {
   return (
     <div className="min-h-screen">
       <Navbar />
-      <div className="container px-4 md:px-6 pt-24 pb-16">
-        <motion.div
-          className="max-w-4xl mx-auto"
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-        >
-          {/* Back Button */}
-          <motion.div variants={itemVariants} className="mb-8">
-            <Button asChild variant="ghost">
-              <Link to="/mentors">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Mentors
-              </Link>
-            </Button>
-          </motion.div>
-
-          {/* Profile Header */}
-          <motion.div variants={itemVariants} className="flex flex-col md:flex-row gap-8 mb-12">
-            <div className="flex-shrink-0">
-              <img
-                src={mentor.profile_image}
-                alt={mentor.name}
-                className="w-32 h-32 rounded-full object-cover border-4 border-primary"
-              />
-            </div>
-            <div className="flex-grow">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                  <h1 className="text-3xl font-bold mb-2">{mentor.name}</h1>
-                  <p className="text-xl text-muted-foreground mb-4">{mentor.department}</p>
+      
+      <main className="pt-24 pb-16">
+        <div className="container px-4 md:px-6">
+          <motion.div 
+            className="max-w-4xl mx-auto"
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+          >
+            <motion.div className="mb-8" variants={itemVariants}>
+              <Button variant="ghost" asChild className="px-0 text-muted-foreground">
+                <Link to="/mentors">
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Back to Mentors
+                </Link>
+              </Button>
+            </motion.div>
+            
+            <motion.div 
+              className="flex flex-col md:flex-row gap-8 mb-10"
+              variants={itemVariants}
+            >
+              <motion.div 
+                className="flex-shrink-0"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5 }}
+              >
+                <div className="relative">
+                  <motion.img 
+                    src={mentor.profile_image} 
+                    alt={mentor.name}
+                    className="w-36 h-36 md:w-48 md:h-48 rounded-xl object-cover shadow-lg"
+                    whileHover={{ scale: 1.05 }}
+                    transition={{ type: "spring", stiffness: 300 }}
+                  />
+                  <motion.div 
+                    className="absolute -bottom-2 -right-2 flex items-center bg-white rounded-full px-3 py-1 shadow-sm border border-gray-100"
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.3, duration: 0.4 }}
+                  >
+                    <Star className="w-4 h-4 text-yellow-400 mr-1.5" />
+                    <span className="text-sm font-medium">{mentor.rating.toFixed(1)}</span>
+                    <span className="text-xs text-muted-foreground ml-1">({mentor.review_count})</span>
+                  </motion.div>
                 </div>
-                <div className="flex gap-4">
-                  {isAdmin && isOwnProfile && (
-                    <Dialog open={isCreateAdOpen} onOpenChange={setIsCreateAdOpen}>
-                      <DialogTrigger asChild>
-                        <Button>
-                          <Plus className="mr-2 h-4 w-4" />
-                          Create Ad
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Create New Ad</DialogTitle>
-                        </DialogHeader>
-                        <CreateAdForm
-                          onSuccess={() => {
-                            setIsCreateAdOpen(false);
-                            // Refresh ads
-                            window.location.reload();
-                          }}
-                          onCancel={() => setIsCreateAdOpen(false)}
-                        />
-                      </DialogContent>
-                    </Dialog>
-                  )}
-                  {mentor.linkedin_url && (
-                    <Button variant="outline" asChild>
-                      <a
-                        href={mentor.linkedin_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center"
+              </motion.div>
+              
+              <div className="flex-1">
+                <motion.h1 
+                  className="text-3xl font-bold mb-2"
+                  variants={itemVariants}
+                >
+                  {mentor.name}
+                </motion.h1>
+                <motion.p 
+                  className="text-lg text-muted-foreground mb-4"
+                  variants={itemVariants}
+                >
+                  {mentor.department}
+                </motion.p>
+                
+                <motion.div 
+                  className="flex flex-wrap gap-2 mb-6"
+                  variants={itemVariants}
+                >
+                  {mentor.skills.map((skill, index) => (
+                    <motion.div
+                      key={skill}
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.2 + (index * 0.05), duration: 0.3 }}
+                    >
+                      <Badge variant="secondary" className="text-sm">
+                        {skill}
+                      </Badge>
+                    </motion.div>
+                  ))}
+                </motion.div>
+                
+                <motion.div 
+                  className="flex flex-col sm:flex-row gap-3 mt-auto"
+                  variants={itemVariants}
+                >
+                  {isOwnProfile ? (
+                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                      <Button 
+                        asChild
+                        className="flex items-center gap-2"
                       >
-                        <Linkedin className="mr-2 h-4 w-4" />
-                        LinkedIn
-                      </a>
-                    </Button>
+                        <Link to="/profile">
+                          Edit Profile
+                        </Link>
+                      </Button>
+                    </motion.div>
+                  ) : (
+                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                      <Button 
+                        onClick={openChatModal}
+                        className="flex items-center gap-2"
+                      >
+                        <MessageCircle className="h-4 w-4" />
+                        Connect with Mentor
+                      </Button>
+                    </motion.div>
                   )}
-                  <Button onClick={openChatModal}>
-                    <MessageCircle className="mr-2 h-4 w-4" />
-                    Connect
-                  </Button>
-                </div>
+                  
+                  {mentor.linkedin_url && (
+                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                      <Button variant="outline" asChild className="flex items-center gap-2">
+                        <a href={mentor.linkedin_url} target="_blank" rel="noopener noreferrer">
+                          <Linkedin className="h-4 w-4" />
+                          LinkedIn Profile
+                        </a>
+                      </Button>
+                    </motion.div>
+                  )}
+                </motion.div>
               </div>
-              <div className="flex items-center gap-4 mt-4">
-                <div className="flex items-center">
-                  <Star className="h-5 w-5 text-amber-400 fill-amber-400 mr-1" />
-                  <span className="font-medium">{mentor.rating.toFixed(1)}</span>
-                  <span className="text-muted-foreground ml-1">
-                    ({mentor.review_count} reviews)
-                  </span>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Bio */}
-          {mentor.bio && (
-            <motion.div variants={itemVariants} className="mb-12">
+            </motion.div>
+            
+            <motion.div 
+              className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 mb-10"
+              variants={itemVariants}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+            >
               <h2 className="text-xl font-semibold mb-4">About</h2>
-              <p className="text-muted-foreground">{mentor.bio}</p>
+              <p className="text-gray-700 leading-relaxed">
+                {mentor.bio || "This mentor hasn't added a bio yet."}
+              </p>
             </motion.div>
-          )}
-
-          {/* Skills */}
-          <motion.div variants={itemVariants} className="mb-12">
-            <h2 className="text-xl font-semibold mb-4">Skills</h2>
-            <div className="flex flex-wrap gap-2">
-              {mentor.skills.map((skill, index) => (
-                <Badge key={index} variant="secondary">
-                  {skill}
-                </Badge>
-              ))}
-            </div>
           </motion.div>
-
-          {/* Ads Section */}
-          {isOwnProfile && ads.length > 0 && (
-            <motion.div variants={itemVariants} className="mb-12">
-              <h2 className="text-xl font-semibold mb-4">Your Ads</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {ads.map((ad) => (
-                  <AdCard key={ad.id} ad={ad} />
-                ))}
-              </div>
-            </motion.div>
-          )}
-        </motion.div>
-      </div>
-
-      {/* Chat Modal */}
-      <ChatModal
-        isOpen={isChatOpen}
-        onClose={() => setIsChatOpen(false)}
-        mentorId={mentor.id}
-        mentorName={mentor.name}
-      />
+        </div>
+      </main>
+      
+      {isChatOpen && mentor && (
+        <ChatModal 
+          isOpen={isChatOpen} 
+          onClose={() => setIsChatOpen(false)} 
+          mentor={mentor}
+        />
+      )}
     </div>
   );
 };

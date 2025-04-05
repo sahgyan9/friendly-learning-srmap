@@ -1,3 +1,4 @@
+
 export interface Mentor {
   id: string;
   name: string;
@@ -9,7 +10,6 @@ export interface Mentor {
   bio?: string;
   review_count: number;
   created_at?: string;
-  is_admin?: boolean;
 }
 
 export interface MentorFormData {
@@ -21,19 +21,4 @@ export interface MentorFormData {
   linkedin_url?: string;
   bio?: string;
   review_count?: number;
-}
-
-export interface Ad {
-  id: string;
-  title: string;
-  description: string;
-  image_url: string;
-  price?: string;
-  features?: string[];
-  cta_text: string;
-  cta_url: string;
-  badge_text?: string;
-  badge_color?: string;
-  created_at?: string;
-  created_by: string;
 }

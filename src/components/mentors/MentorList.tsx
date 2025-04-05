@@ -1,10 +1,8 @@
-import { useState, useEffect } from "react";
+
 import { Loader2 } from "lucide-react";
 import MentorCard from "@/components/MentorCard";
-import { Mentor, Ad } from "@/types/mentor";
+import { Mentor } from "@/types/mentor";
 import { motion } from "framer-motion";
-import AdCard from "@/components/ads/AdCard";
-import { supabase } from "@/integrations/supabase/client";
 
 interface MentorListProps {
   isLoading: boolean;
@@ -13,29 +11,6 @@ interface MentorListProps {
 }
 
 const MentorList = ({ isLoading, mentors, isAiSearch }: MentorListProps) => {
-  const [ads, setAds] = useState<Ad[]>([]);
-  const [loadingAds, setLoadingAds] = useState(true);
-
-  useEffect(() => {
-    const fetchAds = async () => {
-      try {
-        const { data, error } = await supabase
-          .from("ads")
-          .select("*")
-          .order("created_at", { ascending: false });
-
-        if (error) throw error;
-        setAds(data || []);
-      } catch (error) {
-        console.error("Error fetching ads:", error);
-      } finally {
-        setLoadingAds(false);
-      }
-    };
-
-    fetchAds();
-  }, []);
-
   // Animation variants
   const container = {
     hidden: { opacity: 0 },
@@ -56,35 +31,18 @@ const MentorList = ({ isLoading, mentors, isAiSearch }: MentorListProps) => {
     }
   };
 
-  if (isLoading || loadingAds) {
+  if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {[...Array(6)].map((_, index) => (
-          <div
-            key={index}
-            className="bg-white rounded-lg shadow-sm border border-gray-100 p-6 animate-pulse"
-          >
-            <div className="flex items-center gap-4 mb-4">
-              <div className="w-16 h-16 rounded-full bg-gray-200" />
-              <div className="flex-1">
-                <div className="h-4 bg-gray-200 rounded w-3/4 mb-2" />
-                <div className="h-3 bg-gray-200 rounded w-1/2" />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <div className="h-3 bg-gray-200 rounded w-full" />
-              <div className="h-3 bg-gray-200 rounded w-5/6" />
-              <div className="h-3 bg-gray-200 rounded w-4/6" />
-            </div>
-          </div>
-        ))}
+      <div className="flex justify-center items-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-2 text-lg">Loading mentors...</span>
       </div>
     );
   }
 
   if (mentors.length === 0) {
     return (
-      <motion.div
+      <motion.div 
         className="text-center py-12"
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -97,7 +55,7 @@ const MentorList = ({ isLoading, mentors, isAiSearch }: MentorListProps) => {
       </motion.div>
     );
   }
-
+  
   return (
     <motion.div
       initial="hidden"
@@ -106,7 +64,7 @@ const MentorList = ({ isLoading, mentors, isAiSearch }: MentorListProps) => {
     >
       {/* AI Search Badge */}
       {isAiSearch && (
-        <motion.div
+        <motion.div 
           className="flex items-center justify-center mb-8 gap-2"
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -121,30 +79,13 @@ const MentorList = ({ isLoading, mentors, isAiSearch }: MentorListProps) => {
         </motion.div>
       )}
 
-      {/* Ads Section */}
-      {ads.map((ad, index) => (
-        <motion.div
-          key={ad.id}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: index * 0.1 }}
-        >
-          <AdCard ad={ad} />
-        </motion.div>
-      ))}
-
       {/* Mentors Grid */}
-      <motion.div
+      <motion.div 
         className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6"
         variants={container}
       >
-        {mentors.map((mentor, index) => (
-          <motion.div
-            key={mentor.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: (index + ads.length) * 0.1 }}
-          >
+        {mentors.map((mentor) => (
+          <motion.div key={mentor.id} variants={item}>
             <MentorCard mentor={mentor} />
           </motion.div>
         ))}
