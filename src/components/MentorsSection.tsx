@@ -1,3 +1,4 @@
+
 import { useState, useEffect, Suspense, lazy } from "react";
 import { getMentors, searchMentors } from "@/integrations/supabase/services/mentors";
 import { useToast } from "@/components/ui/use-toast";
@@ -17,35 +18,36 @@ const SearchBar = lazy(() => import("@/components/SearchBar"));
 const MentorCard = lazy(() => import("@/components/MentorCard"));
 
 const MentorsSection = () => {
-  const { toast } = useToast();
-  const [allMentors, setAllMentors] = useState<any[]>([]); // Added state for all mentors
-  const [filteredMentors, setFilteredMentors] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [filteredMentors, setFilteredMentors] = useState<Mentor[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isAiSearch, setIsAiSearch] = useState(false);
+  const { toast } = useToast();
 
+  // Fetch mentors from Supabase on component mount
   useEffect(() => {
     const fetchMentors = async () => {
       setIsLoading(true);
       try {
         const { data, error } = await getMentors();
-
+        
         if (error) {
           console.error("Error fetching mentors:", error);
-          // Fallback to sample data
-          setAllMentors(sampleMentors); // Store sample data in allMentors
-          setFilteredMentors(sampleMentors.slice(0, 8));
           toast({
             title: "Error",
-            description: "Failed to fetch mentors. Using sample data.",
+            description: "Failed to load mentors. Using sample data instead.",
             variant: "destructive",
           });
-        } else if (data && data.length > 0) {
-          setAllMentors(data); // Store fetched data in allMentors
+          // Use sample data as fallback
+          setFilteredMentors(sampleMentors.slice(0, 8));
+          return;
+        }
+        
+        if (data && data.length > 0) {
+          // Only display a limited number initially for faster rendering
           setFilteredMentors(data.slice(0, 8));
         } else {
-          // No mentors found in database, use sample data
-          setAllMentors(sampleMentors); // Store sample data in allMentors
+          // Use sample data as fallback if no mentors in database
           setFilteredMentors(sampleMentors.slice(0, 8));
           toast({
             title: "Using sample data",
@@ -54,8 +56,7 @@ const MentorsSection = () => {
         }
       } catch (err) {
         console.error("Exception fetching mentors:", err);
-        // Fallback to sample data
-        setAllMentors(sampleMentors); // Store sample data in allMentors
+        // Use sample data as fallback
         setFilteredMentors(sampleMentors.slice(0, 8));
         toast({
           title: "Error",
@@ -70,63 +71,92 @@ const MentorsSection = () => {
     fetchMentors();
   }, [toast]);
 
-  // Modified handleSearch for local filtering
-  const handleSearch = (query: string) => {
+  const handleSearch = async (query: string) => {
     setSearchQuery(query);
-    setIsAiSearch(false); // Reset AI search flag on manual search
-
+    setIsAiSearch(false);
+    
     if (!query) {
-      // Show initial subset of all mentors when search is cleared
-      setFilteredMentors(allMentors.slice(0, 8));
+      // Fetch all mentors again when search is cleared
+      const { data } = await getMentors();
+      if (data && data.length > 0) {
+        setFilteredMentors(data.slice(0, 8));
+      } else {
+        setFilteredMentors(sampleMentors.slice(0, 8));
+      }
       return;
     }
-
-    // Perform local filtering on allMentors
-    const filtered = allMentors.filter(mentor => {
-      const searchLower = query.toLowerCase();
-      return (
-        mentor.name.toLowerCase().includes(searchLower) ||
-        mentor.department.toLowerCase().includes(searchLower) ||
-        mentor.skills.some((skill: string) => skill.toLowerCase().includes(searchLower)) ||
-        (mentor.bio && mentor.bio.toLowerCase().includes(searchLower))
-      );
-    });
-
-    setFilteredMentors(filtered);
-
-    // Optional: Show toast if local filtering yields no results
-    if (filtered.length === 0) {
+    
+    // Use the searchMentors function from Supabase services
+    try {
+      const { data, error } = await searchMentors(query);
+      
+      if (error) {
+        console.error("Error searching mentors:", error);
+        toast({
+          title: "Search Error",
+          description: "Failed to search mentors. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      if (data && data.length > 0) {
+        setFilteredMentors(data);
+      } else {
+        // Try searching in sample data as fallback
+        const filteredSampleMentors = sampleMentors.filter(mentor => {
+          const searchLower = query.toLowerCase();
+          return (
+            mentor.name.toLowerCase().includes(searchLower) ||
+            mentor.department.toLowerCase().includes(searchLower) ||
+            mentor.skills.some(skill => skill.toLowerCase().includes(searchLower)) ||
+            (mentor.bio && mentor.bio.toLowerCase().includes(searchLower))
+          );
+        });
+        
+        setFilteredMentors(filteredSampleMentors);
+        
+        if (filteredSampleMentors.length === 0) {
+          toast({
+            title: "No results found",
+            description: "Try a different search term or browse all mentors.",
+          });
+        }
+      }
+    } catch (err) {
+      console.error("Exception during search:", err);
       toast({
-        title: "No results found",
-        description: "Try a different search term or browse all mentors.",
+        title: "Search Error",
+        description: "An unexpected error occurred during search.",
+        variant: "destructive",
       });
     }
   };
 
   const handleGeminiSearch = (geminiResults: any[]) => {
     setIsAiSearch(true);
-
+    
     if (!geminiResults || geminiResults.length === 0) {
       setFilteredMentors([]);
       return;
     }
-
+    
     setFilteredMentors(geminiResults);
   };
 
   return (
     <section className="py-16 bg-secondary/50 dark:bg-gray-900/30">
       <div className="container px-4 md:px-6">
-        <SectionHeader
+        <SectionHeader 
           title="Find Your Mentor"
           description="Search from our pool of experienced senior students who are ready 
             to help you excel in your academic journey."
         />
-
+        
         <Suspense fallback={<SearchBarSkeleton />}>
           <SearchBar onSearch={handleSearch} onGeminiSearch={handleGeminiSearch} />
         </Suspense>
-
+        
         {isLoading ? (
           <MentorsGridSkeleton />
         ) : filteredMentors.length > 0 ? (
@@ -140,7 +170,7 @@ const MentorsSection = () => {
         ) : (
           <EmptyMentorsState />
         )}
-
+        
         {/* View all mentors link */}
         {filteredMentors.length > 0 && (
           <ViewAllLink url="/mentors" />
