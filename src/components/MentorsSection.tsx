@@ -3,7 +3,7 @@ import { getMentors, searchMentors } from "@/integrations/supabase/services/ment
 import { useToast } from "@/components/ui/use-toast";
 import { Loader2 } from "lucide-react";
 import { Mentor } from "@/types/mentor";
-import { sampleMentors } from "@/data/sampleMentors";
+import { sampleMentors } from "@/data/mentors";
 
 // Import refactored components
 import SearchBarSkeleton from "@/components/mentors/loaders/SearchBarSkeleton";
