@@ -4,7 +4,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search } from "lucide-react";
 import { PostCard } from "@/components/marketplace/PostCard";
-import { FilterSidebar } from "@/components/marketplace/FilterSidebar";
 import Navbar from "@/components/Navbar";
 
 type Category = 'news' | 'events' | 'ads' | 'courses';
@@ -53,18 +52,16 @@ export default function MarketPlace() {
     const [activeCategory, setActiveCategory] = useState<Category>('news');
     const [searchQuery, setSearchQuery] = useState('');
 
-    const handleFilterChange = (filters: any) => {
-        // Implement filter logic
-        console.log('Filters changed:', filters);
-    };
-
     return (
         <div className="min-h-screen bg-background">
             <Navbar />
 
             <div className="container mx-auto px-4 py-8 pt-24">
                 <div className="flex justify-between items-center mb-8">
-                    <h1 className="text-3xl font-bold">MarketPlace</h1>
+                    <div>
+                        <h1 className="text-3xl font-bold">MarketPlace</h1>
+                        <p className="text-sm text-muted-foreground mt-1">(Demo Version)</p>
+                    </div>
                     <div className="flex gap-4">
                         <div className="relative w-64">
                             <Input
@@ -80,40 +77,36 @@ export default function MarketPlace() {
                     </div>
                 </div>
 
-                <div className="flex gap-8">
-                    <FilterSidebar onFilterChange={handleFilterChange} />
+                <div className="flex-1">
+                    <Tabs defaultValue="news" className="w-full" onValueChange={(value) => setActiveCategory(value as Category)}>
+                        <TabsList className="grid w-full grid-cols-4 mb-8">
+                            <TabsTrigger value="news">University News</TabsTrigger>
+                            <TabsTrigger value="events">Events</TabsTrigger>
+                            <TabsTrigger value="ads">Advertisements</TabsTrigger>
+                            <TabsTrigger value="courses">Course Materials</TabsTrigger>
+                        </TabsList>
 
-                    <div className="flex-1">
-                        <Tabs defaultValue="news" className="w-full" onValueChange={(value) => setActiveCategory(value as Category)}>
-                            <TabsList className="grid w-full grid-cols-4 mb-8">
-                                <TabsTrigger value="news">University News</TabsTrigger>
-                                <TabsTrigger value="events">Events</TabsTrigger>
-                                <TabsTrigger value="ads">Advertisements</TabsTrigger>
-                                <TabsTrigger value="courses">Course Materials</TabsTrigger>
-                            </TabsList>
-
-                            <TabsContent value={activeCategory}>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    {samplePosts
-                                        .filter(post => post.category === activeCategory)
-                                        .map(post => (
-                                            <div key={post.id}>
-                                                <PostCard
-                                                    title={post.title}
-                                                    description={post.description}
-                                                    category={post.category}
-                                                    date={post.date}
-                                                    author={post.author}
-                                                    image={post.image}
-                                                    id={post.id}
-                                                    onView={() => console.log('View post:', post.id)}
-                                                />
-                                            </div>
-                                        ))}
-                                </div>
-                            </TabsContent>
-                        </Tabs>
-                    </div>
+                        <TabsContent value={activeCategory}>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {samplePosts
+                                    .filter(post => post.category === activeCategory)
+                                    .map(post => (
+                                        <div key={post.id}>
+                                            <PostCard
+                                                title={post.title}
+                                                description={post.description}
+                                                category={post.category}
+                                                date={post.date}
+                                                author={post.author}
+                                                image={post.image}
+                                                id={post.id}
+                                                onView={() => console.log('View post:', post.id)}
+                                            />
+                                        </div>
+                                    ))}
+                            </div>
+                        </TabsContent>
+                    </Tabs>
                 </div>
             </div>
         </div>
