@@ -22,7 +22,7 @@ const samplePosts: Post[] = [
     {
         id: '1',
         title: '🚀 Certified Ethical Hacking Course - Limited Time Offer!',
-        description: `From Vhass Softwares Pvt.ltd ?
+        description: `Unlock the Secrets of Cybersecurity and Protect Digital Assects..
 
 Why Choose Our Ethical Hacking Course?
 
@@ -42,9 +42,9 @@ Price: ₹1999/-
 
 Contact: +91 7981047612
 Email: udayvenkat102@gmail.com`,
-        category: 'courses',
-        date: '2024-03-17',
-        author: 'Uday (CEH v12 Certified)',
+        category: 'Vhass Pvt.ltd',
+        date: '2025-04-15',
+        author: 'Uday Venkat',
         image: 'https://media.istockphoto.com/id/1214556264/photo/hacker.jpg?s=1024x1024&w=is&k=20&c=GsVEQnT0di3a8A4Uo_QUtyFVBPfc_CiVYEi7PK2E-uU='
     }
 ];
