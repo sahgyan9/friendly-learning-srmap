@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { Search, XCircle, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -6,6 +5,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { Mentor } from "@/types/mentor";
 import { useDebounce } from "@/hooks/useDebounce";
+import { sampleMentors } from "@/data/mentors";
 
 interface SearchBarProps {
   onSearch: (query: string) => void;
@@ -16,9 +16,10 @@ const SearchBar = ({ onSearch, onGeminiSearch }: SearchBarProps) => {
   const [query, setQuery] = useState("");
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const [isGeminiSearching, setIsGeminiSearching] = useState(false);
+  const [localMentors, setLocalMentors] = useState<Mentor[]>([]);
   const { toast } = useToast();
   const debouncedQuery = useDebounce(query, 300); // Debounce search by 300ms
-  
+
   const placeholders = [
     "Search for mentors by name or skills...",
     "Who can help me with Python?",
@@ -26,14 +27,60 @@ const SearchBar = ({ onSearch, onGeminiSearch }: SearchBarProps) => {
     "Looking for help with Circuit Design",
   ];
 
-  // Handle normal search with debounced query to prevent API hammering
+  // Load mentors locally once on component mount
   useEffect(() => {
-    onSearch(debouncedQuery);
-  }, [debouncedQuery, onSearch]);
-  
+    const loadInitialMentors = async () => {
+      try {
+        const { data, error } = await supabase.from('mentors').select('*');
+        if (data && !error) {
+          setLocalMentors(data);
+        } else {
+          console.error("Error loading initial mentors:", error);
+          // Fallback to sample data silently - no error toast
+          setLocalMentors(sampleMentors);
+        }
+      } catch (err) {
+        console.error("Exception loading initial mentors:", err);
+        // Fallback to sample data silently - no error toast
+        setLocalMentors(sampleMentors);
+      }
+    };
+
+    loadInitialMentors();
+  }, []);
+
+  // Do client-side filtering as user types
+  useEffect(() => {
+    if (!debouncedQuery.trim()) {
+      // Just return all mentors when query is empty
+      onSearch("");
+      return;
+    }
+
+    // Do local filtering on already loaded mentors
+    try {
+      const searchLower = debouncedQuery.toLowerCase();
+      const filteredResults = localMentors.filter(mentor => {
+        return (
+          mentor.name.toLowerCase().includes(searchLower) ||
+          mentor.department.toLowerCase().includes(searchLower) ||
+          mentor.skills.some(skill => skill.toLowerCase().includes(searchLower)) ||
+          (mentor.bio && mentor.bio.toLowerCase().includes(searchLower))
+        );
+      });
+
+      // Pass filtered results to parent component
+      onSearch(debouncedQuery);
+    } catch (err) {
+      console.error("Error filtering mentors:", err);
+      // Don't show error to user, just use empty results
+      onSearch(debouncedQuery);
+    }
+  }, [debouncedQuery, localMentors, onSearch]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSearch(query); // Immediately search on form submit
+    onSearch(query); // Search on form submit
   };
 
   const clearSearch = () => {
@@ -112,7 +159,7 @@ const SearchBar = ({ onSearch, onGeminiSearch }: SearchBarProps) => {
 
   return (
     <div className="w-full max-w-3xl mx-auto mb-10">
-      <form 
+      <form
         onSubmit={handleSubmit}
         className="relative flex items-center transition-all duration-300 group"
       >
@@ -120,7 +167,7 @@ const SearchBar = ({ onSearch, onGeminiSearch }: SearchBarProps) => {
           <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500">
             <Search className="h-5 w-5" />
           </div>
-          
+
           <input
             type="text"
             value={query}
@@ -128,7 +175,7 @@ const SearchBar = ({ onSearch, onGeminiSearch }: SearchBarProps) => {
             placeholder={placeholders[placeholderIndex]}
             className="w-full pl-12 pr-12 py-3.5 rounded-xl bg-card border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 shadow-sm transition-all duration-200 placeholder:text-gray-400 dark:placeholder:text-gray-500"
           />
-          
+
           {query && (
             <button
               type="button"
@@ -139,8 +186,8 @@ const SearchBar = ({ onSearch, onGeminiSearch }: SearchBarProps) => {
             </button>
           )}
         </div>
-        
-        <Button 
+
+        <Button
           type="submit"
           className="ml-2 px-6"
         >
@@ -161,7 +208,7 @@ const SearchBar = ({ onSearch, onGeminiSearch }: SearchBarProps) => {
           )}
         </Button>
       </form>
-      
+
       <div className="mt-2 flex flex-wrap gap-2 px-1">
         <span className="text-sm text-muted-foreground">Popular:</span>
         {["Python", "Data Structures", "Machine Learning", "Web Development"].map((tag) => (
