@@ -3,9 +3,15 @@ import { useState, useEffect, Suspense, lazy } from "react";
 import { getMentors, searchMentors } from "@/integrations/supabase/services/mentors";
 import { useToast } from "@/components/ui/use-toast";
 import { Loader2 } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Mentor } from "@/types/mentor";
 import { sampleMentors } from "@/data/mentors";
+
+// Import refactored components
+import SearchBarSkeleton from "@/components/mentors/loaders/SearchBarSkeleton";
+import MentorsGridSkeleton from "@/components/mentors/loaders/MentorsGridSkeleton";
+import EmptyMentorsState from "@/components/mentors/EmptyMentorsState";
+import SectionHeader from "@/components/mentors/SectionHeader";
+import ViewAllLink from "@/components/mentors/ViewAllLink";
 
 // Lazy load heavy components
 const SearchBar = lazy(() => import("@/components/SearchBar"));
@@ -138,70 +144,21 @@ const MentorsSection = () => {
     setFilteredMentors(geminiResults);
   };
 
-  // SearchBar skeleton component
-  const SearchBarSkeleton = () => (
-    <div className="w-full max-w-3xl mx-auto mb-10">
-      <div className="flex items-center gap-2">
-        <Skeleton className="h-12 flex-1 rounded-xl dark:bg-gray-800" />
-        <Skeleton className="h-12 w-24 rounded-md dark:bg-gray-800" />
-        <Skeleton className="h-12 w-32 rounded-md dark:bg-gray-800" />
-      </div>
-      <div className="mt-2 flex gap-2">
-        <Skeleton className="h-6 w-16 dark:bg-gray-800" />
-        <Skeleton className="h-6 w-20 dark:bg-gray-800" />
-        <Skeleton className="h-6 w-32 dark:bg-gray-800" />
-        <Skeleton className="h-6 w-28 dark:bg-gray-800" />
-      </div>
-    </div>
-  );
-
-  // MentorCard skeleton component
-  const MentorCardSkeleton = () => (
-    <div className="bg-card rounded-xl p-6 shadow-sm border border-border h-[260px]">
-      <div className="flex items-start gap-4">
-        <Skeleton className="w-16 h-16 rounded-full dark:bg-gray-800" />
-        <div className="flex-1">
-          <Skeleton className="h-6 w-32 mb-2 dark:bg-gray-800" />
-          <Skeleton className="h-4 w-24 mb-2 dark:bg-gray-800" />
-          <Skeleton className="h-5 w-16 dark:bg-gray-800" />
-        </div>
-      </div>
-      <div className="mt-4 mb-5">
-        <Skeleton className="h-4 w-16 mb-2 dark:bg-gray-800" />
-        <div className="flex gap-2">
-          <Skeleton className="h-6 w-16 rounded-full dark:bg-gray-800" />
-          <Skeleton className="h-6 w-20 rounded-full dark:bg-gray-800" />
-          <Skeleton className="h-6 w-14 rounded-full dark:bg-gray-800" />
-        </div>
-      </div>
-      <div className="flex gap-2 mt-4">
-        <Skeleton className="h-10 flex-1 rounded-md dark:bg-gray-800" />
-        <Skeleton className="h-10 flex-1 rounded-md dark:bg-gray-800" />
-      </div>
-    </div>
-  );
-
   return (
     <section className="py-16 bg-secondary/50 dark:bg-gray-900/30">
       <div className="container px-4 md:px-6">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold mb-4">Find Your Mentor</h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
-            Search from our pool of experienced senior students who are ready 
-            to help you excel in your academic journey.
-          </p>
-        </div>
+        <SectionHeader 
+          title="Find Your Mentor"
+          description="Search from our pool of experienced senior students who are ready 
+            to help you excel in your academic journey."
+        />
         
         <Suspense fallback={<SearchBarSkeleton />}>
           <SearchBar onSearch={handleSearch} onGeminiSearch={handleGeminiSearch} />
         </Suspense>
         
         {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
-            {[...Array(8)].map((_, index) => (
-              <MentorCardSkeleton key={index} />
-            ))}
-          </div>
+          <MentorsGridSkeleton />
         ) : filteredMentors.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
             <Suspense fallback={<div className="col-span-full flex justify-center py-8"><Loader2 className="animate-spin h-8 w-8" /></div>}>
@@ -211,24 +168,12 @@ const MentorsSection = () => {
             </Suspense>
           </div>
         ) : (
-          <div className="text-center py-12">
-            <h3 className="text-xl font-medium mb-2">No mentors found</h3>
-            <p className="text-muted-foreground">
-              Try adjusting your search or browse all available mentors.
-            </p>
-          </div>
+          <EmptyMentorsState />
         )}
         
         {/* View all mentors link */}
         {filteredMentors.length > 0 && (
-          <div className="text-center mt-8">
-            <a 
-              href="/mentors" 
-              className="text-primary font-medium hover:underline"
-            >
-              View all mentors →
-            </a>
-          </div>
+          <ViewAllLink url="/mentors" />
         )}
       </div>
     </section>
