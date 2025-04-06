@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
 
@@ -21,7 +20,7 @@ const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/
 // Helper function to fetch mentors from Supabase
 async function fetchMentors() {
   console.log("Fetching mentors from Supabase database...");
-  
+
   const { data, error } = await supabaseClient
     .from('mentors')
     .select('*');
@@ -39,36 +38,31 @@ async function fetchMentors() {
 async function searchWithGeminiAI(query: string, mentors: any[]) {
   if (!GOOGLE_API_KEY) {
     console.error("Google API key is not set");
-    return { error: "API key not configured" };
+    return { error: "AI search is not configured correctly (missing API key)." };
+  }
+
+  if (mentors.length === 0) {
+    console.log("No mentors provided to searchWithGeminiAI");
+    return { ids: [] };
   }
 
   try {
     const mentorsContext = mentors.map(mentor => {
-      return `
-        ID: ${mentor.id}
-        Name: ${mentor.name}
-        Department: ${mentor.department}
-        Skills: ${mentor.skills.join(', ')}
-        Rating: ${mentor.rating}
-        Bio: ${mentor.bio || 'No bio available'}
-      `;
-    }).join('\n\n');
+      return `ID: ${mentor.id}, Name: ${mentor.name}, Dept: ${mentor.department}, Skills: ${mentor.skills.join(', ')}, Bio: ${mentor.bio?.substring(0, 100) || 'N/A'}`;
+    }).join('\n');
 
     const prompt = `
-      You are a helpful AI assistant for a university mentorship platform. Using the following context of available mentors, find the most relevant mentors for the user's query: "${query}".
+      Analyze the user query "${query}" based ONLY on the following mentor context.
+      Return ONLY a valid JSON array containing objects, where each object has a single key "id" with the string value of the relevant mentor's ID. Rank by relevance.
+      Example response format: [{"id":"123"},{"id":"45"}]
+      DO NOT include any introductory text, explanations, apologies, or markdown formatting like \`\`\`json. Just the JSON array.
       
-      Mentor Database Context:
+      Mentor Context:
       ${mentorsContext}
-      
-      Based on the query, return ONLY a JSON array of mentor IDs that match the query best, ranked by relevance. Don't include any explanation or other text.
-      The format should be: [{"id":"1"},{"id":"2"}]
-      
-      Try to understand not just keywords, but the intent behind the query. For example, if they ask for "programming help", consider mentors with skills like Python, Java, Web Development, etc.
-      
-      Important: The IDs must exactly match one of the ID values provided in the context above.
     `;
 
-    // Make the API call to Gemini
+    console.log(`Sending prompt to Gemini (context length: ${mentorsContext.length})`);
+
     const response = await fetch(`${GEMINI_API_URL}?key=${GOOGLE_API_KEY}`, {
       method: 'POST',
       headers: {
@@ -83,7 +77,7 @@ async function searchWithGeminiAI(query: string, mentors: any[]) {
           }
         ],
         generationConfig: {
-          temperature: 0.2,
+          temperature: 0.1,
           maxOutputTokens: 1024,
         }
       }),
@@ -91,35 +85,44 @@ async function searchWithGeminiAI(query: string, mentors: any[]) {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("Gemini API error:", errorText);
-      return { error: "Error communicating with Gemini API" };
+      console.error("Gemini API fetch error:", response.status, errorText);
+      return { error: `Gemini API request failed with status ${response.status}` };
     }
 
     const data = await response.json();
-    console.log("Gemini response:", JSON.stringify(data));
+    const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
+    console.log("Trimmed Gemini response text:", responseText);
 
-    // Extract the response text
-    const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-    
-    // Parse the JSON array of mentor IDs from the response
     try {
-      // Find JSON array in the response
-      const jsonMatch = responseText.match(/\[.*\]/s);
-      if (!jsonMatch) {
-        console.error("No JSON array found in response");
-        return { ids: [] };
+      if (!responseText.startsWith('[') || !responseText.endsWith(']')) {
+        console.error("Gemini response does not appear to be a JSON array:", responseText);
+        const jsonMatch = responseText.match(/[.*?]/s);
+        if (jsonMatch && jsonMatch[0]) {
+          console.log("Attempting to parse extracted JSON:", jsonMatch[0]);
+          const mentorIds = JSON.parse(jsonMatch[0]);
+          console.log("Parsed Mentor IDs from extraction:", mentorIds.map((item: any) => item?.id).filter(Boolean));
+          return { ids: mentorIds.filter((item: any) => item && typeof item.id === 'string') };
+        } else {
+          return { error: "Could not extract valid JSON array from Gemini response", raw: responseText };
+        }
       }
-      
-      const mentorIds = JSON.parse(jsonMatch[0]);
-      console.log("Mentor IDs from Gemini:", mentorIds.map(item => item.id));
+
+      const mentorIds = JSON.parse(responseText);
+
+      if (!Array.isArray(mentorIds) || !mentorIds.every(item => item && typeof item.id === 'string')) {
+        console.error("Parsed JSON is not in the expected format [{\"id\":\"...\"}]:", mentorIds);
+        return { error: "Gemini returned data in an unexpected format.", raw: responseText };
+      }
+
+      console.log("Successfully Parsed Mentor IDs:", mentorIds.map(item => item.id));
       return { ids: mentorIds };
     } catch (err) {
-      console.error("Error parsing mentor IDs from Gemini response:", err);
-      return { error: "Failed to parse Gemini response", raw: responseText };
+      console.error("Error parsing JSON from Gemini response:", err, "\nRaw Text:", responseText);
+      return { error: "Failed to parse Gemini response JSON", raw: responseText };
     }
   } catch (error) {
-    console.error("Error in Gemini search:", error);
-    return { error: "Gemini search failed" };
+    console.error("Unexpected error in searchWithGeminiAI:", error);
+    return { error: "An unexpected error occurred during the AI search." };
   }
 }
 
@@ -132,7 +135,7 @@ serve(async (req) => {
   try {
     // Parse the request body
     const { query } = await req.json();
-    
+
     if (!query || typeof query !== 'string') {
       return new Response(
         JSON.stringify({ error: "Invalid query parameter" }),
@@ -141,10 +144,10 @@ serve(async (req) => {
     }
 
     console.log(`Received search query: "${query}"`);
-    
+
     // Fetch mentors from Supabase
     const mentors = await fetchMentors();
-    
+
     // If no mentors in database, return error
     if (mentors.length === 0) {
       return new Response(
@@ -155,7 +158,7 @@ serve(async (req) => {
 
     // Use Gemini to search through mentors
     const geminiResult = await searchWithGeminiAI(query, mentors);
-    
+
     if (geminiResult.error) {
       return new Response(
         JSON.stringify({ error: geminiResult.error, raw: geminiResult.raw }),
@@ -166,14 +169,14 @@ serve(async (req) => {
     // Get the full mentor objects for the returned IDs
     const mentorIds = geminiResult.ids.map((item: any) => item.id);
     console.log("Mentor IDs from Gemini:", mentorIds);
-    
-    const filteredMentors = mentors.filter((mentor) => 
+
+    const filteredMentors = mentors.filter((mentor) =>
       mentorIds.includes(mentor.id)
     );
-    
+
     // Return the results
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         mentors: filteredMentors,
         query: query,
         totalResults: filteredMentors.length
