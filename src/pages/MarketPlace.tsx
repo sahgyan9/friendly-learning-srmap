@@ -46,24 +46,6 @@ Email: udayvenkat102@gmail.com`,
         date: '2024-03-17',
         author: 'Uday (CEH v12 Certified)',
         image: 'https://media.istockphoto.com/id/1214556264/photo/hacker.jpg?s=1024x1024&w=is&k=20&c=GsVEQnT0di3a8A4Uo_QUtyFVBPfc_CiVYEi7PK2E-uU='
-    },
-    {
-        id: '2',
-        title: 'Annual Tech Fest 2024',
-        description: 'Join us for the biggest technical festival of the year. Featuring workshops, competitions, and amazing prizes!',
-        category: 'events',
-        date: '2024-04-15',
-        author: 'Student Council',
-        image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=500&auto=format'
-    },
-    {
-        id: '3',
-        title: 'New Computer Lab Opening',
-        description: 'State-of-the-art computer lab with latest hardware and software is now open for students.',
-        category: 'news',
-        date: '2024-04-10',
-        author: 'Admin',
-        image: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=500&auto=format'
     }
 ];
 
