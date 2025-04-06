@@ -22,6 +22,32 @@ interface Post {
 const samplePosts: Post[] = [
     {
         id: '1',
+        title: '🚀 Certified Ethical Hacking Course - Limited Time Offer!',
+        description: `Learn from the Youngest Telugu Ethical Hacker! Master web application hacking, penetration testing, and cybersecurity essentials.
+
+Key Features:
+✅ Web Application Hacking
+✅ Penetration Testing Techniques
+✅ Ethical Hacking Tools & Methodologies
+✅ Real-World Hands-on Labs
+✅ Lifetime Support & Recorded Sessions
+
+Duration: 2 Months | 30+ Hours
+Schedule: 3 Days/Week (3 Hours/Day)
+Language: Telugu
+Price: ₹1999/week
+
+Contact: 7981047612
+Email: udayvenkat102@gmail.com
+
+Join now: https://forms.gle/4PP6PbrwbjUNSF8y7`,
+        category: 'courses',
+        date: '2024-03-17',
+        author: 'Uday (CEH v12 Certified)',
+        image: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=500&auto=format'
+    },
+    {
+        id: '2',
         title: 'Annual Tech Fest 2024',
         description: 'Join us for the biggest technical festival of the year. Featuring workshops, competitions, and amazing prizes!',
         category: 'events',
@@ -30,21 +56,13 @@ const samplePosts: Post[] = [
         image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=500&auto=format'
     },
     {
-        id: '2',
+        id: '3',
         title: 'New Computer Lab Opening',
         description: 'State-of-the-art computer lab with latest hardware and software is now open for students.',
         category: 'news',
         date: '2024-04-10',
         author: 'Admin',
         image: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=500&auto=format'
-    },
-    {
-        id: '3',
-        title: 'Data Structures Textbook for Sale',
-        description: 'Slightly used Data Structures textbook in excellent condition. Perfect for CS students.',
-        category: 'courses',
-        date: '2024-04-08',
-        author: 'John Doe',
     }
 ];
 
