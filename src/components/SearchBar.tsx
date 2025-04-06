@@ -80,6 +80,7 @@ const SearchBar = ({ onSearch, onGeminiSearch }: SearchBarProps) => {
       }
 
       if (data.mentors && data.mentors.length > 0) {
+        console.log("AI Search returned mentors:", data.mentors);
         onGeminiSearch(data.mentors);
         toast({
           title: "AI Search Results",
@@ -90,6 +91,7 @@ const SearchBar = ({ onSearch, onGeminiSearch }: SearchBarProps) => {
           title: "No results found",
           description: "Try a different search term or browse all mentors",
         });
+        onGeminiSearch([]); // Pass empty array to clear results
       }
     } catch (err) {
       console.error("Error during Gemini search:", err);

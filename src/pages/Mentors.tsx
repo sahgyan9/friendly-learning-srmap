@@ -63,6 +63,7 @@ const Mentors = () => {
         if (data && data.length > 0) {
           setFilteredMentors(data);
         } else {
+          console.log("No mentors found in database, using sample data");
           setFilteredMentors(sampleMentors);
           toast({
             title: "Using sample data",
@@ -112,7 +113,7 @@ const Mentors = () => {
       if (data && data.length > 0) {
         setFilteredMentors(data);
       } else {
-        // Try searching in sample data as fallback
+        // Try searching in sample data as fallback only if no mentors found in database
         const filteredSampleMentors = sampleMentors.filter(mentor => {
           const searchLower = query.toLowerCase();
           return (

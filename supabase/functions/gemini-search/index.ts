@@ -18,18 +18,20 @@ const supabaseClient = createClient(
 const GOOGLE_API_KEY = Deno.env.get('Gemini_API_Key') ?? '';
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
 
-// Helper function to fetch mentors
+// Helper function to fetch mentors from Supabase
 async function fetchMentors() {
+  console.log("Fetching mentors from Supabase database...");
+  
   const { data, error } = await supabaseClient
     .from('mentors')
     .select('*');
 
   if (error) {
-    console.error("Error fetching mentors:", error);
+    console.error("Error fetching mentors from database:", error);
     return [];
   }
 
-  console.log("Fetched mentors:", data?.length || 0);
+  console.log(`Successfully fetched ${data?.length || 0} mentors from Supabase`);
   return data || [];
 }
 
@@ -140,37 +142,15 @@ serve(async (req) => {
 
     console.log(`Received search query: "${query}"`);
     
-    // First try to get mentors from the database
-    let mentors = await fetchMentors();
+    // Fetch mentors from Supabase
+    const mentors = await fetchMentors();
     
-    // If no mentors in database, use the sample data
+    // If no mentors in database, return error
     if (mentors.length === 0) {
-      // Use hardcoded sample mentors
-      const response = await fetch(
-        new URL('/src/data/mentors.ts', 'http://localhost:9999').toString()
-      ).catch(() => null);
-      
-      if (response && response.ok) {
-        try {
-          const module = await response.text();
-          // Very simple way to extract the mentor data
-          const sampleDataMatch = module.match(/sampleMentors\s*=\s*(\[[\s\S]*?\n\]\;)/m);
-          if (sampleDataMatch && sampleDataMatch[1]) {
-            const sampleData = sampleDataMatch[1].replace(/^\s*export\s+const\s+/, '');
-            mentors = eval(sampleData);
-          }
-        } catch (error) {
-          console.error("Error processing sample mentors:", error);
-        }
-      }
-      
-      // If still no mentors, return an error
-      if (mentors.length === 0) {
-        return new Response(
-          JSON.stringify({ error: "No mentors found in database or sample data" }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 }
-        );
-      }
+      return new Response(
+        JSON.stringify({ error: "No mentors found in database" }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 }
+      );
     }
 
     // Use Gemini to search through mentors
