@@ -1,14 +1,10 @@
-
 import { Message } from "@/types/chat";
-import { useDemoMessages } from "../use-demo-messages";
 import { getConversationMessages, markMessagesAsRead } from "@/integrations/supabase/services/chat";
 
 /**
- * Hook for message operations like fetching messages
+ * Hook for message operations
  */
 export const useMessageOperations = (userId: string) => {
-  const { getDemoMessages } = useDemoMessages();
-
   /**
    * Fetch messages for a conversation
    */
@@ -20,43 +16,25 @@ export const useMessageOperations = (userId: string) => {
   ) => {
     setIsLoadingMessages(true);
     setError(null);
-    
+    setMessages([]);
+
     try {
-      // Handle demo conversation IDs differently
-      if (conversationId.startsWith('demo-')) {
-        const demoMessages = getDemoMessages(conversationId);
-        if (demoMessages.length > 0) {
-          console.log("Using demo messages from localStorage:", demoMessages);
-          setMessages(demoMessages);
-        }
-        setIsLoadingMessages(false);
-        return;
-      }
-      
+      console.log("Fetching messages for conversation:", conversationId);
+
       const { data, error } = await getConversationMessages(conversationId);
-      
+
       if (error) {
         console.error("Error fetching messages:", error);
         setError(error);
-        
-        // Check for demo messages in localStorage as a fallback
-        const demoMessages = getDemoMessages(conversationId);
-        if (demoMessages.length > 0) {
-          console.log("Using demo messages from localStorage:", demoMessages);
-          setMessages(demoMessages);
-        }
-        
         return;
       }
-      
+
       if (data) {
-        console.log("Fetched messages:", data);
+        console.log(`Fetched ${data.length} messages`);
         setMessages(data);
-        
-        // Mark messages as read if the user ID is valid
-        if (userId && !userId.startsWith('demo-')) {
-          await markMessagesAsRead(conversationId, userId);
-        }
+
+        // Mark messages as read
+        await markMessagesAsRead(conversationId, userId);
       }
     } catch (err) {
       console.error("Exception fetching messages:", err);
