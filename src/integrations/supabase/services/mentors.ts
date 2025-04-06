@@ -1,3 +1,4 @@
+
 import { supabase } from '../client';
 
 // Helper function to get typed data from Supabase tables
@@ -5,7 +6,7 @@ export async function getMentors() {
   const { data, error } = await supabase
     .from('mentors')
     .select('*');
-
+  
   return { data, error };
 }
 
@@ -29,11 +30,11 @@ export async function searchMentors(query: string) {
   if (!query || !query.trim()) {
     return getMentors();
   }
-
+  
   const lowerQuery = query.toLowerCase().trim();
-
+  
   try {
-    // Search in name, department, bio, and skills
+    // Search in name, department, and bio
     const { data, error } = await supabase
       .from('mentors')
       .select('*')
@@ -43,27 +44,24 @@ export async function searchMentors(query: string) {
         bio.ilike.%${lowerQuery}%
       `)
       .order('rating', { ascending: false });
-
-    if (error) {
-      console.error("Supabase search error:", error);
-      return { data: null, error };
-    }
-
+    
+    if (error) throw error;
+    
     // For skills array, we need to filter in JS since it's complex in SQL
-    const mentorsWithMatchingSkills = data?.filter(mentor =>
-      mentor.skills?.some(skill =>
+    const mentorsWithMatchingSkills = data?.filter(mentor => 
+      mentor.skills.some(skill => 
         skill.toLowerCase().includes(lowerQuery)
       )
     ) || [];
-
+    
     // Merge SQL results with JS filtered results for skills
     const mergedResults = [...(data || []), ...mentorsWithMatchingSkills];
-
+    
     // Remove duplicates based on id
     const uniqueResults = Array.from(
       new Map(mergedResults.map(item => [item.id, item])).values()
     );
-
+    
     return { data: uniqueResults, error: null };
   } catch (err) {
     console.error("Search error:", err);
@@ -78,6 +76,6 @@ export async function getMentorById(id: string) {
     .select('*')
     .eq('id', id)
     .single();
-
+  
   return { data, error };
 }
