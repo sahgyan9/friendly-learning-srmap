@@ -45,7 +45,7 @@ Email: udayvenkat102@gmail.com`,
         category: 'courses',
         date: '2024-03-17',
         author: 'Uday (CEH v12 Certified)',
-        image: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=500&auto=format'
+        image: 'https://media.istockphoto.com/id/1214556264/photo/hacker.jpg?s=1024x1024&w=is&k=20&c=GsVEQnT0di3a8A4Uo_QUtyFVBPfc_CiVYEi7PK2E-uU='
     },
     {
         id: '2',
