@@ -18,7 +18,6 @@ const supabaseClient = createClient(
 const GOOGLE_API_KEY = Deno.env.get('Gemini_API_Key') ?? '';
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
 
-
 // Helper function to fetch mentors
 async function fetchMentors() {
   const { data, error } = await supabaseClient
@@ -44,6 +43,7 @@ async function searchWithGeminiAI(query: string, mentors: any[]) {
   try {
     const mentorsContext = mentors.map(mentor => {
       return `
+        ID: ${mentor.id}
         Name: ${mentor.name}
         Department: ${mentor.department}
         Skills: ${mentor.skills.join(', ')}
@@ -59,9 +59,11 @@ async function searchWithGeminiAI(query: string, mentors: any[]) {
       ${mentorsContext}
       
       Based on the query, return ONLY a JSON array of mentor IDs that match the query best, ranked by relevance. Don't include any explanation or other text.
-      The format should be: [{"id":"mentor-id-1"},{"id":"mentor-id-2"}]
+      The format should be: [{"id":"1"},{"id":"2"}]
       
       Try to understand not just keywords, but the intent behind the query. For example, if they ask for "programming help", consider mentors with skills like Python, Java, Web Development, etc.
+      
+      Important: The IDs must exactly match one of the ID values provided in the context above.
     `;
 
     // Make the API call to Gemini
@@ -107,6 +109,7 @@ async function searchWithGeminiAI(query: string, mentors: any[]) {
       }
       
       const mentorIds = JSON.parse(jsonMatch[0]);
+      console.log("Mentor IDs from Gemini:", mentorIds.map(item => item.id));
       return { ids: mentorIds };
     } catch (err) {
       console.error("Error parsing mentor IDs from Gemini response:", err);
@@ -137,14 +140,37 @@ serve(async (req) => {
 
     console.log(`Received search query: "${query}"`);
     
-    // Fetch all mentors from the database
-    const mentors = await fetchMentors();
+    // First try to get mentors from the database
+    let mentors = await fetchMentors();
     
+    // If no mentors in database, use the sample data
     if (mentors.length === 0) {
-      return new Response(
-        JSON.stringify({ error: "No mentors found in database" }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 }
-      );
+      // Use hardcoded sample mentors
+      const response = await fetch(
+        new URL('/src/data/mentors.ts', 'http://localhost:9999').toString()
+      ).catch(() => null);
+      
+      if (response && response.ok) {
+        try {
+          const module = await response.text();
+          // Very simple way to extract the mentor data
+          const sampleDataMatch = module.match(/sampleMentors\s*=\s*(\[[\s\S]*?\n\]\;)/m);
+          if (sampleDataMatch && sampleDataMatch[1]) {
+            const sampleData = sampleDataMatch[1].replace(/^\s*export\s+const\s+/, '');
+            mentors = eval(sampleData);
+          }
+        } catch (error) {
+          console.error("Error processing sample mentors:", error);
+        }
+      }
+      
+      // If still no mentors, return an error
+      if (mentors.length === 0) {
+        return new Response(
+          JSON.stringify({ error: "No mentors found in database or sample data" }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 }
+        );
+      }
     }
 
     // Use Gemini to search through mentors

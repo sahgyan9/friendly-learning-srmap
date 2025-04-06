@@ -1,10 +1,11 @@
 
 import { useState, useEffect, Suspense, lazy } from "react";
-import { getMentors } from "@/integrations/supabase/services/mentors";
+import { getMentors, searchMentors } from "@/integrations/supabase/services/mentors";
 import { useToast } from "@/components/ui/use-toast";
 import { Loader2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Mentor } from "@/types/mentor";
+import { sampleMentors } from "@/data/mentors";
 
 // Lazy load heavy components
 const SearchBar = lazy(() => import("@/components/SearchBar"));
@@ -28,10 +29,11 @@ const MentorsSection = () => {
           console.error("Error fetching mentors:", error);
           toast({
             title: "Error",
-            description: "Failed to load mentors.",
+            description: "Failed to load mentors. Using sample data instead.",
             variant: "destructive",
           });
-          setFilteredMentors([]);
+          // Use sample data as fallback
+          setFilteredMentors(sampleMentors.slice(0, 8));
           return;
         }
         
@@ -39,18 +41,20 @@ const MentorsSection = () => {
           // Only display a limited number initially for faster rendering
           setFilteredMentors(data.slice(0, 8));
         } else {
-          setFilteredMentors([]);
+          // Use sample data as fallback if no mentors in database
+          setFilteredMentors(sampleMentors.slice(0, 8));
           toast({
-            title: "No mentors found",
-            description: "There are currently no mentors available.",
+            title: "Using sample data",
+            description: "No mentors found in database. Using sample data instead.",
           });
         }
       } catch (err) {
         console.error("Exception fetching mentors:", err);
-        setFilteredMentors([]);
+        // Use sample data as fallback
+        setFilteredMentors(sampleMentors.slice(0, 8));
         toast({
           title: "Error",
-          description: "An unexpected error occurred.",
+          description: "An unexpected error occurred. Using sample data instead.",
           variant: "destructive",
         });
       } finally {
@@ -68,46 +72,70 @@ const MentorsSection = () => {
     if (!query) {
       // Fetch all mentors again when search is cleared
       const { data } = await getMentors();
-      if (data) setFilteredMentors(data.slice(0, 8));
+      if (data && data.length > 0) {
+        setFilteredMentors(data.slice(0, 8));
+      } else {
+        setFilteredMentors(sampleMentors.slice(0, 8));
+      }
       return;
     }
     
     // Use the searchMentors function from Supabase services
-    const { data, error } = await import("@/integrations/supabase/services/mentors")
-      .then(module => module.searchMentors(query));
-    
-    if (error) {
-      console.error("Error searching mentors:", error);
+    try {
+      const { data, error } = await searchMentors(query);
+      
+      if (error) {
+        console.error("Error searching mentors:", error);
+        toast({
+          title: "Search Error",
+          description: "Failed to search mentors. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      if (data && data.length > 0) {
+        setFilteredMentors(data);
+      } else {
+        // Try searching in sample data as fallback
+        const filteredSampleMentors = sampleMentors.filter(mentor => {
+          const searchLower = query.toLowerCase();
+          return (
+            mentor.name.toLowerCase().includes(searchLower) ||
+            mentor.department.toLowerCase().includes(searchLower) ||
+            mentor.skills.some(skill => skill.toLowerCase().includes(searchLower)) ||
+            (mentor.bio && mentor.bio.toLowerCase().includes(searchLower))
+          );
+        });
+        
+        setFilteredMentors(filteredSampleMentors);
+        
+        if (filteredSampleMentors.length === 0) {
+          toast({
+            title: "No results found",
+            description: "Try a different search term or browse all mentors.",
+          });
+        }
+      }
+    } catch (err) {
+      console.error("Exception during search:", err);
       toast({
         title: "Search Error",
-        description: "Failed to search mentors. Please try again.",
+        description: "An unexpected error occurred during search.",
         variant: "destructive",
       });
-      return;
     }
-    
-    setFilteredMentors(data || []);
   };
 
   const handleGeminiSearch = (geminiResults: any[]) => {
     setIsAiSearch(true);
     
-    const mappedMentors = geminiResults.map(dbMentor => {
-      return {
-        id: dbMentor.id,
-        name: dbMentor.name,
-        department: dbMentor.department,
-        skills: dbMentor.skills,
-        rating: dbMentor.rating,
-        profile_image: dbMentor.profile_image,
-        linkedin_url: dbMentor.linkedin_url,
-        bio: dbMentor.bio,
-        review_count: dbMentor.review_count,
-        created_at: dbMentor.created_at
-      } as Mentor;
-    });
+    if (!geminiResults || geminiResults.length === 0) {
+      setFilteredMentors([]);
+      return;
+    }
     
-    setFilteredMentors(mappedMentors);
+    setFilteredMentors(geminiResults);
   };
 
   // SearchBar skeleton component
