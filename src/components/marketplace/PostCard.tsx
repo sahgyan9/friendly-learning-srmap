@@ -60,7 +60,4 @@ export function PostCard({
             </CardFooter>
         </Card>
     );
-}
-
-export { MarketPlace };
-export default MarketPlace; 
+} 
