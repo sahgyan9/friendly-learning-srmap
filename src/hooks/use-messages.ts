@@ -1,7 +1,7 @@
-
 import { useEffect } from "react";
 import { useMessagesState } from "./messages/use-messages-state";
 import { useMessagesOperations } from "./messages/use-messages-operations";
+import { getUserById } from "@/integrations/supabase/services/chat";
 
 /**
  * Hook for managing conversations and messages
@@ -32,7 +32,24 @@ export const useMessages = (userId: string) => {
 
   // Fetch conversations on initial load
   useEffect(() => {
-    fetchConversations(setConversations, setActiveChat, setIsLoadingConversations, setError);
+    if (userId) {
+      // Prefetch user data for the current user
+      const prefetchCurrentUser = async () => {
+        try {
+          const { data, error } = await getUserById(userId);
+          if (error) {
+            console.error("Error fetching current user data:", error);
+          } else if (data) {
+            console.log("Current user data prefetched:", data);
+          }
+        } catch (err) {
+          console.error("Error prefetching user data:", err);
+        }
+      };
+
+      prefetchCurrentUser();
+      fetchConversations(setConversations, setActiveChat, setIsLoadingConversations, setError);
+    }
   }, [userId]);
 
   // Fetch messages when active chat changes

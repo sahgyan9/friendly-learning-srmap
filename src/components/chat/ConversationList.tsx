@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -16,6 +15,7 @@ interface ConversationListProps {
   getOtherUser: (conversation: Conversation) => any;
   setActiveChat: (id: string) => void;
   hasUnreadMessages: (conversationId: string) => boolean;
+  currentUserId: string;
 }
 
 const ConversationList = ({
@@ -27,7 +27,8 @@ const ConversationList = ({
   formatTime,
   getOtherUser,
   setActiveChat,
-  hasUnreadMessages
+  hasUnreadMessages,
+  currentUserId
 }: ConversationListProps) => {
   if (isLoading) {
     return (
@@ -37,7 +38,7 @@ const ConversationList = ({
       </div>
     );
   }
-  
+
   if (filteredConversations.length === 0) {
     return (
       <div className="text-center py-8 px-4">
@@ -57,7 +58,7 @@ const ConversationList = ({
       </div>
     );
   }
-  
+
   const getInitials = (name: string) => {
     return name
       .split(' ')
@@ -73,9 +74,9 @@ const ConversationList = ({
         const otherUser = getOtherUser(conversation);
         const hasUnread = hasUnreadMessages(conversation.id);
         const lastMessageContent = conversation.last_message ? conversation.last_message.content : "";
-        
+
         return (
-          <div 
+          <div
             key={conversation.id}
             onClick={() => setActiveChat(conversation.id)}
             className={`flex items-center gap-3 p-4 border-b border-gray-200 dark:border-gray-800 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors ${activeChat === conversation.id ? 'bg-primary/5 dark:bg-primary/10' : ''}`}
@@ -88,7 +89,9 @@ const ConversationList = ({
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex justify-between items-baseline">
-                <h3 className="text-sm font-semibold truncate">{otherUser?.name || "Unknown User"}</h3>
+                <h3 className="text-sm font-semibold truncate">
+                  {otherUser && otherUser.name ? otherUser.name : "Contact"}
+                </h3>
                 <span className="text-xs text-gray-500 dark:text-gray-400">
                   {formatTime(conversation.last_updated)}
                 </span>

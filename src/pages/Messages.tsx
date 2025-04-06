@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
@@ -13,10 +12,10 @@ import { Loader2 } from "lucide-react";
 const Messages = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const { user } = useAuth();
-  
+
   // Use the real user ID from auth context instead of the sample user
   const userId = user?.id || "";
-  
+
   const {
     conversations,
     messages,
@@ -41,22 +40,41 @@ const Messages = () => {
   }, [conversations]);
 
   const getOtherUser = (conversation) => {
-    return conversation.user1_id === userId ? conversation.user2 : conversation.user1;
+    const otherUser = conversation.user1_id === userId ? conversation.user2 : conversation.user1;
+    if (!otherUser || !otherUser.name) {
+      console.log("Missing user data for conversation:", conversation.id, "Users:", conversation.user1, conversation.user2);
+
+      // Additional debugging to understand why user data might be missing
+      if (!conversation.user1) {
+        console.warn(`User1 data is completely missing for conversation ${conversation.id}`);
+      }
+      if (!conversation.user2) {
+        console.warn(`User2 data is completely missing for conversation ${conversation.id}`);
+      }
+
+      // Try to get at least some user data
+      return {
+        id: conversation.user1_id === userId ? conversation.user2_id : conversation.user1_id,
+        name: "Contact", // Default display name
+        profile_image: null
+      };
+    }
+    return otherUser;
   };
 
   const hasUnreadMessages = (conversationId) => {
-    return messages.some(msg => 
-      msg.conversation_id === conversationId && 
-      msg.receiver_id === userId && 
+    return messages.some(msg =>
+      msg.conversation_id === conversationId &&
+      msg.receiver_id === userId &&
       !msg.is_read
     );
   };
 
   const filteredConversations = searchQuery.trim()
     ? conversations.filter(conv => {
-        const otherUser = getOtherUser(conv);
-        return otherUser?.name.toLowerCase().includes(searchQuery.toLowerCase());
-      })
+      const otherUser = getOtherUser(conv);
+      return otherUser?.name.toLowerCase().includes(searchQuery.toLowerCase());
+    })
     : conversations;
 
   if (error) {
@@ -100,11 +118,11 @@ const Messages = () => {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Navbar />
-      
+
       <main className="pt-24 pb-16">
         <div className="container px-4 md:px-6">
           <h1 className="text-3xl font-bold mb-8">Messages</h1>
-          
+
           <ChatContainer
             conversations={conversations}
             filteredConversations={filteredConversations}
@@ -124,7 +142,7 @@ const Messages = () => {
           />
         </div>
       </main>
-      
+
       <ChatFooter />
     </div>
   );
