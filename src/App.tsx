@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -19,6 +18,7 @@ import MentorProfile from "./pages/MentorProfile";
 import UserProfile from "./pages/UserProfile";
 import Unauthorized from "./pages/Unauthorized";
 import ProtectedRoute from "./components/ProtectedRoute";
+import MarketPlace from "./pages/MarketPlace";
 
 const queryClient = new QueryClient();
 
@@ -36,28 +36,29 @@ const App = () => (
             <Route path="/signin" element={<SignIn />} />
             <Route path="/signup" element={<SignUp />} />
             <Route path="/unauthorized" element={<Unauthorized />} />
-            
+
             <Route path="/mentors" element={<Mentors />} />
             <Route path="/mentor/:id" element={<MentorProfile />} />
-            
+            <Route path="/marketplace" element={<MarketPlace />} />
+
             <Route path="/messages" element={
               <ProtectedRoute>
                 <Messages />
               </ProtectedRoute>
             } />
-            
+
             <Route path="/become-mentor" element={
               <ProtectedRoute>
                 <BecomeMentor />
               </ProtectedRoute>
             } />
-            
+
             <Route path="/profile" element={
               <ProtectedRoute>
                 <UserProfile />
               </ProtectedRoute>
             } />
-            
+
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
