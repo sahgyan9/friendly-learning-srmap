@@ -22,7 +22,7 @@ const samplePosts: Post[] = [
     {
         id: '1',
         title: '🚀 Certified Ethical Hacking Course - Limited Time Offer!',
-        description: `ARE YOU FASCINATED BY THE WORLD OF CYBERSECURITY? DO YOU WANT TO LEARN HOW TO DEFEND AGAINST CYBERATTACKS AND PROTECT SENSITIVE INFORMATION?
+        description: `From Vhass Softwares Pvt.ltd ?
 
 Why Choose Our Ethical Hacking Course?
 
