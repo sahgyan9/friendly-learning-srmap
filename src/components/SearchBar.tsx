@@ -125,11 +125,45 @@ const SearchBar = ({ onSearch, onGeminiSearch }: SearchBarProps) => {
 
       if (data.mentors && data.mentors.length > 0) {
         console.log("AI Search returned mentors:", data.mentors);
-        onGeminiSearch(data.mentors);
-        toast({
-          title: "AI Search Results",
-          description: `Found ${data.mentors.length} mentors that match your query`,
-        });
+
+        // Check if mentors have all required fields, if not try to supplement from local data
+        const completeResults = data.mentors.map(mentor => {
+          // Check if this mentor has all required fields
+          if (mentor &&
+            mentor.id &&
+            mentor.name &&
+            mentor.department &&
+            Array.isArray(mentor.skills) &&
+            typeof mentor.rating === 'number' &&
+            mentor.profile_image &&
+            typeof mentor.review_count === 'number') {
+            return mentor; // This mentor has all required fields
+          }
+
+          // If missing fields, try to find the complete mentor in local data
+          const localMentor = localMentors.find(m =>
+            m.id.toString() === mentor.id.toString()
+          );
+
+          return localMentor || null;
+        }).filter(Boolean); // Remove any null entries
+
+        console.log("Complete mentor results:", completeResults);
+
+        if (completeResults.length > 0) {
+          onGeminiSearch(completeResults);
+          toast({
+            title: "AI Search Results",
+            description: `Found ${completeResults.length} mentors that match your query`,
+          });
+        } else {
+          toast({
+            title: "Processing error",
+            description: "Received incomplete mentor data. Try a different search.",
+            variant: "destructive",
+          });
+          onGeminiSearch([]); // Clear results
+        }
       } else {
         toast({
           title: "No results found",

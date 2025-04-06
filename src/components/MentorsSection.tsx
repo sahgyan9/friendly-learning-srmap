@@ -114,7 +114,23 @@ const MentorsSection = () => {
       return;
     }
 
-    setFilteredMentors(geminiResults);
+    // Make sure we're getting complete mentor objects
+    const validMentors = geminiResults.filter(mentor =>
+      mentor && mentor.id && mentor.name && mentor.department
+    );
+
+    console.log("Valid mentors for display in MentorsSection:", validMentors);
+
+    if (validMentors.length === 0) {
+      toast({
+        title: "Processing error",
+        description: "Received incomplete mentor data from AI search",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setFilteredMentors(validMentors);
   };
 
   return (
