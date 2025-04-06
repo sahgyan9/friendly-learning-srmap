@@ -26,39 +26,47 @@ export async function addMentor(mentor: {
 }
 
 export async function searchMentors(query: string) {
-  if (!query.trim()) {
+  // If empty query, just return all mentors
+  if (!query || !query.trim()) {
     return getMentors();
   }
   
-  const lowerQuery = query.toLowerCase();
+  const lowerQuery = query.toLowerCase().trim();
   
-  // Search in name, department, skills, and bio
-  const { data, error } = await supabase
-    .from('mentors')
-    .select('*')
-    .or(`
-      name.ilike.%${lowerQuery}%,
-      department.ilike.%${lowerQuery}%,
-      bio.ilike.%${lowerQuery}%
-    `)
-    .order('rating', { ascending: false });
+  try {
+    // Search in name, department, and bio
+    const { data, error } = await supabase
+      .from('mentors')
+      .select('*')
+      .or(`
+        name.ilike.%${lowerQuery}%,
+        department.ilike.%${lowerQuery}%,
+        bio.ilike.%${lowerQuery}%
+      `)
+      .order('rating', { ascending: false });
     
-  // For skills array, we need to filter in JS since it's complex in SQL
-  const filteredData = data?.filter(mentor => 
-    mentor.skills.some(skill => 
-      skill.toLowerCase().includes(lowerQuery)
-    )
-  ) || [];
-  
-  // Merge SQL results with JS filtered results for skills
-  const mergedResults = [...(data || []), ...filteredData];
-  
-  // Remove duplicates based on id
-  const uniqueResults = Array.from(
-    new Map(mergedResults.map(item => [item.id, item])).values()
-  );
-  
-  return { data: uniqueResults, error };
+    if (error) throw error;
+    
+    // For skills array, we need to filter in JS since it's complex in SQL
+    const mentorsWithMatchingSkills = data?.filter(mentor => 
+      mentor.skills.some(skill => 
+        skill.toLowerCase().includes(lowerQuery)
+      )
+    ) || [];
+    
+    // Merge SQL results with JS filtered results for skills
+    const mergedResults = [...(data || []), ...mentorsWithMatchingSkills];
+    
+    // Remove duplicates based on id
+    const uniqueResults = Array.from(
+      new Map(mergedResults.map(item => [item.id, item])).values()
+    );
+    
+    return { data: uniqueResults, error: null };
+  } catch (err) {
+    console.error("Search error:", err);
+    return { data: null, error: err };
+  }
 }
 
 // Get a single mentor by ID

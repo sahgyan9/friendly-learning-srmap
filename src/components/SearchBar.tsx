@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { Mentor } from "@/types/mentor";
+import { useDebounce } from "@/hooks/useDebounce";
 
 interface SearchBarProps {
   onSearch: (query: string) => void;
@@ -16,6 +17,7 @@ const SearchBar = ({ onSearch, onGeminiSearch }: SearchBarProps) => {
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const [isGeminiSearching, setIsGeminiSearching] = useState(false);
   const { toast } = useToast();
+  const debouncedQuery = useDebounce(query, 300); // Debounce search by 300ms
   
   const placeholders = [
     "Search for mentors by name or skills...",
@@ -24,23 +26,18 @@ const SearchBar = ({ onSearch, onGeminiSearch }: SearchBarProps) => {
     "Looking for help with Circuit Design",
   ];
 
-  // Memoize the search callback to prevent infinite loops
-  const handleSearchChange = useCallback((q: string) => {
-    onSearch(q);
-  }, [onSearch]);
-
-  // Update search results as user types - with dependency array to prevent infinite loops
+  // Handle normal search with debounced query to prevent API hammering
   useEffect(() => {
-    handleSearchChange(query);
-  }, [query, handleSearchChange]);
+    onSearch(debouncedQuery);
+  }, [debouncedQuery, onSearch]);
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    onSearch(query); // Immediately search on form submit
   };
 
   const clearSearch = () => {
     setQuery("");
-    // onSearch(""); - this is now handled by the effect
   };
 
   const handleGeminiSearch = async () => {

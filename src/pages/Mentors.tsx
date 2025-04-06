@@ -101,12 +101,13 @@ const Mentors = () => {
       return;
     }
     
-    // Use Supabase search function
+    // Use Supabase search function with improved error handling
     try {
       const { data, error } = await searchMentors(query);
       
       if (error) {
         console.error("Error searching mentors:", error);
+        // Don't show errors during typing, just maintain current results
         return;
       }
       
@@ -128,15 +129,11 @@ const Mentors = () => {
       }
     } catch (err) {
       console.error("Exception during search:", err);
-      toast({
-        title: "Search Error",
-        description: "An unexpected error occurred during search.",
-        variant: "destructive",
-      });
+      // Don't show errors during typing, just log them
     }
   };
 
-  const handleGeminiSearch = (geminiResults: any[]) => {
+  const handleGeminiSearch = (geminiResults: Mentor[]) => {
     setIsAiSearch(true);
     
     if (!geminiResults || geminiResults.length === 0) {
