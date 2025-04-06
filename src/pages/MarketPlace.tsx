@@ -23,28 +23,30 @@ const samplePosts: Post[] = [
     {
         id: '1',
         title: '🚀 Certified Ethical Hacking Course - Limited Time Offer!',
-        description: `Learn from the Youngest Telugu Ethical Hacker! Master web application hacking, penetration testing, and cybersecurity essentials.
+        description: `ARE YOU FASCINATED BY THE WORLD OF CYBERSECURITY? DO YOU WANT TO LEARN HOW TO DEFEND AGAINST CYBERATTACKS AND PROTECT SENSITIVE INFORMATION?
 
-Key Features:
-✅ Web Application Hacking
-✅ Penetration Testing Techniques
-✅ Ethical Hacking Tools & Methodologies
-✅ Real-World Hands-on Labs
-✅ Lifetime Support & Recorded Sessions
+Why Choose Our Ethical Hacking Course?
 
-Duration: 2 Months | 30+ Hours
-Schedule: 3 Days/Week (3 Hours/Day)
-Language: Telugu
-Price: ₹1999/week
+• Instructors: Learn from youngest telugu experienced cybersecurity professionals with real-world expertise.
+• Hands-on Training: Gain practical experience through labs and simulations.
+• Industry-Relevant Curriculum: Covers the latest hacking techniques and tools.
+• Flexible Learning: Weekly sessions to fit your schedule.
+• Affordable Pricing: Get top-quality training at competitive rates.
+• Recorded sessions
+• Lifetime support
+• IN TELUGU
+• Duration 2months+ 30+hours
+• Freelancing opportunity!
 
-Contact: 7981047612
-Email: udayvenkat102@gmail.com
+Schedule: Mon, Wed, Fri (7:00 pm to 8:00 pm)
+Price: ₹1999/-
 
-Join now: https://forms.gle/4PP6PbrwbjUNSF8y7`,
+Contact: +91 7981047612
+Email: udayvenkat102@gmail.com`,
         category: 'courses',
         date: '2024-03-17',
         author: 'Uday (CEH v12 Certified)',
-        image: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=500&auto=format'
+        image: '/ethical-hacking-banner.jpg'
     },
     {
         id: '2',
@@ -69,6 +71,10 @@ Join now: https://forms.gle/4PP6PbrwbjUNSF8y7`,
 export default function MarketPlace() {
     const [activeCategory, setActiveCategory] = useState<Category>('news');
     const [searchQuery, setSearchQuery] = useState('');
+
+    const handleRegister = (url: string) => {
+        window.open(url, '_blank');
+    };
 
     return (
         <div className="min-h-screen bg-background">
@@ -118,7 +124,7 @@ export default function MarketPlace() {
                                                 author={post.author}
                                                 image={post.image}
                                                 id={post.id}
-                                                onView={() => console.log('View post:', post.id)}
+                                                onView={() => handleRegister('https://forms.gle/4PP6PbrwbjUNSF8y7')}
                                             />
                                         </div>
                                     ))}

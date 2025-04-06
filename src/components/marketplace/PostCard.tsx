@@ -54,8 +54,8 @@ export function PostCard({
                         <span>{date}</span>
                     </div>
                 </div>
-                <Button variant="outline" size="sm" onClick={onView}>
-                    View Details
+                <Button variant="default" size="sm" onClick={onView}>
+                    Register Now
                 </Button>
             </CardFooter>
         </Card>
