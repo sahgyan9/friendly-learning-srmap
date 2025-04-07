@@ -1,3 +1,4 @@
+
 import { useEffect } from "react";
 import { useMessagesState } from "./messages/use-messages-state";
 import { useMessagesOperations } from "./messages/use-messages-operations";
@@ -47,7 +48,10 @@ export const useMessages = (userId: string) => {
         }
       };
 
+      // First ensure current user data is in the database
       prefetchCurrentUser();
+      
+      // Then fetch conversations
       fetchConversations(setConversations, setActiveChat, setIsLoadingConversations, setError);
     }
   }, [userId]);
