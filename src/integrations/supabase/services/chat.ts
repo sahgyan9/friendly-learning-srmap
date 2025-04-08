@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Conversation, Message } from "@/types/chat";
 
@@ -10,7 +9,7 @@ export async function getUserConversations(userId: string) {
     // First fetch user's own data to ensure it's available
     const { data: userData, error: userError } = await supabase
       .from('users')
-      .select('id, name, profile_image, role')
+      .select('id, name, profile_image')
       .eq('id', userId)
       .single();
 
@@ -38,54 +37,47 @@ export async function getUserConversations(userId: string) {
 
     console.log(`Retrieved ${conversationsData?.length || 0} conversations for user ${userId}`);
 
-    // Check if any user data is missing and actively fetch it again
+    // Check if any user data is missing and log it
     if (conversationsData) {
-      const missingUserIds = new Set<string>();
+      const usersToFetch = new Set();
 
       conversationsData.forEach(conv => {
-        if (!conv.user1 && conv.user1_id) {
+        if (!conv.user1 || !conv.user1.name) {
           console.warn(`Missing user1 data for conversation ${conv.id}, user1_id: ${conv.user1_id}`);
-          missingUserIds.add(conv.user1_id);
+          usersToFetch.add(conv.user1_id);
         }
-        if (!conv.user2 && conv.user2_id) {
+        if (!conv.user2 || !conv.user2.name) {
           console.warn(`Missing user2 data for conversation ${conv.id}, user2_id: ${conv.user2_id}`);
-          missingUserIds.add(conv.user2_id);
+          usersToFetch.add(conv.user2_id);
         }
       });
 
-      // Try to fetch any missing user data directly if needed
-      if (missingUserIds.size > 0) {
-        const userIdsArray = Array.from(missingUserIds);
-        console.log('Fetching missing user data for:', userIdsArray);
+      // Try to fetch any missing user data directly
+      if (usersToFetch.size > 0) {
+        const userIds = Array.from(usersToFetch);
+        console.log('Fetching missing user data for:', userIds);
 
         const { data: missingUsers, error: missingUsersError } = await supabase
           .from('users')
           .select('id, name, profile_image, role')
-          .in('id', userIdsArray);
+          .in('id', userIds);
 
         if (missingUsersError) {
           console.error('Error fetching missing user data:', missingUsersError);
-        } else if (missingUsers && missingUsers.length > 0) {
+        } else if (missingUsers) {
           console.log('Retrieved missing user data:', missingUsers);
 
           // Update the conversation data with the missing user info
-          for (const conv of conversationsData) {
-            if (conv.user1_id && !conv.user1) {
-              const foundUser = missingUsers.find(u => u.id === conv.user1_id);
-              if (foundUser) {
-                conv.user1 = foundUser;
-                console.log(`Updated user1 data for conversation ${conv.id}`);
+          missingUsers.forEach(user => {
+            conversationsData.forEach(conv => {
+              if (conv.user1_id === user.id && (!conv.user1 || !conv.user1.name)) {
+                conv.user1 = user;
               }
-            }
-            
-            if (conv.user2_id && !conv.user2) {
-              const foundUser = missingUsers.find(u => u.id === conv.user2_id);
-              if (foundUser) {
-                conv.user2 = foundUser;
-                console.log(`Updated user2 data for conversation ${conv.id}`);
+              if (conv.user2_id === user.id && (!conv.user2 || !conv.user2.name)) {
+                conv.user2 = user;
               }
-            }
-          }
+            });
+          });
         }
       }
     }

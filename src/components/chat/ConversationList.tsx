@@ -1,8 +1,7 @@
-
 import React from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Loader2, AlertCircle } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { Conversation } from "@/types/chat";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
@@ -61,7 +60,6 @@ const ConversationList = ({
   }
 
   const getInitials = (name: string) => {
-    if (!name) return 'U';
     return name
       .split(' ')
       .map(part => part[0])
@@ -76,7 +74,6 @@ const ConversationList = ({
         const otherUser = getOtherUser(conversation);
         const hasUnread = hasUnreadMessages(conversation.id);
         const lastMessageContent = conversation.last_message ? conversation.last_message.content : "";
-        const isMissingData = !otherUser?.name || otherUser.name.startsWith("User ");
 
         return (
           <div
@@ -85,21 +82,16 @@ const ConversationList = ({
             className={`flex items-center gap-3 p-4 border-b border-gray-200 dark:border-gray-800 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors ${activeChat === conversation.id ? 'bg-primary/5 dark:bg-primary/10' : ''}`}
           >
             <div className="flex-shrink-0">
-              <Avatar className={`h-12 w-12 ${isMissingData ? 'border border-amber-500' : ''}`}>
+              <Avatar className="h-12 w-12">
                 <AvatarImage src={otherUser?.profile_image} alt={otherUser?.name || "User"} />
                 <AvatarFallback>{otherUser?.name ? getInitials(otherUser.name) : 'U'}</AvatarFallback>
               </Avatar>
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex justify-between items-baseline">
-                <div className="flex items-center gap-1">
-                  <h3 className="text-sm font-semibold truncate">
-                    {otherUser?.name || "Contact"}
-                  </h3>
-                  {isMissingData && (
-                    <AlertCircle className="h-3 w-3 text-amber-500" />
-                  )}
-                </div>
+                <h3 className="text-sm font-semibold truncate">
+                  {otherUser && otherUser.name ? otherUser.name : "Contact"}
+                </h3>
                 <span className="text-xs text-gray-500 dark:text-gray-400">
                   {formatTime(conversation.last_updated)}
                 </span>

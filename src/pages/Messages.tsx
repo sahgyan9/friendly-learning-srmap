@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
@@ -41,29 +40,25 @@ const Messages = () => {
   }, [conversations]);
 
   const getOtherUser = (conversation) => {
-    // First try to get the other user data from the conversation
-    let otherUser = conversation.user1_id === userId ? conversation.user2 : conversation.user1;
-    
-    // Log the user data if it's missing for debugging
+    const otherUser = conversation.user1_id === userId ? conversation.user2 : conversation.user1;
     if (!otherUser || !otherUser.name) {
-      console.warn(`Missing user data for conversation ${conversation.id}`, {
-        user1_id: conversation.user1_id,
-        user2_id: conversation.user2_id,
-        user1: conversation.user1,
-        user2: conversation.user2,
-        currentUserId: userId
-      });
-      
-      // Create a fallback user object with the user ID
-      // This ensures we at least have an ID to reference
-      const otherUserId = conversation.user1_id === userId ? conversation.user2_id : conversation.user1_id;
-      otherUser = {
-        id: otherUserId,
-        name: otherUserId === conversation.user1_id ? "User 1" : "User 2",
+      console.log("Missing user data for conversation:", conversation.id, "Users:", conversation.user1, conversation.user2);
+
+      // Additional debugging to understand why user data might be missing
+      if (!conversation.user1) {
+        console.warn(`User1 data is completely missing for conversation ${conversation.id}`);
+      }
+      if (!conversation.user2) {
+        console.warn(`User2 data is completely missing for conversation ${conversation.id}`);
+      }
+
+      // Try to get at least some user data
+      return {
+        id: conversation.user1_id === userId ? conversation.user2_id : conversation.user1_id,
+        name: "Contact", // Default display name
         profile_image: null
       };
     }
-    
     return otherUser;
   };
 
