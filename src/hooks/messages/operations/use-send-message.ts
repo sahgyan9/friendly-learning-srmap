@@ -41,7 +41,7 @@ export const useSendMessage = (userId: string) => {
 
       // Create a temporary message to show in the UI while sending
       const tempMessage: Message = {
-        id: temp-${Date.now()},
+        id: `temp-${Date.now()}`,
         conversation_id: conversationId,
         sender_id: userId,
         receiver_id: receiverId,
