@@ -1,11 +1,11 @@
-import { toast } from "sonner";
+.import { toast } from "sonner";
 import { Conversation, Message } from "@/types/chat";
 import { sendMessage as sendMessageApi } from "@/integrations/supabase/services/chat";
 
 /**
  * Hook for sending messages
  */
-export const useSendMessage = (userId: string) => {
+export const useSendMessage = (userId: string, senderName: string) => {
   /**
    * Send a message
    */
@@ -19,7 +19,11 @@ export const useSendMessage = (userId: string) => {
     setError: React.Dispatch<React.SetStateAction<Error | null>>
   ) => {
     if (!conversationId || !content.trim() || !userId) {
-      console.error("Invalid sendMessage parameters", { conversationId, content: content.length > 0, userId });
+      console.error("Invalid sendMessage parameters", {
+        conversationId,
+        content: content.length > 0,
+        userId
+      });
       return;
     }
 
@@ -34,49 +38,45 @@ export const useSendMessage = (userId: string) => {
         return;
       }
 
-      // Determine the recipient ID (the other user in the conversation)
-      const receiverId = conversation.user1_id === userId
-        ? conversation.user2_id
-        : conversation.user1_id;
+      const receiverId =
+        conversation.user1_id === userId
+          ? conversation.user2_id
+          : conversation.user1_id;
 
-      // Create a temporary message to show in the UI while sending
       const tempMessage: Message = {
-        id: `temp-${Date.now()}`,
+        id: temp-${Date.now()},
         conversation_id: conversationId,
         sender_id: userId,
         receiver_id: receiverId,
         content: content,
         sent_at: new Date().toISOString(),
-        is_read: false
+        is_read: false,
+        sender_name: senderName
       };
 
-      // Add the message to the UI immediately
       setMessages(prev => [...prev, tempMessage]);
 
-      // Send to the real backend
       const { data, error } = await sendMessageApi(
         conversationId,
         userId,
         receiverId,
-        content
+        content,
+        senderName
       );
 
       if (error) {
         console.error("Error sending message:", error);
         toast.error("Failed to send message");
 
-        // Remove the temporary message from the UI
         setMessages(prev => prev.filter(msg => msg.id !== tempMessage.id));
         return;
       }
 
       if (data) {
-        // Replace the temporary message with the real one
-        setMessages(prev => prev.map(msg =>
-          msg.id === tempMessage.id ? data : msg
-        ));
+        setMessages(prev =>
+          prev.map(msg => (msg.id === tempMessage.id ? data : msg))
+        );
 
-        // Update the conversation list with the new message
         const updatedConversations = conversations.map(c => {
           if (c.id === conversationId) {
             return {
@@ -89,9 +89,10 @@ export const useSendMessage = (userId: string) => {
           return c;
         });
 
-        // Sort conversations by last updated time
-        const sortedConversations = [...updatedConversations].sort((a, b) =>
-          new Date(b.last_updated).getTime() - new Date(a.last_updated).getTime()
+        const sortedConversations = [...updatedConversations].sort(
+          (a, b) =>
+            new Date(b.last_updated).getTime() -
+            new Date(a.last_updated).getTime()
         );
 
         setConversations(sortedConversations);
