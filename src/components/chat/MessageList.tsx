@@ -54,7 +54,9 @@ const MessageList = ({ messages, loading, currentUserId, getSenderName }: Messag
     <div className="flex flex-col gap-3">
       {messages.map((msg) => {
         const isMine = msg.sender_id === currentUserId;
-        const senderName = isMine ? "You" : getSenderName ? getSenderName(msg.sender_id) : "Contact";
+        const senderName = isMine
+          ? "You"
+          : (msg.sender?.name || (getSenderName ? getSenderName(msg.sender_id) : "Contact"));
 
         return (
           <div
@@ -69,8 +71,8 @@ const MessageList = ({ messages, loading, currentUserId, getSenderName }: Messag
               )}
               <div
                 className={`p-3 rounded-lg ${isMine
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted dark:bg-gray-800"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted dark:bg-gray-800"
                   }`}
               >
                 <p className="text-sm break-words">{msg.content}</p>
