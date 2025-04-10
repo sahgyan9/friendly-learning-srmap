@@ -1,4 +1,3 @@
-
 export interface Message {
   id: string;
   content: string;
@@ -7,6 +6,11 @@ export interface Message {
   sent_at: string;
   is_read: boolean;
   conversation_id: string;
+  sender?: {
+    id: string;
+    name: string;
+    profile_image: string;
+  };
 }
 
 export interface Conversation {
