@@ -144,7 +144,10 @@ export async function getConversationMessages(conversationId: string) {
     // Then fetch messages specifically for this conversation only
     const { data, error } = await supabase
       .from('messages')
-      .select('*')
+      .select(`
+        *,
+        sender:users!messages_sender_id_fkey(id, name, profile_image)
+      `)
       .eq('conversation_id', conversationId)
       .in('sender_id', validParticipants)
       .in('receiver_id', validParticipants)
