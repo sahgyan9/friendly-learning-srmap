@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import { Message } from "@/types/chat";
@@ -6,20 +7,19 @@ interface MessageListProps {
   messages: Message[];
   loading: boolean;
   currentUserId: string;
-  getSenderName?: (senderId: string) => string;
 }
 
-const MessageList = ({ messages, loading, currentUserId, getSenderName }: MessageListProps) => {
+const MessageList = ({ messages, loading, currentUserId }: MessageListProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
+  
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
-
+  
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
-
+  
   const formatTime = (timestamp: string) => {
     try {
       const date = new Date(timestamp);
@@ -29,7 +29,7 @@ const MessageList = ({ messages, loading, currentUserId, getSenderName }: Messag
       return "";
     }
   };
-
+  
   if (loading) {
     return (
       <div className="h-full flex items-center justify-center">
@@ -38,7 +38,7 @@ const MessageList = ({ messages, loading, currentUserId, getSenderName }: Messag
       </div>
     );
   }
-
+  
   if (messages.length === 0) {
     return (
       <div className="h-full flex items-center justify-center flex-col text-center px-4">
@@ -49,29 +49,23 @@ const MessageList = ({ messages, loading, currentUserId, getSenderName }: Messag
       </div>
     );
   }
-
+  
   return (
     <div className="flex flex-col gap-3">
       {messages.map((msg) => {
         const isMine = msg.sender_id === currentUserId;
-        const senderName = isMine ? "You" : getSenderName ? getSenderName(msg.sender_id) : "Contact";
-
         return (
-          <div
-            key={msg.id}
+          <div 
+            key={msg.id} 
             className={`flex ${isMine ? "justify-end" : "justify-start"}`}
           >
             <div className="flex flex-col max-w-[75%]">
-              {!isMine && (
-                <span className="text-xs font-medium text-muted-foreground ml-1 mb-1">
-                  {senderName}
-                </span>
-              )}
-              <div
-                className={`p-3 rounded-lg ${isMine
-                    ? "bg-primary text-primary-foreground"
+              <div 
+                className={`p-3 rounded-lg ${
+                  isMine 
+                    ? "bg-primary text-primary-foreground" 
                     : "bg-muted dark:bg-gray-800"
-                  }`}
+                }`}
               >
                 <p className="text-sm break-words">{msg.content}</p>
               </div>
