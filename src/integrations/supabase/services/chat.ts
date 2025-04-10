@@ -262,42 +262,24 @@ export async function sendMessage(
 // Get or create a conversation between two users
 export async function getOrCreateConversation(user1Id: string, user2Id: string) {
   try {
-    // First, check if a conversation already exists
-    const { data: existingConversation, error: findError } = await supabase
+    const { data: conversationId, error } = await supabase.rpc('update_conversation', {
+      user1: user1Id,
+      user2: user2Id
+    });
+
+    if (error) {
+      console.error('Error in update_conversation:', error);
+      return { data: null, error };
+    }
+
+    // Fetch the full conversation object if needed
+    const { data: conversation, error: fetchError } = await supabase
       .from('conversations')
       .select('*')
-      .or(`and(user1_id.eq.${user1Id},user2_id.eq.${user2Id}),and(user1_id.eq.${user2Id},user2_id.eq.${user1Id})`)
+      .eq('id', conversationId)
       .single();
 
-    if (!findError && existingConversation) {
-      console.log('Found existing conversation:', existingConversation);
-      return { data: existingConversation, error: null };
-    }
-
-    if (findError && findError.code !== 'PGRST116') {
-      // If error is not "no rows returned", something went wrong
-      console.error('Error finding conversation:', findError);
-      return { data: null, error: findError };
-    }
-
-    // No existing conversation, create a new one
-    console.log('Creating new conversation between', user1Id, 'and', user2Id);
-    const { data: newConversation, error: createError } = await supabase
-      .from('conversations')
-      .insert({
-        user1_id: user1Id,
-        user2_id: user2Id,
-        last_updated: new Date().toISOString()
-      })
-      .select()
-      .single();
-
-    if (createError) {
-      console.error('Error creating conversation:', createError);
-      return { data: null, error: createError };
-    }
-
-    return { data: newConversation, error: null };
+    return { data: conversation, error: fetchError || null };
   } catch (err) {
     console.error('Exception in getOrCreateConversation:', err);
     return { data: null, error: err as Error };
