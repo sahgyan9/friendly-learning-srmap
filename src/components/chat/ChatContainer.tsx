@@ -56,6 +56,14 @@ const ChatContainer = ({
     // If it's the current user, return "You"
     if (senderId === currentUserId) return "You";
 
+    // If message already has sender data attached, use that instead
+    const messageWithSender = messages.find(m =>
+      m.sender_id === senderId && m.sender && m.sender.name
+    );
+    if (messageWithSender?.sender?.name) {
+      return messageWithSender.sender.name;
+    }
+
     // If it's from the current conversation, get the other user's name
     if (currentConversation) {
       if (senderId === currentConversation.user1_id && currentConversation.user1) {
@@ -77,7 +85,7 @@ const ChatContainer = ({
     }
 
     return "Contact"; // Fallback if we can't find the user
-  }, [currentConversation, conversations, currentUserId]);
+  }, [currentConversation, conversations, currentUserId, messages]);
 
   return (
     <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-sm h-[calc(100vh-200px)] flex">
