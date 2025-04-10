@@ -9,7 +9,7 @@ export async function getUserConversations(userId: string) {
     // First fetch user's own data to ensure it's available
     const { data: userData, error: userError } = await supabase
       .from('users')
-      .select('id, name, profile_image')
+      .select('id, name, profile_image,role')
       .eq('id', userId)
       .single();
 
@@ -144,10 +144,7 @@ export async function getConversationMessages(conversationId: string) {
     // Then fetch messages specifically for this conversation only
     const { data, error } = await supabase
       .from('messages')
-      .select(`
-        *,
-        sender:users!messages_sender_id_fkey(id, name, profile_image)
-      `)
+      .select('*')
       .eq('conversation_id', conversationId)
       .in('sender_id', validParticipants)
       .in('receiver_id', validParticipants)
@@ -267,7 +264,7 @@ export async function getOrCreateConversation(user1Id: string, user2Id: string) 
       .from('conversations')
       .select('*')
       .or(`and(user1_id.eq.${user1Id},user2_id.eq.${user2Id}),and(user1_id.eq.${user2Id},user2_id.eq.${user1Id})`)
-      .single();
+      .maybesingle();
 
     if (!findError && existingConversation) {
       console.log('Found existing conversation:', existingConversation);
