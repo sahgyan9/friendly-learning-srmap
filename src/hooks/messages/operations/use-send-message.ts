@@ -3,7 +3,7 @@ import { Conversation, Message } from "@/types/chat";
 import { sendMessage as sendMessageApi } from "@/integrations/supabase/services/chat";
 
 /**
- * gyan
+ * Hook for sending messages
  */
 export const useSendMessage = (userId: string, senderName: string) => {
   /**
