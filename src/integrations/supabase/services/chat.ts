@@ -121,10 +121,33 @@ export async function getUserConversations(userId: string) {
 // Get conversation messages
 export async function getConversationMessages(conversationId: string) {
   try {
+    // First, get the conversation details to verify participants
+    const { data: conversation, error: convError } = await supabase
+      .from('conversations')
+      .select('user1_id, user2_id')
+      .eq('id', conversationId)
+      .single();
+
+    if (convError) {
+      console.error('Error fetching conversation details:', convError);
+      return { data: null, error: convError };
+    }
+
+    if (!conversation) {
+      console.error('Conversation not found:', conversationId);
+      return { data: null, error: new Error('Conversation not found') };
+    }
+
+    // Get the valid participant IDs
+    const validParticipants = [conversation.user1_id, conversation.user2_id];
+
+    // Then fetch messages specifically for this conversation only
     const { data, error } = await supabase
       .from('messages')
       .select('*')
       .eq('conversation_id', conversationId)
+      .in('sender_id', validParticipants)
+      .in('receiver_id', validParticipants)
       .order('sent_at', { ascending: true });
 
     if (error) {
@@ -132,6 +155,7 @@ export async function getConversationMessages(conversationId: string) {
       return { data: null, error };
     }
 
+    console.log(`Retrieved ${data?.length || 0} messages for conversation ${conversationId}`);
     return { data, error: null };
   } catch (err) {
     console.error('Exception in getConversationMessages:', err);
@@ -164,6 +188,31 @@ export async function sendMessage(
   content: string
 ) {
   try {
+    // Verify that the sender and receiver are valid participants in this conversation
+    const { data: conversation, error: convError } = await supabase
+      .from('conversations')
+      .select('user1_id, user2_id')
+      .eq('id', conversationId)
+      .single();
+
+    if (convError) {
+      console.error('Error fetching conversation details:', convError);
+      return { data: null, error: convError };
+    }
+
+    if (!conversation) {
+      console.error('Conversation not found:', conversationId);
+      return { data: null, error: new Error('Conversation not found') };
+    }
+
+    // Validate that both users are participants in this conversation
+    const validParticipants = [conversation.user1_id, conversation.user2_id];
+    if (!validParticipants.includes(senderId) || !validParticipants.includes(receiverId)) {
+      const error = new Error('Invalid participants for this conversation');
+      console.error(error.message, { senderId, receiverId, validParticipants });
+      return { data: null, error };
+    }
+
     // 1. Insert the message
     const { data: messageData, error: messageError } = await supabase
       .from('messages')
