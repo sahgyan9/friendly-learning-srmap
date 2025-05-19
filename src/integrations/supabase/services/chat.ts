@@ -284,10 +284,13 @@ export async function sendMessage(
 
     if (senderError) {
       console.error('Error fetching sender data:', senderError);
-    } else if (senderData) {
-      // Attach sender data to the message
-      messageData.sender = senderData;
-    }
+    } 
+
+    // Create a new message object that includes the sender information
+    const messageWithSender = {
+      ...messageData,
+      sender: senderData || null
+    };
 
     // 2. Update the conversation's last_message_id and last_updated
     const { error: conversationError } = await supabase
@@ -301,7 +304,7 @@ export async function sendMessage(
       // We still return the message data even if conversation update fails
     }
 
-    return { data: messageData, error: null };
+    return { data: messageWithSender, error: null };
   } catch (err) {
     console.error('Exception in sendMessage:', err);
     return { data: null, error: err as Error };
