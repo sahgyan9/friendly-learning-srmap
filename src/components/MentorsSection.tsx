@@ -1,6 +1,6 @@
 
 import { useState, useEffect, Suspense, lazy } from "react";
-import { getMentors, searchMentors } from "@/integrations/supabase/services/mentors";
+import { getMentors } from "@/integrations/supabase/services/mentors";
 import { useToast } from "@/components/ui/use-toast";
 import { Loader2 } from "lucide-react";
 import { Mentor } from "@/types/mentor";
@@ -71,6 +71,7 @@ const MentorsSection = () => {
     fetchMentors();
   }, [toast]);
 
+  // Simplified search handler - only clears search results
   const handleSearch = async (query: string) => {
     setSearchQuery(query);
     setIsAiSearch(false);
@@ -83,53 +84,6 @@ const MentorsSection = () => {
       } else {
         setFilteredMentors(sampleMentors.slice(0, 8));
       }
-      return;
-    }
-    
-    // Use the searchMentors function from Supabase services
-    try {
-      const { data, error } = await searchMentors(query);
-      
-      if (error) {
-        console.error("Error searching mentors:", error);
-        toast({
-          title: "Search Error",
-          description: "Failed to search mentors. Please try again.",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      if (data && data.length > 0) {
-        setFilteredMentors(data);
-      } else {
-        // Try searching in sample data as fallback
-        const filteredSampleMentors = sampleMentors.filter(mentor => {
-          const searchLower = query.toLowerCase();
-          return (
-            mentor.name.toLowerCase().includes(searchLower) ||
-            mentor.department.toLowerCase().includes(searchLower) ||
-            mentor.skills.some(skill => skill.toLowerCase().includes(searchLower)) ||
-            (mentor.bio && mentor.bio.toLowerCase().includes(searchLower))
-          );
-        });
-        
-        setFilteredMentors(filteredSampleMentors);
-        
-        if (filteredSampleMentors.length === 0) {
-          toast({
-            title: "No results found",
-            description: "Try a different search term or browse all mentors.",
-          });
-        }
-      }
-    } catch (err) {
-      console.error("Exception during search:", err);
-      toast({
-        title: "Search Error",
-        description: "An unexpected error occurred during search.",
-        variant: "destructive",
-      });
     }
   };
 
@@ -149,8 +103,7 @@ const MentorsSection = () => {
       <div className="container px-4 md:px-6">
         <SectionHeader 
           title="Find Your Mentor"
-          description="Search from our pool of experienced senior students who are ready 
-            to help you excel in your academic journey."
+          description="Use our AI-powered search to find mentors who can help you excel in your academic journey."
         />
         
         <Suspense fallback={<SearchBarSkeleton />}>

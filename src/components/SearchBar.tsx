@@ -1,11 +1,10 @@
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Search, XCircle, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { Mentor } from "@/types/mentor";
-import { useDebounce } from "@/hooks/useDebounce";
 
 interface SearchBarProps {
   onSearch: (query: string) => void;
@@ -17,27 +16,26 @@ const SearchBar = ({ onSearch, onGeminiSearch }: SearchBarProps) => {
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const [isGeminiSearching, setIsGeminiSearching] = useState(false);
   const { toast } = useToast();
-  const debouncedQuery = useDebounce(query, 300); // Debounce search by 300ms
   
   const placeholders = [
-    "Search for mentors by name or skills...",
+    "Search for mentors with AI...",
     "Who can help me with Python?",
     "Find a mentor for Data Structures",
     "Looking for help with Circuit Design",
   ];
 
-  // Handle normal search with debounced query to prevent API hammering
-  useEffect(() => {
-    onSearch(debouncedQuery);
-  }, [debouncedQuery, onSearch]);
+  // Removed dynamic search functionality (debounced search)
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSearch(query); // Immediately search on form submit
+    // Just update the UI state without triggering search functionality
+    // This will clear the current results
+    onSearch("");
   };
 
   const clearSearch = () => {
     setQuery("");
+    onSearch("");
   };
 
   const handleGeminiSearch = async () => {
@@ -139,25 +137,18 @@ const SearchBar = ({ onSearch, onGeminiSearch }: SearchBarProps) => {
             </button>
           )}
         </div>
-        
-        <Button 
-          type="submit"
-          className="ml-2 px-6"
-        >
-          Search
-        </Button>
 
         <Button
           type="button"
-          variant="outline"
-          className="ml-2 flex items-center gap-1.5 text-primary border-primary hover:bg-primary/10"
+          variant="default"
+          className="ml-2 flex items-center gap-1.5"
           onClick={handleGeminiSearch}
           disabled={isGeminiSearching}
         >
           <Sparkles className="h-4 w-4" />
           AI Search
           {isGeminiSearching && (
-            <span className="ml-1 h-4 w-4 animate-spin rounded-full border-2 border-primary border-r-transparent" />
+            <span className="ml-1 h-4 w-4 animate-spin rounded-full border-2 border-white border-r-transparent" />
           )}
         </Button>
       </form>
