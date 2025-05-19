@@ -10,7 +10,7 @@ export async function getUserConversations(userId: string) {
     // First fetch user's own data to ensure it's available
     const { data: userData, error: userError } = await supabase
       .from('users')
-      .select('id, name, profile_image')
+      .select('id, name, profile_image, role')
       .eq('id', userId)
       .single();
 
@@ -59,7 +59,7 @@ export async function getUserConversations(userId: string) {
 
       // Try to fetch any missing user data directly
       if (usersToFetch.size > 0) {
-        // Convert Set to Array of strings explicitly
+        // Convert Set to Array of strings and filter out non-string values
         const userIds = Array.from(usersToFetch).filter(id => typeof id === 'string') as string[];
         
         if (userIds.length > 0) {
@@ -150,12 +150,24 @@ export async function getConversationMessages(conversationId: string) {
     // Get the valid participant IDs
     const validParticipants = [conversation.user1_id, conversation.user2_id];
 
+    // Fetch users data first to ensure we have sender information
+    const { data: usersData, error: usersError } = await supabase
+      .from('users')
+      .select('id, name, profile_image, role')
+      .in('id', validParticipants);
+
+    if (usersError) {
+      console.error('Error fetching users data:', usersError);
+    } else {
+      console.log('Fetched users for conversation:', usersData);
+    }
+
     // Then fetch messages specifically for this conversation only
     const { data, error } = await supabase
       .from('messages')
       .select(`
         *,
-        sender:users!messages_sender_id_fkey(id, name, profile_image)
+        sender:users!messages_sender_id_fkey(id, name, profile_image, role)
       `)
       .eq('conversation_id', conversationId)
       .in('sender_id', validParticipants)
@@ -168,6 +180,20 @@ export async function getConversationMessages(conversationId: string) {
     }
 
     console.log(`Retrieved ${data?.length || 0} messages for conversation ${conversationId}`);
+    
+    // If some messages are missing sender information, try to fill it in from the users we fetched
+    if (data && usersData) {
+      data.forEach(message => {
+        if (!message.sender || !message.sender.name) {
+          const sender = usersData.find(user => user.id === message.sender_id);
+          if (sender) {
+            message.sender = sender;
+            console.log(`Added missing sender data for message ${message.id}:`, sender.name);
+          }
+        }
+      });
+    }
+
     return { data, error: null };
   } catch (err) {
     console.error('Exception in getConversationMessages:', err);
@@ -249,8 +275,22 @@ export async function sendMessage(
       return { data: null, error: new Error('No data returned after sending message') };
     }
 
+    // Get sender information to attach to the message
+    const { data: senderData, error: senderError } = await supabase
+      .from('users')
+      .select('id, name, profile_image, role')
+      .eq('id', senderId)
+      .single();
+
+    if (senderError) {
+      console.error('Error fetching sender data:', senderError);
+    } else if (senderData) {
+      // Attach sender data to the message
+      messageData.sender = senderData;
+    }
+
     // 2. Update the conversation's last_message_id and last_updated
-    const { data: conversationData, error: conversationError } = await supabase
+    const { error: conversationError } = await supabase
       .rpc('update_conversation', {
         conversation_id: conversationId,
         message_id: messageData.id
@@ -331,4 +371,3 @@ export async function getUserById(userId: string) {
     return { data: null, error: err as Error };
   }
 }
-

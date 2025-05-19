@@ -1,6 +1,8 @@
+
 import React, { useRef, useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import { Message } from "@/types/chat";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface MessageListProps {
   messages: Message[];
@@ -30,6 +32,38 @@ const MessageList = ({ messages, loading, currentUserId, getSenderName }: Messag
     }
   };
 
+  const getInitials = (name: string) => {
+    if (!name || typeof name !== 'string') return 'U';
+    return name
+      .split(' ')
+      .map(part => part[0])
+      .join('')
+      .toUpperCase()
+      .substring(0, 2);
+  };
+
+  const getSenderDisplayName = (message: Message): string => {
+    if (message.sender_id === currentUserId) {
+      return "You";
+    }
+    
+    // If the message has sender data attached, use that
+    if (message.sender && message.sender.name) {
+      return message.sender.name;
+    }
+    
+    // Use the getSenderName function if provided
+    if (getSenderName) {
+      const name = getSenderName(message.sender_id);
+      if (name && name !== "Contact") {
+        return name;
+      }
+    }
+    
+    // Fallback - but try to avoid this
+    return "Contact";
+  };
+
   if (loading) {
     return (
       <div className="h-full flex items-center justify-center">
@@ -54,15 +88,21 @@ const MessageList = ({ messages, loading, currentUserId, getSenderName }: Messag
     <div className="flex flex-col gap-3">
       {messages.map((msg) => {
         const isMine = msg.sender_id === currentUserId;
-        const senderName = isMine
-          ? "You"
-          : (msg.sender?.name || (getSenderName ? getSenderName(msg.sender_id) : "Contact"));
+        const senderName = getSenderDisplayName(msg);
 
         return (
           <div
             key={msg.id}
             className={`flex ${isMine ? "justify-end" : "justify-start"}`}
           >
+            {!isMine && (
+              <div className="mr-2 mt-1">
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src={msg.sender?.profile_image} alt={senderName} />
+                  <AvatarFallback>{getInitials(msg.sender?.name || '')}</AvatarFallback>
+                </Avatar>
+              </div>
+            )}
             <div className="flex flex-col max-w-[75%]">
               {!isMine && (
                 <span className="text-xs font-medium text-muted-foreground ml-1 mb-1">

@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Mentor } from "@/types/mentor";
 import { X } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface ChatModalHeaderProps {
   mentor: Mentor;
@@ -10,14 +11,23 @@ interface ChatModalHeaderProps {
 }
 
 const ChatModalHeader = ({ mentor, onClose }: ChatModalHeaderProps) => {
+  const getInitials = (name: string) => {
+    if (!name || typeof name !== 'string') return 'M';
+    return name
+      .split(' ')
+      .map(part => part[0])
+      .join('')
+      .toUpperCase()
+      .substring(0, 2);
+  };
+
   return (
     <DialogHeader className="p-4 border-b">
       <div className="flex items-center">
-        <img 
-          src={mentor.profile_image} 
-          alt={mentor.name} 
-          className="h-10 w-10 rounded-full mr-3"
-        />
+        <Avatar className="h-10 w-10 mr-3">
+          <AvatarImage src={mentor.profile_image} alt={mentor.name} />
+          <AvatarFallback>{getInitials(mentor.name)}</AvatarFallback>
+        </Avatar>
         <div className="flex-1">
           <DialogTitle className="text-lg">{mentor.name}</DialogTitle>
           <p className="text-sm text-muted-foreground">{mentor.department}</p>

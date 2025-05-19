@@ -52,40 +52,46 @@ const ChatContainer = ({
   const showConversationList = !activeChat || mobileView === "list" || window.innerWidth >= 768;
   const showChatArea = activeChat && (mobileView === "chat" || window.innerWidth >= 768);
 
-  // Function to get sender name based on sender ID
+  // Function to get sender name based on sender ID with improved caching
   const getSenderName = useCallback((senderId: string) => {
     // If it's the current user, return "You"
     if (senderId === currentUserId) return "You";
 
-    // If message already has sender data attached, use that instead
-    const messageWithSender = messages.find(m =>
-      m.sender_id === senderId && m.sender && m.sender.name
-    );
-    if (messageWithSender?.sender?.name) {
-      return messageWithSender.sender.name;
+    // Create a map of users for efficient lookup
+    const usersMap = new Map();
+    
+    // First check messages for sender data
+    for (const msg of messages) {
+      if (msg.sender && msg.sender.name && msg.sender_id === senderId) {
+        return msg.sender.name;
+      }
+      if (msg.sender) {
+        usersMap.set(msg.sender_id, msg.sender);
+      }
     }
 
-    // If it's from the current conversation, get the other user's name
+    // Then check all users in the current conversation
     if (currentConversation) {
-      if (senderId === currentConversation.user1_id && currentConversation.user1) {
+      if (currentConversation.user1_id === senderId && currentConversation.user1?.name) {
         return currentConversation.user1.name;
       }
-      if (senderId === currentConversation.user2_id && currentConversation.user2) {
+      if (currentConversation.user2_id === senderId && currentConversation.user2?.name) {
         return currentConversation.user2.name;
       }
     }
 
-    // If we can't find the user, look through all conversations
+    // If we still don't have the sender, check all conversations
     for (const conv of conversations) {
-      if (senderId === conv.user1_id && conv.user1) {
+      if (senderId === conv.user1_id && conv.user1 && conv.user1.name) {
         return conv.user1.name;
       }
-      if (senderId === conv.user2_id && conv.user2) {
+      if (senderId === conv.user2_id && conv.user2 && conv.user2.name) {
         return conv.user2.name;
       }
     }
 
-    return "Contact"; // Fallback if we can't find the user
+    console.warn(`Could not find name for user ID: ${senderId}`);
+    return "User"; // Better fallback than "Contact"
   }, [currentConversation, conversations, currentUserId, messages]);
 
   return (
