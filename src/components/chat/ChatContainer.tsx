@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback } from "react";
 import { Conversation, Message } from "@/types/chat";
 import ConversationList from "./ConversationList";
@@ -112,6 +113,7 @@ const ChatContainer = ({
                 }
               }}
               hasUnreadMessages={hasUnreadMessages}
+              currentUserId={currentUserId}
             />
           </ScrollArea>
         </div>

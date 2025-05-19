@@ -1,11 +1,12 @@
+
 import { toast } from "sonner";
 import { Conversation, Message } from "@/types/chat";
 import { sendMessage as sendMessageApi } from "@/integrations/supabase/services/chat";
 
 /**
- * gyan
+ * Hook for sending messages
  */
-export const useSendMessage = (userId: string, senderName: string) => {
+export const useSendMessage = (userId: string) => {
   /**
    * Send a message
    */
@@ -50,8 +51,7 @@ export const useSendMessage = (userId: string, senderName: string) => {
         receiver_id: receiverId,
         content: content,
         sent_at: new Date().toISOString(),
-        is_read: false,
-        sender_name: senderName
+        is_read: false
       };
 
       setMessages(prev => [...prev, tempMessage]);
@@ -60,8 +60,7 @@ export const useSendMessage = (userId: string, senderName: string) => {
         conversationId,
         userId,
         receiverId,
-        content,
-        senderName
+        content
       );
 
       if (error) {
