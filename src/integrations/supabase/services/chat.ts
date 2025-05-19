@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Conversation, Message } from "@/types/chat";
 
@@ -39,45 +40,53 @@ export async function getUserConversations(userId: string) {
 
     // Check if any user data is missing and log it
     if (conversationsData) {
-      const usersToFetch = new Set();
+      const usersToFetch = new Set<string>();
 
       conversationsData.forEach(conv => {
         if (!conv.user1 || !conv.user1.name) {
           console.warn(`Missing user1 data for conversation ${conv.id}, user1_id: ${conv.user1_id}`);
-          usersToFetch.add(conv.user1_id);
+          if (conv.user1_id) {
+            usersToFetch.add(conv.user1_id);
+          }
         }
         if (!conv.user2 || !conv.user2.name) {
           console.warn(`Missing user2 data for conversation ${conv.id}, user2_id: ${conv.user2_id}`);
-          usersToFetch.add(conv.user2_id);
+          if (conv.user2_id) {
+            usersToFetch.add(conv.user2_id);
+          }
         }
       });
 
       // Try to fetch any missing user data directly
       if (usersToFetch.size > 0) {
-        const userIds = Array.from(usersToFetch);
-        console.log('Fetching missing user data for:', userIds);
+        // Convert Set to Array of strings explicitly
+        const userIds = Array.from(usersToFetch).filter(id => typeof id === 'string') as string[];
+        
+        if (userIds.length > 0) {
+          console.log('Fetching missing user data for:', userIds);
 
-        const { data: missingUsers, error: missingUsersError } = await supabase
-          .from('users')
-          .select('id, name, profile_image, role')
-          .in('id', userIds);
+          const { data: missingUsers, error: missingUsersError } = await supabase
+            .from('users')
+            .select('id, name, profile_image, role')
+            .in('id', userIds);
 
-        if (missingUsersError) {
-          console.error('Error fetching missing user data:', missingUsersError);
-        } else if (missingUsers) {
-          console.log('Retrieved missing user data:', missingUsers);
+          if (missingUsersError) {
+            console.error('Error fetching missing user data:', missingUsersError);
+          } else if (missingUsers) {
+            console.log('Retrieved missing user data:', missingUsers);
 
-          // Update the conversation data with the missing user info
-          missingUsers.forEach(user => {
-            conversationsData.forEach(conv => {
-              if (conv.user1_id === user.id && (!conv.user1 || !conv.user1.name)) {
-                conv.user1 = user;
-              }
-              if (conv.user2_id === user.id && (!conv.user2 || !conv.user2.name)) {
-                conv.user2 = user;
-              }
+            // Update the conversation data with the missing user info
+            missingUsers.forEach(user => {
+              conversationsData.forEach(conv => {
+                if (conv.user1_id === user.id && (!conv.user1 || !conv.user1.name)) {
+                  conv.user1 = user;
+                }
+                if (conv.user2_id === user.id && (!conv.user2 || !conv.user2.name)) {
+                  conv.user2 = user;
+                }
+              });
             });
-          });
+          }
         }
       }
     }
@@ -262,24 +271,40 @@ export async function sendMessage(
 // Get or create a conversation between two users
 export async function getOrCreateConversation(user1Id: string, user2Id: string) {
   try {
-    const { data: conversationId, error } = await supabase.rpc('update_conversation', {
-      user1: user1Id,
-      user2: user2Id
-    });
-
-    if (error) {
-      console.error('Error in update_conversation:', error);
-      return { data: null, error };
-    }
-
-    // Fetch the full conversation object if needed
-    const { data: conversation, error: fetchError } = await supabase
+    // First check if conversation exists
+    const { data: existingConversations, error: fetchError } = await supabase
       .from('conversations')
       .select('*')
-      .eq('id', conversationId)
+      .or(`and(user1_id.eq.${user1Id},user2_id.eq.${user2Id}),and(user1_id.eq.${user2Id},user2_id.eq.${user1Id})`)
+      .limit(1);
+
+    if (fetchError) {
+      console.error('Error checking for existing conversation:', fetchError);
+      return { data: null, error: fetchError };
+    }
+
+    // If conversation exists, return it
+    if (existingConversations && existingConversations.length > 0) {
+      return { data: existingConversations[0], error: null };
+    }
+
+    // If no conversation exists, create a new one
+    const { data: newConversation, error: createError } = await supabase
+      .from('conversations')
+      .insert({
+        user1_id: user1Id,
+        user2_id: user2Id,
+        last_updated: new Date().toISOString()
+      })
+      .select()
       .single();
 
-    return { data: conversation, error: fetchError || null };
+    if (createError) {
+      console.error('Error creating conversation:', createError);
+      return { data: null, error: createError };
+    }
+
+    return { data: newConversation, error: null };
   } catch (err) {
     console.error('Exception in getOrCreateConversation:', err);
     return { data: null, error: err as Error };
@@ -306,3 +331,4 @@ export async function getUserById(userId: string) {
     return { data: null, error: err as Error };
   }
 }
+
