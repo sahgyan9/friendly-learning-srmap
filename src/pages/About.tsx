@@ -3,6 +3,7 @@ import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import Footer from "@/components/Footer";
+import TeamMembers from "@/components/about/TeamMembers";
 
 const About = () => {
   return (
@@ -37,11 +38,15 @@ const About = () => {
               Friendly Learning has a place for you.
             </p>
             
-            <div className="mt-8">
+            <div className="mt-8 mb-12">
               <Button asChild size="lg">
                 <Link to="/signup">Get Started</Link>
               </Button>
             </div>
+          </div>
+          
+          <div className="mt-16">
+            <TeamMembers />
           </div>
         </div>
       </main>
