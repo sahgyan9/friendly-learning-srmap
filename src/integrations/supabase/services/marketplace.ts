@@ -22,6 +22,7 @@ export type CategoryType = 'all' | 'news' | 'events' | 'ads' | 'courses';
 
 export async function fetchMarketplacePosts(category?: CategoryType) {
   try {
+    // Use type assertion for the entire query chain
     let query = supabase.from("marketplace_posts").select("*") as any;
     
     if (category && category !== 'all') {
@@ -45,6 +46,7 @@ export async function fetchMarketplacePosts(category?: CategoryType) {
 
 export async function fetchMarketplacePost(id: string) {
   try {
+    // Use type assertion for the entire query chain
     const { data, error } = await (supabase
       .from("marketplace_posts")
       .select("*")
@@ -64,6 +66,7 @@ export async function fetchMarketplacePost(id: string) {
 
 export async function createMarketplacePost(post: MarketplacePostInput) {
   try {
+    // Use type assertion for the entire query chain
     const { data, error } = await (supabase
       .from("marketplace_posts")
       .insert(post as any)
@@ -83,6 +86,7 @@ export async function createMarketplacePost(post: MarketplacePostInput) {
 
 export async function updateMarketplacePost(id: string, post: Partial<MarketplacePostInput>) {
   try {
+    // Use type assertion for the entire query chain
     const { data, error } = await (supabase
       .from("marketplace_posts")
       .update({ ...post, updated_at: new Date().toISOString() } as any)
@@ -103,6 +107,7 @@ export async function updateMarketplacePost(id: string, post: Partial<Marketplac
 
 export async function deleteMarketplacePost(id: string) {
   try {
+    // Use type assertion for the entire query chain
     const { error } = await (supabase
       .from("marketplace_posts")
       .delete()
