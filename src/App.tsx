@@ -20,6 +20,7 @@ import UserProfile from "./pages/UserProfile";
 import Unauthorized from "./pages/Unauthorized";
 import ProtectedRoute from "./components/ProtectedRoute";
 import MarketPlace from "./pages/MarketPlace";
+import MarketplaceAdmin from "./pages/MarketplaceAdmin";
 import TeamMembersAdmin from "./pages/TeamMembersAdmin";
 
 const queryClient = new QueryClient();
@@ -64,6 +65,12 @@ const App = () => (
             <Route path="/admin/team" element={
               <ProtectedRoute>
                 <TeamMembersAdmin />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/admin/marketplace" element={
+              <ProtectedRoute>
+                <MarketplaceAdmin />
               </ProtectedRoute>
             } />
 
