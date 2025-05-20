@@ -22,11 +22,13 @@ export type CategoryType = 'all' | 'news' | 'events' | 'ads' | 'courses';
 
 export async function fetchMarketplacePosts(category?: CategoryType) {
   try {
-    let query = supabase.from("marketplace_posts").select("*").order('date', { ascending: false });
+    let query = supabase.from("marketplace_posts").select("*") as any;
     
     if (category && category !== 'all') {
       query = query.eq('category', category);
     }
+    
+    query = query.order('date', { ascending: false });
     
     const { data, error } = await query;
     
@@ -43,11 +45,11 @@ export async function fetchMarketplacePosts(category?: CategoryType) {
 
 export async function fetchMarketplacePost(id: string) {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase
       .from("marketplace_posts")
       .select("*")
       .eq("id", id)
-      .maybeSingle();
+      .maybeSingle() as any);
     
     if (error) {
       throw error;
@@ -62,11 +64,11 @@ export async function fetchMarketplacePost(id: string) {
 
 export async function createMarketplacePost(post: MarketplacePostInput) {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase
       .from("marketplace_posts")
-      .insert(post)
+      .insert(post as any)
       .select()
-      .single();
+      .single() as any);
     
     if (error) {
       throw error;
@@ -81,12 +83,12 @@ export async function createMarketplacePost(post: MarketplacePostInput) {
 
 export async function updateMarketplacePost(id: string, post: Partial<MarketplacePostInput>) {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase
       .from("marketplace_posts")
-      .update({ ...post, updated_at: new Date().toISOString() })
+      .update({ ...post, updated_at: new Date().toISOString() } as any)
       .eq("id", id)
       .select()
-      .single();
+      .single() as any);
     
     if (error) {
       throw error;
@@ -101,10 +103,10 @@ export async function updateMarketplacePost(id: string, post: Partial<Marketplac
 
 export async function deleteMarketplacePost(id: string) {
   try {
-    const { error } = await supabase
+    const { error } = await (supabase
       .from("marketplace_posts")
       .delete()
-      .eq("id", id);
+      .eq("id", id) as any);
     
     if (error) {
       throw error;
