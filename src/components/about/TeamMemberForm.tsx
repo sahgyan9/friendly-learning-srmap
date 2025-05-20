@@ -116,11 +116,16 @@ const TeamMemberForm = ({ member, onComplete }: TeamMemberFormProps) => {
           description: "Team member updated successfully!",
         });
       } else {
-        // Create new team member
-        const { error } = await createTeamMember({
-          ...data,
-          image_url: imageUrl,
-        });
+        // Create new team member - Fix for type error here
+        // Ensure name and position are always passed as they are required
+        const teamMemberData = {
+          name: data.name, // This is required
+          position: data.position, // This is required
+          email: data.email || undefined, // This is optional
+          image_url: imageUrl || undefined, // This is optional
+        };
+
+        const { error } = await createTeamMember(teamMemberData);
 
         if (error) throw error;
 
