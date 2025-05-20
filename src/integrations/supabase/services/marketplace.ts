@@ -22,8 +22,10 @@ export type CategoryType = 'all' | 'news' | 'events' | 'ads' | 'courses';
 
 export async function fetchMarketplacePosts(category?: CategoryType) {
   try {
-    // Use type assertion for the entire query chain
-    let query = supabase.from("marketplace_posts").select("*") as any;
+    // Cast the entire Supabase client to any to bypass type checking
+    const supabaseAny = supabase as any;
+    
+    let query = supabaseAny.from("marketplace_posts").select("*");
     
     if (category && category !== 'all') {
       query = query.eq('category', category);
@@ -46,12 +48,14 @@ export async function fetchMarketplacePosts(category?: CategoryType) {
 
 export async function fetchMarketplacePost(id: string) {
   try {
-    // Use type assertion for the entire query chain
-    const { data, error } = await (supabase
+    // Cast the entire Supabase client to any to bypass type checking
+    const supabaseAny = supabase as any;
+    
+    const { data, error } = await supabaseAny
       .from("marketplace_posts")
       .select("*")
       .eq("id", id)
-      .maybeSingle() as any);
+      .maybeSingle();
     
     if (error) {
       throw error;
@@ -66,12 +70,14 @@ export async function fetchMarketplacePost(id: string) {
 
 export async function createMarketplacePost(post: MarketplacePostInput) {
   try {
-    // Use type assertion for the entire query chain
-    const { data, error } = await (supabase
+    // Cast the entire Supabase client to any to bypass type checking
+    const supabaseAny = supabase as any;
+    
+    const { data, error } = await supabaseAny
       .from("marketplace_posts")
-      .insert(post as any)
+      .insert(post)
       .select()
-      .single() as any);
+      .single();
     
     if (error) {
       throw error;
@@ -86,13 +92,15 @@ export async function createMarketplacePost(post: MarketplacePostInput) {
 
 export async function updateMarketplacePost(id: string, post: Partial<MarketplacePostInput>) {
   try {
-    // Use type assertion for the entire query chain
-    const { data, error } = await (supabase
+    // Cast the entire Supabase client to any to bypass type checking
+    const supabaseAny = supabase as any;
+    
+    const { data, error } = await supabaseAny
       .from("marketplace_posts")
-      .update({ ...post, updated_at: new Date().toISOString() } as any)
+      .update({ ...post, updated_at: new Date().toISOString() })
       .eq("id", id)
       .select()
-      .single() as any);
+      .single();
     
     if (error) {
       throw error;
@@ -107,11 +115,13 @@ export async function updateMarketplacePost(id: string, post: Partial<Marketplac
 
 export async function deleteMarketplacePost(id: string) {
   try {
-    // Use type assertion for the entire query chain
-    const { error } = await (supabase
+    // Cast the entire Supabase client to any to bypass type checking
+    const supabaseAny = supabase as any;
+    
+    const { error } = await supabaseAny
       .from("marketplace_posts")
       .delete()
-      .eq("id", id) as any);
+      .eq("id", id);
     
     if (error) {
       throw error;
