@@ -22,6 +22,8 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import MarketPlace from "./pages/MarketPlace";
 import MarketplaceAdmin from "./pages/MarketplaceAdmin";
 import TeamMembersAdmin from "./pages/TeamMembersAdmin";
+import AdminDashboard from "./pages/AdminDashboard";
+import AdminSettings from "./pages/AdminSettings";
 
 const queryClient = new QueryClient();
 
@@ -62,6 +64,13 @@ const App = () => (
               </ProtectedRoute>
             } />
             
+            {/* Admin Routes */}
+            <Route path="/admin" element={
+              <ProtectedRoute requiredRole="admin">
+                <AdminDashboard />
+              </ProtectedRoute>
+            } />
+            
             <Route path="/admin/team" element={
               <ProtectedRoute requiredRole="admin">
                 <TeamMembersAdmin />
@@ -71,6 +80,12 @@ const App = () => (
             <Route path="/admin/marketplace" element={
               <ProtectedRoute requiredRole="admin">
                 <MarketplaceAdmin />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/admin/settings" element={
+              <ProtectedRoute requiredRole="admin">
+                <AdminSettings />
               </ProtectedRoute>
             } />
 

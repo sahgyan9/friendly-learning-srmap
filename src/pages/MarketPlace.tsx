@@ -136,10 +136,10 @@ const MarketPlace = () => {
                             <Search className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
                         </div>
                         {isAdmin && (
-                            <Link to="/admin/marketplace">
+                            <Link to="/admin">
                                 <Button variant="outline">
                                     <Plus className="mr-2 h-4 w-4" />
-                                    Manage Posts
+                                    Admin Panel
                                 </Button>
                             </Link>
                         )}
