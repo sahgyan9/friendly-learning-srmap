@@ -3,6 +3,8 @@ import { ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { Loader2 } from 'lucide-react';
+import { isUserAdmin } from '@/integrations/supabase/services/admin';
+import { useState, useEffect } from 'react';
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -10,10 +12,25 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
-  const { user, profile, loading } = useAuth();
+  const { user, loading } = useAuth();
   const location = useLocation();
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
+  const [checkingAdmin, setCheckingAdmin] = useState<boolean>(false);
 
-  if (loading) {
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      if (user && requiredRole === 'admin') {
+        setCheckingAdmin(true);
+        const adminStatus = await isUserAdmin(user.id);
+        setIsAdmin(adminStatus);
+        setCheckingAdmin(false);
+      }
+    };
+
+    checkAdminStatus();
+  }, [user, requiredRole]);
+
+  if (loading || (requiredRole === 'admin' && checkingAdmin)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
@@ -30,7 +47,7 @@ const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
   }
 
   // If a specific role is required, check if the user has that role
-  if (requiredRole && profile?.role !== requiredRole) {
+  if (requiredRole === 'admin' && !isAdmin) {
     return <Navigate to="/unauthorized" replace />;
   }
 

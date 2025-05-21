@@ -223,6 +223,7 @@ export type Database = {
           created_at: string | null
           email: string
           id: string
+          is_admin: boolean
           name: string
           profile_image: string | null
           role: string
@@ -231,6 +232,7 @@ export type Database = {
           created_at?: string | null
           email: string
           id?: string
+          is_admin?: boolean
           name: string
           profile_image?: string | null
           role: string
@@ -239,6 +241,7 @@ export type Database = {
           created_at?: string | null
           email?: string
           id?: string
+          is_admin?: boolean
           name?: string
           profile_image?: string | null
           role?: string

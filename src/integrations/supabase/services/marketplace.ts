@@ -181,13 +181,13 @@ export async function isUserAdmin() {
     
     const { data: user, error } = await supabase
       .from('users')
-      .select('role')
+      .select('is_admin')
       .eq('id', session.user.id)
       .maybeSingle();
     
     if (error || !user) return false;
     
-    return user.role === 'admin';
+    return user.is_admin === true;
   } catch (error) {
     console.error("Error checking admin status:", error);
     return false;

@@ -17,16 +17,16 @@ export async function isUserAdmin(userId?: string) {
     
     const { data, error } = await supabase
       .from('users')
-      .select('role')
+      .select('is_admin')
       .eq('id', userId)
       .maybeSingle();
     
     if (error || !data) {
-      console.error("Error fetching user role:", error);
+      console.error("Error fetching user admin status:", error);
       return false;
     }
     
-    return data.role === 'admin';
+    return data.is_admin === true;
   } catch (error) {
     console.error("Exception in isUserAdmin:", error);
     return false;
@@ -45,19 +45,48 @@ export async function setUserAsAdmin(userIdToPromote: string) {
     
     const { data, error } = await supabase
       .from('users')
-      .update({ role: 'admin' })
+      .update({ is_admin: true })
       .eq('id', userIdToPromote)
       .select()
       .single();
     
     if (error) {
-      console.error("Error updating user role:", error);
+      console.error("Error updating user admin status:", error);
       throw error;
     }
     
     return data;
   } catch (error) {
     console.error("Exception in setUserAsAdmin:", error);
+    throw error;
+  }
+}
+
+// Function to remove admin privileges from a user (requires admin privileges)
+export async function removeAdminPrivilege(userIdToRevoke: string) {
+  try {
+    // Check if current user is admin
+    const isAdmin = await isUserAdmin();
+    
+    if (!isAdmin) {
+      throw new Error("Only admins can revoke admin privileges");
+    }
+    
+    const { data, error } = await supabase
+      .from('users')
+      .update({ is_admin: false })
+      .eq('id', userIdToRevoke)
+      .select()
+      .single();
+    
+    if (error) {
+      console.error("Error updating user admin status:", error);
+      throw error;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error("Exception in removeAdminPrivilege:", error);
     throw error;
   }
 }
@@ -75,7 +104,7 @@ export async function getAdminUsers() {
     const { data, error } = await supabase
       .from('users')
       .select('id, name, email, profile_image')
-      .eq('role', 'admin');
+      .eq('is_admin', true);
     
     if (error) {
       console.error("Error fetching admin users:", error);
@@ -101,7 +130,7 @@ export async function getUserByEmail(email: string) {
     
     const { data, error } = await supabase
       .from('users')
-      .select('id, name, email, role, profile_image')
+      .select('id, name, email, role, profile_image, is_admin')
       .ilike('email', `%${email}%`)
       .limit(10);
     
