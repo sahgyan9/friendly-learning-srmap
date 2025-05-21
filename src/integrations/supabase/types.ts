@@ -55,6 +55,48 @@ export type Database = {
           },
         ]
       }
+      marketplace_posts: {
+        Row: {
+          author: string
+          category: string
+          contact_info: string | null
+          created_at: string
+          date: string
+          description: string
+          external_link: string | null
+          id: string
+          image_url: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          author: string
+          category: string
+          contact_info?: string | null
+          created_at?: string
+          date?: string
+          description: string
+          external_link?: string | null
+          id?: string
+          image_url?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          author?: string
+          category?: string
+          contact_info?: string | null
+          created_at?: string
+          date?: string
+          description?: string
+          external_link?: string | null
+          id?: string
+          image_url?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       mentors: {
         Row: {
           bio: string | null

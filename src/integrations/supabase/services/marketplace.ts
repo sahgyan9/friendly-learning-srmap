@@ -22,10 +22,7 @@ export type CategoryType = 'all' | 'news' | 'events' | 'ads' | 'courses';
 
 export async function fetchMarketplacePosts(category?: CategoryType) {
   try {
-    // Cast the entire Supabase client to any to bypass type checking
-    const supabaseAny = supabase as any;
-    
-    let query = supabaseAny.from("marketplace_posts").select("*");
+    let query = supabase.from("marketplace_posts").select("*");
     
     if (category && category !== 'all') {
       query = query.eq('category', category);
@@ -36,66 +33,63 @@ export async function fetchMarketplacePosts(category?: CategoryType) {
     const { data, error } = await query;
     
     if (error) {
+      console.error("Error in fetchMarketplacePosts:", error);
       throw error;
     }
     
     return data as MarketplacePost[];
   } catch (error) {
-    console.error("Error fetching marketplace posts:", error);
+    console.error("Exception in fetchMarketplacePosts:", error);
     throw error;
   }
 }
 
 export async function fetchMarketplacePost(id: string) {
   try {
-    // Cast the entire Supabase client to any to bypass type checking
-    const supabaseAny = supabase as any;
-    
-    const { data, error } = await supabaseAny
+    const { data, error } = await supabase
       .from("marketplace_posts")
       .select("*")
       .eq("id", id)
       .maybeSingle();
     
     if (error) {
+      console.error("Error in fetchMarketplacePost:", error);
       throw error;
     }
     
     return data as MarketplacePost | null;
   } catch (error) {
-    console.error("Error fetching marketplace post:", error);
+    console.error("Exception in fetchMarketplacePost:", error);
     throw error;
   }
 }
 
 export async function createMarketplacePost(post: MarketplacePostInput) {
   try {
-    // Cast the entire Supabase client to any to bypass type checking
-    const supabaseAny = supabase as any;
+    console.log("Creating marketplace post:", post);
     
-    const { data, error } = await supabaseAny
+    const { data, error } = await supabase
       .from("marketplace_posts")
       .insert(post)
       .select()
       .single();
     
     if (error) {
+      console.error("Supabase error in createMarketplacePost:", error);
       throw error;
     }
     
+    console.log("Post created successfully:", data);
     return data as MarketplacePost;
   } catch (error) {
-    console.error("Error creating marketplace post:", error);
+    console.error("Exception in createMarketplacePost:", error);
     throw error;
   }
 }
 
 export async function updateMarketplacePost(id: string, post: Partial<MarketplacePostInput>) {
   try {
-    // Cast the entire Supabase client to any to bypass type checking
-    const supabaseAny = supabase as any;
-    
-    const { data, error } = await supabaseAny
+    const { data, error } = await supabase
       .from("marketplace_posts")
       .update({ ...post, updated_at: new Date().toISOString() })
       .eq("id", id)
@@ -103,33 +97,32 @@ export async function updateMarketplacePost(id: string, post: Partial<Marketplac
       .single();
     
     if (error) {
+      console.error("Error in updateMarketplacePost:", error);
       throw error;
     }
     
     return data as MarketplacePost;
   } catch (error) {
-    console.error("Error updating marketplace post:", error);
+    console.error("Exception in updateMarketplacePost:", error);
     throw error;
   }
 }
 
 export async function deleteMarketplacePost(id: string) {
   try {
-    // Cast the entire Supabase client to any to bypass type checking
-    const supabaseAny = supabase as any;
-    
-    const { error } = await supabaseAny
+    const { error } = await supabase
       .from("marketplace_posts")
       .delete()
       .eq("id", id);
     
     if (error) {
+      console.error("Error in deleteMarketplacePost:", error);
       throw error;
     }
     
     return true;
   } catch (error) {
-    console.error("Error deleting marketplace post:", error);
+    console.error("Exception in deleteMarketplacePost:", error);
     throw error;
   }
 }
@@ -138,13 +131,14 @@ export async function uploadMarketplaceImage(file: File) {
   try {
     const fileExt = file.name.split('.').pop();
     const fileName = `${uuidv4()}.${fileExt}`;
-    const filePath = `marketplace/${fileName}`;
+    const filePath = `${fileName}`;
     
     const { data, error } = await supabase.storage
       .from('marketplace')
       .upload(filePath, file);
     
     if (error) {
+      console.error("Error in uploadMarketplaceImage:", error);
       throw error;
     }
     
@@ -153,9 +147,9 @@ export async function uploadMarketplaceImage(file: File) {
       .from('marketplace')
       .getPublicUrl(filePath);
     
-    return { path: data.path, url: publicUrl };
+    return { path: filePath, url: publicUrl };
   } catch (error) {
-    console.error("Error uploading marketplace image:", error);
+    console.error("Exception in uploadMarketplaceImage:", error);
     throw error;
   }
 }
@@ -167,12 +161,13 @@ export async function deleteMarketplaceImage(path: string) {
       .remove([path]);
     
     if (error) {
+      console.error("Error in deleteMarketplaceImage:", error);
       throw error;
     }
     
     return true;
   } catch (error) {
-    console.error("Error deleting marketplace image:", error);
+    console.error("Exception in deleteMarketplaceImage:", error);
     throw error;
   }
 }
