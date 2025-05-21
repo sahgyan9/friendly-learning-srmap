@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,11 +9,15 @@ import { Label } from "@/components/ui/label";
 
 const SignIn = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [formData, setFormData] = useState({
     email: "",
     password: ""
   });
   const [isLoading, setIsLoading] = useState(false);
+
+  // Get the path user was trying to access before being redirected to sign in
+  const from = location.state?.from || '/';
 
   // Check if user is already logged in
   useEffect(() => {
@@ -31,12 +35,13 @@ const SignIn = () => {
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' && session) {
-        navigate('/');
+        // Navigate back to the page the user was trying to access
+        navigate(from);
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, [navigate, from]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -68,7 +73,6 @@ const SignIn = () => {
       }
 
       toast.success("Signed in successfully!");
-      navigate('/');
     } catch (error: any) {
       console.error('Error during sign in:', error);
       toast.error(error.message || "Error signing in");

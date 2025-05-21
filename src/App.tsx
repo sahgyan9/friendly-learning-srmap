@@ -63,13 +63,13 @@ const App = () => (
             } />
             
             <Route path="/admin/team" element={
-              <ProtectedRoute>
+              <ProtectedRoute requiredRole="admin">
                 <TeamMembersAdmin />
               </ProtectedRoute>
             } />
             
             <Route path="/admin/marketplace" element={
-              <ProtectedRoute>
+              <ProtectedRoute requiredRole="admin">
                 <MarketplaceAdmin />
               </ProtectedRoute>
             } />

@@ -7,7 +7,7 @@ import { Search, Plus, Loader2 } from "lucide-react";
 import { PostCard } from "@/components/marketplace/PostCard";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
-import { fetchMarketplacePosts, fetchMarketplacePost, CategoryType, MarketplacePost } from '@/integrations/supabase/services/marketplace';
+import { fetchMarketplacePosts, fetchMarketplacePost, CategoryType, MarketplacePost, isUserAdmin } from '@/integrations/supabase/services/marketplace';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
 import {
@@ -24,6 +24,7 @@ const MarketPlace = () => {
     const [loading, setLoading] = useState(true);
     const [detailPost, setDetailPost] = useState<MarketplacePost | null>(null);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [isAdmin, setIsAdmin] = useState(false);
     const { user } = useAuth();
     const { toast } = useToast();
     const [searchParams, setSearchParams] = useSearchParams();
@@ -36,7 +37,21 @@ const MarketPlace = () => {
         if (postId) {
             loadPostDetails(postId);
         }
-    }, [activeCategory, searchParams]);
+        
+        // Check if user is admin
+        if (user) {
+            checkAdminStatus();
+        }
+    }, [activeCategory, searchParams, user]);
+
+    const checkAdminStatus = async () => {
+        try {
+            const adminStatus = await isUserAdmin();
+            setIsAdmin(adminStatus);
+        } catch (error) {
+            console.error("Error checking admin status:", error);
+        }
+    };
 
     const loadPosts = async () => {
         try {
@@ -120,7 +135,7 @@ const MarketPlace = () => {
                             />
                             <Search className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
                         </div>
-                        {user && (
+                        {isAdmin && (
                             <Link to="/admin/marketplace">
                                 <Button variant="outline">
                                     <Plus className="mr-2 h-4 w-4" />

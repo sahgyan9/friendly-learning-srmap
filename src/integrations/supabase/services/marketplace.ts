@@ -171,3 +171,25 @@ export async function deleteMarketplaceImage(path: string) {
     throw error;
   }
 }
+
+// Helper function to check if the current user is an admin
+export async function isUserAdmin() {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session) return false;
+    
+    const { data: user, error } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', session.user.id)
+      .maybeSingle();
+    
+    if (error || !user) return false;
+    
+    return user.role === 'admin';
+  } catch (error) {
+    console.error("Error checking admin status:", error);
+    return false;
+  }
+}
