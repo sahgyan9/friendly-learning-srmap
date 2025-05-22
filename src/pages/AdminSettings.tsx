@@ -28,7 +28,15 @@ import {
   removeAdminPrivilege,
 } from "@/integrations/supabase/services/admin";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import type { User } from "@/integrations/supabase/types";
+
+// Define our own User interface instead of importing it
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  profile_image?: string;
+  is_admin?: boolean;
+}
 
 interface AdminUser {
   id: string;
