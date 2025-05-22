@@ -160,7 +160,7 @@ const TeamMembersAdmin = () => {
           </div>
         ) : (
           <TeamMembers 
-            data={teamMembers} 
+            teamMembers={teamMembers} 
             isAdmin={true} 
             onEdit={handleEditMember} 
             onMembersUpdated={handleMemberUpdated}

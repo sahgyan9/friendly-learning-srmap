@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { getTeamMembers, TeamMember } from '@/integrations/supabase/services/team-members';
 import { useToast } from '@/components/ui/use-toast';
@@ -7,19 +6,34 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Mail } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-const TeamMembers = () => {
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+interface TeamMembersProps {
+  teamMembers?: TeamMember[];
+  isAdmin?: boolean;
+  onEdit?: (member: TeamMember) => void;
+  onMembersUpdated?: () => void;
+}
+
+const TeamMembers = ({ teamMembers, isAdmin, onEdit, onMembersUpdated }: TeamMembersProps) => {
+  const [members, setMembers] = useState<TeamMember[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => {
+    // If teamMembers are provided as props, use those
+    if (teamMembers) {
+      setMembers(teamMembers);
+      setIsLoading(false);
+      return;
+    }
+
+    // Otherwise, load team members from the database
     const loadTeamMembers = async () => {
       try {
         const { data, error } = await getTeamMembers();
         if (error) {
           throw error;
         }
-        setTeamMembers(data || []);
+        setMembers(data || []);
       } catch (err) {
         console.error('Error loading team members:', err);
         toast({
@@ -33,7 +47,7 @@ const TeamMembers = () => {
     };
     
     loadTeamMembers();
-  }, [toast]);
+  }, [toast, teamMembers]);
 
   // Animation variants
   const containerVariants = {
@@ -77,7 +91,7 @@ const TeamMembers = () => {
     );
   }
 
-  if (teamMembers.length === 0) {
+  if (members.length === 0) {
     return (
       <div className="py-12">
         <div className="text-center">
@@ -104,7 +118,7 @@ const TeamMembers = () => {
         initial="hidden"
         animate="visible"
       >
-        {teamMembers.map((member) => (
+        {members.map((member) => (
           <motion.div key={member.id} variants={itemVariants}>
             <Card className="overflow-hidden hover:shadow-lg transition-shadow">
               <CardContent className="p-6 flex flex-col items-center text-center">
