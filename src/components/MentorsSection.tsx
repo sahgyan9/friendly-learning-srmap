@@ -1,6 +1,5 @@
-
 import { useState, useEffect, Suspense, lazy } from "react";
-import { getMentors } from "@/integrations/supabase/services/mentors";
+import { getMentors, searchMentors } from "@/integrations/supabase/services/mentors";
 import { useToast } from "@/components/ui/use-toast";
 import { Loader2 } from "lucide-react";
 import { Mentor } from "@/types/mentor";
@@ -71,31 +70,59 @@ const MentorsSection = () => {
     fetchMentors();
   }, [toast]);
 
-  // Simplified search handler - only clears search results
+  // Search function now handles both dynamic and manual searches
   const handleSearch = async (query: string) => {
     setSearchQuery(query);
     setIsAiSearch(false);
+    setIsLoading(true);
     
-    if (!query) {
-      // Fetch all mentors again when search is cleared
-      const { data } = await getMentors();
-      if (data && data.length > 0) {
+    try {
+      // If search is cleared, show all mentors again
+      if (!query.trim()) {
+        const { data } = await getMentors();
+        if (data && data.length > 0) {
+          setFilteredMentors(data.slice(0, 8));
+        } else {
+          setFilteredMentors(sampleMentors.slice(0, 8));
+        }
+        return;
+      }
+      
+      // Otherwise, perform search
+      const { data, error } = await searchMentors(query);
+      if (error) {
+        throw error;
+      }
+      
+      if (data) {
         setFilteredMentors(data.slice(0, 8));
       } else {
-        setFilteredMentors(sampleMentors.slice(0, 8));
+        setFilteredMentors([]);
       }
+    } catch (err) {
+      console.error("Search error:", err);
+      toast({
+        title: "Search error",
+        description: "Failed to search mentors",
+        variant: "destructive",
+      });
+      setFilteredMentors([]);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleGeminiSearch = (geminiResults: any[]) => {
     setIsAiSearch(true);
+    setIsLoading(false);
     
     if (!geminiResults || geminiResults.length === 0) {
       setFilteredMentors([]);
       return;
     }
     
-    setFilteredMentors(geminiResults);
+    // Limit to 8 results for this section
+    setFilteredMentors(geminiResults.slice(0, 8));
   };
 
   return (
@@ -103,7 +130,7 @@ const MentorsSection = () => {
       <div className="container px-4 md:px-6">
         <SectionHeader 
           title="Find Your Mentor"
-          description="Use our AI-powered search to find mentors who can help you excel in your academic journey."
+          description="Use our dynamic search or AI-powered search to find mentors who can help you excel in your academic journey."
         />
         
         <Suspense fallback={<SearchBarSkeleton />}>

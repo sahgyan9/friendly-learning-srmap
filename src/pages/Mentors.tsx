@@ -1,8 +1,7 @@
-
 import { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import SearchBar from "@/components/SearchBar";
-import { getMentors } from "@/integrations/supabase/services/mentors";
+import { getMentors, searchMentors } from "@/integrations/supabase/services/mentors";
 import { Mentor } from "@/types/mentor";
 import { useToast } from "@/components/ui/use-toast";
 import { motion } from "framer-motion";
@@ -86,27 +85,51 @@ const Mentors = () => {
     fetchMentors();
   }, [toast]);
 
-  // This simple search function only clears the search term
-  // and doesn't do any filtering anymore (disabled dynamic search)
+  // Search function now handles both dynamic and manual searches
   const handleSearch = async (query: string) => {
     setSearchQuery(query);
     setIsAiSearch(false);
+    setIsLoading(true);
     
-    // If search is cleared, show all mentors again
-    if (!query) {
-      setIsLoading(true);
-      const { data, error } = await getMentors();
-      if (data && !error) {
+    try {
+      // If search is cleared, show all mentors again
+      if (!query.trim()) {
+        const { data, error } = await getMentors();
+        if (data && !error) {
+          setFilteredMentors(data);
+        } else {
+          setFilteredMentors(sampleMentors);
+        }
+        return;
+      }
+      
+      // Otherwise, perform search
+      const { data, error } = await searchMentors(query);
+      if (error) {
+        throw error;
+      }
+      
+      if (data) {
         setFilteredMentors(data);
       } else {
-        setFilteredMentors(sampleMentors);
+        setFilteredMentors([]);
       }
+    } catch (err) {
+      console.error("Search error:", err);
+      toast({
+        title: "Search error",
+        description: "Failed to search mentors",
+        variant: "destructive",
+      });
+      setFilteredMentors([]);
+    } finally {
       setIsLoading(false);
     }
   };
 
   const handleGeminiSearch = (geminiResults: Mentor[]) => {
     setIsAiSearch(true);
+    setIsLoading(false);
     
     if (!geminiResults || geminiResults.length === 0) {
       setFilteredMentors([]);
@@ -130,7 +153,7 @@ const Mentors = () => {
           <motion.div variants={itemVariants}>
             <MentorsHeader 
               title="Find Your Mentor" 
-              description="Use our AI-powered search to find an ideal mentor with the specific skills you need."
+              description="Use our dynamic search or AI-powered search to find an ideal mentor with the specific skills you need."
             />
           </motion.div>
           
