@@ -183,7 +183,7 @@ const SearchBar = ({ onSearch, onGeminiSearch }: SearchBarProps) => {
             disabled={isGeminiSearching}
           >
             <Sparkles className="h-4 w-4" />
-            AI Search
+            Enable AI Search
             {isGeminiSearching && (
               <span className="ml-1 h-4 w-4 animate-spin rounded-full border-2 border-white border-r-transparent" />
             )}
