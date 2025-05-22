@@ -1,13 +1,16 @@
 
 import { useState, useEffect } from "react";
-import { Search, XCircle, Sparkles } from "lucide-react";
+import { Search, XCircle, Sparkles, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { searchMentors } from "@/integrations/supabase/services/mentors";
+import { useDebounce } from "@/hooks/useDebounce";
 import type { Mentor } from "@/types/mentor";
+import { Switch } from "@/components/ui/switch";
 
 interface SearchBarProps {
-  onSearch: (query: string) => void;
+  onSearch: (query: string, results?: Mentor[]) => void;
   onGeminiSearch: (mentors: Mentor[]) => void;
 }
 
@@ -15,22 +18,55 @@ const SearchBar = ({ onSearch, onGeminiSearch }: SearchBarProps) => {
   const [query, setQuery] = useState("");
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const [isGeminiSearching, setIsGeminiSearching] = useState(false);
+  const [isAiSearchEnabled, setIsAiSearchEnabled] = useState(false);
   const { toast } = useToast();
   
+  // Use debounced value for search to avoid excessive API calls
+  const debouncedQuery = useDebounce(query, 300);
+  
   const placeholders = [
-    "Search for mentors with AI...",
+    "Search for mentors...",
     "Who can help me with Python?",
     "Find a mentor for Data Structures",
     "Looking for help with Circuit Design",
   ];
 
-  // Removed dynamic search functionality (debounced search)
+  // Dynamic search using the debounced query
+  useEffect(() => {
+    if (!isAiSearchEnabled && debouncedQuery.trim()) {
+      handleDynamicSearch(debouncedQuery);
+    }
+  }, [debouncedQuery, isAiSearchEnabled]);
+  
+  // Function to handle dynamic search
+  const handleDynamicSearch = async (searchQuery: string) => {
+    if (!searchQuery.trim()) {
+      onSearch("");
+      return;
+    }
+    
+    try {
+      const { data, error } = await searchMentors(searchQuery);
+      
+      if (error) {
+        console.error("Search error:", error);
+        return;
+      }
+      
+      onSearch(searchQuery, data || []);
+    } catch (err) {
+      console.error("Error during search:", err);
+    }
+  };
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Just update the UI state without triggering search functionality
-    // This will clear the current results
-    onSearch("");
+    
+    if (isAiSearchEnabled) {
+      handleGeminiSearch();
+    } else {
+      handleDynamicSearch(query);
+    }
   };
 
   const clearSearch = () => {
@@ -138,34 +174,60 @@ const SearchBar = ({ onSearch, onGeminiSearch }: SearchBarProps) => {
           )}
         </div>
 
-        <Button
-          type="button"
-          variant="default"
-          className="ml-2 flex items-center gap-1.5"
-          onClick={handleGeminiSearch}
-          disabled={isGeminiSearching}
-        >
-          <Sparkles className="h-4 w-4" />
-          AI Search
-          {isGeminiSearching && (
-            <span className="ml-1 h-4 w-4 animate-spin rounded-full border-2 border-white border-r-transparent" />
-          )}
-        </Button>
+        {isAiSearchEnabled ? (
+          <Button
+            type="button"
+            variant="default"
+            className="ml-2 flex items-center gap-1.5"
+            onClick={handleGeminiSearch}
+            disabled={isGeminiSearching}
+          >
+            <Sparkles className="h-4 w-4" />
+            AI Search
+            {isGeminiSearching && (
+              <span className="ml-1 h-4 w-4 animate-spin rounded-full border-2 border-white border-r-transparent" />
+            )}
+          </Button>
+        ) : (
+          <Button
+            type="submit"
+            variant="default"
+            className="ml-2 flex items-center gap-1.5"
+          >
+            <Zap className="h-4 w-4" />
+            Search
+          </Button>
+        )}
       </form>
       
-      <div className="mt-2 flex flex-wrap gap-2 px-1">
-        <span className="text-sm text-muted-foreground">Popular:</span>
-        {["Python", "Data Structures", "Machine Learning", "Web Development"].map((tag) => (
-          <button
-            key={tag}
-            onClick={() => {
-              setQuery(tag);
-            }}
-            className="text-xs px-3 py-1 rounded-full bg-secondary text-secondary-foreground hover:bg-primary/10 hover:text-primary transition-colors"
-          >
-            {tag}
-          </button>
-        ))}
+      <div className="mt-3 flex items-center justify-between px-1">
+        <div className="flex flex-wrap gap-2">
+          <span className="text-sm text-muted-foreground">Popular:</span>
+          {["Python", "Data Structures", "Machine Learning", "Web Development"].map((tag) => (
+            <button
+              key={tag}
+              onClick={() => {
+                setQuery(tag);
+                if (isAiSearchEnabled) {
+                  setTimeout(() => handleGeminiSearch(), 100);
+                }
+              }}
+              className="text-xs px-3 py-1 rounded-full bg-secondary text-secondary-foreground hover:bg-primary/10 hover:text-primary transition-colors"
+            >
+              {tag}
+            </button>
+          ))}
+        </div>
+        
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground">{isAiSearchEnabled ? "AI" : "Standard"}</span>
+          <Switch 
+            checked={isAiSearchEnabled}
+            onCheckedChange={setIsAiSearchEnabled}
+            className="data-[state=checked]:bg-primary"
+          />
+          <span className="text-xs text-muted-foreground ml-1">AI Search</span>
+        </div>
       </div>
     </div>
   );

@@ -71,13 +71,16 @@ const MentorsSection = () => {
     fetchMentors();
   }, [toast]);
 
-  // Simplified search handler - only clears search results
-  const handleSearch = async (query: string) => {
+  // Handle both normal search and AI search
+  const handleSearch = async (query: string, results?: Mentor[]) => {
     setSearchQuery(query);
     setIsAiSearch(false);
     
-    if (!query) {
-      // Fetch all mentors again when search is cleared
+    if (results) {
+      // If results are provided directly (from dynamic search)
+      setFilteredMentors(results.slice(0, 8));
+    } else if (!query) {
+      // If search is cleared, fetch all mentors again
       const { data } = await getMentors();
       if (data && data.length > 0) {
         setFilteredMentors(data.slice(0, 8));
@@ -95,7 +98,7 @@ const MentorsSection = () => {
       return;
     }
     
-    setFilteredMentors(geminiResults);
+    setFilteredMentors(geminiResults.slice(0, 8));
   };
 
   return (
@@ -103,7 +106,7 @@ const MentorsSection = () => {
       <div className="container px-4 md:px-6">
         <SectionHeader 
           title="Find Your Mentor"
-          description="Use our AI-powered search to find mentors who can help you excel in your academic journey."
+          description="Search for mentors with specific skills or use our AI-powered search for more tailored results."
         />
         
         <Suspense fallback={<SearchBarSkeleton />}>

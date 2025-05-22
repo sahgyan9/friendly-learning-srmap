@@ -86,14 +86,16 @@ const Mentors = () => {
     fetchMentors();
   }, [toast]);
 
-  // This simple search function only clears the search term
-  // and doesn't do any filtering anymore (disabled dynamic search)
-  const handleSearch = async (query: string) => {
+  // Handle both normal search and AI search
+  const handleSearch = async (query: string, results?: Mentor[]) => {
     setSearchQuery(query);
     setIsAiSearch(false);
     
-    // If search is cleared, show all mentors again
-    if (!query) {
+    if (results) {
+      // If results are provided directly (from dynamic search)
+      setFilteredMentors(results);
+    } else if (!query) {
+      // If search is cleared, show all mentors again
       setIsLoading(true);
       const { data, error } = await getMentors();
       if (data && !error) {
@@ -130,7 +132,7 @@ const Mentors = () => {
           <motion.div variants={itemVariants}>
             <MentorsHeader 
               title="Find Your Mentor" 
-              description="Use our AI-powered search to find an ideal mentor with the specific skills you need."
+              description="Search for mentors with specific skills or use our AI-powered search for more tailored results."
             />
           </motion.div>
           
