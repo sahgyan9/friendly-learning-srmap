@@ -6,6 +6,8 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { motion } from "framer-motion";
+import DarkModeToggle from "@/components/DarkModeToggle";
 
 const SignUp = () => {
   const navigate = useNavigate();
@@ -117,123 +119,138 @@ const SignUp = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <Link to="/" className="block text-center text-2xl font-bold text-primary mb-2">
-            <span className="mr-1">Friendly</span>
-            <span className="text-gray-700">Learning</span>
-          </Link>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Create your account
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Or{' '}
-            <Link to="/signin" className="font-medium text-primary hover:text-primary/80">
-              sign in to existing account
-            </Link>
-          </p>
-        </div>
-        
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="name">Full name</Label>
-              <Input
-                id="name"
-                name="name"
-                type="text"
-                autoComplete="name"
-                required
-                value={formData.name}
-                onChange={handleChange}
-                placeholder="Your full name"
-              />
-            </div>
-            <div>
-              <Label htmlFor="email-address">Email address</Label>
-              <Input
-                id="email-address"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                value={formData.email}
-                onChange={handleChange}
-                placeholder="Email address"
-              />
-            </div>
-            <div>
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="new-password"
-                required
-                value={formData.password}
-                onChange={handleChange}
-                placeholder="Password"
-              />
-            </div>
-            <div>
-              <Label htmlFor="confirmPassword">Confirm password</Label>
-              <Input
-                id="confirmPassword"
-                name="confirmPassword"
-                type="password"
-                autoComplete="new-password"
-                required
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                placeholder="Confirm password"
-              />
-            </div>
-          </div>
-
+    <div className="min-h-screen flex flex-col bg-background text-foreground">
+      <div className="absolute top-4 right-4">
+        <DarkModeToggle />
+      </div>
+      <div className="flex flex-grow items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <motion.div 
+          className="max-w-md w-full space-y-8"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
           <div>
-            <Button
-              type="submit"
-              className="w-full flex justify-center py-2 px-4"
-              disabled={isLoading}
-            >
-              {isLoading ? "Creating account..." : "Sign up"}
-            </Button>
+            <Link to="/" className="block text-center text-2xl font-bold text-primary mb-2">
+              <span className="mr-1">Friendly</span>
+              <span className="dark:text-gray-200">Learning</span>
+            </Link>
+            <h2 className="mt-6 text-center text-3xl font-extrabold">
+              Create your account
+            </h2>
+            <p className="mt-2 text-center text-sm text-muted-foreground">
+              Or{' '}
+              <Link to="/signin" className="font-medium text-primary hover:text-primary/80">
+                sign in to existing account
+              </Link>
+            </p>
           </div>
-        </form>
-        
-        <div className="mt-6">
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-gray-50 text-gray-500">Or continue with</span>
-            </div>
-          </div>
+          
+          <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+            <div className="bg-card text-card-foreground px-4 py-8 shadow sm:rounded-lg sm:px-10">
+              <form className="space-y-6" onSubmit={handleSubmit}>
+                <div>
+                  <Label htmlFor="name">Full name</Label>
+                  <Input
+                    id="name"
+                    name="name"
+                    type="text"
+                    autoComplete="name"
+                    required
+                    value={formData.name}
+                    onChange={handleChange}
+                    placeholder="Your full name"
+                    className="mt-1"
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="email-address">Email address</Label>
+                  <Input
+                    id="email-address"
+                    name="email"
+                    type="email"
+                    autoComplete="email"
+                    required
+                    value={formData.email}
+                    onChange={handleChange}
+                    placeholder="Email address"
+                    className="mt-1"
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="password">Password</Label>
+                  <Input
+                    id="password"
+                    name="password"
+                    type="password"
+                    autoComplete="new-password"
+                    required
+                    value={formData.password}
+                    onChange={handleChange}
+                    placeholder="Password"
+                    className="mt-1"
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="confirmPassword">Confirm password</Label>
+                  <Input
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    type="password"
+                    autoComplete="new-password"
+                    required
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                    placeholder="Confirm password"
+                    className="mt-1"
+                  />
+                </div>
 
-          <div className="mt-6 grid grid-cols-2 gap-3">
-            <div>
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={handleGoogleSignUp}
-                disabled={isLoading}
-              >
-                Google
-              </Button>
-            </div>
-            <div>
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={() => toast.info("GitHub authentication coming soon")}
-              >
-                GitHub
-              </Button>
+                <div>
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? "Creating account..." : "Sign up"}
+                  </Button>
+                </div>
+              </form>
+              
+              <div className="mt-6">
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-border"></div>
+                  </div>
+                  <div className="relative flex justify-center text-sm">
+                    <span className="px-2 bg-card text-muted-foreground">Or continue with</span>
+                  </div>
+                </div>
+
+                <div className="mt-6 grid grid-cols-2 gap-3">
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={handleGoogleSignUp}
+                    disabled={isLoading}
+                  >
+                    Google
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => toast.info("GitHub authentication coming soon")}
+                  >
+                    GitHub
+                  </Button>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
+        </motion.div>
       </div>
     </div>
   );
