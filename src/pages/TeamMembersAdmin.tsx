@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, Loader2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { isUserAdmin } from "@/integrations/supabase/services/admin";
-import { getTeamMembers } from "@/integrations/supabase/services/team-members";
+import { getTeamMembers, TeamMember } from "@/integrations/supabase/services/team-members";
 import TeamMemberForm from "@/components/about/TeamMemberForm";
 import TeamMembers from "@/components/about/TeamMembers";
 import {
@@ -19,14 +19,6 @@ import {
 import AdminLayout from "@/components/admin/AdminLayout";
 import AdminHeader from "@/components/admin/AdminHeader";
 import AdminCard from "@/components/admin/AdminCard";
-
-interface TeamMember {
-  id: string;
-  name: string;
-  position: string;
-  email?: string;
-  image_url?: string;
-}
 
 const TeamMembersAdmin = () => {
   const { user } = useAuth();
@@ -64,8 +56,14 @@ const TeamMembersAdmin = () => {
         }
         
         // Load team members
-        const members = await getTeamMembers();
-        setTeamMembers(members);
+        const { data, error } = await getTeamMembers();
+        if (error) {
+          throw error;
+        }
+        
+        if (data) {
+          setTeamMembers(data);
+        }
       } catch (error) {
         console.error("Error loading admin data:", error);
         toast({
@@ -96,8 +94,29 @@ const TeamMembersAdmin = () => {
     setEditingMember(null);
   };
   
-  const handleMemberUpdated = (updatedMembers: TeamMember[]) => {
-    setTeamMembers(updatedMembers);
+  const handleMemberUpdated = () => {
+    // Reload team members after update
+    const loadMembers = async () => {
+      try {
+        const { data, error } = await getTeamMembers();
+        if (error) {
+          throw error;
+        }
+        
+        if (data) {
+          setTeamMembers(data);
+        }
+      } catch (error) {
+        console.error("Error reloading team members:", error);
+        toast({
+          title: "Error",
+          description: "Failed to reload team members.",
+          variant: "destructive",
+        });
+      }
+    };
+    
+    loadMembers();
     setShowAddMemberForm(false);
     setEditingMember(null);
   };
@@ -141,7 +160,7 @@ const TeamMembersAdmin = () => {
           </div>
         ) : (
           <TeamMembers 
-            members={teamMembers} 
+            data={teamMembers} 
             isAdmin={true} 
             onEdit={handleEditMember} 
             onMembersUpdated={handleMemberUpdated}
@@ -163,8 +182,7 @@ const TeamMembersAdmin = () => {
           </DialogHeader>
           <TeamMemberForm
             member={editingMember}
-            onCancel={handleFormClose}
-            onMembersUpdated={handleMemberUpdated}
+            onComplete={handleMemberUpdated}
           />
         </DialogContent>
       </Dialog>
