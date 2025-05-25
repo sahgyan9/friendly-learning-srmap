@@ -7,26 +7,17 @@ export async function getUserConversations(userId: string) {
   try {
     console.log("Getting conversations for user ID:", userId);
 
-    // First fetch user's own data to ensure it's available
-    const { data: userData, error: userError } = await supabase
-      .from('users')
-      .select('id, name, profile_image, role')
-      .eq('id', userId)
-      .single();
-
-    if (userError) {
-      console.error('Error fetching user data:', userError);
-    } else {
-      console.log('Current user data:', userData);
-    }
-
-    // Then fetch conversations with complete user data
+    // Use a more explicit query with LEFT JOINs to ensure we get user data
     const { data: conversationsData, error: conversationsError } = await supabase
       .from('conversations')
       .select(`
-        *,
-        user1:users!conversations_user1_id_fkey(id, name, profile_image, role),
-        user2:users!conversations_user2_id_fkey(id, name, profile_image, role)
+        id,
+        user1_id,
+        user2_id,
+        last_message_id,
+        last_updated,
+        user1:user1_id(id, name, profile_image, role),
+        user2:user2_id(id, name, profile_image, role)
       `)
       .or(`user1_id.eq.${userId},user2_id.eq.${userId}`)
       .order('last_updated', { ascending: false });
@@ -38,108 +29,80 @@ export async function getUserConversations(userId: string) {
 
     console.log(`Retrieved ${conversationsData?.length || 0} conversations for user ${userId}`);
 
-    // Check if any user data is missing and fetch it separately
-    if (conversationsData) {
-      const usersToFetch = new Set<string>();
+    // For any missing user data, fetch it directly
+    const enhancedConversations = await Promise.all(
+      (conversationsData || []).map(async (conv) => {
+        let user1Data = conv.user1;
+        let user2Data = conv.user2;
 
-      conversationsData.forEach(conv => {
-        if (!conv.user1 || !conv.user1.name) {
-          console.warn(`Missing user1 data for conversation ${conv.id}, user1_id: ${conv.user1_id}`);
-          if (conv.user1_id) {
-            usersToFetch.add(conv.user1_id);
-          }
-        }
-        if (!conv.user2 || !conv.user2.name) {
-          console.warn(`Missing user2 data for conversation ${conv.id}, user2_id: ${conv.user2_id}`);
-          if (conv.user2_id) {
-            usersToFetch.add(conv.user2_id);
-          }
-        }
-      });
-
-      // Try to fetch any missing user data directly
-      if (usersToFetch.size > 0) {
-        const userIds = Array.from(usersToFetch).filter(id => typeof id === 'string') as string[];
-        
-        if (userIds.length > 0) {
-          console.log('Fetching missing user data for:', userIds);
-
-          const { data: missingUsers, error: missingUsersError } = await supabase
+        // If user1 data is missing or incomplete, fetch it directly
+        if (!user1Data || !user1Data.name) {
+          console.log(`Fetching missing user1 data for conversation ${conv.id}, user1_id: ${conv.user1_id}`);
+          const { data: fetchedUser1, error: user1Error } = await supabase
             .from('users')
             .select('id, name, profile_image, role')
-            .in('id', userIds);
+            .eq('id', conv.user1_id)
+            .single();
 
-          if (missingUsersError) {
-            console.error('Error fetching missing user data:', missingUsersError);
-          } else if (missingUsers) {
-            console.log('Retrieved missing user data:', missingUsers);
-
-            // Update the conversation data with the missing user info
-            missingUsers.forEach(user => {
-              conversationsData.forEach(conv => {
-                if (conv.user1_id === user.id && (!conv.user1 || !conv.user1.name)) {
-                  conv.user1 = user;
-                  console.log(`Updated user1 data for conversation ${conv.id}`);
-                }
-                if (conv.user2_id === user.id && (!conv.user2 || !conv.user2.name)) {
-                  conv.user2 = user;
-                  console.log(`Updated user2 data for conversation ${conv.id}`);
-                }
-              });
-            });
+          if (user1Error) {
+            console.error(`Error fetching user1 data for ${conv.user1_id}:`, user1Error);
+            user1Data = {
+              id: conv.user1_id || '',
+              name: 'Unknown User',
+              profile_image: null,
+              role: 'user'
+            };
+          } else {
+            user1Data = fetchedUser1;
           }
         }
-      }
 
-      // Final validation and fallback for any remaining missing data
-      conversationsData.forEach(conv => {
-        if (!conv.user1 || !conv.user1.name) {
-          console.error(`Still missing user1 data for conversation ${conv.id}, creating fallback`);
-          conv.user1 = {
-            id: conv.user1_id || '',
-            name: 'User',
-            profile_image: null,
-            role: 'user'
-          };
-        }
-        if (!conv.user2 || !conv.user2.name) {
-          console.error(`Still missing user2 data for conversation ${conv.id}, creating fallback`);
-          conv.user2 = {
-            id: conv.user2_id || '',
-            name: 'User',
-            profile_image: null,
-            role: 'user'
-          };
-        }
-      });
-    }
+        // If user2 data is missing or incomplete, fetch it directly
+        if (!user2Data || !user2Data.name) {
+          console.log(`Fetching missing user2 data for conversation ${conv.id}, user2_id: ${conv.user2_id}`);
+          const { data: fetchedUser2, error: user2Error } = await supabase
+            .from('users')
+            .select('id, name, profile_image, role')
+            .eq('id', conv.user2_id)
+            .single();
 
-    // Fetch the last message separately for each conversation
-    const enhancedConversations: Conversation[] = [];
-
-    for (const conversation of conversationsData || []) {
-      if (conversation.last_message_id) {
-        const { data: messageData, error: messageError } = await supabase
-          .from('messages')
-          .select('*')
-          .eq('id', conversation.last_message_id)
-          .single();
-
-        if (messageError) {
-          console.error(`Error fetching last message for conversation ${conversation.id}:`, messageError);
+          if (user2Error) {
+            console.error(`Error fetching user2 data for ${conv.user2_id}:`, user2Error);
+            user2Data = {
+              id: conv.user2_id || '',
+              name: 'Unknown User',
+              profile_image: null,
+              role: 'user'
+            };
+          } else {
+            user2Data = fetchedUser2;
+          }
         }
 
-        enhancedConversations.push({
-          ...conversation,
-          last_message: messageData || undefined
-        });
-      } else {
-        enhancedConversations.push({
-          ...conversation,
-          last_message: undefined
-        });
-      }
-    }
+        // Fetch the last message if it exists
+        let lastMessage = undefined;
+        if (conv.last_message_id) {
+          const { data: messageData, error: messageError } = await supabase
+            .from('messages')
+            .select('*')
+            .eq('id', conv.last_message_id)
+            .single();
+
+          if (messageError) {
+            console.error(`Error fetching last message for conversation ${conv.id}:`, messageError);
+          } else {
+            lastMessage = messageData;
+          }
+        }
+
+        return {
+          ...conv,
+          user1: user1Data,
+          user2: user2Data,
+          last_message: lastMessage
+        };
+      })
+    );
 
     return { data: enhancedConversations, error: null };
   } catch (err) {

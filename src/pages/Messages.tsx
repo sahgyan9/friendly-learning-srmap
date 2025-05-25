@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
@@ -41,30 +40,41 @@ const Messages = () => {
   }, [conversations]);
 
   const getOtherUser = (conversation) => {
+    console.log(`Getting other user for conversation ${conversation.id}:`, {
+      user1: conversation.user1,
+      user2: conversation.user2,
+      currentUserId: userId
+    });
+
     const otherUser = conversation.user1_id === userId ? conversation.user2 : conversation.user1;
     
-    // Enhanced debugging and fallback handling
     if (!otherUser) {
       console.error(`No user data found for conversation ${conversation.id}`);
       console.log("Conversation data:", conversation);
       
+      // Return the other user's ID so we can at least identify them
+      const otherUserId = conversation.user1_id === userId ? conversation.user2_id : conversation.user1_id;
       return {
-        id: conversation.user1_id === userId ? conversation.user2_id : conversation.user1_id,
-        name: "User", // Better fallback than "Contact"
+        id: otherUserId,
+        name: "Unknown User", // More descriptive than just "User"
         profile_image: null,
         role: 'user'
       };
     }
     
-    if (!otherUser.name || otherUser.name.trim() === '') {
-      console.warn(`User found but name is empty for conversation ${conversation.id}:`, otherUser);
+    // Validate that we have a proper name
+    if (!otherUser.name || otherUser.name.trim() === '' || otherUser.name === 'Contact') {
+      console.warn(`User found but name is invalid for conversation ${conversation.id}:`, otherUser);
       
       return {
         ...otherUser,
-        name: "User" // Better fallback than "Contact"
+        name: otherUser.name && otherUser.name.trim() !== '' && otherUser.name !== 'Contact' 
+          ? otherUser.name 
+          : "Unknown User"
       };
     }
     
+    console.log(`Successfully got other user: ${otherUser.name}`);
     return otherUser;
   };
 
@@ -79,7 +89,8 @@ const Messages = () => {
   const filteredConversations = searchQuery.trim()
     ? conversations.filter(conv => {
       const otherUser = getOtherUser(conv);
-      return otherUser?.name.toLowerCase().includes(searchQuery.toLowerCase());
+      const searchName = otherUser?.name || '';
+      return searchName.toLowerCase().includes(searchQuery.toLowerCase());
     })
     : conversations;
 
