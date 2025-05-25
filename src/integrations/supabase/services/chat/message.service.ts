@@ -64,12 +64,18 @@ export async function getConversationMessages(conversationId: string) {
         if (senderData) {
           // Sender data found in usersData
           if (!message.sender) {
-            message.sender = { ...senderData, name: senderData.name?.trim() || "Unknown User" };
+            // Ensure role is included, default if not present in senderData for some reason
+            message.sender = { 
+              ...senderData, 
+              name: senderData.name?.trim() || "Unknown User",
+              role: senderData.role || 'user' 
+            };
           } else {
             message.sender.name = senderData.name?.trim() || "Unknown User";
             // Ensure other fields are present if message.sender was minimal
             message.sender.profile_image = message.sender.profile_image || senderData.profile_image || null;
-            message.sender.id = message.sender.id || senderData.id; 
+            message.sender.id = message.sender.id || senderData.id;
+            message.sender.role = message.sender.role || senderData.role || 'user';
           }
           if (!message.sender.name) { // Double check if name ended up empty after trim
             message.sender.name = "Unknown User";
@@ -78,9 +84,10 @@ export async function getConversationMessages(conversationId: string) {
         } else {
           // Sender data not found in usersData
           if (!message.sender) {
-            message.sender = { id: message.sender_id, name: "Unknown User", profile_image: null };
+            message.sender = { id: message.sender_id, name: "Unknown User", profile_image: null, role: 'user' };
           } else {
             message.sender.name = message.sender.name?.trim() || "Unknown User";
+            message.sender.role = message.sender.role || 'user'; // Ensure role if sender object existed but was incomplete
             if (!message.sender.name) { // Double check if name ended up empty after trim
                 message.sender.name = "Unknown User";
             }
@@ -97,9 +104,10 @@ export async function getConversationMessages(conversationId: string) {
           console.warn("Failed to resolve sender name for message:", message.id);
           // Ensure sender object and name are populated to avoid downstream errors
           if (!message.sender) {
-            message.sender = { id: message.sender_id, name: "Unknown User", profile_image: null };
+            message.sender = { id: message.sender_id, name: "Unknown User", profile_image: null, role: 'user' };
           } else {
             message.sender.name = "Unknown User";
+            message.sender.role = message.sender.role || 'user'; // Ensure role if sender object existed but was incomplete
           }
         }
       });
