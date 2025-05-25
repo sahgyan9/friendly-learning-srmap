@@ -59,11 +59,47 @@ export async function getConversationMessages(conversationId: string) {
     // If some messages are missing sender information, try to fill it in from the users we fetched
     if (data && usersData) {
       data.forEach(message => {
-        if (!message.sender || !message.sender.name) {
-          const sender = usersData.find(user => user.id === message.sender_id);
-          if (sender) {
-            message.sender = sender;
-            console.log(`Added missing sender data for message ${message.id}:`, sender.name);
+        const senderData = usersData.find(user => user.id === message.sender_id);
+
+        if (senderData) {
+          // Sender data found in usersData
+          if (!message.sender) {
+            message.sender = { ...senderData, name: senderData.name?.trim() || "Unknown User" };
+          } else {
+            message.sender.name = senderData.name?.trim() || "Unknown User";
+            // Ensure other fields are present if message.sender was minimal
+            message.sender.profile_image = message.sender.profile_image || senderData.profile_image || null;
+            message.sender.id = message.sender.id || senderData.id; 
+          }
+          if (!message.sender.name) { // Double check if name ended up empty after trim
+            message.sender.name = "Unknown User";
+          }
+          console.log(`Updated sender data for message ${message.id}:`, message.sender.name);
+        } else {
+          // Sender data not found in usersData
+          if (!message.sender) {
+            message.sender = { id: message.sender_id, name: "Unknown User", profile_image: null };
+          } else {
+            message.sender.name = message.sender.name?.trim() || "Unknown User";
+            if (!message.sender.name) { // Double check if name ended up empty after trim
+                message.sender.name = "Unknown User";
+            }
+          }
+          console.log(`Sender data not found for message ${message.id}. Set to "Unknown User".`);
+        }
+      });
+    }
+
+    // Final check for sender names
+    if (data) {
+      data.forEach(message => {
+        if (!message.sender || !message.sender.name || message.sender.name === "Contact") {
+          console.warn("Failed to resolve sender name for message:", message.id);
+          // Ensure sender object and name are populated to avoid downstream errors
+          if (!message.sender) {
+            message.sender = { id: message.sender_id, name: "Unknown User", profile_image: null };
+          } else {
+            message.sender.name = "Unknown User";
           }
         }
       });

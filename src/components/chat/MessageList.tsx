@@ -43,25 +43,25 @@ const MessageList = ({ messages, loading, currentUserId, getSenderName }: Messag
   };
 
   const getSenderDisplayName = (message: Message): string => {
+    let displayName: string | undefined | null = null;
+
     if (message.sender_id === currentUserId) {
-      return "You";
-    }
-    
-    // If the message has sender data attached, use that
-    if (message.sender && message.sender.name) {
-      return message.sender.name;
-    }
-    
-    // Use the getSenderName function if provided
-    if (getSenderName) {
-      const name = getSenderName(message.sender_id);
-      if (name && name !== "Contact") {
-        return name;
+      displayName = "You";
+    } else if (message.sender && message.sender.name && message.sender.name.trim() !== "") {
+      displayName = message.sender.name;
+    } else if (getSenderName) {
+      const nameFromProp = getSenderName(message.sender_id);
+      if (nameFromProp && nameFromProp.trim() !== "" && nameFromProp !== "Contact") {
+        displayName = nameFromProp;
       }
     }
-    
-    // Fallback - but try to avoid this
-    return "Contact";
+
+    // Final check for invalid or placeholder names
+    if (!displayName || displayName.trim() === "" || displayName === "Contact") {
+      return "User";
+    }
+
+    return displayName;
   };
 
   if (loading) {
