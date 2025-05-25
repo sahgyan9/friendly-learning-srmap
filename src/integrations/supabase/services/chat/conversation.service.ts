@@ -38,7 +38,7 @@ export async function getUserConversations(userId: string) {
 
     console.log(`Retrieved ${conversationsData?.length || 0} conversations for user ${userId}`);
 
-    // Check if any user data is missing and log it
+    // Check if any user data is missing and fetch it separately
     if (conversationsData) {
       const usersToFetch = new Set<string>();
 
@@ -79,15 +79,39 @@ export async function getUserConversations(userId: string) {
               conversationsData.forEach(conv => {
                 if (conv.user1_id === user.id && (!conv.user1 || !conv.user1.name)) {
                   conv.user1 = user;
+                  console.log(`Updated user1 data for conversation ${conv.id}`);
                 }
                 if (conv.user2_id === user.id && (!conv.user2 || !conv.user2.name)) {
                   conv.user2 = user;
+                  console.log(`Updated user2 data for conversation ${conv.id}`);
                 }
               });
             });
           }
         }
       }
+
+      // Final validation and fallback for any remaining missing data
+      conversationsData.forEach(conv => {
+        if (!conv.user1 || !conv.user1.name) {
+          console.error(`Still missing user1 data for conversation ${conv.id}, creating fallback`);
+          conv.user1 = {
+            id: conv.user1_id || '',
+            name: 'User',
+            profile_image: null,
+            role: 'user'
+          };
+        }
+        if (!conv.user2 || !conv.user2.name) {
+          console.error(`Still missing user2 data for conversation ${conv.id}, creating fallback`);
+          conv.user2 = {
+            id: conv.user2_id || '',
+            name: 'User',
+            profile_image: null,
+            role: 'user'
+          };
+        }
+      });
     }
 
     // Fetch the last message separately for each conversation

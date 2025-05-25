@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -60,6 +61,7 @@ const ConversationList = ({
   }
 
   const getInitials = (name: string) => {
+    if (!name || typeof name !== 'string') return 'U';
     return name
       .split(' ')
       .map(part => part[0])
@@ -74,6 +76,9 @@ const ConversationList = ({
         const otherUser = getOtherUser(conversation);
         const hasUnread = hasUnreadMessages(conversation.id);
         const lastMessageContent = conversation.last_message ? conversation.last_message.content : "";
+        
+        // Ensure we have a proper display name
+        const displayName = otherUser?.name && otherUser.name.trim() !== "" ? otherUser.name : "User";
 
         return (
           <div
@@ -83,14 +88,14 @@ const ConversationList = ({
           >
             <div className="flex-shrink-0">
               <Avatar className="h-12 w-12">
-                <AvatarImage src={otherUser?.profile_image} alt={otherUser?.name || "User"} />
-                <AvatarFallback>{otherUser?.name ? getInitials(otherUser.name) : 'U'}</AvatarFallback>
+                <AvatarImage src={otherUser?.profile_image} alt={displayName} />
+                <AvatarFallback>{getInitials(displayName)}</AvatarFallback>
               </Avatar>
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex justify-between items-baseline">
                 <h3 className="text-sm font-semibold truncate">
-                  {otherUser && otherUser.name ? otherUser.name : "Contact"}
+                  {displayName}
                 </h3>
                 <span className="text-xs text-gray-500 dark:text-gray-400">
                   {formatTime(conversation.last_updated)}

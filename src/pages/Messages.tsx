@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
@@ -41,24 +42,29 @@ const Messages = () => {
 
   const getOtherUser = (conversation) => {
     const otherUser = conversation.user1_id === userId ? conversation.user2 : conversation.user1;
-    if (!otherUser || !otherUser.name) {
-      console.log("Missing user data for conversation:", conversation.id, "Users:", conversation.user1, conversation.user2);
-
-      // Additional debugging to understand why user data might be missing
-      if (!conversation.user1) {
-        console.warn(`User1 data is completely missing for conversation ${conversation.id}`);
-      }
-      if (!conversation.user2) {
-        console.warn(`User2 data is completely missing for conversation ${conversation.id}`);
-      }
-
-      // Try to get at least some user data
+    
+    // Enhanced debugging and fallback handling
+    if (!otherUser) {
+      console.error(`No user data found for conversation ${conversation.id}`);
+      console.log("Conversation data:", conversation);
+      
       return {
         id: conversation.user1_id === userId ? conversation.user2_id : conversation.user1_id,
-        name: "Contact", // Default display name
-        profile_image: null
+        name: "User", // Better fallback than "Contact"
+        profile_image: null,
+        role: 'user'
       };
     }
+    
+    if (!otherUser.name || otherUser.name.trim() === '') {
+      console.warn(`User found but name is empty for conversation ${conversation.id}:`, otherUser);
+      
+      return {
+        ...otherUser,
+        name: "User" // Better fallback than "Contact"
+      };
+    }
+    
     return otherUser;
   };
 
