@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Conversation } from "@/types/chat";
 
@@ -7,7 +6,7 @@ export async function getUserConversations(userId: string) {
   try {
     console.log("Getting conversations for user ID:", userId);
 
-    // Use a more explicit query with LEFT JOINs to ensure we get user data
+    // First, get the conversations without the embedded user data
     const { data: conversationsData, error: conversationsError } = await supabase
       .from('conversations')
       .select(`
@@ -15,9 +14,7 @@ export async function getUserConversations(userId: string) {
         user1_id,
         user2_id,
         last_message_id,
-        last_updated,
-        user1:user1_id(id, name, profile_image, role),
-        user2:user2_id(id, name, profile_image, role)
+        last_updated
       `)
       .or(`user1_id.eq.${userId},user2_id.eq.${userId}`)
       .order('last_updated', { ascending: false });
@@ -29,55 +26,37 @@ export async function getUserConversations(userId: string) {
 
     console.log(`Retrieved ${conversationsData?.length || 0} conversations for user ${userId}`);
 
-    // For any missing user data, fetch it directly
+    // Now fetch the user data and last messages for each conversation
     const enhancedConversations = await Promise.all(
       (conversationsData || []).map(async (conv) => {
-        let user1Data = conv.user1;
-        let user2Data = conv.user2;
+        // Fetch user1 data
+        const { data: user1Data, error: user1Error } = await supabase
+          .from('users')
+          .select('id, name, profile_image, role')
+          .eq('id', conv.user1_id)
+          .single();
 
-        // If user1 data is missing or incomplete, fetch it directly
-        if (!user1Data || !user1Data.name) {
-          console.log(`Fetching missing user1 data for conversation ${conv.id}, user1_id: ${conv.user1_id}`);
-          const { data: fetchedUser1, error: user1Error } = await supabase
-            .from('users')
-            .select('id, name, profile_image, role')
-            .eq('id', conv.user1_id)
-            .single();
+        // Fetch user2 data
+        const { data: user2Data, error: user2Error } = await supabase
+          .from('users')
+          .select('id, name, profile_image, role')
+          .eq('id', conv.user2_id)
+          .single();
 
-          if (user1Error) {
-            console.error(`Error fetching user1 data for ${conv.user1_id}:`, user1Error);
-            user1Data = {
-              id: conv.user1_id || '',
-              name: 'Unknown User',
-              profile_image: null,
-              role: 'user'
-            };
-          } else {
-            user1Data = fetchedUser1;
-          }
-        }
+        // Handle missing user data with proper fallbacks
+        const user1 = user1Error || !user1Data ? {
+          id: conv.user1_id || '',
+          name: 'Unknown User',
+          profile_image: null,
+          role: 'user'
+        } : user1Data;
 
-        // If user2 data is missing or incomplete, fetch it directly
-        if (!user2Data || !user2Data.name) {
-          console.log(`Fetching missing user2 data for conversation ${conv.id}, user2_id: ${conv.user2_id}`);
-          const { data: fetchedUser2, error: user2Error } = await supabase
-            .from('users')
-            .select('id, name, profile_image, role')
-            .eq('id', conv.user2_id)
-            .single();
-
-          if (user2Error) {
-            console.error(`Error fetching user2 data for ${conv.user2_id}:`, user2Error);
-            user2Data = {
-              id: conv.user2_id || '',
-              name: 'Unknown User',
-              profile_image: null,
-              role: 'user'
-            };
-          } else {
-            user2Data = fetchedUser2;
-          }
-        }
+        const user2 = user2Error || !user2Data ? {
+          id: conv.user2_id || '',
+          name: 'Unknown User',
+          profile_image: null,
+          role: 'user'
+        } : user2Data;
 
         // Fetch the last message if it exists
         let lastMessage = undefined;
@@ -95,10 +74,12 @@ export async function getUserConversations(userId: string) {
           }
         }
 
+        console.log(`Conversation ${conv.id} - user1: ${user1.name}, user2: ${user2.name}`);
+
         return {
           ...conv,
-          user1: user1Data,
-          user2: user2Data,
+          user1,
+          user2,
           last_message: lastMessage
         };
       })
