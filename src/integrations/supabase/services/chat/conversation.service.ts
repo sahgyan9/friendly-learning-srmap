@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Conversation } from "@/types/chat";
 
@@ -26,37 +27,66 @@ export async function getUserConversations(userId: string) {
 
     console.log(`Retrieved ${conversationsData?.length || 0} conversations for user ${userId}`);
 
-    // Now fetch the user data and last messages for each conversation
+    if (!conversationsData || conversationsData.length === 0) {
+      console.log("No conversations found");
+      return { data: [], error: null };
+    }
+
+    // Get all unique user IDs to fetch in bulk
+    const allUserIds = new Set<string>();
+    conversationsData.forEach(conv => {
+      if (conv.user1_id) allUserIds.add(conv.user1_id);
+      if (conv.user2_id) allUserIds.add(conv.user2_id);
+    });
+
+    console.log("Fetching user data for IDs:", Array.from(allUserIds));
+
+    // Fetch all user data in a single query
+    const { data: usersData, error: usersError } = await supabase
+      .from('users')
+      .select('id, name, profile_image, role')
+      .in('id', Array.from(allUserIds));
+
+    if (usersError) {
+      console.error('Error fetching users data:', usersError);
+    }
+
+    console.log("Fetched users data:", usersData);
+
+    // Create a map for quick user lookup
+    const usersMap = new Map();
+    if (usersData) {
+      usersData.forEach(user => {
+        usersMap.set(user.id, user);
+      });
+    }
+
+    console.log("Users map created with keys:", Array.from(usersMap.keys()));
+
+    // Now enhance conversations with user data and last messages
     const enhancedConversations = await Promise.all(
-      (conversationsData || []).map(async (conv) => {
-        // Fetch user1 data
-        const { data: user1Data, error: user1Error } = await supabase
-          .from('users')
-          .select('id, name, profile_image, role')
-          .eq('id', conv.user1_id)
-          .single();
+      conversationsData.map(async (conv) => {
+        // Get user data from the map with fallbacks
+        const user1Data = usersMap.get(conv.user1_id);
+        const user2Data = usersMap.get(conv.user2_id);
 
-        // Fetch user2 data
-        const { data: user2Data, error: user2Error } = await supabase
-          .from('users')
-          .select('id, name, profile_image, role')
-          .eq('id', conv.user2_id)
-          .single();
+        console.log(`Conversation ${conv.id}:`);
+        console.log(`  - user1_id: ${conv.user1_id}, found data:`, user1Data);
+        console.log(`  - user2_id: ${conv.user2_id}, found data:`, user2Data);
 
-        // Handle missing user data with proper fallbacks
-        const user1 = user1Error || !user1Data ? {
+        const user1 = user1Data && user1Data.name ? user1Data : {
           id: conv.user1_id || '',
           name: 'Unknown User',
           profile_image: null,
           role: 'user'
-        } : user1Data;
+        };
 
-        const user2 = user2Error || !user2Data ? {
+        const user2 = user2Data && user2Data.name ? user2Data : {
           id: conv.user2_id || '',
           name: 'Unknown User',
           profile_image: null,
           role: 'user'
-        } : user2Data;
+        };
 
         // Fetch the last message if it exists
         let lastMessage = undefined;
@@ -65,7 +95,7 @@ export async function getUserConversations(userId: string) {
             .from('messages')
             .select('*')
             .eq('id', conv.last_message_id)
-            .single();
+            .maybeSingle();
 
           if (messageError) {
             console.error(`Error fetching last message for conversation ${conv.id}:`, messageError);
@@ -74,7 +104,7 @@ export async function getUserConversations(userId: string) {
           }
         }
 
-        console.log(`Conversation ${conv.id} - user1: ${user1.name}, user2: ${user2.name}`);
+        console.log(`Final conversation ${conv.id} - user1: ${user1.name}, user2: ${user2.name}`);
 
         return {
           ...conv,
@@ -84,6 +114,12 @@ export async function getUserConversations(userId: string) {
         };
       })
     );
+
+    console.log("Enhanced conversations:", enhancedConversations.map(c => ({
+      id: c.id,
+      user1_name: c.user1?.name,
+      user2_name: c.user2?.name
+    })));
 
     return { data: enhancedConversations, error: null };
   } catch (err) {

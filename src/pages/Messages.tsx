@@ -36,7 +36,15 @@ const Messages = () => {
   }, [error]);
 
   useEffect(() => {
-    console.log("Current conversations:", conversations);
+    console.log("Current conversations in Messages:", conversations);
+    conversations.forEach(conv => {
+      console.log(`Conversation ${conv.id}:`, {
+        user1: conv.user1,
+        user2: conv.user2,
+        user1_id: conv.user1_id,
+        user2_id: conv.user2_id
+      });
+    });
   }, [conversations]);
 
   const getOtherUser = (conversation) => {
@@ -46,35 +54,35 @@ const Messages = () => {
       currentUserId: userId
     });
 
-    const otherUser = conversation.user1_id === userId ? conversation.user2 : conversation.user1;
+    // Determine which user is the "other" user
+    const isUser1Current = conversation.user1_id === userId;
+    const otherUser = isUser1Current ? conversation.user2 : conversation.user1;
     
     if (!otherUser) {
       console.error(`No user data found for conversation ${conversation.id}`);
       console.log("Conversation data:", conversation);
       
-      // Return the other user's ID so we can at least identify them
-      const otherUserId = conversation.user1_id === userId ? conversation.user2_id : conversation.user1_id;
+      // Return a fallback with the other user's ID
+      const otherUserId = isUser1Current ? conversation.user2_id : conversation.user1_id;
       return {
         id: otherUserId,
-        name: "Unknown User", // More descriptive than just "User"
+        name: "Loading...", // More appropriate than "Unknown User" if data is still loading
         profile_image: null,
         role: 'user'
       };
     }
     
-    // Validate that we have a proper name
+    // Additional validation for the name field
     if (!otherUser.name || otherUser.name.trim() === '' || otherUser.name === 'Contact') {
       console.warn(`User found but name is invalid for conversation ${conversation.id}:`, otherUser);
       
       return {
         ...otherUser,
-        name: otherUser.name && otherUser.name.trim() !== '' && otherUser.name !== 'Contact' 
-          ? otherUser.name 
-          : "Unknown User"
+        name: "User" // Simple fallback
       };
     }
     
-    console.log(`Successfully got other user: ${otherUser.name}`);
+    console.log(`Successfully got other user: ${otherUser.name} (ID: ${otherUser.id})`);
     return otherUser;
   };
 
