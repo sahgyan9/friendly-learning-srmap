@@ -66,7 +66,7 @@ export async function getUserConversations(userId: string) {
     // Now enhance conversations with user data and last messages
     const enhancedConversations = await Promise.all(
       conversationsData.map(async (conv) => {
-        // Get user data from the map with fallbacks
+        // Get user data from the map
         const user1Data = usersMap.get(conv.user1_id);
         const user2Data = usersMap.get(conv.user2_id);
 
@@ -74,19 +74,30 @@ export async function getUserConversations(userId: string) {
         console.log(`  - user1_id: ${conv.user1_id}, found data:`, user1Data);
         console.log(`  - user2_id: ${conv.user2_id}, found data:`, user2Data);
 
-        const user1 = user1Data && user1Data.name ? user1Data : {
+        // Process user1 with proper name validation
+        const user1 = user1Data ? {
+          ...user1Data,
+          name: user1Data.name?.trim() || 'Unknown User'
+        } : {
           id: conv.user1_id || '',
           name: 'Unknown User',
           profile_image: null,
           role: 'user'
         };
 
-        const user2 = user2Data && user2Data.name ? user2Data : {
+        // Process user2 with proper name validation
+        const user2 = user2Data ? {
+          ...user2Data,
+          name: user2Data.name?.trim() || 'Unknown User'
+        } : {
           id: conv.user2_id || '',
           name: 'Unknown User',
           profile_image: null,
           role: 'user'
         };
+
+        // Log the processed names
+        console.log(`Processed names - user1: "${user1.name}", user2: "${user2.name}"`);
 
         // Fetch the last message if it exists
         let lastMessage = undefined;

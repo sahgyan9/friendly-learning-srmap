@@ -66,24 +66,29 @@ const Messages = () => {
       const otherUserId = isUser1Current ? conversation.user2_id : conversation.user1_id;
       return {
         id: otherUserId,
-        name: "Loading...", // More appropriate than "Unknown User" if data is still loading
+        name: "Unknown User",
         profile_image: null,
         role: 'user'
       };
     }
     
-    // Additional validation for the name field
-    if (!otherUser.name || otherUser.name.trim() === '' || otherUser.name === 'Contact') {
-      console.warn(`User found but name is invalid for conversation ${conversation.id}:`, otherUser);
+    // Clean and validate the name
+    const cleanName = otherUser.name?.trim();
+    
+    if (!cleanName) {
+      console.warn(`User found but name is empty after trimming for conversation ${conversation.id}:`, otherUser);
       
       return {
         ...otherUser,
-        name: "User" // Simple fallback
+        name: "Unknown User"
       };
     }
     
-    console.log(`Successfully got other user: ${otherUser.name} (ID: ${otherUser.id})`);
-    return otherUser;
+    console.log(`Successfully got other user: "${cleanName}" (ID: ${otherUser.id})`);
+    return {
+      ...otherUser,
+      name: cleanName
+    };
   };
 
   const hasUnreadMessages = (conversationId) => {
