@@ -92,7 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           id: user.id,
           name: user.user_metadata.full_name || user.user_metadata.name || 'User',
           email: user.email || '',
-          role: 'student' // Default role
+          role: 'student' // Use 'student' instead of 'user' to match the check constraint
         };
 
         const { error: insertError } = await supabase
