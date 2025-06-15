@@ -88,7 +88,7 @@ const MentorCard = ({ mentor }: MentorCardProps) => {
                 </div>
                 
                 {/* Rating or New Mentor Badge */}
-                {mentor.review_count === 0 ? (
+                {mentor.review_count === 0 || mentor.rating === 0 ? (
                   <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 flex-shrink-0 ml-2">
                     New Mentor
                   </Badge>

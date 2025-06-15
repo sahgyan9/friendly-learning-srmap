@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Star, Linkedin, MessageCircle, ArrowLeft, Loader2 } from "lucide-react";
@@ -168,16 +169,30 @@ const MentorProfile = () => {
                     whileHover={{ scale: 1.05 }}
                     transition={{ type: "spring", stiffness: 300 }}
                   />
-                  <motion.div 
-                    className="absolute -bottom-2 -right-2 flex items-center bg-white rounded-full px-3 py-1 shadow-sm border border-gray-100"
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.3, duration: 0.4 }}
-                  >
-                    <Star className="w-4 h-4 text-yellow-400 mr-1.5" />
-                    <span className="text-sm font-medium">{mentor.rating.toFixed(1)}</span>
-                    <span className="text-xs text-muted-foreground ml-1">({mentor.review_count})</span>
-                  </motion.div>
+                  {/* Only show rating badge if mentor has reviews and rating > 0 */}
+                  {mentor.review_count > 0 && mentor.rating > 0 && (
+                    <motion.div 
+                      className="absolute -bottom-2 -right-2 flex items-center bg-white rounded-full px-3 py-1 shadow-sm border border-gray-100"
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.3, duration: 0.4 }}
+                    >
+                      <Star className="w-4 h-4 text-yellow-400 mr-1.5" />
+                      <span className="text-sm font-medium">{mentor.rating.toFixed(1)}</span>
+                      <span className="text-xs text-muted-foreground ml-1">({mentor.review_count})</span>
+                    </motion.div>
+                  )}
+                  {/* Show "New Mentor" badge if no reviews or rating is 0 */}
+                  {(mentor.review_count === 0 || mentor.rating === 0) && (
+                    <motion.div 
+                      className="absolute -bottom-2 -right-2 bg-green-100 text-green-800 rounded-full px-3 py-1 shadow-sm border border-green-200"
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.3, duration: 0.4 }}
+                    >
+                      <span className="text-sm font-medium">New Mentor</span>
+                    </motion.div>
+                  )}
                 </div>
               </motion.div>
               
