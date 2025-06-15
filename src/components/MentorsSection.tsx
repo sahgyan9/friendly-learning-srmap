@@ -1,10 +1,10 @@
-
 import { useState, useEffect, Suspense, lazy } from "react";
 import { getMentors } from "@/integrations/supabase/services/mentors";
 import { useToast } from "@/components/ui/use-toast";
 import { Loader2 } from "lucide-react";
 import { Mentor } from "@/types/mentor";
 import { sampleMentors } from "@/data/mentors";
+import MentorCard from "@/components/MentorCard";
 
 // Import refactored components
 import SearchBarSkeleton from "@/components/mentors/loaders/SearchBarSkeleton";
@@ -15,7 +15,6 @@ import ViewAllLink from "@/components/mentors/ViewAllLink";
 
 // Lazy load heavy components
 const SearchBar = lazy(() => import("@/components/SearchBar"));
-const MentorCard = lazy(() => import("@/components/MentorCard"));
 
 const MentorsSection = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -117,11 +116,9 @@ const MentorsSection = () => {
           <MentorsGridSkeleton />
         ) : filteredMentors.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
-            <Suspense fallback={<div className="col-span-full flex justify-center py-8"><Loader2 className="animate-spin h-8 w-8" /></div>}>
-              {filteredMentors.map((mentor) => (
-                <MentorCard key={mentor.id} mentor={mentor} />
-              ))}
-            </Suspense>
+            {filteredMentors.map((mentor) => (
+              <MentorCard key={mentor.id} mentor={mentor} />
+            ))}
           </div>
         ) : (
           <EmptyMentorsState />
