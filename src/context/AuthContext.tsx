@@ -10,6 +10,8 @@ interface UserProfile {
   email: string;
   role: string;
   profile_image?: string;
+  verification_status?: string;
+  is_admin?: boolean;
 }
 
 interface AuthContextType {
@@ -19,6 +21,7 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   loading: boolean;
   isMentor: boolean;
+  isAdmin: boolean;
   refreshProfile: () => Promise<void>;
 }
 
@@ -111,8 +114,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Determine if the user is a mentor
-  const isMentor = profile?.role === 'mentor';
+  // Determine if the user is a mentor or admin
+  const isMentor = profile?.role === 'mentor' || profile?.role === 'both';
+  const isAdmin = profile?.is_admin === true;
 
   const value = {
     session,
@@ -121,6 +125,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signOut,
     loading,
     isMentor,
+    isAdmin,
     refreshProfile
   };
 

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -8,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { motion } from "framer-motion";
 import DarkModeToggle from "@/components/DarkModeToggle";
+import GoogleAuthButton from "@/components/auth/GoogleAuthButton";
+import RoleSelectionModal from "@/components/auth/RoleSelectionModal";
 
 const SignUp = () => {
   const navigate = useNavigate();
@@ -18,6 +19,8 @@ const SignUp = () => {
     confirmPassword: ""
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [showRoleSelection, setShowRoleSelection] = useState(false);
+  const [pendingAuthData, setPendingAuthData] = useState<any>(null);
 
   // Check if user is already logged in
   useEffect(() => {
@@ -31,12 +34,59 @@ const SignUp = () => {
     checkSession();
   }, [navigate]);
 
+  // Listen for OAuth completion
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (event === 'SIGNED_IN' && session?.user) {
+          // Check if this is a new user (Google OAuth signup)
+          const { data: existingUser } = await supabase
+            .from('users')
+            .select('id, role')
+            .eq('id', session.user.id)
+            .single();
+
+          if (!existingUser || !existingUser.role) {
+            // New user, show role selection
+            setShowRoleSelection(true);
+            setPendingAuthData(session.user);
+          } else {
+            // Existing user, redirect to home
+            navigate('/');
+          }
+        }
+      }
+    );
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
+  };
+
+  const handleRoleSelect = async (role: string) => {
+    try {
+      if (pendingAuthData) {
+        // Update user role for OAuth signup
+        const { error } = await supabase
+          .from('users')
+          .update({ role })
+          .eq('id', pendingAuthData.id);
+
+        if (error) throw error;
+      }
+      
+      setShowRoleSelection(false);
+      toast.success("Account setup completed!");
+      navigate('/');
+    } catch (error: any) {
+      toast.error("Error setting up account: " + error.message);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -50,7 +100,7 @@ const SignUp = () => {
     setIsLoading(true);
     
     try {
-      // Register the user with Supabase auth - the database trigger will handle profile creation
+      // Register the user with Supabase auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
@@ -66,13 +116,12 @@ const SignUp = () => {
       if (authError) throw authError;
 
       if (authData.user) {
-        // Check if email confirmation is required
         if (authData.session) {
-          // If session exists, user can log in immediately
-          toast.success("Account created successfully! You're now signed in.");
-          navigate('/');
+          // User can log in immediately, show role selection
+          setShowRoleSelection(true);
+          setPendingAuthData(authData.user);
         } else {
-          // If no session, email confirmation is probably required
+          // Email confirmation required
           toast.success("Account created successfully! Please check your email for verification.");
           navigate('/signin');
         }
@@ -88,23 +137,6 @@ const SignUp = () => {
         toast.error(error.message || "Error creating account");
       }
     } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleGoogleSignUp = async () => {
-    try {
-      setIsLoading(true);
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/`,
-        },
-      });
-
-      if (error) throw error;
-    } catch (error: any) {
-      toast.error(error.message || "Error signing up with Google");
       setIsLoading(false);
     }
   };
@@ -221,28 +253,23 @@ const SignUp = () => {
                   </div>
                 </div>
 
-                <div className="mt-6 grid grid-cols-2 gap-3">
-                  <Button
-                    variant="outline"
-                    className="w-full"
-                    onClick={handleGoogleSignUp}
-                    disabled={isLoading}
-                  >
-                    Google
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => toast.info("GitHub authentication coming soon")}
-                  >
-                    GitHub
-                  </Button>
+                <div className="mt-6">
+                  <GoogleAuthButton 
+                    mode="signup" 
+                    isLoading={isLoading} 
+                    setIsLoading={setIsLoading} 
+                  />
                 </div>
               </div>
             </div>
           </div>
         </motion.div>
       </div>
+
+      <RoleSelectionModal 
+        isOpen={showRoleSelection}
+        onRoleSelect={handleRoleSelect}
+      />
     </div>
   );
 };

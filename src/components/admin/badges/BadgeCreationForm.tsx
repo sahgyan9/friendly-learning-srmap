@@ -1,25 +1,13 @@
 
 import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { createBadgeType } from "@/integrations/supabase/services/badges";
-
-const badgeSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  description: z.string().min(1, "Description is required"),
-  icon: z.string().min(1, "Icon is required"),
-  color: z.string().min(1, "Color is required"),
-  category: z.enum(["performance", "expertise", "contribution", "special"]),
-});
-
-type BadgeFormData = z.infer<typeof badgeSchema>;
+import { useToast } from "@/components/ui/use-toast";
 
 interface BadgeCreationFormProps {
   onCancel: () => void;
@@ -27,148 +15,136 @@ interface BadgeCreationFormProps {
 }
 
 const BadgeCreationForm = ({ onCancel, onSuccess }: BadgeCreationFormProps) => {
-  const [creating, setCreating] = useState(false);
-
-  const form = useForm<BadgeFormData>({
-    resolver: zodResolver(badgeSchema),
-    defaultValues: {
-      name: "",
-      description: "",
-      icon: "",
-      color: "#3B82F6",
-      category: "expertise",
-    },
+  const [formData, setFormData] = useState({
+    name: "",
+    description: "",
+    icon: "",
+    color: "#3B82F6",
+    category: "performance" as "performance" | "expertise" | "contribution" | "special"
   });
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
 
-  const onSubmit = async (data: BadgeFormData) => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.name.trim()) {
+      toast({
+        title: "Error",
+        description: "Badge name is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    
     try {
-      setCreating(true);
-      await createBadgeType(data);
+      const result = await createBadgeType({
+        name: formData.name,
+        description: formData.description,
+        icon: formData.icon,
+        color: formData.color,
+        category: formData.category
+      });
+      
+      if (result.error) {
+        throw new Error(result.error.message);
+      }
+      
       onSuccess();
-    } catch (error) {
-      console.error('Error creating badge:', error);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create badge type",
+        variant: "destructive",
+      });
     } finally {
-      setCreating(false);
+      setIsLoading(false);
     }
   };
 
-  const commonIcons = ["🏆", "⭐", "🎯", "💎", "🚀", "⚡", "🔥", "💪", "🎨", "🧠", "❤️", "👑"];
-
   return (
-    <Card className="max-w-2xl mx-auto">
+    <Card>
       <CardHeader>
         <CardTitle>Create New Badge Type</CardTitle>
+        <CardDescription>
+          Create a new badge type that can be awarded to users
+        </CardDescription>
       </CardHeader>
       <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Badge Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g., JavaScript Expert" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <Label htmlFor="name">Badge Name</Label>
+            <Input
+              id="name"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              placeholder="Enter badge name"
+              required
             />
+          </div>
 
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description</FormLabel>
-                  <FormControl>
-                    <Textarea 
-                      placeholder="Describe what this badge represents..."
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+          <div>
+            <Label htmlFor="description">Description</Label>
+            <Textarea
+              id="description"
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              placeholder="Describe what this badge represents"
+              rows={3}
             />
+          </div>
 
-            <FormField
-              control={form.control}
-              name="icon"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Icon</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter an emoji or icon" {...field} />
-                  </FormControl>
-                  <div className="flex gap-1 mt-2">
-                    {commonIcons.map((icon) => (
-                      <Button
-                        key={icon}
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => form.setValue("icon", icon)}
-                        className="p-2"
-                      >
-                        {icon}
-                      </Button>
-                    ))}
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
+          <div>
+            <Label htmlFor="icon">Icon (Emoji)</Label>
+            <Input
+              id="icon"
+              value={formData.icon}
+              onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
+              placeholder="🏆"
             />
+          </div>
 
-            <FormField
-              control={form.control}
-              name="color"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Color</FormLabel>
-                  <FormControl>
-                    <Input type="color" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+          <div>
+            <Label htmlFor="color">Color</Label>
+            <Input
+              id="color"
+              type="color"
+              value={formData.color}
+              onChange={(e) => setFormData({ ...formData, color: e.target.value })}
             />
+          </div>
 
-            <FormField
-              control={form.control}
-              name="category"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Category</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a category" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="performance">Performance</SelectItem>
-                      <SelectItem value="expertise">Expertise</SelectItem>
-                      <SelectItem value="contribution">Contribution</SelectItem>
-                      <SelectItem value="special">Special</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+          <div>
+            <Label htmlFor="category">Category</Label>
+            <Select
+              value={formData.category}
+              onValueChange={(value: "performance" | "expertise" | "contribution" | "special") => 
+                setFormData({ ...formData, category: value })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="performance">Performance</SelectItem>
+                <SelectItem value="expertise">Expertise</SelectItem>
+                <SelectItem value="contribution">Contribution</SelectItem>
+                <SelectItem value="special">Special</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-            <div className="flex gap-3 pt-4">
-              <Button type="button" variant="outline" onClick={onCancel}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={creating}>
-                {creating ? "Creating..." : "Create Badge"}
-              </Button>
-            </div>
-          </form>
-        </Form>
+          <div className="flex justify-end space-x-2">
+            <Button type="button" variant="outline" onClick={onCancel}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? "Creating..." : "Create Badge"}
+            </Button>
+          </div>
+        </form>
       </CardContent>
     </Card>
   );

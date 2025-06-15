@@ -6,6 +6,9 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { motion } from "framer-motion";
+import DarkModeToggle from "@/components/DarkModeToggle";
+import GoogleAuthButton from "@/components/auth/GoogleAuthButton";
 
 const SignIn = () => {
   const navigate = useNavigate();
@@ -81,26 +84,17 @@ const SignIn = () => {
     }
   };
 
-  const handleGoogleSignIn = async () => {
-    try {
-      setIsLoading(true);
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/`,
-        },
-      });
-
-      if (error) throw error;
-    } catch (error: any) {
-      toast.error(error.message || "Error signing in with Google");
-      setIsLoading(false);
-    }
-  };
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-background py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
+      <div className="absolute top-4 right-4">
+        <DarkModeToggle />
+      </div>
+      <motion.div 
+        className="max-w-md w-full space-y-8"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
         <div>
           <Link to="/" className="block text-center text-2xl font-bold text-primary mb-2">
             <span className="mr-1">Friendly</span>
@@ -117,8 +111,8 @@ const SignIn = () => {
           </p>
         </div>
         
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="space-y-4">
+        <div className="bg-card text-card-foreground px-4 py-8 shadow sm:rounded-lg sm:px-10">
+          <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
               <Label htmlFor="email-address">Email address</Label>
               <Input
@@ -130,6 +124,7 @@ const SignIn = () => {
                 value={formData.email}
                 onChange={handleChange}
                 placeholder="Email address"
+                className="mt-1"
               />
             </div>
             <div>
@@ -143,74 +138,61 @@ const SignIn = () => {
                 value={formData.password}
                 onChange={handleChange}
                 placeholder="Password"
+                className="mt-1"
               />
             </div>
-          </div>
 
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <input
-                id="remember-me"
-                name="remember-me"
-                type="checkbox"
-                className="h-4 w-4 text-primary focus:ring-primary border-input rounded"
-              />
-              <label htmlFor="remember-me" className="ml-2 block text-sm text-foreground">
-                Remember me
-              </label>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <input
+                  id="remember-me"
+                  name="remember-me"
+                  type="checkbox"
+                  className="h-4 w-4 text-primary focus:ring-primary border-input rounded"
+                />
+                <label htmlFor="remember-me" className="ml-2 block text-sm text-foreground">
+                  Remember me
+                </label>
+              </div>
+
+              <div className="text-sm">
+                <a href="#" onClick={() => toast.info("Password reset functionality coming soon")} className="font-medium text-primary hover:text-primary/80">
+                  Forgot your password?
+                </a>
+              </div>
             </div>
 
-            <div className="text-sm">
-              <a href="#" onClick={() => toast.info("Password reset functionality coming soon")} className="font-medium text-primary hover:text-primary/80">
-                Forgot your password?
-              </a>
-            </div>
-          </div>
-
-          <div>
-            <Button
-              type="submit"
-              className="w-full flex justify-center py-2 px-4"
-              disabled={isLoading}
-            >
-              {isLoading ? "Signing in..." : "Sign in"}
-            </Button>
-          </div>
-        </form>
-        
-        <div className="mt-6">
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-input"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-background text-muted-foreground">Or continue with</span>
-            </div>
-          </div>
-
-          <div className="mt-6 grid grid-cols-2 gap-3">
             <div>
               <Button
-                variant="outline"
-                className="w-full"
-                onClick={handleGoogleSignIn}
+                type="submit"
+                className="w-full flex justify-center py-2 px-4"
                 disabled={isLoading}
               >
-                Google
+                {isLoading ? "Signing in..." : "Sign in"}
               </Button>
             </div>
-            <div>
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={() => toast.info("GitHub authentication coming soon")}
-              >
-                GitHub
-              </Button>
+          </form>
+          
+          <div className="mt-6">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-input"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-card text-muted-foreground">Or continue with</span>
+              </div>
+            </div>
+
+            <div className="mt-6">
+              <GoogleAuthButton 
+                mode="signin" 
+                isLoading={isLoading} 
+                setIsLoading={setIsLoading} 
+              />
             </div>
           </div>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 };
