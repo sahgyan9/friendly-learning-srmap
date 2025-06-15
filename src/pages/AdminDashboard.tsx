@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
@@ -17,6 +18,8 @@ import {
   ShoppingBag,
   Settings,
   BookOpen,
+  Award,
+  UserCheck,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { isUserAdmin } from "@/integrations/supabase/services/admin";
@@ -65,6 +68,18 @@ const AdminDashboard = () => {
   }, [user, navigate, toast]);
 
   const adminModules = [
+    {
+      title: "Badge Management",
+      description: "Create, manage, and award badges to mentors.",
+      icon: Award,
+      path: "/admin/badges",
+    },
+    {
+      title: "Mentor Verification",
+      description: "Review and approve mentor applications.",
+      icon: UserCheck,
+      path: "/admin/mentor-verification",
+    },
     {
       title: "Team Members",
       description: "Manage team members displayed on the about page.",

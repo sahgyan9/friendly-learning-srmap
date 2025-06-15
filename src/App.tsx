@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -24,6 +23,8 @@ import NotFound from "./pages/NotFound";
 import Unauthorized from "./pages/Unauthorized";
 import ProtectedRoute from "./components/ProtectedRoute";
 import FloatingChatbot from "./components/chatbot/FloatingChatbot";
+import AdminBadges from "@/pages/AdminBadges";
+import AdminMentorVerification from "@/pages/AdminMentorVerification";
 
 const queryClient = new QueryClient();
 
@@ -54,9 +55,20 @@ const App = () => (
                 <UserProfile />
               </ProtectedRoute>
             } />
+            {/* Admin Routes */}
             <Route path="/admin" element={
               <ProtectedRoute requiredRole="admin">
                 <AdminDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/badges" element={
+              <ProtectedRoute requiredRole="admin">
+                <AdminBadges />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/mentor-verification" element={
+              <ProtectedRoute requiredRole="admin">
+                <AdminMentorVerification />
               </ProtectedRoute>
             } />
             <Route path="/admin/settings" element={

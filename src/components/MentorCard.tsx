@@ -168,8 +168,7 @@ const MentorCard = ({ mentor }: MentorCardProps) => {
       {/* Chat Modal */}
       {showChatModal && (
         <ChatModal
-          mentorId={mentor.id}
-          mentorName={mentor.name}
+          mentor={{ id: mentor.id, name: mentor.name }}
           onClose={() => setShowChatModal(false)}
         />
       )}

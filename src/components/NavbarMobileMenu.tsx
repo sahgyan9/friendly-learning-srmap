@@ -1,98 +1,83 @@
 
 import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { LogOut, User } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { motion } from "framer-motion";
-import { getInitials } from "@/utils/user-utils";
 
 interface NavbarMobileMenuProps {
-  isMobileMenuOpen: boolean;
-  profile: any;
-  user: any;
-  loading: boolean;
-  signOut: () => void;
+  isOpen: boolean;
+  navItems: { href: string; label: string; }[];
+  isActiveLink: (href: string) => boolean;
+  onClose: () => void;
 }
 
-const NavbarMobileMenu = ({
-  isMobileMenuOpen,
-  profile,
-  user,
-  loading,
-  signOut,
-}: NavbarMobileMenuProps) => {
-  if (!isMobileMenuOpen) return null;
+const NavbarMobileMenu = ({ isOpen, navItems, isActiveLink, onClose }: NavbarMobileMenuProps) => {
+  const { user, signOut } = useAuth();
+
+  if (!isOpen) return null;
 
   return (
-    <motion.nav
-      initial={{ opacity: 0, y: -20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      className="md:hidden mt-4 py-4 px-2 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md rounded-lg shadow-lg"
-    >
-      <div className="flex flex-col space-y-3">
-        <Button variant="ghost" asChild className="justify-start text-gray-700 dark:text-gray-200 hover:text-primary">
-          <Link to="/">Home</Link>
-        </Button>
-        <Button variant="ghost" asChild className="justify-start text-gray-700 dark:text-gray-200 hover:text-primary">
-          <Link to="/about">About</Link>
-        </Button>
-        <Button variant="ghost" asChild className="justify-start text-gray-700 dark:text-gray-200 hover:text-primary">
-          <Link to="/mentors">Mentors</Link>
-        </Button>
-        <Button variant="ghost" asChild className="justify-start text-gray-700 dark:text-gray-200 hover:text-primary">
-          <Link to="/marketplace">MarketPlace</Link>
-        </Button>
-        <Button variant="ghost" asChild className="justify-start text-gray-700 dark:text-gray-200 hover:text-primary">
-          <Link to="/contact">Contact</Link>
-        </Button>
-
-        <div className="pt-2 flex flex-col space-y-2">
-          {!loading && user ? (
-            <>
-              <div className="flex items-center p-2 rounded-md bg-gray-50">
-                <Avatar className="h-8 w-8 mr-2">
-                  <AvatarImage src={profile?.profile_image} />
-                  <AvatarFallback>{getInitials(profile?.name)}</AvatarFallback>
-                </Avatar>
-                <div className="flex-1">
-                  <p className="text-sm font-medium">{profile?.name}</p>
-                  <p className="text-xs text-muted-foreground">{profile?.email}</p>
-                </div>
-              </div>
-              <Button variant="outline" size="sm" asChild className="justify-center">
-                <Link to="/profile">My Profile</Link>
-              </Button>
-              <Button variant="outline" size="sm" asChild className="justify-center">
-                <Link to="/messages">Messages</Link>
-              </Button>
-              {profile?.role !== 'mentor' && (
-                <Button variant="outline" size="sm" asChild className="justify-center">
-                  <Link to="/become-mentor">Become a Mentor</Link>
-                </Button>
-              )}
-              <Button
-                variant="outline"
-                size="sm"
-                className="justify-center text-red-500 border-red-200 hover:bg-red-50"
-                onClick={signOut}
-              >
-                <LogOut className="h-4 w-4 mr-2" />
-                Sign out
-              </Button>
-            </>
-          ) : (
-            <Button variant="default" size="sm" asChild className="justify-center">
-              <Link to="/signin">
-                <User className="h-4 w-4 mr-2" />
-                Sign In
-              </Link>
-            </Button>
-          )}
-        </div>
+    <div className="md:hidden bg-white dark:bg-gray-900 border-t">
+      <div className="px-2 pt-2 pb-3 space-y-1">
+        {navItems.map((item) => (
+          <Link
+            key={item.href}
+            to={item.href}
+            onClick={onClose}
+            className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
+              isActiveLink(item.href)
+                ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
+                : "text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400"
+            }`}
+          >
+            {item.label}
+          </Link>
+        ))}
+        
+        {user ? (
+          <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+            <Link
+              to="/profile"
+              onClick={onClose}
+              className="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400"
+            >
+              Profile
+            </Link>
+            <Link
+              to="/messages"
+              onClick={onClose}
+              className="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400"
+            >
+              Messages
+            </Link>
+            <button
+              onClick={() => {
+                signOut();
+                onClose();
+              }}
+              className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-red-600 hover:text-red-500"
+            >
+              Sign out
+            </button>
+          </div>
+        ) : (
+          <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+            <Link
+              to="/signin"
+              onClick={onClose}
+              className="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400"
+            >
+              Sign In
+            </Link>
+            <Link
+              to="/signup"
+              onClick={onClose}
+              className="block px-3 py-2 rounded-md text-base font-medium bg-blue-600 text-white hover:bg-blue-700"
+            >
+              Sign Up
+            </Link>
+          </div>
+        )}
       </div>
-    </motion.nav>
+    </div>
   );
 };
 

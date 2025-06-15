@@ -94,7 +94,7 @@ const Navbar = () => {
 
       {/* Mobile Navigation */}
       <NavbarMobileMenu 
-        isMenuOpen={isMenuOpen} 
+        isOpen={isMenuOpen} 
         navItems={navItems}
         isActiveLink={isActiveLink}
         onClose={() => setIsMenuOpen(false)}
