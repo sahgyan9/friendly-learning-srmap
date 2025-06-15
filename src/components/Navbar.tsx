@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
@@ -15,7 +16,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
 
 const Navbar = () => {
-  const { user, signOut } = useAuth();
+  const { user, profile, signOut } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -63,8 +64,8 @@ const Navbar = () => {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative w-8 h-8 rounded-full mr-2">
                   <Avatar className="w-8 h-8">
-                    <AvatarImage src={user.profile_image} alt={user.name} />
-                    <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
+                    <AvatarImage src={profile?.profile_image || undefined} alt={profile?.name ?? "Profile"} />
+                    <AvatarFallback>{profile?.name ? getInitials(profile.name) : "U"}</AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
@@ -107,3 +108,4 @@ const Navbar = () => {
 };
 
 export default Navbar;
+
