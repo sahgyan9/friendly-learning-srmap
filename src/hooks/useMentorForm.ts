@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -64,7 +63,7 @@ export const useMentorForm = (userId: string, initialData: MentorFormData) => {
         bio: formData.bio || null,
         linkedin_url: formData.linkedin_url || null,
         profile_image: formData.profile_image,
-        rating: 4.0,
+        rating: 0,
         review_count: 0
       };
       

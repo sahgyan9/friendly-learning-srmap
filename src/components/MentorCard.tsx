@@ -51,15 +51,22 @@ const MentorCard = ({ mentor }: MentorCardProps) => {
                 </div>
               </div>
               
-              <div className="flex items-center space-x-1 bg-yellow-50 dark:bg-yellow-900/20 px-2 py-1 rounded-full flex-shrink-0 ml-2">
-                <Star className="h-4 w-4 text-yellow-500 fill-current" />
-                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                  {mentor.rating.toFixed(1)}
-                </span>
-                <span className="text-xs text-gray-500 dark:text-gray-400">
-                  ({mentor.review_count})
-                </span>
-              </div>
+              {/* Rating or New Mentor Badge */}
+              {mentor.review_count === 0 ? (
+                <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 flex-shrink-0 ml-2">
+                  New Mentor
+                </Badge>
+              ) : (
+                <div className="flex items-center space-x-1 bg-yellow-50 dark:bg-yellow-900/20 px-2 py-1 rounded-full flex-shrink-0 ml-2">
+                  <Star className="h-4 w-4 text-yellow-500 fill-current" />
+                  <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                    {mentor.rating.toFixed(1)}
+                  </span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                    ({mentor.review_count})
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -103,7 +110,9 @@ const MentorCard = ({ mentor }: MentorCardProps) => {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-1 text-sm text-gray-500 dark:text-gray-400">
               <Users className="h-4 w-4" />
-              <span>{mentor.review_count} reviews</span>
+              <span>
+                {mentor.review_count === 0 ? "No reviews yet" : `${mentor.review_count} reviews`}
+              </span>
             </div>
             
             <div className="flex items-center space-x-2">
