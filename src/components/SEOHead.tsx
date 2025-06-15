@@ -15,7 +15,7 @@ interface SEOHeadProps {
 const SEOHead = ({
   title = "Friendly Learning - SRM AP Student Mentorship Platform",
   description = "Connect with experienced student mentors at SRM AP University. Get academic guidance, career advice, and peer support from verified mentors in your field of study.",
-  keywords = "SRM AP mentorship, student mentor platform, academic guidance SRM, university mentorship program",
+  keywords = "friendly learning srm ap, SRM AP mentorship, student mentor platform, academic guidance SRM, university mentorship program",
   canonical,
   ogTitle,
   ogDescription,

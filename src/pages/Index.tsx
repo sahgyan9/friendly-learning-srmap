@@ -110,9 +110,9 @@ const Index = () => {
   return (
     <>
       <SEOHead
-        title="Friendly Learning - SRM AP Student Mentorship Platform | Connect with Academic Mentors"
-        description="Join SRM AP's premier student mentorship platform. Connect with experienced peer mentors for academic guidance, career advice, and personalized learning support. Start your mentorship journey today!"
-        keywords="SRM AP mentorship, student mentor platform, academic guidance SRM, university mentorship program, student to student mentoring, SRM AP academic support, peer learning, career guidance"
+        title="Friendly Learning SRM AP - Student Mentorship Platform | Connect with Academic Mentors"
+        description="Join Friendly Learning SRM AP's premier student mentorship platform. Connect with experienced peer mentors for academic guidance, career advice, and personalized learning support. Start your mentorship journey today!"
+        keywords="friendly learning srm ap, SRM AP mentorship, student mentor platform, academic guidance SRM, university mentorship program, student to student mentoring, SRM AP academic support, peer learning, career guidance"
         canonical="https://friendly-learning.lovable.app"
         structuredData={structuredData}
       />

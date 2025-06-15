@@ -31,9 +31,9 @@ const About = () => {
   return (
     <>
       <SEOHead
-        title="About Friendly Learning - SRM AP Student Mentorship Platform | Our Mission & Story"
-        description="Learn about Friendly Learning's mission to connect SRM AP students with peer mentors. Discover our story, values, and commitment to collaborative learning and academic success."
-        keywords="about Friendly Learning, SRM AP mentorship platform, student mentorship mission, peer learning story, university mentorship values"
+        title="About Friendly Learning SRM AP - Student Mentorship Platform | Our Mission & Story"
+        description="Learn about Friendly Learning SRM AP's mission to connect students with peer mentors. Discover our story, values, and commitment to collaborative learning and academic success."
+        keywords="about friendly learning srm ap, SRM AP mentorship platform, student mentorship mission, peer learning story, university mentorship values"
         canonical="https://friendly-learning.lovable.app/about"
         structuredData={structuredData}
       />
