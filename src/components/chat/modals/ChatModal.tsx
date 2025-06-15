@@ -1,9 +1,13 @@
 
-import { useState, useEffect } from "react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Mentor } from "@/types/mentor";
-import { useChat } from "@/hooks/use-chat";
+import React from "react";
 import { useAuth } from "@/context/AuthContext";
+import { useMessages } from "@/hooks/use-messages";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import ChatModalHeader from "./ChatModalHeader";
 import ChatModalContent from "./ChatModalContent";
 import ChatModalError from "./ChatModalError";
@@ -11,46 +15,84 @@ import ChatModalError from "./ChatModalError";
 interface ChatModalProps {
   isOpen: boolean;
   onClose: () => void;
-  mentor: Mentor;
+  receiverId: string;
+  receiverName: string;
+  receiverImage?: string;
 }
 
-const ChatModal = ({ isOpen, onClose, mentor }: ChatModalProps) => {
+const ChatModal = ({
+  isOpen,
+  onClose,
+  receiverId,
+  receiverName,
+  receiverImage,
+}: ChatModalProps) => {
   const { user } = useAuth();
-  
-  const userId = user?.id || "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"; // Fallback for demo
-  
   const {
+    conversations,
     messages,
-    loading,
-    sending,
+    activeChat,
+    isLoadingMessages,
+    isSending,
     error,
-    conversationId,
-    initializeChat,
-    handleSendMessage,
-  } = useChat(userId, mentor.id);
-  
-  const handleRetry = () => {
-    initializeChat();
+    setActiveChat,
+    sendMessage,
+  } = useMessages(user?.id || "");
+
+  React.useEffect(() => {
+    if (isOpen && user?.id && receiverId) {
+      // Find or create conversation with the receiver
+      const existingConversation = conversations.find(
+        (conv) =>
+          (conv.user1_id === user.id && conv.user2_id === receiverId) ||
+          (conv.user1_id === receiverId && conv.user2_id === user.id)
+      );
+
+      if (existingConversation) {
+        setActiveChat(existingConversation.id);
+      } else {
+        // Create a temporary conversation ID for new conversations
+        const tempConversationId = `temp-${user.id}-${receiverId}`;
+        setActiveChat(tempConversationId);
+      }
+    }
+  }, [isOpen, user?.id, receiverId, conversations, setActiveChat]);
+
+  const handleSendMessage = async (content: string) => {
+    if (!user?.id || !receiverId) return;
+    await sendMessage(content);
   };
-  
+
+  if (!user) {
+    return null;
+  }
+
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[500px] p-0 h-[600px] max-h-[80vh]">
-        <ChatModalHeader mentor={mentor} onClose={onClose} />
-        
-        <div className="flex flex-col h-full">
-          {error ? (
-            <ChatModalError error={error} onRetry={handleRetry} />
-          ) : (
-            <ChatModalContent 
-              messages={messages}
-              loading={loading}
-              sending={sending}
-              currentUserId={userId}
-              onSendMessage={handleSendMessage}
-            />
-          )}
-        </div>
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[600px] h-[600px] flex flex-col p-0">
+        <DialogHeader className="p-0">
+          <DialogTitle className="sr-only">
+            Chat with {receiverName}
+          </DialogTitle>
+          <ChatModalHeader
+            receiverName={receiverName}
+            receiverImage={receiverImage}
+            onClose={onClose}
+          />
+        </DialogHeader>
+
+        {error ? (
+          <ChatModalError error={error} />
+        ) : (
+          <ChatModalContent
+            messages={messages}
+            loading={isLoadingMessages}
+            sending={isSending}
+            currentUserId={user.id}
+            conversationId={activeChat}
+            onSendMessage={handleSendMessage}
+          />
+        )}
       </DialogContent>
     </Dialog>
   );
