@@ -220,13 +220,12 @@ const SearchBar = ({ onSearch, onGeminiSearch }: SearchBarProps) => {
         </div>
         
         <div className="flex items-center gap-2">
-          <span className="text-xs text-muted-foreground">{isAiSearchEnabled ? "AI" : "Standard"}</span>
+          <span className="text-xs text-muted-foreground">Enable AI Search</span>
           <Switch 
             checked={isAiSearchEnabled}
             onCheckedChange={setIsAiSearchEnabled}
             className="data-[state=checked]:bg-primary"
           />
-          <span className="text-xs text-muted-foreground ml-1">AI Search</span>
         </div>
       </div>
     </div>
