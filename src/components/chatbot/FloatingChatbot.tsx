@@ -1,0 +1,40 @@
+
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { motion } from "framer-motion";
+import ChatbotModal from "./ChatbotModal";
+
+const FloatingChatbot = () => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <>
+      <motion.div
+        className="fixed bottom-6 right-6 z-50"
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        transition={{ duration: 0.3, delay: 0.5 }}
+      >
+        <motion.div
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+        >
+          <Button
+            onClick={() => setIsOpen(true)}
+            className="h-14 w-14 rounded-full bg-blue-500 hover:bg-blue-600 text-white shadow-lg hover:shadow-xl transition-all duration-300"
+            size="icon"
+          >
+            <span className="font-bold text-sm">AI</span>
+          </Button>
+        </motion.div>
+      </motion.div>
+
+      <ChatbotModal 
+        isOpen={isOpen} 
+        onClose={() => setIsOpen(false)} 
+      />
+    </>
+  );
+};
+
+export default FloatingChatbot;
