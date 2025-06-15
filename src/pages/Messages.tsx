@@ -58,6 +58,8 @@ const Messages = () => {
     const isUser1Current = conversation.user1_id === userId;
     const otherUser = isUser1Current ? conversation.user2 : conversation.user1;
     
+    console.log(`Selected other user:`, otherUser);
+    
     if (!otherUser) {
       console.error(`No user data found for conversation ${conversation.id}`);
       console.log("Conversation data:", conversation);
@@ -72,23 +74,10 @@ const Messages = () => {
       };
     }
     
-    // Clean and validate the name
-    const cleanName = otherUser.name?.trim();
-    
-    if (!cleanName) {
-      console.warn(`User found but name is empty after trimming for conversation ${conversation.id}:`, otherUser);
-      
-      return {
-        ...otherUser,
-        name: "Unknown User"
-      };
-    }
-    
-    console.log(`Successfully got other user: "${cleanName}" (ID: ${otherUser.id})`);
-    return {
-      ...otherUser,
-      name: cleanName
-    };
+    // The name should already be properly processed by the conversation service
+    // Just return the user as-is since the service already handled name validation
+    console.log(`Returning other user with name: "${otherUser.name}"`);
+    return otherUser;
   };
 
   const hasUnreadMessages = (conversationId) => {

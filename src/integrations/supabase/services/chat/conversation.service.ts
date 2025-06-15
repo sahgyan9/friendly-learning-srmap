@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Conversation } from "@/types/chat";
 
@@ -57,6 +56,7 @@ export async function getUserConversations(userId: string) {
     const usersMap = new Map();
     if (usersData) {
       usersData.forEach(user => {
+        console.log(`Mapping user ${user.id}: name="${user.name}", type=${typeof user.name}, length=${user.name?.length}`);
         usersMap.set(user.id, user);
       });
     }
@@ -74,30 +74,63 @@ export async function getUserConversations(userId: string) {
         console.log(`  - user1_id: ${conv.user1_id}, found data:`, user1Data);
         console.log(`  - user2_id: ${conv.user2_id}, found data:`, user2Data);
 
-        // Process user1 with proper name validation
+        // Process user1 with explicit name handling
+        let user1Name = "Unknown User";
+        if (user1Data) {
+          if (user1Data.name && typeof user1Data.name === 'string') {
+            const trimmedName = user1Data.name.trim();
+            if (trimmedName.length > 0) {
+              user1Name = trimmedName;
+              console.log(`User1 name processed: "${user1Data.name}" -> "${user1Name}"`);
+            } else {
+              console.log(`User1 name is empty after trim: "${user1Data.name}"`);
+            }
+          } else {
+            console.log(`User1 name is invalid:`, user1Data.name, typeof user1Data.name);
+          }
+        } else {
+          console.log(`No user1Data found for ID: ${conv.user1_id}`);
+        }
+
         const user1 = user1Data ? {
           ...user1Data,
-          name: user1Data.name?.trim() || 'Unknown User'
+          name: user1Name
         } : {
           id: conv.user1_id || '',
-          name: 'Unknown User',
+          name: user1Name,
           profile_image: null,
           role: 'user'
         };
 
-        // Process user2 with proper name validation
+        // Process user2 with explicit name handling
+        let user2Name = "Unknown User";
+        if (user2Data) {
+          if (user2Data.name && typeof user2Data.name === 'string') {
+            const trimmedName = user2Data.name.trim();
+            if (trimmedName.length > 0) {
+              user2Name = trimmedName;
+              console.log(`User2 name processed: "${user2Data.name}" -> "${user2Name}"`);
+            } else {
+              console.log(`User2 name is empty after trim: "${user2Data.name}"`);
+            }
+          } else {
+            console.log(`User2 name is invalid:`, user2Data.name, typeof user2Data.name);
+          }
+        } else {
+          console.log(`No user2Data found for ID: ${conv.user2_id}`);
+        }
+
         const user2 = user2Data ? {
           ...user2Data,
-          name: user2Data.name?.trim() || 'Unknown User'
+          name: user2Name
         } : {
           id: conv.user2_id || '',
-          name: 'Unknown User',
+          name: user2Name,
           profile_image: null,
           role: 'user'
         };
 
-        // Log the processed names
-        console.log(`Processed names - user1: "${user1.name}", user2: "${user2.name}"`);
+        console.log(`Final conversation ${conv.id} - user1: "${user1.name}", user2: "${user2.name}"`);
 
         // Fetch the last message if it exists
         let lastMessage = undefined;
@@ -115,8 +148,6 @@ export async function getUserConversations(userId: string) {
           }
         }
 
-        console.log(`Final conversation ${conv.id} - user1: ${user1.name}, user2: ${user2.name}`);
-
         return {
           ...conv,
           user1,
@@ -126,7 +157,7 @@ export async function getUserConversations(userId: string) {
       })
     );
 
-    console.log("Enhanced conversations:", enhancedConversations.map(c => ({
+    console.log("Enhanced conversations final result:", enhancedConversations.map(c => ({
       id: c.id,
       user1_name: c.user1?.name,
       user2_name: c.user2?.name
