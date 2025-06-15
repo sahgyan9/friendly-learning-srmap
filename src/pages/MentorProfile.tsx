@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Star, Linkedin, MessageCircle, ArrowLeft, Loader2 } from "lucide-react";
@@ -256,14 +255,14 @@ const MentorProfile = () => {
             </motion.div>
             
             <motion.div 
-              className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 mb-10"
+              className="bg-card p-6 rounded-lg shadow-sm border border-border mb-10"
               variants={itemVariants}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.4 }}
             >
-              <h2 className="text-xl font-semibold mb-4">About</h2>
-              <p className="text-gray-700 leading-relaxed">
+              <h2 className="text-xl font-semibold mb-4 text-foreground">About</h2>
+              <p className="text-foreground leading-relaxed">
                 {mentor.bio || "This mentor hasn't added a bio yet."}
               </p>
             </motion.div>
