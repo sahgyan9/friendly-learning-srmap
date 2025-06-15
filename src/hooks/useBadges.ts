@@ -55,7 +55,7 @@ export const useBadges = (userId?: string) => {
     });
   };
 
-  const getUserBadges = (mentorId: string) => {
+  const getUserBadgesForMentor = (mentorId: string) => {
     if (mentorId === targetUserId) {
       return userBadges.map(userBadge => {
         const badgeType = badgeTypes.find(bt => bt.id === userBadge.badge_type_id);
@@ -74,7 +74,7 @@ export const useBadges = (userId?: string) => {
     loading,
     getBadgesByCategory,
     getUserBadgesByCategory,
-    getUserBadges,
+    getUserBadges: getUserBadgesForMentor,
     refetch: () => {
       if (targetUserId) {
         const fetchBadges = async () => {
