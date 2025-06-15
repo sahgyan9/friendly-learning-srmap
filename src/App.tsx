@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -24,6 +23,7 @@ import MarketplaceAdmin from "./pages/MarketplaceAdmin";
 import TeamMembersAdmin from "./pages/TeamMembersAdmin";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminSettings from "./pages/AdminSettings";
+import AIChat from "@/pages/AIChat";
 
 const queryClient = new QueryClient();
 
@@ -90,6 +90,7 @@ const App = () => (
             } />
 
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="/ai-chat" element={<AIChat />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
