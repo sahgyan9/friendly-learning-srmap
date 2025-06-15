@@ -67,9 +67,8 @@ const MentorCard = ({ mentor }: MentorCardProps) => {
         
         <CardContent className="p-6 flex flex-col h-full">
           {/* Header section with avatar and basic info */}
-          <div className="flex flex-col items-center mb-4">
-            {/* Avatar centered */}
-            <Avatar className="h-16 w-16 ring-2 ring-blue-100 dark:ring-blue-900 mb-3">
+          <div className="flex items-start space-x-4 mb-4">
+            <Avatar className="h-16 w-16 ring-2 ring-blue-100 dark:ring-blue-900 flex-shrink-0">
               <AvatarImage 
                 src={mentor.profile_image} 
                 alt={mentor.name}
@@ -80,46 +79,49 @@ const MentorCard = ({ mentor }: MentorCardProps) => {
               </AvatarFallback>
             </Avatar>
             
-            {/* Rating or New Mentor Badge - now below avatar */}
-            {mentor.review_count === 0 || mentor.rating === 0 ? (
-              <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 mb-2">
-                New Mentor
-              </Badge>
-            ) : (
-              <div className="flex items-center space-x-1 bg-yellow-50 dark:bg-yellow-900/20 px-2 py-1 rounded-full mb-2">
-                <Star className="h-4 w-4 text-yellow-500 fill-current" />
-                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                  {mentor.rating.toFixed(1)}
-                </span>
-                <span className="text-xs text-gray-500 dark:text-gray-400">
-                  ({mentor.review_count})
-                </span>
-              </div>
-            )}
-            
-            {/* Name and details - now have full width */}
-            <div className="text-center w-full">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors mb-2">
-                {mentor.name}
-              </h3>
-              <div className="flex items-center justify-center space-x-2 mb-2">
-                <div className="flex items-center space-x-1">
-                  <MapPin className="h-4 w-4 text-gray-500 flex-shrink-0" />
-                  <span className="text-sm text-gray-600 dark:text-gray-400 truncate">
-                    {mentor.department}
-                  </span>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-start justify-between mb-2">
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors truncate">
+                    {mentor.name}
+                  </h3>
+                  <div className="flex items-center space-x-2 mt-1">
+                    <div className="flex items-center space-x-1">
+                      <MapPin className="h-4 w-4 text-gray-500 flex-shrink-0" />
+                      <span className="text-sm text-gray-600 dark:text-gray-400 truncate">
+                        {mentor.department}
+                      </span>
+                    </div>
+                    {/* LinkedIn icon */}
+                    {mentor.linkedin_url && (
+                      <a
+                        href={mentor.linkedin_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Linkedin className="h-4 w-4" />
+                      </a>
+                    )}
+                  </div>
                 </div>
-                {/* LinkedIn icon */}
-                {mentor.linkedin_url && (
-                  <a
-                    href={mentor.linkedin_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <Linkedin className="h-4 w-4" />
-                  </a>
+                
+                {/* Rating or New Mentor Badge */}
+                {mentor.review_count === 0 || mentor.rating === 0 ? (
+                  <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 flex-shrink-0 ml-2">
+                    New Mentor
+                  </Badge>
+                ) : (
+                  <div className="flex items-center space-x-1 bg-yellow-50 dark:bg-yellow-900/20 px-2 py-1 rounded-full flex-shrink-0 ml-2">
+                    <Star className="h-4 w-4 text-yellow-500 fill-current" />
+                    <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                      {mentor.rating.toFixed(1)}
+                    </span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                      ({mentor.review_count})
+                    </span>
+                  </div>
                 )}
               </div>
             </div>
@@ -127,14 +129,14 @@ const MentorCard = ({ mentor }: MentorCardProps) => {
 
           {/* Bio section */}
           <div className="mb-4 flex-grow">
-            <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 text-center">
+            <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
               {mentor.bio}
             </p>
           </div>
 
           {/* Skills section */}
           <div className="mb-4">
-            <div className="flex flex-wrap gap-1 justify-center">
+            <div className="flex flex-wrap gap-1">
               {mentor.skills.slice(0, 3).map((skill, index) => (
                 <Badge 
                   key={index} 
