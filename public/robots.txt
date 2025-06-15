@@ -1,0 +1,17 @@
+
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://friendly-learning.lovable.app/sitemap.xml
+
+# Specific crawl delays for better performance
+Crawl-delay: 1
+
+# Disallow admin and private areas
+Disallow: /admin/
+Disallow: /api/
+Disallow: /unauthorized
+Disallow: /*?*utm_*
+Disallow: /*?*fbclid*
+Disallow: /*?*gclid*

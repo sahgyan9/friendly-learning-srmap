@@ -221,7 +221,7 @@ export type Database = {
           id: string
           linkedin_url: string | null
           name: string
-          profile_image: string
+          profile_image: string | null
           rating: number
           review_count: number
           skills: string[]
@@ -233,7 +233,7 @@ export type Database = {
           id?: string
           linkedin_url?: string | null
           name: string
-          profile_image: string
+          profile_image?: string | null
           rating?: number
           review_count?: number
           skills: string[]
@@ -245,7 +245,7 @@ export type Database = {
           id?: string
           linkedin_url?: string | null
           name?: string
-          profile_image?: string
+          profile_image?: string | null
           rating?: number
           review_count?: number
           skills?: string[]

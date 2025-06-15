@@ -5,6 +5,7 @@ import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
 import Footer from "@/components/Footer";
 import CallToAction from "@/components/CallToAction";
+import SEOHead from "@/components/SEOHead";
 import { Skeleton } from "@/components/ui/skeleton";
 
 // Lazy load non-critical sections for improved performance
@@ -29,6 +30,29 @@ const Index = () => {
       opacity: 1, 
       y: 0,
       transition: { duration: 0.7 }
+    }
+  };
+
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "Friendly Learning",
+    "description": "Student mentorship platform connecting SRM AP university students with experienced peer mentors for academic guidance and career support",
+    "url": "https://friendly-learning.lovable.app",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": "https://friendly-learning.lovable.app/mentors?search={search_term_string}",
+      "query-input": "required name=search_term_string"
+    },
+    "mainEntity": {
+      "@type": "EducationalOrganization",
+      "name": "SRM University AP",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Amaravati",
+        "addressRegion": "Andhra Pradesh",
+        "addressCountry": "IN"
+      }
     }
   };
   
@@ -84,53 +108,63 @@ const Index = () => {
   );
 
   return (
-    <motion.div 
-      className="min-h-screen"
-      initial="initial"
-      animate="animate"
-      variants={pageVariants}
-    >
-      <Navbar />
+    <>
+      <SEOHead
+        title="Friendly Learning - SRM AP Student Mentorship Platform | Connect with Academic Mentors"
+        description="Join SRM AP's premier student mentorship platform. Connect with experienced peer mentors for academic guidance, career advice, and personalized learning support. Start your mentorship journey today!"
+        keywords="SRM AP mentorship, student mentor platform, academic guidance SRM, university mentorship program, student to student mentoring, SRM AP academic support, peer learning, career guidance"
+        canonical="https://friendly-learning.lovable.app"
+        structuredData={structuredData}
+      />
       
-      <main>
-        <motion.div variants={sectionVariants}>
-          <Hero />
-        </motion.div>
+      <motion.div 
+        className="min-h-screen"
+        initial="initial"
+        animate="animate"
+        variants={pageVariants}
+      >
+        <Navbar />
         
-        <motion.div 
-          variants={sectionVariants}
-          initial="initial"
-          whileInView="animate"
-          viewport={{ once: true, amount: 0.1 }}
-        >
-          <Suspense fallback={<MentorsSectionSkeleton />}>
-            <MentorsSection />
-          </Suspense>
-        </motion.div>
+        <main>
+          <motion.div variants={sectionVariants}>
+            <Hero />
+          </motion.div>
+          
+          <motion.div 
+            variants={sectionVariants}
+            initial="initial"
+            whileInView="animate"
+            viewport={{ once: true, amount: 0.1 }}
+          >
+            <Suspense fallback={<MentorsSectionSkeleton />}>
+              <MentorsSection />
+            </Suspense>
+          </motion.div>
+          
+          <motion.div 
+            variants={sectionVariants}
+            initial="initial"
+            whileInView="animate"
+            viewport={{ once: true, amount: 0.1 }}
+          >
+            <Suspense fallback={<WhyFriendlyLearningSkeleton />}>
+              <WhyFriendlyLearning />
+            </Suspense>
+          </motion.div>
+          
+          <motion.div 
+            variants={sectionVariants}
+            initial="initial"
+            whileInView="animate"
+            viewport={{ once: true, amount: 0.1 }}
+          >
+            <CallToAction />
+          </motion.div>
+        </main>
         
-        <motion.div 
-          variants={sectionVariants}
-          initial="initial"
-          whileInView="animate"
-          viewport={{ once: true, amount: 0.1 }}
-        >
-          <Suspense fallback={<WhyFriendlyLearningSkeleton />}>
-            <WhyFriendlyLearning />
-          </Suspense>
-        </motion.div>
-        
-        <motion.div 
-          variants={sectionVariants}
-          initial="initial"
-          whileInView="animate"
-          viewport={{ once: true, amount: 0.1 }}
-        >
-          <CallToAction />
-        </motion.div>
-      </main>
-      
-      <Footer />
-    </motion.div>
+        <Footer />
+      </motion.div>
+    </>
   );
 };
 
