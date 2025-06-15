@@ -3,8 +3,8 @@ import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Star, MapPin, Users, MessageCircle, Linkedin } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Star, MapPin, Users, MessageCircle, Linkedin, Loader2 } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Mentor } from "@/types/mentor";
 import BadgeGrid from "@/components/badges/BadgeGrid";
@@ -22,6 +22,8 @@ const MentorCard = ({ mentor }: MentorCardProps) => {
   const userBadges = getUserBadges(mentor.id);
   const { user } = useAuth();
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
+  const navigate = useNavigate();
 
   const getInitials = (name: string) => {
     return name
@@ -39,21 +41,35 @@ const MentorCard = ({ mentor }: MentorCardProps) => {
     setIsChatOpen(true);
   };
 
-  const handleCardClick = () => {
-    window.location.href = `/mentor/${mentor.id}`;
+  const handleCardClick = async () => {
+    setIsNavigating(true);
+    // Add a small delay to show loading state
+    setTimeout(() => {
+      navigate(`/mentor/${mentor.id}`);
+    }, 100);
   };
 
   return (
     <div className="relative group">
       <Card 
-        className="group hover:shadow-lg transition-all duration-300 border border-gray-200 dark:border-gray-700 overflow-hidden h-full flex flex-col hover:scale-[1.02] cursor-pointer"
+        className="group hover:shadow-lg transition-all duration-200 border border-gray-200 dark:border-gray-700 overflow-hidden h-full flex flex-col hover:scale-[1.01] cursor-pointer"
         onClick={handleCardClick}
       >
+        {isNavigating && (
+          <div className="absolute inset-0 bg-white/80 dark:bg-gray-900/80 flex items-center justify-center z-10">
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+          </div>
+        )}
+        
         <CardContent className="p-6 flex flex-col h-full">
           {/* Header section with avatar and basic info */}
           <div className="flex items-start space-x-4 mb-4">
             <Avatar className="h-16 w-16 ring-2 ring-blue-100 dark:ring-blue-900 flex-shrink-0">
-              <AvatarImage src={mentor.profile_image} alt={mentor.name} />
+              <AvatarImage 
+                src={mentor.profile_image} 
+                alt={mentor.name}
+                loading="lazy"
+              />
               <AvatarFallback className="bg-blue-600 text-white text-lg font-semibold">
                 {getInitials(mentor.name)}
               </AvatarFallback>

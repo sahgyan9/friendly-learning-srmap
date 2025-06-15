@@ -5,10 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { CheckCircle, XCircle, Clock, User } from "lucide-react";
+import { CheckCircle, XCircle, Clock, User, Loader2 } from "lucide-react";
 import { updateVerificationStatus } from "@/integrations/supabase/services/mentor-verification";
 import { useAuth } from "@/context/AuthContext";
 import { formatDistanceToNow } from "date-fns";
+import { toast } from "sonner";
 
 interface VerificationListProps {
   verifications: any[];
@@ -29,14 +30,30 @@ const VerificationList = ({
   const { user } = useAuth();
 
   const handleStatusUpdate = async (verificationId: string, status: 'approved' | 'rejected', reason?: string) => {
-    if (!user) return;
+    if (!user) {
+      toast.error("User not authenticated");
+      return;
+    }
+
+    console.log('Attempting to update verification:', {
+      verificationId,
+      status,
+      adminId: user.id,
+      reason
+    });
 
     try {
       setUpdating(verificationId);
-      await updateVerificationStatus(verificationId, status, user.id, reason);
+      
+      const result = await updateVerificationStatus(verificationId, status, user.id, reason);
+      
+      console.log('Verification update result:', result);
+      
+      toast.success(`Mentor application ${status} successfully`);
       onStatusUpdate();
     } catch (error) {
       console.error('Error updating verification status:', error);
+      toast.error(`Failed to ${status} mentor application: ${error.message || 'Unknown error'}`);
     } finally {
       setUpdating(null);
     }
@@ -152,7 +169,11 @@ const VerificationList = ({
                           disabled={updating === verification.id}
                           className="bg-green-600 hover:bg-green-700"
                         >
-                          <CheckCircle className="h-4 w-4 mr-2" />
+                          {updating === verification.id ? (
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          ) : (
+                            <CheckCircle className="h-4 w-4 mr-2" />
+                          )}
                           Approve
                         </Button>
                         <Button
@@ -160,7 +181,11 @@ const VerificationList = ({
                           disabled={updating === verification.id}
                           variant="destructive"
                         >
-                          <XCircle className="h-4 w-4 mr-2" />
+                          {updating === verification.id ? (
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          ) : (
+                            <XCircle className="h-4 w-4 mr-2" />
+                          )}
                           Reject
                         </Button>
                       </div>
