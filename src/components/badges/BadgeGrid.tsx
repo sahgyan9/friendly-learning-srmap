@@ -1,74 +1,33 @@
 
-import { useEffect, useState } from "react";
-import { getBadgeTypes, getUserBadges, BadgeType, UserBadge } from "@/integrations/supabase/services/badges";
-import BadgeCard from "./BadgeCard";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
 
 interface BadgeGridProps {
-  userId?: string;
-  showAll?: boolean;
+  badges: any[];
   maxDisplay?: number;
-  size?: 'sm' | 'md' | 'lg';
 }
 
-const BadgeGrid = ({ userId, showAll = true, maxDisplay = 20, size = 'md' }: BadgeGridProps) => {
-  const [allBadges, setAllBadges] = useState<BadgeType[]>([]);
-  const [userBadges, setUserBadges] = useState<UserBadge[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [badgeTypesResult, userBadgesResult] = await Promise.all([
-          getBadgeTypes(),
-          userId ? getUserBadges(userId) : { data: [], error: null }
-        ]);
-
-        if (badgeTypesResult.data) {
-          setAllBadges(badgeTypesResult.data);
-        }
-
-        if (userBadgesResult.data) {
-          setUserBadges(userBadgesResult.data);
-        }
-      } catch (error) {
-        console.error('Error fetching badge data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [userId]);
-
-  if (loading) {
-    return (
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-        {Array.from({ length: 8 }).map((_, index) => (
-          <Skeleton key={index} className="w-16 h-20" />
-        ))}
-      </div>
-    );
-  }
-
-  const badgesToShow = showAll ? allBadges : allBadges.slice(0, maxDisplay);
-  const userBadgeMap = new Map(userBadges.map(ub => [ub.badge_type_id, ub]));
+const BadgeGrid = ({ badges, maxDisplay = 3 }: BadgeGridProps) => {
+  const displayBadges = badges.slice(0, maxDisplay);
+  const remainingCount = badges.length - maxDisplay;
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-      {badgesToShow.map((badge) => {
-        const userBadge = userBadgeMap.get(badge.id);
-        return (
-          <BadgeCard
-            key={badge.id}
-            badge={badge}
-            awarded={!!userBadge}
-            awardedDate={userBadge?.awarded_at}
-            showDescription={true}
-            size={size}
-          />
-        );
-      })}
+    <div className="flex flex-wrap gap-1">
+      {displayBadges.map((badge, index) => (
+        <div
+          key={index}
+          className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-sm"
+          style={{ backgroundColor: badge.badge_type?.color || '#3B82F6' }}
+          title={badge.badge_type?.description}
+        >
+          <span className="mr-1">{badge.badge_type?.icon}</span>
+          <span>{badge.badge_type?.name}</span>
+        </div>
+      ))}
+      {remainingCount > 0 && (
+        <Badge variant="outline" className="text-xs">
+          +{remainingCount} more
+        </Badge>
+      )}
     </div>
   );
 };

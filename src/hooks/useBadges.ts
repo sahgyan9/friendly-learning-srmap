@@ -55,12 +55,26 @@ export const useBadges = (userId?: string) => {
     });
   };
 
+  const getUserBadges = (mentorId: string) => {
+    if (mentorId === targetUserId) {
+      return userBadges.map(userBadge => {
+        const badgeType = badgeTypes.find(bt => bt.id === userBadge.badge_type_id);
+        return {
+          ...userBadge,
+          badge_type: badgeType
+        };
+      });
+    }
+    return [];
+  };
+
   return {
     badgeTypes,
     userBadges,
     loading,
     getBadgesByCategory,
     getUserBadgesByCategory,
+    getUserBadges,
     refetch: () => {
       if (targetUserId) {
         const fetchBadges = async () => {
