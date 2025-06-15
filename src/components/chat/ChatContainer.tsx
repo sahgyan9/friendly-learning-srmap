@@ -147,6 +147,7 @@ const ChatContainer = ({
               messages={messages}
               loading={isLoadingMessages}
               currentUserId={currentUserId}
+              conversationId={activeChat}
               getSenderName={getSenderName}
             />
           </ScrollArea>
@@ -156,6 +157,8 @@ const ChatContainer = ({
             onSendMessage={handleSendMessage}
             disabled={isLoadingMessages}
             sending={isSending}
+            conversationId={activeChat}
+            userId={currentUserId}
           />
         </div>
       ) : (

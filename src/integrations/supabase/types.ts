@@ -256,6 +256,7 @@ export type Database = {
         Row: {
           content: string
           conversation_id: string
+          delivery_status: string | null
           file_name: string | null
           file_size: number | null
           file_url: string | null
@@ -269,6 +270,7 @@ export type Database = {
         Insert: {
           content: string
           conversation_id: string
+          delivery_status?: string | null
           file_name?: string | null
           file_size?: number | null
           file_url?: string | null
@@ -282,6 +284,7 @@ export type Database = {
         Update: {
           content?: string
           conversation_id?: string
+          delivery_status?: string | null
           file_name?: string | null
           file_size?: number | null
           file_url?: string | null
@@ -387,6 +390,38 @@ export type Database = {
         }
         Relationships: []
       }
+      typing_indicators: {
+        Row: {
+          conversation_id: string
+          id: string
+          is_typing: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          conversation_id: string
+          id?: string
+          is_typing?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          conversation_id?: string
+          id?: string
+          is_typing?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "typing_indicators_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_badges: {
         Row: {
           awarded_at: string | null
@@ -435,6 +470,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_presence: {
+        Row: {
+          id: string
+          is_online: boolean
+          last_seen: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          is_online?: boolean
+          last_seen?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          is_online?: boolean
+          last_seen?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       users: {
         Row: {
@@ -525,6 +584,7 @@ export type Database = {
         Returns: {
           content: string
           conversation_id: string
+          delivery_status: string | null
           file_name: string | null
           file_size: number | null
           file_url: string | null
@@ -541,6 +601,7 @@ export type Database = {
         Returns: {
           content: string
           conversation_id: string
+          delivery_status: string | null
           file_name: string | null
           file_size: number | null
           file_url: string | null
@@ -552,6 +613,10 @@ export type Database = {
           sent_at: string | null
         }[]
       }
+      mark_messages_delivered: {
+        Args: { p_conversation_id: string; p_user_id: string }
+        Returns: undefined
+      }
       send_message: {
         Args: {
           p_conversation_id: string
@@ -562,6 +627,7 @@ export type Database = {
         Returns: {
           content: string
           conversation_id: string
+          delivery_status: string | null
           file_name: string | null
           file_size: number | null
           file_url: string | null
@@ -575,6 +641,18 @@ export type Database = {
       }
       update_conversation: {
         Args: { conversation_id: string; message_id: string }
+        Returns: undefined
+      }
+      update_typing_indicator: {
+        Args: {
+          p_conversation_id: string
+          p_user_id: string
+          p_is_typing: boolean
+        }
+        Returns: undefined
+      }
+      update_user_presence: {
+        Args: { p_user_id: string; p_is_online: boolean }
         Returns: undefined
       }
       update_verification_status: {

@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { Conversation } from "@/types/chat";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useUserPresenceRealtime } from "@/hooks/useUserPresenceRealtime";
+import OnlineStatus from "./OnlineStatus";
 
 interface ConversationListProps {
   conversations: Conversation[];
@@ -31,6 +33,8 @@ const ConversationList = ({
   hasUnreadMessages,
   currentUserId
 }: ConversationListProps) => {
+  const { isUserOnline } = useUserPresenceRealtime();
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center py-8">
@@ -76,8 +80,8 @@ const ConversationList = ({
         const otherUser = getOtherUser(conversation);
         const hasUnread = hasUnreadMessages(conversation.id);
         const lastMessageContent = conversation.last_message ? conversation.last_message.content : "Start a conversation";
-        
         const displayName = otherUser?.name?.trim() || "Unknown User";
+        const isOnline = isUserOnline(otherUser?.id);
 
         return (
           <div
@@ -87,8 +91,8 @@ const ConversationList = ({
               activeChat === conversation.id ? 'bg-muted border-r-2 border-primary' : ''
             }`}
           >
-            {/* Avatar with better sizing */}
-            <div className="flex-shrink-0">
+            {/* Avatar with online status */}
+            <div className="flex-shrink-0 relative">
               <Avatar className="h-11 w-11 border-2 border-border">
                 <AvatarImage 
                   src={otherUser?.profile_image} 
@@ -99,16 +103,25 @@ const ConversationList = ({
                   {getInitials(displayName)}
                 </AvatarFallback>
               </Avatar>
+              {/* Online status indicator */}
+              <div className="absolute -bottom-0.5 -right-0.5">
+                <OnlineStatus isOnline={isOnline} size="sm" />
+              </div>
             </div>
 
             {/* Conversation details */}
             <div className="flex-1 min-w-0">
               <div className="flex justify-between items-start mb-1">
-                <h3 className={`text-sm font-medium truncate ${
-                  hasUnread ? 'text-foreground' : 'text-foreground/90'
-                }`}>
-                  {displayName}
-                </h3>
+                <div className="flex items-center gap-2">
+                  <h3 className={`text-sm font-medium truncate ${
+                    hasUnread ? 'text-foreground' : 'text-foreground/90'
+                  }`}>
+                    {displayName}
+                  </h3>
+                  {isOnline && (
+                    <OnlineStatus isOnline={true} size="sm" showText />
+                  )}
+                </div>
                 <span className="text-xs text-muted-foreground flex-shrink-0 ml-2">
                   {formatTime(conversation.last_updated)}
                 </span>
