@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Conversation } from "@/types/chat";
 
@@ -16,11 +17,11 @@ export async function getUserConversations(userId: string) {
       return { data: null, error: conversationsError };
     }
 
-    // Now fetch user data and last messages separately for each conversation
+    // Now fetch user data and mentor data separately for each conversation
     const conversationsWithDetails: Conversation[] = [];
     
     for (const conv of conversationsData || []) {
-      // Fetch user1 data
+      // Fetch user1 data from users table
       const { data: user1Data, error: user1Error } = await supabase
         .from('users')
         .select('id, name, profile_image, role')
@@ -31,7 +32,7 @@ export async function getUserConversations(userId: string) {
         console.error(`Error fetching user1 data for ${conv.user1_id}:`, user1Error);
       }
 
-      // Fetch user2 data
+      // Fetch user2 data from users table
       const { data: user2Data, error: user2Error } = await supabase
         .from('users')
         .select('id, name, profile_image, role')
@@ -40,6 +41,30 @@ export async function getUserConversations(userId: string) {
 
       if (user2Error) {
         console.error(`Error fetching user2 data for ${conv.user2_id}:`, user2Error);
+      }
+
+      // Check if user1 is a mentor and fetch mentor data
+      let user1MentorData = null;
+      if (user1Data) {
+        const { data: mentorData } = await supabase
+          .from('mentors')
+          .select('id, name, profile_image')
+          .eq('id', conv.user1_id)
+          .maybeSingle();
+        
+        user1MentorData = mentorData;
+      }
+
+      // Check if user2 is a mentor and fetch mentor data
+      let user2MentorData = null;
+      if (user2Data) {
+        const { data: mentorData } = await supabase
+          .from('mentors')
+          .select('id, name, profile_image')
+          .eq('id', conv.user2_id)
+          .maybeSingle();
+        
+        user2MentorData = mentorData;
       }
 
       // Fetch last message if it exists
@@ -56,10 +81,12 @@ export async function getUserConversations(userId: string) {
         }
       }
 
-      // Provide proper user data with better fallback handling
+      // Prioritize mentor data over user data for display
       const user1 = user1Data ? {
-        ...user1Data,
-        name: user1Data.name?.trim() || 'Unknown User'
+        id: user1Data.id || conv.user1_id,
+        name: user1MentorData?.name?.trim() || user1Data.name?.trim() || 'Unknown User',
+        profile_image: user1MentorData?.profile_image || user1Data.profile_image || null,
+        role: user1Data.role || 'student'
       } : {
         id: conv.user1_id || '',
         name: 'Unknown User',
@@ -68,11 +95,13 @@ export async function getUserConversations(userId: string) {
       };
 
       const user2 = user2Data ? {
-        ...user2Data,
-        name: user2Data.name?.trim() || 'Unknown User'
+        id: user2Data.id || conv.user2_id,
+        name: user2MentorData?.name?.trim() || user2Data.name?.trim() || 'Unknown User',
+        profile_image: user2MentorData?.profile_image || user2Data.profile_image || null,
+        role: user2Data.role || 'student'
       } : {
         id: conv.user2_id || '',
-        name: 'Unknown User', 
+        name: 'Unknown User',
         profile_image: null,
         role: 'student'
       };
