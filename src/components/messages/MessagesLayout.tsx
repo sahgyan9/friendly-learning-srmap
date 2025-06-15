@@ -40,29 +40,57 @@ const MessagesLayout = () => {
   }, [error]);
 
   useEffect(() => {
-    console.log("Current conversations:", conversations);
+    console.log("=== MessagesLayout Debug ===");
+    console.log("Current conversations in MessagesLayout:", conversations);
+    console.log("Number of conversations:", conversations.length);
+    
+    // Debug each conversation's user data
+    conversations.forEach((conv, index) => {
+      console.log(`Conversation ${index + 1}:`, {
+        id: conv.id,
+        user1_id: conv.user1_id,
+        user2_id: conv.user2_id,
+        user1: conv.user1,
+        user2: conv.user2
+      });
+    });
   }, [conversations]);
 
   const getOtherUser = (conversation) => {
-    const otherUser = conversation.user1_id === userId ? conversation.user2 : conversation.user1;
+    console.log(`\n=== getOtherUser Debug ===`);
+    console.log('Input conversation:', conversation);
+    console.log('Current userId:', userId);
+    console.log('user1_id:', conversation.user1_id);
+    console.log('user2_id:', conversation.user2_id);
+    console.log('user1 object:', conversation.user1);
+    console.log('user2 object:', conversation.user2);
+
+    // Determine which user is the "other" user
+    const isUser1 = conversation.user1_id === userId;
+    const otherUserId = isUser1 ? conversation.user2_id : conversation.user1_id;
+    const otherUserData = isUser1 ? conversation.user2 : conversation.user1;
     
-    if (!otherUser) {
-      console.error(`No user data found for conversation ${conversation.id}`);
-      
+    console.log('Is current user user1?', isUser1);
+    console.log('Other user ID:', otherUserId);
+    console.log('Other user data:', otherUserData);
+    
+    // If we have the user data, use it
+    if (otherUserData && otherUserData.name && otherUserData.name.trim() !== "") {
+      console.log('Using otherUserData:', otherUserData);
       return {
-        id: conversation.user1_id === userId ? conversation.user2_id : conversation.user1_id,
-        name: "Unknown User",
-        profile_image: null,
-        role: 'student'
+        ...otherUserData,
+        name: otherUserData.name.trim()
       };
     }
     
-    // Ensure name is a trimmed string or a fallback
-    const finalName = otherUser.name?.trim() || "Unknown User";
+    // Fallback if user data is missing
+    console.warn(`Missing user data for conversation ${conversation.id}. Other user ID: ${otherUserId}`);
     
     return {
-      ...otherUser,
-      name: finalName
+      id: otherUserId,
+      name: "User", // Better fallback than "Unknown User"
+      profile_image: null,
+      role: 'student'
     };
   };
 

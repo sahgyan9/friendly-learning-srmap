@@ -5,6 +5,7 @@ import { Conversation } from "@/types/chat";
 // Get all conversations for a user with improved data fetching
 export async function getUserConversations(userId: string) {
   try {
+    console.log('=== getUserConversations Debug ===');
     console.log('Fetching conversations for user:', userId);
 
     // Fetch conversations without complex joins
@@ -30,7 +31,8 @@ export async function getUserConversations(userId: string) {
     const conversationsWithDetails: Conversation[] = [];
     
     for (const conv of conversationsData) {
-      console.log(`Processing conversation ${conv.id} between ${conv.user1_id} and ${conv.user2_id}`);
+      console.log(`\n--- Processing conversation ${conv.id} ---`);
+      console.log(`Between users: ${conv.user1_id} and ${conv.user2_id}`);
 
       // Fetch user data for both participants
       const [user1Result, user2Result] = await Promise.all([
@@ -38,8 +40,8 @@ export async function getUserConversations(userId: string) {
         fetchUserData(conv.user2_id)
       ]);
 
-      console.log('User1 data:', user1Result);
-      console.log('User2 data:', user2Result);
+      console.log('User1 result:', user1Result);
+      console.log('User2 result:', user2Result);
 
       // Fetch last message if exists
       let lastMessage = undefined;
@@ -55,15 +57,19 @@ export async function getUserConversations(userId: string) {
         }
       }
 
-      conversationsWithDetails.push({
+      const conversationWithDetails = {
         ...conv,
         user1: user1Result,
         user2: user2Result,
         last_message: lastMessage
-      });
+      };
+
+      console.log('Final conversation object:', conversationWithDetails);
+      conversationsWithDetails.push(conversationWithDetails);
     }
 
-    console.log('Final conversations with details:', conversationsWithDetails);
+    console.log('=== Final conversations array ===');
+    console.log(conversationsWithDetails);
     return { data: conversationsWithDetails, error: null };
   } catch (err) {
     console.error('Exception in getUserConversations:', err);
@@ -71,10 +77,10 @@ export async function getUserConversations(userId: string) {
   }
 }
 
-// Simplified function to fetch user data - prioritizes users table consistently
+// Improved function to fetch user data - always prioritizes users table
 async function fetchUserData(userId: string) {
   try {
-    console.log(`Fetching user data for ${userId}`);
+    console.log(`\n>> Fetching user data for ${userId}`);
 
     // Always fetch from users table first - this is the primary source of truth
     const { data: userData, error: userError } = await supabase
@@ -87,12 +93,12 @@ async function fetchUserData(userId: string) {
       console.error(`Error fetching user data for ${userId}:`, userError);
     }
 
-    console.log(`User data for ${userId}:`, userData);
+    console.log(`Raw user data for ${userId}:`, userData);
 
-    // Create final user data with proper fallbacks
+    // Create final user data with proper fallbacks and validation
     const finalUserData = {
       id: userId,
-      name: userData?.name?.trim() || 'Unknown User',
+      name: userData?.name && userData.name.trim() !== "" ? userData.name.trim() : 'Unknown User',
       profile_image: userData?.profile_image || null,
       role: userData?.role || 'student'
     };
