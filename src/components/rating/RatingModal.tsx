@@ -12,6 +12,7 @@ import { Star } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useAuth } from "@/context/AuthContext";
 
 interface RatingModalProps {
   isOpen: boolean;
@@ -30,6 +31,7 @@ const RatingModal = ({
   mentorImage,
   onRatingSubmitted,
 }: RatingModalProps) => {
+  const { user } = useAuth();
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [reviewText, setReviewText] = useState("");
@@ -41,12 +43,18 @@ const RatingModal = ({
       return;
     }
 
+    if (!user?.id) {
+      toast.error("You must be logged in to submit a review");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const { error } = await supabase
         .from("mentor_reviews")
         .insert({
           mentor_id: mentorId,
+          reviewer_id: user.id,
           rating,
           review_text: reviewText.trim() || null,
         });
