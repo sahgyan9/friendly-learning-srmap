@@ -303,10 +303,10 @@ export type Database = {
       }
       send_message: {
         Args: {
-          conversation_id: string
-          sender_id: string
-          receiver_id: string
-          content: string
+          p_conversation_id: string
+          p_sender_id: string
+          p_receiver_id: string
+          p_content: string
         }
         Returns: {
           content: string

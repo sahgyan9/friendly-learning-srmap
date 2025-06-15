@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
@@ -43,16 +42,8 @@ const Messages = () => {
   const getOtherUser = (conversation) => {
     const otherUser = conversation.user1_id === userId ? conversation.user2 : conversation.user1;
     
-    console.log(`Getting other user for conversation ${conversation.id}:`);
-    console.log(`- Current user ID: ${userId}`);
-    console.log(`- Conversation user1_id: ${conversation.user1_id}`);
-    console.log(`- Conversation user2_id: ${conversation.user2_id}`);
-    console.log(`- Selected other user:`, otherUser);
-    
-    // Enhanced debugging and fallback handling
     if (!otherUser) {
       console.error(`No user data found for conversation ${conversation.id}`);
-      console.log("Conversation data:", conversation);
       
       return {
         id: conversation.user1_id === userId ? conversation.user2_id : conversation.user1_id,
@@ -62,23 +53,13 @@ const Messages = () => {
       };
     }
     
-    // Check if name exists and is not empty
-    const finalName = otherUser.name && otherUser.name.trim() !== '' && otherUser.name.trim() !== 'Unknown User' 
-      ? otherUser.name.trim() 
-      : "Unknown User";
+    // Ensure name is a trimmed string or a fallback
+    const finalName = otherUser.name?.trim() || "Unknown User";
     
-    if (otherUser.name !== finalName) {
-      console.warn(`User found but name is invalid for conversation ${conversation.id}:`, otherUser);
-      console.warn(`Original name: "${otherUser.name}", Final name: "${finalName}"`);
-    }
-    
-    const result = {
+    return {
       ...otherUser,
       name: finalName
     };
-    
-    console.log(`Final other user result:`, result);
-    return result;
   };
 
   const hasUnreadMessages = (conversationId) => {

@@ -66,10 +66,11 @@ export const useMessages = (userId: string) => {
       content,
       conversations,
       setMessages,
-      setConversations,
       setIsSending,
       setError
     );
+    // Refetch conversations to update the list with the latest message preview
+    fetchConversations(setConversations, () => {}, setIsLoadingConversations, setError);
   };
 
   return {

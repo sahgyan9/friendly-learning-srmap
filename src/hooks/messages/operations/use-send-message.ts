@@ -15,7 +15,6 @@ export const useSendMessage = (userId: string) => {
     content: string,
     conversations: Conversation[],
     setMessages: React.Dispatch<React.SetStateAction<Message[]>>,
-    setConversations: React.Dispatch<React.SetStateAction<Conversation[]>>,
     setIsSending: React.Dispatch<React.SetStateAction<boolean>>,
     setError: React.Dispatch<React.SetStateAction<Error | null>>
   ) => {
@@ -75,26 +74,6 @@ export const useSendMessage = (userId: string) => {
         setMessages(prev =>
           prev.map(msg => (msg.id === tempMessage.id ? data : msg))
         );
-
-        const updatedConversations = conversations.map(c => {
-          if (c.id === conversationId) {
-            return {
-              ...c,
-              last_message: data,
-              last_message_id: data.id,
-              last_updated: data.sent_at
-            };
-          }
-          return c;
-        });
-
-        const sortedConversations = [...updatedConversations].sort(
-          (a, b) =>
-            new Date(b.last_updated).getTime() -
-            new Date(a.last_updated).getTime()
-        );
-
-        setConversations(sortedConversations);
       }
     } catch (err) {
       console.error("Exception sending message:", err);

@@ -1,4 +1,3 @@
-
 -- RPC function to check if a conversation exists between two users
 CREATE OR REPLACE FUNCTION public.get_conversation(user1 UUID, user2 UUID)
 RETURNS SETOF public.conversations
@@ -32,37 +31,35 @@ AS $$
   ORDER BY sent_at ASC;
 $$;
 
--- RPC function to send a message
+-- RPC function to send a message and update conversation
 CREATE OR REPLACE FUNCTION public.send_message(
-  conversation_id UUID,
-  sender_id UUID,
-  receiver_id UUID,
-  content TEXT
+  p_conversation_id UUID,
+  p_sender_id UUID,
+  p_receiver_id UUID,
+  p_content TEXT
 )
 RETURNS public.messages
-LANGUAGE sql
+LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
+DECLARE
+  new_message public.messages;
+BEGIN
+  -- Insert the new message
   INSERT INTO public.messages (conversation_id, sender_id, receiver_id, content)
-  VALUES (conversation_id, sender_id, receiver_id, content)
-  RETURNING *;
-$$;
+  VALUES (p_conversation_id, p_sender_id, p_receiver_id, p_content)
+  RETURNING * INTO new_message;
 
--- RPC function to update conversation last_message_id and last_updated
-CREATE OR REPLACE FUNCTION public.update_conversation(
-  conversation_id UUID,
-  message_id UUID
-)
-RETURNS public.conversations
-LANGUAGE sql
-SECURITY DEFINER
-AS $$
+  -- Update the conversation's last message and timestamp
   UPDATE public.conversations
   SET 
-    last_message_id = message_id,
-    last_updated = NOW()
-  WHERE id = conversation_id
-  RETURNING *;
+    last_message_id = new_message.id,
+    last_updated = new_message.sent_at
+  WHERE id = p_conversation_id;
+
+  -- Return the newly created message
+  RETURN new_message;
+END;
 $$;
 
 -- RPC function to get all conversations for a user

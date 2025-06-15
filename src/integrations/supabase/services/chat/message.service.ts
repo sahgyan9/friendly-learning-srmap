@@ -54,10 +54,10 @@ export async function sendMessage(
 ) {
   try {
     const { data, error } = await supabase.rpc('send_message', {
-      conversation_id: conversationId,
-      sender_id: senderId,
-      receiver_id: receiverId,
-      content: content
+      p_conversation_id: conversationId,
+      p_sender_id: senderId,
+      p_receiver_id: receiverId,
+      p_content: content
     });
 
     if (error) {
