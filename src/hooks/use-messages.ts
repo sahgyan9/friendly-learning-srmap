@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { useMessagesState } from "./messages/use-messages-state";
 import { useMessagesOperations } from "./messages/use-messages-operations";
@@ -31,20 +30,9 @@ export const useMessages = (userId: string) => {
     sendMessage: sendMessageOperation
   } = useMessagesOperations(userId);
 
-  // Function to refresh conversations - exposed for external use
-  const refreshConversations = async () => {
-    console.log("=== refreshConversations called ===");
-    const result = await fetchConversations(setConversations, setActiveChat, setIsLoadingConversations, setError);
-    console.log("refreshConversations result:", result);
-    return result;
-  };
-
   // Fetch conversations on initial load
   useEffect(() => {
     if (userId) {
-      console.log("=== useMessages initial load ===");
-      console.log("User ID:", userId);
-      
       // Prefetch user data for the current user
       const prefetchCurrentUser = async () => {
         try {
@@ -60,25 +48,19 @@ export const useMessages = (userId: string) => {
       };
 
       prefetchCurrentUser();
-      refreshConversations();
+      fetchConversations(setConversations, setActiveChat, setIsLoadingConversations, setError);
     }
   }, [userId]);
 
   // Fetch messages when active chat changes
   useEffect(() => {
     if (activeChat) {
-      console.log("=== Active chat changed ===");
-      console.log("New active chat:", activeChat);
       fetchMessages(activeChat, setMessages, setIsLoadingMessages, setError);
     }
   }, [activeChat]);
 
   // Wrapper for sending messages
   const sendMessage = async (content: string) => {
-    console.log("=== Sending message ===");
-    console.log("Active chat:", activeChat);
-    console.log("Message content:", content);
-    
     await sendMessageOperation(
       activeChat,
       content,
@@ -88,16 +70,8 @@ export const useMessages = (userId: string) => {
       setError
     );
     // Refetch conversations to update the list with the latest message preview
-    await refreshConversations();
+    fetchConversations(setConversations, () => {}, setIsLoadingConversations, setError);
   };
-
-  // Debug log the current state
-  useEffect(() => {
-    console.log("=== useMessages state update ===");
-    console.log("Conversations count:", conversations.length);
-    console.log("Active chat:", activeChat);
-    console.log("Is loading conversations:", isLoadingConversations);
-  }, [conversations, activeChat, isLoadingConversations]);
 
   return {
     conversations,
@@ -109,6 +83,5 @@ export const useMessages = (userId: string) => {
     error,
     setActiveChat,
     sendMessage,
-    refreshConversations,
   };
 };
