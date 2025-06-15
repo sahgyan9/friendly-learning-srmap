@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -70,21 +69,14 @@ const ConversationList = ({
       .substring(0, 2);
   };
 
+  // Updated: Only treat name as invalid if truly missing or empty after trim
   const getValidDisplayName = (otherUser: any) => {
     if (!otherUser) return "Unknown User";
-    
     const name = otherUser.name;
-    
-    // Check for invalid names
-    if (!name || 
-        typeof name !== 'string' || 
-        name.trim() === '' || 
-        name === 'Contact' || 
-        name === 'User') {
+    if (!name || typeof name !== 'string' || name.trim() === '') {
       console.warn('Invalid or placeholder name detected:', name);
       return "Unknown User";
     }
-    
     return name.trim();
   };
 

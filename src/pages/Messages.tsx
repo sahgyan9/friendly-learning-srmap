@@ -47,6 +47,7 @@ const Messages = () => {
     });
   }, [conversations]);
 
+  // Improved getOtherUser fallback for display name
   const getOtherUser = (conversation) => {
     console.log(`Getting other user for conversation ${conversation.id}:`, {
       user1: conversation.user1,
@@ -77,7 +78,10 @@ const Messages = () => {
     // The name should already be properly processed by the conversation service
     // Just return the user as-is since the service already handled name validation
     console.log(`Returning other user with name: "${otherUser.name}"`);
-    return otherUser;
+    return {
+      ...otherUser,
+      name: otherUser.name.trim()
+    };
   };
 
   const hasUnreadMessages = (conversationId) => {
