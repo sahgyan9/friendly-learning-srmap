@@ -2,20 +2,15 @@
 import { supabase } from "@/integrations/supabase/client";
 import { Conversation } from "@/types/chat";
 
-// Get all conversations for a user using direct query with proper joins
+// Get all conversations for a user using a simpler approach to avoid relationship conflicts
 export async function getUserConversations(userId: string) {
   try {
     console.log("Getting conversations for user ID:", userId);
 
-    // Fetch conversations with complete user data using joins
+    // First, fetch conversations without complex joins
     const { data: conversationsData, error: conversationsError } = await supabase
       .from('conversations')
-      .select(`
-        *,
-        user1:users!conversations_user1_id_fkey(id, name, profile_image, role),
-        user2:users!conversations_user2_id_fkey(id, name, profile_image, role),
-        last_message:messages(id, content, sent_at)
-      `)
+      .select('*')
       .or(`user1_id.eq.${userId},user2_id.eq.${userId}`)
       .order('last_updated', { ascending: false });
 
@@ -26,33 +21,62 @@ export async function getUserConversations(userId: string) {
 
     console.log(`Retrieved ${conversationsData?.length || 0} conversations for user ${userId}`);
 
-    // Ensure user data exists for all conversations
-    const validConversations: Conversation[] = (conversationsData || []).map(conv => {
+    // Now fetch user data and last messages separately for each conversation
+    const conversationsWithDetails: Conversation[] = [];
+    
+    for (const conv of conversationsData || []) {
+      // Fetch user1 data
+      const { data: user1Data } = await supabase
+        .from('users')
+        .select('id, name, profile_image, role')
+        .eq('id', conv.user1_id)
+        .single();
+
+      // Fetch user2 data
+      const { data: user2Data } = await supabase
+        .from('users')
+        .select('id, name, profile_image, role')
+        .eq('id', conv.user2_id)
+        .single();
+
+      // Fetch last message if it exists
+      let lastMessage = undefined;
+      if (conv.last_message_id) {
+        const { data: messageData } = await supabase
+          .from('messages')
+          .select('id, content, sent_at')
+          .eq('id', conv.last_message_id)
+          .single();
+        
+        if (messageData) {
+          lastMessage = messageData;
+        }
+      }
+
       // Provide fallback user data if missing
-      if (!conv.user1 || !conv.user1.name) {
-        conv.user1 = {
-          id: conv.user1_id || '',
-          name: 'User',
-          profile_image: null,
-          role: 'user'
-        };
-      }
-      if (!conv.user2 || !conv.user2.name) {
-        conv.user2 = {
-          id: conv.user2_id || '',
-          name: 'User', 
-          profile_image: null,
-          role: 'user'
-        };
-      }
-
-      return {
-        ...conv,
-        last_message: conv.last_message?.[0] || undefined
+      const user1 = user1Data || {
+        id: conv.user1_id || '',
+        name: 'User',
+        profile_image: null,
+        role: 'student'
       };
-    });
 
-    return { data: validConversations, error: null };
+      const user2 = user2Data || {
+        id: conv.user2_id || '',
+        name: 'User', 
+        profile_image: null,
+        role: 'student'
+      };
+
+      conversationsWithDetails.push({
+        ...conv,
+        user1,
+        user2,
+        last_message: lastMessage
+      });
+    }
+
+    return { data: conversationsWithDetails, error: null };
   } catch (err) {
     console.error('Exception in getUserConversations:', err);
     return { data: null, error: err as Error };
