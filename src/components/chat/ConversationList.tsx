@@ -77,8 +77,14 @@ const ConversationList = ({
         const hasUnread = hasUnreadMessages(conversation.id);
         const lastMessageContent = conversation.last_message ? conversation.last_message.content : "";
         
-        // Ensure we have a proper display name
-        const displayName = otherUser?.name && otherUser.name.trim() !== "" ? otherUser.name : "User";
+        // Ensure we have a proper display name with better fallback
+        const displayName = otherUser?.name && 
+                           otherUser.name.trim() !== "" && 
+                           otherUser.name.trim() !== "Unknown User" 
+          ? otherUser.name.trim() 
+          : "Unknown User";
+
+        console.log(`Rendering conversation ${conversation.id} with display name: "${displayName}"`);
 
         return (
           <div

@@ -25,19 +25,33 @@ export async function getUserConversations(userId: string) {
     const conversationsWithDetails: Conversation[] = [];
     
     for (const conv of conversationsData || []) {
+      console.log(`Processing conversation ${conv.id} with user1: ${conv.user1_id}, user2: ${conv.user2_id}`);
+      
       // Fetch user1 data
-      const { data: user1Data } = await supabase
+      const { data: user1Data, error: user1Error } = await supabase
         .from('users')
         .select('id, name, profile_image, role')
         .eq('id', conv.user1_id)
-        .single();
+        .maybeSingle();
+
+      if (user1Error) {
+        console.error(`Error fetching user1 data for ${conv.user1_id}:`, user1Error);
+      } else {
+        console.log(`User1 data for ${conv.user1_id}:`, user1Data);
+      }
 
       // Fetch user2 data
-      const { data: user2Data } = await supabase
+      const { data: user2Data, error: user2Error } = await supabase
         .from('users')
         .select('id, name, profile_image, role')
         .eq('id', conv.user2_id)
-        .single();
+        .maybeSingle();
+
+      if (user2Error) {
+        console.error(`Error fetching user2 data for ${conv.user2_id}:`, user2Error);
+      } else {
+        console.log(`User2 data for ${conv.user2_id}:`, user2Data);
+      }
 
       // Fetch last message if it exists
       let lastMessage = undefined;
@@ -46,27 +60,36 @@ export async function getUserConversations(userId: string) {
           .from('messages')
           .select('id, content, sent_at')
           .eq('id', conv.last_message_id)
-          .single();
+          .maybeSingle();
         
         if (messageData) {
           lastMessage = messageData;
         }
       }
 
-      // Provide fallback user data if missing
-      const user1 = user1Data || {
+      // Provide proper user data with better fallback handling
+      const user1 = user1Data ? {
+        ...user1Data,
+        name: user1Data.name && user1Data.name.trim() !== '' ? user1Data.name.trim() : 'Unknown User'
+      } : {
         id: conv.user1_id || '',
-        name: 'User',
+        name: 'Unknown User',
         profile_image: null,
         role: 'student'
       };
 
-      const user2 = user2Data || {
+      const user2 = user2Data ? {
+        ...user2Data,
+        name: user2Data.name && user2Data.name.trim() !== '' ? user2Data.name.trim() : 'Unknown User'
+      } : {
         id: conv.user2_id || '',
-        name: 'User', 
+        name: 'Unknown User', 
         profile_image: null,
         role: 'student'
       };
+
+      console.log(`Final user1 for conversation ${conv.id}:`, user1);
+      console.log(`Final user2 for conversation ${conv.id}:`, user2);
 
       conversationsWithDetails.push({
         ...conv,
@@ -76,6 +99,7 @@ export async function getUserConversations(userId: string) {
       });
     }
 
+    console.log('Final conversations with details:', conversationsWithDetails);
     return { data: conversationsWithDetails, error: null };
   } catch (err) {
     console.error('Exception in getUserConversations:', err);

@@ -43,6 +43,12 @@ const Messages = () => {
   const getOtherUser = (conversation) => {
     const otherUser = conversation.user1_id === userId ? conversation.user2 : conversation.user1;
     
+    console.log(`Getting other user for conversation ${conversation.id}:`);
+    console.log(`- Current user ID: ${userId}`);
+    console.log(`- Conversation user1_id: ${conversation.user1_id}`);
+    console.log(`- Conversation user2_id: ${conversation.user2_id}`);
+    console.log(`- Selected other user:`, otherUser);
+    
     // Enhanced debugging and fallback handling
     if (!otherUser) {
       console.error(`No user data found for conversation ${conversation.id}`);
@@ -50,22 +56,29 @@ const Messages = () => {
       
       return {
         id: conversation.user1_id === userId ? conversation.user2_id : conversation.user1_id,
-        name: "User", // Better fallback than "Contact"
+        name: "Unknown User",
         profile_image: null,
-        role: 'student' // Updated to use 'student' instead of 'user'
+        role: 'student'
       };
     }
     
-    if (!otherUser.name || otherUser.name.trim() === '') {
-      console.warn(`User found but name is empty for conversation ${conversation.id}:`, otherUser);
-      
-      return {
-        ...otherUser,
-        name: "User" // Better fallback than "Contact"
-      };
+    // Check if name exists and is not empty
+    const finalName = otherUser.name && otherUser.name.trim() !== '' && otherUser.name.trim() !== 'Unknown User' 
+      ? otherUser.name.trim() 
+      : "Unknown User";
+    
+    if (otherUser.name !== finalName) {
+      console.warn(`User found but name is invalid for conversation ${conversation.id}:`, otherUser);
+      console.warn(`Original name: "${otherUser.name}", Final name: "${finalName}"`);
     }
     
-    return otherUser;
+    const result = {
+      ...otherUser,
+      name: finalName
+    };
+    
+    console.log(`Final other user result:`, result);
+    return result;
   };
 
   const hasUnreadMessages = (conversationId) => {
