@@ -71,12 +71,12 @@ export async function getUserConversations(userId: string) {
   }
 }
 
-// Enhanced function to fetch complete user data prioritizing mentor data
+// Simplified function to fetch user data - prioritizes users table consistently
 async function fetchUserData(userId: string) {
   try {
-    console.log(`Fetching complete data for user ${userId}`);
+    console.log(`Fetching user data for ${userId}`);
 
-    // First, get user data from users table
+    // Always fetch from users table first - this is the primary source of truth
     const { data: userData, error: userError } = await supabase
       .from('users')
       .select('id, name, profile_image, role')
@@ -89,24 +89,11 @@ async function fetchUserData(userId: string) {
 
     console.log(`User data for ${userId}:`, userData);
 
-    // Then, check if this user is also a mentor
-    const { data: mentorData, error: mentorError } = await supabase
-      .from('mentors')
-      .select('id, name, profile_image')
-      .eq('id', userId)
-      .maybeSingle();
-
-    if (mentorError) {
-      console.log(`No mentor data found for ${userId} (this is normal if user is not a mentor)`);
-    }
-
-    console.log(`Mentor data for ${userId}:`, mentorData);
-
-    // Prioritize mentor data over user data, with proper fallbacks
+    // Create final user data with proper fallbacks
     const finalUserData = {
       id: userId,
-      name: (mentorData?.name?.trim() || userData?.name?.trim() || 'Unknown User'),
-      profile_image: mentorData?.profile_image || userData?.profile_image || null,
+      name: userData?.name?.trim() || 'Unknown User',
+      profile_image: userData?.profile_image || null,
       role: userData?.role || 'student'
     };
 
@@ -124,9 +111,11 @@ async function fetchUserData(userId: string) {
   }
 }
 
-// Get or create a conversation between two users
+// Get or create a conversation between two users - improved with better state management
 export async function getOrCreateConversation(user1Id: string, user2Id: string) {
   try {
+    console.log(`Getting/creating conversation between ${user1Id} and ${user2Id}`);
+
     // First check if conversation exists using RPC
     const { data: existingConversations, error: fetchError } = await supabase.rpc('get_conversation', {
       user1: user1Id,
@@ -138,12 +127,29 @@ export async function getOrCreateConversation(user1Id: string, user2Id: string) 
       return { data: null, error: fetchError };
     }
 
-    // If conversation exists, return it
+    // If conversation exists, return it with user data
     if (existingConversations && existingConversations.length > 0) {
-      return { data: existingConversations[0], error: null };
+      const conversation = existingConversations[0];
+      console.log('Found existing conversation:', conversation.id);
+      
+      // Fetch user data for the existing conversation
+      const [user1Data, user2Data] = await Promise.all([
+        fetchUserData(conversation.user1_id),
+        fetchUserData(conversation.user2_id)
+      ]);
+
+      return { 
+        data: {
+          ...conversation,
+          user1: user1Data,
+          user2: user2Data
+        }, 
+        error: null 
+      };
     }
 
     // If no conversation exists, create a new one using RPC
+    console.log('Creating new conversation');
     const { data: newConversation, error: createError } = await supabase.rpc('create_conversation', {
       user1_id: user1Id,
       user2_id: user2Id
@@ -154,7 +160,20 @@ export async function getOrCreateConversation(user1Id: string, user2Id: string) 
       return { data: null, error: createError };
     }
 
-    return { data: newConversation, error: null };
+    // Fetch user data for the new conversation
+    const [user1Data, user2Data] = await Promise.all([
+      fetchUserData(user1Id),
+      fetchUserData(user2Id)
+    ]);
+
+    const conversationWithUserData = {
+      ...newConversation,
+      user1: user1Data,
+      user2: user2Data
+    };
+
+    console.log('Created new conversation with user data:', conversationWithUserData);
+    return { data: conversationWithUserData, error: null };
   } catch (err) {
     console.error('Exception in getOrCreateConversation:', err);
     return { data: null, error: err as Error };

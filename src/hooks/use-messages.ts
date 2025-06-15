@@ -1,3 +1,4 @@
+
 import { useEffect } from "react";
 import { useMessagesState } from "./messages/use-messages-state";
 import { useMessagesOperations } from "./messages/use-messages-operations";
@@ -30,6 +31,11 @@ export const useMessages = (userId: string) => {
     sendMessage: sendMessageOperation
   } = useMessagesOperations(userId);
 
+  // Function to refresh conversations - exposed for external use
+  const refreshConversations = async () => {
+    await fetchConversations(setConversations, setActiveChat, setIsLoadingConversations, setError);
+  };
+
   // Fetch conversations on initial load
   useEffect(() => {
     if (userId) {
@@ -48,7 +54,7 @@ export const useMessages = (userId: string) => {
       };
 
       prefetchCurrentUser();
-      fetchConversations(setConversations, setActiveChat, setIsLoadingConversations, setError);
+      refreshConversations();
     }
   }, [userId]);
 
@@ -70,7 +76,7 @@ export const useMessages = (userId: string) => {
       setError
     );
     // Refetch conversations to update the list with the latest message preview
-    fetchConversations(setConversations, () => {}, setIsLoadingConversations, setError);
+    refreshConversations();
   };
 
   return {
@@ -83,5 +89,6 @@ export const useMessages = (userId: string) => {
     error,
     setActiveChat,
     sendMessage,
+    refreshConversations,
   };
 };

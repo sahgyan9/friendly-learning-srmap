@@ -26,10 +26,11 @@ const MessagesLayout = () => {
     isSending,
     error,
     setActiveChat,
-    sendMessage
+    sendMessage,
+    refreshConversations
   } = useMessages(userId);
 
-  const { isProcessingMentor } = useMentorConnection(userId, setActiveChat);
+  const { isProcessingMentor } = useMentorConnection(userId, setActiveChat, refreshConversations);
 
   useEffect(() => {
     if (error) {
