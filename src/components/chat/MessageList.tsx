@@ -130,7 +130,7 @@ const MessageList = ({
   return (
     <div 
       ref={containerRef}
-      className="flex flex-col gap-4 p-4 overflow-y-auto"
+      className="h-full flex flex-col gap-4 p-4 overflow-y-auto"
       onScroll={handleScroll}
     >
       {messages.map((msg, index) => {

@@ -135,7 +135,7 @@ const ChatContainer = ({
 
       {/* Chat area */}
       {showChatArea ? (
-        <div className={`${showConversationList && window.innerWidth >= 768 ? 'flex-1' : 'w-full'} flex flex-col bg-background h-full`}>
+        <div className={`${showConversationList && window.innerWidth >= 768 ? 'flex-1' : 'w-full'} flex flex-col bg-background`}>
           {/* Chat header with back button on mobile */}
           <div className="flex items-center border-b border-border">
             {window.innerWidth < 768 && (
