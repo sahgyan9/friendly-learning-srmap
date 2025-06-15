@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
@@ -36,52 +37,35 @@ const Messages = () => {
   }, [error]);
 
   useEffect(() => {
-    console.log("Current conversations in Messages:", conversations);
-    conversations.forEach(conv => {
-      console.log(`Conversation ${conv.id}:`, {
-        user1: conv.user1,
-        user2: conv.user2,
-        user1_id: conv.user1_id,
-        user2_id: conv.user2_id
-      });
-    });
+    console.log("Current conversations:", conversations);
   }, [conversations]);
 
-  // Improved getOtherUser fallback for display name
   const getOtherUser = (conversation) => {
-    console.log(`Getting other user for conversation ${conversation.id}:`, {
-      user1: conversation.user1,
-      user2: conversation.user2,
-      currentUserId: userId
-    });
-
-    // Determine which user is the "other" user
-    const isUser1Current = conversation.user1_id === userId;
-    const otherUser = isUser1Current ? conversation.user2 : conversation.user1;
+    const otherUser = conversation.user1_id === userId ? conversation.user2 : conversation.user1;
     
-    console.log(`Selected other user:`, otherUser);
-    
+    // Enhanced debugging and fallback handling
     if (!otherUser) {
       console.error(`No user data found for conversation ${conversation.id}`);
       console.log("Conversation data:", conversation);
       
-      // Return a fallback with the other user's ID
-      const otherUserId = isUser1Current ? conversation.user2_id : conversation.user1_id;
       return {
-        id: otherUserId,
-        name: "Unknown User",
+        id: conversation.user1_id === userId ? conversation.user2_id : conversation.user1_id,
+        name: "User", // Better fallback than "Contact"
         profile_image: null,
         role: 'user'
       };
     }
     
-    // The name should already be properly processed by the conversation service
-    // Just return the user as-is since the service already handled name validation
-    console.log(`Returning other user with name: "${otherUser.name}"`);
-    return {
-      ...otherUser,
-      name: otherUser.name.trim()
-    };
+    if (!otherUser.name || otherUser.name.trim() === '') {
+      console.warn(`User found but name is empty for conversation ${conversation.id}:`, otherUser);
+      
+      return {
+        ...otherUser,
+        name: "User" // Better fallback than "Contact"
+      };
+    }
+    
+    return otherUser;
   };
 
   const hasUnreadMessages = (conversationId) => {
@@ -95,8 +79,7 @@ const Messages = () => {
   const filteredConversations = searchQuery.trim()
     ? conversations.filter(conv => {
       const otherUser = getOtherUser(conv);
-      const searchName = otherUser?.name || '';
-      return searchName.toLowerCase().includes(searchQuery.toLowerCase());
+      return otherUser?.name.toLowerCase().includes(searchQuery.toLowerCase());
     })
     : conversations;
 
