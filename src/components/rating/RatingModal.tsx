@@ -50,6 +50,13 @@ const RatingModal = ({
 
     setIsSubmitting(true);
     try {
+      console.log("Submitting review:", {
+        mentor_id: mentorId,
+        reviewer_id: user.id,
+        rating,
+        review_text: reviewText.trim() || null,
+      });
+
       const { error } = await supabase
         .from("mentor_reviews")
         .insert({
@@ -60,6 +67,7 @@ const RatingModal = ({
         });
 
       if (error) {
+        console.error("Database error:", error);
         throw error;
       }
 
@@ -74,6 +82,8 @@ const RatingModal = ({
       console.error("Error submitting review:", error);
       if (error.code === '23505') {
         toast.error("You have already reviewed this mentor");
+      } else if (error.message) {
+        toast.error(`Failed to submit review: ${error.message}`);
       } else {
         toast.error("Failed to submit review. Please try again.");
       }
