@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Mentor } from "@/types/mentor";
 import BadgeGrid from "@/components/badges/BadgeGrid";
 import { useBadges } from "@/hooks/useBadges";
-import ChatModal from "@/components/chat/modals/ChatModal";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 
@@ -21,8 +20,8 @@ const MentorCard = ({ mentor }: MentorCardProps) => {
   const { getUserBadges } = useBadges();
   const userBadges = getUserBadges(mentor.id);
   const { user } = useAuth();
-  const [isChatOpen, setIsChatOpen] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(false);
   const navigate = useNavigate();
 
   const getInitials = (name: string) => {
@@ -33,12 +32,17 @@ const MentorCard = ({ mentor }: MentorCardProps) => {
       .toUpperCase();
   };
 
-  const openChatModal = () => {
+  const handleConnect = () => {
     if (!user) {
       toast.error("Please sign in to connect with mentors");
       return;
     }
-    setIsChatOpen(true);
+    
+    setIsConnecting(true);
+    // Add a small delay to show loading state
+    setTimeout(() => {
+      navigate(`/messages?mentor=${mentor.id}`);
+    }, 100);
   };
 
   const handleCardClick = async () => {
@@ -184,10 +188,15 @@ const MentorCard = ({ mentor }: MentorCardProps) => {
                   className="text-xs px-2 py-1 h-7"
                   onClick={(e) => {
                     e.stopPropagation();
-                    openChatModal();
+                    handleConnect();
                   }}
+                  disabled={isConnecting}
                 >
-                  <MessageCircle className="h-3 w-3 mr-1" />
+                  {isConnecting ? (
+                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                  ) : (
+                    <MessageCircle className="h-3 w-3 mr-1" />
+                  )}
                   Connect
                 </Button>
               </div>
@@ -195,15 +204,6 @@ const MentorCard = ({ mentor }: MentorCardProps) => {
           </div>
         </CardContent>
       </Card>
-
-      {/* Chat Modal */}
-      {isChatOpen && (
-        <ChatModal 
-          isOpen={isChatOpen} 
-          onClose={() => setIsChatOpen(false)} 
-          mentor={mentor}
-        />
-      )}
     </div>
   );
 };

@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { Star, Linkedin, MessageCircle, ArrowLeft, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,6 @@ import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
 import { getMentorById } from "@/integrations/supabase/services/mentors";
 import { Mentor } from "@/types/mentor";
-import ChatModal from "@/components/chat/modals/ChatModal";
 import { useAuth } from "@/context/AuthContext";
 import { motion } from "framer-motion";
 
@@ -16,8 +15,9 @@ const MentorProfile = () => {
   const { id } = useParams<{ id: string }>();
   const [mentor, setMentor] = useState<Mentor | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(false);
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchMentor = async () => {
@@ -51,13 +51,19 @@ const MentorProfile = () => {
     fetchMentor();
   }, [id]);
 
-  const openChatModal = () => {
+  const handleConnect = () => {
     if (!user) {
       toast.error("Please sign in to connect with mentors");
       return;
     }
     
-    setIsChatOpen(true);
+    if (!mentor) return;
+    
+    setIsConnecting(true);
+    // Add a small delay to show loading state
+    setTimeout(() => {
+      navigate(`/messages?mentor=${mentor.id}`);
+    }, 100);
   };
 
   const isOwnProfile = user && mentor && user.id === mentor.id;
@@ -231,10 +237,15 @@ const MentorProfile = () => {
                     </Button>
                   ) : (
                     <Button 
-                      onClick={openChatModal}
+                      onClick={handleConnect}
                       className="flex items-center gap-2"
+                      disabled={isConnecting}
                     >
-                      <MessageCircle className="h-4 w-4" />
+                      {isConnecting ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <MessageCircle className="h-4 w-4" />
+                      )}
                       Connect with Mentor
                     </Button>
                   )}
@@ -266,14 +277,6 @@ const MentorProfile = () => {
           </motion.div>
         </div>
       </main>
-      
-      {isChatOpen && mentor && (
-        <ChatModal 
-          isOpen={isChatOpen} 
-          onClose={() => setIsChatOpen(false)} 
-          mentor={mentor}
-        />
-      )}
     </div>
   );
 };
