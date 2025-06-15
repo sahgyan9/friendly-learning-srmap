@@ -2,10 +2,12 @@
 import { supabase } from "@/integrations/supabase/client";
 import { Conversation } from "@/types/chat";
 
-// Get all conversations for a user using a simpler approach to avoid relationship conflicts
+// Get all conversations for a user with improved data fetching
 export async function getUserConversations(userId: string) {
   try {
-    // First, fetch conversations without complex joins
+    console.log('Fetching conversations for user:', userId);
+
+    // Fetch conversations without complex joins
     const { data: conversationsData, error: conversationsError } = await supabase
       .from('conversations')
       .select('*')
@@ -17,57 +19,29 @@ export async function getUserConversations(userId: string) {
       return { data: null, error: conversationsError };
     }
 
-    // Now fetch user data and mentor data separately for each conversation
+    if (!conversationsData || conversationsData.length === 0) {
+      console.log('No conversations found');
+      return { data: [], error: null };
+    }
+
+    console.log('Raw conversations data:', conversationsData);
+
+    // Process each conversation to get complete user data
     const conversationsWithDetails: Conversation[] = [];
     
-    for (const conv of conversationsData || []) {
-      // Fetch user1 data from users table
-      const { data: user1Data, error: user1Error } = await supabase
-        .from('users')
-        .select('id, name, profile_image, role')
-        .eq('id', conv.user1_id)
-        .maybeSingle();
+    for (const conv of conversationsData) {
+      console.log(`Processing conversation ${conv.id} between ${conv.user1_id} and ${conv.user2_id}`);
 
-      if (user1Error) {
-        console.error(`Error fetching user1 data for ${conv.user1_id}:`, user1Error);
-      }
+      // Fetch user data for both participants
+      const [user1Result, user2Result] = await Promise.all([
+        fetchUserData(conv.user1_id),
+        fetchUserData(conv.user2_id)
+      ]);
 
-      // Fetch user2 data from users table
-      const { data: user2Data, error: user2Error } = await supabase
-        .from('users')
-        .select('id, name, profile_image, role')
-        .eq('id', conv.user2_id)
-        .maybeSingle();
+      console.log('User1 data:', user1Result);
+      console.log('User2 data:', user2Result);
 
-      if (user2Error) {
-        console.error(`Error fetching user2 data for ${conv.user2_id}:`, user2Error);
-      }
-
-      // Check if user1 is a mentor and fetch mentor data
-      let user1MentorData = null;
-      if (user1Data) {
-        const { data: mentorData } = await supabase
-          .from('mentors')
-          .select('id, name, profile_image')
-          .eq('id', conv.user1_id)
-          .maybeSingle();
-        
-        user1MentorData = mentorData;
-      }
-
-      // Check if user2 is a mentor and fetch mentor data
-      let user2MentorData = null;
-      if (user2Data) {
-        const { data: mentorData } = await supabase
-          .from('mentors')
-          .select('id, name, profile_image')
-          .eq('id', conv.user2_id)
-          .maybeSingle();
-        
-        user2MentorData = mentorData;
-      }
-
-      // Fetch last message if it exists
+      // Fetch last message if exists
       let lastMessage = undefined;
       if (conv.last_message_id) {
         const { data: messageData } = await supabase
@@ -81,43 +55,72 @@ export async function getUserConversations(userId: string) {
         }
       }
 
-      // Prioritize mentor data over user data for display
-      const user1 = user1Data ? {
-        id: user1Data.id || conv.user1_id,
-        name: user1MentorData?.name?.trim() || user1Data.name?.trim() || 'Unknown User',
-        profile_image: user1MentorData?.profile_image || user1Data.profile_image || null,
-        role: user1Data.role || 'student'
-      } : {
-        id: conv.user1_id || '',
-        name: 'Unknown User',
-        profile_image: null,
-        role: 'student'
-      };
-
-      const user2 = user2Data ? {
-        id: user2Data.id || conv.user2_id,
-        name: user2MentorData?.name?.trim() || user2Data.name?.trim() || 'Unknown User',
-        profile_image: user2MentorData?.profile_image || user2Data.profile_image || null,
-        role: user2Data.role || 'student'
-      } : {
-        id: conv.user2_id || '',
-        name: 'Unknown User',
-        profile_image: null,
-        role: 'student'
-      };
-
       conversationsWithDetails.push({
         ...conv,
-        user1,
-        user2,
+        user1: user1Result,
+        user2: user2Result,
         last_message: lastMessage
       });
     }
 
+    console.log('Final conversations with details:', conversationsWithDetails);
     return { data: conversationsWithDetails, error: null };
   } catch (err) {
     console.error('Exception in getUserConversations:', err);
     return { data: null, error: err as Error };
+  }
+}
+
+// Enhanced function to fetch complete user data prioritizing mentor data
+async function fetchUserData(userId: string) {
+  try {
+    console.log(`Fetching complete data for user ${userId}`);
+
+    // First, get user data from users table
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('id, name, profile_image, role')
+      .eq('id', userId)
+      .maybeSingle();
+
+    if (userError) {
+      console.error(`Error fetching user data for ${userId}:`, userError);
+    }
+
+    console.log(`User data for ${userId}:`, userData);
+
+    // Then, check if this user is also a mentor
+    const { data: mentorData, error: mentorError } = await supabase
+      .from('mentors')
+      .select('id, name, profile_image')
+      .eq('id', userId)
+      .maybeSingle();
+
+    if (mentorError) {
+      console.log(`No mentor data found for ${userId} (this is normal if user is not a mentor)`);
+    }
+
+    console.log(`Mentor data for ${userId}:`, mentorData);
+
+    // Prioritize mentor data over user data, with proper fallbacks
+    const finalUserData = {
+      id: userId,
+      name: (mentorData?.name?.trim() || userData?.name?.trim() || 'Unknown User'),
+      profile_image: mentorData?.profile_image || userData?.profile_image || null,
+      role: userData?.role || 'student'
+    };
+
+    console.log(`Final processed data for ${userId}:`, finalUserData);
+    return finalUserData;
+
+  } catch (err) {
+    console.error(`Exception fetching user data for ${userId}:`, err);
+    return {
+      id: userId,
+      name: 'Unknown User',
+      profile_image: null,
+      role: 'student'
+    };
   }
 }
 

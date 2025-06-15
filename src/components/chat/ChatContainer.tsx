@@ -54,23 +54,16 @@ const ChatContainer = ({
 
   // Function to get sender name based on sender ID with improved caching
   const getSenderName = useCallback((senderId: string) => {
-    // If it's the current user, return "You"
     if (senderId === currentUserId) return "You";
 
-    // Create a map of users for efficient lookup
-    const usersMap = new Map();
-    
-    // First check messages for sender data
+    // Check messages for sender data first
     for (const msg of messages) {
       if (msg.sender && msg.sender.name && msg.sender_id === senderId) {
         return msg.sender.name;
       }
-      if (msg.sender) {
-        usersMap.set(msg.sender_id, msg.sender);
-      }
     }
 
-    // Then check all users in the current conversation
+    // Check current conversation users
     if (currentConversation) {
       if (currentConversation.user1_id === senderId && currentConversation.user1?.name) {
         return currentConversation.user1.name;
@@ -80,26 +73,26 @@ const ChatContainer = ({
       }
     }
 
-    // If we still don't have the sender, check all conversations
+    // Check all conversations as fallback
     for (const conv of conversations) {
-      if (senderId === conv.user1_id && conv.user1 && conv.user1.name) {
+      if (senderId === conv.user1_id && conv.user1?.name) {
         return conv.user1.name;
       }
-      if (senderId === conv.user2_id && conv.user2 && conv.user2.name) {
+      if (senderId === conv.user2_id && conv.user2?.name) {
         return conv.user2.name;
       }
     }
 
     console.warn(`Could not find name for user ID: ${senderId}`);
-    return "User"; // Better fallback than "Contact"
+    return "User";
   }, [currentConversation, conversations, currentUserId, messages]);
 
   return (
-    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-sm h-[calc(100vh-200px)] flex">
+    <div className="bg-background border border-border rounded-xl shadow-sm h-[calc(100vh-200px)] flex overflow-hidden">
       {/* Conversations list */}
       {showConversationList && (
-        <div className={`${showChatArea && window.innerWidth >= 768 ? 'w-1/3' : 'w-full'} border-r border-gray-200 dark:border-gray-800 flex flex-col`}>
-          <div className="p-4 border-b border-gray-200 dark:border-gray-800">
+        <div className={`${showChatArea && window.innerWidth >= 768 ? 'w-80' : 'w-full'} border-r border-border flex flex-col bg-background`}>
+          <div className="px-4 py-4 border-b border-border">
             <SearchInput searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
           </div>
 
@@ -127,9 +120,9 @@ const ChatContainer = ({
 
       {/* Chat area */}
       {showChatArea ? (
-        <div className={`${showConversationList && window.innerWidth >= 768 ? 'w-2/3' : 'w-full'} flex flex-col`}>
+        <div className={`${showConversationList && window.innerWidth >= 768 ? 'flex-1' : 'w-full'} flex flex-col bg-background`}>
           {/* Chat header with back button on mobile */}
-          <div className="flex items-center border-b border-gray-200 dark:border-gray-800">
+          <div className="flex items-center">
             {window.innerWidth < 768 && (
               <Button
                 variant="ghost"
@@ -149,7 +142,7 @@ const ChatContainer = ({
           </div>
 
           {/* Messages area */}
-          <ScrollArea className="flex-1 p-4">
+          <ScrollArea className="flex-1">
             <MessageList
               messages={messages}
               loading={isLoadingMessages}
@@ -159,19 +152,17 @@ const ChatContainer = ({
           </ScrollArea>
 
           {/* Message input */}
-          <div className="p-4 border-t border-gray-200 dark:border-gray-800">
-            <MessageInput
-              onSendMessage={handleSendMessage}
-              disabled={isLoadingMessages}
-              sending={isSending}
-            />
-          </div>
+          <MessageInput
+            onSendMessage={handleSendMessage}
+            disabled={isLoadingMessages}
+            sending={isSending}
+          />
         </div>
       ) : (
-        <div className="hidden md:flex md:w-2/3 items-center justify-center">
+        <div className="hidden md:flex md:flex-1 items-center justify-center bg-muted/30">
           <div className="text-center p-6">
-            <h3 className="text-xl font-medium mb-2">Select a conversation</h3>
-            <p className="text-muted-foreground">
+            <h3 className="text-lg font-medium mb-2 text-foreground">Select a conversation</h3>
+            <p className="text-muted-foreground text-sm">
               Choose a conversation from the sidebar to start chatting
             </p>
           </div>
