@@ -165,6 +165,51 @@ export type Database = {
         }
         Relationships: []
       }
+      mentor_reviews: {
+        Row: {
+          created_at: string
+          id: string
+          mentor_id: string
+          rating: number
+          review_text: string | null
+          reviewer_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          mentor_id: string
+          rating: number
+          review_text?: string | null
+          reviewer_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          mentor_id?: string
+          rating?: number
+          review_text?: string | null
+          reviewer_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mentor_reviews_mentor_id_fkey"
+            columns: ["mentor_id"]
+            isOneToOne: false
+            referencedRelation: "mentors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mentor_reviews_reviewer_id_fkey"
+            columns: ["reviewer_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mentor_verifications: {
         Row: {
           application_data: Json | null
@@ -555,6 +600,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      can_user_rate_mentor: {
+        Args: { user_id: string; mentor_id: string }
+        Returns: boolean
+      }
       create_conversation: {
         Args: { user1_id: string; user2_id: string }
         Returns: {
@@ -594,6 +643,17 @@ export type Database = {
           receiver_id: string
           sender_id: string
           sent_at: string | null
+        }[]
+      }
+      get_mentor_reviews: {
+        Args: { mentor_id: string }
+        Returns: {
+          id: string
+          rating: number
+          review_text: string
+          created_at: string
+          reviewer_name: string
+          reviewer_image: string
         }[]
       }
       mark_messages_as_read: {
@@ -641,6 +701,10 @@ export type Database = {
       }
       update_conversation: {
         Args: { conversation_id: string; message_id: string }
+        Returns: undefined
+      }
+      update_mentor_rating: {
+        Args: { mentor_id: string }
         Returns: undefined
       }
       update_typing_indicator: {

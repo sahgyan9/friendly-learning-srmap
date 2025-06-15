@@ -10,14 +10,20 @@ import { getMentorById } from "@/integrations/supabase/services/mentors";
 import { Mentor } from "@/types/mentor";
 import { useAuth } from "@/context/AuthContext";
 import { motion } from "framer-motion";
+import RatingModal from "@/components/rating/RatingModal";
+import ReviewsList from "@/components/rating/ReviewsList";
+import { useRating } from "@/hooks/useRating";
 
 const MentorProfile = () => {
   const { id } = useParams<{ id: string }>();
   const [mentor, setMentor] = useState<Mentor | null>(null);
   const [loading, setLoading] = useState(true);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [showRatingModal, setShowRatingModal] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
+  
+  const { canRate, isLoading: ratingLoading, refreshRatingStatus } = useRating(id || "");
 
   useEffect(() => {
     const fetchMentor = async () => {
@@ -64,6 +70,16 @@ const MentorProfile = () => {
     setTimeout(() => {
       navigate(`/messages?mentor=${mentor.id}`);
     }, 100);
+  };
+
+  const handleRatingSubmitted = () => {
+    refreshRatingStatus();
+    // Refresh mentor data to get updated rating
+    if (id) {
+      getMentorById(id).then(({ data }) => {
+        if (data) setMentor(data);
+      });
+    }
   };
 
   const isOwnProfile = user && mentor && user.id === mentor.id;
@@ -236,18 +252,31 @@ const MentorProfile = () => {
                       </Link>
                     </Button>
                   ) : (
-                    <Button 
-                      onClick={handleConnect}
-                      className="flex items-center gap-2"
-                      disabled={isConnecting}
-                    >
-                      {isConnecting ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <MessageCircle className="h-4 w-4" />
+                    <>
+                      <Button 
+                        onClick={handleConnect}
+                        className="flex items-center gap-2"
+                        disabled={isConnecting}
+                      >
+                        {isConnecting ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <MessageCircle className="h-4 w-4" />
+                        )}
+                        Connect with Mentor
+                      </Button>
+                      
+                      {canRate && !ratingLoading && (
+                        <Button 
+                          variant="outline"
+                          onClick={() => setShowRatingModal(true)}
+                          className="flex items-center gap-2"
+                        >
+                          <Star className="h-4 w-4" />
+                          Rate Mentor
+                        </Button>
                       )}
-                      Connect with Mentor
-                    </Button>
+                    </>
                   )}
                   
                   {mentor.linkedin_url && (
@@ -274,9 +303,31 @@ const MentorProfile = () => {
                 {mentor.bio || "This mentor hasn't added a bio yet."}
               </p>
             </motion.div>
+
+            {/* Reviews Section */}
+            <motion.div 
+              className="bg-card p-6 rounded-lg shadow-sm border border-border"
+              variants={itemVariants}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.4 }}
+            >
+              <h2 className="text-xl font-semibold mb-6 text-foreground">Reviews</h2>
+              <ReviewsList mentorId={mentor.id} />
+            </motion.div>
           </motion.div>
         </div>
       </main>
+
+      {/* Rating Modal */}
+      <RatingModal
+        isOpen={showRatingModal}
+        onClose={() => setShowRatingModal(false)}
+        mentorId={mentor.id}
+        mentorName={mentor.name}
+        mentorImage={mentor.profile_image}
+        onRatingSubmitted={handleRatingSubmitted}
+      />
     </div>
   );
 };
