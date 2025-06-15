@@ -14,22 +14,22 @@ export type Database = {
           id: string
           last_message_id: string | null
           last_updated: string | null
-          user1_id: string | null
-          user2_id: string | null
+          user1_id: string
+          user2_id: string
         }
         Insert: {
           id?: string
           last_message_id?: string | null
           last_updated?: string | null
-          user1_id?: string | null
-          user2_id?: string | null
+          user1_id: string
+          user2_id: string
         }
         Update: {
           id?: string
           last_message_id?: string | null
           last_updated?: string | null
-          user1_id?: string | null
-          user2_id?: string | null
+          user1_id?: string
+          user2_id?: string
         }
         Relationships: [
           {
@@ -139,29 +139,29 @@ export type Database = {
       messages: {
         Row: {
           content: string
-          conversation_id: string | null
+          conversation_id: string
           id: string
           is_read: boolean | null
-          receiver_id: string | null
-          sender_id: string | null
+          receiver_id: string
+          sender_id: string
           sent_at: string | null
         }
         Insert: {
           content: string
-          conversation_id?: string | null
+          conversation_id: string
           id?: string
           is_read?: boolean | null
-          receiver_id?: string | null
-          sender_id?: string | null
+          receiver_id: string
+          sender_id: string
           sent_at?: string | null
         }
         Update: {
           content?: string
-          conversation_id?: string | null
+          conversation_id?: string
           id?: string
           is_read?: boolean | null
-          receiver_id?: string | null
-          sender_id?: string | null
+          receiver_id?: string
+          sender_id?: string
           sent_at?: string | null
         }
         Relationships: [
@@ -253,9 +253,70 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_conversation: {
+        Args: { user1_id: string; user2_id: string }
+        Returns: {
+          id: string
+          last_message_id: string | null
+          last_updated: string | null
+          user1_id: string
+          user2_id: string
+        }
+      }
       delete_all_messages: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      get_conversation: {
+        Args: { user1: string; user2: string }
+        Returns: {
+          id: string
+          last_message_id: string | null
+          last_updated: string | null
+          user1_id: string
+          user2_id: string
+        }[]
+      }
+      get_conversation_messages: {
+        Args: { conversation_id: string }
+        Returns: {
+          content: string
+          conversation_id: string
+          id: string
+          is_read: boolean | null
+          receiver_id: string
+          sender_id: string
+          sent_at: string | null
+        }[]
+      }
+      mark_messages_as_read: {
+        Args: { conversation_id: string; user_id: string }
+        Returns: {
+          content: string
+          conversation_id: string
+          id: string
+          is_read: boolean | null
+          receiver_id: string
+          sender_id: string
+          sent_at: string | null
+        }[]
+      }
+      send_message: {
+        Args: {
+          conversation_id: string
+          sender_id: string
+          receiver_id: string
+          content: string
+        }
+        Returns: {
+          content: string
+          conversation_id: string
+          id: string
+          is_read: boolean | null
+          receiver_id: string
+          sender_id: string
+          sent_at: string | null
+        }
       }
       update_conversation: {
         Args: { conversation_id: string; message_id: string }

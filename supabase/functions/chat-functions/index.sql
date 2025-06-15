@@ -28,7 +28,8 @@ LANGUAGE sql
 SECURITY DEFINER
 AS $$
   SELECT * FROM public.messages
-  WHERE conversation_id = get_conversation_messages.conversation_id;
+  WHERE conversation_id = get_conversation_messages.conversation_id
+  ORDER BY sent_at ASC;
 $$;
 
 -- RPC function to send a message
@@ -70,11 +71,9 @@ RETURNS SETOF public.conversations
 LANGUAGE sql
 SECURITY DEFINER
 AS $$
-  SELECT c.*, m.content as last_message 
-  FROM public.conversations c
-  LEFT JOIN public.messages m ON c.last_message_id = m.id
-  WHERE c.user1_id = user_id OR c.user2_id = user_id
-  ORDER BY c.last_updated DESC;
+  SELECT * FROM public.conversations
+  WHERE user1_id = user_id OR user2_id = user_id
+  ORDER BY last_updated DESC;
 $$;
 
 -- RPC function to mark messages as read
