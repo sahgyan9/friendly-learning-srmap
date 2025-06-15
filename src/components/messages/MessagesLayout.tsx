@@ -2,7 +2,6 @@
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import ChatContainer from "@/components/chat/ChatContainer";
-import ChatFooter from "@/components/chat/ChatFooter";
 import { useAuth } from "@/context/AuthContext";
 import { useMessages } from "@/hooks/use-messages";
 import { useMentorConnection } from "@/hooks/use-mentor-connection";
@@ -121,8 +120,6 @@ const MessagesLayout = () => {
         hasUnreadMessages={hasUnreadMessages}
         handleSendMessage={sendMessage}
       />
-      
-      <ChatFooter />
     </>
   );
 };
