@@ -6,7 +6,6 @@ import MessageList from "./MessageList";
 import ChatHeader from "./ChatHeader";
 import MessageInput from "./MessageInput";
 import SearchInput from "./SearchInput";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 
@@ -96,7 +95,7 @@ const ChatContainer = ({
             <SearchInput searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
           </div>
 
-          <ScrollArea className="flex-1">
+          <div className="flex-1 overflow-y-auto">
             <ConversationList
               conversations={conversations}
               filteredConversations={filteredConversations}
@@ -114,7 +113,7 @@ const ChatContainer = ({
               hasUnreadMessages={hasUnreadMessages}
               currentUserId={currentUserId}
             />
-          </ScrollArea>
+          </div>
         </div>
       )}
 
@@ -141,8 +140,8 @@ const ChatContainer = ({
             </div>
           </div>
 
-          {/* Messages area */}
-          <ScrollArea className="flex-1">
+          {/* Messages area with controlled height */}
+          <div className="flex-1 overflow-hidden">
             <MessageList
               messages={messages}
               loading={isLoadingMessages}
@@ -150,7 +149,7 @@ const ChatContainer = ({
               conversationId={activeChat}
               getSenderName={getSenderName}
             />
-          </ScrollArea>
+          </div>
 
           {/* Message input */}
           <MessageInput

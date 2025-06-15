@@ -82,7 +82,7 @@ const ChatModal = ({
         </DialogHeader>
 
         {error ? (
-          <ChatModalError error={error} />
+          <ChatModalError error={error.message || "An error occurred"} />
         ) : (
           <ChatModalContent
             messages={messages}

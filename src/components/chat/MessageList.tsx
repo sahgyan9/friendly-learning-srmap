@@ -1,5 +1,5 @@
 
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { Message } from "@/types/chat";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -23,14 +23,39 @@ const MessageList = ({
   getSenderName 
 }: MessageListProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [userHasScrolled, setUserHasScrolled] = useState(false);
+  const [prevMessageCount, setPrevMessageCount] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
   const { typingUsers } = useTypingIndicator(conversationId, currentUserId);
 
+  // Handle scrolling behavior
   useEffect(() => {
-    scrollToBottom();
-  }, [messages, typingUsers]);
+    const shouldScroll = messages.length > prevMessageCount && !userHasScrolled;
+    
+    if (shouldScroll) {
+      scrollToBottom();
+    }
+    
+    setPrevMessageCount(messages.length);
+  }, [messages, userHasScrolled, prevMessageCount]);
+
+  // Auto-scroll when typing indicator appears
+  useEffect(() => {
+    if (typingUsers.length > 0 && !userHasScrolled) {
+      scrollToBottom();
+    }
+  }, [typingUsers, userHasScrolled]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  // Track user scroll behavior
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const container = e.currentTarget;
+    const isAtBottom = container.scrollHeight - container.scrollTop <= container.clientHeight + 50;
+    
+    setUserHasScrolled(!isAtBottom);
   };
 
   const formatTime = (timestamp: string) => {
@@ -103,7 +128,11 @@ const MessageList = ({
   }
 
   return (
-    <div className="flex flex-col gap-4 p-4">
+    <div 
+      ref={containerRef}
+      className="flex flex-col gap-4 p-4 overflow-y-auto"
+      onScroll={handleScroll}
+    >
       {messages.map((msg, index) => {
         const isMine = msg.sender_id === currentUserId;
         const senderName = getSenderDisplayName(msg);
