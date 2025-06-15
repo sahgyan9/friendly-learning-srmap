@@ -263,6 +263,7 @@ const UserProfile = () => {
                     value={formData.name}
                     onChange={handleChange}
                     required
+                    className="bg-background text-foreground border-border"
                   />
                 </div>
                 
@@ -273,7 +274,7 @@ const UserProfile = () => {
                     name="email"
                     value={formData.email}
                     disabled
-                    className="bg-muted"
+                    className="bg-muted text-muted-foreground border-border"
                   />
                 </div>
               </div>
@@ -282,7 +283,7 @@ const UserProfile = () => {
               {isMentorProfile && (
                 <>
                   <div>
-                    <Label htmlFor="bio" className="text-foreground">Bio</Label>
+                    <Label htmlFor="bio" className="text-foreground">About</Label>
                     <Textarea
                       id="bio"
                       name="bio"
@@ -290,7 +291,7 @@ const UserProfile = () => {
                       onChange={handleChange}
                       rows={4}
                       placeholder="Tell students about yourself, your experience, and how you can help them"
-                      className="bg-background text-foreground"
+                      className="bg-background text-foreground border-border placeholder:text-muted-foreground"
                     />
                   </div>
                   
@@ -302,6 +303,7 @@ const UserProfile = () => {
                         name="department"
                         value={formData.department}
                         onChange={handleChange}
+                        className="bg-background text-foreground border-border"
                       />
                     </div>
                     
@@ -313,6 +315,7 @@ const UserProfile = () => {
                         value={formData.skills}
                         onChange={handleChange}
                         placeholder="Python, Data Structures, Machine Learning"
+                        className="bg-background text-foreground border-border placeholder:text-muted-foreground"
                       />
                     </div>
                   </div>
@@ -325,6 +328,7 @@ const UserProfile = () => {
                       value={formData.linkedin_url}
                       onChange={handleChange}
                       placeholder="https://linkedin.com/in/yourprofile"
+                      className="bg-background text-foreground border-border placeholder:text-muted-foreground"
                     />
                   </div>
                 </>
