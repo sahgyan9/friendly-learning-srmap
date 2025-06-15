@@ -34,18 +34,21 @@ export async function searchMentors(query: string) {
   const lowerQuery = query.toLowerCase().trim();
   
   try {
-    // Search in name, department, and bio
+    console.log("Searching for:", lowerQuery);
+    
+    // Search in name, department, and bio with proper formatting
     const { data, error } = await supabase
       .from('mentors')
       .select('*')
-      .or(`
-        name.ilike.%${lowerQuery}%,
-        department.ilike.%${lowerQuery}%,
-        bio.ilike.%${lowerQuery}%
-      `)
+      .or(`name.ilike.%${lowerQuery}%,department.ilike.%${lowerQuery}%,bio.ilike.%${lowerQuery}%`)
       .order('rating', { ascending: false });
     
-    if (error) throw error;
+    if (error) {
+      console.error("Supabase search error:", error);
+      throw error;
+    }
+    
+    console.log("SQL search results:", data?.length || 0, "mentors found");
     
     // For skills array, we need to filter in JS since it's complex in SQL
     const mentorsWithMatchingSkills = data?.filter(mentor => 
@@ -54,6 +57,8 @@ export async function searchMentors(query: string) {
       )
     ) || [];
     
+    console.log("Skills search results:", mentorsWithMatchingSkills.length, "mentors found");
+    
     // Merge SQL results with JS filtered results for skills
     const mergedResults = [...(data || []), ...mentorsWithMatchingSkills];
     
@@ -61,6 +66,8 @@ export async function searchMentors(query: string) {
     const uniqueResults = Array.from(
       new Map(mergedResults.map(item => [item.id, item])).values()
     );
+    
+    console.log("Final search results:", uniqueResults.length, "unique mentors");
     
     return { data: uniqueResults, error: null };
   } catch (err) {
