@@ -1,152 +1,179 @@
 
-import { MessageCircle, Linkedin } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Mentor } from "@/types/mentor";
-import { Link } from "react-router-dom";
 import { useState } from "react";
-import ChatModal from "@/components/chat/modals/ChatModal";
+import { Link } from "react-router-dom";
+import { Star, MessageCircle, ExternalLink } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/context/AuthContext";
-import { toast } from "sonner";
+import ChatModal from "@/components/chat/modals/ChatModal";
+import BadgeCard from "@/components/badges/BadgeCard";
+import { useBadges } from "@/hooks/useBadges";
+import type { Mentor } from "@/types/mentor";
 
 interface MentorCardProps {
   mentor: Mentor;
 }
 
 const MentorCard = ({ mentor }: MentorCardProps) => {
-  const { id, name, department, skills, rating, profile_image, linkedin_url } = mentor;
-  const [isChatOpen, setIsChatOpen] = useState(false);
   const { user } = useAuth();
+  const [showChatModal, setShowChatModal] = useState(false);
+  const { userBadges, badgeTypes } = useBadges(mentor.id);
 
-  const handleConnectClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  const handleConnectClick = () => {
     if (!user) {
-      toast.error("Please sign in to connect with mentors");
+      window.location.href = "/signin";
       return;
     }
-    
-    // Delay slightly to prevent any race conditions
-    setTimeout(() => {
-      setIsChatOpen(true);
-    }, 100);
+    setShowChatModal(true);
   };
 
-  const handleLinkedInClick = (e: React.MouseEvent) => {
-    if (!linkedin_url) {
-      e.preventDefault();
-      toast.error("LinkedIn profile not available for this mentor");
-      return;
-    }
-  };
-
-  const handleCloseChatModal = () => {
-    setIsChatOpen(false);
-  };
+  // Get top 3 badges to display
+  const topBadges = userBadges.slice(0, 3);
+  const badgeTypesMap = new Map(badgeTypes.map(bt => [bt.id, bt]));
 
   return (
-    <div className="bg-card rounded-xl p-6 shadow-sm border border-border">
-      {/* Profile Image and Details */}
-      <div className="flex items-start gap-4">
-        <img
-          src={profile_image}
-          alt={name}
-          className="w-16 h-16 rounded-full object-cover border border-border"
-        />
-        
-        <div className="flex-1">
-          {/* Name and LinkedIn */}
-          <div className="flex justify-between items-start">
-            <div>
-              <h3 className="text-lg font-semibold text-card-foreground">{name}</h3>
-              <p className="text-sm text-muted-foreground">{department}</p>
+    <>
+      <Card className="h-full hover:shadow-lg transition-shadow duration-300 overflow-hidden group">
+        <CardContent className="p-6">
+          <div className="flex flex-col items-center text-center space-y-4">
+            {/* Profile Image */}
+            <Avatar className="w-20 h-20 border-4 border-gray-100 dark:border-gray-700">
+              <AvatarImage src={mentor.profile_image} alt={mentor.name} />
+              <AvatarFallback className="bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 text-lg font-semibold">
+                {getInitials(mentor.name)}
+              </AvatarFallback>
+            </Avatar>
+
+            {/* Name and Department */}
+            <div className="space-y-1">
+              <h3 className="font-semibold text-lg text-gray-900 dark:text-gray-100">
+                {mentor.name}
+              </h3>
+              <p className="text-blue-600 dark:text-blue-400 font-medium">
+                {mentor.department}
+              </p>
             </div>
-            {linkedin_url ? (
-              <a 
-                href={linkedin_url} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                onClick={handleLinkedInClick}
-                className="hover:text-blue-700 transition-colors"
-                aria-label={`${name}'s LinkedIn profile`}
+
+            {/* Rating */}
+            <div className="flex items-center space-x-1">
+              <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+              <span className="font-medium text-gray-900 dark:text-gray-100">
+                {mentor.rating.toFixed(1)}
+              </span>
+              <span className="text-gray-500 dark:text-gray-400 text-sm">
+                ({mentor.review_count} reviews)
+              </span>
+            </div>
+
+            {/* Bio */}
+            {mentor.bio && (
+              <p className="text-gray-600 dark:text-gray-400 text-sm line-clamp-2 leading-relaxed">
+                {mentor.bio}
+              </p>
+            )}
+
+            {/* Skills */}
+            <div className="flex flex-wrap gap-1 justify-center max-w-full">
+              {mentor.skills.slice(0, 4).map((skill, index) => (
+                <Badge 
+                  key={index} 
+                  variant="secondary" 
+                  className="text-xs bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300"
+                >
+                  {skill}
+                </Badge>
+              ))}
+              {mentor.skills.length > 4 && (
+                <Badge variant="outline" className="text-xs text-gray-500 dark:text-gray-400">
+                  +{mentor.skills.length - 4} more
+                </Badge>
+              )}
+            </div>
+
+            {/* Badges */}
+            {topBadges.length > 0 && (
+              <div className="flex gap-2 justify-center">
+                {topBadges.map((userBadge) => {
+                  const badgeType = badgeTypesMap.get(userBadge.badge_type_id);
+                  if (!badgeType) return null;
+                  
+                  return (
+                    <BadgeCard
+                      key={userBadge.id}
+                      badge={badgeType}
+                      awarded={true}
+                      awardedDate={userBadge.awarded_at}
+                      size="sm"
+                      showDescription={true}
+                    />
+                  );
+                })}
+                {userBadges.length > 3 && (
+                  <div className="flex items-center justify-center w-8 h-8 bg-gray-100 dark:bg-gray-800 rounded-lg text-xs font-medium text-gray-600 dark:text-gray-400">
+                    +{userBadges.length - 3}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="flex space-x-2 w-full">
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1"
+                asChild
               >
-                <Linkedin className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                <Link to={`/mentor/${mentor.id}`}>
+                  <ExternalLink className="w-4 h-4 mr-2" />
+                  View Profile
+                </Link>
+              </Button>
+              <Button
+                size="sm"
+                className="flex-1 bg-blue-600 hover:bg-blue-700"
+                onClick={handleConnectClick}
+              >
+                <MessageCircle className="w-4 h-4 mr-2" />
+                Connect
+              </Button>
+            </div>
+
+            {/* LinkedIn Link */}
+            {mentor.linkedin_url && (
+              <a
+                href={mentor.linkedin_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 dark:text-blue-400 hover:underline text-sm"
+              >
+                LinkedIn Profile
               </a>
-            ) : (
-              <Linkedin className="h-5 w-5 text-blue-600 dark:text-blue-400 opacity-50" />
             )}
           </div>
-          
-          {/* Rating */}
-          <div className="flex items-center mt-1 mb-4">
-            <div className="flex items-center gap-1 bg-amber-50 dark:bg-amber-950/30 px-2 py-0.5 rounded-full">
-              <svg 
-                xmlns="http://www.w3.org/2000/svg" 
-                className="h-4 w-4 text-amber-400 fill-amber-400"
-                viewBox="0 0 24 24"
-              >
-                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-              </svg>
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{rating.toFixed(1)}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      {/* Skills */}
-      <div className="mt-4 mb-5">
-        <p className="text-sm font-medium mb-2 text-card-foreground">Skills:</p>
-        <div className="flex flex-wrap gap-2">
-          {skills.slice(0, 3).map((skill) => (
-            <Badge
-              key={skill}
-              variant="secondary"
-              className="font-normal text-sm py-0.5"
-            >
-              {skill}
-            </Badge>
-          ))}
-          {skills.length > 3 && (
-            <Badge
-              variant="outline"
-              className="font-normal text-sm py-0.5"
-            >
-              +{skills.length - 3} more
-            </Badge>
-          )}
-        </div>
-      </div>
-      
-      {/* Action Buttons */}
-      <div className="flex gap-2 mt-4">
-        <Button 
-          variant="outline" 
-          className="flex-1"
-          asChild
-        >
-          <Link to={`/mentor/${id}`}>
-            View Profile
-          </Link>
-        </Button>
-        <Button 
-          variant="default" 
-          className="flex-1 flex items-center justify-center gap-2"
-          onClick={handleConnectClick}
-        >
-          <MessageCircle className="h-4 w-4" />
-          Connect
-        </Button>
-      </div>
+        </CardContent>
+      </Card>
 
-      {/* Chat Modal - Only render when needed */}
-      {isChatOpen && (
-        <ChatModal 
-          isOpen={isChatOpen} 
-          onClose={handleCloseChatModal} 
-          mentor={mentor}
+      {/* Chat Modal */}
+      {showChatModal && (
+        <ChatModal
+          mentorId={mentor.id}
+          mentorName={mentor.name}
+          onClose={() => setShowChatModal(false)}
         />
       )}
-    </div>
+    </>
   );
 };
 

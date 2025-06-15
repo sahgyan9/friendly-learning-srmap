@@ -9,6 +9,74 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      ai_conversations: {
+        Row: {
+          context: Json | null
+          created_at: string | null
+          id: string
+          message: string
+          response: string
+          user_id: string | null
+        }
+        Insert: {
+          context?: Json | null
+          created_at?: string | null
+          id?: string
+          message: string
+          response: string
+          user_id?: string | null
+        }
+        Update: {
+          context?: Json | null
+          created_at?: string | null
+          id?: string
+          message?: string
+          response?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_conversations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      badge_types: {
+        Row: {
+          category: string | null
+          color: string | null
+          created_at: string | null
+          description: string | null
+          icon: string | null
+          id: string
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          category?: string | null
+          color?: string | null
+          created_at?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string | null
+          color?: string | null
+          created_at?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       conversations: {
         Row: {
           id: string
@@ -97,6 +165,54 @@ export type Database = {
         }
         Relationships: []
       }
+      mentor_verifications: {
+        Row: {
+          application_data: Json | null
+          id: string
+          rejection_reason: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string | null
+          submitted_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          application_data?: Json | null
+          id?: string
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string | null
+          submitted_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          application_data?: Json | null
+          id?: string
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string | null
+          submitted_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mentor_verifications_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mentor_verifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mentors: {
         Row: {
           bio: string | null
@@ -140,8 +256,12 @@ export type Database = {
         Row: {
           content: string
           conversation_id: string
+          file_name: string | null
+          file_size: number | null
+          file_url: string | null
           id: string
           is_read: boolean | null
+          message_type: string | null
           receiver_id: string
           sender_id: string
           sent_at: string | null
@@ -149,8 +269,12 @@ export type Database = {
         Insert: {
           content: string
           conversation_id: string
+          file_name?: string | null
+          file_size?: number | null
+          file_url?: string | null
           id?: string
           is_read?: boolean | null
+          message_type?: string | null
           receiver_id: string
           sender_id: string
           sent_at?: string | null
@@ -158,8 +282,12 @@ export type Database = {
         Update: {
           content?: string
           conversation_id?: string
+          file_name?: string | null
+          file_size?: number | null
+          file_url?: string | null
           id?: string
           is_read?: boolean | null
+          message_type?: string | null
           receiver_id?: string
           sender_id?: string
           sent_at?: string | null
@@ -182,6 +310,47 @@ export type Database = {
           {
             foreignKeyName: "messages_sender_id_fkey"
             columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          content: string | null
+          created_at: string | null
+          data: Json | null
+          id: string
+          read: boolean | null
+          title: string
+          type: string | null
+          user_id: string | null
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string | null
+          data?: Json | null
+          id?: string
+          read?: boolean | null
+          title: string
+          type?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          content?: string | null
+          created_at?: string | null
+          data?: Json | null
+          id?: string
+          read?: boolean | null
+          title?: string
+          type?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
@@ -218,33 +387,103 @@ export type Database = {
         }
         Relationships: []
       }
+      user_badges: {
+        Row: {
+          awarded_at: string | null
+          awarded_by: string | null
+          badge_type_id: string | null
+          id: string
+          notes: string | null
+          user_id: string | null
+        }
+        Insert: {
+          awarded_at?: string | null
+          awarded_by?: string | null
+          badge_type_id?: string | null
+          id?: string
+          notes?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          awarded_at?: string | null
+          awarded_by?: string | null
+          badge_type_id?: string | null
+          id?: string
+          notes?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_badges_awarded_by_fkey"
+            columns: ["awarded_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_badges_badge_type_id_fkey"
+            columns: ["badge_type_id"]
+            isOneToOne: false
+            referencedRelation: "badge_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_badges_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       users: {
         Row: {
+          bio: string | null
           created_at: string | null
+          department: string | null
           email: string
           id: string
           is_admin: boolean
+          is_available: boolean | null
+          linkedin_url: string | null
           name: string
+          phone: string | null
           profile_image: string | null
           role: string
+          skills: string[] | null
+          verification_status: string | null
         }
         Insert: {
+          bio?: string | null
           created_at?: string | null
+          department?: string | null
           email: string
           id?: string
           is_admin?: boolean
+          is_available?: boolean | null
+          linkedin_url?: string | null
           name: string
+          phone?: string | null
           profile_image?: string | null
           role: string
+          skills?: string[] | null
+          verification_status?: string | null
         }
         Update: {
+          bio?: string | null
           created_at?: string | null
+          department?: string | null
           email?: string
           id?: string
           is_admin?: boolean
+          is_available?: boolean | null
+          linkedin_url?: string | null
           name?: string
+          phone?: string | null
           profile_image?: string | null
           role?: string
+          skills?: string[] | null
+          verification_status?: string | null
         }
         Relationships: []
       }
@@ -253,6 +492,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      auto_award_performance_badges: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       create_conversation: {
         Args: { user1_id: string; user2_id: string }
         Returns: {
@@ -282,8 +525,12 @@ export type Database = {
         Returns: {
           content: string
           conversation_id: string
+          file_name: string | null
+          file_size: number | null
+          file_url: string | null
           id: string
           is_read: boolean | null
+          message_type: string | null
           receiver_id: string
           sender_id: string
           sent_at: string | null
@@ -294,8 +541,12 @@ export type Database = {
         Returns: {
           content: string
           conversation_id: string
+          file_name: string | null
+          file_size: number | null
+          file_url: string | null
           id: string
           is_read: boolean | null
+          message_type: string | null
           receiver_id: string
           sender_id: string
           sent_at: string | null
@@ -311,8 +562,12 @@ export type Database = {
         Returns: {
           content: string
           conversation_id: string
+          file_name: string | null
+          file_size: number | null
+          file_url: string | null
           id: string
           is_read: boolean | null
+          message_type: string | null
           receiver_id: string
           sender_id: string
           sent_at: string | null
@@ -320,6 +575,15 @@ export type Database = {
       }
       update_conversation: {
         Args: { conversation_id: string; message_id: string }
+        Returns: undefined
+      }
+      update_verification_status: {
+        Args: {
+          verification_id: string
+          new_status: string
+          admin_id: string
+          reason?: string
+        }
         Returns: undefined
       }
     }

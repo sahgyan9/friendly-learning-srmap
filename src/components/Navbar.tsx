@@ -1,107 +1,105 @@
 
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Menu, X, User } from "lucide-react";
-import { Link } from "react-router-dom";
-import { useAuth } from "@/context/AuthContext";
+import { useState } from "react";
+import { Link, useLocation } from "react-router-dom";
+import { Menu, X } from "lucide-react";
 import Logo from "./Logo";
-import { motion } from "framer-motion";
 import DarkModeToggle from "./DarkModeToggle";
 import NavbarProfileMenu from "./NavbarProfileMenu";
 import NavbarMobileMenu from "./NavbarMobileMenu";
+import NotificationBell from "./notifications/NotificationBell";
+import { useAuth } from "@/context/AuthContext";
 
 const Navbar = () => {
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { user, profile, signOut, loading } = useAuth();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const location = useLocation();
+  const { user } = useAuth();
 
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
-    };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  const navItems = [
+    { href: "/", label: "Home" },
+    { href: "/about", label: "About" },
+    { href: "/mentors", label: "Mentors" },
+    { href: "/marketplace", label: "MarketPlace" },
+    { href: "/contact", label: "Contact" },
+  ];
+
+  const isActiveLink = (href: string) => {
+    if (href === "/") {
+      return location.pathname === "/";
+    }
+    return location.pathname.startsWith(href);
+  };
 
   return (
-    <header
-      className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${isScrolled
-        ? "py-3 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md shadow-sm"
-        : "py-5 bg-transparent"
-        }`}
-    >
-      <div className="container mx-auto px-4 md:px-6">
-        <div className="flex items-center justify-between">
-          <Link to="/">
-            <Logo />
-          </Link>
+    <nav className="bg-white dark:bg-gray-900 shadow-md sticky top-0 z-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-16">
+          <Logo />
+
           {/* Desktop Navigation */}
-          <motion.nav
-            className="hidden md:flex items-center space-x-1"
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.1 }}
-          >
-            <Button variant="ghost" asChild className="text-gray-700 dark:text-gray-200 hover:text-primary">
-              <Link to="/">Home</Link>
-            </Button>
-            <Button variant="ghost" asChild className="text-gray-700 dark:text-gray-200 hover:text-primary">
-              <Link to="/about">About</Link>
-            </Button>
-            <Button variant="ghost" asChild className="text-gray-700 dark:text-gray-200 hover:text-primary">
-              <Link to="/mentors">Mentors</Link>
-            </Button>
-            <Button variant="ghost" asChild className="text-gray-700 dark:text-gray-200 hover:text-primary">
-              <Link to="/marketplace">MarketPlace</Link>
-            </Button>
-            <Button variant="ghost" asChild className="text-gray-700 dark:text-gray-200 hover:text-primary">
-              <Link to="/contact">Contact</Link>
-            </Button>
-            <div className="ml-4 flex items-center space-x-2">
-              <DarkModeToggle />
-              {!loading && user ? (
-                <NavbarProfileMenu />
-              ) : (
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+          <div className="hidden md:block">
+            <div className="ml-10 flex items-baseline space-x-4">
+              {navItems.map((item) => (
+                <Link
+                  key={item.href}
+                  to={item.href}
+                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    isActiveLink(item.href)
+                      ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
+                      : "text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400"
+                  }`}
                 >
-                  <Button variant="default" size="sm" asChild className="flex items-center gap-1">
-                    <Link to="/signin">
-                      <User className="h-4 w-4" />
-                      Sign In
-                    </Link>
-                  </Button>
-                </motion.div>
-              )}
+                  {item.label}
+                </Link>
+              ))}
             </div>
-          </motion.nav>
-          {/* Mobile Navigation Toggle */}
-          <div className="md:hidden flex items-center gap-2">
+          </div>
+
+          {/* Right side items */}
+          <div className="flex items-center space-x-2">
             <DarkModeToggle />
-            <motion.button
-              whileTap={{ scale: 0.9 }}
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="text-gray-700 dark:text-gray-200 focus:outline-none"
-              aria-label="Toggle navigation menu"
+            {user && <NotificationBell />}
+            {user ? (
+              <NavbarProfileMenu />
+            ) : (
+              <div className="hidden md:flex items-center space-x-2">
+                <Link
+                  to="/signin"
+                  className="text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                >
+                  Sign In
+                </Link>
+                <Link
+                  to="/signup"
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
+                >
+                  Sign Up
+                </Link>
+              </div>
+            )}
+
+            {/* Mobile menu button */}
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="md:hidden inline-flex items-center justify-center p-2 rounded-md text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
             >
-              {isMobileMenuOpen ? (
+              {isMenuOpen ? (
                 <X className="h-6 w-6" />
               ) : (
                 <Menu className="h-6 w-6" />
               )}
-            </motion.button>
+            </button>
           </div>
         </div>
-        <NavbarMobileMenu
-          isMobileMenuOpen={isMobileMenuOpen}
-          profile={profile}
-          user={user}
-          loading={loading}
-          signOut={signOut}
-        />
       </div>
-    </header>
+
+      {/* Mobile Navigation */}
+      <NavbarMobileMenu 
+        isMenuOpen={isMenuOpen} 
+        navItems={navItems}
+        isActiveLink={isActiveLink}
+        onClose={() => setIsMenuOpen(false)}
+      />
+    </nav>
   );
 };
 
