@@ -1,4 +1,5 @@
 
+import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +9,9 @@ import { Button } from "@/components/ui/button";
 import { Mentor } from "@/types/mentor";
 import BadgeGrid from "@/components/badges/BadgeGrid";
 import { useBadges } from "@/hooks/useBadges";
+import ChatModal from "@/components/chat/modals/ChatModal";
+import { useAuth } from "@/context/AuthContext";
+import { toast } from "sonner";
 
 interface MentorCardProps {
   mentor: Mentor;
@@ -16,6 +20,8 @@ interface MentorCardProps {
 const MentorCard = ({ mentor }: MentorCardProps) => {
   const { getUserBadges } = useBadges();
   const userBadges = getUserBadges(mentor.id);
+  const { user } = useAuth();
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   const getInitials = (name: string) => {
     return name
@@ -25,16 +31,25 @@ const MentorCard = ({ mentor }: MentorCardProps) => {
       .toUpperCase();
   };
 
+  const openChatModal = () => {
+    if (!user) {
+      toast.error("Please sign in to connect with mentors");
+      return;
+    }
+    setIsChatOpen(true);
+  };
+
+  const handleCardClick = () => {
+    window.location.href = `/mentor/${mentor.id}`;
+  };
+
   return (
     <div className="relative group">
-      {/* Main clickable card link */}
-      <Link 
-        to={`/mentor/${mentor.id}`}
-        className="pointer-events-none absolute inset-0 z-0"
-      />
-      
-      <Card className="group hover:shadow-lg transition-all duration-300 border border-gray-200 dark:border-gray-700 overflow-hidden h-full flex flex-col hover:scale-[1.02] cursor-pointer">
-        <CardContent className="p-6 flex flex-col h-full relative z-10">
+      <Card 
+        className="group hover:shadow-lg transition-all duration-300 border border-gray-200 dark:border-gray-700 overflow-hidden h-full flex flex-col hover:scale-[1.02] cursor-pointer"
+        onClick={handleCardClick}
+      >
+        <CardContent className="p-6 flex flex-col h-full">
           {/* Header section with avatar and basic info */}
           <div className="flex items-start space-x-4 mb-4">
             <Avatar className="h-16 w-16 ring-2 ring-blue-100 dark:ring-blue-900 flex-shrink-0">
@@ -63,7 +78,7 @@ const MentorCard = ({ mentor }: MentorCardProps) => {
                         href={mentor.linkedin_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="pointer-events-auto text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+                        className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <Linkedin className="h-4 w-4" />
@@ -141,33 +156,38 @@ const MentorCard = ({ mentor }: MentorCardProps) => {
                   variant="outline" 
                   size="sm" 
                   asChild
-                  className="pointer-events-auto text-xs px-2 py-1 h-7"
+                  className="text-xs px-2 py-1 h-7"
+                  onClick={(e) => e.stopPropagation()}
                 >
-                  <Link 
-                    to={`/mentor/${mentor.id}`}
-                    onClick={(e) => e.stopPropagation()}
-                  >
+                  <Link to={`/mentor/${mentor.id}`}>
                     View Profile
                   </Link>
                 </Button>
                 <Button 
                   size="sm" 
-                  asChild
-                  className="pointer-events-auto text-xs px-2 py-1 h-7"
+                  className="text-xs px-2 py-1 h-7"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openChatModal();
+                  }}
                 >
-                  <Link 
-                    to={`/mentor/${mentor.id}`}
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <MessageCircle className="h-3 w-3 mr-1" />
-                    Connect
-                  </Link>
+                  <MessageCircle className="h-3 w-3 mr-1" />
+                  Connect
                 </Button>
               </div>
             </div>
           </div>
         </CardContent>
       </Card>
+
+      {/* Chat Modal */}
+      {isChatOpen && (
+        <ChatModal 
+          isOpen={isChatOpen} 
+          onClose={() => setIsChatOpen(false)} 
+          mentor={mentor}
+        />
+      )}
     </div>
   );
 };
