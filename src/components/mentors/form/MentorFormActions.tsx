@@ -1,7 +1,7 @@
 
-import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Loader2, Send } from "lucide-react";
 
 interface MentorFormActionsProps {
   isSubmitting: boolean;
@@ -9,19 +9,32 @@ interface MentorFormActionsProps {
 
 const MentorFormActions = ({ isSubmitting }: MentorFormActionsProps) => {
   return (
-    <div className="flex justify-end space-x-4 pt-4">
-      <Button type="button" variant="outline" asChild>
-        <Link to="/">Cancel</Link>
-      </Button>
-      <Button type="submit" disabled={isSubmitting} className="flex items-center gap-2">
+    <div className="flex flex-col sm:flex-row gap-4 pt-6">
+      <Button
+        type="submit"
+        disabled={isSubmitting}
+        className="flex-1 sm:flex-none"
+      >
         {isSubmitting ? (
           <>
-            <Loader2 className="h-4 w-4 animate-spin" />
-            Submitting...
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Submitting Application...
           </>
         ) : (
-          "Submit Application"
+          <>
+            <Send className="mr-2 h-4 w-4" />
+            Submit Application
+          </>
         )}
+      </Button>
+      
+      <Button
+        type="button"
+        variant="outline"
+        asChild
+        className="flex-1 sm:flex-none"
+      >
+        <Link to="/">Cancel</Link>
       </Button>
     </div>
   );

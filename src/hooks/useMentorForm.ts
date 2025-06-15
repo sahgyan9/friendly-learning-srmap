@@ -1,7 +1,8 @@
+
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { addMentor } from "@/integrations/supabase/services/mentors";
+import { submitMentorApplication } from "@/integrations/supabase/services/mentor-verification";
 import { useNavigate } from "react-router-dom";
 
 export interface MentorFormData {
@@ -44,49 +45,54 @@ export const useMentorForm = (userId: string, initialData: MentorFormData) => {
     setIsSubmitting(true);
     
     try {
-      // Convert skills string to array
-      const skillsArray = formData.skills
-        .split(',')
-        .map(skill => skill.trim())
-        .filter(skill => skill.length > 0);
-      
       // Validate form
-      if (!formData.name || !formData.department || skillsArray.length === 0) {
+      if (!formData.name || !formData.department || !formData.skills.trim()) {
         throw new Error("Please fill in all required fields");
       }
       
-      const mentorData = {
-        id: userId,
-        name: formData.name,
-        department: formData.department,
-        skills: skillsArray,
-        bio: formData.bio || null,
-        linkedin_url: formData.linkedin_url || null,
-        profile_image: formData.profile_image,
-        rating: 0,
-        review_count: 0
+      // Check if user already has a pending or approved application
+      const { data: existingVerification } = await supabase
+        .from('mentor_verifications')
+        .select('status')
+        .eq('user_id', userId)
+        .single();
+      
+      if (existingVerification) {
+        if (existingVerification.status === 'pending') {
+          toast.error("You already have a pending mentor application. Please wait for admin review.");
+          return;
+        }
+        if (existingVerification.status === 'approved') {
+          toast.error("You are already an approved mentor.");
+          return;
+        }
+      }
+      
+      // Submit verification application instead of directly creating mentor
+      const applicationData = {
+        user_id: userId,
+        application_data: {
+          name: formData.name,
+          department: formData.department,
+          skills: formData.skills,
+          bio: formData.bio,
+          linkedin_url: formData.linkedin_url,
+          profile_image: formData.profile_image
+        },
+        status: 'pending'
       };
       
-      // First, update the user's role to 'mentor' in the users table
-      const { error: userError } = await supabase
-        .from('users')
-        .update({ role: 'mentor' })
-        .eq('id', userId);
-      
-      if (userError) throw userError;
-      
-      // Then add the mentor record
-      const { error } = await addMentor(mentorData);
+      const { error } = await submitMentorApplication(applicationData);
       
       if (error) throw error;
       
-      toast.success("Your mentor profile has been created successfully!");
+      toast.success("Your mentor application has been submitted successfully! You will be notified once it's reviewed by our team.");
       
       // Navigate to the user's profile page
       navigate('/profile');
     } catch (error: any) {
-      console.error("Error creating mentor profile:", error);
-      toast.error(error.message || "Failed to create mentor profile");
+      console.error("Error submitting mentor application:", error);
+      toast.error(error.message || "Failed to submit mentor application");
     } finally {
       setIsSubmitting(false);
     }
