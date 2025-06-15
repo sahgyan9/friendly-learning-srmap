@@ -119,9 +119,9 @@ const ChatContainer = ({
 
       {/* Chat area */}
       {showChatArea ? (
-        <div className={`${showConversationList && window.innerWidth >= 768 ? 'flex-1' : 'w-full'} flex flex-col bg-background`}>
+        <div className={`${showConversationList && window.innerWidth >= 768 ? 'flex-1' : 'w-full'} flex flex-col bg-background h-full`}>
           {/* Chat header with back button on mobile */}
-          <div className="flex items-center">
+          <div className="flex items-center border-b border-border">
             {window.innerWidth < 768 && (
               <Button
                 variant="ghost"
@@ -140,8 +140,8 @@ const ChatContainer = ({
             </div>
           </div>
 
-          {/* Messages area with controlled height */}
-          <div className="flex-1 overflow-hidden">
+          {/* Messages area with fixed height and scroll */}
+          <div className="flex-1 min-h-0 overflow-hidden">
             <MessageList
               messages={messages}
               loading={isLoadingMessages}
@@ -152,13 +152,15 @@ const ChatContainer = ({
           </div>
 
           {/* Message input */}
-          <MessageInput
-            onSendMessage={handleSendMessage}
-            disabled={isLoadingMessages}
-            sending={isSending}
-            conversationId={activeChat}
-            userId={currentUserId}
-          />
+          <div className="border-t border-border">
+            <MessageInput
+              onSendMessage={handleSendMessage}
+              disabled={isLoadingMessages}
+              sending={isSending}
+              conversationId={activeChat}
+              userId={currentUserId}
+            />
+          </div>
         </div>
       ) : (
         <div className="hidden md:flex md:flex-1 items-center justify-center bg-muted/30">

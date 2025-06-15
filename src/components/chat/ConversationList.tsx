@@ -2,6 +2,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
 import { Conversation } from "@/types/chat";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -89,7 +90,7 @@ const ConversationList = ({
             onClick={() => setActiveChat(conversation.id)}
             className={`flex items-center gap-3 p-4 cursor-pointer hover:bg-muted/50 transition-colors ${
               activeChat === conversation.id ? 'bg-muted border-r-2 border-primary' : ''
-            }`}
+            } ${hasUnread ? 'bg-blue-50/50 dark:bg-blue-950/20' : ''}`}
           >
             {/* Avatar with online status */}
             <div className="flex-shrink-0 relative">
@@ -114,7 +115,7 @@ const ConversationList = ({
               <div className="flex justify-between items-start mb-1">
                 <div className="flex items-center gap-2">
                   <h3 className={`text-sm font-medium truncate ${
-                    hasUnread ? 'text-foreground' : 'text-foreground/90'
+                    hasUnread ? 'text-foreground font-semibold' : 'text-foreground/90'
                   }`}>
                     {displayName}
                   </h3>
@@ -122,23 +123,27 @@ const ConversationList = ({
                     <OnlineStatus isOnline={true} size="sm" showText />
                   )}
                 </div>
-                <span className="text-xs text-muted-foreground flex-shrink-0 ml-2">
-                  {formatTime(conversation.last_updated)}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground flex-shrink-0">
+                    {formatTime(conversation.last_updated)}
+                  </span>
+                  {/* Unread badge */}
+                  {hasUnread && (
+                    <Badge 
+                      variant="destructive" 
+                      className="h-5 w-5 p-0 flex items-center justify-center text-xs"
+                    >
+                      •
+                    </Badge>
+                  )}
+                </div>
               </div>
               
-              <div className="flex items-center justify-between">
-                <p className={`text-xs truncate ${
-                  hasUnread ? 'text-foreground/70 font-medium' : 'text-muted-foreground'
-                }`}>
-                  {lastMessageContent}
-                </p>
-                
-                {/* Unread indicator */}
-                {hasUnread && (
-                  <div className="w-2 h-2 bg-primary rounded-full flex-shrink-0 ml-2"></div>
-                )}
-              </div>
+              <p className={`text-xs truncate ${
+                hasUnread ? 'text-foreground/70 font-medium' : 'text-muted-foreground'
+              }`}>
+                {lastMessageContent}
+              </p>
             </div>
           </div>
         );
