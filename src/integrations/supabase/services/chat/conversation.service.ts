@@ -71,46 +71,82 @@ export async function getUserConversations(userId: string) {
   }
 }
 
-// Enhanced function to fetch complete user data prioritizing mentor data
+// Enhanced function to fetch complete user data with improved error handling
 async function fetchUserData(userId: string) {
   try {
     console.log(`Fetching complete data for user ${userId}`);
 
-    // First, get user data from users table
+    if (!userId || typeof userId !== 'string') {
+      console.error(`Invalid user ID provided: ${userId}`);
+      return {
+        id: userId || 'unknown',
+        name: 'Unknown User',
+        profile_image: null,
+        role: 'student'
+      };
+    }
+
+    // First, get user data from users table - this is the primary source
     const { data: userData, error: userError } = await supabase
       .from('users')
-      .select('id, name, profile_image, role')
+      .select('id, name, profile_image, role, email')
       .eq('id', userId)
       .maybeSingle();
 
-    if (userError) {
-      console.error(`Error fetching user data for ${userId}:`, userError);
-    }
+    console.log(`User data for ${userId}:`, userData, 'Error:', userError);
 
-    console.log(`User data for ${userId}:`, userData);
-
-    // Then, check if this user is also a mentor
+    // Check if this user is also a mentor (for profile image fallback)
     const { data: mentorData, error: mentorError } = await supabase
       .from('mentors')
       .select('id, name, profile_image')
       .eq('id', userId)
       .maybeSingle();
 
-    if (mentorError) {
-      console.log(`No mentor data found for ${userId} (this is normal if user is not a mentor)`);
+    console.log(`Mentor data for ${userId}:`, mentorData, 'Error:', mentorError);
+
+    // Prepare final user data with proper fallbacks
+    let finalName = 'Unknown User';
+    let finalProfileImage = null;
+    let finalRole = 'student';
+
+    // Priority for name: users.name > mentors.name > email prefix > 'Unknown User'
+    if (userData?.name && userData.name.trim()) {
+      finalName = userData.name.trim();
+    } else if (mentorData?.name && mentorData.name.trim()) {
+      finalName = mentorData.name.trim();
+    } else if (userData?.email) {
+      // Extract name from email as fallback
+      const emailPrefix = userData.email.split('@')[0];
+      finalName = emailPrefix.charAt(0).toUpperCase() + emailPrefix.slice(1);
+      console.log(`Using email prefix as fallback name for ${userId}: ${finalName}`);
     }
 
-    console.log(`Mentor data for ${userId}:`, mentorData);
+    // Priority for profile image: mentors.profile_image > users.profile_image
+    if (mentorData?.profile_image) {
+      finalProfileImage = mentorData.profile_image;
+    } else if (userData?.profile_image) {
+      finalProfileImage = userData.profile_image;
+    }
 
-    // Prioritize mentor data over user data, with proper fallbacks
+    // Use role from users table
+    if (userData?.role) {
+      finalRole = userData.role;
+    }
+
     const finalUserData = {
       id: userId,
-      name: (mentorData?.name?.trim() || userData?.name?.trim() || 'Unknown User'),
-      profile_image: mentorData?.profile_image || userData?.profile_image || null,
-      role: userData?.role || 'student'
+      name: finalName,
+      profile_image: finalProfileImage,
+      role: finalRole
     };
 
     console.log(`Final processed data for ${userId}:`, finalUserData);
+
+    // Log warning if we couldn't get proper user data
+    if (finalName === 'Unknown User') {
+      console.warn(`Could not retrieve proper name for user ${userId}. User data:`, userData, 'Mentor data:', mentorData);
+    }
+
     return finalUserData;
 
   } catch (err) {

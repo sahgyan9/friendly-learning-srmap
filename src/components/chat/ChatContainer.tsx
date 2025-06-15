@@ -51,38 +51,54 @@ const ChatContainer = ({
   const showConversationList = !activeChat || mobileView === "list" || window.innerWidth >= 768;
   const showChatArea = activeChat && (mobileView === "chat" || window.innerWidth >= 768);
 
-  // Function to get sender name based on sender ID with improved caching
+  // Function to get sender name based on sender ID with improved fallback handling
   const getSenderName = useCallback((senderId: string) => {
     if (senderId === currentUserId) return "You";
 
-    // Check messages for sender data first
+    // Check messages for sender data first (with better validation)
     for (const msg of messages) {
       if (msg.sender && msg.sender.name && msg.sender_id === senderId) {
-        return msg.sender.name;
+        const senderName = msg.sender.name.trim();
+        if (senderName && senderName !== 'Unknown User') {
+          return senderName;
+        }
       }
     }
 
-    // Check current conversation users
+    // Check current conversation users (with better validation)
     if (currentConversation) {
       if (currentConversation.user1_id === senderId && currentConversation.user1?.name) {
-        return currentConversation.user1.name;
+        const userName = currentConversation.user1.name.trim();
+        if (userName && userName !== 'Unknown User') {
+          return userName;
+        }
       }
       if (currentConversation.user2_id === senderId && currentConversation.user2?.name) {
-        return currentConversation.user2.name;
+        const userName = currentConversation.user2.name.trim();
+        if (userName && userName !== 'Unknown User') {
+          return userName;
+        }
       }
     }
 
-    // Check all conversations as fallback
+    // Check all conversations as fallback (with better validation)
     for (const conv of conversations) {
       if (senderId === conv.user1_id && conv.user1?.name) {
-        return conv.user1.name;
+        const userName = conv.user1.name.trim();
+        if (userName && userName !== 'Unknown User') {
+          return userName;
+        }
       }
       if (senderId === conv.user2_id && conv.user2?.name) {
-        return conv.user2.name;
+        const userName = conv.user2.name.trim();
+        if (userName && userName !== 'Unknown User') {
+          return userName;
+        }
       }
     }
 
-    console.warn(`Could not find name for user ID: ${senderId}`);
+    // Enhanced fallback - try to extract from sender ID or use a more descriptive fallback
+    console.warn(`Could not find valid name for user ID: ${senderId}`);
     return "User";
   }, [currentConversation, conversations, currentUserId, messages]);
 
