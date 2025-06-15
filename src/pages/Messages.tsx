@@ -52,7 +52,7 @@ const Messages = () => {
         id: conversation.user1_id === userId ? conversation.user2_id : conversation.user1_id,
         name: "User", // Better fallback than "Contact"
         profile_image: null,
-        role: 'user'
+        role: 'student' // Updated to use 'student' instead of 'user'
       };
     }
     

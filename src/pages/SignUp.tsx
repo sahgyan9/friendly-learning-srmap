@@ -50,33 +50,22 @@ const SignUp = () => {
     setIsLoading(true);
     
     try {
-      // Register the user with Supabase auth
+      // Register the user with Supabase auth - the database trigger will handle profile creation
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
         options: {
           data: {
+            name: formData.name,
             full_name: formData.name,
           },
-          emailRedirectTo: `${window.location.origin}/signin`,
+          emailRedirectTo: `${window.location.origin}/`,
         }
       });
 
       if (authError) throw authError;
 
       if (authData.user) {
-        // Create user profile in the users table
-        const { error: profileError } = await supabase
-          .from('users')
-          .insert({
-            id: authData.user.id,
-            name: formData.name,
-            email: formData.email,
-            role: 'student' // Default role
-          });
-
-        if (profileError) throw profileError;
-
         // Check if email confirmation is required
         if (authData.session) {
           // If session exists, user can log in immediately
@@ -92,6 +81,8 @@ const SignUp = () => {
       console.error('Error during signup:', error);
       
       if (error.message.includes('User already registered')) {
+        toast.error("An account with this email already exists. Please sign in instead.");
+      } else if (error.message.includes('duplicate key')) {
         toast.error("An account with this email already exists. Please sign in instead.");
       } else {
         toast.error(error.message || "Error creating account");

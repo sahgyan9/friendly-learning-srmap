@@ -41,16 +41,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
         // Fetch user profile when session changes
         if (session?.user) {
-          // For Google Auth or other OAuth providers, we need to create a profile if it doesn't exist
-          if (event === 'SIGNED_IN') {
-            setTimeout(() => {
-              checkAndCreateUserProfile(session.user);
-            }, 0);
-          } else {
-            setTimeout(() => {
-              fetchUserProfile(session.user.id);
-            }, 0);
-          }
+          setTimeout(() => {
+            fetchUserProfile(session.user.id);
+          }, 0);
         } else {
           setProfile(null);
           setLoading(false);
@@ -75,45 +68,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const checkAndCreateUserProfile = async (user: User) => {
-    try {
-      // First check if profile exists
-      const { data: existingProfile, error: fetchError } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', user.id)
-        .maybeSingle();
-      
-      if (fetchError) throw fetchError;
-
-      // If profile doesn't exist, create one
-      if (!existingProfile) {
-        const userData = {
-          id: user.id,
-          name: user.user_metadata.full_name || user.user_metadata.name || 'User',
-          email: user.email || '',
-          role: 'student' // Use 'student' instead of 'user' to match the check constraint
-        };
-
-        const { error: insertError } = await supabase
-          .from('users')
-          .insert(userData);
-        
-        if (insertError) throw insertError;
-        
-        setProfile(userData);
-      } else {
-        setProfile(existingProfile);
-      }
-    } catch (error) {
-      console.error('Error checking/creating user profile:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const fetchUserProfile = async (userId: string) => {
     try {
+      console.log("Fetching profile for user:", userId);
+      
       const { data, error } = await supabase
         .from('users')
         .select('*')
@@ -123,8 +81,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (error) {
         console.error('Error fetching user profile:', error);
         setProfile(null);
-      } else {
+      } else if (data) {
+        console.log("Profile found:", data);
         setProfile(data);
+      } else {
+        console.log("No profile found for user, this should have been created by trigger");
+        setProfile(null);
       }
     } catch (error) {
       console.error('Unexpected error fetching user profile:', error);
