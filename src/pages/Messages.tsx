@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
@@ -15,9 +15,10 @@ import { getOrCreateConversation } from "@/integrations/supabase/services/chat";
 
 const Messages = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
   const [isProcessingMentor, setIsProcessingMentor] = useState(false);
+  const mentorProcessedRef = useRef<string | null>(null);
 
   // Use the real user ID from auth context instead of the sample user
   const userId = user?.id || "";
@@ -38,57 +39,78 @@ const Messages = () => {
   useEffect(() => {
     const mentorId = searchParams.get('mentor');
     
-    if (mentorId && user?.id && !isProcessingMentor) {
-      const handleMentorConnection = async () => {
-        setIsProcessingMentor(true);
-        
-        try {
-          console.log('Processing mentor connection for mentor ID:', mentorId);
-          
-          // First verify the mentor exists
-          const { data: mentor, error: mentorError } = await getMentorById(mentorId);
-          
-          if (mentorError || !mentor) {
-            console.error('Mentor not found:', mentorError);
-            toast.error("Mentor not found or is no longer available");
-            return;
-          }
-          
-          // Check if user is trying to message themselves
-          if (mentor.id === user.id) {
-            toast.error("You cannot message yourself");
-            return;
-          }
-          
-          console.log('Found mentor:', mentor.name);
-          
-          // Get or create conversation with the mentor
-          const { data: conversation, error: conversationError } = await getOrCreateConversation(user.id, mentorId);
-          
-          if (conversationError || !conversation) {
-            console.error('Failed to create/get conversation:', conversationError);
-            toast.error("Failed to start conversation with mentor");
-            return;
-          }
-          
-          console.log('Conversation ready:', conversation.id);
-          
-          // Set the active chat to this conversation
-          setActiveChat(conversation.id);
-          
-          toast.success(`Connected with ${mentor.name}. You can now start messaging!`);
-          
-        } catch (err) {
-          console.error('Exception during mentor connection:', err);
-          toast.error("An unexpected error occurred while connecting to the mentor");
-        } finally {
-          setIsProcessingMentor(false);
-        }
-      };
-      
-      handleMentorConnection();
+    // Skip if no mentor ID, no user, or already processing this mentor
+    if (!mentorId || !user?.id || isProcessingMentor || mentorProcessedRef.current === mentorId) {
+      return;
     }
-  }, [searchParams, user?.id, setActiveChat, isProcessingMentor]);
+
+    const handleMentorConnection = async () => {
+      setIsProcessingMentor(true);
+      mentorProcessedRef.current = mentorId;
+      
+      try {
+        console.log('Processing mentor connection for mentor ID:', mentorId);
+        
+        // First verify the mentor exists
+        const { data: mentor, error: mentorError } = await getMentorById(mentorId);
+        
+        if (mentorError || !mentor) {
+          console.error('Mentor not found:', mentorError);
+          toast.error("Mentor not found or is no longer available");
+          // Clear the mentor parameter from URL
+          setSearchParams(params => {
+            params.delete('mentor');
+            return params;
+          });
+          return;
+        }
+        
+        // Check if user is trying to message themselves
+        if (mentor.id === user.id) {
+          toast.error("You cannot message yourself");
+          // Clear the mentor parameter from URL
+          setSearchParams(params => {
+            params.delete('mentor');
+            return params;
+          });
+          return;
+        }
+        
+        console.log('Found mentor:', mentor.name);
+        
+        // Get or create conversation with the mentor
+        const { data: conversation, error: conversationError } = await getOrCreateConversation(user.id, mentorId);
+        
+        if (conversationError || !conversation) {
+          console.error('Failed to create/get conversation:', conversationError);
+          toast.error("Failed to start conversation with mentor");
+          return;
+        }
+        
+        console.log('Conversation ready:', conversation.id);
+        
+        // Set the active chat to this conversation
+        setActiveChat(conversation.id);
+        
+        // Show success message
+        toast.success(`Connected with ${mentor.name}. You can now start messaging!`);
+        
+        // Clear the mentor parameter from URL after successful connection
+        setSearchParams(params => {
+          params.delete('mentor');
+          return params;
+        });
+        
+      } catch (err) {
+        console.error('Exception during mentor connection:', err);
+        toast.error("An unexpected error occurred while connecting to the mentor");
+      } finally {
+        setIsProcessingMentor(false);
+      }
+    };
+    
+    handleMentorConnection();
+  }, [searchParams, user?.id, isProcessingMentor, setSearchParams]); // Removed setActiveChat from dependencies
 
   useEffect(() => {
     if (error) {
