@@ -32,6 +32,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isMentor, setIsMentor] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -49,6 +50,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }, 0);
         } else {
           setProfile(null);
+          setIsMentor(false);
           setLoading(false);
         }
       }
@@ -84,18 +86,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (error) {
         console.error('Error fetching user profile:', error);
         setProfile(null);
+        setIsMentor(false);
       } else if (data) {
         console.log("Profile found:", data);
         setProfile(data);
+        
+        // Check if user is a real mentor (not in General department)
+        await checkRealMentorStatus(userId);
       } else {
         console.log("No profile found for user, this should have been created by trigger");
         setProfile(null);
+        setIsMentor(false);
       }
     } catch (error) {
       console.error('Unexpected error fetching user profile:', error);
       setProfile(null);
+      setIsMentor(false);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const checkRealMentorStatus = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('mentors')
+        .select('department')
+        .eq('id', userId)
+        .single();
+      
+      if (error) {
+        setIsMentor(false);
+      } else {
+        // Only consider as real mentor if not in General department
+        setIsMentor(data && data.department && data.department !== 'General');
+      }
+    } catch (error) {
+      console.error('Error checking mentor status:', error);
+      setIsMentor(false);
     }
   };
 
@@ -114,8 +142,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Determine if the user is a mentor or admin
-  const isMentor = profile?.role === 'mentor' || profile?.role === 'both';
+  // Determine if the user is an admin
   const isAdmin = profile?.is_admin === true;
 
   const value = {
