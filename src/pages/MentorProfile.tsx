@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Star, Linkedin, MessageCircle, ArrowLeft, Loader2 } from "lucide-react";
@@ -209,13 +208,13 @@ const MentorProfile = () => {
                   {/* Only show rating badge if mentor has reviews and rating > 0 */}
                   {mentor.review_count > 0 && mentor.rating > 0 && (
                     <motion.div 
-                      className="absolute -bottom-2 -right-2 flex items-center bg-white rounded-full px-3 py-1 shadow-sm border border-gray-100"
+                      className="absolute -bottom-2 -right-2 flex items-center bg-background dark:bg-gray-800 rounded-full px-3 py-1 shadow-sm border border-border"
                       initial={{ opacity: 0, scale: 0.8 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ delay: 0.2, duration: 0.3 }}
                     >
-                      <Star className="w-4 h-4 text-yellow-400 mr-1.5" />
-                      <span className="text-sm font-medium">{mentor.rating.toFixed(1)}</span>
+                      <Star className="w-4 h-4 text-amber-400 mr-1.5" />
+                      <span className="text-sm font-medium text-foreground">{mentor.rating.toFixed(1)}</span>
                       <span className="text-xs text-muted-foreground ml-1">({mentor.review_count})</span>
                     </motion.div>
                   )}
