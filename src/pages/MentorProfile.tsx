@@ -12,7 +12,6 @@ import { motion } from "framer-motion";
 import RatingModal from "@/components/rating/RatingModal";
 import ReviewsList from "@/components/rating/ReviewsList";
 import { useRating } from "@/hooks/useRating";
-import BadgeDisplay from "@/components/badges/BadgeDisplay";
 
 const MentorProfile = () => {
   const { id } = useParams<{ id: string }>();
@@ -325,28 +324,28 @@ const MentorProfile = () => {
               </div>
             </motion.div>
             
-            {/* Add BadgeDisplay component after the main profile info */}
             <motion.div 
-              className="mb-10"
+              className="bg-card p-6 rounded-lg shadow-sm border border-border mb-10"
               variants={itemVariants}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.3 }}
             >
-              <h2 className="text-2xl font-semibold mb-4">Badges</h2>
-              <BadgeDisplay userId={mentor.id} />
+              <h2 className="text-xl font-semibold mb-4 text-foreground">About</h2>
+              <p className="text-foreground leading-relaxed">
+                {mentor.bio || "This mentor hasn't added a bio yet."}
+              </p>
             </motion.div>
 
             {/* Reviews Section */}
             <motion.div 
-              className="mb-10"
+              className="bg-card p-6 rounded-lg shadow-sm border border-border"
               variants={itemVariants}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.4 }}
             >
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-2xl font-semibold">Reviews</h2>
-                {canRate && !isOwnProfile && !ratingLoading && (
-                  <Button onClick={() => setShowRatingModal(true)}>
-                    Add Review
-                  </Button>
-                )}
-              </div>
+              <h2 className="text-xl font-semibold mb-6 text-foreground">Reviews</h2>
               <ReviewsList mentorId={mentor.id} />
             </motion.div>
           </motion.div>

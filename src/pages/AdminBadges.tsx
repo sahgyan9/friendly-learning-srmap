@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
@@ -7,7 +8,6 @@ import AdminHeader from "@/components/admin/AdminHeader";
 import BadgeTypeList from "@/components/admin/badges/BadgeTypeList";
 import BadgeCreationForm from "@/components/admin/badges/BadgeCreationForm";
 import BadgeAwardModal from "@/components/admin/badges/BadgeAwardModal";
-import BadgeStatistics from "@/components/admin/badges/BadgeStatistics";
 import { useBadges } from "@/hooks/useBadges";
 
 const AdminBadges = () => {
@@ -37,7 +37,7 @@ const AdminBadges = () => {
     <AdminLayout>
       <AdminHeader
         title="Badge Management"
-        description="Create, manage, and award badges to users"
+        description="Create, manage, and award badges to mentors"
         action={
           <div className="flex gap-2">
             <Button onClick={() => setShowAwardModal(true)}>
@@ -50,11 +50,6 @@ const AdminBadges = () => {
           </div>
         }
       />
-      
-      {/* Add Badge Statistics */}
-      <div className="mb-8">
-        <BadgeStatistics />
-      </div>
 
       {showCreateForm ? (
         <BadgeCreationForm
