@@ -96,6 +96,10 @@ export const updateVerificationStatus = async (
       throw new Error(`Failed to fetch verification: ${fetchError.message}`);
     }
 
+    if (!verification) {
+      throw new Error('Verification not found');
+    }
+
     // Update verification status
     const { error: updateError } = await supabase
       .from('mentor_verifications')
@@ -127,16 +131,21 @@ export const updateVerificationStatus = async (
     if (status === 'approved' && verification.application_data) {
       const applicationData = verification.application_data as any;
       
-      // Get user info
+      // Get user info with proper error handling
       const { data: userData, error: userFetchError } = await supabase
         .from('users')
         .select('name, profile_image')
         .eq('id', verification.user_id)
-        .single();
+        .maybeSingle();
 
       if (userFetchError) {
         console.error('Error fetching user data:', userFetchError);
         throw new Error(`Failed to fetch user data: ${userFetchError.message}`);
+      }
+
+      if (!userData) {
+        console.error('User not found for ID:', verification.user_id);
+        throw new Error(`User not found with ID: ${verification.user_id}`);
       }
 
       // Update mentor record with verification data
