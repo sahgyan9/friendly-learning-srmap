@@ -12,6 +12,7 @@ import { motion } from "framer-motion";
 import RatingModal from "@/components/rating/RatingModal";
 import ReviewsList from "@/components/rating/ReviewsList";
 import { useRating } from "@/hooks/useRating";
+import { getOrCreateConversation } from "@/integrations/supabase/services/chat/conversation.service";
 
 const MentorProfile = () => {
   const { id } = useParams<{ id: string }>();
@@ -61,31 +62,32 @@ const MentorProfile = () => {
       toast.error("Please sign in to connect with mentors");
       return;
     }
-    
     if (!mentor) return;
-    
     setIsConnecting(true);
-    
     try {
       // Fetch mentor data first to ensure it's fresh and available
       console.log('Fetching mentor data before connecting:', mentor.id);
       const { data: mentorData, error } = await getMentorById(mentor.id);
-      
       if (error || !mentorData) {
         console.error('Failed to fetch mentor data:', error);
         toast.error("Failed to load mentor information");
         return;
       }
-      
-      console.log('Mentor data fetched successfully:', mentorData.name);
-      
-      // Add a small delay to show loading state, then navigate
+      // Connect at backend (create/get conversation) before navigating
+      const { data: conversation, error: conversationError } = await getOrCreateConversation(user.id, mentor.id);
+      if (conversationError || !conversation) {
+        console.error('Failed to create/get conversation:', conversationError);
+        toast.error("Failed to start conversation with mentor");
+        return;
+      }
+      toast.success(`Connected with ${mentor.name}. You can now start messaging!`);
+      // Wait 1.8 seconds before navigating and reloading, so user can read the message
       setTimeout(() => {
         navigate(`/messages?mentor=${mentor.id}`);
         setTimeout(() => {
           window.location.reload();
-        }, 100);
-      }, 100);
+        }, 500); // Short delay after navigation to ensure reload
+      }, 1800);
     } catch (err) {
       console.error('Error fetching mentor data:', err);
       toast.error("An error occurred while connecting to the mentor");
