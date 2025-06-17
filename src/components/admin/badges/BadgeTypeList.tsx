@@ -1,164 +1,164 @@
 
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Edit, Award } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
-import { deleteBadgeType, autoAwardPerformanceBadges } from "@/integrations/supabase/services/badges";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { Edit, Trash2, Users } from "lucide-react";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useBadges } from "@/hooks/useBadges";
+import BadgeSearchFilter from "./BadgeSearchFilter";
+import EditBadgeModal from "./EditBadgeModal";
 
-interface BadgeTypeListProps {
-  badgeTypes: any[];
-  loading: boolean;
-  onRefetch: () => void;
+interface BadgeType {
+  id: string;
+  name: string;
+  description: string | null;
+  icon: string | null;
+  color: string | null;
+  category: string | null;
 }
 
-const BadgeTypeList = ({ badgeTypes, loading, onRefetch }: BadgeTypeListProps) => {
-  const [deleting, setDeleting] = useState<string | null>(null);
-  const [autoAwarding, setAutoAwarding] = useState(false);
-  const { toast } = useToast();
+const BadgeTypeList = () => {
+  const { badgeTypes, loading, refetch } = useBadges();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [editingBadge, setEditingBadge] = useState<BadgeType | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-  const handleDelete = async (badgeId: string) => {
+  const filteredBadges = badgeTypes?.filter(badge => {
+    const matchesSearch = badge.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         badge.description?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = categoryFilter === "all" || badge.category === categoryFilter;
+    return matchesSearch && matchesCategory;
+  }) || [];
+
+  const handleEdit = (badge: BadgeType) => {
+    setEditingBadge(badge);
+    setIsEditModalOpen(true);
+  };
+
+  const handleDelete = async (badgeId: string, badgeName: string) => {
+    if (!confirm(`Are you sure you want to delete the "${badgeName}" badge? This action cannot be undone.`)) {
+      return;
+    }
+
     try {
-      setDeleting(badgeId);
-      await deleteBadgeType(badgeId);
-      onRefetch();
-      toast({
-        title: "Success",
-        description: "Badge type deleted successfully",
-      });
-    } catch (error) {
+      // First check if badge is in use
+      const { data: userBadges, error: checkError } = await supabase
+        .from('user_badges')
+        .select('id')
+        .eq('badge_type_id', badgeId)
+        .limit(1);
+
+      if (checkError) throw checkError;
+
+      if (userBadges && userBadges.length > 0) {
+        toast.error('Cannot delete badge that has been awarded to users');
+        return;
+      }
+
+      const { error } = await supabase
+        .from('badge_types')
+        .delete()
+        .eq('id', badgeId);
+
+      if (error) throw error;
+
+      toast.success('Badge deleted successfully');
+      refetch();
+    } catch (error: any) {
       console.error('Error deleting badge:', error);
-      toast({
-        title: "Error",
-        description: "Failed to delete badge type",
-        variant: "destructive",
-      });
-    } finally {
-      setDeleting(null);
+      toast.error(error.message || 'Failed to delete badge');
     }
   };
 
-  const handleAutoAward = async () => {
-    try {
-      setAutoAwarding(true);
-      await autoAwardPerformanceBadges();
-      toast({
-        title: "Success",
-        description: "Performance badges have been automatically awarded",
-      });
-    } catch (error) {
-      console.error('Error auto-awarding badges:', error);
-      toast({
-        title: "Error",
-        description: "Failed to auto-award badges",
-        variant: "destructive",
-      });
-    } finally {
-      setAutoAwarding(false);
-    }
+  const handleViewUsers = (badgeId: string, badgeName: string) => {
+    // TODO: Navigate to user management page filtered by this badge
+    toast.info(`Viewing users with "${badgeName}" badge - Feature coming soon!`);
   };
 
   if (loading) {
-    return (
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <Card key={i} className="animate-pulse">
-            <CardHeader>
-              <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <div className="h-3 bg-gray-200 rounded"></div>
-                <div className="h-3 bg-gray-200 rounded w-2/3"></div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    );
+    return <div className="text-center py-8">Loading badges...</div>;
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">Badge Types ({badgeTypes.length})</h2>
-        <Button 
-          onClick={handleAutoAward}
-          disabled={autoAwarding}
-          variant="outline"
-        >
-          <Award className="h-4 w-4 mr-2" />
-          {autoAwarding ? "Auto-Awarding..." : "Auto-Award Performance Badges"}
-        </Button>
-      </div>
+    <div>
+      <BadgeSearchFilter
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        categoryFilter={categoryFilter}
+        onCategoryChange={setCategoryFilter}
+      />
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {badgeTypes.map((badge) => (
-          <Card key={badge.id} className="hover:shadow-md transition-shadow">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <span className="text-xl">{badge.icon}</span>
-                  {badge.name}
-                </CardTitle>
-                <div className="flex gap-1">
-                  <Button variant="ghost" size="sm">
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="ghost" size="sm" className="text-destructive">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Delete Badge Type</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Are you sure you want to delete this badge type? This action cannot be undone.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={() => handleDelete(badge.id)}
-                          disabled={deleting === badge.id}
-                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                        >
-                          {deleting === badge.id ? "Deleting..." : "Delete"}
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+      <div className="grid gap-4">
+        {filteredBadges.map((badge) => (
+          <div key={badge.id} className="bg-card rounded-lg border p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div 
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-semibold"
+                  style={{ backgroundColor: badge.color || '#3B82F6' }}
+                >
+                  {badge.icon ? badge.icon.charAt(0) : badge.name.charAt(0)}
+                </div>
+                <div>
+                  <h3 className="font-semibold">{badge.name}</h3>
+                  {badge.description && (
+                    <p className="text-sm text-muted-foreground">{badge.description}</p>
+                  )}
+                  <div className="flex gap-2 mt-1">
+                    {badge.category && (
+                      <Badge variant="secondary" className="text-xs">
+                        {badge.category}
+                      </Badge>
+                    )}
+                  </div>
                 </div>
               </div>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <p className="text-sm text-muted-foreground">{badge.description}</p>
-              <div className="flex gap-2">
-                <Badge 
-                  variant="secondary" 
-                  style={{ backgroundColor: badge.color, color: 'white' }}
+              
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleViewUsers(badge.id, badge.name)}
                 >
-                  {badge.category}
-                </Badge>
+                  <Users className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleEdit(badge)}
+                >
+                  <Edit className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => handleDelete(badge.id, badge.name)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         ))}
+        
+        {filteredBadges.length === 0 && (
+          <div className="text-center py-8 text-muted-foreground">
+            No badges found matching your criteria.
+          </div>
+        )}
       </div>
+
+      <EditBadgeModal
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setEditingBadge(null);
+        }}
+        badge={editingBadge}
+        onBadgeUpdated={refetch}
+      />
     </div>
   );
 };

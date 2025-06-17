@@ -84,20 +84,99 @@ export const updateVerificationStatus = async (
   });
 
   try {
-    const { data, error } = await supabase.rpc('update_verification_status', {
-      verification_id: verificationId,
-      new_status: status,
-      admin_id: adminId,
-      reason: reason || null
-    });
+    // First get the verification data to access application details
+    const { data: verification, error: fetchError } = await supabase
+      .from('mentor_verifications')
+      .select('user_id, application_data')
+      .eq('id', verificationId)
+      .single();
 
-    if (error) {
-      console.error('RPC Error updating verification status:', error);
-      throw new Error(`Database error: ${error.message}`);
+    if (fetchError) {
+      console.error('Error fetching verification:', fetchError);
+      throw new Error(`Failed to fetch verification: ${fetchError.message}`);
     }
 
-    console.log('Verification status updated successfully:', data);
-    return { data, error: null };
+    // Update verification status
+    const { error: updateError } = await supabase
+      .from('mentor_verifications')
+      .update({
+        status,
+        reviewed_at: new Date().toISOString(),
+        reviewed_by: adminId,
+        rejection_reason: status === 'rejected' ? reason : null
+      })
+      .eq('id', verificationId);
+
+    if (updateError) {
+      console.error('Error updating verification:', updateError);
+      throw new Error(`Failed to update verification: ${updateError.message}`);
+    }
+
+    // Update user verification status
+    const { error: userUpdateError } = await supabase
+      .from('users')
+      .update({ verification_status: status })
+      .eq('id', verification.user_id);
+
+    if (userUpdateError) {
+      console.error('Error updating user status:', userUpdateError);
+      throw new Error(`Failed to update user status: ${userUpdateError.message}`);
+    }
+
+    // If approved, update mentor record with verification data
+    if (status === 'approved' && verification.application_data) {
+      const applicationData = verification.application_data as any;
+      
+      // Get user info
+      const { data: userData, error: userFetchError } = await supabase
+        .from('users')
+        .select('name, profile_image')
+        .eq('id', verification.user_id)
+        .single();
+
+      if (userFetchError) {
+        console.error('Error fetching user data:', userFetchError);
+        throw new Error(`Failed to fetch user data: ${userFetchError.message}`);
+      }
+
+      // Update mentor record with verification data
+      const { error: mentorUpdateError } = await supabase
+        .from('mentors')
+        .update({
+          name: userData.name,
+          department: applicationData.department || 'General',
+          skills: applicationData.skills ? applicationData.skills.split(',').map((s: string) => s.trim()) : [],
+          bio: applicationData.bio || null,
+          linkedin_url: applicationData.linkedin_url || null,
+          profile_image: userData.profile_image || null
+        })
+        .eq('id', verification.user_id);
+
+      if (mentorUpdateError) {
+        console.error('Error updating mentor record:', mentorUpdateError);
+        throw new Error(`Failed to update mentor record: ${mentorUpdateError.message}`);
+      }
+
+      // Update user role to mentor
+      const { error: roleUpdateError } = await supabase
+        .from('users')
+        .update({
+          role: 'mentor',
+          department: applicationData.department,
+          skills: applicationData.skills ? applicationData.skills.split(',').map((s: string) => s.trim()) : [],
+          bio: applicationData.bio,
+          linkedin_url: applicationData.linkedin_url
+        })
+        .eq('id', verification.user_id);
+
+      if (roleUpdateError) {
+        console.error('Error updating user role:', roleUpdateError);
+        throw new Error(`Failed to update user role: ${roleUpdateError.message}`);
+      }
+    }
+
+    console.log('Verification status updated successfully');
+    return { data: true, error: null };
   } catch (error) {
     console.error('Exception updating verification status:', error);
     throw error;
