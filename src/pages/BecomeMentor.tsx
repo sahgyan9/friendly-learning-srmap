@@ -58,7 +58,7 @@ const BecomeMentor = () => {
         );
       case 'approved':
         return (
-          <Alert className="mb-6 border-green-200 bg-green-50 text-green-800">
+          <Alert className="mb-6 border-green-200 bg-green-50 text-green-800 dark:border-green-700 dark:bg-green-900/20 dark:text-green-300">
             <CheckCircle className="h-4 w-4" />
             <AlertDescription>
               Congratulations! Your mentor application has been approved. You can now mentor students and update your profile.
@@ -67,7 +67,7 @@ const BecomeMentor = () => {
         );
       case 'rejected':
         return (
-          <Alert className="mb-6 border-red-200 bg-red-50 text-red-800">
+          <Alert className="mb-6 border-red-200 bg-red-50 text-red-800 dark:border-red-700 dark:bg-red-900/20 dark:text-red-300">
             <XCircle className="h-4 w-4" />
             <AlertDescription>
               Your mentor application needs attention. Please contact support or resubmit your application with the required changes.
@@ -81,14 +81,14 @@ const BecomeMentor = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-background">
         <Navbar />
         <main className="container px-4 py-16 md:py-24 mx-auto">
           <div className="max-w-3xl mx-auto">
-            <div className="bg-white rounded-lg shadow-sm p-6 md:p-8">
+            <div className="bg-card rounded-lg shadow-sm p-6 md:p-8">
               <div className="flex items-center justify-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                <span className="ml-3">Loading...</span>
+                <span className="ml-3 text-foreground">Loading...</span>
               </div>
             </div>
           </div>
@@ -98,7 +98,7 @@ const BecomeMentor = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <Navbar />
       
       <main className="container px-4 py-16 md:py-24 mx-auto">
@@ -110,14 +110,14 @@ const BecomeMentor = () => {
           
           {getStatusAlert()}
           
-          <div className="bg-white rounded-lg shadow-sm p-6 md:p-8">
+          <div className="bg-card rounded-lg shadow-sm p-6 md:p-8">
             {user ? (
               <>
                 {verificationStatus === 'pending' ? (
                   <Card>
                     <CardContent className="flex flex-col items-center justify-center py-12">
                       <Clock className="h-12 w-12 text-yellow-500 mb-4" />
-                      <h3 className="text-lg font-semibold mb-2">Application Under Review</h3>
+                      <h3 className="text-lg font-semibold mb-2 text-card-foreground">Application Under Review</h3>
                       <p className="text-center text-muted-foreground">
                         Your mentor application is being reviewed by our team. We'll notify you once a decision has been made.
                       </p>

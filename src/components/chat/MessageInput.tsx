@@ -3,16 +3,27 @@ import React, { useState } from "react";
 import { Send, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { useTypingIndicator } from "@/hooks/useTypingIndicator";
 
 interface MessageInputProps {
   onSendMessage: (content: string) => Promise<void>;
   disabled: boolean;
   sending: boolean;
+  conversationId: string | null;
+  userId: string;
 }
 
-const MessageInput = ({ onSendMessage, disabled, sending }: MessageInputProps) => {
+const MessageInput = ({ 
+  onSendMessage, 
+  disabled, 
+  sending, 
+  conversationId, 
+  userId 
+}: MessageInputProps) => {
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const { startTyping, stopTyping, refreshTyping } = useTypingIndicator(conversationId, userId);
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,6 +31,7 @@ const MessageInput = ({ onSendMessage, disabled, sending }: MessageInputProps) =
     
     setIsSubmitting(true);
     try {
+      await stopTyping(); // Stop typing before sending
       await onSendMessage(message.trim());
       setMessage("");
     } catch (error) {
@@ -35,6 +47,24 @@ const MessageInput = ({ onSendMessage, disabled, sending }: MessageInputProps) =
       handleSubmit(e);
     }
   };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = e.target.value;
+    setMessage(value);
+    
+    // Handle typing indicators
+    if (value.trim() && conversationId) {
+      startTyping();
+    } else {
+      stopTyping();
+    }
+  };
+
+  const handleInputFocus = () => {
+    if (message.trim() && conversationId) {
+      refreshTyping();
+    }
+  };
   
   return (
     <div className="p-4 border-t border-border bg-background">
@@ -42,8 +72,10 @@ const MessageInput = ({ onSendMessage, disabled, sending }: MessageInputProps) =
         <div className="flex-1">
           <Textarea
             value={message}
-            onChange={(e) => setMessage(e.target.value)}
+            onChange={handleInputChange}
             onKeyDown={handleKeyDown}
+            onFocus={handleInputFocus}
+            onBlur={stopTyping}
             placeholder="Type your message..."
             className="min-h-[44px] max-h-32 resize-none border-muted-foreground/20 focus:border-primary rounded-xl px-4 py-3"
             disabled={disabled || sending || isSubmitting}

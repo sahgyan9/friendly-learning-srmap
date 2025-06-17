@@ -1,25 +1,61 @@
 
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { Message } from "@/types/chat";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useTypingIndicator } from "@/hooks/useTypingIndicator";
+import TypingIndicator from "./TypingIndicator";
+import MessageStatus from "./MessageStatus";
 
 interface MessageListProps {
   messages: Message[];
   loading: boolean;
   currentUserId: string;
+  conversationId: string | null;
   getSenderName?: (senderId: string) => string;
 }
 
-const MessageList = ({ messages, loading, currentUserId, getSenderName }: MessageListProps) => {
+const MessageList = ({ 
+  messages, 
+  loading, 
+  currentUserId, 
+  conversationId,
+  getSenderName 
+}: MessageListProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [userHasScrolled, setUserHasScrolled] = useState(false);
+  const [prevMessageCount, setPrevMessageCount] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const { typingUsers } = useTypingIndicator(conversationId, currentUserId);
 
+  // Handle scrolling behavior
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    const shouldScroll = messages.length > prevMessageCount && !userHasScrolled;
+    
+    if (shouldScroll) {
+      scrollToBottom();
+    }
+    
+    setPrevMessageCount(messages.length);
+  }, [messages, userHasScrolled, prevMessageCount]);
+
+  // Auto-scroll when typing indicator appears
+  useEffect(() => {
+    if (typingUsers.length > 0 && !userHasScrolled) {
+      scrollToBottom();
+    }
+  }, [typingUsers, userHasScrolled]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  // Track user scroll behavior
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const container = e.currentTarget;
+    const isAtBottom = container.scrollHeight - container.scrollTop <= container.clientHeight + 50;
+    
+    setUserHasScrolled(!isAtBottom);
   };
 
   const formatTime = (timestamp: string) => {
@@ -61,6 +97,16 @@ const MessageList = ({ messages, loading, currentUserId, getSenderName }: Messag
     return "User";
   };
 
+  const getUserNameForTyping = (userId: string): string => {
+    if (getSenderName) {
+      const name = getSenderName(userId);
+      if (name && name.trim() !== "" && name !== "Contact") {
+        return name;
+      }
+    }
+    return "Someone";
+  };
+
   if (loading) {
     return (
       <div className="h-full flex items-center justify-center">
@@ -82,7 +128,11 @@ const MessageList = ({ messages, loading, currentUserId, getSenderName }: Messag
   }
 
   return (
-    <div className="flex flex-col gap-4 p-4">
+    <div 
+      ref={containerRef}
+      className="h-full flex flex-col gap-4 p-4 overflow-y-auto"
+      onScroll={handleScroll}
+    >
       {messages.map((msg, index) => {
         const isMine = msg.sender_id === currentUserId;
         const senderName = getSenderDisplayName(msg);
@@ -137,16 +187,29 @@ const MessageList = ({ messages, loading, currentUserId, getSenderName }: Messag
                 <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
               </div>
 
-              {/* Timestamp */}
-              <span className={`text-xs text-muted-foreground mt-1 ${
-                isMine ? "text-right mr-1" : "text-left ml-3"
+              {/* Timestamp and message status */}
+              <div className={`flex items-center gap-1 mt-1 ${
+                isMine ? "justify-end mr-1" : "justify-start ml-3"
               }`}>
-                {formatTime(msg.sent_at)}
-              </span>
+                <span className="text-xs text-muted-foreground">
+                  {formatTime(msg.sent_at)}
+                </span>
+                <MessageStatus 
+                  deliveryStatus={msg.delivery_status || 'sent'} 
+                  isOwnMessage={isMine} 
+                />
+              </div>
             </div>
           </div>
         );
       })}
+      
+      {/* Typing indicator */}
+      <TypingIndicator 
+        typingUsers={typingUsers} 
+        getUserName={getUserNameForTyping}
+      />
+      
       <div ref={messagesEndRef} />
     </div>
   );

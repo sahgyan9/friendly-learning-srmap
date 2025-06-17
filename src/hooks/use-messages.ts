@@ -3,9 +3,13 @@ import { useEffect } from "react";
 import { useMessagesState } from "./messages/use-messages-state";
 import { useMessagesOperations } from "./messages/use-messages-operations";
 import { getUserById } from "@/integrations/supabase/services/chat";
+import { useMessageRealtime } from "./useMessageRealtime";
+import { useUserPresence } from "./useRealtime";
+import { markMessagesAsRead } from "@/integrations/supabase/services/chat";
+import { Message, Conversation } from "@/types/chat";
 
 /**
- * Hook for managing conversations and messages
+ * Hook for managing conversations and messages with real-time updates
  */
 export const useMessages = (userId: string) => {
   const {
@@ -31,20 +35,63 @@ export const useMessages = (userId: string) => {
     sendMessage: sendMessageOperation
   } = useMessagesOperations(userId);
 
-  // Function to refresh conversations - exposed for external use
-  const refreshConversations = async () => {
-    console.log("=== refreshConversations called ===");
-    const result = await fetchConversations(setConversations, setActiveChat, setIsLoadingConversations, setError);
-    console.log("refreshConversations result:", result);
-    return result;
-  };
+  // Enable user presence tracking
+  useUserPresence(userId);
+
+  // Real-time message and conversation updates
+  useMessageRealtime(
+    activeChat,
+    userId,
+    // On new message
+    (newMessage: Message) => {
+      // Add to messages if it's for the active conversation
+      if (newMessage.conversation_id === activeChat) {
+        setMessages(prev => {
+          // Avoid duplicates
+          if (prev.some(msg => msg.id === newMessage.id)) {
+            return prev;
+          }
+          return [...prev, newMessage];
+        });
+      }
+
+      // Update conversations list to show latest message
+      setConversations(prev => 
+        prev.map(conv => 
+          conv.id === newMessage.conversation_id
+            ? {
+                ...conv,
+                last_message: newMessage,
+                last_message_id: newMessage.id,
+                last_updated: newMessage.sent_at
+              }
+            : conv
+        )
+      );
+    },
+    // On message update
+    (updatedMessage: Message) => {
+      setMessages(prev => 
+        prev.map(msg => 
+          msg.id === updatedMessage.id ? updatedMessage : msg
+        )
+      );
+    },
+    // On conversation update
+    (updatedConversation: Conversation) => {
+      setConversations(prev => 
+        prev.map(conv => 
+          conv.id === updatedConversation.id 
+            ? { ...conv, ...updatedConversation }
+            : conv
+        )
+      );
+    }
+  );
 
   // Fetch conversations on initial load
   useEffect(() => {
     if (userId) {
-      console.log("=== useMessages initial load ===");
-      console.log("User ID:", userId);
-      
       // Prefetch user data for the current user
       const prefetchCurrentUser = async () => {
         try {
@@ -60,25 +107,32 @@ export const useMessages = (userId: string) => {
       };
 
       prefetchCurrentUser();
-      refreshConversations();
+      fetchConversations(setConversations, setActiveChat, setIsLoadingConversations, setError);
     }
   }, [userId]);
 
   // Fetch messages when active chat changes
   useEffect(() => {
     if (activeChat) {
-      console.log("=== Active chat changed ===");
-      console.log("New active chat:", activeChat);
       fetchMessages(activeChat, setMessages, setIsLoadingMessages, setError);
     }
   }, [activeChat]);
 
+  // Mark messages as read when viewing a conversation
+  useEffect(() => {
+    if (activeChat && messages.length > 0) {
+      const unreadMessages = messages.filter(msg => 
+        msg.receiver_id === userId && !msg.is_read
+      );
+      
+      if (unreadMessages.length > 0) {
+        markMessagesAsRead(activeChat, userId);
+      }
+    }
+  }, [activeChat, messages, userId]);
+
   // Wrapper for sending messages
   const sendMessage = async (content: string) => {
-    console.log("=== Sending message ===");
-    console.log("Active chat:", activeChat);
-    console.log("Message content:", content);
-    
     await sendMessageOperation(
       activeChat,
       content,
@@ -88,16 +142,8 @@ export const useMessages = (userId: string) => {
       setError
     );
     // Refetch conversations to update the list with the latest message preview
-    await refreshConversations();
+    fetchConversations(setConversations, () => {}, setIsLoadingConversations, setError);
   };
-
-  // Debug log the current state
-  useEffect(() => {
-    console.log("=== useMessages state update ===");
-    console.log("Conversations count:", conversations.length);
-    console.log("Active chat:", activeChat);
-    console.log("Is loading conversations:", isLoadingConversations);
-  }, [conversations, activeChat, isLoadingConversations]);
 
   return {
     conversations,
@@ -109,6 +155,5 @@ export const useMessages = (userId: string) => {
     error,
     setActiveChat,
     sendMessage,
-    refreshConversations,
   };
 };

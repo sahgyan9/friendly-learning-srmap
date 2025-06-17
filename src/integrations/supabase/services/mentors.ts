@@ -5,7 +5,9 @@ import { supabase } from '../client';
 export async function getMentors() {
   const { data, error } = await supabase
     .from('mentors')
-    .select('*');
+    .select('*')
+    .neq('department', 'General')
+    .order('rating', { ascending: false });
   
   return { data, error };
 }
@@ -26,7 +28,7 @@ export async function addMentor(mentor: {
 }
 
 export async function searchMentors(query: string) {
-  // If empty query, just return all mentors
+  // If empty query, just return all mentors (excluding General)
   if (!query || !query.trim()) {
     return getMentors();
   }
@@ -36,10 +38,11 @@ export async function searchMentors(query: string) {
   try {
     console.log("Searching for:", lowerQuery);
     
-    // Search in name, department, and bio with proper formatting
+    // Search in name, department, and bio with proper formatting, excluding General department
     const { data, error } = await supabase
       .from('mentors')
       .select('*')
+      .neq('department', 'General')
       .or(`name.ilike.%${lowerQuery}%,department.ilike.%${lowerQuery}%,bio.ilike.%${lowerQuery}%`)
       .order('rating', { ascending: false });
     

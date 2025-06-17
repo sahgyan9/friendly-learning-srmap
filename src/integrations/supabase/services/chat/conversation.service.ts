@@ -5,7 +5,6 @@ import { Conversation } from "@/types/chat";
 // Get all conversations for a user with improved data fetching
 export async function getUserConversations(userId: string) {
   try {
-    console.log('=== getUserConversations Debug ===');
     console.log('Fetching conversations for user:', userId);
 
     // Fetch conversations without complex joins
@@ -31,8 +30,7 @@ export async function getUserConversations(userId: string) {
     const conversationsWithDetails: Conversation[] = [];
     
     for (const conv of conversationsData) {
-      console.log(`\n--- Processing conversation ${conv.id} ---`);
-      console.log(`Between users: ${conv.user1_id} and ${conv.user2_id}`);
+      console.log(`Processing conversation ${conv.id} between ${conv.user1_id} and ${conv.user2_id}`);
 
       // Fetch user data for both participants
       const [user1Result, user2Result] = await Promise.all([
@@ -40,8 +38,8 @@ export async function getUserConversations(userId: string) {
         fetchUserData(conv.user2_id)
       ]);
 
-      console.log('User1 result:', user1Result);
-      console.log('User2 result:', user2Result);
+      console.log('User1 data:', user1Result);
+      console.log('User2 data:', user2Result);
 
       // Fetch last message if exists
       let lastMessage = undefined;
@@ -57,19 +55,15 @@ export async function getUserConversations(userId: string) {
         }
       }
 
-      const conversationWithDetails = {
+      conversationsWithDetails.push({
         ...conv,
         user1: user1Result,
         user2: user2Result,
         last_message: lastMessage
-      };
-
-      console.log('Final conversation object:', conversationWithDetails);
-      conversationsWithDetails.push(conversationWithDetails);
+      });
     }
 
-    console.log('=== Final conversations array ===');
-    console.log(conversationsWithDetails);
+    console.log('Final conversations with details:', conversationsWithDetails);
     return { data: conversationsWithDetails, error: null };
   } catch (err) {
     console.error('Exception in getUserConversations:', err);
@@ -77,33 +71,82 @@ export async function getUserConversations(userId: string) {
   }
 }
 
-// Improved function to fetch user data - always prioritizes users table
+// Enhanced function to fetch complete user data with improved error handling
 async function fetchUserData(userId: string) {
   try {
-    console.log(`\n>> Fetching user data for ${userId}`);
+    console.log(`Fetching complete data for user ${userId}`);
 
-    // Always fetch from users table first - this is the primary source of truth
+    if (!userId || typeof userId !== 'string') {
+      console.error(`Invalid user ID provided: ${userId}`);
+      return {
+        id: userId || 'unknown',
+        name: 'Unknown User',
+        profile_image: null,
+        role: 'student'
+      };
+    }
+
+    // First, get user data from users table - this is the primary source
     const { data: userData, error: userError } = await supabase
       .from('users')
-      .select('id, name, profile_image, role')
+      .select('id, name, profile_image, role, email')
       .eq('id', userId)
       .maybeSingle();
 
-    if (userError) {
-      console.error(`Error fetching user data for ${userId}:`, userError);
+    console.log(`User data for ${userId}:`, userData, 'Error:', userError);
+
+    // Check if this user is also a mentor (for profile image fallback)
+    const { data: mentorData, error: mentorError } = await supabase
+      .from('mentors')
+      .select('id, name, profile_image')
+      .eq('id', userId)
+      .maybeSingle();
+
+    console.log(`Mentor data for ${userId}:`, mentorData, 'Error:', mentorError);
+
+    // Prepare final user data with proper fallbacks
+    let finalName = 'Unknown User';
+    let finalProfileImage = null;
+    let finalRole = 'student';
+
+    // Priority for name: users.name > mentors.name > email prefix > 'Unknown User'
+    if (userData?.name && userData.name.trim()) {
+      finalName = userData.name.trim();
+    } else if (mentorData?.name && mentorData.name.trim()) {
+      finalName = mentorData.name.trim();
+    } else if (userData?.email) {
+      // Extract name from email as fallback
+      const emailPrefix = userData.email.split('@')[0];
+      finalName = emailPrefix.charAt(0).toUpperCase() + emailPrefix.slice(1);
+      console.log(`Using email prefix as fallback name for ${userId}: ${finalName}`);
     }
 
-    console.log(`Raw user data for ${userId}:`, userData);
+    // Priority for profile image: mentors.profile_image > users.profile_image
+    if (mentorData?.profile_image) {
+      finalProfileImage = mentorData.profile_image;
+    } else if (userData?.profile_image) {
+      finalProfileImage = userData.profile_image;
+    }
 
-    // Create final user data with proper fallbacks and validation
+    // Use role from users table
+    if (userData?.role) {
+      finalRole = userData.role;
+    }
+
     const finalUserData = {
       id: userId,
-      name: userData?.name && userData.name.trim() !== "" ? userData.name.trim() : 'Unknown User',
-      profile_image: userData?.profile_image || null,
-      role: userData?.role || 'student'
+      name: finalName,
+      profile_image: finalProfileImage,
+      role: finalRole
     };
 
     console.log(`Final processed data for ${userId}:`, finalUserData);
+
+    // Log warning if we couldn't get proper user data
+    if (finalName === 'Unknown User') {
+      console.warn(`Could not retrieve proper name for user ${userId}. User data:`, userData, 'Mentor data:', mentorData);
+    }
+
     return finalUserData;
 
   } catch (err) {
@@ -117,11 +160,9 @@ async function fetchUserData(userId: string) {
   }
 }
 
-// Get or create a conversation between two users - improved with better state management
+// Get or create a conversation between two users
 export async function getOrCreateConversation(user1Id: string, user2Id: string) {
   try {
-    console.log(`Getting/creating conversation between ${user1Id} and ${user2Id}`);
-
     // First check if conversation exists using RPC
     const { data: existingConversations, error: fetchError } = await supabase.rpc('get_conversation', {
       user1: user1Id,
@@ -133,29 +174,12 @@ export async function getOrCreateConversation(user1Id: string, user2Id: string) 
       return { data: null, error: fetchError };
     }
 
-    // If conversation exists, return it with user data
+    // If conversation exists, return it
     if (existingConversations && existingConversations.length > 0) {
-      const conversation = existingConversations[0];
-      console.log('Found existing conversation:', conversation.id);
-      
-      // Fetch user data for the existing conversation
-      const [user1Data, user2Data] = await Promise.all([
-        fetchUserData(conversation.user1_id),
-        fetchUserData(conversation.user2_id)
-      ]);
-
-      return { 
-        data: {
-          ...conversation,
-          user1: user1Data,
-          user2: user2Data
-        }, 
-        error: null 
-      };
+      return { data: existingConversations[0], error: null };
     }
 
     // If no conversation exists, create a new one using RPC
-    console.log('Creating new conversation');
     const { data: newConversation, error: createError } = await supabase.rpc('create_conversation', {
       user1_id: user1Id,
       user2_id: user2Id
@@ -166,20 +190,7 @@ export async function getOrCreateConversation(user1Id: string, user2Id: string) 
       return { data: null, error: createError };
     }
 
-    // Fetch user data for the new conversation
-    const [user1Data, user2Data] = await Promise.all([
-      fetchUserData(user1Id),
-      fetchUserData(user2Id)
-    ]);
-
-    const conversationWithUserData = {
-      ...newConversation,
-      user1: user1Data,
-      user2: user2Data
-    };
-
-    console.log('Created new conversation with user data:', conversationWithUserData);
-    return { data: conversationWithUserData, error: null };
+    return { data: newConversation, error: null };
   } catch (err) {
     console.error('Exception in getOrCreateConversation:', err);
     return { data: null, error: err as Error };
