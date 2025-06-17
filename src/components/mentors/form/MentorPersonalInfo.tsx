@@ -1,6 +1,7 @@
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MentorFormData } from "@/hooks/useMentorForm";
 
 interface MentorPersonalInfoProps {
@@ -9,6 +10,18 @@ interface MentorPersonalInfoProps {
 }
 
 const MentorPersonalInfo = ({ formData, handleChange }: MentorPersonalInfoProps) => {
+  const handleDepartmentChange = (value: string) => {
+    // Create a synthetic event to match the expected interface
+    const syntheticEvent = {
+      target: {
+        name: 'department',
+        value: value,
+      },
+    } as React.ChangeEvent<HTMLSelectElement>;
+    
+    handleChange(syntheticEvent);
+  };
+
   return (
     <div className="grid gap-6 md:grid-cols-2">
       <div className="space-y-2">
@@ -25,25 +38,22 @@ const MentorPersonalInfo = ({ formData, handleChange }: MentorPersonalInfoProps)
 
       <div className="space-y-2">
         <Label htmlFor="department">Department <span className="text-red-500">*</span></Label>
-        <select
-          id="department"
-          name="department"
-          value={formData.department}
-          onChange={handleChange}
-          required
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-        >
-          <option value="">Select Department</option>
-          <option value="Computer Science">Computer Science</option>
-          <option value="Electrical Engineering">Electrical Engineering</option>
-          <option value="Mechanical Engineering">Mechanical Engineering</option>
-          <option value="Civil Engineering">Civil Engineering</option>
-          <option value="Business Administration">Business Administration</option>
-          <option value="Physics">Physics</option>
-          <option value="Mathematics">Mathematics</option>
-          <option value="Chemistry">Chemistry</option>
-          <option value="Biology">Biology</option>
-        </select>
+        <Select value={formData.department} onValueChange={handleDepartmentChange} required>
+          <SelectTrigger>
+            <SelectValue placeholder="Select Department" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="Computer Science">Computer Science</SelectItem>
+            <SelectItem value="Electrical Engineering">Electrical Engineering</SelectItem>
+            <SelectItem value="Mechanical Engineering">Mechanical Engineering</SelectItem>
+            <SelectItem value="Civil Engineering">Civil Engineering</SelectItem>
+            <SelectItem value="Business Administration">Business Administration</SelectItem>
+            <SelectItem value="Physics">Physics</SelectItem>
+            <SelectItem value="Mathematics">Mathematics</SelectItem>
+            <SelectItem value="Chemistry">Chemistry</SelectItem>
+            <SelectItem value="Biology">Biology</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
     </div>
   );
