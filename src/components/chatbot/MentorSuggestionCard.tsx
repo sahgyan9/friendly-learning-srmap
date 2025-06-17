@@ -1,10 +1,13 @@
 
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Star, MessageCircle, User } from "lucide-react";
+import { Star, MessageCircle, Loader2 } from "lucide-react";
 import { getInitials } from "@/utils/user-utils";
+import { getMentorById } from "@/integrations/supabase/services/mentors";
+import { toast } from "sonner";
 
 interface MentorSuggestionCardProps {
   mentor: {
@@ -21,6 +24,8 @@ interface MentorSuggestionCardProps {
 }
 
 const MentorSuggestionCard = ({ mentor, onConnect }: MentorSuggestionCardProps) => {
+  const [isConnecting, setIsConnecting] = useState(false);
+  
   // Get the most relevant skills (first 3)
   const topSkills = mentor.skills.slice(0, 3);
   
@@ -28,6 +33,32 @@ const MentorSuggestionCard = ({ mentor, onConnect }: MentorSuggestionCardProps) 
   const truncatedBio = mentor.bio && mentor.bio.length > 80 
     ? mentor.bio.substring(0, 80) + "..." 
     : mentor.bio;
+
+  const handleConnect = async () => {
+    setIsConnecting(true);
+    
+    try {
+      // Fetch mentor data first to ensure it's available
+      console.log('Fetching mentor data before connecting:', mentor.id);
+      const { data: mentorData, error } = await getMentorById(mentor.id);
+      
+      if (error || !mentorData) {
+        console.error('Failed to fetch mentor data:', error);
+        toast.error("Failed to load mentor information");
+        return;
+      }
+      
+      console.log('Mentor data fetched successfully:', mentorData.name);
+      
+      // Call the original onConnect function
+      onConnect();
+    } catch (err) {
+      console.error('Error fetching mentor data:', err);
+      toast.error("An error occurred while connecting to the mentor");
+    } finally {
+      setIsConnecting(false);
+    }
+  };
 
   return (
     <Card className="p-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow">
@@ -86,11 +117,16 @@ const MentorSuggestionCard = ({ mentor, onConnect }: MentorSuggestionCardProps) 
           </div>
           
           <Button 
-            onClick={onConnect}
+            onClick={handleConnect}
             size="sm" 
             className="w-full h-8 text-xs bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700"
+            disabled={isConnecting}
           >
-            <MessageCircle className="h-3 w-3 mr-1" />
+            {isConnecting ? (
+              <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+            ) : (
+              <MessageCircle className="h-3 w-3 mr-1" />
+            )}
             Connect with {mentor.name.split(' ')[0]}
           </Button>
         </div>

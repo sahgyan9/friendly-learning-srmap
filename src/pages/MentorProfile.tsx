@@ -57,7 +57,7 @@ const MentorProfile = () => {
     fetchMentor();
   }, [id]);
 
-  const handleConnect = () => {
+  const handleConnect = async () => {
     if (!user) {
       toast.error("Please sign in to connect with mentors");
       return;
@@ -66,10 +66,30 @@ const MentorProfile = () => {
     if (!mentor) return;
     
     setIsConnecting(true);
-    // Add a small delay to show loading state
-    setTimeout(() => {
-      navigate(`/messages?mentor=${mentor.id}`);
-    }, 100);
+    
+    try {
+      // Fetch mentor data first to ensure it's fresh and available
+      console.log('Fetching mentor data before connecting:', mentor.id);
+      const { data: mentorData, error } = await getMentorById(mentor.id);
+      
+      if (error || !mentorData) {
+        console.error('Failed to fetch mentor data:', error);
+        toast.error("Failed to load mentor information");
+        return;
+      }
+      
+      console.log('Mentor data fetched successfully:', mentorData.name);
+      
+      // Add a small delay to show loading state, then navigate
+      setTimeout(() => {
+        navigate(`/messages?mentor=${mentor.id}`);
+      }, 100);
+    } catch (err) {
+      console.error('Error fetching mentor data:', err);
+      toast.error("An error occurred while connecting to the mentor");
+    } finally {
+      setIsConnecting(false);
+    }
   };
 
   const handleRatingSubmitted = () => {
