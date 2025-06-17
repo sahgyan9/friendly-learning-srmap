@@ -77,42 +77,6 @@ export type Database = {
         }
         Relationships: []
       }
-      contact_messages: {
-        Row: {
-          admin_response: string | null
-          created_at: string
-          email: string
-          id: string
-          message: string
-          name: string
-          responded_at: string | null
-          status: string
-          subject: string
-        }
-        Insert: {
-          admin_response?: string | null
-          created_at?: string
-          email: string
-          id?: string
-          message: string
-          name: string
-          responded_at?: string | null
-          status?: string
-          subject: string
-        }
-        Update: {
-          admin_response?: string | null
-          created_at?: string
-          email?: string
-          id?: string
-          message?: string
-          name?: string
-          responded_at?: string | null
-          status?: string
-          subject?: string
-        }
-        Relationships: []
-      }
       conversations: {
         Row: {
           id: string

@@ -84,110 +84,20 @@ export const updateVerificationStatus = async (
   });
 
   try {
-    // First get the verification data to access application details
-    const { data: verification, error: fetchError } = await supabase
-      .from('mentor_verifications')
-      .select('user_id, application_data')
-      .eq('id', verificationId)
-      .single();
+    const { data, error } = await supabase.rpc('update_verification_status', {
+      verification_id: verificationId,
+      new_status: status,
+      admin_id: adminId,
+      reason: reason || null
+    });
 
-    if (fetchError) {
-      console.error('Error fetching verification:', fetchError);
-      throw new Error(`Failed to fetch verification: ${fetchError.message}`);
+    if (error) {
+      console.error('RPC Error updating verification status:', error);
+      throw new Error(`Database error: ${error.message}`);
     }
 
-    if (!verification) {
-      throw new Error('Verification not found');
-    }
-
-    // Update verification status
-    const { error: updateError } = await supabase
-      .from('mentor_verifications')
-      .update({
-        status,
-        reviewed_at: new Date().toISOString(),
-        reviewed_by: adminId,
-        rejection_reason: status === 'rejected' ? reason : null
-      })
-      .eq('id', verificationId);
-
-    if (updateError) {
-      console.error('Error updating verification:', updateError);
-      throw new Error(`Failed to update verification: ${updateError.message}`);
-    }
-
-    // Update user verification status
-    const { error: userUpdateError } = await supabase
-      .from('users')
-      .update({ verification_status: status })
-      .eq('id', verification.user_id);
-
-    if (userUpdateError) {
-      console.error('Error updating user status:', userUpdateError);
-      throw new Error(`Failed to update user status: ${userUpdateError.message}`);
-    }
-
-    // If approved, create/update mentor record with verification data
-    if (status === 'approved' && verification.application_data) {
-      const applicationData = verification.application_data as any;
-      
-      // Get user info with proper error handling
-      const { data: userData, error: userFetchError } = await supabase
-        .from('users')
-        .select('name, profile_image')
-        .eq('id', verification.user_id)
-        .maybeSingle();
-
-      if (userFetchError) {
-        console.error('Error fetching user data:', userFetchError);
-        throw new Error(`Failed to fetch user data: ${userFetchError.message}`);
-      }
-
-      if (!userData) {
-        console.error('User not found for ID:', verification.user_id);
-        throw new Error(`User not found with ID: ${verification.user_id}`);
-      }
-
-      // Create or update mentor record with verification data using upsert
-      const { error: mentorUpsertError } = await supabase
-        .from('mentors')
-        .upsert({
-          id: verification.user_id,
-          name: userData.name,
-          department: applicationData.department || 'General',
-          skills: applicationData.skills ? applicationData.skills.split(',').map((s: string) => s.trim()) : [],
-          bio: applicationData.bio || null,
-          linkedin_url: applicationData.linkedin_url || null,
-          profile_image: userData.profile_image || null,
-          rating: 0,
-          review_count: 0
-        });
-
-      if (mentorUpsertError) {
-        console.error('Error creating/updating mentor record:', mentorUpsertError);
-        throw new Error(`Failed to create/update mentor record: ${mentorUpsertError.message}`);
-      }
-
-      // Update user role to mentor and sync profile data
-      const { error: roleUpdateError } = await supabase
-        .from('users')
-        .update({
-          role: 'mentor',
-          department: applicationData.department,
-          skills: applicationData.skills ? applicationData.skills.split(',').map((s: string) => s.trim()) : [],
-          bio: applicationData.bio,
-          linkedin_url: applicationData.linkedin_url
-        })
-        .eq('id', verification.user_id);
-
-      if (roleUpdateError) {
-        console.error('Error updating user role:', roleUpdateError);
-        throw new Error(`Failed to update user role: ${roleUpdateError.message}`);
-      }
-    }
-
-    console.log('Verification status updated successfully');
-    return { data: true, error: null };
+    console.log('Verification status updated successfully:', data);
+    return { data, error: null };
   } catch (error) {
     console.error('Exception updating verification status:', error);
     throw error;

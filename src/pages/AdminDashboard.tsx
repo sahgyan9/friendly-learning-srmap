@@ -20,7 +20,6 @@ import {
   BookOpen,
   Award,
   UserCheck,
-  Mail,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { isUserAdmin } from "@/integrations/supabase/services/admin";
@@ -82,16 +81,10 @@ const AdminDashboard = () => {
       path: "/admin/mentor-verification",
     },
     {
-      title: "Contact Messages",
-      description: "Manage and respond to user inquiries.",
-      icon: Mail,
-      path: "/admin/contact-messages",
-    },
-    {
       title: "Team Members",
       description: "Manage team members displayed on the about page.",
       icon: Users,
-      path: "/admin/team-members",
+      path: "/admin/team",
     },
     {
       title: "Marketplace",
