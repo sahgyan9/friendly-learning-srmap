@@ -127,7 +127,7 @@ export const updateVerificationStatus = async (
       throw new Error(`Failed to update user status: ${userUpdateError.message}`);
     }
 
-    // If approved, update mentor record with verification data
+    // If approved, create/update mentor record with verification data
     if (status === 'approved' && verification.application_data) {
       const applicationData = verification.application_data as any;
       
@@ -148,25 +148,27 @@ export const updateVerificationStatus = async (
         throw new Error(`User not found with ID: ${verification.user_id}`);
       }
 
-      // Update mentor record with verification data
-      const { error: mentorUpdateError } = await supabase
+      // Create or update mentor record with verification data using upsert
+      const { error: mentorUpsertError } = await supabase
         .from('mentors')
-        .update({
+        .upsert({
+          id: verification.user_id,
           name: userData.name,
           department: applicationData.department || 'General',
           skills: applicationData.skills ? applicationData.skills.split(',').map((s: string) => s.trim()) : [],
           bio: applicationData.bio || null,
           linkedin_url: applicationData.linkedin_url || null,
-          profile_image: userData.profile_image || null
-        })
-        .eq('id', verification.user_id);
+          profile_image: userData.profile_image || null,
+          rating: 0,
+          review_count: 0
+        });
 
-      if (mentorUpdateError) {
-        console.error('Error updating mentor record:', mentorUpdateError);
-        throw new Error(`Failed to update mentor record: ${mentorUpdateError.message}`);
+      if (mentorUpsertError) {
+        console.error('Error creating/updating mentor record:', mentorUpsertError);
+        throw new Error(`Failed to create/update mentor record: ${mentorUpsertError.message}`);
       }
 
-      // Update user role to mentor
+      // Update user role to mentor and sync profile data
       const { error: roleUpdateError } = await supabase
         .from('users')
         .update({
