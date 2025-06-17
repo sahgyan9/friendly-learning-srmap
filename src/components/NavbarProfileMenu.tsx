@@ -1,7 +1,7 @@
 
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { MessageCircle, LogOut, Settings } from "lucide-react";
+import { MessageCircle, LogOut } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -13,46 +13,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { getInitials } from "@/utils/user-utils";
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
 
 const NavbarProfileMenu = () => {
-  const { user, profile, signOut, loading, isAdmin } = useAuth();
-  const [isRealMentor, setIsRealMentor] = useState(false);
-  const [checkingMentorStatus, setCheckingMentorStatus] = useState(true);
+  const { user, profile, signOut, loading } = useAuth();
 
-  useEffect(() => {
-    checkMentorStatus();
-  }, [user, profile]);
-
-  const checkMentorStatus = async () => {
-    if (!user) {
-      setCheckingMentorStatus(false);
-      return;
-    }
-    
-    try {
-      const { data, error } = await supabase
-        .from('mentors')
-        .select('department')
-        .eq('id', user.id)
-        .single();
-      
-      if (error) {
-        setIsRealMentor(false);
-      } else {
-        // Only consider as real mentor if not in General department
-        setIsRealMentor(data && data.department && data.department !== 'General');
-      }
-    } catch (error) {
-      console.error('Error checking mentor status:', error);
-      setIsRealMentor(false);
-    } finally {
-      setCheckingMentorStatus(false);
-    }
-  };
-
-  if (loading || checkingMentorStatus) return null;
+  if (loading) return null;
   if (!user) return null;
 
   return (
@@ -82,15 +47,7 @@ const NavbarProfileMenu = () => {
               Profile
             </Link>
           </DropdownMenuItem>
-          {isAdmin && (
-            <DropdownMenuItem asChild>
-              <Link to="/admin" className="cursor-pointer w-full">
-                <Settings className="h-4 w-4 mr-2" />
-                Admin Dashboard
-              </Link>
-            </DropdownMenuItem>
-          )}
-          {!isRealMentor && (
+          {profile?.role !== 'mentor' && (
             <DropdownMenuItem asChild>
               <Link to="/become-mentor" className="cursor-pointer w-full">
                 Become a Mentor
