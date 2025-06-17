@@ -84,7 +84,7 @@ const NavbarProfileMenu = () => {
           </DropdownMenuItem>
           {isAdmin && (
             <DropdownMenuItem asChild>
-              <Link to="/admin/dashboard" className="cursor-pointer w-full">
+              <Link to="/admin" className="cursor-pointer w-full">
                 <Settings className="h-4 w-4 mr-2" />
                 Admin Dashboard
               </Link>
