@@ -1,104 +1,23 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
-// Get user data by ID with improved error handling and fallbacks
+// Get user data by ID
 export async function getUserById(userId: string) {
   try {
-    console.log(`Fetching user data for ID: ${userId}`);
-
-    if (!userId || typeof userId !== 'string') {
-      console.error(`Invalid user ID provided: ${userId}`);
-      return { 
-        data: null, 
-        error: new Error('Invalid user ID provided') 
-      };
-    }
-
-    // Get user data from users table
-    const { data: userData, error: userError } = await supabase
+    const { data, error } = await supabase
       .from('users')
-      .select('id, name, profile_image, role, email')
+      .select('id, name, profile_image, role')
       .eq('id', userId)
-      .maybeSingle();
+      .single();
 
-    if (userError) {
-      console.error(`Error fetching user ${userId}:`, userError);
-      return { data: null, error: userError };
+    if (error) {
+      console.error(`Error fetching user ${userId}:`, error);
+      return { data: null, error };
     }
 
-    if (!userData) {
-      console.warn(`No user found with ID ${userId}`);
-      return { 
-        data: null, 
-        error: new Error(`User not found with ID: ${userId}`) 
-      };
-    }
-
-    // Check for mentor data as well for profile image fallback
-    const { data: mentorData } = await supabase
-      .from('mentors')
-      .select('id, name, profile_image')
-      .eq('id', userId)
-      .maybeSingle();
-
-    // Prepare final user data with proper fallbacks
-    let finalName = userData.name;
-    
-    // If name is missing or empty, try fallbacks
-    if (!finalName || !finalName.trim()) {
-      if (mentorData?.name && mentorData.name.trim()) {
-        finalName = mentorData.name.trim();
-      } else if (userData.email) {
-        // Extract name from email as fallback
-        const emailPrefix = userData.email.split('@')[0];
-        finalName = emailPrefix.charAt(0).toUpperCase() + emailPrefix.slice(1);
-        console.log(`Using email prefix as fallback name for ${userId}: ${finalName}`);
-      } else {
-        finalName = 'User';
-      }
-    }
-
-    const processedUserData = {
-      id: userData.id,
-      name: finalName,
-      profile_image: mentorData?.profile_image || userData.profile_image || null,
-      role: userData.role
-    };
-
-    console.log(`Processed user data for ${userId}:`, processedUserData);
-    return { data: processedUserData, error: null };
-
+    return { data, error: null };
   } catch (err) {
     console.error('Exception in getUserById:', err);
     return { data: null, error: err as Error };
-  }
-}
-
-// Validate and ensure user has proper name data
-export async function validateUserData(userId: string) {
-  try {
-    const { data: userData, error } = await getUserById(userId);
-    
-    if (error || !userData) {
-      return { isValid: false, error };
-    }
-
-    // Check if user has a proper name
-    const hasValidName = userData.name && 
-                        userData.name.trim() !== '' && 
-                        userData.name !== 'Unknown User' && 
-                        userData.name !== 'User';
-
-    return {
-      isValid: hasValidName,
-      userData,
-      error: null
-    };
-  } catch (err) {
-    console.error('Exception in validateUserData:', err);
-    return { 
-      isValid: false, 
-      error: err as Error 
-    };
   }
 }

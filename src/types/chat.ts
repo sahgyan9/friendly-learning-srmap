@@ -1,4 +1,3 @@
-
 export interface Message {
   id: string;
   content: string;
@@ -7,7 +6,6 @@ export interface Message {
   sent_at: string;
   is_read: boolean;
   conversation_id: string;
-  delivery_status?: 'sent' | 'delivered' | 'read';
   sender?: {
     id: string;
     name: string;
@@ -32,20 +30,4 @@ export interface Conversation {
     profile_image: string;
   };
   last_message?: Message;
-}
-
-export interface TypingIndicator {
-  id: string;
-  conversation_id: string;
-  user_id: string;
-  is_typing: boolean;
-  updated_at: string;
-}
-
-export interface UserPresence {
-  id: string;
-  user_id: string;
-  is_online: boolean;
-  last_seen: string;
-  updated_at: string;
 }

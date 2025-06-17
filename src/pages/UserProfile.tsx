@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -16,7 +17,6 @@ const UserProfile = () => {
   const { user, profile, loading: authLoading } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [isMentorProfile, setIsMentorProfile] = useState(false);
-  const [isRealMentor, setIsRealMentor] = useState(false);
   const [mentorData, setMentorData] = useState<any>(null);
   
   const [formData, setFormData] = useState({
@@ -61,18 +61,12 @@ const UserProfile = () => {
           console.error('Error checking mentor status:', error);
         }
         setIsMentorProfile(false);
-        setIsRealMentor(false);
         return;
       }
       
       if (data) {
         setIsMentorProfile(true);
         setMentorData(data);
-        
-        // Check if this is a real mentor (not in General department)
-        const isReal = data.department && data.department !== 'General';
-        setIsRealMentor(isReal);
-        
         // Update form with mentor data
         setFormData(prev => ({
           ...prev,
@@ -184,7 +178,7 @@ const UserProfile = () => {
             department: formData.department,
             skills: skillsArray,
             linkedin_url: formData.linkedin_url,
-            profile_image: profileImageUrl // Fix: Ensure mentor table gets updated profile image
+            profile_image: profileImageUrl
           })
           .eq('id', user.id);
         
@@ -228,12 +222,7 @@ const UserProfile = () => {
           <div className="mb-8 text-center">
             <h1 className="text-3xl font-bold text-foreground">Your Profile</h1>
             <p className="text-muted-foreground mt-2">
-              {isRealMentor 
-                ? "You're registered as a mentor. Edit your profile details below." 
-                : isMentorProfile 
-                ? "Complete your profile below. To become a mentor, click 'Become a Mentor'."
-                : "Manage your account information"
-              }
+              {isMentorProfile ? "You're registered as a mentor. Edit your profile details below." : "Manage your account information"}
             </p>
           </div>
           
@@ -290,8 +279,8 @@ const UserProfile = () => {
                 </div>
               </div>
               
-              {/* Only show these fields for real mentors */}
-              {isRealMentor && (
+              {/* Only show these fields for mentors */}
+              {isMentorProfile && (
                 <>
                   <div>
                     <Label htmlFor="bio" className="text-foreground">About</Label>
@@ -345,7 +334,7 @@ const UserProfile = () => {
                 </>
               )}
               
-              {!isRealMentor && (
+              {!isMentorProfile && (
                 <div className="py-4 border-t border-border">
                   <p className="text-sm text-muted-foreground mb-3">
                     Want to help other students? Apply to become a mentor!

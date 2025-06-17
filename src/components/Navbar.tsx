@@ -7,7 +7,6 @@ import DarkModeToggle from "./DarkModeToggle";
 import NavbarProfileMenu from "./NavbarProfileMenu";
 import NavbarMobileMenu from "./NavbarMobileMenu";
 import NotificationBell from "./notifications/NotificationBell";
-import MessagesIcon from "./navbar/MessagesIcon";
 import { useAuth } from "@/context/AuthContext";
 
 const Navbar = () => {
@@ -58,7 +57,6 @@ const Navbar = () => {
           {/* Right side items */}
           <div className="flex items-center space-x-2">
             <DarkModeToggle />
-            {user && <MessagesIcon />}
             {user && <NotificationBell />}
             {user ? (
               <NavbarProfileMenu />

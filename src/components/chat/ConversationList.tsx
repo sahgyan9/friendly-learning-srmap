@@ -2,12 +2,9 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
 import { Conversation } from "@/types/chat";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useUserPresenceRealtime } from "@/hooks/useUserPresenceRealtime";
-import OnlineStatus from "./OnlineStatus";
 
 interface ConversationListProps {
   conversations: Conversation[];
@@ -34,8 +31,6 @@ const ConversationList = ({
   hasUnreadMessages,
   currentUserId
 }: ConversationListProps) => {
-  const { isUserOnline } = useUserPresenceRealtime();
-
   if (isLoading) {
     return (
       <div className="flex justify-center items-center py-8">
@@ -81,8 +76,8 @@ const ConversationList = ({
         const otherUser = getOtherUser(conversation);
         const hasUnread = hasUnreadMessages(conversation.id);
         const lastMessageContent = conversation.last_message ? conversation.last_message.content : "Start a conversation";
+        
         const displayName = otherUser?.name?.trim() || "Unknown User";
-        const isOnline = isUserOnline(otherUser?.id);
 
         return (
           <div
@@ -90,10 +85,10 @@ const ConversationList = ({
             onClick={() => setActiveChat(conversation.id)}
             className={`flex items-center gap-3 p-4 cursor-pointer hover:bg-muted/50 transition-colors ${
               activeChat === conversation.id ? 'bg-muted border-r-2 border-primary' : ''
-            } ${hasUnread ? 'bg-blue-50/50 dark:bg-blue-950/20' : ''}`}
+            }`}
           >
-            {/* Avatar with online status */}
-            <div className="flex-shrink-0 relative">
+            {/* Avatar with better sizing */}
+            <div className="flex-shrink-0">
               <Avatar className="h-11 w-11 border-2 border-border">
                 <AvatarImage 
                   src={otherUser?.profile_image} 
@@ -104,46 +99,33 @@ const ConversationList = ({
                   {getInitials(displayName)}
                 </AvatarFallback>
               </Avatar>
-              {/* Online status indicator */}
-              <div className="absolute -bottom-0.5 -right-0.5">
-                <OnlineStatus isOnline={isOnline} size="sm" />
-              </div>
             </div>
 
             {/* Conversation details */}
             <div className="flex-1 min-w-0">
               <div className="flex justify-between items-start mb-1">
-                <div className="flex items-center gap-2">
-                  <h3 className={`text-sm font-medium truncate ${
-                    hasUnread ? 'text-foreground font-semibold' : 'text-foreground/90'
-                  }`}>
-                    {displayName}
-                  </h3>
-                  {isOnline && (
-                    <OnlineStatus isOnline={true} size="sm" showText />
-                  )}
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground flex-shrink-0">
-                    {formatTime(conversation.last_updated)}
-                  </span>
-                  {/* Unread badge */}
-                  {hasUnread && (
-                    <Badge 
-                      variant="destructive" 
-                      className="h-5 w-5 p-0 flex items-center justify-center text-xs"
-                    >
-                      •
-                    </Badge>
-                  )}
-                </div>
+                <h3 className={`text-sm font-medium truncate ${
+                  hasUnread ? 'text-foreground' : 'text-foreground/90'
+                }`}>
+                  {displayName}
+                </h3>
+                <span className="text-xs text-muted-foreground flex-shrink-0 ml-2">
+                  {formatTime(conversation.last_updated)}
+                </span>
               </div>
               
-              <p className={`text-xs truncate ${
-                hasUnread ? 'text-foreground/70 font-medium' : 'text-muted-foreground'
-              }`}>
-                {lastMessageContent}
-              </p>
+              <div className="flex items-center justify-between">
+                <p className={`text-xs truncate ${
+                  hasUnread ? 'text-foreground/70 font-medium' : 'text-muted-foreground'
+                }`}>
+                  {lastMessageContent}
+                </p>
+                
+                {/* Unread indicator */}
+                {hasUnread && (
+                  <div className="w-2 h-2 bg-primary rounded-full flex-shrink-0 ml-2"></div>
+                )}
+              </div>
             </div>
           </div>
         );

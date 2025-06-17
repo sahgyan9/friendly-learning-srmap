@@ -8,7 +8,6 @@ interface ChatModalContentProps {
   loading: boolean;
   sending: boolean;
   currentUserId: string;
-  conversationId: string | null;
   onSendMessage: (content: string) => Promise<void>;
 }
 
@@ -17,7 +16,6 @@ const ChatModalContent = ({
   loading, 
   sending, 
   currentUserId,
-  conversationId,
   onSendMessage 
 }: ChatModalContentProps) => {
   return (
@@ -28,7 +26,6 @@ const ChatModalContent = ({
           messages={messages} 
           loading={loading} 
           currentUserId={currentUserId}
-          conversationId={conversationId}
         />
       </div>
       
@@ -38,8 +35,6 @@ const ChatModalContent = ({
           onSendMessage={onSendMessage}
           disabled={loading}
           sending={sending}
-          conversationId={conversationId}
-          userId={currentUserId}
         />
       </div>
     </>

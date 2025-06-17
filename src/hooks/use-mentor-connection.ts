@@ -5,7 +5,11 @@ import { toast } from "sonner";
 import { getMentorById } from "@/integrations/supabase/services/mentors";
 import { getOrCreateConversation } from "@/integrations/supabase/services/chat";
 
-export const useMentorConnection = (userId: string, setActiveChat: (id: string) => void) => {
+export const useMentorConnection = (
+  userId: string, 
+  setActiveChat: (id: string) => void,
+  refreshConversations?: () => void
+) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [isProcessingMentor, setIsProcessingMentor] = useState(false);
   const mentorProcessedRef = useRef<string | null>(null);
@@ -31,7 +35,6 @@ export const useMentorConnection = (userId: string, setActiveChat: (id: string) 
         if (mentorError || !mentor) {
           console.error('Mentor not found:', mentorError);
           toast.error("Mentor not found or is no longer available");
-          // Clear the mentor parameter from URL
           setSearchParams(params => {
             params.delete('mentor');
             return params;
@@ -42,7 +45,6 @@ export const useMentorConnection = (userId: string, setActiveChat: (id: string) 
         // Check if user is trying to message themselves
         if (mentor.id === userId) {
           toast.error("You cannot message yourself");
-          // Clear the mentor parameter from URL
           setSearchParams(params => {
             params.delete('mentor');
             return params;
@@ -62,6 +64,11 @@ export const useMentorConnection = (userId: string, setActiveChat: (id: string) 
         }
         
         console.log('Conversation ready:', conversation.id);
+        
+        // Refresh conversations list to ensure the new/existing conversation is loaded
+        if (refreshConversations) {
+          await refreshConversations();
+        }
         
         // Set the active chat to this conversation
         setActiveChat(conversation.id);
@@ -84,7 +91,7 @@ export const useMentorConnection = (userId: string, setActiveChat: (id: string) 
     };
     
     handleMentorConnection();
-  }, [searchParams, userId, isProcessingMentor, setSearchParams, setActiveChat]);
+  }, [searchParams, userId, isProcessingMentor, setSearchParams, setActiveChat, refreshConversations]);
 
   return { isProcessingMentor };
 };

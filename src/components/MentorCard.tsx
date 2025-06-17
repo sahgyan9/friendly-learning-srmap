@@ -4,14 +4,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Star, MapPin, Users, MessageCircle, Linkedin, Loader2 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Mentor } from "@/types/mentor";
 import BadgeGrid from "@/components/badges/BadgeGrid";
 import { useBadges } from "@/hooks/useBadges";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
-import { getMentorById } from "@/integrations/supabase/services/mentors";
 
 interface MentorCardProps {
   mentor: Mentor;
@@ -33,37 +32,17 @@ const MentorCard = ({ mentor }: MentorCardProps) => {
       .toUpperCase();
   };
 
-  const handleConnect = async () => {
+  const handleConnect = () => {
     if (!user) {
       toast.error("Please sign in to connect with mentors");
       return;
     }
     
     setIsConnecting(true);
-    
-    try {
-      // Fetch mentor data first to ensure it's available
-      console.log('Fetching mentor data before connecting:', mentor.id);
-      const { data: mentorData, error } = await getMentorById(mentor.id);
-      
-      if (error || !mentorData) {
-        console.error('Failed to fetch mentor data:', error);
-        toast.error("Failed to load mentor information");
-        return;
-      }
-      
-      console.log('Mentor data fetched successfully:', mentorData.name);
-      
-      // Add a small delay to show loading state, then navigate
-      setTimeout(() => {
-        navigate(`/messages?mentor=${mentor.id}`);
-      }, 100);
-    } catch (err) {
-      console.error('Error fetching mentor data:', err);
-      toast.error("An error occurred while connecting to the mentor");
-    } finally {
-      setIsConnecting(false);
-    }
+    // Add a small delay to show loading state
+    setTimeout(() => {
+      navigate(`/messages?mentor=${mentor.id}`);
+    }, 100);
   };
 
   const handleCardClick = async () => {
@@ -89,61 +68,61 @@ const MentorCard = ({ mentor }: MentorCardProps) => {
         <CardContent className="p-6 flex flex-col h-full">
           {/* Header section with avatar and basic info */}
           <div className="flex items-start space-x-4 mb-4">
-            <div className="flex flex-col items-center flex-shrink-0">
-              <Avatar className="h-16 w-16 ring-2 ring-blue-100 dark:ring-blue-900 mb-2">
-                <AvatarImage 
-                  src={mentor.profile_image} 
-                  alt={mentor.name}
-                  loading="lazy"
-                />
-                <AvatarFallback className="bg-blue-600 text-white text-lg font-semibold">
-                  {getInitials(mentor.name)}
-                </AvatarFallback>
-              </Avatar>
-              
-              {/* Rating or New Mentor Badge - moved below avatar */}
-              {mentor.review_count === 0 || mentor.rating === 0 ? (
-                <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 text-xs">
-                  New Mentor
-                </Badge>
-              ) : (
-                <div className="flex items-center space-x-1 bg-yellow-50 dark:bg-yellow-900/20 px-2 py-1 rounded-full">
-                  <Star className="h-3 w-3 text-yellow-500 fill-current" />
-                  <span className="text-xs font-medium text-gray-900 dark:text-gray-100">
-                    {mentor.rating.toFixed(1)}
-                  </span>
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
-                    ({mentor.review_count})
-                  </span>
-                </div>
-              )}
-            </div>
+            <Avatar className="h-16 w-16 ring-2 ring-blue-100 dark:ring-blue-900 flex-shrink-0">
+              <AvatarImage 
+                src={mentor.profile_image} 
+                alt={mentor.name}
+                loading="lazy"
+              />
+              <AvatarFallback className="bg-blue-600 text-white text-lg font-semibold">
+                {getInitials(mentor.name)}
+              </AvatarFallback>
+            </Avatar>
             
             <div className="flex-1 min-w-0">
-              <div className="mb-2">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors truncate">
-                  {mentor.name}
-                </h3>
-                <div className="flex items-center space-x-2 mt-1">
-                  <div className="flex items-center space-x-1">
-                    <MapPin className="h-4 w-4 text-gray-500 flex-shrink-0" />
-                    <span className="text-sm text-gray-600 dark:text-gray-400 truncate">
-                      {mentor.department}
+              <div className="flex items-start justify-between mb-2">
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors truncate">
+                    {mentor.name}
+                  </h3>
+                  <div className="flex items-center space-x-2 mt-1">
+                    <div className="flex items-center space-x-1">
+                      <MapPin className="h-4 w-4 text-gray-500 flex-shrink-0" />
+                      <span className="text-sm text-gray-600 dark:text-gray-400 truncate">
+                        {mentor.department}
+                      </span>
+                    </div>
+                    {/* LinkedIn icon */}
+                    {mentor.linkedin_url && (
+                      <a
+                        href={mentor.linkedin_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Linkedin className="h-4 w-4" />
+                      </a>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Rating or New Mentor Badge */}
+                {mentor.review_count === 0 || mentor.rating === 0 ? (
+                  <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 flex-shrink-0 ml-2">
+                    New Mentor
+                  </Badge>
+                ) : (
+                  <div className="flex items-center space-x-1 bg-yellow-50 dark:bg-yellow-900/20 px-2 py-1 rounded-full flex-shrink-0 ml-2">
+                    <Star className="h-4 w-4 text-yellow-500 fill-current" />
+                    <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                      {mentor.rating.toFixed(1)}
+                    </span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                      ({mentor.review_count})
                     </span>
                   </div>
-                  {/* LinkedIn icon */}
-                  {mentor.linkedin_url && (
-                    <a
-                      href={mentor.linkedin_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <Linkedin className="h-4 w-4" />
-                    </a>
-                  )}
-                </div>
+                )}
               </div>
             </div>
           </div>
@@ -192,22 +171,35 @@ const MentorCard = ({ mentor }: MentorCardProps) => {
                 </span>
               </div>
               
-              <Button 
-                size="sm" 
-                className="text-sm px-4 py-2 h-9"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleConnect();
-                }}
-                disabled={isConnecting}
-              >
-                {isConnecting ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <MessageCircle className="h-4 w-4 mr-2" />
-                )}
-                Connect
-              </Button>
+              <div className="flex items-center space-x-1">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  asChild
+                  className="text-xs px-2 py-1 h-7"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Link to={`/mentor/${mentor.id}`}>
+                    View Profile
+                  </Link>
+                </Button>
+                <Button 
+                  size="sm" 
+                  className="text-xs px-2 py-1 h-7"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleConnect();
+                  }}
+                  disabled={isConnecting}
+                >
+                  {isConnecting ? (
+                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                  ) : (
+                    <MessageCircle className="h-3 w-3 mr-1" />
+                  )}
+                  Connect
+                </Button>
+              </div>
             </div>
           </div>
         </CardContent>

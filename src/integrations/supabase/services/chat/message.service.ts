@@ -32,12 +32,8 @@ export async function getConversationMessages(conversationId: string) {
         }
       }
 
-      // Ensure delivery_status is properly typed
-      const deliveryStatus = message.delivery_status as 'sent' | 'delivered' | 'read' || 'sent';
-
       messagesWithSenders.push({
         ...message,
-        delivery_status: deliveryStatus,
         sender: senderData
       });
     }

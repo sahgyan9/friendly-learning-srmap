@@ -6,6 +6,7 @@ import MessageList from "./MessageList";
 import ChatHeader from "./ChatHeader";
 import MessageInput from "./MessageInput";
 import SearchInput from "./SearchInput";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 
@@ -51,54 +52,38 @@ const ChatContainer = ({
   const showConversationList = !activeChat || mobileView === "list" || window.innerWidth >= 768;
   const showChatArea = activeChat && (mobileView === "chat" || window.innerWidth >= 768);
 
-  // Function to get sender name based on sender ID with improved fallback handling
+  // Function to get sender name based on sender ID with improved caching
   const getSenderName = useCallback((senderId: string) => {
     if (senderId === currentUserId) return "You";
 
-    // Check messages for sender data first (with better validation)
+    // Check messages for sender data first
     for (const msg of messages) {
       if (msg.sender && msg.sender.name && msg.sender_id === senderId) {
-        const senderName = msg.sender.name.trim();
-        if (senderName && senderName !== 'Unknown User') {
-          return senderName;
-        }
+        return msg.sender.name;
       }
     }
 
-    // Check current conversation users (with better validation)
+    // Check current conversation users
     if (currentConversation) {
       if (currentConversation.user1_id === senderId && currentConversation.user1?.name) {
-        const userName = currentConversation.user1.name.trim();
-        if (userName && userName !== 'Unknown User') {
-          return userName;
-        }
+        return currentConversation.user1.name;
       }
       if (currentConversation.user2_id === senderId && currentConversation.user2?.name) {
-        const userName = currentConversation.user2.name.trim();
-        if (userName && userName !== 'Unknown User') {
-          return userName;
-        }
+        return currentConversation.user2.name;
       }
     }
 
-    // Check all conversations as fallback (with better validation)
+    // Check all conversations as fallback
     for (const conv of conversations) {
       if (senderId === conv.user1_id && conv.user1?.name) {
-        const userName = conv.user1.name.trim();
-        if (userName && userName !== 'Unknown User') {
-          return userName;
-        }
+        return conv.user1.name;
       }
       if (senderId === conv.user2_id && conv.user2?.name) {
-        const userName = conv.user2.name.trim();
-        if (userName && userName !== 'Unknown User') {
-          return userName;
-        }
+        return conv.user2.name;
       }
     }
 
-    // Enhanced fallback - try to extract from sender ID or use a more descriptive fallback
-    console.warn(`Could not find valid name for user ID: ${senderId}`);
+    console.warn(`Could not find name for user ID: ${senderId}`);
     return "User";
   }, [currentConversation, conversations, currentUserId, messages]);
 
@@ -111,7 +96,7 @@ const ChatContainer = ({
             <SearchInput searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
           </div>
 
-          <div className="flex-1 overflow-y-auto">
+          <ScrollArea className="flex-1">
             <ConversationList
               conversations={conversations}
               filteredConversations={filteredConversations}
@@ -129,7 +114,7 @@ const ChatContainer = ({
               hasUnreadMessages={hasUnreadMessages}
               currentUserId={currentUserId}
             />
-          </div>
+          </ScrollArea>
         </div>
       )}
 
@@ -137,7 +122,7 @@ const ChatContainer = ({
       {showChatArea ? (
         <div className={`${showConversationList && window.innerWidth >= 768 ? 'flex-1' : 'w-full'} flex flex-col bg-background`}>
           {/* Chat header with back button on mobile */}
-          <div className="flex items-center border-b border-border">
+          <div className="flex items-center">
             {window.innerWidth < 768 && (
               <Button
                 variant="ghost"
@@ -156,27 +141,22 @@ const ChatContainer = ({
             </div>
           </div>
 
-          {/* Messages area with fixed height and scroll */}
-          <div className="flex-1 min-h-0 overflow-hidden">
+          {/* Messages area */}
+          <ScrollArea className="flex-1">
             <MessageList
               messages={messages}
               loading={isLoadingMessages}
               currentUserId={currentUserId}
-              conversationId={activeChat}
               getSenderName={getSenderName}
             />
-          </div>
+          </ScrollArea>
 
           {/* Message input */}
-          <div className="border-t border-border">
-            <MessageInput
-              onSendMessage={handleSendMessage}
-              disabled={isLoadingMessages}
-              sending={isSending}
-              conversationId={activeChat}
-              userId={currentUserId}
-            />
-          </div>
+          <MessageInput
+            onSendMessage={handleSendMessage}
+            disabled={isLoadingMessages}
+            sending={isSending}
+          />
         </div>
       ) : (
         <div className="hidden md:flex md:flex-1 items-center justify-center bg-muted/30">
