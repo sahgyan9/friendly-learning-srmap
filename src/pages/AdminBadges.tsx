@@ -57,7 +57,11 @@ const AdminBadges = () => {
           onSuccess={handleBadgeCreated}
         />
       ) : (
-        <BadgeTypeList />
+        <BadgeTypeList
+          badgeTypes={badgeTypes}
+          loading={loading}
+          onRefetch={refetch}
+        />
       )}
 
       {showAwardModal && (

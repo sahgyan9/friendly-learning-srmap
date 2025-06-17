@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import Footer from "@/components/Footer";
 import SEOHead from "@/components/SEOHead";
-import { supabase } from "@/integrations/supabase/client";
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -14,7 +13,6 @@ const Contact = () => {
     subject: "",
     message: ""
   });
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -24,41 +22,17 @@ const Contact = () => {
     }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!formData.name || !formData.email || !formData.subject || !formData.message) {
-      toast.error("Please fill in all required fields");
-      return;
-    }
-
-    setIsSubmitting(true);
-    
-    try {
-      const { error } = await supabase
-        .from('contact_messages')
-        .insert([{
-          name: formData.name,
-          email: formData.email,
-          subject: formData.subject,
-          message: formData.message
-        }]);
-
-      if (error) throw error;
-
-      toast.success("Message sent successfully! We'll get back to you soon.");
-      setFormData({
-        name: "",
-        email: "",
-        subject: "",
-        message: ""
-      });
-    } catch (error: any) {
-      console.error('Error sending message:', error);
-      toast.error(error.message || "Failed to send message. Please try again.");
-    } finally {
-      setIsSubmitting(false);
-    }
+    // In a real app, this would send the form data to a server
+    console.log("Form submitted:", formData);
+    toast.success("Message sent successfully! We'll get back to you soon.");
+    setFormData({
+      name: "",
+      email: "",
+      subject: "",
+      message: ""
+    });
   };
 
   const structuredData = {
@@ -118,7 +92,6 @@ const Contact = () => {
                       className="w-full p-3 border border-input rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary"
                       placeholder="Enter your full name"
                       aria-required="true"
-                      disabled={isSubmitting}
                     />
                   </div>
                   
@@ -134,7 +107,6 @@ const Contact = () => {
                       className="w-full p-3 border border-input rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary"
                       placeholder="your.email@srmuniv.edu.in"
                       aria-required="true"
-                      disabled={isSubmitting}
                     />
                   </div>
                   
@@ -150,7 +122,6 @@ const Contact = () => {
                       className="w-full p-3 border border-input rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary"
                       placeholder="What is this regarding?"
                       aria-required="true"
-                      disabled={isSubmitting}
                     />
                   </div>
                   
@@ -166,18 +137,12 @@ const Contact = () => {
                       className="w-full p-3 border border-input rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary"
                       placeholder="Please describe your question or feedback in detail..."
                       aria-required="true"
-                      disabled={isSubmitting}
                     />
                   </div>
                   
                   <div>
-                    <Button 
-                      type="submit" 
-                      size="lg" 
-                      className="w-full md:w-auto"
-                      disabled={isSubmitting}
-                    >
-                      {isSubmitting ? "Sending..." : "Send Message"}
+                    <Button type="submit" size="lg" className="w-full md:w-auto">
+                      Send Message
                     </Button>
                   </div>
                 </form>

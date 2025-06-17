@@ -1,7 +1,7 @@
 
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { MessageCircle, LogOut, Settings } from "lucide-react";
+import { MessageCircle, LogOut } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -17,7 +17,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 const NavbarProfileMenu = () => {
-  const { user, profile, signOut, loading, isAdmin } = useAuth();
+  const { user, profile, signOut, loading } = useAuth();
   const [isRealMentor, setIsRealMentor] = useState(false);
   const [checkingMentorStatus, setCheckingMentorStatus] = useState(true);
 
@@ -82,14 +82,6 @@ const NavbarProfileMenu = () => {
               Profile
             </Link>
           </DropdownMenuItem>
-          {isAdmin && (
-            <DropdownMenuItem asChild>
-              <Link to="/admin/dashboard" className="cursor-pointer w-full">
-                <Settings className="h-4 w-4 mr-2" />
-                Admin Dashboard
-              </Link>
-            </DropdownMenuItem>
-          )}
           {!isRealMentor && (
             <DropdownMenuItem asChild>
               <Link to="/become-mentor" className="cursor-pointer w-full">
