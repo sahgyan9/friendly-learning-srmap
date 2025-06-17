@@ -42,7 +42,7 @@ const EditBadgeModal = ({ isOpen, onClose, badge, onBadgeUpdated }: EditBadgeMod
     description: "",
     icon: "",
     color: "#3B82F6",
-    category: ""
+    category: "none"
   });
   const [isLoading, setIsLoading] = useState(false);
 
@@ -53,7 +53,7 @@ const EditBadgeModal = ({ isOpen, onClose, badge, onBadgeUpdated }: EditBadgeMod
         description: badge.description || "",
         icon: badge.icon || "",
         color: badge.color || "#3B82F6",
-        category: badge.category || ""
+        category: badge.category || "none"
       });
     }
   }, [badge]);
@@ -72,7 +72,7 @@ const EditBadgeModal = ({ isOpen, onClose, badge, onBadgeUpdated }: EditBadgeMod
           description: formData.description || null,
           icon: formData.icon || null,
           color: formData.color,
-          category: formData.category || null,
+          category: formData.category === "none" ? null : formData.category,
           updated_at: new Date().toISOString()
         })
         .eq('id', badge.id);
@@ -149,7 +149,7 @@ const EditBadgeModal = ({ isOpen, onClose, badge, onBadgeUpdated }: EditBadgeMod
                 <SelectValue placeholder="Select category" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">No Category</SelectItem>
+                <SelectItem value="none">No Category</SelectItem>
                 <SelectItem value="Achievement">Achievement</SelectItem>
                 <SelectItem value="Participation">Participation</SelectItem>
                 <SelectItem value="Excellence">Excellence</SelectItem>

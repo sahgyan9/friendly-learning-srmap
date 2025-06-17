@@ -50,7 +50,7 @@ const BadgeSearchFilter = ({
             <SelectValue placeholder="All categories" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Categories</SelectItem>
+            <SelectItem value="all">All Categories</SelectItem>
             <SelectItem value="Achievement">Achievement</SelectItem>
             <SelectItem value="Participation">Participation</SelectItem>
             <SelectItem value="Excellence">Excellence</SelectItem>

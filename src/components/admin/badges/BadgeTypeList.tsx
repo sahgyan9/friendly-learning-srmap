@@ -19,16 +19,16 @@ interface BadgeType {
 }
 
 const BadgeTypeList = () => {
-  const { badgeTypes, isLoading, refetch } = useBadges();
+  const { badgeTypes, loading, refetch } = useBadges();
   const [searchTerm, setSearchTerm] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
   const [editingBadge, setEditingBadge] = useState<BadgeType | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const filteredBadges = badgeTypes?.filter(badge => {
     const matchesSearch = badge.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          badge.description?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = !categoryFilter || badge.category === categoryFilter;
+    const matchesCategory = categoryFilter === "all" || badge.category === categoryFilter;
     return matchesSearch && matchesCategory;
   }) || [];
 
@@ -77,7 +77,7 @@ const BadgeTypeList = () => {
     toast.info(`Viewing users with "${badgeName}" badge - Feature coming soon!`);
   };
 
-  if (isLoading) {
+  if (loading) {
     return <div className="text-center py-8">Loading badges...</div>;
   }
 
