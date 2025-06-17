@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Star, Linkedin, MessageCircle, ArrowLeft, Loader2 } from "lucide-react";
@@ -83,6 +82,9 @@ const MentorProfile = () => {
       // Add a small delay to show loading state, then navigate
       setTimeout(() => {
         navigate(`/messages?mentor=${mentor.id}`);
+        setTimeout(() => {
+          window.location.reload();
+        }, 100);
       }, 100);
     } catch (err) {
       console.error('Error fetching mentor data:', err);
