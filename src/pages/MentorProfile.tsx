@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { Star, Linkedin, MessageCircle, ArrowLeft, Loader2, ShieldCheck } from "lucide-react";
+import { Star, Linkedin, MessageCircle, ArrowLeft, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -19,7 +19,7 @@ const MentorProfile = () => {
   const [loading, setLoading] = useState(true);
   const [isConnecting, setIsConnecting] = useState(false);
   const [showRatingModal, setShowRatingModal] = useState(false);
-  const { user, isAdmin } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   
   const { canRate, isLoading: ratingLoading, refreshRatingStatus } = useRating(id || "");
@@ -262,28 +262,14 @@ const MentorProfile = () => {
                   variants={itemVariants}
                 >
                   {isOwnProfile ? (
-                    <>
-                      <Button 
-                        asChild
-                        className="flex items-center gap-2"
-                      >
-                        <Link to="/profile">
-                          Edit Profile
-                        </Link>
-                      </Button>
-                      {isAdmin && (
-                        <Button 
-                          variant="outline"
-                          className="flex items-center gap-2"
-                          onClick={() => {
-                            window.location.href = '/admin';
-                          }}
-                        >
-                          <ShieldCheck className="h-4 w-4" />
-                          Admin Dashboard
-                        </Button>
-                      )}
-                    </>
+                    <Button 
+                      asChild
+                      className="flex items-center gap-2"
+                    >
+                      <Link to="/profile">
+                        Edit Profile
+                      </Link>
+                    </Button>
                   ) : (
                     <>
                       <Button 
