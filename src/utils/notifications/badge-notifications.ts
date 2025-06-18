@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { getUserById } from "@/integrations/supabase/services/users";
 import { createNotification } from "@/integrations/supabase/services/notifications";
@@ -30,7 +31,7 @@ export const handleBadgeAwardNotification = async (payload: {
       type: "badge",
       title: "New Badge Awarded! 🎉",
       content: `${awarderName} awarded you the ${badge_type.icon} ${badge_type.name} badge${record.notes ? `: "${record.notes}"` : ''}`,
-      metadata: {
+      data: {
         badge_id: record.id,
         badge_type_id: record.badge_type_id,
         badge_name: badge_type.name,

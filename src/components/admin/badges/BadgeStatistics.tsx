@@ -18,8 +18,8 @@ const BadgeStatistics = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const stats = await getBadgeStatistics();
-        setStats(stats);
+        const result = await getBadgeStatistics();
+        setStats(result.data);
       } catch (error) {
         console.error("Error fetching badge statistics:", error);
       } finally {
