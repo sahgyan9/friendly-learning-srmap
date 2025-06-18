@@ -39,10 +39,22 @@ const NavbarProfileMenu = () => {
         .single();
       
       if (error) {
+        console.log('User not found in mentors table or error:', error);
         setIsRealMentor(false);
       } else {
-        // Only consider as real mentor if not in General department
-        setIsRealMentor(data && data.department && data.department !== 'General');
+        // Only consider as real mentor if not in General department and department exists
+        const isApprovedMentor = data && 
+          data.department && 
+          data.department !== 'General' && 
+          data.department.trim() !== '';
+        
+        console.log('Mentor status check:', {
+          userId: user.id,
+          department: data?.department,
+          isApprovedMentor
+        });
+        
+        setIsRealMentor(isApprovedMentor);
       }
     } catch (error) {
       console.error('Error checking mentor status:', error);

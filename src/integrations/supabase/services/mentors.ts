@@ -7,6 +7,7 @@ export async function getMentors() {
     .from('mentors')
     .select('*')
     .neq('department', 'General')
+    .not('department', 'is', null)
     .order('rating', { ascending: false });
   
   return { data, error };
@@ -43,6 +44,7 @@ export async function searchMentors(query: string) {
       .from('mentors')
       .select('*')
       .neq('department', 'General')
+      .not('department', 'is', null)
       .or(`name.ilike.%${lowerQuery}%,department.ilike.%${lowerQuery}%,bio.ilike.%${lowerQuery}%`)
       .order('rating', { ascending: false });
     
@@ -55,7 +57,7 @@ export async function searchMentors(query: string) {
     
     // For skills array, we need to filter in JS since it's complex in SQL
     const mentorsWithMatchingSkills = data?.filter(mentor => 
-      mentor.skills.some(skill => 
+      mentor.skills && mentor.skills.some(skill => 
         skill.toLowerCase().includes(lowerQuery)
       )
     ) || [];
