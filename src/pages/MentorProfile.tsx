@@ -1,7 +1,6 @@
-
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { Star, Linkedin, MessageCircle, ArrowLeft, Loader2 } from "lucide-react";
+import { Star, Linkedin, MessageCircle, ArrowLeft, Loader2, ShieldCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -13,6 +12,7 @@ import { motion } from "framer-motion";
 import RatingModal from "@/components/rating/RatingModal";
 import ReviewsList from "@/components/rating/ReviewsList";
 import { useRating } from "@/hooks/useRating";
+import BadgeDisplay from "@/components/badges/BadgeDisplay";
 
 const MentorProfile = () => {
   const { id } = useParams<{ id: string }>();
@@ -20,7 +20,7 @@ const MentorProfile = () => {
   const [loading, setLoading] = useState(true);
   const [isConnecting, setIsConnecting] = useState(false);
   const [showRatingModal, setShowRatingModal] = useState(false);
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const navigate = useNavigate();
   
   const { canRate, isLoading: ratingLoading, refreshRatingStatus } = useRating(id || "");
@@ -209,13 +209,13 @@ const MentorProfile = () => {
                   {/* Only show rating badge if mentor has reviews and rating > 0 */}
                   {mentor.review_count > 0 && mentor.rating > 0 && (
                     <motion.div 
-                      className="absolute -bottom-2 -right-2 flex items-center bg-white rounded-full px-3 py-1 shadow-sm border border-gray-100"
+                      className="absolute -bottom-2 -right-2 flex items-center bg-background dark:bg-gray-800 rounded-full px-3 py-1 shadow-sm border border-border"
                       initial={{ opacity: 0, scale: 0.8 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ delay: 0.2, duration: 0.3 }}
                     >
-                      <Star className="w-4 h-4 text-yellow-400 mr-1.5" />
-                      <span className="text-sm font-medium">{mentor.rating.toFixed(1)}</span>
+                      <Star className="w-4 h-4 text-amber-400 mr-1.5" />
+                      <span className="text-sm font-medium text-foreground">{mentor.rating.toFixed(1)}</span>
                       <span className="text-xs text-muted-foreground ml-1">({mentor.review_count})</span>
                     </motion.div>
                   )}
@@ -263,14 +263,28 @@ const MentorProfile = () => {
                   variants={itemVariants}
                 >
                   {isOwnProfile ? (
-                    <Button 
-                      asChild
-                      className="flex items-center gap-2"
-                    >
-                      <Link to="/profile">
-                        Edit Profile
-                      </Link>
-                    </Button>
+                    <>
+                      <Button 
+                        asChild
+                        className="flex items-center gap-2"
+                      >
+                        <Link to="/profile">
+                          Edit Profile
+                        </Link>
+                      </Button>
+                      {isAdmin && (
+                        <Button 
+                          variant="outline"
+                          className="flex items-center gap-2"
+                          onClick={() => {
+                            window.location.href = '/admin';
+                          }}
+                        >
+                          <ShieldCheck className="h-4 w-4" />
+                          Admin Dashboard
+                        </Button>
+                      )}
+                    </>
                   ) : (
                     <>
                       <Button 
@@ -311,28 +325,28 @@ const MentorProfile = () => {
               </div>
             </motion.div>
             
+            {/* Add BadgeDisplay component after the main profile info */}
             <motion.div 
-              className="bg-card p-6 rounded-lg shadow-sm border border-border mb-10"
+              className="mb-10"
               variants={itemVariants}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: 0.3 }}
             >
-              <h2 className="text-xl font-semibold mb-4 text-foreground">About</h2>
-              <p className="text-foreground leading-relaxed">
-                {mentor.bio || "This mentor hasn't added a bio yet."}
-              </p>
+              <h2 className="text-2xl font-semibold mb-4">Badges</h2>
+              <BadgeDisplay userId={mentor.id} />
             </motion.div>
 
             {/* Reviews Section */}
             <motion.div 
-              className="bg-card p-6 rounded-lg shadow-sm border border-border"
+              className="mb-10"
               variants={itemVariants}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: 0.4 }}
             >
-              <h2 className="text-xl font-semibold mb-6 text-foreground">Reviews</h2>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-semibold">Reviews</h2>
+                {canRate && !isOwnProfile && !ratingLoading && (
+                  <Button onClick={() => setShowRatingModal(true)}>
+                    Add Review
+                  </Button>
+                )}
+              </div>
               <ReviewsList mentorId={mentor.id} />
             </motion.div>
           </motion.div>
