@@ -1,7 +1,30 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Hide Lovable edit button */
+div[id*="lovable-edit-button"],
+div[class*="lovable-edit-button"],
+div[class*="lovable-edit"],
+div[id*="lovable-edit"],
+button[aria-label*="Edit with"],
+a[href*="lovable.dev"],
+*[class*="lovable-"] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  height: 0 !important;
+  width: 0 !important;
+  position: absolute !important;
+  z-index: -9999 !important;
+}
+
+/* Hide Lovable edit button */
+[id*="lovable-edit-button"],
+[class*="lovable-edit-button"] {
+  display: none !important;
+}
 
 @layer base {
   :root {
