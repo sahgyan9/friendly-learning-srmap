@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -7,7 +8,6 @@ import { Send, Bot, User, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import MentorSuggestionCard from "./MentorSuggestionCard";
-import { useAuth } from "@/context/AuthContext";
 
 interface Message {
   id: string;
@@ -27,7 +27,6 @@ const ChatbotModal = ({ isOpen, onClose }: ChatbotModalProps) => {
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const { user } = useAuth();
 
   const sendMessage = async () => {
     if (!inputValue.trim() || isLoading) return;
@@ -45,10 +44,7 @@ const ChatbotModal = ({ isOpen, onClose }: ChatbotModalProps) => {
 
     try {
       const { data, error } = await supabase.functions.invoke('ai-chatbot', {
-        body: { 
-          message: inputValue,
-          userId: user?.id || null
-        }
+        body: { message: inputValue }
       });
 
       if (error) throw error;
