@@ -1,28 +1,24 @@
+
 import { useState, useEffect } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
-import { Star, Linkedin, MessageCircle, ArrowLeft, Loader2, ShieldCheck } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { useParams, Link } from "react-router-dom";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
 import { getMentorById } from "@/integrations/supabase/services/mentors";
-import { getOrCreateConversation } from "@/integrations/supabase/services/chat";
 import { Mentor } from "@/types/mentor";
 import { useAuth } from "@/context/AuthContext";
 import { motion } from "framer-motion";
 import RatingModal from "@/components/rating/RatingModal";
-import ReviewsList from "@/components/rating/ReviewsList";
 import { useRating } from "@/hooks/useRating";
-import BadgeDisplay from "@/components/badges/BadgeDisplay";
+import MentorProfileContent from "@/components/mentor-profile/MentorProfileContent";
 
 const MentorProfile = () => {
   const { id } = useParams<{ id: string }>();
   const [mentor, setMentor] = useState<Mentor | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isConnecting, setIsConnecting] = useState(false);
   const [showRatingModal, setShowRatingModal] = useState(false);
-  const { user, isAdmin } = useAuth();
-  const navigate = useNavigate();
+  const { user } = useAuth();
   
   const { canRate, isLoading: ratingLoading, refreshRatingStatus } = useRating(id || "");
 
@@ -58,61 +54,6 @@ const MentorProfile = () => {
     fetchMentor();
   }, [id]);
 
-  const handleConnect = async () => {
-    if (!user) {
-      toast.error("Please sign in to connect with mentors");
-      return;
-    }
-    
-    if (!mentor) return;
-    
-    setIsConnecting(true);
-    
-    try {
-      console.log('Starting connection process with mentor:', mentor.id);
-      
-      // Check if user is trying to message themselves
-      if (mentor.id === user.id) {
-        toast.error("You cannot message yourself");
-        return;
-      }
-      
-      // First verify the mentor exists and get fresh data
-      const { data: mentorData, error: mentorError } = await getMentorById(mentor.id);
-      
-      if (mentorError || !mentorData) {
-        console.error('Failed to fetch mentor data:', mentorError);
-        toast.error("Failed to load mentor information");
-        return;
-      }
-      
-      console.log('Mentor data verified:', mentorData.name);
-      
-      // Create or get the conversation
-      const { data: conversation, error: conversationError } = await getOrCreateConversation(user.id, mentor.id);
-      
-      if (conversationError || !conversation) {
-        console.error('Failed to create/get conversation:', conversationError);
-        toast.error("Failed to start conversation with mentor");
-        return;
-      }
-      
-      console.log('Conversation established:', conversation.id);
-      
-      // Show success message
-      toast.success(`Connected with ${mentor.name}. Redirecting to messages...`);
-      
-      // Navigate to messages page with the conversation ID
-      navigate(`/messages?chat=${conversation.id}`);
-      
-    } catch (err) {
-      console.error('Error during connection process:', err);
-      toast.error("An unexpected error occurred while connecting to the mentor");
-    } finally {
-      setIsConnecting(false);
-    }
-  };
-
   const handleRatingSubmitted = () => {
     refreshRatingStatus();
     // Refresh mentor data to get updated rating
@@ -124,24 +65,6 @@ const MentorProfile = () => {
   };
 
   const isOwnProfile = user && mentor && user.id === mentor.id;
-
-  // Simplified animation variants for better performance
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: { 
-      opacity: 1,
-      transition: { duration: 0.3 }
-    }
-  };
-  
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { 
-      opacity: 1, 
-      y: 0,
-      transition: { duration: 0.3 }
-    }
-  };
 
   if (loading) {
     return (
@@ -196,181 +119,26 @@ const MentorProfile = () => {
       <main className="pt-24 pb-16">
         <div className="container px-4 md:px-6">
           <motion.div 
-            className="max-w-4xl mx-auto"
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
+            className="mb-8"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
           >
-            <motion.div className="mb-8" variants={itemVariants}>
-              <Button variant="ghost" asChild className="px-0 text-muted-foreground">
-                <Link to="/mentors">
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back to Mentors
-                </Link>
-              </Button>
-            </motion.div>
-            
-            <motion.div 
-              className="flex flex-col md:flex-row gap-8 mb-10"
-              variants={itemVariants}
-            >
-              <motion.div 
-                className="flex-shrink-0"
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.3 }}
-              >
-                <div className="relative">
-                  <img 
-                    src={mentor.profile_image} 
-                    alt={mentor.name}
-                    className="w-36 h-36 md:w-48 md:h-48 rounded-xl object-cover shadow-lg"
-                    loading="lazy"
-                  />
-                  {/* Only show rating badge if mentor has reviews and rating > 0 */}
-                  {mentor.review_count > 0 && mentor.rating > 0 && (
-                    <motion.div 
-                      className="absolute -bottom-2 -right-2 flex items-center bg-background dark:bg-gray-800 rounded-full px-3 py-1 shadow-sm border border-border"
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: 0.2, duration: 0.3 }}
-                    >
-                      <Star className="w-4 h-4 text-amber-400 mr-1.5" />
-                      <span className="text-sm font-medium text-foreground">{mentor.rating.toFixed(1)}</span>
-                      <span className="text-xs text-muted-foreground ml-1">({mentor.review_count})</span>
-                    </motion.div>
-                  )}
-                  {/* Show "New Mentor" badge if no reviews or rating is 0 */}
-                  {(mentor.review_count === 0 || mentor.rating === 0) && (
-                    <motion.div 
-                      className="absolute -bottom-2 -right-2 bg-green-100 text-green-800 rounded-full px-3 py-1 shadow-sm border border-green-200"
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: 0.2, duration: 0.3 }}
-                    >
-                      <span className="text-sm font-medium">New Mentor</span>
-                    </motion.div>
-                  )}
-                </div>
-              </motion.div>
-              
-              <div className="flex-1">
-                <motion.h1 
-                  className="text-3xl font-bold mb-2"
-                  variants={itemVariants}
-                >
-                  {mentor.name}
-                </motion.h1>
-                <motion.p 
-                  className="text-lg text-muted-foreground mb-4"
-                  variants={itemVariants}
-                >
-                  {mentor.department}
-                </motion.p>
-                
-                <motion.div 
-                  className="flex flex-wrap gap-2 mb-6"
-                  variants={itemVariants}
-                >
-                  {mentor.skills.map((skill, index) => (
-                    <Badge key={skill} variant="secondary" className="text-sm">
-                      {skill}
-                    </Badge>
-                  ))}
-                </motion.div>
-                
-                <motion.div 
-                  className="flex flex-col sm:flex-row gap-3 mt-auto"
-                  variants={itemVariants}
-                >
-                  {isOwnProfile ? (
-                    <>
-                      <Button 
-                        asChild
-                        className="flex items-center gap-2"
-                      >
-                        <Link to="/profile">
-                          Edit Profile
-                        </Link>
-                      </Button>
-                      {isAdmin && (
-                        <Button 
-                          variant="outline"
-                          className="flex items-center gap-2"
-                          onClick={() => {
-                            window.location.href = '/admin';
-                          }}
-                        >
-                          <ShieldCheck className="h-4 w-4" />
-                          Admin Dashboard
-                        </Button>
-                      )}
-                    </>
-                  ) : (
-                    <>
-                      <Button 
-                        onClick={handleConnect}
-                        className="flex items-center gap-2"
-                        disabled={isConnecting}
-                      >
-                        {isConnecting ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <MessageCircle className="h-4 w-4" />
-                        )}
-                        {isConnecting ? "Connecting..." : "Connect with Mentor"}
-                      </Button>
-                      
-                      {canRate && !ratingLoading && (
-                        <Button 
-                          variant="outline"
-                          onClick={() => setShowRatingModal(true)}
-                          className="flex items-center gap-2"
-                        >
-                          <Star className="h-4 w-4" />
-                          Rate Mentor
-                        </Button>
-                      )}
-                    </>
-                  )}
-                  
-                  {mentor.linkedin_url && (
-                    <Button variant="outline" asChild className="flex items-center gap-2">
-                      <a href={mentor.linkedin_url} target="_blank" rel="noopener noreferrer">
-                        <Linkedin className="h-4 w-4" />
-                        LinkedIn Profile
-                      </a>
-                    </Button>
-                  )}
-                </motion.div>
-              </div>
-            </motion.div>
-            
-            {/* Add BadgeDisplay component after the main profile info */}
-            <motion.div 
-              className="mb-10"
-              variants={itemVariants}
-            >
-              <h2 className="text-2xl font-semibold mb-4">Badges</h2>
-              <BadgeDisplay userId={mentor.id} />
-            </motion.div>
-
-            {/* Reviews Section */}
-            <motion.div 
-              className="mb-10"
-              variants={itemVariants}
-            >
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-2xl font-semibold">Reviews</h2>
-                {canRate && !isOwnProfile && !ratingLoading && (
-                  <Button onClick={() => setShowRatingModal(true)}>
-                    Add Review
-                  </Button>
-                )}
-              </div>
-              <ReviewsList mentorId={mentor.id} />
-            </motion.div>
+            <Button variant="ghost" asChild className="px-0 text-muted-foreground">
+              <Link to="/mentors">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Mentors
+              </Link>
+            </Button>
           </motion.div>
+          
+          <MentorProfileContent
+            mentor={mentor}
+            canRate={canRate}
+            isOwnProfile={isOwnProfile}
+            ratingLoading={ratingLoading}
+            onShowRatingModal={() => setShowRatingModal(true)}
+          />
         </div>
       </main>
 
