@@ -1,4 +1,3 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
@@ -68,6 +67,58 @@ Keep your response concise but comprehensive.`;
     const geminiData = await geminiResponse.json();
     const aiResponse = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || "I'm sorry, I couldn't process your request. Please try rephrasing your question.";
 
+    // Expert domains and skills mapping
+    const expertDomains = {
+      programming: {
+        keywords: ['programming', 'coding', 'code', 'development', 'software', 'debugging', 'error', 'stuck'],
+        skills: ['python', 'javascript', 'java', 'c++', 'programming', 'web development', 'software development'],
+        departments: ['Computer Science', 'Information Technology', 'Software Engineering']
+      },
+      webdev: {
+        keywords: ['web', 'website', 'frontend', 'backend', 'fullstack'],
+        skills: ['react', 'javascript', 'html', 'css', 'node.js', 'web development'],
+        departments: ['Computer Science', 'Information Technology']
+      },
+      dataScience: {
+        keywords: ['data', 'machine learning', 'ai', 'analytics', 'statistics'],
+        skills: ['python', 'machine learning', 'data science', 'deep learning', 'statistics'],
+        departments: ['Computer Science', 'Data Science', 'Statistics']
+      }
+    };
+
+    // Updated mentor matching logic
+    const scoreMentor = (mentor: any, message: string) => {
+      let score = 0;
+      const messageLC = message.toLowerCase();
+      
+      // Find matching domain expertise
+      for (const [domain, info] of Object.entries(expertDomains)) {
+        // Check if query matches domain keywords
+        if (info.keywords.some(kw => messageLC.includes(kw))) {
+          // Check mentor's relevant skills
+          const hasRelevantSkills = mentor.skills.some(skill => 
+            info.skills.some(domainSkill => skill.toLowerCase().includes(domainSkill))
+          );
+          
+          // Check department alignment
+          const hasRelevantDepartment = info.departments.some(dept => 
+            mentor.department.toLowerCase().includes(dept.toLowerCase())
+          );
+          
+          if (hasRelevantSkills) score += 25;
+          if (hasRelevantDepartment) score += 15;
+          
+          // Bonus for having both relevant skills and department
+          if (hasRelevantSkills && hasRelevantDepartment) score += 10;
+        }
+      }
+      
+      // Add rating factor (less weight than expertise)
+      score += mentor.rating * 2;
+      
+      return score;
+    };
+
     // Enhanced mentor suggestion logic with better software-specific matching
     const softwareKeywords = {
       'fusion 360': ['fusion 360', 'autodesk fusion', 'cad design', '3d modeling', 'mechanical design', 'product design'],
@@ -104,135 +155,34 @@ Keep your response concise but comprehensive.`;
         .limit(10);
 
       if (!error && allMentors && allMentors.length > 0) {
-        // Advanced relevance scoring with software-specific matching
-        const scoredMentors = allMentors.map(mentor => {
-          let score = 0;
-          const searchTerms = message.toLowerCase().split(' ').filter(term => term.length > 2);
-          const messageText = message.toLowerCase();
-          
-          // Check for exact software matches first (highest priority)
-          Object.entries(softwareKeywords).forEach(([software, keywords]) => {
-            if (messageText.includes(software)) {
-              keywords.forEach(keyword => {
-                mentor.skills.forEach(skill => {
-                  if (skill.toLowerCase().includes(keyword.toLowerCase())) {
-                    score += 15; // Very high score for exact software matches
-                  }
-                });
-                
-                if (mentor.department.toLowerCase().includes(keyword.toLowerCase())) {
-                  score += 10;
-                }
-                
-                if (mentor.bio?.toLowerCase().includes(keyword.toLowerCase())) {
-                  score += 8;
-                }
-              });
-            }
-          });
-          
-          searchTerms.forEach(term => {
-            // Name matching (high priority)
-            if (mentor.name.toLowerCase().includes(term)) score += 5;
-            
-            // Department matching (high priority)
-            if (mentor.department.toLowerCase().includes(term)) score += 6;
-            
-            // Skills matching (very high priority)
-            mentor.skills.forEach(skill => {
-              const skillLower = skill.toLowerCase();
-              if (skillLower.includes(term)) {
-                score += 10; // Increased from 6
-              }
-              // Partial skill matching
-              if (skillLower.split(' ').some(skillWord => skillWord.includes(term))) {
-                score += 5; // Increased from 3
-              }
-            });
-            
-            // Bio matching (medium priority)
-            if (mentor.bio?.toLowerCase().includes(term)) score += 4; // Increased from 3
-            
-            // Specific domain matching with higher scores
-            if (term.includes('fusion') && messageText.includes('360')) {
-              if (mentor.skills.some(skill => 
-                ['fusion 360', 'cad', '3d modeling', 'mechanical design', 'product design', 'autodesk'].some(tech => 
-                  skill.toLowerCase().includes(tech)
-                ))) {
-                score += 20; // Very high score for Fusion 360 specific matches
-              }
-            }
-            
-            if (term.includes('quantum') && 
-                (mentor.skills.some(skill => skill.toLowerCase().includes('quantum')) ||
-                 mentor.department.toLowerCase().includes('physics'))) {
-              score += 12; // Increased from 8
-            }
-            
-            if (['programming', 'coding', 'code'].some(prog => term.includes(prog))) {
-              if (mentor.skills.some(skill => 
-                ['python', 'javascript', 'programming', 'coding', 'development', 'software'].some(tech => 
-                  skill.toLowerCase().includes(tech)
-                ))) {
-                score += 10; // Increased from 7
-              }
-            }
-            
-            if (['web', 'frontend', 'react', 'javascript'].some(web => term.includes(web))) {
-              if (mentor.skills.some(skill => 
-                ['react', 'web', 'frontend', 'javascript', 'html', 'css', 'node'].some(tech => 
-                  skill.toLowerCase().includes(tech)
-                ))) {
-                score += 10; // Increased from 7
-              }
-            }
-
-            // CAD and design software matching
-            if (['cad', 'autocad', 'solidworks', 'design', 'modeling'].some(design => term.includes(design))) {
-              if (mentor.skills.some(skill => 
-                ['cad', 'autocad', 'solidworks', 'fusion 360', '3d modeling', 'mechanical design', 'product design'].some(tech => 
-                  skill.toLowerCase().includes(tech)
-                ))) {
-                score += 12;
-              }
-            }
-          });
-          
-          // Boost score based on rating
-          score += mentor.rating * 0.8; // Increased from 0.5
-          
-          return { ...mentor, relevanceScore: score };
-        });
-
-        // Filter and sort mentors with higher threshold for better quality
+        // Score mentors based on expertise match
+        const scoredMentors = allMentors.map(mentor => ({
+          ...mentor,
+          relevanceScore: scoreMentor(mentor, message)
+        }));
+        
+        // Filter for highly relevant mentors only
         suggestedMentors = scoredMentors
-          .filter(mentor => mentor.relevanceScore > 3) // Slightly higher threshold
+          .filter(mentor => mentor.relevanceScore > 20) // Higher threshold for better matches
           .sort((a, b) => b.relevanceScore - a.relevanceScore)
-          .slice(0, 3); // Top 3 most relevant mentors
-
-        // If no highly relevant mentors, fall back to top-rated mentors in related fields
+          .slice(0, 2); // Top 2 most relevant mentors
+        
+        // If no highly relevant mentors found, fall back to best available in the domain
         if (suggestedMentors.length === 0) {
-          // Try to find mentors in engineering/technical fields first
-          const technicalMentors = allMentors.filter(mentor => 
-            mentor.department.toLowerCase().includes('engineering') ||
-            mentor.department.toLowerCase().includes('computer') ||
-            mentor.department.toLowerCase().includes('design') ||
-            mentor.skills.some(skill => 
-              ['cad', 'design', 'engineering', 'technical', 'programming'].some(tech =>
-                skill.toLowerCase().includes(tech)
+          // Try to match based on department for technical queries
+          if (message.toLowerCase().includes('programming') || message.toLowerCase().includes('coding')) {
+            const techMentors = allMentors.filter(mentor =>
+              mentor.department.toLowerCase().includes('computer') ||
+              mentor.skills.some(skill => 
+                ['programming', 'python', 'javascript', 'web development']
+                  .some(tech => skill.toLowerCase().includes(tech))
               )
-            )
-          );
-          
-          if (technicalMentors.length > 0) {
-            suggestedMentors = technicalMentors
-              .sort((a, b) => b.rating - a.rating)
-              .slice(0, 2);
-          } else {
-            // Final fallback to highest rated mentors
-            suggestedMentors = allMentors
-              .sort((a, b) => b.rating - a.rating)
-              .slice(0, 2);
+            ).sort((a, b) => b.rating - a.rating)
+            .slice(0, 2);
+            
+            if (techMentors.length > 0) {
+              suggestedMentors = techMentors;
+            }
           }
         }
       }
