@@ -12,6 +12,7 @@ import { useBadges } from "@/hooks/useBadges";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import { getMentorById } from "@/integrations/supabase/services/mentors";
+import { getOrCreateConversation } from "@/integrations/supabase/services/chat";
 
 interface MentorCardProps {
   mentor: Mentor;
@@ -42,24 +43,44 @@ const MentorCard = ({ mentor }: MentorCardProps) => {
     setIsConnecting(true);
     
     try {
-      // Fetch mentor data first to ensure it's available
-      console.log('Fetching mentor data before connecting:', mentor.id);
-      const { data: mentorData, error } = await getMentorById(mentor.id);
+      console.log('Starting connection process with mentor:', mentor.id);
       
-      if (error || !mentorData) {
-        console.error('Failed to fetch mentor data:', error);
+      // Check if user is trying to message themselves
+      if (mentor.id === user.id) {
+        toast.error("You cannot message yourself");
+        return;
+      }
+      
+      // First verify the mentor exists and get fresh data
+      const { data: mentorData, error: mentorError } = await getMentorById(mentor.id);
+      
+      if (mentorError || !mentorData) {
+        console.error('Failed to fetch mentor data:', mentorError);
         toast.error("Failed to load mentor information");
         return;
       }
       
-      console.log('Mentor data fetched successfully:', mentorData.name);
+      console.log('Mentor data verified:', mentorData.name);
       
-      // Add a small delay to show loading state, then navigate
-      setTimeout(() => {
-        navigate(`/messages?mentor=${mentor.id}`);
-      }, 100);
+      // Create or get the conversation
+      const { data: conversation, error: conversationError } = await getOrCreateConversation(user.id, mentor.id);
+      
+      if (conversationError || !conversation) {
+        console.error('Failed to create/get conversation:', conversationError);
+        toast.error("Failed to start conversation with mentor");
+        return;
+      }
+      
+      console.log('Conversation established:', conversation.id);
+      
+      // Show success message
+      toast.success(`Connected with ${mentor.name}. Redirecting to messages...`);
+      
+      // Navigate to messages page with the conversation ID
+      navigate(`/messages?chat=${conversation.id}`);
+      
     } catch (err) {
-      console.error('Error fetching mentor data:', err);
+      console.error('Error during connection process:', err);
       toast.error("An error occurred while connecting to the mentor");
     } finally {
       setIsConnecting(false);
@@ -206,7 +227,7 @@ const MentorCard = ({ mentor }: MentorCardProps) => {
                 ) : (
                   <MessageCircle className="h-4 w-4 mr-2" />
                 )}
-                Connect
+                {isConnecting ? "Connecting..." : "Connect"}
               </Button>
             </div>
           </div>

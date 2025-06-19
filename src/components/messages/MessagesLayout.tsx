@@ -5,6 +5,7 @@ import ChatContainer from "@/components/chat/ChatContainer";
 import { useAuth } from "@/context/AuthContext";
 import { useMessages } from "@/hooks/use-messages";
 import { useMentorConnection } from "@/hooks/use-mentor-connection";
+import { useChatConnection } from "@/hooks/use-chat-connection";
 import { formatMessageTime } from "@/utils/date-utils";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import MessagesHeader from "./MessagesHeader";
@@ -29,6 +30,7 @@ const MessagesLayout = () => {
   } = useMessages(userId);
 
   const { isProcessingMentor } = useMentorConnection(userId, setActiveChat);
+  const { isProcessingChat } = useChatConnection(userId, setActiveChat);
 
   useEffect(() => {
     if (error) {
@@ -101,7 +103,7 @@ const MessagesLayout = () => {
 
   return (
     <>
-      <MessagesHeader isProcessingMentor={isProcessingMentor} />
+      <MessagesHeader isProcessingMentor={isProcessingMentor || isProcessingChat} />
       
       <ChatContainer
         conversations={conversations}
