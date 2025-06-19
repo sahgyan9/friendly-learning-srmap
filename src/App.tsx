@@ -33,9 +33,10 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <AuthProvider>
-        <Routes>
-          <Route path="/" element={<Index />} />
+      <BrowserRouter>
+        <AuthProvider>
+          <Routes>
+            <Route path="/" element={<Index />} />
             <Route path="/mentors" element={<Mentors />} />
             <Route path="/mentor/:id" element={<MentorProfile />} />
             <Route path="/about" element={<About />} />
