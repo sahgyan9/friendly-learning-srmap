@@ -100,41 +100,13 @@ async function findRelevantMentors(query: string, mentors: any[]) {
   }
 }
 
-// Save conversation to database
-async function saveConversation(userId: string | null, message: string, aiResponse: string, context: any = {}) {
-  if (!userId) {
-    console.warn('No user ID provided, conversation will not be saved');
-    return;
-  }
-
-  try {
-    const { data, error } = await supabase
-      .from('ai_conversations')
-      .insert({
-        user_id: userId,
-        message: message,
-        response: aiResponse,
-        context: context,
-        created_at: new Date().toISOString()
-      });
-
-    if (error) {
-      console.error('Error saving conversation:', error);
-    } else {
-      console.log('Conversation saved successfully');
-    }
-  } catch (err) {
-    console.error('Exception saving conversation:', err);
-  }
-}
-
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { message, userId } = await req.json();
+    const { message } = await req.json();
     
     if (!message) {
       throw new Error('No message provided');
@@ -191,12 +163,6 @@ Keep your response concise but comprehensive.`;
 
     // Find relevant mentors using the same logic as the search bar
     const suggestedMentors = await findRelevantMentors(message, allMentors);
-
-    // Save the conversation if we have a user ID
-    await saveConversation(userId || null, message, aiResponse, {
-      hasMentorSuggestions: suggestedMentors.length > 0,
-      suggestedMentorCount: suggestedMentors.length
-    });
 
     return new Response(
       JSON.stringify({
