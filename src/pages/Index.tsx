@@ -1,6 +1,7 @@
 
 import { lazy, Suspense } from "react";
 import { motion } from "framer-motion";
+import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
 import Footer from "@/components/Footer";
 import CallToAction from "@/components/CallToAction";
@@ -122,6 +123,8 @@ const Index = () => {
         animate="animate"
         variants={pageVariants}
       >
+        <Navbar />
+        
         <main>
           <motion.div variants={sectionVariants}>
             <Hero />
