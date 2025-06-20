@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -185,5 +186,21 @@ a[href*="lovable.dev"],
   /* Fix for dropdown menus in dark mode */
   .dark [data-radix-popper-content-wrapper] {
     @apply bg-popover text-popover-foreground border border-border shadow-lg;
+  }
+
+  /* Mobile safe area support */
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
+  }
+  
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* Mobile-specific adjustments */
+  @media (max-width: 768px) {
+    .container {
+      @apply px-4;
+    }
   }
 }
