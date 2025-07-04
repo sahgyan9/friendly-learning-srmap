@@ -163,6 +163,21 @@ const Mentors = () => {
                 title="Find Your Perfect Mentor at SRM AP" 
                 description="Browse our extensive directory of verified student mentors or use our AI-powered search to find mentors with specific skills and expertise tailored to your academic needs."
               />
+              
+              {/* SEO Content for Mentors Page */}
+              <div className="text-center mb-8">
+                <h1 className="text-2xl font-bold mb-4">
+                  <strong>Student Mentors Directory</strong> - <strong>SRM University AP</strong>
+                </h1>
+                <h2 className="text-lg font-semibold mb-3">
+                  Connect with <strong>Verified Academic Mentors</strong> at <strong>SRMAP Amaravati</strong>
+                </h2>
+                <p className="max-w-3xl mx-auto">
+                  Discover experienced <strong>peer mentors</strong> from <strong>SRM AP University</strong> offering 
+                  <strong>academic guidance</strong>, <strong>career counseling</strong>, and <strong>personalized learning support</strong> 
+                  across all departments in <strong>Amaravati, Andhra Pradesh</strong>.
+                </p>
+              </div>
             </motion.div>
             
             {/* Search */}
