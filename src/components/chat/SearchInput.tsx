@@ -16,7 +16,7 @@ const SearchInput = ({ searchQuery, setSearchQuery }: SearchInputProps) => {
         placeholder="Search messages..." 
         value={searchQuery}
         onChange={(e) => setSearchQuery && setSearchQuery(e.target.value)}
-        className="w-full pl-10 p-2 border border-border bg-background text-foreground rounded-md focus:ring-2 focus:ring-primary focus:border-primary"
+        className="w-full pl-10 p-2 border border-gray-300 rounded-md"
       />
     </div>
   );
