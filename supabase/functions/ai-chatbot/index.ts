@@ -1,3 +1,4 @@
+
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
@@ -106,7 +107,7 @@ serve(async (req) => {
   }
 
   try {
-    const { message } = await req.json();
+    const { message, sessionId, userId } = await req.json();
     
     if (!message) {
       throw new Error('No message provided');
@@ -121,6 +122,26 @@ serve(async (req) => {
     if (mentorsError || !allMentors) {
       console.error("Error fetching mentors:", mentorsError);
       throw new Error('Failed to fetch mentors');
+    }
+
+    // Save the user message to database
+    const userConversationId = crypto.randomUUID();
+    const currentSessionId = sessionId || crypto.randomUUID();
+    
+    const { error: userMessageError } = await supabase
+      .from('ai_conversations')
+      .insert({
+        id: userConversationId,
+        user_id: userId,
+        session_id: currentSessionId,
+        message: message,
+        response: '', // Will be filled by AI response
+        message_type: 'user',
+        context: { original_query: message }
+      });
+
+    if (userMessageError) {
+      console.error("Error saving user message:", userMessageError);
     }
 
     // Get AI response for the user's question
@@ -164,11 +185,34 @@ Keep your response concise but comprehensive.`;
     // Find relevant mentors using the same logic as the search bar
     const suggestedMentors = await findRelevantMentors(message, allMentors);
 
+    // Save the AI response to database
+    const aiConversationId = crypto.randomUUID();
+    const { error: aiMessageError } = await supabase
+      .from('ai_conversations')
+      .insert({
+        id: aiConversationId,
+        user_id: userId,
+        session_id: currentSessionId,
+        message: message, // Original user message for context
+        response: aiResponse.trim(),
+        message_type: 'ai',
+        suggested_mentors: suggestedMentors,
+        context: { 
+          user_message_id: userConversationId,
+          mentor_suggestions_count: suggestedMentors.length
+        }
+      });
+
+    if (aiMessageError) {
+      console.error("Error saving AI response:", aiMessageError);
+    }
+
     return new Response(
       JSON.stringify({
         aiResponse: aiResponse.trim(),
         suggestedMentors,
-        hasMentorSuggestions: suggestedMentors.length > 0
+        hasMentorSuggestions: suggestedMentors.length > 0,
+        sessionId: currentSessionId
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

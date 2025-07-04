@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -18,6 +19,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import AdminSettings from "./pages/AdminSettings";
 import TeamMembersAdmin from "./pages/TeamMembersAdmin";
 import MarketplaceAdmin from "./pages/MarketplaceAdmin";
+import AdminContactMessages from "./pages/AdminContactMessages";
 import Messages from "./pages/Messages";
 import NotFound from "./pages/NotFound";
 import Unauthorized from "./pages/Unauthorized";
@@ -69,6 +71,11 @@ const App = () => (
             <Route path="/admin/mentor-verification" element={
               <ProtectedRoute requiredRole="admin">
                 <AdminMentorVerification />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/contact-messages" element={
+              <ProtectedRoute requiredRole="admin">
+                <AdminContactMessages />
               </ProtectedRoute>
             } />
             <Route path="/admin/settings" element={

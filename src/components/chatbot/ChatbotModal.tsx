@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Send, Bot, User, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/context/AuthContext";
 import MentorSuggestionCard from "./MentorSuggestionCard";
 
 interface Message {
@@ -26,7 +27,79 @@ const ChatbotModal = ({ isOpen, onClose }: ChatbotModalProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const navigate = useNavigate();
+  const { user } = useAuth();
+
+  // Load conversation history when modal opens
+  useEffect(() => {
+    if (isOpen && user) {
+      loadConversationHistory();
+    } else if (isOpen && !user) {
+      // For non-authenticated users, generate a session ID
+      setSessionId(crypto.randomUUID());
+    }
+  }, [isOpen, user]);
+
+  const loadConversationHistory = async () => {
+    if (!user) return;
+    
+    setIsLoadingHistory(true);
+    try {
+      const { data, error } = await supabase
+        .from('ai_conversations')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: true })
+        .limit(20); // Load last 20 messages
+
+      if (error) {
+        console.error('Error loading conversation history:', error);
+        return;
+      }
+
+      if (data && data.length > 0) {
+        // Group messages by session and convert to UI format
+        const conversationMessages: Message[] = [];
+        
+        data.forEach((conv) => {
+          if (conv.message_type === 'user') {
+            conversationMessages.push({
+              id: conv.id,
+              type: 'user',
+              content: conv.message,
+              timestamp: new Date(conv.created_at || Date.now())
+            });
+          } else if (conv.message_type === 'ai') {
+            conversationMessages.push({
+              id: conv.id,
+              type: 'ai',
+              content: conv.response,
+              mentorSuggestions: conv.suggested_mentors || [],
+              timestamp: new Date(conv.created_at || Date.now())
+            });
+          }
+        });
+
+        setMessages(conversationMessages);
+        
+        // Use the latest session ID if available
+        if (data.length > 0 && data[data.length - 1].session_id) {
+          setSessionId(data[data.length - 1].session_id);
+        } else {
+          setSessionId(crypto.randomUUID());
+        }
+      } else {
+        setSessionId(crypto.randomUUID());
+      }
+    } catch (error) {
+      console.error('Error loading conversation history:', error);
+      setSessionId(crypto.randomUUID());
+    } finally {
+      setIsLoadingHistory(false);
+    }
+  };
 
   const sendMessage = async () => {
     if (!inputValue.trim() || isLoading) return;
@@ -44,7 +117,11 @@ const ChatbotModal = ({ isOpen, onClose }: ChatbotModalProps) => {
 
     try {
       const { data, error } = await supabase.functions.invoke('ai-chatbot', {
-        body: { message: inputValue }
+        body: { 
+          message: inputValue,
+          sessionId: sessionId,
+          userId: user?.id || null
+        }
       });
 
       if (error) throw error;
@@ -58,6 +135,11 @@ const ChatbotModal = ({ isOpen, onClose }: ChatbotModalProps) => {
       };
 
       setMessages(prev => [...prev, aiMessage]);
+      
+      // Update session ID if returned
+      if (data.sessionId) {
+        setSessionId(data.sessionId);
+      }
     } catch (error) {
       console.error('Error sending message:', error);
       const errorMessage: Message = {
@@ -97,7 +179,14 @@ const ChatbotModal = ({ isOpen, onClose }: ChatbotModalProps) => {
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Messages Area */}
           <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
-            {messages.length === 0 && (
+            {isLoadingHistory && (
+              <div className="text-center py-4">
+                <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
+                <p className="text-sm text-muted-foreground">Loading conversation history...</p>
+              </div>
+            )}
+
+            {messages.length === 0 && !isLoadingHistory && (
               <motion.div 
                 className="text-center py-8"
                 initial={{ opacity: 0, y: 20 }}
