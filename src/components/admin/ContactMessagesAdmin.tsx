@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -48,7 +47,13 @@ const ContactMessagesAdmin = () => {
         return;
       }
 
-      setMessages(data || []);
+      // Type assertion to ensure proper types
+      const typedMessages = (data || []).map(msg => ({
+        ...msg,
+        status: msg.status as 'unread' | 'read' | 'responded'
+      }));
+
+      setMessages(typedMessages);
     } catch (error) {
       console.error('Error fetching contact messages:', error);
       toast.error('Failed to load contact messages');
@@ -79,7 +84,7 @@ const ContactMessagesAdmin = () => {
       // Update local state
       setMessages(prev => prev.map(msg => 
         msg.id === messageId 
-          ? { ...msg, status: status as any, admin_notes: notes || msg.admin_notes }
+          ? { ...msg, status: status as 'unread' | 'read' | 'responded', admin_notes: notes || msg.admin_notes }
           : msg
       ));
 

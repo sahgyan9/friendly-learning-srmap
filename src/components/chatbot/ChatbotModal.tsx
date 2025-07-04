@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -72,11 +71,17 @@ const ChatbotModal = ({ isOpen, onClose }: ChatbotModalProps) => {
               timestamp: new Date(conv.created_at || Date.now())
             });
           } else if (conv.message_type === 'ai') {
+            // Safely handle suggested_mentors which could be null or different types
+            let mentorSuggestions: any[] = [];
+            if (conv.suggested_mentors && Array.isArray(conv.suggested_mentors)) {
+              mentorSuggestions = conv.suggested_mentors;
+            }
+
             conversationMessages.push({
               id: conv.id,
               type: 'ai',
               content: conv.response,
-              mentorSuggestions: conv.suggested_mentors || [],
+              mentorSuggestions: mentorSuggestions,
               timestamp: new Date(conv.created_at || Date.now())
             });
           }
