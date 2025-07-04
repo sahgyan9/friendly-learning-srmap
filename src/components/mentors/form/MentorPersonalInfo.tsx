@@ -1,17 +1,35 @@
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { MentorFormData } from "@/hooks/useMentorForm";
+import { useState } from "react";
 
 interface MentorPersonalInfoProps {
   formData: MentorFormData;
   handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
 }
 
+const departments = [
+  "Computer Science",
+  "Electrical Engineering", 
+  "Mechanical Engineering",
+  "Civil Engineering",
+  "Business Administration",
+  "Physics",
+  "Mathematics",
+  "Chemistry",
+  "Biology"
+];
+
 const MentorPersonalInfo = ({ formData, handleChange }: MentorPersonalInfoProps) => {
-  const handleDepartmentChange = (value: string) => {
-    // Create a synthetic event to match the expected interface
+  const [open, setOpen] = useState(false);
+
+  const handleDepartmentSelect = (value: string) => {
     const syntheticEvent = {
       target: {
         name: 'department',
@@ -20,6 +38,7 @@ const MentorPersonalInfo = ({ formData, handleChange }: MentorPersonalInfoProps)
     } as React.ChangeEvent<HTMLSelectElement>;
     
     handleChange(syntheticEvent);
+    setOpen(false);
   };
 
   return (
@@ -38,22 +57,58 @@ const MentorPersonalInfo = ({ formData, handleChange }: MentorPersonalInfoProps)
 
       <div className="space-y-2">
         <Label htmlFor="department">Department <span className="text-red-500">*</span></Label>
-        <Select value={formData.department} onValueChange={handleDepartmentChange} required>
-          <SelectTrigger>
-            <SelectValue placeholder="Select Department" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="Computer Science">Computer Science</SelectItem>
-            <SelectItem value="Electrical Engineering">Electrical Engineering</SelectItem>
-            <SelectItem value="Mechanical Engineering">Mechanical Engineering</SelectItem>
-            <SelectItem value="Civil Engineering">Civil Engineering</SelectItem>
-            <SelectItem value="Business Administration">Business Administration</SelectItem>
-            <SelectItem value="Physics">Physics</SelectItem>
-            <SelectItem value="Mathematics">Mathematics</SelectItem>
-            <SelectItem value="Chemistry">Chemistry</SelectItem>
-            <SelectItem value="Biology">Biology</SelectItem>
-          </SelectContent>
-        </Select>
+        <Popover open={open} onOpenChange={setOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              role="combobox"
+              aria-expanded={open}
+              className="w-full justify-between"
+            >
+              {formData.department || "Select or type department..."}
+              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-full p-0">
+            <Command>
+              <CommandInput 
+                placeholder="Search or type department..." 
+                value={formData.department}
+                onValueChange={(value) => handleDepartmentSelect(value)}
+              />
+              <CommandList>
+                <CommandEmpty>
+                  <div className="p-2">
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-start"
+                      onClick={() => handleDepartmentSelect(formData.department)}
+                    >
+                      Use "{formData.department}"
+                    </Button>
+                  </div>
+                </CommandEmpty>
+                <CommandGroup>
+                  {departments.map((department) => (
+                    <CommandItem
+                      key={department}
+                      value={department}
+                      onSelect={() => handleDepartmentSelect(department)}
+                    >
+                      <Check
+                        className={cn(
+                          "mr-2 h-4 w-4",
+                          formData.department === department ? "opacity-100" : "opacity-0"
+                        )}
+                      />
+                      {department}
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
       </div>
     </div>
   );
