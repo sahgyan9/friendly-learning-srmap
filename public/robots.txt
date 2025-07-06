@@ -8,10 +8,24 @@ Sitemap: https://friendly-learning.lovable.app/sitemap.xml
 # Specific crawl delays for better performance
 Crawl-delay: 1
 
+# Allow important pages for indexing
+Allow: /mentors
+Allow: /about
+Allow: /contact
+Allow: /become-mentor
+Allow: /marketplace
+
 # Disallow admin and private areas
 Disallow: /admin/
 Disallow: /api/
 Disallow: /unauthorized
+Disallow: /profile
+Disallow: /messages
 Disallow: /*?*utm_*
 Disallow: /*?*fbclid*
 Disallow: /*?*gclid*
+Disallow: /*?*source=*
+Disallow: /*#*
+
+# Specify host preference
+Host: https://friendly-learning.lovable.app

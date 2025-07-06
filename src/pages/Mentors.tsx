@@ -141,9 +141,9 @@ const Mentors = () => {
   return (
     <>
       <SEOHead
-        title={`Find Student Mentors at Friendly Learning SRM AP | Browse ${filteredMentors.length} Verified Mentors`}
-        description="Discover experienced student mentors at Friendly Learning SRM AP University. Browse profiles, skills, and reviews to find the perfect mentor for your academic journey. Connect with verified peer mentors today!"
-        keywords="friendly learning srm ap, SRM AP mentors directory, student mentors SRM, academic guidance, peer mentoring, university mentorship, SRM AP academic support, student tutoring"
+        title={`Find Student Mentors at Friendly Learning SRM AP | Browse ${filteredMentors.length} Verified SRMAP Mentors`}
+        description="Discover experienced student mentors at Friendly Learning SRM AP University in Amaravati. Browse profiles, skills, and reviews to find the perfect mentor for your academic journey. Connect with verified peer mentors from SRMAP today!"
+        keywords="friendly learning srm ap, srmap mentorship platform, srmap friendly learning, SRM AP mentors directory, student mentors SRMAP, academic guidance amaravati, peer mentoring andhra pradesh, university mentorship srmap, SRM AP academic support, student tutoring amaravati"
         canonical="https://friendly-learning.lovable.app/mentors"
         structuredData={structuredData}
       />
