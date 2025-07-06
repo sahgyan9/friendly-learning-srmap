@@ -84,7 +84,7 @@ const Hero = () => {
             variants={item}
           >
             Friendly Learning connects undergraduate students with experienced
-            senior mentors to provide personalized academic support within your university.
+            student mentors to provide personalized academic support within your university.
           </motion.p>
           
           <motion.div 
