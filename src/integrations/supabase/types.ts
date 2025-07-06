@@ -255,33 +255,45 @@ export type Database = {
       mentor_verifications: {
         Row: {
           application_data: Json | null
+          cgpa: number | null
+          hobbies: string | null
           id: string
           rejection_reason: string | null
           reviewed_at: string | null
           reviewed_by: string | null
           status: string | null
           submitted_at: string | null
+          university: string | null
           user_id: string | null
+          year_of_studies: string | null
         }
         Insert: {
           application_data?: Json | null
+          cgpa?: number | null
+          hobbies?: string | null
           id?: string
           rejection_reason?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
           status?: string | null
           submitted_at?: string | null
+          university?: string | null
           user_id?: string | null
+          year_of_studies?: string | null
         }
         Update: {
           application_data?: Json | null
+          cgpa?: number | null
+          hobbies?: string | null
           id?: string
           rejection_reason?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
           status?: string | null
           submitted_at?: string | null
+          university?: string | null
           user_id?: string | null
+          year_of_studies?: string | null
         }
         Relationships: [
           {
@@ -303,8 +315,10 @@ export type Database = {
       mentors: {
         Row: {
           bio: string | null
+          cgpa: number | null
           created_at: string | null
           department: string
+          hobbies: string | null
           id: string
           linkedin_url: string | null
           name: string
@@ -312,11 +326,15 @@ export type Database = {
           rating: number
           review_count: number
           skills: string[]
+          university: string | null
+          year_of_studies: string | null
         }
         Insert: {
           bio?: string | null
+          cgpa?: number | null
           created_at?: string | null
           department: string
+          hobbies?: string | null
           id?: string
           linkedin_url?: string | null
           name: string
@@ -324,11 +342,15 @@ export type Database = {
           rating?: number
           review_count?: number
           skills: string[]
+          university?: string | null
+          year_of_studies?: string | null
         }
         Update: {
           bio?: string | null
+          cgpa?: number | null
           created_at?: string | null
           department?: string
+          hobbies?: string | null
           id?: string
           linkedin_url?: string | null
           name?: string
@@ -336,6 +358,8 @@ export type Database = {
           rating?: number
           review_count?: number
           skills?: string[]
+          university?: string | null
+          year_of_studies?: string | null
         }
         Relationships: []
       }
