@@ -69,14 +69,14 @@ const Hero = () => {
             className="inline-block px-4 py-1.5 mb-6 rounded-full bg-primary/10 text-primary text-sm font-medium"
             variants={item}
           >
-            SRM AP Mentorship Platform
+            SRM AP Student Mentorship Platform
           </motion.div>
           
           <motion.h1 
             className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6 text-balance"
             variants={item}
           >
-            Connect with Senior Students for Academic Guidance
+            Connect with Students Mentors for Academic Guidance
           </motion.h1>
           
           <motion.p 
