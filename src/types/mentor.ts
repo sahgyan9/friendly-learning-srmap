@@ -10,10 +10,6 @@ export interface Mentor {
   bio?: string;
   review_count: number;
   created_at?: string;
-  cgpa?: number;
-  year_of_studies?: string;
-  university?: string;
-  hobbies?: string;
 }
 
 export interface MentorFormData {

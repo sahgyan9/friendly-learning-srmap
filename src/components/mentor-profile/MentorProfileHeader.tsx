@@ -77,28 +77,6 @@ const MentorProfileHeader = ({ mentor }: MentorProfileHeaderProps) => {
           {mentor.department}
         </motion.p>
         
-        {/* University */}
-        {mentor.university && (
-          <motion.p 
-            className="text-md text-muted-foreground mb-4"
-            variants={itemVariants}
-          >
-            <span className="font-medium">University: </span>
-            {mentor.university}
-          </motion.p>
-        )}
-        
-        {/* Hobbies */}
-        {mentor.hobbies && (
-          <motion.p 
-            className="text-md text-muted-foreground mb-4"
-            variants={itemVariants}
-          >
-            <span className="font-medium">Hobbies: </span>
-            {mentor.hobbies}
-          </motion.p>
-        )}
-        
         <motion.div 
           className="flex flex-wrap gap-2 mb-6"
           variants={itemVariants}

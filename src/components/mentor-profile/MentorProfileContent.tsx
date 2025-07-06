@@ -55,7 +55,13 @@ const MentorProfileContent = ({
         />
       </motion.div>
 
-      <MentorProfileSections mentor={mentor} />
+      <MentorProfileSections 
+        mentor={mentor}
+        canRate={canRate}
+        isOwnProfile={isOwnProfile}
+        ratingLoading={ratingLoading}
+        onShowRatingModal={onShowRatingModal}
+      />
     </motion.div>
   );
 };

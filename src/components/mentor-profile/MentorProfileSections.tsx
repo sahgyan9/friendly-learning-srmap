@@ -1,60 +1,61 @@
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Trophy, MessageCircle } from "lucide-react";
-import { Mentor } from "@/types/mentor";
+import { motion } from "framer-motion";
 import BadgeDisplay from "@/components/badges/BadgeDisplay";
 import ReviewsList from "@/components/rating/ReviewsList";
+import { Button } from "@/components/ui/button";
+import { Mentor } from "@/types/mentor";
 
 interface MentorProfileSectionsProps {
   mentor: Mentor;
+  canRate: boolean;
+  isOwnProfile: boolean;
+  ratingLoading: boolean;
+  onShowRatingModal: () => void;
 }
 
-const MentorProfileSections = ({ mentor }: MentorProfileSectionsProps) => {
+const MentorProfileSections = ({ 
+  mentor, 
+  canRate, 
+  isOwnProfile, 
+  ratingLoading, 
+  onShowRatingModal 
+}: MentorProfileSectionsProps) => {
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: { duration: 0.3 }
+    }
+  };
+
   return (
-    <div className="grid gap-6 md:grid-cols-1">
+    <>
       {/* Badges Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Trophy className="h-5 w-5 text-primary" />
-            Badges
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <BadgeDisplay userId={mentor.id} showAll={false} />
-        </CardContent>
-      </Card>
+      <motion.div 
+        className="mb-10"
+        variants={itemVariants}
+      >
+        <h2 className="text-2xl font-semibold mb-4">Badges</h2>
+        <BadgeDisplay userId={mentor.id} />
+      </motion.div>
 
       {/* Reviews Section */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <MessageCircle className="h-5 w-5 text-primary" />
-            Reviews
-          </CardTitle>
-          <Button variant="outline" size="sm">
-            Add Review
-          </Button>
-        </CardHeader>
-        <CardContent>
-          <ReviewsList mentorId={mentor.id} />
-        </CardContent>
-      </Card>
-
-      {/* Bio Section */}
-      {mentor.bio && (
-        <Card>
-          <CardHeader>
-            <CardTitle>About</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground leading-relaxed">{mentor.bio}</p>
-          </CardContent>
-        </Card>
-      )}
-    </div>
+      <motion.div 
+        className="mb-10"
+        variants={itemVariants}
+      >
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-2xl font-semibold">Reviews</h2>
+          {canRate && !isOwnProfile && !ratingLoading && (
+            <Button onClick={onShowRatingModal}>
+              Add Review
+            </Button>
+          )}
+        </div>
+        <ReviewsList mentorId={mentor.id} />
+      </motion.div>
+    </>
   );
 };
 
