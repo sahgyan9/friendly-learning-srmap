@@ -1,61 +1,100 @@
 
-import { motion } from "framer-motion";
-import BadgeDisplay from "@/components/badges/BadgeDisplay";
-import ReviewsList from "@/components/rating/ReviewsList";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { GraduationCap, University, Heart, Trophy } from "lucide-react";
 import { Mentor } from "@/types/mentor";
 
 interface MentorProfileSectionsProps {
   mentor: Mentor;
-  canRate: boolean;
-  isOwnProfile: boolean;
-  ratingLoading: boolean;
-  onShowRatingModal: () => void;
 }
 
-const MentorProfileSections = ({ 
-  mentor, 
-  canRate, 
-  isOwnProfile, 
-  ratingLoading, 
-  onShowRatingModal 
-}: MentorProfileSectionsProps) => {
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { 
-      opacity: 1, 
-      y: 0,
-      transition: { duration: 0.3 }
-    }
-  };
-
+const MentorProfileSections = ({ mentor }: MentorProfileSectionsProps) => {
   return (
-    <>
-      {/* Badges Section */}
-      <motion.div 
-        className="mb-10"
-        variants={itemVariants}
-      >
-        <h2 className="text-2xl font-semibold mb-4">Badges</h2>
-        <BadgeDisplay userId={mentor.id} />
-      </motion.div>
+    <div className="grid gap-6 md:grid-cols-2">
+      {/* Skills Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Trophy className="h-5 w-5 text-primary" />
+            Skills & Expertise
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-2">
+            {mentor.skills && mentor.skills.length > 0 ? (
+              mentor.skills.map((skill, index) => (
+                <Badge key={index} variant="secondary">
+                  {skill}
+                </Badge>
+              ))
+            ) : (
+              <p className="text-muted-foreground">No skills listed</p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
-      {/* Reviews Section */}
-      <motion.div 
-        className="mb-10"
-        variants={itemVariants}
-      >
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-2xl font-semibold">Reviews</h2>
-          {canRate && !isOwnProfile && !ratingLoading && (
-            <Button onClick={onShowRatingModal}>
-              Add Review
-            </Button>
+      {/* Academic Information */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <GraduationCap className="h-5 w-5 text-primary" />
+            Academic Information
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div>
+            <span className="font-medium">Department: </span>
+            <span className="text-muted-foreground">{mentor.department}</span>
+          </div>
+          {mentor.university && (
+            <div>
+              <span className="font-medium">University: </span>
+              <span className="text-muted-foreground">{mentor.university}</span>
+            </div>
           )}
-        </div>
-        <ReviewsList mentorId={mentor.id} />
-      </motion.div>
-    </>
+          {mentor.year_of_studies && (
+            <div>
+              <span className="font-medium">Year of Studies: </span>
+              <span className="text-muted-foreground">{mentor.year_of_studies}</span>
+            </div>
+          )}
+          {mentor.cgpa && (
+            <div>
+              <span className="font-medium">CGPA: </span>
+              <span className="text-muted-foreground">{mentor.cgpa}/10</span>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Bio Section */}
+      {mentor.bio && (
+        <Card className="md:col-span-2">
+          <CardHeader>
+            <CardTitle>About</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground leading-relaxed">{mentor.bio}</p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Hobbies Section */}
+      {mentor.hobbies && (
+        <Card className="md:col-span-2">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Heart className="h-5 w-5 text-primary" />
+              Hobbies & Interests
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground">{mentor.hobbies}</p>
+          </CardContent>
+        </Card>
+      )}
+    </div>
   );
 };
 

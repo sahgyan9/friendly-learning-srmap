@@ -1,190 +1,175 @@
 
-import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { GoogleGenerativeAI } from "https://esm.sh/@google/generative-ai@0.1.3"
 
-// CORS headers
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
-
-// Initialize the Supabase client with credentials from the environment
-const supabaseClient = createClient(
-  Deno.env.get('SUPABASE_URL') ?? '',
-  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-);
-
-// The Google API key and Gemini API URL
-const GOOGLE_API_KEY = Deno.env.get('Gemini_API_Key') ?? '';
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
-
-// Helper function to fetch mentors from Supabase
-async function fetchMentors() {
-  console.log("Fetching mentors from Supabase database...");
-  
-  const { data, error } = await supabaseClient
-    .from('mentors')
-    .select('*');
-
-  if (error) {
-    console.error("Error fetching mentors from database:", error);
-    return [];
-  }
-
-  console.log(`Successfully fetched ${data?.length || 0} mentors from Supabase`);
-  return data || [];
 }
 
-// Helper function to use Gemini to analyze query and find mentors
-async function searchWithGeminiAI(query: string, mentors: any[]) {
-  if (!GOOGLE_API_KEY) {
-    console.error("Google API key is not set");
-    return { error: "API key not configured" };
-  }
-
-  try {
-    const mentorsContext = mentors.map(mentor => {
-      return `
-        ID: ${mentor.id}
-        Name: ${mentor.name}
-        Department: ${mentor.department}
-        Skills: ${mentor.skills.join(', ')}
-        Rating: ${mentor.rating}
-        Bio: ${mentor.bio || 'No bio available'}
-      `;
-    }).join('\n\n');
-
-    const prompt = `
-      You are a helpful AI assistant for a university mentorship platform. Using the following context of available mentors, find the most relevant mentors for the user's query: "${query}".
-      
-      Mentor Database Context:
-      ${mentorsContext}
-      
-      Based on the query, return ONLY a JSON array of mentor IDs that match the query best, ranked by relevance. Don't include any explanation or other text.
-      The format should be: [{"id":"1"},{"id":"2"}]
-      
-      Try to understand not just keywords, but the intent behind the query. For example, if they ask for "programming help", consider mentors with skills like Python, Java, Web Development, etc.
-      
-      Important: The IDs must exactly match one of the ID values provided in the context above.
-    `;
-
-    // Make the API call to Gemini
-    const response = await fetch(`${GEMINI_API_URL}?key=${GOOGLE_API_KEY}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [
-              { text: prompt }
-            ]
-          }
-        ],
-        generationConfig: {
-          temperature: 0.2,
-          maxOutputTokens: 1024,
-        }
-      }),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("Gemini API error:", errorText);
-      return { error: "Error communicating with Gemini API" };
-    }
-
-    const data = await response.json();
-    console.log("Gemini response:", JSON.stringify(data));
-
-    // Extract the response text
-    const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-    
-    // Parse the JSON array of mentor IDs from the response
-    try {
-      // Find JSON array in the response
-      const jsonMatch = responseText.match(/\[.*\]/s);
-      if (!jsonMatch) {
-        console.error("No JSON array found in response");
-        return { ids: [] };
-      }
-      
-      const mentorIds = JSON.parse(jsonMatch[0]);
-      console.log("Mentor IDs from Gemini:", mentorIds.map(item => item.id));
-      return { ids: mentorIds };
-    } catch (err) {
-      console.error("Error parsing mentor IDs from Gemini response:", err);
-      return { error: "Failed to parse Gemini response", raw: responseText };
-    }
-  } catch (error) {
-    console.error("Error in Gemini search:", error);
-    return { error: "Gemini search failed" };
-  }
+interface Mentor {
+  id: string;
+  name: string;
+  department: string;
+  skills: string[];
+  bio?: string;
+  rating: number;
+  review_count: number;
+  profile_image?: string;
+  linkedin_url?: string;
+  cgpa?: number;
+  year_of_studies?: string;
+  university?: string;
+  hobbies?: string;
 }
 
 serve(async (req) => {
-  // Handle CORS preflight request
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders })
   }
 
   try {
-    // Parse the request body
-    const { query } = await req.json();
-    
-    if (!query || typeof query !== 'string') {
-      return new Response(
-        JSON.stringify({ error: "Invalid query parameter" }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-      );
+    const { query } = await req.json()
+    console.log('Search query:', query)
+
+    const apiKey = Deno.env.get('Gemini_API_Key')
+    if (!apiKey) {
+      throw new Error('Gemini API key not found')
     }
 
-    console.log(`Received search query: "${query}"`);
-    
     // Fetch mentors from Supabase
-    const mentors = await fetchMentors();
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')
+    const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY')
     
-    // If no mentors in database, return error
-    if (mentors.length === 0) {
-      return new Response(
-        JSON.stringify({ error: "No mentors found in database" }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 }
-      );
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error('Supabase configuration not found')
     }
 
-    // Use Gemini to search through mentors
-    const geminiResult = await searchWithGeminiAI(query, mentors);
-    
-    if (geminiResult.error) {
-      return new Response(
-        JSON.stringify({ error: geminiResult.error, raw: geminiResult.raw }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-      );
+    const mentorsResponse = await fetch(`${supabaseUrl}/rest/v1/mentors?select=*`, {
+      headers: {
+        'apikey': supabaseKey,
+        'Authorization': `Bearer ${supabaseKey}`,
+        'Content-Type': 'application/json',
+      },
+    })
+
+    if (!mentorsResponse.ok) {
+      throw new Error(`Failed to fetch mentors: ${mentorsResponse.statusText}`)
     }
 
-    // Get the full mentor objects for the returned IDs
-    const mentorIds = geminiResult.ids.map((item: any) => item.id);
-    console.log("Mentor IDs from Gemini:", mentorIds);
+    const mentors: Mentor[] = await mentorsResponse.json()
+    console.log(`Fetched ${mentors.length} mentors`)
+
+    // Filter out mentors with "General" department
+    const validMentors = mentors.filter(mentor => 
+      mentor.department && mentor.department !== 'General'
+    )
+
+    // Initialize Gemini AI
+    const genAI = new GoogleGenerativeAI(apiKey)
+    const model = genAI.getGenerativeModel({ model: "gemini-pro" })
+
+    // Create context about available mentors for AI
+    const mentorContext = validMentors.map(mentor => {
+      return `Mentor: ${mentor.name}
+Department: ${mentor.department}
+Skills: ${mentor.skills?.join(', ') || 'Not specified'}
+Bio: ${mentor.bio || 'No bio available'}
+Rating: ${mentor.rating}/5 (${mentor.review_count} reviews)
+University: ${mentor.university || 'Not specified'}
+Year of Studies: ${mentor.year_of_studies || 'Not specified'}
+CGPA: ${mentor.cgpa || 'Not specified'}
+Hobbies: ${mentor.hobbies || 'Not specified'}
+ID: ${mentor.id}`
+    }).join('\n\n')
+
+    const prompt = `
+You are a helpful AI assistant that recommends mentors based on student queries. 
+Here are the available mentors and their information:
+
+${mentorContext}
+
+Student Query: "${query}"
+
+Based on the student's query, recommend the most suitable mentors. Consider:
+1. Department/field matching
+2. Relevant skills and expertise
+3. Mentor ratings and experience
+4. University and academic background
+5. Hobbies and personal interests if relevant
+6. CGPA and year of studies for academic guidance
+
+Return your response as a JSON array of mentor IDs (strings), ordered by relevance (most relevant first).
+Only include mentors that are genuinely relevant to the query.
+Maximum 5 recommendations.
+
+Example format: ["mentor-id-1", "mentor-id-2", "mentor-id-3"]
+
+If no mentors are suitable, return an empty array: []
+`
+
+    const result = await model.generateContent(prompt)
+    const response = await result.response
+    const text = response.text()
     
-    const filteredMentors = mentors.filter((mentor) => 
-      mentorIds.includes(mentor.id)
-    );
+    console.log('AI Response:', text)
     
-    // Return the results
+    // Parse the AI response to extract mentor IDs
+    let recommendedMentorIds: string[] = []
+    try {
+      // Extract JSON array from the response
+      const jsonMatch = text.match(/\[.*\]/)
+      if (jsonMatch) {
+        recommendedMentorIds = JSON.parse(jsonMatch[0])
+      }
+    } catch (parseError) {
+      console.error('Error parsing AI response:', parseError)
+      // Fallback: try to extract IDs using regex
+      const idMatches = text.match(/[a-f0-9-]{36}/g)
+      if (idMatches) {
+        recommendedMentorIds = idMatches.slice(0, 5)
+      }
+    }
+
+    console.log('Recommended mentor IDs:', recommendedMentorIds)
+
+    // Get the full mentor objects for recommended IDs
+    const recommendedMentors = recommendedMentorIds
+      .map(id => validMentors.find(mentor => mentor.id === id))
+      .filter(mentor => mentor !== undefined)
+
+    console.log(`Returning ${recommendedMentors.length} recommended mentors`)
+
     return new Response(
       JSON.stringify({ 
-        mentors: filteredMentors,
+        mentors: recommendedMentors,
         query: query,
-        totalResults: filteredMentors.length
+        totalMentorsSearched: validMentors.length
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+      { 
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json' 
+        } 
+      }
+    )
+
   } catch (error) {
-    console.error("Error processing search request:", error);
+    console.error('Error in gemini-search function:', error)
     return new Response(
-      JSON.stringify({ error: "Internal server error" }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-    );
+      JSON.stringify({ 
+        error: error.message,
+        mentors: [],
+        query: ''
+      }),
+      { 
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json' 
+        },
+        status: 500
+      }
+    )
   }
-});
+})

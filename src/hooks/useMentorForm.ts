@@ -12,6 +12,10 @@ export interface MentorFormData {
   bio: string;
   linkedin_url: string;
   profile_image: string;
+  cgpa: string;
+  year_of_studies: string;
+  university: string;
+  hobbies: string;
 }
 
 export const useMentorForm = (userId: string, initialData: MentorFormData) => {
@@ -46,7 +50,7 @@ export const useMentorForm = (userId: string, initialData: MentorFormData) => {
     
     try {
       // Validate form
-      if (!formData.name || !formData.department || !formData.skills.trim()) {
+      if (!formData.name || !formData.department || !formData.skills.trim() || !formData.year_of_studies || !formData.university) {
         throw new Error("Please fill in all required fields");
       }
       
@@ -68,7 +72,7 @@ export const useMentorForm = (userId: string, initialData: MentorFormData) => {
         }
       }
       
-      // Submit verification application instead of directly creating mentor
+      // Submit verification application with new fields
       const applicationData = {
         user_id: userId,
         application_data: {
@@ -79,6 +83,10 @@ export const useMentorForm = (userId: string, initialData: MentorFormData) => {
           linkedin_url: formData.linkedin_url,
           profile_image: formData.profile_image
         },
+        cgpa: formData.cgpa ? parseFloat(formData.cgpa) : null,
+        year_of_studies: formData.year_of_studies,
+        university: formData.university,
+        hobbies: formData.hobbies || null,
         status: 'pending'
       };
       
