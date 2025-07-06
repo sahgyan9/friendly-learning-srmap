@@ -1,8 +1,11 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { GraduationCap, Trophy } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Trophy, MessageCircle } from "lucide-react";
 import { Mentor } from "@/types/mentor";
+import BadgeDisplay from "@/components/badges/BadgeDisplay";
+import ReviewsList from "@/components/rating/ReviewsList";
 
 interface MentorProfileSectionsProps {
   mentor: Mentor;
@@ -10,61 +13,39 @@ interface MentorProfileSectionsProps {
 
 const MentorProfileSections = ({ mentor }: MentorProfileSectionsProps) => {
   return (
-    <div className="grid gap-6 md:grid-cols-2">
-      {/* Skills Section */}
+    <div className="grid gap-6 md:grid-cols-1">
+      {/* Badges Section */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Trophy className="h-5 w-5 text-primary" />
-            Skills & Expertise
+            Badges
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-wrap gap-2">
-            {mentor.skills && mentor.skills.length > 0 ? (
-              mentor.skills.map((skill, index) => (
-                <Badge key={index} variant="secondary">
-                  {skill}
-                </Badge>
-              ))
-            ) : (
-              <p className="text-muted-foreground">No skills listed</p>
-            )}
-          </div>
+          <BadgeDisplay userId={mentor.id} showAll={false} />
         </CardContent>
       </Card>
 
-      {/* Academic Information */}
+      {/* Reviews Section */}
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="flex items-center gap-2">
-            <GraduationCap className="h-5 w-5 text-primary" />
-            Academic Information
+            <MessageCircle className="h-5 w-5 text-primary" />
+            Reviews
           </CardTitle>
+          <Button variant="outline" size="sm">
+            Add Review
+          </Button>
         </CardHeader>
-        <CardContent className="space-y-3">
-          <div>
-            <span className="font-medium">Department: </span>
-            <span className="text-muted-foreground">{mentor.department}</span>
-          </div>
-          {mentor.year_of_studies && (
-            <div>
-              <span className="font-medium">Year of Studies: </span>
-              <span className="text-muted-foreground">{mentor.year_of_studies}</span>
-            </div>
-          )}
-          {mentor.cgpa && (
-            <div>
-              <span className="font-medium">CGPA: </span>
-              <span className="text-muted-foreground">{mentor.cgpa}/10</span>
-            </div>
-          )}
+        <CardContent>
+          <ReviewsList mentorId={mentor.id} />
         </CardContent>
       </Card>
 
       {/* Bio Section */}
       {mentor.bio && (
-        <Card className="md:col-span-2">
+        <Card>
           <CardHeader>
             <CardTitle>About</CardTitle>
           </CardHeader>
