@@ -12,11 +12,6 @@ export interface MentorFormData {
   bio: string;
   linkedin_url: string;
   profile_image: string;
-  cgpa: string;
-  year_of_studies: string;
-  university: string;
-  hobbies: string;
-  other_departments: string;
 }
 
 export const useMentorForm = (userId: string, initialData: MentorFormData) => {
@@ -51,7 +46,7 @@ export const useMentorForm = (userId: string, initialData: MentorFormData) => {
     
     try {
       // Validate form
-      if (!formData.name || !formData.department || !formData.skills.trim() || !formData.cgpa || !formData.year_of_studies || !formData.university) {
+      if (!formData.name || !formData.department || !formData.skills.trim()) {
         throw new Error("Please fill in all required fields");
       }
       
@@ -82,12 +77,7 @@ export const useMentorForm = (userId: string, initialData: MentorFormData) => {
           skills: formData.skills,
           bio: formData.bio,
           linkedin_url: formData.linkedin_url,
-          profile_image: formData.profile_image,
-          cgpa: formData.cgpa,
-          year_of_studies: formData.year_of_studies,
-          university: formData.university,
-          hobbies: formData.hobbies,
-          other_departments: formData.other_departments
+          profile_image: formData.profile_image
         },
         status: 'pending'
       };

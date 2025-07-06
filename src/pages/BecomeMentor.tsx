@@ -21,11 +21,6 @@ const BecomeMentor = () => {
     bio: "",
     linkedin_url: "",
     profile_image: profile?.profile_image || "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=crop&w=256&q=80",
-    cgpa: "",
-    year_of_studies: "",
-    university: "SRM University AP",
-    hobbies: "",
-    other_departments: ""
   };
 
   useEffect(() => {
