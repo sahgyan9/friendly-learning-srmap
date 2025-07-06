@@ -1,7 +1,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { GraduationCap, University, Heart, Trophy } from "lucide-react";
+import { GraduationCap, Trophy } from "lucide-react";
 import { Mentor } from "@/types/mentor";
 
 interface MentorProfileSectionsProps {
@@ -47,12 +47,6 @@ const MentorProfileSections = ({ mentor }: MentorProfileSectionsProps) => {
             <span className="font-medium">Department: </span>
             <span className="text-muted-foreground">{mentor.department}</span>
           </div>
-          {mentor.university && (
-            <div>
-              <span className="font-medium">University: </span>
-              <span className="text-muted-foreground">{mentor.university}</span>
-            </div>
-          )}
           {mentor.year_of_studies && (
             <div>
               <span className="font-medium">Year of Studies: </span>
@@ -76,21 +70,6 @@ const MentorProfileSections = ({ mentor }: MentorProfileSectionsProps) => {
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground leading-relaxed">{mentor.bio}</p>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Hobbies Section */}
-      {mentor.hobbies && (
-        <Card className="md:col-span-2">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Heart className="h-5 w-5 text-primary" />
-              Hobbies & Interests
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground">{mentor.hobbies}</p>
           </CardContent>
         </Card>
       )}
