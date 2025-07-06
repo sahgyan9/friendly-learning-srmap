@@ -110,9 +110,9 @@ const Index = () => {
   return (
     <>
       <SEOHead
-        title="Friendly Learning SRM AP - Premier Student Mentorship Platform | SRMAP Academic Support"
-        description="Friendly Learning SRM AP is the leading student mentorship platform at SRM University AP. Connect with experienced peer mentors for academic guidance, career advice, and personalized learning support in Amaravati, Andhra Pradesh. Start your mentorship journey today!"
-        keywords="friendly learning srm ap, srmap mentorship platform, srmap friendly learning, SRM AP mentorship, student mentor platform srmap, academic guidance SRM AP, university mentorship program, srm amaravati mentorship, andhra pradesh student mentoring, peer learning srmap, career guidance amaravati"
+        title="Friendly Learning SRM AP - Student Mentorship Platform | Connect with Academic Mentors"
+        description="Join Friendly Learning SRM AP's premier student mentorship platform. Connect with experienced peer mentors for academic guidance, career advice, and personalized learning support. Start your mentorship journey today!"
+        keywords="friendly learning srm ap, SRM AP mentorship, student mentor platform, academic guidance SRM, university mentorship program, student to student mentoring, SRM AP academic support, peer learning, career guidance"
         canonical="https://friendly-learning.lovable.app"
         structuredData={structuredData}
       />
@@ -129,36 +129,6 @@ const Index = () => {
           <motion.div variants={sectionVariants}>
             <Hero />
           </motion.div>
-          
-          {/* SEO Content Section */}
-          <section className="py-8 bg-background">
-            <div className="container px-4 md:px-6">
-              <div className="max-w-4xl mx-auto text-center">
-                <h1 className="text-3xl font-bold mb-4">
-                  <strong>Friendly Learning SRM AP</strong> - Premier <strong>Student Mentorship Platform</strong>
-                </h1>
-                <h2 className="text-xl font-semibold mb-4">
-                  Connect with <strong>Verified Peer Mentors</strong> at <strong>SRM University AP</strong>
-                </h2>
-                <p className="text-lg mb-6">
-                  <strong>SRMAP Friendly Learning</strong> is the leading <strong>mentorship platform</strong> connecting 
-                  students with experienced <strong>academic mentors</strong> in <strong>Amaravati, Andhra Pradesh</strong>. 
-                  Get personalized <strong>career guidance</strong> and <strong>academic support</strong> from verified 
-                  <strong>SRM AP students</strong>.
-                </p>
-                <h3 className="text-lg font-semibold mb-3">
-                  Why Choose <strong>Friendly Learning SRMAP</strong>?
-                </h3>
-                <ul className="text-left max-w-2xl mx-auto space-y-2">
-                  <li>• <strong>Verified student mentors</strong> from SRM University AP</li>
-                  <li>• <strong>Personalized academic guidance</strong> across all departments</li>
-                  <li>• <strong>Career mentorship</strong> and professional development</li>
-                  <li>• <strong>Peer learning community</strong> in Amaravati</li>
-                  <li>• <strong>University mentorship program</strong> with proven results</li>
-                </ul>
-              </div>
-            </div>
-          </section>
           
           <motion.div 
             variants={sectionVariants}
