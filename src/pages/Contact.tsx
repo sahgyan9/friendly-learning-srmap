@@ -127,7 +127,7 @@ const Contact = () => {
                       value={formData.email}
                       onChange={handleChange}
                       className="w-full p-3 border border-input rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary"
-                      placeholder="your.email@srmuniv.edu.in"
+                      placeholder="Enter your email address"
                       aria-required="true"
                       disabled={isSubmitting}
                     />
