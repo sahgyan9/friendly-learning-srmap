@@ -184,7 +184,8 @@ const UserProfile = () => {
         .from('users')
         .update({
           name: formData.name,
-          profile_image: profileImageUrl
+          profile_image: profileImageUrl,
+          mobile: formData.mobile
         })
         .eq('id', user.id);
       
@@ -309,7 +310,6 @@ const UserProfile = () => {
                     className="bg-background text-foreground border-border"
                   />
                 </div>
-                
                 <div>
                   <Label htmlFor="email" className="text-foreground">Email address</Label>
                   <Input
@@ -318,6 +318,18 @@ const UserProfile = () => {
                     value={formData.email}
                     disabled
                     className="bg-muted text-muted-foreground border-border"
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <Label htmlFor="mobile" className="text-foreground">Mobile Number</Label>
+                  <Input
+                    id="mobile"
+                    name="mobile"
+                    type="tel"
+                    value={formData.mobile}
+                    onChange={handleChange}
+                    placeholder="Enter your mobile number"
+                    className="bg-background text-foreground border-border placeholder:text-muted-foreground"
                   />
                 </div>
               </div>
