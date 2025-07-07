@@ -43,11 +43,11 @@ const UserProfile = () => {
         ...prev,
         name: profile.name || '',
         email: profile.email || '',
-        department: profile.department || '',
-        skills: profile.skills ? profile.skills.join(', ') : '',
-        bio: profile.bio || '',
-        linkedin_url: profile.linkedin_url || '',
-        phone: profile.phone || ''
+        department: (profile as any).department || '',
+        skills: (profile as any).skills ? (profile as any).skills.join(', ') : '',
+        bio: (profile as any).bio || '',
+        linkedin_url: (profile as any).linkedin_url || '',
+        phone: (profile as any).phone || ''
       }));
     }
 
