@@ -47,11 +47,12 @@ const MentorPersonalInfo = ({ formData, handleChange }: MentorPersonalInfoProps)
             <SelectItem value="Electrical Engineering">Electrical Engineering</SelectItem>
             <SelectItem value="Mechanical Engineering">Mechanical Engineering</SelectItem>
             <SelectItem value="Civil Engineering">Civil Engineering</SelectItem>
-            <SelectItem value="Business Administration">Business Administration</SelectItem>
+            <SelectItem value="Business Administration">Account & Finance</SelectItem>
             <SelectItem value="Physics">Physics</SelectItem>
             <SelectItem value="Mathematics">Mathematics</SelectItem>
             <SelectItem value="Chemistry">Chemistry</SelectItem>
             <SelectItem value="Biology">Biology</SelectItem>
+            <SelectItem value="Biology">PhD</SelectItem>
           </SelectContent>
         </Select>
       </div>
