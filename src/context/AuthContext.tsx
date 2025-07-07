@@ -12,6 +12,13 @@ interface UserProfile {
   profile_image?: string;
   verification_status?: string;
   is_admin?: boolean;
+  mobile?: string;
+  department?: string;
+  skills?: string[];
+  linkedin_url?: string;
+  bio?: string;
+  phone?: string;
+  is_available?: boolean;
 }
 
 interface AuthContextType {

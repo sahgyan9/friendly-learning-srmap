@@ -20,8 +20,6 @@ const BecomeMentor = () => {
     mobile: ""
   };
 
-  const mentorForm = useMentorForm(user?.id || "", initialFormData);
-
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -35,7 +33,10 @@ const BecomeMentor = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <MentorProfileForm {...mentorForm} />
+      <MentorProfileForm 
+        userId={user.id}
+        initialData={initialFormData}
+      />
     </div>
   );
 };
