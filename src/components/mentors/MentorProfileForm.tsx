@@ -2,6 +2,7 @@
 import { Link } from "react-router-dom";
 import { useMentorForm, MentorFormData } from "@/hooks/useMentorForm";
 import MentorProfileImageUpload from "./MentorProfileImageUpload";
+import MentorAcademicInfo from "./form/MentorAcademicInfo";
 import MentorPersonalInfo from "./form/MentorPersonalInfo";
 import MentorSkillsField from "./form/MentorSkillsField";
 import MentorBioField from "./form/MentorBioField";
@@ -32,6 +33,11 @@ const MentorProfileForm = ({ userId, initialData }: MentorProfileFormProps) => {
       />
 
       <MentorPersonalInfo 
+        formData={formData}
+        handleChange={handleChange}
+      />
+
+      <MentorAcademicInfo 
         formData={formData}
         handleChange={handleChange}
       />
