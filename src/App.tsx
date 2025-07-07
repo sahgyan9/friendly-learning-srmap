@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -12,6 +13,7 @@ import BecomeMentor from "./pages/BecomeMentor";
 import MentorProfile from "./pages/MentorProfile";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
+import ForgotPassword from "./pages/ForgotPassword";
 import UserProfile from "./pages/UserProfile";
 import MarketPlace from "./pages/MarketPlace";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -45,6 +47,7 @@ const App = () => (
           <Route path="/become-mentor" element={<BecomeMentor />} />
           <Route path="/signin" element={<SignIn />} />
           <Route path="/signup" element={<SignUp />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/marketplace" element={<MarketPlace />} />
           <Route path="/messages" element={
