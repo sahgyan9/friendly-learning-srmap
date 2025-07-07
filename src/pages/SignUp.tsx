@@ -16,7 +16,8 @@ const SignUp = () => {
     name: "",
     email: "",
     password: "",
-    confirmPassword: ""
+    confirmPassword: "",
+    mobile: ""
   });
   const [isLoading, setIsLoading] = useState(false);
   const [showRoleSelection, setShowRoleSelection] = useState(false);
@@ -96,6 +97,10 @@ const SignUp = () => {
       toast.error("Passwords don't match");
       return;
     }
+    if (!formData.mobile) {
+      toast.error("Please enter your mobile number");
+      return;
+    }
 
     setIsLoading(true);
     
@@ -108,6 +113,7 @@ const SignUp = () => {
           data: {
             name: formData.name,
             full_name: formData.name,
+            mobile: formData.mobile
           },
           emailRedirectTo: `${window.location.origin}/`,
         }
@@ -186,7 +192,6 @@ const SignUp = () => {
                     className="mt-1"
                   />
                 </div>
-                
                 <div>
                   <Label htmlFor="email-address">Email address</Label>
                   <Input
@@ -201,7 +206,19 @@ const SignUp = () => {
                     className="mt-1"
                   />
                 </div>
-                
+                <div>
+                  <Label htmlFor="mobile">Mobile Number</Label>
+                  <Input
+                    id="mobile"
+                    name="mobile"
+                    type="tel"
+                    required
+                    value={formData.mobile}
+                    onChange={handleChange}
+                    placeholder="Enter your mobile number"
+                    className="mt-1"
+                  />
+                </div>
                 <div>
                   <Label htmlFor="password">Password</Label>
                   <Input
