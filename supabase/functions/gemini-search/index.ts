@@ -68,6 +68,7 @@ async function searchWithGeminiAI(query: string, mentors: any[]) {
       Try to understand not just keywords, but the intent behind the query. For example, if they ask for "programming help", consider mentors with skills like Python, Java, Web Development, etc. If they ask for mentors from a specific university or with certain hobbies, prioritize those matches.
       
       Important: The IDs must exactly match one of the ID values provided in the context above.
+      Important: The mentors who are in general category please don't return JSON array of those mentor IDs
     `;
 
     // Make the API call to Gemini
