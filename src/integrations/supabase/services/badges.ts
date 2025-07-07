@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Database } from "@/integrations/supabase/types";
 
@@ -72,7 +71,7 @@ export const getUserBadges = async (userId: string) => {
     .select(`
       *,
       badge_type:badge_types(*),
-      awarded_by_user:users!user_badges_awarded_by_fkey(name)
+      awarder:users!user_badges_awarded_by_fkey(name)
     `)
     .eq('user_id', userId)
     .order('awarded_at', { ascending: false });
@@ -92,7 +91,7 @@ export const awardBadge = async (badge: AwardBadge) => {
     .select(`
       *,
       badge_type:badge_types(*),
-      user:users(name, email)
+      recipient:users!user_badges_user_id_fkey(name, email)
     `)
     .single();
 

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -143,8 +142,21 @@ const BadgeAwardModal = ({ badgeTypes, onClose, onSuccess }: BadgeAwardModalProp
       
     } catch (error) {
       console.error('Error awarding badge:', error);
-      const errorMsg = error instanceof Error ? error.message : "Failed to award badge";
-      setErrorMessage(`Failed to award badge: ${errorMsg}`);
+      let errorMsg = "Failed to award badge";
+      
+      if (error instanceof Error) {
+        errorMsg = error.message;
+        // Provide more specific error messages based on common issues
+        if (error.message.includes('PGRST201')) {
+          errorMsg = "Database query error. Please contact support.";
+        } else if (error.message.includes('violates row-level security')) {
+          errorMsg = "Permission denied. Please ensure you have admin privileges.";
+        } else if (error.message.includes('duplicate')) {
+          errorMsg = "This user already has this badge.";
+        }
+      }
+      
+      setErrorMessage(errorMsg);
     } finally {
       setAwarding(false);
     }
