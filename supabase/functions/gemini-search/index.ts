@@ -51,6 +51,8 @@ async function searchWithGeminiAI(query: string, mentors: any[]) {
         Skills: ${mentor.skills.join(', ')}
         Rating: ${mentor.rating}
         Bio: ${mentor.bio || 'No bio available'}
+        University: ${mentor.university || 'Not specified'}
+        Hobbies: ${mentor.hobbies || 'Not specified'}
       `;
     }).join('\n\n');
 
@@ -63,7 +65,7 @@ async function searchWithGeminiAI(query: string, mentors: any[]) {
       Based on the query, return ONLY a JSON array of mentor IDs that match the query best, ranked by relevance. Don't include any explanation or other text.
       The format should be: [{"id":"1"},{"id":"2"}]
       
-      Try to understand not just keywords, but the intent behind the query. For example, if they ask for "programming help", consider mentors with skills like Python, Java, Web Development, etc.
+      Try to understand not just keywords, but the intent behind the query. For example, if they ask for "programming help", consider mentors with skills like Python, Java, Web Development, etc. If they ask for mentors from a specific university or with certain hobbies, prioritize those matches.
       
       Important: The IDs must exactly match one of the ID values provided in the context above.
     `;
