@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -10,13 +11,14 @@ import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
+import AcademicInfoSection from "@/components/profile/AcademicInfoSection";
 
 const UserProfile = () => {
   const navigate = useNavigate();
   const { user, profile, loading: authLoading } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [isMentorProfile, setIsMentorProfile] = useState(false);
-  const [isRealMentor, setIsRealMentor] = useState(false);
+  const [isApprovedMentor, setIsApprovedMentor] = useState(false);
   const [mentorData, setMentorData] = useState<any>(null);
   
   const [formData, setFormData] = useState({
@@ -26,7 +28,11 @@ const UserProfile = () => {
     bio: "",
     department: "",
     skills: "",
-    linkedin_url: ""
+    linkedin_url: "",
+    cgpa: "",
+    year_of_studies: "",
+    university: "",
+    hobbies: ""
   });
 
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -61,7 +67,7 @@ const UserProfile = () => {
           console.error('Error checking mentor status:', error);
         }
         setIsMentorProfile(false);
-        setIsRealMentor(false);
+        setIsApprovedMentor(false);
         return;
       }
       
@@ -69,18 +75,25 @@ const UserProfile = () => {
         setIsMentorProfile(true);
         setMentorData(data);
         
-        // Check if this is a real mentor (not in General department)
-        const isReal = data.department && data.department !== 'General';
-        setIsRealMentor(isReal);
+        // Check if this is an approved mentor (not in General department)
+        const isApproved = data && 
+          data.department && 
+          data.department !== 'General';
         
-        // Update form with mentor data
+        setIsApprovedMentor(isApproved);
+        
+        // Update form with mentor data including academic fields
         setFormData(prev => ({
           ...prev,
           bio: data.bio || "",
           department: data.department || "",
           skills: data.skills?.join(', ') || "",
           linkedin_url: data.linkedin_url || "",
-          profile_image: data.profile_image || prev.profile_image
+          profile_image: data.profile_image || prev.profile_image,
+          cgpa: data.cgpa?.toString() || "",
+          year_of_studies: data.year_of_studies || "",
+          university: data.university || "",
+          hobbies: data.hobbies || ""
         }));
       }
     } catch (error) {
@@ -90,6 +103,13 @@ const UserProfile = () => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSelectChange = (name: string, value: string) => {
     setFormData(prev => ({
       ...prev,
       [name]: value
@@ -176,16 +196,26 @@ const UserProfile = () => {
           .map(skill => skill.trim())
           .filter(skill => skill.length > 0);
         
+        const updateData: any = {
+          name: formData.name,
+          bio: formData.bio,
+          department: formData.department,
+          skills: skillsArray,
+          linkedin_url: formData.linkedin_url,
+          profile_image: profileImageUrl
+        };
+
+        // Add academic fields for approved mentors
+        if (isApprovedMentor) {
+          updateData.cgpa = formData.cgpa ? parseFloat(formData.cgpa) : null;
+          updateData.year_of_studies = formData.year_of_studies || null;
+          updateData.university = formData.university || null;
+          updateData.hobbies = formData.hobbies || null;
+        }
+        
         const { error: mentorError } = await supabase
           .from('mentors')
-          .update({
-            name: formData.name,
-            bio: formData.bio,
-            department: formData.department,
-            skills: skillsArray,
-            linkedin_url: formData.linkedin_url,
-            profile_image: profileImageUrl // Fix: Ensure mentor table gets updated profile image
-          })
+          .update(updateData)
           .eq('id', user.id);
         
         if (mentorError) throw mentorError;
@@ -228,7 +258,7 @@ const UserProfile = () => {
           <div className="mb-8 text-center">
             <h1 className="text-3xl font-bold text-foreground">Your Profile</h1>
             <p className="text-muted-foreground mt-2">
-              {isRealMentor 
+              {isApprovedMentor 
                 ? "You're registered as a mentor. Edit your profile details below." 
                 : isMentorProfile 
                 ? "Complete your profile below. To become a mentor, click 'Become a Mentor'."
@@ -290,8 +320,8 @@ const UserProfile = () => {
                 </div>
               </div>
               
-              {/* Only show these fields for real mentors */}
-              {isRealMentor && (
+              {/* Only show these fields for approved mentors */}
+              {isApprovedMentor && (
                 <>
                   <div>
                     <Label htmlFor="bio" className="text-foreground">About</Label>
@@ -342,10 +372,22 @@ const UserProfile = () => {
                       className="bg-background text-foreground border-border placeholder:text-muted-foreground"
                     />
                   </div>
+
+                  {/* Academic Information Section */}
+                  <AcademicInfoSection 
+                    formData={{
+                      cgpa: formData.cgpa,
+                      year_of_studies: formData.year_of_studies,
+                      university: formData.university,
+                      hobbies: formData.hobbies
+                    }}
+                    handleChange={handleChange}
+                    handleSelectChange={handleSelectChange}
+                  />
                 </>
               )}
               
-              {!isRealMentor && (
+              {!isApprovedMentor && (
                 <div className="py-4 border-t border-border">
                   <p className="text-sm text-muted-foreground mb-3">
                     Want to help other students? Apply to become a mentor!
