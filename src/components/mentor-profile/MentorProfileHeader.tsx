@@ -1,6 +1,6 @@
 
 import { motion } from "framer-motion";
-import { Star } from "lucide-react";
+import { Star, University, Heart } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Mentor } from "@/types/mentor";
 
@@ -76,6 +76,25 @@ const MentorProfileHeader = ({ mentor }: MentorProfileHeaderProps) => {
         >
           {mentor.department}
         </motion.p>
+
+        {/* University and Hobbies Section */}
+        <motion.div 
+          className="space-y-2 mb-6"
+          variants={itemVariants}
+        >
+          {mentor.university && (
+            <div className="flex items-center gap-2">
+              <University className="w-4 h-4 text-muted-foreground" />
+              <span className="text-sm text-foreground">{mentor.university}</span>
+            </div>
+          )}
+          {mentor.hobbies && (
+            <div className="flex items-center gap-2">
+              <Heart className="w-4 h-4 text-muted-foreground" />
+              <span className="text-sm text-foreground">{mentor.hobbies}</span>
+            </div>
+          )}
+        </motion.div>
         
         <motion.div 
           className="flex flex-wrap gap-2 mb-6"

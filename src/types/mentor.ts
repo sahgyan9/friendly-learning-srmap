@@ -9,6 +9,8 @@ export interface Mentor {
   linkedin_url?: string;
   bio?: string;
   review_count: number;
+  university?: string;
+  hobbies?: string;
   created_at?: string;
 }
 
@@ -21,4 +23,6 @@ export interface MentorFormData {
   linkedin_url?: string;
   bio?: string;
   review_count?: number;
+  university?: string;
+  hobbies?: string;
 }
