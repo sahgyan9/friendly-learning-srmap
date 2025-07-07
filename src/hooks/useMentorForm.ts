@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,6 +15,7 @@ export interface MentorFormData {
   year_of_studies: string;
   university: string;
   hobbies: string;
+  mobile: string;
 }
 
 export const useMentorForm = (userId: string, initialData: MentorFormData) => {
@@ -50,7 +50,7 @@ export const useMentorForm = (userId: string, initialData: MentorFormData) => {
     
     try {
       // Validate form
-      if (!formData.name || !formData.department || !formData.skills.trim() || !formData.cgpa || !formData.year_of_studies || !formData.university) {
+      if (!formData.name || !formData.department || !formData.skills.trim() || !formData.cgpa || !formData.year_of_studies || !formData.university || !formData.mobile) {
         throw new Error("Please fill in all required fields");
       }
       
@@ -81,7 +81,8 @@ export const useMentorForm = (userId: string, initialData: MentorFormData) => {
           skills: formData.skills,
           bio: formData.bio,
           linkedin_url: formData.linkedin_url,
-          profile_image: formData.profile_image
+          profile_image: formData.profile_image,
+          mobile: formData.mobile
         },
         cgpa: parseFloat(formData.cgpa),
         year_of_studies: formData.year_of_studies,

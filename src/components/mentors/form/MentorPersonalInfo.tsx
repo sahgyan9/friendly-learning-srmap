@@ -1,4 +1,3 @@
-
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -55,6 +54,19 @@ const MentorPersonalInfo = ({ formData, handleChange }: MentorPersonalInfoProps)
             <SelectItem value="Biology">PhD</SelectItem>
           </SelectContent>
         </Select>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="mobile">Mobile Number <span className="text-red-500">*</span></Label>
+        <Input
+          id="mobile"
+          name="mobile"
+          type="tel"
+          value={formData.mobile}
+          onChange={handleChange}
+          required
+          placeholder="Enter your mobile number"
+        />
       </div>
     </div>
   );

@@ -1,4 +1,3 @@
-
 export interface Mentor {
   id: string;
   name: string;
@@ -12,6 +11,7 @@ export interface Mentor {
   university?: string;
   hobbies?: string;
   created_at?: string;
+  mobile?: string;
 }
 
 export interface MentorFormData {
@@ -25,4 +25,5 @@ export interface MentorFormData {
   review_count?: number;
   university?: string;
   hobbies?: string;
+  mobile?: string;
 }

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -156,7 +155,26 @@ const SignIn = () => {
               </div>
 
               <div className="text-sm">
-                <a href="#" onClick={() => toast.info("Password reset functionality coming soon")} className="font-medium text-primary hover:text-primary/80">
+                <a
+                  href="#"
+                  onClick={async (e) => {
+                    e.preventDefault();
+                    const email = formData.email;
+                    if (!email) {
+                      toast.error("Please enter your email above to reset password.");
+                      return;
+                    }
+                    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                      redirectTo: window.location.origin + "/reset-password"
+                    });
+                    if (error) {
+                      toast.error(error.message || "Failed to send reset email");
+                    } else {
+                      toast.success("Password reset email sent! Check your inbox.");
+                    }
+                  }}
+                  className="font-medium text-primary hover:text-primary/80"
+                >
                   Forgot your password?
                 </a>
               </div>
