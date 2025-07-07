@@ -115,15 +115,10 @@ serve(async (req) => {
       throw new Error('No message provided');
     }
 
-    // Get verified mentors from the database (excluding General category)
+    // Get all mentors from the database
     const { data: allMentors, error: mentorsError } = await supabase
       .from('mentors')
-      .select(`
-        *,
-        users!inner(verification_status)
-      `)
-      .eq('users.verification_status', 'approved')
-      .neq('department', 'General')
+      .select('*')
       .limit(10);
 
     if (mentorsError || !allMentors) {

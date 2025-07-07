@@ -18,25 +18,20 @@ const supabaseClient = createClient(
 const GOOGLE_API_KEY = Deno.env.get('Gemini_API_Key') ?? '';
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
 
-// Helper function to fetch verified mentors from Supabase (excluding General category)
+// Helper function to fetch mentors from Supabase
 async function fetchMentors() {
-  console.log("Fetching verified mentors from Supabase database...");
+  console.log("Fetching mentors from Supabase database...");
   
   const { data, error } = await supabaseClient
     .from('mentors')
-    .select(`
-      *,
-      users!inner(verification_status)
-    `)
-    .eq('users.verification_status', 'approved')
-    .neq('department', 'General');
+    .select('*');
 
   if (error) {
     console.error("Error fetching mentors from database:", error);
     return [];
   }
 
-  console.log(`Successfully fetched ${data?.length || 0} verified mentors from Supabase`);
+  console.log(`Successfully fetched ${data?.length || 0} mentors from Supabase`);
   return data || [];
 }
 
@@ -149,13 +144,13 @@ serve(async (req) => {
 
     console.log(`Received search query: "${query}"`);
     
-    // Fetch verified mentors from Supabase (excluding General category)
+    // Fetch mentors from Supabase
     const mentors = await fetchMentors();
     
     // If no mentors in database, return error
     if (mentors.length === 0) {
       return new Response(
-        JSON.stringify({ error: "No verified mentors found in database" }),
+        JSON.stringify({ error: "No mentors found in database" }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 }
       );
     }
