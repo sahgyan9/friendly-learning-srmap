@@ -1,106 +1,141 @@
 
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X } from "lucide-react";
-import Logo from "./Logo";
-import DarkModeToggle from "./DarkModeToggle";
-import NavbarProfileMenu from "./NavbarProfileMenu";
-import NavbarMobileMenu from "./NavbarMobileMenu";
-import NotificationBell from "./notifications/NotificationBell";
-import MessagesIcon from "./navbar/MessagesIcon";
 import { useAuth } from "@/context/AuthContext";
+import { Button } from "@/components/ui/button";
+import { Menu, X } from "lucide-react";
+import { Logo } from "./Logo";
+import { NavbarProfileMenu } from "./NavbarProfileMenu";
+import { NavbarMobileMenu } from "./NavbarMobileMenu";
+import { MessagesIcon } from "./navbar/MessagesIcon";
+import { NotificationBell } from "./notifications/NotificationBell";
+import DarkModeToggle from "./DarkModeToggle";
 
 const Navbar = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const location = useLocation();
   const { user } = useAuth();
+  const location = useLocation();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const navItems = [
-    { href: "/", label: "Home" },
-    { href: "/about", label: "About" },
-    { href: "/mentors", label: "Mentors" },
-    { href: "/marketplace", label: "Event" },
-    { href: "/contact", label: "Contact" },
-  ];
+  const isActive = (path: string) => location.pathname === path;
 
-  const isActiveLink = (href: string) => {
-    if (href === "/") {
-      return location.pathname === "/";
-    }
-    return location.pathname.startsWith(href);
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
   return (
-    <nav className="bg-white dark:bg-gray-900 shadow-md sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          <Logo />
+    <nav className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border sticky top-0 z-50">
+      <div className="container mx-auto px-4">
+        <div className="flex items-center justify-between h-16">
+          {/* Logo */}
+          <Link to="/" className="flex items-center">
+            <Logo />
+          </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:block">
-            <div className="ml-10 flex items-baseline space-x-4">
-              {navItems.map((item) => (
-                <Link
-                  key={item.href}
-                  to={item.href}
-                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                    isActiveLink(item.href)
-                      ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
-                      : "text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400"
-                  }`}
-                >
-                  {item.label}
-                </Link>
-              ))}
-            </div>
+          <div className="hidden md:flex items-center space-x-8">
+            <Link
+              to="/"
+              className={`text-sm font-medium transition-colors hover:text-primary ${
+                isActive("/") ? "text-primary" : "text-muted-foreground"
+              }`}
+            >
+              Home
+            </Link>
+            <Link
+              to="/mentors"
+              className={`text-sm font-medium transition-colors hover:text-primary ${
+                isActive("/mentors") ? "text-primary" : "text-muted-foreground"
+              }`}
+            >
+              Mentors
+            </Link>
+            <Link
+              to="/community-posts"
+              className={`text-sm font-medium transition-colors hover:text-primary ${
+                isActive("/community-posts") ? "text-primary" : "text-muted-foreground"
+              }`}
+            >
+              Community
+            </Link>
+            <Link
+              to="/marketplace"
+              className={`text-sm font-medium transition-colors hover:text-primary ${
+                isActive("/marketplace") ? "text-primary" : "text-muted-foreground"
+              }`}
+            >
+              Marketplace
+            </Link>
+            <Link
+              to="/about"
+              className={`text-sm font-medium transition-colors hover:text-primary ${
+                isActive("/about") ? "text-primary" : "text-muted-foreground"
+              }`}
+            >
+              About
+            </Link>
+            <Link
+              to="/contact"
+              className={`text-sm font-medium transition-colors hover:text-primary ${
+                isActive("/contact") ? "text-primary" : "text-muted-foreground"
+              }`}
+            >
+              Contact
+            </Link>
           </div>
 
-          {/* Right side items */}
-          <div className="flex items-center space-x-2">
+          {/* Right side - Auth buttons or user menu */}
+          <div className="hidden md:flex items-center space-x-4">
             <DarkModeToggle />
-            {user && <MessagesIcon />}
-            {user && <NotificationBell />}
             {user ? (
-              <NavbarProfileMenu />
+              <>
+                <MessagesIcon />
+                <NotificationBell />
+                <NavbarProfileMenu />
+              </>
             ) : (
-              <div className="hidden md:flex items-center space-x-2">
-                <Link
-                  to="/signin"
-                  className="text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 px-3 py-2 rounded-md text-sm font-medium transition-colors"
-                >
-                  Sign In
+              <div className="flex items-center space-x-2">
+                <Link to="/signin">
+                  <Button variant="ghost" size="sm">
+                    Sign In
+                  </Button>
                 </Link>
-                <Link
-                  to="/signup"
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
-                >
-                  Sign Up
+                <Link to="/signup">
+                  <Button size="sm">Sign Up</Button>
                 </Link>
               </div>
             )}
+          </div>
 
-            {/* Mobile menu button */}
-            <button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="md:hidden inline-flex items-center justify-center p-2 rounded-md text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
+          {/* Mobile menu button */}
+          <div className="md:hidden flex items-center space-x-2">
+            <DarkModeToggle />
+            {user && (
+              <>
+                <MessagesIcon />
+                <NotificationBell />
+              </>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleMobileMenu}
+              aria-label="Toggle mobile menu"
             >
-              {isMenuOpen ? (
-                <X className="h-6 w-6" />
+              {isMobileMenuOpen ? (
+                <X className="h-5 w-5" />
               ) : (
-                <Menu className="h-6 w-6" />
+                <Menu className="h-5 w-5" />
               )}
-            </button>
+            </Button>
           </div>
         </div>
-      </div>
 
-      {/* Mobile Navigation */}
-      <NavbarMobileMenu 
-        isOpen={isMenuOpen} 
-        navItems={navItems}
-        isActiveLink={isActiveLink}
-        onClose={() => setIsMenuOpen(false)}
-      />
+        {/* Mobile Navigation Menu */}
+        <NavbarMobileMenu 
+          isOpen={isMobileMenuOpen} 
+          onClose={() => setIsMobileMenuOpen(false)} 
+        />
+      </div>
     </nav>
   );
 };

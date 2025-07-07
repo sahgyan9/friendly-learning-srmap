@@ -16,6 +16,7 @@ import SignUp from "./pages/SignUp";
 import ForgotPassword from "./pages/ForgotPassword";
 import UserProfile from "./pages/UserProfile";
 import MarketPlace from "./pages/MarketPlace";
+import CommunityPosts from "./pages/CommunityPosts";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminSettings from "./pages/AdminSettings";
 import TeamMembersAdmin from "./pages/TeamMembersAdmin";
@@ -50,6 +51,7 @@ const App = () => (
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/marketplace" element={<MarketPlace />} />
+          <Route path="/community-posts" element={<CommunityPosts />} />
           <Route path="/messages" element={
             <ProtectedRoute>
               <Messages />

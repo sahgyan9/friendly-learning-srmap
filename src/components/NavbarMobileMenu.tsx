@@ -1,84 +1,128 @@
 
 import { Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface NavbarMobileMenuProps {
   isOpen: boolean;
-  navItems: { href: string; label: string; }[];
-  isActiveLink: (href: string) => boolean;
   onClose: () => void;
 }
 
-const NavbarMobileMenu = ({ isOpen, navItems, isActiveLink, onClose }: NavbarMobileMenuProps) => {
-  const { user, signOut } = useAuth();
+export const NavbarMobileMenu = ({ isOpen, onClose }: NavbarMobileMenuProps) => {
+  const { user } = useAuth();
+
+  const handleSignOut = async () => {
+    try {
+      await supabase.auth.signOut();
+      toast.success("Signed out successfully");
+      onClose();
+    } catch (error) {
+      console.error("Error signing out:", error);
+      toast.error("Error signing out");
+    }
+  };
 
   if (!isOpen) return null;
 
   return (
-    <div className="md:hidden bg-white dark:bg-gray-900 border-t">
+    <div className="md:hidden border-t border-border bg-background">
       <div className="px-2 pt-2 pb-3 space-y-1">
-        {navItems.map((item) => (
-          <Link
-            key={item.href}
-            to={item.href}
-            onClick={onClose}
-            className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
-              isActiveLink(item.href)
-                ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
-                : "text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400"
-            }`}
-          >
-            {item.label}
-          </Link>
-        ))}
-        
-        {user ? (
-          <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+        <Link
+          to="/"
+          className="block px-3 py-2 text-base font-medium text-muted-foreground hover:text-primary hover:bg-muted rounded-md"
+          onClick={onClose}
+        >
+          Home
+        </Link>
+        <Link
+          to="/mentors"
+          className="block px-3 py-2 text-base font-medium text-muted-foreground hover:text-primary hover:bg-muted rounded-md"
+          onClick={onClose}
+        >
+          Mentors
+        </Link>
+        <Link
+          to="/community-posts"
+          className="block px-3 py-2 text-base font-medium text-muted-foreground hover:text-primary hover:bg-muted rounded-md"
+          onClick={onClose}
+        >
+          Community
+        </Link>
+        <Link
+          to="/marketplace"
+          className="block px-3 py-2 text-base font-medium text-muted-foreground hover:text-primary hover:bg-muted rounded-md"
+          onClick={onClose}
+        >
+          Marketplace
+        </Link>
+        <Link
+          to="/about"
+          className="block px-3 py-2 text-base font-medium text-muted-foreground hover:text-primary hover:bg-muted rounded-md"
+          onClick={onClose}
+        >
+          About
+        </Link>
+        <Link
+          to="/contact"
+          className="block px-3 py-2 text-base font-medium text-muted-foreground hover:text-primary hover:bg-muted rounded-md"
+          onClick={onClose}
+        >
+          Contact
+        </Link>
+      </div>
+      
+      {user ? (
+        <div className="pt-4 pb-3 border-t border-border">
+          <div className="flex items-center px-5">
+            <Avatar className="h-10 w-10">
+              <AvatarImage src={user.profile_image || undefined} />
+              <AvatarFallback>{user.name?.charAt(0) || 'U'}</AvatarFallback>
+            </Avatar>
+            <div className="ml-3">
+              <div className="text-base font-medium">{user.name}</div>
+              <div className="text-sm text-muted-foreground">{user.email}</div>
+            </div>
+          </div>
+          <div className="mt-3 px-2 space-y-1">
             <Link
               to="/profile"
+              className="block px-3 py-2 text-base font-medium text-muted-foreground hover:text-primary hover:bg-muted rounded-md"
               onClick={onClose}
-              className="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400"
             >
               Profile
             </Link>
             <Link
               to="/messages"
+              className="block px-3 py-2 text-base font-medium text-muted-foreground hover:text-primary hover:bg-muted rounded-md"
               onClick={onClose}
-              className="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400"
             >
               Messages
             </Link>
             <button
-              onClick={() => {
-                signOut();
-                onClose();
-              }}
-              className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-red-600 hover:text-red-500"
+              onClick={handleSignOut}
+              className="block w-full text-left px-3 py-2 text-base font-medium text-muted-foreground hover:text-primary hover:bg-muted rounded-md"
             >
-              Sign out
+              Sign Out
             </button>
           </div>
-        ) : (
-          <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-            <Link
-              to="/signin"
-              onClick={onClose}
-              className="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400"
-            >
-              Sign In
+        </div>
+      ) : (
+        <div className="pt-4 pb-3 border-t border-border">
+          <div className="px-2 space-y-1">
+            <Link to="/signin" onClick={onClose}>
+              <Button variant="ghost" className="w-full justify-start">
+                Sign In
+              </Button>
             </Link>
-            <Link
-              to="/signup"
-              onClick={onClose}
-              className="block px-3 py-2 rounded-md text-base font-medium bg-blue-600 text-white hover:bg-blue-700"
-            >
-              Sign Up
+            <Link to="/signup" onClick={onClose}>
+              <Button className="w-full justify-start">Sign Up</Button>
             </Link>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };
-
-export default NavbarMobileMenu;
