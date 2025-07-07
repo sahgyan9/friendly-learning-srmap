@@ -1,3 +1,4 @@
+
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -57,18 +58,18 @@ const MentorAcademicInfo = ({ formData, handleChange }: MentorAcademicInfoProps)
 
       <div className="grid gap-6 md:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="cgpa">CGPA <span className="text-red-500">*</span></Label>
+          <Label htmlFor="cgpa">CGPA (out of 10) <span className="text-red-500">*</span></Label>
           <Input
             id="cgpa"
             name="cgpa"
             type="number"
             min="0.0"
-            max="4.0"
+            max="10.0"
             step="0.01"
             value={formData.cgpa}
             onChange={handleChange}
             required
-            placeholder="e.g., 3.85"
+            placeholder="e.g., 8.5"
           />
         </div>
 
