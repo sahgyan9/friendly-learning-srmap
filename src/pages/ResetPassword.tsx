@@ -13,9 +13,13 @@ const ResetPassword = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  // Get access_token from URL
+  // Get access_token from URL (query or hash)
   const params = new URLSearchParams(location.search);
-  const accessToken = params.get("access_token");
+  let accessToken = params.get("access_token");
+  if (!accessToken && location.hash) {
+    const hashParams = new URLSearchParams(location.hash.replace(/^#/, ""));
+    accessToken = hashParams.get("access_token");
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
