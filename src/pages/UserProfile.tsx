@@ -44,7 +44,8 @@ const UserProfile = () => {
         ...prev,
         name: profile.name || "",
         email: profile.email || "",
-        profile_image: profile.profile_image || ""
+        profile_image: profile.profile_image || "",
+        mobile: profile.mobile || ""
       }));
 
       // Check if the user is a mentor
