@@ -121,6 +121,14 @@ const SignUp = () => {
 
       if (authError) throw authError;
 
+      // Store mobile in app users table after signup
+      if (authData.user) {
+        await supabase
+          .from('users')
+          .update({ mobile: formData.mobile })
+          .eq('id', authData.user.id);
+      }
+
       if (authData.user) {
         if (authData.session) {
           // User can log in immediately, show role selection
