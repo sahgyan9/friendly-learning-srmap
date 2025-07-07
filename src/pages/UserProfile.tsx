@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -32,7 +31,8 @@ const UserProfile = () => {
     cgpa: "",
     year_of_studies: "",
     university: "",
-    hobbies: ""
+    hobbies: "",
+    mobile: ""
   });
 
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -93,7 +93,8 @@ const UserProfile = () => {
           cgpa: data.cgpa?.toString() || "",
           year_of_studies: data.year_of_studies || "",
           university: data.university || "",
-          hobbies: data.hobbies || ""
+          hobbies: data.hobbies || "",
+          mobile: data.mobile || ""
         }));
       }
     } catch (error) {
@@ -202,7 +203,8 @@ const UserProfile = () => {
           department: formData.department,
           skills: skillsArray,
           linkedin_url: formData.linkedin_url,
-          profile_image: profileImageUrl
+          profile_image: profileImageUrl,
+          mobile: formData.mobile
         };
 
         // Add academic fields for approved mentors
@@ -347,7 +349,6 @@ const UserProfile = () => {
                         className="bg-background text-foreground border-border"
                       />
                     </div>
-                    
                     <div>
                       <Label htmlFor="skills" className="text-foreground">Skills (comma separated)</Label>
                       <Input
@@ -356,6 +357,18 @@ const UserProfile = () => {
                         value={formData.skills}
                         onChange={handleChange}
                         placeholder="Python, Data Structures, Machine Learning"
+                        className="bg-background text-foreground border-border placeholder:text-muted-foreground"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="mobile" className="text-foreground">Mobile Number</Label>
+                      <Input
+                        id="mobile"
+                        name="mobile"
+                        type="tel"
+                        value={formData.mobile}
+                        onChange={handleChange}
+                        placeholder="Enter your mobile number"
                         className="bg-background text-foreground border-border placeholder:text-muted-foreground"
                       />
                     </div>
