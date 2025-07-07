@@ -115,16 +115,27 @@ serve(async (req) => {
       throw new Error('No message provided');
     }
 
-    // Get all mentors from the database
+    // Get only verified mentors from the database
     const { data: allMentors, error: mentorsError } = await supabase
       .from('mentors')
-      .select('*')
+      .select(`
+        *,
+        users!inner(verification_status)
+      `)
+      .neq('department', 'General')
+      .eq('users.verification_status', 'approved')
       .limit(10);
 
     if (mentorsError || !allMentors) {
-      console.error("Error fetching mentors:", mentorsError);
-      throw new Error('Failed to fetch mentors');
+      console.error("Error fetching verified mentors:", mentorsError);
+      throw new Error('Failed to fetch verified mentors');
     }
+
+    // Extract mentor data without the users join
+    const mentors = allMentors.map(mentor => {
+      const { users, ...mentorData } = mentor;
+      return mentorData;
+    });
 
     // Save the user message to database
     const userConversationId = crypto.randomUUID();
@@ -185,7 +196,7 @@ Keep your response concise but comprehensive.`;
     const aiResponse = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || "I'm sorry, I couldn't process your request. Please try rephrasing your question.";
 
     // Find relevant mentors using the same logic as the search bar
-    const suggestedMentors = await findRelevantMentors(message, allMentors);
+    const suggestedMentors = await findRelevantMentors(message, mentors);
 
     // Save the AI response to database
     const aiConversationId = crypto.randomUUID();

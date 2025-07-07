@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
 
@@ -18,21 +17,32 @@ const supabaseClient = createClient(
 const GOOGLE_API_KEY = Deno.env.get('Gemini_API_Key') ?? '';
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
 
-// Helper function to fetch mentors from Supabase
+// Helper function to fetch only verified mentors from Supabase
 async function fetchMentors() {
-  console.log("Fetching mentors from Supabase database...");
+  console.log("Fetching verified mentors from Supabase database...");
   
   const { data, error } = await supabaseClient
     .from('mentors')
-    .select('*');
+    .select(`
+      *,
+      users!inner(verification_status)
+    `)
+    .neq('department', 'General')
+    .eq('users.verification_status', 'approved');
 
   if (error) {
     console.error("Error fetching mentors from database:", error);
     return [];
   }
 
-  console.log(`Successfully fetched ${data?.length || 0} mentors from Supabase`);
-  return data || [];
+  // Extract mentor data without the users join
+  const mentors = data?.map(mentor => {
+    const { users, ...mentorData } = mentor;
+    return mentorData;
+  }) || [];
+
+  console.log(`Successfully fetched ${mentors.length} verified mentors from Supabase`);
+  return mentors;
 }
 
 // Helper function to use Gemini to analyze query and find mentors
@@ -144,13 +154,13 @@ serve(async (req) => {
 
     console.log(`Received search query: "${query}"`);
     
-    // Fetch mentors from Supabase
+    // Fetch only verified mentors from Supabase
     const mentors = await fetchMentors();
     
-    // If no mentors in database, return error
+    // If no verified mentors in database, return error
     if (mentors.length === 0) {
       return new Response(
-        JSON.stringify({ error: "No mentors found in database" }),
+        JSON.stringify({ error: "No verified mentors found in database" }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 }
       );
     }
