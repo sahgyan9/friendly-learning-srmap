@@ -1,11 +1,11 @@
 
-import { Hero } from "@/components/Hero";
-import { MentorsSection } from "@/components/MentorsSection";
-import { WhyFriendlyLearning } from "@/components/WhyFriendlyLearning";
-import { CallToAction } from "@/components/CallToAction";
-import { Footer } from "@/components/Footer";
+import Hero from "@/components/Hero";
+import MentorsSection from "@/components/MentorsSection";
+import WhyFriendlyLearning from "@/components/WhyFriendlyLearning";
+import CallToAction from "@/components/CallToAction";
+import Footer from "@/components/Footer";
 import { CommunityPostsSection } from "@/components/community/CommunityPostsSection";
-import { SEOHead } from "@/components/SEOHead";
+import SEOHead from "@/components/SEOHead";
 
 const Index = () => {
   return (

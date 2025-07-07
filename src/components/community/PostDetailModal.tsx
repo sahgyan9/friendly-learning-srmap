@@ -34,7 +34,7 @@ export const PostDetailModal = ({
   onPostUpdated, 
   onPostDeleted 
 }: PostDetailModalProps) => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [comments, setComments] = useState<any[]>([]);
   const [newComment, setNewComment] = useState("");
   const [loadingComments, setLoadingComments] = useState(false);
@@ -229,8 +229,8 @@ export const PostDetailModal = ({
               <div className="space-y-3">
                 <div className="flex gap-3">
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src={user.profile_image || undefined} />
-                    <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                    <AvatarImage src={profile?.profile_image || undefined} />
+                    <AvatarFallback>{profile?.name?.charAt(0) || 'U'}</AvatarFallback>
                   </Avatar>
                   <div className="flex-1 space-y-2">
                     <Textarea
@@ -270,7 +270,7 @@ export const PostDetailModal = ({
                         <div className="flex gap-3">
                           <Avatar className="h-8 w-8">
                             <AvatarImage src={comment.user?.profile_image || undefined} />
-                            <AvatarFallback>{comment.user?.name.charAt(0)}</AvatarFallback>
+                            <AvatarFallback>{comment.user?.name?.charAt(0) || 'U'}</AvatarFallback>
                           </Avatar>
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-1">

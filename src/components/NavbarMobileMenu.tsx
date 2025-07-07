@@ -12,7 +12,7 @@ interface NavbarMobileMenuProps {
 }
 
 export const NavbarMobileMenu = ({ isOpen, onClose }: NavbarMobileMenuProps) => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
 
   const handleSignOut = async () => {
     try {
@@ -78,11 +78,11 @@ export const NavbarMobileMenu = ({ isOpen, onClose }: NavbarMobileMenuProps) => 
         <div className="pt-4 pb-3 border-t border-border">
           <div className="flex items-center px-5">
             <Avatar className="h-10 w-10">
-              <AvatarImage src={user.profile_image || undefined} />
-              <AvatarFallback>{user.name?.charAt(0) || 'U'}</AvatarFallback>
+              <AvatarImage src={profile?.profile_image || undefined} />
+              <AvatarFallback>{profile?.name?.charAt(0) || 'U'}</AvatarFallback>
             </Avatar>
             <div className="ml-3">
-              <div className="text-base font-medium">{user.name}</div>
+              <div className="text-base font-medium">{profile?.name}</div>
               <div className="text-sm text-muted-foreground">{user.email}</div>
             </div>
           </div>

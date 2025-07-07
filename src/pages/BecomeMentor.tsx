@@ -1,18 +1,18 @@
 
 import { useAuth } from "@/context/AuthContext";
-import { MentorProfileForm } from "@/components/mentors/MentorProfileForm";
+import MentorProfileForm from "@/components/mentors/MentorProfileForm";
 import { useMentorForm } from "@/hooks/useMentorForm";
 
 const BecomeMentor = () => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
 
   const initialFormData = {
-    name: user?.name || "",
+    name: profile?.name || "",
     department: "",
     skills: "",
     bio: "",
     linkedin_url: "",
-    profile_image: user?.profile_image || "",
+    profile_image: profile?.profile_image || "",
     cgpa: "",
     year_of_studies: "",
     university: "",

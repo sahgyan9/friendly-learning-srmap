@@ -4,11 +4,11 @@ import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
-import { Logo } from "./Logo";
-import { NavbarProfileMenu } from "./NavbarProfileMenu";
+import Logo from "./Logo";
+import NavbarProfileMenu from "./NavbarProfileMenu";
 import { NavbarMobileMenu } from "./NavbarMobileMenu";
-import { MessagesIcon } from "./navbar/MessagesIcon";
-import { NotificationBell } from "./notifications/NotificationBell";
+import MessagesIcon from "./navbar/MessagesIcon";
+import NotificationBell from "./notifications/NotificationBell";
 import DarkModeToggle from "./DarkModeToggle";
 
 const Navbar = () => {

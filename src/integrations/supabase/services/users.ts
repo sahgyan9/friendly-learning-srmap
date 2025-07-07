@@ -1,6 +1,24 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
+export interface UserProfile {
+  id: string;
+  name: string;
+  email: string;
+  profile_image?: string;
+  role: string;
+  department?: string;
+  skills?: string[];
+  linkedin_url?: string;
+  bio?: string;
+  phone?: string;
+  mobile?: string;
+  verification_status?: string;
+  is_admin: boolean;
+  is_available?: boolean;
+  created_at?: string;
+}
+
 export const getUserById = async (userId: string) => {
   const { data, error } = await supabase
     .from('users')
