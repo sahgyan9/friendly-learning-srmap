@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Star, MapPin, Users, MessageCircle, Linkedin, Loader2 } from "lucide-react";
+import { Star, MapPin, Users, MessageCircle, Linkedin, Loader2, GraduationCap } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Mentor } from "@/types/mentor";
@@ -145,15 +145,26 @@ const MentorCard = ({ mentor }: MentorCardProps) => {
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors truncate">
                   {mentor.name}
                 </h3>
-                <div className="flex items-center space-x-2 mt-1">
+                <div className="space-y-1 mt-1">
                   <div className="flex items-center space-x-1">
                     <MapPin className="h-4 w-4 text-gray-500 flex-shrink-0" />
                     <span className="text-sm text-gray-600 dark:text-gray-400 truncate">
                       {mentor.department}
                     </span>
                   </div>
-                  {/* LinkedIn icon */}
-                  {mentor.linkedin_url && (
+                  {mentor.university && (
+                    <div className="flex items-center space-x-1">
+                      <GraduationCap className="h-4 w-4 text-gray-500 flex-shrink-0" />
+                      <span className="text-sm text-gray-600 dark:text-gray-400 truncate">
+                        {mentor.university}
+                      </span>
+                    </div>
+                  )}
+                </div>
+                
+                {/* LinkedIn icon */}
+                {mentor.linkedin_url && (
+                  <div className="mt-2">
                     <a
                       href={mentor.linkedin_url}
                       target="_blank"
@@ -163,8 +174,8 @@ const MentorCard = ({ mentor }: MentorCardProps) => {
                     >
                       <Linkedin className="h-4 w-4" />
                     </a>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
