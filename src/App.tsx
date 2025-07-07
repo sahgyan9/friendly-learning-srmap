@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -27,6 +26,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import FloatingChatbot from "./components/chatbot/FloatingChatbot";
 import AdminBadges from "@/pages/AdminBadges";
 import AdminMentorVerification from "@/pages/AdminMentorVerification";
+import ResetPassword from "./pages/ResetPassword";
 
 const queryClient = new QueryClient();
 
@@ -45,6 +45,7 @@ const App = () => (
           <Route path="/become-mentor" element={<BecomeMentor />} />
           <Route path="/signin" element={<SignIn />} />
           <Route path="/signup" element={<SignUp />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/marketplace" element={<MarketPlace />} />
           <Route path="/messages" element={
             <ProtectedRoute>
