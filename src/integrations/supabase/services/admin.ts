@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 // Function to check if a user is an admin
@@ -118,8 +117,8 @@ export async function getAdminUsers() {
   }
 }
 
-// Get users by email (for admin promotion)
-export async function getUserByEmail(email: string) {
+// Enhanced user search by email or name
+export async function getUserByEmail(query: string) {
   try {
     // Check if current user is admin
     const isAdmin = await isUserAdmin();
@@ -128,20 +127,77 @@ export async function getUserByEmail(email: string) {
       throw new Error("Only admins can search for users");
     }
     
-    const { data, error } = await supabase
+    console.log("Searching for users with query:", query);
+    
+    // First try exact email match
+    let { data: exactEmailMatch, error: emailError } = await supabase
       .from('users')
-      .select('id, name, email, role, profile_image, is_admin')
-      .ilike('email', `%${email}%`)
+      .select('id, name, email, role, profile_image, is_admin, department')
+      .eq('email', query.toLowerCase())
+      .limit(1);
+    
+    if (emailError) {
+      console.error("Error in exact email search:", emailError);
+    }
+    
+    // If exact email match found, return it
+    if (exactEmailMatch && exactEmailMatch.length > 0) {
+      console.log("Found exact email match:", exactEmailMatch);
+      return exactEmailMatch;
+    }
+    
+    // Otherwise, search by email pattern and name
+    const { data: searchResults, error: searchError } = await supabase
+      .from('users')
+      .select('id, name, email, role, profile_image, is_admin, department')
+      .or(`email.ilike.%${query}%,name.ilike.%${query}%`)
       .limit(10);
     
+    if (searchError) {
+      console.error("Error in pattern search:", searchError);
+      throw searchError;
+    }
+    
+    console.log("Search results:", searchResults);
+    return searchResults || [];
+    
+  } catch (error) {
+    console.error("Exception in getUserByEmail:", error);
+    throw error;
+  }
+}
+
+// Get mentors only (for badge awarding)
+export async function getMentorsForBadges() {
+  try {
+    const isAdmin = await isUserAdmin();
+    
+    if (!isAdmin) {
+      throw new Error("Only admins can view mentors for badge awarding");
+    }
+    
+    const { data, error } = await supabase
+      .from('users')
+      .select(`
+        id, 
+        name, 
+        email, 
+        role, 
+        profile_image, 
+        department,
+        is_admin
+      `)
+      .in('role', ['mentor', 'both'])
+      .limit(50);
+    
     if (error) {
-      console.error("Error searching users:", error);
+      console.error("Error fetching mentors:", error);
       throw error;
     }
     
     return data;
   } catch (error) {
-    console.error("Exception in getUserByEmail:", error);
+    console.error("Exception in getMentorsForBadges:", error);
     throw error;
   }
 }
