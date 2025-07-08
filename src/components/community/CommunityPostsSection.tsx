@@ -167,7 +167,7 @@ export const CommunityPostsSection = () => {
 						</Link>
 					</div>
 				</div>
-				{/* Centered Scrollable Posts Container */}
+				{/* Centered Scrollable Posts Container with Spacers */}
 				<div className="relative">
 					<Button
 						variant="outline"
@@ -182,16 +182,18 @@ export const CommunityPostsSection = () => {
 					<div
 						id="community-posts-scroll"
 						ref={containerRef}
-						className="flex gap-4 overflow-x-auto scrollbar-hide pb-4 justify-center md:snap-x md:snap-mandatory pl-[calc(50vw-200px)] pr-[calc(50vw-200px)]"
+						className="flex gap-4 overflow-x-auto scrollbar-hide pb-4 md:snap-x md:snap-mandatory items-stretch"
 						style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
 						onTouchStart={handleTouchStart}
 						onTouchMove={handleTouchMove}
 						onTouchEnd={handleTouchEnd}
 					>
+						{/* Left Spacer: half container width minus card width */}
+						<div className="hidden md:block flex-shrink-0" style={{ width: 'calc(50vw - 200px)' }} />
 						{posts.map((post) => (
 							<div
 								key={post.id}
-								className="community-post-card flex-shrink-0 w-80 md:w-[380px] snap-center"
+								className="community-post-card flex-shrink-0 w-80 md:w-[400px] snap-center"
 							>
 								<Card 
 									className="h-full cursor-pointer hover:shadow-lg transition-shadow"
@@ -287,6 +289,8 @@ export const CommunityPostsSection = () => {
 								</Card>
 							</div>
 						))}
+						{/* Right Spacer: half container width minus card width */}
+						<div className="hidden md:block flex-shrink-0" style={{ width: 'calc(50vw - 200px)' }} />
 					</div>
 					<Button
 						variant="outline"
