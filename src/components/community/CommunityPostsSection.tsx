@@ -182,7 +182,7 @@ export const CommunityPostsSection = () => {
 					<div
 						id="community-posts-scroll"
 						ref={containerRef}
-						className="flex gap-4 overflow-x-auto scrollbar-hide pb-4 justify-center md:snap-x md:snap-mandatory"
+						className="flex gap-4 overflow-x-auto scrollbar-hide pb-4 justify-center md:snap-x md:snap-mandatory pl-[calc(50vw-200px)] pr-[calc(50vw-200px)]"
 						style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
 						onTouchStart={handleTouchStart}
 						onTouchMove={handleTouchMove}
