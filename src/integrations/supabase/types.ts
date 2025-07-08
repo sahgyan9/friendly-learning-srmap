@@ -97,6 +97,7 @@ export type Database = {
           content: string
           created_at: string
           id: string
+          image_url: string | null
           likes_count: number
           mentor_id: string
           post_type: string
@@ -104,13 +105,13 @@ export type Database = {
           tags: string[] | null
           title: string
           updated_at: string
-          image_url: string | null
         }
         Insert: {
           comments_count?: number
           content: string
           created_at?: string
           id?: string
+          image_url?: string | null
           likes_count?: number
           mentor_id: string
           post_type?: string
@@ -118,13 +119,13 @@ export type Database = {
           tags?: string[] | null
           title: string
           updated_at?: string
-          image_url?: string | null
         }
         Update: {
           comments_count?: number
           content?: string
           created_at?: string
           id?: string
+          image_url?: string | null
           likes_count?: number
           mentor_id?: string
           post_type?: string
@@ -132,7 +133,6 @@ export type Database = {
           tags?: string[] | null
           title?: string
           updated_at?: string
-          image_url?: string | null
         }
         Relationships: [
           {
@@ -945,7 +945,7 @@ export type Tables<
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never,
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
