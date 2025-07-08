@@ -2,7 +2,6 @@
 import { createContext, useState, useContext, useEffect, ReactNode } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
 
 interface UserProfile {
   id: string;
@@ -40,7 +39,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [isMentor, setIsMentor] = useState(false);
-  const navigate = useNavigate();
 
   useEffect(() => {
     // Set up auth state listener first
@@ -143,7 +141,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = async () => {
     try {
       await supabase.auth.signOut();
-      navigate('/signin');
+      // Navigation will be handled by the component that calls signOut
     } catch (error) {
       console.error('Error signing out:', error);
     }
