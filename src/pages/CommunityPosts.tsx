@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +7,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Heart, MessageCircle, Search, Filter, Share2, Bookmark, MoreHorizontal, ChevronDown, ChevronUp } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { getCommunityPosts, togglePostLike, checkUserLikedPost, type CommunityPost } from "@/integrations/supabase/services/community-posts";
+import { getMentorById } from "@/integrations/supabase/services/mentors";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { CreatePostButton } from "@/components/community/CreatePostButton";
@@ -109,13 +110,52 @@ const CommunityPosts = () => {
     }
   };
 
-  const handleConnect = (mentorId: string, event: React.MouseEvent) => {
+  const handleConnect = async (mentorId: string, event: React.MouseEvent) => {
     event.stopPropagation();
     if (!user) {
       toast.error("Please sign in to connect with mentors");
       return;
     }
-    navigate(`/messages?mentorId=${mentorId}`);
+
+    try {
+      // First get mentor data to ensure it exists
+      const { data: mentorData, error: mentorError } = await getMentorById(mentorId);
+      
+      if (mentorError || !mentorData) {
+        toast.error("Mentor not found");
+        return;
+      }
+
+      // Check if conversation already exists
+      const { data: existingConversation } = await supabase
+        .from('conversations')
+        .select('*')
+        .or(`and(user1_id.eq.${user.id},user2_id.eq.${mentorId}),and(user1_id.eq.${mentorId},user2_id.eq.${user.id})`)
+        .maybeSingle();
+
+      if (!existingConversation) {
+        // Create new conversation
+        const { error: createError } = await supabase
+          .from('conversations')
+          .insert({
+            user1_id: user.id,
+            user2_id: mentorId
+          });
+
+        if (createError) {
+          console.error('Error creating conversation:', createError);
+          toast.error('Failed to start conversation');
+          return;
+        }
+      }
+
+      // Navigate to messages with mentorId parameter
+      navigate(`/messages?mentorId=${mentorId}`);
+      toast.success(`Connected with ${mentorData.name}`);
+    } catch (error) {
+      console.error('Error connecting with mentor:', error);
+      toast.error('Failed to connect with mentor');
+    }
   };
 
   const toggleComments = (postId: string, event: React.MouseEvent) => {

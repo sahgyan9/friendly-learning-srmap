@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useSearchParams } from "react-router-dom";
-import { MessagesLayout } from "@/components/messages/MessagesLayout";
+import MessagesLayout from "@/components/messages/MessagesLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
