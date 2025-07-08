@@ -198,6 +198,16 @@ const CommunityPosts = () => {
                   </CardHeader>
                   
                   <CardContent className="pt-0">
+                    {post.image_url && (
+                      <div className="mb-4 w-full max-w-md h-64 bg-gray-100 rounded overflow-hidden flex items-center justify-center">
+                        <img
+                          src={post.image_url}
+                          alt="Post image"
+                          className="object-cover w-full h-full"
+                          onError={(e) => (e.currentTarget.style.display = 'none')}
+                        />
+                      </div>
+                    )}
                     <h2 className="text-xl font-semibold mb-2">{post.title}</h2>
                     <p className="text-muted-foreground mb-4 line-clamp-3">{post.content}</p>
                     
@@ -262,7 +272,7 @@ const CommunityPosts = () => {
               setPosts(posts.map(p => p.id === updatedPost.id ? updatedPost : p));
             }}
             onPostDeleted={(deletedPostId) => {
-              setPosts(posts.filter(p => p.id !== deletedPostId));
+              setPosts(posts.filter p => p.id !== deletedPostId));
               setSelectedPost(null);
             }}
           />
