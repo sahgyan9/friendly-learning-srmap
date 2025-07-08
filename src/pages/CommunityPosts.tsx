@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +12,7 @@ import { formatDistanceToNow } from "date-fns";
 import { CreatePostModal } from "@/components/community/CreatePostModal";
 import { PostDetailModal } from "@/components/community/PostDetailModal";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import Navbar from "@/components/Navbar";
 
 const POST_TYPES = [
   { value: 'all', label: 'All Posts' },
@@ -114,158 +114,161 @@ const CommunityPosts = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-          <div>
-            <h1 className="text-3xl font-bold">Community Posts</h1>
-            <p className="text-muted-foreground">Connect, collaborate, and find partners for your projects</p>
-          </div>
-          
-          {user && (
-            <Button onClick={() => setShowCreateModal(true)} className="flex items-center gap-2">
-              <Plus className="h-4 w-4" />
-              Create Post
-            </Button>
-          )}
-        </div>
-
-        {/* Filters */}
-        <div className="flex flex-col sm:flex-row gap-4 mb-8">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-            <Input
-              placeholder="Search posts, tags, or content..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-          
-          <Select value={selectedType} onValueChange={setSelectedType}>
-            <SelectTrigger className="w-full sm:w-48">
-              <Filter className="h-4 w-4 mr-2" />
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {POST_TYPES.map(type => (
-                <SelectItem key={type.value} value={type.value}>
-                  {type.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Posts Grid */}
-        <div className="grid gap-6">
-          {filteredPosts.length === 0 ? (
-            <div className="text-center py-12">
-              <h3 className="text-lg font-semibold mb-2">No posts found</h3>
-              <p className="text-muted-foreground">
-                {searchTerm || selectedType !== 'all' 
-                  ? "Try adjusting your search or filters" 
-                  : "Be the first to create a community post!"}
-              </p>
+    <>
+      <Navbar />
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-4 py-8">
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+            <div>
+              <h1 className="text-3xl font-bold">Community Posts</h1>
+              <p className="text-muted-foreground">Connect, collaborate, and find partners for your projects</p>
             </div>
-          ) : (
-            filteredPosts.map((post) => (
-              <Card key={post.id} className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setSelectedPost(post)}>
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-10 w-10">
-                        <AvatarImage src={post.mentor.profile_image || undefined} />
-                        <AvatarFallback>{post.mentor.name.charAt(0)}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <h3 className="font-semibold">{post.mentor.name}</h3>
-                        <p className="text-sm text-muted-foreground">{post.mentor.department}</p>
+            
+            {user && (
+              <Button onClick={() => setShowCreateModal(true)} className="flex items-center gap-2">
+                <Plus className="h-4 w-4" />
+                Create Post
+              </Button>
+            )}
+          </div>
+
+          {/* Filters */}
+          <div className="flex flex-col sm:flex-row gap-4 mb-8">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+              <Input
+                placeholder="Search posts, tags, or content..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            
+            <Select value={selectedType} onValueChange={setSelectedType}>
+              <SelectTrigger className="w-full sm:w-48">
+                <Filter className="h-4 w-4 mr-2" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {POST_TYPES.map(type => (
+                  <SelectItem key={type.value} value={type.value}>
+                    {type.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Posts Grid */}
+          <div className="grid gap-6">
+            {filteredPosts.length === 0 ? (
+              <div className="text-center py-12">
+                <h3 className="text-lg font-semibold mb-2">No posts found</h3>
+                <p className="text-muted-foreground">
+                  {searchTerm || selectedType !== 'all' 
+                    ? "Try adjusting your search or filters" 
+                    : "Be the first to create a community post!"}
+                </p>
+              </div>
+            ) : (
+              filteredPosts.map((post) => (
+                <Card key={post.id} className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setSelectedPost(post)}>
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-10 w-10">
+                          <AvatarImage src={post.mentor.profile_image || undefined} />
+                          <AvatarFallback>{post.mentor.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <h3 className="font-semibold">{post.mentor.name}</h3>
+                          <p className="text-sm text-muted-foreground">{post.mentor.department}</p>
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className={getStatusColor(post.status)}>
-                        {post.status}
-                      </Badge>
-                      <span className="text-sm text-muted-foreground">
-                        {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
-                      </span>
-                    </div>
-                  </div>
-                </CardHeader>
-                
-                <CardContent className="pt-0">
-                  <h2 className="text-xl font-semibold mb-2">{post.title}</h2>
-                  <p className="text-muted-foreground mb-4 line-clamp-3">{post.content}</p>
-                  
-                  {/* Tags */}
-                  {post.tags && post.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      {post.tags.map((tag, index) => (
-                        <Badge key={index} variant="secondary" className="text-xs">
-                          {tag}
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className={getStatusColor(post.status)}>
+                          {post.status}
                         </Badge>
-                      ))}
-                    </div>
-                  )}
-                  
-                  {/* Post Type */}
-                  <div className="flex items-center justify-between">
-                    <Badge variant="outline">
-                      {POST_TYPES.find(type => type.value === post.post_type)?.label || post.post_type}
-                    </Badge>
-                    
-                    <div className="flex items-center gap-4">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleLike(post.id);
-                        }}
-                        className="flex items-center gap-1 text-sm text-muted-foreground hover:text-red-500 transition-colors"
-                      >
-                        <Heart className={`h-4 w-4 ${post.user_has_liked ? 'fill-red-500 text-red-500' : ''}`} />
-                        {post.likes_count}
-                      </button>
-                      
-                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                        <MessageCircle className="h-4 w-4" />
-                        {post.comments_count}
+                        <span className="text-sm text-muted-foreground">
+                          {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
+                        </span>
                       </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
-          )}
+                  </CardHeader>
+                  
+                  <CardContent className="pt-0">
+                    <h2 className="text-xl font-semibold mb-2">{post.title}</h2>
+                    <p className="text-muted-foreground mb-4 line-clamp-3">{post.content}</p>
+                    
+                    {/* Tags */}
+                    {post.tags && post.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        {post.tags.map((tag, index) => (
+                          <Badge key={index} variant="secondary" className="text-xs">
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                    
+                    {/* Post Type */}
+                    <div className="flex items-center justify-between">
+                      <Badge variant="outline">
+                        {POST_TYPES.find(type => type.value === post.post_type)?.label || post.post_type}
+                      </Badge>
+                      
+                      <div className="flex items-center gap-4">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleLike(post.id);
+                          }}
+                          className="flex items-center gap-1 text-sm text-muted-foreground hover:text-red-500 transition-colors"
+                        >
+                          <Heart className={`h-4 w-4 ${post.user_has_liked ? 'fill-red-500 text-red-500' : ''}`} />
+                          {post.likes_count}
+                        </button>
+                        
+                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                          <MessageCircle className="h-4 w-4" />
+                          {post.comments_count}
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </div>
         </div>
-      </div>
 
-      {/* Modals */}
-      <CreatePostModal 
-        open={showCreateModal} 
-        onOpenChange={setShowCreateModal}
-        onPostCreated={() => {
-          fetchPosts();
-          setShowCreateModal(false);
-        }}
-      />
-
-      {selectedPost && (
-        <PostDetailModal
-          post={selectedPost}
-          open={!!selectedPost}
-          onOpenChange={() => setSelectedPost(null)}
-          onPostUpdated={(updatedPost) => {
-            setPosts(posts.map(p => p.id === updatedPost.id ? updatedPost : p));
-          }}
-          onPostDeleted={(deletedPostId) => {
-            setPosts(posts.filter(p => p.id !== deletedPostId));
-            setSelectedPost(null);
+        {/* Modals */}
+        <CreatePostModal 
+          open={showCreateModal} 
+          onOpenChange={setShowCreateModal}
+          onPostCreated={() => {
+            fetchPosts();
+            setShowCreateModal(false);
           }}
         />
-      )}
-    </div>
+
+        {selectedPost && (
+          <PostDetailModal
+            post={selectedPost}
+            open={!!selectedPost}
+            onOpenChange={() => setSelectedPost(null)}
+            onPostUpdated={(updatedPost) => {
+              setPosts(posts.map(p => p.id === updatedPost.id ? updatedPost : p));
+            }}
+            onPostDeleted={(deletedPostId) => {
+              setPosts(posts.filter(p => p.id !== deletedPostId));
+              setSelectedPost(null);
+            }}
+          />
+        )}
+      </div>
+    </>
   );
 };
 
