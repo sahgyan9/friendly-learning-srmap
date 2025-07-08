@@ -75,37 +75,37 @@ function App() {
                 
                 {/* Admin Routes */}
                 <Route path="/admin" element={
-                  <ProtectedRoute requireAdmin>
+                  <ProtectedRoute requiredRole="admin">
                     <AdminDashboard />
                   </ProtectedRoute>
                 } />
                 <Route path="/admin/settings" element={
-                  <ProtectedRoute requireAdmin>
+                  <ProtectedRoute requiredRole="admin">
                     <AdminSettings />
                   </ProtectedRoute>
                 } />
                 <Route path="/admin/contact-messages" element={
-                  <ProtectedRoute requireAdmin>
+                  <ProtectedRoute requiredRole="admin">
                     <AdminContactMessages />
                   </ProtectedRoute>
                 } />
                 <Route path="/admin/mentor-verification" element={
-                  <ProtectedRoute requireAdmin>
+                  <ProtectedRoute requiredRole="admin">
                     <AdminMentorVerification />
                   </ProtectedRoute>
                 } />
                 <Route path="/admin/badges" element={
-                  <ProtectedRoute requireAdmin>
+                  <ProtectedRoute requiredRole="admin">
                     <AdminBadges />
                   </ProtectedRoute>
                 } />
                 <Route path="/admin/team-members" element={
-                  <ProtectedRoute requireAdmin>
+                  <ProtectedRoute requiredRole="admin">
                     <TeamMembersAdmin />
                   </ProtectedRoute>
                 } />
                 <Route path="/admin/marketplace" element={
-                  <ProtectedRoute requireAdmin>
+                  <ProtectedRoute requiredRole="admin">
                     <MarketplaceAdmin />
                   </ProtectedRoute>
                 } />
