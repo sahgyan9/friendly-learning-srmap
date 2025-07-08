@@ -1,10 +1,11 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Heart, MessageCircle, ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { getCommunityPosts, togglePostLike, checkUserLikedPost, type CommunityPost } from "@/integrations/supabase/services/community-posts";
 import { useAuth } from "@/context/AuthContext";
 import { formatDistanceToNow } from "date-fns";
@@ -20,6 +21,7 @@ const POST_TYPES = [
 
 export const CommunityPostsSection = () => {
 	const { user } = useAuth();
+	const navigate = useNavigate();
 	const [posts, setPosts] = useState<CommunityPost[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [scrollPosition, setScrollPosition] = useState(0);
@@ -73,6 +75,11 @@ export const CommunityPostsSection = () => {
 					: post
 			));
 		}
+	};
+
+	const handleMentorClick = (mentorId: string, event: React.MouseEvent) => {
+		event.stopPropagation();
+		navigate(`/mentors/${mentorId}`);
 	};
 
 	const scroll = (direction: 'left' | 'right') => {
@@ -149,16 +156,25 @@ export const CommunityPostsSection = () => {
 						<Card 
 							key={post.id} 
 							className="flex-shrink-0 w-80 cursor-pointer hover:shadow-lg transition-shadow"
+							onClick={() => navigate(`/community-posts/${post.id}`)}
 						>
 							<CardHeader className="pb-3">
 								<div className="flex items-start justify-between">
 									<div className="flex items-center gap-3">
-										<Avatar className="h-8 w-8">
+										<Avatar 
+											className="h-8 w-8 cursor-pointer hover:ring-2 hover:ring-primary/20 transition-all"
+											onClick={(e) => handleMentorClick(post.mentor.id, e)}
+										>
 											<AvatarImage src={post.mentor.profile_image || undefined} />
 											<AvatarFallback>{post.mentor.name.charAt(0)}</AvatarFallback>
 										</Avatar>
 										<div>
-											<h4 className="font-semibold text-sm">{post.mentor.name}</h4>
+											<h4 
+												className="font-semibold text-sm cursor-pointer hover:text-primary transition-colors"
+												onClick={(e) => handleMentorClick(post.mentor.id, e)}
+											>
+												{post.mentor.name}
+											</h4>
 											<p className="text-xs text-muted-foreground">{post.mentor.department}</p>
 										</div>
 									</div>

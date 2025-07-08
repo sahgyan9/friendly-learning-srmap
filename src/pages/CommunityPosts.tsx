@@ -5,15 +5,16 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Heart, MessageCircle, Search, Plus, Filter, Share2, Bookmark, MoreHorizontal } from "lucide-react";
+import { Heart, MessageCircle, Search, Filter, Share2, Bookmark, MoreHorizontal, ChevronDown, ChevronUp } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { getCommunityPosts, togglePostLike, checkUserLikedPost, type CommunityPost } from "@/integrations/supabase/services/community-posts";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
-import { CreatePostModal } from "@/components/community/CreatePostModal";
+import { CreatePostButton } from "@/components/community/CreatePostButton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
+import { InlineComments } from "@/components/community/InlineComments";
 
 const POST_TYPES = [
   { value: 'all', label: 'All Posts' },
@@ -31,7 +32,7 @@ const CommunityPosts = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedType, setSelectedType] = useState("all");
-  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [expandedComments, setExpandedComments] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetchPosts();
@@ -89,6 +90,11 @@ const CommunityPosts = () => {
     navigate(`/community-posts/${postId}`);
   };
 
+  const handleMentorClick = (mentorId: string, event: React.MouseEvent) => {
+    event.stopPropagation();
+    navigate(`/mentors/${mentorId}`);
+  };
+
   const handleShare = async (post: CommunityPost, event: React.MouseEvent) => {
     event.stopPropagation();
     try {
@@ -98,10 +104,31 @@ const CommunityPosts = () => {
         url: `${window.location.origin}/community-posts/${post.id}`,
       });
     } catch (error) {
-      // Fallback for browsers that don't support Web Share API
       navigator.clipboard.writeText(`${window.location.origin}/community-posts/${post.id}`);
       toast.success("Link copied to clipboard!");
     }
+  };
+
+  const handleConnect = (mentorId: string, event: React.MouseEvent) => {
+    event.stopPropagation();
+    if (!user) {
+      toast.error("Please sign in to connect with mentors");
+      return;
+    }
+    navigate(`/messages?mentorId=${mentorId}`);
+  };
+
+  const toggleComments = (postId: string, event: React.MouseEvent) => {
+    event.stopPropagation();
+    setExpandedComments(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(postId)) {
+        newSet.delete(postId);
+      } else {
+        newSet.add(postId);
+      }
+      return newSet;
+    });
   };
 
   const filteredPosts = posts.filter(post => {
@@ -164,12 +191,7 @@ const CommunityPosts = () => {
               <p className="text-muted-foreground">Connect, collaborate, and find partners for your projects</p>
             </div>
             
-            {user && (
-              <Button onClick={() => setShowCreateModal(true)} className="flex items-center gap-2">
-                <Plus className="h-4 w-4" />
-                Create Post
-              </Button>
-            )}
+            <CreatePostButton onPostCreated={fetchPosts} />
           </div>
 
           {/* Filters */}
@@ -221,7 +243,10 @@ const CommunityPosts = () => {
                   <CardHeader className="pb-4">
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-3">
-                        <Avatar className="h-12 w-12 ring-2 ring-background shadow-sm">
+                        <Avatar 
+                          className="h-12 w-12 ring-2 ring-background shadow-sm cursor-pointer hover:ring-primary/20 transition-all"
+                          onClick={(e) => handleMentorClick(post.mentor.id, e)}
+                        >
                           <AvatarImage src={post.mentor.profile_image || undefined} />
                           <AvatarFallback className="bg-primary/10 text-primary font-semibold">
                             {post.mentor.name.charAt(0)}
@@ -229,7 +254,10 @@ const CommunityPosts = () => {
                         </Avatar>
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
-                            <h3 className="font-semibold text-foreground hover:text-primary transition-colors">
+                            <h3 
+                              className="font-semibold text-foreground hover:text-primary transition-colors cursor-pointer"
+                              onClick={(e) => handleMentorClick(post.mentor.id, e)}
+                            >
                               {post.mentor.name}
                             </h3>
                             <Badge variant="outline" className={`text-xs ${getStatusColor(post.status)}`}>
@@ -300,10 +328,18 @@ const CommunityPosts = () => {
                           <span className="font-medium">{post.likes_count}</span>
                         </button>
                         
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <button
+                          onClick={(e) => toggleComments(post.id, e)}
+                          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-blue-500 transition-colors"
+                        >
                           <MessageCircle className="h-5 w-5" />
                           <span className="font-medium">{post.comments_count}</span>
-                        </div>
+                          {expandedComments.has(post.id) ? (
+                            <ChevronUp className="h-4 w-4" />
+                          ) : (
+                            <ChevronDown className="h-4 w-4" />
+                          )}
+                        </button>
 
                         <button
                           onClick={(e) => handleShare(post, e)}
@@ -314,19 +350,14 @@ const CommunityPosts = () => {
                       </div>
                       
                       <div className="flex items-center gap-2">
-                        {post.post_type !== 'general' && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="text-xs"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handlePostClick(post.id);
-                            }}
-                          >
-                            Show Interest
-                          </Button>
-                        )}
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-xs"
+                          onClick={(e) => handleConnect(post.mentor.id, e)}
+                        >
+                          Connect
+                        </Button>
                         <Button
                           variant="ghost"
                           size="sm"
@@ -336,22 +367,29 @@ const CommunityPosts = () => {
                         </Button>
                       </div>
                     </div>
+
+                    {/* Inline Comments */}
+                    {expandedComments.has(post.id) && (
+                      <div className="pt-4 border-t border-border/50">
+                        <InlineComments 
+                          postId={post.id} 
+                          onCommentAdded={() => {
+                            // Update the comments count
+                            setPosts(posts.map(p => 
+                              p.id === post.id 
+                                ? { ...p, comments_count: p.comments_count + 1 }
+                                : p
+                            ));
+                          }}
+                        />
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               ))
             )}
           </div>
         </div>
-
-        {/* Create Post Modal */}
-        <CreatePostModal 
-          open={showCreateModal} 
-          onOpenChange={setShowCreateModal}
-          onPostCreated={() => {
-            fetchPosts();
-            setShowCreateModal(false);
-          }}
-        />
       </div>
     </>
   );
