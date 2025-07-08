@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -9,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { X } from "lucide-react";
 import { createCommunityPost } from "@/integrations/supabase/services/community-posts";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 const POST_TYPES = [
@@ -32,6 +32,9 @@ export const CreatePostModal = ({ open, onOpenChange, onPostCreated }: CreatePos
   const [tagInput, setTagInput] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageError, setImageError] = useState<string | null>(null);
 
   const handleAddTag = () => {
     if (tagInput.trim() && !tags.includes(tagInput.trim()) && tags.length < 5) {
@@ -44,6 +47,33 @@ export const CreatePostModal = ({ open, onOpenChange, onPostCreated }: CreatePos
     setTags(tags.filter(tag => tag !== tagToRemove));
   };
 
+  // Image validation
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setImageError("Only image files are allowed.");
+      setImageFile(null);
+      setImagePreview(null);
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) { // 2MB limit
+      setImageError("Image size must be less than 2MB.");
+      setImageFile(null);
+      setImagePreview(null);
+      return;
+    }
+    setImageError(null);
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+  };
+
+  const handleRemoveImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
+    setImageError(null);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -51,14 +81,30 @@ export const CreatePostModal = ({ open, onOpenChange, onPostCreated }: CreatePos
       toast.error("Please fill in all required fields");
       return;
     }
-
+    if (imageFile && imageError) {
+      toast.error(imageError);
+      return;
+    }
     setIsSubmitting(true);
-    
+    let image_url: string | undefined = undefined;
+    if (imageFile) {
+      // Upload image to Supabase storage (bucket: community-posts)
+      const fileExt = imageFile.name.split('.').pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
+      const { data: uploadData, error: uploadError } = await supabase.storage.from('community-posts').upload(fileName, imageFile, { cacheControl: '3600', upsert: false });
+      if (uploadError) {
+        toast.error("Failed to upload image");
+        setIsSubmitting(false);
+        return;
+      }
+      image_url = supabase.storage.from('community-posts').getPublicUrl(fileName).data.publicUrl;
+    }
     const { data, error } = await createCommunityPost({
       title: title.trim(),
       content: content.trim(),
       post_type: postType,
       tags: tags.length > 0 ? tags : undefined,
+      image_url,
     });
 
     if (error) {
@@ -73,6 +119,9 @@ export const CreatePostModal = ({ open, onOpenChange, onPostCreated }: CreatePos
       setPostType("");
       setTags([]);
       setTagInput("");
+      setImageFile(null);
+      setImagePreview(null);
+      setImageError(null);
     }
     
     setIsSubmitting(false);
@@ -167,6 +216,26 @@ export const CreatePostModal = ({ open, onOpenChange, onPostCreated }: CreatePos
                     </button>
                   </Badge>
                 ))}
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="image">Attach Image (optional)</Label>
+            <Input
+              id="image"
+              type="file"
+              accept="image/*"
+              onChange={handleImageChange}
+              disabled={isSubmitting}
+            />
+            {imageError && <div className="text-destructive text-xs">{imageError}</div>}
+            {imagePreview && (
+              <div className="relative mt-2 w-32 h-32">
+                <img src={imagePreview} alt="Preview" className="object-cover w-full h-full rounded" />
+                <Button type="button" size="icon" variant="ghost" className="absolute top-1 right-1" onClick={handleRemoveImage}>
+                  <X className="h-4 w-4" />
+                </Button>
               </div>
             )}
           </div>

@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Database } from "@/integrations/supabase/types";
 
@@ -11,6 +10,7 @@ export type CommunityPost = Database['public']['Tables']['community_posts']['Row
     rating: number;
   };
   user_has_liked?: boolean;
+  image_url?: string | null; // Added for type safety
 };
 
 export type CreatePostData = {
@@ -18,6 +18,7 @@ export type CreatePostData = {
   content: string;
   post_type: string;
   tags?: string[];
+  image_url?: string; // Added
 };
 
 export type UpdatePostData = Partial<CreatePostData> & {

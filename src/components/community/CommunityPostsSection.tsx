@@ -167,8 +167,17 @@ export const CommunityPostsSection = () => {
 									</Badge>
 								</div>
 							</CardHeader>
-							
 							<CardContent className="pt-0 space-y-3">
+								{post.image_url && (
+									<div className="mb-2 w-full h-40 bg-gray-100 rounded overflow-hidden flex items-center justify-center">
+										<img
+											src={post.image_url}
+											alt="Post image"
+											className="object-cover w-full h-full"
+											onError={(e) => (e.currentTarget.style.display = 'none')}
+										/>
+									</div>
+								)}
 								<div>
 									<h3 className="font-semibold text-sm mb-2 line-clamp-2">{post.title}</h3>
 									<p className="text-xs text-muted-foreground line-clamp-3">{post.content}</p>

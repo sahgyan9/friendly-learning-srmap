@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -194,6 +193,16 @@ export const PostDetailModal = ({
             {/* Post Content */}
             <div>
               <h2 className="text-2xl font-bold mb-4">{currentPost.title}</h2>
+              {currentPost.image_url && (
+                <div className="mb-4 w-full max-w-md h-64 bg-gray-100 rounded overflow-hidden flex items-center justify-center">
+                  <img
+                    src={currentPost.image_url}
+                    alt="Post image"
+                    className="object-cover w-full h-full"
+                    onError={(e) => (e.currentTarget.style.display = 'none')}
+                  />
+                </div>
+              )}
               <p className="text-muted-foreground whitespace-pre-wrap">{currentPost.content}</p>
             </div>
 
