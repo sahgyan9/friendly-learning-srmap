@@ -9,7 +9,6 @@ import { getCommunityPosts, togglePostLike, checkUserLikedPost, type CommunityPo
 import { useAuth } from "@/context/AuthContext";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
-import { InlineComments } from "./InlineComments";
 
 const POST_TYPES = [
 	{ value: 'hackathon', label: 'Hackathon Partners' },
@@ -29,7 +28,6 @@ export const CommunityPostsSection = () => {
 	const [isTouching, setIsTouching] = useState(false);
 	const [touchStartX, setTouchStartX] = useState(0);
 	const [touchScrollLeft, setTouchScrollLeft] = useState(0);
-	const [openCommentsPostId, setOpenCommentsPostId] = useState<string | null>(null);
 
 	useEffect(() => {
 		fetchPosts();
@@ -170,7 +168,7 @@ export const CommunityPostsSection = () => {
 						id="community-posts-scroll"
 						ref={containerRef}
 						className="flex gap-4 overflow-x-auto scrollbar-hide pb-4 md:snap-x md:snap-mandatory items-stretch snap-x snap-mandatory"
-						style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebKitOverflowScrolling: 'touch' }}
+						style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
 					>
 						{/* Left Spacer: half container width minus card width */}
 						<div className="hidden md:block flex-shrink-0" style={{ width: 'calc(50vw - 200px)' }} />
@@ -253,34 +251,24 @@ export const CommunityPostsSection = () => {
 													onClick={(e) => {
 														e.stopPropagation();
 														handleLike(post.id);
-												}}
-												className="flex items-center gap-1 text-xs text-muted-foreground hover:text-red-500 transition-colors"
-											>
-												<Heart className={`h-3 w-3 ${post.user_has_liked ? 'fill-red-500 text-red-500' : ''}`} />
-												{post.likes_count}
-											</button>
-											<button
-												onClick={(e) => {
-													e.stopPropagation();
-													setOpenCommentsPostId(openCommentsPostId === post.id ? null : post.id);
-												}}
-												className={`flex items-center gap-1 text-xs text-muted-foreground hover:text-blue-500 transition-colors ${openCommentsPostId === post.id ? 'font-bold text-blue-600' : ''}`}
-											>
-												<MessageCircle className="h-3 w-3" />
-												{post.comments_count}
-											</button>
+													}}
+													className="flex items-center gap-1 text-xs text-muted-foreground hover:text-red-500 transition-colors"
+												>
+													<Heart className={`h-3 w-3 ${post.user_has_liked ? 'fill-red-500 text-red-500' : ''}`} />
+													{post.likes_count}
+												</button>
+												
+												<div className="flex items-center gap-1 text-xs text-muted-foreground">
+													<MessageCircle className="h-3 w-3" />
+													{post.comments_count}
+												</div>
+											</div>
+											
+											<span className="text-xs text-muted-foreground">
+												{formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
+											</span>
 										</div>
-										<span className="text-xs text-muted-foreground">
-											{formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
-										</span>
-									</div>
-									{/* Inline Comments Section */}
-									{openCommentsPostId === post.id && (
-										<div className="pt-2">
-											<InlineComments postId={post.id} />
-										</div>
-									)}
-								</CardContent>
+									</CardContent>
 								</Card>
 							</div>
 						))}
