@@ -101,21 +101,6 @@ export const CommunityPostsSection = () => {
 		}
 	};
 
-	// Touch/swipe handlers for mobile
-	const handleTouchStart = (e: React.TouchEvent) => {
-		setIsTouching(true);
-		setTouchStartX(e.touches[0].clientX);
-		setTouchScrollLeft(containerRef.current?.scrollLeft || 0);
-	};
-	const handleTouchMove = (e: React.TouchEvent) => {
-		if (!isTouching || !containerRef.current) return;
-		const dx = e.touches[0].clientX - touchStartX;
-		containerRef.current.scrollLeft = touchScrollLeft - dx;
-	};
-	const handleTouchEnd = () => {
-		setIsTouching(false);
-	};
-
 	const getStatusColor = (status: string) => {
 		switch (status) {
 			case 'open': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
@@ -167,7 +152,7 @@ export const CommunityPostsSection = () => {
 						</Link>
 					</div>
 				</div>
-				{/* Centered Scrollable Posts Container with Spacers */}
+				{/* Centered Scrollable Posts Container with Spacers and scroll-snap */}
 				<div className="relative">
 					<Button
 						variant="outline"
@@ -182,11 +167,8 @@ export const CommunityPostsSection = () => {
 					<div
 						id="community-posts-scroll"
 						ref={containerRef}
-						className="flex gap-4 overflow-x-auto scrollbar-hide pb-4 md:snap-x md:snap-mandatory items-stretch"
-						style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-						onTouchStart={handleTouchStart}
-						onTouchMove={handleTouchMove}
-						onTouchEnd={handleTouchEnd}
+						className="flex gap-4 overflow-x-auto scrollbar-hide pb-4 md:snap-x md:snap-mandatory items-stretch snap-x snap-mandatory"
+						style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
 					>
 						{/* Left Spacer: half container width minus card width */}
 						<div className="hidden md:block flex-shrink-0" style={{ width: 'calc(50vw - 200px)' }} />
@@ -194,6 +176,7 @@ export const CommunityPostsSection = () => {
 							<div
 								key={post.id}
 								className="community-post-card flex-shrink-0 w-80 md:w-[400px] snap-center"
+								style={{ scrollSnapAlign: 'center' }}
 							>
 								<Card 
 									className="h-full cursor-pointer hover:shadow-lg transition-shadow"
