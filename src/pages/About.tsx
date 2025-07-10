@@ -40,53 +40,67 @@ const About = () => {
       
       <div className="min-h-screen">
         <Navbar />
-        
         <main className="pt-24 pb-16">
           <div className="container px-4 md:px-6">
             <div className="max-w-3xl mx-auto">
               <header>
                 <h1 className="text-4xl font-bold mb-6">About Friendly Learning</h1>
               </header>
-              
               <section className="mb-8">
                 <p className="text-lg mb-6">
-                  Friendly Learning is a peer-to-peer mentorship platform designed to connect SRM AP students 
-                  with experienced mentors who can help them excel in their academic journey.
-                </p>
-                
-                <p className="text-lg mb-6">
-                  Our mission is to create a collaborative learning environment where knowledge is 
-                  shared freely, and everyone has access to the support they need to succeed.
+                  <strong>Friendly Learning</strong> is more than just a platform — it's a movement to empower students through students. Born at SRM University, Andhra Pradesh, Friendly Learning is a peer-to-peer mentorship and collaboration network designed to bridge the academic gap between students and their peers. Whether you're stuck on an assignment, exploring a new skill, preparing for a hackathon, or looking for like-minded project partners — the help you need is often just a few doors away. We’re here to help you find it.
                 </p>
               </section>
-              
               <section className="mb-8">
                 <h2 className="text-2xl font-semibold mt-10 mb-4">Our Story</h2>
                 <p className="mb-6">
-                  Friendly Learning was founded by a group of SRM AP students who recognized the value of 
-                  peer mentorship in their own academic success. They created this platform to 
-                  formalize and expand the reach of student-to-student mentoring at our university.
+                  The journey began when a group of students, like many others, faced confusion about assignments, subject expectations, and navigating university life. YouTube didn’t always help, professors weren’t always available, and Google didn’t always have the answers. The real solution? Students who had been there, done that.
+                </p>
+                <p className="mb-6">
+                  So we built Friendly Learning — a platform where any student can search for help and connect directly with a verified student mentor from their own university, someone who’s already solved the exact problem they’re facing.
+                </p>
+                <p className="mb-6">
+                  What started as a simple idea became a seven-month-long mission to build a functional, scalable, AI-powered, student-first mentorship ecosystem.
                 </p>
               </section>
-              
               <section className="mb-8">
-                <h2 className="text-2xl font-semibold mt-10 mb-4">Why Choose Friendly Learning?</h2>
+                <h2 className="text-2xl font-semibold mt-10 mb-4">Our Vision</h2>
+                <p className="mb-6">
+                  To create a globally recognized, student-first learning ecosystem that redefines how mentorship, collaboration, and academic help is accessed — not from the internet, but from your own campus community.
+                </p>
+              </section>
+              <section className="mb-8">
+                <h2 className="text-2xl font-semibold mt-10 mb-4">Our Mission</h2>
                 <ul className="list-disc pl-6 mb-6 space-y-2">
-                  <li>Connect with verified student mentors from your own university</li>
-                  <li>Get personalized academic guidance from peers who understand your challenges</li>
-                  <li>Access mentors across various departments and specializations</li>
-                  <li>Flexible mentorship options that fit your schedule</li>
-                  <li>Safe and secure platform with verified mentor profiles</li>
+                  <li>✅ To connect students to the right mentors within their university</li>
+                  <li>✅ To make mentorship accessible, informal, and empowering</li>
+                  <li>✅ To recognize and reward student mentors for their contribution</li>
+                  <li>✅ To build a collaborative culture of growth, innovation, and learning in every university</li>
                 </ul>
+              </section>
+              <section className="mb-8">
+                <h2 className="text-2xl font-semibold mt-10 mb-4">Why Friendly Learning?</h2>
+                <ul className="list-disc pl-6 mb-6 space-y-2">
+                  <li>🔒 Verified Mentors Only — All mentors are real, active students with proven skills</li>
+                  <li>🧠 AI-Powered Search — Just type your problem, and we’ll match you with the right mentor</li>
+                  <li>🌱 Cross-Department Learning — Get help across physics, CS, business, humanities & more</li>
+                  <li>💬 One-on-One Messaging — Connect freely, meet up, and learn without formality</li>
+                  <li>🌍 A Social Learning Network — Join community posts, find project partners, research groups, and collaborators</li>
+                  <li>🏅 Build Your Mentor Profile — Gain recognition through badges, reviews, and student impact</li>
+                </ul>
+                <blockquote className="italic border-l-4 border-blue-400 pl-4 my-4">
+                  "Friendly Learning is not just an app — it’s a gateway to unlock the hidden potential inside your university."
+                </blockquote>
+                <p className="mb-6">
+                  Whether you're here to grow, guide, learn, or lead — Friendly Learning welcomes you.
+                </p>
               </section>
               
               <section className="mb-12">
                 <h2 className="text-2xl font-semibold mt-10 mb-4">Join Our Community</h2>
                 <p className="mb-6">
-                  Whether you're looking for help or want to share your knowledge, 
-                  Friendly Learning has a place for you in the SRM AP academic community.
+                  Whether you're looking for help or want to share your knowledge, Friendly Learning has a place for you in the SRM AP academic community.
                 </p>
-                
                 <div className="mt-8 mb-12">
                   <Button asChild size="lg">
                     <Link to="/signup">Get Started Today</Link>
