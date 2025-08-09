@@ -9,7 +9,7 @@ import Navbar from "@/components/Navbar";
 
 const Messages = () => {
   const { user } = useAuth();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const mentorId = searchParams.get('mentorId');
   const [isInitializingConversation, setIsInitializingConversation] = useState(false);
 
@@ -48,6 +48,9 @@ const Messages = () => {
           toast.success('Conversation started successfully');
         }
       }
+
+      // Clear the mentorId from URL after initialization
+      setSearchParams({});
     } catch (error) {
       console.error('Error initializing conversation:', error);
       toast.error('Failed to start conversation');

@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Send, Loader2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { getPostComments, addPostComment } from "@/integrations/supabase/services/community-posts";
+import { getPostComments, addPostComment, type PostComment } from "@/integrations/supabase/services/community-posts";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 
@@ -17,7 +17,7 @@ interface InlineCommentsProps {
 
 export const InlineComments = ({ postId, onCommentAdded }: InlineCommentsProps) => {
   const { user, profile } = useAuth();
-  const [comments, setComments] = useState<any[]>([]);
+  const [comments, setComments] = useState<PostComment[]>([]);
   const [newComment, setNewComment] = useState("");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -144,12 +144,14 @@ export const InlineComments = ({ postId, onCommentAdded }: InlineCommentsProps) 
                   <Avatar className="h-6 w-6">
                     <AvatarImage src={comment.user?.profile_image || undefined} />
                     <AvatarFallback className="text-xs">
-                      {comment.user?.name?.charAt(0) || 'U'}
+                      {comment.user?.name?.charAt(0) || 'A'}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="font-medium text-sm">{comment.user?.name || 'Anonymous'}</span>
+                      <span className="font-medium text-sm">
+                        {comment.user?.name || 'Anonymous User'}
+                      </span>
                       <span className="text-xs text-muted-foreground">
                         {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
                       </span>

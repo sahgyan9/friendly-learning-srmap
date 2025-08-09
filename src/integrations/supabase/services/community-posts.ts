@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Database } from "@/integrations/supabase/types";
 
@@ -10,7 +11,21 @@ export type CommunityPost = Database['public']['Tables']['community_posts']['Row
     rating: number;
   };
   user_has_liked?: boolean;
-  image_url?: string | null; // Added for type safety
+  image_url?: string | null;
+};
+
+export type PostComment = {
+  id: string;
+  post_id: string;
+  user_id: string;
+  content: string;
+  created_at: string;
+  updated_at: string;
+  user: {
+    id: string;
+    name: string;
+    profile_image: string | null;
+  } | null;
 };
 
 export type CreatePostData = {
@@ -18,7 +33,7 @@ export type CreatePostData = {
   content: string;
   post_type: string;
   tags?: string[];
-  image_url?: string; // Added
+  image_url?: string;
 };
 
 export type UpdatePostData = Partial<CreatePostData> & {
@@ -191,13 +206,13 @@ export const togglePostLike = async (postId: string) => {
   }
 };
 
-// Get post comments
+// Get post comments with LEFT JOIN for user info
 export const getPostComments = async (postId: string) => {
   const { data, error } = await supabase
     .from('post_comments')
     .select(`
       *,
-      user:users!inner(
+      user:users(
         id,
         name,
         profile_image
@@ -211,7 +226,7 @@ export const getPostComments = async (postId: string) => {
     return { data: null, error };
   }
 
-  return { data, error: null };
+  return { data: data as PostComment[], error: null };
 };
 
 // Add a comment to a post
@@ -228,7 +243,7 @@ export const addPostComment = async (postId: string, content: string) => {
     })
     .select(`
       *,
-      user:users!inner(
+      user:users(
         id,
         name,
         profile_image
@@ -241,7 +256,7 @@ export const addPostComment = async (postId: string, content: string) => {
     return { data: null, error };
   }
 
-  return { data, error: null };
+  return { data: data as PostComment, error: null };
 };
 
 // Check if user has liked a specific post
