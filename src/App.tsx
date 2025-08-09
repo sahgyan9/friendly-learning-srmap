@@ -2,7 +2,7 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, StaticRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/context/AuthContext";
 import { ThemeProvider } from "next-themes";
 import Index from "./pages/Index";
@@ -33,11 +33,22 @@ import ProtectedRoute from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
+// Router wrapper component to handle SSR/client-side routing
+const RouterWrapper = ({ children }: { children: React.ReactNode }) => {
+  // Check if we're in browser environment
+  if (typeof window !== 'undefined') {
+    return <BrowserRouter>{children}</BrowserRouter>;
+  }
+  
+  // For SSR, use StaticRouter with a default location
+  return <StaticRouter location="/">{children}</StaticRouter>;
+};
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
-        <BrowserRouter>
+        <RouterWrapper>
           <AuthProvider>
             <TooltipProvider>
               <Toaster />
@@ -114,7 +125,7 @@ function App() {
               </Routes>
             </TooltipProvider>
           </AuthProvider>
-        </BrowserRouter>
+        </RouterWrapper>
       </ThemeProvider>
     </QueryClientProvider>
   );
