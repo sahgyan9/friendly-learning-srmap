@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 // Function to check if a user is an admin
@@ -42,6 +43,12 @@ export async function setUserAsAdmin(userIdToPromote: string) {
       throw new Error("Only admins can promote other users to admin");
     }
     
+    // Log the admin action before making changes
+    await logAdminAction('promote_user_to_admin', userIdToPromote, {
+      action: 'User promoted to admin status',
+      target_user_id: userIdToPromote
+    });
+    
     const { data, error } = await supabase
       .from('users')
       .update({ is_admin: true })
@@ -70,6 +77,12 @@ export async function removeAdminPrivilege(userIdToRevoke: string) {
     if (!isAdmin) {
       throw new Error("Only admins can revoke admin privileges");
     }
+    
+    // Log the admin action before making changes
+    await logAdminAction('revoke_admin_privileges', userIdToRevoke, {
+      action: 'Admin privileges revoked from user',
+      target_user_id: userIdToRevoke
+    });
     
     const { data, error } = await supabase
       .from('users')
@@ -127,13 +140,19 @@ export async function getUserByEmail(query: string) {
       throw new Error("Only admins can search for users");
     }
     
-    console.log("Searching for users with query:", query);
+    // Input validation and sanitization
+    const sanitizedQuery = sanitizeInput(query);
+    if (!sanitizedQuery || sanitizedQuery.length < 2) {
+      throw new Error("Query must be at least 2 characters long");
+    }
+    
+    console.log("Searching for users with query:", sanitizedQuery);
     
     // First try exact email match
     let { data: exactEmailMatch, error: emailError } = await supabase
       .from('users')
       .select('id, name, email, role, profile_image, is_admin, department')
-      .eq('email', query.toLowerCase())
+      .eq('email', sanitizedQuery.toLowerCase())
       .limit(1);
     
     if (emailError) {
@@ -150,7 +169,7 @@ export async function getUserByEmail(query: string) {
     const { data: searchResults, error: searchError } = await supabase
       .from('users')
       .select('id, name, email, role, profile_image, is_admin, department')
-      .or(`email.ilike.%${query}%,name.ilike.%${query}%`)
+      .or(`email.ilike.%${sanitizedQuery}%,name.ilike.%${sanitizedQuery}%`)
       .limit(10);
     
     if (searchError) {
@@ -198,6 +217,66 @@ export async function getMentorsForBadges() {
     return data;
   } catch (error) {
     console.error("Exception in getMentorsForBadges:", error);
+    throw error;
+  }
+}
+
+// New function to log admin actions using the database function
+async function logAdminAction(actionType: string, targetUserId?: string, actionDetails?: any) {
+  try {
+    const { error } = await supabase.rpc('log_admin_action', {
+      action_type: actionType,
+      target_id: targetUserId || null,
+      action_details: actionDetails || null
+    });
+    
+    if (error) {
+      console.error("Error logging admin action:", error);
+    }
+  } catch (error) {
+    console.error("Exception logging admin action:", error);
+  }
+}
+
+// Input sanitization utility
+function sanitizeInput(input: string): string {
+  if (!input) return '';
+  
+  // Remove potentially dangerous characters and trim
+  return input
+    .trim()
+    .replace(/[<>\"']/g, '') // Remove HTML/script injection chars
+    .replace(/;/g, '') // Remove SQL injection chars
+    .slice(0, 100); // Limit length
+}
+
+// Get admin audit logs (new function)
+export async function getAdminAuditLogs(limit: number = 50) {
+  try {
+    const isAdmin = await isUserAdmin();
+    
+    if (!isAdmin) {
+      throw new Error("Only admins can view audit logs");
+    }
+    
+    const { data, error } = await supabase
+      .from('admin_audit_log')
+      .select(`
+        *,
+        admin_user:users!admin_user_id(name, email),
+        target_user:users!target_user_id(name, email)
+      `)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+    
+    if (error) {
+      console.error("Error fetching audit logs:", error);
+      throw error;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error("Exception in getAdminAuditLogs:", error);
     throw error;
   }
 }

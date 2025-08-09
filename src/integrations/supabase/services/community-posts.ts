@@ -101,59 +101,88 @@ export const getPostsByMentor = async (mentorId: string) => {
 
 // Create a new community post
 export const createCommunityPost = async (postData: CreatePostData) => {
-  const { data, error } = await supabase
-    .from('community_posts')
-    .insert({
-      mentor_id: (await supabase.auth.getUser()).data.user?.id,
-      ...postData,
-    })
-    .select(`
-      *,
-      mentor:mentors!inner(
-        id,
-        name,
-        profile_image,
-        department,
-        rating
-      )
-    `)
-    .single();
+  try {
+    const user = (await supabase.auth.getUser()).data.user;
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
 
-  if (error) {
-    console.error('Error creating community post:', error);
+    // Sanitize inputs
+    const sanitizedPostData = {
+      mentor_id: user.id,
+      title: sanitizeInput(postData.title, 300),
+      content: sanitizeInput(postData.content, 5000),
+      post_type: postData.post_type,
+      tags: postData.tags ? postData.tags.map(tag => sanitizeInput(tag, 50)).slice(0, 10) : [],
+      image_url: postData.image_url
+    };
+
+    const { data, error } = await supabase
+      .from('community_posts')
+      .insert(sanitizedPostData)
+      .select(`
+        *,
+        mentor:mentors!inner(
+          id,
+          name,
+          profile_image,
+          department,
+          rating
+        )
+      `)
+      .single();
+
+    if (error) {
+      console.error('Error creating community post:', error);
+      return { data: null, error };
+    }
+
+    return { data: data as CommunityPost, error: null };
+  } catch (error) {
+    console.error('Exception in createCommunityPost:', error);
     return { data: null, error };
   }
-
-  return { data: data as CommunityPost, error: null };
 };
 
 // Update a community post
 export const updateCommunityPost = async (postId: string, updateData: UpdatePostData) => {
-  const { data, error } = await supabase
-    .from('community_posts')
-    .update({
-      ...updateData,
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', postId)
-    .select(`
-      *,
-      mentor:mentors!inner(
-        id,
-        name,
-        profile_image,
-        department,
-        rating
-      )
-    `)
-    .single();
+  try {
+    // Sanitize inputs if provided
+    const sanitizedUpdate: any = { updated_at: new Date().toISOString() };
+    
+    if (updateData.title) sanitizedUpdate.title = sanitizeInput(updateData.title, 300);
+    if (updateData.content) sanitizedUpdate.content = sanitizeInput(updateData.content, 5000);
+    if (updateData.post_type) sanitizedUpdate.post_type = updateData.post_type;
+    if (updateData.tags) sanitizedUpdate.tags = updateData.tags.map(tag => sanitizeInput(tag, 50)).slice(0, 10);
+    if (updateData.image_url) sanitizedUpdate.image_url = updateData.image_url;
+    if (updateData.status) sanitizedUpdate.status = updateData.status;
 
-  if (error) {
-    console.error('Error updating community post:', error);
+    const { data, error } = await supabase
+      .from('community_posts')
+      .update(sanitizedUpdate)
+      .eq('id', postId)
+      .select(`
+        *,
+        mentor:mentors!inner(
+          id,
+          name,
+          profile_image,
+          department,
+          rating
+        )
+      `)
+      .single();
+
+    if (error) {
+      console.error('Error updating community post:', error);
+      return { data: null, error };
+    }
+
+    return { data: data as CommunityPost, error: null };
+  } catch (error) {
+    console.error('Exception in updateCommunityPost:', error);
     return { data: null, error };
   }
-
-  return { data: data as CommunityPost, error: null };
 };
 
 // Delete a community post
@@ -231,32 +260,43 @@ export const getPostComments = async (postId: string) => {
 
 // Add a comment to a post
 export const addPostComment = async (postId: string, content: string) => {
-  const user = (await supabase.auth.getUser()).data.user;
-  if (!user) return { error: new Error('User not authenticated') };
+  try {
+    const user = (await supabase.auth.getUser()).data.user;
+    if (!user) return { error: new Error('User not authenticated') };
 
-  const { data, error } = await supabase
-    .from('post_comments')
-    .insert({
-      post_id: postId,
-      user_id: user.id,
-      content,
-    })
-    .select(`
-      *,
-      user:users(
-        id,
-        name,
-        profile_image
-      )
-    `)
-    .single();
+    // Sanitize comment content
+    const sanitizedContent = sanitizeInput(content, 1000);
+    if (!sanitizedContent.trim()) {
+      return { error: new Error('Comment content cannot be empty') };
+    }
 
-  if (error) {
-    console.error('Error adding comment:', error);
+    const { data, error } = await supabase
+      .from('post_comments')
+      .insert({
+        post_id: postId,
+        user_id: user.id,
+        content: sanitizedContent,
+      })
+      .select(`
+        *,
+        user:users(
+          id,
+          name,
+          profile_image
+        )
+      `)
+      .single();
+
+    if (error) {
+      console.error('Error adding comment:', error);
+      return { data: null, error };
+    }
+
+    return { data: data as PostComment, error: null };
+  } catch (error) {
+    console.error('Exception in addPostComment:', error);
     return { data: null, error };
   }
-
-  return { data: data as PostComment, error: null };
 };
 
 // Check if user has liked a specific post
@@ -278,3 +318,61 @@ export const checkUserLikedPost = async (postId: string) => {
 
   return { liked: !!data, error: null };
 };
+
+// Upload community post image with validation
+export const uploadCommunityPostImage = async (file: File) => {
+  try {
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      throw new Error('Invalid file type. Only JPEG, PNG, GIF, and WebP images are allowed.');
+    }
+    
+    // Validate file size (5MB limit)
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      throw new Error('File size too large. Maximum size is 5MB.');
+    }
+
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+    const filePath = `${fileName}`;
+    
+    const { data, error } = await supabase.storage
+      .from('Community Post Images')
+      .upload(filePath, file);
+    
+    if (error) {
+      console.error("Error uploading community post image:", error);
+      throw error;
+    }
+    
+    // Get public URL for the uploaded image
+    const { data: { publicUrl } } = supabase.storage
+      .from('Community Post Images')
+      .getPublicUrl(filePath);
+    
+    return { path: filePath, url: publicUrl };
+  } catch (error) {
+    console.error("Exception in uploadCommunityPostImage:", error);
+    throw error;
+  }
+};
+
+// Input sanitization utility
+function sanitizeInput(input: string, maxLength?: number): string {
+  if (!input) return '';
+  
+  let sanitized = input
+    .trim()
+    .replace(/[<>]/g, '') // Remove HTML tags
+    .replace(/javascript:/gi, '') // Remove javascript: protocols
+    .replace(/on\w+=/gi, '') // Remove event handlers
+    .replace(/script/gi, ''); // Remove script tags
+  
+  if (maxLength) {
+    sanitized = sanitized.slice(0, maxLength);
+  }
+  
+  return sanitized;
+}

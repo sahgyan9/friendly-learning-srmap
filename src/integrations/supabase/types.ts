@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_audit_log: {
+        Row: {
+          action: string
+          admin_user_id: string
+          created_at: string | null
+          details: Json | null
+          id: string
+          target_user_id: string | null
+        }
+        Insert: {
+          action: string
+          admin_user_id: string
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          target_user_id?: string | null
+        }
+        Update: {
+          action?: string
+          admin_user_id?: string
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          target_user_id?: string | null
+        }
+        Relationships: []
+      }
       ai_conversations: {
         Row: {
           context: Json | null
@@ -236,6 +263,7 @@ export type Database = {
           image_url: string | null
           title: string
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           author: string
@@ -249,6 +277,7 @@ export type Database = {
           image_url?: string | null
           title: string
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           author?: string
@@ -262,6 +291,7 @@ export type Database = {
           image_url?: string | null
           title?: string
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -856,6 +886,10 @@ export type Database = {
           reviewer_name: string
           reviewer_image: string
         }[]
+      }
+      log_admin_action: {
+        Args: { action_type: string; target_id?: string; action_details?: Json }
+        Returns: undefined
       }
       mark_messages_as_read: {
         Args: { conversation_id: string; user_id: string }
