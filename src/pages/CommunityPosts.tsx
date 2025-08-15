@@ -8,6 +8,7 @@ import { Heart, MessageCircle, Search, Filter, Share2, Bookmark, MoreHorizontal,
 import { useAuth } from "@/context/AuthContext";
 import { getCommunityPosts, togglePostLike, checkUserLikedPost, type CommunityPost } from "@/integrations/supabase/services/community-posts";
 import { getMentorById } from "@/integrations/supabase/services/mentors";
+import { getOrCreateConversation } from "@/integrations/supabase/services/chat/conversation.service";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
@@ -126,32 +127,18 @@ const CommunityPosts = () => {
         return;
       }
 
-      // Check if conversation already exists
-      const { data: existingConversation } = await supabase
-        .from('conversations')
-        .select('*')
-        .or(`and(user1_id.eq.${user.id},user2_id.eq.${mentorId}),and(user1_id.eq.${mentorId},user2_id.eq.${user.id})`)
-        .maybeSingle();
+      // Use the proper conversation service to prevent duplicates
+      const { data: conversation, error: conversationError } = await getOrCreateConversation(user.id, mentorId);
 
-      if (!existingConversation) {
-        // Create new conversation
-        const { error: createError } = await supabase
-          .from('conversations')
-          .insert({
-            user1_id: user.id,
-            user2_id: mentorId
-          });
-
-        if (createError) {
-          console.error('Error creating conversation:', createError);
-          toast.error('Failed to start conversation');
-          return;
-        }
+      if (conversationError || !conversation) {
+        console.error('Error creating/getting conversation:', conversationError);
+        toast.error('Failed to start conversation');
+        return;
       }
 
-      // Navigate to messages with mentorId parameter
-      navigate(`/messages?mentorId=${mentorId}`);
-      toast.success(`Connected with ${mentorData.name}`);
+      // Navigate to messages with the conversation ID
+      navigate(`/messages?chat=${conversation.id}`);
+      toast.success(`Connected with ${mentorData.name}!`);
     } catch (error) {
       console.error('Error connecting with mentor:', error);
       toast.error('Failed to connect with mentor');

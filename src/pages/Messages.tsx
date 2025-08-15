@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useSearchParams } from "react-router-dom";
 import MessagesLayout from "@/components/messages/MessagesLayout";
+import { getOrCreateConversation } from "@/integrations/supabase/services/chat/conversation.service";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
@@ -25,28 +26,14 @@ const Messages = () => {
     try {
       setIsInitializingConversation(true);
       
-      // Check if conversation already exists
-      const { data: existingConversation } = await supabase
-        .from('conversations')
-        .select('*')
-        .or(`and(user1_id.eq.${user.id},user2_id.eq.${mentorId}),and(user1_id.eq.${mentorId},user2_id.eq.${user.id})`)
-        .maybeSingle();
+      // Use the proper conversation service to prevent duplicates
+      const { data: conversation, error } = await getOrCreateConversation(user.id, mentorId);
 
-      if (!existingConversation) {
-        // Create new conversation
-        const { error } = await supabase
-          .from('conversations')
-          .insert({
-            user1_id: user.id,
-            user2_id: mentorId
-          });
-
-        if (error) {
-          console.error('Error creating conversation:', error);
-          toast.error('Failed to start conversation');
-        } else {
-          toast.success('Conversation started successfully');
-        }
+      if (error) {
+        console.error('Error creating/getting conversation:', error);
+        toast.error('Failed to start conversation');
+      } else {
+        toast.success('Conversation ready!');
       }
 
       // Clear the mentorId from URL after initialization
