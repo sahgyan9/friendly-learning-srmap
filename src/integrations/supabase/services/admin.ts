@@ -1,7 +1,7 @@
-
 import { supabase } from "@/integrations/supabase/client";
+import { InputSanitizer } from "@/utils/input-sanitization";
 
-// Function to check if a user is an admin
+// Function to check if a user is an admin using the secure database function
 export async function isUserAdmin(userId?: string) {
   try {
     // If no userId is provided, get the current user
@@ -15,18 +15,17 @@ export async function isUserAdmin(userId?: string) {
       userId = session.user.id;
     }
     
-    const { data, error } = await supabase
-      .from('users')
-      .select('is_admin')
-      .eq('id', userId)
-      .maybeSingle();
+    // Use the secure database function instead of direct query
+    const { data, error } = await supabase.rpc('is_admin_user', {
+      user_id: userId
+    });
     
-    if (error || !data) {
-      console.error("Error fetching user admin status:", error);
+    if (error) {
+      console.error("Error checking admin status:", error);
       return false;
     }
     
-    return data.is_admin === true;
+    return data === true;
   } catch (error) {
     console.error("Exception in isUserAdmin:", error);
     return false;
@@ -130,7 +129,7 @@ export async function getAdminUsers() {
   }
 }
 
-// Enhanced user search by email or name
+// Enhanced user search by email or name with improved security
 export async function getUserByEmail(query: string) {
   try {
     // Check if current user is admin
@@ -140,10 +139,16 @@ export async function getUserByEmail(query: string) {
       throw new Error("Only admins can search for users");
     }
     
-    // Input validation and sanitization
-    const sanitizedQuery = sanitizeInput(query);
+    // Enhanced input validation and sanitization
+    const sanitizedQuery = InputSanitizer.sanitizeSearchQuery(query);
     if (!sanitizedQuery || sanitizedQuery.length < 2) {
       throw new Error("Query must be at least 2 characters long");
+    }
+    
+    // Check rate limiting
+    const userKey = `search_${(await supabase.auth.getUser()).data.user?.id}`;
+    if (!InputSanitizer.checkRateLimit(userKey, 20, 60000)) {
+      throw new Error("Too many search requests. Please wait before trying again.");
     }
     
     console.log("Searching for users with query:", sanitizedQuery);
@@ -221,7 +226,7 @@ export async function getMentorsForBadges() {
   }
 }
 
-// New function to log admin actions using the database function
+// Log admin actions using the secure database function
 async function logAdminAction(actionType: string, targetUserId?: string, actionDetails?: any) {
   try {
     const { error } = await supabase.rpc('log_admin_action', {
@@ -238,19 +243,7 @@ async function logAdminAction(actionType: string, targetUserId?: string, actionD
   }
 }
 
-// Input sanitization utility
-function sanitizeInput(input: string): string {
-  if (!input) return '';
-  
-  // Remove potentially dangerous characters and trim
-  return input
-    .trim()
-    .replace(/[<>\"']/g, '') // Remove HTML/script injection chars
-    .replace(/;/g, '') // Remove SQL injection chars
-    .slice(0, 100); // Limit length
-}
-
-// Get admin audit logs (new function)
+// Get admin audit logs (enhanced with better error handling)
 export async function getAdminAuditLogs(limit: number = 50) {
   try {
     const isAdmin = await isUserAdmin();

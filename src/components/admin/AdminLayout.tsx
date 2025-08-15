@@ -1,25 +1,28 @@
 
+import { ReactNode } from "react";
+import { 
+  Users, 
+  MessageSquare, 
+  Award, 
+  Settings, 
+  Shield,
+  UserCheck, 
+  UsersIcon,
+  ShoppingCart,
+  BarChart3
+} from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import {
-  Users,
-  Settings,
-  BarChart3,
-  Award,
-  UserCheck,
-  ShoppingCart,
-  MessageSquare,
-  Mail
-} from "lucide-react";
+import Navbar from "@/components/Navbar";
 
 interface AdminLayoutProps {
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
 const AdminLayout = ({ children }: AdminLayoutProps) => {
   const location = useLocation();
 
-  const navigation = [
+  const navigationItems = [
     {
       name: "Dashboard",
       href: "/admin",
@@ -27,10 +30,10 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
       current: location.pathname === "/admin",
     },
     {
-      name: "Badges",
-      href: "/admin/badges",
-      icon: Award,
-      current: location.pathname === "/admin/badges",
+      name: "Contact Messages",
+      href: "/admin/contact-messages", 
+      icon: MessageSquare,
+      current: location.pathname === "/admin/contact-messages",
     },
     {
       name: "Mentor Verification",
@@ -39,15 +42,15 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
       current: location.pathname === "/admin/mentor-verification",
     },
     {
-      name: "Contact Messages",
-      href: "/admin/contact-messages",
-      icon: Mail,
-      current: location.pathname === "/admin/contact-messages",
+      name: "Badge Management",
+      href: "/admin/badges",
+      icon: Award,
+      current: location.pathname === "/admin/badges",
     },
     {
       name: "Team Members",
       href: "/admin/team-members",
-      icon: Users,
+      icon: UsersIcon,
       current: location.pathname === "/admin/team-members",
     },
     {
@@ -55,6 +58,12 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
       href: "/admin/marketplace",
       icon: ShoppingCart,
       current: location.pathname === "/admin/marketplace",
+    },
+    {
+      name: "Security",
+      href: "/admin/security",
+      icon: Shield,
+      current: location.pathname === "/admin/security",
     },
     {
       name: "Settings",
@@ -65,72 +74,47 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
   ];
 
   return (
-    <div className="flex h-full">
-      {/* Sidebar */}
-      <div className="hidden md:flex md:w-64 md:flex-col">
-        <div className="flex flex-col flex-grow pt-5 bg-card overflow-y-auto border-r">
-          <div className="flex items-center flex-shrink-0 px-4">
-            <h2 className="text-lg font-semibold text-foreground">Admin Panel</h2>
+    <div className="min-h-screen bg-gray-50">
+      <Navbar />
+      <div className="flex">
+        {/* Sidebar */}
+        <div className="w-64 bg-white shadow-sm min-h-screen pt-6">
+          <div className="px-6 pb-4">
+            <h2 className="text-lg font-semibold text-gray-900">Admin Panel</h2>
           </div>
-          <div className="mt-8 flex-grow flex flex-col">
-            <nav className="flex-1 px-2 space-y-1">
-              {navigation.map((item) => {
-                const Icon = item.icon;
-                return (
+          <nav className="px-3">
+            <ul className="space-y-1">
+              {navigationItems.map((item) => (
+                <li key={item.name}>
                   <Link
-                    key={item.name}
                     to={item.href}
                     className={cn(
+                      "group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors",
                       item.current
-                        ? "bg-primary/10 text-primary border-r-2 border-primary"
-                        : "text-muted-foreground hover:bg-muted hover:text-foreground",
-                      "group flex items-center px-2 py-2 text-sm font-medium rounded-l-md transition-colors duration-200"
+                        ? "bg-primary text-primary-foreground"
+                        : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
                     )}
                   >
-                    <Icon
+                    <item.icon
                       className={cn(
-                        item.current ? "text-primary" : "text-muted-foreground",
-                        "mr-3 flex-shrink-0 h-5 w-5"
+                        "mr-3 h-5 w-5 flex-shrink-0",
+                        item.current
+                          ? "text-primary-foreground"
+                          : "text-gray-400 group-hover:text-gray-500"
                       )}
                     />
                     {item.name}
                   </Link>
-                );
-              })}
-            </nav>
-          </div>
+                </li>
+              ))}
+            </ul>
+          </nav>
         </div>
-      </div>
 
-      {/* Mobile menu button and content */}
-      <div className="md:hidden w-full">
-        <div className="flex flex-wrap gap-2 p-4 border-b bg-card">
-          {navigation.map((item) => {
-            const Icon = item.icon;
-            return (
-              <Link
-                key={item.name}
-                to={item.href}
-                className={cn(
-                  item.current
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground hover:bg-muted/80",
-                  "flex items-center px-3 py-2 text-xs font-medium rounded-md transition-colors duration-200"
-                )}
-              >
-                <Icon className="mr-2 h-4 w-4" />
-                {item.name}
-              </Link>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Main content */}
-      <div className="flex flex-col flex-1 overflow-hidden">
-        <main className="flex-1 relative overflow-y-auto focus:outline-none p-6">
+        {/* Main content */}
+        <div className="flex-1 p-8">
           {children}
-        </main>
+        </div>
       </div>
     </div>
   );

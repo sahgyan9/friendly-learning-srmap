@@ -41,6 +41,36 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_recovery: {
+        Row: {
+          created_at: string | null
+          created_by: string
+          expires_at: string
+          id: string
+          recovery_code: string
+          used_at: string | null
+          used_by: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by: string
+          expires_at?: string
+          id?: string
+          recovery_code: string
+          used_at?: string | null
+          used_by?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string
+          expires_at?: string
+          id?: string
+          recovery_code?: string
+          used_at?: string | null
+          used_by?: string | null
+        }
+        Relationships: []
+      }
       ai_conversations: {
         Row: {
           context: Json | null
@@ -924,6 +954,10 @@ export type Database = {
           updated_at: string
         }[]
       }
+      is_admin_user: {
+        Args: { user_id?: string }
+        Returns: boolean
+      }
       log_admin_action: {
         Args: { action_details?: Json; action_type: string; target_id?: string }
         Returns: undefined
@@ -948,6 +982,10 @@ export type Database = {
       mark_messages_delivered: {
         Args: { p_conversation_id: string; p_user_id: string }
         Returns: undefined
+      }
+      promote_to_admin_with_code: {
+        Args: { recovery_code: string; target_user_id: string }
+        Returns: boolean
       }
       send_message: {
         Args: {
