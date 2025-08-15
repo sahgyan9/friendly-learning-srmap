@@ -74,6 +74,31 @@ export const getCommunityPosts = async (limit?: number, offset?: number) => {
   return { data: data as CommunityPost[], error: null };
 };
 
+// Get a single community post by ID
+export const getCommunityPostById = async (postId: string) => {
+  const { data, error } = await supabase
+    .from('community_posts')
+    .select(`
+      *,
+      mentor:mentors!inner(
+        id,
+        name,
+        profile_image,
+        department,
+        rating
+      )
+    `)
+    .eq('id', postId)
+    .single();
+
+  if (error) {
+    console.error('Error fetching community post:', error);
+    return { data: null, error };
+  }
+
+  return { data: data as CommunityPost, error: null };
+};
+
 // Get posts by mentor
 export const getPostsByMentor = async (mentorId: string) => {
   const { data, error } = await supabase

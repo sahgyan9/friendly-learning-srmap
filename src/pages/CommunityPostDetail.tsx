@@ -9,7 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Heart, MessageCircle, Share2, Bookmark, ArrowLeft, Send, MoreHorizontal } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import {
-  getCommunityPosts,
+  getCommunityPostById,
   togglePostLike,
   checkUserLikedPost,
   getPostComments,
@@ -29,7 +29,7 @@ const POST_TYPES = [
 ];
 
 const CommunityPostDetail = () => {
-  const { postId } = useParams<{ postId: string }>();
+  const { id: postId } = useParams<{ id: string }>();
   const { user, profile } = useAuth();
   const navigate = useNavigate();
   const [post, setPost] = useState<CommunityPost | null>(null);
@@ -48,24 +48,18 @@ const CommunityPostDetail = () => {
 
   const fetchPost = async () => {
     setLoading(true);
-    const { data, error } = await getCommunityPosts();
+    const { data, error } = await getCommunityPostById(postId!);
 
-    if (error) {
+    if (error || !data) {
       toast.error("Failed to load post");
       console.error(error);
       navigate('/community-posts');
-    } else if (data) {
-      const foundPost = data.find(p => p.id === postId);
-      if (foundPost) {
-        if (user) {
-          const { liked } = await checkUserLikedPost(foundPost.id);
-          setPost({ ...foundPost, user_has_liked: liked });
-        } else {
-          setPost(foundPost);
-        }
+    } else {
+      if (user) {
+        const { liked } = await checkUserLikedPost(data.id);
+        setPost({ ...data, user_has_liked: liked });
       } else {
-        toast.error("Post not found");
-        navigate('/community-posts');
+        setPost(data);
       }
     }
     setLoading(false);
