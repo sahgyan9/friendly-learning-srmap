@@ -88,7 +88,7 @@ const CommunityPosts = () => {
   };
 
   const handlePostClick = (postId: string) => {
-    navigate(`/community-posts/${postId}`);
+    navigate(`/community/${postId}`);
   };
 
   const handleMentorClick = (mentorId: string, event: React.MouseEvent) => {
@@ -102,10 +102,10 @@ const CommunityPosts = () => {
       await navigator.share({
         title: post.title,
         text: post.content,
-        url: `${window.location.origin}/community-posts/${post.id}`,
+        url: `${window.location.origin}/community/${post.id}`,
       });
     } catch (error) {
-      navigator.clipboard.writeText(`${window.location.origin}/community-posts/${post.id}`);
+      navigator.clipboard.writeText(`${window.location.origin}/community/${post.id}`);
       toast.success("Link copied to clipboard!");
     }
   };
