@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -824,7 +824,33 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      team_members_public: {
+        Row: {
+          created_at: string | null
+          id: string | null
+          image_url: string | null
+          name: string | null
+          position: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string | null
+          image_url?: string | null
+          name?: string | null
+          position?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string | null
+          image_url?: string | null
+          name?: string | null
+          position?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       auto_award_performance_badges: {
@@ -832,7 +858,7 @@ export type Database = {
         Returns: undefined
       }
       can_user_rate_mentor: {
-        Args: { user_id: string; mentor_id: string }
+        Args: { mentor_id: string; user_id: string }
         Returns: boolean
       }
       create_conversation: {
@@ -879,16 +905,16 @@ export type Database = {
       get_mentor_reviews: {
         Args: { mentor_id: string }
         Returns: {
+          created_at: string
           id: string
           rating: number
           review_text: string
-          created_at: string
-          reviewer_name: string
           reviewer_image: string
+          reviewer_name: string
         }[]
       }
       log_admin_action: {
-        Args: { action_type: string; target_id?: string; action_details?: Json }
+        Args: { action_details?: Json; action_type: string; target_id?: string }
         Returns: undefined
       }
       mark_messages_as_read: {
@@ -914,10 +940,10 @@ export type Database = {
       }
       send_message: {
         Args: {
-          p_conversation_id: string
-          p_sender_id: string
-          p_receiver_id: string
           p_content: string
+          p_conversation_id: string
+          p_receiver_id: string
+          p_sender_id: string
         }
         Returns: {
           content: string
@@ -945,21 +971,21 @@ export type Database = {
       update_typing_indicator: {
         Args: {
           p_conversation_id: string
-          p_user_id: string
           p_is_typing: boolean
+          p_user_id: string
         }
         Returns: undefined
       }
       update_user_presence: {
-        Args: { p_user_id: string; p_is_online: boolean }
+        Args: { p_is_online: boolean; p_user_id: string }
         Returns: undefined
       }
       update_verification_status: {
         Args: {
-          verification_id: string
-          new_status: string
           admin_id: string
+          new_status: string
           reason?: string
+          verification_id: string
         }
         Returns: undefined
       }
