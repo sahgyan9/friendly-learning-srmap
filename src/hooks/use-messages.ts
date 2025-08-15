@@ -56,6 +56,7 @@ export const useMessages = (userId: string) => {
       }
 
       // Update conversations list to show latest message
+      console.log('Updating conversation list with new message:', newMessage);
       setConversations(prev => 
         prev.map(conv => 
           conv.id === newMessage.conversation_id
@@ -141,8 +142,7 @@ export const useMessages = (userId: string) => {
       setIsSending,
       setError
     );
-    // Refetch conversations to update the list with the latest message preview
-    fetchConversations(setConversations, () => {}, setIsLoadingConversations, setError);
+    // No need to refetch conversations - real-time updates will handle this
   };
 
   return {
