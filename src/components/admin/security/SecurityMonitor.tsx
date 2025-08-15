@@ -10,8 +10,8 @@ interface AuditLog {
   action: string;
   created_at: string;
   details?: any;
-  admin_user?: { name: string; email: string };
-  target_user?: { name: string; email: string };
+  admin_user?: { name: string; email: string } | null;
+  target_user?: { name: string; email: string } | null;
 }
 
 const SecurityMonitor = () => {
@@ -91,7 +91,7 @@ const SecurityMonitor = () => {
             </div>
             <div className="text-center p-4 bg-blue-50 rounded-lg">
               <div className="text-2xl font-bold text-blue-600">
-                {new Set(auditLogs.map(log => log.admin_user?.email)).size}
+                {new Set(auditLogs.map(log => log.admin_user?.email).filter(Boolean)).size}
               </div>
               <div className="text-sm text-blue-700">Active Admins</div>
             </div>

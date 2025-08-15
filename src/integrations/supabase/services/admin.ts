@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { InputSanitizer } from "@/utils/input-sanitization";
 
@@ -243,7 +244,7 @@ async function logAdminAction(actionType: string, targetUserId?: string, actionD
   }
 }
 
-// Get admin audit logs (enhanced with better error handling)
+// Get admin audit logs with manual joins to handle missing foreign keys
 export async function getAdminAuditLogs(limit: number = 50) {
   try {
     const isAdmin = await isUserAdmin();
@@ -252,22 +253,53 @@ export async function getAdminAuditLogs(limit: number = 50) {
       throw new Error("Only admins can view audit logs");
     }
     
-    const { data, error } = await supabase
+    // First get the audit logs
+    const { data: auditLogs, error: auditError } = await supabase
       .from('admin_audit_log')
-      .select(`
-        *,
-        admin_user:users!admin_user_id(name, email),
-        target_user:users!target_user_id(name, email)
-      `)
+      .select('*')
       .order('created_at', { ascending: false })
       .limit(limit);
     
-    if (error) {
-      console.error("Error fetching audit logs:", error);
-      throw error;
+    if (auditError) {
+      console.error("Error fetching audit logs:", auditError);
+      throw auditError;
     }
+
+    if (!auditLogs || auditLogs.length === 0) {
+      return [];
+    }
+
+    // Get all unique user IDs from the audit logs
+    const adminUserIds = [...new Set(auditLogs.map(log => log.admin_user_id).filter(Boolean))];
+    const targetUserIds = [...new Set(auditLogs.map(log => log.target_user_id).filter(Boolean))];
+    const allUserIds = [...new Set([...adminUserIds, ...targetUserIds])];
+
+    // Fetch user data for all referenced users
+    const { data: users, error: usersError } = await supabase
+      .from('users')
+      .select('id, name, email')
+      .in('id', allUserIds);
+
+    if (usersError) {
+      console.error("Error fetching users for audit logs:", usersError);
+    }
+
+    // Create a map of user ID to user data for quick lookup
+    const userMap = new Map();
+    if (users) {
+      users.forEach(user => {
+        userMap.set(user.id, user);
+      });
+    }
+
+    // Combine audit logs with user data
+    const enrichedLogs = auditLogs.map(log => ({
+      ...log,
+      admin_user: log.admin_user_id ? userMap.get(log.admin_user_id) || null : null,
+      target_user: log.target_user_id ? userMap.get(log.target_user_id) || null : null
+    }));
     
-    return data;
+    return enrichedLogs;
   } catch (error) {
     console.error("Exception in getAdminAuditLogs:", error);
     throw error;
