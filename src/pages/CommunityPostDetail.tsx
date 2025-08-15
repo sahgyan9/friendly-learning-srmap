@@ -8,13 +8,13 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Heart, MessageCircle, Share2, Bookmark, ArrowLeft, Send, MoreHorizontal } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { 
-  getCommunityPosts, 
-  togglePostLike, 
-  checkUserLikedPost, 
-  getPostComments, 
+import {
+  getCommunityPosts,
+  togglePostLike,
+  checkUserLikedPost,
+  getPostComments,
   addPostComment,
-  type CommunityPost 
+  type CommunityPost
 } from "@/integrations/supabase/services/community-posts";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
@@ -49,11 +49,11 @@ const CommunityPostDetail = () => {
   const fetchPost = async () => {
     setLoading(true);
     const { data, error } = await getCommunityPosts();
-    
+
     if (error) {
       toast.error("Failed to load post");
       console.error(error);
-      navigate('/community');
+      navigate('/community-posts');
     } else if (data) {
       const foundPost = data.find(p => p.id === postId);
       if (foundPost) {
@@ -65,7 +65,7 @@ const CommunityPostDetail = () => {
         }
       } else {
         toast.error("Post not found");
-        navigate('/community');
+        navigate('/community-posts');
       }
     }
     setLoading(false);
@@ -73,17 +73,17 @@ const CommunityPostDetail = () => {
 
   const fetchComments = async () => {
     if (!postId) return;
-    
+
     setLoadingComments(true);
     const { data, error } = await getPostComments(postId);
-    
+
     if (error) {
       toast.error("Failed to load comments");
       console.error(error);
     } else if (data) {
       setComments(data);
     }
-    
+
     setLoadingComments(false);
   };
 
@@ -94,7 +94,7 @@ const CommunityPostDetail = () => {
     }
 
     const { error, liked } = await togglePostLike(post.id);
-    
+
     if (error) {
       toast.error("Failed to update like");
       console.error(error);
@@ -117,7 +117,7 @@ const CommunityPostDetail = () => {
 
     setSubmittingComment(true);
     const { data, error } = await addPostComment(post.id, newComment.trim());
-    
+
     if (error) {
       toast.error("Failed to add comment");
       console.error(error);
@@ -129,13 +129,13 @@ const CommunityPostDetail = () => {
         comments_count: post.comments_count + 1
       });
     }
-    
+
     setSubmittingComment(false);
   };
 
   const handleShare = async () => {
     if (!post) return;
-    
+
     try {
       await navigator.share({
         title: post.title,
@@ -192,7 +192,7 @@ const CommunityPostDetail = () => {
         <div className="container mx-auto px-4 py-8 max-w-4xl">
           <div className="text-center py-12">
             <h3 className="text-lg font-semibold mb-2">Post not found</h3>
-            <Link to="/community">
+            <Link to="/community-posts">
               <Button variant="outline">Back to Community Posts</Button>
             </Link>
           </div>
@@ -208,7 +208,7 @@ const CommunityPostDetail = () => {
         <div className="container mx-auto px-4 py-8 max-w-4xl">
           {/* Back Navigation */}
           <div className="mb-6">
-            <Link to="/community">
+            <Link to="/community-posts">
               <Button variant="ghost" className="flex items-center gap-2">
                 <ArrowLeft className="h-4 w-4" />
                 Back to Community Posts
@@ -290,7 +290,7 @@ const CommunityPostDetail = () => {
                     <Heart className={`h-6 w-6 transition-all ${post.user_has_liked ? 'fill-red-500 text-red-500 scale-110' : 'group-hover:scale-110'}`} />
                     <span className="font-medium">{post.likes_count} likes</span>
                   </button>
-                  
+
                   <div className="flex items-center gap-3 text-muted-foreground">
                     <MessageCircle className="h-6 w-6" />
                     <span className="font-medium">{post.comments_count} comments</span>
@@ -304,7 +304,7 @@ const CommunityPostDetail = () => {
                     <span className="font-medium">Share</span>
                   </button>
                 </div>
-                
+
                 <div className="flex items-center gap-3">
                   {post.post_type !== 'general' && (
                     <Button className="px-6">
@@ -337,7 +337,7 @@ const CommunityPostDetail = () => {
                       className="resize-none"
                     />
                     <div className="flex justify-end">
-                      <Button 
+                      <Button
                         onClick={handleAddComment}
                         disabled={!newComment.trim() || submittingComment}
                         className="flex items-center gap-2"
@@ -355,7 +355,7 @@ const CommunityPostDetail = () => {
           {/* Comments Section */}
           <div className="space-y-4">
             <h3 className="text-xl font-semibold">Comments ({post.comments_count})</h3>
-            
+
             {loadingComments ? (
               <div className="space-y-4">
                 {[...Array(3)].map((_, i) => (

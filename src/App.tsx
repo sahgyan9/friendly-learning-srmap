@@ -51,8 +51,8 @@ function App() {
             <Route path="/messages" element={<Messages />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/about" element={<About />} />
-            <Route path="/community" element={<CommunityPosts />} />
-            <Route path="/community/:id" element={<CommunityPostDetail />} />
+            <Route path="/community-posts" element={<CommunityPosts />} />
+            <Route path="/community-posts/:id" element={<CommunityPostDetail />} />
             <Route path="/marketplace" element={<MarketPlace />} />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/admin/contact-messages" element={<AdminContactMessages />} />

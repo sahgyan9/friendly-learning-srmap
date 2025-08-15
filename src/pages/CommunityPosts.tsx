@@ -42,7 +42,7 @@ const CommunityPosts = () => {
   const fetchPosts = async () => {
     setLoading(true);
     const { data, error } = await getCommunityPosts();
-    
+
     if (error) {
       toast.error("Failed to load community posts");
       console.error(error);
@@ -70,25 +70,25 @@ const CommunityPosts = () => {
     }
 
     const { error, liked } = await togglePostLike(postId);
-    
+
     if (error) {
       toast.error("Failed to update like");
       console.error(error);
     } else {
-      setPosts(posts.map(post => 
-        post.id === postId 
-          ? { 
-              ...post, 
-              user_has_liked: liked,
-              likes_count: liked ? post.likes_count + 1 : post.likes_count - 1
-            }
+      setPosts(posts.map(post =>
+        post.id === postId
+          ? {
+            ...post,
+            user_has_liked: liked,
+            likes_count: liked ? post.likes_count + 1 : post.likes_count - 1
+          }
           : post
       ));
     }
   };
 
   const handlePostClick = (postId: string) => {
-    navigate(`/community/${postId}`);
+    navigate(`/community-posts/${postId}`);
   };
 
   const handleMentorClick = (mentorId: string, event: React.MouseEvent) => {
@@ -102,10 +102,10 @@ const CommunityPosts = () => {
       await navigator.share({
         title: post.title,
         text: post.content,
-        url: `${window.location.origin}/community/${post.id}`,
+        url: `${window.location.origin}/community-posts/${post.id}`,
       });
     } catch (error) {
-      navigator.clipboard.writeText(`${window.location.origin}/community/${post.id}`);
+      navigator.clipboard.writeText(`${window.location.origin}/community-posts/${post.id}`);
       toast.success("Link copied to clipboard!");
     }
   };
@@ -120,7 +120,7 @@ const CommunityPosts = () => {
     try {
       // First get mentor data to ensure it exists
       const { data: mentorData, error: mentorError } = await getMentorById(mentorId);
-      
+
       if (mentorError || !mentorData) {
         toast.error("Mentor not found");
         return;
@@ -173,11 +173,11 @@ const CommunityPosts = () => {
 
   const filteredPosts = posts.filter(post => {
     const matchesSearch = post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         post.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         post.tags?.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
-    
+      post.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      post.tags?.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
+
     const matchesType = selectedType === 'all' || post.post_type === selectedType;
-    
+
     return matchesSearch && matchesType;
   });
 
@@ -230,7 +230,7 @@ const CommunityPosts = () => {
               <h1 className="text-3xl font-bold">Community Posts</h1>
               <p className="text-muted-foreground">Connect, collaborate, and find partners for your projects</p>
             </div>
-            
+
             <CreatePostButton onPostCreated={fetchPosts} />
           </div>
 
@@ -245,7 +245,7 @@ const CommunityPosts = () => {
                 className="pl-10"
               />
             </div>
-            
+
             <Select value={selectedType} onValueChange={setSelectedType}>
               <SelectTrigger className="w-full sm:w-48">
                 <Filter className="h-4 w-4 mr-2" />
@@ -267,15 +267,15 @@ const CommunityPosts = () => {
               <div className="text-center py-12">
                 <h3 className="text-lg font-semibold mb-2">No posts found</h3>
                 <p className="text-muted-foreground">
-                  {searchTerm || selectedType !== 'all' 
-                    ? "Try adjusting your search or filters" 
+                  {searchTerm || selectedType !== 'all'
+                    ? "Try adjusting your search or filters"
                     : "Be the first to create a community post!"}
                 </p>
               </div>
             ) : (
               filteredPosts.map((post) => (
-                <Card 
-                  key={post.id} 
+                <Card
+                  key={post.id}
                   className="cursor-pointer hover:shadow-lg transition-all duration-200 border-0 shadow-sm hover:shadow-md"
                   onClick={() => handlePostClick(post.id)}
                 >
@@ -283,7 +283,7 @@ const CommunityPosts = () => {
                   <CardHeader className="pb-4">
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-3">
-                        <Avatar 
+                        <Avatar
                           className="h-12 w-12 ring-2 ring-background shadow-sm cursor-pointer hover:ring-primary/20 transition-all"
                           onClick={(e) => handleMentorClick(post.mentor.id, e)}
                         >
@@ -294,7 +294,7 @@ const CommunityPosts = () => {
                         </Avatar>
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
-                            <h3 
+                            <h3
                               className="font-semibold text-foreground hover:text-primary transition-colors cursor-pointer"
                               onClick={(e) => handleMentorClick(post.mentor.id, e)}
                             >
@@ -320,7 +320,7 @@ const CommunityPosts = () => {
                       </Button>
                     </div>
                   </CardHeader>
-                  
+
                   <CardContent className="pt-0 space-y-4">
                     {/* Post Content */}
                     <div>
@@ -339,7 +339,7 @@ const CommunityPosts = () => {
                         />
                       </div>
                     )}
-                    
+
                     {/* Post Type & Tags */}
                     <div className="flex flex-wrap items-center gap-2">
                       <Badge variant="secondary" className="text-xs font-medium">
@@ -356,7 +356,7 @@ const CommunityPosts = () => {
                         </span>
                       )}
                     </div>
-                    
+
                     {/* Engagement Bar */}
                     <div className="flex items-center justify-between pt-3 border-t border-border/50">
                       <div className="flex items-center gap-6">
@@ -367,7 +367,7 @@ const CommunityPosts = () => {
                           <Heart className={`h-5 w-5 transition-all ${post.user_has_liked ? 'fill-red-500 text-red-500 scale-110' : 'group-hover:scale-110'}`} />
                           <span className="font-medium">{post.likes_count}</span>
                         </button>
-                        
+
                         <button
                           onClick={(e) => toggleComments(post.id, e)}
                           className="flex items-center gap-2 text-sm text-muted-foreground hover:text-blue-500 transition-colors"
@@ -388,7 +388,7 @@ const CommunityPosts = () => {
                           <Share2 className="h-4 w-4" />
                         </button>
                       </div>
-                      
+
                       <div className="flex items-center gap-2">
                         <Button
                           size="sm"
@@ -411,12 +411,12 @@ const CommunityPosts = () => {
                     {/* Inline Comments */}
                     {expandedComments.has(post.id) && (
                       <div className="pt-4 border-t border-border/50">
-                        <InlineComments 
-                          postId={post.id} 
+                        <InlineComments
+                          postId={post.id}
                           onCommentAdded={() => {
                             // Update the comments count
-                            setPosts(posts.map(p => 
-                              p.id === post.id 
+                            setPosts(posts.map(p =>
+                              p.id === post.id
                                 ? { ...p, comments_count: p.comments_count + 1 }
                                 : p
                             ));
