@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/context/AuthContext";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
@@ -30,8 +31,20 @@ import MarketplaceAdmin from "./pages/MarketplaceAdmin";
 import NotFound from "./pages/NotFound";
 import Unauthorized from "./pages/Unauthorized";
 
+// Create a new QueryClient instance for React Query
 const queryClient = new QueryClient();
 
+/**
+ * Main App component that sets up routing and global providers
+ * 
+ * The routing structure is organized as follows:
+ * 1. Public routes - accessible to all users
+ * 2. User protected routes - require authentication
+ * 3. Admin protected routes - require authentication + admin role
+ * 
+ * All admin routes use the ProtectedRoute component with requiredRole="admin"
+ * to ensure proper authentication and authorization before rendering.
+ */
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
@@ -39,30 +52,38 @@ function App() {
         <TooltipProvider>
           <Toaster />
           <Routes>
+            {/* Public Routes - No authentication required */}
             <Route path="/" element={<Index />} />
             <Route path="/signin" element={<SignIn />} />
             <Route path="/signup" element={<SignUp />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/profile" element={<UserProfile />} />
             <Route path="/mentors" element={<Mentors />} />
-            <Route path="/become-mentor" element={<BecomeMentor />} />
             <Route path="/mentor/:id" element={<MentorProfile />} />
-            <Route path="/messages" element={<Messages />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/about" element={<About />} />
             <Route path="/community-posts" element={<CommunityPosts />} />
             <Route path="/community-posts/:id" element={<CommunityPostDetail />} />
             <Route path="/marketplace" element={<MarketPlace />} />
-            <Route path="/admin" element={<AdminDashboard />} />
-            <Route path="/admin/contact-messages" element={<AdminContactMessages />} />
-            <Route path="/admin/mentor-verification" element={<AdminMentorVerification />} />
-            <Route path="/admin/badges" element={<AdminBadges />} />
-            <Route path="/admin/settings" element={<AdminSettings />} />
-            <Route path="/admin/security" element={<AdminSecurity />} />
-            <Route path="/admin/team-members" element={<TeamMembersAdmin />} />
-            <Route path="/admin/marketplace" element={<MarketplaceAdmin />} />
             <Route path="/unauthorized" element={<Unauthorized />} />
+            
+            {/* User Protected Routes - Require authentication */}
+            <Route path="/profile" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
+            <Route path="/become-mentor" element={<ProtectedRoute><BecomeMentor /></ProtectedRoute>} />
+            <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
+            
+            {/* Admin Protected Routes - Require authentication + admin role */}
+            {/* These routes will redirect to /unauthorized if the user is not an admin */}
+            <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>} />
+            <Route path="/admin/contact-messages" element={<ProtectedRoute requiredRole="admin"><AdminContactMessages /></ProtectedRoute>} />
+            <Route path="/admin/mentor-verification" element={<ProtectedRoute requiredRole="admin"><AdminMentorVerification /></ProtectedRoute>} />
+            <Route path="/admin/badges" element={<ProtectedRoute requiredRole="admin"><AdminBadges /></ProtectedRoute>} />
+            <Route path="/admin/settings" element={<ProtectedRoute requiredRole="admin"><AdminSettings /></ProtectedRoute>} />
+            <Route path="/admin/security" element={<ProtectedRoute requiredRole="admin"><AdminSecurity /></ProtectedRoute>} />
+            <Route path="/admin/team-members" element={<ProtectedRoute requiredRole="admin"><TeamMembersAdmin /></ProtectedRoute>} />
+            <Route path="/admin/marketplace" element={<ProtectedRoute requiredRole="admin"><MarketplaceAdmin /></ProtectedRoute>} />
+            
+            {/* 404 Page - Catch all unmatched routes */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </TooltipProvider>
