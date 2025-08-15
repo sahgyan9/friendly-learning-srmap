@@ -12,10 +12,30 @@ export type TeamMember = {
 }
 
 export async function getTeamMembers() {
+  // Check if user is admin to determine which data to return
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (user) {
+    // Check if user is admin
+    const { data: userData } = await supabase
+      .from('users')
+      .select('is_admin')
+      .eq('id', user.id)
+      .maybeSingle();
+    
+    if (userData?.is_admin) {
+      // Admin can see all data including emails
+      const { data, error } = await supabase
+        .from('team_members')
+        .select('*')
+        .order('name');
+      return { data, error };
+    }
+  }
+  
+  // Public users get filtered data (no emails)
   const { data, error } = await supabase
-    .from('team_members')
-    .select('*')
-    .order('name');
+    .rpc('get_team_members_public');
   
   return { data, error };
 }

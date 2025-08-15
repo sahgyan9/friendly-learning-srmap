@@ -913,6 +913,17 @@ export type Database = {
           reviewer_name: string
         }[]
       }
+      get_team_members_public: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          created_at: string
+          id: string
+          image_url: string
+          name: string
+          position: string
+          updated_at: string
+        }[]
+      }
       log_admin_action: {
         Args: { action_details?: Json; action_type: string; target_id?: string }
         Returns: undefined
