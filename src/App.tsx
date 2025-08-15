@@ -2,7 +2,7 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/context/AuthContext";
 import Index from "./pages/Index";
 import SignIn from "./pages/SignIn";
@@ -38,35 +38,33 @@ function App() {
       <AuthProvider>
         <TooltipProvider>
           <Toaster />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/signin" element={<SignIn />} />
-              <Route path="/signup" element={<SignUp />} />
-              <Route path="/forgot-password" element={<ForgotPassword />} />
-              <Route path="/reset-password" element={<ResetPassword />} />
-              <Route path="/profile" element={<UserProfile />} />
-              <Route path="/mentors" element={<Mentors />} />
-              <Route path="/become-mentor" element={<BecomeMentor />} />
-              <Route path="/mentor/:id" element={<MentorProfile />} />
-              <Route path="/messages" element={<Messages />} />
-              <Route path="/contact" element={<Contact />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/community" element={<CommunityPosts />} />
-              <Route path="/community/:id" element={<CommunityPostDetail />} />
-              <Route path="/marketplace" element={<MarketPlace />} />
-              <Route path="/admin" element={<AdminDashboard />} />
-              <Route path="/admin/contact-messages" element={<AdminContactMessages />} />
-              <Route path="/admin/mentor-verification" element={<AdminMentorVerification />} />
-              <Route path="/admin/badges" element={<AdminBadges />} />
-              <Route path="/admin/settings" element={<AdminSettings />} />
-              <Route path="/admin/security" element={<AdminSecurity />} />
-              <Route path="/admin/team-members" element={<TeamMembersAdmin />} />
-              <Route path="/admin/marketplace" element={<MarketplaceAdmin />} />
-              <Route path="/unauthorized" element={<Unauthorized />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/signin" element={<SignIn />} />
+            <Route path="/signup" element={<SignUp />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/profile" element={<UserProfile />} />
+            <Route path="/mentors" element={<Mentors />} />
+            <Route path="/become-mentor" element={<BecomeMentor />} />
+            <Route path="/mentor/:id" element={<MentorProfile />} />
+            <Route path="/messages" element={<Messages />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/community" element={<CommunityPosts />} />
+            <Route path="/community/:id" element={<CommunityPostDetail />} />
+            <Route path="/marketplace" element={<MarketPlace />} />
+            <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin/contact-messages" element={<AdminContactMessages />} />
+            <Route path="/admin/mentor-verification" element={<AdminMentorVerification />} />
+            <Route path="/admin/badges" element={<AdminBadges />} />
+            <Route path="/admin/settings" element={<AdminSettings />} />
+            <Route path="/admin/security" element={<AdminSecurity />} />
+            <Route path="/admin/team-members" element={<TeamMembersAdmin />} />
+            <Route path="/admin/marketplace" element={<MarketplaceAdmin />} />
+            <Route path="/unauthorized" element={<Unauthorized />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
         </TooltipProvider>
       </AuthProvider>
     </QueryClientProvider>
