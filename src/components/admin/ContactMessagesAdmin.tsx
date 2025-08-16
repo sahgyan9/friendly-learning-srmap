@@ -3,11 +3,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
-import { Mail, Calendar, User, MessageSquare } from "lucide-react";
+import { Mail, Calendar, User, MessageSquare, Send, History } from "lucide-react";
 import { format } from "date-fns";
+import AdminEmailResponse from "@/components/admin/contact/AdminEmailResponse";
+import ResponseHistory from "@/components/admin/contact/ResponseHistory";
 
 interface ContactMessage {
   id: string;
@@ -82,8 +85,8 @@ const ContactMessagesAdmin = () => {
       }
 
       // Update local state
-      setMessages(prev => prev.map(msg => 
-        msg.id === messageId 
+      setMessages(prev => prev.map(msg =>
+        msg.id === messageId
           ? { ...msg, status: status as 'unread' | 'read' | 'responded', admin_notes: notes || msg.admin_notes }
           : msg
       ));
@@ -102,7 +105,7 @@ const ContactMessagesAdmin = () => {
   const handleViewMessage = (message: ContactMessage) => {
     setSelectedMessage(message);
     setAdminNotes(message.admin_notes || "");
-    
+
     // Mark as read if it's unread
     if (message.status === 'unread') {
       updateMessageStatus(message.id, 'read');
@@ -161,11 +164,10 @@ const ContactMessagesAdmin = () => {
             </Card>
           ) : (
             messages.map((message) => (
-              <Card 
-                key={message.id} 
-                className={`cursor-pointer hover:shadow-md transition-shadow ${
-                  selectedMessage?.id === message.id ? 'ring-2 ring-primary' : ''
-                }`}
+              <Card
+                key={message.id}
+                className={`cursor-pointer hover:shadow-md transition-shadow ${selectedMessage?.id === message.id ? 'ring-2 ring-primary' : ''
+                  }`}
                 onClick={() => handleViewMessage(message)}
               >
                 <CardHeader className="pb-3">
@@ -203,70 +205,86 @@ const ContactMessagesAdmin = () => {
         {/* Message Detail */}
         <div className="sticky top-6">
           {selectedMessage ? (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <MessageSquare className="h-5 w-5" />
-                  Message Details
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium">From:</label>
-                  <p className="text-sm">{selectedMessage.name} ({selectedMessage.email})</p>
-                </div>
-                
-                <div>
-                  <label className="text-sm font-medium">Subject:</label>
-                  <p className="text-sm">{selectedMessage.subject}</p>
-                </div>
-                
-                <div>
-                  <label className="text-sm font-medium">Message:</label>
-                  <p className="text-sm whitespace-pre-wrap bg-muted p-3 rounded">
-                    {selectedMessage.message}
-                  </p>
-                </div>
-                
-                <div>
-                  <label className="text-sm font-medium">Received:</label>
-                  <p className="text-sm">
-                    {format(new Date(selectedMessage.created_at), 'MMM d, yyyy at h:mm a')}
-                  </p>
-                </div>
+            <div className="space-y-6">
+              {/* Message Details Card */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <MessageSquare className="h-5 w-5" />
+                    Message Details
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <label className="text-sm font-medium">From:</label>
+                    <p className="text-sm">{selectedMessage.name} ({selectedMessage.email})</p>
+                  </div>
 
-                <div>
-                  <label htmlFor="admin-notes" className="text-sm font-medium block mb-2">
-                    Admin Notes:
-                  </label>
-                  <Textarea
-                    id="admin-notes"
-                    value={adminNotes}
-                    onChange={(e) => setAdminNotes(e.target.value)}
-                    placeholder="Add notes about this message..."
-                    rows={3}
-                  />
-                </div>
+                  <div>
+                    <label className="text-sm font-medium">Subject:</label>
+                    <p className="text-sm">{selectedMessage.subject}</p>
+                  </div>
 
-                <div className="flex gap-2">
-                  <Button
-                    onClick={() => updateMessageStatus(selectedMessage.id, 'read', adminNotes)}
-                    disabled={updating}
-                    variant="outline"
-                    size="sm"
-                  >
-                    Mark as Read
-                  </Button>
-                  <Button
-                    onClick={() => updateMessageStatus(selectedMessage.id, 'responded', adminNotes)}
-                    disabled={updating}
-                    size="sm"
-                  >
-                    Mark as Responded
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+                  <div>
+                    <label className="text-sm font-medium">Message:</label>
+                    <p className="text-sm whitespace-pre-wrap bg-muted p-3 rounded">
+                      {selectedMessage.message}
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium">Received:</label>
+                    <p className="text-sm">
+                      {format(new Date(selectedMessage.created_at), 'MMM d, yyyy at h:mm a')}
+                    </p>
+                  </div>
+
+                  <Separator />
+
+                  <div>
+                    <label htmlFor="admin-notes" className="text-sm font-medium block mb-2">
+                      Admin Notes:
+                    </label>
+                    <Textarea
+                      id="admin-notes"
+                      value={adminNotes}
+                      onChange={(e) => setAdminNotes(e.target.value)}
+                      placeholder="Add notes about this message..."
+                      rows={3}
+                    />
+                  </div>
+
+                  <div className="flex gap-2 flex-wrap">
+                    <AdminEmailResponse
+                      contactMessage={selectedMessage}
+                      onResponseSent={() => {
+                        fetchContactMessages();
+                        toast.success('Response sent successfully!');
+                      }}
+                    />
+                    <Button
+                      onClick={() => updateMessageStatus(selectedMessage.id, 'read', adminNotes)}
+                      disabled={updating}
+                      variant="outline"
+                      size="sm"
+                    >
+                      Mark as Read
+                    </Button>
+                    <Button
+                      onClick={() => updateMessageStatus(selectedMessage.id, 'responded', adminNotes)}
+                      disabled={updating}
+                      variant="outline"
+                      size="sm"
+                    >
+                      Mark as Responded
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Response History */}
+              <ResponseHistory contactMessage={selectedMessage} />
+            </div>
           ) : (
             <Card>
               <CardContent className="text-center py-8">
