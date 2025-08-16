@@ -1,8 +1,8 @@
 
 export const generateSitemap = () => {
-  const baseUrl = 'https://friendly-learning.lovable.app';
+  const baseUrl = 'https://friendly-learning-srmap.lovable.app';
   const currentDate = new Date().toISOString().split('T')[0];
-  
+
   const pages = [
     { url: '', priority: '1.0', changefreq: 'daily' },
     { url: '/mentors', priority: '0.9', changefreq: 'daily' },
@@ -28,7 +28,7 @@ ${pages.map(page => `  <url>
 // Function to generate sitemap file (would be used in build process)
 export const createSitemapFile = () => {
   if (typeof window !== 'undefined') return; // Only run in Node.js environment
-  
+
   const sitemap = generateSitemap();
   // In a real implementation, this would write to public/sitemap.xml
   console.log('Sitemap generated:', sitemap);

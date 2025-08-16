@@ -19,4 +19,10 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  // Configure static asset handling
+  publicDir: 'public',
+  build: {
+    // Copy public files to dist during build
+    copyPublicDir: true,
+  },
 }));

@@ -1,0 +1,47 @@
+# Enable gzip compression
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/plain
+    AddOutputFilterByType DEFLATE text/html
+    AddOutputFilterByType DEFLATE text/xml
+    AddOutputFilterByType DEFLATE text/css
+    AddOutputFilterByType DEFLATE application/xml
+    AddOutputFilterByType DEFLATE application/xhtml+xml
+    AddOutputFilterByType DEFLATE application/rss+xml
+    AddOutputFilterByType DEFLATE application/javascript
+    AddOutputFilterByType DEFLATE application/x-javascript
+</IfModule>
+
+# Set proper MIME types for SEO files
+<Files "robots.txt">
+    ForceType text/plain
+    Header set Content-Type "text/plain; charset=utf-8"
+</Files>
+
+<Files "sitemap.xml">
+    ForceType application/xml
+    Header set Content-Type "application/xml; charset=utf-8"
+</Files>
+
+# Cache static files
+<IfModule mod_expires.c>
+    ExpiresActive on
+    ExpiresByType text/plain "access plus 1 day"
+    ExpiresByType application/xml "access plus 1 day"
+</IfModule>
+
+# Handle React Router (SPA) routes
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # Allow access to robots.txt and sitemap.xml
+    RewriteRule ^robots\.txt$ - [L]
+    RewriteRule ^sitemap\.xml$ - [L]
+    
+    # Handle Angular and React Router
+    # Send all other requests to index.html
+    RewriteBase /
+    RewriteRule ^index\.html$ - [L]
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule . /index.html [L]
+</IfModule>
