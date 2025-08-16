@@ -7,7 +7,7 @@ export type CreateMentorVerification = Database['public']['Tables']['mentor_veri
 
 export const submitMentorApplication = async (application: CreateMentorVerification) => {
   console.log('Submitting mentor application:', application);
-  
+
   const { data, error } = await supabase
     .from('mentor_verifications')
     .insert(application)
@@ -25,7 +25,7 @@ export const submitMentorApplication = async (application: CreateMentorVerificat
 
 export const getMentorVerification = async (userId: string) => {
   console.log('Fetching mentor verification for user:', userId);
-  
+
   const { data, error } = await supabase
     .from('mentor_verifications')
     .select(`
@@ -45,7 +45,7 @@ export const getMentorVerification = async (userId: string) => {
 
 export const getAllMentorVerifications = async (status?: string) => {
   console.log('Fetching all mentor verifications with status:', status);
-  
+
   let query = supabase
     .from('mentor_verifications')
     .select(`
@@ -106,7 +106,7 @@ export const updateVerificationStatus = async (
 
 export const getVerificationStatistics = async () => {
   console.log('Fetching verification statistics');
-  
+
   const { data: stats, error } = await supabase
     .from('mentor_verifications')
     .select('status');
@@ -134,11 +134,11 @@ export const getVerificationStatistics = async () => {
 
 // Update and resubmit a rejected mentor application
 export const updateMentorApplication = async (
-  userId: string, 
+  userId: string,
   applicationData: Partial<CreateMentorVerification>
 ) => {
   console.log('Updating mentor application for user:', userId);
-  
+
   try {
     // First check if user has a rejected application
     const { data: existingApp, error: fetchError } = await supabase
@@ -194,7 +194,7 @@ export const updateMentorApplication = async (
 export const canEditApplication = async (userId: string) => {
   try {
     const { data, error } = await getMentorVerification(userId);
-    
+
     if (error) {
       return { canEdit: false, application: null, error };
     }

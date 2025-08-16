@@ -43,7 +43,7 @@ const BecomeMentor = () => {
   const checkEditEligibility = async () => {
     try {
       const result = await canEditApplication(user.id);
-      
+
       if (result.canEdit && result.application) {
         setEditMode(true);
         setExistingApplication(result.application);
@@ -62,7 +62,7 @@ const BecomeMentor = () => {
 
   const getFormDataFromApplication = () => {
     if (!existingApplication) return initialFormData;
-    
+
     const appData = existingApplication.application_data || {};
     return {
       name: appData.name || profile?.name || "",
@@ -137,8 +137,8 @@ const BecomeMentor = () => {
               </div>
             </CardContent>
           </Card>
-          
-          <MentorProfileForm 
+
+          <MentorProfileForm
             userId={user.id}
             initialData={getFormDataFromApplication()}
             isEditMode={true}
@@ -146,7 +146,7 @@ const BecomeMentor = () => {
           />
         </div>
       ) : (
-        <MentorProfileForm 
+        <MentorProfileForm
           userId={user.id}
           initialData={initialFormData}
           isEditMode={false}

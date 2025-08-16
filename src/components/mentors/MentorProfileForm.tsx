@@ -17,44 +17,44 @@ interface MentorProfileFormProps {
 }
 
 const MentorProfileForm = ({ userId, initialData, isEditMode = false, pageTitle }: MentorProfileFormProps) => {
-  const { 
-    formData, 
-    isSubmitting, 
-    handleChange, 
-    handleImageUploaded, 
-    handleSubmit 
+  const {
+    formData,
+    isSubmitting,
+    handleChange,
+    handleImageUploaded,
+    handleSubmit
   } = useMentorForm(userId, initialData, isEditMode);
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <MentorProfileImageUpload 
+      <MentorProfileImageUpload
         profileImage={formData.profile_image}
         name={formData.name}
         userId={userId}
         onImageUploaded={handleImageUploaded}
       />
 
-      <MentorPersonalInfo 
+      <MentorPersonalInfo
         formData={formData}
         handleChange={handleChange}
       />
 
-      <MentorAcademicInfo 
+      <MentorAcademicInfo
         formData={formData}
         handleChange={handleChange}
       />
 
-      <MentorSkillsField 
+      <MentorSkillsField
         skills={formData.skills}
         handleChange={handleChange}
       />
 
-      <MentorBioField 
+      <MentorBioField
         bio={formData.bio}
         handleChange={handleChange}
       />
 
-      <MentorLinkedInField 
+      <MentorLinkedInField
         linkedin_url={formData.linkedin_url}
         handleChange={handleChange}
       />

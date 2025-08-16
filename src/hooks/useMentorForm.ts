@@ -2,10 +2,10 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { 
-  submitMentorApplication, 
-  updateMentorApplication, 
-  canEditApplication 
+import {
+  submitMentorApplication,
+  updateMentorApplication,
+  canEditApplication
 } from "@/integrations/supabase/services/mentor-verification";
 import { useNavigate } from "react-router-dom";
 
@@ -45,20 +45,20 @@ export const useMentorForm = (userId: string, initialData: MentorFormData, isEdi
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!userId) {
       toast.error("You must be logged in to become a mentor");
       return;
     }
-    
+
     setIsSubmitting(true);
-    
+
     try {
       // Validate form
       if (!formData.name || !formData.department || !formData.skills.trim() || !formData.cgpa || !formData.year_of_studies || !formData.university || !formData.mobile) {
         throw new Error("Please fill in all required fields");
       }
-      
+
       const applicationData = {
         user_id: userId,
         application_data: {
@@ -80,9 +80,9 @@ export const useMentorForm = (userId: string, initialData: MentorFormData, isEdi
       if (isEditMode) {
         // Update existing rejected application
         const { error } = await updateMentorApplication(userId, applicationData);
-        
+
         if (error) throw error;
-        
+
         toast.success("Your mentor application has been updated and resubmitted successfully! You will be notified once it's reviewed by our team.");
       } else {
         // Check if user already has a pending or approved application
@@ -91,7 +91,7 @@ export const useMentorForm = (userId: string, initialData: MentorFormData, isEdi
           .select('status')
           .eq('user_id', userId)
           .single();
-        
+
         if (existingVerification) {
           if (existingVerification.status === 'pending') {
             toast.error("You already have a pending mentor application. Please wait for admin review.");
@@ -106,15 +106,15 @@ export const useMentorForm = (userId: string, initialData: MentorFormData, isEdi
             return;
           }
         }
-        
+
         // Submit new application
         const { error } = await submitMentorApplication(applicationData);
-        
+
         if (error) throw error;
-        
+
         toast.success("Your mentor application has been submitted successfully! You will be notified once it's reviewed by our team.");
       }
-      
+
       // Navigate to the user's profile page
       navigate('/profile');
     } catch (error: any) {
