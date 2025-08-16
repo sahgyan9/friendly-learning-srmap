@@ -1,11 +1,11 @@
 
-import { Hero } from "@/components/Hero";
-import { MentorsSection } from "@/components/MentorsSection";
-import { WhyFriendlyLearning } from "@/components/WhyFriendlyLearning";
-import { CallToAction } from "@/components/CallToAction";
-import { Footer } from "@/components/Footer";
-import { SEOHead } from "@/components/SEOHead";
-import { FloatingChatbot } from "@/components/chatbot/FloatingChatbot";
+import Hero from "@/components/Hero";
+import MentorsSection from "@/components/MentorsSection";
+import WhyFriendlyLearning from "@/components/WhyFriendlyLearning";
+import CallToAction from "@/components/CallToAction";
+import Footer from "@/components/Footer";
+import SEOHead from "@/components/SEOHead";
+import FloatingChatbot from "@/components/chatbot/FloatingChatbot";
 import RejectedApplicationNotice from "@/components/mentors/RejectedApplicationNotice";
 import { useAuth } from "@/context/AuthContext";
 
