@@ -3,7 +3,7 @@ User-agent: *
 Allow: /
 
 # Sitemap
-Sitemap: https://friendly-learning-srmap.lovable.app/sitemap.xml
+Sitemap: https://friendly-learning.lovable.app/sitemap.xml
 
 # Specific crawl delays for better performance
 Crawl-delay: 1
@@ -28,4 +28,4 @@ Disallow: /*?*source=*
 Disallow: /*#*
 
 # Specify host preference
-Host: https://friendly-learning-srmap.lovable.app
+Host: https://friendly-learning.lovable.app
