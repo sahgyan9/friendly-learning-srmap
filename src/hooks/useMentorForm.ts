@@ -2,7 +2,11 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { submitMentorApplication } from "@/integrations/supabase/services/mentor-verification";
+import { 
+  submitMentorApplication, 
+  updateMentorApplication, 
+  canEditApplication 
+} from "@/integrations/supabase/services/mentor-verification";
 import { useNavigate } from "react-router-dom";
 
 export interface MentorFormData {
@@ -19,7 +23,7 @@ export interface MentorFormData {
   mobile: string;
 }
 
-export const useMentorForm = (userId: string, initialData: MentorFormData) => {
+export const useMentorForm = (userId: string, initialData: MentorFormData, isEditMode = false) => {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<MentorFormData>(initialData);
@@ -55,25 +59,6 @@ export const useMentorForm = (userId: string, initialData: MentorFormData) => {
         throw new Error("Please fill in all required fields");
       }
       
-      // Check if user already has a pending or approved application
-      const { data: existingVerification } = await supabase
-        .from('mentor_verifications')
-        .select('status')
-        .eq('user_id', userId)
-        .single();
-      
-      if (existingVerification) {
-        if (existingVerification.status === 'pending') {
-          toast.error("You already have a pending mentor application. Please wait for admin review.");
-          return;
-        }
-        if (existingVerification.status === 'approved') {
-          toast.error("You are already an approved mentor.");
-          return;
-        }
-      }
-      
-      // Submit verification application instead of directly creating mentor
       const applicationData = {
         user_id: userId,
         application_data: {
@@ -91,12 +76,44 @@ export const useMentorForm = (userId: string, initialData: MentorFormData) => {
         hobbies: formData.hobbies,
         status: 'pending'
       };
-      
-      const { error } = await submitMentorApplication(applicationData);
-      
-      if (error) throw error;
-      
-      toast.success("Your mentor application has been submitted successfully! You will be notified once it's reviewed by our team.");
+
+      if (isEditMode) {
+        // Update existing rejected application
+        const { error } = await updateMentorApplication(userId, applicationData);
+        
+        if (error) throw error;
+        
+        toast.success("Your mentor application has been updated and resubmitted successfully! You will be notified once it's reviewed by our team.");
+      } else {
+        // Check if user already has a pending or approved application
+        const { data: existingVerification } = await supabase
+          .from('mentor_verifications')
+          .select('status')
+          .eq('user_id', userId)
+          .single();
+        
+        if (existingVerification) {
+          if (existingVerification.status === 'pending') {
+            toast.error("You already have a pending mentor application. Please wait for admin review.");
+            return;
+          }
+          if (existingVerification.status === 'approved') {
+            toast.error("You are already an approved mentor.");
+            return;
+          }
+          if (existingVerification.status === 'rejected') {
+            toast.error("You have a rejected application. Please use the edit option to update and resubmit it.");
+            return;
+          }
+        }
+        
+        // Submit new application
+        const { error } = await submitMentorApplication(applicationData);
+        
+        if (error) throw error;
+        
+        toast.success("Your mentor application has been submitted successfully! You will be notified once it's reviewed by our team.");
+      }
       
       // Navigate to the user's profile page
       navigate('/profile');

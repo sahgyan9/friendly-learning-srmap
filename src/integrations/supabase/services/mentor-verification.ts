@@ -131,3 +131,78 @@ export const getVerificationStatistics = async () => {
   console.log('Verification statistics:', result);
   return { data: result, error: null };
 };
+
+// Update and resubmit a rejected mentor application
+export const updateMentorApplication = async (
+  userId: string, 
+  applicationData: Partial<CreateMentorVerification>
+) => {
+  console.log('Updating mentor application for user:', userId);
+  
+  try {
+    // First check if user has a rejected application
+    const { data: existingApp, error: fetchError } = await supabase
+      .from('mentor_verifications')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
+
+    if (fetchError) {
+      console.error('Error fetching existing application:', fetchError);
+      throw new Error(`Failed to fetch existing application: ${fetchError.message}`);
+    }
+
+    if (!existingApp) {
+      throw new Error('No existing application found');
+    }
+
+    if (existingApp.status !== 'rejected') {
+      throw new Error('Application is not in rejected status, cannot update');
+    }
+
+    // Update the existing application with new data and reset status to pending
+    const updateData = {
+      ...applicationData,
+      status: 'pending',
+      submitted_at: new Date().toISOString(),
+      reviewed_at: null,
+      reviewed_by: null,
+      rejection_reason: null
+    };
+
+    const { data, error } = await supabase
+      .from('mentor_verifications')
+      .update(updateData)
+      .eq('user_id', userId)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error updating mentor application:', error);
+      throw new Error(`Failed to update application: ${error.message}`);
+    }
+
+    console.log('Application updated and resubmitted successfully:', data);
+    return { data, error: null };
+  } catch (error) {
+    console.error('Exception updating mentor application:', error);
+    throw error;
+  }
+};
+
+// Check if user can edit their application (i.e., has a rejected application)
+export const canEditApplication = async (userId: string) => {
+  try {
+    const { data, error } = await getMentorVerification(userId);
+    
+    if (error) {
+      return { canEdit: false, application: null, error };
+    }
+
+    const canEdit = data && data.status === 'rejected';
+    return { canEdit, application: data, error: null };
+  } catch (error) {
+    console.error('Error checking edit eligibility:', error);
+    return { canEdit: false, application: null, error };
+  }
+};

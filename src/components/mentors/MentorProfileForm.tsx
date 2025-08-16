@@ -12,16 +12,18 @@ import MentorFormActions from "./form/MentorFormActions";
 interface MentorProfileFormProps {
   userId: string;
   initialData: MentorFormData;
+  isEditMode?: boolean;
+  pageTitle?: string;
 }
 
-const MentorProfileForm = ({ userId, initialData }: MentorProfileFormProps) => {
+const MentorProfileForm = ({ userId, initialData, isEditMode = false, pageTitle }: MentorProfileFormProps) => {
   const { 
     formData, 
     isSubmitting, 
     handleChange, 
     handleImageUploaded, 
     handleSubmit 
-  } = useMentorForm(userId, initialData);
+  } = useMentorForm(userId, initialData, isEditMode);
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -57,7 +59,7 @@ const MentorProfileForm = ({ userId, initialData }: MentorProfileFormProps) => {
         handleChange={handleChange}
       />
 
-      <MentorFormActions isSubmitting={isSubmitting} />
+      <MentorFormActions isSubmitting={isSubmitting} isEditMode={isEditMode} />
     </form>
   );
 };

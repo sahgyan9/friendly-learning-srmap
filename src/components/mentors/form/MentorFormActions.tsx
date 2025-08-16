@@ -5,9 +5,10 @@ import { Loader2, Send } from "lucide-react";
 
 interface MentorFormActionsProps {
   isSubmitting: boolean;
+  isEditMode?: boolean;
 }
 
-const MentorFormActions = ({ isSubmitting }: MentorFormActionsProps) => {
+const MentorFormActions = ({ isSubmitting, isEditMode = false }: MentorFormActionsProps) => {
   return (
     <div className="flex flex-col sm:flex-row gap-4 pt-6">
       <Button
@@ -18,12 +19,12 @@ const MentorFormActions = ({ isSubmitting }: MentorFormActionsProps) => {
         {isSubmitting ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Submitting Application...
+            {isEditMode ? 'Updating Application...' : 'Submitting Application...'}
           </>
         ) : (
           <>
             <Send className="mr-2 h-4 w-4" />
-            Submit Application
+            {isEditMode ? 'Update Application' : 'Submit Application'}
           </>
         )}
       </Button>
