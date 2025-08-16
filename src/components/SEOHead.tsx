@@ -13,9 +13,9 @@ interface SEOHeadProps {
 }
 
 const SEOHead = ({
-  title = "Friendly Learning SRM AP - Premier Student Mentorship Platform | SRMAP Academic Support",
-  description = "Friendly Learning SRM AP is the leading student mentorship platform at SRM University AP. Connect with experienced peer mentors for academic guidance, career advice, and personalized learning support in Amaravati, Andhra Pradesh.",
-  keywords = "friendly learning srm ap, srmap mentorship platform, srmap friendly learning, SRM AP mentorship, student mentor platform srmap, academic guidance SRM AP, university mentorship program, srm amaravati mentorship, andhra pradesh student mentoring, peer learning srmap",
+  title = "Project FL - Friendly Learning Platform | Premier Student Mentorship Platform",
+  description = "Project FL is the leading friendly learning platform connecting students with experienced mentors. Get personalized academic guidance, career advice, and peer learning support through our innovative mentorship platform.",
+  keywords = "project fl, friendly learning platform, project fl mentorship, student to studentmentor platform, academic guidance, university mentorship program, peer learning platform, friendly learning, project fl app",
   canonical,
   ogTitle,
   ogDescription,
@@ -30,7 +30,7 @@ const SEOHead = ({
     const updateMetaTag = (name: string, content: string, property?: boolean) => {
       const selector = property ? `meta[property="${name}"]` : `meta[name="${name}"]`;
       let metaTag = document.querySelector(selector) as HTMLMetaElement;
-      
+
       if (!metaTag) {
         metaTag = document.createElement('meta');
         if (property) {
@@ -46,19 +46,17 @@ const SEOHead = ({
     // Update basic meta tags
     updateMetaTag('description', description);
     updateMetaTag('keywords', keywords);
-    
+
     // Geographic and locale targeting
-    updateMetaTag('geo.region', 'IN-AP'); // Andhra Pradesh, India
-    updateMetaTag('geo.placename', 'Amaravati');
-    updateMetaTag('geo.position', '16.5062;80.6480'); // SRM AP coordinates
-    updateMetaTag('ICBM', '16.5062, 80.6480');
+    updateMetaTag('geo.region', 'IN'); // India
+    updateMetaTag('geo.placename', 'India');
     updateMetaTag('language', 'en-IN');
     updateMetaTag('country', 'India');
-    
+
     // Additional SEO meta tags
-    updateMetaTag('author', 'Friendly Learning SRM AP');
-    updateMetaTag('publisher', 'SRM University AP');
-    updateMetaTag('application-name', 'Friendly Learning SRM AP');
+    updateMetaTag('author', 'Project FL');
+    updateMetaTag('publisher', 'Project FL');
+    updateMetaTag('application-name', 'Project FL');
     updateMetaTag('theme-color', '#6366f1');
 
     // Update Open Graph tags
@@ -67,12 +65,8 @@ const SEOHead = ({
     updateMetaTag('og:image', `${window.location.origin}${ogImage}`, true);
     updateMetaTag('og:url', window.location.href, true);
     updateMetaTag('og:type', 'website', true);
-    updateMetaTag('og:site_name', 'Friendly Learning SRM AP', true);
+    updateMetaTag('og:site_name', 'Project FL', true);
     updateMetaTag('og:locale', 'en_IN', true);
-    
-    // Geographic Open Graph tags
-    updateMetaTag('og:locality', 'Amaravati', true);
-    updateMetaTag('og:region', 'Andhra Pradesh', true);
     updateMetaTag('og:country-name', 'India', true);
 
     // Update Twitter tags
@@ -80,7 +74,7 @@ const SEOHead = ({
     updateMetaTag('twitter:title', ogTitle || title, true);
     updateMetaTag('twitter:description', ogDescription || description, true);
     updateMetaTag('twitter:image', `${window.location.origin}${ogImage}`, true);
-    updateMetaTag('twitter:site', '@FriendlyLearningSRMAP', true);
+    updateMetaTag('twitter:site', '@ProjectFL', true);
 
     // Update canonical URL
     if (canonical) {

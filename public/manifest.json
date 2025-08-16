@@ -1,13 +1,16 @@
 {
-  "name": "Friendly Learning SRM AP - Student Mentorship Platform",
-  "short_name": "Friendly Learning SRMAP",
-  "description": "Premier student mentorship platform at SRM University AP connecting students with experienced peer mentors",
+  "name": "Project FL - Friendly Learning Platform",
+  "short_name": "Project FL",
+  "description": "Premier friendly learning platform connecting students with experienced mentors for personalized guidance",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#6366f1",
   "orientation": "portrait",
-  "categories": ["education", "social"],
+  "categories": [
+    "education",
+    "social"
+  ],
   "lang": "en-IN",
   "icons": [
     {
@@ -16,7 +19,13 @@
       "type": "image/x-icon"
     }
   ],
-  "keywords": ["friendly learning srm ap", "srmap mentorship platform", "srmap friendly learning", "student mentoring"],
+  "keywords": [
+    "project fl",
+    "friendly learning platform",
+    "project fl mentorship",
+    "student mentoring platform",
+    "fl platform"
+  ],
   "scope": "/",
   "related_applications": [],
   "prefer_related_applications": false

@@ -1,4 +1,3 @@
-
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -10,20 +9,14 @@ const About = () => {
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "AboutPage",
-    "name": "About Friendly Learning",
-    "description": "Learn about Friendly Learning, the premier peer-to-peer mentorship platform for SRM AP students",
+    "name": "About Project FL",
+    "description": "Learn about Project FL, the premier friendly learning platform connecting students with experienced mentors",
     "mainEntity": {
       "@type": "Organization",
-      "name": "Friendly Learning",
-      "description": "A peer-to-peer mentorship platform designed to connect SRM AP students with experienced mentors",
+      "name": "Project FL",
+      "description": "A friendly learning platform designed to connect students with experienced mentors for personalized guidance and career support",
       "foundingDate": "2024",
-      "address": {
-        "@type": "PostalAddress",
-        "addressLocality": "Amaravati",
-        "addressRegion": "Andhra Pradesh",
-        "addressCountry": "IN"
-      },
-      "serviceArea": "SRM University AP",
+      "serviceArea": "Global",
       "mission": "To create a collaborative learning environment where knowledge is shared freely, and everyone has access to the support they need to succeed"
     }
   };
@@ -31,9 +24,9 @@ const About = () => {
   return (
     <>
       <SEOHead
-        title="About Friendly Learning SRM AP - Premier Student Mentorship Platform | Our Mission & Story"
-        description="Learn about Friendly Learning SRM AP's mission to connect students with peer mentors at SRM University AP, Amaravati. Discover our story, values, and commitment to collaborative learning and academic success in Andhra Pradesh."
-        keywords="about friendly learning srm ap, srmap mentorship platform, srmap friendly learning, SRM AP mentorship platform, student mentorship mission amaravati, peer learning story andhra pradesh, university mentorship values srmap"
+        title="About Project FL - Friendly Learning Platform | Our Mission & Story"
+        description="Learn about Project FL's mission to connect students with experienced mentors. Discover our story, values, and commitment to collaborative learning and academic success through personalized mentorship."
+        keywords="about project fl, friendly learning platform, project fl mentorship, student mentorship mission, peer learning story, friendly learning values, mentorship platform"
         canonical="https://friendly-learning.lovable.app/about"
         structuredData={structuredData}
       />
@@ -44,77 +37,100 @@ const About = () => {
           <div className="container px-4 md:px-6">
             <div className="max-w-3xl mx-auto">
               <header>
-                <h1 className="text-4xl font-bold mb-6">About Friendly Learning</h1>
+                <h1 className="text-4xl font-bold mb-6">About Project FL</h1>
               </header>
               <section className="mb-8">
                 <p className="text-lg mb-6">
-                  <strong>Friendly Learning</strong> is more than just a platform — it's a movement to empower students through students. Born at SRM University, Andhra Pradesh, Friendly Learning is a peer-to-peer mentorship and collaboration network designed to bridge the academic gap between students and their peers. Whether you're stuck on an assignment, exploring a new skill, preparing for a hackathon, or looking for like-minded project partners — the help you need is often just a few doors away. We’re here to help you find it.
+                  <strong>Project FL (Friendly Learning)</strong> is more than just a platform — it's a movement to empower students through personalized mentorship. Our friendly learning ecosystem is designed to bridge the academic and career gap by connecting students with experienced mentors who provide guidance, support, and expertise. Whether you're stuck on coursework, exploring new skills, preparing for competitions, or looking for career guidance — the help you need is available through our innovative platform.
                 </p>
-              </section>
-              <section className="mb-8">
-                <h2 className="text-2xl font-semibold mt-10 mb-4">Our Story</h2>
-                <p className="mb-6">
-                  The journey began when a group of students, like many others, faced confusion about assignments, subject expectations, and navigating university life. YouTube didn’t always help, professors weren’t always available, and Google didn’t always have the answers. The real solution? Students who had been there, done that.
+                <p className="text-lg mb-6">
+                  Our approach is simple: we believe that learning is most effective when it's collaborative, supportive, and personalized. Through Project FL, we create meaningful connections between students seeking knowledge and mentors ready to share their expertise.
                 </p>
-                <p className="mb-6">
-                  So we built Friendly Learning — a platform where any student can search for help and connect directly with a verified student mentor from their own university, someone who’s already solved the exact problem they’re facing.
-                </p>
-                <p className="mb-6">
-                  What started as a simple idea became a seven-month-long mission to build a functional, scalable, AI-powered, student-first mentorship ecosystem.
-                </p>
-              </section>
-              <section className="mb-8">
-                <h2 className="text-2xl font-semibold mt-10 mb-4">Our Vision</h2>
-                <p className="mb-6">
-                  To create a globally recognized, student-first learning ecosystem that redefines how mentorship, collaboration, and academic help is accessed — not from the internet, but from your own campus community.
-                </p>
-              </section>
-              <section className="mb-8">
-                <h2 className="text-2xl font-semibold mt-10 mb-4">Our Mission</h2>
-                <ul className="list-disc pl-6 mb-6 space-y-2">
-                  <li>✅ To connect students to the right mentors within their university</li>
-                  <li>✅ To make mentorship accessible, informal, and empowering</li>
-                  <li>✅ To recognize and reward student mentors for their contribution</li>
-                  <li>✅ To build a collaborative culture of growth, innovation, and learning in every university</li>
-                </ul>
-              </section>
-              <section className="mb-8">
-                <h2 className="text-2xl font-semibold mt-10 mb-4">Why Friendly Learning?</h2>
-                <ul className="list-disc pl-6 mb-6 space-y-2">
-                  <li>🔒 Verified Mentors Only — All mentors are real, active students with proven skills</li>
-                  <li>🧠 AI-Powered Search — Just type your problem, and we’ll match you with the right mentor</li>
-                  <li>🌱 Cross-Department Learning — Get help across physics, CS, business, humanities & more</li>
-                  <li>💬 One-on-One Messaging — Connect freely, meet up, and learn without formality</li>
-                  <li>🌍 A Social Learning Network — Join community posts, find project partners, research groups, and collaborators</li>
-                  <li>🏅 Build Your Mentor Profile — Gain recognition through badges, reviews, and student impact</li>
-                </ul>
-                <blockquote className="italic border-l-4 border-blue-400 pl-4 my-4">
-                  "Friendly Learning is not just an app — it’s a gateway to unlock the hidden potential inside your university."
-                </blockquote>
-                <p className="mb-6">
-                  Whether you're here to grow, guide, learn, or lead — Friendly Learning welcomes you.
+                <p className="text-lg mb-6">
+                  <strong>FL stands for Friendly Learning</strong> — emphasizing our commitment to creating a welcoming, supportive environment where everyone feels comfortable asking questions, sharing knowledge, and growing together.
                 </p>
               </section>
               
-              <section className="mb-12">
-                <h2 className="text-2xl font-semibold mt-10 mb-4">Join Our Community</h2>
-                <p className="mb-6">
-                  Whether you're looking for help or want to share your knowledge, Friendly Learning has a place for you in the SRM AP academic community.
+              <section className="mb-8">
+                <h2 className="text-2xl font-bold mb-4">Our Mission</h2>
+                <p className="text-lg mb-6">
+                  To create a collaborative learning environment where knowledge is shared freely, and everyone has access to the personalized support they need to succeed in their academic and professional journey.
                 </p>
-                <div className="mt-8 mb-12">
+              </section>
+              
+              <section className="mb-8">
+                <h2 className="text-2xl font-bold mb-4">How It Works</h2>
+                <div className="grid md:grid-cols-3 gap-6">
+                  <div className="text-center p-4">
+                    <div className="text-4xl mb-4">🔍</div>
+                    <h3 className="text-xl font-bold mb-2">Find a Mentor</h3>
+                    <p>Browse through our community of experienced mentors and find the perfect match for your learning needs.</p>
+                  </div>
+                  <div className="text-center p-4">
+                    <div className="text-4xl mb-4">💬</div>
+                    <h3 className="text-xl font-bold mb-2">Connect & Learn</h3>
+                    <p>Engage in meaningful conversations, get personalized guidance, and accelerate your learning journey.</p>
+                  </div>
+                  <div className="text-center p-4">
+                    <div className="text-4xl mb-4">🚀</div>
+                    <h3 className="text-xl font-bold mb-2">Achieve Your Goals</h3>
+                    <p>With the right support and guidance, reach your academic and career milestones faster than ever.</p>
+                  </div>
+                </div>
+              </section>
+              
+              <section className="mb-8">
+                <h2 className="text-2xl font-bold mb-4">Why Choose Project FL?</h2>
+                <div className="space-y-4">
+                  <div className="flex items-start space-x-3">
+                    <span className="text-primary text-xl">✓</span>
+                    <div>
+                      <h3 className="font-bold">Personalized Matching</h3>
+                      <p>Our platform connects you with mentors who match your specific learning goals and interests.</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-3">
+                    <span className="text-primary text-xl">✓</span>
+                    <div>
+                      <h3 className="font-bold">Flexible Learning</h3>
+                      <p>Learn at your own pace with mentors who understand your schedule and constraints.</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-3">
+                    <span className="text-primary text-xl">✓</span>
+                    <div>
+                      <h3 className="font-bold">Supportive Community</h3>
+                      <p>Join a community of learners and mentors who are committed to mutual growth and success.</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-3">
+                    <span className="text-primary text-xl">✓</span>
+                    <div>
+                      <h3 className="font-bold">Proven Results</h3>
+                      <p>Our mentorship approach has helped countless students achieve their academic and career goals.</p>
+                    </div>
+                  </div>
+                </div>
+              </section>
+              
+              <section className="text-center mb-8">
+                <h2 className="text-3xl font-bold mb-4">Ready to Start Your Journey?</h2>
+                <p className="text-lg mb-6">
+                  Join Project FL today and connect with mentors who can help you unlock your full potential.
+                </p>
+                <div className="space-x-4">
                   <Button asChild size="lg">
                     <Link to="/signup">Get Started Today</Link>
+                  </Button>
+                  <Button variant="outline" size="lg" asChild>
+                    <Link to="/mentors">Explore Mentors</Link>
                   </Button>
                 </div>
               </section>
             </div>
-            
-            <section className="mt-16">
-              <TeamMembers />
-            </section>
           </div>
         </main>
-        
+        <TeamMembers />
         <Footer />
       </div>
     </>

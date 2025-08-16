@@ -13,10 +13,10 @@ const MentorsFooter = () => {
               <Logo showText={true} />
             </Link>
             <p className="text-sm text-muted-foreground mt-1">
-              Connecting students with mentors at SRM AP
+              Project FL - Connecting students with experienced student mentors
             </p>
           </div>
-          
+
           <div className="flex space-x-6">
             <Link to="/about" className="text-muted-foreground hover:text-primary transition-colors">
               About
@@ -29,9 +29,9 @@ const MentorsFooter = () => {
             </Link>
           </div>
         </div>
-        
+
         <div className="mt-8 pt-8 border-t border-border text-center text-sm text-muted-foreground">
-          <p>© {new Date().getFullYear()} Friendly Learning. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} Project FL. All rights reserved.</p>
         </div>
       </div>
     </footer>

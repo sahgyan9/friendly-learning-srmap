@@ -1,4 +1,10 @@
-# Welcome to your Lovable project
+# Project FL - Friendly Learning Platform
+
+## About Project FL
+
+**Project FL** is a premier friendly learning platform that connects students with student mentor within university. Our mission is to provide personalized academic guidance, career advice, and peer learning support through an innovative mentorship ecosystem.
+
+**FL** stands for **Friendly Learning** - embodying our core values of accessible, supportive, and collaborative education.
 
 ## Project info
 
