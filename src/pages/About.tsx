@@ -20,7 +20,7 @@ const About = () => {
       "mission": "To build the strongest university communities by connecting students with each other for academic success, project collaboration, and personal growth",
       "services": [
         "Academic Help and Tutoring",
-        "Hackathon Team Formation", 
+        "Hackathon Team Formation",
         "Project Collaboration",
         "Startup Team Building",
         "Study Partner Matching",
@@ -39,7 +39,7 @@ const About = () => {
         canonical="https://friendly-learning.lovable.app/about"
         structuredData={structuredData}
       />
-      
+
       <div className="min-h-screen">
         <Navbar />
         <main className="pt-24 pb-16">
@@ -59,7 +59,7 @@ const About = () => {
                   <strong>FL stands for Friendly Learning</strong> — emphasizing our commitment to creating a collaborative environment where students support each other's academic and professional growth within their university community.
                 </p>
               </section>
-              
+
               <section className="mb-8">
                 <h2 className="text-2xl font-bold mb-6">What You Can Do on Project FL</h2>
                 <div className="grid md:grid-cols-2 gap-6">
@@ -95,14 +95,14 @@ const About = () => {
                   </div>
                 </div>
               </section>
-              
+
               <section className="mb-8">
                 <h2 className="text-2xl font-bold mb-4">Our Mission</h2>
                 <p className="text-lg mb-6">
                   To build the strongest university communities by connecting students with each other for academic success, project collaboration, and personal growth. We believe that the best help often comes from fellow students who understand your challenges and can provide peer-to-peer support.
                 </p>
               </section>
-              
+
               <section className="mb-8">
                 <h2 className="text-2xl font-bold mb-4">How It Works</h2>
                 <div className="grid md:grid-cols-3 gap-6">
@@ -123,7 +123,7 @@ const About = () => {
                   </div>
                 </div>
               </section>
-              
+
               <section className="mb-8">
                 <h2 className="text-2xl font-bold mb-4">Why Choose Project FL?</h2>
                 <div className="space-y-4">
@@ -157,7 +157,7 @@ const About = () => {
                   </div>
                 </div>
               </section>
-              
+
               <section className="text-center mb-8">
                 <h2 className="text-3xl font-bold mb-4">Ready to Connect with Your University Community?</h2>
                 <p className="text-lg mb-6">
