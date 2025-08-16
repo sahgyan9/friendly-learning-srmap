@@ -94,7 +94,7 @@ const CommunityPosts = () => {
 
   const handleMentorClick = (mentorId: string, event: React.MouseEvent) => {
     event.stopPropagation();
-    navigate(`/mentors/${mentorId}`);
+    navigate(`/mentor/${mentorId}`);
   };
 
   const handleShare = async (post: CommunityPost, event: React.MouseEvent) => {

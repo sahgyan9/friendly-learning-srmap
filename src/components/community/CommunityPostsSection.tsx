@@ -3,12 +3,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Heart, MessageCircle, ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
+import { Heart, MessageCircle, ChevronLeft, ChevronRight, ArrowRight, Share2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { getCommunityPosts, togglePostLike, checkUserLikedPost, type CommunityPost } from "@/integrations/supabase/services/community-posts";
 import { useAuth } from "@/context/AuthContext";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
+import { getMentorById } from "@/integrations/supabase/services/mentors";
+import { getOrCreateConversation } from "@/integrations/supabase/services/chat/conversation.service";
 
 const POST_TYPES = [
 	{ value: 'hackathon', label: 'Hackathon Partners' },
@@ -36,7 +38,7 @@ export const CommunityPostsSection = () => {
 	const fetchPosts = async () => {
 		setLoading(true);
 		const { data, error } = await getCommunityPosts(8); // Get latest 8 posts
-		
+
 		if (error) {
 			console.error('Error fetching community posts:', error);
 		} else if (data) {
@@ -63,26 +65,69 @@ export const CommunityPostsSection = () => {
 		}
 
 		const { error, liked } = await togglePostLike(postId);
-		
+
 		if (error) {
 			toast.error("Failed to update like");
 			console.error(error);
 		} else {
-			setPosts(posts.map(post => 
-				post.id === postId 
-					? { 
-							...post, 
-							user_has_liked: liked,
-							likes_count: liked ? post.likes_count + 1 : post.likes_count - 1
-						}
+			setPosts(posts.map(post =>
+				post.id === postId
+					? {
+						...post,
+						user_has_liked: liked,
+						likes_count: liked ? post.likes_count + 1 : post.likes_count - 1
+					}
 					: post
 			));
 		}
 	};
 
+	const handleShare = async (post: CommunityPost, event: React.MouseEvent) => {
+		event.stopPropagation();
+		try {
+			await navigator.share({
+				title: post.title,
+				text: post.content,
+				url: `${window.location.origin}/community-posts/${post.id}`,
+			});
+		} catch (error) {
+			navigator.clipboard.writeText(`${window.location.origin}/community-posts/${post.id}`);
+			toast.success("Link copied to clipboard!");
+		}
+	};
+
+	const handleConnect = async (mentorId: string, event: React.MouseEvent) => {
+		event.stopPropagation();
+		if (!user) {
+			toast.error("Please sign in to connect with mentors");
+			return;
+		}
+
+		try {
+			const { data: mentorData, error: mentorError } = await getMentorById(mentorId);
+			if (mentorError || !mentorData) {
+				toast.error("Mentor not found");
+				return;
+			}
+
+			const { data: conversation, error: conversationError } = await getOrCreateConversation(user.id, mentorId);
+			if (conversationError || !conversation) {
+				console.error('Error creating/getting conversation:', conversationError);
+				toast.error('Failed to start conversation');
+				return;
+			}
+
+			navigate(`/messages?chat=${conversation.id}`);
+			toast.success(`Connected with ${mentorData.name}!`);
+		} catch (error) {
+			console.error('Error connecting with mentor:', error);
+			toast.error('Failed to connect with mentor');
+		}
+	};
+
 	const handleMentorClick = (mentorId: string, event: React.MouseEvent) => {
 		event.stopPropagation();
-		navigate(`/mentors/${mentorId}`);
+		navigate(`/mentor/${mentorId}`);
 	};
 
 	const scroll = (direction: 'left' | 'right') => {
@@ -154,16 +199,30 @@ export const CommunityPostsSection = () => {
 				</div>
 				{/* Centered Scrollable Posts Container with Spacers and scroll-snap */}
 				<div className="relative">
-					<Button
-						variant="outline"
-						size="sm"
-						className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-background/80 rounded-full shadow p-2 border border-border hover:bg-muted transition"
-						style={{ transform: 'translateY(-50%)' }}
-						onClick={() => scroll('left')}
-						disabled={scrollPosition === 0}
-					>
-						<ChevronLeft className="h-4 w-4" />
-					</Button>
+					{/* Overlayed nav buttons to avoid jitter and ensure clickability */}
+					<div className="pointer-events-none absolute inset-0 hidden md:block z-10">
+						<div className="h-full flex items-center justify-between">
+							<Button
+								variant="outline"
+								size="sm"
+								aria-label="Previous posts"
+								className="pointer-events-auto bg-background/80 rounded-full shadow p-2 border border-border hover:bg-muted transition"
+								onClick={() => scroll('left')}
+								disabled={scrollPosition === 0}
+							>
+								<ChevronLeft className="h-4 w-4" />
+							</Button>
+							<Button
+								variant="outline"
+								size="sm"
+								aria-label="Next posts"
+								className="pointer-events-auto bg-background/80 rounded-full shadow p-2 border border-border hover:bg-muted transition"
+								onClick={() => scroll('right')}
+							>
+								<ChevronRight className="h-4 w-4" />
+							</Button>
+						</div>
+					</div>
 					<div
 						id="community-posts-scroll"
 						ref={containerRef}
@@ -178,14 +237,14 @@ export const CommunityPostsSection = () => {
 								className="community-post-card flex-shrink-0 w-80 md:w-[400px] snap-center"
 								style={{ scrollSnapAlign: 'center' }}
 							>
-								<Card 
+								<Card
 									className="h-full cursor-pointer hover:shadow-lg transition-shadow"
 									onClick={() => navigate(`/community-posts/${post.id}`)}
 								>
 									<CardHeader className="pb-3">
 										<div className="flex items-start justify-between">
 											<div className="flex items-center gap-3">
-												<Avatar 
+												<Avatar
 													className="h-8 w-8 cursor-pointer hover:ring-2 hover:ring-primary/20 transition-all"
 													onClick={(e) => handleMentorClick(post.mentor.id, e)}
 												>
@@ -193,7 +252,7 @@ export const CommunityPostsSection = () => {
 													<AvatarFallback>{post.mentor.name.charAt(0)}</AvatarFallback>
 												</Avatar>
 												<div>
-													<h4 
+													<h4
 														className="font-semibold text-sm cursor-pointer hover:text-primary transition-colors"
 														onClick={(e) => handleMentorClick(post.mentor.id, e)}
 													>
@@ -208,8 +267,10 @@ export const CommunityPostsSection = () => {
 										</div>
 									</CardHeader>
 									<CardContent className="pt-0 space-y-3">
+										{/* Title above image */}
+										<h3 className="font-semibold text-base md:text-lg mb-2 line-clamp-2">{post.title}</h3>
 										{post.image_url && (
-											<div className="mb-2 w-full h-40 bg-gray-100 rounded overflow-hidden flex items-center justify-center">
+											<div className="mb-2 w-full h-40 bg-gray-100 rounded overflow-hidden">
 												<img
 													src={post.image_url}
 													alt="Post image"
@@ -218,16 +279,13 @@ export const CommunityPostsSection = () => {
 												/>
 											</div>
 										)}
-										<div>
-											<h3 className="font-semibold text-sm mb-2 line-clamp-2">{post.title}</h3>
-											<p className="text-xs text-muted-foreground line-clamp-3">{post.content}</p>
-										</div>
-										
+										<p className="text-xs text-muted-foreground line-clamp-3">{post.content}</p>
+
 										{/* Post Type */}
 										<Badge variant="secondary" className="text-xs">
 											{POST_TYPES.find(type => type.value === post.post_type)?.label || post.post_type}
 										</Badge>
-										
+
 										{/* Tags */}
 										{post.tags && post.tags.length > 0 && (
 											<div className="flex flex-wrap gap-1">
@@ -243,7 +301,7 @@ export const CommunityPostsSection = () => {
 												)}
 											</div>
 										)}
-										
+
 										{/* Footer */}
 										<div className="flex items-center justify-between pt-2 border-t">
 											<div className="flex items-center gap-3">
@@ -257,16 +315,28 @@ export const CommunityPostsSection = () => {
 													<Heart className={`h-3 w-3 ${post.user_has_liked ? 'fill-red-500 text-red-500' : ''}`} />
 													{post.likes_count}
 												</button>
-												
+
 												<div className="flex items-center gap-1 text-xs text-muted-foreground">
 													<MessageCircle className="h-3 w-3" />
 													{post.comments_count}
 												</div>
+
+												<button
+													onClick={(e) => handleShare(post, e)}
+													className="flex items-center gap-1 text-xs text-muted-foreground hover:text-blue-500 transition-colors"
+												>
+													<Share2 className="h-3 w-3" />
+												</button>
 											</div>
-											
-											<span className="text-xs text-muted-foreground">
-												{formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
-											</span>
+
+											<div className="flex items-center gap-2">
+												<span className="text-xs text-muted-foreground">
+													{formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
+												</span>
+												<Button size="sm" className="h-6 px-3 text-xs" onClick={(e) => handleConnect(post.mentor.id, e)}>
+													Connect
+												</Button>
+											</div>
 										</div>
 									</CardContent>
 								</Card>
@@ -275,15 +345,6 @@ export const CommunityPostsSection = () => {
 						{/* Right Spacer: half container width minus card width */}
 						<div className="hidden md:block flex-shrink-0" style={{ width: 'calc(50vw - 200px)' }} />
 					</div>
-					<Button
-						variant="outline"
-						size="sm"
-						className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-background/80 rounded-full shadow p-2 border border-border hover:bg-muted transition"
-						style={{ transform: 'translateY(-50%)' }}
-						onClick={() => scroll('right')}
-					>
-						<ChevronRight className="h-4 w-4" />
-					</Button>
 				</div>
 			</div>
 		</section>

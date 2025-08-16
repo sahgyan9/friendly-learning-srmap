@@ -19,6 +19,8 @@ import {
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
+import { getMentorById } from "@/integrations/supabase/services/mentors";
+import { getOrCreateConversation } from "@/integrations/supabase/services/chat/conversation.service";
 
 const POST_TYPES = [
   { value: 'hackathon', label: 'Hackathon Partners' },
@@ -142,6 +144,39 @@ const CommunityPostDetail = () => {
     }
   };
 
+  const handleMentorClick = (mentorId: string, event?: React.MouseEvent) => {
+    event?.stopPropagation?.();
+    navigate(`/mentor/${mentorId}`);
+  };
+
+  const handleConnect = async (mentorId: string) => {
+    if (!user) {
+      toast.error("Please sign in to connect with mentors");
+      return;
+    }
+
+    try {
+      const { data: mentorData, error: mentorError } = await getMentorById(mentorId);
+      if (mentorError || !mentorData) {
+        toast.error("Mentor not found");
+        return;
+      }
+
+      const { data: conversation, error: conversationError } = await getOrCreateConversation(user.id, mentorId);
+      if (conversationError || !conversation) {
+        console.error('Error creating/getting conversation:', conversationError);
+        toast.error('Failed to start conversation');
+        return;
+      }
+
+      navigate(`/messages?chat=${conversation.id}`);
+      toast.success(`Connected with ${mentorData.name}!`);
+    } catch (error) {
+      console.error('Error connecting with mentor:', error);
+      toast.error('Failed to connect with mentor');
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'open': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
@@ -217,7 +252,10 @@ const CommunityPostDetail = () => {
             <CardHeader className="pb-3 sm:pb-4">
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
-                  <Avatar className="h-12 w-12 sm:h-16 sm:w-16 ring-2 ring-background shadow-lg flex-shrink-0">
+                  <Avatar
+                    className="h-12 w-12 sm:h-16 sm:w-16 ring-2 ring-background shadow-lg flex-shrink-0 cursor-pointer hover:ring-primary/20"
+                    onClick={(e) => handleMentorClick(post.mentor.id, e)}
+                  >
                     <AvatarImage src={post.mentor.profile_image || undefined} />
                     <AvatarFallback className="bg-primary/10 text-primary font-bold text-sm sm:text-lg">
                       {post.mentor.name.charAt(0)}
@@ -225,7 +263,12 @@ const CommunityPostDetail = () => {
                   </Avatar>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-2 mb-1">
-                      <h3 className="text-base sm:text-lg font-semibold truncate">{post.mentor.name}</h3>
+                      <h3
+                        className="text-base sm:text-lg font-semibold truncate cursor-pointer hover:text-primary"
+                        onClick={(e) => handleMentorClick(post.mentor.id, e)}
+                      >
+                        {post.mentor.name}
+                      </h3>
                       <Badge variant="outline" className={`text-xs flex-shrink-0 ${getStatusColor(post.status)}`}>
                         {post.status}
                       </Badge>
@@ -290,7 +333,7 @@ const CommunityPostDetail = () => {
                     <Heart className={`h-3 w-3 ${post.user_has_liked ? 'fill-red-500 text-red-500' : ''}`} />
                     {post.likes_count}
                   </button>
-                  
+
                   <div className="flex items-center gap-1 text-xs text-muted-foreground">
                     <MessageCircle className="h-3 w-3" />
                     {post.comments_count}
@@ -303,10 +346,10 @@ const CommunityPostDetail = () => {
                     <Share2 className="h-3 w-3" />
                   </button>
                 </div>
-                
+
                 <div className="flex items-center gap-2">
                   {post.post_type !== 'general' && (
-                    <Button size="sm" className="h-6 px-3 text-xs">
+                    <Button size="sm" className="h-6 px-3 text-xs" onClick={() => handleConnect(post.mentor.id)}>
                       Connect
                     </Button>
                   )}
