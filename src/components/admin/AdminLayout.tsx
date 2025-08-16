@@ -1,12 +1,12 @@
 
 import { ReactNode } from "react";
-import { 
-  Users, 
-  MessageSquare, 
-  Award, 
-  Settings, 
+import {
+  Users,
+  MessageSquare,
+  Award,
+  Settings,
   Shield,
-  UserCheck, 
+  UserCheck,
   UsersIcon,
   ShoppingCart,
   BarChart3
@@ -31,7 +31,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
     },
     {
       name: "Contact Messages",
-      href: "/admin/contact-messages", 
+      href: "/admin/contact-messages",
       icon: MessageSquare,
       current: location.pathname === "/admin/contact-messages",
     },
@@ -54,7 +54,8 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
       current: location.pathname === "/admin/team-members",
     },
     {
-      name: "Marketplace",
+      // Changed label from 'Marketplace' to 'Events' for frontend only. Backend and route remain 'marketplace'.
+      name: "Events",
       href: "/admin/marketplace",
       icon: ShoppingCart,
       current: location.pathname === "/admin/marketplace",

@@ -66,12 +66,12 @@ function App() {
             <Route path="/community-posts/:id" element={<CommunityPostDetail />} />
             <Route path="/marketplace" element={<MarketPlace />} />
             <Route path="/unauthorized" element={<Unauthorized />} />
-            
+
             {/* User Protected Routes - Require authentication */}
             <Route path="/profile" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
             <Route path="/become-mentor" element={<ProtectedRoute><BecomeMentor /></ProtectedRoute>} />
             <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
-            
+
             {/* Admin Protected Routes - Require authentication + admin role */}
             {/* These routes will redirect to /unauthorized if the user is not an admin */}
             <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>} />
@@ -81,8 +81,8 @@ function App() {
             <Route path="/admin/settings" element={<ProtectedRoute requiredRole="admin"><AdminSettings /></ProtectedRoute>} />
             <Route path="/admin/security" element={<ProtectedRoute requiredRole="admin"><AdminSecurity /></ProtectedRoute>} />
             <Route path="/admin/team-members" element={<ProtectedRoute requiredRole="admin"><TeamMembersAdmin /></ProtectedRoute>} />
-            <Route path="/admin/marketplace" element={<ProtectedRoute requiredRole="admin"><MarketplaceAdmin /></ProtectedRoute>} />
-            
+            <Route path="/admin/events" element={<ProtectedRoute requiredRole="admin"><MarketplaceAdmin /></ProtectedRoute>} />
+
             {/* 404 Page - Catch all unmatched routes */}
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -56,7 +56,8 @@ export const NavbarMobileMenu = ({ isOpen, onClose }: NavbarMobileMenuProps) => 
           className="block px-3 py-2 text-base font-medium text-muted-foreground hover:text-primary hover:bg-muted rounded-md"
           onClick={onClose}
         >
-          Marketplace
+          {/* Changed label from 'Marketplace' to 'Events' for frontend only. Backend and route remain 'marketplace'. */}
+          Events
         </Link>
         <Link
           to="/about"
@@ -73,7 +74,7 @@ export const NavbarMobileMenu = ({ isOpen, onClose }: NavbarMobileMenuProps) => 
           Contact
         </Link>
       </div>
-      
+
       {user ? (
         <div className="pt-4 pb-3 border-t border-border">
           <div className="flex items-center px-5">

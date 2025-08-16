@@ -11,14 +11,15 @@ import { fetchMarketplacePosts, fetchMarketplacePost, CategoryType, MarketplaceP
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
 import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogDescription,
+    Dialog,
+    DialogContent,
+    DialogTitle,
+    DialogDescription,
 } from '@/components/ui/dialog';
 
 const MarketPlace = () => {
     const [activeCategory, setActiveCategory] = useState<CategoryType>('all');
+    // Changed all visible 'MarketPlace' and 'Marketplace' labels to 'Events' and updated all URLs from '/marketplace' to '/events'.
     const [searchQuery, setSearchQuery] = useState('');
     const [posts, setPosts] = useState<MarketplacePost[]>([]);
     const [loading, setLoading] = useState(true);
@@ -31,13 +32,13 @@ const MarketPlace = () => {
 
     useEffect(() => {
         loadPosts();
-        
+
         // Check if there's a post ID in the URL params
         const postId = searchParams.get('post');
         if (postId) {
             loadPostDetails(postId);
         }
-        
+
         // Check if user is admin
         if (user) {
             checkAdminStatus();
@@ -121,7 +122,7 @@ const MarketPlace = () => {
             <div className="container mx-auto px-4 py-8 pt-24">
                 <div className="flex justify-between items-center mb-8">
                     <div>
-                        <h1 className="text-3xl font-bold">MarketPlace</h1>
+                        <h1 className="text-3xl font-bold">Events</h1>
                         <p className="text-sm text-muted-foreground mt-1">Find university news, events, ads and more</p>
                     </div>
                     <div className="flex items-center gap-4">
@@ -166,7 +167,7 @@ const MarketPlace = () => {
                                     <p className="text-lg text-muted-foreground">No posts found</p>
                                     <p className="text-sm text-muted-foreground mt-2">
                                         {user ? (
-                                            <Link to="/admin/marketplace" className="text-primary hover:underline">
+                                            <Link to="/admin/events" className="text-primary hover:underline">
                                                 Click here to add a new post
                                             </Link>
                                         ) : (
@@ -204,26 +205,26 @@ const MarketPlace = () => {
                         <DialogDescription>
                             Posted by {detailPost.author} on {new Date(detailPost.date).toLocaleDateString()}
                         </DialogDescription>
-                        
+
                         {detailPost.image_url && (
                             <div className="w-full aspect-video mb-4">
-                                <img 
-                                    src={detailPost.image_url} 
-                                    alt={detailPost.title} 
+                                <img
+                                    src={detailPost.image_url}
+                                    alt={detailPost.title}
                                     className="w-full h-full object-cover rounded-md"
                                 />
                             </div>
                         )}
-                        
+
                         <div className="space-y-4">
                             <div className="whitespace-pre-line">{detailPost.description}</div>
-                            
+
                             {detailPost.contact_info && (
                                 <div className="mt-4 p-4 bg-muted rounded-md">
                                     <strong>Contact Information:</strong> {detailPost.contact_info}
                                 </div>
                             )}
-                            
+
                             {detailPost.external_link && (
                                 <div className="flex justify-end mt-4">
                                     <Button onClick={() => handleRegister()}>

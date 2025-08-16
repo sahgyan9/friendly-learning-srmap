@@ -35,49 +35,44 @@ const Navbar = () => {
           <div className="hidden md:flex items-center space-x-8">
             <Link
               to="/"
-              className={`text-sm font-medium transition-colors hover:text-primary ${
-                isActive("/") ? "text-primary" : "text-muted-foreground"
-              }`}
+              className={`text-sm font-medium transition-colors hover:text-primary ${isActive("/") ? "text-primary" : "text-muted-foreground"
+                }`}
             >
               Home
             </Link>
             <Link
               to="/mentors"
-              className={`text-sm font-medium transition-colors hover:text-primary ${
-                isActive("/mentors") ? "text-primary" : "text-muted-foreground"
-              }`}
+              className={`text-sm font-medium transition-colors hover:text-primary ${isActive("/mentors") ? "text-primary" : "text-muted-foreground"
+                }`}
             >
               Mentors
             </Link>
             <Link
               to="/community-posts"
-              className={`text-sm font-medium transition-colors hover:text-primary ${
-                isActive("/community-posts") ? "text-primary" : "text-muted-foreground"
-              }`}
+              className={`text-sm font-medium transition-colors hover:text-primary ${isActive("/community-posts") ? "text-primary" : "text-muted-foreground"
+                }`}
             >
               Community
             </Link>
             <Link
               to="/marketplace"
-              className={`text-sm font-medium transition-colors hover:text-primary ${
-                isActive("/marketplace") ? "text-primary" : "text-muted-foreground"
-              }`}
+              className={`text-sm font-medium transition-colors hover:text-primary ${isActive("/marketplace") ? "text-primary" : "text-muted-foreground"
+                }`}
             >
-              Marketplace
+              {/* Changed label from 'Marketplace' to 'Events' for frontend only. Backend and route remain 'marketplace'. */}
+              Events
             </Link>
             <Link
               to="/about"
-              className={`text-sm font-medium transition-colors hover:text-primary ${
-                isActive("/about") ? "text-primary" : "text-muted-foreground"
-              }`}
+              className={`text-sm font-medium transition-colors hover:text-primary ${isActive("/about") ? "text-primary" : "text-muted-foreground"
+                }`}
             >
               About
             </Link>
             <Link
               to="/contact"
-              className={`text-sm font-medium transition-colors hover:text-primary ${
-                isActive("/contact") ? "text-primary" : "text-muted-foreground"
-              }`}
+              className={`text-sm font-medium transition-colors hover:text-primary ${isActive("/contact") ? "text-primary" : "text-muted-foreground"
+                }`}
             >
               Contact
             </Link>
@@ -131,9 +126,9 @@ const Navbar = () => {
         </div>
 
         {/* Mobile Navigation Menu */}
-        <NavbarMobileMenu 
-          isOpen={isMobileMenuOpen} 
-          onClose={() => setIsMobileMenuOpen(false)} 
+        <NavbarMobileMenu
+          isOpen={isMobileMenuOpen}
+          onClose={() => setIsMobileMenuOpen(false)}
         />
       </div>
     </nav>
