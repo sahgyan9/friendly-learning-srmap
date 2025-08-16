@@ -96,6 +96,31 @@ export const updateVerificationStatus = async (
       throw new Error(`Database error: ${error.message}`);
     }
 
+    // If rejected, also create an additional notification with edit instructions
+    if (status === 'rejected') {
+      const { data: verification } = await supabase
+        .from('mentor_verifications')
+        .select('user_id')
+        .eq('id', verificationId)
+        .single();
+
+      if (verification) {
+        await supabase
+          .from('notifications')
+          .insert({
+            user_id: verification.user_id,
+            type: 'mentor_application',
+            title: 'Edit Your Mentor Application',
+            content: `Your mentor application was rejected with feedback. You can now edit and improve your application based on the admin's suggestions. Click here to edit: /become-mentor?edit=true`,
+            data: {
+              action: 'edit_application',
+              verification_id: verificationId,
+              edit_url: '/become-mentor?edit=true'
+            }
+          });
+      }
+    }
+
     console.log('Verification status updated successfully:', data);
     return { data, error: null };
   } catch (error) {

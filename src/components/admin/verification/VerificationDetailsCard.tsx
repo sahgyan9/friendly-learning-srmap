@@ -49,12 +49,22 @@ const VerificationDetailsCard = ({ verification, onStatusUpdate }: VerificationD
             return;
         }
 
+        if (status === 'rejected' && !reason?.trim()) {
+            toast.error("Please provide a reason for rejection to help the user improve their application");
+            return;
+        }
+
         try {
             setUpdating(verification.id);
 
             await updateVerificationStatus(verification.id, status, user.id, reason);
 
-            toast.success(`Mentor application ${status} successfully`);
+            if (status === 'approved') {
+                toast.success("Mentor application approved successfully");
+            } else {
+                toast.success("Application rejected with feedback. User can now edit and resubmit their application.");
+            }
+            
             onStatusUpdate();
 
             if (status === 'rejected') {
@@ -387,15 +397,26 @@ const VerificationDetailsCard = ({ verification, onStatusUpdate }: VerificationD
                                     <DialogTitle>Reject Mentor Application</DialogTitle>
                                 </DialogHeader>
                                 <div className="space-y-4">
+                                    <div className="bg-amber-50 dark:bg-amber-900/20 p-4 rounded-lg border border-amber-200 dark:border-amber-800">
+                                        <p className="text-sm text-amber-800 dark:text-amber-200">
+                                            <strong>Note:</strong> When you reject this application with feedback, the user will be able to edit their existing application and resubmit it. Their current data will be preserved, so they won't have to start from scratch.
+                                        </p>
+                                    </div>
                                     <div>
-                                        <Label htmlFor="rejection-reason">Reason for rejection</Label>
+                                        <Label htmlFor="rejection-reason">
+                                            Reason for rejection <span className="text-red-500">*</span>
+                                        </Label>
                                         <Textarea
                                             id="rejection-reason"
-                                            placeholder="Please provide a reason for rejecting this application..."
+                                            placeholder="Please be specific about what needs to be improved (e.g., 'Please provide more details in your bio section and add your LinkedIn profile URL')"
                                             value={rejectionReason}
                                             onChange={(e) => setRejectionReason(e.target.value)}
                                             className="mt-2"
+                                            rows={4}
                                         />
+                                        <p className="text-xs text-muted-foreground mt-1">
+                                            Provide constructive feedback to help the user improve their application.
+                                        </p>
                                     </div>
                                     <div className="flex justify-end space-x-2">
                                         <Button
@@ -409,7 +430,7 @@ const VerificationDetailsCard = ({ verification, onStatusUpdate }: VerificationD
                                             onClick={() => handleStatusUpdate('rejected', rejectionReason)}
                                             disabled={!rejectionReason.trim()}
                                         >
-                                            Reject Application
+                                            Reject with Feedback
                                         </Button>
                                     </div>
                                 </div>
@@ -425,9 +446,15 @@ const VerificationDetailsCard = ({ verification, onStatusUpdate }: VerificationD
                             <XCircle className="h-4 w-4 text-red-500" />
                             <h4 className="font-semibold text-red-700 dark:text-red-300">Rejection Reason</h4>
                         </div>
-                        <p className="text-sm text-red-600 dark:text-red-400">
+                        <p className="text-sm text-red-600 dark:text-red-400 mb-3">
                             {verification.rejection_reason}
                         </p>
+                        <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded border border-blue-200 dark:border-blue-800">
+                            <p className="text-xs text-blue-700 dark:text-blue-300">
+                                💡 <strong>User can edit and resubmit:</strong> The user can access their rejected application at{' '}
+                                <code className="bg-blue-100 dark:bg-blue-800 px-1 rounded">/become-mentor?edit=true</code> to make improvements and resubmit.
+                            </p>
+                        </div>
                     </div>
                 )}
 
