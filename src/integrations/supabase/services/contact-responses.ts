@@ -1,5 +1,28 @@
 import { supabase } from "@/integrations/supabase/client";
 import { createNotification } from "./notifications";
+import { sendEmail } from "@/integrations/email/resend";
+
+// Verify table exists and is accessible
+export const verifyContactResponsesTable = async () => {
+    try {
+        console.log('Verifying contact_responses table...');
+        const { data, error } = await supabase
+            .from('contact_responses')
+            .select('id')
+            .limit(1);
+
+        if (error) {
+            console.error('Table verification failed:', error);
+            return { exists: false, error: error.message };
+        }
+
+        console.log('Table verification successful');
+        return { exists: true, error: null };
+    } catch (error: any) {
+        console.error('Table verification error:', error);
+        return { exists: false, error: error.message };
+    }
+};
 
 export interface AdminResponse {
     id: string;
@@ -77,15 +100,46 @@ export const sendAdminResponse = async (response: CreateAdminResponse) => {
             // Don't throw here as the response was already sent
         }
 
-        // 3. In a real implementation, you would send the actual email here
-        // await sendEmailViaProvider({
-        //   to: response.recipient_email,
-        //   subject: response.subject,
-        //   html: formatEmailTemplate(response.message, response.recipient_name),
-        //   from: 'admin@friendlylearning.com'
-        // });
+        // 3. Send the actual email
+        try {
+            console.log('Sending email to:', response.recipient_email);
 
-        console.log('Admin response sent successfully:', responseData);
+            const emailHtml = formatEmailTemplate(
+                response.message,
+                response.recipient_name,
+                'Friendly Learning Team' // You can get admin name from user profile
+            );
+
+            const emailResult = await sendEmail({
+                to: response.recipient_email,
+                subject: response.subject,
+                html: emailHtml,
+                from: 'Friendly Learning <noreply@friendlylearning.com>'
+            });
+
+            if (emailResult.success) {
+                console.log('Email sent successfully:', emailResult.messageId);
+
+                // Update the response record with email status
+                await supabase
+                    .from('contact_responses')
+                    .update({
+                        sent_at: new Date().toISOString(),
+                        // You could add email_status field to track this
+                    })
+                    .eq('id', responseData.id);
+
+            } else {
+                console.warn('Email sending failed:', emailResult.message);
+                // Don't throw error as response was already saved
+            }
+
+        } catch (emailError) {
+            console.error('Error sending email:', emailError);
+            // Don't throw error as response was already saved to database
+        }
+
+        console.log('Admin response processed successfully:', responseData);
         return { data: responseData, error: null };
 
     } catch (error) {
@@ -97,42 +151,59 @@ export const sendAdminResponse = async (response: CreateAdminResponse) => {
 // Get all responses for a contact message
 export const getContactMessageResponses = async (contactMessageId: string) => {
     try {
+        console.log('Fetching responses for contact message:', contactMessageId);
+
+        // First, let's try a simple query without foreign key joins to diagnose the issue
         const { data, error } = await supabase
             .from('contact_responses')
-            .select(`
-        *,
-        admin:users!contact_responses_admin_id_fkey(name, email)
-      `)
+            .select('*')
             .eq('contact_message_id', contactMessageId)
             .order('sent_at', { ascending: false });
 
         if (error) {
             console.error('Error fetching contact responses:', error);
-            throw error;
+            throw new Error(`Failed to fetch responses: ${error.message}`);
         }
 
-        return { data, error: null };
+        // If we have responses, fetch admin info separately
+        if (data && data.length > 0) {
+            const adminIds = [...new Set(data.map(r => r.admin_id))];
+            const { data: admins, error: adminError } = await supabase
+                .from('users')
+                .select('id, name, email')
+                .in('id', adminIds);
+
+            if (!adminError && admins) {
+                // Merge admin data with responses
+                const responsesWithAdmin = data.map(response => {
+                    const admin = admins.find(a => a.id === response.admin_id);
+                    return {
+                        ...response,
+                        admin
+                    };
+                });
+
+                console.log('Successfully fetched responses with admin data:', responsesWithAdmin.length);
+                return { data: responsesWithAdmin, error: null };
+            }
+        }
+
+        console.log('Successfully fetched responses:', data?.length || 0);
+        return { data: data || [], error: null };
     } catch (error) {
         console.error('Error fetching contact responses:', error);
-        throw error;
+        return { data: [], error };
     }
 };
 
 // Get all admin responses (for admin dashboard)
 export const getAllAdminResponses = async (adminId?: string) => {
     try {
+        console.log('Fetching all admin responses', adminId ? `for admin: ${adminId}` : '');
+
         let query = supabase
             .from('contact_responses')
-            .select(`
-        *,
-        contact_message:contact_messages!contact_responses_contact_message_id_fkey(
-          name,
-          email,
-          subject,
-          created_at
-        ),
-        admin:users!contact_responses_admin_id_fkey(name, email)
-      `)
+            .select('*')
             .order('sent_at', { ascending: false });
 
         if (adminId) {
@@ -143,13 +214,45 @@ export const getAllAdminResponses = async (adminId?: string) => {
 
         if (error) {
             console.error('Error fetching admin responses:', error);
-            throw error;
+            throw new Error(`Failed to fetch admin responses: ${error.message}`);
         }
 
-        return { data, error: null };
+        // If we have responses, fetch related data separately
+        if (data && data.length > 0) {
+            // Get contact message info
+            const messageIds = [...new Set(data.map(r => r.contact_message_id))];
+            const { data: messages } = await supabase
+                .from('contact_messages')
+                .select('id, name, email, subject, created_at')
+                .in('id', messageIds);
+
+            // Get admin info
+            const adminIds = [...new Set(data.map(r => r.admin_id))];
+            const { data: admins } = await supabase
+                .from('users')
+                .select('id, name, email')
+                .in('id', adminIds);
+
+            // Merge all data
+            const responsesWithData = data.map(response => {
+                const contactMessage = messages?.find(m => m.id === response.contact_message_id);
+                const admin = admins?.find(a => a.id === response.admin_id);
+                return {
+                    ...response,
+                    contact_message: contactMessage,
+                    admin
+                };
+            });
+
+            console.log('Successfully fetched admin responses with related data:', responsesWithData.length);
+            return { data: responsesWithData, error: null };
+        }
+
+        console.log('Successfully fetched admin responses:', data?.length || 0);
+        return { data: data || [], error: null };
     } catch (error) {
         console.error('Error fetching admin responses:', error);
-        throw error;
+        return { data: [], error };
     }
 };
 

@@ -1,7 +1,6 @@
 
 import { useAuth } from "@/context/AuthContext";
 import { Navigate } from "react-router-dom";
-import Navbar from "@/components/Navbar";
 import AdminLayout from "@/components/admin/AdminLayout";
 import ContactMessagesAdmin from "@/components/admin/ContactMessagesAdmin";
 
@@ -21,16 +20,9 @@ const AdminContactMessages = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      <main className="pt-24 pb-16">
-        <div className="container px-4 md:px-6">
-          <AdminLayout>
-            <ContactMessagesAdmin />
-          </AdminLayout>
-        </div>
-      </main>
-    </div>
+    <AdminLayout>
+      <ContactMessagesAdmin />
+    </AdminLayout>
   );
 };
 

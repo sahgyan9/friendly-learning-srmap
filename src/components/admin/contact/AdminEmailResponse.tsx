@@ -23,6 +23,7 @@ import { format } from "date-fns";
 import { toast } from "sonner";
 import { sendAdminResponse, formatEmailTemplate } from "@/integrations/supabase/services/contact-responses";
 import { useAuth } from "@/context/AuthContext";
+import EmailClientHelper from "./EmailClientHelper";
 
 interface ContactMessage {
     id: string;
@@ -108,6 +109,24 @@ const AdminEmailResponse = ({ contactMessage, onResponseSent }: AdminEmailRespon
                             <span>Send Email Response</span>
                         </DialogTitle>
                     </DialogHeader>
+
+                    {/* Email Status Notice */}
+                    <div className="bg-amber-50 dark:bg-amber-900/20 p-4 rounded-lg border border-amber-200 dark:border-amber-800">
+                        <div className="flex items-start space-x-2">
+                            <Mail className="h-4 w-4 text-amber-600 mt-0.5" />
+                            <div className="text-sm">
+                                <p className="font-medium text-amber-800 dark:text-amber-200">
+                                    Email Service Status
+                                </p>
+                                <p className="text-amber-700 dark:text-amber-300 mt-1">
+                                    {import.meta.env.DEV
+                                        ? 'Development mode: Responses will be logged to console and recorded in the system, but no actual emails will be sent.'
+                                        : 'Email service is not configured yet. Use "Open Email Client" to send responses manually.'
+                                    }
+                                </p>
+                            </div>
+                        </div>
+                    </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         {/* Original Message */}
@@ -216,8 +235,14 @@ const AdminEmailResponse = ({ contactMessage, onResponseSent }: AdminEmailRespon
                                         ) : (
                                             <Send className="h-4 w-4" />
                                         )}
-                                        <span>{sending ? 'Sending...' : 'Send Response'}</span>
+                                        <span>{sending ? 'Sending...' : 'Record Response'}</span>
                                     </Button>
+
+                                    <EmailClientHelper
+                                        contactMessage={contactMessage}
+                                        responseSubject={responseSubject}
+                                        responseMessage={responseMessage}
+                                    />
 
                                     <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
                                         <DialogTrigger asChild>

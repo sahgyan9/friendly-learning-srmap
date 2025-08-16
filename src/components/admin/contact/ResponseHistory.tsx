@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
-import { getContactMessageResponses, AdminResponse } from "@/integrations/supabase/services/contact-responses";
+import { getContactMessageResponses, AdminResponse, verifyContactResponsesTable } from "@/integrations/supabase/services/contact-responses";
 
 interface ContactMessage {
     id: string;
@@ -43,13 +43,36 @@ const ResponseHistory = ({ contactMessage }: ResponseHistoryProps) => {
     const fetchResponses = async () => {
         try {
             setLoading(true);
+            console.log('Fetching responses for contact message:', contactMessage.id);
+
+            // First verify the table exists
+            const tableCheck = await verifyContactResponsesTable();
+            if (!tableCheck.exists) {
+                console.error('contact_responses table does not exist or is not accessible:', tableCheck.error);
+                toast.error('Contact responses feature not available. Please ensure the database is properly configured.');
+                setResponses([]);
+                return;
+            }
+
             const result = await getContactMessageResponses(contactMessage.id);
+
+            if (result.error) {
+                console.error('Error in response result:', result.error);
+                toast.error(`Failed to load response history: ${result.error.message || 'Unknown error'}`);
+                return;
+            }
+
             if (result.data) {
+                console.log('Successfully loaded responses:', result.data.length);
                 setResponses(result.data);
+            } else {
+                console.log('No responses found');
+                setResponses([]);
             }
         } catch (error: any) {
             console.error('Error fetching responses:', error);
-            toast.error('Failed to load response history');
+            toast.error(`Failed to load response history: ${error.message || 'Unknown error'}`);
+            setResponses([]);
         } finally {
             setLoading(false);
         }
@@ -224,15 +247,18 @@ const ResponseHistory = ({ contactMessage }: ResponseHistoryProps) => {
                             </div>
 
                             {/* Status */}
-                            <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
+                            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
                                 <div className="flex items-center space-x-2">
-                                    <Send className="h-4 w-4 text-green-600" />
-                                    <span className="text-sm font-medium text-green-700 dark:text-green-300">
-                                        Email sent successfully
+                                    <Send className="h-4 w-4 text-blue-600" />
+                                    <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
+                                        Response recorded in system
                                     </span>
                                 </div>
-                                <p className="text-xs text-green-600 dark:text-green-400 mt-1">
-                                    This response was delivered to the recipient's email address.
+                                <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                                    {import.meta.env.DEV
+                                        ? 'In development mode - email content was logged to console instead of being sent.'
+                                        : 'Email service is not yet configured. Response saved for manual follow-up.'
+                                    }
                                 </p>
                             </div>
                         </div>
