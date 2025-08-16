@@ -111,8 +111,8 @@ const VerificationStats = ({ stats }: VerificationStatsProps) => {
                 <div className="text-2xl font-bold text-green-600">
                   {approvalRate.toFixed(1)}%
                 </div>
-                <Progress 
-                  value={approvalRate} 
+                <Progress
+                  value={approvalRate}
                   className="h-2"
                 />
                 <p className="text-xs text-muted-foreground">
@@ -137,8 +137,8 @@ const VerificationStats = ({ stats }: VerificationStatsProps) => {
                 <div className="text-2xl font-bold text-blue-600">
                   {processingRate.toFixed(1)}%
                 </div>
-                <Progress 
-                  value={processingRate} 
+                <Progress
+                  value={processingRate}
                   className="h-2"
                 />
                 <p className="text-xs text-muted-foreground">

@@ -12,12 +12,12 @@ interface VerificationListProps {
   onStatusUpdate: () => void;
 }
 
-const VerificationList = ({ 
-  verifications, 
-  loading, 
-  selectedStatus, 
-  onStatusChange, 
-  onStatusUpdate 
+const VerificationList = ({
+  verifications,
+  loading,
+  selectedStatus,
+  onStatusChange,
+  onStatusUpdate
 }: VerificationListProps) => {
   if (loading) {
     return (

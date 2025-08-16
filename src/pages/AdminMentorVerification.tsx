@@ -24,7 +24,7 @@ const AdminMentorVerification = () => {
 
   // Filter and process verifications
   const filteredVerifications = useMemo(() => {
-    let filtered = allVerifications.filter((verification: any) => 
+    let filtered = allVerifications.filter((verification: any) =>
       verification.status === selectedStatus
     );
 
@@ -34,7 +34,7 @@ const AdminMentorVerification = () => {
       filtered = filtered.filter((verification: any) => {
         const userData = verification.user || {};
         const appData = verification.application_data || {};
-        
+
         return (
           userData.name?.toLowerCase().includes(searchTerm) ||
           userData.email?.toLowerCase().includes(searchTerm) ||
@@ -56,7 +56,7 @@ const AdminMentorVerification = () => {
     // Apply university filter
     if (filters.university) {
       const universityTerm = filters.university.toLowerCase();
-      filtered = filtered.filter((verification: any) => 
+      filtered = filtered.filter((verification: any) =>
         verification.university?.toLowerCase().includes(universityTerm)
       );
     }
@@ -66,7 +66,7 @@ const AdminMentorVerification = () => {
       filtered = filtered.filter((verification: any) => {
         const verificationCgpa = parseFloat(verification.cgpa);
         if (isNaN(verificationCgpa)) return false;
-        
+
         switch (filters.cgpaRange) {
           case '9.0-10.0':
             return verificationCgpa >= 9.0 && verificationCgpa <= 10.0;
@@ -86,7 +86,7 @@ const AdminMentorVerification = () => {
 
     // Apply year of studies filter
     if (filters.yearOfStudies) {
-      filtered = filtered.filter((verification: any) => 
+      filtered = filtered.filter((verification: any) =>
         verification.year_of_studies === filters.yearOfStudies
       );
     }
@@ -98,7 +98,7 @@ const AdminMentorVerification = () => {
     try {
       setLoading(true);
       console.log('Fetching all verification data');
-      
+
       const [verificationsResult, statsResult] = await Promise.all([
         getAllMentorVerifications(), // Get all verifications, we'll filter on frontend
         getVerificationStatistics()
@@ -153,13 +153,13 @@ const AdminMentorVerification = () => {
 
       <div className="space-y-6">
         <VerificationStats stats={stats} />
-        
-        <VerificationFilters 
+
+        <VerificationFilters
           onFiltersChange={handleFiltersChange}
           totalResults={totalForStatus}
           filteredResults={filteredVerifications.length}
         />
-        
+
         <VerificationList
           verifications={filteredVerifications}
           loading={loading}
