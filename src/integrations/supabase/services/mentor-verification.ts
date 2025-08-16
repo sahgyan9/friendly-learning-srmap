@@ -191,6 +191,7 @@ export const updateMentorApplication = async (
   applicationData: Partial<CreateMentorVerification>
 ) => {
   console.log('Updating mentor application for user:', userId);
+  console.log('Application data to update:', applicationData);
 
   try {
     // First check if user has a rejected application using maybeSingle
@@ -199,6 +200,8 @@ export const updateMentorApplication = async (
       .select('*')
       .eq('user_id', userId)
       .maybeSingle();
+
+    console.log('Existing application found:', existingApp);
 
     if (fetchError) {
       console.error('Error fetching existing application:', fetchError);
@@ -210,24 +213,29 @@ export const updateMentorApplication = async (
     }
 
     if (existingApp.status !== 'rejected') {
-      throw new Error('Application is not in rejected status, cannot update');
+      throw new Error(`Application is not in rejected status, cannot update. Current status: ${existingApp.status}`);
     }
 
     // Update the existing application with new data and reset status to pending
     const updateData = {
       ...applicationData,
-      status: 'pending',
+      status: 'pending' as const,
       submitted_at: new Date().toISOString(),
       reviewed_at: null,
       reviewed_by: null,
       rejection_reason: null
     };
 
+    console.log('Update data being sent:', updateData);
+
     const { data, error } = await supabase
       .from('mentor_verifications')
       .update(updateData)
       .eq('user_id', userId)
+      .eq('id', existingApp.id) // Also match by ID for extra safety
       .select();
+
+    console.log('Update result:', { data, error });
 
     if (error) {
       console.error('Error updating mentor application:', error);
@@ -236,13 +244,25 @@ export const updateMentorApplication = async (
 
     // Since user_id has a unique constraint, there should be exactly one record
     if (!data || data.length === 0) {
-      throw new Error('No application was updated');
+      console.error('No rows were updated. This might indicate a constraint violation or the record was not found.');
+
+      // Let's check if the record still exists
+      const { data: checkApp } = await supabase
+        .from('mentor_verifications')
+        .select('*')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      console.log('Record after failed update:', checkApp);
+
+      throw new Error('No application was updated. The application record may have been modified by another process.');
     }
 
     const updatedApplication = data[0];
+    console.log('Successfully updated application:', updatedApplication);
 
     // Create a success notification
-    await supabase
+    const { error: notificationError } = await supabase
       .from('notifications')
       .insert({
         user_id: userId,
@@ -254,6 +274,10 @@ export const updateMentorApplication = async (
           verification_id: updatedApplication.id
         }
       });
+
+    if (notificationError) {
+      console.warn('Failed to create notification:', notificationError);
+    }
 
     console.log('Application updated and resubmitted successfully:', updatedApplication);
     return { data: updatedApplication, error: null };
