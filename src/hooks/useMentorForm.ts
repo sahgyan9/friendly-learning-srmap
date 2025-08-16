@@ -79,40 +79,60 @@ export const useMentorForm = (userId: string, initialData: MentorFormData, isEdi
 
       if (isEditMode) {
         // Update existing rejected application
-        const { error } = await updateMentorApplication(userId, applicationData);
+        try {
+          const { error } = await updateMentorApplication(userId, applicationData);
 
-        if (error) throw error;
+          if (error) throw error;
 
-        toast.success("Your mentor application has been updated and resubmitted successfully! You will be notified once it's reviewed by our team.");
+          toast.success("Your mentor application has been updated and resubmitted successfully! You will be notified once it's reviewed by our team.");
+        } catch (updateError: any) {
+          console.error("Error updating mentor application:", updateError);
+          throw new Error(updateError.message || "Failed to update mentor application");
+        }
       } else {
         // Check if user already has a pending or approved application
-        const { data: existingVerification } = await supabase
-          .from('mentor_verifications')
-          .select('status')
-          .eq('user_id', userId)
-          .single();
+        try {
+          const { data: existingVerification, error: checkError } = await supabase
+            .from('mentor_verifications')
+            .select('status')
+            .eq('user_id', userId)
+            .maybeSingle();
 
-        if (existingVerification) {
-          if (existingVerification.status === 'pending') {
-            toast.error("You already have a pending mentor application. Please wait for admin review.");
-            return;
+          if (checkError && checkError.code !== 'PGRST116') {
+            console.error("Error checking existing verification:", checkError);
+            throw new Error("Failed to check existing application status");
           }
-          if (existingVerification.status === 'approved') {
-            toast.error("You are already an approved mentor.");
-            return;
+
+          if (existingVerification) {
+            if (existingVerification.status === 'pending') {
+              toast.error("You already have a pending mentor application. Please wait for admin review.");
+              return;
+            }
+            if (existingVerification.status === 'approved') {
+              toast.error("You are already an approved mentor.");
+              return;
+            }
+            if (existingVerification.status === 'rejected') {
+              toast.error("You have a rejected application. Please use the edit option to update and resubmit it.");
+              return;
+            }
           }
-          if (existingVerification.status === 'rejected') {
-            toast.error("You have a rejected application. Please use the edit option to update and resubmit it.");
-            return;
-          }
+        } catch (checkError: any) {
+          console.error("Error checking existing application:", checkError);
+          throw new Error(checkError.message || "Failed to check application status");
         }
 
         // Submit new application
-        const { error } = await submitMentorApplication(applicationData);
+        try {
+          const { error } = await submitMentorApplication(applicationData);
 
-        if (error) throw error;
+          if (error) throw error;
 
-        toast.success("Your mentor application has been submitted successfully! You will be notified once it's reviewed by our team.");
+          toast.success("Your mentor application has been submitted successfully! You will be notified once it's reviewed by our team.");
+        } catch (submitError: any) {
+          console.error("Error submitting mentor application:", submitError);
+          throw new Error(submitError.message || "Failed to submit mentor application");
+        }
       }
 
       // Navigate to the user's profile page

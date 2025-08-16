@@ -25,21 +25,31 @@ export const submitMentorApplication = async (application: CreateMentorVerificat
 export const getMentorVerification = async (userId: string) => {
   console.log('Fetching mentor verification for user:', userId);
 
-  const { data, error } = await supabase
-    .from('mentor_verifications')
-    .select(`
-      *,
-      reviewed_by_user:users!mentor_verifications_reviewed_by_fkey(name, email)
-    `)
-    .eq('user_id', userId)
-    .maybeSingle();
-
-  if (error && error.code !== 'PGRST116') {
-    console.error('Error fetching mentor verification:', error);
-    throw new Error(`Failed to fetch verification: ${error.message}`);
+  if (!userId) {
+    console.error('No userId provided to getMentorVerification');
+    return { data: null, error: { message: 'User ID is required' } };
   }
 
-  return { data, error: null };
+  try {
+    const { data, error } = await supabase
+      .from('mentor_verifications')
+      .select(`
+        *,
+        reviewed_by_user:users!mentor_verifications_reviewed_by_fkey(name, email)
+      `)
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (error && error.code !== 'PGRST116') {
+      console.error('Error fetching mentor verification:', error);
+      throw new Error(`Failed to fetch verification: ${error.message}`);
+    }
+
+    return { data, error: null };
+  } catch (error: any) {
+    console.error('Exception in getMentorVerification:', error);
+    return { data: null, error: { message: error.message || 'Failed to fetch verification' } };
+  }
 };
 
 export const getAllMentorVerifications = async (status?: string) => {
@@ -183,12 +193,12 @@ export const updateMentorApplication = async (
   console.log('Updating mentor application for user:', userId);
 
   try {
-    // First check if user has a rejected application
+    // First check if user has a rejected application using maybeSingle
     const { data: existingApp, error: fetchError } = await supabase
       .from('mentor_verifications')
       .select('*')
       .eq('user_id', userId)
-      .single();
+      .maybeSingle();
 
     if (fetchError) {
       console.error('Error fetching existing application:', fetchError);
@@ -217,13 +227,19 @@ export const updateMentorApplication = async (
       .from('mentor_verifications')
       .update(updateData)
       .eq('user_id', userId)
-      .select()
-      .single();
+      .select();
 
     if (error) {
       console.error('Error updating mentor application:', error);
       throw new Error(`Failed to update application: ${error.message}`);
     }
+
+    // Since user_id has a unique constraint, there should be exactly one record
+    if (!data || data.length === 0) {
+      throw new Error('No application was updated');
+    }
+
+    const updatedApplication = data[0];
 
     // Create a success notification
     await supabase
@@ -235,12 +251,12 @@ export const updateMentorApplication = async (
         content: 'Your updated mentor application has been resubmitted and is now under review. You will be notified once the review is complete.',
         data: {
           action: 'application_resubmitted',
-          verification_id: data.id
+          verification_id: updatedApplication.id
         }
       });
 
-    console.log('Application updated and resubmitted successfully:', data);
-    return { data, error: null };
+    console.log('Application updated and resubmitted successfully:', updatedApplication);
+    return { data: updatedApplication, error: null };
   } catch (error) {
     console.error('Exception updating mentor application:', error);
     throw error;
