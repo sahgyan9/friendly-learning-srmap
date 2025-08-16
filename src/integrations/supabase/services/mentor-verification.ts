@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Database } from "@/integrations/supabase/types";
 
@@ -33,7 +32,7 @@ export const getMentorVerification = async (userId: string) => {
       reviewed_by_user:users!mentor_verifications_reviewed_by_fkey(name, email)
     `)
     .eq('user_id', userId)
-    .single();
+    .maybeSingle();
 
   if (error && error.code !== 'PGRST116') {
     console.error('Error fetching mentor verification:', error);
@@ -96,7 +95,7 @@ export const updateVerificationStatus = async (
       throw new Error(`Database error: ${error.message}`);
     }
 
-    // If rejected, also create an additional notification with edit instructions
+    // Enhanced notification system for rejections
     if (status === 'rejected') {
       const { data: verification } = await supabase
         .from('mentor_verifications')
@@ -105,19 +104,38 @@ export const updateVerificationStatus = async (
         .single();
 
       if (verification) {
-        await supabase
-          .from('notifications')
-          .insert({
+        // Create multiple notifications to ensure visibility
+        const notifications = [
+          {
             user_id: verification.user_id,
             type: 'mentor_application',
-            title: 'Edit Your Mentor Application',
-            content: `Your mentor application was rejected with feedback. You can now edit and improve your application based on the admin's suggestions. Click here to edit: /become-mentor?edit=true`,
+            title: '🎯 Action Required: Mentor Application Rejected',
+            content: `Your mentor application was rejected and needs attention. Admin feedback: "${reason || 'No specific reason provided'}". You can edit and resubmit your application with the provided feedback.`,
+            data: {
+              action: 'edit_application',
+              verification_id: verificationId,
+              edit_url: '/become-mentor?edit=true',
+              rejection_reason: reason
+            }
+          },
+          {
+            user_id: verification.user_id,
+            type: 'system',
+            title: '📝 Edit Your Mentor Application',
+            content: `Good news! Your previous data is saved. Click here to edit and improve your mentor application: /become-mentor?edit=true`,
             data: {
               action: 'edit_application',
               verification_id: verificationId,
               edit_url: '/become-mentor?edit=true'
             }
-          });
+          }
+        ];
+
+        for (const notification of notifications) {
+          await supabase
+            .from('notifications')
+            .insert(notification);
+        }
       }
     }
 
@@ -206,6 +224,20 @@ export const updateMentorApplication = async (
       console.error('Error updating mentor application:', error);
       throw new Error(`Failed to update application: ${error.message}`);
     }
+
+    // Create a success notification
+    await supabase
+      .from('notifications')
+      .insert({
+        user_id: userId,
+        type: 'system',
+        title: '✅ Application Resubmitted Successfully',
+        content: 'Your updated mentor application has been resubmitted and is now under review. You will be notified once the review is complete.',
+        data: {
+          action: 'application_resubmitted',
+          verification_id: data.id
+        }
+      });
 
     console.log('Application updated and resubmitted successfully:', data);
     return { data, error: null };
