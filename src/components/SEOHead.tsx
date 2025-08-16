@@ -13,9 +13,9 @@ interface SEOHeadProps {
 }
 
 const SEOHead = ({
-  title = "Project FL - Friendly Learning Platform | Premier Student Mentorship Platform",
-  description = "Project FL is the leading friendly learning platform connecting students with experienced mentors. Get personalized academic guidance, career advice, and peer learning support through our innovative mentorship platform.",
-  keywords = "project fl, friendly learning platform, project fl mentorship, student to studentmentor platform, academic guidance, university mentorship program, peer learning platform, friendly learning, project fl app",
+  title = "Project FL - University Student Collaboration Platform | Find Study Partners, Hackathon Teams & Project Collaborators",
+  description = "Project FL connects university students for academic help, hackathon partnerships, project collaborations, startup discussions, and finding study partners. Post in community, find skilled teammates, connect with like-minded peers.",
+  keywords = "project fl, university student collaboration, find hackathon partners, student project collaboration, university community posts, find study partners, startup team formation, skill-based student matching, peer learning university, student networking platform, academic help university",
   canonical,
   ogTitle,
   ogDescription,

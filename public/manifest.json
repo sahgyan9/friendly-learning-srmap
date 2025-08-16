@@ -1,7 +1,7 @@
 {
-  "name": "Project FL - Friendly Learning Platform",
+  "name": "Project FL - Student to Student Mentorship Platform",
   "short_name": "Project FL",
-  "description": "Premier friendly learning platform connecting students with experienced mentors for personalized guidance",
+  "description": "Premier student to student mentorship platform within university connecting peers for academic guidance and collaborative learning",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
@@ -21,9 +21,9 @@
   ],
   "keywords": [
     "project fl",
-    "friendly learning platform",
-    "project fl mentorship",
-    "student mentoring platform",
+    "student to student mentorship platform",
+    "peer to peer learning platform within university",
+    "university mentorship platform",
     "fl platform"
   ],
   "scope": "/",
