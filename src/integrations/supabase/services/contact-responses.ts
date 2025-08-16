@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { createNotification } from "./notifications";
 
@@ -18,12 +17,22 @@ export interface CreateAdminResponse {
     admin_id: string;
     subject: string;
     message: string;
+    recipient_email: string;
+    recipient_name: string;
 }
 
 // Create admin response record and send notification
 export const sendAdminResponse = async (response: CreateAdminResponse) => {
     try {
         console.log('Sending admin response:', response);
+
+        // In a real application, you would integrate with an email service like:
+        // - SendGrid
+        // - AWS SES
+        // - Mailgun
+        // - Resend
+        // 
+        // For now, we'll create a record in our database and send a notification
 
         // First, get the contact message details to extract recipient info
         const { data: contactMessage, error: contactError } = await supabase
@@ -37,14 +46,6 @@ export const sendAdminResponse = async (response: CreateAdminResponse) => {
             throw new Error(`Failed to fetch contact message: ${contactError?.message || 'Contact message not found'}`);
         }
 
-        // In a real application, you would integrate with an email service like:
-        // - SendGrid
-        // - AWS SES
-        // - Mailgun
-        // - Resend
-        // 
-        // For now, we'll create a record in our database and send a notification
-
         // 1. Store the response in the database with recipient info
         const { data: responseData, error: responseError } = await supabase
             .from('contact_responses')
@@ -53,8 +54,8 @@ export const sendAdminResponse = async (response: CreateAdminResponse) => {
                 admin_id: response.admin_id,
                 subject: response.subject,
                 message: response.message,
-                recipient_email: contactMessage.email,
-                recipient_name: contactMessage.name,
+                recipient_email: response.recipient_email,
+                recipient_name: response.recipient_name,
                 sent_at: new Date().toISOString()
             })
             .select()
@@ -78,9 +79,9 @@ export const sendAdminResponse = async (response: CreateAdminResponse) => {
 
         // 3. In a real implementation, you would send the actual email here
         // await sendEmailViaProvider({
-        //   to: contactMessage.email,
+        //   to: response.recipient_email,
         //   subject: response.subject,
-        //   html: formatEmailTemplate(response.message, contactMessage.name),
+        //   html: formatEmailTemplate(response.message, response.recipient_name),
         //   from: 'admin@friendlylearning.com'
         // });
 
