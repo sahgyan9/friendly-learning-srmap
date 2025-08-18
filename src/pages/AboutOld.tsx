@@ -34,10 +34,10 @@ const About = () => {
         title="About Friendly Learning SRM AP - Premier Student Mentorship Platform | Our Mission & Story"
         description="Learn about Friendly Learning SRM AP's mission to connect students with peer mentors at SRM University AP, Amaravati. Discover our story, values, and commitment to collaborative learning and academic success in Andhra Pradesh."
         keywords="about friendly learning srm ap, srmap mentorship platform, srmap friendly learning, SRM AP mentorship platform, student mentorship mission amaravati, peer learning story andhra pradesh, university mentorship values srmap"
-        canonical="https://friendly-learning.lovable.app/about"
+        canonical="https://www.project-fl.me/about"
         structuredData={structuredData}
       />
-      
+
       <div className="min-h-screen">
         <Navbar />
         <main className="pt-24 pb-16">
@@ -95,7 +95,7 @@ const About = () => {
                   Whether you're here to grow, guide, learn, or lead — Friendly Learning welcomes you.
                 </p>
               </section>
-              
+
               <section className="mb-12">
                 <h2 className="text-2xl font-semibold mt-10 mb-4">Join Our Community</h2>
                 <p className="mb-6">
@@ -108,13 +108,13 @@ const About = () => {
                 </div>
               </section>
             </div>
-            
+
             <section className="mt-16">
               <TeamMembers />
             </section>
           </div>
         </main>
-        
+
         <Footer />
       </div>
     </>

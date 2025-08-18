@@ -32,6 +32,10 @@
 # Handle React Router (SPA) routes
 <IfModule mod_rewrite.c>
     RewriteEngine On
+    # Enforce canonical host (301 redirect to www.project-fl.me)
+    RewriteCond %{HTTP_HOST} !^www\.project-fl\.me$ [NC]
+    RewriteCond %{HTTP_HOST} !^$ [NC]
+    RewriteRule ^(.*)$ https://www.project-fl.me/$1 [L,R=301]
     
     # Allow access to robots.txt and sitemap.xml
     RewriteRule ^robots\.txt$ - [L]
