@@ -6,14 +6,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Camera, Loader2, Save } from "lucide-react";
+import { Camera, Loader2, Save, AlertTriangle, Edit, Clock } from "lucide-react";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import AcademicInfoSection from "@/components/profile/AcademicInfoSection";
-import MentorApplicationStatusChecker from "@/components/mentors/MentorApplicationStatusChecker";
-import SmartBecomeMentorButton from "@/components/mentors/SmartBecomeMentorButton";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { getMentorVerification } from "@/integrations/supabase/services/mentor-verification";
 
 const UserProfile = () => {
   const navigate = useNavigate();
@@ -22,7 +23,8 @@ const UserProfile = () => {
   const [isMentorProfile, setIsMentorProfile] = useState(false);
   const [isApprovedMentor, setIsApprovedMentor] = useState(false);
   const [mentorData, setMentorData] = useState<any>(null);
-  const [applicationStatus, setApplicationStatus] = useState<any>(null);
+  const [mentorVerification, setMentorVerification] = useState<any>(null);
+  const [verificationLoading, setVerificationLoading] = useState(true);
   
   const [formData, setFormData] = useState({
     name: "",
@@ -54,8 +56,24 @@ const UserProfile = () => {
 
       // Check if the user is a mentor
       checkMentorStatus();
+      // Check mentor verification status
+      checkMentorVerification();
     }
   }, [profile]);
+
+  const checkMentorVerification = async () => {
+    if (!user) return;
+    
+    try {
+      setVerificationLoading(true);
+      const { data } = await getMentorVerification(user.id);
+      setMentorVerification(data);
+    } catch (error) {
+      console.error('Error checking mentor verification:', error);
+    } finally {
+      setVerificationLoading(false);
+    }
+  };
 
   const checkMentorStatus = async () => {
     if (!user) return;
@@ -243,7 +261,113 @@ const UserProfile = () => {
     }
   };
 
-  if (authLoading) {
+  const renderMentorApplicationStatus = () => {
+    if (verificationLoading) return null;
+    
+    if (!mentorVerification) {
+      return (
+        <Card className="mb-6">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-medium">Become a Mentor</h3>
+                <p className="text-sm text-muted-foreground">Share your knowledge and help other students</p>
+              </div>
+              <Button onClick={() => navigate('/become-mentor')}>
+                Apply Now
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      );
+    }
+
+    const getStatusBadge = (status: string) => {
+      switch (status) {
+        case 'pending':
+          return <Badge variant="outline" className="bg-yellow-50 text-yellow-800 border-yellow-200"><Clock className="h-3 w-3 mr-1" />Under Review</Badge>;
+        case 'approved':
+          return <Badge variant="outline" className="bg-green-50 text-green-800 border-green-200">Approved</Badge>;
+        case 'rejected':
+          return <Badge variant="outline" className="bg-red-50 text-red-800 border-red-200">Needs Attention</Badge>;
+        default:
+          return <Badge variant="outline">{status}</Badge>;
+      }
+    };
+
+    return (
+      <Card className={`mb-6 ${mentorVerification.status === 'rejected' ? 'border-amber-200 bg-amber-50 dark:bg-amber-900/20' : ''}`}>
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            <span className="flex items-center space-x-2">
+              <span>Mentor Application Status</span>
+              {getStatusBadge(mentorVerification.status)}
+            </span>
+            {mentorVerification.status === 'rejected' && (
+              <Button 
+                onClick={() => navigate('/become-mentor?edit=true')}
+                className="flex items-center space-x-2"
+              >
+                <Edit className="h-4 w-4" />
+                <span>Edit & Resubmit</span>
+              </Button>
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {mentorVerification.status === 'pending' && (
+            <div className="flex items-start space-x-3">
+              <Clock className="h-5 w-5 text-yellow-600 mt-0.5" />
+              <div>
+                <p className="text-sm">Your mentor application is currently under review by our team.</p>
+                <p className="text-xs text-muted-foreground mt-1">You will be notified once the review is complete.</p>
+              </div>
+            </div>
+          )}
+          
+          {mentorVerification.status === 'approved' && (
+            <div className="flex items-start space-x-3">
+              <div className="h-5 w-5 rounded-full bg-green-100 flex items-center justify-center mt-0.5">
+                <div className="h-2 w-2 rounded-full bg-green-600"></div>
+              </div>
+              <div>
+                <p className="text-sm">Congratulations! Your mentor application has been approved.</p>
+                <p className="text-xs text-muted-foreground mt-1">You can now help other students as a verified mentor.</p>
+              </div>
+            </div>
+          )}
+          
+          {mentorVerification.status === 'rejected' && (
+            <div className="flex items-start space-x-3">
+              <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5" />
+              <div className="space-y-2 flex-1">
+                <p className="text-sm text-amber-700 dark:text-amber-300">
+                  Your mentor application needs some updates before it can be approved.
+                </p>
+                {mentorVerification.rejection_reason && (
+                  <div className="bg-white dark:bg-gray-800 p-3 rounded border">
+                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">
+                      Admin Feedback:
+                    </p>
+                    <p className="text-sm text-gray-700 dark:text-gray-300">
+                      {mentorVerification.rejection_reason}
+                    </p>
+                  </div>
+                )}
+                <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded border border-blue-200 dark:border-blue-800">
+                  <p className="text-xs text-blue-700 dark:text-blue-300">
+                    💡 <strong>Good news:</strong> Your previous information has been saved. Click "Edit & Resubmit" to make the necessary changes.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    );
+  };
+
+  if (authLoading || verificationLoading) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
@@ -275,11 +399,7 @@ const UserProfile = () => {
             </p>
           </div>
           
-          {/* Show mentor application status */}
-          <MentorApplicationStatusChecker 
-            onStatusChange={setApplicationStatus}
-            showCard={true}
-          />
+          {renderMentorApplicationStatus()}
           
           <div className="bg-card rounded-lg shadow-sm p-6 md:p-8 border border-border">
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -411,13 +531,18 @@ const UserProfile = () => {
                 </>
               )}
               
-              {/* Show smart button for becoming a mentor */}
-              {!isApprovedMentor && (
+              {!isApprovedMentor && !mentorVerification && (
                 <div className="py-4 border-t border-border">
                   <p className="text-sm text-muted-foreground mb-3">
                     Want to help other students? Apply to become a mentor!
                   </p>
-                  <SmartBecomeMentorButton variant="outline" />
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => navigate('/become-mentor')}
+                  >
+                    Become a Mentor
+                  </Button>
                 </div>
               )}
               
