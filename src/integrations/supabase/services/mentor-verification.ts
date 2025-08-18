@@ -223,7 +223,7 @@ export const updateMentorApplication = async (
   userId: string,
   applicationData: Partial<CreateMentorVerification>
 ) => {
-  console.log('Updating mentor application for user:', userId, applicationData);
+  console.log('Updating mentor application for user:', userId);
 
   try {
     // First check if user has a rejected application using maybeSingle
@@ -235,44 +235,44 @@ export const updateMentorApplication = async (
 
     if (fetchError) {
       console.error('Error fetching existing application:', fetchError);
-      return { data: null, error: { message: `Failed to fetch existing application: ${fetchError.message}` } };
+      throw new Error(`Failed to fetch existing application: ${fetchError.message}`);
     }
 
     if (!existingApp) {
-      return { data: null, error: { message: 'No existing application found' } };
+      throw new Error('No existing application found');
     }
 
     if (existingApp.status !== 'rejected') {
-      return { data: null, error: { message: 'Application is not in rejected status, cannot update' } };
+      throw new Error('Application is not in rejected status, cannot update');
     }
 
     // Update the existing application with new data and reset status to pending
     const updateData = {
       ...applicationData,
-      status: 'pending' as const,
+      status: 'pending',
       submitted_at: new Date().toISOString(),
       reviewed_at: null,
       reviewed_by: null,
       rejection_reason: null
     };
 
-    console.log('Updating with data:', updateData);
-
     const { data, error } = await supabase
       .from('mentor_verifications')
       .update(updateData)
       .eq('user_id', userId)
-      .select()
-      .single();
+      .select();
 
     if (error) {
       console.error('Error updating mentor application:', error);
-      return { data: null, error: { message: `Failed to update application: ${error.message}` } };
+      throw new Error(`Failed to update application: ${error.message}`);
     }
 
-    if (!data) {
-      return { data: null, error: { message: 'No application was updated' } };
+    // Since user_id has a unique constraint, there should be exactly one record
+    if (!data || data.length === 0) {
+      throw new Error('No application was updated');
     }
+
+    const updatedApplication = data[0];
 
     // Create comprehensive success notifications
     const successNotifications = [
@@ -283,7 +283,7 @@ export const updateMentorApplication = async (
         content: 'Great news! Your updated mentor application has been resubmitted and is now under review. Our team will carefully review your improvements and get back to you soon.',
         data: {
           action: 'application_resubmitted',
-          verification_id: data.id,
+          verification_id: updatedApplication.id,
           status: 'success'
         }
       },
@@ -294,7 +294,7 @@ export const updateMentorApplication = async (
         content: 'Your mentor application is now being reviewed by our team. You can check the status anytime by visiting your profile or the mentor application page.',
         data: {
           action: 'application_under_review',
-          verification_id: data.id,
+          verification_id: updatedApplication.id,
           status_url: '/become-mentor'
         }
       }
@@ -306,11 +306,11 @@ export const updateMentorApplication = async (
         .insert(notification);
     }
 
-    console.log('Application updated and resubmitted successfully:', data);
-    return { data, error: null };
+    console.log('Application updated and resubmitted successfully:', updatedApplication);
+    return { data: updatedApplication, error: null };
   } catch (error) {
     console.error('Exception updating mentor application:', error);
-    return { data: null, error: { message: error instanceof Error ? error.message : 'Unknown error occurred' } };
+    throw error;
   }
 };
 

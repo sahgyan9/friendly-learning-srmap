@@ -28,13 +28,8 @@ import AdminSettings from "./pages/AdminSettings";
 import AdminSecurity from "./pages/AdminSecurity";
 import TeamMembersAdmin from "./pages/TeamMembersAdmin";
 import MarketplaceAdmin from "./pages/MarketplaceAdmin";
-import HowItWorks from "./pages/HowItWorks";
-import FindStudyPartners from "./pages/FindStudyPartners";
-import HackathonPartners from "./pages/HackathonPartners";
-import Blog from "./pages/Blog";
 import NotFound from "./pages/NotFound";
 import Unauthorized from "./pages/Unauthorized";
-import RouteRobots from "@/components/RouteRobots";
 
 // Create a new QueryClient instance for React Query
 const queryClient = new QueryClient();
@@ -56,7 +51,6 @@ function App() {
       <AuthProvider>
         <TooltipProvider>
           <Toaster />
-          <RouteRobots />
           <Routes>
             {/* Public Routes - No authentication required */}
             <Route path="/" element={<Index />} />
@@ -71,10 +65,6 @@ function App() {
             <Route path="/community-posts" element={<CommunityPosts />} />
             <Route path="/community-posts/:id" element={<CommunityPostDetail />} />
             <Route path="/marketplace" element={<MarketPlace />} />
-            <Route path="/how-it-works" element={<HowItWorks />} />
-            <Route path="/find-study-partners" element={<FindStudyPartners />} />
-            <Route path="/hackathon-partners" element={<HackathonPartners />} />
-            <Route path="/blog" element={<Blog />} />
             <Route path="/unauthorized" element={<Unauthorized />} />
 
             {/* User Protected Routes - Require authentication */}
@@ -83,6 +73,7 @@ function App() {
             <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
 
             {/* Admin Protected Routes - Require authentication + admin role */}
+            {/* These routes will redirect to /unauthorized if the user is not an admin */}
             <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>} />
             <Route path="/admin/contact-messages" element={<ProtectedRoute requiredRole="admin"><AdminContactMessages /></ProtectedRoute>} />
             <Route path="/admin/mentor-verification" element={<ProtectedRoute requiredRole="admin"><AdminMentorVerification /></ProtectedRoute>} />

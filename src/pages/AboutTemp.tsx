@@ -27,7 +27,7 @@ const About = () => {
                 title="About Project FL - Friendly Learning Platform | Our Mission & Story"
                 description="Learn about Project FL's mission to connect students with experienced mentors. Discover our story, values, and commitment to collaborative learning and academic success through personalized mentorship."
                 keywords="about project fl, friendly learning platform, project fl mentorship, student mentorship mission, peer learning story, friendly learning values, mentorship platform"
-                canonical="https://www.project-fl.me/about"
+                canonical="https://friendly-learning.lovable.app/about"
                 structuredData={structuredData}
             />
 

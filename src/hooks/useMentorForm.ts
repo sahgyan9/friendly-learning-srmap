@@ -55,89 +55,91 @@ export const useMentorForm = (userId: string, initialData: MentorFormData, isEdi
 
     try {
       // Validate form
-      if (!formData.name?.trim() || !formData.department?.trim() || !formData.skills.trim() || !formData.cgpa || !formData.year_of_studies || !formData.university?.trim() || !formData.mobile?.trim()) {
+      if (!formData.name || !formData.department || !formData.skills.trim() || !formData.cgpa || !formData.year_of_studies || !formData.university || !formData.mobile) {
         throw new Error("Please fill in all required fields");
-      }
-
-      // Validate CGPA
-      const cgpaNum = parseFloat(formData.cgpa);
-      if (isNaN(cgpaNum) || cgpaNum < 0 || cgpaNum > 10) {
-        throw new Error("Please enter a valid CGPA between 0 and 10");
       }
 
       const applicationData = {
         user_id: userId,
         application_data: {
-          name: formData.name.trim(),
-          department: formData.department.trim(),
-          skills: formData.skills.trim(),
-          bio: formData.bio?.trim() || '',
-          linkedin_url: formData.linkedin_url?.trim() || '',
-          profile_image: formData.profile_image || '',
-          mobile: formData.mobile.trim()
+          name: formData.name,
+          department: formData.department,
+          skills: formData.skills,
+          bio: formData.bio,
+          linkedin_url: formData.linkedin_url,
+          profile_image: formData.profile_image,
+          mobile: formData.mobile
         },
-        cgpa: cgpaNum,
+        cgpa: parseFloat(formData.cgpa),
         year_of_studies: formData.year_of_studies,
-        university: formData.university.trim(),
-        hobbies: formData.hobbies?.trim() || '',
+        university: formData.university,
+        hobbies: formData.hobbies,
         status: 'pending'
       };
 
-      console.log('Submitting application data:', applicationData);
-
       if (isEditMode) {
         // Update existing rejected application
-        const result = await updateMentorApplication(userId, applicationData);
-        
-        if (result.error) {
-          console.error("Update error:", result.error);
-          throw new Error(result.error.message || "Failed to update mentor application");
-        }
+        try {
+          const { error } = await updateMentorApplication(userId, applicationData);
 
-        toast.success("Your mentor application has been updated and resubmitted successfully! You will be notified once it's reviewed by our team.");
+          if (error) throw error;
+
+          toast.success("Your mentor application has been updated and resubmitted successfully! You will be notified once it's reviewed by our team.");
+        } catch (updateError: any) {
+          console.error("Error updating mentor application:", updateError);
+          throw new Error(updateError.message || "Failed to update mentor application");
+        }
       } else {
         // Check if user already has any application (prevent duplicates)
-        const { data: existingVerification, error: checkError } = await getMentorVerification(userId);
+        try {
+          const { data: existingVerification, error: checkError } = await getMentorVerification(userId);
 
-        if (checkError && checkError.message !== 'User ID is required') {
-          console.error("Error checking existing verification:", checkError);
-          throw new Error("Failed to check existing application status");
-        }
+          if (checkError) {
+            console.error("Error checking existing verification:", checkError);
+            throw new Error("Failed to check existing application status");
+          }
 
-        if (existingVerification) {
-          if (existingVerification.status === 'pending') {
-            toast.error("You already have a pending mentor application. Please wait for admin review.");
-            navigate('/become-mentor');
-            return;
+          if (existingVerification) {
+            if (existingVerification.status === 'pending') {
+              toast.error("You already have a pending mentor application. Please wait for admin review.");
+              // Redirect to status page
+              navigate('/become-mentor');
+              return;
+            }
+            if (existingVerification.status === 'approved') {
+              toast.error("You are already an approved mentor.");
+              navigate('/become-mentor');
+              return;
+            }
+            if (existingVerification.status === 'rejected') {
+              toast.error("You have a rejected application. Please use the edit option to update and resubmit it.");
+              navigate('/become-mentor?edit=true');
+              return;
+            }
           }
-          if (existingVerification.status === 'approved') {
-            toast.error("You are already an approved mentor.");
-            navigate('/become-mentor');
-            return;
-          }
-          if (existingVerification.status === 'rejected') {
-            toast.error("You have a rejected application. Please use the edit option to update and resubmit it.");
-            navigate('/become-mentor?edit=true');
-            return;
-          }
+        } catch (checkError: any) {
+          console.error("Error checking existing application:", checkError);
+          throw new Error(checkError.message || "Failed to check application status");
         }
 
         // Submit new application
-        const result = await submitMentorApplication(applicationData);
-        
-        if (result.error) {
-          console.error("Submit error:", result.error);
-          throw new Error(result.error.message || "Failed to submit mentor application");
-        }
+        try {
+          const { error } = await submitMentorApplication(applicationData);
 
-        toast.success("Your mentor application has been submitted successfully! You will be notified once it's reviewed by our team.");
+          if (error) throw error;
+
+          toast.success("Your mentor application has been submitted successfully! You will be notified once it's reviewed by our team.");
+        } catch (submitError: any) {
+          console.error("Error submitting mentor application:", submitError);
+          throw new Error(submitError.message || "Failed to submit mentor application");
+        }
       }
 
-      // Navigate to status page
+      // Navigate to status page instead of profile
       navigate('/become-mentor');
     } catch (error: any) {
-      console.error("Error handling mentor application:", error);
-      toast.error(error.message || "Failed to process mentor application");
+      console.error("Error submitting mentor application:", error);
+      toast.error(error.message || "Failed to submit mentor application");
     } finally {
       setIsSubmitting(false);
     }

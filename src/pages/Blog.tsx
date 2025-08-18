@@ -34,11 +34,11 @@ const Blog = () => {
         "@type": "Blog",
         "name": "Project FL Blog - University Student Collaboration Insights",
         "description": "Expert insights on university student collaboration, hackathon teams, study partners, and campus networking through Project FL platform",
-        "url": "https://www.project-fl.me/blog",
+        "url": "https://friendly-learning.lovable.app/blog",
         "publisher": {
             "@type": "Organization",
             "name": "Project FL",
-            "logo": "https://www.project-fl.me/og-image.png"
+            "logo": "https://friendly-learning.lovable.app/og-image.png"
         }
     };
 
@@ -48,7 +48,7 @@ const Blog = () => {
                 title="Project FL Blog - University Student Collaboration Tips & Insights"
                 description="Expert insights on university student collaboration, finding hackathon partners, study groups, and campus networking. Learn how Project FL is transforming student connections."
                 keywords="project fl blog, university student collaboration tips, hackathon team building guide, study partner advice, student networking insights, campus collaboration"
-                canonical="https://www.project-fl.me/blog"
+                canonical="https://friendly-learning.lovable.app/blog"
                 structuredData={structuredData}
             />
 

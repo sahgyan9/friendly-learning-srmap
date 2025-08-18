@@ -78,19 +78,19 @@ const Contact = () => {
         title="Contact Friendly Learning - Get Support for SRM AP Mentorship Platform"
         description="Have questions about Friendly Learning? Contact our support team for help with mentor connections, platform features, or technical support. We're here to help SRM AP students succeed!"
         keywords="contact Friendly Learning, SRM AP mentorship support, student platform help, mentorship questions, technical support"
-        canonical="https://www.project-fl.me/contact"
+        canonical="https://friendly-learning.lovable.app/contact"
         structuredData={structuredData}
       />
-
+      
       <div className="min-h-screen bg-background text-foreground">
         <Navbar />
-
+        
         <main className="pt-24 pb-16">
           <div className="container px-4 md:px-6">
             <div className="max-w-3xl mx-auto">
               <header className="mb-10">
                 <h1 className="text-4xl font-bold mb-6">Contact Us</h1>
-
+                
                 <p className="text-lg mb-4">
                   Have questions or feedback about our SRM AP mentorship platform? We'd love to hear from you.
                 </p>
@@ -98,7 +98,7 @@ const Contact = () => {
                   Fill out the form below and we'll get back to you as soon as possible.
                 </p>
               </header>
-
+              
               <section>
                 <form onSubmit={handleSubmit} className="space-y-6" role="form" aria-label="Contact form">
                   <div>
@@ -116,7 +116,7 @@ const Contact = () => {
                       disabled={isSubmitting}
                     />
                   </div>
-
+                  
                   <div>
                     <label htmlFor="email" className="block text-sm font-medium mb-2">Email Address *</label>
                     <input
@@ -132,7 +132,7 @@ const Contact = () => {
                       disabled={isSubmitting}
                     />
                   </div>
-
+                  
                   <div>
                     <label htmlFor="subject" className="block text-sm font-medium mb-2">Subject *</label>
                     <input
@@ -148,7 +148,7 @@ const Contact = () => {
                       disabled={isSubmitting}
                     />
                   </div>
-
+                  
                   <div>
                     <label htmlFor="message" className="block text-sm font-medium mb-2">Message *</label>
                     <textarea
@@ -164,11 +164,11 @@ const Contact = () => {
                       disabled={isSubmitting}
                     />
                   </div>
-
+                  
                   <div>
-                    <Button
-                      type="submit"
-                      size="lg"
+                    <Button 
+                      type="submit" 
+                      size="lg" 
                       className="w-full md:w-auto"
                       disabled={isSubmitting}
                     >
@@ -180,7 +180,7 @@ const Contact = () => {
             </div>
           </div>
         </main>
-
+        
         <Footer />
       </div>
     </>
