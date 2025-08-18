@@ -9,12 +9,21 @@ const toAbsolute = (p) => path.resolve(__dirname, p)
 const template = fs.readFileSync(toAbsolute('dist/index.html'), 'utf-8')
 const { render } = await import('./dist/server/entry-server.js')
 
-const routesToPrerender = fs
-  .readdirSync(toAbsolute('src/pages'))
-  .map((file) => {
-    const name = file.replace(/\.tsx$/, '').toLowerCase()
-    return name === 'index' ? `/` : `/${name}`
-  })
+// Explicit list of public, SEO-friendly routes
+const routesToPrerender = [
+  '/',
+  '/about',
+  '/mentors',
+  '/community-posts',
+  '/signup',
+  '/signin',
+  '/contact',
+  '/marketplace',
+  '/how-it-works',
+  '/find-study-partners',
+  '/hackathon-partners',
+  '/blog'
+]
 
   ; (async () => {
     for (const url of routesToPrerender) {
@@ -40,83 +49,39 @@ const routesToPrerender = fs
       }
     }
 
-    // Generate sitemap.xml dynamically
-    const sitemapContent = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
-  <url>
-    <loc>https://friendly-learning-srmap.lovable.app/</loc>
-    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>1.0</priority>
-  </url>
-  <url>
-    <loc>https://friendly-learning-srmap.lovable.app/about</loc>
-    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://friendly-learning-srmap.lovable.app/mentors</loc>
-    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://friendly-learning-srmap.lovable.app/community</loc>
-    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://friendly-learning-srmap.lovable.app/signup</loc>
-    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://friendly-learning-srmap.lovable.app/signin</loc>
-    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://friendly-learning-srmap.lovable.app/contact</loc>
-    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://friendly-learning-srmap.lovable.app/marketplace</loc>
-    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://friendly-learning-srmap.lovable.app/become-mentor</loc>
-    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://friendly-learning-srmap.lovable.app/how-it-works</loc>
-    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://friendly-learning-srmap.lovable.app/find-study-partners</loc>
-    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://friendly-learning-srmap.lovable.app/hackathon-partners</loc>
-    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-  </url>
-</urlset>`
+    // Generate sitemap.xml from an explicit list of public routes
+    const primary = 'https://www.project-fl.me';
+    const legacy = 'https://friendly-learning.lovable.app';
+    const today = new Date().toISOString().split('T')[0];
+    const publicRoutes = [
+      '/',
+      '/about',
+      '/mentors',
+      '/community',
+      '/signup',
+      '/signin',
+      '/contact',
+      '/marketplace',
+      '/become-mentor',
+      '/how-it-works',
+      '/find-study-partners',
+      '/hackathon-partners',
+      '/blog'
+    ];
+    const urls = publicRoutes.map((r) => {
+      const loc = r === '/' ? `${primary}/` : `${primary}${r}`;
+      const isHome = r === '/';
+      const priority = isHome ? '1.0' : '0.8';
+      const changefreq = isHome ? 'weekly' : 'monthly';
+      return `  <url>\n    <loc>${loc}</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>${changefreq}</changefreq>\n    <priority>${priority}</priority>\n  </url>`;
+    }).join('\n');
 
-    fs.writeFileSync(toAbsolute('dist/sitemap.xml'), sitemapContent)
-    console.log('generated sitemap.xml with correct domain')
+    const sitemapContent = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">\n${urls}\n</urlset>`;
+
+    fs.writeFileSync(toAbsolute('dist/sitemap.xml'), sitemapContent);
+    console.log('generated sitemap.xml from routes with primary domain');
+
+    const legacySitemap = sitemapContent.replaceAll(primary, legacy);
+    fs.writeFileSync(toAbsolute('dist/sitemap-legacy.xml'), legacySitemap);
+    console.log('generated sitemap-legacy.xml for legacy domain');
   })()

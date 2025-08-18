@@ -1,6 +1,6 @@
 
 export const generateSitemap = () => {
-  const baseUrl = 'https://friendly-learning-srmap.lovable.app';
+  const baseUrl = 'https://www.project-fl.me';
   const currentDate = new Date().toISOString().split('T')[0];
 
   const pages = [

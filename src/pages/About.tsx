@@ -36,7 +36,7 @@ const About = () => {
         title="About Project FL - University Student Collaboration Platform | Find Study Partners & Hackathon Teams"
         description="Learn about Project FL's mission to connect university students for academic help, hackathon partnerships, project collaborations, startup discussions, and finding study partners. Discover how our platform builds stronger university communities."
         keywords="about project fl, university student collaboration, find hackathon partners, student project collaboration, university community platform, study partner matching, startup team formation, skill-based student discovery"
-        canonical="https://friendly-learning.lovable.app/about"
+        canonical="https://www.project-fl.me/about"
         structuredData={structuredData}
       />
 

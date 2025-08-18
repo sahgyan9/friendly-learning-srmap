@@ -30,6 +30,7 @@ import TeamMembersAdmin from "./pages/TeamMembersAdmin";
 import MarketplaceAdmin from "./pages/MarketplaceAdmin";
 import NotFound from "./pages/NotFound";
 import Unauthorized from "./pages/Unauthorized";
+import RouteRobots from "@/components/RouteRobots";
 
 // Create a new QueryClient instance for React Query
 const queryClient = new QueryClient();
@@ -51,6 +52,7 @@ function App() {
       <AuthProvider>
         <TooltipProvider>
           <Toaster />
+          <RouteRobots />
           <Routes>
             {/* Public Routes - No authentication required */}
             <Route path="/" element={<Index />} />

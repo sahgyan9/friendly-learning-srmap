@@ -24,20 +24,20 @@ const Mentors = () => {
   // Fade in animation variants
   const pageVariants = {
     hidden: { opacity: 0 },
-    visible: { 
+    visible: {
       opacity: 1,
-      transition: { 
+      transition: {
         duration: 0.6,
         when: "beforeChildren",
         staggerChildren: 0.2
       }
     }
   };
-  
+
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
-    visible: { 
-      opacity: 1, 
+    visible: {
+      opacity: 1,
       y: 0,
       transition: { duration: 0.5 }
     }
@@ -49,7 +49,7 @@ const Mentors = () => {
       setIsLoading(true);
       try {
         const { data, error } = await getMentors();
-        
+
         if (error) {
           console.error("Error fetching mentors:", error);
           toast({
@@ -60,7 +60,7 @@ const Mentors = () => {
           setFilteredMentors(sampleMentors);
           return;
         }
-        
+
         if (data && data.length > 0) {
           setFilteredMentors(data);
         } else {
@@ -75,7 +75,7 @@ const Mentors = () => {
         console.error("Exception fetching mentors:", err);
         setFilteredMentors(sampleMentors);
         toast({
-          title: "Error", 
+          title: "Error",
           description: "An unexpected error occurred. Using sample data instead.",
           variant: "destructive",
         });
@@ -91,7 +91,7 @@ const Mentors = () => {
   const handleSearch = async (query: string, results?: Mentor[]) => {
     setSearchQuery(query);
     setIsAiSearch(false);
-    
+
     if (results) {
       // If results are provided directly (from dynamic search)
       setFilteredMentors(results);
@@ -110,12 +110,12 @@ const Mentors = () => {
 
   const handleGeminiSearch = (geminiResults: Mentor[]) => {
     setIsAiSearch(true);
-    
+
     if (!geminiResults || geminiResults.length === 0) {
       setFilteredMentors([]);
       return;
     }
-    
+
     setFilteredMentors(geminiResults);
   };
 
@@ -144,43 +144,43 @@ const Mentors = () => {
         title={`Find Student Mentors at Friendly Learning SRM AP | Browse ${filteredMentors.length} Verified SRMAP Mentors`}
         description="Discover experienced student mentors at Friendly Learning SRM AP University in Amaravati. Browse profiles, skills, and reviews to find the perfect mentor for your academic journey. Connect with verified peer mentors from SRMAP today!"
         keywords="friendly learning srm ap, srmap mentorship platform, srmap friendly learning, SRM AP mentors directory, student mentors SRMAP, academic guidance amaravati, peer mentoring andhra pradesh, university mentorship srmap, SRM AP academic support, student tutoring amaravati"
-        canonical="https://friendly-learning.lovable.app/mentors"
+        canonical="https://www.project-fl.me/mentors"
         structuredData={structuredData}
       />
-      
-      <motion.div 
+
+      <motion.div
         className="min-h-screen"
         initial="hidden"
         animate="visible"
         variants={pageVariants}
       >
         <Navbar />
-        
+
         <main className="pt-24 pb-16">
           <div className="container px-4 md:px-6">
             <motion.div variants={itemVariants}>
-              <MentorsHeader 
-                title="Find Your Perfect Mentor at SRM AP" 
+              <MentorsHeader
+                title="Find Your Perfect Mentor at SRM AP"
                 description="Browse our extensive directory of verified student mentors or use our AI-powered search to find mentors with specific skills and expertise tailored to your academic needs."
               />
             </motion.div>
-            
+
             {/* Search */}
             <motion.div variants={itemVariants}>
               <SearchBar onSearch={handleSearch} onGeminiSearch={handleGeminiSearch} />
             </motion.div>
-            
+
             {/* Mentors List */}
             <motion.div variants={itemVariants}>
-              <MentorList 
-                isLoading={isLoading} 
-                mentors={filteredMentors} 
-                isAiSearch={isAiSearch} 
+              <MentorList
+                isLoading={isLoading}
+                mentors={filteredMentors}
+                isAiSearch={isAiSearch}
               />
             </motion.div>
           </div>
         </main>
-        
+
         <MentorsFooter />
       </motion.div>
     </>

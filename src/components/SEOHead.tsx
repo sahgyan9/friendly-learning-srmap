@@ -86,6 +86,19 @@ const SEOHead = ({
       }
       canonicalLink.href = canonical;
     }
+    // If no canonical provided, ensure canonical points to primary domain
+    if (!canonical) {
+      let canonicalLink = document.querySelector('link[rel="canonical"]') as HTMLLinkElement;
+      const desiredHost = 'www.project-fl.me';
+      const url = new URL(window.location.href);
+      url.hostname = desiredHost;
+      if (!canonicalLink) {
+        canonicalLink = document.createElement('link');
+        canonicalLink.rel = 'canonical';
+        document.head.appendChild(canonicalLink);
+      }
+      canonicalLink.href = url.toString();
+    }
 
     // Add structured data
     if (structuredData) {

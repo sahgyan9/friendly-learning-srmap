@@ -10,7 +10,7 @@ const HowItWorks = () => {
         "@type": "HowTo",
         "name": "How to Use Project FL for University Student Collaboration",
         "description": "Step-by-step guide on using Project FL to find study partners, hackathon teams, and project collaborators at your university",
-        "image": "https://friendly-learning.lovable.app/og-image.png",
+        "image": "https://www.project-fl.me/og-image.png",
         "totalTime": "PT10M",
         "supply": ["University email address", "Internet connection"],
         "tool": ["Project FL platform", "Web browser"],
@@ -19,19 +19,19 @@ const HowItWorks = () => {
                 "@type": "HowToStep",
                 "name": "Sign Up",
                 "text": "Create your Project FL account using your university email",
-                "image": "https://friendly-learning.lovable.app/og-image.png"
+                "image": "https://www.project-fl.me/og-image.png"
             },
             {
                 "@type": "HowToStep",
                 "name": "Complete Profile",
                 "text": "Add your skills, interests, and what you're looking for (study partners, hackathon teams, project collaborators)",
-                "image": "https://friendly-learning.lovable.app/og-image.png"
+                "image": "https://www.project-fl.me/og-image.png"
             },
             {
                 "@type": "HowToStep",
                 "name": "Search and Connect",
                 "text": "Use our search filters to find students with the skills or interests you need, or post in the community",
-                "image": "https://friendly-learning.lovable.app/og-image.png"
+                "image": "https://www.project-fl.me/og-image.png"
             }
         ]
     };

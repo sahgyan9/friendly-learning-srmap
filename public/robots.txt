@@ -2,30 +2,24 @@
 User-agent: *
 Allow: /
 
-# Sitemap
+# Sitemaps (primary and legacy domain)
+Sitemap: https://www.project-fl.me/sitemap.xml
 Sitemap: https://friendly-learning.lovable.app/sitemap.xml
 
-# Specific crawl delays for better performance
-Crawl-delay: 1
-
-# Allow important pages for indexing
-Allow: /mentors
-Allow: /about
-Allow: /contact
-Allow: /become-mentor
-Allow: /marketplace
-
-# Disallow admin and private areas
+# Disallow admin and private areas (keep resources crawlable)
 Disallow: /admin/
 Disallow: /api/
 Disallow: /unauthorized
 Disallow: /profile
 Disallow: /messages
+
+# Ignore common tracking parameters
 Disallow: /*?*utm_*
 Disallow: /*?*fbclid*
 Disallow: /*?*gclid*
 Disallow: /*?*source=*
 Disallow: /*#*
 
-# Specify host preference
-Host: https://friendly-learning.lovable.app
+# Notes:
+# - Google ignores Crawl-delay and Host directives, so they're omitted.
+# - All JS/CSS/image assets are allowed for rendering.
