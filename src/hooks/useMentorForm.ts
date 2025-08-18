@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   submitMentorApplication,
   updateMentorApplication,
-  canEditApplication
+  getMentorVerification
 } from "@/integrations/supabase/services/mentor-verification";
 import { useNavigate } from "react-router-dom";
 
@@ -90,15 +90,11 @@ export const useMentorForm = (userId: string, initialData: MentorFormData, isEdi
           throw new Error(updateError.message || "Failed to update mentor application");
         }
       } else {
-        // Check if user already has a pending or approved application
+        // Check if user already has any application (prevent duplicates)
         try {
-          const { data: existingVerification, error: checkError } = await supabase
-            .from('mentor_verifications')
-            .select('status')
-            .eq('user_id', userId)
-            .maybeSingle();
+          const { data: existingVerification, error: checkError } = await getMentorVerification(userId);
 
-          if (checkError && checkError.code !== 'PGRST116') {
+          if (checkError) {
             console.error("Error checking existing verification:", checkError);
             throw new Error("Failed to check existing application status");
           }
@@ -106,14 +102,18 @@ export const useMentorForm = (userId: string, initialData: MentorFormData, isEdi
           if (existingVerification) {
             if (existingVerification.status === 'pending') {
               toast.error("You already have a pending mentor application. Please wait for admin review.");
+              // Redirect to status page
+              navigate('/become-mentor');
               return;
             }
             if (existingVerification.status === 'approved') {
               toast.error("You are already an approved mentor.");
+              navigate('/become-mentor');
               return;
             }
             if (existingVerification.status === 'rejected') {
               toast.error("You have a rejected application. Please use the edit option to update and resubmit it.");
+              navigate('/become-mentor?edit=true');
               return;
             }
           }
@@ -135,8 +135,8 @@ export const useMentorForm = (userId: string, initialData: MentorFormData, isEdi
         }
       }
 
-      // Navigate to the user's profile page
-      navigate('/profile');
+      // Navigate to status page instead of profile
+      navigate('/become-mentor');
     } catch (error: any) {
       console.error("Error submitting mentor application:", error);
       toast.error(error.message || "Failed to submit mentor application");

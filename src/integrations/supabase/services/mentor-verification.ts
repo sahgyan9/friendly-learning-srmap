@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Database } from "@/integrations/supabase/types";
 
@@ -6,6 +7,22 @@ export type CreateMentorVerification = Database['public']['Tables']['mentor_veri
 
 export const submitMentorApplication = async (application: CreateMentorVerification) => {
   console.log('Submitting mentor application:', application);
+
+  // First check if user already has an application
+  const { data: existingApp, error: checkError } = await supabase
+    .from('mentor_verifications')
+    .select('*')
+    .eq('user_id', application.user_id)
+    .maybeSingle();
+
+  if (checkError) {
+    console.error('Error checking existing application:', checkError);
+    throw new Error(`Failed to check existing application: ${checkError.message}`);
+  }
+
+  if (existingApp) {
+    throw new Error(`You already have a ${existingApp.status} mentor application. Please check your profile for status updates.`);
+  }
 
   const { data, error } = await supabase
     .from('mentor_verifications')
@@ -114,29 +131,43 @@ export const updateVerificationStatus = async (
         .single();
 
       if (verification) {
-        // Create multiple notifications to ensure visibility
+        // Create enhanced notifications for rejected applications
         const notifications = [
           {
             user_id: verification.user_id,
             type: 'mentor_application',
-            title: '🎯 Action Required: Mentor Application Rejected',
-            content: `Your mentor application was rejected and needs attention. Admin feedback: "${reason || 'No specific reason provided'}". You can edit and resubmit your application with the provided feedback.`,
+            title: '🚨 URGENT: Mentor Application Rejected - Action Required',
+            content: `Your mentor application was rejected and needs immediate attention. Admin feedback: "${reason || 'No specific reason provided'}". Click here to edit and resubmit your application: /become-mentor?edit=true`,
             data: {
               action: 'edit_application',
               verification_id: verificationId,
               edit_url: '/become-mentor?edit=true',
-              rejection_reason: reason
+              rejection_reason: reason,
+              priority: 'high'
             }
           },
           {
             user_id: verification.user_id,
             type: 'system',
-            title: '📝 Edit Your Mentor Application',
-            content: `Good news! Your previous data is saved. Click here to edit and improve your mentor application: /become-mentor?edit=true`,
+            title: '📝 Your Data is Safe - Ready to Edit Application',
+            content: `Don't worry! All your previous application data has been preserved. You can now edit your mentor application with the admin feedback and resubmit it. Visit: /become-mentor?edit=true`,
             data: {
               action: 'edit_application',
               verification_id: verificationId,
-              edit_url: '/become-mentor?edit=true'
+              edit_url: '/become-mentor?edit=true',
+              data_preserved: true
+            }
+          },
+          {
+            user_id: verification.user_id,
+            type: 'reminder',
+            title: '⏰ Don\'t Miss Out - Edit Your Mentor Application',
+            content: `You have a mentor application that needs updates. Make the suggested improvements and resubmit to join our mentor community. Your application data is waiting for you.`,
+            data: {
+              action: 'edit_application',
+              verification_id: verificationId,
+              edit_url: '/become-mentor?edit=true',
+              reminder: true
             }
           }
         ];
@@ -146,6 +177,8 @@ export const updateVerificationStatus = async (
             .from('notifications')
             .insert(notification);
         }
+        
+        console.log('Enhanced rejection notifications created for user:', verification.user_id);
       }
     }
 
@@ -241,19 +274,37 @@ export const updateMentorApplication = async (
 
     const updatedApplication = data[0];
 
-    // Create a success notification
-    await supabase
-      .from('notifications')
-      .insert({
+    // Create comprehensive success notifications
+    const successNotifications = [
+      {
         user_id: userId,
         type: 'system',
-        title: '✅ Application Resubmitted Successfully',
-        content: 'Your updated mentor application has been resubmitted and is now under review. You will be notified once the review is complete.',
+        title: '✅ Application Successfully Resubmitted!',
+        content: 'Great news! Your updated mentor application has been resubmitted and is now under review. Our team will carefully review your improvements and get back to you soon.',
         data: {
           action: 'application_resubmitted',
-          verification_id: updatedApplication.id
+          verification_id: updatedApplication.id,
+          status: 'success'
         }
-      });
+      },
+      {
+        user_id: userId,
+        type: 'mentor_application',
+        title: '📋 Application Status: Under Review',
+        content: 'Your mentor application is now being reviewed by our team. You can check the status anytime by visiting your profile or the mentor application page.',
+        data: {
+          action: 'application_under_review',
+          verification_id: updatedApplication.id,
+          status_url: '/become-mentor'
+        }
+      }
+    ];
+
+    for (const notification of successNotifications) {
+      await supabase
+        .from('notifications')
+        .insert(notification);
+    }
 
     console.log('Application updated and resubmitted successfully:', updatedApplication);
     return { data: updatedApplication, error: null };
