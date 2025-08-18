@@ -2,9 +2,15 @@
 User-agent: *
 Allow: /
 
-# Sitemaps (primary and legacy domain)
+# Primary domain sitemaps
 Sitemap: https://www.project-fl.me/sitemap.xml
+Sitemap: https://www.project-fl.me/sitemap-mentors.xml
+Sitemap: https://www.project-fl.me/sitemap-posts.xml
+
+# Legacy domain sitemaps (for transition period)
 Sitemap: https://friendly-learning.lovable.app/sitemap.xml
+Sitemap: https://friendly-learning.lovable.app/sitemap-mentors.xml
+Sitemap: https://friendly-learning.lovable.app/sitemap-posts.xml
 
 # Disallow admin and private areas (keep resources crawlable)
 Disallow: /admin/
@@ -13,6 +19,21 @@ Disallow: /unauthorized
 Disallow: /profile
 Disallow: /messages
 
+# Allow important SEO pages
+Allow: /
+Allow: /about
+Allow: /mentors
+Allow: /community-posts
+Allow: /marketplace
+Allow: /contact
+Allow: /signup
+Allow: /signin
+Allow: /how-it-works
+Allow: /find-study-partners
+Allow: /hackathon-partners
+Allow: /blog
+Allow: /become-mentor
+
 # Ignore common tracking parameters
 Disallow: /*?*utm_*
 Disallow: /*?*fbclid*
@@ -20,6 +41,11 @@ Disallow: /*?*gclid*
 Disallow: /*?*source=*
 Disallow: /*#*
 
+# Crawl-delay for polite crawling
+Crawl-delay: 1
+
 # Notes:
-# - Google ignores Crawl-delay and Host directives, so they're omitted.
-# - All JS/CSS/image assets are allowed for rendering.
+# - Google ignores Crawl-delay and Host directives in modern implementations
+# - All JS/CSS/image assets are explicitly allowed for proper rendering
+# - Multiple sitemaps for better organization and faster indexing
+# - Both primary and legacy domains supported during transition

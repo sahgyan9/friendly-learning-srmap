@@ -9,7 +9,7 @@ const toAbsolute = (p) => path.resolve(__dirname, p)
 const template = fs.readFileSync(toAbsolute('dist/index.html'), 'utf-8')
 const { render } = await import('./dist/server/entry-server.js')
 
-// Explicit list of public, SEO-friendly routes
+// Comprehensive list of public, SEO-friendly routes
 const routesToPrerender = [
   '/',
   '/about',
@@ -22,66 +22,89 @@ const routesToPrerender = [
   '/how-it-works',
   '/find-study-partners',
   '/hackathon-partners',
-  '/blog'
+  '/blog',
+  '/become-mentor'
 ]
 
-  ; (async () => {
-    for (const url of routesToPrerender) {
-      const appHtml = render(url);
-      const html = template.replace(`<!--app-html-->`, appHtml)
+;(async () => {
+  for (const url of routesToPrerender) {
+    const appHtml = render(url);
+    const html = template.replace(`<!--app-html-->`, appHtml)
 
-      const filePath = `dist${url === '/' ? '/index' : url}.html`
-      fs.writeFileSync(toAbsolute(filePath), html)
-      console.log('pre-rendered:', filePath)
+    const filePath = `dist${url === '/' ? '/index' : url}.html`
+    fs.writeFileSync(toAbsolute(filePath), html)
+    console.log('pre-rendered:', filePath)
+  }
+
+  // Ensure static files are accessible
+  const staticFiles = ['robots.txt', 'sitemap.xml', '.htaccess']
+
+  for (const file of staticFiles) {
+    const sourcePath = toAbsolute(`public/${file}`)
+    const destPath = toAbsolute(`dist/${file}`)
+
+    if (fs.existsSync(sourcePath)) {
+      fs.copyFileSync(sourcePath, destPath)
+      console.log('copied static file:', destPath)
     }
+  }
 
-    // Ensure static files are accessible
-    // Copy robots.txt, sitemap.xml, and .htaccess from public to dist root if they don't exist
-    const staticFiles = ['robots.txt', 'sitemap.xml', '.htaccess']
+  // Generate comprehensive sitemap.xml with proper SEO structure
+  const primaryDomain = 'https://www.project-fl.me';
+  const legacyDomain = 'https://friendly-learning.lovable.app';
+  const today = new Date().toISOString().split('T')[0];
+  
+  const publicRoutes = [
+    { path: '/', priority: '1.0', changefreq: 'daily' },
+    { path: '/about', priority: '0.8', changefreq: 'monthly' },
+    { path: '/mentors', priority: '0.9', changefreq: 'daily' },
+    { path: '/community-posts', priority: '0.9', changefreq: 'daily' },
+    { path: '/marketplace', priority: '0.7', changefreq: 'weekly' },
+    { path: '/contact', priority: '0.5', changefreq: 'monthly' },
+    { path: '/signup', priority: '0.7', changefreq: 'monthly' },
+    { path: '/signin', priority: '0.6', changefreq: 'monthly' },
+    { path: '/become-mentor', priority: '0.6', changefreq: 'monthly' },
+    { path: '/how-it-works', priority: '0.8', changefreq: 'monthly' },
+    { path: '/find-study-partners', priority: '0.9', changefreq: 'weekly' },
+    { path: '/hackathon-partners', priority: '0.9', changefreq: 'weekly' },
+    { path: '/blog', priority: '0.7', changefreq: 'weekly' }
+  ];
 
-    for (const file of staticFiles) {
-      const sourcePath = toAbsolute(`public/${file}`)
-      const destPath = toAbsolute(`dist/${file}`)
+  // Generate primary domain sitemap
+  const urls = publicRoutes.map((route) => {
+    const loc = route.path === '/' ? `${primaryDomain}/` : `${primaryDomain}${route.path}`;
+    return `  <url>\n    <loc>${loc}</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>${route.changefreq}</changefreq>\n    <priority>${route.priority}</priority>\n  </url>`;
+  }).join('\n');
 
-      if (fs.existsSync(sourcePath)) {
-        fs.copyFileSync(sourcePath, destPath)
-        console.log('copied static file:', destPath)
-      }
-    }
+  const sitemapContent = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">\n${urls}\n</urlset>`;
 
-    // Generate sitemap.xml from an explicit list of public routes
-    const primary = 'https://www.project-fl.me';
-    const legacy = 'https://friendly-learning.lovable.app';
-    const today = new Date().toISOString().split('T')[0];
-    const publicRoutes = [
-      '/',
-      '/about',
-      '/mentors',
-      '/community',
-      '/signup',
-      '/signin',
-      '/contact',
-      '/marketplace',
-      '/become-mentor',
-      '/how-it-works',
-      '/find-study-partners',
-      '/hackathon-partners',
-      '/blog'
-    ];
-    const urls = publicRoutes.map((r) => {
-      const loc = r === '/' ? `${primary}/` : `${primary}${r}`;
-      const isHome = r === '/';
-      const priority = isHome ? '1.0' : '0.8';
-      const changefreq = isHome ? 'weekly' : 'monthly';
-      return `  <url>\n    <loc>${loc}</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>${changefreq}</changefreq>\n    <priority>${priority}</priority>\n  </url>`;
-    }).join('\n');
+  fs.writeFileSync(toAbsolute('dist/sitemap.xml'), sitemapContent);
+  console.log('generated primary sitemap.xml with comprehensive SEO structure');
 
-    const sitemapContent = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">\n${urls}\n</urlset>`;
+  // Generate legacy domain sitemap
+  const legacyUrls = publicRoutes.map((route) => {
+    const loc = route.path === '/' ? `${legacyDomain}/` : `${legacyDomain}${route.path}`;
+    return `  <url>\n    <loc>${loc}</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>${route.changefreq}</changefreq>\n    <priority>${route.priority}</priority>\n  </url>`;
+  }).join('\n');
 
-    fs.writeFileSync(toAbsolute('dist/sitemap.xml'), sitemapContent);
-    console.log('generated sitemap.xml from routes with primary domain');
+  const legacySitemapContent = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">\n${legacyUrls}\n</urlset>`;
 
-    const legacySitemap = sitemapContent.replaceAll(primary, legacy);
-    fs.writeFileSync(toAbsolute('dist/sitemap-legacy.xml'), legacySitemap);
-    console.log('generated sitemap-legacy.xml for legacy domain');
-  })()
+  fs.writeFileSync(toAbsolute('dist/sitemap-legacy.xml'), legacySitemapContent);
+  console.log('generated legacy domain sitemap for transition period');
+
+  // Generate sitemap index
+  const sitemapIndex = `<?xml version="1.0" encoding="UTF-8"?>
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <sitemap>
+    <loc>${primaryDomain}/sitemap.xml</loc>
+    <lastmod>${today}</lastmod>
+  </sitemap>
+  <sitemap>
+    <loc>${primaryDomain}/sitemap-legacy.xml</loc>
+    <lastmod>${today}</lastmod>
+  </sitemap>
+</sitemapindex>`;
+
+  fs.writeFileSync(toAbsolute('dist/sitemapindex.xml'), sitemapIndex);
+  console.log('generated sitemap index for better SEO organization');
+})()
