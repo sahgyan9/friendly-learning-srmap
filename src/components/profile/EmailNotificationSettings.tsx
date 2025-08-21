@@ -41,7 +41,7 @@ export const EmailNotificationSettings = () => {
       if (data) {
         setSettings({
           email_notifications: data.email_notifications ?? true,
-          email_frequency: data.email_frequency ?? 'immediate'
+          email_frequency: (data.email_frequency as EmailSettings['email_frequency']) ?? 'immediate'
         });
       }
     } catch (error) {
