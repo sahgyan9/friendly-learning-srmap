@@ -49,7 +49,7 @@ export async function getConversationMessages(conversationId: string) {
   }
 }
 
-// Send a message using RPC function
+// Send a message using RPC function - email notifications are now automatically triggered
 export async function sendMessage(
   conversationId: string,
   senderId: string,
@@ -69,6 +69,9 @@ export async function sendMessage(
       return { data: null, error };
     }
 
+    // Note: Email notification is automatically sent via database trigger
+    console.log('Message sent successfully - email notification triggered automatically');
+    
     return { data, error: null };
   } catch (err) {
     console.error('Exception in sendMessage:', err);

@@ -851,6 +851,8 @@ export type Database = {
           created_at: string | null
           department: string | null
           email: string
+          email_frequency: string | null
+          email_notifications: boolean | null
           id: string
           is_admin: boolean
           is_available: boolean | null
@@ -868,6 +870,8 @@ export type Database = {
           created_at?: string | null
           department?: string | null
           email: string
+          email_frequency?: string | null
+          email_notifications?: boolean | null
           id?: string
           is_admin?: boolean
           is_available?: boolean | null
@@ -885,6 +889,8 @@ export type Database = {
           created_at?: string | null
           department?: string | null
           email?: string
+          email_frequency?: string | null
+          email_notifications?: boolean | null
           id?: string
           is_admin?: boolean
           is_available?: boolean | null
