@@ -41,7 +41,7 @@ const ADMIN_ROUTES = [
 export function render(url: string) {
   // Determine status code based on URL
   let statusCode = 200;
-  
+
   // Check if it's a known route
   const isKnownRoute = KNOWN_ROUTES.some(route => {
     if (route === '/') {
@@ -49,28 +49,28 @@ export function render(url: string) {
     }
     return url === route || url.startsWith(`${route}/`);
   });
-  
+
   // Handle private routes
   const isPrivateRoute = PRIVATE_ROUTES.some(route => url === route || url.startsWith(`${route}/`));
-  
+
   // Handle admin routes
   const isAdminRoute = ADMIN_ROUTES.some(route => url === route || url.startsWith(`${route}/`));
-  
+
   // Set 404 for unknown routes
   if (!isKnownRoute && !isPrivateRoute && !isAdminRoute) {
     statusCode = 404;
   }
-  
+
   // Special cases like /unauthorized should return 403
   if (url === '/unauthorized') {
     statusCode = 403;
   }
-  
+
   const html = ReactDOMServer.renderToString(
     <StaticRouter location={url}>
       <App />
     </StaticRouter>
   );
-  
+
   return { html, statusCode };
 }

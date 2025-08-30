@@ -22,24 +22,24 @@ const MentorProfile = () => {
   const [loading, setLoading] = useState(true);
   const [showRatingModal, setShowRatingModal] = useState(false);
   const { user } = useAuth();
-  
+
   const { canRate, isLoading: ratingLoading, refreshRatingStatus } = useRating(id || "");
 
   useEffect(() => {
     const fetchMentor = async () => {
       if (!id) return;
-      
+
       setLoading(true);
       try {
         console.log('Fetching mentor profile for ID:', id);
         const { data, error } = await getMentorById(id);
-        
+
         if (error) {
           console.error("Error fetching mentor:", error);
           toast.error("Failed to load mentor profile");
           return;
         }
-        
+
         if (data) {
           console.log('Mentor profile loaded:', data.name);
           setMentor(data);
@@ -74,7 +74,7 @@ const MentorProfile = () => {
       <div className="min-h-screen">
         <Navbar />
         <div className="container px-4 md:px-6 pt-24 pb-16 flex justify-center items-center min-h-[60vh]">
-          <motion.div 
+          <motion.div
             className="flex flex-col items-center"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -92,7 +92,7 @@ const MentorProfile = () => {
     return (
       <div className="min-h-screen">
         <Navbar />
-        <motion.div 
+        <motion.div
           className="container px-4 md:px-6 pt-24 pb-16"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -118,13 +118,13 @@ const MentorProfile = () => {
   // Generate SEO metadata and structured data
   const generateSEO = () => {
     if (!mentor) return null;
-    
+
     const mentorName = mentor.name || "Mentor";
     const mentorDescription = mentor.bio || `${mentorName} is a mentor on Project FL.`;
     const mentorSkills = mentor.skills ? mentor.skills.join(", ") : "";
     const metaTitle = `${mentorName} - Project FL Mentor | ${mentor.department || 'University Mentor'}`;
     const metaDescription = `Connect with ${mentorName}, a verified mentor at Project FL. ${mentorDescription.substring(0, 120)}${mentorDescription.length > 120 ? '...' : ''}`;
-    
+
     return (
       <>
         <SEOHead
@@ -136,7 +136,7 @@ const MentorProfile = () => {
           ogDescription={metaDescription}
           ogImage={mentor.profile_image || "/og-image.png"}
         />
-        
+
         <StructuredData data={getMentorSchema(mentor)} />
         <StructuredData data={getBreadcrumbSchema([
           { name: "Home", url: "https://www.project-fl.me/" },
@@ -151,10 +151,10 @@ const MentorProfile = () => {
     <div className="min-h-screen">
       {mentor && generateSEO()}
       <Navbar />
-      
+
       <main className="pt-24 pb-16">
         <div className="container px-4 md:px-6">
-          <motion.div 
+          <motion.div
             className="mb-8"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -167,7 +167,7 @@ const MentorProfile = () => {
               </Link>
             </Button>
           </motion.div>
-          
+
           <MentorProfileContent
             mentor={mentor}
             canRate={canRate}

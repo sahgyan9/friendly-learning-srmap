@@ -37,29 +37,29 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <SEOHead 
+      <SEOHead
         title="Project FL - University Student Collaboration Platform | Find Study Partners, Hackathon Teams & Project Collaborators"
         description="Find and connect with verified student mentors for academic guidance, career advice, and peer support. Join our community of learners helping learners."
         canonical="https://www.project-fl.me/"
         ogTitle="Project FL - Connect with University Students & Mentors"
         ogDescription="Find study partners, mentors, project collaborators, and hackathon teams through our university student collaboration platform."
       />
-      
+
       {/* Add structured data for SEO */}
       <StructuredData data={homePageSchema} />
       <StructuredData data={getOrganizationSchema()} />
       <StructuredData data={getWebsiteSchema()} />
-      
+
       <Navbar />
       <Hero />
-      
+
       {/* Show rejected application notice for authenticated users */}
       {user && (
         <div className="container mx-auto px-4 py-4">
           <RejectedApplicationNotice />
         </div>
       )}
-      
+
       <MentorsSection />
       <WhyFriendlyLearning />
       <CallToAction />

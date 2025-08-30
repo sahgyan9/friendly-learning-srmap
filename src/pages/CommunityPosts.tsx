@@ -252,13 +252,13 @@ const CommunityPosts = () => {
         keywords="university community posts, student project collaboration, find hackathon partners, university academic help, student skill matching, project collaborators university"
         canonical="https://www.project-fl.me/community-posts"
       />
-      
+
       <StructuredData data={generateStructuredData()} />
       <StructuredData data={getBreadcrumbSchema([
         { name: "Home", url: "https://www.project-fl.me/" },
         { name: "Community Posts", url: "https://www.project-fl.me/community-posts" }
       ])} />
-      
+
       <Navbar />
       <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-8 max-w-4xl">

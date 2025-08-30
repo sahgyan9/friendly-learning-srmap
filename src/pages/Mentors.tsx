@@ -148,10 +148,10 @@ const Mentors = () => {
         keywords="friendly learning srm ap, srmap mentorship platform, srmap friendly learning, SRM AP mentors directory, student mentors SRMAP, academic guidance amaravati, peer mentoring andhra pradesh, university mentorship srmap, SRM AP academic support, student tutoring amaravati"
         canonical="https://www.project-fl.me/mentors"
       />
-      
+
       {/* Add structured data using our dedicated component */}
       <StructuredData data={structuredData} />
-      
+
       {/* Add breadcrumb schema */}
       <StructuredData data={getBreadcrumbSchema([
         { name: "Home", url: "https://www.project-fl.me/" },

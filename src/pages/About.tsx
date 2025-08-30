@@ -40,7 +40,7 @@ const About = () => {
         keywords="about project fl, university student collaboration, find hackathon partners, student project collaboration, university community platform, study partner matching, startup team formation, skill-based student discovery"
         canonical="https://www.project-fl.me/about"
       />
-      
+
       {/* Add structured data using our dedicated component */}
       <StructuredData data={structuredData} />
       <StructuredData data={getOrganizationSchema()} />
