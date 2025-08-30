@@ -250,7 +250,7 @@ const CommunityPostDetail = () => {
       `community post, ${post.tags.join(", ")}, ${post.mentor.name}, ${postType}` :
       `community post, ${post.mentor.name}, ${postType}, project fl`;
 
-    const canonicalUrl = `https://www.project-fl.me/community-posts/${post.id}`;
+    const canonicalUrl = `https://friendly-learning-srmap.lovable.app/community-posts/${post.id}`;
 
     // Create a modified post object suitable for structured data
     const postForSchema = {
@@ -261,7 +261,7 @@ const CommunityPostDetail = () => {
       image_url: post.image_url || undefined,
       author: {
         name: post.mentor.name,
-        url: `https://www.project-fl.me/mentor/${post.mentor.id}`,
+        url: `https://friendly-learning-srmap.lovable.app/mentor/${post.mentor.id}`,
         image: post.mentor.profile_image
       }
     };
@@ -280,8 +280,8 @@ const CommunityPostDetail = () => {
 
         <StructuredData data={getArticleSchema(postForSchema)} />
         <StructuredData data={getBreadcrumbSchema([
-          { name: "Home", url: "https://www.project-fl.me/" },
-          { name: "Community Posts", url: "https://www.project-fl.me/community-posts" },
+          { name: "Home", url: "https://friendly-learning-srmap.lovable.app/" },
+          { name: "Community Posts", url: "https://friendly-learning-srmap.lovable.app/community-posts" },
           { name: postTitle, url: canonicalUrl }
         ])} />
       </>

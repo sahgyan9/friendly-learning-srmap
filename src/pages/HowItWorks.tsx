@@ -19,7 +19,7 @@ const HowItWorks = () => {
                 "text": "Create your account using your verified university email address to join the Project FL community."
             },
             {
-                "@type": "HowToStep", 
+                "@type": "HowToStep",
                 "name": "Complete Your Profile",
                 "text": "Add your skills, courses, interests, and academic information to help others find you."
             },
@@ -37,7 +37,7 @@ const HowItWorks = () => {
                 title="How Project FL Works | University Student Collaboration Guide"
                 description="Learn how Project FL connects university students worldwide for mentoring, study partnerships, hackathon teams, and academic collaboration. Simple 3-step process to start collaborating."
                 keywords="how project fl works, university student collaboration guide, student mentoring platform, academic help process, project fl tutorial"
-                canonical="https://www.project-fl.me/how-it-works"
+                canonical="https://friendly-learning-srmap.lovable.app/how-it-works"
                 structuredData={structuredData}
             />
 
@@ -77,14 +77,14 @@ const HowItWorks = () => {
                                     <div>
                                         <h4 className="font-bold mb-2">🎓 Find Academic Help</h4>
                                         <p className="text-sm mb-4">Connect with mentors and peers for course help, assignment guidance, and exam preparation.</p>
-                                        
+
                                         <h4 className="font-bold mb-2">💻 Build Hackathon Teams</h4>
                                         <p className="text-sm mb-4">Find developers, designers, and business minds to create winning hackathon teams.</p>
                                     </div>
                                     <div>
                                         <h4 className="font-bold mb-2">📚 Form Study Groups</h4>
                                         <p className="text-sm mb-4">Connect with classmates for collaborative learning and study sessions.</p>
-                                        
+
                                         <h4 className="font-bold mb-2">🚀 Start Projects</h4>
                                         <p className="text-sm mb-4">Find collaborators for startup ideas, research projects, and innovative solutions.</p>
                                     </div>

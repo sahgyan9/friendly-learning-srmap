@@ -250,13 +250,13 @@ const CommunityPosts = () => {
         title="Community Posts | Project FL University Student Collaboration"
         description="Browse and create posts to find university students for academic help, hackathon partnerships, project collaborations, and more. Connect with skilled students for your academic and project needs."
         keywords="university community posts, student project collaboration, find hackathon partners, university academic help, student skill matching, project collaborators university"
-        canonical="https://www.project-fl.me/community-posts"
+        canonical="https://friendly-learning-srmap.lovable.app/community-posts"
       />
 
       <StructuredData data={generateStructuredData()} />
       <StructuredData data={getBreadcrumbSchema([
-        { name: "Home", url: "https://www.project-fl.me/" },
-        { name: "Community Posts", url: "https://www.project-fl.me/community-posts" }
+        { name: "Home", url: "https://friendly-learning-srmap.lovable.app/" },
+        { name: "Community Posts", url: "https://friendly-learning-srmap.lovable.app/community-posts" }
       ])} />
 
       <Navbar />

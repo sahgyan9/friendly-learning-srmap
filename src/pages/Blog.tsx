@@ -48,7 +48,7 @@ const Blog = () => {
                 title="Project FL Blog - University Student Collaboration Tips & Insights"
                 description="Expert insights on university student collaboration, finding hackathon partners, study groups, and campus networking. Learn how Project FL is transforming student connections."
                 keywords="project fl blog, university student collaboration tips, hackathon team building guide, study partner advice, student networking insights, campus collaboration"
-                canonical="https://www.project-fl.me/blog"
+                canonical="https://friendly-learning-srmap.lovable.app/blog"
                 structuredData={structuredData}
             />
 

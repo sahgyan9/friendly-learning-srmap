@@ -99,26 +99,26 @@ const SEOHead = ({
     if (canonical) {
       canonicalLink.href = canonical;
     } else {
-      // Use current domain for canonical if not on custom domain
+      // Use Lovable domain as primary canonical
       const currentDomain = window.location.hostname;
-      const primaryDomain = 'www.project-fl.me';
-      const fallbackDomain = 'friendly-learning-srmap.lovable.app';
+      const primaryDomain = 'friendly-learning-srmap.lovable.app';
+      const fallbackDomain = 'www.project-fl.me';
 
-      // If we're on the custom domain, use it; otherwise use current domain
-      if (currentDomain === primaryDomain || currentDomain === 'project-fl.me') {
+      // Always prefer the Lovable domain for canonical URLs
+      if (currentDomain === primaryDomain) {
+        canonicalLink.href = window.location.href;
+      } else {
+        // Use Lovable domain as canonical even when on other domains
         const url = new URL(window.location.href);
         url.hostname = primaryDomain;
         canonicalLink.href = url.toString();
-      } else {
-        // Use current domain (like Lovable deployment) for canonical
-        canonicalLink.href = window.location.href;
       }
     }
 
     // Add alternate domain links
     const alternateDomains = ['www.project-fl.me'];
-    if (window.location.hostname !== 'friendly-learning-srmap.lovable.app') {
-      alternateDomains.push('friendly-learning-srmap.lovable.app');
+    if (window.location.hostname !== 'www.project-fl.me') {
+      alternateDomains.push('www.project-fl.me');
     }
 
     alternateDomains.forEach(domain => {
@@ -172,7 +172,7 @@ const SEOHead = ({
             "@type": "ListItem",
             "position": 1,
             "name": "Home",
-            "item": "https://www.project-fl.me/"
+            "item": "https://friendly-learning-srmap.lovable.app/"
           },
           {
             "@type": "ListItem",
@@ -203,8 +203,8 @@ const SEOHead = ({
       "logo": `${currentOrigin}/og-image.png`,
       "description": "University student collaboration platform connecting students for mentoring, study partnerships, and project collaborations",
       "sameAs": [
-        "https://www.project-fl.me",
-        "https://friendly-learning-srmap.lovable.app"
+        "https://friendly-learning-srmap.lovable.app",
+        "https://www.project-fl.me"
       ].filter(url => url !== currentOrigin),
       "contactPoint": {
         "@type": "ContactPoint",

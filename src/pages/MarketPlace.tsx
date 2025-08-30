@@ -10,6 +10,9 @@ import Navbar from "@/components/Navbar";
 import { fetchMarketplacePosts, fetchMarketplacePost, CategoryType, MarketplacePost, isUserAdmin } from '@/integrations/supabase/services/marketplace';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
+import SEOHead from "@/components/SEOHead";
+import StructuredData from "@/components/StructuredData";
+import { getBreadcrumbSchema } from "@/lib/structured-data";
 import {
     Dialog,
     DialogContent,
@@ -116,127 +119,141 @@ const MarketPlace = () => {
     );
 
     return (
-        <div className="min-h-screen bg-background">
-            <Navbar />
+        <>
+            <SEOHead
+                title="Events & News | Project FL University Student Hub | Find University Events, News & Advertisements"
+                description="Discover university events, news, advertisements, and course materials at Project FL. Stay updated with campus activities, announcements, and educational resources for university students."
+                keywords="university events, campus news, student advertisements, course materials, university announcements, student hub, campus activities, educational resources"
+                canonical="https://friendly-learning-srmap.lovable.app/marketplace"
+            />
 
-            <div className="container mx-auto px-4 py-8 pt-24">
-                <div className="flex justify-between items-center mb-8">
-                    <div>
-                        <h1 className="text-3xl font-bold">Events</h1>
-                        <p className="text-sm text-muted-foreground mt-1">Find university news, events, ads and more</p>
-                    </div>
-                    <div className="flex items-center gap-4">
-                        <div className="relative w-64">
-                            <Input
-                                type="text"
-                                placeholder="Search..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="pl-10"
-                            />
-                            <Search className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+            <StructuredData data={getBreadcrumbSchema([
+                { name: "Home", url: "https://friendly-learning-srmap.lovable.app/" },
+                { name: "Events & News", url: "https://friendly-learning-srmap.lovable.app/marketplace" }
+            ])} />
+
+            <div className="min-h-screen bg-background">
+                <Navbar />
+
+                <div className="container mx-auto px-4 py-8 pt-24">
+                    <div className="flex justify-between items-center mb-8">
+                        <div>
+                            <h1 className="text-3xl font-bold">Events</h1>
+                            <p className="text-sm text-muted-foreground mt-1">Find university news, events, ads and more</p>
                         </div>
-                        {isAdmin && (
-                            <Link to="/admin">
-                                <Button variant="outline">
-                                    <Plus className="mr-2 h-4 w-4" />
-                                    Admin Panel
-                                </Button>
-                            </Link>
-                        )}
-                    </div>
-                </div>
-
-                <div className="flex-1">
-                    <Tabs defaultValue={activeCategory} className="w-full" onValueChange={handleCategoryChange}>
-                        <TabsList className="grid w-full grid-cols-5 mb-8">
-                            <TabsTrigger value="all">All</TabsTrigger>
-                            <TabsTrigger value="news">University News</TabsTrigger>
-                            <TabsTrigger value="events">Events</TabsTrigger>
-                            <TabsTrigger value="ads">Advertisements</TabsTrigger>
-                            <TabsTrigger value="courses">Course Materials</TabsTrigger>
-                        </TabsList>
-
-                        <TabsContent value={activeCategory}>
-                            {loading ? (
-                                <div className="flex justify-center items-center h-64">
-                                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                                </div>
-                            ) : filteredPosts.length === 0 ? (
-                                <div className="text-center py-12">
-                                    <p className="text-lg text-muted-foreground">No posts found</p>
-                                    <p className="text-sm text-muted-foreground mt-2">
-                                        {user ? (
-                                            <Link to="/admin/events" className="text-primary hover:underline">
-                                                Click here to add a new post
-                                            </Link>
-                                        ) : (
-                                            "Sign in to create posts"
-                                        )}
-                                    </p>
-                                </div>
-                            ) : (
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                    {filteredPosts.map(post => (
-                                        <div key={post.id}>
-                                            <PostCard
-                                                id={post.id}
-                                                title={post.title}
-                                                description={post.description}
-                                                category={post.category}
-                                                date={post.date}
-                                                author={post.author}
-                                                image={post.image_url}
-                                                onView={() => handleView(post.id)}
-                                            />
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </TabsContent>
-                    </Tabs>
-                </div>
-            </div>
-
-            {detailPost && (
-                <Dialog open={isDialogOpen} onOpenChange={closeDialog}>
-                    <DialogContent className="sm:max-w-3xl">
-                        <DialogTitle>{detailPost.title}</DialogTitle>
-                        <DialogDescription>
-                            Posted by {detailPost.author} on {new Date(detailPost.date).toLocaleDateString()}
-                        </DialogDescription>
-
-                        {detailPost.image_url && (
-                            <div className="w-full aspect-video mb-4">
-                                <img
-                                    src={detailPost.image_url}
-                                    alt={detailPost.title}
-                                    className="w-full h-full object-cover rounded-md"
+                        <div className="flex items-center gap-4">
+                            <div className="relative w-64">
+                                <Input
+                                    type="text"
+                                    placeholder="Search..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="pl-10"
                                 />
+                                <Search className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
                             </div>
-                        )}
-
-                        <div className="space-y-4">
-                            <div className="whitespace-pre-line">{detailPost.description}</div>
-
-                            {detailPost.contact_info && (
-                                <div className="mt-4 p-4 bg-muted rounded-md">
-                                    <strong>Contact Information:</strong> {detailPost.contact_info}
-                                </div>
-                            )}
-
-                            {detailPost.external_link && (
-                                <div className="flex justify-end mt-4">
-                                    <Button onClick={() => handleRegister()}>
-                                        Register Now
+                            {isAdmin && (
+                                <Link to="/admin">
+                                    <Button variant="outline">
+                                        <Plus className="mr-2 h-4 w-4" />
+                                        Admin Panel
                                     </Button>
-                                </div>
+                                </Link>
                             )}
                         </div>
-                    </DialogContent>
-                </Dialog>
-            )}
-        </div>
+                    </div>
+
+                    <div className="flex-1">
+                        <Tabs defaultValue={activeCategory} className="w-full" onValueChange={handleCategoryChange}>
+                            <TabsList className="grid w-full grid-cols-5 mb-8">
+                                <TabsTrigger value="all">All</TabsTrigger>
+                                <TabsTrigger value="news">University News</TabsTrigger>
+                                <TabsTrigger value="events">Events</TabsTrigger>
+                                <TabsTrigger value="ads">Advertisements</TabsTrigger>
+                                <TabsTrigger value="courses">Course Materials</TabsTrigger>
+                            </TabsList>
+
+                            <TabsContent value={activeCategory}>
+                                {loading ? (
+                                    <div className="flex justify-center items-center h-64">
+                                        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                                    </div>
+                                ) : filteredPosts.length === 0 ? (
+                                    <div className="text-center py-12">
+                                        <p className="text-lg text-muted-foreground">No posts found</p>
+                                        <p className="text-sm text-muted-foreground mt-2">
+                                            {user ? (
+                                                <Link to="/admin/events" className="text-primary hover:underline">
+                                                    Click here to add a new post
+                                                </Link>
+                                            ) : (
+                                                "Sign in to create posts"
+                                            )}
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                        {filteredPosts.map(post => (
+                                            <div key={post.id}>
+                                                <PostCard
+                                                    id={post.id}
+                                                    title={post.title}
+                                                    description={post.description}
+                                                    category={post.category}
+                                                    date={post.date}
+                                                    author={post.author}
+                                                    image={post.image_url}
+                                                    onView={() => handleView(post.id)}
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </TabsContent>
+                        </Tabs>
+                    </div>
+                </div>
+
+                {detailPost && (
+                    <Dialog open={isDialogOpen} onOpenChange={closeDialog}>
+                        <DialogContent className="sm:max-w-3xl">
+                            <DialogTitle>{detailPost.title}</DialogTitle>
+                            <DialogDescription>
+                                Posted by {detailPost.author} on {new Date(detailPost.date).toLocaleDateString()}
+                            </DialogDescription>
+
+                            {detailPost.image_url && (
+                                <div className="w-full aspect-video mb-4">
+                                    <img
+                                        src={detailPost.image_url}
+                                        alt={detailPost.title}
+                                        className="w-full h-full object-cover rounded-md"
+                                    />
+                                </div>
+                            )}
+
+                            <div className="space-y-4">
+                                <div className="whitespace-pre-line">{detailPost.description}</div>
+
+                                {detailPost.contact_info && (
+                                    <div className="mt-4 p-4 bg-muted rounded-md">
+                                        <strong>Contact Information:</strong> {detailPost.contact_info}
+                                    </div>
+                                )}
+
+                                {detailPost.external_link && (
+                                    <div className="flex justify-end mt-4">
+                                        <Button onClick={() => handleRegister()}>
+                                            Register Now
+                                        </Button>
+                                    </div>
+                                )}
+                            </div>
+                        </DialogContent>
+                    </Dialog>
+                )}
+            </div>
+        </>
     );
 };
 
