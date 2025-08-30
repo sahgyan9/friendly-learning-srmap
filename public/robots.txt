@@ -34,10 +34,10 @@ Disallow: /
 # -- Sitemaps --
 # Multiple sitemaps are used for better organization.
 # Main sitemap index that references all other sitemaps
-Sitemap: https://www.project-fl.me/sitemap.xml
-Sitemap: https://www.project-fl.me/sitemap-blog.xml
-Sitemap: https://www.project-fl.me/sitemap-community.xml
-Sitemap: https://www.project-fl.me/sitemap-mentors.xml
+Sitemap: https://friendly-learning-srmap.lovable.app/sitemap.xml
+Sitemap: https://friendly-learning-srmap.lovable.app/sitemap-blog.xml
+Sitemap: https://friendly-learning-srmap.lovable.app/sitemap-community.xml
+Sitemap: https://friendly-learning-srmap.lovable.app/sitemap-mentors.xml
 
 
 # -- Crawling Rules --

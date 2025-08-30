@@ -5,13 +5,20 @@
  * for different page types following Schema.org guidelines.
  */
 
-// Base URL for the site
-const baseUrl = "https://www.project-fl.me";
+// Base URL for the site - dynamically determined
+const getBaseUrl = () => {
+    if (typeof window !== 'undefined') {
+        return window.location.origin;
+    }
+    // Fallback for server-side rendering
+    return "https://friendly-learning-srmap.lovable.app";
+};
 
 /**
  * Generate Organization schema
  */
 export const getOrganizationSchema = () => {
+    const baseUrl = getBaseUrl();
     return {
         "@context": "https://schema.org",
         "@type": "Organization",
@@ -20,9 +27,10 @@ export const getOrganizationSchema = () => {
         "logo": `${baseUrl}/og-image.png`,
         "description": "University student collaboration platform connecting students for academic help, hackathon partnerships, project collaborations, and finding study partners.",
         "sameAs": [
-            "https://friendly-learning.lovable.app",
+            "https://www.project-fl.me",
+            "https://friendly-learning-srmap.lovable.app",
             // Add social media profiles when available
-        ],
+        ].filter(url => url !== baseUrl),
         "contactPoint": {
             "@type": "ContactPoint",
             "contactType": "customer service",
@@ -35,6 +43,7 @@ export const getOrganizationSchema = () => {
  * Generate WebSite schema
  */
 export const getWebsiteSchema = () => {
+    const baseUrl = getBaseUrl();
     return {
         "@context": "https://schema.org",
         "@type": "WebSite",
@@ -72,6 +81,7 @@ export const getBreadcrumbSchema = (items) => {
  * @param {Object} mentor - Mentor data
  */
 export const getCourseSchema = (mentor, courseTitle, courseDescription) => {
+    const baseUrl = getBaseUrl();
     return {
         "@context": "https://schema.org",
         "@type": "Course",
@@ -90,6 +100,7 @@ export const getCourseSchema = (mentor, courseTitle, courseDescription) => {
  * @param {Object} mentor - Mentor data
  */
 export const getMentorSchema = (mentor) => {
+    const baseUrl = getBaseUrl();
     return {
         "@context": "https://schema.org",
         "@type": "Person",
@@ -112,6 +123,7 @@ export const getMentorSchema = (mentor) => {
  * @param {Object} post - Post data
  */
 export const getArticleSchema = (post) => {
+    const baseUrl = getBaseUrl();
     return {
         "@context": "https://schema.org",
         "@type": "Article",
@@ -165,6 +177,7 @@ export const getFAQSchema = (questions) => {
  * @param {Object} event - Event data
  */
 export const getEventSchema = (event) => {
+    const baseUrl = getBaseUrl();
     return {
         "@context": "https://schema.org",
         "@type": "Event",

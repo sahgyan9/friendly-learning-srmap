@@ -19,19 +19,19 @@ const Index = () => {
   const homePageSchema = {
     "@context": "https://schema.org",
     "@type": "WebPage",
-    "url": "https://www.project-fl.me/",
+    "url": "https://friendly-learning-srmap.lovable.app/",
     "name": "Project FL - University Student Collaboration Platform",
     "description": "Find and connect with verified student mentors for academic guidance, career advice, and peer support. Join our community of learners helping learners.",
     "isPartOf": {
       "@type": "WebSite",
       "name": "Project FL",
-      "url": "https://www.project-fl.me/"
+      "url": "https://friendly-learning-srmap.lovable.app/"
     },
     "mainEntity": {
       "@type": "Organization",
       "name": "Project FL",
-      "url": "https://www.project-fl.me/",
-      "logo": "https://www.project-fl.me/og-image.png"
+      "url": "https://friendly-learning-srmap.lovable.app/",
+      "logo": "https://friendly-learning-srmap.lovable.app/og-image.png"
     }
   };
 
@@ -40,7 +40,7 @@ const Index = () => {
       <SEOHead
         title="Project FL - University Student Collaboration Platform | Find Study Partners, Hackathon Teams & Project Collaborators"
         description="Find and connect with verified student mentors for academic guidance, career advice, and peer support. Join our community of learners helping learners."
-        canonical="https://www.project-fl.me/"
+        canonical="https://friendly-learning-srmap.lovable.app/"
         ogTitle="Project FL - Connect with University Students & Mentors"
         ogDescription="Find study partners, mentors, project collaborators, and hackathon teams through our university student collaboration platform."
       />

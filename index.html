@@ -18,28 +18,28 @@
   <meta name="geo.placename" content="India" />
   <meta name="language" content="en-IN" />
   <meta name="country" content="India" />
-  <link rel="canonical" href="https://www.project-fl.me/" />
+  <link rel="canonical" href="https://friendly-learning-srmap.lovable.app/" />
 
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://www.project-fl.me/" />
+  <meta property="og:url" content="https://friendly-learning-srmap.lovable.app/" />
   <meta property="og:title"
     content="Project FL - Find University Study Partners, Hackathon Teams & Project Collaborators" />
   <meta property="og:description"
     content="Connect with university students for academic help, hackathon partnerships, project collaborations, and startup discussions. Post problems in community and find skilled teammates within your university." />
-  <meta property="og:image" content="/og-image.png" />
+  <meta property="og:image" content="https://friendly-learning-srmap.lovable.app/og-image.png" />
   <meta property="og:site_name" content="Project FL" />
   <meta property="og:locale" content="en_IN" />
   <meta property="og:country-name" content="India" />
 
   <!-- Twitter -->
   <meta property="twitter:card" content="summary_large_image" />
-  <meta property="twitter:url" content="https://www.project-fl.me/" />
+  <meta property="twitter:url" content="https://friendly-learning-srmap.lovable.app/" />
   <meta property="twitter:title"
     content="Project FL - Find University Study Partners, Hackathon Teams & Project Collaborators" />
   <meta property="twitter:description"
     content="Connect with university students for academic help, hackathon partnerships, project collaborations, and startup discussions. Post problems in community and find skilled teammates." />
-  <meta property="twitter:image" content="/og-image.png" />
+  <meta property="twitter:image" content="https://friendly-learning-srmap.lovable.app/og-image.png" />
 
   <!-- Schema.org structured data -->
   <script type="application/ld+json">
@@ -49,14 +49,14 @@
       "name": "Project FL",
       "alternateName": ["Project FL Student Platform", "Project FL University Collaboration", "Project FL Friendly Learning Platform", "University Student Networking Platform"],
       "description": "Project FL is a university student collaboration platform connecting students for academic help, hackathon partnerships, project collaborations, startup discussions, and finding study partners with specific skills within their university. Not related to FL Studio music software.",
-  "url": "https://www.project-fl.me/",
-  "logo": "https://www.project-fl.me/og-image.png",
-  "image": "https://www.project-fl.me/og-image.png",
-      "sameAs": [],
+  "url": "https://friendly-learning-srmap.lovable.app/",
+  "logo": "https://friendly-learning-srmap.lovable.app/og-image.png",
+  "image": "https://friendly-learning-srmap.lovable.app/og-image.png",
+      "sameAs": ["https://www.project-fl.me"],
       "contactPoint": {
         "@type": "ContactPoint",
         "contactType": "Customer Service",
-  "url": "https://www.project-fl.me/contact",
+  "url": "https://friendly-learning-srmap.lovable.app/contact",
         "availableLanguage": ["English", "Hindi"]
       },
       "areaServed": {
@@ -74,17 +74,34 @@
   <script>
     // Lightweight client-side canonicalization (use server-side 301 where possible)
     (function () {
-      var desired = 'www.project-fl.me';
       var host = window.location.hostname;
       var isLocal = host === 'localhost' || host === '127.0.0.1';
-      if (!isLocal && host !== desired) {
-        var target = 'https://' + desired + window.location.pathname;
-        // Strip tracking params from canonicalized URL
+
+      // Only redirect if we have a custom domain configured and we're not on it
+      // For now, we'll let the current domain be the canonical one
+      if (!isLocal) {
+        // Update canonical link to current domain
+        var canonicalLink = document.querySelector('link[rel="canonical"]');
+        if (canonicalLink) {
+          canonicalLink.href = window.location.origin + window.location.pathname;
+        }
+
+        // Strip tracking params from URL
         var params = new URLSearchParams(window.location.search);
-        ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid', 'fbclid', 'source'].forEach(function (k) { params.delete(k) });
-        var qs = params.toString();
-        if (qs) target += '?' + qs;
-        window.location.replace(target);
+        var hasTrackingParams = false;
+        ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid', 'fbclid', 'source'].forEach(function (k) {
+          if (params.has(k)) {
+            params.delete(k);
+            hasTrackingParams = true;
+          }
+        });
+
+        if (hasTrackingParams) {
+          var cleanUrl = window.location.origin + window.location.pathname;
+          var qs = params.toString();
+          if (qs) cleanUrl += '?' + qs;
+          window.history.replaceState({}, '', cleanUrl);
+        }
       }
     })();
   </script>
