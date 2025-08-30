@@ -31,14 +31,13 @@ Disallow: /
 # cannot crawl on www.project-fl.me.
 # ===================================================================
 
-# Specify canonical host to prevent duplicate content issues
-Host: https://www.project-fl.me
-
-
 # -- Sitemaps --
 # Multiple sitemaps are used for better organization.
 # Main sitemap index that references all other sitemaps
-Sitemap: https://www.project-fl.me/sitemap-index.xml
+Sitemap: https://www.project-fl.me/sitemap.xml
+Sitemap: https://www.project-fl.me/sitemap-blog.xml
+Sitemap: https://www.project-fl.me/sitemap-community.xml
+Sitemap: https://www.project-fl.me/sitemap-mentors.xml
 
 
 # -- Crawling Rules --
