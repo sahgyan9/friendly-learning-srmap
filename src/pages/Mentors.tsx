@@ -3,11 +3,13 @@ import { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import SearchBar from "@/components/SearchBar";
 import SEOHead from "@/components/SEOHead";
+import StructuredData from "@/components/StructuredData";
 import { getMentors } from "@/integrations/supabase/services/mentors";
 import { Mentor } from "@/types/mentor";
 import { useToast } from "@/components/ui/use-toast";
 import { motion } from "framer-motion";
 import { sampleMentors } from "@/data/mentors";
+import { getBreadcrumbSchema } from "@/lib/structured-data";
 
 // Import refactored components
 import MentorList from "@/components/mentors/MentorList";
@@ -145,8 +147,16 @@ const Mentors = () => {
         description="Discover experienced student mentors at Friendly Learning SRM AP University in Amaravati. Browse profiles, skills, and reviews to find the perfect mentor for your academic journey. Connect with verified peer mentors from SRMAP today!"
         keywords="friendly learning srm ap, srmap mentorship platform, srmap friendly learning, SRM AP mentors directory, student mentors SRMAP, academic guidance amaravati, peer mentoring andhra pradesh, university mentorship srmap, SRM AP academic support, student tutoring amaravati"
         canonical="https://www.project-fl.me/mentors"
-        structuredData={structuredData}
       />
+      
+      {/* Add structured data using our dedicated component */}
+      <StructuredData data={structuredData} />
+      
+      {/* Add breadcrumb schema */}
+      <StructuredData data={getBreadcrumbSchema([
+        { name: "Home", url: "https://www.project-fl.me/" },
+        { name: "Mentors", url: "https://www.project-fl.me/mentors" }
+      ])} />
 
       <motion.div
         className="min-h-screen"

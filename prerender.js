@@ -28,12 +28,21 @@ const routesToPrerender = [
 
 ;(async () => {
   for (const url of routesToPrerender) {
-    const appHtml = render(url);
-    const html = template.replace(`<!--app-html-->`, appHtml)
-
+    const { html: appHtml, statusCode } = render(url);
+    const html = template
+      .replace(`<!--app-html-->`, appHtml)
+      // Add status code meta tag for search engines
+      .replace('</head>', `<meta name="http-status" content="${statusCode}">\n</head>`)
+      
     const filePath = `dist${url === '/' ? '/index' : url}.html`
     fs.writeFileSync(toAbsolute(filePath), html)
-    console.log('pre-rendered:', filePath)
+    console.log(`pre-rendered: ${filePath} (status: ${statusCode})`)
+    
+    // If this is a 404 route, also create a 404.html file at the root
+    if (statusCode === 404 && url === '*') {
+      fs.writeFileSync(toAbsolute('dist/404.html'), html)
+      console.log('created 404.html file for server configuration')
+    }
   }
 
   // Ensure static files are accessible

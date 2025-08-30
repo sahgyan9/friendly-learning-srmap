@@ -1,51 +1,85 @@
-
+# -- Default Crawler Rules --
 User-agent: *
 Allow: /
 
-# Primary domain sitemaps
-Sitemap: https://www.project-fl.me/sitemap.xml
-Sitemap: https://www.project-fl.me/sitemap-mentors.xml
-Sitemap: https://www.project-fl.me/sitemap-posts.xml
+# -- Rules for Specific Crawlers --
+# Googlebot specific rules
+User-agent: Googlebot
+Allow: /
+Disallow: /assets/temp/
 
-# Legacy domain sitemaps (for transition period)
-Sitemap: https://friendly-learning.lovable.app/sitemap.xml
-Sitemap: https://friendly-learning.lovable.app/sitemap-mentors.xml
-Sitemap: https://friendly-learning.lovable.app/sitemap-posts.xml
+# Bingbot specific rules
+User-agent: Bingbot
+Allow: /
+Disallow: /assets/temp/
 
-# Disallow admin and private areas (keep resources crawlable)
+# Rules for AI crawlers - prevent content scraping
+User-agent: GPTBot
+Disallow: /
+
+User-agent: ChatGPT-User
+Disallow: /
+
+User-agent: Google-Extended
+Disallow: /
+
+# ===================================================================
+# Robots.txt for Project FL
+# Last Updated: August 30, 2025
+# 
+# This file tells search engine crawlers which pages they can and 
+# cannot crawl on www.project-fl.me.
+# ===================================================================
+
+# Specify canonical host to prevent duplicate content issues
+Host: https://www.project-fl.me
+
+
+# -- Sitemaps --
+# Multiple sitemaps are used for better organization.
+# Main sitemap index that references all other sitemaps
+Sitemap: https://www.project-fl.me/sitemap-index.xml
+
+
+# -- Crawling Rules --
+# Disallow private, admin, or API directories.
 Disallow: /admin/
+Disallow: /admin/*
 Disallow: /api/
+Disallow: /api/*
 Disallow: /unauthorized
 Disallow: /profile
+Disallow: /profile/*
 Disallow: /messages
+Disallow: /messages/*
+Disallow: /draft/
+Disallow: /auth/
+Disallow: /auth/*
+Disallow: /password-reset
+Disallow: /*?preview=true
 
-# Allow important SEO pages
-Allow: /
-Allow: /about
-Allow: /mentors
-Allow: /community-posts
-Allow: /marketplace
-Allow: /contact
-Allow: /signup
-Allow: /signin
-Allow: /how-it-works
-Allow: /find-study-partners
-Allow: /hackathon-partners
-Allow: /blog
-Allow: /become-mentor
 
-# Ignore common tracking parameters
+# -- Parameter Handling --
+# Disallow URLs with common tracking parameters to avoid duplicate content.
 Disallow: /*?*utm_*
 Disallow: /*?*fbclid*
 Disallow: /*?*gclid*
 Disallow: /*?*source=*
-Disallow: /*#*
 
-# Crawl-delay for polite crawling
+
+# -- Crawler Politeness --
+# Set appropriate delays for different crawlers
+
+# Bing and other crawlers that respect Crawl-delay
+User-agent: Bingbot
 Crawl-delay: 1
 
-# Notes:
-# - Google ignores Crawl-delay and Host directives in modern implementations
-# - All JS/CSS/image assets are explicitly allowed for proper rendering
-# - Multiple sitemaps for better organization and faster indexing
-# - Both primary and legacy domains supported during transition
+User-agent: Slurp
+Crawl-delay: 2
+
+User-agent: DuckDuckBot
+Crawl-delay: 2
+
+# For Google, use the recommended header-based rate limiting approach
+# as Googlebot ignores Crawl-delay directive
+# This is just a note - actual rate limiting should be configured on your server

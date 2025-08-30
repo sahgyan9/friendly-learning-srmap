@@ -19,6 +19,9 @@ import {
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
+import SEOHead from "@/components/SEOHead";
+import StructuredData from "@/components/StructuredData";
+import { getBreadcrumbSchema, getArticleSchema } from "@/lib/structured-data";
 import { getMentorById } from "@/integrations/supabase/services/mentors";
 import { getOrCreateConversation } from "@/integrations/supabase/services/chat/conversation.service";
 
@@ -230,8 +233,64 @@ const CommunityPostDetail = () => {
     );
   }
 
+  // Generate SEO metadata and structured data for the post
+  const generateSEO = () => {
+    if (!post) return null;
+    
+    const postType = POST_TYPES.find(type => type.value === post.post_type)?.label || post.post_type;
+    const postTitle = post.title || "Community Post";
+    const postDescription = post.content && post.content.length > 150 ? 
+      `${post.content.substring(0, 150)}...` : 
+      post.content || "Community post on Project FL";
+    
+    const metaTitle = `${postTitle} | ${postType} - Project FL Community`;
+    const metaDescription = `${postDescription} - Posted by ${post.mentor.name}. Join the discussion with ${post.comments_count} comments and ${post.likes_count} likes.`;
+    
+    const keywords = post.tags ? 
+      `community post, ${post.tags.join(", ")}, ${post.mentor.name}, ${postType}` :
+      `community post, ${post.mentor.name}, ${postType}, project fl`;
+    
+    const canonicalUrl = `https://www.project-fl.me/community-posts/${post.id}`;
+    
+    // Create a modified post object suitable for structured data
+    const postForSchema = {
+      ...post,
+      title: postTitle,
+      description: postDescription,
+      url: canonicalUrl,
+      image_url: post.image_url || undefined,
+      author: {
+        name: post.mentor.name,
+        url: `https://www.project-fl.me/mentor/${post.mentor.id}`,
+        image: post.mentor.profile_image
+      }
+    };
+    
+    return (
+      <>
+        <SEOHead
+          title={metaTitle}
+          description={metaDescription}
+          keywords={keywords}
+          canonical={canonicalUrl}
+          ogTitle={postTitle}
+          ogDescription={postDescription}
+          ogImage={post.image_url || "/og-image.png"}
+        />
+        
+        <StructuredData data={getArticleSchema(postForSchema)} />
+        <StructuredData data={getBreadcrumbSchema([
+          { name: "Home", url: "https://www.project-fl.me/" },
+          { name: "Community Posts", url: "https://www.project-fl.me/community-posts" },
+          { name: postTitle, url: canonicalUrl }
+        ])} />
+      </>
+    );
+  };
+
   return (
     <>
+      {post && generateSEO()}
       <Navbar />
       <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-8 max-w-4xl">

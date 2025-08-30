@@ -4,6 +4,8 @@ import { Link } from "react-router-dom";
 import Footer from "@/components/Footer";
 import SEOHead from "@/components/SEOHead";
 import TeamMembers from "@/components/about/TeamMembers";
+import StructuredData from "@/components/StructuredData";
+import { getOrganizationSchema } from "@/lib/structured-data";
 
 const About = () => {
   const structuredData = {
@@ -37,8 +39,11 @@ const About = () => {
         description="Learn about Project FL's mission to connect university students for academic help, hackathon partnerships, project collaborations, startup discussions, and finding study partners. Discover how our platform builds stronger university communities."
         keywords="about project fl, university student collaboration, find hackathon partners, student project collaboration, university community platform, study partner matching, startup team formation, skill-based student discovery"
         canonical="https://www.project-fl.me/about"
-        structuredData={structuredData}
       />
+      
+      {/* Add structured data using our dedicated component */}
+      <StructuredData data={structuredData} />
+      <StructuredData data={getOrganizationSchema()} />
 
       <div className="min-h-screen">
         <Navbar />

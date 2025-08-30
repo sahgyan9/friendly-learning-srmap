@@ -17,6 +17,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import { InlineComments } from "@/components/community/InlineComments";
+import SEOHead from "@/components/SEOHead";
+import StructuredData from "@/components/StructuredData";
+import { getBreadcrumbSchema } from "@/lib/structured-data";
 
 const POST_TYPES = [
   { value: 'all', label: 'All Posts' },
@@ -206,8 +209,56 @@ const CommunityPosts = () => {
     );
   }
 
+  // Generate structured data for community posts list
+  const generateStructuredData = () => {
+    return {
+      "@context": "https://schema.org",
+      "@type": "ItemList",
+      "name": "Community Posts on Project FL",
+      "description": "Browse posts from university students seeking academic help, project collaborations, hackathon partners, and more.",
+      "numberOfItems": filteredPosts.length,
+      "itemListElement": filteredPosts.slice(0, 10).map((post, index) => ({
+        "@type": "ListItem",
+        "position": index + 1,
+        "item": {
+          "@type": "SocialMediaPosting",
+          "headline": post.title,
+          "articleBody": post.content,
+          "datePublished": post.created_at,
+          "author": {
+            "@type": "Person",
+            "name": post.mentor.name,
+            "url": `https://www.project-fl.me/mentor/${post.mentor.id}`
+          },
+          "url": `https://www.project-fl.me/community-posts/${post.id}`,
+          "commentCount": post.comments_count,
+          "interactionStatistic": {
+            "@type": "InteractionCounter",
+            "interactionType": "https://schema.org/LikeAction",
+            "userInteractionCount": post.likes_count
+          },
+          "keywords": post.tags ? post.tags.join(", ") : "",
+          "articleSection": post.post_type
+        }
+      }))
+    };
+  };
+
   return (
     <>
+      <SEOHead
+        title="Community Posts | Project FL University Student Collaboration"
+        description="Browse and create posts to find university students for academic help, hackathon partnerships, project collaborations, and more. Connect with skilled students for your academic and project needs."
+        keywords="university community posts, student project collaboration, find hackathon partners, university academic help, student skill matching, project collaborators university"
+        canonical="https://www.project-fl.me/community-posts"
+      />
+      
+      <StructuredData data={generateStructuredData()} />
+      <StructuredData data={getBreadcrumbSchema([
+        { name: "Home", url: "https://www.project-fl.me/" },
+        { name: "Community Posts", url: "https://www.project-fl.me/community-posts" }
+      ])} />
+      
       <Navbar />
       <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-8 max-w-4xl">

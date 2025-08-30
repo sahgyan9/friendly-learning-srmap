@@ -17,10 +17,14 @@
     Header set Content-Type "text/plain; charset=utf-8"
 </Files>
 
-<Files "sitemap.xml">
+<Files ~ "\.(xml)$">
     ForceType application/xml
     Header set Content-Type "application/xml; charset=utf-8"
 </Files>
+
+# Set proper HTTP Status Codes
+ErrorDocument 404 /404.html
+ErrorDocument 403 /unauthorized.html
 
 # Cache static files
 <IfModule mod_expires.c>
@@ -29,23 +33,49 @@
     ExpiresByType application/xml "access plus 1 day"
 </IfModule>
 
-# Handle React Router (SPA) routes
+# Handle React Router (SPA) routes and proper HTTP status codes
 <IfModule mod_rewrite.c>
     RewriteEngine On
+    
     # Enforce canonical host (301 redirect to www.project-fl.me)
     RewriteCond %{HTTP_HOST} !^www\.project-fl\.me$ [NC]
     RewriteCond %{HTTP_HOST} !^$ [NC]
     RewriteRule ^(.*)$ https://www.project-fl.me/$1 [L,R=301]
     
-    # Allow access to robots.txt and sitemap.xml
+    # Allow access to static files
     RewriteRule ^robots\.txt$ - [L]
-    RewriteRule ^sitemap\.xml$ - [L]
+    RewriteRule ^sitemap.*\.xml$ - [L]
+    RewriteRule ^\.well-known/ - [L]
+    RewriteRule ^manifest\.json$ - [L]
     
-    # Handle Angular and React Router
-    # Send all other requests to index.html
+    # Handle 301 redirects for moved pages
+    # Example: RewriteRule ^old-page$ /new-page [R=301,L]
+    
+    # Handle 410 Gone for permanently removed content
+    # RewriteRule ^removed-feature$ - [G,L]
+    
+    # Handle 404s with correct status code
+    RewriteRule ^404\.html$ - [L,R=404]
+    
+    # Handle 403s with correct status code
+    RewriteRule ^unauthorized\.html$ - [L,R=403]
+    
+    # Handle SPA routing - send all other requests to index.html
     RewriteBase /
     RewriteRule ^index\.html$ - [L]
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteRule . /index.html [L]
+</IfModule>
+
+# Add security headers
+<IfModule mod_headers.c>
+    # Prevent clickjacking
+    Header set X-Frame-Options "SAMEORIGIN"
+    # XSS protection
+    Header set X-XSS-Protection "1; mode=block"
+    # Prevent MIME-sniffing
+    Header set X-Content-Type-Options "nosniff"
+    # Referrer policy
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
 </IfModule>

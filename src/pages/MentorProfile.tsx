@@ -5,6 +5,8 @@ import { ArrowLeft, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
+import SEOHead from "@/components/SEOHead";
+import StructuredData from "@/components/StructuredData";
 import { getMentorById } from "@/integrations/supabase/services/mentors";
 import { Mentor } from "@/types/mentor";
 import { useAuth } from "@/context/AuthContext";
@@ -12,6 +14,7 @@ import { motion } from "framer-motion";
 import RatingModal from "@/components/rating/RatingModal";
 import { useRating } from "@/hooks/useRating";
 import MentorProfileContent from "@/components/mentor-profile/MentorProfileContent";
+import { getMentorSchema, getBreadcrumbSchema } from "@/lib/structured-data";
 
 const MentorProfile = () => {
   const { id } = useParams<{ id: string }>();
@@ -112,8 +115,41 @@ const MentorProfile = () => {
     );
   }
 
+  // Generate SEO metadata and structured data
+  const generateSEO = () => {
+    if (!mentor) return null;
+    
+    const mentorName = mentor.name || "Mentor";
+    const mentorDescription = mentor.bio || `${mentorName} is a mentor on Project FL.`;
+    const mentorSkills = mentor.skills ? mentor.skills.join(", ") : "";
+    const metaTitle = `${mentorName} - Project FL Mentor | ${mentor.department || 'University Mentor'}`;
+    const metaDescription = `Connect with ${mentorName}, a verified mentor at Project FL. ${mentorDescription.substring(0, 120)}${mentorDescription.length > 120 ? '...' : ''}`;
+    
+    return (
+      <>
+        <SEOHead
+          title={metaTitle}
+          description={metaDescription}
+          keywords={`${mentorName}, Project FL mentor, university student mentor, ${mentorSkills}, academic mentor, peer learning`}
+          canonical={`https://www.project-fl.me/mentor/${mentor.id}`}
+          ogTitle={`Meet ${mentorName} - Project FL Mentor`}
+          ogDescription={metaDescription}
+          ogImage={mentor.profile_image || "/og-image.png"}
+        />
+        
+        <StructuredData data={getMentorSchema(mentor)} />
+        <StructuredData data={getBreadcrumbSchema([
+          { name: "Home", url: "https://www.project-fl.me/" },
+          { name: "Mentors", url: "https://www.project-fl.me/mentors" },
+          { name: mentorName, url: `https://www.project-fl.me/mentor/${mentor.id}` }
+        ])} />
+      </>
+    );
+  };
+
   return (
     <div className="min-h-screen">
+      {mentor && generateSEO()}
       <Navbar />
       
       <main className="pt-24 pb-16">
