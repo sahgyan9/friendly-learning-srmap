@@ -17,7 +17,7 @@ const __dirname = path.dirname(__filename);
 
 // Configuration
 const config = {
-    siteUrl: 'https://www.project-fl.me',
+    siteUrl: 'https://friendly-learning-srmap.lovable.app',
     publicDir: path.join(__dirname, 'public'),
     lastmod: new Date().toISOString().split('T')[0],
     defaultChangeFreq: 'weekly',

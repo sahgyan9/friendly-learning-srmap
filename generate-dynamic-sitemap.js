@@ -29,7 +29,7 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 // Site configuration
 const config = {
-    siteUrl: 'https://www.project-fl.me',
+    siteUrl: 'https://friendly-learning-srmap.lovable.app',
     publicDir: path.join(__dirname, 'public'),
     defaultChangeFreq: 'weekly',
     defaultPriority: 0.7,

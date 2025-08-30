@@ -59,8 +59,8 @@ const routesToPrerender = [
     }
 
     // Generate comprehensive sitemap.xml with proper SEO structure
-    const primaryDomain = 'https://www.project-fl.me';
-    const legacyDomain = 'https://friendly-learning.lovable.app';
+    const primaryDomain = 'https://friendly-learning-srmap.lovable.app';
+    const legacyDomain = 'https://www.project-fl.me';
     const today = new Date().toISOString().split('T')[0];
 
     const publicRoutes = [
