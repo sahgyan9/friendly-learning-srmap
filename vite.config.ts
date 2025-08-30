@@ -8,6 +8,8 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
+    // Enable SPA fallback for development
+    historyApiFallback: true,
   },
   plugins: [
     react(),
@@ -24,5 +26,13 @@ export default defineConfig(({ mode }) => ({
   build: {
     // Copy public files to dist during build
     copyPublicDir: true,
+    // Generate manifest for better caching
+    manifest: true,
+  },
+  // Enable SPA mode for preview
+  preview: {
+    port: 8080,
+    // Enable SPA fallback for preview mode
+    historyApiFallback: true,
   },
 }));
