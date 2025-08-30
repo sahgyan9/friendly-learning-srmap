@@ -1,82 +1,97 @@
-
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" 
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+        xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd
+                            http://www.google.com/schemas/sitemap-image/1.1 http://www.google.com/schemas/sitemap-image/1.1/sitemap-image.xsd">
   <url>
     <loc>https://www.project-fl.me/</loc>
-    <lastmod>2025-08-18</lastmod>
+    <lastmod>2025-08-30T09:36:24.228Z</lastmod>
     <changefreq>daily</changefreq>
-    <priority>1.0</priority>
+    <priority>1</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.project-fl.me/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.project-fl.me/"/>
+    <image:image>
+      <image:loc>https://www.project-fl.me/og-image.png</image:loc>
+      <image:title>Project FL - University Student Collaboration Platform</image:title>
+      <image:caption>Connect with university students for mentoring, study partnerships, and project collaborations</image:caption>
+    </image:image>
   </url>
   <url>
     <loc>https://www.project-fl.me/about</loc>
-    <lastmod>2025-08-18</lastmod>
+    <lastmod>2025-08-30T09:36:24.228Z</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.project-fl.me/about-team.png</image:loc>
+      <image:title>About Project FL Team</image:title>
+    </image:image>
   </url>
   <url>
     <loc>https://www.project-fl.me/mentors</loc>
-    <lastmod>2025-08-18</lastmod>
+    <lastmod>2025-08-30T09:36:24.228Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://www.project-fl.me/community-posts</loc>
-    <lastmod>2025-08-18</lastmod>
+    <lastmod>2025-08-30T09:36:24.228Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://www.project-fl.me/signup</loc>
-    <lastmod>2025-08-18</lastmod>
+    <lastmod>2025-08-30T09:36:24.228Z</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.project-fl.me/signin</loc>
-    <lastmod>2025-08-18</lastmod>
+    <lastmod>2025-08-30T09:36:24.228Z</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://www.project-fl.me/contact</loc>
-    <lastmod>2025-08-18</lastmod>
+    <lastmod>2025-08-30T09:36:24.228Z</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://www.project-fl.me/marketplace</loc>
-    <lastmod>2025-08-18</lastmod>
+    <lastmod>2025-08-30T09:36:24.228Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.project-fl.me/become-mentor</loc>
-    <lastmod>2025-08-18</lastmod>
+    <lastmod>2025-08-30T09:36:24.228Z</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://www.project-fl.me/how-it-works</loc>
-    <lastmod>2025-08-18</lastmod>
+    <lastmod>2025-08-30T09:36:24.228Z</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.project-fl.me/find-study-partners</loc>
-    <lastmod>2025-08-18</lastmod>
+    <lastmod>2025-08-30T09:36:24.228Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://www.project-fl.me/hackathon-partners</loc>
-    <lastmod>2025-08-18</lastmod>
+    <lastmod>2025-08-30T09:36:24.228Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://www.project-fl.me/blog</loc>
-    <lastmod>2025-08-18</lastmod>
+    <lastmod>2025-08-30T09:36:24.228Z</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.8</priority>
   </url>
 </urlset>
