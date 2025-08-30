@@ -24,6 +24,7 @@ export const useSendMessage = (userId: string) => {
         content: content.length > 0,
         userId
       });
+      toast.error("Unable to send message: Missing required information");
       return;
     }
 
@@ -35,6 +36,7 @@ export const useSendMessage = (userId: string) => {
       if (!conversation) {
         console.error("Conversation not found:", conversationId);
         toast.error("Error: Conversation not found");
+        setIsSending(false);
         return;
       }
 
@@ -43,6 +45,13 @@ export const useSendMessage = (userId: string) => {
           ? conversation.user2_id
           : conversation.user1_id;
 
+      console.log("Sending message:", {
+        conversationId,
+        senderId: userId,
+        receiverId,
+        contentLength: content.length
+      });
+
       const tempMessage: Message = {
         id: `temp-${Date.now()}`,
         conversation_id: conversationId,
@@ -50,7 +59,8 @@ export const useSendMessage = (userId: string) => {
         receiver_id: receiverId,
         content: content,
         sent_at: new Date().toISOString(),
-        is_read: false
+        is_read: false,
+        delivery_status: 'sent'
       };
 
       setMessages(prev => [...prev, tempMessage]);
@@ -64,19 +74,24 @@ export const useSendMessage = (userId: string) => {
 
       if (error) {
         console.error("Error sending message:", error);
-        toast.error("Failed to send message");
+        toast.error("Failed to send message. Please try again.");
 
         setMessages(prev => prev.filter(msg => msg.id !== tempMessage.id));
+        setError(error);
         return;
       }
 
       if (data) {
+        console.log("Message sent successfully:", data.id);
         setMessages(prev =>
           prev.map(msg => (msg.id === tempMessage.id ? data : msg))
         );
+        toast.success("Message sent successfully");
       }
     } catch (err) {
       console.error("Exception sending message:", err);
+      const errorMessage = err instanceof Error ? err.message : "Unknown error occurred";
+      toast.error(`Failed to send message: ${errorMessage}`);
       setError(err as Error);
     } finally {
       setIsSending(false);
