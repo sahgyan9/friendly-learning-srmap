@@ -83,7 +83,7 @@ const FindStudyPartners = () => {
                                         <Link to="/signup">Find Study Partners Now</Link>
                                     </Button>
                                     <Button variant="outline" size="lg" asChild>
-                                        <Link to="/community">Browse Study Groups</Link>
+                                        <Link to="/community-posts">Browse Study Groups</Link>
                                     </Button>
                                 </div>
                             </div>

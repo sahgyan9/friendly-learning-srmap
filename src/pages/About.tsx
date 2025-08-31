@@ -173,7 +173,7 @@ const About = () => {
                     <Link to="/signup">Join Your University Network</Link>
                   </Button>
                   <Button variant="outline" size="lg" asChild>
-                    <Link to="/community">Explore Community Posts</Link>
+                    <Link to="/community-posts">Explore Community Posts</Link>
                   </Button>
                 </div>
               </section>
