@@ -119,50 +119,6 @@ a[href*="lovable.dev"],
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 
-  /* Safe area support for mobile devices */
-  .safe-area-pb {
-    padding-bottom: env(safe-area-inset-bottom);
-  }
-  
-  .safe-area-pt {
-    padding-top: env(safe-area-inset-top);
-  }
-  
-  .safe-area-pl {
-    padding-left: env(safe-area-inset-left);
-  }
-  
-  .safe-area-pr {
-    padding-right: env(safe-area-inset-right);
-  }
-
-  /* Mobile-first responsive design improvements */
-  @media (max-width: 768px) {
-    /* Improve touch targets */
-    button, a, input, textarea, select {
-      min-height: 44px;
-      min-width: 44px;
-    }
-    
-    /* Prevent zoom on form inputs in iOS */
-    input[type="text"],
-    input[type="email"],
-    input[type="password"],
-    input[type="number"],
-    input[type="tel"],
-    input[type="url"],
-    input[type="search"],
-    textarea,
-    select {
-      font-size: 16px;
-    }
-    
-    /* Improve scrolling performance */
-    * {
-      -webkit-overflow-scrolling: touch;
-    }
-  }
-
   /* Custom scrollbar */
   ::-webkit-scrollbar {
     width: 10px;

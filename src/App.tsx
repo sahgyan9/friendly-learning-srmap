@@ -5,7 +5,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/context/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import BottomNavigation from "@/components/navigation/BottomNavigation";
 import Index from "./pages/Index";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
@@ -56,51 +55,46 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <TooltipProvider>
-          <div className="min-h-screen pb-16 md:pb-0">
-            <Toaster />
-            <RouteRobots />
-            <Routes>
-              {/* Public Routes - No authentication required */}
-              <Route path="/" element={<Index />} />
-              <Route path="/signin" element={<SignIn />} />
-              <Route path="/signup" element={<SignUp />} />
-              <Route path="/forgot-password" element={<ForgotPassword />} />
-              <Route path="/reset-password" element={<ResetPassword />} />
-              <Route path="/mentors" element={<Mentors />} />
-              <Route path="/mentor/:id" element={<MentorProfile />} />
-              <Route path="/contact" element={<Contact />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/community-posts" element={<CommunityPosts />} />
-              <Route path="/community-posts/:id" element={<CommunityPostDetail />} />
-              <Route path="/marketplace" element={<MarketPlace />} />
-              <Route path="/how-it-works" element={<HowItWorks />} />
-              <Route path="/find-study-partners" element={<FindStudyPartners />} />
-              <Route path="/hackathon-partners" element={<HackathonPartners />} />
-              <Route path="/blog" element={<Blog />} />
-              <Route path="/unauthorized" element={<Unauthorized />} />
+          <Toaster />
+          <RouteRobots />
+          <Routes>
+            {/* Public Routes - No authentication required */}
+            <Route path="/" element={<Index />} />
+            <Route path="/signin" element={<SignIn />} />
+            <Route path="/signup" element={<SignUp />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/mentors" element={<Mentors />} />
+            <Route path="/mentor/:id" element={<MentorProfile />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/community-posts" element={<CommunityPosts />} />
+            <Route path="/community-posts/:id" element={<CommunityPostDetail />} />
+            <Route path="/marketplace" element={<MarketPlace />} />
+            <Route path="/how-it-works" element={<HowItWorks />} />
+            <Route path="/find-study-partners" element={<FindStudyPartners />} />
+            <Route path="/hackathon-partners" element={<HackathonPartners />} />
+            <Route path="/blog" element={<Blog />} />
+            <Route path="/unauthorized" element={<Unauthorized />} />
 
-              {/* User Protected Routes - Require authentication */}
-              <Route path="/profile" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
-              <Route path="/become-mentor" element={<ProtectedRoute><BecomeMentor /></ProtectedRoute>} />
-              <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
+            {/* User Protected Routes - Require authentication */}
+            <Route path="/profile" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
+            <Route path="/become-mentor" element={<ProtectedRoute><BecomeMentor /></ProtectedRoute>} />
+            <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
 
-              {/* Admin Protected Routes - Require authentication + admin role */}
-              <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>} />
-              <Route path="/admin/contact-messages" element={<ProtectedRoute requiredRole="admin"><AdminContactMessages /></ProtectedRoute>} />
-              <Route path="/admin/mentor-verification" element={<ProtectedRoute requiredRole="admin"><AdminMentorVerification /></ProtectedRoute>} />
-              <Route path="/admin/badges" element={<ProtectedRoute requiredRole="admin"><AdminBadges /></ProtectedRoute>} />
-              <Route path="/admin/settings" element={<ProtectedRoute requiredRole="admin"><AdminSettings /></ProtectedRoute>} />
-              <Route path="/admin/security" element={<ProtectedRoute requiredRole="admin"><AdminSecurity /></ProtectedRoute>} />
-              <Route path="/admin/team-members" element={<ProtectedRoute requiredRole="admin"><TeamMembersAdmin /></ProtectedRoute>} />
-              <Route path="/admin/events" element={<ProtectedRoute requiredRole="admin"><MarketplaceAdmin /></ProtectedRoute>} />
+            {/* Admin Protected Routes - Require authentication + admin role */}
+            <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>} />
+            <Route path="/admin/contact-messages" element={<ProtectedRoute requiredRole="admin"><AdminContactMessages /></ProtectedRoute>} />
+            <Route path="/admin/mentor-verification" element={<ProtectedRoute requiredRole="admin"><AdminMentorVerification /></ProtectedRoute>} />
+            <Route path="/admin/badges" element={<ProtectedRoute requiredRole="admin"><AdminBadges /></ProtectedRoute>} />
+            <Route path="/admin/settings" element={<ProtectedRoute requiredRole="admin"><AdminSettings /></ProtectedRoute>} />
+            <Route path="/admin/security" element={<ProtectedRoute requiredRole="admin"><AdminSecurity /></ProtectedRoute>} />
+            <Route path="/admin/team-members" element={<ProtectedRoute requiredRole="admin"><TeamMembersAdmin /></ProtectedRoute>} />
+            <Route path="/admin/events" element={<ProtectedRoute requiredRole="admin"><MarketplaceAdmin /></ProtectedRoute>} />
 
-              {/* 404 Page - Catch all unmatched routes */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-            
-            {/* Bottom Navigation for Mobile */}
-            <BottomNavigation />
-          </div>
+            {/* 404 Page - Catch all unmatched routes */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
         </TooltipProvider>
       </AuthProvider>
     </QueryClientProvider>
