@@ -9,6 +9,7 @@ import SEOHead from "@/components/SEOHead";
 import FloatingChatbot from "@/components/chatbot/FloatingChatbot";
 import RejectedApplicationNotice from "@/components/mentors/RejectedApplicationNotice";
 import StructuredData from "@/components/StructuredData";
+import { CommunityPostsSection } from "@/components/community/CommunityPostsSection";
 import { useAuth } from "@/context/AuthContext";
 import { getOrganizationSchema, getWebsiteSchema } from "@/lib/structured-data";
 
@@ -73,6 +74,9 @@ const Index = () => {
           <RejectedApplicationNotice />
         </div>
       )}
+
+      {/* Community Posts Section - Social Media-like engagement */}
+      <CommunityPostsSection />
 
       <MentorsSection />
       <WhyFriendlyLearning />
