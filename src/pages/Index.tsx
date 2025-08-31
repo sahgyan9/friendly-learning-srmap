@@ -20,29 +20,43 @@ const Index = () => {
     "@context": "https://schema.org",
     "@type": "WebPage",
     "url": "https://friendly-learning-srmap.lovable.app/",
-    "name": "Project FL - University Student Collaboration Platform",
-    "description": "Find and connect with verified student mentors for academic guidance, career advice, and peer support. Join our community of learners helping learners.",
+    "name": "Friendly Learning SRMAP - SRM AP Student Mentorship Platform",
+    "description": "Friendly Learning SRMAP connects SRM AP university students with experienced peer mentors for academic guidance, project collaboration, and study partnerships.",
     "isPartOf": {
       "@type": "WebSite",
-      "name": "Project FL",
+      "name": "Friendly Learning SRMAP",
       "url": "https://friendly-learning-srmap.lovable.app/"
     },
+    "keywords": "friendly learning srmap, fl srmap, srmap mentorship, srm ap student mentors",
     "mainEntity": {
-      "@type": "Organization",
-      "name": "Project FL",
+      "@type": "EducationalOrganization",
+      "name": "Friendly Learning",
       "url": "https://friendly-learning-srmap.lovable.app/",
-      "logo": "https://friendly-learning-srmap.lovable.app/og-image.png"
+      "logo": "https://friendly-learning-srmap.lovable.app/og-image.png",
+      "sameAs": [
+        "https://www.project-fl.me"
+      ],
+      "educationalCredentialAwarded": "Peer Mentorship",
+      "serviceArea": {
+        "@type": "Place",
+        "name": "SRM University AP"
+      }
+    },
+    "specialty": "Student academic mentorship",
+    "audience": {
+      "@type": "Audience",
+      "audienceType": "University students"
     }
   };
 
   return (
     <div className="min-h-screen bg-background">
       <SEOHead
-        title="Project FL - University Student Collaboration Platform | Find Study Partners, Hackathon Teams & Project Collaborators"
-        description="Find and connect with verified student mentors for academic guidance, career advice, and peer support. Join our community of learners helping learners."
+        title="Friendly Learning SRMAP - Student Mentorship Platform | SRM AP Academic Mentors"
+        description="Friendly Learning SRMAP connects SRM AP university students with experienced peer mentors for academic guidance, project collaboration, and study partnerships. Get personalized help from verified mentors in your department."
         canonical="https://friendly-learning-srmap.lovable.app/"
-        ogTitle="Project FL - Connect with University Students & Mentors"
-        ogDescription="Find study partners, mentors, project collaborators, and hackathon teams through our university student collaboration platform."
+        ogTitle="Friendly Learning SRMAP - Connect with SRM AP Student Mentors"
+        ogDescription="Find academic guidance, study partners, project collaborators, and hackathon teams through the official SRM AP student mentorship platform."
       />
 
       {/* Add structured data for SEO */}

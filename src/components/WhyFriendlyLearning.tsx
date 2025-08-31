@@ -22,12 +22,12 @@ const WhyFriendlyLearning = () => {
     <section className="py-16 bg-background dark:bg-gray-900/40">
       <div className="container px-4 md:px-6">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold mb-4">Why Friendly Learning?</h2>
+          <h2 className="text-3xl font-bold mb-4">Why Friendly Learning SRMAP?</h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            We make it easy to connect with the right mentor for your needs.
+            We make it easy to connect with the right mentor for your needs at SRM AP.
           </p>
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <FeatureCard
             icon={
@@ -38,7 +38,7 @@ const WhyFriendlyLearning = () => {
             title="Direct Messaging"
             description="Connect with mentors through our real-time messaging system for quick help."
           />
-          
+
           <FeatureCard
             icon={
               <svg className="w-6 h-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -48,7 +48,7 @@ const WhyFriendlyLearning = () => {
             title="Verified Mentors"
             description="All our mentors are verified students from your university with proven expertise."
           />
-          
+
           <FeatureCard
             icon={
               <svg className="w-6 h-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">

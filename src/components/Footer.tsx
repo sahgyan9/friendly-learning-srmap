@@ -13,10 +13,10 @@ const Footer = () => {
               <Logo showText={true} />
             </Link>
             <p className="text-sm text-muted-foreground mt-1">
-              Connecting students with mentor at SRM AP
+              Friendly Learning SRMAP - Connecting students with mentors at SRM AP
             </p>
           </div>
-          
+
           <div className="flex space-x-6">
             <Link to="/about" className="text-muted-foreground hover:text-primary transition-colors">
               About
@@ -29,9 +29,9 @@ const Footer = () => {
             </Link>
           </div>
         </div>
-        
+
         <div className="mt-8 pt-8 border-t border-border text-center text-sm text-muted-foreground">
-          <p>© {new Date().getFullYear()} Friendly Learning. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} Friendly Learning SRMAP. All rights reserved.</p>
         </div>
       </div>
     </footer>

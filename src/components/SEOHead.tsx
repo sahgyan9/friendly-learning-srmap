@@ -13,9 +13,9 @@ interface SEOHeadProps {
 }
 
 const SEOHead = ({
-  title = "Project FL - University Student Collaboration Platform | Find Study Partners, Hackathon Teams & Project Collaborators",
-  description = "Project FL connects university students for academic help, hackathon partnerships, project collaborations, startup discussions, and finding study partners. Post in community, find skilled teammates, connect with like-minded peers.",
-  keywords = "project fl, university student collaboration, find hackathon partners, student project collaboration, university community posts, find study partners, startup team formation, skill-based student matching, peer learning university, student networking platform, academic help university",
+  title = "Friendly Learning SRMAP - Student Mentorship Platform | SRM AP Academic Mentors",
+  description = "Friendly Learning SRMAP connects SRM AP university students with experienced peer mentors for academic guidance, project collaboration, and study partnerships. Get personalized help from verified mentors in your department.",
+  keywords = "friendly learning srmap, fl srmap, srm ap mentorship, srmap student mentors, academic guidance srm, university mentors srmap, find study partners srm, verified mentors srmap, peer learning srm ap, student collaboration srmap, academic support srm, srm university mentors, hackathon partners srm, project collaboration srmap",
   canonical,
   ogTitle,
   ogDescription,

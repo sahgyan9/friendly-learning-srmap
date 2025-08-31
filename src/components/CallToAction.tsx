@@ -16,7 +16,7 @@ const CallToAction = () => {
               <Link to="/signup">Get Started</Link>
             </Button>
             <Button size="lg" variant="outline" asChild>
-              <Link to="/about">Learn More</Link>
+              <Link to="/about">Learn About Mentorship Benefits</Link>
             </Button>
           </div>
         </div>
