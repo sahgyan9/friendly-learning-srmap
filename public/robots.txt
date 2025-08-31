@@ -59,7 +59,6 @@ Disallow: /*?*utm_*
 Disallow: /*?*fbclid*
 Disallow: /*?*gclid*
 Disallow: /*?*source=*
-Crawl-delay: 1
 
 # -- Rules for other search engines --
 User-agent: Slurp
@@ -72,7 +71,6 @@ Disallow: /messages
 Disallow: /draft/
 Disallow: /auth/
 Disallow: /password-reset
-Crawl-delay: 2
 
 User-agent: DuckDuckBot
 Allow: /
@@ -84,7 +82,6 @@ Disallow: /messages
 Disallow: /draft/
 Disallow: /auth/
 Disallow: /password-reset
-Crawl-delay: 2
 
 # -- Rules for AI crawlers - prevent content scraping --
 User-agent: GPTBot
