@@ -4,6 +4,7 @@ import Navbar from "@/components/Navbar";
 import SearchBar from "@/components/SearchBar";
 import SEOHead from "@/components/SEOHead";
 import StructuredData from "@/components/StructuredData";
+import PullToRefresh from "@/components/ui/PullToRefresh";
 import { getMentors } from "@/integrations/supabase/services/mentors";
 import { Mentor } from "@/types/mentor";
 import { useToast } from "@/components/ui/use-toast";
@@ -47,47 +48,47 @@ const Mentors = () => {
 
   // Fetch mentors from Supabase on component mount
   useEffect(() => {
-    const fetchMentors = async () => {
-      setIsLoading(true);
-      try {
-        const { data, error } = await getMentors();
-
-        if (error) {
-          console.error("Error fetching mentors:", error);
-          toast({
-            title: "Error",
-            description: "Failed to load mentors. Using sample data instead.",
-            variant: "destructive",
-          });
-          setFilteredMentors(sampleMentors);
-          return;
-        }
-
-        if (data && data.length > 0) {
-          setFilteredMentors(data);
-        } else {
-          console.log("No mentors found in database, using sample data");
-          setFilteredMentors(sampleMentors);
-          toast({
-            title: "Using sample data",
-            description: "No mentors found in database. Using sample data instead.",
-          });
-        }
-      } catch (err) {
-        console.error("Exception fetching mentors:", err);
-        setFilteredMentors(sampleMentors);
-        toast({
-          title: "Error",
-          description: "An unexpected error occurred. Using sample data instead.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchMentors();
   }, [toast]);
+
+  const fetchMentors = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await getMentors();
+
+      if (error) {
+        console.error("Error fetching mentors:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load mentors. Using sample data instead.",
+          variant: "destructive",
+        });
+        setFilteredMentors(sampleMentors);
+        return;
+      }
+
+      if (data && data.length > 0) {
+        setFilteredMentors(data);
+      } else {
+        console.log("No mentors found in database, using sample data");
+        setFilteredMentors(sampleMentors);
+        toast({
+          title: "Using sample data",
+          description: "No mentors found in database. Using sample data instead.",
+        });
+      }
+    } catch (err) {
+      console.error("Exception fetching mentors:", err);
+      setFilteredMentors(sampleMentors);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred. Using sample data instead.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Handle both normal search and AI search
   const handleSearch = async (query: string, results?: Mentor[]) => {
@@ -158,41 +159,43 @@ const Mentors = () => {
         { name: "Mentors", url: "https://friendly-learning-srmap.lovable.app/mentors" }
       ])} />
 
-      <motion.div
-        className="min-h-screen"
-        initial="hidden"
-        animate="visible"
-        variants={pageVariants}
-      >
-        <Navbar />
+      <PullToRefresh onRefresh={fetchMentors}>
+        <motion.div
+          className="min-h-screen"
+          initial="hidden"
+          animate="visible"
+          variants={pageVariants}
+        >
+          <Navbar />
 
-        <main className="pt-24 pb-16">
-          <div className="container px-4 md:px-6">
-            <motion.div variants={itemVariants}>
-              <MentorsHeader
-                title="Find Your Perfect Mentor at SRM AP"
-                description="Browse our extensive directory of verified student mentors or use our AI-powered search to find mentors with specific skills and expertise tailored to your academic needs."
-              />
-            </motion.div>
+          <main className="pt-24 pb-16">
+            <div className="container px-4 md:px-6">
+              <motion.div variants={itemVariants}>
+                <MentorsHeader
+                  title="Find Your Perfect Mentor at SRM AP"
+                  description="Browse our extensive directory of verified student mentors or use our AI-powered search to find mentors with specific skills and expertise tailored to your academic needs."
+                />
+              </motion.div>
 
-            {/* Search */}
-            <motion.div variants={itemVariants}>
-              <SearchBar onSearch={handleSearch} onGeminiSearch={handleGeminiSearch} />
-            </motion.div>
+              {/* Search */}
+              <motion.div variants={itemVariants}>
+                <SearchBar onSearch={handleSearch} onGeminiSearch={handleGeminiSearch} />
+              </motion.div>
 
-            {/* Mentors List */}
-            <motion.div variants={itemVariants}>
-              <MentorList
-                isLoading={isLoading}
-                mentors={filteredMentors}
-                isAiSearch={isAiSearch}
-              />
-            </motion.div>
-          </div>
-        </main>
+              {/* Mentors List */}
+              <motion.div variants={itemVariants}>
+                <MentorList
+                  isLoading={isLoading}
+                  mentors={filteredMentors}
+                  isAiSearch={isAiSearch}
+                />
+              </motion.div>
+            </div>
+          </main>
 
-        <MentorsFooter />
-      </motion.div>
+          <MentorsFooter />
+        </motion.div>
+      </PullToRefresh>
     </>
   );
 };
