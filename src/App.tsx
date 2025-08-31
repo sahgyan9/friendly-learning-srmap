@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/context/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import BottomNavigation from "@/components/navigation/BottomNavigation";
 import Index from "./pages/Index";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
@@ -55,8 +56,9 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <TooltipProvider>
-          <Toaster />
-          <RouteRobots />
+          <div className="min-h-screen pb-16 md:pb-0">
+            <Toaster />
+            <RouteRobots />
           <Routes>
             {/* Public Routes - No authentication required */}
             <Route path="/" element={<Index />} />
@@ -95,6 +97,10 @@ function App() {
             {/* 404 Page - Catch all unmatched routes */}
             <Route path="*" element={<NotFound />} />
           </Routes>
+          
+          {/* Bottom Navigation for Mobile */}
+          <BottomNavigation />
+          </div>
         </TooltipProvider>
       </AuthProvider>
     </QueryClientProvider>
