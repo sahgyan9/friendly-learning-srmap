@@ -11,10 +11,18 @@ const BottomNavigation = () => {
   const location = useLocation();
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
+  const [isMounted, setIsMounted] = useState(false);
   const { unreadCount } = useNotifications();
+
+  // Handle SSR
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // Hide/show bottom nav on scroll
   useEffect(() => {
+    if (!isMounted) return;
+    
     const controlNavbar = () => {
       const currentScrollY = window.scrollY;
       
@@ -29,7 +37,7 @@ const BottomNavigation = () => {
 
     window.addEventListener('scroll', controlNavbar);
     return () => window.removeEventListener('scroll', controlNavbar);
-  }, [lastScrollY]);
+  }, [lastScrollY, isMounted]);
 
   const navItems = [
     {
@@ -65,8 +73,8 @@ const BottomNavigation = () => {
     },
   ];
 
-  // Don't show on desktop
-  if (window.innerWidth >= 768) {
+  // Don't show on desktop or during SSR
+  if (!isMounted || (typeof window !== 'undefined' && window.innerWidth >= 768)) {
     return null;
   }
 

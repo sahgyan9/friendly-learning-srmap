@@ -22,11 +22,11 @@ const PullToRefresh = ({
 
   const handleDragStart = () => {
     // Only allow pull-to-refresh when at the top of the page
-    return window.scrollY === 0;
+    return typeof window !== 'undefined' && window.scrollY === 0;
   };
 
   const handleDrag = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
-    if (info.offset.y > 0 && window.scrollY === 0) {
+    if (typeof window !== 'undefined' && info.offset.y > 0 && window.scrollY === 0) {
       const distance = Math.min(info.offset.y, maxPullDistance);
       setPullDistance(distance);
       setShouldRefresh(distance >= threshold);
