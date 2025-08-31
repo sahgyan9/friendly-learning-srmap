@@ -13,7 +13,7 @@ const Footer = () => {
               <Logo showText={true} />
             </Link>
             <p className="text-sm text-muted-foreground mt-1">
-              Friendly Learning SRMAP - Connecting students with mentors at SRM AP
+              <strong className="font-bold">Friendly Learning SRMAP</strong> - Connecting students with mentors at <strong className="font-bold">SRM AP</strong>
             </p>
           </div>
 

@@ -7,15 +7,43 @@ interface FeatureCardProps {
   description: string;
 }
 
-const FeatureCard = ({ icon, title, description }: FeatureCardProps) => (
-  <div className="p-6 rounded-xl bg-card shadow-sm border border-border text-center">
-    <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-      {icon}
+const FeatureCard = ({ icon, title, description }: FeatureCardProps) => {
+  // Parse description for keywords that should be bolded
+  const boldedDescription = () => {
+    if (title === "Direct Messaging") {
+      return (
+        <>
+          Connect with mentors through our <strong className="font-bold">real-time messaging</strong> system for quick help.
+        </>
+      );
+    }
+    else if (title === "Verified Mentors") {
+      return (
+        <>
+          All our mentors are <strong className="font-bold">verified students</strong> from your university with proven expertise.
+        </>
+      );
+    }
+    else if (title === "Smart Matching") {
+      return (
+        <>
+          Our <strong className="font-bold">intelligent search</strong> helps you find mentors with the exact skills you need.
+        </>
+      );
+    }
+    return description;
+  };
+
+  return (
+    <div className="p-6 rounded-xl bg-card shadow-sm border border-border text-center">
+      <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+        {icon}
+      </div>
+      <h3 className="text-lg font-semibold mb-2">{title}</h3>
+      <p className="text-muted-foreground">{boldedDescription()}</p>
     </div>
-    <h3 className="text-lg font-semibold mb-2">{title}</h3>
-    <p className="text-muted-foreground">{description}</p>
-  </div>
-);
+  );
+};
 
 const WhyFriendlyLearning = () => {
   return (
@@ -24,7 +52,7 @@ const WhyFriendlyLearning = () => {
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold mb-4">Why Friendly Learning SRMAP?</h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            We make it easy to connect with the right mentor for your needs at SRM AP.
+            We make it easy to connect with the <strong className="font-bold">right mentor</strong> for your needs at <strong className="font-bold">SRM AP</strong>.
           </p>
         </div>
 

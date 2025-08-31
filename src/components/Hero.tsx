@@ -83,8 +83,8 @@ const Hero = () => {
             className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto text-balance"
             variants={item}
           >
-            <span className="font-bold">Friendly Learning</span> connects undergraduate students with <span className="font-bold">experienced
-              student mentors</span> to provide <span className="font-bold">personalized academic support</span> within your university.
+            <strong className="font-bold">Friendly Learning SRMAP</strong> connects undergraduate students with <strong className="font-bold">experienced
+              student mentors</strong> to provide <strong className="font-bold">personalized academic support</strong> within your university.
           </motion.p>
 
           <motion.div
