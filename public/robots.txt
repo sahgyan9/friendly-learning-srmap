@@ -1,19 +1,92 @@
-# -- Default Crawler Rules --
-User-agent: *
-Allow: /
+# ===================================================================
+# Robots.txt for Project FL
+# Last Updated: August 31, 2025
+# 
+# This file tells search engine crawlers which pages they can and 
+# cannot crawl on friendly-learning-srmap.lovable.app
+# ===================================================================
 
-# -- Rules for Specific Crawlers --
-# Googlebot specific rules
+# -- Sitemaps --
+# Multiple sitemaps are used for better organization.
+Sitemap: https://friendly-learning-srmap.lovable.app/sitemap-index.xml
+Sitemap: https://friendly-learning-srmap.lovable.app/sitemap.xml
+Sitemap: https://friendly-learning-srmap.lovable.app/sitemap-blog.xml
+Sitemap: https://friendly-learning-srmap.lovable.app/sitemap-community.xml
+Sitemap: https://friendly-learning-srmap.lovable.app/sitemap-mentors.xml
+
+# -- Rules for Googlebot --
 User-agent: Googlebot
 Allow: /
-Disallow: /assets/temp/
+Allow: /mentors
+Allow: /community-posts
+Allow: /marketplace
+Allow: /about
+Allow: /contact
+Allow: /how-it-works
+Allow: /find-study-partners
+Allow: /hackathon-partners
+Allow: /blog
+Allow: /signin
+Allow: /signup
+Allow: /become-mentor
+Disallow: /admin/
+Disallow: /api/
+Disallow: /unauthorized
+Disallow: /profile
+Disallow: /messages
+Disallow: /draft/
+Disallow: /auth/
+Disallow: /password-reset
+Disallow: /*?preview=true
+Disallow: /*?*utm_*
+Disallow: /*?*fbclid*
+Disallow: /*?*gclid*
+Disallow: /*?*source=*
 
-# Bingbot specific rules
+# -- Rules for Bingbot --
 User-agent: Bingbot
 Allow: /
-Disallow: /assets/temp/
+Disallow: /admin/
+Disallow: /api/
+Disallow: /unauthorized
+Disallow: /profile
+Disallow: /messages
+Disallow: /draft/
+Disallow: /auth/
+Disallow: /password-reset
+Disallow: /*?preview=true
+Disallow: /*?*utm_*
+Disallow: /*?*fbclid*
+Disallow: /*?*gclid*
+Disallow: /*?*source=*
+Crawl-delay: 1
 
-# Rules for AI crawlers - prevent content scraping
+# -- Rules for other search engines --
+User-agent: Slurp
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Disallow: /unauthorized
+Disallow: /profile
+Disallow: /messages
+Disallow: /draft/
+Disallow: /auth/
+Disallow: /password-reset
+Crawl-delay: 2
+
+User-agent: DuckDuckBot
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Disallow: /unauthorized
+Disallow: /profile
+Disallow: /messages
+Disallow: /draft/
+Disallow: /auth/
+Disallow: /password-reset
+Crawl-delay: 2
+
+# -- Rules for AI crawlers - prevent content scraping --
 User-agent: GPTBot
 Disallow: /
 
@@ -23,62 +96,19 @@ Disallow: /
 User-agent: Google-Extended
 Disallow: /
 
-# ===================================================================
-# Robots.txt for Project FL
-# Last Updated: August 30, 2025
-# 
-# This file tells search engine crawlers which pages they can and 
-# cannot crawl on www.project-fl.me.
-# ===================================================================
-
-# -- Sitemaps --
-# Multiple sitemaps are used for better organization.
-# Main sitemap index that references all other sitemaps
-Sitemap: https://friendly-learning-srmap.lovable.app/sitemap.xml
-Sitemap: https://friendly-learning-srmap.lovable.app/sitemap-blog.xml
-Sitemap: https://friendly-learning-srmap.lovable.app/sitemap-community.xml
-Sitemap: https://friendly-learning-srmap.lovable.app/sitemap-mentors.xml
-
-
-# -- Crawling Rules --
-# Disallow private, admin, or API directories.
+# -- Default rules for all other crawlers --
+User-agent: *
+Allow: /
 Disallow: /admin/
-Disallow: /admin/*
 Disallow: /api/
-Disallow: /api/*
 Disallow: /unauthorized
 Disallow: /profile
-Disallow: /profile/*
 Disallow: /messages
-Disallow: /messages/*
 Disallow: /draft/
 Disallow: /auth/
-Disallow: /auth/*
 Disallow: /password-reset
 Disallow: /*?preview=true
-
-
-# -- Parameter Handling --
-# Disallow URLs with common tracking parameters to avoid duplicate content.
 Disallow: /*?*utm_*
 Disallow: /*?*fbclid*
 Disallow: /*?*gclid*
 Disallow: /*?*source=*
-
-
-# -- Crawler Politeness --
-# Set appropriate delays for different crawlers
-
-# Bing and other crawlers that respect Crawl-delay
-User-agent: Bingbot
-Crawl-delay: 1
-
-User-agent: Slurp
-Crawl-delay: 2
-
-User-agent: DuckDuckBot
-Crawl-delay: 2
-
-# For Google, use the recommended header-based rate limiting approach
-# as Googlebot ignores Crawl-delay directive
-# This is just a note - actual rate limiting should be configured on your server
