@@ -34,7 +34,7 @@ const About = () => {
         title="About Friendly Learning SRM AP - Premier Student Mentorship Platform | Our Mission & Story"
         description="Learn about Friendly Learning SRM AP's mission to connect students with peer mentors at SRM University AP, Amaravati. Discover our story, values, and commitment to collaborative learning and academic success in Andhra Pradesh."
         keywords="about friendly learning srm ap, srmap mentorship platform, srmap friendly learning, SRM AP mentorship platform, student mentorship mission amaravati, peer learning story andhra pradesh, university mentorship values srmap"
-        canonical="https://www.project-fl.me/about"
+        canonical="https://friendly-learning-srmap.lovable.app/about"
         structuredData={structuredData}
       />
 

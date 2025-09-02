@@ -131,7 +131,7 @@ const MentorProfile = () => {
           title={metaTitle}
           description={metaDescription}
           keywords={`${mentorName}, Project FL mentor, university student mentor, ${mentorSkills}, academic mentor, peer learning`}
-          canonical={`https://www.project-fl.me/mentor/${mentor.id}`}
+          canonical={`https://friendly-learning-srmap.lovable.app/mentor/${mentor.id}`}
           ogTitle={`Meet ${mentorName} - Project FL Mentor`}
           ogDescription={metaDescription}
           ogImage={mentor.profile_image || "/og-image.png"}
@@ -139,9 +139,9 @@ const MentorProfile = () => {
 
         <StructuredData data={getMentorSchema(mentor)} />
         <StructuredData data={getBreadcrumbSchema([
-          { name: "Home", url: "https://www.project-fl.me/" },
-          { name: "Mentors", url: "https://www.project-fl.me/mentors" },
-          { name: mentorName, url: `https://www.project-fl.me/mentor/${mentor.id}` }
+          { name: "Home", url: "https://friendly-learning-srmap.lovable.app/" },
+          { name: "Mentors", url: "https://friendly-learning-srmap.lovable.app/mentors" },
+          { name: mentorName, url: `https://friendly-learning-srmap.lovable.app/mentor/${mentor.id}` }
         ])} />
       </>
     );
