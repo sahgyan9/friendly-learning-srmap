@@ -12,8 +12,8 @@ import {
  * Create a new canvas session
  */
 export async function createCanvasSession(
-    mentorId: string,
-    sessionData: CreateSessionData
+    sessionData: CreateSessionData,
+    mentorId: string
 ) {
     try {
         console.log("Creating canvas session:", { mentorId, sessionData });
@@ -56,8 +56,8 @@ export async function createCanvasSession(
  * Join a canvas session using session code
  */
 export async function joinCanvasSession(
-    userId: string,
-    sessionData: JoinSessionData
+    sessionData: JoinSessionData,
+    userId: string
 ) {
     try {
         console.log("Joining canvas session:", { userId, sessionCode: sessionData.sessionCode });
