@@ -83,6 +83,14 @@ const Navbar = () => {
             <DarkModeToggle />
             {user ? (
               <>
+                <Link
+                  to="/canvas-test"
+                  className={`text-sm font-medium transition-colors hover:text-primary px-2 py-1 rounded border ${isActive("/canvas-test") ? "text-primary border-primary" : "text-muted-foreground border-orange-500"
+                    }`}
+                  title="Test Canvas Functionality"
+                >
+                  🎨 Test Canvas
+                </Link>
                 <MessagesIcon />
                 <NotificationBell />
                 <NavbarProfileMenu />
