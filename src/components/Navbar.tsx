@@ -55,6 +55,13 @@ const Navbar = () => {
               Community
             </Link>
             <Link
+              to="/canvas"
+              className={`text-sm font-medium transition-colors hover:text-primary ${isActive("/canvas") ? "text-primary" : "text-muted-foreground"
+                }`}
+            >
+              Canvas
+            </Link>
+            <Link
               to="/marketplace"
               className={`text-sm font-medium transition-colors hover:text-primary ${isActive("/marketplace") ? "text-primary" : "text-muted-foreground"
                 }`}

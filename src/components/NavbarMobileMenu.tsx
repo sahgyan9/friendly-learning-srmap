@@ -52,6 +52,13 @@ export const NavbarMobileMenu = ({ isOpen, onClose }: NavbarMobileMenuProps) => 
           Community
         </Link>
         <Link
+          to="/canvas"
+          className="block px-3 py-2 text-base font-medium text-muted-foreground hover:text-primary hover:bg-muted rounded-md"
+          onClick={onClose}
+        >
+          Canvas
+        </Link>
+        <Link
           to="/marketplace"
           className="block px-3 py-2 text-base font-medium text-muted-foreground hover:text-primary hover:bg-muted rounded-md"
           onClick={onClose}

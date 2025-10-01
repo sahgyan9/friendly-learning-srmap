@@ -37,6 +37,7 @@ import NotFound from "./pages/NotFound";
 import Unauthorized from "./pages/Unauthorized";
 import RouteRobots from "@/components/RouteRobots";
 import { CanvasSession } from "./pages/CanvasSession";
+import { CanvasPage } from "./pages/CanvasPage";
 
 // Create a new QueryClient instance for React Query
 const queryClient = new QueryClient();
@@ -84,6 +85,7 @@ function App() {
             <Route path="/profile" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
             <Route path="/become-mentor" element={<ProtectedRoute><BecomeMentor /></ProtectedRoute>} />
             <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
+            <Route path="/canvas" element={<ProtectedRoute><CanvasPage /></ProtectedRoute>} />
             <Route path="/canvas/:sessionId" element={<ProtectedRoute><CanvasSession /></ProtectedRoute>} />
 
             {/* Admin Protected Routes - Require authentication + admin role */}
