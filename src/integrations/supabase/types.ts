@@ -148,6 +148,131 @@ export type Database = {
         }
         Relationships: []
       }
+      canvas_drawings: {
+        Row: {
+          action_type: string
+          drawing_data: Json
+          id: string
+          session_id: string
+          timestamp: string | null
+          user_id: string
+        }
+        Insert: {
+          action_type: string
+          drawing_data: Json
+          id?: string
+          session_id: string
+          timestamp?: string | null
+          user_id: string
+        }
+        Update: {
+          action_type?: string
+          drawing_data?: Json
+          id?: string
+          session_id?: string
+          timestamp?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "canvas_drawings_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "canvas_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "canvas_drawings_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      canvas_participants: {
+        Row: {
+          id: string
+          is_active: boolean | null
+          joined_at: string | null
+          role: string
+          session_id: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          is_active?: boolean | null
+          joined_at?: string | null
+          role: string
+          session_id: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          is_active?: boolean | null
+          joined_at?: string | null
+          role?: string
+          session_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "canvas_participants_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "canvas_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "canvas_participants_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      canvas_sessions: {
+        Row: {
+          background_color: string | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          max_participants: number | null
+          mentor_id: string
+          session_code: string
+          title: string
+        }
+        Insert: {
+          background_color?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_participants?: number | null
+          mentor_id: string
+          session_code: string
+          title: string
+        }
+        Update: {
+          background_color?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_participants?: number | null
+          mentor_id?: string
+          session_code?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "canvas_sessions_mentor_id_fkey"
+            columns: ["mentor_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       community_posts: {
         Row: {
           comments_count: number
@@ -321,131 +446,6 @@ export type Database = {
           {
             foreignKeyName: "conversations_user2_id_fkey"
             columns: ["user2_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      canvas_sessions: {
-        Row: {
-          id: string
-          mentor_id: string
-          title: string
-          session_code: string
-          created_at: string | null
-          is_active: boolean | null
-          max_participants: number | null
-          background_color: string | null
-        }
-        Insert: {
-          id?: string
-          mentor_id: string
-          title: string
-          session_code: string
-          created_at?: string | null
-          is_active?: boolean | null
-          max_participants?: number | null
-          background_color?: string | null
-        }
-        Update: {
-          id?: string
-          mentor_id?: string
-          title?: string
-          session_code?: string
-          created_at?: string | null
-          is_active?: boolean | null
-          max_participants?: number | null
-          background_color?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "canvas_sessions_mentor_id_fkey"
-            columns: ["mentor_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      canvas_participants: {
-        Row: {
-          id: string
-          session_id: string
-          user_id: string
-          joined_at: string | null
-          role: string
-          is_active: boolean | null
-        }
-        Insert: {
-          id?: string
-          session_id: string
-          user_id: string
-          joined_at?: string | null
-          role: string
-          is_active?: boolean | null
-        }
-        Update: {
-          id?: string
-          session_id?: string
-          user_id?: string
-          joined_at?: string | null
-          role?: string
-          is_active?: boolean | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "canvas_participants_session_id_fkey"
-            columns: ["session_id"]
-            isOneToOne: false
-            referencedRelation: "canvas_sessions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "canvas_participants_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      canvas_drawings: {
-        Row: {
-          id: string
-          session_id: string
-          user_id: string
-          drawing_data: Json
-          timestamp: string | null
-          action_type: string
-        }
-        Insert: {
-          id?: string
-          session_id: string
-          user_id: string
-          drawing_data: Json
-          timestamp?: string | null
-          action_type: string
-        }
-        Update: {
-          id?: string
-          session_id?: string
-          user_id?: string
-          drawing_data?: Json
-          timestamp?: string | null
-          action_type?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "canvas_drawings_session_id_fkey"
-            columns: ["session_id"]
-            isOneToOne: false
-            referencedRelation: "canvas_sessions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "canvas_drawings_user_id_fkey"
-            columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
@@ -1073,6 +1073,19 @@ export type Database = {
         Args: { mentor_id: string; user_id: string }
         Returns: boolean
       }
+      create_canvas_session: {
+        Args: { p_mentor_id: string; p_title: string }
+        Returns: {
+          background_color: string | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          max_participants: number | null
+          mentor_id: string
+          session_code: string
+          title: string
+        }
+      }
       create_conversation: {
         Args: { user1_id: string; user2_id: string }
         Returns: {
@@ -1086,6 +1099,22 @@ export type Database = {
       delete_all_messages: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      generate_session_code: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      get_canvas_session_participants: {
+        Args: { p_session_id: string }
+        Returns: {
+          id: string
+          is_active: boolean
+          joined_at: string
+          role: string
+          user_id: string
+          user_name: string
+          user_profile_image: string
+        }[]
       }
       get_conversation: {
         Args: { user1: string; user2: string }
@@ -1142,8 +1171,8 @@ export type Database = {
       }
       http_delete: {
         Args:
-        | { content: string; content_type: string; uri: string }
-        | { uri: string }
+          | { content: string; content_type: string; uri: string }
+          | { uri: string }
         Returns: Database["public"]["CompositeTypes"]["http_response"]
       }
       http_get: {
@@ -1171,8 +1200,8 @@ export type Database = {
       }
       http_post: {
         Args:
-        | { content: string; content_type: string; uri: string }
-        | { data: Json; uri: string }
+          | { content: string; content_type: string; uri: string }
+          | { data: Json; uri: string }
         Returns: Database["public"]["CompositeTypes"]["http_response"]
       }
       http_put: {
@@ -1190,6 +1219,19 @@ export type Database = {
       is_admin_user: {
         Args: { user_id?: string }
         Returns: boolean
+      }
+      join_canvas_session: {
+        Args: { p_session_code: string; p_user_id: string }
+        Returns: {
+          background_color: string | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          max_participants: number | null
+          mentor_id: string
+          session_code: string
+          title: string
+        }
       }
       log_admin_action: {
         Args: { action_details?: Json; action_type: string; target_id?: string }
@@ -1279,48 +1321,6 @@ export type Database = {
         Args: { data: Json } | { string: string } | { string: string }
         Returns: string
       }
-      create_canvas_session: {
-        Args: { p_title: string; p_mentor_id: string }
-        Returns: {
-          id: string
-          mentor_id: string
-          title: string
-          session_code: string
-          created_at: string | null
-          is_active: boolean | null
-          max_participants: number | null
-          background_color: string | null
-        }
-      }
-      join_canvas_session: {
-        Args: { p_session_code: string; p_user_id: string }
-        Returns: {
-          id: string
-          mentor_id: string
-          title: string
-          session_code: string
-          created_at: string | null
-          is_active: boolean | null
-          max_participants: number | null
-          background_color: string | null
-        }
-      }
-      get_canvas_session_participants: {
-        Args: { p_session_id: string }
-        Returns: {
-          id: string
-          user_id: string
-          role: string
-          joined_at: string | null
-          is_active: boolean | null
-          user_name: string
-          user_profile_image: string | null
-        }[]
-      }
-      generate_session_code: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
     }
     Enums: {
       [_ in never]: never
@@ -1353,116 +1353,116 @@ type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
-  | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
-  | { schema: keyof DatabaseWithoutInternals },
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-  ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-    DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-  : never = never,
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-    DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
       Row: infer R
     }
-  ? R
-  : never
+    ? R
+    : never
   : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
-    DefaultSchema["Views"])
-  ? (DefaultSchema["Tables"] &
-    DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
-      Row: infer R
-    }
-  ? R
-  : never
-  : never
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
-  | keyof DefaultSchema["Tables"]
-  | { schema: keyof DatabaseWithoutInternals },
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-  ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-  : never = never,
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-    Insert: infer I
-  }
-  ? I
-  : never
+      Insert: infer I
+    }
+    ? I
+    : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-  ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-    Insert: infer I
-  }
-  ? I
-  : never
-  : never
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
-  | keyof DefaultSchema["Tables"]
-  | { schema: keyof DatabaseWithoutInternals },
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-  ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-  : never = never,
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-    Update: infer U
-  }
-  ? U
-  : never
+      Update: infer U
+    }
+    ? U
+    : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-  ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-    Update: infer U
-  }
-  ? U
-  : never
-  : never
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
-  | keyof DefaultSchema["Enums"]
-  | { schema: keyof DatabaseWithoutInternals },
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
   EnumName extends DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-  ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-  : never = never,
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
-  ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
-  : never
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-  | keyof DefaultSchema["CompositeTypes"]
-  | { schema: keyof DatabaseWithoutInternals },
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-  ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-  : never = never,
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
-  ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-  : never
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
 
 export const Constants = {
   public: {
