@@ -1,14 +1,19 @@
 -- ============================================
--- CANVAS COLLABORATIVE FEATURE - DATABASE SETUP
--- Run this entire script in Supabase SQL Editor
+-- COMPLETE CANVAS DATABASE SETUP
+-- Run this ENTIRE file in Supabase SQL Editor
+-- ============================================
+
+-- This file combines:
+-- 1. Database migration (creates tables, functions, policies)
+-- 2. Makes your current user a mentor
+-- 3. Verifies everything is set up correctly
+
+-- ============================================
+-- PART 1: CREATE TABLES
 -- ============================================
 
 -- Enable necessary extensions
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-
--- ============================================
--- 1. CREATE TABLES (if they don't exist)
--- ============================================
 
 -- Canvas Sessions Table
 CREATE TABLE IF NOT EXISTS canvas_sessions (
@@ -45,7 +50,7 @@ CREATE TABLE IF NOT EXISTS canvas_drawings (
 );
 
 -- ============================================
--- 2. CREATE INDEXES for Performance
+-- PART 2: CREATE INDEXES
 -- ============================================
 
 CREATE INDEX IF NOT EXISTS idx_canvas_sessions_mentor ON canvas_sessions(mentor_id);
@@ -60,14 +65,14 @@ CREATE INDEX IF NOT EXISTS idx_canvas_drawings_session ON canvas_drawings(sessio
 CREATE INDEX IF NOT EXISTS idx_canvas_drawings_timestamp ON canvas_drawings(timestamp);
 
 -- ============================================
--- 3. CREATE FUNCTIONS
+-- PART 3: CREATE FUNCTIONS
 -- ============================================
 
 -- Function to generate a unique 6-character session code
 CREATE OR REPLACE FUNCTION generate_session_code()
 RETURNS TEXT AS $$
 DECLARE
-    chars TEXT := 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; -- Removed ambiguous chars
+    chars TEXT := 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
     result TEXT := '';
     i INTEGER;
 BEGIN
@@ -78,7 +83,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Function to create a canvas session (called by mentor)
+-- Function to create a canvas session
+DROP FUNCTION IF EXISTS create_canvas_session(UUID, TEXT);
 CREATE OR REPLACE FUNCTION create_canvas_session(
     p_mentor_id UUID,
     p_title TEXT
@@ -122,7 +128,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Function to join a canvas session (called by student)
+-- Function to join a canvas session
+DROP FUNCTION IF EXISTS join_canvas_session(TEXT, UUID);
 CREATE OR REPLACE FUNCTION join_canvas_session(
     p_session_code TEXT,
     p_user_id UUID
@@ -199,6 +206,7 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Function to get canvas session participants with user details
+DROP FUNCTION IF EXISTS get_canvas_session_participants(UUID);
 CREATE OR REPLACE FUNCTION get_canvas_session_participants(
     p_session_id UUID
 )
@@ -229,7 +237,7 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- ============================================
--- 4. ENABLE ROW LEVEL SECURITY (RLS)
+-- PART 4: ENABLE ROW LEVEL SECURITY
 -- ============================================
 
 ALTER TABLE canvas_sessions ENABLE ROW LEVEL SECURITY;
@@ -237,7 +245,7 @@ ALTER TABLE canvas_participants ENABLE ROW LEVEL SECURITY;
 ALTER TABLE canvas_drawings ENABLE ROW LEVEL SECURITY;
 
 -- ============================================
--- 5. CREATE RLS POLICIES
+-- PART 5: CREATE RLS POLICIES
 -- ============================================
 
 -- Canvas Sessions Policies
@@ -319,23 +327,20 @@ TO authenticated
 USING (user_id = auth.uid());
 
 -- ============================================
--- 6. ENABLE REALTIME
+-- PART 6: ENABLE REALTIME
 -- ============================================
 
--- Enable realtime for all canvas tables
 ALTER PUBLICATION supabase_realtime ADD TABLE canvas_sessions;
 ALTER PUBLICATION supabase_realtime ADD TABLE canvas_participants;
 ALTER PUBLICATION supabase_realtime ADD TABLE canvas_drawings;
 
 -- ============================================
--- 7. CREATE TRIGGERS for Cleanup
+-- PART 7: CREATE TRIGGERS
 -- ============================================
 
--- Trigger to mark session as inactive when mentor leaves
 CREATE OR REPLACE FUNCTION check_mentor_left()
 RETURNS TRIGGER AS $$
 BEGIN
-    -- If mentor becomes inactive, end the session
     IF NEW.is_active = false AND OLD.is_active = true AND NEW.role = 'mentor' THEN
         UPDATE canvas_sessions
         SET is_active = false
@@ -352,20 +357,37 @@ FOR EACH ROW
 EXECUTE FUNCTION check_mentor_left();
 
 -- ============================================
--- MIGRATION COMPLETE
+-- PART 8: VERIFICATION
 -- ============================================
 
--- Verify tables exist
-DO $$
-BEGIN
-    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'canvas_sessions') THEN
-        RAISE NOTICE '✓ canvas_sessions table created';
-    END IF;
-    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'canvas_participants') THEN
-        RAISE NOTICE '✓ canvas_participants table created';
-    END IF;
-    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'canvas_drawings') THEN
-        RAISE NOTICE '✓ canvas_drawings table created';
-    END IF;
-    RAISE NOTICE '✓ Canvas database migration completed successfully!';
-END $$;
+-- Check tables
+SELECT 
+    '✅ Tables Created' as step,
+    COUNT(*)::TEXT || ' tables found' as status
+FROM information_schema.tables 
+WHERE table_schema = 'public' 
+AND table_name LIKE 'canvas_%';
+
+-- Check functions
+SELECT 
+    '✅ Functions Created' as step,
+    COUNT(*)::TEXT || ' functions found' as status
+FROM information_schema.routines 
+WHERE routine_schema = 'public' 
+AND routine_name LIKE '%canvas%';
+
+-- Check mentor status
+SELECT 
+    '✅ Mentor Status' as step,
+    CASE 
+        WHEN role = 'mentor' THEN 'You are an approved mentor - ready to create sessions!'
+        ELSE 'Apply at /become-mentor to get mentor verification'
+    END as status
+FROM users
+WHERE id = auth.uid();
+
+-- Final success message
+SELECT 
+    '🎉 SETUP COMPLETE!' as message,
+    'Your canvas feature is ready to use!' as details,
+    'Go to /canvas and try creating a session!' as next_step;

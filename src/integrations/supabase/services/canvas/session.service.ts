@@ -9,6 +9,36 @@ import {
 } from "@/types/canvas";
 
 /**
+ * Check if canvas database tables exist
+ */
+export async function checkCanvasTablesExist() {
+    try {
+        // Try to query the canvas_sessions table
+        const { error } = await supabase
+            .from('canvas_sessions')
+            .select('id')
+            .limit(1);
+
+        // If no error or error is just "no rows", tables exist
+        if (!error || error.message?.includes('0 rows')) {
+            return { exists: true, error: null };
+        }
+
+        // Check if error is about missing table
+        if (error.message?.includes('does not exist') ||
+            error.code === '42P01' ||
+            error.message?.includes('relation')) {
+            return { exists: false, error };
+        }
+
+        return { exists: false, error };
+    } catch (err) {
+        console.error('Exception checking canvas tables:', err);
+        return { exists: false, error: err as Error };
+    }
+}
+
+/**
  * Create a new canvas session
  */
 export async function createCanvasSession(

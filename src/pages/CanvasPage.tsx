@@ -7,12 +7,14 @@ import { JoinSessionModal } from '@/components/canvas/JoinSessionModal';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { getMentorCanvasSessions } from '@/integrations/supabase/services/canvas';
+import { getMentorCanvasSessions, checkCanvasTablesExist } from '@/integrations/supabase/services/canvas';
 import { CanvasSession } from '@/types/canvas';
 import { Palette, Plus, LogIn, Loader2, Clock, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { formatDistanceToNow } from 'date-fns';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertCircle } from 'lucide-react';
 
 export const CanvasPage: React.FC = () => {
     const { user, profile } = useAuth();
@@ -22,6 +24,7 @@ export const CanvasPage: React.FC = () => {
 
     const [mySessions, setMySessions] = useState<CanvasSession[]>([]);
     const [isLoadingSessions, setIsLoadingSessions] = useState(false);
+    const [databaseExists, setDatabaseExists] = useState<boolean | null>(null);
 
     // If there's a session ID in URL, show the canvas
     if (sessionId) {
@@ -37,10 +40,22 @@ export const CanvasPage: React.FC = () => {
     const isMentor = profile?.role === 'mentor';
 
     useEffect(() => {
+        checkDatabaseSetup();
+    }, []);
+
+    useEffect(() => {
         if (user?.id && isMentor) {
             loadMySessions();
         }
     }, [user?.id, isMentor]);
+
+    const checkDatabaseSetup = async () => {
+        const { exists } = await checkCanvasTablesExist();
+        setDatabaseExists(exists);
+        if (!exists) {
+            console.error('Canvas database tables do not exist. Please run COMPLETE_DATABASE_SETUP.sql');
+        }
+    };
 
     const loadMySessions = async () => {
         if (!user?.id) return;
@@ -48,19 +63,25 @@ export const CanvasPage: React.FC = () => {
         setIsLoadingSessions(true);
         try {
             const { data, error } = await getMentorCanvasSessions(user.id);
-            if (error) throw error;
-            if (data) {
+            if (error) {
+                console.error('Error loading sessions:', error);
+                // Don't show error toast for empty results, only for actual errors
+                if (error.message && !error.message.includes('0 rows')) {
+                    toast.error('Failed to load your sessions. Please ensure database is set up correctly.');
+                }
+            } else if (data) {
                 setMySessions(data);
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error loading sessions:', error);
-            toast.error('Failed to load your sessions');
+            // Only show error if it's not just empty results
+            if (error?.message && !error.message.includes('0 rows')) {
+                toast.error('Database not configured. Please run the SQL migration first.');
+            }
         } finally {
             setIsLoadingSessions(false);
         }
-    };
-
-    const handleSessionCreated = (sessionId: string, sessionCode: string) => {
+    }; const handleSessionCreated = (sessionId: string, sessionCode: string) => {
         toast.success(`Session created! Code: ${sessionCode}`, {
             duration: 5000,
         });
@@ -94,6 +115,19 @@ export const CanvasPage: React.FC = () => {
 
     return (
         <div className="container mx-auto px-4 py-8">
+            {/* Database Setup Warning */}
+            {databaseExists === false && (
+                <Alert variant="destructive" className="mb-6">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>Database Setup Required</AlertTitle>
+                    <AlertDescription>
+                        The canvas feature requires database setup. Please run the SQL migration file
+                        <code className="mx-1 px-2 py-1 bg-muted rounded text-xs">COMPLETE_DATABASE_SETUP.sql</code>
+                        in your Supabase SQL Editor. Check browser console (F12) for details.
+                    </AlertDescription>
+                </Alert>
+            )}
+
             {/* Header */}
             <div className="mb-8">
                 <div className="flex items-center justify-between mb-2">
