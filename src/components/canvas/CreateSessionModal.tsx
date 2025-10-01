@@ -8,12 +8,21 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
-import { Loader2, Palette, Users, Clock } from 'lucide-react';
+import { Loader2, Palette, Users, Clock, Copy, Check } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface CreateSessionModalProps {
@@ -28,6 +37,9 @@ export const CreateSessionModal: React.FC<CreateSessionModalProps> = ({
   const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [showCodeDialog, setShowCodeDialog] = useState(false);
+  const [sessionData, setSessionData] = useState<{ id: string; code: string } | null>(null);
+  const [codeCopied, setCodeCopied] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -60,9 +72,10 @@ export const CreateSessionModal: React.FC<CreateSessionModalProps> = ({
         throw error || new Error('Failed to create session');
       }
 
-      toast.success('Canvas session created successfully!');
-      onSessionCreated(session.id, session.session_code);
+      // Show the session code to the user before navigating
+      setSessionData({ id: session.id, code: session.session_code });
       setIsOpen(false);
+      setShowCodeDialog(true);
       
       // Reset form
       setFormData({
@@ -87,8 +100,25 @@ export const CreateSessionModal: React.FC<CreateSessionModalProps> = ({
     }));
   };
 
+  const handleCopyCode = async () => {
+    if (sessionData?.code) {
+      await navigator.clipboard.writeText(sessionData.code);
+      setCodeCopied(true);
+      toast.success('Session code copied to clipboard!');
+      setTimeout(() => setCodeCopied(false), 2000);
+    }
+  };
+
+  const handleJoinSession = () => {
+    if (sessionData) {
+      setShowCodeDialog(false);
+      onSessionCreated(sessionData.id, sessionData.code);
+    }
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <>
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         {trigger || (
           <Button className="gap-2">
@@ -205,5 +235,61 @@ export const CreateSessionModal: React.FC<CreateSessionModalProps> = ({
         </form>
       </DialogContent>
     </Dialog>
+
+    {/* Session Code Display Dialog */}
+    <AlertDialog open={showCodeDialog} onOpenChange={setShowCodeDialog}>
+      <AlertDialogContent className="max-w-md">
+        <AlertDialogHeader>
+          <AlertDialogTitle className="text-2xl">🎉 Session Created!</AlertDialogTitle>
+          <AlertDialogDescription className="space-y-4">
+            <p className="text-base">
+              Your collaborative canvas session is ready! Share this code with students so they can join:
+            </p>
+            
+            <Card className="p-6 bg-primary/5 border-primary/20">
+              <div className="text-center space-y-3">
+                <p className="text-sm font-medium text-muted-foreground">Session Code</p>
+                <div className="text-4xl font-bold tracking-wider font-mono text-primary">
+                  {sessionData?.code}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCopyCode}
+                  className="gap-2"
+                >
+                  {codeCopied ? (
+                    <>
+                      <Check className="h-4 w-4" />
+                      Copied!
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="h-4 w-4" />
+                      Copy Code
+                    </>
+                  )}
+                </Button>
+              </div>
+            </Card>
+
+            <div className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-md">
+              <p className="font-medium mb-1">How to share:</p>
+              <ul className="list-disc list-inside space-y-1">
+                <li>Students click "Join Session" button</li>
+                <li>They enter this code: <code className="font-mono font-bold">{sessionData?.code}</code></li>
+                <li>They'll instantly join your canvas!</li>
+              </ul>
+            </div>
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogAction onClick={handleJoinSession} className="w-full">
+            Start Teaching
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 };

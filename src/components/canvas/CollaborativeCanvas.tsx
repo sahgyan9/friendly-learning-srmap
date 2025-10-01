@@ -46,35 +46,44 @@ export const CollaborativeCanvas: React.FC<CollaborativeCanvasProps> = ({
 
   // Initialize Fabric Canvas
   useEffect(() => {
-    if (!canvasRef.current) return;
+    if (!canvasRef.current || fabricCanvas) return;
 
+    console.log('Initializing Fabric canvas...');
+    
     const canvas = new FabricCanvas(canvasRef.current, {
-      width: canvasState.canvasSize.width,
-      height: canvasState.canvasSize.height,
+      width: 1200,
+      height: 800,
       backgroundColor: '#ffffff',
-      isDrawingMode: false,
+      isDrawingMode: true, // Start in drawing mode
     });
 
     // Configure drawing brush
-    canvas.freeDrawingBrush = new PencilBrush(canvas);
-    canvas.freeDrawingBrush.color = canvasState.toolSettings.color;
-    canvas.freeDrawingBrush.width = canvasState.toolSettings.width;
+    const brush = new PencilBrush(canvas);
+    brush.color = '#000000';
+    brush.width = 2;
+    canvas.freeDrawingBrush = brush;
 
     setFabricCanvas(canvas);
+    console.log('Fabric canvas initialized successfully');
 
     return () => {
+      console.log('Disposing Fabric canvas');
       canvas.dispose();
     };
-  }, [canvasState.canvasSize]);
+  }, []);
 
   // Update canvas tool settings
   useEffect(() => {
     if (!fabricCanvas) return;
 
+    console.log('Updating tool settings:', canvasState.toolSettings);
+
     if (canvasState.toolSettings.tool === 'pen') {
       fabricCanvas.isDrawingMode = true;
-      fabricCanvas.freeDrawingBrush.color = canvasState.toolSettings.color;
-      fabricCanvas.freeDrawingBrush.width = canvasState.toolSettings.width;
+      if (fabricCanvas.freeDrawingBrush) {
+        fabricCanvas.freeDrawingBrush.color = canvasState.toolSettings.color;
+        fabricCanvas.freeDrawingBrush.width = canvasState.toolSettings.width;
+      }
     } else {
       fabricCanvas.isDrawingMode = false;
     }
@@ -273,14 +282,11 @@ export const CollaborativeCanvas: React.FC<CollaborativeCanvasProps> = ({
           </div>
 
           {/* Canvas */}
-          <div className="flex-1 overflow-auto bg-gray-50 p-4">
-            <div className="relative mx-auto" style={{ 
-              width: canvasState.canvasSize.width, 
-              height: canvasState.canvasSize.height 
-            }}>
+          <div className="flex-1 overflow-auto bg-muted p-4">
+            <div className="mx-auto w-fit">
               <canvas
                 ref={canvasRef}
-                className="border border-gray-300 bg-white shadow-lg"
+                className="border-2 border-border bg-white shadow-xl rounded-sm"
               />
 
               {/* Render other users' cursors */}
