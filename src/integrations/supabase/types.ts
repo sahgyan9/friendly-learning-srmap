@@ -148,131 +148,6 @@ export type Database = {
         }
         Relationships: []
       }
-      canvas_drawings: {
-        Row: {
-          action_type: string
-          drawing_data: Json
-          id: string
-          session_id: string
-          timestamp: string | null
-          user_id: string
-        }
-        Insert: {
-          action_type: string
-          drawing_data: Json
-          id?: string
-          session_id: string
-          timestamp?: string | null
-          user_id: string
-        }
-        Update: {
-          action_type?: string
-          drawing_data?: Json
-          id?: string
-          session_id?: string
-          timestamp?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "canvas_drawings_session_id_fkey"
-            columns: ["session_id"]
-            isOneToOne: false
-            referencedRelation: "canvas_sessions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "canvas_drawings_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      canvas_participants: {
-        Row: {
-          id: string
-          is_active: boolean | null
-          joined_at: string | null
-          role: string
-          session_id: string
-          user_id: string
-        }
-        Insert: {
-          id?: string
-          is_active?: boolean | null
-          joined_at?: string | null
-          role: string
-          session_id: string
-          user_id: string
-        }
-        Update: {
-          id?: string
-          is_active?: boolean | null
-          joined_at?: string | null
-          role?: string
-          session_id?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "canvas_participants_session_id_fkey"
-            columns: ["session_id"]
-            isOneToOne: false
-            referencedRelation: "canvas_sessions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "canvas_participants_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      canvas_sessions: {
-        Row: {
-          background_color: string | null
-          created_at: string | null
-          id: string
-          is_active: boolean | null
-          max_participants: number | null
-          mentor_id: string
-          session_code: string
-          title: string
-        }
-        Insert: {
-          background_color?: string | null
-          created_at?: string | null
-          id?: string
-          is_active?: boolean | null
-          max_participants?: number | null
-          mentor_id: string
-          session_code: string
-          title: string
-        }
-        Update: {
-          background_color?: string | null
-          created_at?: string | null
-          id?: string
-          is_active?: boolean | null
-          max_participants?: number | null
-          mentor_id?: string
-          session_code?: string
-          title?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "canvas_sessions_mentor_id_fkey"
-            columns: ["mentor_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       community_posts: {
         Row: {
           comments_count: number
@@ -1073,19 +948,6 @@ export type Database = {
         Args: { mentor_id: string; user_id: string }
         Returns: boolean
       }
-      create_canvas_session: {
-        Args: { p_mentor_id: string; p_title: string }
-        Returns: {
-          background_color: string | null
-          created_at: string | null
-          id: string
-          is_active: boolean | null
-          max_participants: number | null
-          mentor_id: string
-          session_code: string
-          title: string
-        }
-      }
       create_conversation: {
         Args: { user1_id: string; user2_id: string }
         Returns: {
@@ -1099,22 +961,6 @@ export type Database = {
       delete_all_messages: {
         Args: Record<PropertyKey, never>
         Returns: undefined
-      }
-      generate_session_code: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      get_canvas_session_participants: {
-        Args: { p_session_id: string }
-        Returns: {
-          id: string
-          is_active: boolean
-          joined_at: string
-          role: string
-          user_id: string
-          user_name: string
-          user_profile_image: string
-        }[]
       }
       get_conversation: {
         Args: { user1: string; user2: string }
@@ -1219,19 +1065,6 @@ export type Database = {
       is_admin_user: {
         Args: { user_id?: string }
         Returns: boolean
-      }
-      join_canvas_session: {
-        Args: { p_session_code: string; p_user_id: string }
-        Returns: {
-          background_color: string | null
-          created_at: string | null
-          id: string
-          is_active: boolean | null
-          max_participants: number | null
-          mentor_id: string
-          session_code: string
-          title: string
-        }
       }
       log_admin_action: {
         Args: { action_details?: Json; action_type: string; target_id?: string }

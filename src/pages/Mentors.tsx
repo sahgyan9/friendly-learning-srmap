@@ -15,7 +15,6 @@ import { getBreadcrumbSchema } from "@/lib/structured-data";
 import MentorList from "@/components/mentors/MentorList";
 import MentorsHeader from "@/components/mentors/MentorsHeader";
 import MentorsFooter from "@/components/mentors/MentorsFooter";
-import { CanvasSessionButton } from "@/components/mentors/CanvasSessionButton";
 
 const Mentors = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -174,21 +173,6 @@ const Mentors = () => {
                 title="Find Your Perfect Mentor at SRM AP"
                 description="Browse our extensive directory of verified student mentors or use our AI-powered search to find mentors with specific skills and expertise tailored to your academic needs."
               />
-            </motion.div>
-
-            {/* Canvas Session Actions */}
-            <motion.div variants={itemVariants}>
-              <div className="mb-8 p-6 bg-gradient-to-r from-primary/10 to-secondary/10 rounded-lg border">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                  <div>
-                    <h3 className="text-lg font-semibold mb-2">Interactive Learning Canvas</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Join or start a collaborative canvas session for real-time visual learning
-                    </p>
-                  </div>
-                  <CanvasSessionButton />
-                </div>
-              </div>
             </motion.div>
 
             {/* Search */}

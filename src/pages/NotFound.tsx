@@ -44,7 +44,7 @@ const NotFound = () => {
           "@type": "ListItem",
           "position": 1,
           "name": "Home",
-          "item": "https://friendly-learning-srmap.lovable.app/"
+          "item": "https://www.project-fl.me/"
         },
         {
           "@type": "ListItem",
@@ -61,7 +61,7 @@ const NotFound = () => {
       <SEOHead
         title="404 - Page Not Found | Project FL"
         description="The page you're looking for could not be found."
-        canonical={`https://friendly-learning-srmap.lovable.app${location.pathname}`}
+        canonical={`https://www.project-fl.me${location.pathname}`}
       />
       <StructuredData data={structuredData} />
 

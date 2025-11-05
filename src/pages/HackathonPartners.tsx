@@ -10,7 +10,7 @@ const HackathonPartners = () => {
         "@type": "WebPage",
         "name": "Find Hackathon Partners - Project FL University Platform",
         "description": "Connect with skilled developers, designers, and business minds for hackathon teams through Project FL. Build winning teams with complementary skills at your university.",
-        "url": "https://friendly-learning-srmap.lovable.app/hackathon-partners",
+        "url": "https://www.project-fl.me/hackathon-partners",
         "mainEntity": {
             "@type": "Service",
             "name": "Hackathon Team Formation Service",
@@ -28,7 +28,7 @@ const HackathonPartners = () => {
                 title="Find Hackathon Partners & Build Winning Teams | Project FL University Platform"
                 description="Connect with skilled developers, designers, and business minds for hackathon teams through Project FL. Build winning teams with complementary skills at your university. Perfect team formation for coding competitions."
                 keywords="find hackathon partners, hackathon team formation, coding competition teams, university hackathon, project fl hackathon, student developer teams, hackathon teammates"
-                canonical="https://friendly-learning-srmap.lovable.app/hackathon-partners"
+                canonical="https://www.project-fl.me/hackathon-partners"
                 structuredData={structuredData}
             />
 

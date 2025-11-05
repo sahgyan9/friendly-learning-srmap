@@ -78,7 +78,7 @@ const Contact = () => {
         title="Contact Friendly Learning - Get Support for SRM AP Mentorship Platform"
         description="Have questions about Friendly Learning? Contact our support team for help with mentor connections, platform features, or technical support. We're here to help SRM AP students succeed!"
         keywords="contact Friendly Learning, SRM AP mentorship support, student platform help, mentorship questions, technical support"
-        canonical="https://friendly-learning-srmap.lovable.app/contact"
+        canonical="https://www.project-fl.me/contact"
         structuredData={structuredData}
       />
 

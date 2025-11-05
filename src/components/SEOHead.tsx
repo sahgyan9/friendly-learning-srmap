@@ -88,7 +88,7 @@ const SEOHead = ({
     updateMetaTag('twitter:site', '@ProjectFL', true);
     updateMetaTag('twitter:creator', '@ProjectFL', true);
 
-    // Update canonical URL - always use Lovable domain as primary
+    // Update canonical URL with multi-domain support
     let canonicalLink = document.querySelector('link[rel="canonical"]') as HTMLLinkElement;
     if (!canonicalLink) {
       canonicalLink = document.createElement('link');
@@ -99,13 +99,39 @@ const SEOHead = ({
     if (canonical) {
       canonicalLink.href = canonical;
     } else {
-      // Always use Lovable domain as canonical for consistency
+      // Use Lovable domain as primary canonical
+      const currentDomain = window.location.hostname;
       const primaryDomain = 'friendly-learning-srmap.lovable.app';
-      const url = new URL(window.location.href);
-      url.hostname = primaryDomain;
-      url.protocol = 'https:';
-      canonicalLink.href = url.toString();
+      const fallbackDomain = 'www.project-fl.me';
+
+      // Always prefer the Lovable domain for canonical URLs
+      if (currentDomain === primaryDomain) {
+        canonicalLink.href = window.location.href;
+      } else {
+        // Use Lovable domain as canonical even when on other domains
+        const url = new URL(window.location.href);
+        url.hostname = primaryDomain;
+        canonicalLink.href = url.toString();
+      }
     }
+
+    // Add alternate domain links
+    const alternateDomains = ['www.project-fl.me'];
+    if (window.location.hostname !== 'www.project-fl.me') {
+      alternateDomains.push('www.project-fl.me');
+    }
+
+    alternateDomains.forEach(domain => {
+      if (domain !== window.location.hostname) {
+        let alternateLink = document.querySelector(`link[rel="alternate"][href*="${domain}"]`) as HTMLLinkElement;
+        if (!alternateLink) {
+          alternateLink = document.createElement('link');
+          alternateLink.rel = 'alternate';
+          alternateLink.href = `https://${domain}${window.location.pathname}${window.location.search}`;
+          document.head.appendChild(alternateLink);
+        }
+      }
+    });
 
     // Add DNS prefetch for performance
     const dnsPrefetchLinks = [
@@ -168,20 +194,22 @@ const SEOHead = ({
     }
 
     // Add organization structured data
+    const currentOrigin = window.location.origin;
     const organizationData = {
       "@context": "https://schema.org",
       "@type": "Organization",
       "name": "Project FL",
-      "url": "https://friendly-learning-srmap.lovable.app",
-      "logo": "https://friendly-learning-srmap.lovable.app/og-image.png",
+      "url": currentOrigin,
+      "logo": `${currentOrigin}/og-image.png`,
       "description": "University student collaboration platform connecting students for mentoring, study partnerships, and project collaborations",
       "sameAs": [
+        "https://friendly-learning-srmap.lovable.app",
         "https://www.project-fl.me"
-      ],
+      ].filter(url => url !== currentOrigin),
       "contactPoint": {
         "@type": "ContactPoint",
         "contactType": "customer service",
-        "url": "https://friendly-learning-srmap.lovable.app/contact"
+        "url": `${currentOrigin}/contact`
       }
     };
 
