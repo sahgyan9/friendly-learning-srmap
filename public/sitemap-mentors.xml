@@ -6,59 +6,23 @@
                             http://www.google.com/schemas/sitemap-image/1.1 http://www.google.com/schemas/sitemap-image/1.1/sitemap-image.xsd">
   <url>
     <loc>https://friendly-learning-srmap.lovable.app/mentors</loc>
-    <lastmod>2025-08-31T07:22:48.537Z</lastmod>
+    <lastmod>2025-11-05T09:03:45.157Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://friendly-learning-srmap.lovable.app/mentor/08541459-8e36-40f6-aec6-e8c7d7b1fe5e</loc>
-    <lastmod>2025-08-31T07:22:48.537Z</lastmod>
+    <loc>https://friendly-learning-srmap.lovable.app/mentor/82308f04-e756-4a00-a912-950a5534aa46</loc>
+    <lastmod>2025-11-05T09:03:45.157Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
     <image:image>
-      <image:loc>https://ruapdkrgcbqrhvsayvpf.supabase.co/storage/v1/object/public/profiles/profile-images/08541459-8e36-40f6-aec6-e8c7d7b1fe5e-1751863132211.jpg</image:loc>
-      <image:title>anshu shah | AP23110011260 - Project FL Mentor</image:title>
-    </image:image>
-  </url>
-  <url>
-    <loc>https://friendly-learning-srmap.lovable.app/mentor/dce05088-1d68-4d5d-a9a8-02318e0d0e48</loc>
-    <lastmod>2025-08-31T07:22:48.537Z</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-    <image:image>
-      <image:loc>https://ruapdkrgcbqrhvsayvpf.supabase.co/storage/v1/object/public/profiles/profile-images/dce05088-1d68-4d5d-a9a8-02318e0d0e48-1751865661145.webp</image:loc>
-      <image:title>Hariom yadav - Project FL Mentor</image:title>
-    </image:image>
-  </url>
-  <url>
-    <loc>https://friendly-learning-srmap.lovable.app/mentor/d38d017e-06be-4086-8ee9-3c61a2a05d1d</loc>
-    <lastmod>2025-08-31T07:22:48.537Z</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-    <image:image>
-      <image:loc>https://ruapdkrgcbqrhvsayvpf.supabase.co/storage/v1/object/public/profiles/profile-images/d38d017e-06be-4086-8ee9-3c61a2a05d1d-1751869769143.jpg</image:loc>
-      <image:title>pankaj yadav | AP23110011537 - Project FL Mentor</image:title>
-    </image:image>
-  </url>
-  <url>
-    <loc>https://friendly-learning-srmap.lovable.app/mentor/bbbfe2e7-c7db-48dd-a6c7-c99de4de95cf</loc>
-    <lastmod>2025-08-31T07:22:48.537Z</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://friendly-learning-srmap.lovable.app/mentor/d751a265-666d-464a-a8d1-32d14b8cda22</loc>
-    <lastmod>2025-08-31T07:22:48.537Z</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-    <image:image>
-      <image:loc>https://ruapdkrgcbqrhvsayvpf.supabase.co/storage/v1/object/public/profiles/profile-images/d751a265-666d-464a-a8d1-32d14b8cda22-1751872158984.jpg</image:loc>
-      <image:title>Abhishek Das - Project FL Mentor</image:title>
+      <image:loc>https://lh3.googleusercontent.com/a/ACg8ocJ5Cj6dkKWsfe4-XQkMZYL1jsnqRl0lOsz26oGLesJmyfj_aELg=s96-c</image:loc>
+      <image:title>Bigyan sah - Project FL Mentor</image:title>
     </image:image>
   </url>
   <url>
     <loc>https://friendly-learning-srmap.lovable.app/mentor/54774a25-67a8-48da-abc7-3621f35fbb26</loc>
-    <lastmod>2025-08-31T07:22:48.537Z</lastmod>
+    <lastmod>2025-11-05T09:03:45.157Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
     <image:image>

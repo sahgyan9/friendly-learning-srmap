@@ -436,13 +436,13 @@ const UserProfile = () => {
                     <p className="text-2xl font-bold">{userStats.totalBadges}</p>
                     <p className="text-xs text-muted-foreground">Badges</p>
                   </div>
-                  
+
                   <div className="flex flex-col items-center p-4 bg-muted rounded-lg">
                     <MessageSquare className="h-6 w-6 mb-2 text-primary" />
                     <p className="text-2xl font-bold">{userStats.totalConnections}</p>
                     <p className="text-xs text-muted-foreground">Connections</p>
                   </div>
-                  
+
                   {(profile.role === 'mentor' || isMentor) && (
                     <>
                       <div className="flex flex-col items-center p-4 bg-muted rounded-lg">
@@ -450,7 +450,7 @@ const UserProfile = () => {
                         <p className="text-2xl font-bold">{mentorProfile.rating.toFixed(1)}</p>
                         <p className="text-xs text-muted-foreground">Rating</p>
                       </div>
-                      
+
                       <div className="flex flex-col items-center p-4 bg-muted rounded-lg">
                         <BookOpen className="h-6 w-6 mb-2 text-primary" />
                         <p className="text-2xl font-bold">{userStats.totalReviews}</p>
@@ -458,7 +458,7 @@ const UserProfile = () => {
                       </div>
                     </>
                   )}
-                  
+
                   {!(profile.role === 'mentor' || isMentor) && (
                     <>
                       <div className="flex flex-col items-center p-4 bg-muted rounded-lg">
@@ -466,7 +466,7 @@ const UserProfile = () => {
                         <p className="text-2xl font-bold">{userStats.messagesSent}</p>
                         <p className="text-xs text-muted-foreground">Messages</p>
                       </div>
-                      
+
                       <div className="flex flex-col items-center p-4 bg-muted rounded-lg">
                         <GraduationCap className="h-6 w-6 mb-2 text-primary" />
                         <p className="text-2xl font-bold">{userStats.mentoringSessions || 0}</p>
@@ -488,266 +488,266 @@ const UserProfile = () => {
               </TabsList>
 
               <TabsContent value="profile" className="space-y-6">
-            <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
-              {/* Profile Information */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <User className="h-5 w-5" />
-                    Personal Information
-                  </CardTitle>
-                  <CardDescription>
-                    Update your profile details and contact information
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <form onSubmit={handleSubmit} className="space-y-4">
-                    {/* Verification Status Badge */}
-                    <div className="p-3 bg-muted rounded-lg flex items-center justify-between">
-                      <span className="text-sm font-medium">Verification Status</span>
-                      <Badge variant={
-                        profile.verification_status === 'verified' ? 'default' :
-                          profile.verification_status === 'rejected' ? 'destructive' :
-                            'secondary'
-                      }>
-                        {profile.verification_status === 'verified' && '✓ '}
-                        {profile.verification_status.charAt(0).toUpperCase() + profile.verification_status.slice(1)}
-                      </Badge>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="name">Full Name</Label>
-                      <Input
-                        id="name"
-                        value={profile.name}
-                        onChange={(e) => setProfile({ ...profile, name: e.target.value })}
-                        placeholder="Enter your full name"
-                        required
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="email">Email Address</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        value={profile.email}
-                        disabled
-                        className="bg-muted"
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        Email cannot be changed
-                      </p>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="phone">Phone Number</Label>
-                      <Input
-                        id="phone"
-                        type="tel"
-                        value={profile.phone}
-                        onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
-                        placeholder="Enter your phone number"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="mobile">Mobile Number</Label>
-                      <Input
-                        id="mobile"
-                        type="tel"
-                        value={profile.mobile}
-                        onChange={(e) => setProfile({ ...profile, mobile: e.target.value })}
-                        placeholder="Enter your mobile number"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="department">Department</Label>
-                      <Input
-                        id="department"
-                        value={profile.department}
-                        onChange={(e) => setProfile({ ...profile, department: e.target.value })}
-                        placeholder="e.g., Computer Science, Mathematics"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="linkedin_url">LinkedIn URL</Label>
-                      <Input
-                        id="linkedin_url"
-                        type="url"
-                        value={profile.linkedin_url}
-                        onChange={(e) => setProfile({ ...profile, linkedin_url: e.target.value })}
-                        placeholder="https://linkedin.com/in/yourprofile"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="bio">Bio</Label>
-                      <Textarea
-                        id="bio"
-                        value={profile.bio}
-                        onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
-                        placeholder="Tell us about yourself..."
-                        rows={4}
-                      />
-                    </div>
-
-                    {/* Skills Section */}
-                    <div className="space-y-2">
-                      <Label>Skills</Label>
-                      <div className="flex gap-2">
-                        <Input
-                          value={newSkill}
-                          onChange={(e) => setNewSkill(e.target.value)}
-                          placeholder="Add a skill"
-                          onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addSkill())}
-                        />
-                        <Button type="button" onClick={addSkill} variant="outline">
-                          Add
-                        </Button>
-                      </div>
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        {profile.skills.map((skill, index) => (
-                          <Badge key={index} variant="secondary" className="cursor-pointer">
-                            {skill}
-                            <button
-                              onClick={() => removeSkill(skill)}
-                              className="ml-2 hover:text-destructive"
-                              type="button"
-                            >
-                              ×
-                            </button>
+                <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
+                  {/* Profile Information */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <User className="h-5 w-5" />
+                        Personal Information
+                      </CardTitle>
+                      <CardDescription>
+                        Update your profile details and contact information
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <form onSubmit={handleSubmit} className="space-y-4">
+                        {/* Verification Status Badge */}
+                        <div className="p-3 bg-muted rounded-lg flex items-center justify-between">
+                          <span className="text-sm font-medium">Verification Status</span>
+                          <Badge variant={
+                            profile.verification_status === 'verified' ? 'default' :
+                              profile.verification_status === 'rejected' ? 'destructive' :
+                                'secondary'
+                          }>
+                            {profile.verification_status === 'verified' && '✓ '}
+                            {profile.verification_status.charAt(0).toUpperCase() + profile.verification_status.slice(1)}
                           </Badge>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="is_available" className="flex items-center gap-2">
-                        Available for Connections
-                      </Label>
-                      <Select
-                        value={profile.is_available ? "yes" : "no"}
-                        onValueChange={(value) => setProfile({ ...profile, is_available: value === "yes" })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="yes">Yes, I'm available</SelectItem>
-                          <SelectItem value="no">No, not available</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <Button type="submit" disabled={isSaving} className="w-full">
-                      {isSaving ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Saving...
-                        </>
-                      ) : (
-                        "Save Changes"
-                      )}
-                    </Button>
-                  </form>
-                </CardContent>
-              </Card>
-
-              {/* Email Notification Settings */}
-              <EmailNotificationSettings />
-
-              {/* Mentor-specific fields */}
-              {(profile.role === 'mentor' || isMentor) && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <GraduationCap className="h-5 w-5" />
-                      Mentor Information
-                    </CardTitle>
-                    <CardDescription>
-                      Additional information for mentor profile
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="university">University</Label>
-                      <Input
-                        id="university"
-                        value={mentorProfile.university}
-                        onChange={(e) => setMentorProfile({ ...mentorProfile, university: e.target.value })}
-                        placeholder="e.g., SRM AP University"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="year_of_studies">Year of Studies</Label>
-                      <Select
-                        value={mentorProfile.year_of_studies}
-                        onValueChange={(value) => setMentorProfile({ ...mentorProfile, year_of_studies: value })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select year" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="1st Year">1st Year</SelectItem>
-                          <SelectItem value="2nd Year">2nd Year</SelectItem>
-                          <SelectItem value="3rd Year">3rd Year</SelectItem>
-                          <SelectItem value="4th Year">4th Year</SelectItem>
-                          <SelectItem value="Graduate">Graduate</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="cgpa">CGPA</Label>
-                      <Input
-                        id="cgpa"
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        max="10"
-                        value={mentorProfile.cgpa || ""}
-                        onChange={(e) => setMentorProfile({ ...mentorProfile, cgpa: parseFloat(e.target.value) || null })}
-                        placeholder="e.g., 8.5"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="hobbies">Hobbies & Interests</Label>
-                      <Textarea
-                        id="hobbies"
-                        value={mentorProfile.hobbies}
-                        onChange={(e) => setMentorProfile({ ...mentorProfile, hobbies: e.target.value })}
-                        placeholder="Tell us about your hobbies and interests..."
-                        rows={3}
-                      />
-                    </div>
-
-                    {/* Display rating and review count (read-only) */}
-                    <div className="space-y-2">
-                      <Label className="flex items-center gap-2">
-                        <Award className="h-4 w-4" />
-                        Mentor Rating
-                      </Label>
-                      <div className="flex items-center gap-4 p-3 bg-muted rounded-lg">
-                        <div>
-                          <p className="text-2xl font-bold">{mentorProfile.rating.toFixed(1)}</p>
-                          <p className="text-xs text-muted-foreground">⭐ Rating</p>
                         </div>
-                        <div className="h-10 w-px bg-border" />
-                        <div>
-                          <p className="text-2xl font-bold">{mentorProfile.review_count}</p>
-                          <p className="text-xs text-muted-foreground">Reviews</p>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="name">Full Name</Label>
+                          <Input
+                            id="name"
+                            value={profile.name}
+                            onChange={(e) => setProfile({ ...profile, name: e.target.value })}
+                            placeholder="Enter your full name"
+                            required
+                          />
                         </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="email">Email Address</Label>
+                          <Input
+                            id="email"
+                            type="email"
+                            value={profile.email}
+                            disabled
+                            className="bg-muted"
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            Email cannot be changed
+                          </p>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="phone">Phone Number</Label>
+                          <Input
+                            id="phone"
+                            type="tel"
+                            value={profile.phone}
+                            onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
+                            placeholder="Enter your phone number"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="mobile">Mobile Number</Label>
+                          <Input
+                            id="mobile"
+                            type="tel"
+                            value={profile.mobile}
+                            onChange={(e) => setProfile({ ...profile, mobile: e.target.value })}
+                            placeholder="Enter your mobile number"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="department">Department</Label>
+                          <Input
+                            id="department"
+                            value={profile.department}
+                            onChange={(e) => setProfile({ ...profile, department: e.target.value })}
+                            placeholder="e.g., Computer Science, Mathematics"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="linkedin_url">LinkedIn URL</Label>
+                          <Input
+                            id="linkedin_url"
+                            type="url"
+                            value={profile.linkedin_url}
+                            onChange={(e) => setProfile({ ...profile, linkedin_url: e.target.value })}
+                            placeholder="https://linkedin.com/in/yourprofile"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="bio">Bio</Label>
+                          <Textarea
+                            id="bio"
+                            value={profile.bio}
+                            onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
+                            placeholder="Tell us about yourself..."
+                            rows={4}
+                          />
+                        </div>
+
+                        {/* Skills Section */}
+                        <div className="space-y-2">
+                          <Label>Skills</Label>
+                          <div className="flex gap-2">
+                            <Input
+                              value={newSkill}
+                              onChange={(e) => setNewSkill(e.target.value)}
+                              placeholder="Add a skill"
+                              onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addSkill())}
+                            />
+                            <Button type="button" onClick={addSkill} variant="outline">
+                              Add
+                            </Button>
+                          </div>
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            {profile.skills.map((skill, index) => (
+                              <Badge key={index} variant="secondary" className="cursor-pointer">
+                                {skill}
+                                <button
+                                  onClick={() => removeSkill(skill)}
+                                  className="ml-2 hover:text-destructive"
+                                  type="button"
+                                >
+                                  ×
+                                </button>
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="is_available" className="flex items-center gap-2">
+                            Available for Connections
+                          </Label>
+                          <Select
+                            value={profile.is_available ? "yes" : "no"}
+                            onValueChange={(value) => setProfile({ ...profile, is_available: value === "yes" })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="yes">Yes, I'm available</SelectItem>
+                              <SelectItem value="no">No, not available</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <Button type="submit" disabled={isSaving} className="w-full">
+                          {isSaving ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Saving...
+                            </>
+                          ) : (
+                            "Save Changes"
+                          )}
+                        </Button>
+                      </form>
+                    </CardContent>
+                  </Card>
+
+                  {/* Email Notification Settings */}
+                  <EmailNotificationSettings />
+
+                  {/* Mentor-specific fields */}
+                  {(profile.role === 'mentor' || isMentor) && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <GraduationCap className="h-5 w-5" />
+                          Mentor Information
+                        </CardTitle>
+                        <CardDescription>
+                          Additional information for mentor profile
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="university">University</Label>
+                          <Input
+                            id="university"
+                            value={mentorProfile.university}
+                            onChange={(e) => setMentorProfile({ ...mentorProfile, university: e.target.value })}
+                            placeholder="e.g., SRM AP University"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="year_of_studies">Year of Studies</Label>
+                          <Select
+                            value={mentorProfile.year_of_studies}
+                            onValueChange={(value) => setMentorProfile({ ...mentorProfile, year_of_studies: value })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select year" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="1st Year">1st Year</SelectItem>
+                              <SelectItem value="2nd Year">2nd Year</SelectItem>
+                              <SelectItem value="3rd Year">3rd Year</SelectItem>
+                              <SelectItem value="4th Year">4th Year</SelectItem>
+                              <SelectItem value="Graduate">Graduate</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="cgpa">CGPA</Label>
+                          <Input
+                            id="cgpa"
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            max="10"
+                            value={mentorProfile.cgpa || ""}
+                            onChange={(e) => setMentorProfile({ ...mentorProfile, cgpa: parseFloat(e.target.value) || null })}
+                            placeholder="e.g., 8.5"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="hobbies">Hobbies & Interests</Label>
+                          <Textarea
+                            id="hobbies"
+                            value={mentorProfile.hobbies}
+                            onChange={(e) => setMentorProfile({ ...mentorProfile, hobbies: e.target.value })}
+                            placeholder="Tell us about your hobbies and interests..."
+                            rows={3}
+                          />
+                        </div>
+
+                        {/* Display rating and review count (read-only) */}
+                        <div className="space-y-2">
+                          <Label className="flex items-center gap-2">
+                            <Award className="h-4 w-4" />
+                            Mentor Rating
+                          </Label>
+                          <div className="flex items-center gap-4 p-3 bg-muted rounded-lg">
+                            <div>
+                              <p className="text-2xl font-bold">{mentorProfile.rating.toFixed(1)}</p>
+                              <p className="text-xs text-muted-foreground">⭐ Rating</p>
+                            </div>
+                            <div className="h-10 w-px bg-border" />
+                            <div>
+                              <p className="text-2xl font-bold">{mentorProfile.review_count}</p>
+                              <p className="text-xs text-muted-foreground">Reviews</p>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
               </TabsContent>
 
               {/* Badges Tab */}
