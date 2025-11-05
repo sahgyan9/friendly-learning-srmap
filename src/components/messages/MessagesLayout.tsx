@@ -9,6 +9,7 @@ import { useChatConnection } from "@/hooks/use-chat-connection";
 import { formatMessageTime } from "@/utils/date-utils";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import MessagesHeader from "./MessagesHeader";
+import { supabase } from "@/integrations/supabase/client";
 
 const MessagesLayout = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -32,6 +33,42 @@ const MessagesLayout = () => {
   const { isProcessingMentor } = useMentorConnection(userId, setActiveChat);
   const { isProcessingChat } = useChatConnection(userId, setActiveChat);
 
+  // Mark messages as read when viewing a conversation
+  useEffect(() => {
+    const markAsRead = async () => {
+      if (!activeChat || !userId) return;
+
+      // Find unread messages in active conversation
+      const unreadMessages = messages.filter(
+        msg => msg.conversation_id === activeChat &&
+          msg.receiver_id === userId &&
+          !msg.is_read
+      );
+
+      if (unreadMessages.length === 0) return;
+
+      try {
+        // Update messages as read
+        const { error } = await supabase
+          .from('messages')
+          .update({ is_read: true, delivery_status: 'read' })
+          .eq('conversation_id', activeChat)
+          .eq('receiver_id', userId)
+          .eq('is_read', false);
+
+        if (error) {
+          console.error('Error marking messages as read:', error);
+        }
+      } catch (error) {
+        console.error('Error in markAsRead:', error);
+      }
+    };
+
+    // Mark as read after a short delay (user has actually viewed the messages)
+    const timer = setTimeout(markAsRead, 1000);
+    return () => clearTimeout(timer);
+  }, [activeChat, userId, messages]);
+
   useEffect(() => {
     if (error) {
       toast.error(`Error: ${error.message || 'Failed to load conversations'}`);
@@ -45,10 +82,10 @@ const MessagesLayout = () => {
 
   const getOtherUser = (conversation) => {
     const otherUser = conversation.user1_id === userId ? conversation.user2 : conversation.user1;
-    
+
     if (!otherUser) {
       console.error(`No user data found for conversation ${conversation.id}`);
-      
+
       return {
         id: conversation.user1_id === userId ? conversation.user2_id : conversation.user1_id,
         name: "Unknown User",
@@ -56,10 +93,10 @@ const MessagesLayout = () => {
         role: 'student'
       };
     }
-    
+
     // Ensure name is a trimmed string or a fallback
     const finalName = otherUser.name?.trim() || "Unknown User";
-    
+
     return {
       ...otherUser,
       name: finalName
@@ -104,7 +141,7 @@ const MessagesLayout = () => {
   return (
     <>
       <MessagesHeader isProcessingMentor={isProcessingMentor || isProcessingChat} />
-      
+
       <ChatContainer
         conversations={conversations}
         filteredConversations={filteredConversations}

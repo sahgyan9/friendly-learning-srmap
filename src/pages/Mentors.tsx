@@ -10,6 +10,8 @@ import { useToast } from "@/components/ui/use-toast";
 import { motion } from "framer-motion";
 import { sampleMentors } from "@/data/mentors";
 import { getBreadcrumbSchema } from "@/lib/structured-data";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Card } from "@/components/ui/card";
 
 // Import refactored components
 import MentorList from "@/components/mentors/MentorList";

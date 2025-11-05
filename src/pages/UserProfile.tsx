@@ -8,9 +8,10 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Loader2, User, Mail, Phone, LinkIcon, FileText, Calendar } from "lucide-react";
+import { Loader2, User, Mail, Phone, LinkIcon, FileText, Calendar, Upload, Camera } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import { EmailNotificationSettings } from "@/components/profile/EmailNotificationSettings";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface UserProfile {
   name: string;
@@ -19,6 +20,7 @@ interface UserProfile {
   bio: string;
   linkedin_url: string;
   department: string;
+  profile_image: string;
 }
 
 const UserProfile = () => {
@@ -30,9 +32,11 @@ const UserProfile = () => {
     bio: "",
     linkedin_url: "",
     department: "",
+    profile_image: "",
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -44,7 +48,7 @@ const UserProfile = () => {
     try {
       const { data, error } = await supabase
         .from("users")
-        .select("name, email, phone, bio, linkedin_url, department")
+        .select("name, email, phone, bio, linkedin_url, department, profile_image")
         .eq("id", user?.id)
         .single();
 
@@ -58,6 +62,7 @@ const UserProfile = () => {
           bio: data.bio || "",
           linkedin_url: data.linkedin_url || "",
           department: data.department || "",
+          profile_image: data.profile_image || "",
         });
       }
     } catch (error) {
@@ -65,6 +70,62 @@ const UserProfile = () => {
       toast.error("Failed to load profile");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error("Please upload an image file");
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image must be less than 5MB");
+      return;
+    }
+
+    setIsUploadingImage(true);
+
+    try {
+      // Create unique file name
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user?.id}-${Date.now()}.${fileExt}`;
+      const filePath = `profile-images/${fileName}`;
+
+      // Upload to Supabase Storage
+      const { error: uploadError } = await supabase.storage
+        .from('profiles')
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: urlData } = supabase.storage
+        .from('profiles')
+        .getPublicUrl(filePath);
+
+      const imageUrl = urlData.publicUrl;
+
+      // Update profile with new image URL
+      const { error: updateError } = await supabase
+        .from("users")
+        .update({ profile_image: imageUrl })
+        .eq("id", user?.id);
+
+      if (updateError) throw updateError;
+
+      setProfile({ ...profile, profile_image: imageUrl });
+      toast.success("Profile picture updated successfully!");
+    } catch (error: any) {
+      console.error("Error uploading image:", error);
+      toast.error(error.message || "Failed to upload image");
+    } finally {
+      setIsUploadingImage(false);
     }
   };
 
@@ -122,6 +183,72 @@ const UserProfile = () => {
                 Manage your account information and preferences
               </p>
             </div>
+
+            {/* Profile Picture Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Camera className="h-5 w-5" />
+                  Profile Picture
+                </CardTitle>
+                <CardDescription>
+                  Upload a profile picture to personalize your account
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-col items-center gap-4">
+                  <Avatar className="h-32 w-32 border-4 border-border">
+                    <AvatarImage
+                      src={profile.profile_image}
+                      alt={profile.name}
+                      className="object-cover"
+                    />
+                    <AvatarFallback className="text-3xl bg-primary/10 text-primary">
+                      {profile.name
+                        .split(' ')
+                        .map(n => n[0])
+                        .join('')
+                        .toUpperCase()
+                        .substring(0, 2) || 'U'}
+                    </AvatarFallback>
+                  </Avatar>
+
+                  <div className="flex flex-col items-center gap-2">
+                    <Label htmlFor="profile-image" className="cursor-pointer">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        disabled={isUploadingImage}
+                        onClick={() => document.getElementById('profile-image')?.click()}
+                      >
+                        {isUploadingImage ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Uploading...
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="mr-2 h-4 w-4" />
+                            Upload Picture
+                          </>
+                        )}
+                      </Button>
+                    </Label>
+                    <Input
+                      id="profile-image"
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleImageUpload}
+                      disabled={isUploadingImage}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      JPG, PNG or GIF (max 5MB)
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
             <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
               {/* Profile Information */}

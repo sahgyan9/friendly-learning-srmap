@@ -43,7 +43,7 @@ const ChatbotModal = ({ isOpen, onClose }: ChatbotModalProps) => {
 
   const loadConversationHistory = async () => {
     if (!user) return;
-    
+
     setIsLoadingHistory(true);
     try {
       const { data, error } = await supabase
@@ -61,7 +61,7 @@ const ChatbotModal = ({ isOpen, onClose }: ChatbotModalProps) => {
       if (data && data.length > 0) {
         // Group messages by session and convert to UI format
         const conversationMessages: Message[] = [];
-        
+
         data.forEach((conv) => {
           if (conv.message_type === 'user') {
             conversationMessages.push({
@@ -88,7 +88,7 @@ const ChatbotModal = ({ isOpen, onClose }: ChatbotModalProps) => {
         });
 
         setMessages(conversationMessages);
-        
+
         // Use the latest session ID if available
         if (data.length > 0 && data[data.length - 1].session_id) {
           setSessionId(data[data.length - 1].session_id);
@@ -122,7 +122,7 @@ const ChatbotModal = ({ isOpen, onClose }: ChatbotModalProps) => {
 
     try {
       const { data, error } = await supabase.functions.invoke('ai-chatbot', {
-        body: { 
+        body: {
           message: inputValue,
           sessionId: sessionId,
           userId: user?.id || null
@@ -140,7 +140,7 @@ const ChatbotModal = ({ isOpen, onClose }: ChatbotModalProps) => {
       };
 
       setMessages(prev => [...prev, aiMessage]);
-      
+
       // Update session ID if returned
       if (data.sessionId) {
         setSessionId(data.sessionId);
@@ -192,16 +192,39 @@ const ChatbotModal = ({ isOpen, onClose }: ChatbotModalProps) => {
             )}
 
             {messages.length === 0 && !isLoadingHistory && (
-              <motion.div 
+              <motion.div
                 className="text-center py-8"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
               >
                 <Bot className="h-12 w-12 text-blue-500 mx-auto mb-4" />
                 <h3 className="text-lg font-medium mb-2">Hello! I'm your AI assistant</h3>
-                <p className="text-muted-foreground">
+                <p className="text-muted-foreground mb-4">
                   Ask me anything! I can help with general questions and suggest mentors for specific problems.
                 </p>
+
+                {/* Suggested prompts */}
+                <div className="mt-6 space-y-2 max-w-md mx-auto">
+                  <p className="text-sm font-medium text-left mb-3">Try asking:</p>
+                  <button
+                    onClick={() => setInputValue("I need help with Data Structures")}
+                    className="w-full text-left px-4 py-3 rounded-lg border border-border hover:bg-muted/50 transition-colors text-sm"
+                  >
+                    💡 "I need help with Data Structures"
+                  </button>
+                  <button
+                    onClick={() => setInputValue("Find me a mentor for web development")}
+                    className="w-full text-left px-4 py-3 rounded-lg border border-border hover:bg-muted/50 transition-colors text-sm"
+                  >
+                    🎯 "Find me a mentor for web development"
+                  </button>
+                  <button
+                    onClick={() => setInputValue("I want to learn machine learning")}
+                    className="w-full text-left px-4 py-3 rounded-lg border border-border hover:bg-muted/50 transition-colors text-sm"
+                  >
+                    🚀 "I want to learn machine learning"
+                  </button>
+                </div>
               </motion.div>
             )}
 
@@ -217,18 +240,17 @@ const ChatbotModal = ({ isOpen, onClose }: ChatbotModalProps) => {
                     <Bot className="h-4 w-4 text-white" />
                   </div>
                 )}
-                
+
                 <div className={`max-w-[80%] ${message.type === 'user' ? 'order-2' : ''}`}>
                   <div
-                    className={`rounded-lg px-4 py-2 ${
-                      message.type === 'user'
+                    className={`rounded-lg px-4 py-2 ${message.type === 'user'
                         ? 'bg-blue-500 text-white'
                         : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100'
-                    }`}
+                      }`}
                   >
                     {message.content}
                   </div>
-                  
+
                   {/* Mentor Suggestions */}
                   {message.mentorSuggestions && message.mentorSuggestions.length > 0 && (
                     <div className="mt-3 space-y-2">
@@ -281,8 +303,8 @@ const ChatbotModal = ({ isOpen, onClose }: ChatbotModalProps) => {
                 disabled={isLoading}
                 className="flex-1"
               />
-              <Button 
-                onClick={sendMessage} 
+              <Button
+                onClick={sendMessage}
                 disabled={!inputValue.trim() || isLoading}
                 size="icon"
               >

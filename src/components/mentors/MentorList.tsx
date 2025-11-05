@@ -3,6 +3,8 @@ import { Loader2 } from "lucide-react";
 import MentorCard from "@/components/MentorCard";
 import { Mentor } from "@/types/mentor";
 import { motion } from "framer-motion";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Card } from "@/components/ui/card";
 
 interface MentorListProps {
   isLoading: boolean;
@@ -33,16 +35,41 @@ const MentorList = ({ isLoading, mentors, isAiSearch }: MentorListProps) => {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <span className="ml-2 text-lg">Loading mentors...</span>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
+        {[...Array(8)].map((_, index) => (
+          <Card key={index} className="p-6 space-y-4">
+            {/* Avatar skeleton */}
+            <div className="flex justify-center">
+              <Skeleton className="h-24 w-24 rounded-full" />
+            </div>
+
+            {/* Name skeleton */}
+            <Skeleton className="h-6 w-3/4 mx-auto" />
+
+            {/* Department skeleton */}
+            <Skeleton className="h-4 w-1/2 mx-auto" />
+
+            {/* Skills skeletons */}
+            <div className="flex gap-2 justify-center flex-wrap">
+              <Skeleton className="h-6 w-16" />
+              <Skeleton className="h-6 w-20" />
+              <Skeleton className="h-6 w-14" />
+            </div>
+
+            {/* Rating skeleton */}
+            <Skeleton className="h-4 w-24 mx-auto" />
+
+            {/* Button skeleton */}
+            <Skeleton className="h-10 w-full" />
+          </Card>
+        ))}
       </div>
     );
   }
 
   if (mentors.length === 0) {
     return (
-      <motion.div 
+      <motion.div
         className="text-center py-12"
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -55,7 +82,7 @@ const MentorList = ({ isLoading, mentors, isAiSearch }: MentorListProps) => {
       </motion.div>
     );
   }
-  
+
   return (
     <motion.div
       initial="hidden"
@@ -64,7 +91,7 @@ const MentorList = ({ isLoading, mentors, isAiSearch }: MentorListProps) => {
     >
       {/* AI Search Badge */}
       {isAiSearch && (
-        <motion.div 
+        <motion.div
           className="flex items-center justify-center mb-8 gap-2"
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -80,7 +107,7 @@ const MentorList = ({ isLoading, mentors, isAiSearch }: MentorListProps) => {
       )}
 
       {/* Mentors Grid */}
-      <motion.div 
+      <motion.div
         className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6"
         variants={container}
       >
