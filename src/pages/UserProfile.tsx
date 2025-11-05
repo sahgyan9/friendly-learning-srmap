@@ -8,12 +8,15 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Loader2, User, Mail, Phone, LinkIcon, FileText, Calendar, Upload, Camera, Award, BookOpen, GraduationCap, Heart } from "lucide-react";
+import { Loader2, User, Mail, Phone, LinkIcon, FileText, Calendar, Upload, Camera, Award, BookOpen, GraduationCap, Heart, Star, MessageSquare } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import { EmailNotificationSettings } from "@/components/profile/EmailNotificationSettings";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import BadgeDisplay from "@/components/badges/BadgeDisplay";
+import ReviewsList from "@/components/rating/ReviewsList";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface UserProfile {
   name: string;
@@ -41,6 +44,14 @@ interface MentorProfile {
   review_count: number;
 }
 
+interface UserStats {
+  totalConnections: number;
+  totalReviews: number;
+  totalBadges: number;
+  messagesSent: number;
+  mentoringSessions?: number;
+}
+
 const UserProfile = () => {
   const { user, profile: authProfile, isMentor } = useAuth();
   const [profile, setProfile] = useState<UserProfile>({
@@ -66,6 +77,13 @@ const UserProfile = () => {
     hobbies: "",
     rating: 0,
     review_count: 0,
+  });
+  const [userStats, setUserStats] = useState<UserStats>({
+    totalConnections: 0,
+    totalReviews: 0,
+    totalBadges: 0,
+    messagesSent: 0,
+    mentoringSessions: 0,
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -125,12 +143,53 @@ const UserProfile = () => {
             });
           }
         }
+
+        // Fetch user statistics
+        await fetchUserStats();
       }
     } catch (error) {
       console.error("Error fetching profile:", error);
       toast.error("Failed to load profile");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchUserStats = async () => {
+    try {
+      // Fetch badges count
+      const { data: badgesData, error: badgesError } = await supabase
+        .from('user_badges')
+        .select('id', { count: 'exact' })
+        .eq('user_id', user?.id);
+
+      // Fetch reviews count (if mentor)
+      const { data: reviewsData, error: reviewsError } = await supabase
+        .from('mentor_reviews')
+        .select('id', { count: 'exact' })
+        .eq('mentor_id', user?.id);
+
+      // Fetch messages sent count
+      const { data: messagesData, error: messagesError } = await supabase
+        .from('messages')
+        .select('id', { count: 'exact' })
+        .eq('sender_id', user?.id);
+
+      // Fetch connections count (conversations)
+      const { data: connectionsData, error: connectionsError } = await supabase
+        .from('conversations')
+        .select('id', { count: 'exact' })
+        .or(`user1_id.eq.${user?.id},user2_id.eq.${user?.id}`);
+
+      setUserStats({
+        totalBadges: badgesData?.length || 0,
+        totalReviews: reviewsData?.length || 0,
+        messagesSent: messagesData?.length || 0,
+        totalConnections: connectionsData?.length || 0,
+        mentoringSessions: reviewsData?.length || 0, // Using reviews as proxy for sessions
+      });
+    } catch (error) {
+      console.error("Error fetching user stats:", error);
     }
   };
 
@@ -359,6 +418,76 @@ const UserProfile = () => {
               </CardContent>
             </Card>
 
+            {/* Statistics Overview */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Award className="h-5 w-5" />
+                  Profile Statistics
+                </CardTitle>
+                <CardDescription>
+                  Your activity and achievements overview
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="flex flex-col items-center p-4 bg-muted rounded-lg">
+                    <Award className="h-6 w-6 mb-2 text-primary" />
+                    <p className="text-2xl font-bold">{userStats.totalBadges}</p>
+                    <p className="text-xs text-muted-foreground">Badges</p>
+                  </div>
+                  
+                  <div className="flex flex-col items-center p-4 bg-muted rounded-lg">
+                    <MessageSquare className="h-6 w-6 mb-2 text-primary" />
+                    <p className="text-2xl font-bold">{userStats.totalConnections}</p>
+                    <p className="text-xs text-muted-foreground">Connections</p>
+                  </div>
+                  
+                  {(profile.role === 'mentor' || isMentor) && (
+                    <>
+                      <div className="flex flex-col items-center p-4 bg-muted rounded-lg">
+                        <Star className="h-6 w-6 mb-2 text-primary" />
+                        <p className="text-2xl font-bold">{mentorProfile.rating.toFixed(1)}</p>
+                        <p className="text-xs text-muted-foreground">Rating</p>
+                      </div>
+                      
+                      <div className="flex flex-col items-center p-4 bg-muted rounded-lg">
+                        <BookOpen className="h-6 w-6 mb-2 text-primary" />
+                        <p className="text-2xl font-bold">{userStats.totalReviews}</p>
+                        <p className="text-xs text-muted-foreground">Reviews</p>
+                      </div>
+                    </>
+                  )}
+                  
+                  {!(profile.role === 'mentor' || isMentor) && (
+                    <>
+                      <div className="flex flex-col items-center p-4 bg-muted rounded-lg">
+                        <Mail className="h-6 w-6 mb-2 text-primary" />
+                        <p className="text-2xl font-bold">{userStats.messagesSent}</p>
+                        <p className="text-xs text-muted-foreground">Messages</p>
+                      </div>
+                      
+                      <div className="flex flex-col items-center p-4 bg-muted rounded-lg">
+                        <GraduationCap className="h-6 w-6 mb-2 text-primary" />
+                        <p className="text-2xl font-bold">{userStats.mentoringSessions || 0}</p>
+                        <p className="text-xs text-muted-foreground">Sessions</p>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Tabs defaultValue="profile" className="w-full">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="profile">Profile Info</TabsTrigger>
+                <TabsTrigger value="badges">Badges</TabsTrigger>
+                {(profile.role === 'mentor' || isMentor) && (
+                  <TabsTrigger value="reviews">Reviews</TabsTrigger>
+                )}
+              </TabsList>
+
+              <TabsContent value="profile" className="space-y-6">
             <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
               {/* Profile Information */}
               <Card>
@@ -619,6 +748,46 @@ const UserProfile = () => {
                 </Card>
               )}
             </div>
+              </TabsContent>
+
+              {/* Badges Tab */}
+              <TabsContent value="badges" className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Award className="h-5 w-5" />
+                      My Badges
+                    </CardTitle>
+                    <CardDescription>
+                      Badges you've earned for your achievements and contributions
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <BadgeDisplay userId={user?.id || ""} showAll={true} />
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Reviews Tab - Only for Mentors */}
+              {(profile.role === 'mentor' || isMentor) && (
+                <TabsContent value="reviews" className="space-y-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Star className="h-5 w-5" />
+                        Student Reviews
+                      </CardTitle>
+                      <CardDescription>
+                        Feedback from students you've mentored
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <ReviewsList mentorId={user?.id || ""} />
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+              )}
+            </Tabs>
           </div>
         </div>
       </div>
