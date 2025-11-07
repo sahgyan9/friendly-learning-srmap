@@ -7,12 +7,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Heart, MessageCircle, Edit, Trash2, Send } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { 
-  type CommunityPost, 
-  togglePostLike, 
-  getPostComments, 
+import {
+  type CommunityPost,
+  togglePostLike,
+  getPostComments,
   addPostComment,
-  deleteCommunityPost 
+  deleteCommunityPost
 } from "@/integrations/supabase/services/community-posts";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
@@ -26,12 +26,12 @@ interface PostDetailModalProps {
   onPostDeleted: (postId: string) => void;
 }
 
-export const PostDetailModal = ({ 
-  post, 
-  open, 
-  onOpenChange, 
-  onPostUpdated, 
-  onPostDeleted 
+export const PostDetailModal = ({
+  post,
+  open,
+  onOpenChange,
+  onPostUpdated,
+  onPostDeleted
 }: PostDetailModalProps) => {
   const { user, profile } = useAuth();
   const [comments, setComments] = useState<any[]>([]);
@@ -54,14 +54,14 @@ export const PostDetailModal = ({
   const fetchComments = async () => {
     setLoadingComments(true);
     const { data, error } = await getPostComments(post.id);
-    
+
     if (error) {
       toast.error("Failed to load comments");
       console.error(error);
     } else if (data) {
       setComments(data);
     }
-    
+
     setLoadingComments(false);
   };
 
@@ -72,7 +72,7 @@ export const PostDetailModal = ({
     }
 
     const { error, liked } = await togglePostLike(currentPost.id);
-    
+
     if (error) {
       toast.error("Failed to update like");
       console.error(error);
@@ -97,7 +97,7 @@ export const PostDetailModal = ({
 
     setSubmittingComment(true);
     const { data, error } = await addPostComment(post.id, newComment.trim());
-    
+
     if (error) {
       toast.error("Failed to add comment");
       console.error(error);
@@ -112,7 +112,7 @@ export const PostDetailModal = ({
       setCurrentPost(updatedPost);
       onPostUpdated(updatedPost);
     }
-    
+
     setSubmittingComment(false);
   };
 
@@ -120,7 +120,7 @@ export const PostDetailModal = ({
     if (!confirm("Are you sure you want to delete this post?")) return;
 
     const { error } = await deleteCommunityPost(post.id);
-    
+
     if (error) {
       toast.error("Failed to delete post");
       console.error(error);
@@ -160,12 +160,12 @@ export const PostDetailModal = ({
                   </p>
                 </div>
               </div>
-              
+
               <div className="flex items-center gap-2">
                 <Badge variant="outline" className={getStatusColor(currentPost.status)}>
                   {currentPost.status}
                 </Badge>
-                
+
                 {isPostOwner && (
                   <div className="flex gap-1">
                     <Button
@@ -188,7 +188,7 @@ export const PostDetailModal = ({
               </div>
             </div>
           </DialogHeader>
-          
+
           <div className="space-y-6">
             {/* Post Content */}
             <div>
@@ -227,7 +227,7 @@ export const PostDetailModal = ({
                 <Heart className={`h-5 w-5 ${currentPost.user_has_liked ? 'fill-red-500 text-red-500' : ''}`} />
                 <span>{currentPost.likes_count} likes</span>
               </button>
-              
+
               <div className="flex items-center gap-2 text-muted-foreground">
                 <MessageCircle className="h-5 w-5" />
                 <span>{currentPost.comments_count} comments</span>
@@ -249,7 +249,7 @@ export const PostDetailModal = ({
                       onChange={(e) => setNewComment(e.target.value)}
                       rows={3}
                     />
-                    <Button 
+                    <Button
                       onClick={handleAddComment}
                       disabled={!newComment.trim() || submittingComment}
                       size="sm"
@@ -265,7 +265,7 @@ export const PostDetailModal = ({
             {/* Comments */}
             <div className="space-y-4">
               <h3 className="font-semibold">Comments</h3>
-              
+
               {loadingComments ? (
                 <div className="text-center py-4">Loading comments...</div>
               ) : comments.length === 0 ? (
