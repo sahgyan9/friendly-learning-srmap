@@ -148,6 +148,131 @@ export type Database = {
         }
         Relationships: []
       }
+      canvas_drawings: {
+        Row: {
+          action_type: string
+          drawing_data: Json
+          id: string
+          session_id: string
+          timestamp: string | null
+          user_id: string
+        }
+        Insert: {
+          action_type: string
+          drawing_data: Json
+          id?: string
+          session_id: string
+          timestamp?: string | null
+          user_id: string
+        }
+        Update: {
+          action_type?: string
+          drawing_data?: Json
+          id?: string
+          session_id?: string
+          timestamp?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "canvas_drawings_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "canvas_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "canvas_drawings_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      canvas_participants: {
+        Row: {
+          id: string
+          is_active: boolean | null
+          joined_at: string | null
+          role: string
+          session_id: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          is_active?: boolean | null
+          joined_at?: string | null
+          role: string
+          session_id: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          is_active?: boolean | null
+          joined_at?: string | null
+          role?: string
+          session_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "canvas_participants_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "canvas_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "canvas_participants_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      canvas_sessions: {
+        Row: {
+          background_color: string | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          max_participants: number | null
+          mentor_id: string
+          session_code: string
+          title: string
+        }
+        Insert: {
+          background_color?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_participants?: number | null
+          mentor_id: string
+          session_code: string
+          title: string
+        }
+        Update: {
+          background_color?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_participants?: number | null
+          mentor_id?: string
+          session_code?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "canvas_sessions_mentor_id_fkey"
+            columns: ["mentor_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       community_posts: {
         Row: {
           comments_count: number
@@ -847,60 +972,39 @@ export type Database = {
       }
       users: {
         Row: {
-          bio: string | null
           created_at: string | null
-          department: string | null
           email: string
-          email_frequency: string | null
           email_notifications: boolean | null
           id: string
           is_admin: boolean
           is_available: boolean | null
-          linkedin_url: string | null
-          mobile: string | null
           name: string
-          phone: string | null
           profile_image: string | null
           role: string
-          skills: string[] | null
           verification_status: string | null
         }
         Insert: {
-          bio?: string | null
           created_at?: string | null
-          department?: string | null
           email: string
-          email_frequency?: string | null
           email_notifications?: boolean | null
           id?: string
           is_admin?: boolean
           is_available?: boolean | null
-          linkedin_url?: string | null
-          mobile?: string | null
           name: string
-          phone?: string | null
           profile_image?: string | null
           role: string
-          skills?: string[] | null
           verification_status?: string | null
         }
         Update: {
-          bio?: string | null
           created_at?: string | null
-          department?: string | null
           email?: string
-          email_frequency?: string | null
           email_notifications?: boolean | null
           id?: string
           is_admin?: boolean
           is_available?: boolean | null
-          linkedin_url?: string | null
-          mobile?: string | null
           name?: string
-          phone?: string | null
           profile_image?: string | null
           role?: string
-          skills?: string[] | null
           verification_status?: string | null
         }
         Relationships: []
@@ -936,18 +1040,41 @@ export type Database = {
       }
     }
     Functions: {
-      auto_award_performance_badges: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      bytea_to_text: {
-        Args: { data: string }
-        Returns: string
-      }
+      auto_award_performance_badges: { Args: never; Returns: undefined }
+      bytea_to_text: { Args: { data: string }; Returns: string }
       can_user_rate_mentor: {
         Args: { mentor_id: string; user_id: string }
         Returns: boolean
       }
+      create_canvas_session:
+        | {
+            Args: { p_mentor_id: string; p_title: string }
+            Returns: {
+              created_at: string
+              id: string
+              session_code: string
+              title: string
+            }[]
+          }
+        | {
+            Args: { p_mentor_id: string; p_title: string }
+            Returns: {
+              background_color: string | null
+              created_at: string | null
+              id: string
+              is_active: boolean | null
+              max_participants: number | null
+              mentor_id: string
+              session_code: string
+              title: string
+            }
+            SetofOptions: {
+              from: "*"
+              to: "canvas_sessions"
+              isOneToOne: true
+              isSetofReturn: false
+            }
+          }
       create_conversation: {
         Args: { user1_id: string; user2_id: string }
         Returns: {
@@ -957,10 +1084,26 @@ export type Database = {
           user1_id: string
           user2_id: string
         }
+        SetofOptions: {
+          from: "*"
+          to: "conversations"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
-      delete_all_messages: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
+      delete_all_messages: { Args: never; Returns: undefined }
+      generate_session_code: { Args: never; Returns: string }
+      get_canvas_session_participants: {
+        Args: { p_session_id: string }
+        Returns: {
+          id: string
+          is_active: boolean
+          joined_at: string
+          role: string
+          user_id: string
+          user_name: string
+          user_profile_image: string
+        }[]
       }
       get_conversation: {
         Args: { user1: string; user2: string }
@@ -971,6 +1114,12 @@ export type Database = {
           user1_id: string
           user2_id: string
         }[]
+        SetofOptions: {
+          from: "*"
+          to: "conversations"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       get_conversation_messages: {
         Args: { conversation_id: string }
@@ -988,6 +1137,12 @@ export type Database = {
           sender_id: string
           sent_at: string | null
         }[]
+        SetofOptions: {
+          from: "*"
+          to: "messages"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       get_mentor_reviews: {
         Args: { mentor_id: string }
@@ -1001,7 +1156,7 @@ export type Database = {
         }[]
       }
       get_team_members_public: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           created_at: string
           id: string
@@ -1014,27 +1169,77 @@ export type Database = {
       http: {
         Args: { request: Database["public"]["CompositeTypes"]["http_request"] }
         Returns: Database["public"]["CompositeTypes"]["http_response"]
+        SetofOptions: {
+          from: "http_request"
+          to: "http_response"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
-      http_delete: {
-        Args:
-          | { content: string; content_type: string; uri: string }
-          | { uri: string }
-        Returns: Database["public"]["CompositeTypes"]["http_response"]
-      }
-      http_get: {
-        Args: { data: Json; uri: string } | { uri: string }
-        Returns: Database["public"]["CompositeTypes"]["http_response"]
-      }
+      http_delete:
+        | {
+            Args: { uri: string }
+            Returns: Database["public"]["CompositeTypes"]["http_response"]
+            SetofOptions: {
+              from: "*"
+              to: "http_response"
+              isOneToOne: true
+              isSetofReturn: false
+            }
+          }
+        | {
+            Args: { content: string; content_type: string; uri: string }
+            Returns: Database["public"]["CompositeTypes"]["http_response"]
+            SetofOptions: {
+              from: "*"
+              to: "http_response"
+              isOneToOne: true
+              isSetofReturn: false
+            }
+          }
+      http_get:
+        | {
+            Args: { uri: string }
+            Returns: Database["public"]["CompositeTypes"]["http_response"]
+            SetofOptions: {
+              from: "*"
+              to: "http_response"
+              isOneToOne: true
+              isSetofReturn: false
+            }
+          }
+        | {
+            Args: { data: Json; uri: string }
+            Returns: Database["public"]["CompositeTypes"]["http_response"]
+            SetofOptions: {
+              from: "*"
+              to: "http_response"
+              isOneToOne: true
+              isSetofReturn: false
+            }
+          }
       http_head: {
         Args: { uri: string }
         Returns: Database["public"]["CompositeTypes"]["http_response"]
+        SetofOptions: {
+          from: "*"
+          to: "http_response"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       http_header: {
         Args: { field: string; value: string }
         Returns: Database["public"]["CompositeTypes"]["http_header"]
+        SetofOptions: {
+          from: "*"
+          to: "http_header"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       http_list_curlopt: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           curlopt: string
           value: string
@@ -1043,28 +1248,58 @@ export type Database = {
       http_patch: {
         Args: { content: string; content_type: string; uri: string }
         Returns: Database["public"]["CompositeTypes"]["http_response"]
+        SetofOptions: {
+          from: "*"
+          to: "http_response"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
-      http_post: {
-        Args:
-          | { content: string; content_type: string; uri: string }
-          | { data: Json; uri: string }
-        Returns: Database["public"]["CompositeTypes"]["http_response"]
-      }
+      http_post:
+        | {
+            Args: { content: string; content_type: string; uri: string }
+            Returns: Database["public"]["CompositeTypes"]["http_response"]
+            SetofOptions: {
+              from: "*"
+              to: "http_response"
+              isOneToOne: true
+              isSetofReturn: false
+            }
+          }
+        | {
+            Args: { data: Json; uri: string }
+            Returns: Database["public"]["CompositeTypes"]["http_response"]
+            SetofOptions: {
+              from: "*"
+              to: "http_response"
+              isOneToOne: true
+              isSetofReturn: false
+            }
+          }
       http_put: {
         Args: { content: string; content_type: string; uri: string }
         Returns: Database["public"]["CompositeTypes"]["http_response"]
+        SetofOptions: {
+          from: "*"
+          to: "http_response"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
-      http_reset_curlopt: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
+      http_reset_curlopt: { Args: never; Returns: boolean }
       http_set_curlopt: {
         Args: { curlopt: string; value: string }
         Returns: boolean
       }
-      is_admin_user: {
-        Args: { user_id?: string }
-        Returns: boolean
+      is_admin_user: { Args: { user_id?: string }; Returns: boolean }
+      join_canvas_session: {
+        Args: { p_session_code: string; p_user_id: string }
+        Returns: {
+          id: string
+          role: string
+          session_id: string
+          session_title: string
+        }[]
       }
       log_admin_action: {
         Args: { action_details?: Json; action_type: string; target_id?: string }
@@ -1086,6 +1321,12 @@ export type Database = {
           sender_id: string
           sent_at: string | null
         }[]
+        SetofOptions: {
+          from: "*"
+          to: "messages"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       mark_messages_delivered: {
         Args: { p_conversation_id: string; p_user_id: string }
@@ -1116,19 +1357,19 @@ export type Database = {
           sender_id: string
           sent_at: string | null
         }
+        SetofOptions: {
+          from: "*"
+          to: "messages"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
-      text_to_bytea: {
-        Args: { data: string }
-        Returns: string
-      }
+      text_to_bytea: { Args: { data: string }; Returns: string }
       update_conversation: {
         Args: { conversation_id: string; message_id: string }
         Returns: undefined
       }
-      update_mentor_rating: {
-        Args: { mentor_id: string }
-        Returns: undefined
-      }
+      update_mentor_rating: { Args: { mentor_id: string }; Returns: undefined }
       update_typing_indicator: {
         Args: {
           p_conversation_id: string
@@ -1150,10 +1391,20 @@ export type Database = {
         }
         Returns: undefined
       }
-      urlencode: {
-        Args: { data: Json } | { string: string } | { string: string }
-        Returns: string
-      }
+      urlencode:
+        | { Args: { data: Json }; Returns: string }
+        | {
+            Args: { string: string }
+            Returns: {
+              error: true
+            } & "Could not choose the best candidate function between: public.urlencode(string => bytea), public.urlencode(string => varchar). Try renaming the parameters or the function itself in the database so function overloading can be resolved"
+          }
+        | {
+            Args: { string: string }
+            Returns: {
+              error: true
+            } & "Could not choose the best candidate function between: public.urlencode(string => bytea), public.urlencode(string => varchar). Try renaming the parameters or the function itself in the database so function overloading can be resolved"
+          }
     }
     Enums: {
       [_ in never]: never
@@ -1164,7 +1415,7 @@ export type Database = {
         value: string | null
       }
       http_request: {
-        method: unknown | null
+        method: unknown
         uri: string | null
         headers: Database["public"]["CompositeTypes"]["http_header"][] | null
         content_type: string | null
