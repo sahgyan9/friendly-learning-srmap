@@ -1,5 +1,6 @@
 
 import { motion } from "framer-motion";
+import { useState } from "react";
 import { Star, University, Heart } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Mentor } from "@/types/mentor";
@@ -9,36 +10,39 @@ interface MentorProfileHeaderProps {
 }
 
 const MentorProfileHeader = ({ mentor }: MentorProfileHeaderProps) => {
+  const [bioExpanded, setBioExpanded] = useState(false);
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
-    visible: { 
-      opacity: 1, 
+    visible: {
+      opacity: 1,
       y: 0,
       transition: { duration: 0.3 }
     }
   };
 
+  const isLongBio = (mentor.bio?.trim().length || 0) > 160;
+
   return (
-    <motion.div 
+    <motion.div
       className="flex flex-col md:flex-row gap-8 mb-10"
       variants={itemVariants}
     >
-      <motion.div 
+      <motion.div
         className="flex-shrink-0"
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.3 }}
       >
         <div className="relative">
-          <img 
-            src={mentor.profile_image} 
+          <img
+            src={mentor.profile_image}
             alt={mentor.name}
             className="w-36 h-36 md:w-48 md:h-48 rounded-xl object-cover shadow-lg"
             loading="lazy"
           />
           {/* Only show rating badge if mentor has reviews and rating > 0 */}
           {mentor.review_count > 0 && mentor.rating > 0 && (
-            <motion.div 
+            <motion.div
               className="absolute -bottom-2 -right-2 flex items-center bg-background dark:bg-gray-800 rounded-full px-3 py-1 shadow-sm border border-border"
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -51,7 +55,7 @@ const MentorProfileHeader = ({ mentor }: MentorProfileHeaderProps) => {
           )}
           {/* Show "New Mentor" badge if no reviews or rating is 0 */}
           {(mentor.review_count === 0 || mentor.rating === 0) && (
-            <motion.div 
+            <motion.div
               className="absolute -bottom-2 -right-2 bg-green-100 text-green-800 rounded-full px-3 py-1 shadow-sm border border-green-200"
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -62,15 +66,15 @@ const MentorProfileHeader = ({ mentor }: MentorProfileHeaderProps) => {
           )}
         </div>
       </motion.div>
-      
+
       <div className="flex-1">
-        <motion.h1 
+        <motion.h1
           className="text-3xl font-bold mb-2"
           variants={itemVariants}
         >
           {mentor.name}
         </motion.h1>
-        <motion.p 
+        <motion.p
           className="text-lg text-muted-foreground mb-4"
           variants={itemVariants}
         >
@@ -78,7 +82,7 @@ const MentorProfileHeader = ({ mentor }: MentorProfileHeaderProps) => {
         </motion.p>
 
         {/* University and Hobbies Section */}
-        <motion.div 
+        <motion.div
           className="space-y-2 mb-6"
           variants={itemVariants}
         >
@@ -95,8 +99,8 @@ const MentorProfileHeader = ({ mentor }: MentorProfileHeaderProps) => {
             </div>
           )}
         </motion.div>
-        
-        <motion.div 
+
+        <motion.div
           className="flex flex-wrap gap-2 mb-6"
           variants={itemVariants}
         >
@@ -106,6 +110,40 @@ const MentorProfileHeader = ({ mentor }: MentorProfileHeaderProps) => {
             </Badge>
           ))}
         </motion.div>
+
+        {/* Bio / About section with scroll + expand */}
+        {mentor.bio && (
+          <motion.div
+            className="bg-muted/50 border border-border rounded-lg p-4"
+            variants={itemVariants}
+          >
+            <h3 className="text-sm font-semibold text-foreground mb-2">About</h3>
+            <div className="relative">
+              <div
+                className={`text-sm sm:text-base text-muted-foreground leading-relaxed whitespace-pre-line ${!bioExpanded && isLongBio ? "max-h-24 sm:max-h-32 overflow-y-auto pr-2" : ""
+                  }`}
+              >
+                {mentor.bio}
+              </div>
+
+              {!bioExpanded && isLongBio && (
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-background to-transparent rounded-b-lg" />
+              )}
+            </div>
+
+            {isLongBio && (
+              <button
+                type="button"
+                onClick={() => setBioExpanded((v) => !v)}
+                className="mt-2 text-sm font-medium text-primary hover:underline"
+                aria-expanded={bioExpanded}
+                aria-controls="mentor-bio"
+              >
+                {bioExpanded ? "Show less" : "Read more"}
+              </button>
+            )}
+          </motion.div>
+        )}
       </div>
     </motion.div>
   );
