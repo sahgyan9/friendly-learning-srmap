@@ -1,5 +1,6 @@
 
 import { useEffect } from 'react';
+import { APP_NAME, APP_DESCRIPTION, APP_KEYWORDS, getAppUrl } from '@/lib/constants';
 
 interface SEOHeadProps {
   title?: string;
@@ -13,9 +14,9 @@ interface SEOHeadProps {
 }
 
 const SEOHead = ({
-  title = "Friendly Learning SRMAP - Student Mentorship Platform | SRM AP Academic Mentors",
-  description = "Friendly Learning SRMAP connects SRM AP university students with experienced peer mentors for academic guidance, project collaboration, and study partnerships. Get personalized help from verified mentors in your department.",
-  keywords = "friendly learning srmap, fl srmap, srm ap mentorship, srmap student mentors, academic guidance srm, university mentors srmap, find study partners srm, verified mentors srmap, peer learning srm ap, student collaboration srmap, academic support srm, srm university mentors, hackathon partners srm, project collaboration srmap",
+  title = `${APP_NAME} - Student Mentorship Platform | SRM AP Academic Mentors`,
+  description = APP_DESCRIPTION,
+  keywords = APP_KEYWORDS,
   canonical,
   ogTitle,
   ogDescription,
@@ -70,7 +71,7 @@ const SEOHead = ({
     // Update Open Graph tags
     updateMetaTag('og:title', ogTitle || title, true);
     updateMetaTag('og:description', ogDescription || description, true);
-    updateMetaTag('og:image', `${window.location.origin}${ogImage}`, true);
+    updateMetaTag('og:image', `${getAppUrl()}${ogImage}`, true);
     updateMetaTag('og:url', window.location.href, true);
     updateMetaTag('og:type', 'website', true);
     updateMetaTag('og:site_name', 'Project FL', true);
@@ -84,7 +85,7 @@ const SEOHead = ({
     updateMetaTag('twitter:card', 'summary_large_image', true);
     updateMetaTag('twitter:title', ogTitle || title, true);
     updateMetaTag('twitter:description', ogDescription || description, true);
-    updateMetaTag('twitter:image', `${window.location.origin}${ogImage}`, true);
+    updateMetaTag('twitter:image', `${getAppUrl()}${ogImage}`, true);
     updateMetaTag('twitter:site', '@ProjectFL', true);
     updateMetaTag('twitter:creator', '@ProjectFL', true);
 
@@ -137,7 +138,7 @@ const SEOHead = ({
     const dnsPrefetchLinks = [
       'https://fonts.googleapis.com',
       'https://fonts.gstatic.com',
-      'https://ruapdkrgcbqrhvsayvpf.supabase.co'
+      import.meta.env.VITE_SUPABASE_URL || 'https://ruapdkrgcbqrhvsayvpf.supabase.co'
     ];
 
     dnsPrefetchLinks.forEach(href => {

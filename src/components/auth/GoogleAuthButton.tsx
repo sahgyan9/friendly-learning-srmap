@@ -2,6 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { getAppUrl } from "@/lib/constants";
 
 interface GoogleAuthButtonProps {
   mode: "signin" | "signup";
@@ -16,7 +17,7 @@ const GoogleAuthButton = ({ mode, isLoading, setIsLoading }: GoogleAuthButtonPro
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/`,
+          redirectTo: `${getAppUrl()}/`,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
