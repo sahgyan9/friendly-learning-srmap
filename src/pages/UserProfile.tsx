@@ -21,7 +21,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 interface UserProfile {
   name: string;
   email: string;
-  phone: string;
   mobile: string;
   bio: string;
   linkedin_url: string;
@@ -57,7 +56,6 @@ const UserProfile = () => {
   const [profile, setProfile] = useState<UserProfile>({
     name: "",
     email: "",
-    phone: "",
     mobile: "",
     bio: "",
     linkedin_url: "",
@@ -110,7 +108,7 @@ const UserProfile = () => {
         setProfile({
           name: data.name || "",
           email: data.email || "",
-          phone: data.phone || "",
+          
           mobile: data.mobile || "",
           bio: data.bio || "",
           linkedin_url: data.linkedin_url || "",
@@ -259,7 +257,7 @@ const UserProfile = () => {
         .from("users")
         .update({
           name: profile.name,
-          phone: profile.phone,
+          
           mobile: profile.mobile,
           bio: profile.bio,
           linkedin_url: profile.linkedin_url,
@@ -540,16 +538,6 @@ const UserProfile = () => {
                           </p>
                         </div>
 
-                        <div className="space-y-2">
-                          <Label htmlFor="phone">Phone Number</Label>
-                          <Input
-                            id="phone"
-                            type="tel"
-                            value={profile.phone}
-                            onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
-                            placeholder="Enter your phone number"
-                          />
-                        </div>
 
                         <div className="space-y-2">
                           <Label htmlFor="mobile">Mobile Number</Label>
