@@ -261,9 +261,9 @@ const CommunityPosts = () => {
 
       <Navbar />
       <div className="min-h-screen bg-background">
-        <div className="container mx-auto px-4 py-8 max-w-4xl">
+        <div className="container mx-auto px-4 py-6 max-w-2xl">
           {/* Header */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
             <div>
               <h1 className="text-3xl font-bold">Community Posts</h1>
               <p className="text-muted-foreground">Connect, collaborate, and find partners for your projects</p>
@@ -273,7 +273,7 @@ const CommunityPosts = () => {
           </div>
 
           {/* Filters */}
-          <div className="flex flex-col sm:flex-row gap-4 mb-8">
+          <div className="flex flex-col sm:flex-row gap-4 mb-6">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <Input
@@ -300,7 +300,7 @@ const CommunityPosts = () => {
           </div>
 
           {/* Posts Feed */}
-          <div className="space-y-6">
+          <div className="space-y-4">
             {filteredPosts.length === 0 ? (
               <div className="text-center py-12">
                 <h3 className="text-lg font-semibold mb-2">No posts found</h3>

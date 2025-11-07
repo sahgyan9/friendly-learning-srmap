@@ -193,7 +193,7 @@ const CommunityPostDetail = () => {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
-        <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-8 max-w-4xl">
+        <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-8 max-w-2xl">
           <div className="animate-pulse space-y-4 sm:space-y-6">
             <div className="h-4 bg-gray-200 rounded w-20 sm:w-32"></div>
             <Card>
@@ -221,7 +221,7 @@ const CommunityPostDetail = () => {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
-        <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-8 max-w-4xl">
+        <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-8 max-w-2xl">
           <div className="text-center py-8 sm:py-12">
             <h3 className="text-base sm:text-lg font-semibold mb-2">Post not found</h3>
             <Link to="/community-posts">
@@ -293,9 +293,9 @@ const CommunityPostDetail = () => {
       {post && generateSEO()}
       <Navbar />
       <div className="min-h-screen bg-background">
-        <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-8 max-w-4xl">
+        <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-6 max-w-2xl">
           {/* Back Navigation */}
-          <div className="mb-4 sm:mb-6">
+          <div className="mb-4 sm:mb-4">
             <Link to="/community-posts">
               <Button variant="ghost" className="flex items-center gap-2 text-sm sm:text-base">
                 <ArrowLeft className="h-4 w-4" />
@@ -306,7 +306,7 @@ const CommunityPostDetail = () => {
           </div>
 
           {/* Post Content */}
-          <Card className="mb-6 sm:mb-8">
+          <Card className="mb-4 sm:mb-6">
             {/* Post Header */}
             <CardHeader className="pb-3 sm:pb-4">
               <div className="flex items-start justify-between">
@@ -423,8 +423,8 @@ const CommunityPostDetail = () => {
 
           {/* Add Comment Section */}
           {user && (
-            <Card className="mb-6 sm:mb-8">
-              <CardContent className="pt-4 sm:pt-6">
+            <Card className="mb-4 sm:mb-6">
+              <CardContent className="pt-4 sm:pt-4">
                 <div className="flex gap-3 sm:gap-4">
                   <Avatar className="h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0">
                     <AvatarImage src={profile?.profile_image || undefined} />
