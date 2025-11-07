@@ -972,39 +972,57 @@ export type Database = {
       }
       users: {
         Row: {
+          bio: string | null
           created_at: string | null
+          department: string | null
           email: string
+          email_frequency: string | null
           email_notifications: boolean | null
           id: string
           is_admin: boolean
           is_available: boolean | null
+          linkedin_url: string | null
+          mobile: string | null
           name: string
           profile_image: string | null
           role: string
+          skills: string[] | null
           verification_status: string | null
         }
         Insert: {
+          bio?: string | null
           created_at?: string | null
+          department?: string | null
           email: string
+          email_frequency?: string | null
           email_notifications?: boolean | null
           id?: string
           is_admin?: boolean
           is_available?: boolean | null
+          linkedin_url?: string | null
+          mobile?: string | null
           name: string
           profile_image?: string | null
           role: string
+          skills?: string[] | null
           verification_status?: string | null
         }
         Update: {
+          bio?: string | null
           created_at?: string | null
+          department?: string | null
           email?: string
+          email_frequency?: string | null
           email_notifications?: boolean | null
           id?: string
           is_admin?: boolean
           is_available?: boolean | null
+          linkedin_url?: string | null
+          mobile?: string | null
           name?: string
           profile_image?: string | null
           role?: string
+          skills?: string[] | null
           verification_status?: string | null
         }
         Relationships: []
