@@ -10,13 +10,13 @@ import {
 } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuth } from "@/context/AuthContext";
-import { 
-  getUserNotifications, 
-  getUnreadNotificationsCount, 
+import {
+  getUserNotifications,
+  getUnreadNotificationsCount,
   markNotificationAsRead,
   markAllNotificationsAsRead,
   subscribeToNotifications,
-  Notification 
+  Notification
 } from "@/integrations/supabase/services/notifications";
 import NotificationItem from "./NotificationItem";
 
@@ -67,7 +67,7 @@ const NotificationBell = () => {
   const handleMarkAsRead = async (notificationId: string) => {
     try {
       await markNotificationAsRead(notificationId);
-      setNotifications(prev => 
+      setNotifications(prev =>
         prev.map(n => n.id === notificationId ? { ...n, read: true } : n)
       );
       setUnreadCount(prev => Math.max(0, prev - 1));
@@ -78,7 +78,7 @@ const NotificationBell = () => {
 
   const handleMarkAllAsRead = async () => {
     if (!user) return;
-    
+
     try {
       await markAllNotificationsAsRead(user.id);
       setNotifications(prev => prev.map(n => ({ ...n, read: true })));
@@ -96,8 +96,8 @@ const NotificationBell = () => {
         <Button variant="ghost" size="sm" className="relative">
           <Bell className="h-5 w-5" />
           {unreadCount > 0 && (
-            <Badge 
-              variant="destructive" 
+            <Badge
+              variant="destructive"
               className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs"
             >
               {unreadCount > 99 ? '99+' : unreadCount}
@@ -137,6 +137,7 @@ const NotificationBell = () => {
                   key={notification.id}
                   notification={notification}
                   onMarkAsRead={handleMarkAsRead}
+                  onNotificationClick={() => setIsOpen(false)}
                 />
               ))}
             </div>

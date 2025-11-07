@@ -1,15 +1,17 @@
 
 import { formatDistanceToNow } from "date-fns";
 import { Button } from "@/components/ui/button";
-import { Badge, Star, MessageCircle, Settings } from "lucide-react";
+import { Badge, Star, MessageCircle, Settings, ChevronRight } from "lucide-react";
 import { Notification } from "@/integrations/supabase/services/notifications";
+import { getNotificationNavigationUrl, isNotificationClickable } from "@/utils/notificationNavigation";
 
 interface NotificationItemProps {
   notification: Notification;
   onMarkAsRead: (id: string) => void;
+  onNotificationClick?: () => void; // Optional callback to close popover
 }
 
-const NotificationItem = ({ notification, onMarkAsRead }: NotificationItemProps) => {
+const NotificationItem = ({ notification, onMarkAsRead, onNotificationClick }: NotificationItemProps) => {
   const getIcon = () => {
     switch (notification.type) {
       case 'badge':
@@ -24,27 +26,47 @@ const NotificationItem = ({ notification, onMarkAsRead }: NotificationItemProps)
   };
 
   const handleClick = () => {
+    // Mark as read if not already read
     if (!notification.read) {
       onMarkAsRead(notification.id);
     }
+
+    // Navigate if the notification is clickable
+    const navigationUrl = getNotificationNavigationUrl(notification);
+    if (navigationUrl) {
+      // Close the notification popover if callback provided
+      onNotificationClick?.();
+
+      // Perform full page reload to the desired URL to avoid authentication issues
+      window.location.href = navigationUrl;
+    }
   };
+
+  const clickable = isNotificationClickable(notification);
 
   return (
     <Button
       variant="ghost"
-      className={`w-full justify-start p-4 h-auto text-left hover:bg-muted/50 ${
-        !notification.read ? 'bg-blue-50 dark:bg-blue-950/20' : ''
-      }`}
+      className={`w-full justify-start p-4 h-auto text-left ${clickable
+          ? 'hover:bg-muted/50 cursor-pointer transition-colors'
+          : 'hover:bg-muted/20 cursor-default'
+        } ${!notification.read ? 'bg-blue-50 dark:bg-blue-950/20' : ''
+        }`}
       onClick={handleClick}
     >
       <div className="flex items-start gap-3 w-full">
         <div className="mt-1">{getIcon()}</div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <p className="font-medium text-sm truncate">{notification.title}</p>
-            {!notification.read && (
-              <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0" />
-            )}
+            <p className="font-medium text-sm truncate flex-1">{notification.title}</p>
+            <div className="flex items-center gap-1 flex-shrink-0">
+              {!notification.read && (
+                <div className="w-2 h-2 bg-blue-500 rounded-full" />
+              )}
+              {clickable && (
+                <ChevronRight className="h-3 w-3 text-muted-foreground" />
+              )}
+            </div>
           </div>
           {notification.content && (
             <p className="text-xs text-muted-foreground line-clamp-2 mb-1">
