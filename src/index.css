@@ -96,7 +96,7 @@ a[href*="lovable.dev"],
     --border: 217 33% 25%;
     --input: 217 33% 25%;
     --ring: 213 27% 84%;
-    
+
     /* Added better sidebar dark mode variables */
     --sidebar-background: 240 10% 8%;
     --sidebar-foreground: 210 40% 98%;
@@ -135,16 +135,16 @@ a[href*="lovable.dev"],
   ::-webkit-scrollbar-thumb:hover {
     @apply bg-primary/50;
   }
-  
+
   /* Ensure text is visible on dark backgrounds */
   .dark .text-gray-700 {
     @apply text-gray-300;
   }
-  
+
   .dark .text-gray-800 {
     @apply text-gray-200;
   }
-  
+
   .dark .text-gray-900 {
     @apply text-gray-100;
   }
@@ -154,7 +154,7 @@ a[href*="lovable.dev"],
   .glass-card {
     @apply bg-white/80 dark:bg-gray-900/50 backdrop-blur-md border border-white/20 dark:border-white/10 shadow-lg;
   }
-  
+
   .text-balance {
     text-wrap: balance;
   }
@@ -163,16 +163,16 @@ a[href*="lovable.dev"],
   .button-hover {
     @apply hover:scale-105 transition-transform duration-200;
   }
-  
+
   .button-tap {
     @apply active:scale-95 transition-transform duration-200;
   }
-  
+
   /* Loading animations */
   .loading-pulse {
     @apply animate-pulse;
   }
-  
+
   .loading-spin {
     @apply animate-spin;
   }
@@ -181,17 +181,17 @@ a[href*="lovable.dev"],
   .card-gradient {
     @apply bg-gradient-to-br from-card to-secondary/80 dark:from-gray-800 dark:to-gray-900 backdrop-blur-sm;
   }
-  
+
   /* Fix for dropdown menus in dark mode */
   .dark [data-radix-popper-content-wrapper] {
     @apply bg-popover text-popover-foreground border border-border shadow-lg;
   }
-  
+
   /* Mobile bottom navigation support */
   .pb-safe {
     padding-bottom: env(safe-area-inset-bottom);
   }
-  
+
   .mb-safe {
     margin-bottom: env(safe-area-inset-bottom);
   }

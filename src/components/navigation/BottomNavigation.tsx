@@ -20,24 +20,24 @@ const BottomNavigation = () => {
   // Hide/show bottom nav on scroll with improved behavior
   useEffect(() => {
     if (!isMounted) return;
-    
+
     let ticking = false;
-    
+
     const controlNavbar = () => {
       if (typeof window === 'undefined') return;
-      
+
       const currentScrollY = window.scrollY;
       const scrollDifference = Math.abs(currentScrollY - lastScrollY);
-      
+
       // Only hide if scrolling down more than 10px and past 50px from top
       if (currentScrollY > lastScrollY && currentScrollY > 50 && scrollDifference > 10) {
         setIsVisible(false);
-      } 
+      }
       // Show if scrolling up or near top
       else if (currentScrollY < lastScrollY || currentScrollY < 50) {
         setIsVisible(true);
       }
-      
+
       setLastScrollY(currentScrollY);
       ticking = false;
     };
@@ -98,7 +98,7 @@ const BottomNavigation = () => {
       animate={{ y: isVisible ? 0 : 100 }}
       transition={{ duration: 0.2, ease: "easeOut" }}
       className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-background/98 dark:bg-background/95 backdrop-blur-md border-t border-border shadow-2xl"
-      style={{ 
+      style={{
         willChange: 'transform',
         transform: 'translateZ(0)',
       }}
@@ -106,25 +106,23 @@ const BottomNavigation = () => {
       <div className="flex items-center justify-around px-2 py-2 safe-area-inset-bottom">
         {navItems.map((item) => {
           const IconComponent = item.icon;
-          
+
           return (
             <Link
               key={item.path}
               to={item.path}
-              className={`flex flex-col items-center justify-center p-2 min-w-[60px] relative transition-all duration-200 ${
-                item.isActive
+              className={`flex flex-col items-center justify-center p-2 min-w-[60px] relative transition-all duration-200 ${item.isActive
                   ? "text-primary"
                   : "text-muted-foreground hover:text-primary"
-              }`}
+                }`}
             >
               <motion.div
                 whileTap={{ scale: 0.9 }}
                 className="relative"
               >
-                <IconComponent 
-                  className={`h-5 w-5 mb-1 ${
-                    item.isActive ? "text-primary" : "text-muted-foreground"
-                  }`} 
+                <IconComponent
+                  className={`h-5 w-5 mb-1 ${item.isActive ? "text-primary" : "text-muted-foreground"
+                    }`}
                 />
 
                 {/* Active indicator */}
@@ -135,11 +133,10 @@ const BottomNavigation = () => {
                   />
                 )}
               </motion.div>
-              
-              <span 
-                className={`text-xs font-medium ${
-                  item.isActive ? "text-primary" : "text-muted-foreground"
-                }`}
+
+              <span
+                className={`text-xs font-medium ${item.isActive ? "text-primary" : "text-muted-foreground"
+                  }`}
               >
                 {item.label}
               </span>
