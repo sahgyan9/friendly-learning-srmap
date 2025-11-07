@@ -124,7 +124,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
         >
           {/* Glassmorphism overlay */}
           <div className="absolute inset-0 bg-gradient-to-b from-white/50 to-transparent dark:from-slate-900/50 pointer-events-none" />
-          
+
           <div className="relative">
             {/* Header with animated sparkles */}
             <div className="px-6 pb-6 flex items-center justify-between">
@@ -154,7 +154,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
                   </motion.div>
                 )}
               </AnimatePresence>
-              
+
               <motion.button
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
@@ -207,7 +207,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
                             }}
                           />
                         )}
-                        
+
                         <motion.div
                           animate={item.current ? {
                             rotate: [0, 5, -5, 0],
@@ -228,7 +228,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
                             )}
                           />
                         </motion.div>
-                        
+
                         <AnimatePresence>
                           {!collapsed && (
                             <motion.span

@@ -98,8 +98,8 @@ const AdminDashboard = () => {
         title="Admin Dashboard"
         description="Welcome to the admin area. Manage your site content and settings from here."
       />
-      
-      <motion.div 
+
+      <motion.div
         className="grid gap-6 md:grid-cols-2 lg:grid-cols-3"
         variants={containerVariants}
         initial="hidden"
@@ -115,7 +115,7 @@ const AdminDashboard = () => {
             <Card className={`overflow-hidden h-full bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border-slate-200 dark:border-slate-700 shadow-lg hover:shadow-2xl transition-all duration-300 relative group ${module.disabled ? 'opacity-60' : ''}`}>
               {/* Animated background gradient */}
               <div className={`absolute inset-0 bg-gradient-to-br ${module.gradient} opacity-0 group-hover:opacity-10 transition-opacity duration-300`} />
-              
+
               {/* Floating icon background */}
               <motion.div
                 className={`absolute -right-8 -top-8 w-32 h-32 bg-gradient-to-br ${module.gradient} opacity-10 rounded-full blur-2xl`}
@@ -129,7 +129,7 @@ const AdminDashboard = () => {
                   ease: "easeInOut",
                 }}
               />
-              
+
               <CardHeader className="pb-3 relative z-10">
                 <div className="flex items-start justify-between">
                   <motion.div
@@ -139,7 +139,7 @@ const AdminDashboard = () => {
                   >
                     <module.icon className="h-6 w-6 text-white" />
                   </motion.div>
-                  
+
                   {!module.disabled && (
                     <motion.div
                       initial={{ opacity: 0, x: -10 }}
@@ -150,7 +150,7 @@ const AdminDashboard = () => {
                     </motion.div>
                   )}
                 </div>
-                
+
                 <CardTitle className="flex items-center gap-2 mt-4 text-slate-900 dark:text-slate-100">
                   {module.title}
                 </CardTitle>
@@ -158,11 +158,11 @@ const AdminDashboard = () => {
                   {module.description}
                 </CardDescription>
               </CardHeader>
-              
+
               <CardFooter className="pt-3 relative z-10">
-                <Button 
-                  asChild 
-                  variant="default" 
+                <Button
+                  asChild
+                  variant="default"
                   className={`w-full bg-gradient-to-r ${module.gradient} hover:opacity-90 text-white shadow-md hover:shadow-lg transition-all duration-300 group/btn`}
                   disabled={module.disabled}
                 >

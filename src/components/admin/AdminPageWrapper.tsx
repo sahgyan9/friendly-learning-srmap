@@ -18,7 +18,7 @@ interface AdminPageWrapperProps {
  */
 const AdminPageWrapper = ({ children, loading = false }: AdminPageWrapperProps) => {
   const { loading: authLoading } = useAuth();
-  
+
   const isLoading = loading || authLoading;
 
   if (isLoading) {
@@ -53,7 +53,7 @@ const AdminPageWrapper = ({ children, loading = false }: AdminPageWrapperProps) 
                 <Sparkles className="h-12 w-12 text-pink-600 dark:text-pink-400" />
               </motion.div>
             </motion.div>
-            
+
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -63,7 +63,7 @@ const AdminPageWrapper = ({ children, loading = false }: AdminPageWrapperProps) 
                 Loading...
               </p>
             </motion.div>
-            
+
             <motion.div
               className="flex gap-2"
               initial={{ opacity: 0 }}

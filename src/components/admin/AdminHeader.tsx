@@ -16,7 +16,7 @@ const AdminHeader = ({ title, description, action }: AdminHeaderProps) => {
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <motion.h1 
+        <motion.h1
           className="text-4xl font-bold bg-gradient-to-r from-slate-900 via-purple-900 to-slate-900 dark:from-slate-100 dark:via-purple-300 dark:to-slate-100 bg-clip-text text-transparent"
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -24,7 +24,7 @@ const AdminHeader = ({ title, description, action }: AdminHeaderProps) => {
         >
           {title}
         </motion.h1>
-        <motion.p 
+        <motion.p
           className="text-muted-foreground mt-2 text-lg"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -34,7 +34,7 @@ const AdminHeader = ({ title, description, action }: AdminHeaderProps) => {
         </motion.p>
       </motion.div>
       {action && (
-        <motion.div 
+        <motion.div
           className="flex-shrink-0"
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}

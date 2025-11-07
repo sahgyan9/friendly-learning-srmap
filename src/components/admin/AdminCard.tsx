@@ -30,7 +30,7 @@ const AdminCard = ({ title, description, children, footer, className }: AdminCar
         {/* Animated gradient border effect */}
         <div className="absolute inset-0 bg-gradient-to-r from-purple-500 via-pink-500 to-blue-500 opacity-0 group-hover:opacity-100 blur-xl transition-opacity duration-500" />
         <div className="absolute inset-[1px] bg-white dark:bg-slate-900 rounded-lg" />
-        
+
         {/* Content */}
         <div className="relative z-10">
           <CardHeader>
