@@ -10,7 +10,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Loader2, User, Mail, Phone, LinkIcon, FileText, Calendar, Upload, Camera, Award, BookOpen, GraduationCap, Heart, Star, MessageSquare } from "lucide-react";
 import Navbar from "@/components/Navbar";
-import { EmailNotificationSettings } from "@/components/profile/EmailNotificationSettings";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -108,7 +107,7 @@ const UserProfile = () => {
         setProfile({
           name: data.name || "",
           email: data.email || "",
-          
+
           mobile: data.mobile || "",
           bio: data.bio || "",
           linkedin_url: data.linkedin_url || "",
@@ -257,7 +256,7 @@ const UserProfile = () => {
         .from("users")
         .update({
           name: profile.name,
-          
+
           mobile: profile.mobile,
           bio: profile.bio,
           linkedin_url: profile.linkedin_url,
@@ -477,11 +476,15 @@ const UserProfile = () => {
             </Card>
 
             <Tabs defaultValue="profile" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full" style={{ gridTemplateColumns: (profile.role === 'mentor' || isMentor) ? '1fr 1fr 1fr' : '1fr 1fr' }}>
                 <TabsTrigger value="profile">Profile Info</TabsTrigger>
-                <TabsTrigger value="badges">Badges</TabsTrigger>
-                {(profile.role === 'mentor' || isMentor) && (
-                  <TabsTrigger value="reviews">Reviews</TabsTrigger>
+                {(profile.role === 'mentor' || isMentor) ? (
+                  <>
+                    <TabsTrigger value="badges">Badges</TabsTrigger>
+                    <TabsTrigger value="reviews">Reviews</TabsTrigger>
+                  </>
+                ) : (
+                  <TabsTrigger value="badges">Badges</TabsTrigger>
                 )}
               </TabsList>
 
@@ -524,19 +527,7 @@ const UserProfile = () => {
                           />
                         </div>
 
-                        <div className="space-y-2">
-                          <Label htmlFor="email">Email Address</Label>
-                          <Input
-                            id="email"
-                            type="email"
-                            value={profile.email}
-                            disabled
-                            className="bg-muted"
-                          />
-                          <p className="text-xs text-muted-foreground">
-                            Email cannot be changed
-                          </p>
-                        </div>
+
 
 
                         <div className="space-y-2">
@@ -550,85 +541,101 @@ const UserProfile = () => {
                           />
                         </div>
 
-                        <div className="space-y-2">
-                          <Label htmlFor="department">Department</Label>
-                          <Input
-                            id="department"
-                            value={profile.department}
-                            onChange={(e) => setProfile({ ...profile, department: e.target.value })}
-                            placeholder="e.g., Computer Science, Mathematics"
-                          />
-                        </div>
+                        {(profile.role === 'mentor' || isMentor) && (
+                          <>
+                            <div className="space-y-2">
+                              <Label htmlFor="department">Department</Label>
+                              <Input
+                                id="department"
+                                value={profile.department}
+                                onChange={(e) => setProfile({ ...profile, department: e.target.value })}
+                                placeholder="e.g., Computer Science, Mathematics"
+                              />
+                            </div>
 
-                        <div className="space-y-2">
-                          <Label htmlFor="linkedin_url">LinkedIn URL</Label>
-                          <Input
-                            id="linkedin_url"
-                            type="url"
-                            value={profile.linkedin_url}
-                            onChange={(e) => setProfile({ ...profile, linkedin_url: e.target.value })}
-                            placeholder="https://linkedin.com/in/yourprofile"
-                          />
-                        </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="linkedin_url">LinkedIn URL</Label>
+                              <Input
+                                id="linkedin_url"
+                                type="url"
+                                value={profile.linkedin_url}
+                                onChange={(e) => setProfile({ ...profile, linkedin_url: e.target.value })}
+                                placeholder="https://linkedin.com/in/yourprofile"
+                              />
+                            </div>
 
-                        <div className="space-y-2">
-                          <Label htmlFor="bio">Bio</Label>
-                          <Textarea
-                            id="bio"
-                            value={profile.bio}
-                            onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
-                            placeholder="Tell us about yourself..."
-                            rows={4}
-                          />
-                        </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="bio">Bio</Label>
+                              <Textarea
+                                id="bio"
+                                value={profile.bio}
+                                onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
+                                placeholder="Tell us about yourself..."
+                                rows={4}
+                              />
+                            </div>
 
-                        {/* Skills Section */}
-                        <div className="space-y-2">
-                          <Label>Skills</Label>
-                          <div className="flex gap-2">
-                            <Input
-                              value={newSkill}
-                              onChange={(e) => setNewSkill(e.target.value)}
-                              placeholder="Add a skill"
-                              onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addSkill())}
-                            />
-                            <Button type="button" onClick={addSkill} variant="outline">
-                              Add
-                            </Button>
-                          </div>
-                          <div className="flex flex-wrap gap-2 mt-2">
-                            {profile.skills.map((skill, index) => (
-                              <Badge key={index} variant="secondary" className="cursor-pointer">
-                                {skill}
-                                <button
-                                  onClick={() => removeSkill(skill)}
-                                  className="ml-2 hover:text-destructive"
-                                  type="button"
-                                >
-                                  ×
-                                </button>
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
+                            {/* Skills Section */}
+                            <div className="space-y-2">
+                              <Label>Skills</Label>
+                              <div className="flex gap-2">
+                                <Input
+                                  value={newSkill}
+                                  onChange={(e) => setNewSkill(e.target.value)}
+                                  placeholder="Add a skill"
+                                  onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addSkill())}
+                                />
+                                <Button type="button" onClick={addSkill} variant="outline">
+                                  Add
+                                </Button>
+                              </div>
+                              <div className="flex flex-wrap gap-2 mt-2">
+                                {profile.skills.map((skill, index) => (
+                                  <Badge key={index} variant="secondary" className="cursor-pointer">
+                                    {skill}
+                                    <button
+                                      onClick={() => removeSkill(skill)}
+                                      className="ml-2 hover:text-destructive"
+                                      type="button"
+                                    >
+                                      ×
+                                    </button>
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
 
-                        <div className="space-y-2">
-                          <Label htmlFor="is_available" className="flex items-center gap-2">
-                            Available for Connections
-                          </Label>
-                          <Select
-                            value={profile.is_available ? "yes" : "no"}
-                            onValueChange={(value) => setProfile({ ...profile, is_available: value === "yes" })}
+                            <div className="space-y-2">
+                              <Label htmlFor="is_available" className="flex items-center gap-2">
+                                Available for Connections
+                              </Label>
+                              <Select
+                                value={profile.is_available ? "yes" : "no"}
+                                onValueChange={(value) => setProfile({ ...profile, is_available: value === "yes" })}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="yes">Yes, I'm available</SelectItem>
+                                  <SelectItem value="no">No, not available</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </>
+                        )}
+
+                        {!(profile.role === 'mentor' || isMentor) && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="w-full"
+                            onClick={() => window.location.href = '/become-mentor'}
                           >
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="yes">Yes, I'm available</SelectItem>
-                              <SelectItem value="no">No, not available</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
+                            <GraduationCap className="mr-2 h-4 w-4" />
+                            Become a Mentor
+                          </Button>
+                        )}
 
                         <Button type="submit" disabled={isSaving} className="w-full">
                           {isSaving ? (
@@ -643,9 +650,6 @@ const UserProfile = () => {
                       </form>
                     </CardContent>
                   </Card>
-
-                  {/* Email Notification Settings */}
-                  <EmailNotificationSettings />
 
                   {/* Mentor-specific fields */}
                   {(profile.role === 'mentor' || isMentor) && (
