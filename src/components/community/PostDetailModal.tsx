@@ -194,12 +194,13 @@ export const PostDetailModal = ({
             <div>
               <h2 className="text-2xl font-bold mb-4">{currentPost.title}</h2>
               {currentPost.image_url && (
-                <div className="mb-4 w-full max-w-md h-64 bg-gray-100 rounded overflow-hidden flex items-center justify-center">
+                <div className="mb-4 w-full bg-muted rounded overflow-hidden flex items-center justify-center">
                   <img
                     src={currentPost.image_url}
                     alt="Post image"
-                    className="object-cover w-full h-full"
+                    className="w-full h-auto max-h-[50vh] object-contain cursor-pointer"
                     onError={(e) => (e.currentTarget.style.display = 'none')}
+                    onClick={() => window.open(currentPost.image_url, '_blank')}
                   />
                 </div>
               )}

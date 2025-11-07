@@ -223,11 +223,12 @@ const MarketPlace = () => {
                             </DialogDescription>
 
                             {detailPost.image_url && (
-                                <div className="w-full aspect-video mb-4">
+                                <div className="w-full mb-4 bg-muted rounded-md overflow-hidden">
                                     <img
                                         src={detailPost.image_url}
                                         alt={detailPost.title}
-                                        className="w-full h-full object-cover rounded-md"
+                                        className="w-full h-auto max-h-[50vh] object-contain cursor-pointer"
+                                        onClick={() => window.open(detailPost.image_url, '_blank')}
                                     />
                                 </div>
                             )}

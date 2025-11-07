@@ -355,12 +355,13 @@ const CommunityPostDetail = () => {
 
               {/* Post Image */}
               {post.image_url && (
-                <div className="w-full rounded-lg sm:rounded-xl overflow-hidden">
+                <div className="w-full rounded-lg sm:rounded-xl overflow-hidden bg-muted">
                   <img
                     src={post.image_url}
                     alt="Post image"
-                    className="w-full h-auto object-cover"
+                    className="w-full h-auto max-h-[70vh] object-contain cursor-pointer"
                     onError={(e) => (e.currentTarget.style.display = 'none')}
+                    onClick={() => window.open(post.image_url, '_blank')}
                   />
                 </div>
               )}

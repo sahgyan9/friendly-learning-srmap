@@ -372,8 +372,13 @@ const CommunityPosts = () => {
                         <img
                           src={post.image_url}
                           alt="Post image"
-                          className="w-full h-64 object-cover hover:scale-105 transition-transform duration-300"
+                          className="w-full max-h-96 object-contain hover:scale-105 transition-transform duration-300 cursor-pointer"
                           onError={(e) => (e.currentTarget.style.display = 'none')}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            // Open image in new tab for full view
+                            window.open(post.image_url, '_blank');
+                          }}
                         />
                       </div>
                     )}

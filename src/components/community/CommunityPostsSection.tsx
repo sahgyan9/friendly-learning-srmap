@@ -270,12 +270,16 @@ export const CommunityPostsSection = () => {
 										{/* Title above image */}
 										<h3 className="font-semibold text-base md:text-lg mb-2 line-clamp-2">{post.title}</h3>
 										{post.image_url && (
-											<div className="mb-2 w-full h-40 bg-gray-100 rounded overflow-hidden">
+											<div className="mb-2 w-full bg-muted rounded overflow-hidden">
 												<img
 													src={post.image_url}
 													alt="Post image"
-													className="object-cover w-full h-full"
+													className="w-full h-auto max-h-40 object-contain cursor-pointer"
 													onError={(e) => (e.currentTarget.style.display = 'none')}
+													onClick={(e) => {
+														e.stopPropagation();
+														window.open(post.image_url, '_blank');
+													}}
 												/>
 											</div>
 										)}
