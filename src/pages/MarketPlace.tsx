@@ -136,44 +136,45 @@ const MarketPlace = () => {
                 <Navbar />
 
                 <div className="container mx-auto px-4 py-8 pt-24">
-                    <div className="flex justify-between items-center mb-8">
-                        <div>
-                            <h1 className="text-3xl font-bold">Events</h1>
-                            <p className="text-sm text-muted-foreground mt-1">Find university news, events, ads and more</p>
-                        </div>
-                        <div className="flex items-center gap-4">
-                            <div className="relative w-64">
-                                <Input
-                                    type="text"
-                                    placeholder="Search..."
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="pl-10"
-                                />
-                                <Search className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                    <div className="mb-6">
+                        <h1 className="text-2xl sm:text-3xl font-bold">Events</h1>
+                        <p className="text-sm text-muted-foreground mt-1">Find university news, events, ads and more</p>
+                    </div>
+
+                    <div className="mb-8">
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                            <div className="flex-1 w-full sm:w-auto">
+                                <div className="relative">
+                                    <Input
+                                        type="text"
+                                        placeholder="Search..."
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        className="pl-10 w-full"
+                                    />
+                                    <Search className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                                </div>
                             </div>
                             {isAdmin && (
-                                <Link to="/admin">
-                                    <Button variant="outline">
+                                <Link to="/admin" className="w-full sm:w-auto">
+                                    <Button variant="outline" className="w-full sm:w-auto">
                                         <Plus className="mr-2 h-4 w-4" />
                                         Admin Panel
                                     </Button>
                                 </Link>
                             )}
                         </div>
-                    </div>
 
-                    <div className="flex-1">
                         <Tabs defaultValue={activeCategory} className="w-full" onValueChange={handleCategoryChange}>
-                            <TabsList className="grid w-full grid-cols-5 mb-8">
-                                <TabsTrigger value="all">All</TabsTrigger>
-                                <TabsTrigger value="news">University News</TabsTrigger>
-                                <TabsTrigger value="events">Events</TabsTrigger>
-                                <TabsTrigger value="ads">Advertisements</TabsTrigger>
-                                <TabsTrigger value="courses">Course Materials</TabsTrigger>
+                            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 h-auto p-1">
+                                <TabsTrigger value="all" className="text-xs sm:text-sm">All</TabsTrigger>
+                                <TabsTrigger value="news" className="text-xs sm:text-sm">University News</TabsTrigger>
+                                <TabsTrigger value="events" className="text-xs sm:text-sm">Events</TabsTrigger>
+                                <TabsTrigger value="ads" className="text-xs sm:text-sm">Advertisements</TabsTrigger>
+                                <TabsTrigger value="courses" className="text-xs sm:text-sm col-span-2 sm:col-span-1">Course Materials</TabsTrigger>
                             </TabsList>
 
-                            <TabsContent value={activeCategory}>
+                            <TabsContent value={activeCategory} className="mt-6">
                                 {loading ? (
                                     <div className="flex justify-center items-center h-64">
                                         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
