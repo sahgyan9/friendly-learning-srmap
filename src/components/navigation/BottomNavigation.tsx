@@ -17,26 +17,40 @@ const BottomNavigation = () => {
     setIsMounted(true);
   }, []);
 
-  // Hide/show bottom nav on scroll
+  // Hide/show bottom nav on scroll with improved behavior
   useEffect(() => {
     if (!isMounted) return;
+    
+    let ticking = false;
     
     const controlNavbar = () => {
       if (typeof window === 'undefined') return;
       
       const currentScrollY = window.scrollY;
+      const scrollDifference = Math.abs(currentScrollY - lastScrollY);
       
-      if (currentScrollY > lastScrollY && currentScrollY > 100) {
+      // Only hide if scrolling down more than 10px and past 50px from top
+      if (currentScrollY > lastScrollY && currentScrollY > 50 && scrollDifference > 10) {
         setIsVisible(false);
-      } else {
+      } 
+      // Show if scrolling up or near top
+      else if (currentScrollY < lastScrollY || currentScrollY < 50) {
         setIsVisible(true);
       }
       
       setLastScrollY(currentScrollY);
+      ticking = false;
     };
 
-    window.addEventListener('scroll', controlNavbar);
-    return () => window.removeEventListener('scroll', controlNavbar);
+    const requestTick = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(controlNavbar);
+        ticking = true;
+      }
+    };
+
+    window.addEventListener('scroll', requestTick, { passive: true });
+    return () => window.removeEventListener('scroll', requestTick);
   }, [lastScrollY, isMounted]);
 
   const navItems = [
@@ -82,10 +96,14 @@ const BottomNavigation = () => {
     <motion.nav
       initial={{ y: 0 }}
       animate={{ y: isVisible ? 0 : 100 }}
-      transition={{ duration: 0.3, ease: "easeInOut" }}
-      className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-white/95 backdrop-blur-lg border-t border-border shadow-lg"
+      transition={{ duration: 0.2, ease: "easeOut" }}
+      className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-background/98 dark:bg-background/95 backdrop-blur-md border-t border-border shadow-2xl"
+      style={{ 
+        willChange: 'transform',
+        transform: 'translateZ(0)',
+      }}
     >
-      <div className="flex items-center justify-around px-2 py-2 pb-safe">
+      <div className="flex items-center justify-around px-2 py-2 safe-area-inset-bottom">
         {navItems.map((item) => {
           const IconComponent = item.icon;
           

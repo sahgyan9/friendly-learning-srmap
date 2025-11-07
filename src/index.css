@@ -195,10 +195,18 @@ a[href*="lovable.dev"],
   .mb-safe {
     margin-bottom: env(safe-area-inset-bottom);
   }
+
+  .safe-area-inset-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
 }
 
 @supports (padding: max(0px)) {
   .pb-safe {
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
+  }
+
+  .safe-area-inset-bottom {
     padding-bottom: max(8px, env(safe-area-inset-bottom));
   }
 }
