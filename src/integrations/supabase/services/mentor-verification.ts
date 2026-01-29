@@ -6,8 +6,6 @@ export type MentorVerification = Database['public']['Tables']['mentor_verificati
 export type CreateMentorVerification = Database['public']['Tables']['mentor_verifications']['Insert'];
 
 export const submitMentorApplication = async (application: CreateMentorVerification) => {
-  console.log('Submitting mentor application:', application);
-
   // First check if user already has an application
   const { data: existingApp, error: checkError } = await supabase
     .from('mentor_verifications')
@@ -16,7 +14,6 @@ export const submitMentorApplication = async (application: CreateMentorVerificat
     .maybeSingle();
 
   if (checkError) {
-    console.error('Error checking existing application:', checkError);
     throw new Error(`Failed to check existing application: ${checkError.message}`);
   }
 
@@ -31,19 +28,14 @@ export const submitMentorApplication = async (application: CreateMentorVerificat
     .single();
 
   if (error) {
-    console.error('Error submitting mentor application:', error);
     throw new Error(`Failed to submit application: ${error.message}`);
   }
 
-  console.log('Application submitted successfully:', data);
   return { data, error: null };
 };
 
 export const getMentorVerification = async (userId: string) => {
-  console.log('Fetching mentor verification for user:', userId);
-
   if (!userId) {
-    console.error('No userId provided to getMentorVerification');
     return { data: null, error: { message: 'User ID is required' } };
   }
 
@@ -58,20 +50,16 @@ export const getMentorVerification = async (userId: string) => {
       .maybeSingle();
 
     if (error && error.code !== 'PGRST116') {
-      console.error('Error fetching mentor verification:', error);
       throw new Error(`Failed to fetch verification: ${error.message}`);
     }
 
     return { data, error: null };
   } catch (error: any) {
-    console.error('Exception in getMentorVerification:', error);
     return { data: null, error: { message: error.message || 'Failed to fetch verification' } };
   }
 };
 
 export const getAllMentorVerifications = async (status?: string) => {
-  console.log('Fetching all mentor verifications with status:', status);
-
   let query = supabase
     .from('mentor_verifications')
     .select(`
@@ -88,11 +76,9 @@ export const getAllMentorVerifications = async (status?: string) => {
   const { data, error } = await query;
 
   if (error) {
-    console.error('Error fetching mentor verifications:', error);
     throw new Error(`Failed to fetch verifications: ${error.message}`);
   }
 
-  console.log('Fetched verifications:', data?.length || 0);
   return { data, error: null };
 };
 
@@ -102,13 +88,6 @@ export const updateVerificationStatus = async (
   adminId: string,
   reason?: string
 ) => {
-  console.log('Updating verification status:', {
-    verificationId,
-    status,
-    adminId,
-    reason
-  });
-
   try {
     const { data, error } = await supabase.rpc('update_verification_status', {
       verification_id: verificationId,
@@ -118,7 +97,6 @@ export const updateVerificationStatus = async (
     });
 
     if (error) {
-      console.error('RPC Error updating verification status:', error);
       throw new Error(`Database error: ${error.message}`);
     }
 
@@ -177,7 +155,7 @@ export const updateVerificationStatus = async (
             .from('notifications')
             .insert(notification);
         }
-        
+
         console.log('Enhanced rejection notifications created for user:', verification.user_id);
       }
     }

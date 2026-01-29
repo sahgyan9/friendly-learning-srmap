@@ -97,7 +97,6 @@ const AdminMentorVerification = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      console.log('Fetching all verification data');
 
       const [verificationsResult, statsResult] = await Promise.all([
         getAllMentorVerifications(), // Get all verifications, we'll filter on frontend
@@ -105,16 +104,13 @@ const AdminMentorVerification = () => {
       ]);
 
       if (verificationsResult.data) {
-        console.log('All verifications loaded:', verificationsResult.data.length);
         setAllVerifications(verificationsResult.data);
       }
 
       if (statsResult.data) {
-        console.log('Statistics loaded:', statsResult.data);
         setStats(statsResult.data);
       }
     } catch (error) {
-      console.error('Error fetching verification data:', error);
       toast({
         title: "Error",
         description: `Failed to load verification data: ${error.message || 'Unknown error'}`,
@@ -130,7 +126,6 @@ const AdminMentorVerification = () => {
   }, []);
 
   const handleStatusUpdate = () => {
-    console.log('Verification status updated, refreshing data');
     fetchData();
     toast({
       title: "Success",

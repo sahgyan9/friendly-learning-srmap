@@ -5,13 +5,18 @@
  * for different page types following Schema.org guidelines.
  */
 
+// Primary domain constant
+const PRIMARY_DOMAIN = "https://friendly-learning-srmap.com";
+
 // Base URL for the site - dynamically determined
 const getBaseUrl = () => {
     if (typeof window !== 'undefined') {
-        return window.location.origin;
+        // Use primary domain for production, current origin for development
+        if (window.location.hostname === 'localhost' || window.location.hostname.includes('127.0.0.1')) {
+            return window.location.origin;
+        }
     }
-    // Fallback for server-side rendering
-    return "https://friendly-learning-srmap.lovable.app";
+    return PRIMARY_DOMAIN;
 };
 
 /**
@@ -22,19 +27,17 @@ export const getOrganizationSchema = () => {
     return {
         "@context": "https://schema.org",
         "@type": "Organization",
-        "name": "Project FL",
-        "url": baseUrl,
-        "logo": `${baseUrl}/og-image.png`,
+        "name": "Friendly Learning SRMAP",
+        "url": PRIMARY_DOMAIN,
+        "logo": `${PRIMARY_DOMAIN}/og-image.png`,
         "description": "University student collaboration platform connecting students for academic help, hackathon partnerships, project collaborations, and finding study partners.",
         "sameAs": [
-            "https://www.project-fl.me",
-            "https://friendly-learning-srmap.lovable.app",
-            // Add social media profiles when available
-        ].filter(url => url !== baseUrl),
+            "https://friendly-learning-srmap.com"
+        ],
         "contactPoint": {
             "@type": "ContactPoint",
             "contactType": "customer service",
-            "url": `${baseUrl}/contact`
+            "url": `${PRIMARY_DOMAIN}/contact`
         }
     };
 };
@@ -43,15 +46,14 @@ export const getOrganizationSchema = () => {
  * Generate WebSite schema
  */
 export const getWebsiteSchema = () => {
-    const baseUrl = getBaseUrl();
     return {
         "@context": "https://schema.org",
         "@type": "WebSite",
-        "name": "Project FL",
-        "url": baseUrl,
+        "name": "Friendly Learning SRMAP",
+        "url": PRIMARY_DOMAIN,
         "potentialAction": {
             "@type": "SearchAction",
-            "target": `${baseUrl}/search?q={search_term_string}`,
+            "target": `${PRIMARY_DOMAIN}/mentors?search={search_term_string}`,
             "query-input": "required name=search_term_string"
         }
     };

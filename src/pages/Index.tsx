@@ -12,6 +12,7 @@ import StructuredData from "@/components/StructuredData";
 import { CommunityPostsSection } from "@/components/community/CommunityPostsSection";
 import { useAuth } from "@/context/AuthContext";
 import { getOrganizationSchema, getWebsiteSchema } from "@/lib/structured-data";
+import { PRIMARY_DOMAIN } from "@/lib/constants";
 
 const Index = () => {
   const { user } = useAuth();
@@ -20,22 +21,22 @@ const Index = () => {
   const homePageSchema = {
     "@context": "https://schema.org",
     "@type": "WebPage",
-    "url": "https://friendly-learning-srmap.lovable.app/",
+    "url": `${PRIMARY_DOMAIN}/`,
     "name": "Friendly Learning SRMAP - SRM AP Student Mentorship Platform",
     "description": "Friendly Learning SRMAP connects SRM AP university students with experienced peer mentors for academic guidance, project collaboration, and study partnerships.",
     "isPartOf": {
       "@type": "WebSite",
       "name": "Friendly Learning SRMAP",
-      "url": "https://friendly-learning-srmap.lovable.app/"
+      "url": `${PRIMARY_DOMAIN}/`
     },
     "keywords": "friendly learning srmap, fl srmap, srmap mentorship, srm ap student mentors",
     "mainEntity": {
       "@type": "EducationalOrganization",
       "name": "Friendly Learning",
-      "url": "https://friendly-learning-srmap.lovable.app/",
-      "logo": "https://friendly-learning-srmap.lovable.app/og-image.png",
+      "url": `${PRIMARY_DOMAIN}/`,
+      "logo": `${PRIMARY_DOMAIN}/og-image.png`,
       "sameAs": [
-        "https://www.project-fl.me"
+        "https://friendly-learning-srmap.com"
       ],
       "educationalCredentialAwarded": "Peer Mentorship",
       "serviceArea": {
@@ -55,7 +56,7 @@ const Index = () => {
       <SEOHead
         title="Friendly Learning SRMAP - Student Mentorship Platform | SRM AP Academic Mentors"
         description="Friendly Learning SRMAP connects SRM AP university students with experienced peer mentors for academic guidance, project collaboration, and study partnerships. Get personalized help from verified mentors in your department."
-        canonical="https://friendly-learning-srmap.lovable.app/"
+        canonical={`${PRIMARY_DOMAIN}/`}
         ogTitle="Friendly Learning SRMAP - Connect with SRM AP Student Mentors"
         ogDescription="Find academic guidance, study partners, project collaborators, and hackathon teams through the official SRM AP student mentorship platform."
       />

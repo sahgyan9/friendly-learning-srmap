@@ -31,23 +31,19 @@ const MentorProfile = () => {
 
       setLoading(true);
       try {
-        console.log('Fetching mentor profile for ID:', id);
         const { data, error } = await getMentorById(id);
 
         if (error) {
-          console.error("Error fetching mentor:", error);
           toast.error("Failed to load mentor profile");
           return;
         }
 
         if (data) {
-          console.log('Mentor profile loaded:', data.name);
           setMentor(data);
         } else {
           toast.error("Mentor not found");
         }
       } catch (err) {
-        console.error("Exception fetching mentor:", err);
         toast.error("An unexpected error occurred");
       } finally {
         setLoading(false);

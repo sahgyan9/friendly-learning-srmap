@@ -9,7 +9,7 @@ export async function getMentors() {
     .neq('department', 'General')
     .not('department', 'is', null)
     .order('rating', { ascending: false });
-  
+
   return { data, error };
 }
 
@@ -33,12 +33,10 @@ export async function searchMentors(query: string) {
   if (!query || !query.trim()) {
     return getMentors();
   }
-  
+
   const lowerQuery = query.toLowerCase().trim();
-  
+
   try {
-    console.log("Searching for:", lowerQuery);
-    
     // Search in name, department, and bio with proper formatting, excluding General department
     const { data, error } = await supabase
       .from('mentors')
@@ -47,36 +45,28 @@ export async function searchMentors(query: string) {
       .not('department', 'is', null)
       .or(`name.ilike.%${lowerQuery}%,department.ilike.%${lowerQuery}%,bio.ilike.%${lowerQuery}%`)
       .order('rating', { ascending: false });
-    
+
     if (error) {
-      console.error("Supabase search error:", error);
       throw error;
     }
-    
-    console.log("SQL search results:", data?.length || 0, "mentors found");
-    
+
     // For skills array, we need to filter in JS since it's complex in SQL
-    const mentorsWithMatchingSkills = data?.filter(mentor => 
-      mentor.skills && mentor.skills.some(skill => 
+    const mentorsWithMatchingSkills = data?.filter(mentor =>
+      mentor.skills && mentor.skills.some(skill =>
         skill.toLowerCase().includes(lowerQuery)
       )
     ) || [];
-    
-    console.log("Skills search results:", mentorsWithMatchingSkills.length, "mentors found");
-    
+
     // Merge SQL results with JS filtered results for skills
     const mergedResults = [...(data || []), ...mentorsWithMatchingSkills];
-    
+
     // Remove duplicates based on id
     const uniqueResults = Array.from(
       new Map(mergedResults.map(item => [item.id, item])).values()
     );
-    
-    console.log("Final search results:", uniqueResults.length, "unique mentors");
-    
+
     return { data: uniqueResults, error: null };
   } catch (err) {
-    console.error("Search error:", err);
     return { data: null, error: err };
   }
 }
@@ -88,6 +78,6 @@ export async function getMentorById(id: string) {
     .select('*')
     .eq('id', id)
     .single();
-  
+
   return { data, error };
 }

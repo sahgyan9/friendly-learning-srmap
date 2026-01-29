@@ -2,6 +2,7 @@
 import { createContext, useState, useContext, useEffect, ReactNode } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { setUserContext } from "@/lib/sentry";
 
 interface UserProfile {
   id: string;
@@ -44,10 +45,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Set up auth state listener first
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log("Auth event:", event);
         setSession(session);
         setUser(session?.user ?? null);
-        
+
         // Fetch user profile when session changes
         if (session?.user) {
           setTimeout(() => {
@@ -65,7 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
-      
+
       if (session?.user) {
         fetchUserProfile(session.user.id);
       } else {
@@ -80,31 +80,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const fetchUserProfile = async (userId: string) => {
     try {
-      console.log("Fetching profile for user:", userId);
-      
       const { data, error } = await supabase
         .from('users')
         .select('*')
         .eq('id', userId)
         .maybeSingle();
-      
+
       if (error) {
-        console.error('Error fetching user profile:', error);
         setProfile(null);
         setIsMentor(false);
+        setUserContext(null);
       } else if (data) {
-        console.log("Profile found:", data);
         setProfile(data);
-        
+        // Set Sentry user context for error tracking
+        setUserContext({ id: data.id, email: data.email, name: data.name });
+
         // Check if user is a real mentor (not in General department)
         await checkRealMentorStatus(userId);
       } else {
-        console.log("No profile found for user, this should have been created by trigger");
         setProfile(null);
         setIsMentor(false);
+        setUserContext(null);
       }
     } catch (error) {
-      console.error('Unexpected error fetching user profile:', error);
       setProfile(null);
       setIsMentor(false);
     } finally {
@@ -119,7 +117,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .select('department')
         .eq('id', userId)
         .single();
-      
+
       if (error) {
         setIsMentor(false);
       } else {
@@ -127,7 +125,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setIsMentor(data && data.department && data.department !== 'General');
       }
     } catch (error) {
-      console.error('Error checking mentor status:', error);
       setIsMentor(false);
     }
   };
@@ -143,7 +140,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await supabase.auth.signOut();
       // Navigation will be handled by the component that calls signOut
     } catch (error) {
-      console.error('Error signing out:', error);
+      // Sign out error - silent fail, user can retry
     }
   };
 
