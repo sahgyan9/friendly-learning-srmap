@@ -5,7 +5,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/context/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import BottomNavigation from "@/components/navigation/BottomNavigation";
+import { NavBar } from "@/components/ui/tubelight-navbar";
+import { Home, Users, MessageSquare, Calendar, Mail } from "lucide-react";
 import Index from "./pages/Index";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
@@ -98,8 +99,16 @@ function App() {
             <Route path="*" element={<NotFound />} />
           </Routes>
           
-          {/* Bottom Navigation for Mobile */}
-          <BottomNavigation />
+          {/* Tubelight Navigation - bottom on mobile, top on desktop */}
+          <NavBar
+            items={[
+              { name: "Home", url: "/", icon: Home },
+              { name: "Mentors", url: "/mentors", icon: Users },
+              { name: "Community", url: "/community-posts", icon: MessageSquare },
+              { name: "Events", url: "/marketplace", icon: Calendar },
+              { name: "Messages", url: "/messages", icon: Mail },
+            ]}
+          />
           </div>
         </TooltipProvider>
       </AuthProvider>
