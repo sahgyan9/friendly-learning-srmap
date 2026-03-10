@@ -9,7 +9,6 @@ import NavbarProfileMenu from "./NavbarProfileMenu";
 import { NavbarMobileMenu } from "./NavbarMobileMenu";
 import MessagesIcon from "./navbar/MessagesIcon";
 import NotificationBell from "./notifications/NotificationBell";
-import DarkModeToggle from "./DarkModeToggle";
 
 const Navbar = () => {
   const { user } = useAuth();
@@ -31,8 +30,8 @@ const Navbar = () => {
             <Logo />
           </Link>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-8">
+          {/* Desktop Navigation - hidden since tubelight navbar handles desktop nav */}
+          <div className="hidden items-center space-x-8">
             <Link
               to="/"
               className={`text-sm font-medium transition-colors hover:text-primary ${isActive("/") ? "text-primary" : "text-muted-foreground"
@@ -80,7 +79,6 @@ const Navbar = () => {
 
           {/* Right side - Auth buttons or user menu */}
           <div className="hidden md:flex items-center space-x-4">
-            <DarkModeToggle />
             {user ? (
               <>
                 <MessagesIcon />
@@ -103,7 +101,6 @@ const Navbar = () => {
 
           {/* Mobile menu button */}
           <div className="md:hidden flex items-center space-x-2">
-            <DarkModeToggle />
             {user && (
               <>
                 <MessagesIcon />

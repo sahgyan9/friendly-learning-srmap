@@ -3,6 +3,7 @@ import { motion } from "framer-motion"
 import { Link } from "react-router-dom"
 import { LucideIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
+import DarkModeToggle from "@/components/DarkModeToggle"
 
 interface NavItem {
   name: string
@@ -77,6 +78,9 @@ export function NavBar({ items, className }: NavBarProps) {
             </Link>
           )
         })}
+        <div className="hidden md:flex items-center pl-2 pr-1">
+          <DarkModeToggle />
+        </div>
       </div>
     </div>
   )
