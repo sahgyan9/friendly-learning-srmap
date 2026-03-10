@@ -5,6 +5,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Search, Plus, Loader2 } from "lucide-react";
 import { PostCard } from "@/components/marketplace/PostCard";
+import { SRMAPEventCard } from "@/components/marketplace/SRMAPEventCard";
+import { useSRMAPEvents } from "@/hooks/useSRMAPEvents";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
 import { fetchMarketplacePosts, fetchMarketplacePost, CategoryType, MarketplacePost, isUserAdmin } from '@/integrations/supabase/services/marketplace';
@@ -21,7 +23,7 @@ import {
 } from '@/components/ui/dialog';
 
 const MarketPlace = () => {
-    const [activeCategory, setActiveCategory] = useState<CategoryType>('all');
+    const [activeCategory, setActiveCategory] = useState<string>('srmap');
     // Changed all visible 'MarketPlace' and 'Marketplace' labels to 'Events' and updated all URLs from '/marketplace' to '/events'.
     const [searchQuery, setSearchQuery] = useState('');
     const [posts, setPosts] = useState<MarketplacePost[]>([]);
@@ -31,6 +33,7 @@ const MarketPlace = () => {
     const [isAdmin, setIsAdmin] = useState(false);
     const { user } = useAuth();
     const { toast } = useToast();
+    const { events: srmapEvents, loading: srmapLoading, error: srmapError } = useSRMAPEvents();
     const [searchParams, setSearchParams] = useSearchParams();
 
     useEffect(() => {
@@ -58,9 +61,11 @@ const MarketPlace = () => {
     };
 
     const loadPosts = async () => {
+        if (activeCategory === 'srmap') return;
         try {
             setLoading(true);
-            const data = await fetchMarketplacePosts(activeCategory);
+            const supabaseCategory = (activeCategory === 'srmap' ? 'all' : activeCategory) as CategoryType;
+            const data = await fetchMarketplacePosts(supabaseCategory);
             setPosts(data);
         } catch (error) {
             console.error('Error loading posts:', error);
@@ -109,7 +114,7 @@ const MarketPlace = () => {
     };
 
     const handleCategoryChange = (value: string) => {
-        setActiveCategory(value as CategoryType);
+        setActiveCategory(value);
     };
 
     const filteredPosts = posts.filter(post =>
@@ -138,7 +143,7 @@ const MarketPlace = () => {
                 <div className="container mx-auto px-4 py-8 pt-24">
                     <div className="mb-6">
                         <h1 className="text-2xl sm:text-3xl font-bold">Events</h1>
-                        <p className="text-sm text-muted-foreground mt-1">Find university news, events, ads and more</p>
+                        <p className="text-sm text-muted-foreground mt-1">Official SRMAP events, ads and course materials</p>
                     </div>
 
                     <div className="mb-8">
@@ -166,14 +171,14 @@ const MarketPlace = () => {
                         </div>
 
                         <Tabs defaultValue={activeCategory} className="w-full" onValueChange={handleCategoryChange}>
-                            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 h-auto p-1">
-                                <TabsTrigger value="all" className="text-xs sm:text-sm">All</TabsTrigger>
-                                <TabsTrigger value="news" className="text-xs sm:text-sm">University News</TabsTrigger>
-                                <TabsTrigger value="events" className="text-xs sm:text-sm">Events</TabsTrigger>
-                                <TabsTrigger value="ads" className="text-xs sm:text-sm">Advertisements</TabsTrigger>
-                                <TabsTrigger value="courses" className="text-xs sm:text-sm col-span-2 sm:col-span-1">Course Materials</TabsTrigger>
+                            <TabsList className="flex flex-wrap w-full h-auto p-1 gap-1">
+                                <TabsTrigger value="srmap" className="text-xs sm:text-sm flex-1">University Events</TabsTrigger>
+                                <TabsTrigger value="all" className="text-xs sm:text-sm flex-1">All Posts</TabsTrigger>
+                                <TabsTrigger value="ads" className="text-xs sm:text-sm flex-1">Advertisements</TabsTrigger>
+                                <TabsTrigger value="courses" className="text-xs sm:text-sm flex-1">Course Materials</TabsTrigger>
                             </TabsList>
 
+                            {(activeCategory as string) !== 'srmap' && (
                             <TabsContent value={activeCategory} className="mt-6">
                                 {loading ? (
                                     <div className="flex justify-center items-center h-64">
@@ -208,6 +213,41 @@ const MarketPlace = () => {
                                                 />
                                             </div>
                                         ))}
+                                    </div>
+                                )}
+                            </TabsContent>
+                            )}
+
+                            <TabsContent value="srmap" className="mt-6">
+                                {srmapLoading ? (
+                                    <div className="flex justify-center items-center h-64">
+                                        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                                    </div>
+                                ) : srmapError ? (
+                                    <div className="text-center py-12">
+                                        <p className="text-lg text-muted-foreground">{srmapError}</p>
+                                        <p className="text-sm text-muted-foreground mt-2">
+                                            <a href="https://events.srmap.edu.in/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                                                Visit SRMAP Events directly
+                                            </a>
+                                        </p>
+                                    </div>
+                                ) : srmapEvents.length === 0 ? (
+                                    <div className="text-center py-12">
+                                        <p className="text-lg text-muted-foreground">No official events found</p>
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                        {srmapEvents
+                                            .filter(e =>
+                                                !searchQuery ||
+                                                e.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                                                e.excerpt.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                                                e.department.toLowerCase().includes(searchQuery.toLowerCase())
+                                            )
+                                            .map(event => (
+                                                <SRMAPEventCard key={event.id} event={event} />
+                                            ))}
                                     </div>
                                 )}
                             </TabsContent>
