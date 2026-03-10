@@ -62,7 +62,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: false, 
-        error: error.message || 'An error occurred while sending your message' 
+        error: (error as Error).message || 'An error occurred while sending your message' 
       }),
       {
         status: 500,

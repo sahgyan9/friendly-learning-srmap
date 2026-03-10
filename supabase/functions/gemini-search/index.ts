@@ -114,7 +114,7 @@ async function searchWithGeminiAI(query: string, mentors: any[]) {
       }
       
       const mentorIds = JSON.parse(jsonMatch[0]);
-      console.log("Mentor IDs from Gemini:", mentorIds.map(item => item.id));
+      console.log("Mentor IDs from Gemini:", mentorIds.map((item: { id: string }) => item.id));
       return { ids: mentorIds };
     } catch (err) {
       console.error("Error parsing mentor IDs from Gemini response:", err);
