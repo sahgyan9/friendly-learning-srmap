@@ -5,14 +5,21 @@ export interface SRMAPEvent {
   title: string;
   excerpt: string;
   date: string;
+  startDate: string;
+  endDate: string;
   link: string;
   imageUrl: string | null;
   department: string;
   eventType: string;
 }
 
-const SRMAP_API =
-  "https://events.srmap.edu.in/wp-json/wp/v2/tribe_events?per_page=20&_embed=1&order=desc";
+const SRMAP_API_BASE =
+  "https://events.srmap.edu.in/wp-json/wp/v2/tribe_events?per_page=100&_embed=1&order=desc";
+
+function parseSRMAPDate(value: string): number {
+  // SRMAP API returns "YYYY-MM-DD HH:mm:ss" in IST. Convert to a stable ISO offset string.
+  return new Date(value.replace(" ", "T") + "+05:30").getTime();
+}
 
 function stripHtml(html: string): string {
   return html.replace(/<[^>]*>/g, "").trim();
@@ -71,27 +78,75 @@ export function useSRMAPEvents() {
       try {
         setLoading(true);
         setError(null);
-        const res = await fetch(SRMAP_API);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
+        const responses = await Promise.all([
+          fetch(`${SRMAP_API_BASE}&page=1`),
+          fetch(`${SRMAP_API_BASE}&page=2`),
+          fetch(`${SRMAP_API_BASE}&page=3`),
+        ]);
+
+        const okResponses = responses.filter((res) => res.ok);
+        if (okResponses.length === 0) {
+          throw new Error("Unable to fetch SRMAP events");
+        }
+
+        const pages = await Promise.all(okResponses.map((res) => res.json()));
+        const data = pages.flat() as Record<string, unknown>[];
 
         if (!cancelled) {
-          const mapped: SRMAPEvent[] = (data as Record<string, unknown>[]).map((item) => ({
-            id: item.id as number,
-            title: stripHtml((item.title as { rendered: string }).rendered),
-            excerpt: stripHtml((item.excerpt as { rendered: string }).rendered),
-            date: item.date as string,
-            link: item.link as string,
-            imageUrl: item._embedded
-              ? extractImage(item._embedded as Record<string, unknown>)
-              : null,
-            department: item._embedded
-              ? extractDepartment(item._embedded as Record<string, unknown>)
-              : "SRMAP",
-            eventType: item._embedded
-              ? extractEventType(item._embedded as Record<string, unknown>)
-              : "",
-          }));
+          const now = Date.now();
+          const mapped: SRMAPEvent[] = data
+            .map((item) => {
+              const startDate = (item.event_start_date as string) || (item.date as string);
+              const endDate = (item.event_end_date as string) || startDate;
+
+              return {
+                id: item.id as number,
+                title: stripHtml((item.title as { rendered: string }).rendered),
+                excerpt: stripHtml((item.excerpt as { rendered: string }).rendered),
+                date: startDate,
+                startDate,
+                endDate,
+                link: item.link as string,
+                imageUrl: item._embedded
+                  ? extractImage(item._embedded as Record<string, unknown>)
+                  : null,
+                department: item._embedded
+                  ? extractDepartment(item._embedded as Record<string, unknown>)
+                  : "SRMAP",
+                eventType: item._embedded
+                  ? extractEventType(item._embedded as Record<string, unknown>)
+                  : "",
+              };
+            })
+            .filter((item) => parseSRMAPDate(item.endDate) >= now - 7 * 24 * 60 * 60 * 1000)
+            .sort((a, b) => {
+              const aStart = parseSRMAPDate(a.startDate);
+              const bStart = parseSRMAPDate(b.startDate);
+              const aEnd = parseSRMAPDate(a.endDate);
+              const bEnd = parseSRMAPDate(b.endDate);
+              const aLive = now >= aStart && now <= aEnd;
+              const bLive = now >= bStart && now <= bEnd;
+
+              if (aLive && !bLive) return -1;
+              if (!aLive && bLive) return 1;
+
+              const aUpcoming = aStart > now;
+              const bUpcoming = bStart > now;
+              if (aUpcoming && !bUpcoming) return -1;
+              if (!aUpcoming && bUpcoming) return 1;
+
+              if (aUpcoming && bUpcoming) {
+                return aStart - bStart;
+              }
+
+              // Both are past events: show most recent first.
+              if (!aLive && !bLive && !aUpcoming && !bUpcoming) {
+                return bStart - aStart;
+              }
+
+              return aStart - bStart;
+            });
+
           setEvents(mapped);
         }
       } catch (err) {
@@ -104,7 +159,9 @@ export function useSRMAPEvents() {
     }
 
     fetchEvents();
+    const refreshTimer = window.setInterval(fetchEvents, 60000);
     return () => {
+      window.clearInterval(refreshTimer);
       cancelled = true;
     };
   }, []);

@@ -9,14 +9,36 @@ interface SRMAPEventCardProps {
 }
 
 export function SRMAPEventCard({ event }: SRMAPEventCardProps) {
-  const formattedDate = new Date(event.date).toLocaleDateString("en-IN", {
+  const parseDate = (value: string) => new Date(value.replace(" ", "T") + "+05:30");
+  const start = parseDate(event.startDate);
+  const end = parseDate(event.endDate);
+  const now = new Date();
+  const isLive = now >= start && now <= end;
+  const isUpcoming = now < start;
+
+  const formattedStartDate = start.toLocaleDateString("en-IN", {
     day: "numeric",
-    month: "short",
+    month: "long",
     year: "numeric",
   });
+  const formattedEndDate = end.toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+  const formattedDate =
+    formattedStartDate === formattedEndDate
+      ? formattedStartDate
+      : `${formattedStartDate} - ${formattedEndDate}`;
 
   return (
-    <Card className="overflow-hidden hover:shadow-lg transition-all duration-200 flex flex-col group border border-border hover:border-primary/30">
+    <Card
+      className={`overflow-hidden hover:shadow-lg transition-all duration-200 flex flex-col group border ${
+        isLive
+          ? "border-red-500/70 shadow-[0_0_0_2px_rgba(239,68,68,0.2)]"
+          : "border-border hover:border-primary/30"
+      }`}
+    >
       {/* Top accent stripe */}
       <div className="h-1 w-full bg-gradient-to-r from-orange-500 to-red-600" />
 
@@ -39,6 +61,25 @@ export function SRMAPEventCard({ event }: SRMAPEventCardProps) {
           <span className="inline-flex items-center gap-1 rounded-full bg-orange-600 px-2 py-0.5 text-[10px] font-semibold text-white shadow">
             ● SRMAP Official
           </span>
+        </div>
+
+        {/* Real-time state badge */}
+        <div className="absolute top-2 right-2">
+          {isLive ? (
+            <span className="relative inline-flex items-center gap-1 rounded-full bg-red-600 px-2 py-0.5 text-[10px] font-semibold text-white shadow">
+              <span className="absolute inline-flex h-2.5 w-2.5 rounded-full bg-red-300 opacity-80 animate-ping" />
+              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-white" />
+              LIVE NOW
+            </span>
+          ) : isUpcoming ? (
+            <span className="inline-flex items-center rounded-full bg-emerald-600 px-2 py-0.5 text-[10px] font-semibold text-white shadow">
+              UPCOMING
+            </span>
+          ) : (
+            <span className="inline-flex items-center rounded-full bg-slate-600 px-2 py-0.5 text-[10px] font-semibold text-white shadow">
+              ENDED
+            </span>
+          )}
         </div>
       </div>
 
