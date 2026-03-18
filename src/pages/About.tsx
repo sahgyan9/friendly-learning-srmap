@@ -211,7 +211,7 @@ const About = () => {
             </div>
           </div>
         </main>
-        <TeamMembers />
+        <TeamMembers teamMembers={teamMembers} />
         <Footer />
       </div>
     </>
