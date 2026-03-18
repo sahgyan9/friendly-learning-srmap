@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -6,8 +7,19 @@ import SEOHead from "@/components/SEOHead";
 import TeamMembers from "@/components/about/TeamMembers";
 import StructuredData from "@/components/StructuredData";
 import { getOrganizationSchema } from "@/lib/structured-data";
+import { getTeamMembers, TeamMember } from "@/integrations/supabase/services/team-members";
 
 const About = () => {
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+
+  useEffect(() => {
+    const load = async () => {
+      const { data } = await getTeamMembers();
+      if (data) setTeamMembers(data);
+    };
+    load();
+  }, []);
+
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "AboutPage",
