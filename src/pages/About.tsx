@@ -40,7 +40,26 @@ const About = () => {
         "Study Partner Matching",
         "Skill-based Student Discovery",
         "University Community Posts"
-      ]
+      ],
+      ...(teamMembers.length > 0 && {
+        "member": teamMembers.map(m => ({
+          "@type": "Person",
+          "name": m.name,
+          "jobTitle": m.position,
+          ...(m.email && { "email": m.email }),
+          ...(m.image_url && { "image": m.image_url })
+        })),
+        "founder": teamMembers.filter(m => 
+          m.position.toLowerCase().includes('founder') || 
+          m.position.toLowerCase().includes('lead') ||
+          m.position.toLowerCase().includes('ceo')
+        ).map(m => ({
+          "@type": "Person",
+          "name": m.name,
+          "jobTitle": m.position,
+          ...(m.image_url && { "image": m.image_url })
+        }))
+      })
     }
   };
 
