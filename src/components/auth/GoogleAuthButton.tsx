@@ -18,10 +18,6 @@ const GoogleAuthButton = ({ mode, isLoading, setIsLoading }: GoogleAuthButtonPro
         provider: 'google',
         options: {
           redirectTo: `${getAppUrl()}/`,
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'consent',
-          },
         },
       });
 
