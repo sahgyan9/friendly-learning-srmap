@@ -12,13 +12,14 @@ export interface AdminRecoveryCode {
   created_at: string;
 }
 
-// Generate a secure recovery code
+// Generate a cryptographically secure recovery code
 function generateRecoveryCode(): string {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  let result = '';
-  for (let i = 0; i < 16; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
+  const array = new Uint32Array(16);
+  crypto.getRandomValues(array);
+  const result = Array.from(array)
+    .map((n) => chars[n % chars.length])
+    .join('');
   return result.match(/.{1,4}/g)?.join('-') || result;
 }
 
