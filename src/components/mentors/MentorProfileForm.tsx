@@ -8,6 +8,7 @@ import MentorSkillsField from "./form/MentorSkillsField";
 import MentorBioField from "./form/MentorBioField";
 import MentorLinkedInField from "./form/MentorLinkedInField";
 import MentorFormActions from "./form/MentorFormActions";
+import LinkedInPdfImport from "./form/LinkedInPdfImport";
 
 interface MentorProfileFormProps {
   userId: string;
@@ -22,11 +23,14 @@ const MentorProfileForm = ({ userId, initialData, isEditMode = false, pageTitle 
     isSubmitting,
     handleChange,
     handleImageUploaded,
+    applyImportedData,
     handleSubmit
   } = useMentorForm(userId, initialData, isEditMode);
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      <LinkedInPdfImport onImported={applyImportedData} />
+
       <MentorProfileImageUpload
         profileImage={formData.profile_image}
         name={formData.name}

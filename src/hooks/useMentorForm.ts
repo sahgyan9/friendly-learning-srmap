@@ -43,6 +43,10 @@ export const useMentorForm = (userId: string, initialData: MentorFormData, isEdi
     }));
   };
 
+  const applyImportedData = (imported: Partial<MentorFormData>) => {
+    setFormData(prev => ({ ...prev, ...imported }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -148,6 +152,7 @@ export const useMentorForm = (userId: string, initialData: MentorFormData, isEdi
     isSubmitting,
     handleChange,
     handleImageUploaded,
+    applyImportedData,
     handleSubmit
   };
 };
