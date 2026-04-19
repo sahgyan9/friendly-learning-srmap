@@ -18,6 +18,7 @@ import {
   Award,
   UserCheck,
   ArrowRight,
+  GraduationCap,
 } from "lucide-react";
 import AdminPageWrapper from "@/components/admin/AdminPageWrapper";
 import AdminHeader from "@/components/admin/AdminHeader";
@@ -44,8 +45,15 @@ const AdminDashboard = () => {
       title: "Team Members",
       description: "Manage team members displayed on the about page.",
       icon: Users,
-      path: "/admin/team-members", // Fixed path to match the route in App.tsx
+      path: "/admin/team-members",
       gradient: "from-blue-500 to-cyan-500",
+    },
+    {
+      title: "Faculty Management",
+      description: "Add, edit, or remove SRMAP faculty for anonymous ratings.",
+      icon: GraduationCap,
+      path: "/admin/faculty",
+      gradient: "from-teal-500 to-emerald-500",
     },
     {
       title: "Marketplace",
