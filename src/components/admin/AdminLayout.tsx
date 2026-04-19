@@ -12,7 +12,8 @@ import {
   BarChart3,
   ChevronLeft,
   ChevronRight,
-  Sparkles
+  Sparkles,
+  GraduationCap
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -57,6 +58,12 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
       href: "/admin/team-members",
       icon: UsersIcon,
       current: location.pathname === "/admin/team-members",
+    },
+    {
+      name: "Faculty",
+      href: "/admin/faculty",
+      icon: GraduationCap,
+      current: location.pathname === "/admin/faculty",
     },
     {
       // Changed label from 'Marketplace' to 'Events' for frontend only. Backend and route remain 'marketplace'.
