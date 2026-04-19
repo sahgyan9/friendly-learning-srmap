@@ -494,86 +494,6 @@ export type Database = {
           },
         ]
       }
-      faculty: {
-        Row: {
-          avg_rating: number
-          created_at: string
-          department: string
-          designation: string | null
-          email: string | null
-          id: string
-          name: string
-          profile_image: string | null
-          rating_count: number
-          school: string | null
-          updated_at: string
-        }
-        Insert: {
-          avg_rating?: number
-          created_at?: string
-          department: string
-          designation?: string | null
-          email?: string | null
-          id?: string
-          name: string
-          profile_image?: string | null
-          rating_count?: number
-          school?: string | null
-          updated_at?: string
-        }
-        Update: {
-          avg_rating?: number
-          created_at?: string
-          department?: string
-          designation?: string | null
-          email?: string | null
-          id?: string
-          name?: string
-          profile_image?: string | null
-          rating_count?: number
-          school?: string | null
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      faculty_ratings: {
-        Row: {
-          comment: string | null
-          created_at: string
-          faculty_id: string
-          id: string
-          rating: number
-          reviewer_id: string
-          updated_at: string
-        }
-        Insert: {
-          comment?: string | null
-          created_at?: string
-          faculty_id: string
-          id?: string
-          rating: number
-          reviewer_id: string
-          updated_at?: string
-        }
-        Update: {
-          comment?: string | null
-          created_at?: string
-          faculty_id?: string
-          id?: string
-          rating?: number
-          reviewer_id?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "faculty_ratings_faculty_id_fkey"
-            columns: ["faculty_id"]
-            isOneToOne: false
-            referencedRelation: "faculty"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       marketplace_posts: {
         Row: {
           author: string
@@ -1385,15 +1305,6 @@ export type Database = {
           isOneToOne: false
           isSetofReturn: true
         }
-      }
-      get_faculty_ratings: {
-        Args: { p_faculty_id: string }
-        Returns: {
-          comment: string
-          created_at: string
-          id: string
-          rating: number
-        }[]
       }
       get_mentor_reviews: {
         Args: { mentor_id: string }

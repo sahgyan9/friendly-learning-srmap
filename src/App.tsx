@@ -6,7 +6,7 @@ import { Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/context/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { NavBar } from "@/components/ui/tubelight-navbar";
-import { Home, Users, MessageSquare, Calendar, Mail, GraduationCap } from "lucide-react";
+import { Home, Users, MessageSquare, Calendar, Mail } from "lucide-react";
 import Index from "./pages/Index";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
@@ -34,9 +34,6 @@ import HowItWorks from "./pages/HowItWorks";
 import FindStudyPartners from "./pages/FindStudyPartners";
 import HackathonPartners from "./pages/HackathonPartners";
 import Blog from "./pages/Blog";
-import Faculty from "./pages/Faculty";
-import FacultyDetail from "./pages/FacultyDetail";
-import AdminFaculty from "./pages/AdminFaculty";
 import NotFound from "./pages/NotFound";
 import Unauthorized from "./pages/Unauthorized";
 import RouteRobots from "@/components/RouteRobots";
@@ -72,8 +69,6 @@ function App() {
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/mentors" element={<Mentors />} />
             <Route path="/mentor/:id" element={<MentorProfile />} />
-            <Route path="/faculty" element={<Faculty />} />
-            <Route path="/faculty/:id" element={<FacultyDetail />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/about" element={<About />} />
             <Route path="/community-posts" element={<CommunityPosts />} />
@@ -99,8 +94,6 @@ function App() {
             <Route path="/admin/security" element={<ProtectedRoute requiredRole="admin"><AdminSecurity /></ProtectedRoute>} />
             <Route path="/admin/team-members" element={<ProtectedRoute requiredRole="admin"><TeamMembersAdmin /></ProtectedRoute>} />
             <Route path="/admin/events" element={<ProtectedRoute requiredRole="admin"><MarketplaceAdmin /></ProtectedRoute>} />
-            <Route path="/admin/marketplace" element={<ProtectedRoute requiredRole="admin"><MarketplaceAdmin /></ProtectedRoute>} />
-            <Route path="/admin/faculty" element={<ProtectedRoute requiredRole="admin"><AdminFaculty /></ProtectedRoute>} />
 
             {/* 404 Page - Catch all unmatched routes */}
             <Route path="*" element={<NotFound />} />
@@ -111,7 +104,6 @@ function App() {
             items={[
               { name: "Home", url: "/", icon: Home },
               { name: "Mentors", url: "/mentors", icon: Users },
-              { name: "Faculty", url: "/faculty", icon: GraduationCap },
               { name: "Community", url: "/community-posts", icon: MessageSquare },
               { name: "Events", url: "/marketplace", icon: Calendar },
               { name: "Messages", url: "/messages", icon: Mail },
