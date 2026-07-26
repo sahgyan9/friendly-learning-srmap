@@ -9,6 +9,13 @@
 -- student and to let a student edit their own. It is never exposed. There is no
 -- public SELECT policy on faculty_ratings; all public reads go through the
 -- SECURITY DEFINER RPCs below, which never return reviewer_id.
+--
+-- UPGRADE-SAFE. An earlier single-score faculty schema was applied to some
+-- databases (faculty.avg_rating, faculty_ratings.rating) and then reverted in
+-- the codebase but not in the database. Every statement here is written to run
+-- correctly both on a clean database and on top of that older schema, which it
+-- migrates in place: existing single scores are carried over to all three
+-- criteria and no ratings are lost.
 -- =============================================================================
 
 -- -----------------------------------------------------------------------------
@@ -52,6 +59,58 @@ CREATE TABLE IF NOT EXISTS public.faculty (
   updated_at     TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+-- Bring a pre-existing `faculty` table (older single-score schema) up to the
+-- shape above. All no-ops on a table just created by the statement above.
+ALTER TABLE public.faculty ADD COLUMN IF NOT EXISTS slug            TEXT;
+ALTER TABLE public.faculty ADD COLUMN IF NOT EXISTS designation     TEXT;
+ALTER TABLE public.faculty ADD COLUMN IF NOT EXISTS school          TEXT;
+ALTER TABLE public.faculty ADD COLUMN IF NOT EXISTS profile_url     TEXT;
+ALTER TABLE public.faculty ADD COLUMN IF NOT EXISTS image_url       TEXT;
+ALTER TABLE public.faculty ADD COLUMN IF NOT EXISTS source          TEXT NOT NULL DEFAULT 'srmap-directory';
+ALTER TABLE public.faculty ADD COLUMN IF NOT EXISTS is_active       BOOLEAN NOT NULL DEFAULT true;
+ALTER TABLE public.faculty ADD COLUMN IF NOT EXISTS rating_count    INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE public.faculty ADD COLUMN IF NOT EXISTS avg_overall     NUMERIC(3,2) NOT NULL DEFAULT 0;
+ALTER TABLE public.faculty ADD COLUMN IF NOT EXISTS avg_teaching    NUMERIC(3,2) NOT NULL DEFAULT 0;
+ALTER TABLE public.faculty ADD COLUMN IF NOT EXISTS avg_grading     NUMERIC(3,2) NOT NULL DEFAULT 0;
+ALTER TABLE public.faculty ADD COLUMN IF NOT EXISTS avg_helpfulness NUMERIC(3,2) NOT NULL DEFAULT 0;
+ALTER TABLE public.faculty ADD COLUMN IF NOT EXISTS last_synced_at  TIMESTAMPTZ;
+
+DO $$
+BEGIN
+  -- Carry over the old single average, and the old profile_image column, if the
+  -- older schema is what we are sitting on.
+  IF EXISTS (SELECT 1 FROM information_schema.columns
+             WHERE table_schema = 'public' AND table_name = 'faculty' AND column_name = 'avg_rating') THEN
+    EXECUTE 'UPDATE public.faculty SET avg_overall = COALESCE(avg_rating, 0) WHERE avg_overall = 0';
+  END IF;
+
+  IF EXISTS (SELECT 1 FROM information_schema.columns
+             WHERE table_schema = 'public' AND table_name = 'faculty' AND column_name = 'profile_image') THEN
+    EXECUTE 'UPDATE public.faculty SET image_url = profile_image WHERE image_url IS NULL';
+  END IF;
+END $$;
+
+-- Backfill slug for pre-existing rows, then make it a real key. Names are
+-- slugified the same way WordPress does, and collisions get a numeric suffix so
+-- the unique index below cannot fail.
+UPDATE public.faculty
+SET slug = lower(regexp_replace(regexp_replace(name, '[^a-zA-Z0-9]+', '-', 'g'), '(^-+|-+$)', '', 'g'))
+WHERE slug IS NULL OR btrim(slug) = '';
+
+UPDATE public.faculty f
+SET slug = f.slug || '-' || d.n
+FROM (
+  SELECT id, row_number() OVER (PARTITION BY slug ORDER BY created_at, id) AS n
+  FROM public.faculty
+) d
+WHERE f.id = d.id AND d.n > 1;
+
+-- Any row whose name slugified to nothing still needs a value.
+UPDATE public.faculty SET slug = 'faculty-' || id WHERE slug IS NULL OR btrim(slug) = '';
+
+ALTER TABLE public.faculty ALTER COLUMN slug SET NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS faculty_slug_key ON public.faculty (slug);
+
 CREATE INDEX IF NOT EXISTS idx_faculty_department ON public.faculty (department);
 CREATE INDEX IF NOT EXISTS idx_faculty_school     ON public.faculty (school);
 CREATE INDEX IF NOT EXISTS idx_faculty_active     ON public.faculty (is_active) WHERE is_active;
@@ -62,6 +121,12 @@ CREATE INDEX IF NOT EXISTS idx_faculty_rating     ON public.faculty (avg_overall
 -- dependency for no measurable gain.
 
 ALTER TABLE public.faculty ENABLE ROW LEVEL SECURITY;
+
+-- Older policy names, superseded by the two below. The old SELECT policy used
+-- USING (true), which would keep deactivated faculty publicly visible.
+DROP POLICY IF EXISTS "Only admins can insert faculty" ON public.faculty;
+DROP POLICY IF EXISTS "Only admins can update faculty" ON public.faculty;
+DROP POLICY IF EXISTS "Only admins can delete faculty" ON public.faculty;
 
 DROP POLICY IF EXISTS "Anyone can view faculty" ON public.faculty;
 CREATE POLICY "Anyone can view faculty"
@@ -112,9 +177,128 @@ CREATE TABLE IF NOT EXISTS public.faculty_ratings (
   UNIQUE (faculty_id, reviewer_id)
 );
 
+-- Retire the legacy aggregate trigger BEFORE touching any data. Its function
+-- body reads faculty_ratings.rating, so leaving it attached while that column is
+-- migrated and dropped makes every subsequent UPDATE/DELETE fail. The new
+-- trigger is installed further down, and aggregates are recomputed at the end.
+DROP TRIGGER IF EXISTS trg_faculty_rating_stats ON public.faculty_ratings;
+
+-- Bring a pre-existing `faculty_ratings` table up to the shape above. The older
+-- schema had a single `rating` column; that score is copied onto all three
+-- criteria so no student's rating is lost.
+ALTER TABLE public.faculty_ratings ADD COLUMN IF NOT EXISTS teaching      SMALLINT;
+ALTER TABLE public.faculty_ratings ADD COLUMN IF NOT EXISTS grading       SMALLINT;
+ALTER TABLE public.faculty_ratings ADD COLUMN IF NOT EXISTS helpfulness   SMALLINT;
+ALTER TABLE public.faculty_ratings ADD COLUMN IF NOT EXISTS course_code   TEXT;
+ALTER TABLE public.faculty_ratings ADD COLUMN IF NOT EXISTS tags          TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[];
+ALTER TABLE public.faculty_ratings ADD COLUMN IF NOT EXISTS helpful_count INTEGER NOT NULL DEFAULT 0;
+
+DO $$
+DECLARE
+  has_legacy_rating BOOLEAN := EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'faculty_ratings' AND column_name = 'rating'
+  );
+BEGIN
+  IF has_legacy_rating THEN
+    EXECUTE $sql$
+      UPDATE public.faculty_ratings
+      SET teaching    = COALESCE(teaching,    rating),
+          grading     = COALESCE(grading,     rating),
+          helpfulness = COALESCE(helpfulness, rating)
+      WHERE teaching IS NULL OR grading IS NULL OR helpfulness IS NULL
+    $sql$;
+  END IF;
+
+  -- Anything still null (should be nothing) gets a neutral 3 so NOT NULL holds.
+  UPDATE public.faculty_ratings
+  SET teaching    = COALESCE(teaching, 3),
+      grading     = COALESCE(grading, 3),
+      helpfulness = COALESCE(helpfulness, 3)
+  WHERE teaching IS NULL OR grading IS NULL OR helpfulness IS NULL;
+
+  ALTER TABLE public.faculty_ratings ALTER COLUMN teaching    SET NOT NULL;
+  ALTER TABLE public.faculty_ratings ALTER COLUMN grading     SET NOT NULL;
+  ALTER TABLE public.faculty_ratings ALTER COLUMN helpfulness SET NOT NULL;
+
+  -- The legacy single score is now redundant, and it is NOT NULL, which would
+  -- block every insert from the new client.
+  IF has_legacy_rating THEN
+    EXECUTE 'ALTER TABLE public.faculty_ratings DROP COLUMN rating';
+  END IF;
+END $$;
+
+-- Range checks (added separately so they apply to upgraded tables too).
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'faculty_ratings_criteria_range') THEN
+    ALTER TABLE public.faculty_ratings ADD CONSTRAINT faculty_ratings_criteria_range
+      CHECK (teaching BETWEEN 1 AND 5 AND grading BETWEEN 1 AND 5 AND helpfulness BETWEEN 1 AND 5);
+  END IF;
+END $$;
+
+-- `overall` is generated, so it can only be added once the three criteria exist
+-- and are NOT NULL.
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+                 WHERE table_schema = 'public' AND table_name = 'faculty_ratings' AND column_name = 'overall') THEN
+    ALTER TABLE public.faculty_ratings
+      ADD COLUMN overall NUMERIC(3,2)
+      GENERATED ALWAYS AS ((teaching + grading + helpfulness)::NUMERIC / 3) STORED;
+  END IF;
+END $$;
+
+-- The older schema capped comments at 500 characters; the new modal allows 1000.
+DO $$
+DECLARE
+  con RECORD;
+BEGIN
+  FOR con IN
+    SELECT conname FROM pg_constraint
+    WHERE conrelid = 'public.faculty_ratings'::regclass
+      AND contype = 'c'
+      AND pg_get_constraintdef(oid) ILIKE '%char_length(comment)%'
+  LOOP
+    EXECUTE format('ALTER TABLE public.faculty_ratings DROP CONSTRAINT %I', con.conname);
+  END LOOP;
+
+  ALTER TABLE public.faculty_ratings ADD CONSTRAINT faculty_ratings_comment_length
+    CHECK (comment IS NULL OR char_length(comment) <= 1000);
+END $$;
+
 CREATE INDEX IF NOT EXISTS idx_faculty_ratings_faculty ON public.faculty_ratings (faculty_id, created_at DESC);
 
 ALTER TABLE public.faculty_ratings ENABLE ROW LEVEL SECURITY;
+
+-- Older policy names, superseded by the ones below.
+DROP POLICY IF EXISTS "Users can view their own ratings only"          ON public.faculty_ratings;
+DROP POLICY IF EXISTS "Authenticated users can insert their own rating" ON public.faculty_ratings;
+DROP POLICY IF EXISTS "Users can update their own rating"              ON public.faculty_ratings;
+DROP POLICY IF EXISTS "Users can delete their own rating"              ON public.faculty_ratings;
+
+-- The older schema left reviewer_id unconstrained, so deleting a user orphaned
+-- their ratings instead of removing them.
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conrelid = 'public.faculty_ratings'::regclass
+      AND contype = 'f'
+      AND pg_get_constraintdef(oid) ILIKE '%REFERENCES users(id)%'
+  ) THEN
+    DELETE FROM public.faculty_ratings r
+    WHERE NOT EXISTS (SELECT 1 FROM public.users u WHERE u.id = r.reviewer_id);
+
+    ALTER TABLE public.faculty_ratings
+      ADD CONSTRAINT faculty_ratings_reviewer_id_fkey
+      FOREIGN KEY (reviewer_id) REFERENCES public.users (id) ON DELETE CASCADE;
+  END IF;
+END $$;
+
+-- The old single-score read RPC selects faculty_ratings.rating, which no longer
+-- exists. It is superseded by get_faculty_reviews below.
+DROP FUNCTION IF EXISTS public.get_faculty_ratings(UUID);
 
 -- Deliberately NO public SELECT policy. A student may read back only their own
 -- row, which is what the "you already rated this" / edit flow needs.
@@ -216,6 +400,30 @@ DROP TRIGGER IF EXISTS trg_faculty_rating_stats ON public.faculty_ratings;
 CREATE TRIGGER trg_faculty_rating_stats
   AFTER INSERT OR UPDATE OR DELETE ON public.faculty_ratings
   FOR EACH ROW EXECUTE FUNCTION public.update_faculty_rating_stats();
+
+-- The legacy trigger was detached before the data migration above, so nothing
+-- recalculated the aggregates while rows were being reshaped. Recompute every
+-- faculty member once, from scratch, so the denormalised columns are correct
+-- regardless of which schema this database started from.
+UPDATE public.faculty f
+SET rating_count    = s.n,
+    avg_overall     = s.overall,
+    avg_teaching    = s.teaching,
+    avg_grading     = s.grading,
+    avg_helpfulness = s.helpfulness
+FROM (
+  SELECT
+    fac.id,
+    COUNT(r.id)                                       AS n,
+    COALESCE(AVG(r.overall),     0)::NUMERIC(3,2)     AS overall,
+    COALESCE(AVG(r.teaching),    0)::NUMERIC(3,2)     AS teaching,
+    COALESCE(AVG(r.grading),     0)::NUMERIC(3,2)     AS grading,
+    COALESCE(AVG(r.helpfulness), 0)::NUMERIC(3,2)     AS helpfulness
+  FROM public.faculty fac
+  LEFT JOIN public.faculty_ratings r ON r.faculty_id = fac.id
+  GROUP BY fac.id
+) s
+WHERE f.id = s.id;
 
 CREATE OR REPLACE FUNCTION public.update_faculty_review_helpful_count()
 RETURNS TRIGGER

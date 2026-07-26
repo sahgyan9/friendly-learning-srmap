@@ -14,7 +14,7 @@
     "preview": "vite preview",
     "generate:sitemap": "node generate-sitemap.js",
     "generate:dynamic-sitemap": "node generate-dynamic-sitemap.js",
-    "test:migrations": "node supabase/tests/verify-migrations.mjs"
+    "test:migrations": "node supabase/tests/verify-migrations.mjs && node supabase/tests/verify-upgrade.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
