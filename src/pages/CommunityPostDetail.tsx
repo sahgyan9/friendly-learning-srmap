@@ -1,516 +1,347 @@
-
-import { useState, useEffect } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Heart, MessageCircle, Share2, Bookmark, ArrowLeft, Send, MoreHorizontal } from "lucide-react";
-import { useAuth } from "@/context/AuthContext";
-import {
-  getCommunityPostById,
-  togglePostLike,
-  checkUserLikedPost,
-  getPostComments,
-  addPostComment,
-  type CommunityPost
-} from "@/integrations/supabase/services/community-posts";
-import { formatDistanceToNow } from "date-fns";
+import { useCallback, useEffect, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
+import { formatDistanceToNow } from "date-fns";
+import { ArrowLeft, BadgeCheck, Heart, MessageCircle, Pencil, Share2, Trash2 } from "lucide-react";
+
 import Navbar from "@/components/Navbar";
 import SEOHead from "@/components/SEOHead";
 import StructuredData from "@/components/StructuredData";
-import { getBreadcrumbSchema, getArticleSchema } from "@/lib/structured-data";
-import { getMentorById } from "@/integrations/supabase/services/mentors";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { EditPostModal } from "@/components/community/EditPostModal";
+import { InlineComments } from "@/components/community/InlineComments";
+import { PostStatusBadge, PostTypeBadge } from "@/components/community/PostTypeBadge";
+import { useAuth } from "@/context/AuthContext";
+import { getBreadcrumbSchema } from "@/lib/structured-data";
+import { PRIMARY_DOMAIN } from "@/lib/constants";
+import { cn } from "@/lib/utils";
+import { getInitials } from "@/utils/user-utils";
 import { getOrCreateConversation } from "@/integrations/supabase/services/chat/conversation.service";
-
-const POST_TYPES = [
-  { value: 'hackathon', label: 'Hackathon Partners' },
-  { value: 'research', label: 'Research Collaboration' },
-  { value: 'problem-solving', label: 'Problem Solving' },
-  { value: 'project', label: 'Project Ideas' },
-  { value: 'general', label: 'General Discussion' },
-];
+import {
+  POST_STATUSES,
+  deleteCommunityPost,
+  getCommunityPostById,
+  togglePostLike,
+  updateCommunityPost,
+  type CommunityPost,
+} from "@/integrations/supabase/services/community-posts";
 
 const CommunityPostDetail = () => {
   const { id: postId } = useParams<{ id: string }>();
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
+
   const [post, setPost] = useState<CommunityPost | null>(null);
-  const [comments, setComments] = useState<any[]>([]);
-  const [newComment, setNewComment] = useState("");
   const [loading, setLoading] = useState(true);
-  const [loadingComments, setLoadingComments] = useState(false);
-  const [submittingComment, setSubmittingComment] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
 
-  useEffect(() => {
-    if (postId) {
-      fetchPost();
-      fetchComments();
-    }
-  }, [postId]);
-
-  const fetchPost = async () => {
-    setLoading(true);
-    const { data, error } = await getCommunityPostById(postId!);
-
-    if (error || !data) {
-      toast.error("Failed to load post");
-      console.error(error);
-      navigate('/community-posts');
-    } else {
-      if (user) {
-        const { liked } = await checkUserLikedPost(data.id);
-        setPost({ ...data, user_has_liked: liked });
-      } else {
-        setPost(data);
-      }
-    }
-    setLoading(false);
-  };
-
-  const fetchComments = async () => {
+  const loadPost = useCallback(async () => {
     if (!postId) return;
 
-    setLoadingComments(true);
-    const { data, error } = await getPostComments(postId);
+    setLoading(true);
+    const { data, error } = await getCommunityPostById(postId);
 
-    if (error) {
-      toast.error("Failed to load comments");
-      console.error(error);
-    } else if (data) {
-      setComments(data);
+    if (error || !data) {
+      toast.error("This post is no longer available");
+      navigate("/community-posts", { replace: true });
+    } else {
+      setPost(data);
     }
+    setLoading(false);
+  }, [postId, navigate]);
 
-    setLoadingComments(false);
-  };
+  useEffect(() => {
+    loadPost();
+  }, [loadPost]);
 
   const handleLike = async () => {
-    if (!user || !post) {
-      toast.error("Please sign in to like posts");
+    if (!user) {
+      toast.error("Sign in to like posts");
       return;
     }
+    if (!post) return;
 
     const { error, liked } = await togglePostLike(post.id);
-
     if (error) {
       toast.error("Failed to update like");
-      console.error(error);
-    } else {
-      setPost({
-        ...post,
-        user_has_liked: liked,
-        likes_count: liked ? post.likes_count + 1 : post.likes_count - 1
-      });
-    }
-  };
-
-  const handleAddComment = async () => {
-    if (!user || !post) {
-      toast.error("Please sign in to comment");
       return;
     }
 
-    if (!newComment.trim()) return;
-
-    setSubmittingComment(true);
-    const { data, error } = await addPostComment(post.id, newComment.trim());
-
-    if (error) {
-      toast.error("Failed to add comment");
-      console.error(error);
-    } else if (data) {
-      setComments([...comments, data]);
-      setNewComment("");
-      setPost({
-        ...post,
-        comments_count: post.comments_count + 1
-      });
-    }
-
-    setSubmittingComment(false);
+    setPost({
+      ...post,
+      viewer_has_liked: liked,
+      likes_count: Math.max(0, post.likes_count + (liked ? 1 : -1)),
+    });
   };
 
   const handleShare = async () => {
+    const url = window.location.href;
+
+    if (navigator.share && post) {
+      try {
+        await navigator.share({ title: post.title, url });
+        return;
+      } catch {
+        // Share sheet dismissed — fall through to clipboard.
+      }
+    }
+
+    await navigator.clipboard.writeText(url);
+    toast.success("Link copied to clipboard");
+  };
+
+  /** Message the author — available for every author now, not only mentors. */
+  const handleContact = async () => {
+    if (!user) {
+      toast.error("Sign in to message the author");
+      return;
+    }
     if (!post) return;
 
-    try {
-      await navigator.share({
-        title: post.title,
-        text: post.content,
-        url: window.location.href,
-      });
-    } catch (error) {
-      navigator.clipboard.writeText(window.location.href);
-      toast.success("Link copied to clipboard!");
-    }
-  };
-
-  const handleMentorClick = (mentorId: string, event?: React.MouseEvent) => {
-    event?.stopPropagation?.();
-    navigate(`/mentor/${mentorId}`);
-  };
-
-  const handleConnect = async (mentorId: string) => {
-    if (!user) {
-      toast.error("Please sign in to connect with mentors");
+    const { data: conversation, error } = await getOrCreateConversation(user.id, post.author.id);
+    if (error || !conversation) {
+      toast.error("Failed to start conversation");
       return;
     }
 
-    try {
-      const { data: mentorData, error: mentorError } = await getMentorById(mentorId);
-      if (mentorError || !mentorData) {
-        toast.error("Mentor not found");
-        return;
-      }
-
-      const { data: conversation, error: conversationError } = await getOrCreateConversation(user.id, mentorId);
-      if (conversationError || !conversation) {
-        console.error('Error creating/getting conversation:', conversationError);
-        toast.error('Failed to start conversation');
-        return;
-      }
-
-      navigate(`/messages?chat=${conversation.id}`);
-      toast.success(`Connected with ${mentorData.name}!`);
-    } catch (error) {
-      console.error('Error connecting with mentor:', error);
-      toast.error('Failed to connect with mentor');
-    }
+    navigate(`/messages?chat=${conversation.id}`);
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'open': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
-      case 'fulfilled': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
-      case 'closed': return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
-      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
+  const handleStatusChange = async (status: string) => {
+    if (!post) return;
+
+    const { error } = await updateCommunityPost(post.id, { status });
+    if (error) {
+      toast.error("Failed to update status");
+      return;
     }
+
+    setPost({ ...post, status });
+    toast.success(status === "fulfilled" ? "Marked as fulfilled 🎉" : `Marked as ${status}`);
+  };
+
+  const handleDelete = async () => {
+    if (!post) return;
+
+    const { error } = await deleteCommunityPost(post.id);
+    if (error) {
+      toast.error("Failed to delete post");
+      return;
+    }
+
+    toast.success("Post deleted");
+    navigate("/community-posts", { replace: true });
   };
 
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
-        <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-8 max-w-2xl">
-          <div className="animate-pulse space-y-4 sm:space-y-6">
-            <div className="h-4 bg-gray-200 rounded w-20 sm:w-32"></div>
-            <Card>
-              <CardHeader className="space-y-3 sm:space-y-4">
-                <div className="flex items-center space-x-3 sm:space-x-4">
-                  <div className="rounded-full bg-gray-200 h-12 w-12 sm:h-12 sm:w-12"></div>
-                  <div className="space-y-2 flex-1">
-                    <div className="h-4 bg-gray-200 rounded w-24 sm:w-32"></div>
-                    <div className="h-3 bg-gray-200 rounded w-16 sm:w-24"></div>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3 sm:space-y-4">
-                <div className="h-6 bg-gray-200 rounded w-3/4"></div>
-                <div className="h-24 sm:h-32 bg-gray-200 rounded"></div>
-              </CardContent>
-            </Card>
-          </div>
+        <div className="container mx-auto max-w-3xl space-y-4 px-4 py-8">
+          <Skeleton className="h-8 w-32" />
+          <Card>
+            <CardHeader className="flex-row items-center gap-3">
+              <Skeleton className="h-12 w-12 rounded-full" />
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-40" />
+                <Skeleton className="h-3 w-28" />
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Skeleton className="h-7 w-3/4" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-2/3" />
+            </CardContent>
+          </Card>
         </div>
       </div>
     );
   }
 
-  if (!post) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Navbar />
-        <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-8 max-w-2xl">
-          <div className="text-center py-8 sm:py-12">
-            <h3 className="text-base sm:text-lg font-semibold mb-2">Post not found</h3>
-            <Link to="/community-posts">
-              <Button variant="outline" size="sm" className="w-full sm:w-auto">Back to Community Posts</Button>
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  if (!post) return null;
 
-  // Generate SEO metadata and structured data for the post
-  const generateSEO = () => {
-    if (!post) return null;
-
-    const postType = POST_TYPES.find(type => type.value === post.post_type)?.label || post.post_type;
-    const postTitle = post.title || "Community Post";
-    const postDescription = post.content && post.content.length > 150 ?
-      `${post.content.substring(0, 150)}...` :
-      post.content || "Community post on Project FL";
-
-    const metaTitle = `${postTitle} | ${postType} - Project FL Community`;
-    const metaDescription = `${postDescription} - Posted by ${post.mentor.name}. Join the discussion with ${post.comments_count} comments and ${post.likes_count} likes.`;
-
-    const keywords = post.tags ?
-      `community post, ${post.tags.join(", ")}, ${post.mentor.name}, ${postType}` :
-      `community post, ${post.mentor.name}, ${postType}, project fl`;
-
-    const canonicalUrl = `https://friendly-learning-srmap.lovable.app/community-posts/${post.id}`;
-
-    // Create a modified post object suitable for structured data
-    const postForSchema = {
-      ...post,
-      title: postTitle,
-      description: postDescription,
-      url: canonicalUrl,
-      image_url: post.image_url || undefined,
-      author: {
-        name: post.mentor.name,
-        url: `https://friendly-learning-srmap.lovable.app/mentor/${post.mentor.id}`,
-        image: post.mentor.profile_image
-      }
-    };
-
-    return (
-      <>
-        <SEOHead
-          title={metaTitle}
-          description={metaDescription}
-          keywords={keywords}
-          canonical={canonicalUrl}
-          ogTitle={postTitle}
-          ogDescription={postDescription}
-          ogImage={post.image_url || "/og-image.png"}
-        />
-
-        <StructuredData data={getArticleSchema(postForSchema)} />
-        <StructuredData data={getBreadcrumbSchema([
-          { name: "Home", url: "https://friendly-learning-srmap.lovable.app/" },
-          { name: "Community Posts", url: "https://friendly-learning-srmap.lovable.app/community-posts" },
-          { name: postTitle, url: canonicalUrl }
-        ])} />
-      </>
-    );
-  };
+  const canonical = `${PRIMARY_DOMAIN}/community-posts/${post.id}`;
 
   return (
     <>
-      {post && generateSEO()}
-      <Navbar />
-      <div className="min-h-screen bg-background">
-        <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-6 max-w-2xl">
-          {/* Back Navigation */}
-          <div className="mb-4 sm:mb-4">
-            <Link to="/community-posts">
-              <Button variant="ghost" className="flex items-center gap-2 text-sm sm:text-base">
-                <ArrowLeft className="h-4 w-4" />
-                <span className="hidden sm:inline">Back to Community Posts</span>
-                <span className="sm:hidden">Back</span>
-              </Button>
-            </Link>
-          </div>
+      <SEOHead
+        title={`${post.title} | Community Board`}
+        description={post.content.slice(0, 160)}
+        canonical={canonical}
+      />
+      <StructuredData
+        data={getBreadcrumbSchema([
+          { name: "Home", url: `${PRIMARY_DOMAIN}/` },
+          { name: "Community Board", url: `${PRIMARY_DOMAIN}/community-posts` },
+          { name: post.title, url: canonical },
+        ])}
+      />
 
-          {/* Post Content */}
-          <Card className="mb-4 sm:mb-6">
-            {/* Post Header */}
-            <CardHeader className="pb-3 sm:pb-4">
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
-                  <Avatar
-                    className="h-12 w-12 sm:h-16 sm:w-16 ring-2 ring-background shadow-lg flex-shrink-0 cursor-pointer hover:ring-primary/20"
-                    onClick={(e) => handleMentorClick(post.mentor.id, e)}
-                  >
-                    <AvatarImage src={post.mentor.profile_image || undefined} />
-                    <AvatarFallback className="bg-primary/10 text-primary font-bold text-sm sm:text-lg">
-                      {post.mentor.name.charAt(0)}
+      <Navbar />
+
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto max-w-3xl px-4 py-6">
+          <Button asChild variant="ghost" size="sm" className="-ml-2 mb-4 gap-1.5">
+            <Link to="/community-posts">
+              <ArrowLeft className="h-4 w-4" />
+              Back to the board
+            </Link>
+          </Button>
+
+          <Card>
+            <CardHeader>
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-12 w-12">
+                    <AvatarImage src={post.author.profile_image ?? undefined} alt={post.author.name} />
+                    <AvatarFallback className="bg-primary/10 font-semibold text-primary">
+                      {getInitials(post.author.name)}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-start justify-between gap-2 mb-1">
-                      <h3
-                        className="text-base sm:text-lg font-semibold truncate cursor-pointer hover:text-primary"
-                        onClick={(e) => handleMentorClick(post.mentor.id, e)}
-                      >
-                        {post.mentor.name}
-                      </h3>
-                      <Badge variant="outline" className={`text-xs flex-shrink-0 ${getStatusColor(post.status)}`}>
-                        {post.status}
-                      </Badge>
+                  <div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-semibold">{post.author.name}</span>
+                      {post.author.is_mentor && (
+                        <BadgeCheck className="h-4 w-4 text-primary" aria-label="Verified mentor" />
+                      )}
                     </div>
-                    <p className="text-sm text-muted-foreground truncate">{post.mentor.department}</p>
-                    <p className="text-xs sm:text-sm text-muted-foreground">
-                      {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
+                    <p className="text-xs text-muted-foreground">
+                      {[
+                        post.author.department,
+                        formatDistanceToNow(new Date(post.created_at), { addSuffix: true }),
+                      ]
+                        .filter(Boolean)
+                        .join(" · ")}
                     </p>
                   </div>
                 </div>
-                <Button variant="ghost" size="sm" className="flex-shrink-0 ml-2">
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
+
+                <div className="flex items-center gap-2">
+                  <PostTypeBadge type={post.post_type} />
+                  <PostStatusBadge status={post.status} />
+                </div>
               </div>
             </CardHeader>
 
-            <CardContent className="space-y-4 sm:space-y-6">
-              {/* Title and Content */}
+            <CardContent className="space-y-5">
               <div>
-                <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-3 sm:mb-4 leading-tight">{post.title}</h1>
-                <div className="prose prose-gray max-w-none">
-                  <p className="text-sm sm:text-base text-foreground leading-relaxed whitespace-pre-wrap">{post.content}</p>
-                </div>
+                <h1 className="mb-3 text-2xl font-bold leading-tight">{post.title}</h1>
+                <p className="whitespace-pre-line leading-relaxed text-muted-foreground">
+                  {post.content}
+                </p>
               </div>
 
-              {/* Post Image */}
               {post.image_url && (
-                <div className="w-full rounded-lg sm:rounded-xl overflow-hidden bg-muted">
-                  <img
-                    src={post.image_url}
-                    alt="Post image"
-                    className="w-full h-auto max-h-[70vh] object-contain cursor-pointer"
-                    onError={(e) => (e.currentTarget.style.display = 'none')}
-                    onClick={() => window.open(post.image_url, '_blank')}
-                  />
+                <img
+                  src={post.image_url}
+                  alt=""
+                  className="w-full rounded-lg border object-contain"
+                  loading="lazy"
+                />
+              )}
+
+              {post.tags && post.tags.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {post.tags.map((tag) => (
+                    <Badge key={tag} variant="outline" className="font-normal">
+                      #{tag}
+                    </Badge>
+                  ))}
                 </div>
               )}
 
-              {/* Post Type & Tags */}
-              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                <Badge variant="secondary" className="text-xs sm:text-sm font-medium px-2 sm:px-3 py-1">
-                  {POST_TYPES.find(type => type.value === post.post_type)?.label || post.post_type}
-                </Badge>
-                {post.tags && post.tags.slice(0, window.innerWidth < 640 ? 2 : post.tags.length).map((tag, index) => (
-                  <Badge key={index} variant="outline" className="text-xs sm:text-sm">
-                    #{tag}
-                  </Badge>
-                ))}
-                {post.tags && post.tags.length > 2 && window.innerWidth < 640 && (
-                  <span className="text-xs text-muted-foreground">
-                    +{post.tags.length - 2} more
-                  </span>
+              <div className="flex flex-wrap items-center gap-2 border-t pt-4">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleLike}
+                  aria-pressed={post.viewer_has_liked}
+                  className={cn("gap-1.5", post.viewer_has_liked && "text-rose-600 dark:text-rose-400")}
+                >
+                  <Heart className={cn("h-4 w-4", post.viewer_has_liked && "fill-current")} />
+                  {post.likes_count}
+                </Button>
+
+                <span className="flex items-center gap-1.5 px-2 text-sm text-muted-foreground">
+                  <MessageCircle className="h-4 w-4" />
+                  {post.comments_count}
+                </span>
+
+                <Button variant="ghost" size="sm" onClick={handleShare} className="gap-1.5">
+                  <Share2 className="h-4 w-4" />
+                  Share
+                </Button>
+
+                {!post.viewer_is_author && (
+                  <Button size="sm" onClick={handleContact} className="ml-auto">
+                    Message {post.author.name.split(" ")[0]}
+                  </Button>
                 )}
               </div>
 
-              {/* Footer - Single row like Image 1 */}
-              <div className="flex items-center justify-between pt-2 border-t">
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={handleLike}
-                    className="flex items-center gap-1 text-xs text-muted-foreground hover:text-red-500 transition-colors"
-                  >
-                    <Heart className={`h-3 w-3 ${post.user_has_liked ? 'fill-red-500 text-red-500' : ''}`} />
-                    {post.likes_count}
-                  </button>
-
-                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <MessageCircle className="h-3 w-3" />
-                    {post.comments_count}
-                  </div>
-
-                  <button
-                    onClick={handleShare}
-                    className="flex items-center gap-1 text-xs text-muted-foreground hover:text-blue-500 transition-colors"
-                  >
-                    <Share2 className="h-3 w-3" />
-                  </button>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  {post.post_type !== 'general' && (
-                    <Button size="sm" className="h-6 px-3 text-xs" onClick={() => handleConnect(post.mentor.id)}>
-                      Connect
+              {/* Author controls. Letting an author close a filled request is what
+                  keeps the board from silting up with stale asks. */}
+              {post.viewer_is_author && (
+                <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-muted/40 p-3">
+                  <span className="mr-1 text-sm font-medium">Your post:</span>
+                  <Button size="sm" variant="outline" onClick={() => setShowEditModal(true)}>
+                    <Pencil className="mr-1.5 h-3.5 w-3.5" />
+                    Edit
+                  </Button>
+                  {POST_STATUSES.map((status) => (
+                    <Button
+                      key={status.value}
+                      size="sm"
+                      variant={post.status === status.value ? "default" : "outline"}
+                      onClick={() => handleStatusChange(status.value)}
+                    >
+                      {status.label}
                     </Button>
-                  )}
-                  <button className="p-1 hover:bg-muted rounded">
-                    <Bookmark className="h-3 w-3 text-muted-foreground" />
-                  </button>
+                  ))}
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="ml-auto gap-1.5 text-destructive hover:text-destructive"
+                    onClick={handleDelete}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Delete
+                  </Button>
                 </div>
-              </div>
+              )}
             </CardContent>
           </Card>
 
-          {/* Add Comment Section */}
-          {user && (
-            <Card className="mb-4 sm:mb-6">
-              <CardContent className="pt-4 sm:pt-4">
-                <div className="flex gap-3 sm:gap-4">
-                  <Avatar className="h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0">
-                    <AvatarImage src={profile?.profile_image || undefined} />
-                    <AvatarFallback>{profile?.name?.charAt(0) || 'U'}</AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 space-y-2 sm:space-y-3 min-w-0">
-                    <Textarea
-                      placeholder="Write a thoughtful comment..."
-                      value={newComment}
-                      onChange={(e) => setNewComment(e.target.value)}
-                      rows={3}
-                      className="resize-none text-sm sm:text-base"
-                    />
-                    <div className="flex justify-end">
-                      <Button
-                        onClick={handleAddComment}
-                        disabled={!newComment.trim() || submittingComment}
-                        className="flex items-center gap-2 text-sm"
-                        size="sm"
-                      >
-                        <Send className="h-3 w-3 sm:h-4 sm:w-4" />
-                        {submittingComment ? "Posting..." : "Comment"}
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Comments Section */}
-          <div className="space-y-3 sm:space-y-4">
-            <h3 className="text-lg sm:text-xl font-semibold">Comments ({post.comments_count})</h3>
-
-            {loadingComments ? (
-              <div className="space-y-3 sm:space-y-4">
-                {[...Array(3)].map((_, i) => (
-                  <Card key={i} className="animate-pulse">
-                    <CardContent className="pt-3 sm:pt-4">
-                      <div className="flex gap-3">
-                        <div className="rounded-full bg-gray-200 h-8 w-8"></div>
-                        <div className="flex-1 space-y-2">
-                          <div className="h-3 bg-gray-200 rounded w-20 sm:w-24"></div>
-                          <div className="h-4 bg-gray-200 rounded w-full"></div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            ) : comments.length === 0 ? (
-              <Card>
-                <CardContent className="pt-4 sm:pt-6 text-center py-8 sm:py-12">
-                  <p className="text-sm sm:text-base text-muted-foreground">
-                    No comments yet. Be the first to share your thoughts!
-                  </p>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="space-y-3 sm:space-y-4">
-                {comments.map((comment) => (
-                  <Card key={comment.id}>
-                    <CardContent className="pt-3 sm:pt-4">
-                      <div className="flex gap-3 sm:gap-4">
-                        <Avatar className="h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0">
-                          <AvatarImage src={comment.user?.profile_image || undefined} />
-                          <AvatarFallback>{comment.user?.name?.charAt(0) || 'U'}</AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 sm:gap-3 mb-1 sm:mb-2">
-                            <span className="font-semibold text-sm sm:text-base truncate">{comment.user?.name}</span>
-                            <span className="text-xs sm:text-sm text-muted-foreground flex-shrink-0">
-                              {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
-                            </span>
-                          </div>
-                          <p className="text-sm sm:text-base text-foreground leading-relaxed break-words">{comment.content}</p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </div>
+          <Card className="mt-4">
+            <CardContent className="pt-6">
+              <InlineComments
+                postId={post.id}
+                onCommentAdded={() =>
+                  setPost((current) =>
+                    current ? { ...current, comments_count: current.comments_count + 1 } : current,
+                  )
+                }
+              />
+            </CardContent>
+          </Card>
         </div>
       </div>
+
+      {post.viewer_is_author && (
+        <EditPostModal
+          post={post}
+          open={showEditModal}
+          onOpenChange={setShowEditModal}
+          onPostUpdated={(updated) => {
+            setPost(updated);
+            setShowEditModal(false);
+          }}
+        />
+      )}
     </>
   );
 };

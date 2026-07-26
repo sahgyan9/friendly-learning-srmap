@@ -7,7 +7,6 @@ import { Search, Plus, Loader2 } from "lucide-react";
 import { PostCard } from "@/components/marketplace/PostCard";
 import { SRMAPEventCard } from "@/components/marketplace/SRMAPEventCard";
 import { useSRMAPEvents } from "@/hooks/useSRMAPEvents";
-import { SRMAPFacultyRatingTemplate } from "@/components/rating/SRMAPFacultyRatingTemplate";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
 import { fetchMarketplacePosts, fetchMarketplacePost, CategoryType, MarketplacePost, isUserAdmin } from '@/integrations/supabase/services/marketplace';
@@ -62,7 +61,7 @@ const MarketPlace = () => {
     };
 
     const loadPosts = async () => {
-        if (activeCategory === 'srmap' || activeCategory === 'faculty') return;
+        if (activeCategory === 'srmap') return;
         try {
             setLoading(true);
             const supabaseCategory = (activeCategory === 'srmap' ? 'all' : activeCategory) as CategoryType;
@@ -116,13 +115,6 @@ const MarketPlace = () => {
 
     const handleCategoryChange = (value: string) => {
         setActiveCategory(value);
-    };
-
-    const handleFacultyRateClick = (facultySlug: string, facultyName: string) => {
-        toast({
-            title: "Faculty selected",
-            description: `${facultyName} (${facultySlug}) selected for rating. Connect this callback to your faculty ratings table.`,
-        });
     };
 
     const filteredPosts = posts.filter(post =>
@@ -181,13 +173,12 @@ const MarketPlace = () => {
                         <Tabs defaultValue={activeCategory} className="w-full" onValueChange={handleCategoryChange}>
                             <TabsList className="flex flex-wrap w-full h-auto p-1 gap-1">
                                 <TabsTrigger value="srmap" className="text-xs sm:text-sm flex-1">University Events</TabsTrigger>
-                                <TabsTrigger value="faculty" className="text-xs sm:text-sm flex-1">Faculty Ratings</TabsTrigger>
                                 <TabsTrigger value="all" className="text-xs sm:text-sm flex-1">All Posts</TabsTrigger>
                                 <TabsTrigger value="ads" className="text-xs sm:text-sm flex-1">Advertisements</TabsTrigger>
                                 <TabsTrigger value="courses" className="text-xs sm:text-sm flex-1">Course Materials</TabsTrigger>
                             </TabsList>
 
-                            {(activeCategory as string) !== 'srmap' && (activeCategory as string) !== 'faculty' && (
+                            {activeCategory !== 'srmap' && (
                             <TabsContent value={activeCategory} className="mt-6">
                                 {loading ? (
                                     <div className="flex justify-center items-center h-64">
@@ -226,14 +217,6 @@ const MarketPlace = () => {
                                 )}
                             </TabsContent>
                             )}
-
-                            <TabsContent value="faculty" className="mt-6">
-                                <SRMAPFacultyRatingTemplate
-                                    limit={24}
-                                    searchQuery={searchQuery}
-                                    onRateClick={handleFacultyRateClick}
-                                />
-                            </TabsContent>
 
                             <TabsContent value="srmap" className="mt-6">
                                 {srmapLoading ? (

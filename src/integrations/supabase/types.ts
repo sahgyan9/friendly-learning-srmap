@@ -303,13 +303,14 @@ export type Database = {
       }
       community_posts: {
         Row: {
+          author_id: string
           comments_count: number
           content: string
           created_at: string
           id: string
           image_url: string | null
           likes_count: number
-          mentor_id: string
+          mentor_id: string | null
           post_type: string
           status: string
           tags: string[] | null
@@ -317,13 +318,14 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          author_id: string
           comments_count?: number
           content: string
           created_at?: string
           id?: string
           image_url?: string | null
           likes_count?: number
-          mentor_id: string
+          mentor_id?: string | null
           post_type?: string
           status?: string
           tags?: string[] | null
@@ -331,13 +333,14 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          author_id?: string
           comments_count?: number
           content?: string
           created_at?: string
           id?: string
           image_url?: string | null
           likes_count?: number
-          mentor_id?: string
+          mentor_id?: string | null
           post_type?: string
           status?: string
           tags?: string[] | null
@@ -346,10 +349,153 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "fk_mentor"
-            columns: ["mentor_id"]
+            foreignKeyName: "community_posts_author_id_fkey"
+            columns: ["author_id"]
             isOneToOne: false
-            referencedRelation: "mentors"
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      faculty: {
+        Row: {
+          avg_grading: number
+          avg_helpfulness: number
+          avg_overall: number
+          avg_teaching: number
+          created_at: string
+          department: string
+          designation: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean
+          last_synced_at: string | null
+          name: string
+          profile_url: string | null
+          rating_count: number
+          school: string | null
+          slug: string
+          source: string
+          updated_at: string
+        }
+        Insert: {
+          avg_grading?: number
+          avg_helpfulness?: number
+          avg_overall?: number
+          avg_teaching?: number
+          created_at?: string
+          department?: string
+          designation?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          last_synced_at?: string | null
+          name: string
+          profile_url?: string | null
+          rating_count?: number
+          school?: string | null
+          slug: string
+          source?: string
+          updated_at?: string
+        }
+        Update: {
+          avg_grading?: number
+          avg_helpfulness?: number
+          avg_overall?: number
+          avg_teaching?: number
+          created_at?: string
+          department?: string
+          designation?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          last_synced_at?: string | null
+          name?: string
+          profile_url?: string | null
+          rating_count?: number
+          school?: string | null
+          slug?: string
+          source?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      faculty_ratings: {
+        Row: {
+          comment: string | null
+          course_code: string | null
+          created_at: string
+          faculty_id: string
+          grading: number
+          helpful_count: number
+          helpfulness: number
+          id: string
+          overall: number
+          reviewer_id: string
+          tags: string[]
+          teaching: number
+          updated_at: string
+        }
+        Insert: {
+          comment?: string | null
+          course_code?: string | null
+          created_at?: string
+          faculty_id: string
+          grading: number
+          helpful_count?: number
+          helpfulness: number
+          id?: string
+          reviewer_id: string
+          tags?: string[]
+          teaching: number
+          updated_at?: string
+        }
+        Update: {
+          comment?: string | null
+          course_code?: string | null
+          created_at?: string
+          faculty_id?: string
+          grading?: number
+          helpful_count?: number
+          helpfulness?: number
+          id?: string
+          reviewer_id?: string
+          tags?: string[]
+          teaching?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "faculty_ratings_faculty_id_fkey"
+            columns: ["faculty_id"]
+            isOneToOne: false
+            referencedRelation: "faculty"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      faculty_review_votes: {
+        Row: {
+          created_at: string
+          rating_id: string
+          voter_id: string
+        }
+        Insert: {
+          created_at?: string
+          rating_id: string
+          voter_id: string
+        }
+        Update: {
+          created_at?: string
+          rating_id?: string
+          voter_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "faculty_review_votes_rating_id_fkey"
+            columns: ["rating_id"]
+            isOneToOne: false
+            referencedRelation: "faculty_ratings"
             referencedColumns: ["id"]
           },
         ]
@@ -1237,6 +1383,116 @@ export type Database = {
               isSetofReturn: false
             }
           }
+      get_community_feed: {
+        Args: {
+          p_post_type?: string | null
+          p_search?: string | null
+          p_limit?: number
+          p_offset?: number
+        }
+        Returns: {
+          id: string
+          title: string
+          content: string
+          post_type: string
+          status: string
+          tags: string[] | null
+          image_url: string | null
+          likes_count: number
+          comments_count: number
+          created_at: string
+          updated_at: string
+          author_id: string
+          author_name: string | null
+          author_image: string | null
+          author_department: string | null
+          author_role: string | null
+          author_is_mentor: boolean
+          viewer_has_liked: boolean
+          viewer_is_author: boolean
+          total_count: number
+        }[]
+      }
+      get_community_post: {
+        Args: { p_post_id: string }
+        Returns: {
+          id: string
+          title: string
+          content: string
+          post_type: string
+          status: string
+          tags: string[] | null
+          image_url: string | null
+          likes_count: number
+          comments_count: number
+          created_at: string
+          updated_at: string
+          author_id: string
+          author_name: string | null
+          author_image: string | null
+          author_department: string | null
+          author_role: string | null
+          author_is_mentor: boolean
+          viewer_has_liked: boolean
+          viewer_is_author: boolean
+        }[]
+      }
+      get_post_comments: {
+        Args: { p_post_id: string }
+        Returns: {
+          id: string
+          content: string
+          created_at: string
+          updated_at: string
+          author_id: string
+          author_name: string | null
+          author_image: string | null
+          viewer_is_author: boolean
+        }[]
+      }
+      get_faculty_reviews: {
+        Args: { p_faculty_id: string }
+        Returns: {
+          id: string
+          teaching: number
+          grading: number
+          helpfulness: number
+          overall: number
+          comment: string | null
+          course_code: string | null
+          tags: string[] | null
+          helpful_count: number
+          viewer_voted: boolean
+          is_own: boolean
+          created_at: string
+        }[]
+      }
+      get_faculty_tag_counts: {
+        Args: { p_faculty_id: string }
+        Returns: { tag: string; count: number }[]
+      }
+      get_top_rated_faculty: {
+        Args: { p_limit?: number; p_min_ratings?: number }
+        Returns: {
+          id: string
+          slug: string
+          name: string
+          designation: string | null
+          department: string
+          school: string | null
+          image_url: string | null
+          avg_overall: number
+          rating_count: number
+        }[]
+      }
+      get_faculty_directory_stats: {
+        Args: never
+        Returns: {
+          faculty_count: number
+          rating_count: number
+          department_count: number
+        }[]
+      }
       create_conversation: {
         Args: { user1_id: string; user2_id: string }
         Returns: {

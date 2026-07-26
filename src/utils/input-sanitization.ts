@@ -1,6 +1,33 @@
 
 // Centralized input sanitization utilities
 
+/**
+ * Normalise free-text a user typed before it is stored.
+ *
+ * Deliberately conservative: it strips angle brackets and control characters and
+ * caps the length, and nothing else. Everything here is rendered through React,
+ * which escapes text nodes, so aggressive filtering buys no safety and actively
+ * corrupts legitimate input — the previous implementation stripped the literal
+ * substring "script", turning "description" into "deion" and "JavaScript" into
+ * "Java".
+ */
+export function sanitizeInput(input: string, maxLength?: number): string {
+  if (!input) return '';
+
+  const withoutControlChars = Array.from(input)
+    .filter((char) => {
+      const code = char.codePointAt(0) ?? 0;
+      // Keep tab, newline and carriage return so multi-line bodies survive.
+      if (code === 9 || code === 10 || code === 13) return true;
+      return code >= 32 && code !== 127;
+    })
+    .join('');
+
+  const sanitized = withoutControlChars.replace(/[<>]/g, '').trim();
+
+  return maxLength ? sanitized.slice(0, maxLength) : sanitized;
+}
+
 export class InputSanitizer {
   // Remove potentially dangerous characters and trim
   static sanitizeText(input: string): string {

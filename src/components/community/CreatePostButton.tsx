@@ -1,57 +1,53 @@
-
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Plus } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
 import { CreatePostModal } from "./CreatePostModal";
-import { BecomeAMentorModal } from "./BecomeAMentorModal";
 
 interface CreatePostButtonProps {
   onPostCreated: () => void;
+  className?: string;
 }
 
-export const CreatePostButton = ({ onPostCreated }: CreatePostButtonProps) => {
-  const { user, isMentor } = useAuth();
+/**
+ * Posting used to be gated behind "become a mentor" — which meant the students
+ * actually looking for hackathon partners and study help could never post. Any
+ * signed-in user can post now; signed-out users are sent to sign in and returned
+ * straight back here.
+ */
+export const CreatePostButton = ({ onPostCreated, className }: CreatePostButtonProps) => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showBecomeAMentorModal, setShowBecomeAMentorModal] = useState(false);
 
-  const handleCreateClick = () => {
+  const handleClick = () => {
     if (!user) {
-      // This should not happen as the button is only shown to authenticated users
+      navigate("/signin", { state: { from: location } });
       return;
     }
-
-    if (isMentor) {
-      setShowCreateModal(true);
-    } else {
-      setShowBecomeAMentorModal(true);
-    }
+    setShowCreateModal(true);
   };
-
-  if (!user) {
-    return null;
-  }
 
   return (
     <>
-      <Button onClick={handleCreateClick} className="flex items-center gap-2">
-        <Plus className="h-4 w-4" />
-        Create Post
+      <Button onClick={handleClick} className={className}>
+        <Plus className="mr-2 h-4 w-4" />
+        Create post
       </Button>
 
-      <CreatePostModal 
-        open={showCreateModal} 
+      <CreatePostModal
+        open={showCreateModal}
         onOpenChange={setShowCreateModal}
         onPostCreated={() => {
           onPostCreated();
           setShowCreateModal(false);
         }}
       />
-
-      <BecomeAMentorModal
-        open={showBecomeAMentorModal}
-        onOpenChange={setShowBecomeAMentorModal}
-      />
     </>
   );
 };
+
+export default CreatePostButton;

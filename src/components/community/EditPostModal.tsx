@@ -8,22 +8,16 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { X } from "lucide-react";
-import { updateCommunityPost, type CommunityPost } from "@/integrations/supabase/services/community-posts";
+import {
+  POST_STATUSES,
+  POST_TYPES as ALL_POST_TYPES,
+  updateCommunityPost,
+  type CommunityPost,
+} from "@/integrations/supabase/services/community-posts";
 import { toast } from "sonner";
 
-const POST_TYPES = [
-  { value: 'hackathon', label: 'Hackathon Partners' },
-  { value: 'research', label: 'Research Collaboration' },
-  { value: 'problem-solving', label: 'Problem Solving' },
-  { value: 'project', label: 'Project Ideas' },
-  { value: 'general', label: 'General Discussion' },
-];
-
-const POST_STATUSES = [
-  { value: 'open', label: 'Open' },
-  { value: 'fulfilled', label: 'Fulfilled' },
-  { value: 'closed', label: 'Closed' },
-];
+// "all" is a feed filter, not a category a post can have.
+const POST_TYPES = ALL_POST_TYPES.filter((type) => type.value !== "all");
 
 interface EditPostModalProps {
   post: CommunityPost;
