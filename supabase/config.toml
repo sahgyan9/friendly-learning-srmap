@@ -1,1 +1,7 @@
 project_id = "ruapdkrgcbqrhvsayvpf"
+
+# sync-faculty authenticates callers itself (CRON_SECRET header, or an admin
+# JWT) so the platform gate is redundant. Leaving verify_jwt on would also break
+# the scheduled invocation, which carries no user JWT.
+[functions.sync-faculty]
+verify_jwt = false

@@ -11,6 +11,13 @@
 // directory are marked is_active = false rather than deleted, so any ratings
 // attached to them survive.
 //
+// AUTH: deployed with verify_jwt = false (see supabase/config.toml) because this
+// function authenticates requests itself in isAuthorised() below — either a
+// CRON_SECRET header or a JWT belonging to a user with is_admin = true. The
+// platform JWT gate would only verify the anon key, which ships in the client
+// bundle and so proves nothing, while breaking the scheduled cron path that
+// carries no user JWT at all.
+//
 // Invoke:
 //   POST /functions/v1/sync-faculty          (admin JWT, or CRON_SECRET header)
 // Schedule it daily with pg_cron or the Supabase dashboard scheduler.
