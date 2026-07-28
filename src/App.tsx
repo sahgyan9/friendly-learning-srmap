@@ -35,6 +35,7 @@ const HowItWorks = lazy(() => import("./pages/HowItWorks"));
 const FindStudyPartners = lazy(() => import("./pages/FindStudyPartners"));
 const HackathonPartners = lazy(() => import("./pages/HackathonPartners"));
 const Blog = lazy(() => import("./pages/Blog"));
+const BlogPost = lazy(() => import("./pages/BlogPost"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Unauthorized = lazy(() => import("./pages/Unauthorized"));
 
@@ -99,6 +100,7 @@ function App() {
                 <Route path="/find-study-partners" element={<FindStudyPartners />} />
                 <Route path="/hackathon-partners" element={<HackathonPartners />} />
                 <Route path="/blog" element={<Blog />} />
+                <Route path="/blog/:slug" element={<BlogPost />} />
                 <Route path="/unauthorized" element={<Unauthorized />} />
 
                 {/* Authenticated */}

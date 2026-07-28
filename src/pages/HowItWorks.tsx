@@ -10,14 +10,14 @@ const HowItWorks = () => {
     const structuredData = {
         "@context": "https://schema.org",
         "@type": "HowTo",
-        "name": "How Project FL Works - Student Collaboration Platform",
-        "description": "Learn how Project FL connects university students for mentoring, study partnerships, hackathon teams, and academic collaboration",
+        "name": "How Friendly Learning SRMAP Works - Student Collaboration Platform",
+        "description": "Learn how Friendly Learning SRMAP connects university students for mentoring, study partnerships, hackathon teams, and academic collaboration",
         "url": `${PRIMARY_DOMAIN}/how-it-works`,
         "step": [
             {
                 "@type": "HowToStep",
                 "name": "Sign Up with University Email",
-                "text": "Create your account using your verified university email address to join the Project FL community."
+                "text": "Create your account using your verified university email address to join the Friendly Learning SRMAP community."
             },
             {
                 "@type": "HowToStep",
@@ -35,9 +35,9 @@ const HowItWorks = () => {
     return (
         <>
             <SEOHead
-                title="How Project FL Works | University Student Collaboration Guide"
-                description="Learn how Project FL connects university students worldwide for mentoring, study partnerships, hackathon teams, and academic collaboration. Simple 3-step process to start collaborating."
-                keywords="how project fl works, university student collaboration guide, student mentoring platform, academic help process, project fl tutorial"
+                title="How Friendly Learning SRMAP Works | University Student Collaboration Guide"
+                description="Learn how Friendly Learning SRMAP connects university students worldwide for mentoring, study partnerships, hackathon teams, and academic collaboration. Simple 3-step process to start collaborating."
+                keywords="how Friendly Learning SRMAP works, university student collaboration guide, student mentoring platform, academic help process, Friendly Learning SRMAP tutorial"
                 canonical={`${PRIMARY_DOMAIN}/how-it-works`}
                 structuredData={structuredData}
             />
@@ -48,7 +48,7 @@ const HowItWorks = () => {
                     <div className="container px-4 md:px-6">
                         <div className="max-w-4xl mx-auto">
                             <header className="text-center mb-12">
-                                <h1 className="text-4xl font-bold mb-6">How Project FL Works</h1>
+                                <h1 className="text-4xl font-bold mb-6">How Friendly Learning SRMAP Works</h1>
                                 <p className="text-xl text-muted-foreground">
                                     Connect, collaborate, and succeed with fellow university students in just 3 simple steps
                                 </p>
@@ -73,20 +73,20 @@ const HowItWorks = () => {
                             </div>
 
                             <div className="bg-muted p-8 rounded-lg mb-12">
-                                <h2 className="text-2xl font-bold mb-6">What You Can Do on Project FL</h2>
+                                <h2 className="text-2xl font-bold mb-6">What You Can Do on Friendly Learning SRMAP</h2>
                                 <div className="grid md:grid-cols-2 gap-6">
                                     <div>
-                                        <h4 className="font-bold mb-2">🎓 Find Academic Help</h4>
+                                        <h4 className="font-bold mb-2">ðŸŽ“ Find Academic Help</h4>
                                         <p className="text-sm mb-4">Connect with mentors and peers for course help, assignment guidance, and exam preparation.</p>
 
-                                        <h4 className="font-bold mb-2">💻 Build Hackathon Teams</h4>
+                                        <h4 className="font-bold mb-2">ðŸ’» Build Hackathon Teams</h4>
                                         <p className="text-sm mb-4">Find developers, designers, and business minds to create winning hackathon teams.</p>
                                     </div>
                                     <div>
-                                        <h4 className="font-bold mb-2">📚 Form Study Groups</h4>
+                                        <h4 className="font-bold mb-2">ðŸ“š Form Study Groups</h4>
                                         <p className="text-sm mb-4">Connect with classmates for collaborative learning and study sessions.</p>
 
-                                        <h4 className="font-bold mb-2">🚀 Start Projects</h4>
+                                        <h4 className="font-bold mb-2">ðŸš€ Start Projects</h4>
                                         <p className="text-sm mb-4">Find collaborators for startup ideas, research projects, and innovative solutions.</p>
                                     </div>
                                 </div>
@@ -94,10 +94,10 @@ const HowItWorks = () => {
 
                             <div className="text-center">
                                 <h2 className="text-2xl font-bold mb-4">Ready to Get Started?</h2>
-                                <p className="mb-6">Join thousands of university students already collaborating on Project FL</p>
+                                <p className="mb-6">Join thousands of university students already collaborating on Friendly Learning SRMAP</p>
                                 <div className="space-x-4">
                                     <Button asChild size="lg">
-                                        <Link to="/signup">Join Project FL Now</Link>
+                                        <Link to="/signup">Join Friendly Learning SRMAP Now</Link>
                                     </Button>
                                     <Button variant="outline" size="lg" asChild>
                                         <Link to="/mentors">Browse Mentors</Link>

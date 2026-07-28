@@ -32,7 +32,9 @@ const BecomeMentor = () => {
     profile_image: profile?.profile_image || "",
     cgpa: "",
     year_of_studies: "",
-    university: "",
+    // Every mentor on this platform is an SRM AP student, so asking them to type
+    // it out was pure friction — it stays editable for the rare exception.
+    university: "SRM University AP",
     hobbies: "",
     mobile: ""
   };

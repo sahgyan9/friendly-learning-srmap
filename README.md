@@ -1,8 +1,8 @@
-# Project FL - Friendly Learning Platform
+# Friendly Learning SRMAP - Friendly Learning Platform
 
-## About Project FL
+## About Friendly Learning SRMAP
 
-**Project FL** is a premier friendly learning platform that connects students with student mentor within university. Our mission is to provide personalized academic guidance, career advice, and peer learning support through an innovative mentorship ecosystem.
+**Friendly Learning SRMAP** is a premier friendly learning platform that connects students with student mentor within university. Our mission is to provide personalized academic guidance, career advice, and peer learning support through an innovative mentorship ecosystem.
 
 **FL** stands for **Friendly Learning** - embodying our core values of accessible, supportive, and collaborative education.
 

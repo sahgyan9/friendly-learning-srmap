@@ -1,73 +1,132 @@
+import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MentorFormData } from "@/hooks/useMentorForm";
+import { getFacultyDepartments } from "@/integrations/supabase/services/faculty";
+import { FormField, describedBy, invalidControlClass } from "./FormField";
+import type { MentorFormErrors } from "@/lib/mentor-form-validation";
 
 interface MentorPersonalInfoProps {
   formData: MentorFormData;
+  errors: MentorFormErrors;
   handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
+  handleBlur: (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
+  markTouched: (field: keyof MentorFormData) => void;
 }
 
-const MentorPersonalInfo = ({ formData, handleChange }: MentorPersonalInfoProps) => {
-  const handleDepartmentChange = (value: string) => {
-    // Create a synthetic event to match the expected interface
-    const syntheticEvent = {
-      target: {
-        name: 'department',
-        value: value,
-      },
-    } as React.ChangeEvent<HTMLSelectElement>;
-    
-    handleChange(syntheticEvent);
+/**
+ * Fallback department list, used only if the faculty directory can't be reached.
+ *
+ * The previous hardcoded list had two entries sharing `value="Biology"` — one
+ * labelled Biology and one labelled PhD — so anyone picking PhD silently filed
+ * as a Biology mentor, and React logged a duplicate-key warning on every render.
+ */
+const FALLBACK_DEPARTMENTS = [
+  "Computer Science and Engineering",
+  "Electronics and Communication Engineering",
+  "Electrical and Electronics Engineering",
+  "Mechanical Engineering",
+  "Civil Engineering",
+  "Physics",
+  "Chemistry",
+  "Mathematics",
+  "Biological Sciences",
+  "Commerce",
+  "Economics",
+  "Management",
+  "Liberal Arts",
+];
+
+const MentorPersonalInfo = ({
+  formData,
+  errors,
+  handleChange,
+  handleBlur,
+  markTouched,
+}: MentorPersonalInfoProps) => {
+  // The faculty directory is synced monthly from the university, so it is the
+  // most accurate department list the app has — better than a list that has to
+  // be edited by hand every time the university reorganises a school.
+  const [departments, setDepartments] = useState<string[]>(FALLBACK_DEPARTMENTS);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    getFacultyDepartments().then(({ data }) => {
+      if (!cancelled && data.length > 0) setDepartments(data);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const selectDepartment = (value: string) => {
+    markTouched("department");
+    handleChange({
+      target: { name: "department", value },
+    } as React.ChangeEvent<HTMLSelectElement>);
   };
 
   return (
     <div className="grid gap-6 md:grid-cols-2">
-      <div className="space-y-2">
-        <Label htmlFor="name">Full Name <span className="text-red-500">*</span></Label>
+      <FormField id="name" label="Full name" required error={errors.name}>
         <Input
           id="name"
           name="name"
           value={formData.name}
           onChange={handleChange}
-          required
+          onBlur={handleBlur}
+          autoComplete="name"
+          aria-describedby={describedBy("name", errors.name)}
+          aria-invalid={Boolean(errors.name)}
+          className={invalidControlClass(errors.name)}
           placeholder="Your full name"
         />
-      </div>
+      </FormField>
 
-      <div className="space-y-2">
-        <Label htmlFor="department">Department <span className="text-red-500">*</span></Label>
-        <Select value={formData.department} onValueChange={handleDepartmentChange} required>
-          <SelectTrigger>
-            <SelectValue placeholder="Select Department" />
+      <FormField id="department" label="Department" required error={errors.department}>
+        <Select value={formData.department} onValueChange={selectDepartment}>
+          <SelectTrigger
+            id="department"
+            aria-describedby={describedBy("department", errors.department)}
+            aria-invalid={Boolean(errors.department)}
+            className={invalidControlClass(errors.department)}
+          >
+            <SelectValue placeholder="Select department" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="Computer Science">Computer Science</SelectItem>
-            <SelectItem value="Electrical Engineering">Electrical Engineering</SelectItem>
-            <SelectItem value="Mechanical Engineering">Mechanical Engineering</SelectItem>
-            <SelectItem value="Civil Engineering">Civil Engineering</SelectItem>
-            <SelectItem value="Business Administration">Account & Finance</SelectItem>
-            <SelectItem value="Physics">Physics</SelectItem>
-            <SelectItem value="Mathematics">Mathematics</SelectItem>
-            <SelectItem value="Chemistry">Chemistry</SelectItem>
-            <SelectItem value="Biology">Biology</SelectItem>
-            <SelectItem value="Biology">PhD</SelectItem>
+            {departments.map((department) => (
+              <SelectItem key={department} value={department}>
+                {department}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
-      </div>
+      </FormField>
 
-      <div className="space-y-2">
-        <Label htmlFor="mobile">Mobile Number <span className="text-red-500">*</span></Label>
+      <FormField
+        id="mobile"
+        label="Mobile number"
+        required
+        error={errors.mobile}
+        hint="Only visible to reviewers, never shown on your profile"
+      >
         <Input
           id="mobile"
           name="mobile"
           type="tel"
+          inputMode="numeric"
+          autoComplete="tel"
           value={formData.mobile}
           onChange={handleChange}
-          required
-          placeholder="Enter your mobile number"
+          onBlur={handleBlur}
+          aria-describedby={describedBy("mobile", errors.mobile, true)}
+          aria-invalid={Boolean(errors.mobile)}
+          className={invalidControlClass(errors.mobile)}
+          placeholder="9876543210"
         />
-      </div>
+      </FormField>
     </div>
   );
 };

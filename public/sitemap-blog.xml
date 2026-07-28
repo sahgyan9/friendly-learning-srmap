@@ -6,8 +6,26 @@
                             http://www.google.com/schemas/sitemap-image/1.1 http://www.google.com/schemas/sitemap-image/1.1/sitemap-image.xsd">
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/blog</loc>
-    <lastmod>2026-07-28T15:07:11.534Z</lastmod>
+    <lastmod>2026-07-28T16:37:54.108Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://friendly-learning-srmap.vercel.app/blog/choosing-electives-srm-ap</loc>
+    <lastmod>2026-07-20</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://friendly-learning-srmap.vercel.app/blog/finding-hackathon-teammates</loc>
+    <lastmod>2026-07-12</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://friendly-learning-srmap.vercel.app/blog/asking-for-academic-help</loc>
+    <lastmod>2026-07-04</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
 </urlset>

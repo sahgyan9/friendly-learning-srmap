@@ -1,5 +1,5 @@
 /**
- * Dynamic Sitemap Generator for Project FL
+ * Dynamic Sitemap Generator for Friendly Learning SRMAP
  * 
  * This script generates sitemap.xml and sitemap-index.xml files 
  * based on the actual routes in the application.
@@ -25,8 +25,8 @@ const config = {
     defaultPriority: 0.7,
     disallowedPaths: ['/unauthorized', '/admin', '/admin/*', '/profile'],
     routeConfig: {
-        '/': { changefreq: 'daily', priority: 1.0, images: [{ loc: '/og-image.png', title: 'Project FL - University Student Collaboration Platform', caption: 'Connect with university students for mentoring, study partnerships, and project collaborations' }] },
-        '/about': { changefreq: 'monthly', priority: 0.8, images: [{ loc: '/about-team.png', title: 'About Project FL Team' }] },
+        '/': { changefreq: 'daily', priority: 1.0, images: [{ loc: '/og-image.png', title: 'Friendly Learning SRMAP - University Student Collaboration Platform', caption: 'Connect with university students for mentoring, study partnerships, and project collaborations' }] },
+        '/about': { changefreq: 'monthly', priority: 0.8, images: [{ loc: '/about-team.png', title: 'About Friendly Learning SRMAP Team' }] },
         '/mentors': { changefreq: 'daily', priority: 0.9 },
         '/community-posts': { changefreq: 'daily', priority: 0.9 },
         '/signup': { changefreq: 'monthly', priority: 0.7 },

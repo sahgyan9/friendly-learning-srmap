@@ -1,5 +1,5 @@
 # ===================================================================
-# Robots.txt for Project FL
+# Robots.txt for Friendly Learning SRMAP
 # Last Updated: July 28, 2026
 # 
 # This file tells search engine crawlers which pages they can and 

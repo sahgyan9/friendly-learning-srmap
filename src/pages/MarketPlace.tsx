@@ -127,8 +127,8 @@ const MarketPlace = () => {
     return (
         <>
             <SEOHead
-                title="Events & News | Project FL University Student Hub | Find University Events, News & Advertisements"
-                description="Discover university events, news, advertisements, and course materials at Project FL. Stay updated with campus activities, announcements, and educational resources for university students."
+                title="Events & News | Friendly Learning SRMAP University Student Hub | Find University Events, News & Advertisements"
+                description="Discover university events, news, advertisements, and course materials at Friendly Learning SRMAP. Stay updated with campus activities, announcements, and educational resources for university students."
                 keywords="university events, campus news, student advertisements, course materials, university announcements, student hub, campus activities, educational resources"
                 canonical={`${PRIMARY_DOMAIN}/marketplace`}
             />

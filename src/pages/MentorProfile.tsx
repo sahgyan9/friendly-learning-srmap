@@ -117,19 +117,19 @@ const MentorProfile = () => {
     if (!mentor) return null;
 
     const mentorName = mentor.name || "Mentor";
-    const mentorDescription = mentor.bio || `${mentorName} is a mentor on Project FL.`;
+    const mentorDescription = mentor.bio || `${mentorName} is a mentor on Friendly Learning SRMAP.`;
     const mentorSkills = mentor.skills ? mentor.skills.join(", ") : "";
-    const metaTitle = `${mentorName} - Project FL Mentor | ${mentor.department || 'University Mentor'}`;
-    const metaDescription = `Connect with ${mentorName}, a verified mentor at Project FL. ${mentorDescription.substring(0, 120)}${mentorDescription.length > 120 ? '...' : ''}`;
+    const metaTitle = `${mentorName} - Friendly Learning SRMAP Mentor | ${mentor.department || 'University Mentor'}`;
+    const metaDescription = `Connect with ${mentorName}, a verified mentor at Friendly Learning SRMAP. ${mentorDescription.substring(0, 120)}${mentorDescription.length > 120 ? '...' : ''}`;
 
     return (
       <>
         <SEOHead
           title={metaTitle}
           description={metaDescription}
-          keywords={`${mentorName}, Project FL mentor, university student mentor, ${mentorSkills}, academic mentor, peer learning`}
+          keywords={`${mentorName}, Friendly Learning SRMAP mentor, university student mentor, ${mentorSkills}, academic mentor, peer learning`}
           canonical={`${PRIMARY_DOMAIN}/mentor/${mentor.id}`}
-          ogTitle={`Meet ${mentorName} - Project FL Mentor`}
+          ogTitle={`Meet ${mentorName} - Friendly Learning SRMAP Mentor`}
           ogDescription={metaDescription}
           ogImage={mentor.profile_image || "/og-image.png"}
         />

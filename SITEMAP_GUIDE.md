@@ -1,6 +1,6 @@
-# Sitemap Generation for Project FL
+# Sitemap Generation for Friendly Learning SRMAP
 
-This document outlines how the sitemap generation works for Project FL.
+This document outlines how the sitemap generation works for Friendly Learning SRMAP.
 
 ## Available Scripts
 

@@ -6,18 +6,18 @@
                             http://www.google.com/schemas/sitemap-image/1.1 http://www.google.com/schemas/sitemap-image/1.1/sitemap-image.xsd">
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/mentors</loc>
-    <lastmod>2026-07-28T15:07:11.815Z</lastmod>
+    <lastmod>2026-07-28T16:37:54.310Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/mentor/54774a25-67a8-48da-abc7-3621f35fbb26</loc>
-    <lastmod>2026-07-28T15:07:11.815Z</lastmod>
+    <lastmod>2026-07-28T16:37:54.310Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
     <image:image>
       <image:loc>https://ruapdkrgcbqrhvsayvpf.supabase.co/storage/v1/object/public/profiles/profile-images/54774a25-67a8-48da-abc7-3621f35fbb26-1751847670170.jpg</image:loc>
-      <image:title>Gyan Kumar Sah - Project FL Mentor</image:title>
+      <image:title>Gyan Kumar Sah - Friendly Learning SRMAP Mentor</image:title>
     </image:image>
   </url>
 </urlset>

@@ -4,9 +4,22 @@ import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
+import { getPlatformStats, type PlatformStats } from "@/integrations/supabase/services/platform-stats";
 
 const Hero = () => {
   const { isMentor } = useAuth();
+  const [stats, setStats] = useState<PlatformStats | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    getPlatformStats().then((result) => {
+      if (!cancelled) setStats(result);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const container = {
     hidden: { opacity: 0 },
@@ -114,38 +127,31 @@ const Hero = () => {
             className="grid grid-cols-2 md:grid-cols-4 gap-8 px-4 max-w-3xl mx-auto"
             variants={item}
           >
-            <motion.div
-              className="text-center"
-              variants={statVariants}
-              whileHover={{ y: -5, transition: { duration: 0.2 } }}
-            >
-              <div className="text-3xl font-bold text-primary">200+</div>
-              <p className="text-muted-foreground text-sm">Active Mentors</p>
-            </motion.div>
-            <motion.div
-              className="text-center"
-              variants={statVariants}
-              whileHover={{ y: -5, transition: { duration: 0.2 } }}
-            >
-              <div className="text-3xl font-bold text-primary">4.8</div>
-              <p className="text-muted-foreground text-sm">Average Rating</p>
-            </motion.div>
-            <motion.div
-              className="text-center"
-              variants={statVariants}
-              whileHover={{ y: -5, transition: { duration: 0.2 } }}
-            >
-              <div className="text-3xl font-bold text-primary">15</div>
-              <p className="text-muted-foreground text-sm">Departments</p>
-            </motion.div>
-            <motion.div
-              className="text-center"
-              variants={statVariants}
-              whileHover={{ y: -5, transition: { duration: 0.2 } }}
-            >
-              <div className="text-3xl font-bold text-primary">1000+</div>
-              <p className="text-muted-foreground text-sm">Mentees Helped</p>
-            </motion.div>
+            {/* Every figure is counted from the database. Placeholder numbers
+                here used to contradict the faculty card further down the page,
+                which reported the real department count. */}
+            {[
+              { value: stats?.faculty, label: "Faculty rated" },
+              { value: stats?.departments, label: "Departments" },
+              { value: stats?.mentors, label: "Student mentors" },
+              { value: stats?.posts, label: "Community posts" },
+            ].map((stat) => (
+              <motion.div
+                key={stat.label}
+                className="text-center"
+                variants={statVariants}
+                whileHover={{ y: -5, transition: { duration: 0.2 } }}
+              >
+                <div className="text-3xl font-bold text-primary tabular-nums">
+                  {stat.value === undefined ? (
+                    <span className="inline-block h-8 w-14 animate-pulse rounded bg-primary/10 align-middle" />
+                  ) : (
+                    stat.value.toLocaleString("en-IN")
+                  )}
+                </div>
+                <p className="text-muted-foreground text-sm">{stat.label}</p>
+              </motion.div>
+            ))}
           </motion.div>
         </motion.div>
       </div>
