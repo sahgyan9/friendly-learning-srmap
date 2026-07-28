@@ -50,6 +50,11 @@ interface WpFacultyProfile {
   featured_media?: number;
 }
 
+interface Taxonomy {
+  bySlug: Map<string, WpTerm>;
+  byId: Map<number, WpTerm>;
+}
+
 interface WpMedia {
   id: number;
   source_url?: string;
@@ -85,12 +90,19 @@ async function fetchJson<T>(url: string): Promise<T> {
   return (await response.json()) as T;
 }
 
-/** school-category terms: top-level (parent 0) are schools, children are departments. */
-async function fetchSchoolCategories(): Promise<Map<string, WpTerm>> {
+/**
+ * school-category terms: top-level (parent 0) are schools, children are
+ * departments. Indexed by slug (to match class_list entries) and by id (to walk
+ * a department up to its school). ~36 terms today, well inside WP's 100 cap.
+ */
+async function fetchSchoolCategories(): Promise<Taxonomy> {
   const terms = await fetchJson<WpTerm[]>(
     `${WP_BASE}/school-category?per_page=100&_fields=id,name,slug,parent`,
   );
-  return new Map(terms.map((term) => [term.slug, term]));
+  return {
+    bySlug: new Map(terms.map((term) => [term.slug, term])),
+    byId: new Map(terms.map((term) => [term.id, term])),
+  };
 }
 
 async function fetchAllFacultyProfiles(): Promise<WpFacultyProfile[]> {
@@ -149,41 +161,55 @@ async function fetchMediaUrls(mediaIds: number[]): Promise<Map<number, string>> 
 
 /**
  * Resolve department + school from the `school-category-*` entries WordPress
- * bakes into class_list. A profile carries both its department term and its
- * school term; the taxonomy's parent link tells them apart.
+ * bakes into class_list. The taxonomy's parent link tells the two apart:
+ * top-level terms are schools, children are departments.
  */
 function resolveAffiliation(
   profile: WpFacultyProfile,
-  terms: Map<string, WpTerm>,
+  taxonomy: Taxonomy,
 ): { department: string; school: string | null } {
   const slugs = (profile.class_list ?? [])
     .filter((entry) => entry.startsWith("school-category-"))
     .map((entry) => entry.replace("school-category-", ""));
 
-  let department: string | null = null;
-  let school: string | null = null;
+  let departmentTerm: WpTerm | null = null;
+  let schoolTerm: WpTerm | null = null;
 
   for (const slug of slugs) {
-    const term = terms.get(slug);
+    const term = taxonomy.bySlug.get(slug);
     if (!term) continue;
     if (term.parent === 0) {
-      school ??= term.name;
+      schoolTerm ??= term;
     } else {
-      department ??= term.name;
+      departmentTerm ??= term;
     }
   }
 
+  // Most profiles list only their department, not the school above it — relying
+  // on both being present left ~70% of rows with a null school. The department
+  // term already records its school in `parent`, so climb to the root instead.
+  if (!schoolTerm && departmentTerm) {
+    let cursor: WpTerm | undefined = taxonomy.byId.get(departmentTerm.parent);
+    while (cursor && cursor.parent !== 0) {
+      cursor = taxonomy.byId.get(cursor.parent);
+    }
+    schoolTerm = cursor ?? null;
+  }
+
   // Some profiles only carry a school term (central offices, directorates).
-  return { department: department ?? school ?? "General", school };
+  return {
+    department: departmentTerm?.name ?? schoolTerm?.name ?? "General",
+    school: schoolTerm?.name ?? null,
+  };
 }
 
 function toFacultyRow(
   profile: WpFacultyProfile,
-  terms: Map<string, WpTerm>,
+  taxonomy: Taxonomy,
   mediaUrls: Map<number, string>,
   syncedAt: string,
 ) {
-  const { department, school } = resolveAffiliation(profile, terms);
+  const { department, school } = resolveAffiliation(profile, taxonomy);
 
   return {
     slug: profile.slug,
@@ -236,7 +262,7 @@ serve(async (req) => {
   const syncStartedAt = new Date().toISOString();
 
   try {
-    const [terms, profiles] = await Promise.all([
+    const [taxonomy, profiles] = await Promise.all([
       fetchSchoolCategories(),
       fetchAllFacultyProfiles(),
     ]);
@@ -251,7 +277,7 @@ serve(async (req) => {
       new Map(
         profiles
           .filter((profile) => profile.slug)
-          .map((profile) => [profile.slug, toFacultyRow(profile, terms, mediaUrls, syncedAt)]),
+          .map((profile) => [profile.slug, toFacultyRow(profile, taxonomy, mediaUrls, syncedAt)]),
       ).values(),
     );
 
@@ -284,6 +310,8 @@ serve(async (req) => {
       synced: rows.length,
       retired: retired ?? 0,
       departments: new Set(rows.map((row) => row.department)).size,
+      schools: new Set(rows.map((row) => row.school).filter(Boolean)).size,
+      missingSchool: rows.filter((row) => !row.school).length,
     });
   } catch (error) {
     return json({ error: error instanceof Error ? error.message : String(error) }, 500);
