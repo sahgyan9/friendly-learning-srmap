@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <sitemap>
-    <loc>https://friendly-learning-srmap.lovable.app/sitemap.xml</loc>
-    <lastmod>2025-11-07T01:19:24.169Z</lastmod>
+    <loc>https://friendly-learning-srmap.vercel.app/sitemap.xml</loc>
+    <lastmod>2026-07-28T15:07:11.954Z</lastmod>
   </sitemap>
   <sitemap>
-    <loc>https://friendly-learning-srmap.lovable.app/sitemap-blog.xml</loc>
-    <lastmod>2025-11-07T01:19:24.169Z</lastmod>
+    <loc>https://friendly-learning-srmap.vercel.app/sitemap-blog.xml</loc>
+    <lastmod>2026-07-28T15:07:11.954Z</lastmod>
   </sitemap>
   <sitemap>
-    <loc>https://friendly-learning-srmap.lovable.app/sitemap-mentors.xml</loc>
-    <lastmod>2025-11-07T01:19:24.169Z</lastmod>
+    <loc>https://friendly-learning-srmap.vercel.app/sitemap-mentors.xml</loc>
+    <lastmod>2026-07-28T15:07:11.954Z</lastmod>
   </sitemap>
   <sitemap>
-    <loc>https://friendly-learning-srmap.lovable.app/sitemap-community.xml</loc>
-    <lastmod>2025-11-07T01:19:24.169Z</lastmod>
+    <loc>https://friendly-learning-srmap.vercel.app/sitemap-community.xml</loc>
+    <lastmod>2026-07-28T15:07:11.954Z</lastmod>
   </sitemap>
 </sitemapindex>

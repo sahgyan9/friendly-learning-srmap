@@ -1,3 +1,4 @@
+import { PRIMARY_DOMAIN } from "@/lib/constants";
 import { useLocation, Link } from "react-router-dom";
 import { useEffect } from "react";
 import SEOHead from "@/components/SEOHead";
@@ -44,7 +45,7 @@ const NotFound = () => {
           "@type": "ListItem",
           "position": 1,
           "name": "Home",
-          "item": "https://www.project-fl.me/"
+          "item": `${PRIMARY_DOMAIN}/`
         },
         {
           "@type": "ListItem",
@@ -61,7 +62,7 @@ const NotFound = () => {
       <SEOHead
         title="404 - Page Not Found | Project FL"
         description="The page you're looking for could not be found."
-        canonical={`https://www.project-fl.me${location.pathname}`}
+        canonical={`${PRIMARY_DOMAIN}${location.pathname}`}
       />
       <StructuredData data={structuredData} />
 

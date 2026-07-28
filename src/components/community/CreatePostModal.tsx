@@ -1,29 +1,62 @@
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { toast } from "sonner";
+import { X } from "lucide-react";
+
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { X } from "lucide-react";
-import { createCommunityPost } from "@/integrations/supabase/services/community-posts";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-
-const POST_TYPES = [
-  { value: 'hackathon', label: 'Hackathon Partners' },
-  { value: 'research', label: 'Research Collaboration' },
-  { value: 'problem-solving', label: 'Problem Solving' },
-  { value: 'project', label: 'Project Ideas' },
-  { value: 'general', label: 'General Discussion' },
-];
+import { cn } from "@/lib/utils";
+import {
+  POST_TYPES,
+  createCommunityPost,
+  uploadCommunityPostImage,
+} from "@/integrations/supabase/services/community-posts";
 
 interface CreatePostModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onPostCreated: () => void;
 }
+
+const MAX_TAGS = 5;
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+
+/** "all" is a filter, not something you can post as. */
+const SELECTABLE_TYPES = POST_TYPES.filter((type) => type.value !== "all");
+
+const PLACEHOLDERS: Record<string, { title: string; content: string }> = {
+  hackathon: {
+    title: "Looking for 2 teammates for Smart India Hackathon",
+    content: "What you're building, the skills you need, the deadline, and how to reach you.",
+  },
+  "study-help": {
+    title: "Need help with Data Structures — trees and graphs",
+    content: "Which course/topic, what you're stuck on, and when you're free to meet.",
+  },
+  project: {
+    title: "Building a campus food-delivery app — need a backend dev",
+    content: "The idea, what's built already, the stack, and the role you're filling.",
+  },
+  research: {
+    title: "Looking for a co-author on an ML paper",
+    content: "The research area, current progress, and what you need help with.",
+  },
+  "problem-solving": {
+    title: "Stuck on a DSA problem — segment trees",
+    content: "The problem, what you've tried, and where it breaks.",
+  },
+  announcement: {
+    title: "Robotics Club orientation — Friday 5pm, Lab 3",
+    content: "What's happening, when, where, and who should come.",
+  },
+  general: {
+    title: "What are you working on this semester?",
+    content: "Say what's on your mind.",
+  },
+};
 
 export const CreatePostModal = ({ open, onOpenChange, onPostCreated }: CreatePostModalProps) => {
   const [title, setTitle] = useState("");
@@ -34,151 +67,164 @@ export const CreatePostModal = ({ open, onOpenChange, onPostCreated }: CreatePos
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [imageError, setImageError] = useState<string | null>(null);
 
-  const handleAddTag = () => {
-    if (tagInput.trim() && !tags.includes(tagInput.trim()) && tags.length < 5) {
-      setTags([...tags, tagInput.trim()]);
-      setTagInput("");
-    }
-  };
+  const placeholders = PLACEHOLDERS[postType] ?? PLACEHOLDERS.general;
 
-  const handleRemoveTag = (tagToRemove: string) => {
-    setTags(tags.filter(tag => tag !== tagToRemove));
-  };
-
-  // Image validation
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      setImageError("Only image files are allowed.");
-      setImageFile(null);
-      setImagePreview(null);
-      return;
-    }
-    if (file.size > 2 * 1024 * 1024) { // 2MB limit
-      setImageError("Image size must be less than 2MB.");
-      setImageFile(null);
-      setImagePreview(null);
-      return;
-    }
-    setImageError(null);
-    setImageFile(file);
-    setImagePreview(URL.createObjectURL(file));
-  };
-
-  const handleRemoveImage = () => {
+  const resetForm = () => {
+    setTitle("");
+    setContent("");
+    setPostType("");
+    setTags([]);
+    setTagInput("");
     setImageFile(null);
-    setImagePreview(null);
-    setImageError(null);
+    setImagePreview((current) => {
+      if (current) URL.revokeObjectURL(current);
+      return null;
+    });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  const addTag = () => {
+    const tag = tagInput.trim().replace(/^#/, "");
+    if (!tag || tags.includes(tag) || tags.length >= MAX_TAGS) return;
+    setTags([...tags, tag]);
+    setTagInput("");
+  };
+
+  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Only image files are allowed");
+      return;
+    }
+    if (file.size > MAX_IMAGE_BYTES) {
+      toast.error("Image must be smaller than 5MB");
+      return;
+    }
+
+    setImageFile(file);
+    setImagePreview((current) => {
+      if (current) URL.revokeObjectURL(current);
+      return URL.createObjectURL(file);
+    });
+  };
+
+  const removeImage = () => {
+    setImageFile(null);
+    setImagePreview((current) => {
+      if (current) URL.revokeObjectURL(current);
+      return null;
+    });
+  };
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+
     if (!title.trim() || !content.trim() || !postType) {
-      toast.error("Please fill in all required fields");
+      toast.error("Add a title, a description and a category");
       return;
     }
-    if (imageFile && imageError) {
-      toast.error(imageError);
-      return;
-    }
+
     setIsSubmitting(true);
-    let image_url: string | undefined = undefined;
-    if (imageFile) {
-      // Upload image to Supabase storage (bucket: community-posts)
-      const fileExt = imageFile.name.split('.').pop();
-      const fileName = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
-      const { data: uploadData, error: uploadError } = await supabase.storage.from('community-posts').upload(fileName, imageFile, { cacheControl: '3600', upsert: false });
-      if (uploadError) {
-        toast.error("Failed to upload image");
-        setIsSubmitting(false);
+
+    try {
+      let imageUrl: string | undefined;
+      if (imageFile) {
+        // Goes through the shared uploader so it lands in the bucket that
+        // actually exists — this modal previously wrote to a "community-posts"
+        // bucket that was never created, so every attachment failed.
+        const { url } = await uploadCommunityPostImage(imageFile);
+        imageUrl = url;
+      }
+
+      const { error } = await createCommunityPost({
+        title: title.trim(),
+        content: content.trim(),
+        post_type: postType,
+        tags: tags.length > 0 ? tags : undefined,
+        image_url: imageUrl,
+      });
+
+      if (error) {
+        toast.error(error.message || "Failed to create post");
         return;
       }
-      image_url = supabase.storage.from('community-posts').getPublicUrl(fileName).data.publicUrl;
-    }
-    const { data, error } = await createCommunityPost({
-      title: title.trim(),
-      content: content.trim(),
-      post_type: postType,
-      tags: tags.length > 0 ? tags : undefined,
-      image_url,
-    });
 
-    if (error) {
-      toast.error("Failed to create post");
-      console.error(error);
-    } else {
-      toast.success("Post created successfully!");
+      toast.success("Posted! Your post is live on the board.");
+      resetForm();
       onPostCreated();
-      // Reset form
-      setTitle("");
-      setContent("");
-      setPostType("");
-      setTags([]);
-      setTagInput("");
-      setImageFile(null);
-      setImagePreview(null);
-      setImageError(null);
-    }
-    
-    setIsSubmitting(false);
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleAddTag();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to create post");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        if (!next) resetForm();
+        onOpenChange(next);
+      }}
+    >
+      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Create Community Post</DialogTitle>
+          <DialogTitle>Create a post</DialogTitle>
+          <DialogDescription>
+            Ask for what you need — teammates, study help, collaborators — or share an announcement.
+          </DialogDescription>
         </DialogHeader>
-        
-        <form onSubmit={handleSubmit} className="space-y-6">
+
+        <form onSubmit={handleSubmit} className="space-y-5">
           <div className="space-y-2">
-            <Label htmlFor="title">Title *</Label>
+            <Label>What kind of post is this?</Label>
+            <div className="flex flex-wrap gap-2">
+              {SELECTABLE_TYPES.map((type) => (
+                <button
+                  key={type.value}
+                  type="button"
+                  onClick={() => setPostType(type.value)}
+                  aria-pressed={postType === type.value}
+                  className={cn(
+                    "flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition-colors",
+                    postType === type.value
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-border hover:bg-muted",
+                  )}
+                >
+                  <span aria-hidden>{type.emoji}</span>
+                  {type.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="title">Title</Label>
             <Input
               id="title"
-              placeholder="What do you need help with?"
+              placeholder={placeholders.title}
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              onChange={(event) => setTitle(event.target.value)}
+              maxLength={300}
               required
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="post-type">Post Type *</Label>
-            <Select value={postType} onValueChange={setPostType} required>
-              <SelectTrigger>
-                <SelectValue placeholder="Select post type" />
-              </SelectTrigger>
-              <SelectContent>
-                {POST_TYPES.map(type => (
-                  <SelectItem key={type.value} value={type.value}>
-                    {type.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="content">Description *</Label>
+            <Label htmlFor="content">Details</Label>
             <Textarea
               id="content"
-              placeholder="Describe what you're looking for, your requirements, timeline, etc."
+              placeholder={placeholders.content}
               rows={6}
               value={content}
-              onChange={(e) => setContent(e.target.value)}
+              onChange={(event) => setContent(event.target.value)}
+              maxLength={5000}
               required
             />
+            <p className="text-right text-xs text-muted-foreground">{content.length}/5000</p>
           </div>
 
           <div className="space-y-2">
@@ -186,31 +232,38 @@ export const CreatePostModal = ({ open, onOpenChange, onPostCreated }: CreatePos
             <div className="flex gap-2">
               <Input
                 id="tags"
-                placeholder="Add relevant tags (max 5)"
+                placeholder="react, machine-learning, cse-2nd-year"
                 value={tagInput}
-                onChange={(e) => setTagInput(e.target.value)}
-                onKeyPress={handleKeyPress}
-                disabled={tags.length >= 5}
+                onChange={(event) => setTagInput(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === ",") {
+                    event.preventDefault();
+                    addTag();
+                  }
+                }}
+                disabled={tags.length >= MAX_TAGS}
+                maxLength={50}
               />
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={handleAddTag}
-                disabled={!tagInput.trim() || tags.length >= 5}
+              <Button
+                type="button"
+                variant="outline"
+                onClick={addTag}
+                disabled={!tagInput.trim() || tags.length >= MAX_TAGS}
               >
                 Add
               </Button>
             </div>
-            
+
             {tags.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-2">
-                {tags.map((tag, index) => (
-                  <Badge key={index} variant="secondary" className="pr-1">
-                    {tag}
+              <div className="flex flex-wrap gap-2 pt-1">
+                {tags.map((tag) => (
+                  <Badge key={tag} variant="secondary" className="pr-1">
+                    #{tag}
                     <button
                       type="button"
-                      onClick={() => handleRemoveTag(tag)}
+                      onClick={() => setTags(tags.filter((item) => item !== tag))}
                       className="ml-1 hover:text-destructive"
+                      aria-label={`Remove tag ${tag}`}
                     >
                       <X className="h-3 w-3" />
                     </button>
@@ -221,7 +274,7 @@ export const CreatePostModal = ({ open, onOpenChange, onPostCreated }: CreatePos
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="image">Attach Image (optional)</Label>
+            <Label htmlFor="image">Image (optional)</Label>
             <Input
               id="image"
               type="file"
@@ -229,28 +282,34 @@ export const CreatePostModal = ({ open, onOpenChange, onPostCreated }: CreatePos
               onChange={handleImageChange}
               disabled={isSubmitting}
             />
-            {imageError && <div className="text-destructive text-xs">{imageError}</div>}
             {imagePreview && (
-              <div className="relative mt-2 w-32 h-32">
-                <img src={imagePreview} alt="Preview" className="object-cover w-full h-full rounded" />
-                <Button type="button" size="icon" variant="ghost" className="absolute top-1 right-1" onClick={handleRemoveImage}>
-                  <X className="h-4 w-4" />
+              <div className="relative mt-2 h-32 w-32">
+                <img src={imagePreview} alt="Preview" className="h-full w-full rounded object-cover" />
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="secondary"
+                  className="absolute right-1 top-1 h-6 w-6"
+                  onClick={removeImage}
+                  aria-label="Remove image"
+                >
+                  <X className="h-3 w-3" />
                 </Button>
               </div>
             )}
           </div>
 
           <div className="flex justify-end gap-2">
-            <Button 
-              type="button" 
-              variant="outline" 
+            <Button
+              type="button"
+              variant="outline"
               onClick={() => onOpenChange(false)}
               disabled={isSubmitting}
             >
               Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Creating..." : "Create Post"}
+              {isSubmitting ? "Posting..." : "Post"}
             </Button>
           </div>
         </form>
@@ -258,3 +317,5 @@ export const CreatePostModal = ({ open, onOpenChange, onPostCreated }: CreatePos
     </Dialog>
   );
 };
+
+export default CreatePostModal;

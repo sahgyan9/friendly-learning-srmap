@@ -1,3 +1,4 @@
+import { PRIMARY_DOMAIN } from "@/lib/constants";
 
 import { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
@@ -148,7 +149,7 @@ const Mentors = () => {
         title={`Find Student Mentors at Friendly Learning SRM AP | Browse ${filteredMentors.length} Verified SRMAP Mentors`}
         description="Discover experienced student mentors at Friendly Learning SRM AP University in Amaravati. Browse profiles, skills, and reviews to find the perfect mentor for your academic journey. Connect with verified peer mentors from SRMAP today!"
         keywords="friendly learning srm ap, srmap mentorship platform, srmap friendly learning, SRM AP mentors directory, student mentors SRMAP, academic guidance amaravati, peer mentoring andhra pradesh, university mentorship srmap, SRM AP academic support, student tutoring amaravati"
-        canonical="https://friendly-learning-srmap.lovable.app/mentors"
+        canonical={`${PRIMARY_DOMAIN}/mentors`}
       />
 
       {/* Add structured data using our dedicated component */}
@@ -156,8 +157,8 @@ const Mentors = () => {
 
       {/* Add breadcrumb schema */}
       <StructuredData data={getBreadcrumbSchema([
-        { name: "Home", url: "https://friendly-learning-srmap.lovable.app/" },
-        { name: "Mentors", url: "https://friendly-learning-srmap.lovable.app/mentors" }
+        { name: "Home", url: `${PRIMARY_DOMAIN}/` },
+        { name: "Mentors", url: `${PRIMARY_DOMAIN}/mentors` }
       ])} />
 
       <motion.div

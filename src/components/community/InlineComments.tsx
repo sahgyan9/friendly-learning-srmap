@@ -8,6 +8,7 @@ import { Send, Loader2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { getPostComments, addPostComment, type PostComment } from "@/integrations/supabase/services/community-posts";
 import { formatDistanceToNow } from "date-fns";
+import { getInitials } from "@/utils/user-utils";
 import { toast } from "sonner";
 
 interface InlineCommentsProps {
@@ -57,16 +58,17 @@ export const InlineComments = ({ postId, onCommentAdded }: InlineCommentsProps) 
 
     try {
       setSubmitting(true);
-      const { data, error } = await addPostComment(postId, newComment.trim());
-      
+      const { error } = await addPostComment(postId, newComment.trim());
+
       if (error) {
         console.error("Error adding comment:", error);
         toast.error("Failed to add comment");
-      } else if (data) {
-        setComments([...comments, data]);
+      } else {
         setNewComment("");
+        // Re-read rather than appending locally: the insert goes through RLS and
+        // the RPC is what resolves the author's public profile.
+        await fetchComments();
         onCommentAdded?.();
-        toast.success("Comment added successfully");
       }
     } catch (error) {
       console.error("Unexpected error adding comment:", error);
@@ -95,7 +97,7 @@ export const InlineComments = ({ postId, onCommentAdded }: InlineCommentsProps) 
           <Avatar className="h-8 w-8">
             <AvatarImage src={profile?.profile_image || undefined} />
             <AvatarFallback className="text-xs">
-              {profile?.name?.charAt(0) || 'U'}
+              {getInitials(profile?.name)}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 space-y-2">
@@ -142,15 +144,15 @@ export const InlineComments = ({ postId, onCommentAdded }: InlineCommentsProps) 
               <CardContent className="p-3">
                 <div className="flex gap-3">
                   <Avatar className="h-6 w-6">
-                    <AvatarImage src={comment.user?.profile_image || undefined} />
+                    <AvatarImage src={comment.author.profile_image || undefined} />
                     <AvatarFallback className="text-xs">
-                      {comment.user?.name?.charAt(0) || 'A'}
+                      {getInitials(comment.author.name)}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
                       <span className="font-medium text-sm">
-                        {comment.user?.name || 'Anonymous User'}
+                        {comment.author.name}
                       </span>
                       <span className="text-xs text-muted-foreground">
                         {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}

@@ -5,8 +5,8 @@
         xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd
                             http://www.google.com/schemas/sitemap-image/1.1 http://www.google.com/schemas/sitemap-image/1.1/sitemap-image.xsd">
   <url>
-    <loc>https://friendly-learning-srmap.lovable.app/blog</loc>
-    <lastmod>2025-11-07T01:19:23.764Z</lastmod>
+    <loc>https://friendly-learning-srmap.vercel.app/blog</loc>
+    <lastmod>2026-07-28T15:07:11.534Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>

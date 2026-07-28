@@ -6,7 +6,7 @@
  */
 
 // Primary domain constant
-const PRIMARY_DOMAIN = "https://friendly-learning-srmap.com";
+import { SITE_URL as PRIMARY_DOMAIN } from "../../site.config.js";
 
 // Base URL for the site - dynamically determined
 const getBaseUrl = () => {

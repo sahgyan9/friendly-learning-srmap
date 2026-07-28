@@ -1,6 +1,6 @@
 
 import { useEffect } from 'react';
-import { APP_NAME, APP_DESCRIPTION, APP_KEYWORDS, getAppUrl } from '@/lib/constants';
+import { APP_NAME, APP_DESCRIPTION, APP_KEYWORDS, PRIMARY_DOMAIN, SITE_HOST } from '@/lib/constants';
 
 interface SEOHeadProps {
   title?: string;
@@ -71,7 +71,7 @@ const SEOHead = ({
     // Update Open Graph tags
     updateMetaTag('og:title', ogTitle || title, true);
     updateMetaTag('og:description', ogDescription || description, true);
-    updateMetaTag('og:image', `${getAppUrl()}${ogImage}`, true);
+    updateMetaTag('og:image', `${PRIMARY_DOMAIN}${ogImage}`, true);
     updateMetaTag('og:url', window.location.href, true);
     updateMetaTag('og:type', 'website', true);
     updateMetaTag('og:site_name', 'Project FL', true);
@@ -85,7 +85,7 @@ const SEOHead = ({
     updateMetaTag('twitter:card', 'summary_large_image', true);
     updateMetaTag('twitter:title', ogTitle || title, true);
     updateMetaTag('twitter:description', ogDescription || description, true);
-    updateMetaTag('twitter:image', `${getAppUrl()}${ogImage}`, true);
+    updateMetaTag('twitter:image', `${PRIMARY_DOMAIN}${ogImage}`, true);
     updateMetaTag('twitter:site', '@ProjectFL', true);
     updateMetaTag('twitter:creator', '@ProjectFL', true);
 
@@ -100,39 +100,15 @@ const SEOHead = ({
     if (canonical) {
       canonicalLink.href = canonical;
     } else {
-      // Use Lovable domain as primary canonical
-      const currentDomain = window.location.hostname;
-      const primaryDomain = 'friendly-learning-srmap.lovable.app';
-      const fallbackDomain = 'www.project-fl.me';
-
-      // Always prefer the Lovable domain for canonical URLs
-      if (currentDomain === primaryDomain) {
-        canonicalLink.href = window.location.href;
-      } else {
-        // Use Lovable domain as canonical even when on other domains
-        const url = new URL(window.location.href);
-        url.hostname = primaryDomain;
-        canonicalLink.href = url.toString();
-      }
+      // Canonical always points at SITE_HOST, whatever host actually served the
+      // page — so preview deployments and any parked domain still credit the
+      // canonical origin rather than competing with it.
+      const url = new URL(window.location.href);
+      url.hostname = SITE_HOST;
+      url.protocol = 'https:';
+      url.port = '';
+      canonicalLink.href = url.toString();
     }
-
-    // Add alternate domain links
-    const alternateDomains = ['www.project-fl.me'];
-    if (window.location.hostname !== 'www.project-fl.me') {
-      alternateDomains.push('www.project-fl.me');
-    }
-
-    alternateDomains.forEach(domain => {
-      if (domain !== window.location.hostname) {
-        let alternateLink = document.querySelector(`link[rel="alternate"][href*="${domain}"]`) as HTMLLinkElement;
-        if (!alternateLink) {
-          alternateLink = document.createElement('link');
-          alternateLink.rel = 'alternate';
-          alternateLink.href = `https://${domain}${window.location.pathname}${window.location.search}`;
-          document.head.appendChild(alternateLink);
-        }
-      }
-    });
 
     // Add DNS prefetch for performance
     const dnsPrefetchLinks = [
@@ -173,7 +149,7 @@ const SEOHead = ({
             "@type": "ListItem",
             "position": 1,
             "name": "Home",
-            "item": "https://friendly-learning-srmap.lovable.app/"
+            "item": `${PRIMARY_DOMAIN}/`
           },
           {
             "@type": "ListItem",
@@ -194,23 +170,20 @@ const SEOHead = ({
       breadcrumbScript.textContent = JSON.stringify(breadcrumbData);
     }
 
-    // Add organization structured data
-    const currentOrigin = window.location.origin;
+    // Add organization structured data. Every URL here is the canonical origin
+    // rather than window.location.origin — structured data emitted from a
+    // preview deployment should still describe the real site.
     const organizationData = {
       "@context": "https://schema.org",
       "@type": "Organization",
       "name": "Project FL",
-      "url": currentOrigin,
-      "logo": `${currentOrigin}/og-image.png`,
+      "url": PRIMARY_DOMAIN,
+      "logo": `${PRIMARY_DOMAIN}/og-image.png`,
       "description": "University student collaboration platform connecting students for mentoring, study partnerships, and project collaborations",
-      "sameAs": [
-        "https://friendly-learning-srmap.lovable.app",
-        "https://www.project-fl.me"
-      ].filter(url => url !== currentOrigin),
       "contactPoint": {
         "@type": "ContactPoint",
         "contactType": "customer service",
-        "url": `${currentOrigin}/contact`
+        "url": `${PRIMARY_DOMAIN}/contact`
       }
     };
 

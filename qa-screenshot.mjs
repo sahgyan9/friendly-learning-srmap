@@ -1,30 +1,80 @@
+// Visual QA harness: loads the key routes at desktop and mobile widths, saves
+// screenshots to .qa/, and reports any console/page errors.
+//
+//   node qa-screenshot.mjs [baseUrl]
 import puppeteer from 'puppeteer';
+import fs from 'fs';
+import path from 'path';
 
-const url = 'http://localhost:5173/marketplace';
+const BASE = process.argv[2] || 'http://localhost:5178';
+const OUT = '.qa';
 
-const browser = await puppeteer.launch({ headless: true });
-const page = await browser.newPage();
+const ROUTES = [
+  { name: 'home', path: '/' },
+  { name: 'faculty', path: '/faculty' },
+  { name: 'community', path: '/community-posts' },
+  { name: 'signin', path: '/signin' },
+  { name: 'mentors', path: '/mentors' },
+];
 
-await page.setViewport({ width: 1440, height: 900, deviceScaleFactor: 1 });
-await page.goto(url, { waitUntil: 'networkidle2', timeout: 120000 });
-await page.waitForSelector('[role="tab"][data-state="active"]', { timeout: 20000 });
-await page.screenshot({ path: 'qa-round1-desktop.png', fullPage: true });
+const VIEWPORTS = [
+  { name: 'desktop', width: 1280, height: 900 },
+  { name: 'mobile', width: 390, height: 844 },
+];
 
-const extracted = await page.evaluate(() => {
-  const cards = Array.from(document.querySelectorAll('h3')).slice(0, 12).map((h3) => {
-    const card = h3.closest('[class*="group"]') || h3.parentElement?.parentElement;
-    const text = card?.textContent || '';
-    const dateMatch = text.match(/\b\d{1,2}\s[A-Za-z]{3}\s\d{4}(\s-\s\d{1,2}\s[A-Za-z]{3}\s\d{4})?/);
-    const state = /LIVE NOW|UPCOMING|ENDED/.exec(text)?.[0] || '';
-    return { title: h3.textContent?.trim() || '', date: dateMatch?.[0] || '', state };
-  });
-  return cards;
+fs.mkdirSync(OUT, { recursive: true });
+
+const browser = await puppeteer.launch({
+  headless: 'new',
+  args: ['--no-sandbox', '--disable-setuid-sandbox'],
 });
 
-await page.setViewport({ width: 390, height: 844, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
-await page.goto(url, { waitUntil: 'networkidle2', timeout: 120000 });
-await page.waitForSelector('[role="tab"][data-state="active"]', { timeout: 20000 });
-await page.screenshot({ path: 'qa-round1-mobile.png', fullPage: true });
+let failures = 0;
 
-console.log(JSON.stringify(extracted, null, 2));
+for (const viewport of VIEWPORTS) {
+  for (const route of ROUTES) {
+    const page = await browser.newPage();
+    await page.setViewport({ width: viewport.width, height: viewport.height });
+
+    const problems = [];
+    page.on('console', (message) => {
+      if (message.type() === 'error') problems.push(`console: ${message.text()}`);
+    });
+    page.on('pageerror', (error) => problems.push(`pageerror: ${error.message}`));
+
+    try {
+      await page.goto(`${BASE}${route.path}`, { waitUntil: 'networkidle2', timeout: 45000 });
+      // Let lazy chunks and data fetches settle.
+      await new Promise((resolve) => setTimeout(resolve, 1800));
+
+      const file = path.join(OUT, `${route.name}-${viewport.name}.png`);
+      await page.screenshot({ path: file, fullPage: viewport.name === 'desktop' });
+
+      const heading = await page
+        .$eval('h1', (element) => element.textContent.trim())
+        .catch(() => '(no h1)');
+
+      const chars = await page.$eval('body', (element) => element.innerText.trim().length);
+
+      const status = problems.length ? 'ERRORS' : 'ok';
+      if (problems.length) failures += 1;
+
+      console.log(
+        `[${status.padEnd(6)}] ${viewport.name.padEnd(7)} ${route.path.padEnd(18)} h1="${heading}" chars=${chars}`,
+      );
+      problems.slice(0, 4).forEach((problem) => console.log(`           ${problem.slice(0, 170)}`));
+    } catch (error) {
+      failures += 1;
+      console.log(`[FAIL  ] ${viewport.name} ${route.path} -> ${error.message}`);
+    }
+
+    await page.close();
+  }
+}
+
 await browser.close();
+console.log(
+  failures === 0
+    ? '\nAll routes rendered without page errors.'
+    : `\n${failures} route/viewport combination(s) reported problems.`,
+);

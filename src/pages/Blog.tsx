@@ -1,3 +1,4 @@
+import { PRIMARY_DOMAIN } from "@/lib/constants";
 import SEOHead from "@/components/SEOHead";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -34,11 +35,11 @@ const Blog = () => {
         "@type": "Blog",
         "name": "Project FL Blog - University Student Collaboration Insights",
         "description": "Expert insights on university student collaboration, hackathon teams, study partners, and campus networking through Project FL platform",
-        "url": "https://www.project-fl.me/blog",
+        "url": `${PRIMARY_DOMAIN}/blog`,
         "publisher": {
             "@type": "Organization",
             "name": "Project FL",
-            "logo": "https://www.project-fl.me/og-image.png"
+            "logo": `${PRIMARY_DOMAIN}/og-image.png`
         }
     };
 
@@ -48,7 +49,7 @@ const Blog = () => {
                 title="Project FL Blog - University Student Collaboration Tips & Insights"
                 description="Expert insights on university student collaboration, finding hackathon partners, study groups, and campus networking. Learn how Project FL is transforming student connections."
                 keywords="project fl blog, university student collaboration tips, hackathon team building guide, study partner advice, student networking insights, campus collaboration"
-                canonical="https://friendly-learning-srmap.lovable.app/blog"
+                canonical={`${PRIMARY_DOMAIN}/blog`}
                 structuredData={structuredData}
             />
 

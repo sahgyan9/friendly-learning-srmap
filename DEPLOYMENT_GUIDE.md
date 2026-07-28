@@ -1,73 +1,71 @@
-# Deployment Guide for React SPA Routing
+# Deployment
 
-## Issue: 404 Errors on Direct URL Access
+The site deploys to **Vercel**. `vercel.json` is the only hosting config in the
+repo; the Netlify (`netlify.toml`, `public/_redirects`) and Apache
+(`public/.htaccess`) equivalents were removed once Vercel became the only
+target, because carrying three of them meant three places to forget to update —
+and the Apache one was still issuing a 301 to a domain the project no longer
+uses.
 
-When users access URLs like `https://www.project-fl.me/community-posts` directly, they get a 404 error. This happens because the web server looks for a physical file at that path, but React Router handles routing client-side.
+## SPA routing
 
-## Solution: SPA Fallback Configuration
+React Router handles routing client-side, so a direct request to
+`/community-posts` has no matching file on disk and would 404. The rewrite in
+`vercel.json` serves `index.html` for every path and lets the router take over:
 
-I've created configuration files for different hosting platforms. Use the appropriate one for your hosting provider:
-
-### 1. **Netlify** (use `_redirects` file)
-- File: `public/_redirects`
-- This tells Netlify to serve `index.html` for all routes that don't match actual files
-
-### 2. **Vercel** (use `vercel.json`)
-- File: `vercel.json` (root directory)
-- Configures Vercel to rewrite all routes to `index.html`
-
-### 3. **Netlify with netlify.toml**
-- File: `netlify.toml` (root directory)
-- Alternative configuration method for Netlify
-
-### 4. **Apache Servers** (use `.htaccess`)
-- File: `public/.htaccess` (already exists and configured)
-- Works for most shared hosting providers using Apache
-
-## Deployment Steps:
-
-1. **Build your project:**
-   ```bash
-   npm run build
-   ```
-
-2. **Deploy the `dist` folder** to your hosting provider
-
-3. **Verify the configuration:**
-   - Try accessing `https://www.project-fl.me/community-posts` directly
-   - Should work without 404 errors
-
-## Testing Locally:
-
-```bash
-# Build the project
-npm run build
-
-# Preview the built version
-npm run preview
-
-# Test direct URL access at http://localhost:8080/community-posts
+```json
+{ "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }] }
 ```
 
-## For Different Hosting Providers:
+## The site's domain
 
-- **Netlify**: Uses `_redirects` or `netlify.toml`
-- **Vercel**: Uses `vercel.json`
-- **Firebase**: Uses `firebase.json` (not included, let me know if needed)
-- **Apache/cPanel**: Uses `.htaccess`
-- **Nginx**: Requires server configuration (not included, let me know if needed)
+`site.config.js` at the repo root is the single source of truth:
 
-## After Deployment:
+```js
+export const SITE_HOST = 'friendly-learning-srmap.vercel.app';
+export const SITE_URL = `https://${SITE_HOST}`;
+```
 
-1. **Test all routes** work when accessed directly
-2. **Resubmit your sitemap** to Google Search Console
-3. **Use "URL Inspection"** tool in Search Console to verify pages are discoverable
-4. **Wait 24-48 hours** for Google to re-crawl your site
+Everything derives from it — canonical tags, Open Graph and Twitter metadata,
+JSON-LD, and the sitemap generators. Changing hosts is a one-line edit here plus
+a regenerated sitemap:
 
-## Troubleshooting:
+```bash
+node generate-dynamic-sitemap.js
+```
 
-If you're still getting 404s after deployment:
-1. Check if your hosting provider supports the configuration files
-2. Verify the files are in the correct location (`public/` files go to root of deployed site)
-3. Contact your hosting provider about SPA routing support
-4. Consider using Server-Side Rendering (SSR) for better SEO
+`index.html` and `public/robots.txt` are static and cannot import the constant,
+so their URLs must be updated by hand at the same time. Those are the only two
+exceptions.
+
+### Canonical origin vs. runtime origin
+
+Two different ideas, deliberately kept apart in `src/lib/constants.ts`:
+
+- **`PRIMARY_DOMAIN`** — fixed, always `SITE_URL`. Used for SEO, so a preview
+  deployment never competes with production in search results.
+- **`getAppUrl()`** — whatever host is actually serving the page. Used for OAuth
+  `redirectTo`, which has to match where the user really is, or the provider
+  returns them to a host they were never on.
+
+Do not collapse these into one value.
+
+## Deploying
+
+Vercel builds on push. To check the output locally first:
+
+```bash
+npm run build
+```
+
+Then confirm the built HTML points at the right host:
+
+```bash
+grep canonical dist/index.html
+```
+
+## After a domain change
+
+1. Regenerate and commit the sitemaps.
+2. Resubmit the sitemap in Google Search Console.
+3. Use URL Inspection to confirm pages are discoverable on the new host.

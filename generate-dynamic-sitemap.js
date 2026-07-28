@@ -13,6 +13,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { SITE_URL } from './site.config.js';
 import { createClient } from '@supabase/supabase-js';
 
 // Import environment variables
@@ -29,7 +30,7 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 // Site configuration
 const config = {
-    siteUrl: 'https://friendly-learning-srmap.lovable.app',
+    siteUrl: SITE_URL,
     publicDir: path.join(__dirname, 'public'),
     defaultChangeFreq: 'weekly',
     defaultPriority: 0.7,
@@ -39,6 +40,7 @@ const config = {
         '/about': { changefreq: 'monthly', priority: 0.8, images: [{ loc: '/about-team.png', title: 'About Project FL Team' }] },
         '/mentors': { changefreq: 'daily', priority: 0.9 },
         '/community-posts': { changefreq: 'daily', priority: 0.9 },
+        '/faculty': { changefreq: 'daily', priority: 0.9 },
         '/signup': { changefreq: 'monthly', priority: 0.7 },
         '/signin': { changefreq: 'monthly', priority: 0.6 },
         '/contact': { changefreq: 'monthly', priority: 0.5 },
@@ -136,6 +138,13 @@ async function generateMentorsSitemap() {
             .neq('department', 'General')
             .not('department', 'is', null);
 
+        // `error` was destructured but never checked, so a failed query left
+        // `mentors` null and the forEach below threw during every build.
+        if (error || !mentors) {
+            console.warn('Skipping mentors sitemap:', error?.message ?? 'no rows returned');
+            return;
+        }
+
         const timestamp = new Date().toISOString();
 
         let sitemap = `<?xml version="1.0" encoding="UTF-8"?>
@@ -199,6 +208,11 @@ async function generateCommunityPostsSitemap() {
             .from('community_posts')
             .select('id, created_at, title, image_url')
             .eq('status', 'open');
+
+        if (error || !posts) {
+            console.warn('Skipping community posts sitemap:', error?.message ?? 'no rows returned');
+            return;
+        }
 
         const timestamp = new Date().toISOString();
 

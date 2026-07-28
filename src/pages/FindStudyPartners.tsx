@@ -1,3 +1,4 @@
+import { PRIMARY_DOMAIN } from "@/lib/constants";
 import SEOHead from "@/components/SEOHead";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -10,7 +11,7 @@ const FindStudyPartners = () => {
         "@type": "WebPage",
         "name": "Find Study Partners at University - Project FL",
         "description": "Connect with study partners at your university through Project FL. Find students in your courses, form study groups, and improve your academic performance together.",
-        "url": "https://www.project-fl.me/find-study-partners",
+        "url": `${PRIMARY_DOMAIN}/find-study-partners`,
         "mainEntity": {
             "@type": "Service",
             "name": "University Study Partner Matching",
@@ -29,7 +30,7 @@ const FindStudyPartners = () => {
                 title="Find Study Partners at Your University | Project FL Student Collaboration Platform"
                 description="Connect with study partners at your university through Project FL. Find students in your courses, form study groups, and improve academic performance together. University student networking made easy."
                 keywords="find study partners university, university study groups, student collaboration, academic study partners, college study buddies, project fl study partners, university networking"
-                canonical="https://www.project-fl.me/find-study-partners"
+                canonical={`${PRIMARY_DOMAIN}/find-study-partners`}
                 structuredData={structuredData}
             />
 

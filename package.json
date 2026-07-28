@@ -11,9 +11,11 @@
     "build:prerender": "node prerender",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
+    "typecheck": "tsc -p tsconfig.app.json --noEmit",
     "preview": "vite preview",
     "generate:sitemap": "node generate-sitemap.js",
-    "generate:dynamic-sitemap": "node generate-dynamic-sitemap.js"
+    "generate:dynamic-sitemap": "node generate-dynamic-sitemap.js",
+    "test:migrations": "node supabase/tests/verify-migrations.mjs && node supabase/tests/verify-upgrade.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
@@ -72,6 +74,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.4",
     "@eslint/js": "^9.9.0",
     "@tailwindcss/typography": "^0.5.15",
     "@types/node": "^22.5.5",

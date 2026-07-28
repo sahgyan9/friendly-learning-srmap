@@ -10,6 +10,7 @@ import FloatingChatbot from "@/components/chatbot/FloatingChatbot";
 import RejectedApplicationNotice from "@/components/mentors/RejectedApplicationNotice";
 import StructuredData from "@/components/StructuredData";
 import { CommunityPostsSection } from "@/components/community/CommunityPostsSection";
+import { FacultyDiscoveryCard } from "@/components/faculty/FacultyDiscoveryCard";
 import { useAuth } from "@/context/AuthContext";
 import { getOrganizationSchema, getWebsiteSchema } from "@/lib/structured-data";
 import { PRIMARY_DOMAIN } from "@/lib/constants";
@@ -76,7 +77,10 @@ const Index = () => {
         </div>
       )}
 
-      {/* Community Posts Section - Social Media-like engagement */}
+      {/* Faculty ratings sit directly under the hero: it is the newest feature
+          and the one a first-time visitor is least likely to stumble into. */}
+      <FacultyDiscoveryCard />
+
       <CommunityPostsSection />
 
       <MentorsSection />

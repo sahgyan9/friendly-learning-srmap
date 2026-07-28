@@ -15,8 +15,6 @@ const Navbar = () => {
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const isActive = (path: string) => location.pathname === path;
-
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
@@ -30,52 +28,8 @@ const Navbar = () => {
             <Logo />
           </Link>
 
-          {/* Desktop Navigation - hidden since tubelight navbar handles desktop nav */}
-          <div className="hidden items-center space-x-8">
-            <Link
-              to="/"
-              className={`text-sm font-medium transition-colors hover:text-primary ${isActive("/") ? "text-primary" : "text-muted-foreground"
-                }`}
-            >
-              Home
-            </Link>
-            <Link
-              to="/mentors"
-              className={`text-sm font-medium transition-colors hover:text-primary ${isActive("/mentors") ? "text-primary" : "text-muted-foreground"
-                }`}
-            >
-              Mentors
-            </Link>
-            <Link
-              to="/community-posts"
-              className={`text-sm font-medium transition-colors hover:text-primary ${isActive("/community-posts") ? "text-primary" : "text-muted-foreground"
-                }`}
-            >
-              Community
-            </Link>
-            <Link
-              to="/marketplace"
-              className={`text-sm font-medium transition-colors hover:text-primary ${isActive("/marketplace") ? "text-primary" : "text-muted-foreground"
-                }`}
-            >
-              {/* Changed label from 'Marketplace' to 'Events' for frontend only. Backend and route remain 'marketplace'. */}
-              Events
-            </Link>
-            <Link
-              to="/about"
-              className={`text-sm font-medium transition-colors hover:text-primary ${isActive("/about") ? "text-primary" : "text-muted-foreground"
-                }`}
-            >
-              About
-            </Link>
-            <Link
-              to="/contact"
-              className={`text-sm font-medium transition-colors hover:text-primary ${isActive("/contact") ? "text-primary" : "text-muted-foreground"
-                }`}
-            >
-              Contact
-            </Link>
-          </div>
+          {/* Primary links live in MainNav (bottom bar on mobile, floating pill
+              on desktop). This bar only carries the logo and account actions. */}
 
           {/* Right side - Auth buttons or user menu */}
           <div className="hidden md:flex items-center space-x-4">
@@ -87,7 +41,9 @@ const Navbar = () => {
               </>
             ) : (
               <div className="flex items-center space-x-2">
-                <Link to="/signin">
+                {/* `state.from` is what lets SignIn return you to the page you
+                    were on instead of dropping you on the homepage. */}
+                <Link to="/signin" state={{ from: location }}>
                   <Button variant="ghost" size="sm">
                     Sign In
                   </Button>

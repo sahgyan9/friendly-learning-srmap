@@ -1,6 +1,6 @@
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, ReactNode } from "react";
+import { Session, User } from "@supabase/supabase-js";
 
-import { createContext, useState, useContext, useEffect, ReactNode } from "react";
-import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { setUserContext } from "@/lib/sentry";
 
@@ -41,122 +41,108 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [isMentor, setIsMentor] = useState(false);
 
-  useEffect(() => {
-    // Set up auth state listener first
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
+  // Which user id we have already loaded a profile for. Guards against
+  // re-fetching on every TOKEN_REFRESHED / tab-focus event, which fired a pair
+  // of queries roughly hourly and on every window refocus.
+  const loadedUserId = useRef<string | null>(null);
 
-        // Fetch user profile when session changes
-        if (session?.user) {
-          setTimeout(() => {
-            fetchUserProfile(session.user.id);
-          }, 0);
-        } else {
-          setProfile(null);
-          setIsMentor(false);
-          setLoading(false);
-        }
-      }
-    );
-
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-
-      if (session?.user) {
-        fetchUserProfile(session.user.id);
-      } else {
-        setLoading(false);
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
+  const clearProfile = useCallback(() => {
+    loadedUserId.current = null;
+    setProfile(null);
+    setIsMentor(false);
+    setUserContext(null);
   }, []);
 
-  const fetchUserProfile = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', userId)
-        .maybeSingle();
+  const fetchUserProfile = useCallback(
+    async (userId: string) => {
+      try {
+        const [{ data: profileData, error: profileError }, { data: mentorData }] = await Promise.all([
+          supabase.from("users").select("*").eq("id", userId).maybeSingle(),
+          supabase.from("mentors").select("department").eq("id", userId).maybeSingle(),
+        ]);
 
-      if (error) {
-        setProfile(null);
-        setIsMentor(false);
-        setUserContext(null);
-      } else if (data) {
-        setProfile(data);
-        // Set Sentry user context for error tracking
-        setUserContext({ id: data.id, email: data.email, name: data.name });
+        if (profileError || !profileData) {
+          clearProfile();
+          return;
+        }
 
-        // Check if user is a real mentor (not in General department)
-        await checkRealMentorStatus(userId);
-      } else {
-        setProfile(null);
-        setIsMentor(false);
-        setUserContext(null);
+        loadedUserId.current = userId;
+        setProfile(profileData);
+        setUserContext({ id: profileData.id, email: profileData.email, name: profileData.name });
+
+        // "General" is the placeholder department auto-created rows get, so it
+        // does not count as a real mentor profile.
+        setIsMentor(Boolean(mentorData?.department && mentorData.department !== "General"));
+      } catch {
+        clearProfile();
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      setProfile(null);
-      setIsMentor(false);
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+    [clearProfile],
+  );
 
-  const checkRealMentorStatus = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('mentors')
-        .select('department')
-        .eq('id', userId)
-        .single();
+  useEffect(() => {
+    // onAuthStateChange fires an INITIAL_SESSION event on subscribe, so it is
+    // the single source of truth. The previous implementation also called
+    // getSession() and kicked off a second, parallel profile fetch for the same
+    // user on every page load.
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      setSession(nextSession);
+      setUser(nextSession?.user ?? null);
 
-      if (error) {
-        setIsMentor(false);
-      } else {
-        // Only consider as real mentor if not in General department
-        setIsMentor(data && data.department && data.department !== 'General');
+      const nextUserId = nextSession?.user?.id ?? null;
+
+      if (!nextUserId) {
+        clearProfile();
+        setLoading(false);
+        return;
       }
-    } catch (error) {
-      setIsMentor(false);
-    }
-  };
 
-  const refreshProfile = async () => {
+      if (loadedUserId.current === nextUserId) {
+        setLoading(false);
+        return;
+      }
+
+      // Deferred to a microtask: Supabase warns against awaiting other client
+      // calls synchronously inside this callback.
+      void Promise.resolve().then(() => fetchUserProfile(nextUserId));
+    });
+
+    return () => subscription.unsubscribe();
+  }, [clearProfile, fetchUserProfile]);
+
+  const refreshProfile = useCallback(async () => {
     if (user) {
+      loadedUserId.current = null;
       await fetchUserProfile(user.id);
     }
-  };
+  }, [user, fetchUserProfile]);
 
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
     try {
       await supabase.auth.signOut();
-      // Navigation will be handled by the component that calls signOut
-    } catch (error) {
-      // Sign out error - silent fail, user can retry
+    } catch {
+      // Sign-out failures are non-fatal; the local session is cleared either way.
     }
-  };
+    clearProfile();
+  }, [clearProfile]);
 
-  // Determine if the user is an admin
-  const isAdmin = profile?.is_admin === true;
-
-  const value = {
-    session,
-    user,
-    profile,
-    signOut,
-    loading,
-    isMentor,
-    isAdmin,
-    refreshProfile
-  };
+  const value = useMemo<AuthContextType>(
+    () => ({
+      session,
+      user,
+      profile,
+      signOut,
+      loading,
+      isMentor,
+      isAdmin: profile?.is_admin === true,
+      refreshProfile,
+    }),
+    [session, user, profile, signOut, loading, isMentor, refreshProfile],
+  );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
@@ -164,7 +150,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 }

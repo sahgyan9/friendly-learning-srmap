@@ -1,31 +1,47 @@
-
 import { supabase } from "@/integrations/supabase/client";
-import { Database } from "@/integrations/supabase/types";
+import { sanitizeInput } from "@/utils/input-sanitization";
 
-export type CommunityPost = Database['public']['Tables']['community_posts']['Row'] & {
-  mentor: {
+/**
+ * A post as rendered in the feed. Author fields are flattened by the
+ * `get_community_feed` / `get_community_post` RPCs, which also fold in the
+ * caller's like state — the feed used to issue one extra query per post to
+ * work that out.
+ */
+export type CommunityPost = {
+  id: string;
+  title: string;
+  content: string;
+  post_type: string;
+  status: string;
+  tags: string[] | null;
+  image_url: string | null;
+  likes_count: number;
+  comments_count: number;
+  created_at: string;
+  updated_at: string;
+  author: {
     id: string;
     name: string;
     profile_image: string | null;
-    department: string;
-    rating: number;
+    department: string | null;
+    role: string | null;
+    is_mentor: boolean;
   };
-  user_has_liked?: boolean;
-  image_url?: string | null;
+  viewer_has_liked: boolean;
+  viewer_is_author: boolean;
 };
 
 export type PostComment = {
   id: string;
-  post_id: string;
-  user_id: string;
   content: string;
   created_at: string;
   updated_at: string;
-  user: {
+  author: {
     id: string;
     name: string;
     profile_image: string | null;
-  } | null;
+  };
+  viewer_is_author: boolean;
 };
 
 export type CreatePostData = {
@@ -36,368 +52,305 @@ export type CreatePostData = {
   image_url?: string;
 };
 
-export type UpdatePostData = Partial<CreatePostData> & {
-  status?: string;
+export type UpdatePostData = Partial<CreatePostData> & { status?: string };
+
+export type CommunityFeedOptions = {
+  postType?: string;
+  search?: string;
+  limit?: number;
+  offset?: number;
 };
 
-// Get all community posts with mentor info
-export const getCommunityPosts = async (limit?: number, offset?: number) => {
-  let query = supabase
-    .from('community_posts')
-    .select(`
-      *,
-      mentor:mentors!inner(
-        id,
-        name,
-        profile_image,
-        department,
-        rating
-      )
-    `)
-    .order('created_at', { ascending: false });
+/** Every post kind the board supports, in the order students see them. */
+export const POST_TYPES = [
+  { value: "all", label: "All posts", emoji: "📋" },
+  { value: "hackathon", label: "Hackathon partners", emoji: "⚡" },
+  { value: "study-help", label: "Study help", emoji: "📚" },
+  { value: "project", label: "Project ideas", emoji: "🛠️" },
+  { value: "research", label: "Research collaboration", emoji: "🔬" },
+  { value: "problem-solving", label: "Problem solving", emoji: "🧩" },
+  { value: "announcement", label: "Announcements", emoji: "📢" },
+  { value: "general", label: "General discussion", emoji: "💬" },
+] as const;
 
-  if (limit) {
-    query = query.limit(limit);
-  }
+export const POST_STATUSES = [
+  { value: "open", label: "Open" },
+  { value: "fulfilled", label: "Fulfilled" },
+  { value: "closed", label: "Closed" },
+] as const;
 
-  if (offset) {
-    query = query.range(offset, offset + limit - 1);
-  }
+export function getPostTypeMeta(value: string) {
+  return POST_TYPES.find((type) => type.value === value) ?? POST_TYPES[POST_TYPES.length - 1];
+}
 
-  const { data, error } = await query;
+type FeedRow = {
+  id: string;
+  title: string;
+  content: string;
+  post_type: string;
+  status: string;
+  tags: string[] | null;
+  image_url: string | null;
+  likes_count: number;
+  comments_count: number;
+  created_at: string;
+  updated_at: string;
+  author_id: string;
+  author_name: string | null;
+  author_image: string | null;
+  author_department: string | null;
+  author_role: string | null;
+  author_is_mentor: boolean;
+  viewer_has_liked: boolean;
+  viewer_is_author: boolean;
+  total_count?: number;
+};
+
+function toCommunityPost(row: FeedRow): CommunityPost {
+  return {
+    id: row.id,
+    title: row.title,
+    content: row.content,
+    post_type: row.post_type,
+    status: row.status,
+    tags: row.tags,
+    image_url: row.image_url,
+    likes_count: row.likes_count,
+    comments_count: row.comments_count,
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+    author: {
+      id: row.author_id,
+      name: row.author_name ?? "Student",
+      profile_image: row.author_image,
+      department: row.author_department,
+      role: row.author_role,
+      is_mentor: row.author_is_mentor,
+    },
+    viewer_has_liked: row.viewer_has_liked,
+    viewer_is_author: row.viewer_is_author,
+  };
+}
+
+export const getCommunityPosts = async (options: CommunityFeedOptions = {}) => {
+  const { postType = "all", search = "", limit = 20, offset = 0 } = options;
+
+  const { data, error } = await supabase.rpc("get_community_feed", {
+    p_post_type: postType,
+    p_search: search,
+    p_limit: limit,
+    p_offset: offset,
+  });
 
   if (error) {
-    console.error('Error fetching community posts:', error);
-    return { data: null, error };
+    console.error("Error fetching community posts:", error);
+    return { data: null, total: 0, error };
   }
 
-  return { data: data as CommunityPost[], error: null };
+  const rows = (data ?? []) as FeedRow[];
+  return {
+    data: rows.map(toCommunityPost),
+    total: Number(rows[0]?.total_count ?? 0),
+    error: null,
+  };
 };
 
-// Get a single community post by ID
 export const getCommunityPostById = async (postId: string) => {
-  const { data, error } = await supabase
-    .from('community_posts')
-    .select(`
-      *,
-      mentor:mentors!inner(
-        id,
-        name,
-        profile_image,
-        department,
-        rating
-      )
-    `)
-    .eq('id', postId)
-    .single();
+  const { data, error } = await supabase.rpc("get_community_post", { p_post_id: postId });
 
   if (error) {
-    console.error('Error fetching community post:', error);
+    console.error("Error fetching community post:", error);
     return { data: null, error };
   }
 
-  return { data: data as CommunityPost, error: null };
+  const row = ((data ?? []) as FeedRow[])[0];
+  if (!row) {
+    return { data: null, error: new Error("Post not found") };
+  }
+
+  return { data: toCommunityPost(row), error: null };
 };
 
-// Get posts by mentor
-export const getPostsByMentor = async (mentorId: string) => {
+export const getPostsByAuthor = async (authorId: string) => {
   const { data, error } = await supabase
-    .from('community_posts')
-    .select(`
-      *,
-      mentor:mentors!inner(
-        id,
-        name,
-        profile_image,
-        department,
-        rating
-      )
-    `)
-    .eq('mentor_id', mentorId)
-    .order('created_at', { ascending: false });
+    .from("community_posts")
+    .select("*")
+    .eq("author_id", authorId)
+    .order("created_at", { ascending: false });
 
   if (error) {
-    console.error('Error fetching mentor posts:', error);
+    console.error("Error fetching author posts:", error);
     return { data: null, error };
   }
 
-  return { data: data as CommunityPost[], error: null };
+  return { data, error: null };
 };
 
-// Create a new community post
 export const createCommunityPost = async (postData: CreatePostData) => {
-  try {
-    const user = (await supabase.auth.getUser()).data.user;
-    if (!user) {
-      throw new Error('User not authenticated');
-    }
+  const { data: auth } = await supabase.auth.getUser();
+  const user = auth.user;
+  if (!user) {
+    return { data: null, error: new Error("You need to be signed in to post") };
+  }
 
-    // Sanitize inputs
-    const sanitizedPostData = {
-      mentor_id: user.id,
-      title: sanitizeInput(postData.title, 300),
-      content: sanitizeInput(postData.content, 5000),
+  const title = sanitizeInput(postData.title, 300);
+  const content = sanitizeInput(postData.content, 5000);
+
+  if (!title.trim() || !content.trim()) {
+    return { data: null, error: new Error("Title and content are required") };
+  }
+
+  const { data, error } = await supabase
+    .from("community_posts")
+    .insert({
+      author_id: user.id,
+      title,
+      content,
       post_type: postData.post_type,
-      tags: postData.tags ? postData.tags.map(tag => sanitizeInput(tag, 50)).slice(0, 10) : [],
-      image_url: postData.image_url
-    };
-
-    const { data, error } = await supabase
-      .from('community_posts')
-      .insert(sanitizedPostData)
-      .select(`
-        *,
-        mentor:mentors!inner(
-          id,
-          name,
-          profile_image,
-          department,
-          rating
-        )
-      `)
-      .single();
-
-    if (error) {
-      console.error('Error creating community post:', error);
-      return { data: null, error };
-    }
-
-    return { data: data as CommunityPost, error: null };
-  } catch (error) {
-    console.error('Exception in createCommunityPost:', error);
-    return { data: null, error };
-  }
-};
-
-// Update a community post
-export const updateCommunityPost = async (postId: string, updateData: UpdatePostData) => {
-  try {
-    // Sanitize inputs if provided
-    const sanitizedUpdate: any = { updated_at: new Date().toISOString() };
-    
-    if (updateData.title) sanitizedUpdate.title = sanitizeInput(updateData.title, 300);
-    if (updateData.content) sanitizedUpdate.content = sanitizeInput(updateData.content, 5000);
-    if (updateData.post_type) sanitizedUpdate.post_type = updateData.post_type;
-    if (updateData.tags) sanitizedUpdate.tags = updateData.tags.map(tag => sanitizeInput(tag, 50)).slice(0, 10);
-    if (updateData.image_url) sanitizedUpdate.image_url = updateData.image_url;
-    if (updateData.status) sanitizedUpdate.status = updateData.status;
-
-    const { data, error } = await supabase
-      .from('community_posts')
-      .update(sanitizedUpdate)
-      .eq('id', postId)
-      .select(`
-        *,
-        mentor:mentors!inner(
-          id,
-          name,
-          profile_image,
-          department,
-          rating
-        )
-      `)
-      .single();
-
-    if (error) {
-      console.error('Error updating community post:', error);
-      return { data: null, error };
-    }
-
-    return { data: data as CommunityPost, error: null };
-  } catch (error) {
-    console.error('Exception in updateCommunityPost:', error);
-    return { data: null, error };
-  }
-};
-
-// Delete a community post
-export const deleteCommunityPost = async (postId: string) => {
-  const { error } = await supabase
-    .from('community_posts')
-    .delete()
-    .eq('id', postId);
+      tags: (postData.tags ?? []).map((tag) => sanitizeInput(tag, 50)).filter(Boolean).slice(0, 10),
+      image_url: postData.image_url ?? null,
+    })
+    .select("id")
+    .single();
 
   if (error) {
-    console.error('Error deleting community post:', error);
-    return { error };
+    console.error("Error creating community post:", error);
+    return { data: null, error };
   }
 
-  return { error: null };
+  return getCommunityPostById(data.id);
 };
 
-// Like/unlike a post
-export const togglePostLike = async (postId: string) => {
-  const user = (await supabase.auth.getUser()).data.user;
-  if (!user) return { error: new Error('User not authenticated') };
+export const updateCommunityPost = async (postId: string, updateData: UpdatePostData) => {
+  const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
 
-  // Check if already liked
+  if (updateData.title !== undefined) patch.title = sanitizeInput(updateData.title, 300);
+  if (updateData.content !== undefined) patch.content = sanitizeInput(updateData.content, 5000);
+  if (updateData.post_type !== undefined) patch.post_type = updateData.post_type;
+  if (updateData.status !== undefined) patch.status = updateData.status;
+  if (updateData.image_url !== undefined) patch.image_url = updateData.image_url;
+  if (updateData.tags !== undefined) {
+    patch.tags = updateData.tags.map((tag) => sanitizeInput(tag, 50)).filter(Boolean).slice(0, 10);
+  }
+
+  const { error } = await supabase.from("community_posts").update(patch).eq("id", postId);
+
+  if (error) {
+    console.error("Error updating community post:", error);
+    return { data: null, error };
+  }
+
+  return getCommunityPostById(postId);
+};
+
+export const deleteCommunityPost = async (postId: string) => {
+  const { error } = await supabase.from("community_posts").delete().eq("id", postId);
+
+  if (error) {
+    console.error("Error deleting community post:", error);
+  }
+
+  return { error };
+};
+
+export const togglePostLike = async (postId: string) => {
+  const { data: auth } = await supabase.auth.getUser();
+  const user = auth.user;
+  if (!user) return { error: new Error("User not authenticated"), liked: false };
+
   const { data: existingLike } = await supabase
-    .from('post_likes')
-    .select('id')
-    .eq('post_id', postId)
-    .eq('user_id', user.id)
-    .single();
+    .from("post_likes")
+    .select("id")
+    .eq("post_id", postId)
+    .eq("user_id", user.id)
+    .maybeSingle();
 
   if (existingLike) {
-    // Unlike
     const { error } = await supabase
-      .from('post_likes')
+      .from("post_likes")
       .delete()
-      .eq('post_id', postId)
-      .eq('user_id', user.id);
+      .eq("post_id", postId)
+      .eq("user_id", user.id);
 
     return { error, liked: false };
-  } else {
-    // Like
-    const { error } = await supabase
-      .from('post_likes')
-      .insert({
-        post_id: postId,
-        user_id: user.id,
-      });
-
-    return { error, liked: true };
   }
+
+  const { error } = await supabase
+    .from("post_likes")
+    .insert({ post_id: postId, user_id: user.id });
+
+  return { error, liked: true };
 };
 
-// Get post comments with LEFT JOIN for user info
 export const getPostComments = async (postId: string) => {
-  const { data, error } = await supabase
-    .from('post_comments')
-    .select(`
-      *,
-      user:users(
-        id,
-        name,
-        profile_image
-      )
-    `)
-    .eq('post_id', postId)
-    .order('created_at', { ascending: true });
+  const { data, error } = await supabase.rpc("get_post_comments", { p_post_id: postId });
 
   if (error) {
-    console.error('Error fetching post comments:', error);
+    console.error("Error fetching post comments:", error);
     return { data: null, error };
   }
 
-  return { data: data as PostComment[], error: null };
+  const comments: PostComment[] = (data ?? []).map((row) => ({
+    id: row.id,
+    content: row.content,
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+    author: {
+      id: row.author_id,
+      name: row.author_name ?? "Student",
+      profile_image: row.author_image,
+    },
+    viewer_is_author: row.viewer_is_author,
+  }));
+
+  return { data: comments, error: null };
 };
 
-// Add a comment to a post
 export const addPostComment = async (postId: string, content: string) => {
-  try {
-    const user = (await supabase.auth.getUser()).data.user;
-    if (!user) return { error: new Error('User not authenticated') };
+  const { data: auth } = await supabase.auth.getUser();
+  const user = auth.user;
+  if (!user) return { data: null, error: new Error("User not authenticated") };
 
-    // Sanitize comment content
-    const sanitizedContent = sanitizeInput(content, 1000);
-    if (!sanitizedContent.trim()) {
-      return { error: new Error('Comment content cannot be empty') };
-    }
+  const sanitizedContent = sanitizeInput(content, 1000);
+  if (!sanitizedContent.trim()) {
+    return { data: null, error: new Error("Comment content cannot be empty") };
+  }
 
-    const { data, error } = await supabase
-      .from('post_comments')
-      .insert({
-        post_id: postId,
-        user_id: user.id,
-        content: sanitizedContent,
-      })
-      .select(`
-        *,
-        user:users(
-          id,
-          name,
-          profile_image
-        )
-      `)
-      .single();
+  const { error } = await supabase
+    .from("post_comments")
+    .insert({ post_id: postId, user_id: user.id, content: sanitizedContent });
 
-    if (error) {
-      console.error('Error adding comment:', error);
-      return { data: null, error };
-    }
-
-    return { data: data as PostComment, error: null };
-  } catch (error) {
-    console.error('Exception in addPostComment:', error);
+  if (error) {
+    console.error("Error adding comment:", error);
     return { data: null, error };
   }
+
+  return { data: null, error: null };
 };
 
-// Check if user has liked a specific post
-export const checkUserLikedPost = async (postId: string) => {
-  const user = (await supabase.auth.getUser()).data.user;
-  if (!user) return { liked: false, error: null };
+const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 
-  const { data, error } = await supabase
-    .from('post_likes')
-    .select('id')
-    .eq('post_id', postId)
-    .eq('user_id', user.id)
-    .single();
-
-  if (error && error.code !== 'PGRST116') {
-    console.error('Error checking user like status:', error);
-    return { liked: false, error };
+export const uploadCommunityPostImage = async (file: File) => {
+  if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+    throw new Error("Invalid file type. Only JPEG, PNG, GIF, and WebP images are allowed.");
+  }
+  if (file.size > MAX_IMAGE_BYTES) {
+    throw new Error("File size too large. Maximum size is 5MB.");
   }
 
-  return { liked: !!data, error: null };
-};
+  const fileExt = file.name.split(".").pop();
+  const filePath = `${crypto.randomUUID()}.${fileExt}`;
 
-// Upload community post image with validation
-export const uploadCommunityPostImage = async (file: File) => {
-  try {
-    // Validate file type
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-    if (!allowedTypes.includes(file.type)) {
-      throw new Error('Invalid file type. Only JPEG, PNG, GIF, and WebP images are allowed.');
-    }
-    
-    // Validate file size (5MB limit)
-    const maxSize = 5 * 1024 * 1024;
-    if (file.size > maxSize) {
-      throw new Error('File size too large. Maximum size is 5MB.');
-    }
-
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
-    const filePath = `${fileName}`;
-    
-    const { data, error } = await supabase.storage
-      .from('Community Post Images')
-      .upload(filePath, file);
-    
-    if (error) {
-      console.error("Error uploading community post image:", error);
-      throw error;
-    }
-    
-    // Get public URL for the uploaded image
-    const { data: { publicUrl } } = supabase.storage
-      .from('Community Post Images')
-      .getPublicUrl(filePath);
-    
-    return { path: filePath, url: publicUrl };
-  } catch (error) {
-    console.error("Exception in uploadCommunityPostImage:", error);
+  const { error } = await supabase.storage.from("Community Post Images").upload(filePath, file);
+  if (error) {
+    console.error("Error uploading community post image:", error);
     throw error;
   }
-};
 
-// Input sanitization utility
-function sanitizeInput(input: string, maxLength?: number): string {
-  if (!input) return '';
-  
-  let sanitized = input
-    .trim()
-    .replace(/[<>]/g, '') // Remove HTML tags
-    .replace(/javascript:/gi, '') // Remove javascript: protocols
-    .replace(/on\w+=/gi, '') // Remove event handlers
-    .replace(/script/gi, ''); // Remove script tags
-  
-  if (maxLength) {
-    sanitized = sanitized.slice(0, maxLength);
-  }
-  
-  return sanitized;
-}
+  const {
+    data: { publicUrl },
+  } = supabase.storage.from("Community Post Images").getPublicUrl(filePath);
+
+  return { path: filePath, url: publicUrl };
+};

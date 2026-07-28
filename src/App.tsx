@@ -1,56 +1,73 @@
+import { Suspense, lazy } from "react";
+import { Route, Routes } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Loader2 } from "lucide-react";
 
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/context/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import { NavBar } from "@/components/ui/tubelight-navbar";
-import { Home, Users, MessageSquare, Calendar, Mail } from "lucide-react";
-import Index from "./pages/Index";
-import SignIn from "./pages/SignIn";
-import SignUp from "./pages/SignUp";
-import ForgotPassword from "./pages/ForgotPassword";
-import ResetPassword from "./pages/ResetPassword";
-import UserProfile from "./pages/UserProfile";
-import Mentors from "./pages/Mentors";
-import BecomeMentor from "./pages/BecomeMentor";
-import MentorProfile from "./pages/MentorProfile";
-import Messages from "./pages/Messages";
-import Contact from "./pages/Contact";
-import About from "./pages/About";
-import CommunityPosts from "./pages/CommunityPosts";
-import CommunityPostDetail from "./pages/CommunityPostDetail";
-import MarketPlace from "./pages/MarketPlace";
-import AdminDashboard from "./pages/AdminDashboard";
-import AdminContactMessages from "./pages/AdminContactMessages";
-import AdminMentorVerification from "./pages/AdminMentorVerification";
-import AdminBadges from "./pages/AdminBadges";
-import AdminSettings from "./pages/AdminSettings";
-import AdminSecurity from "./pages/AdminSecurity";
-import TeamMembersAdmin from "./pages/TeamMembersAdmin";
-import MarketplaceAdmin from "./pages/MarketplaceAdmin";
-import HowItWorks from "./pages/HowItWorks";
-import FindStudyPartners from "./pages/FindStudyPartners";
-import HackathonPartners from "./pages/HackathonPartners";
-import Blog from "./pages/Blog";
-import NotFound from "./pages/NotFound";
-import Unauthorized from "./pages/Unauthorized";
 import RouteRobots from "@/components/RouteRobots";
+import MainNav from "@/components/navigation/MainNav";
 
-// Create a new QueryClient instance for React Query
-const queryClient = new QueryClient();
+// The landing page is the most common entry point, so it stays in the main
+// bundle. Everything else is split per route — the app previously shipped one
+// 1.4MB chunk containing every admin screen to every first-time visitor.
+import Index from "./pages/Index";
+
+const SignIn = lazy(() => import("./pages/SignIn"));
+const SignUp = lazy(() => import("./pages/SignUp"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const UserProfile = lazy(() => import("./pages/UserProfile"));
+const Mentors = lazy(() => import("./pages/Mentors"));
+const BecomeMentor = lazy(() => import("./pages/BecomeMentor"));
+const MentorProfile = lazy(() => import("./pages/MentorProfile"));
+const Messages = lazy(() => import("./pages/Messages"));
+const Contact = lazy(() => import("./pages/Contact"));
+const About = lazy(() => import("./pages/About"));
+const CommunityPosts = lazy(() => import("./pages/CommunityPosts"));
+const CommunityPostDetail = lazy(() => import("./pages/CommunityPostDetail"));
+const Faculty = lazy(() => import("./pages/Faculty"));
+const FacultyDetail = lazy(() => import("./pages/FacultyDetail"));
+const MarketPlace = lazy(() => import("./pages/MarketPlace"));
+const HowItWorks = lazy(() => import("./pages/HowItWorks"));
+const FindStudyPartners = lazy(() => import("./pages/FindStudyPartners"));
+const HackathonPartners = lazy(() => import("./pages/HackathonPartners"));
+const Blog = lazy(() => import("./pages/Blog"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const Unauthorized = lazy(() => import("./pages/Unauthorized"));
+
+const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
+const AdminContactMessages = lazy(() => import("./pages/AdminContactMessages"));
+const AdminMentorVerification = lazy(() => import("./pages/AdminMentorVerification"));
+const AdminBadges = lazy(() => import("./pages/AdminBadges"));
+const AdminSettings = lazy(() => import("./pages/AdminSettings"));
+const AdminSecurity = lazy(() => import("./pages/AdminSecurity"));
+const TeamMembersAdmin = lazy(() => import("./pages/TeamMembersAdmin"));
+const MarketplaceAdmin = lazy(() => import("./pages/MarketplaceAdmin"));
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60_000,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
+
+function RouteFallback() {
+  return (
+    <div className="flex min-h-screen items-center justify-center">
+      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+    </div>
+  );
+}
 
 /**
- * Main App component that sets up routing and global providers
- * 
- * The routing structure is organized as follows:
- * 1. Public routes - accessible to all users
- * 2. User protected routes - require authentication
- * 3. Admin protected routes - require authentication + admin role
- * 
- * All admin routes use the ProtectedRoute component with requiredRole="admin"
- * to ensure proper authentication and authorization before rendering.
+ * Routes are grouped as: public, authenticated, and admin (authenticated +
+ * is_admin). Admin authorisation is enforced by ProtectedRoute and, ultimately,
+ * by RLS on the server.
  */
 function App() {
   return (
@@ -60,55 +77,127 @@ function App() {
           <div className="min-h-screen pb-16 md:pb-0">
             <Toaster />
             <RouteRobots />
-          <Routes>
-            {/* Public Routes - No authentication required */}
-            <Route path="/" element={<Index />} />
-            <Route path="/signin" element={<SignIn />} />
-            <Route path="/signup" element={<SignUp />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/mentors" element={<Mentors />} />
-            <Route path="/mentor/:id" element={<MentorProfile />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/community-posts" element={<CommunityPosts />} />
-            <Route path="/community-posts/:id" element={<CommunityPostDetail />} />
-            <Route path="/marketplace" element={<MarketPlace />} />
-            <Route path="/how-it-works" element={<HowItWorks />} />
-            <Route path="/find-study-partners" element={<FindStudyPartners />} />
-            <Route path="/hackathon-partners" element={<HackathonPartners />} />
-            <Route path="/blog" element={<Blog />} />
-            <Route path="/unauthorized" element={<Unauthorized />} />
 
-            {/* User Protected Routes - Require authentication */}
-            <Route path="/profile" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
-            <Route path="/become-mentor" element={<ProtectedRoute><BecomeMentor /></ProtectedRoute>} />
-            <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
+            <Suspense fallback={<RouteFallback />}>
+              <Routes>
+                {/* Public */}
+                <Route path="/" element={<Index />} />
+                <Route path="/signin" element={<SignIn />} />
+                <Route path="/signup" element={<SignUp />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
+                <Route path="/mentors" element={<Mentors />} />
+                <Route path="/mentor/:id" element={<MentorProfile />} />
+                <Route path="/faculty" element={<Faculty />} />
+                <Route path="/faculty/:slug" element={<FacultyDetail />} />
+                <Route path="/contact" element={<Contact />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/community-posts" element={<CommunityPosts />} />
+                <Route path="/community-posts/:id" element={<CommunityPostDetail />} />
+                <Route path="/marketplace" element={<MarketPlace />} />
+                <Route path="/how-it-works" element={<HowItWorks />} />
+                <Route path="/find-study-partners" element={<FindStudyPartners />} />
+                <Route path="/hackathon-partners" element={<HackathonPartners />} />
+                <Route path="/blog" element={<Blog />} />
+                <Route path="/unauthorized" element={<Unauthorized />} />
 
-            {/* Admin Protected Routes - Require authentication + admin role */}
-            <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>} />
-            <Route path="/admin/contact-messages" element={<ProtectedRoute requiredRole="admin"><AdminContactMessages /></ProtectedRoute>} />
-            <Route path="/admin/mentor-verification" element={<ProtectedRoute requiredRole="admin"><AdminMentorVerification /></ProtectedRoute>} />
-            <Route path="/admin/badges" element={<ProtectedRoute requiredRole="admin"><AdminBadges /></ProtectedRoute>} />
-            <Route path="/admin/settings" element={<ProtectedRoute requiredRole="admin"><AdminSettings /></ProtectedRoute>} />
-            <Route path="/admin/security" element={<ProtectedRoute requiredRole="admin"><AdminSecurity /></ProtectedRoute>} />
-            <Route path="/admin/team-members" element={<ProtectedRoute requiredRole="admin"><TeamMembersAdmin /></ProtectedRoute>} />
-            <Route path="/admin/events" element={<ProtectedRoute requiredRole="admin"><MarketplaceAdmin /></ProtectedRoute>} />
+                {/* Authenticated */}
+                <Route
+                  path="/profile"
+                  element={
+                    <ProtectedRoute>
+                      <UserProfile />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/become-mentor"
+                  element={
+                    <ProtectedRoute>
+                      <BecomeMentor />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/messages"
+                  element={
+                    <ProtectedRoute>
+                      <Messages />
+                    </ProtectedRoute>
+                  }
+                />
 
-            {/* 404 Page - Catch all unmatched routes */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-          
-          {/* Tubelight Navigation - bottom on mobile, top on desktop */}
-          <NavBar
-            items={[
-              { name: "Home", url: "/", icon: Home },
-              { name: "Mentors", url: "/mentors", icon: Users },
-              { name: "Community", url: "/community-posts", icon: MessageSquare },
-              { name: "Events", url: "/marketplace", icon: Calendar },
-              { name: "Messages", url: "/messages", icon: Mail },
-            ]}
-          />
+                {/* Admin */}
+                <Route
+                  path="/admin"
+                  element={
+                    <ProtectedRoute requiredRole="admin">
+                      <AdminDashboard />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/contact-messages"
+                  element={
+                    <ProtectedRoute requiredRole="admin">
+                      <AdminContactMessages />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/mentor-verification"
+                  element={
+                    <ProtectedRoute requiredRole="admin">
+                      <AdminMentorVerification />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/badges"
+                  element={
+                    <ProtectedRoute requiredRole="admin">
+                      <AdminBadges />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/settings"
+                  element={
+                    <ProtectedRoute requiredRole="admin">
+                      <AdminSettings />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/security"
+                  element={
+                    <ProtectedRoute requiredRole="admin">
+                      <AdminSecurity />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/team-members"
+                  element={
+                    <ProtectedRoute requiredRole="admin">
+                      <TeamMembersAdmin />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/events"
+                  element={
+                    <ProtectedRoute requiredRole="admin">
+                      <MarketplaceAdmin />
+                    </ProtectedRoute>
+                  }
+                />
+
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Suspense>
+
+            <MainNav />
           </div>
         </TooltipProvider>
       </AuthProvider>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,6 +12,7 @@ import RoleSelectionModal from "@/components/auth/RoleSelectionModal";
 
 const SignIn = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [formData, setFormData] = useState({
     email: "",
     password: ""
@@ -20,44 +21,46 @@ const SignIn = () => {
   const [showRoleSelection, setShowRoleSelection] = useState(false);
   const [pendingAuthData, setPendingAuthData] = useState<any>(null);
 
-  // Check if user is already logged in
-  useEffect(() => {
-    const checkSession = async () => {
-      const { data } = await supabase.auth.getSession();
-      if (data.session) {
-        navigate('/');
-      }
-    };
-    
-    checkSession();
-  }, [navigate]);
+  /**
+   * Where to land after signing in.
+   *
+   * ProtectedRoute (and the rate/post buttons) stash the page you were trying
+   * to reach in `location.state.from`. This used to be ignored and everyone was
+   * dumped on `/`, so getting to a gated action took a sign-in plus a manual
+   * walk back to wherever you started.
+   */
+  const redirectTo = (location.state as { from?: { pathname?: string; search?: string } } | null)?.from;
+  const destination = redirectTo?.pathname
+    ? `${redirectTo.pathname}${redirectTo.search ?? ""}`
+    : "/";
 
-  // Listen for OAuth completion
+  // A single auth listener drives both the "already signed in" case and OAuth
+  // completion. INITIAL_SESSION fires on subscribe, so a separate getSession()
+  // call would only duplicate this.
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        if (event === 'SIGNED_IN' && session?.user) {
-          // Check if this is a new user (Google OAuth signup)
-          const { data: existingUser } = await supabase
-            .from('users')
-            .select('id, role')
-            .eq('id', session.user.id)
-            .single();
+        if (event !== 'SIGNED_IN' && event !== 'INITIAL_SESSION') return;
+        if (!session?.user) return;
 
-          if (!existingUser || !existingUser.role) {
-            // New user, show role selection
-            setShowRoleSelection(true);
-            setPendingAuthData(session.user);
-          } else {
-            // Existing user, redirect to home
-            navigate('/');
-          }
+        const { data: existingUser } = await supabase
+          .from('users')
+          .select('id, role')
+          .eq('id', session.user.id)
+          .maybeSingle();
+
+        if (!existingUser || !existingUser.role) {
+          // First sign-in via OAuth — ask which role they are before continuing.
+          setShowRoleSelection(true);
+          setPendingAuthData(session.user);
+        } else {
+          navigate(destination, { replace: true });
         }
       }
     );
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, [navigate, destination]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -81,7 +84,7 @@ const SignIn = () => {
       
       setShowRoleSelection(false);
       toast.success("Welcome to Friendly Learning!");
-      navigate('/');
+      navigate(destination, { replace: true });
     } catch (error: any) {
       toast.error("Error setting up account: " + error.message);
     }
@@ -107,7 +110,7 @@ const SignIn = () => {
         }
       } else if (data.user) {
         toast.success("Successfully signed in!");
-        navigate('/');
+        navigate(destination, { replace: true });
       }
     } catch (error: any) {
       console.error('Error during sign in:', error);

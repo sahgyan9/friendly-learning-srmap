@@ -1,3 +1,4 @@
+import { PRIMARY_DOMAIN } from "@/lib/constants";
 
 import { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
@@ -7,7 +8,6 @@ import { Search, Plus, Loader2 } from "lucide-react";
 import { PostCard } from "@/components/marketplace/PostCard";
 import { SRMAPEventCard } from "@/components/marketplace/SRMAPEventCard";
 import { useSRMAPEvents } from "@/hooks/useSRMAPEvents";
-import { SRMAPFacultyRatingTemplate } from "@/components/rating/SRMAPFacultyRatingTemplate";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
 import { fetchMarketplacePosts, fetchMarketplacePost, CategoryType, MarketplacePost, isUserAdmin } from '@/integrations/supabase/services/marketplace';
@@ -62,7 +62,7 @@ const MarketPlace = () => {
     };
 
     const loadPosts = async () => {
-        if (activeCategory === 'srmap' || activeCategory === 'faculty') return;
+        if (activeCategory === 'srmap') return;
         try {
             setLoading(true);
             const supabaseCategory = (activeCategory === 'srmap' ? 'all' : activeCategory) as CategoryType;
@@ -118,13 +118,6 @@ const MarketPlace = () => {
         setActiveCategory(value);
     };
 
-    const handleFacultyRateClick = (facultySlug: string, facultyName: string) => {
-        toast({
-            title: "Faculty selected",
-            description: `${facultyName} (${facultySlug}) selected for rating. Connect this callback to your faculty ratings table.`,
-        });
-    };
-
     const filteredPosts = posts.filter(post =>
         post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         post.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -137,12 +130,12 @@ const MarketPlace = () => {
                 title="Events & News | Project FL University Student Hub | Find University Events, News & Advertisements"
                 description="Discover university events, news, advertisements, and course materials at Project FL. Stay updated with campus activities, announcements, and educational resources for university students."
                 keywords="university events, campus news, student advertisements, course materials, university announcements, student hub, campus activities, educational resources"
-                canonical="https://friendly-learning-srmap.lovable.app/marketplace"
+                canonical={`${PRIMARY_DOMAIN}/marketplace`}
             />
 
             <StructuredData data={getBreadcrumbSchema([
-                { name: "Home", url: "https://friendly-learning-srmap.lovable.app/" },
-                { name: "Events & News", url: "https://friendly-learning-srmap.lovable.app/marketplace" }
+                { name: "Home", url: `${PRIMARY_DOMAIN}/` },
+                { name: "Events & News", url: `${PRIMARY_DOMAIN}/marketplace` }
             ])} />
 
             <div className="min-h-screen bg-background">
@@ -181,13 +174,12 @@ const MarketPlace = () => {
                         <Tabs defaultValue={activeCategory} className="w-full" onValueChange={handleCategoryChange}>
                             <TabsList className="flex flex-wrap w-full h-auto p-1 gap-1">
                                 <TabsTrigger value="srmap" className="text-xs sm:text-sm flex-1">University Events</TabsTrigger>
-                                <TabsTrigger value="faculty" className="text-xs sm:text-sm flex-1">Faculty Ratings</TabsTrigger>
                                 <TabsTrigger value="all" className="text-xs sm:text-sm flex-1">All Posts</TabsTrigger>
                                 <TabsTrigger value="ads" className="text-xs sm:text-sm flex-1">Advertisements</TabsTrigger>
                                 <TabsTrigger value="courses" className="text-xs sm:text-sm flex-1">Course Materials</TabsTrigger>
                             </TabsList>
 
-                            {(activeCategory as string) !== 'srmap' && (activeCategory as string) !== 'faculty' && (
+                            {activeCategory !== 'srmap' && (
                             <TabsContent value={activeCategory} className="mt-6">
                                 {loading ? (
                                     <div className="flex justify-center items-center h-64">
@@ -226,14 +218,6 @@ const MarketPlace = () => {
                                 )}
                             </TabsContent>
                             )}
-
-                            <TabsContent value="faculty" className="mt-6">
-                                <SRMAPFacultyRatingTemplate
-                                    limit={24}
-                                    searchQuery={searchQuery}
-                                    onRateClick={handleFacultyRateClick}
-                                />
-                            </TabsContent>
 
                             <TabsContent value="srmap" className="mt-6">
                                 {srmapLoading ? (
