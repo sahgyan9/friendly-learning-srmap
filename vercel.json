@@ -16,7 +16,7 @@
             ]
         },
         {
-            "source": "/sitemap-*.xml",
+            "source": "/sitemap-:slug*.xml",
             "headers": [
                 {
                     "key": "Content-Type",
