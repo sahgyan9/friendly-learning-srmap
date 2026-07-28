@@ -13,6 +13,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { SITE_URL } from './site.config.js';
 import { createClient } from '@supabase/supabase-js';
 
 // Import environment variables
@@ -29,7 +30,7 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 // Site configuration
 const config = {
-    siteUrl: 'https://friendly-learning-srmap.lovable.app',
+    siteUrl: SITE_URL,
     publicDir: path.join(__dirname, 'public'),
     defaultChangeFreq: 'weekly',
     defaultPriority: 0.7,

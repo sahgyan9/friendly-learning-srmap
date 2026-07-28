@@ -1,9 +1,18 @@
 // Application constants
+import { SITE_HOST, SITE_URL } from '../../site.config.js';
+
+export { SITE_HOST, SITE_URL };
+
 export const APP_NAME = import.meta.env.VITE_APP_NAME || 'Friendly Learning SRMAP';
-export const APP_URL = import.meta.env.VITE_APP_URL || 'https://friendly-learning-srmap.com';
+export const APP_URL = import.meta.env.VITE_APP_URL || SITE_URL;
 export const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 
-// Get the app URL, preferring custom domain over current origin
+// The origin the app is actually being served from — localhost in dev, the
+// preview URL on a branch deploy, the real domain in production.
+//
+// Deliberately NOT the same thing as PRIMARY_DOMAIN below. This feeds OAuth
+// redirectTo, where the value has to match wherever the user actually is or the
+// provider bounces them to a host they were never on.
 export const getAppUrl = () => {
     if (import.meta.env.VITE_APP_URL) {
         return import.meta.env.VITE_APP_URL;
@@ -11,14 +20,15 @@ export const getAppUrl = () => {
     if (typeof window !== 'undefined') {
         return window.location.origin;
     }
-    return 'https://friendly-learning-srmap.com';
+    return SITE_URL;
 };
 
 // Check if we're in development
 export const isDevelopment = import.meta.env.DEV;
 
-// Primary domain for canonical URLs and SEO
-export const PRIMARY_DOMAIN = 'https://friendly-learning-srmap.com';
+// The canonical origin for SEO — fixed, regardless of which host served the
+// page, so preview deployments never compete with production in search results.
+export const PRIMARY_DOMAIN = SITE_URL;
 
 // App metadata
 export const APP_DESCRIPTION = 'Connect with experienced mentors at SRMAP and accelerate your learning journey through personalized guidance and expert insights.';

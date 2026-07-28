@@ -1,18 +1,18 @@
 # ===================================================================
 # Robots.txt for Project FL
-# Last Updated: August 31, 2025
+# Last Updated: July 28, 2026
 # 
 # This file tells search engine crawlers which pages they can and 
-# cannot crawl on friendly-learning-srmap.lovable.app
+# cannot crawl on friendly-learning-srmap.vercel.app
 # ===================================================================
 
 # -- Sitemaps --
 # Multiple sitemaps are used for better organization.
-Sitemap: https://friendly-learning-srmap.lovable.app/sitemap-index.xml
-Sitemap: https://friendly-learning-srmap.lovable.app/sitemap.xml
-Sitemap: https://friendly-learning-srmap.lovable.app/sitemap-blog.xml
-Sitemap: https://friendly-learning-srmap.lovable.app/sitemap-community.xml
-Sitemap: https://friendly-learning-srmap.lovable.app/sitemap-mentors.xml
+Sitemap: https://friendly-learning-srmap.vercel.app/sitemap-index.xml
+Sitemap: https://friendly-learning-srmap.vercel.app/sitemap.xml
+Sitemap: https://friendly-learning-srmap.vercel.app/sitemap-blog.xml
+Sitemap: https://friendly-learning-srmap.vercel.app/sitemap-community.xml
+Sitemap: https://friendly-learning-srmap.vercel.app/sitemap-mentors.xml
 
 # -- Rules for Googlebot --
 User-agent: Googlebot

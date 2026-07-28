@@ -1,5 +1,12 @@
 # Google Search Console Robots.txt Blocking Issue - SOLUTION
 
+> **Historical.** This records a past debugging session and describes a
+> two-domain setup (`friendly-learning-srmap.lovable.app` plus
+> `www.project-fl.me`) that no longer exists. The site now serves a single
+> canonical origin defined in `site.config.js`. Kept for context on why the SEO
+> code is shaped the way it is; do not follow its instructions.
+
+
 ## Problem Analysis
 
 Based on the Google Search Console URL Inspection results, the primary issue is:

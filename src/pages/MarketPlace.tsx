@@ -1,3 +1,4 @@
+import { PRIMARY_DOMAIN } from "@/lib/constants";
 
 import { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
@@ -129,12 +130,12 @@ const MarketPlace = () => {
                 title="Events & News | Project FL University Student Hub | Find University Events, News & Advertisements"
                 description="Discover university events, news, advertisements, and course materials at Project FL. Stay updated with campus activities, announcements, and educational resources for university students."
                 keywords="university events, campus news, student advertisements, course materials, university announcements, student hub, campus activities, educational resources"
-                canonical="https://friendly-learning-srmap.lovable.app/marketplace"
+                canonical={`${PRIMARY_DOMAIN}/marketplace`}
             />
 
             <StructuredData data={getBreadcrumbSchema([
-                { name: "Home", url: "https://friendly-learning-srmap.lovable.app/" },
-                { name: "Events & News", url: "https://friendly-learning-srmap.lovable.app/marketplace" }
+                { name: "Home", url: `${PRIMARY_DOMAIN}/` },
+                { name: "Events & News", url: `${PRIMARY_DOMAIN}/marketplace` }
             ])} />
 
             <div className="min-h-screen bg-background">

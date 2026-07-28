@@ -2,6 +2,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import url from 'node:url'
+import { SITE_URL } from './site.config.js'
 
 const __dirname = path.dirname(url.fileURLToPath(import.meta.url))
 const toAbsolute = (p) => path.resolve(__dirname, p)
@@ -59,8 +60,7 @@ const routesToPrerender = [
     }
 
     // Generate comprehensive sitemap.xml with proper SEO structure
-    const primaryDomain = 'https://friendly-learning-srmap.lovable.app';
-    const legacyDomain = 'https://www.project-fl.me';
+    const primaryDomain = SITE_URL;
     const today = new Date().toISOString().split('T')[0];
 
     const publicRoutes = [
@@ -90,26 +90,11 @@ const routesToPrerender = [
     fs.writeFileSync(toAbsolute('dist/sitemap.xml'), sitemapContent);
     console.log('generated primary sitemap.xml with comprehensive SEO structure');
 
-    // Generate legacy domain sitemap
-    const legacyUrls = publicRoutes.map((route) => {
-      const loc = route.path === '/' ? `${legacyDomain}/` : `${legacyDomain}${route.path}`;
-      return `  <url>\n    <loc>${loc}</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>${route.changefreq}</changefreq>\n    <priority>${route.priority}</priority>\n  </url>`;
-    }).join('\n');
-
-    const legacySitemapContent = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">\n${legacyUrls}\n</urlset>`;
-
-    fs.writeFileSync(toAbsolute('dist/sitemap-legacy.xml'), legacySitemapContent);
-    console.log('generated legacy domain sitemap for transition period');
-
     // Generate sitemap index
     const sitemapIndex = `<?xml version="1.0" encoding="UTF-8"?>
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <sitemap>
     <loc>${primaryDomain}/sitemap.xml</loc>
-    <lastmod>${today}</lastmod>
-  </sitemap>
-  <sitemap>
-    <loc>${primaryDomain}/sitemap-legacy.xml</loc>
     <lastmod>${today}</lastmod>
   </sitemap>
 </sitemapindex>`;

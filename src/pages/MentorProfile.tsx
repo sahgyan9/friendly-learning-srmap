@@ -1,3 +1,4 @@
+import { PRIMARY_DOMAIN } from "@/lib/constants";
 
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
@@ -127,7 +128,7 @@ const MentorProfile = () => {
           title={metaTitle}
           description={metaDescription}
           keywords={`${mentorName}, Project FL mentor, university student mentor, ${mentorSkills}, academic mentor, peer learning`}
-          canonical={`https://www.project-fl.me/mentor/${mentor.id}`}
+          canonical={`${PRIMARY_DOMAIN}/mentor/${mentor.id}`}
           ogTitle={`Meet ${mentorName} - Project FL Mentor`}
           ogDescription={metaDescription}
           ogImage={mentor.profile_image || "/og-image.png"}
@@ -135,9 +136,9 @@ const MentorProfile = () => {
 
         <StructuredData data={getMentorSchema(mentor)} />
         <StructuredData data={getBreadcrumbSchema([
-          { name: "Home", url: "https://www.project-fl.me/" },
-          { name: "Mentors", url: "https://www.project-fl.me/mentors" },
-          { name: mentorName, url: `https://www.project-fl.me/mentor/${mentor.id}` }
+          { name: "Home", url: `${PRIMARY_DOMAIN}/` },
+          { name: "Mentors", url: `${PRIMARY_DOMAIN}/mentors` },
+          { name: mentorName, url: `${PRIMARY_DOMAIN}/mentor/${mentor.id}` }
         ])} />
       </>
     );

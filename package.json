@@ -11,6 +11,7 @@
     "build:prerender": "node prerender",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
+    "typecheck": "tsc -p tsconfig.app.json --noEmit",
     "preview": "vite preview",
     "generate:sitemap": "node generate-sitemap.js",
     "generate:dynamic-sitemap": "node generate-dynamic-sitemap.js",

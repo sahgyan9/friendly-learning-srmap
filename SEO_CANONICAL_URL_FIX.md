@@ -1,5 +1,12 @@
 # SEO Canonical URL Issues - FIXED
 
+> **Historical.** This records a past debugging session and describes a
+> two-domain setup (`friendly-learning-srmap.lovable.app` plus
+> `www.project-fl.me`) that no longer exists. The site now serves a single
+> canonical origin defined in `site.config.js`. Kept for context on why the SEO
+> code is shaped the way it is; do not follow its instructions.
+
+
 ## Issues Identified from Google Search Console
 
 ### 1. **MarketPlace Page Missing SEO Head**

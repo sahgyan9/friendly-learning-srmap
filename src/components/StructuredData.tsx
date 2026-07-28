@@ -16,7 +16,7 @@ interface StructuredDataProps {
  *     "@context": "https://schema.org",
  *     "@type": "Organization",
  *     "name": "Project FL",
- *     "url": "https://www.project-fl.me",
+ *     "url": PRIMARY_DOMAIN,
  *     // other properties...
  *   }} 
  * />

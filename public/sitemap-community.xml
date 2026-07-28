@@ -5,9 +5,25 @@
         xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd
                             http://www.google.com/schemas/sitemap-image/1.1 http://www.google.com/schemas/sitemap-image/1.1/sitemap-image.xsd">
   <url>
-    <loc>https://friendly-learning-srmap.lovable.app/community-posts</loc>
-    <lastmod>2025-11-07T01:19:24.168Z</lastmod>
+    <loc>https://friendly-learning-srmap.vercel.app/community-posts</loc>
+    <lastmod>2026-07-28T15:07:11.952Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://friendly-learning-srmap.vercel.app/community-posts/ba105e1b-65e1-418a-8141-016ebd8edc6f</loc>
+    <lastmod>2026-07-28T15:07:11.952Z</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <image:image>
+      <image:loc>https://ruapdkrgcbqrhvsayvpf.supabase.co/storage/v1/object/public/community-posts/1762479470638-7p8xg78il.jpg</image:loc>
+      <image:title>Holiday</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://friendly-learning-srmap.vercel.app/community-posts/beaf6460-28db-4776-881d-ea1feef1ab4e</loc>
+    <lastmod>2026-07-28T15:07:11.952Z</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
   </url>
 </urlset>

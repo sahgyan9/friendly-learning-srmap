@@ -1,3 +1,4 @@
+import { PRIMARY_DOMAIN } from "@/lib/constants";
 
 import SEOHead from "@/components/SEOHead";
 import Navbar from "@/components/Navbar";
@@ -11,7 +12,7 @@ const HowItWorks = () => {
         "@type": "HowTo",
         "name": "How Project FL Works - Student Collaboration Platform",
         "description": "Learn how Project FL connects university students for mentoring, study partnerships, hackathon teams, and academic collaboration",
-        "url": "https://www.project-fl.me/how-it-works",
+        "url": `${PRIMARY_DOMAIN}/how-it-works`,
         "step": [
             {
                 "@type": "HowToStep",
@@ -37,7 +38,7 @@ const HowItWorks = () => {
                 title="How Project FL Works | University Student Collaboration Guide"
                 description="Learn how Project FL connects university students worldwide for mentoring, study partnerships, hackathon teams, and academic collaboration. Simple 3-step process to start collaborating."
                 keywords="how project fl works, university student collaboration guide, student mentoring platform, academic help process, project fl tutorial"
-                canonical="https://friendly-learning-srmap.lovable.app/how-it-works"
+                canonical={`${PRIMARY_DOMAIN}/how-it-works`}
                 structuredData={structuredData}
             />
 

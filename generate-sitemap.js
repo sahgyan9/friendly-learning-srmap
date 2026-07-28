@@ -11,13 +11,14 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { SITE_URL } from './site.config.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Configuration
 const config = {
-    siteUrl: 'https://friendly-learning-srmap.lovable.app',
+    siteUrl: SITE_URL,
     publicDir: path.join(__dirname, 'public'),
     lastmod: new Date().toISOString().split('T')[0],
     defaultChangeFreq: 'weekly',
