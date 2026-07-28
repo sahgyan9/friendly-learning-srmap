@@ -1,5 +1,5 @@
 /**
- * Advanced Dynamic Sitemap Generator for Project FL
+ * Advanced Dynamic Sitemap Generator for Friendly Learning SRMAP
  * 
  * This script generates sitemap.xml files that include:
  * 1. Static routes from the application
@@ -36,8 +36,8 @@ const config = {
     defaultPriority: 0.7,
     disallowedPaths: ['/unauthorized', '/admin', '/admin/*', '/profile', '/messages'],
     routeConfig: {
-        '/': { changefreq: 'daily', priority: 1.0, images: [{ loc: '/og-image.png', title: 'Project FL - University Student Collaboration Platform', caption: 'Connect with university students for mentoring, study partnerships, and project collaborations' }] },
-        '/about': { changefreq: 'monthly', priority: 0.8, images: [{ loc: '/about-team.png', title: 'About Project FL Team' }] },
+        '/': { changefreq: 'daily', priority: 1.0, images: [{ loc: '/og-image.png', title: 'Friendly Learning SRMAP - University Student Collaboration Platform', caption: 'Connect with university students for mentoring, study partnerships, and project collaborations' }] },
+        '/about': { changefreq: 'monthly', priority: 0.8, images: [{ loc: '/about-team.png', title: 'About Friendly Learning SRMAP Team' }] },
         '/mentors': { changefreq: 'daily', priority: 0.9 },
         '/community-posts': { changefreq: 'daily', priority: 0.9 },
         '/faculty': { changefreq: 'daily', priority: 0.9 },
@@ -176,7 +176,7 @@ async function generateMentorsSitemap() {
                 sitemap += `
     <image:image>
       <image:loc>${mentor.profile_image}</image:loc>
-      <image:title>${mentor.name || 'Mentor'} - Project FL Mentor</image:title>
+      <image:title>${mentor.name || 'Mentor'} - Friendly Learning SRMAP Mentor</image:title>
     </image:image>`;
             }
 
@@ -369,10 +369,30 @@ async function generateBlogSitemap() {
 /**
  * Generate a static blog sitemap as fallback
  */
+/**
+ * Slugs and publication dates of the posts in `src/data/blog-posts.ts`, which
+ * is the source of truth for blog content. They are repeated here because this
+ * script runs under plain Node during the build and cannot import a TypeScript
+ * module — add a post there, add its slug here.
+ */
+const STATIC_BLOG_POSTS = [
+    { slug: 'choosing-electives-srm-ap', date: '2026-07-20' },
+    { slug: 'finding-hackathon-teammates', date: '2026-07-12' },
+    { slug: 'asking-for-academic-help', date: '2026-07-04' }
+];
+
 function generateStaticBlogSitemap() {
     console.log('Generating static blog sitemap as fallback...');
 
     const timestamp = new Date().toISOString();
+
+    const postUrls = STATIC_BLOG_POSTS.map((post) => `
+  <url>
+    <loc>${config.siteUrl}/blog/${post.slug}</loc>
+    <lastmod>${post.date}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>`).join('');
 
     const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" 
@@ -385,7 +405,7 @@ function generateStaticBlogSitemap() {
     <lastmod>${timestamp}</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
-  </url>
+  </url>${postUrls}
 </urlset>`;
 
     fs.writeFileSync(path.join(config.publicDir, 'sitemap-blog.xml'), sitemap);

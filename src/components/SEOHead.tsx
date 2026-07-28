@@ -10,6 +10,8 @@ interface SEOHeadProps {
   ogTitle?: string;
   ogDescription?: string;
   ogImage?: string;
+  /** `article` for blog posts, so shares render with article metadata. */
+  ogType?: "website" | "article";
   structuredData?: object;
 }
 
@@ -21,6 +23,7 @@ const SEOHead = ({
   ogTitle,
   ogDescription,
   ogImage = "/og-image.png",
+  ogType = "website",
   structuredData
 }: SEOHeadProps) => {
   useEffect(() => {
@@ -54,14 +57,14 @@ const SEOHead = ({
     updateMetaTag('language', 'en-IN');
     updateMetaTag('country', 'India');
     updateMetaTag('DC.title', title);
-    updateMetaTag('DC.creator', 'Project FL');
+    updateMetaTag('DC.creator', 'Friendly Learning SRMAP');
     updateMetaTag('DC.subject', keywords);
     updateMetaTag('DC.description', description);
 
     // Additional SEO meta tags
-    updateMetaTag('author', 'Project FL');
-    updateMetaTag('publisher', 'Project FL');
-    updateMetaTag('application-name', 'Project FL');
+    updateMetaTag('author', 'Friendly Learning SRMAP');
+    updateMetaTag('publisher', 'Friendly Learning SRMAP');
+    updateMetaTag('application-name', 'Friendly Learning SRMAP');
     updateMetaTag('theme-color', '#6366f1');
     updateMetaTag('msapplication-TileColor', '#6366f1');
     updateMetaTag('apple-mobile-web-app-capable', 'yes');
@@ -73,8 +76,8 @@ const SEOHead = ({
     updateMetaTag('og:description', ogDescription || description, true);
     updateMetaTag('og:image', `${PRIMARY_DOMAIN}${ogImage}`, true);
     updateMetaTag('og:url', window.location.href, true);
-    updateMetaTag('og:type', 'website', true);
-    updateMetaTag('og:site_name', 'Project FL', true);
+    updateMetaTag('og:type', ogType, true);
+    updateMetaTag('og:site_name', APP_NAME, true);
     updateMetaTag('og:locale', 'en_IN', true);
     updateMetaTag('og:country-name', 'India', true);
     updateMetaTag('og:image:width', '1200', true);
@@ -86,8 +89,8 @@ const SEOHead = ({
     updateMetaTag('twitter:title', ogTitle || title, true);
     updateMetaTag('twitter:description', ogDescription || description, true);
     updateMetaTag('twitter:image', `${PRIMARY_DOMAIN}${ogImage}`, true);
-    updateMetaTag('twitter:site', '@ProjectFL', true);
-    updateMetaTag('twitter:creator', '@ProjectFL', true);
+    updateMetaTag('twitter:site', '@FriendlyLearnAP', true);
+    updateMetaTag('twitter:creator', '@FriendlyLearnAP', true);
 
     // Update canonical URL with multi-domain support
     let canonicalLink = document.querySelector('link[rel="canonical"]') as HTMLLinkElement;
@@ -176,7 +179,7 @@ const SEOHead = ({
     const organizationData = {
       "@context": "https://schema.org",
       "@type": "Organization",
-      "name": "Project FL",
+      "name": "Friendly Learning SRMAP",
       "url": PRIMARY_DOMAIN,
       "logo": `${PRIMARY_DOMAIN}/og-image.png`,
       "description": "University student collaboration platform connecting students for mentoring, study partnerships, and project collaborations",
@@ -196,7 +199,7 @@ const SEOHead = ({
     }
     orgScript.textContent = JSON.stringify(organizationData);
 
-  }, [title, description, keywords, canonical, ogTitle, ogDescription, ogImage, structuredData]);
+  }, [title, description, keywords, canonical, ogTitle, ogDescription, ogImage, ogType, structuredData]);
 
   return null;
 };

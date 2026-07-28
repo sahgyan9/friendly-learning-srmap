@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowRight, PenLine } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { CreatePostButton } from "@/components/community/CreatePostButton";
 import { PostCard } from "@/components/community/PostCard";
 import { useAuth } from "@/context/AuthContext";
 import {
@@ -24,6 +25,12 @@ export const CommunityPostsSection = () => {
   const navigate = useNavigate();
   const [posts, setPosts] = useState<CommunityPost[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const reload = useCallback(async () => {
+    const { data } = await getCommunityPosts({ limit: 8 });
+    if (data) setPosts(data);
+    setLoading(false);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -87,19 +94,12 @@ export const CommunityPostsSection = () => {
   return (
     <section className="bg-muted/30 py-16">
       <div className="container mx-auto px-4">
-        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <h2 className="mb-2 text-3xl font-bold">Community Board</h2>
-            <p className="text-muted-foreground">
-              Looking for a hackathon teammate, study help or a project partner? Ask here.
-            </p>
-          </div>
-          <Button asChild variant="outline" className="gap-2 self-start sm:self-auto">
-            <Link to="/community-posts">
-              Browse the board
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </Button>
+        {/* Centred to match the rhythm of every other homepage section. */}
+        <div className="mb-8 text-center">
+          <h2 className="mb-2 text-3xl font-bold">Community Board</h2>
+          <p className="mx-auto max-w-xl text-muted-foreground">
+            Looking for a hackathon teammate, study help or a project partner? Ask here.
+          </p>
         </div>
 
         {posts.length === 0 ? (
@@ -109,30 +109,46 @@ export const CommunityPostsSection = () => {
             <p className="mb-4 text-sm text-muted-foreground">
               Be the first to post — every student can.
             </p>
-            <Button asChild>
-              <Link to="/community-posts">Write the first post</Link>
-            </Button>
-          </div>
-        ) : (
-          <div className="-mx-4 overflow-x-auto px-4 pb-4 [scrollbar-width:thin]">
-            <div className="flex snap-x snap-mandatory gap-4">
-              {posts.map((post) => (
-                <PostCard
-                  key={post.id}
-                  post={post}
-                  variant="compact"
-                  className="w-[300px] shrink-0 snap-start md:w-[340px]"
-                  onOpen={(postId) => navigate(`/community-posts/${postId}`)}
-                  onLike={handleLike}
-                  onShare={handleShare}
-                  onComment={(postId, event) => {
-                    event.stopPropagation();
-                    navigate(`/community-posts/${postId}`);
-                  }}
-                />
-              ))}
+            <div className="flex justify-center">
+              <CreatePostButton onPostCreated={reload} />
             </div>
           </div>
+        ) : (
+          <>
+            <div className="-mx-4 overflow-x-auto px-4 pb-4 [scrollbar-width:thin]">
+              {/* `items-start` stops a card with an image stretching its
+                  neighbours into a column of empty space; `w-max mx-auto`
+                  centres the rail while it still fits and lets it scroll once
+                  it doesn't. */}
+              <div className="mx-auto flex w-max snap-x snap-mandatory items-start gap-4">
+                {posts.map((post) => (
+                  <PostCard
+                    key={post.id}
+                    post={post}
+                    variant="compact"
+                    className="w-[300px] shrink-0 snap-start md:w-[340px]"
+                    onOpen={(postId) => navigate(`/community-posts/${postId}`)}
+                    onLike={handleLike}
+                    onShare={handleShare}
+                    onComment={(postId, event) => {
+                      event.stopPropagation();
+                      navigate(`/community-posts/${postId}`);
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
+              <CreatePostButton onPostCreated={reload} />
+              <Button asChild variant="outline" className="gap-2">
+                <Link to="/community-posts">
+                  Browse the board
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
+          </>
         )}
       </div>
     </section>

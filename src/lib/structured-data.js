@@ -107,13 +107,13 @@ export const getMentorSchema = (mentor) => {
         "@context": "https://schema.org",
         "@type": "Person",
         "name": mentor.name,
-        "description": mentor.bio || `${mentor.name} is a mentor on Project FL.`,
+        "description": mentor.bio || `${mentor.name} is a mentor on Friendly Learning SRMAP.`,
         "image": mentor.profile_image,
         "url": `${baseUrl}/mentor/${mentor.id}`,
         "jobTitle": mentor.department ? `${mentor.department} Mentor` : "Mentor",
         "worksFor": {
             "@type": "Organization",
-            "name": "Project FL"
+            "name": "Friendly Learning SRMAP"
         },
         "knowsAbout": mentor.skills || [],
         "alumniOf": mentor.university || "University"
@@ -136,11 +136,11 @@ export const getArticleSchema = (post) => {
         "dateModified": post.updated_at || post.created_at,
         "author": {
             "@type": "Person",
-            "name": post.author?.name || "Project FL Community Member"
+            "name": post.author?.name || "Friendly Learning SRMAP Community Member"
         },
         "publisher": {
             "@type": "Organization",
-            "name": "Project FL",
+            "name": "Friendly Learning SRMAP",
             "logo": {
                 "@type": "ImageObject",
                 "url": `${baseUrl}/og-image.png`
@@ -189,13 +189,13 @@ export const getEventSchema = (event) => {
         "endDate": event.end_date || event.start_date,
         "location": {
             "@type": "Place",
-            "name": event.location || "Project FL Campus",
+            "name": event.location || "Friendly Learning SRMAP Campus",
             "address": event.address || "Campus"
         },
         "image": event.image_url || `${baseUrl}/og-image.png`,
         "organizer": {
             "@type": "Organization",
-            "name": event.organizer || "Project FL"
+            "name": event.organizer || "Friendly Learning SRMAP"
         },
         "eventStatus": "https://schema.org/EventScheduled",
         "eventAttendanceMode": event.is_online

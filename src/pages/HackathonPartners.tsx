@@ -9,15 +9,15 @@ const HackathonPartners = () => {
     const structuredData = {
         "@context": "https://schema.org",
         "@type": "WebPage",
-        "name": "Find Hackathon Partners - Project FL University Platform",
-        "description": "Connect with skilled developers, designers, and business minds for hackathon teams through Project FL. Build winning teams with complementary skills at your university.",
+        "name": "Find Hackathon Partners - Friendly Learning SRMAP University Platform",
+        "description": "Connect with skilled developers, designers, and business minds for hackathon teams through Friendly Learning SRMAP. Build winning teams with complementary skills at your university.",
         "url": `${PRIMARY_DOMAIN}/hackathon-partners`,
         "mainEntity": {
             "@type": "Service",
             "name": "Hackathon Team Formation Service",
             "provider": {
                 "@type": "Organization",
-                "name": "Project FL"
+                "name": "Friendly Learning SRMAP"
             },
             "serviceType": "Team Building for Competitions"
         }
@@ -26,9 +26,9 @@ const HackathonPartners = () => {
     return (
         <>
             <SEOHead
-                title="Find Hackathon Partners & Build Winning Teams | Project FL University Platform"
-                description="Connect with skilled developers, designers, and business minds for hackathon teams through Project FL. Build winning teams with complementary skills at your university. Perfect team formation for coding competitions."
-                keywords="find hackathon partners, hackathon team formation, coding competition teams, university hackathon, project fl hackathon, student developer teams, hackathon teammates"
+                title="Find Hackathon Partners & Build Winning Teams | Friendly Learning SRMAP University Platform"
+                description="Connect with skilled developers, designers, and business minds for hackathon teams through Friendly Learning SRMAP. Build winning teams with complementary skills at your university. Perfect team formation for coding competitions."
+                keywords="find hackathon partners, hackathon team formation, coding competition teams, university hackathon, Friendly Learning SRMAP hackathon, student developer teams, hackathon teammates"
                 canonical={`${PRIMARY_DOMAIN}/hackathon-partners`}
                 structuredData={structuredData}
             />
@@ -41,30 +41,30 @@ const HackathonPartners = () => {
                             <header className="text-center mb-12">
                                 <h1 className="text-4xl font-bold mb-6">Find Hackathon Partners at Your University</h1>
                                 <p className="text-xl text-muted-foreground">
-                                    Build winning hackathon teams with Project FL's skill-based matching
+                                    Build winning hackathon teams with Friendly Learning SRMAP's skill-based matching
                                 </p>
                             </header>
 
                             <div className="grid md:grid-cols-3 gap-8 mb-12">
                                 <div className="text-center p-6 border rounded-lg">
-                                    <div className="text-4xl mb-4">💻</div>
+                                    <div className="text-4xl mb-4">ðŸ’»</div>
                                     <h3 className="text-xl font-bold mb-3">Find Developers</h3>
                                     <p>Connect with skilled programmers who know the languages and frameworks you need</p>
                                 </div>
                                 <div className="text-center p-6 border rounded-lg">
-                                    <div className="text-4xl mb-4">🎨</div>
+                                    <div className="text-4xl mb-4">ðŸŽ¨</div>
                                     <h3 className="text-xl font-bold mb-3">Find Designers</h3>
                                     <p>Team up with UI/UX designers and graphic designers to make your project stand out</p>
                                 </div>
                                 <div className="text-center p-6 border rounded-lg">
-                                    <div className="text-4xl mb-4">📊</div>
+                                    <div className="text-4xl mb-4">ðŸ“Š</div>
                                     <h3 className="text-xl font-bold mb-3">Find Business Minds</h3>
                                     <p>Partner with students skilled in business strategy, marketing, and pitch development</p>
                                 </div>
                             </div>
 
                             <div className="bg-muted p-8 rounded-lg mb-12">
-                                <h2 className="text-2xl font-bold mb-6">Popular Hackathon Skills on Project FL</h2>
+                                <h2 className="text-2xl font-bold mb-6">Popular Hackathon Skills on Friendly Learning SRMAP</h2>
                                 <div className="grid md:grid-cols-2 gap-4">
                                     <div>
                                         <h4 className="font-bold mb-2">Technical Skills</h4>
@@ -91,7 +91,7 @@ const HackathonPartners = () => {
 
                             <div className="text-center">
                                 <h2 className="text-2xl font-bold mb-4">Ready to Build Your Dream Team?</h2>
-                                <p className="mb-6">Join Project FL and connect with talented students for your next hackathon</p>
+                                <p className="mb-6">Join Friendly Learning SRMAP and connect with talented students for your next hackathon</p>
                                 <div className="space-x-4">
                                     <Button asChild size="lg">
                                         <Link to="/signup">Find Hackathon Partners</Link>

@@ -15,7 +15,7 @@ interface StructuredDataProps {
  *   data={{
  *     "@context": "https://schema.org",
  *     "@type": "Organization",
- *     "name": "Project FL",
+ *     "name": "Friendly Learning SRMAP",
  *     "url": PRIMARY_DOMAIN,
  *     // other properties...
  *   }} 

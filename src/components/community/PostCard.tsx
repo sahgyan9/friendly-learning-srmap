@@ -1,4 +1,4 @@
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,7 @@ import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { getInitials } from "@/utils/user-utils";
 import type { CommunityPost } from "@/integrations/supabase/services/community-posts";
-import { PostStatusBadge, PostTypeBadge } from "./PostTypeBadge";
+import { PostStatusBadge, PostTypeBadge, postTypeAccent } from "./PostTypeBadge";
 
 interface PostCardProps {
   post: CommunityPost;
@@ -16,15 +16,17 @@ interface PostCardProps {
   onShare?: (post: CommunityPost, event: React.MouseEvent) => void;
   onComment?: (postId: string, event: React.MouseEvent) => void;
   onAuthorClick?: (authorId: string, event: React.MouseEvent) => void;
-  /** `compact` is the homepage carousel; `full` is the /community-posts feed. */
+  /** `compact` is the homepage rail; `full` is the /community-posts feed. */
   variant?: "full" | "compact";
   className?: string;
 }
 
 /**
- * The single source of truth for how a community post looks. The homepage
- * carousel, the feed page and the detail page all previously carried their own
- * near-identical copy of this markup, which is why they drifted apart.
+ * The single source of truth for how a community post looks.
+ *
+ * The ask leads and the author follows as a byline. An earlier version opened
+ * with the avatar and name like a social feed, which buried the one line a
+ * student is actually scanning for — what is being asked.
  */
 export function PostCard({
   post,
@@ -37,123 +39,151 @@ export function PostCard({
   className,
 }: PostCardProps) {
   const isCompact = variant === "compact";
+  const postedAt = formatDistanceToNow(new Date(post.created_at), { addSuffix: true });
 
   return (
     <Card
       className={cn(
-        "flex flex-col transition-shadow",
-        onOpen && "cursor-pointer hover:shadow-md",
+        "group relative flex flex-col overflow-hidden transition-all",
+        onOpen && "cursor-pointer hover:-translate-y-0.5 hover:shadow-lg",
         className,
       )}
       onClick={onOpen ? () => onOpen(post.id) : undefined}
     >
-      <CardHeader className="gap-3 pb-3">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex min-w-0 items-center gap-3">
-            <Avatar
-              className={cn("h-10 w-10 shrink-0", onAuthorClick && "cursor-pointer")}
-              onClick={onAuthorClick ? (event) => onAuthorClick(post.author.id, event) : undefined}
-            >
-              <AvatarImage src={post.author.profile_image ?? undefined} alt={post.author.name} />
-              <AvatarFallback className="bg-primary/10 text-primary font-semibold">
-                {getInitials(post.author.name)}
-              </AvatarFallback>
-            </Avatar>
+      <span
+        aria-hidden
+        className={cn("absolute inset-y-0 left-0 w-1", postTypeAccent(post.post_type))}
+      />
 
-            <div className="min-w-0">
-              <div className="flex items-center gap-1.5">
-                <span
-                  className={cn("truncate font-semibold", onAuthorClick && "cursor-pointer hover:text-primary")}
-                  onClick={onAuthorClick ? (event) => onAuthorClick(post.author.id, event) : undefined}
-                >
-                  {post.author.name}
-                </span>
-                {post.author.is_mentor && (
-                  <BadgeCheck className="h-4 w-4 shrink-0 text-primary" aria-label="Verified mentor" />
-                )}
-              </div>
-              <p className="truncate text-xs text-muted-foreground">
-                {[post.author.department, formatDistanceToNow(new Date(post.created_at), { addSuffix: true })]
-                  .filter(Boolean)
-                  .join(" · ")}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex shrink-0 flex-col items-end gap-1">
-            <PostTypeBadge type={post.post_type} />
-            <PostStatusBadge status={post.status} />
-          </div>
+      <div className={cn("flex flex-1 flex-col gap-3 pl-5 pr-4", isCompact ? "py-4" : "py-5")}>
+        <div className="flex flex-wrap items-center gap-2">
+          <PostTypeBadge type={post.post_type} />
+          <PostStatusBadge status={post.status} />
+          <span className="ml-auto shrink-0 text-xs text-muted-foreground">{postedAt}</span>
         </div>
-      </CardHeader>
 
-      <CardContent className="flex-1 space-y-3 pb-3">
-        <h3 className={cn("font-semibold leading-snug", isCompact ? "text-base line-clamp-2" : "text-lg")}>
-          {post.title}
-        </h3>
+        <div className="space-y-1.5">
+          <h3
+            className={cn(
+              "font-semibold leading-snug tracking-tight",
+              isCompact ? "line-clamp-2 text-base" : "text-xl",
+              onOpen && "group-hover:text-primary",
+            )}
+          >
+            {post.title}
+          </h3>
 
-        <p
-          className={cn(
-            "whitespace-pre-line text-sm text-muted-foreground",
-            isCompact ? "line-clamp-3" : "line-clamp-5",
-          )}
-        >
-          {post.content}
-        </p>
+          <p
+            className={cn(
+              "whitespace-pre-line text-sm leading-relaxed text-muted-foreground",
+              isCompact ? "line-clamp-2" : "line-clamp-4",
+            )}
+          >
+            {post.content}
+          </p>
+        </div>
 
         {post.image_url && (
           <img
             src={post.image_url}
             alt=""
             loading="lazy"
-            className="max-h-64 w-full rounded-md border object-cover"
+            className={cn(
+              "w-full rounded-lg border object-cover",
+              isCompact ? "h-28" : "max-h-72",
+            )}
           />
         )}
 
         {post.tags && post.tags.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
-            {post.tags.slice(0, isCompact ? 3 : 8).map((tag) => (
-              <Badge key={tag} variant="outline" className="text-xs font-normal">
+            {post.tags.slice(0, isCompact ? 2 : 6).map((tag) => (
+              <Badge key={tag} variant="outline" className="text-xs font-normal text-muted-foreground">
                 #{tag}
               </Badge>
             ))}
           </div>
         )}
-      </CardContent>
 
-      <CardFooter className="mt-auto gap-1 border-t pt-3">
-        <Button
-          variant="ghost"
-          size="sm"
-          className={cn("gap-1.5", post.viewer_has_liked && "text-rose-600 dark:text-rose-400")}
-          onClick={onLike ? (event) => onLike(post.id, event) : undefined}
-          aria-pressed={post.viewer_has_liked}
-          aria-label={post.viewer_has_liked ? "Unlike post" : "Like post"}
-        >
-          <Heart className={cn("h-4 w-4", post.viewer_has_liked && "fill-current")} />
-          {post.likes_count}
-        </Button>
+        {/* Byline and actions share the last row: the author is context for the
+            ask, not the headline, and the actions stay reachable without a
+            separate bordered footer eating vertical space. */}
+        <div className="mt-auto flex items-center justify-between gap-2 pt-2">
+          <div className="flex min-w-0 items-center gap-2">
+            <Avatar
+              className={cn("h-7 w-7 shrink-0", onAuthorClick && "cursor-pointer")}
+              onClick={onAuthorClick ? (event) => onAuthorClick(post.author.id, event) : undefined}
+            >
+              <AvatarImage src={post.author.profile_image ?? undefined} alt={post.author.name} />
+              <AvatarFallback className="bg-primary/10 text-[10px] font-semibold text-primary">
+                {getInitials(post.author.name)}
+              </AvatarFallback>
+            </Avatar>
 
-        <Button
-          variant="ghost"
-          size="sm"
-          className="gap-1.5"
-          onClick={onComment ? (event) => onComment(post.id, event) : undefined}
-        >
-          <MessageCircle className="h-4 w-4" />
-          {post.comments_count}
-        </Button>
+            <div className="min-w-0 leading-tight">
+              <span className="flex items-center gap-1">
+                <span
+                  className={cn(
+                    "truncate text-xs font-medium",
+                    onAuthorClick && "cursor-pointer hover:text-primary",
+                  )}
+                  onClick={onAuthorClick ? (event) => onAuthorClick(post.author.id, event) : undefined}
+                >
+                  {post.author.name}
+                </span>
+                {post.author.is_mentor && (
+                  <BadgeCheck className="h-3.5 w-3.5 shrink-0 text-primary" aria-label="Verified mentor" />
+                )}
+              </span>
+              {post.author.department && (
+                <span className="block truncate text-[11px] text-muted-foreground">
+                  {post.author.department}
+                </span>
+              )}
+            </div>
+          </div>
 
-        <Button
-          variant="ghost"
-          size="sm"
-          className="ml-auto gap-1.5"
-          onClick={onShare ? (event) => onShare(post, event) : undefined}
-          aria-label="Share post"
-        >
-          <Share2 className="h-4 w-4" />
-        </Button>
-      </CardFooter>
+          <div className="flex shrink-0 items-center">
+            <Button
+              variant="ghost"
+              size="sm"
+              className={cn(
+                "h-8 gap-1.5 px-2 text-muted-foreground hover:text-rose-600",
+                post.viewer_has_liked && "text-rose-600 dark:text-rose-400",
+              )}
+              onClick={onLike ? (event) => onLike(post.id, event) : undefined}
+              aria-pressed={post.viewer_has_liked}
+              aria-label={post.viewer_has_liked ? "Unlike post" : "Like post"}
+            >
+              <Heart className={cn("h-4 w-4", post.viewer_has_liked && "fill-current")} />
+              {/* A row of zeroes makes a young board look abandoned; the count
+                  appears once there is something to count. */}
+              {post.likes_count > 0 && <span className="text-xs">{post.likes_count}</span>}
+            </Button>
+
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 gap-1.5 px-2 text-muted-foreground hover:text-primary"
+              onClick={onComment ? (event) => onComment(post.id, event) : undefined}
+              aria-label="Comments"
+            >
+              <MessageCircle className="h-4 w-4" />
+              {post.comments_count > 0 && <span className="text-xs">{post.comments_count}</span>}
+            </Button>
+
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 px-2 text-muted-foreground hover:text-primary"
+              onClick={onShare ? (event) => onShare(post, event) : undefined}
+              aria-label="Share post"
+            >
+              <Share2 className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </div>
     </Card>
   );
 }

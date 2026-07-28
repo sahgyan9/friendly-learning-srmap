@@ -13,6 +13,23 @@ const TYPE_STYLES: Record<string, string> = {
   general: "bg-muted text-muted-foreground",
 };
 
+/**
+ * Accent rail down the left edge of a card. Carries the same colour as the
+ * badge, so the type of an ask is readable from the shape of the feed before
+ * any text is read.
+ */
+const TYPE_ACCENTS: Record<string, string> = {
+  hackathon: "bg-amber-400",
+  "study-help": "bg-sky-400",
+  project: "bg-violet-400",
+  research: "bg-emerald-400",
+  "problem-solving": "bg-rose-400",
+  announcement: "bg-orange-400",
+  general: "bg-border",
+};
+
+export const postTypeAccent = (type: string) => TYPE_ACCENTS[type] ?? TYPE_ACCENTS.general;
+
 const STATUS_STYLES: Record<string, string> = {
   open: "bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300",
   fulfilled: "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300",

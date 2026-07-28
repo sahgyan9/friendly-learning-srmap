@@ -1,54 +1,45 @@
+import { Link } from "react-router-dom";
+import { ArrowRight, Clock } from "lucide-react";
+
 import { PRIMARY_DOMAIN } from "@/lib/constants";
 import SEOHead from "@/components/SEOHead";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { Card } from "@/components/ui/card";
+import { formatBlogDate, getSortedBlogPosts } from "@/data/blog-posts";
 
 const Blog = () => {
-    const blogPosts = [
-        {
-            title: "How to Build the Perfect Hackathon Team in 2025",
-            excerpt: "Discover the essential skills and strategies for forming winning hackathon teams at your university through Project FL.",
-            date: "August 16, 2025",
-            slug: "perfect-hackathon-team-2025",
-            tags: ["Hackathons", "Team Building", "University"]
-        },
-        {
-            title: "The Ultimate Guide to Finding Study Partners at University",
-            excerpt: "Learn proven strategies for finding compatible study partners and creating effective study groups on campus.",
-            date: "August 15, 2025",
-            slug: "ultimate-guide-study-partners",
-            tags: ["Study Tips", "Academic Success", "Student Life"]
-        },
-        {
-            title: "University Startup Success: How Project FL Connects Student Entrepreneurs",
-            excerpt: "Explore how Project FL is revolutionizing student entrepreneurship by connecting like-minded innovators on campus.",
-            date: "August 14, 2025",
-            slug: "university-startup-success-project-fl",
-            tags: ["Startups", "Entrepreneurship", "Student Networking"]
-        }
-    ];
+    const posts = getSortedBlogPosts();
 
     const structuredData = {
         "@context": "https://schema.org",
         "@type": "Blog",
-        "name": "Project FL Blog - University Student Collaboration Insights",
-        "description": "Expert insights on university student collaboration, hackathon teams, study partners, and campus networking through Project FL platform",
+        "name": "Friendly Learning SRMAP Blog",
+        "description":
+            "Practical guides for SRM AP students on choosing electives, finding hackathon teammates, and getting academic help.",
         "url": `${PRIMARY_DOMAIN}/blog`,
         "publisher": {
             "@type": "Organization",
-            "name": "Project FL",
+            "name": "Friendly Learning SRMAP",
             "logo": `${PRIMARY_DOMAIN}/og-image.png`
-        }
+        },
+        "blogPost": posts.map((post) => ({
+            "@type": "BlogPosting",
+            "headline": post.title,
+            "description": post.excerpt,
+            "datePublished": post.date,
+            "url": `${PRIMARY_DOMAIN}/blog/${post.slug}`
+        }))
     };
 
     return (
         <>
             <SEOHead
-                title="Project FL Blog - University Student Collaboration Tips & Insights"
-                description="Expert insights on university student collaboration, finding hackathon partners, study groups, and campus networking. Learn how Project FL is transforming student connections."
-                keywords="project fl blog, university student collaboration tips, hackathon team building guide, study partner advice, student networking insights, campus collaboration"
+                title="Blog | Friendly Learning SRMAP"
+                description="Practical guides for SRM AP students — choosing electives with faculty ratings, finding hackathon teammates who show up, and asking for academic help early."
+                keywords="srm ap student guides, srmap electives, hackathon teammates srm ap, study help srmap, friendly learning blog"
                 canonical={`${PRIMARY_DOMAIN}/blog`}
                 structuredData={structuredData}
             />
@@ -57,45 +48,60 @@ const Blog = () => {
                 <Navbar />
                 <main className="pt-24 pb-16">
                     <div className="container px-4 md:px-6">
-                        <div className="max-w-4xl mx-auto">
-                            <header className="text-center mb-12">
-                                <h1 className="text-4xl font-bold mb-6">Project FL Blog</h1>
-                                <p className="text-xl text-muted-foreground">
-                                    Expert insights on university student collaboration and networking
+                        <div className="mx-auto max-w-3xl">
+                            <header className="mb-12 text-center">
+                                <h1 className="mb-4 text-4xl font-bold tracking-tight">Guides for SRM AP students</h1>
+                                <p className="text-lg text-muted-foreground">
+                                    Short, practical writing on the decisions that actually shape a semester.
                                 </p>
                             </header>
 
-                            <div className="grid gap-8 mb-12">
-                                {blogPosts.map((post, index) => (
-                                    <article key={index} className="p-6 border rounded-lg">
-                                        <div className="flex flex-wrap gap-2 mb-3">
-                                            {post.tags.map((tag, tagIndex) => (
-                                                <span key={tagIndex} className="px-3 py-1 bg-primary/10 text-primary text-sm rounded-full">
-                                                    {tag}
+                            <div className="mb-16 grid gap-5">
+                                {posts.map((post) => (
+                                    <Card key={post.slug} className="group transition-all hover:-translate-y-0.5 hover:shadow-lg">
+                                        <article className="p-6">
+                                            <div className="mb-3 flex flex-wrap gap-2">
+                                                {post.tags.map((tag) => (
+                                                    <Badge key={tag} variant="secondary" className="font-normal">
+                                                        {tag}
+                                                    </Badge>
+                                                ))}
+                                            </div>
+
+                                            <h2 className="mb-2 text-2xl font-bold leading-snug tracking-tight">
+                                                <Link to={`/blog/${post.slug}`} className="transition-colors group-hover:text-primary">
+                                                    {post.title}
+                                                </Link>
+                                            </h2>
+
+                                            <p className="mb-4 text-muted-foreground">{post.excerpt}</p>
+
+                                            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
+                                                <time dateTime={post.date}>{formatBlogDate(post.date)}</time>
+                                                <span className="flex items-center gap-1.5">
+                                                    <Clock className="h-3.5 w-3.5" aria-hidden />
+                                                    {post.readingMinutes} min read
                                                 </span>
-                                            ))}
-                                        </div>
-                                        <h2 className="text-2xl font-bold mb-3">
-                                            <Link to={`/blog/${post.slug}`} className="hover:text-primary transition-colors">
-                                                {post.title}
-                                            </Link>
-                                        </h2>
-                                        <p className="text-muted-foreground mb-4">{post.excerpt}</p>
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-sm text-muted-foreground">{post.date}</span>
-                                            <Button variant="outline" size="sm" asChild>
-                                                <Link to={`/blog/${post.slug}`}>Read More</Link>
-                                            </Button>
-                                        </div>
-                                    </article>
+                                                <Link
+                                                    to={`/blog/${post.slug}`}
+                                                    className="ml-auto flex items-center gap-1 font-medium text-primary"
+                                                >
+                                                    Read
+                                                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                                                </Link>
+                                            </div>
+                                        </article>
+                                    </Card>
                                 ))}
                             </div>
 
-                            <div className="text-center">
-                                <h2 className="text-2xl font-bold mb-4">Ready to Start Collaborating?</h2>
-                                <p className="mb-6">Join Project FL and transform your university experience</p>
+                            <div className="rounded-xl border bg-muted/40 p-8 text-center">
+                                <h2 className="mb-2 text-2xl font-bold">Got a question these don't answer?</h2>
+                                <p className="mb-6 text-muted-foreground">
+                                    Ask it on the community board — every SRM AP student can post and reply.
+                                </p>
                                 <Button asChild size="lg">
-                                    <Link to="/signup">Join Project FL Today</Link>
+                                    <Link to="/community-posts">Go to the board</Link>
                                 </Button>
                             </div>
                         </div>

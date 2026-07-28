@@ -27,7 +27,7 @@ const NotFound = () => {
 
     // If we're in a browser context that supports it
     if (typeof window !== 'undefined' && 'Response' in window) {
-      document.title = '404 - Page Not Found | Project FL';
+      document.title = '404 - Page Not Found | Friendly Learning SRMAP';
     }
   }, [location.pathname]);
 
@@ -60,7 +60,7 @@ const NotFound = () => {
   return (
     <>
       <SEOHead
-        title="404 - Page Not Found | Project FL"
+        title="404 - Page Not Found | Friendly Learning SRMAP"
         description="The page you're looking for could not be found."
         canonical={`${PRIMARY_DOMAIN}${location.pathname}`}
       />

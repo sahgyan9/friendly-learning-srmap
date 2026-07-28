@@ -195,10 +195,11 @@ const CommunityPosts = () => {
             />
           </div>
 
-          {/* Horizontally scrollable chips beat a <select> on mobile: every
-              category stays one tap away and visible. */}
-          <div className="mb-6 -mx-4 overflow-x-auto px-4 pb-1">
-            <div className="flex w-max gap-2">
+          {/* Chips beat a <select>: every category stays one tap away. They
+              scroll on a phone and wrap on a desktop, where a scrolling strip
+              would just clip the last category out of sight. */}
+          <div className="mb-6 -mx-4 overflow-x-auto px-4 pb-1 sm:mx-0 sm:overflow-visible sm:px-0">
+            <div className="flex w-max gap-2 sm:w-auto sm:flex-wrap">
               {POST_TYPES.map((type) => (
                 <button
                   key={type.value}
