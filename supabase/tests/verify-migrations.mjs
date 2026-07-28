@@ -193,6 +193,68 @@ const { rows: [studentPost] } = await q(`SELECT id, author_id, mentor_id FROM pu
 check('student (non-mentor) can insert a post', studentPost.author_id === CURRENT_UID);
 check('trigger mirrors author_id into legacy mentor_id', studentPost.mentor_id === CURRENT_UID);
 
+// --------------------------------------------------------------- RLS, for real
+// Everything above runs as the owner, which bypasses RLS entirely — so it proves
+// the triggers and columns work but says nothing about whether the policies
+// admit or reject a given write. Re-run the writes as `authenticated` with
+// auth.uid() bound to a specific student.
+await db.exec(`
+  GRANT USAGE ON SCHEMA public, auth TO authenticated;
+  GRANT SELECT ON auth._session TO authenticated;
+  GRANT SELECT, INSERT, UPDATE, DELETE ON public.community_posts TO authenticated;
+`);
+
+async function asAuthenticated(fn) {
+  await db.exec(`SET ROLE authenticated`);
+  try {
+    return await fn();
+  } finally {
+    await db.exec(`RESET ROLE`);
+  }
+}
+
+async function attempt(sql, params) {
+  try {
+    await q(sql, params);
+    return null;
+  } catch (error) {
+    return error.message;
+  }
+}
+
+const ownPost = await asAuthenticated(() => attempt(
+  `INSERT INTO public.community_posts (author_id, title, content, post_type)
+   VALUES ($1, 'RLS: own post', 'body', 'general')`, [CURRENT_UID]));
+check('RLS admits a student posting as themselves', ownPost === null, ownPost ?? '');
+
+const impersonated = await asAuthenticated(() => attempt(
+  `INSERT INTO public.community_posts (author_id, title, content)
+   VALUES ($1, 'RLS: impersonated', 'body')`, [OTHER_UID]));
+check('RLS rejects posting as somebody else', impersonated !== null, impersonated ?? 'INSERT SUCCEEDED');
+
+// The deployed client still sends mentor_id and no author_id. The BEFORE trigger
+// fills author_id in, and Postgres evaluates the policy's WITH CHECK against the
+// post-trigger row — so the old write shape has to keep working after migrating.
+const legacyShape = await asAuthenticated(() => attempt(
+  `INSERT INTO public.community_posts (mentor_id, title, content)
+   VALUES ($1, 'RLS: legacy client shape', 'body')`, [CURRENT_UID]));
+check('RLS admits the legacy mentor_id-only insert', legacyShape === null, legacyShape ?? '');
+
+const { rows: [legacyRow] } = await q(
+  `SELECT author_id, mentor_id FROM public.community_posts WHERE title='RLS: legacy client shape'`);
+check('legacy insert lands with both ids populated',
+  legacyRow?.author_id === CURRENT_UID && legacyRow?.mentor_id === CURRENT_UID,
+  JSON.stringify(legacyRow ?? null));
+
+const foreignEdit = await asAuthenticated(() => attempt(
+  `UPDATE public.community_posts SET title='hijacked' WHERE author_id=$1`, [OTHER_UID]));
+const { rows: [untouched] } = await q(
+  `SELECT count(*)::int AS n FROM public.community_posts WHERE title='hijacked'`);
+check('RLS keeps a student out of another author\'s post', untouched.n === 0,
+  foreignEdit ? 'rejected outright' : 'update matched no rows');
+
+await q(`DELETE FROM public.community_posts WHERE title LIKE 'RLS: %'`);
+
 await q(`INSERT INTO public.post_likes (post_id, user_id) VALUES ($1,$2)`, [studentPost.id, CURRENT_UID]);
 
 const { rows: feed } = await q(`SELECT * FROM public.get_community_feed('all', '', 20, 0)`);
