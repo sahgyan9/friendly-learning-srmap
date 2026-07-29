@@ -443,6 +443,105 @@ function generateStaticBlogSitemap() {
 }
 
 /**
+ * Faculty profile pages — the largest body of indexable content on the site,
+ * and the one people actually search for by name ("Dr X SRM AP rating").
+ * Without these URLs in a sitemap the only way in is the /faculty list, which
+ * paginates 24 at a time behind JavaScript, so most of the directory was
+ * effectively unreachable by crawlers.
+ */
+async function generateFacultySitemap() {
+    console.log('Fetching faculty data from Supabase...');
+
+    try {
+        // Paged rather than a single .limit(). PostgREST caps a response at the
+        // server's max-rows regardless of what the client asks for, so a plain
+        // limit would quietly stop returning everyone once the directory grew
+        // past that cap — the same silent truncation this file already had.
+        //
+        // is_active mirrors getFacultyBySlug. That filter is not cosmetic: the
+        // detail page returns "not found" for an inactive record, so listing
+        // one here would advertise a soft 404.
+        const PAGE = 500;
+        const faculty = [];
+
+        for (let from = 0; ; from += PAGE) {
+            const { data, error } = await supabase
+                .from('faculty')
+                .select('slug, name, image_url, department, rating_count, updated_at')
+                .eq('is_active', true)
+                .not('slug', 'is', null)
+                .order('rating_count', { ascending: false })
+                .order('name', { ascending: true })
+                .range(from, from + PAGE - 1);
+
+            if (error) {
+                console.warn('Skipping faculty sitemap:', error.message);
+                return false;
+            }
+            if (!data || data.length === 0) break;
+
+            faculty.push(...data);
+            if (data.length < PAGE) break;
+        }
+
+        if (faculty.length === 0) {
+            console.warn('Skipping faculty sitemap: no rows returned');
+            return false;
+        }
+
+        const timestamp = new Date().toISOString();
+
+        let sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd
+                            http://www.google.com/schemas/sitemap-image/1.1 http://www.google.com/schemas/sitemap-image/1.1/sitemap-image.xsd">
+  <url>
+    <loc>${config.siteUrl}/faculty</loc>
+    <lastmod>${timestamp}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>`;
+
+        faculty.forEach(member => {
+            // A profile carrying reviews is the page worth ranking; the rest are
+            // stubs inviting the first rating, so they sit a rung lower.
+            const rated = Number(member.rating_count) > 0;
+
+            sitemap += `
+  <url>
+    <loc>${config.siteUrl}/faculty/${encodeURIComponent(member.slug)}</loc>
+    <lastmod>${member.updated_at || timestamp}</lastmod>
+    <changefreq>${rated ? 'weekly' : 'monthly'}</changefreq>
+    <priority>${rated ? '0.8' : '0.5'}</priority>`;
+
+            if (member.image_url) {
+                sitemap += `
+    <image:image>
+      <image:loc>${xmlEscape(member.image_url)}</image:loc>
+      <image:title>${xmlEscape(member.name)}${member.department ? ' — ' + xmlEscape(member.department) : ''}, SRM University-AP</image:title>
+    </image:image>`;
+            }
+
+            sitemap += `
+  </url>`;
+        });
+
+        sitemap += `
+</urlset>`;
+
+        fs.writeFileSync(path.join(config.publicDir, 'sitemap-faculty.xml'), sitemap);
+        const ratedCount = faculty.filter(m => Number(m.rating_count) > 0).length;
+        console.log(`Faculty sitemap generated successfully with ${faculty.length} profiles (${ratedCount} rated)`);
+        return true;
+    } catch (error) {
+        console.error('Error generating faculty sitemap:', error);
+        return false;
+    }
+}
+
+/**
  * Generate the sitemap index file
  */
 async function generateSitemapIndex(availableSitemaps) {
@@ -482,6 +581,14 @@ async function generateSitemapIndex(availableSitemaps) {
   </sitemap>`;
     }
 
+    if (availableSitemaps.faculty) {
+        sitemapIndex += `
+  <sitemap>
+    <loc>${config.siteUrl}/sitemap-faculty.xml</loc>
+    <lastmod>${timestamp}</lastmod>
+  </sitemap>`;
+    }
+
     sitemapIndex += `
 </sitemapindex>`;
 
@@ -503,7 +610,8 @@ async function generateSitemaps() {
         const availableSitemaps = {
             blog: false,
             mentors: false,
-            community: false
+            community: false,
+            faculty: false
         };
 
         // Generate blog sitemap
@@ -514,6 +622,9 @@ async function generateSitemaps() {
 
         // Generate community posts sitemap
         availableSitemaps.community = await generateCommunityPostsSitemap();
+
+        // Generate faculty profiles sitemap
+        availableSitemaps.faculty = await generateFacultySitemap();
 
         // Generate the sitemap index based on available sitemaps
         await generateSitemapIndex(availableSitemaps);

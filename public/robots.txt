@@ -13,6 +13,7 @@ Sitemap: https://friendly-learning-srmap.vercel.app/sitemap.xml
 Sitemap: https://friendly-learning-srmap.vercel.app/sitemap-blog.xml
 Sitemap: https://friendly-learning-srmap.vercel.app/sitemap-community.xml
 Sitemap: https://friendly-learning-srmap.vercel.app/sitemap-mentors.xml
+Sitemap: https://friendly-learning-srmap.vercel.app/sitemap-faculty.xml
 
 # -- Rules for Googlebot --
 User-agent: Googlebot
