@@ -1,7 +1,7 @@
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, ExternalLink, GraduationCap } from "lucide-react";
+import { cn } from "@/lib/utils";
 import type { SRMAPEvent } from "@/hooks/useSRMAPEvents";
 
 interface SRMAPEventCardProps {
@@ -14,7 +14,7 @@ export function SRMAPEventCard({ event }: SRMAPEventCardProps) {
   const end = parseDate(event.endDate);
   const now = new Date();
   const isLive = now >= start && now <= end;
-  const isUpcoming = now < start;
+  const hasEnded = now > end;
 
   const formattedStartDate = start.toLocaleDateString("en-IN", {
     day: "numeric",
@@ -29,97 +29,96 @@ export function SRMAPEventCard({ event }: SRMAPEventCardProps) {
   const formattedDate =
     formattedStartDate === formattedEndDate
       ? formattedStartDate
-      : `${formattedStartDate} - ${formattedEndDate}`;
+      : `${formattedStartDate} – ${formattedEndDate}`;
 
   return (
     <Card
-      className={`overflow-hidden hover:shadow-lg transition-all duration-200 flex flex-col group border ${
-        isLive
-          ? "border-red-500/70 shadow-[0_0_0_2px_rgba(239,68,68,0.2)]"
-          : "border-border hover:border-primary/30"
-      }`}
+      className={cn(
+        "group flex flex-col overflow-hidden transition-all hover:-translate-y-0.5 hover:shadow-lg",
+        isLive && "ring-2 ring-rose-500/40",
+        hasEnded && "opacity-75",
+      )}
     >
-      {/* Top accent stripe */}
-      <div className="h-1 w-full bg-gradient-to-r from-orange-500 to-red-600" />
-
-      {/* Image or fallback */}
-      <div className="aspect-video w-full overflow-hidden bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-950/30 dark:to-red-950/30 relative">
+      <div className="relative aspect-video w-full overflow-hidden bg-muted">
         {event.imageUrl ? (
           <img
             src={event.imageUrl}
-            alt={event.title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            alt=""
+            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
             loading="lazy"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <GraduationCap className="h-14 w-14 text-orange-300 dark:text-orange-700" />
+          <div className="flex h-full w-full items-center justify-center">
+            <GraduationCap className="h-12 w-12 text-muted-foreground/40" aria-hidden />
           </div>
         )}
-        {/* Official badge overlay */}
-        <div className="absolute top-2 left-2">
-          <span className="inline-flex items-center gap-1 rounded-full bg-orange-600 px-2 py-0.5 text-[10px] font-semibold text-white shadow">
-            ● SRMAP Official
-          </span>
-        </div>
 
-        {/* Real-time state badge */}
-        <div className="absolute top-2 right-2">
-          {isLive ? (
-            <span className="relative inline-flex items-center gap-1 rounded-full bg-red-600 px-2 py-0.5 text-[10px] font-semibold text-white shadow">
-              <span className="absolute inline-flex h-2.5 w-2.5 rounded-full bg-red-300 opacity-80 animate-ping" />
-              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-white" />
-              LIVE NOW
+        {/* Only the exceptions are called out. "Upcoming" described almost
+            every card, and the date below already says so — a badge on
+            everything carries no information. The same was true of the
+            "SRMAP Official" tag, which sat on all of them. */}
+        {isLive && (
+          <span className="absolute right-2 top-2 inline-flex items-center gap-1.5 rounded-full bg-rose-600 px-2.5 py-1 text-[11px] font-semibold text-white shadow">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-white" />
             </span>
-          ) : isUpcoming ? (
-            <span className="inline-flex items-center rounded-full bg-emerald-600 px-2 py-0.5 text-[10px] font-semibold text-white shadow">
-              UPCOMING
-            </span>
-          ) : (
-            <span className="inline-flex items-center rounded-full bg-slate-600 px-2 py-0.5 text-[10px] font-semibold text-white shadow">
-              ENDED
-            </span>
-          )}
-        </div>
+            Live now
+          </span>
+        )}
+        {hasEnded && (
+          <span className="absolute right-2 top-2 rounded-full bg-background/90 px-2.5 py-1 text-[11px] font-medium text-muted-foreground shadow-sm backdrop-blur">
+            Ended
+          </span>
+        )}
       </div>
 
-      <CardHeader className="pb-1 pt-3">
-        <div className="flex flex-wrap gap-1 mb-1.5">
-          {event.department && event.department !== "SRMAP" && (
-            <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300 border-0">
-              {event.department}
-            </Badge>
-          )}
-          {event.eventType && (
-            <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-orange-300 text-orange-700 dark:text-orange-400">
-              {event.eventType}
-            </Badge>
-          )}
-        </div>
-        <h3 className="text-sm font-semibold leading-snug line-clamp-2 group-hover:text-primary transition-colors">
+      <CardHeader className="gap-2 pb-2 pt-4">
+        {(event.department !== "SRMAP" || event.eventType) && (
+          <div className="flex flex-wrap gap-1.5">
+            {event.department && event.department !== "SRMAP" && (
+              <Badge variant="secondary" className="text-[11px] font-normal">
+                {event.department}
+              </Badge>
+            )}
+            {event.eventType && (
+              <Badge variant="outline" className="text-[11px] font-normal text-muted-foreground">
+                {event.eventType}
+              </Badge>
+            )}
+          </div>
+        )}
+
+        <h3 className="line-clamp-2 text-base font-semibold leading-snug tracking-tight transition-colors group-hover:text-primary">
           {event.title}
         </h3>
       </CardHeader>
 
-      <CardContent className="flex-1 py-1">
+      <CardContent className="flex-1 pb-3 pt-0">
         {event.excerpt && (
-          <p className="text-xs text-muted-foreground line-clamp-2">{event.excerpt}</p>
+          <p className="line-clamp-2 text-sm leading-relaxed text-muted-foreground">{event.excerpt}</p>
         )}
       </CardContent>
 
-      <CardFooter className="flex justify-between items-center pt-2 pb-3 border-t border-border/50 mt-2">
-        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-          <Calendar className="h-3.5 w-3.5" />
-          <span>{formattedDate}</span>
-        </div>
-        <Button
-          size="sm"
-          className="h-7 text-xs px-3 bg-orange-600 hover:bg-orange-700 text-white"
-          onClick={() => window.open(event.link, "_blank", "noopener,noreferrer")}
+      <CardFooter className="mt-auto flex items-center justify-between gap-3 border-t pt-3">
+        <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <Calendar className="h-3.5 w-3.5 shrink-0" aria-hidden />
+          {formattedDate}
+        </span>
+
+        {/* An anchor, not a button calling window.open — this navigates, so it
+            should be middle-clickable, show its target on hover, and be
+            announced as a link. */}
+        <a
+          href={event.link}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
-          <ExternalLink className="mr-1 h-3 w-3" />
-          View Event
-        </Button>
+          View event
+          <ExternalLink className="h-3 w-3" aria-hidden />
+          <span className="sr-only">(opens in a new tab)</span>
+        </a>
       </CardFooter>
     </Card>
   );

@@ -60,8 +60,38 @@ function parseSRMAPDate(value: string): number {
   return new Date(value.replace(" ", "T") + "+05:30").getTime();
 }
 
+const NAMED_ENTITIES: Record<string, string> = {
+  amp: "&",
+  lt: "<",
+  gt: ">",
+  quot: '"',
+  apos: "'",
+  nbsp: " ",
+  hellip: "…",
+  ndash: "–",
+  mdash: "—",
+  lsquo: "‘",
+  rsquo: "’",
+  ldquo: "“",
+  rdquo: "”",
+};
+
+/**
+ * WordPress returns titles and excerpts with entities already encoded, so
+ * stripping tags alone left `&#8211;`, `&#8220;` and `&amp;` rendering
+ * literally on every event card. Decoded here rather than with
+ * `dangerouslySetInnerHTML`, which would hand an external feed the ability to
+ * inject markup into the page.
+ */
+function decodeEntities(text: string): string {
+  return text
+    .replace(/&#(\d+);/g, (_, code) => String.fromCodePoint(Number(code)))
+    .replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCodePoint(parseInt(hex, 16)))
+    .replace(/&([a-z]+);/gi, (match, name) => NAMED_ENTITIES[name.toLowerCase()] ?? match);
+}
+
 function stripHtml(html: string): string {
-  return html.replace(/<[^>]*>/g, "").trim();
+  return decodeEntities(html.replace(/<[^>]*>/g, "")).replace(/\s+/g, " ").trim();
 }
 
 function extractDepartment(embedded: Record<string, unknown>): string {
