@@ -20,7 +20,10 @@
 //
 // Invoke:
 //   POST /functions/v1/sync-faculty          (admin JWT, or CRON_SECRET header)
-// Schedule it daily with pg_cron or the Supabase dashboard scheduler.
+//
+// Scheduled by the pg_cron job `sync-faculty-monthly`: 0 3 1 * *, so 03:00 UTC
+// on the 1st of each month. A university directory changes on semester
+// boundaries, not daily, and each run costs ~600 upstream requests.
 
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
