@@ -2,7 +2,6 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import url from 'node:url'
-import { SITE_URL } from './site.config.js'
 
 const __dirname = path.dirname(url.fileURLToPath(import.meta.url))
 const toAbsolute = (p) => path.resolve(__dirname, p)
@@ -59,46 +58,14 @@ const routesToPrerender = [
       }
     }
 
-    // Generate comprehensive sitemap.xml with proper SEO structure
-    const primaryDomain = SITE_URL;
-    const today = new Date().toISOString().split('T')[0];
-
-    const publicRoutes = [
-      { path: '/', priority: '1.0', changefreq: 'daily' },
-      { path: '/about', priority: '0.8', changefreq: 'monthly' },
-      { path: '/mentors', priority: '0.9', changefreq: 'daily' },
-      { path: '/community-posts', priority: '0.9', changefreq: 'daily' },
-      { path: '/marketplace', priority: '0.7', changefreq: 'weekly' },
-      { path: '/contact', priority: '0.5', changefreq: 'monthly' },
-      { path: '/signup', priority: '0.7', changefreq: 'monthly' },
-      { path: '/signin', priority: '0.6', changefreq: 'monthly' },
-      { path: '/become-mentor', priority: '0.6', changefreq: 'monthly' },
-      { path: '/how-it-works', priority: '0.8', changefreq: 'monthly' },
-      { path: '/find-study-partners', priority: '0.9', changefreq: 'weekly' },
-      { path: '/hackathon-partners', priority: '0.9', changefreq: 'weekly' },
-      { path: '/blog', priority: '0.7', changefreq: 'weekly' }
-    ];
-
-    // Generate primary domain sitemap
-    const urls = publicRoutes.map((route) => {
-      const loc = route.path === '/' ? `${primaryDomain}/` : `${primaryDomain}${route.path}`;
-      return `  <url>\n    <loc>${loc}</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>${route.changefreq}</changefreq>\n    <priority>${route.priority}</priority>\n  </url>`;
-    }).join('\n');
-
-    const sitemapContent = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">\n${urls}\n</urlset>`;
-
-    fs.writeFileSync(toAbsolute('dist/sitemap.xml'), sitemapContent);
-    console.log('generated primary sitemap.xml with comprehensive SEO structure');
-
-    // Generate sitemap index
-    const sitemapIndex = `<?xml version="1.0" encoding="UTF-8"?>
-<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <sitemap>
-    <loc>${primaryDomain}/sitemap.xml</loc>
-    <lastmod>${today}</lastmod>
-  </sitemap>
-</sitemapindex>`;
-
-    fs.writeFileSync(toAbsolute('dist/sitemapindex.xml'), sitemapIndex);
-    console.log('generated sitemap index for better SEO organization');
+    // Sitemaps are not generated here. generate-dynamic-sitemap.js owns them,
+    // and it now runs first in `npm run build` so its output is in public/
+    // before Vite copies that directory into dist/.
+    //
+    // This file used to write its own dist/sitemap.xml from a hardcoded route
+    // list, which overwrote the richer generated one — production served 13
+    // bare URLs instead of the 14 with image and hreflang annotations. It also
+    // wrote dist/sitemapindex.xml, which nothing referenced: robots.txt points
+    // at sitemap-index.xml, so that file was an orphan Google could still find
+    // and crawl as a second, conflicting index.
   })()

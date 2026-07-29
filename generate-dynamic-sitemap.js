@@ -54,6 +54,22 @@ const config = {
 };
 
 /**
+ * Sitemaps interpolate user-supplied text — post titles, mentor names — and
+ * image URLs that can carry query strings. A single unescaped & or < makes the
+ * whole file invalid XML, and Search Console rejects a sitemap it cannot parse,
+ * so one awkward title silently takes out every URL in the file rather than
+ * just its own.
+ */
+function xmlEscape(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')   // must run first, or it double-escapes the rest
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&apos;');
+}
+
+/**
  * Generate and write the main sitemap.xml file with static routes
  */
 function generateMainSitemap() {
@@ -100,11 +116,11 @@ function generateMainSitemap() {
                     sitemap += `
     <image:image>
       <image:loc>${config.siteUrl}${img.loc}</image:loc>
-      <image:title>${img.title}</image:title>`;
+      <image:title>${xmlEscape(img.title)}</image:title>`;
 
                     if (img.caption) {
                         sitemap += `
-      <image:caption>${img.caption}</image:caption>`;
+      <image:caption>${xmlEscape(img.caption)}</image:caption>`;
                     }
 
                     sitemap += `
@@ -134,7 +150,7 @@ async function generateMentorsSitemap() {
         // Fetch active mentors from the database
         const { data: mentors, error } = await supabase
             .from('mentors')
-            .select('id, name, profile_image, department')
+            .select('id, name, profile_image, department, created_at')
             .neq('department', 'General')
             .not('department', 'is', null);
 
@@ -165,18 +181,22 @@ async function generateMentorsSitemap() {
 
         // Add each mentor profile page
         mentors.forEach(mentor => {
+            // mentors has no updated_at column, so created_at is the best signal
+            // available — still better than restamping every URL each build.
+            const lastmod = mentor.created_at || timestamp;
+
             sitemap += `
   <url>
     <loc>${config.siteUrl}/mentor/${mentor.id}</loc>
-    <lastmod>${timestamp}</lastmod>
+    <lastmod>${lastmod}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>`;
 
             if (mentor.profile_image) {
                 sitemap += `
     <image:image>
-      <image:loc>${mentor.profile_image}</image:loc>
-      <image:title>${mentor.name || 'Mentor'} - Friendly Learning SRMAP Mentor</image:title>
+      <image:loc>${xmlEscape(mentor.profile_image)}</image:loc>
+      <image:title>${xmlEscape(mentor.name || 'Mentor')} - Friendly Learning SRMAP Mentor</image:title>
     </image:image>`;
             }
 
@@ -203,11 +223,16 @@ async function generateCommunityPostsSitemap() {
     console.log('Fetching community posts data from Supabase...');
 
     try {
-        // Fetch active community posts
+        // No status filter. The board and /community-posts/:id both serve every
+        // post regardless of status — get_community_feed does not filter on it
+        // either — so restricting the sitemap to status = 'open' dropped pages
+        // that are live and indexable. It also failed silently: the single post
+        // on the site is 'fulfilled', so the sitemap was being regenerated with
+        // zero post URLs while the board displayed it.
         const { data: posts, error } = await supabase
             .from('community_posts')
-            .select('id, created_at, title, image_url')
-            .eq('status', 'open');
+            .select('id, created_at, updated_at, title, image_url')
+            .order('created_at', { ascending: false });
 
         if (error || !posts) {
             console.warn('Skipping community posts sitemap:', error?.message ?? 'no rows returned');
@@ -234,18 +259,23 @@ async function generateCommunityPostsSitemap() {
 
         // Add each community post page
         posts.forEach(post => {
+            // The post's own timestamp, not the build time. Stamping every URL
+            // with "now" on each deploy tells crawlers everything changed when
+            // nothing did, and they learn to discount the field.
+            const lastmod = post.updated_at || post.created_at || timestamp;
+
             sitemap += `
   <url>
     <loc>${config.siteUrl}/community-posts/${post.id}</loc>
-    <lastmod>${timestamp}</lastmod>
+    <lastmod>${lastmod}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>`;
 
             if (post.image_url) {
                 sitemap += `
     <image:image>
-      <image:loc>${post.image_url}</image:loc>
-      <image:title>${post.title}</image:title>
+      <image:loc>${xmlEscape(post.image_url)}</image:loc>
+      <image:title>${xmlEscape(post.title)}</image:title>
     </image:image>`;
             }
 
@@ -332,16 +362,16 @@ async function generateBlogSitemap() {
 
                 sitemap += `
   <url>
-    <loc>${postUrl}</loc>
-    <lastmod>${timestamp}</lastmod>
+    <loc>${xmlEscape(postUrl)}</loc>
+    <lastmod>${post.updated_at || post.published_at || timestamp}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>`;
 
                 if (post.image_url) {
                     sitemap += `
     <image:image>
-      <image:loc>${post.image_url}</image:loc>
-      <image:title>${post.title}</image:title>
+      <image:loc>${xmlEscape(post.image_url)}</image:loc>
+      <image:title>${xmlEscape(post.title)}</image:title>
     </image:image>`;
                 }
 
