@@ -6,7 +6,6 @@ import MessagesLayout from "@/components/messages/MessagesLayout";
 import { getOrCreateConversation } from "@/integrations/supabase/services/chat/conversation.service";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import Navbar from "@/components/Navbar";
 
 const Messages = () => {
   const { user } = useAuth();
@@ -48,7 +47,6 @@ const Messages = () => {
 
   return (
     <>
-      <Navbar />
       <div className="min-h-screen bg-background">
         {isInitializingConversation ? (
           <div className="flex items-center justify-center min-h-[50vh]">

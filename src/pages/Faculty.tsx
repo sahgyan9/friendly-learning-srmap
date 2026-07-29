@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { EyeOff, Search, SlidersHorizontal } from "lucide-react";
 
-import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import SEOHead from "@/components/SEOHead";
 import StructuredData from "@/components/StructuredData";
@@ -119,7 +118,6 @@ const Faculty = () => {
       />
 
       <div className="min-h-screen bg-background">
-        <Navbar />
 
         <div className="container mx-auto px-4 py-8 pt-24">
           <header className="mb-6">

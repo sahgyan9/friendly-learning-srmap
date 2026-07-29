@@ -1,6 +1,5 @@
 import { PRIMARY_DOMAIN } from "@/lib/constants";
 import SEOHead from "@/components/SEOHead";
-import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -34,7 +33,6 @@ const HackathonPartners = () => {
             />
 
             <div className="min-h-screen">
-                <Navbar />
                 <main className="pt-24 pb-16">
                     <div className="container px-4 md:px-6">
                         <div className="max-w-4xl mx-auto">
@@ -47,17 +45,17 @@ const HackathonPartners = () => {
 
                             <div className="grid md:grid-cols-3 gap-8 mb-12">
                                 <div className="text-center p-6 border rounded-lg">
-                                    <div className="text-4xl mb-4">ðŸ’»</div>
+                                    <div className="text-4xl mb-4">💻</div>
                                     <h3 className="text-xl font-bold mb-3">Find Developers</h3>
                                     <p>Connect with skilled programmers who know the languages and frameworks you need</p>
                                 </div>
                                 <div className="text-center p-6 border rounded-lg">
-                                    <div className="text-4xl mb-4">ðŸŽ¨</div>
+                                    <div className="text-4xl mb-4">🎨</div>
                                     <h3 className="text-xl font-bold mb-3">Find Designers</h3>
                                     <p>Team up with UI/UX designers and graphic designers to make your project stand out</p>
                                 </div>
                                 <div className="text-center p-6 border rounded-lg">
-                                    <div className="text-4xl mb-4">ðŸ“Š</div>
+                                    <div className="text-4xl mb-4">📊</div>
                                     <h3 className="text-xl font-bold mb-3">Find Business Minds</h3>
                                     <p>Partner with students skilled in business strategy, marketing, and pitch development</p>
                                 </div>

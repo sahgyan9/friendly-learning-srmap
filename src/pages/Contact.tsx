@@ -1,7 +1,6 @@
 import { PRIMARY_DOMAIN } from "@/lib/constants";
 
 import { useState } from "react";
-import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import Footer from "@/components/Footer";
@@ -99,7 +98,6 @@ const Contact = () => {
       />
 
       <div className="min-h-screen bg-background text-foreground">
-        <Navbar />
 
         <main className="pt-24 pb-16">
           <div className="container px-4 md:px-6">

@@ -3,7 +3,6 @@ import { ArrowRight, Clock } from "lucide-react";
 
 import { PRIMARY_DOMAIN } from "@/lib/constants";
 import SEOHead from "@/components/SEOHead";
-import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -45,7 +44,6 @@ const Blog = () => {
             />
 
             <div className="min-h-screen">
-                <Navbar />
                 <main className="pt-24 pb-16">
                     <div className="container px-4 md:px-6">
                         <div className="mx-auto max-w-3xl">

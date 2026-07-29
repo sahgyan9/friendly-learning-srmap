@@ -10,7 +10,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, Edit, FileText, Clock, CheckCircle, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import Navbar from "@/components/Navbar";
 import { useNavigate } from "react-router-dom";
 
 const BecomeMentor = () => {
@@ -122,7 +121,6 @@ const BecomeMentor = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
-        <Navbar />
         <div className="min-h-screen flex items-center justify-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
@@ -133,7 +131,6 @@ const BecomeMentor = () => {
   if (!user) {
     return (
       <div className="min-h-screen bg-background">
-        <Navbar />
         <div className="min-h-screen flex items-center justify-center">
           <div className="text-center">
             <h2 className="text-2xl font-bold mb-4">Please sign in to continue</h2>
@@ -150,7 +147,6 @@ const BecomeMentor = () => {
     
     return (
       <div className="min-h-screen bg-background">
-        <Navbar />
         <div className="container mx-auto px-4 py-16 md:py-24">
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-8">
@@ -251,7 +247,6 @@ const BecomeMentor = () => {
   if (editMode && existingApplication && existingApplication.status === 'rejected') {
     return (
       <div className="min-h-screen bg-background">
-        <Navbar />
         <div className="container mx-auto px-4 py-16 md:py-24">
           {/* Edit Mode Header */}
           <Card className="mb-6 border-amber-200 bg-amber-50 dark:bg-amber-900/20">
@@ -310,7 +305,6 @@ const BecomeMentor = () => {
   // Show new application form (only if no existing application)
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
       <div className="container mx-auto px-4 py-16 md:py-24">
         <MentorFormHeader />
         <div className="max-w-4xl mx-auto">

@@ -13,8 +13,47 @@ export interface SRMAPEvent {
   eventType: string;
 }
 
+const PER_PAGE = 100;
+const MAX_PAGES = 3;
+
 const SRMAP_API_BASE =
-  "https://events.srmap.edu.in/wp-json/wp/v2/tribe_events?per_page=100&_embed=1&order=desc";
+  `https://events.srmap.edu.in/wp-json/wp/v2/tribe_events?per_page=${PER_PAGE}&_embed=1&order=desc`;
+
+/**
+ * Fetches every available page, but only the ones that exist.
+ *
+ * Pages 1-3 were previously requested unconditionally. The feed currently fits
+ * on one page, so two of those three requests returned
+ * `rest_post_invalid_page_number` 400s on every load — and again on every
+ * 60-second refresh. WordPress reports the real count in `X-WP-TotalPages`.
+ */
+async function fetchAllPages(): Promise<Record<string, unknown>[]> {
+  const first = await fetch(`${SRMAP_API_BASE}&page=1`);
+  if (!first.ok) throw new Error("Unable to fetch SRMAP events");
+
+  const firstPage = (await first.json()) as Record<string, unknown>[];
+
+  // The header is normally exposed via CORS; if a proxy strips it, fall back to
+  // "a full page probably means there is another one".
+  const reported = Number(first.headers.get("X-WP-TotalPages"));
+  const totalPages = Number.isFinite(reported) && reported > 0
+    ? reported
+    : firstPage.length === PER_PAGE
+      ? MAX_PAGES
+      : 1;
+
+  const extraPages = [];
+  for (let page = 2; page <= Math.min(totalPages, MAX_PAGES); page++) {
+    extraPages.push(fetch(`${SRMAP_API_BASE}&page=${page}`));
+  }
+
+  const rest = await Promise.all(extraPages);
+  const parsed = await Promise.all(
+    rest.filter((res) => res.ok).map((res) => res.json() as Promise<Record<string, unknown>[]>),
+  );
+
+  return [firstPage, ...parsed].flat();
+}
 
 function parseSRMAPDate(value: string): number {
   // SRMAP API returns "YYYY-MM-DD HH:mm:ss" in IST. Convert to a stable ISO offset string.
@@ -74,23 +113,14 @@ export function useSRMAPEvents() {
   useEffect(() => {
     let cancelled = false;
 
-    async function fetchEvents() {
+    async function fetchEvents({ isRefresh = false } = {}) {
       try {
-        setLoading(true);
+        // A background refresh must not tear the list down and show a spinner
+        // in place of content the reader is part-way through.
+        if (!isRefresh) setLoading(true);
         setError(null);
-        const responses = await Promise.all([
-          fetch(`${SRMAP_API_BASE}&page=1`),
-          fetch(`${SRMAP_API_BASE}&page=2`),
-          fetch(`${SRMAP_API_BASE}&page=3`),
-        ]);
 
-        const okResponses = responses.filter((res) => res.ok);
-        if (okResponses.length === 0) {
-          throw new Error("Unable to fetch SRMAP events");
-        }
-
-        const pages = await Promise.all(okResponses.map((res) => res.json()));
-        const data = pages.flat() as Record<string, unknown>[];
+        const data = await fetchAllPages();
 
         if (!cancelled) {
           const now = Date.now();
@@ -159,7 +189,9 @@ export function useSRMAPEvents() {
     }
 
     fetchEvents();
-    const refreshTimer = window.setInterval(fetchEvents, 60000);
+    // University events change a few times a week, not a few times an hour.
+    // Re-pulling a fully embedded feed every 60s was pure waste.
+    const refreshTimer = window.setInterval(() => fetchEvents({ isRefresh: true }), 5 * 60 * 1000);
     return () => {
       window.clearInterval(refreshTimer);
       cancelled = true;

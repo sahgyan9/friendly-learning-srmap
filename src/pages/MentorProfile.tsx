@@ -5,7 +5,6 @@ import { useParams, Link } from "react-router-dom";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import Navbar from "@/components/Navbar";
 import SEOHead from "@/components/SEOHead";
 import StructuredData from "@/components/StructuredData";
 import { getMentorById } from "@/integrations/supabase/services/mentors";
@@ -69,7 +68,6 @@ const MentorProfile = () => {
   if (loading) {
     return (
       <div className="min-h-screen">
-        <Navbar />
         <div className="container px-4 md:px-6 pt-24 pb-16 flex justify-center items-center min-h-[60vh]">
           <motion.div
             className="flex flex-col items-center"
@@ -88,7 +86,6 @@ const MentorProfile = () => {
   if (!mentor) {
     return (
       <div className="min-h-screen">
-        <Navbar />
         <motion.div
           className="container px-4 md:px-6 pt-24 pb-16"
           initial={{ opacity: 0 }}
@@ -147,7 +144,6 @@ const MentorProfile = () => {
   return (
     <div className="min-h-screen">
       {mentor && generateSEO()}
-      <Navbar />
 
       <main className="pt-24 pb-16">
         <div className="container px-4 md:px-6">

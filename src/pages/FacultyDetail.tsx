@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, EyeOff, ExternalLink, Star, UserRound } from "lucide-react";
 
-import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import SEOHead from "@/components/SEOHead";
 import StructuredData from "@/components/StructuredData";
@@ -74,7 +73,6 @@ const FacultyDetail = () => {
   if (loading || !faculty) {
     return (
       <div className="min-h-screen bg-background">
-        <Navbar />
         <div className="container mx-auto space-y-4 px-4 py-8 pt-24">
           <Skeleton className="h-8 w-32" />
           <Card>
@@ -122,7 +120,6 @@ const FacultyDetail = () => {
       />
 
       <div className="min-h-screen bg-background">
-        <Navbar />
 
         <div className="container mx-auto max-w-4xl px-4 py-8 pt-24">
           <Button asChild variant="ghost" size="sm" className="-ml-2 mb-4 gap-1.5">

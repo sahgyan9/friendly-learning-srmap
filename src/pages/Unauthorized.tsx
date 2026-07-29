@@ -2,12 +2,10 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ShieldOff } from "lucide-react";
-import Navbar from "@/components/Navbar";
 
 const Unauthorized = () => {
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar />
       
       <div className="container px-4 md:px-6 pt-24 pb-16">
         <div className="max-w-md mx-auto text-center py-12">

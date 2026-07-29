@@ -9,7 +9,6 @@ import { PostCard } from "@/components/marketplace/PostCard";
 import { SRMAPEventCard } from "@/components/marketplace/SRMAPEventCard";
 import { useSRMAPEvents } from "@/hooks/useSRMAPEvents";
 import { Button } from "@/components/ui/button";
-import Navbar from "@/components/Navbar";
 import { fetchMarketplacePosts, fetchMarketplacePost, CategoryType, MarketplacePost, isUserAdmin } from '@/integrations/supabase/services/marketplace';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
@@ -139,7 +138,6 @@ const MarketPlace = () => {
             ])} />
 
             <div className="min-h-screen bg-background">
-                <Navbar />
 
                 <div className="container mx-auto px-4 py-8 pt-24">
                     <div className="mb-6">

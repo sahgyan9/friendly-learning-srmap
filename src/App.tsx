@@ -8,7 +8,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/context/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import RouteRobots from "@/components/RouteRobots";
-import MainNav from "@/components/navigation/MainNav";
+import SiteHeader from "@/components/navigation/SiteHeader";
 
 // The landing page is the most common entry point, so it stays in the main
 // bundle. Everything else is split per route — the app previously shipped one
@@ -75,10 +75,16 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <TooltipProvider>
-          <div className="min-h-screen pb-16 md:pb-0">
+          <div className="min-h-screen">
             <Toaster />
             <RouteRobots />
 
+            {/* One header for the whole app. Pages used to render their own
+                <Navbar /> underneath a separately-mounted floating nav, which
+                is how the two ended up overlapping. */}
+            <SiteHeader />
+
+            <main id="main-content">
             <Suspense fallback={<RouteFallback />}>
               <Routes>
                 {/* Public */}
@@ -198,8 +204,7 @@ function App() {
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>
-
-            <MainNav />
+            </main>
           </div>
         </TooltipProvider>
       </AuthProvider>

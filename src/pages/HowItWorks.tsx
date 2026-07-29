@@ -1,7 +1,6 @@
 import { PRIMARY_DOMAIN } from "@/lib/constants";
 
 import SEOHead from "@/components/SEOHead";
-import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -43,7 +42,6 @@ const HowItWorks = () => {
             />
 
             <div className="min-h-screen">
-                <Navbar />
                 <main className="pt-24 pb-16">
                     <div className="container px-4 md:px-6">
                         <div className="max-w-4xl mx-auto">
@@ -76,17 +74,17 @@ const HowItWorks = () => {
                                 <h2 className="text-2xl font-bold mb-6">What You Can Do on Friendly Learning SRMAP</h2>
                                 <div className="grid md:grid-cols-2 gap-6">
                                     <div>
-                                        <h4 className="font-bold mb-2">ðŸŽ“ Find Academic Help</h4>
+                                        <h4 className="font-bold mb-2">🎓 Find Academic Help</h4>
                                         <p className="text-sm mb-4">Connect with mentors and peers for course help, assignment guidance, and exam preparation.</p>
 
-                                        <h4 className="font-bold mb-2">ðŸ’» Build Hackathon Teams</h4>
+                                        <h4 className="font-bold mb-2">💻 Build Hackathon Teams</h4>
                                         <p className="text-sm mb-4">Find developers, designers, and business minds to create winning hackathon teams.</p>
                                     </div>
                                     <div>
-                                        <h4 className="font-bold mb-2">ðŸ“š Form Study Groups</h4>
+                                        <h4 className="font-bold mb-2">📚 Form Study Groups</h4>
                                         <p className="text-sm mb-4">Connect with classmates for collaborative learning and study sessions.</p>
 
-                                        <h4 className="font-bold mb-2">ðŸš€ Start Projects</h4>
+                                        <h4 className="font-bold mb-2">🚀 Start Projects</h4>
                                         <p className="text-sm mb-4">Find collaborators for startup ideas, research projects, and innovative solutions.</p>
                                     </div>
                                 </div>
@@ -94,7 +92,7 @@ const HowItWorks = () => {
 
                             <div className="text-center">
                                 <h2 className="text-2xl font-bold mb-4">Ready to Get Started?</h2>
-                                <p className="mb-6">Join thousands of university students already collaborating on Friendly Learning SRMAP</p>
+                                <p className="mb-6">Find the people at SRM AP who can help with what you're working on</p>
                                 <div className="space-x-4">
                                     <Button asChild size="lg">
                                         <Link to="/signup">Join Friendly Learning SRMAP Now</Link>

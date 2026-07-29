@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Loader2, User, Mail, Phone, LinkIcon, FileText, Calendar, Upload, Camera, Award, BookOpen, GraduationCap, Heart, Star, MessageSquare } from "lucide-react";
-import Navbar from "@/components/Navbar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -318,7 +317,6 @@ const UserProfile = () => {
   if (isLoading) {
     return (
       <>
-        <Navbar />
         <div className="min-h-screen bg-background">
           <div className="container mx-auto px-4 py-8">
             <div className="flex justify-center items-center min-h-[400px]">
@@ -332,7 +330,6 @@ const UserProfile = () => {
 
   return (
     <>
-      <Navbar />
       <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-8">
           <div className="max-w-4xl mx-auto space-y-8">
@@ -526,9 +523,6 @@ const UserProfile = () => {
                             required
                           />
                         </div>
-
-
-
 
                         <div className="space-y-2">
                           <Label htmlFor="mobile">Mobile Number</Label>

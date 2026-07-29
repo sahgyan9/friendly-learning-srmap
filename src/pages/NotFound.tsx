@@ -3,7 +3,6 @@ import { useLocation, Link } from "react-router-dom";
 import { useEffect } from "react";
 import SEOHead from "@/components/SEOHead";
 import StructuredData from "@/components/StructuredData";
-import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { FileSearch } from "lucide-react";
 
@@ -67,7 +66,6 @@ const NotFound = () => {
       <StructuredData data={structuredData} />
 
       <div className="min-h-screen bg-background">
-        <Navbar />
 
         <div className="container mx-auto px-4 py-16">
           <div className="max-w-md mx-auto text-center py-12">

@@ -1,6 +1,5 @@
 import { PRIMARY_DOMAIN } from "@/lib/constants";
 import { useEffect, useState } from "react";
-import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import Footer from "@/components/Footer";
@@ -78,7 +77,6 @@ const About = () => {
       <StructuredData data={getOrganizationSchema()} />
 
       <div className="min-h-screen">
-        <Navbar />
         <main className="pt-24 pb-16">
           <div className="container px-4 md:px-6">
             <div className="max-w-3xl mx-auto">
@@ -101,27 +99,27 @@ const About = () => {
                 <h2 className="text-2xl font-bold mb-6">What You Can Do on Friendly Learning SRMAP</h2>
                 <div className="grid md:grid-cols-2 gap-6">
                   <div className="p-6 border rounded-lg">
-                    <div className="text-4xl mb-4">ðŸ¤</div>
+                    <div className="text-4xl mb-4">🤝</div>
                     <h3 className="text-xl font-bold mb-3">Get Academic Help</h3>
                     <p>Connect with fellow students for academic guidance, study sessions, assignment help, or clarifying concepts. Find students who excel in subjects you're struggling with.</p>
                   </div>
                   <div className="p-6 border rounded-lg">
-                    <div className="text-4xl mb-4">ðŸ’¬</div>
+                    <div className="text-4xl mb-4">💬</div>
                     <h3 className="text-xl font-bold mb-3">Community Posts</h3>
                     <p>Post your problems, questions, or requests in the community. Get responses from university students and arrange one-on-one meetings for detailed discussions.</p>
                   </div>
                   <div className="p-6 border rounded-lg">
-                    <div className="text-4xl mb-4">ï¿½</div>
+                    <div className="text-4xl mb-4">💻</div>
                     <h3 className="text-xl font-bold mb-3">Find Hackathon Partners</h3>
                     <p>Looking for a hackathon team? Find students with complementary skills like coding, design, or business development to form the perfect team for competitions.</p>
                   </div>
                   <div className="p-6 border rounded-lg">
-                    <div className="text-4xl mb-4">ï¿½</div>
+                    <div className="text-4xl mb-4">🚀</div>
                     <h3 className="text-xl font-bold mb-3">Project Collaboration</h3>
                     <p>Working on a project or planning a startup? Discover students with specific technical skills, domain expertise, or shared entrepreneurial interests within your university.</p>
                   </div>
                   <div className="p-6 border rounded-lg">
-                    <div className="text-4xl mb-4">ðŸŽ¯</div>
+                    <div className="text-4xl mb-4">🎯</div>
                     <h3 className="text-xl font-bold mb-3">Interest-Based Connections</h3>
                     <p>Find students who share your hobbies, interests, or career aspirations. Build friendships and networks that extend beyond academics.</p>
                   </div>
@@ -144,17 +142,17 @@ const About = () => {
                 <h2 className="text-2xl font-bold mb-4">How It Works</h2>
                 <div className="grid md:grid-cols-3 gap-6">
                   <div className="text-center p-4">
-                    <div className="text-4xl mb-4">ðŸ”</div>
+                    <div className="text-4xl mb-4">🔍</div>
                     <h3 className="text-xl font-bold mb-2">Search & Discover</h3>
                     <p>Search for students by skills, interests, courses, or projects. Use filters to find exactly what you're looking for within your university.</p>
                   </div>
                   <div className="text-center p-4">
-                    <div className="text-4xl mb-4">ðŸ’¬</div>
+                    <div className="text-4xl mb-4">💬</div>
                     <h3 className="text-xl font-bold mb-2">Connect & Collaborate</h3>
                     <p>Send messages, join community discussions, or arrange meetups. Build meaningful connections for studies, projects, or shared interests.</p>
                   </div>
                   <div className="text-center p-4">
-                    <div className="text-4xl mb-4">ðŸŒŸ</div>
+                    <div className="text-4xl mb-4">🌟</div>
                     <h3 className="text-xl font-bold mb-2">Succeed Together</h3>
                     <p>Whether it's acing exams, winning hackathons, or launching startups - achieve more through collaborative student networks.</p>
                   </div>

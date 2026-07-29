@@ -4,7 +4,6 @@ import MentorsSection from "@/components/MentorsSection";
 import WhyFriendlyLearning from "@/components/WhyFriendlyLearning";
 import CallToAction from "@/components/CallToAction";
 import Footer from "@/components/Footer";
-import Navbar from "@/components/Navbar";
 import SEOHead from "@/components/SEOHead";
 import FloatingChatbot from "@/components/chatbot/FloatingChatbot";
 import RejectedApplicationNotice from "@/components/mentors/RejectedApplicationNotice";
@@ -67,7 +66,6 @@ const Index = () => {
       <StructuredData data={getOrganizationSchema()} />
       <StructuredData data={getWebsiteSchema()} />
 
-      <Navbar />
       <Hero />
 
       {/* Show rejected application notice for authenticated users */}

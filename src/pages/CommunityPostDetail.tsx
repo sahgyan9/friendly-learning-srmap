@@ -4,7 +4,6 @@ import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { ArrowLeft, BadgeCheck, Heart, MessageCircle, Pencil, Share2, Trash2 } from "lucide-react";
 
-import Navbar from "@/components/Navbar";
 import SEOHead from "@/components/SEOHead";
 import StructuredData from "@/components/StructuredData";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -140,7 +139,6 @@ const CommunityPostDetail = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
-        <Navbar />
         <div className="container mx-auto max-w-3xl space-y-4 px-4 py-8">
           <Skeleton className="h-8 w-32" />
           <Card>
@@ -181,7 +179,6 @@ const CommunityPostDetail = () => {
         ])}
       />
 
-      <Navbar />
 
       <div className="min-h-screen bg-background">
         <div className="container mx-auto max-w-3xl px-4 py-6">

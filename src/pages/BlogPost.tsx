@@ -4,7 +4,6 @@ import { ArrowLeft, ArrowRight, Clock } from "lucide-react";
 import { PRIMARY_DOMAIN } from "@/lib/constants";
 import SEOHead from "@/components/SEOHead";
 import StructuredData from "@/components/StructuredData";
-import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -65,7 +64,6 @@ const BlogPost = () => {
             />
 
             <div className="min-h-screen">
-                <Navbar />
                 <main className="pb-16 pt-24">
                     <div className="container px-4 md:px-6">
                         <article className="mx-auto max-w-2xl">

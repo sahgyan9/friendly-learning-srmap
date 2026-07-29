@@ -1,7 +1,6 @@
 import { PRIMARY_DOMAIN } from "@/lib/constants";
 
 import { useState, useEffect } from "react";
-import Navbar from "@/components/Navbar";
 import SearchBar from "@/components/SearchBar";
 import SEOHead from "@/components/SEOHead";
 import StructuredData from "@/components/StructuredData";
@@ -167,7 +166,6 @@ const Mentors = () => {
         animate="visible"
         variants={pageVariants}
       >
-        <Navbar />
 
         <main className="pt-24 pb-16">
           <div className="container px-4 md:px-6">

@@ -1,6 +1,5 @@
 import { PRIMARY_DOMAIN } from "@/lib/constants";
 import SEOHead from "@/components/SEOHead";
-import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -35,7 +34,6 @@ const FindStudyPartners = () => {
             />
 
             <div className="min-h-screen">
-                <Navbar />
                 <main className="pt-24 pb-16">
                     <div className="container px-4 md:px-6">
                         <div className="max-w-4xl mx-auto">
@@ -48,15 +46,15 @@ const FindStudyPartners = () => {
 
                             <div className="grid md:grid-cols-2 gap-8 mb-12">
                                 <div className="p-6 border rounded-lg">
-                                    <h3 className="text-xl font-bold mb-3">ðŸŽ¯ Course-Specific Partners</h3>
+                                    <h3 className="text-xl font-bold mb-3">🎯 Course-Specific Partners</h3>
                                     <p>Find students taking the same courses as you for targeted study sessions and assignment collaboration.</p>
                                 </div>
                                 <div className="p-6 border rounded-lg">
-                                    <h3 className="text-xl font-bold mb-3">ðŸ“š Study Group Formation</h3>
+                                    <h3 className="text-xl font-bold mb-3">📚 Study Group Formation</h3>
                                     <p>Create or join study groups with students who share your learning goals and schedule preferences.</p>
                                 </div>
                                 <div className="p-6 border rounded-lg">
-                                    <h3 className="text-xl font-bold mb-3">ðŸ¤ Skill Exchange</h3>
+                                    <h3 className="text-xl font-bold mb-3">🤝 Skill Exchange</h3>
                                     <p>Help others in subjects you excel at while getting support in areas where you need improvement.</p>
                                 </div>
                                 <div className="p-6 border rounded-lg">
@@ -78,7 +76,7 @@ const FindStudyPartners = () => {
 
                             <div className="text-center">
                                 <h2 className="text-2xl font-bold mb-4">Start Finding Study Partners Today</h2>
-                                <p className="mb-6">Join thousands of university students already collaborating on Friendly Learning SRMAP</p>
+                                <p className="mb-6">Find someone at SRM AP taking the same course as you</p>
                                 <div className="space-x-4">
                                     <Button asChild size="lg">
                                         <Link to="/signup">Find Study Partners Now</Link>

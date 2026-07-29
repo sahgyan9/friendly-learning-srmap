@@ -3,7 +3,6 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { Search } from "lucide-react";
 
-import Navbar from "@/components/Navbar";
 import SEOHead from "@/components/SEOHead";
 import StructuredData from "@/components/StructuredData";
 import { Input } from "@/components/ui/input";
@@ -170,7 +169,6 @@ const CommunityPosts = () => {
         ])}
       />
 
-      <Navbar />
 
       <div className="min-h-screen bg-background">
         <div className="container mx-auto max-w-3xl px-4 py-6">
