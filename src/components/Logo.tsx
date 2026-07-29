@@ -8,9 +8,7 @@ interface LogoProps {
   textColor?: string;
 }
 
-// textColor defaults to the semantic foreground rather than a fixed grey, so
-// the wordmark stays legible in both themes without every caller overriding it.
-const Logo = ({ className = "", showText = true, textColor = "text-foreground" }: LogoProps) => {
+const Logo = ({ className = "", showText = true, textColor = "text-gray-700" }: LogoProps) => {
   return (
     <motion.div
       className={`flex items-center ${className}`}

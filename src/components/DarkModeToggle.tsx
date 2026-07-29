@@ -10,8 +10,8 @@ import { toggleTheme } from "@/lib/theme";
  * Two things break if this component keeps its own state instead:
  *
  * 1. Public pages are prerendered, so markup driven by a value only known at
- *    runtime would mismatch during hydration for anyone whose stored theme
- *    differs from the default.
+ *    runtime would mismatch during hydration for anyone who has opted into
+ *    dark mode.
  * 2. Sign in, sign up and the password pages render this toggle alongside the
  *    one in the site header. Two copies of local state disagree the moment
  *    either one is clicked.
