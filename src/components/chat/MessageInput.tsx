@@ -1,8 +1,9 @@
 
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Send, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 import { useTypingIndicator } from "@/hooks/useTypingIndicator";
 
 interface MessageInputProps {
@@ -13,80 +14,109 @@ interface MessageInputProps {
   userId: string;
 }
 
-const MessageInput = ({ 
-  onSendMessage, 
-  disabled, 
-  sending, 
-  conversationId, 
-  userId 
+const MAX_ROWS_PX = 160;
+
+const MessageInput = ({
+  onSendMessage,
+  disabled,
+  sending,
+  conversationId,
+  userId
 }: MessageInputProps) => {
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
   const { startTyping, stopTyping, refreshTyping } = useTypingIndicator(conversationId, userId);
-  
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!message.trim() || disabled || sending || isSubmitting) return;
-    
+
+  const busy = disabled || sending || isSubmitting;
+  const canSend = message.trim().length > 0 && !busy;
+
+  // Grow with the content up to a ceiling, then scroll. A fixed-height box
+  // hides the top of anything longer than two lines while you write it.
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, MAX_ROWS_PX)}px`;
+  }, [message]);
+
+  // Switching conversations should not carry a half-written message across.
+  useEffect(() => {
+    setMessage("");
+  }, [conversationId]);
+
+  const submit = async () => {
+    const content = message.trim();
+    if (!content || busy) return;
+
     setIsSubmitting(true);
+    // Clear immediately: the send is optimistic upstream, and leaving the text
+    // sitting there makes it look like nothing happened.
+    setMessage("");
+
     try {
-      await stopTyping(); // Stop typing before sending
-      await onSendMessage(message.trim());
-      setMessage("");
+      await stopTyping();
+      await onSendMessage(content);
     } catch (error) {
       console.error("Failed to send message:", error);
+      setMessage(content); // hand it back rather than losing what was typed
     } finally {
       setIsSubmitting(false);
-    }
-  };
-  
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSubmit(e);
+      textareaRef.current?.focus();
     }
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const value = e.target.value;
+  const handleSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
+    submit();
+  };
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      submit();
+    }
+  };
+
+  const handleChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = event.target.value;
     setMessage(value);
-    
-    // Handle typing indicators
-    if (value.trim() && conversationId) {
-      startTyping();
-    } else {
-      stopTyping();
-    }
+    if (value.trim() && conversationId) startTyping();
+    else stopTyping();
   };
 
-  const handleInputFocus = () => {
-    if (message.trim() && conversationId) {
-      refreshTyping();
-    }
-  };
-  
   return (
-    <div className="p-4 border-t border-border bg-background">
-      <form onSubmit={handleSubmit} className="flex items-end gap-3">
-        <div className="flex-1">
-          <Textarea
-            value={message}
-            onChange={handleInputChange}
-            onKeyDown={handleKeyDown}
-            onFocus={handleInputFocus}
-            onBlur={stopTyping}
-            placeholder="Type your message..."
-            className="min-h-[44px] max-h-32 resize-none border-muted-foreground/20 focus:border-primary rounded-xl px-4 py-3"
-            disabled={disabled || sending || isSubmitting}
-            rows={1}
-          />
-        </div>
-        <Button 
-          type="submit" 
-          size="sm"
-          className="h-11 w-11 rounded-xl"
-          disabled={disabled || sending || isSubmitting || !message.trim()}
+    <form onSubmit={handleSubmit} className="border-t bg-background p-3">
+      <div
+        className={cn(
+          "flex items-end gap-2 rounded-2xl border bg-muted/40 p-1.5 transition-colors",
+          "focus-within:border-primary focus-within:bg-background",
+        )}
+      >
+        <Textarea
+          ref={textareaRef}
+          value={message}
+          onChange={handleChange}
+          onKeyDown={handleKeyDown}
+          onFocus={() => message.trim() && conversationId && refreshTyping()}
+          onBlur={stopTyping}
+          placeholder="Write a message…"
+          aria-label="Message"
+          disabled={busy}
+          rows={1}
+          className={cn(
+            "min-h-0 resize-none border-0 bg-transparent px-3 py-2 text-sm shadow-none",
+            "focus-visible:ring-0 focus-visible:ring-offset-0",
+          )}
+        />
+
+        <Button
+          type="submit"
+          size="icon"
+          className="h-9 w-9 shrink-0 rounded-xl"
+          disabled={!canSend}
+          aria-label="Send message"
         >
           {sending || isSubmitting ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -94,8 +124,14 @@ const MessageInput = ({
             <Send className="h-4 w-4" />
           )}
         </Button>
-      </form>
-    </div>
+      </div>
+
+      <p className="mt-1.5 px-1 text-[11px] text-muted-foreground">
+        <kbd className="rounded border bg-muted px-1 font-sans">Enter</kbd> to send ·{" "}
+        <kbd className="rounded border bg-muted px-1 font-sans">Shift</kbd>+
+        <kbd className="rounded border bg-muted px-1 font-sans">Enter</kbd> for a new line
+      </p>
+    </form>
   );
 };
 

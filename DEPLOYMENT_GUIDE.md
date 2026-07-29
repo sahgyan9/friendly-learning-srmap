@@ -10,12 +10,30 @@ uses.
 ## SPA routing
 
 React Router handles routing client-side, so a direct request to
-`/community-posts` has no matching file on disk and would 404. The rewrite in
-`vercel.json` serves `index.html` for every path and lets the router take over:
+`/faculty/dr-anshu-sahu` has no matching file on disk and would 404. The final
+catch-all rewrite in `vercel.json` serves `index.html` for those paths and lets
+the router take over:
 
 ```json
-{ "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }] }
+{ "source": "/(.*)", "destination": "/index.html" }
 ```
+
+### Why the explicit rewrites come first
+
+`npm run build` prerenders one HTML file per public route (`dist/about.html`,
+`dist/blog.html`, …). Vercel does not resolve `/about` to `about.html` on its
+own unless `cleanUrls` is enabled, so with only the catch-all every route was
+served the *homepage* HTML. Crawlers saw homepage content at every URL, and
+React logged hydration error #418 on each one because the markup it was handed
+never matched the route it was rendering.
+
+`cleanUrls` would fix that in one line, but it also 308-redirects
+`/google207de3fb46e51bdf.html` — the Search Console verification file — so the
+routes are listed explicitly instead.
+
+**Keep the list in sync with `routesToPrerender` in `prerender.js`.** A route
+prerendered but not listed here silently falls through to the catch-all and
+regresses to homepage HTML; a route listed here but not prerendered 404s.
 
 ## The site's domain
 

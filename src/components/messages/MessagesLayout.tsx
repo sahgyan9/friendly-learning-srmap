@@ -76,16 +76,10 @@ const MessagesLayout = () => {
     }
   }, [error]);
 
-  useEffect(() => {
-    console.log("Current conversations:", conversations);
-  }, [conversations]);
-
   const getOtherUser = (conversation) => {
     const otherUser = conversation.user1_id === userId ? conversation.user2 : conversation.user1;
 
     if (!otherUser) {
-      console.error(`No user data found for conversation ${conversation.id}`);
-
       return {
         id: conversation.user1_id === userId ? conversation.user2_id : conversation.user1_id,
         name: "Unknown User",

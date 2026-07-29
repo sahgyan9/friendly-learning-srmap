@@ -1,9 +1,18 @@
 {
     "rewrites": [
-        {
-            "source": "/(.*)",
-            "destination": "/index.html"
-        }
+        { "source": "/about", "destination": "/about.html" },
+        { "source": "/mentors", "destination": "/mentors.html" },
+        { "source": "/community-posts", "destination": "/community-posts.html" },
+        { "source": "/signup", "destination": "/signup.html" },
+        { "source": "/signin", "destination": "/signin.html" },
+        { "source": "/contact", "destination": "/contact.html" },
+        { "source": "/marketplace", "destination": "/marketplace.html" },
+        { "source": "/how-it-works", "destination": "/how-it-works.html" },
+        { "source": "/find-study-partners", "destination": "/find-study-partners.html" },
+        { "source": "/hackathon-partners", "destination": "/hackathon-partners.html" },
+        { "source": "/blog", "destination": "/blog.html" },
+        { "source": "/become-mentor", "destination": "/become-mentor.html" },
+        { "source": "/(.*)", "destination": "/index.html" }
     ],
     "headers": [
         {

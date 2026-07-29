@@ -1,8 +1,11 @@
 
-import React, { useRef, useEffect, useState } from "react";
-import { Loader2 } from "lucide-react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ArrowDown, Loader2, MessagesSquare } from "lucide-react";
 import { Message } from "@/types/chat";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { getInitials } from "@/utils/user-utils";
 import { useTypingIndicator } from "@/hooks/useTypingIndicator";
 import TypingIndicator from "./TypingIndicator";
 import MessageStatus from "./MessageStatus";
@@ -15,202 +18,261 @@ interface MessageListProps {
   getSenderName?: (senderId: string) => string;
 }
 
-const MessageList = ({ 
-  messages, 
-  loading, 
-  currentUserId, 
+/** Messages from the same person within this window read as one utterance. */
+const GROUP_WINDOW_MS = 5 * 60 * 1000;
+
+const dayKey = (iso: string) => new Date(iso).toDateString();
+
+function formatDayLabel(iso: string): string {
+  const date = new Date(iso);
+  const today = new Date();
+  const yesterday = new Date();
+  yesterday.setDate(today.getDate() - 1);
+
+  if (date.toDateString() === today.toDateString()) return "Today";
+  if (date.toDateString() === yesterday.toDateString()) return "Yesterday";
+
+  const sameYear = date.getFullYear() === today.getFullYear();
+  return date.toLocaleDateString("en-IN", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    ...(sameYear ? {} : { year: "numeric" }),
+  });
+}
+
+const formatTime = (iso: string) => {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
+};
+
+const MessageList = ({
+  messages,
+  loading,
+  currentUserId,
   conversationId,
-  getSenderName 
+  getSenderName,
 }: MessageListProps) => {
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [userHasScrolled, setUserHasScrolled] = useState(false);
-  const [prevMessageCount, setPrevMessageCount] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
+  const isFirstRender = useRef(true);
+  const [isPinnedToBottom, setIsPinnedToBottom] = useState(true);
+  const [unseenCount, setUnseenCount] = useState(0);
   const { typingUsers } = useTypingIndicator(conversationId, currentUserId);
 
-  // Handle scrolling behavior
+  const scrollToBottom = useCallback((behavior: ScrollBehavior = "smooth") => {
+    bottomRef.current?.scrollIntoView({ behavior, block: "end" });
+    setUnseenCount(0);
+  }, []);
+
+  // The first paint of a thread should already be at the newest message rather
+  // than animating down through the whole history.
   useEffect(() => {
-    const shouldScroll = messages.length > prevMessageCount && !userHasScrolled;
-    
-    if (shouldScroll) {
-      scrollToBottom();
-    }
-    
-    setPrevMessageCount(messages.length);
-  }, [messages, userHasScrolled, prevMessageCount]);
+    isFirstRender.current = true;
+    setIsPinnedToBottom(true);
+    setUnseenCount(0);
+  }, [conversationId]);
 
-  // Auto-scroll when typing indicator appears
   useEffect(() => {
-    if (typingUsers.length > 0 && !userHasScrolled) {
-      scrollToBottom();
-    }
-  }, [typingUsers, userHasScrolled]);
+    if (loading || messages.length === 0) return;
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
-  // Track user scroll behavior
-  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    const container = e.currentTarget;
-    const isAtBottom = container.scrollHeight - container.scrollTop <= container.clientHeight + 50;
-    
-    setUserHasScrolled(!isAtBottom);
-  };
-
-  const formatTime = (timestamp: string) => {
-    try {
-      const date = new Date(timestamp);
-      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    } catch (e) {
-      console.error("Invalid timestamp format:", timestamp);
-      return "";
-    }
-  };
-
-  const getInitials = (name: string) => {
-    if (!name || typeof name !== 'string') return 'U';
-    return name
-      .split(' ')
-      .map(part => part[0])
-      .join('')
-      .toUpperCase()
-      .substring(0, 2);
-  };
-
-  const getSenderDisplayName = (message: Message): string => {
-    if (message.sender_id === currentUserId) {
-      return "You";
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      scrollToBottom("auto");
+      return;
     }
 
-    if (message.sender && message.sender.name && message.sender.name.trim() !== "") {
-      return message.sender.name;
+    if (isPinnedToBottom) {
+      scrollToBottom("smooth");
+    } else {
+      // Reading older messages should not be interrupted; count instead.
+      const newest = messages[messages.length - 1];
+      if (newest?.sender_id !== currentUserId) setUnseenCount((n) => n + 1);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [messages.length, loading]);
 
-    if (getSenderName) {
-      const nameFromProp = getSenderName(message.sender_id);
-      if (nameFromProp && nameFromProp.trim() !== "" && nameFromProp !== "Contact") {
-        return nameFromProp;
-      }
-    }
+  useEffect(() => {
+    if (typingUsers.length > 0 && isPinnedToBottom) scrollToBottom("smooth");
+  }, [typingUsers.length, isPinnedToBottom, scrollToBottom]);
 
-    return "User";
+  const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
+    const el = event.currentTarget;
+    const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+    setIsPinnedToBottom(atBottom);
+    if (atBottom) setUnseenCount(0);
   };
 
-  const getUserNameForTyping = (userId: string): string => {
-    if (getSenderName) {
-      const name = getSenderName(userId);
-      if (name && name.trim() !== "" && name !== "Contact") {
-        return name;
-      }
-    }
-    return "Someone";
-  };
+  /**
+   * Precomputes what each row needs to know about its neighbours: whether it
+   * starts a new day, opens a group, or closes one. Doing it here keeps the
+   * render body free of index arithmetic.
+   */
+  const rows = useMemo(
+    () =>
+      messages.map((message, index) => {
+        const previous = index > 0 ? messages[index - 1] : null;
+        const next = index < messages.length - 1 ? messages[index + 1] : null;
+
+        const startsDay = !previous || dayKey(previous.sent_at) !== dayKey(message.sent_at);
+        const gapBefore = previous
+          ? new Date(message.sent_at).getTime() - new Date(previous.sent_at).getTime()
+          : Infinity;
+        const gapAfter = next
+          ? new Date(next.sent_at).getTime() - new Date(message.sent_at).getTime()
+          : Infinity;
+
+        return {
+          message,
+          startsDay,
+          isFirstInGroup:
+            startsDay || previous?.sender_id !== message.sender_id || gapBefore > GROUP_WINDOW_MS,
+          isLastInGroup:
+            !next ||
+            next.sender_id !== message.sender_id ||
+            gapAfter > GROUP_WINDOW_MS ||
+            dayKey(next.sent_at) !== dayKey(message.sent_at),
+        };
+      }),
+    [messages],
+  );
 
   if (loading) {
     return (
-      <div className="h-full flex items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-primary" />
-        <span className="ml-2 text-sm text-muted-foreground">Loading messages...</span>
+      <div className="flex h-full items-center justify-center gap-2 text-sm text-muted-foreground">
+        <Loader2 className="h-4 w-4 animate-spin" />
+        Loading messages…
       </div>
     );
   }
 
   if (messages.length === 0) {
     return (
-      <div className="h-full flex items-center justify-center flex-col text-center px-4">
-        <p className="text-muted-foreground mb-2">No messages yet</p>
-        <p className="text-sm text-muted-foreground">
-          Start your conversation by sending a message below.
+      <div className="flex h-full flex-col items-center justify-center px-6 text-center">
+        <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-muted">
+          <MessagesSquare className="h-6 w-6 text-muted-foreground" aria-hidden />
+        </div>
+        <p className="font-medium">No messages yet</p>
+        <p className="mt-1 max-w-xs text-sm text-muted-foreground">
+          Say hello — mention what you're working on and what you'd like help with.
         </p>
       </div>
     );
   }
 
   return (
-    <div 
-      ref={containerRef}
-      className="h-full flex flex-col gap-4 p-4 overflow-y-auto"
-      onScroll={handleScroll}
-    >
-      {messages.map((msg, index) => {
-        const isMine = msg.sender_id === currentUserId;
-        const senderName = getSenderDisplayName(msg);
-        const showAvatar = !isMine;
-        const prevMessage = index > 0 ? messages[index - 1] : null;
-        const isFirstInGroup = !prevMessage || prevMessage.sender_id !== msg.sender_id;
+    <div className="relative h-full">
+      <div
+        ref={containerRef}
+        onScroll={handleScroll}
+        className="h-full overflow-y-auto overscroll-contain px-4 py-4"
+      >
+        {rows.map(({ message, startsDay, isFirstInGroup, isLastInGroup }) => {
+          const isMine = message.sender_id === currentUserId;
+          const senderName = isMine ? "You" : getSenderName?.(message.sender_id) ?? "User";
 
-        return (
-          <div
-            key={msg.id}
-            className={`flex ${isMine ? "justify-end" : "justify-start"} ${
-              isFirstInGroup ? "mt-4" : "mt-1"
-            }`}
-          >
-            {/* Avatar for received messages */}
-            {showAvatar && isFirstInGroup && (
-              <div className="mr-3 mt-1">
-                <Avatar className="h-8 w-8">
-                  <AvatarImage 
-                    src={msg.sender?.profile_image} 
-                    alt={senderName}
-                    className="object-cover"
-                  />
-                  <AvatarFallback className="bg-muted text-muted-foreground text-xs">
-                    {getInitials(msg.sender?.name || senderName)}
-                  </AvatarFallback>
-                </Avatar>
-              </div>
-            )}
-
-            {/* Spacer for subsequent messages in group */}
-            {showAvatar && !isFirstInGroup && (
-              <div className="w-11 mr-3"></div>
-            )}
-
-            <div className="flex flex-col max-w-[70%]">
-              {/* Sender name for first message in group */}
-              {showAvatar && isFirstInGroup && (
-                <span className="text-xs font-medium text-muted-foreground ml-3 mb-1">
-                  {senderName}
-                </span>
+          return (
+            <React.Fragment key={message.id}>
+              {startsDay && (
+                <div className="my-4 flex items-center gap-3">
+                  <span className="h-px flex-1 bg-border" />
+                  <span className="rounded-full bg-muted px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground">
+                    {formatDayLabel(message.sent_at)}
+                  </span>
+                  <span className="h-px flex-1 bg-border" />
+                </div>
               )}
 
-              {/* Message bubble */}
               <div
-                className={`px-4 py-2 rounded-2xl max-w-full break-words ${
-                  isMine
-                    ? "bg-primary text-primary-foreground rounded-br-md"
-                    : "bg-muted text-foreground rounded-bl-md"
-                }`}
+                className={cn(
+                  "flex items-end gap-2",
+                  isMine ? "justify-end" : "justify-start",
+                  isFirstInGroup ? "mt-3" : "mt-0.5",
+                )}
               >
-                <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
-              </div>
+                {!isMine &&
+                  (isLastInGroup ? (
+                    <Avatar className="h-7 w-7 shrink-0">
+                      <AvatarImage src={message.sender?.profile_image} alt="" className="object-cover" />
+                      <AvatarFallback className="bg-muted text-[10px] font-medium">
+                        {getInitials(message.sender?.name || senderName)}
+                      </AvatarFallback>
+                    </Avatar>
+                  ) : (
+                    // Keeps the column aligned without repeating the avatar.
+                    <span className="w-7 shrink-0" aria-hidden />
+                  ))}
 
-              {/* Timestamp and message status */}
-              <div className={`flex items-center gap-1 mt-1 ${
-                isMine ? "justify-end mr-1" : "justify-start ml-3"
-              }`}>
-                <span className="text-xs text-muted-foreground">
-                  {formatTime(msg.sent_at)}
-                </span>
-                <MessageStatus 
-                  deliveryStatus={msg.delivery_status || 'sent'} 
-                  isOwnMessage={isMine} 
-                />
+                <div className={cn("flex max-w-[78%] flex-col sm:max-w-[68%]", isMine && "items-end")}>
+                  {!isMine && isFirstInGroup && (
+                    <span className="mb-1 ml-1 text-xs font-medium text-muted-foreground">
+                      {senderName}
+                    </span>
+                  )}
+
+                  <div
+                    className={cn(
+                      "whitespace-pre-wrap break-words px-3.5 py-2 text-sm leading-relaxed",
+                      isMine
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-foreground",
+                      // Square off the inner corner so a run of messages reads
+                      // as one block rather than a stack of separate pills.
+                      isMine
+                        ? cn("rounded-2xl", isFirstInGroup ? "rounded-br-md" : "rounded-tr-md rounded-br-md")
+                        : cn("rounded-2xl", isFirstInGroup ? "rounded-bl-md" : "rounded-tl-md rounded-bl-md"),
+                      isLastInGroup && (isMine ? "rounded-br-2xl" : "rounded-bl-2xl"),
+                    )}
+                  >
+                    {message.content}
+                  </div>
+
+                  {/* One timestamp per group, not one per message. */}
+                  {isLastInGroup && (
+                    <div
+                      className={cn(
+                        "mt-1 flex items-center gap-1 px-1 text-[11px] text-muted-foreground",
+                        isMine ? "justify-end" : "justify-start",
+                      )}
+                    >
+                      <time dateTime={message.sent_at}>{formatTime(message.sent_at)}</time>
+                      <MessageStatus
+                        deliveryStatus={message.delivery_status || "sent"}
+                        isOwnMessage={isMine}
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          </div>
-        );
-      })}
-      
-      {/* Typing indicator */}
-      <TypingIndicator 
-        typingUsers={typingUsers} 
-        getUserName={getUserNameForTyping}
-      />
-      
-      <div ref={messagesEndRef} />
+            </React.Fragment>
+          );
+        })}
+
+        <TypingIndicator
+          typingUsers={typingUsers}
+          getUserName={(id) => getSenderName?.(id) ?? "Someone"}
+        />
+
+        <div ref={bottomRef} />
+      </div>
+
+      {/* Appears only when you have scrolled away from the newest message. */}
+      {!isPinnedToBottom && (
+        <div className="pointer-events-none absolute inset-x-0 bottom-3 flex justify-center">
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => scrollToBottom("smooth")}
+            className="pointer-events-auto gap-1.5 rounded-full shadow-md"
+          >
+            <ArrowDown className="h-3.5 w-3.5" />
+            {unseenCount > 0
+              ? `${unseenCount} new message${unseenCount === 1 ? "" : "s"}`
+              : "Jump to latest"}
+          </Button>
+        </div>
+      )}
     </div>
   );
 };
