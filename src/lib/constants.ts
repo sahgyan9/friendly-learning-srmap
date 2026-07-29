@@ -4,7 +4,6 @@ import { SITE_HOST, SITE_URL } from '../../site.config.js';
 export { SITE_HOST, SITE_URL };
 
 export const APP_NAME = import.meta.env.VITE_APP_NAME || 'Friendly Learning SRMAP';
-export const APP_URL = import.meta.env.VITE_APP_URL || SITE_URL;
 export const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 
 // The origin the app is actually being served from — localhost in dev, the
@@ -13,14 +12,16 @@ export const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 // Deliberately NOT the same thing as PRIMARY_DOMAIN below. This feeds OAuth
 // redirectTo, where the value has to match wherever the user actually is or the
 // provider bounces them to a host they were never on.
+// The browser's own origin wins whenever there is one. VITE_APP_URL used to be
+// checked first, which meant a stale value baked in at build time silently
+// hijacked every OAuth redirect — a build carrying an old domain sent users
+// there after signing in, no matter which host they had actually started from.
+// The env var is now only a fallback for non-browser contexts (SSR, prerender).
 export const getAppUrl = () => {
-    if (import.meta.env.VITE_APP_URL) {
-        return import.meta.env.VITE_APP_URL;
-    }
     if (typeof window !== 'undefined') {
         return window.location.origin;
     }
-    return SITE_URL;
+    return import.meta.env.VITE_APP_URL || SITE_URL;
 };
 
 // Check if we're in development

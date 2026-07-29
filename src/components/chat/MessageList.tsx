@@ -55,14 +55,18 @@ const MessageList = ({
   getSenderName,
 }: MessageListProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const bottomRef = useRef<HTMLDivElement>(null);
   const isFirstRender = useRef(true);
   const [isPinnedToBottom, setIsPinnedToBottom] = useState(true);
   const [unseenCount, setUnseenCount] = useState(0);
   const { typingUsers } = useTypingIndicator(conversationId, currentUserId);
 
+  // Scrolls the thread's own container rather than calling scrollIntoView on a
+  // sentinel: scrollIntoView walks up the ancestor chain and will happily move
+  // the whole page as well, and it stops short of the container's bottom
+  // padding so the view never quite reaches the end.
   const scrollToBottom = useCallback((behavior: ScrollBehavior = "smooth") => {
-    bottomRef.current?.scrollIntoView({ behavior, block: "end" });
+    const el = containerRef.current;
+    if (el) el.scrollTo({ top: el.scrollHeight, behavior });
     setUnseenCount(0);
   }, []);
 
@@ -166,6 +170,7 @@ const MessageList = ({
       <div
         ref={containerRef}
         onScroll={handleScroll}
+        data-testid="message-scroller"
         className="h-full overflow-y-auto overscroll-contain px-4 py-4"
       >
         {rows.map(({ message, startsDay, isFirstInGroup, isLastInGroup }) => {
@@ -204,13 +209,10 @@ const MessageList = ({
                     <span className="w-7 shrink-0" aria-hidden />
                   ))}
 
+                {/* No sender name above the bubble: conversations here are
+                    strictly two-party, so the header already says who this is
+                    and repeating it above every group is noise. */}
                 <div className={cn("flex max-w-[78%] flex-col sm:max-w-[68%]", isMine && "items-end")}>
-                  {!isMine && isFirstInGroup && (
-                    <span className="mb-1 ml-1 text-xs font-medium text-muted-foreground">
-                      {senderName}
-                    </span>
-                  )}
-
                   <div
                     className={cn(
                       "whitespace-pre-wrap break-words px-3.5 py-2 text-sm leading-relaxed",
@@ -253,8 +255,6 @@ const MessageList = ({
           typingUsers={typingUsers}
           getUserName={(id) => getSenderName?.(id) ?? "Someone"}
         />
-
-        <div ref={bottomRef} />
       </div>
 
       {/* Appears only when you have scrolled away from the newest message. */}
