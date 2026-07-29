@@ -103,7 +103,13 @@ const FacultyDetail = () => {
   return (
     <>
       <SEOHead
-        title={`${faculty.name} — Reviews & Ratings | SRM AP Faculty`}
+        // Shaped like the query people actually type ("Dr X rating"), with
+        // SRM AP kept as the disambiguator — three names already collide inside
+        // this one directory, and names like "Dr Arun Kumar" are common enough
+        // nationally that the bare name would not identify the right person.
+        // The brand is deliberately absent: it costs ~19 characters, and it is
+        // already carried by og:site_name and the visible URL.
+        title={`${faculty.name} Rating & Reviews — SRM AP`}
         description={
           hasRatings
             ? `${faculty.name} (${faculty.department}) is rated ${Number(faculty.avg_overall).toFixed(1)}/5 by ${faculty.rating_count} SRM AP students on teaching, grading fairness and helpfulness.`
