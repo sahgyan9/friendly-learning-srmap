@@ -13,8 +13,8 @@ export type Theme = "dark" | "light";
 
 export const THEME_STORAGE_KEY = "theme";
 
-/** Light is the default. Only an explicit stored "dark" opts in. */
-export const DEFAULT_THEME: Theme = "light";
+/** Dark is the default. Only an explicit stored "light" opts out. */
+export const DEFAULT_THEME: Theme = "dark";
 
 export function getTheme(): Theme {
   if (typeof document === "undefined") return DEFAULT_THEME;

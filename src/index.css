@@ -79,21 +79,13 @@ a[href*="lovable.dev"],
     --background: 222 47% 11%;
     --foreground: 210 40% 98%;
 
-    /* Raised surfaces sit *above* the background. These were darker than the
-       page (8% against 11%) and on a different hue, so every card read as a
-       hole punched in the page rather than a panel on top of it. The ladder is
-       now background 11% → card 15% → muted/hover 18% → border 25%. */
-    --card: 222 45% 15%;
+    --card: 240 10% 8%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 222 45% 15%;
+    --popover: 240 10% 8%;
     --popover-foreground: 210 40% 98%;
 
-    /* Brand blue, lightened to carry against a dark page. This used to be
-       near-white, which quietly deleted the accent colour in dark mode: every
-       primary button, link and active state turned into the same white as the
-       body text, leaving nothing to mark what was interactive. */
-    --primary: 217 91% 68%;
+    --primary: 210 40% 98%;
     --primary-foreground: 222 47% 11%;
 
     --secondary: 217 33% 18%;
@@ -110,17 +102,17 @@ a[href*="lovable.dev"],
 
     --border: 217 33% 25%;
     --input: 217 33% 25%;
-    --ring: 217 91% 68%;
+    --ring: 213 27% 84%;
 
     /* Added better sidebar dark mode variables */
-    --sidebar-background: 222 45% 15%;
+    --sidebar-background: 240 10% 8%;
     --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 217 91% 68%;
-    --sidebar-primary-foreground: 222 47% 11%;
-    --sidebar-accent: 222 40% 21%;
+    --sidebar-primary: 210 40% 98%;
+    --sidebar-primary-foreground: 240 10% 8%;
+    --sidebar-accent: 240 10% 15%;
     --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 222 33% 25%;
-    --sidebar-ring: 217 91% 68%;
+    --sidebar-border: 240 10% 20%;
+    --sidebar-ring: 213 27% 84%;
   }
 }
 
