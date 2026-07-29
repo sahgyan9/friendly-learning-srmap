@@ -45,6 +45,7 @@ interface WpFacultyProfile {
   id: number;
   slug: string;
   link: string;
+  modified?: string;
   title: { rendered: string };
   class_list?: string[];
   featured_media?: number;
@@ -114,7 +115,7 @@ async function fetchAllFacultyProfiles(): Promise<WpFacultyProfile[]> {
     // them in one batch below keeps the payload at ~48KB/page instead of ~1.2MB.
     const url =
       `${WP_BASE}/faculty-profile?per_page=${PER_PAGE}&page=${page}` +
-      `&_fields=id,slug,link,title,class_list,featured_media`;
+      `&_fields=id,slug,link,modified,title,class_list,featured_media`;
 
     const batch = await fetchJson<WpFacultyProfile[]>(url);
     all.push(...batch);
@@ -224,6 +225,98 @@ function toFacultyRow(
   };
 }
 
+type FacultyRow = ReturnType<typeof toFacultyRow>;
+
+/**
+ * Honorifics and punctuation vary between duplicate listings of the same
+ * person — "Mr. Vikas Choudhary" against "Mr Vikas Choudhary", "Dr Arun Kumar"
+ * against "Dr Arun Kumar." — so neither is part of the identity.
+ */
+function normaliseName(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/\b(dr|prof|professor|mr|mrs|ms|miss|shri|smt)\.?\b/g, "")
+    .replace(/[^a-z0-9]/g, "");
+}
+
+/** Current rating counts, keyed by slug, so dedup never strands a review. */
+async function fetchRatingCounts(slugs: string[]): Promise<Map<string, number>> {
+  const counts = new Map<string, number>();
+
+  for (let i = 0; i < slugs.length; i += 200) {
+    const { data } = await supabaseAdmin
+      .from("faculty")
+      .select("slug, rating_count")
+      .in("slug", slugs.slice(i, i + 200));
+
+    for (const row of data ?? []) counts.set(row.slug, row.rating_count ?? 0);
+  }
+
+  return counts;
+}
+
+/**
+ * The upstream directory publishes some people more than once — the same name
+ * in the same department at two different URLs, each a separate WordPress post
+ * (/vikas-choudhary/ is post 123973, /mr-vikas-choudhary/ is post 123464). The
+ * slug-level dedupe cannot see these because the slugs genuinely differ.
+ *
+ * Left alone each copy gets its own /faculty/<slug> page, and ratings divide
+ * between them, so neither page shows the professor's real score — which is
+ * the one thing the feature exists to do.
+ *
+ * The match is deliberately narrow: same normalised name AND same department.
+ * Name alone would collapse two different people, since SRM AP has a Dr Arun
+ * Kumar in Mathematics and another in Electronics and Communication.
+ *
+ * Losers are simply left out of the upsert. Their last_synced_at then stays
+ * behind syncStartedAt, so the existing retirement step marks them inactive,
+ * which hides the page without deleting the row or its ratings.
+ */
+function dropDuplicatePeople(
+  rows: FacultyRow[],
+  modifiedBySlug: Map<string, string>,
+  ratingCounts: Map<string, number>,
+): { kept: FacultyRow[]; dropped: Array<{ slug: string; inFavourOf: string; name: string }> } {
+  const groups = new Map<string, FacultyRow[]>();
+
+  for (const row of rows) {
+    const key = `${normaliseName(row.name)}::${row.department.toLowerCase()}`;
+    const group = groups.get(key);
+    if (group) group.push(row);
+    else groups.set(key, [row]);
+  }
+
+  const kept: FacultyRow[] = [];
+  const dropped: Array<{ slug: string; inFavourOf: string; name: string }> = [];
+
+  for (const group of groups.values()) {
+    if (group.length === 1) {
+      kept.push(group[0]);
+      continue;
+    }
+
+    // Whichever copy students have already rated wins, so no existing review is
+    // hidden. Failing that, the most recently edited upstream post is the one
+    // the university is actually maintaining.
+    group.sort((a, b) => {
+      const byRatings = (ratingCounts.get(b.slug) ?? 0) - (ratingCounts.get(a.slug) ?? 0);
+      if (byRatings !== 0) return byRatings;
+      return (
+        Date.parse(modifiedBySlug.get(b.slug) ?? "") -
+        Date.parse(modifiedBySlug.get(a.slug) ?? "")
+      );
+    });
+
+    kept.push(group[0]);
+    for (const loser of group.slice(1)) {
+      dropped.push({ slug: loser.slug, inFavourOf: group[0].slug, name: loser.name });
+    }
+  }
+
+  return { kept, dropped };
+}
+
 async function isAuthorised(req: Request): Promise<boolean> {
   const cronSecret = Deno.env.get("CRON_SECRET");
   if (cronSecret && req.headers.get("x-cron-secret") === cronSecret) return true;
@@ -272,8 +365,8 @@ serve(async (req) => {
     );
     const syncedAt = new Date().toISOString();
 
-    // Dedupe on slug — the directory occasionally lists a person twice.
-    const rows = Array.from(
+    // Dedupe on slug — the directory occasionally serves the same post twice.
+    const bySlug = Array.from(
       new Map(
         profiles
           .filter((profile) => profile.slug)
@@ -281,9 +374,16 @@ serve(async (req) => {
       ).values(),
     );
 
-    if (rows.length === 0) {
+    if (bySlug.length === 0) {
       return json({ error: "Directory returned no faculty; refusing to sync" }, 502);
     }
+
+    // Then dedupe on the person, which slugs alone cannot catch.
+    const modifiedBySlug = new Map(
+      profiles.filter((p) => p.slug && p.modified).map((p) => [p.slug, p.modified as string]),
+    );
+    const ratingCounts = await fetchRatingCounts(bySlug.map((row) => row.slug));
+    const { kept: rows, dropped } = dropDuplicatePeople(bySlug, modifiedBySlug, ratingCounts);
 
     const CHUNK = 200;
     for (let i = 0; i < rows.length; i += CHUNK) {
@@ -309,6 +409,10 @@ serve(async (req) => {
     return json({
       synced: rows.length,
       retired: retired ?? 0,
+      // Surfaced rather than swallowed: every entry here is a person the
+      // university's directory lists twice, and that is worth reporting to them.
+      duplicatesDropped: dropped.length,
+      duplicates: dropped,
       departments: new Set(rows.map((row) => row.department)).size,
       schools: new Set(rows.map((row) => row.school).filter(Boolean)).size,
       missingSchool: rows.filter((row) => !row.school).length,
