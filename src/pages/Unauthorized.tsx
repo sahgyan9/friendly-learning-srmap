@@ -5,13 +5,13 @@ import { ShieldOff } from "lucide-react";
 
 const Unauthorized = () => {
   return (
-    <div className="min-h-screen bg-gray-50">
-      
+    <div className="min-h-screen bg-background">
+
       <div className="container px-4 md:px-6 pt-24 pb-16">
         <div className="max-w-md mx-auto text-center py-12">
-          <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100">
-            <div className="inline-block p-4 bg-red-100 rounded-full mb-4">
-              <ShieldOff className="h-8 w-8 text-red-600" />
+          <div className="bg-card p-8 rounded-xl shadow-sm border">
+            <div className="inline-block p-4 bg-destructive/10 rounded-full mb-4">
+              <ShieldOff className="h-8 w-8 text-destructive" />
             </div>
             
             <h1 className="text-2xl font-bold mb-3">Access Denied</h1>

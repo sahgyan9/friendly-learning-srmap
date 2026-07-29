@@ -56,7 +56,7 @@ const MentorProfileHeader = ({ mentor }: MentorProfileHeaderProps) => {
           {/* Show "New Mentor" badge if no reviews or rating is 0 */}
           {(mentor.review_count === 0 || mentor.rating === 0) && (
             <motion.div
-              className="absolute -bottom-2 -right-2 bg-green-100 text-green-800 rounded-full px-3 py-1 shadow-sm border border-green-200"
+              className="absolute -bottom-2 -right-2 bg-green-100 text-green-800 rounded-full px-3 py-1 shadow-sm border border-green-200 dark:bg-green-950 dark:text-green-300 dark:border-green-800"
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.2, duration: 0.3 }}

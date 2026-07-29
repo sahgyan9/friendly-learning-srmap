@@ -21,7 +21,9 @@ const FloatingChatbot = () => {
         >
           <Button
             onClick={() => setIsOpen(true)}
-            className="h-14 w-14 rounded-full bg-blue-500 hover:bg-blue-600 text-white shadow-lg hover:shadow-xl transition-all duration-300"
+            // blue-600 rather than blue-500: white on blue-500 is 3.68:1,
+            // under the 4.5:1 needed for text this size.
+            className="h-14 w-14 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-300"
             size="icon"
           >
             <span className="font-bold text-sm">AI</span>

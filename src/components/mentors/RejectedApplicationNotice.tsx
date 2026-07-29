@@ -111,7 +111,7 @@ const RejectedApplicationNotice = () => {
             variant="ghost" 
             size="sm" 
             onClick={() => setDismissed(true)}
-            className="ml-4 text-amber-600 hover:text-amber-700 hover:bg-amber-100"
+            className="ml-4 text-amber-600 hover:text-amber-700 hover:bg-amber-100 dark:hover:bg-amber-950"
           >
             <X className="h-4 w-4" />
           </Button>

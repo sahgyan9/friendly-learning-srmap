@@ -8,7 +8,9 @@ interface LogoProps {
   textColor?: string;
 }
 
-const Logo = ({ className = "", showText = true, textColor = "text-gray-700" }: LogoProps) => {
+// textColor defaults to the semantic foreground rather than a fixed grey, so
+// the wordmark stays legible in both themes without every caller overriding it.
+const Logo = ({ className = "", showText = true, textColor = "text-foreground" }: LogoProps) => {
   return (
     <motion.div
       className={`flex items-center ${className}`}
@@ -24,7 +26,11 @@ const Logo = ({ className = "", showText = true, textColor = "text-gray-700" }: 
         <img
           src="/lovable-uploads/df76e963-f250-4f25-8f7b-3917f857fe63.png"
           alt="Friendly Learning - SRM AP Student Mentorship Platform Logo"
-          className="h-full w-auto object-contain"
+          // The mark is drawn in two dark inks (#4060c0 and #404060) on a
+          // transparent background, so the darker half all but vanished
+          // against the dark page. Lifting brightness keeps both brand hues
+          // rather than flattening the whole mark to white.
+          className="h-full w-auto object-contain dark:brightness-[1.75] dark:saturate-125"
           loading="eager"
           width="48"
           height="36"

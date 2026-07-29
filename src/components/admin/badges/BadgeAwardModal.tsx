@@ -187,9 +187,9 @@ const BadgeAwardModal = ({ badgeTypes, onClose, onSuccess }: BadgeAwardModalProp
         )}
 
         {successMessage && (
-          <Alert className="border-green-200 bg-green-50">
-            <CheckCircle2 className="h-4 w-4 text-green-600" />
-            <AlertDescription className="text-green-800">{successMessage}</AlertDescription>
+          <Alert className="border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950/40">
+            <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
+            <AlertDescription className="text-green-800 dark:text-green-200">{successMessage}</AlertDescription>
           </Alert>
         )}
 
@@ -220,7 +220,7 @@ const BadgeAwardModal = ({ badgeTypes, onClose, onSuccess }: BadgeAwardModalProp
                       {searchResults.map((user) => (
                         <div
                           key={user.id}
-                          className="p-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0"
+                          className="p-3 hover:bg-muted cursor-pointer border-b last:border-b-0"
                           onClick={() => handleUserSelect(user)}
                         >
                           <div className="flex items-center gap-3">
@@ -249,7 +249,7 @@ const BadgeAwardModal = ({ badgeTypes, onClose, onSuccess }: BadgeAwardModalProp
                   )}
                   
                   {selectedUser && (
-                    <div className="p-3 bg-green-50 border border-green-200 rounded-md">
+                    <div className="p-3 bg-green-50 dark:bg-green-950/40 border border-green-200 dark:border-green-800 rounded-md">
                       <div className="flex items-center gap-3">
                         <Avatar className="h-8 w-8">
                           <AvatarImage src={selectedUser.profile_image || ""} alt={selectedUser.name} />
@@ -258,8 +258,8 @@ const BadgeAwardModal = ({ badgeTypes, onClose, onSuccess }: BadgeAwardModalProp
                           </AvatarFallback>
                         </Avatar>
                         <div>
-                          <div className="font-medium text-green-800">Selected: {selectedUser.name}</div>
-                          <div className="text-sm text-green-600">{selectedUser.email}</div>
+                          <div className="font-medium text-green-800 dark:text-green-200">Selected: {selectedUser.name}</div>
+                          <div className="text-sm text-green-600 dark:text-green-400">{selectedUser.email}</div>
                         </div>
                         <Badge variant={selectedUser.role === 'mentor' || selectedUser.role === 'both' ? 'default' : 'secondary'}>
                           {selectedUser.role}

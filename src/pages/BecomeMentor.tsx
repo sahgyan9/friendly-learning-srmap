@@ -92,7 +92,7 @@ const BecomeMentor = () => {
       case 'pending':
         return {
           icon: <Clock className="h-6 w-6 text-amber-600" />,
-          badge: <Badge variant="outline" className="bg-amber-50 text-amber-800 border-amber-200">Under Review</Badge>,
+          badge: <Badge variant="outline" className="bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950/60 dark:text-amber-200 dark:border-amber-800">Under Review</Badge>,
           title: "Application Under Review",
           description: "Your mentor application is currently being reviewed by our team.",
           cardClass: "border-amber-200 bg-amber-50 dark:bg-amber-900/20"
@@ -100,7 +100,7 @@ const BecomeMentor = () => {
       case 'approved':
         return {
           icon: <CheckCircle className="h-6 w-6 text-green-600" />,
-          badge: <Badge variant="outline" className="bg-green-50 text-green-800 border-green-200">Approved</Badge>,
+          badge: <Badge variant="outline" className="bg-green-50 text-green-800 border-green-200 dark:bg-green-950/60 dark:text-green-200 dark:border-green-800">Approved</Badge>,
           title: "Congratulations! Application Approved",
           description: "Your mentor application has been approved. You can now help other students as a verified mentor.",
           cardClass: "border-green-200 bg-green-50 dark:bg-green-900/20"
@@ -108,7 +108,7 @@ const BecomeMentor = () => {
       case 'rejected':
         return {
           icon: <XCircle className="h-6 w-6 text-red-600" />,
-          badge: <Badge variant="outline" className="bg-red-50 text-red-800 border-red-200">Needs Attention</Badge>,
+          badge: <Badge variant="outline" className="bg-red-50 text-red-800 border-red-200 dark:bg-red-950/60 dark:text-red-200 dark:border-red-800">Needs Attention</Badge>,
           title: "Application Needs Updates",
           description: "Your mentor application needs some improvements before it can be approved.",
           cardClass: "border-red-200 bg-red-50 dark:bg-red-900/20"

@@ -19,21 +19,27 @@ const RoleSelectionModal = ({ isOpen, onRoleSelect }: RoleSelectionModalProps) =
       title: "Student",
       description: "I'm here to learn and get mentorship",
       icon: GraduationCap,
-      color: "bg-blue-50 border-blue-200 hover:bg-blue-100"
+      // Card supplies text-card-foreground, which is near-white in dark mode —
+      // without a dark tint these cards kept their near-white background and
+      // the label disappeared into it.
+      color:
+        "bg-blue-50 border-blue-200 hover:bg-blue-100 dark:bg-blue-950/50 dark:border-blue-900 dark:hover:bg-blue-900/50"
     },
     {
       value: "mentor",
       title: "Mentor",
       description: "I want to share knowledge and guide others",
       icon: Users,
-      color: "bg-green-50 border-green-200 hover:bg-green-100"
+      color:
+        "bg-green-50 border-green-200 hover:bg-green-100 dark:bg-green-950/50 dark:border-green-900 dark:hover:bg-green-900/50"
     },
     {
       value: "both",
       title: "Both",
       description: "I want to learn and mentor others",
       icon: BookOpen,
-      color: "bg-purple-50 border-purple-200 hover:bg-purple-100"
+      color:
+        "bg-purple-50 border-purple-200 hover:bg-purple-100 dark:bg-purple-950/50 dark:border-purple-900 dark:hover:bg-purple-900/50"
     }
   ];
 

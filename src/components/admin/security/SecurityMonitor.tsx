@@ -77,23 +77,23 @@ const SecurityMonitor = () => {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div className="text-center p-4 bg-green-50 rounded-lg">
-              <div className="text-2xl font-bold text-green-600">
+            <div className="text-center p-4 bg-green-50 dark:bg-green-950/40 rounded-lg">
+              <div className="text-2xl font-bold text-green-600 dark:text-green-400">
                 {auditLogs.filter(log => log.created_at > new Date(Date.now() - 24*60*60*1000).toISOString()).length}
               </div>
-              <div className="text-sm text-green-700">Actions (24h)</div>
+              <div className="text-sm text-green-700 dark:text-green-300">Actions (24h)</div>
             </div>
-            <div className="text-center p-4 bg-red-50 rounded-lg">
-              <div className="text-2xl font-bold text-red-600">
+            <div className="text-center p-4 bg-red-50 dark:bg-red-950/40 rounded-lg">
+              <div className="text-2xl font-bold text-red-600 dark:text-red-400">
                 {auditLogs.filter(log => log.action.includes('admin') || log.action.includes('promote')).length}
               </div>
-              <div className="text-sm text-red-700">Critical Actions</div>
+              <div className="text-sm text-red-700 dark:text-red-300">Critical Actions</div>
             </div>
-            <div className="text-center p-4 bg-blue-50 rounded-lg">
-              <div className="text-2xl font-bold text-blue-600">
+            <div className="text-center p-4 bg-blue-50 dark:bg-blue-950/40 rounded-lg">
+              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                 {new Set(auditLogs.map(log => log.admin_user?.email).filter(Boolean)).size}
               </div>
-              <div className="text-sm text-blue-700">Active Admins</div>
+              <div className="text-sm text-blue-700 dark:text-blue-300">Active Admins</div>
             </div>
           </div>
 
@@ -108,7 +108,7 @@ const SecurityMonitor = () => {
             ) : (
               <div className="space-y-2 max-h-96 overflow-y-auto">
                 {auditLogs.map((log) => (
-                  <div key={log.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
+                  <div key={log.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted">
                     <div className="flex items-center gap-3">
                       {getActionIcon(log.action)}
                       <div className="flex-1">

@@ -69,9 +69,9 @@ const NotFound = () => {
 
         <div className="container mx-auto px-4 py-16">
           <div className="max-w-md mx-auto text-center py-12">
-            <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100">
-              <div className="inline-block p-4 bg-blue-100 rounded-full mb-4">
-                <FileSearch className="h-8 w-8 text-blue-600" />
+            <div className="bg-card p-8 rounded-xl shadow-sm border">
+              <div className="inline-block p-4 bg-primary/10 rounded-full mb-4">
+                <FileSearch className="h-8 w-8 text-primary" />
               </div>
 
               <h1 className="text-3xl font-bold mb-3">404: Page Not Found</h1>
