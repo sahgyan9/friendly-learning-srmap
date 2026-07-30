@@ -77,6 +77,8 @@ const MentorProfileForm = ({ userId, initialData, isEditMode = false }: MentorPr
         <Progress value={completion} className="h-2" />
       </div>
 
+      {!isEditMode && <CertificatePreview name={formData.name} />}
+
       <LinkedInPdfImport onImported={applyImportedData} />
 
       <Section
@@ -141,11 +143,6 @@ const MentorProfileForm = ({ userId, initialData, isEditMode = false }: MentorPr
           handleBlur={handleBlur}
         />
       </Section>
-
-      {/* Last, not first. It is a reason to finish the form, not a reason to
-          start filling one in, and leading with a reward would bury what the
-          platform is actually for. */}
-      {!isEditMode && <CertificatePreview name={formData.name} />}
 
       <MentorFormActions
         isSubmitting={isSubmitting}
