@@ -5,3 +5,16 @@ project_id = "ruapdkrgcbqrhvsayvpf"
 # the scheduled invocation, which carries no user JWT.
 [functions.sync-faculty]
 verify_jwt = false
+
+# send-email-queue authenticates callers itself (CRON_SECRET header, or an admin
+# JWT), because the scheduled sweep carries no user JWT. Unlike the function it
+# replaces, it takes no recipient or content from the request, so an
+# unauthenticated caller could at worst ask it to look at the queue.
+[functions.send-email-queue]
+verify_jwt = false
+
+# email-unsubscribe is deliberately public: a one-click opt-out link in an email
+# footer cannot require a login. It is authorised by an opaque per-user token and
+# can only ever turn notifications off.
+[functions.email-unsubscribe]
+verify_jwt = false
