@@ -1,4 +1,5 @@
 import { forwardRef } from "react";
+import { LOGO_DATA_URL } from "@/assets/logoBase64";
 import {
   CertificateData,
   formatCertificateDate,
@@ -74,13 +75,17 @@ const MentorCertificate = forwardRef<SVGSVGElement, MentorCertificateProps>(
         <rect x="44" y="44" width="1512" height="1043" rx="10" fill="#ffffff" stroke="#e2e8f0" strokeWidth="2" />
         <rect x="44" y="44" width="1512" height="12" rx="6" fill="url(#fl-cert-accent)" />
 
-        {/* A monogram, not a seal. An ornate wax-seal emblem would be borrowing
-            an authority a student platform does not have; a logo mark says who
-            issued this and leaves it at that. */}
+        {/* Official logo mark emblem */}
         <circle cx="168" cy="152" r="46" fill="#eff6ff" stroke="#bfdbfe" strokeWidth="2" />
-        <text x="168" y="168" textAnchor="middle" fontFamily={serif} fontSize="36" fontWeight="bold" fill="#2563eb">
-          FL
-        </text>
+        <image
+          href={LOGO_DATA_URL}
+          xlinkHref={LOGO_DATA_URL}
+          x="133"
+          y="117"
+          width="70"
+          height="70"
+          preserveAspectRatio="xMidYMid meet"
+        />
 
         {/* Issuer, stated first and plainly. */}
         <text x="800" y="150" textAnchor="middle" fontFamily={sans} fontSize="26" fontWeight="bold" fill="#2563eb" letterSpacing="6">
