@@ -28,7 +28,7 @@ const CertificatePreview = ({ name }: CertificatePreviewProps) => {
   const data = useMemo(() => sampleCertificate(name), [name]);
 
   return (
-    <Card className="border-primary/20 bg-primary/[0.03]">
+    <Card>
       <CardHeader className="pb-4">
         <CardTitle className="flex items-center gap-2.5 text-lg">
           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
