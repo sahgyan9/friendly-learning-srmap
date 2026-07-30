@@ -35,7 +35,7 @@ const PRIMARY_NAV: NavItem[] = [
   { name: "Home", url: "/", icon: Home },
   { name: "Mentors", url: "/mentors", icon: Users },
   { name: "Faculty", url: "/faculty", icon: GraduationCap },
-  { name: "Board", url: "/community-posts", icon: MessageSquare },
+  { name: "Posts", url: "/community-posts", icon: MessageSquare },
   { name: "Events", url: "/marketplace", icon: Calendar },
   { name: "Messages", url: "/messages", icon: Mail, requiresAuth: true },
 ];
