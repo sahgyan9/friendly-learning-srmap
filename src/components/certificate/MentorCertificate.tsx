@@ -75,23 +75,26 @@ const MentorCertificate = forwardRef<SVGSVGElement, MentorCertificateProps>(
         <rect x="44" y="44" width="1512" height="1043" rx="10" fill="#ffffff" stroke="#e2e8f0" strokeWidth="2" />
         <rect x="44" y="44" width="1512" height="12" rx="6" fill="url(#fl-cert-accent)" />
 
-        {/* Official logo mark emblem */}
-        <circle cx="168" cy="152" r="46" fill="#eff6ff" stroke="#bfdbfe" strokeWidth="2" />
-        <image
-          href={LOGO_DATA_URL}
-          xlinkHref={LOGO_DATA_URL}
-          x="133"
-          y="117"
-          width="70"
-          height="70"
-          preserveAspectRatio="xMidYMid meet"
-        />
-
-        {/* Issuer, stated first and plainly. */}
-        <text x="800" y="150" textAnchor="middle" fontFamily={sans} fontSize="26" fontWeight="bold" fill="#2563eb" letterSpacing="6">
-          FRIENDLY LEARNING
-        </text>
-        <text x="800" y="186" textAnchor="middle" fontFamily={sans} fontSize="19" fill="#64748b">
+        {/* Official brand logo header, matching navbar Logo component */}
+        <g>
+          {/* Logo Mark Icon */}
+          <image
+            href={LOGO_DATA_URL}
+            xlinkHref={LOGO_DATA_URL}
+            x="545"
+            y="108"
+            width="64"
+            height="64"
+            preserveAspectRatio="xMidYMid meet"
+          />
+          {/* Brand Name: Friendly (Blue) Learning (Dark Slate) SRMAP (Blue) */}
+          <text x="625" y="152" fontFamily={sans} fontSize="38" fontWeight="bold">
+            <tspan fill="#2563eb">Friendly</tspan>
+            <tspan fill="#0f172a">Learning</tspan>
+            <tspan fill="#2563eb" fontSize="26" dx="8">SRMAP</tspan>
+          </text>
+        </g>
+        <text x="800" y="194" textAnchor="middle" fontFamily={sans} fontSize="19" fill="#64748b">
           Student-run mentorship platform · SRM University AP
         </text>
 
