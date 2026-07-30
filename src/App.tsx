@@ -36,6 +36,8 @@ const FindStudyPartners = lazy(() => import("./pages/FindStudyPartners"));
 const HackathonPartners = lazy(() => import("./pages/HackathonPartners"));
 const Blog = lazy(() => import("./pages/Blog"));
 const BlogPost = lazy(() => import("./pages/BlogPost"));
+const Certificate = lazy(() => import("./pages/Certificate"));
+const VerifyCertificate = lazy(() => import("./pages/VerifyCertificate"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Unauthorized = lazy(() => import("./pages/Unauthorized"));
 
@@ -107,6 +109,9 @@ function App() {
                 <Route path="/hackathon-partners" element={<HackathonPartners />} />
                 <Route path="/blog" element={<Blog />} />
                 <Route path="/blog/:slug" element={<BlogPost />} />
+                {/* Public on purpose: a certificate nobody can check without an
+                    account is worth no more than the image itself. */}
+                <Route path="/verify/:id" element={<VerifyCertificate />} />
                 <Route path="/unauthorized" element={<Unauthorized />} />
 
                 {/* Authenticated */}
@@ -131,6 +136,14 @@ function App() {
                   element={
                     <ProtectedRoute>
                       <Messages />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/certificate"
+                  element={
+                    <ProtectedRoute>
+                      <Certificate />
                     </ProtectedRoute>
                   }
                 />

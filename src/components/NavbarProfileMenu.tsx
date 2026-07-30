@@ -88,6 +88,13 @@ const NavbarProfileMenu = () => {
               Profile
             </Link>
           </DropdownMenuItem>
+          {isRealMentor && (
+            <DropdownMenuItem asChild>
+              <Link to="/certificate" className="cursor-pointer w-full">
+                My certificate
+              </Link>
+            </DropdownMenuItem>
+          )}
           {!isRealMentor && (
             <DropdownMenuItem asChild>
               <Link to="/become-mentor" className="cursor-pointer w-full">

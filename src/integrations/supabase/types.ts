@@ -1491,6 +1491,51 @@ export type Database = {
         }
         Returns: undefined
       }
+      get_certificate: {
+        Args: { p_certificate_id: string }
+        Returns: {
+          average_rating: number | null
+          badges: number
+          certificate_number: string
+          department: string | null
+          graduation_year: number | null
+          is_alumni: boolean
+          issued_at: string
+          mentor_since: string | null
+          name: string
+          reviews: number
+          revoked: boolean
+          students_helped: number
+          university: string | null
+        }[]
+      }
+      issue_certificate_if_earned: { Args: never; Returns: string | null }
+      mentor_impact: {
+        Args: { p_user_id: string }
+        Returns: {
+          average_rating: number | null
+          badges: number
+          mentor_since: string | null
+          reviews: number
+          students_helped: number
+        }[]
+      }
+      my_certificate_status: {
+        Args: never
+        Returns: {
+          average_rating: number | null
+          badges: number
+          certificate_id: string | null
+          certificate_number: string | null
+          is_mentor: boolean
+          issued_at: string | null
+          mentor_since: string | null
+          reviews: number
+          revoked: boolean
+          students_helped: number
+          students_required: number
+        }[]
+      }
       create_canvas_session:
         | {
             Args: { p_mentor_id: string; p_title: string }

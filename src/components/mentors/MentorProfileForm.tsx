@@ -11,6 +11,7 @@ import MentorBioField from "./form/MentorBioField";
 import MentorLinkedInField from "./form/MentorLinkedInField";
 import MentorFormActions from "./form/MentorFormActions";
 import LinkedInPdfImport from "./form/LinkedInPdfImport";
+import CertificatePreview from "@/components/certificate/CertificatePreview";
 
 interface MentorProfileFormProps {
   userId: string;
@@ -140,6 +141,11 @@ const MentorProfileForm = ({ userId, initialData, isEditMode = false }: MentorPr
           handleBlur={handleBlur}
         />
       </Section>
+
+      {/* Last, not first. It is a reason to finish the form, not a reason to
+          start filling one in, and leading with a reward would bury what the
+          platform is actually for. */}
+      {!isEditMode && <CertificatePreview name={formData.name} />}
 
       <MentorFormActions
         isSubmitting={isSubmitting}
