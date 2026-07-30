@@ -167,7 +167,7 @@ const MentorAcademicInfo = ({
           label="CGPA"
           required
           error={errors.cgpa}
-          hint="Out of 10 — reviewers use this to verify your academic standing"
+          hint="Out of 10 — kept private, never shown on your public profile"
         >
           <Input
             id="cgpa"

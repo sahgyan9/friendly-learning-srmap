@@ -254,7 +254,9 @@ export const useMentorForm = (userId: string, initialData: MentorFormData, isEdi
           throw new Error(result.error.message || "Failed to update mentor application");
         }
 
-        toast.success("Application resubmitted — we'll email you once it's reviewed.");
+        // Email delivery is not live yet, so promising mail was a promise the
+        // platform could not keep. The notification bell can.
+        toast.success("Resubmitted — we'll let you know once it's been reviewed.");
       } else {
         // Check if user already has any application (prevent duplicates)
         const { data: existingVerification, error: checkError } = await getMentorVerification(userId);
@@ -288,7 +290,8 @@ export const useMentorForm = (userId: string, initialData: MentorFormData, isEdi
           throw new Error(result.error.message || "Failed to submit mentor application");
         }
 
-        toast.success("Application submitted — we'll email you once it's reviewed.");
+        // Approved by the insert trigger before this line runs, so say so.
+        toast.success("You're a mentor — your profile is live. Students can find you now.");
       }
 
       setIsDirty(false);

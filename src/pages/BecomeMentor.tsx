@@ -105,9 +105,9 @@ const BecomeMentor = () => {
       case 'approved':
         return {
           icon: <CheckCircle className="h-6 w-6 text-green-600" />,
-          badge: <Badge variant="outline" className="bg-green-50 text-green-800 border-green-200 dark:bg-green-950/60 dark:text-green-200 dark:border-green-800">Approved</Badge>,
-          title: "Congratulations! Application Approved",
-          description: "Your mentor application has been approved. You can now help other students as a verified mentor.",
+          badge: <Badge variant="outline" className="bg-green-50 text-green-800 border-green-200 dark:bg-green-950/60 dark:text-green-200 dark:border-green-800">Live</Badge>,
+          title: "You're a mentor 🎉",
+          description: "Your profile is live. Students can find you in the mentor list and message you.",
           cardClass: "border-green-200 bg-green-50 dark:bg-green-900/20"
         };
       case 'rejected':
@@ -154,9 +154,18 @@ const BecomeMentor = () => {
       <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-16 md:py-24">
           <div className="max-w-4xl mx-auto">
+            {/* An approved mentor lands here straight after submitting and every
+                time afterwards. Heading it "Application Status" told someone who
+                is already listed that they were still in a queue. */}
             <div className="text-center mb-8">
-              <h1 className="text-3xl font-bold text-foreground mb-4">Mentor Application Status</h1>
-              <p className="text-muted-foreground">Here's the current status of your mentor application</p>
+              <h1 className="text-3xl font-bold text-foreground mb-4">
+                {existingApplication.status === 'approved' ? 'Your mentor profile' : 'Mentor application status'}
+              </h1>
+              <p className="text-muted-foreground">
+                {existingApplication.status === 'approved'
+                  ? "You're listed as a mentor at SRM AP"
+                  : "Here's the current status of your mentor application"}
+              </p>
             </div>
 
             <Card className={`mb-6 ${statusDisplay?.cardClass}`}>
@@ -194,7 +203,8 @@ const BecomeMentor = () => {
                   <div className="space-y-4">
                     <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border">
                       <p className="text-sm text-gray-700 dark:text-gray-300">
-                        Welcome to our mentor team! You can now start helping students and sharing your knowledge.
+                        Nothing else to do — students browsing for help can see you already. You can
+                        edit your profile whenever you like.
                       </p>
                     </div>
                     <div className="flex justify-center space-x-4">

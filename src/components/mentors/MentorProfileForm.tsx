@@ -68,7 +68,9 @@ const MentorProfileForm = ({ userId, initialData, isEditMode = false }: MentorPr
           scrolling back to the top of a form that runs past one screen. */}
       <div className="sticky top-24 z-10 rounded-lg border bg-background/95 p-4 shadow-sm backdrop-blur">
         <div className="mb-2 flex items-center justify-between text-sm">
-          <span className="font-medium">Application progress</span>
+          <span className="font-medium">
+            {isEditMode ? "Application progress" : "Your mentor profile"}
+          </span>
           <span className="tabular-nums text-muted-foreground">{completion}%</span>
         </div>
         <Progress value={completion} className="h-2" />
@@ -100,7 +102,7 @@ const MentorProfileForm = ({ userId, initialData, isEditMode = false }: MentorPr
       <Section
         icon={<GraduationCap className="h-4 w-4" />}
         title="Academic background"
-        description="Reviewers use this to confirm you're a current student in good standing."
+        description="Confirms you're a current SRM AP student. Your College ID and CGPA stay private."
       >
         <MentorAcademicInfo
           formData={formData}

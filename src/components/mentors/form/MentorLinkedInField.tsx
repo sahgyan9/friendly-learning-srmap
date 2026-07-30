@@ -15,7 +15,7 @@ const MentorLinkedInField = ({ linkedin_url, error, handleChange, handleBlur }: 
       id="linkedin_url"
       label="LinkedIn profile"
       error={error}
-      hint="Speeds up review — reviewers can confirm who you are at a glance"
+      hint="Students are quicker to message someone they can look up"
     >
       <Input
         id="linkedin_url"

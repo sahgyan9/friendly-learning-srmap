@@ -100,26 +100,38 @@ const Hero = () => {
               student mentors</strong> to provide <strong className="font-bold">personalized academic support</strong> within your university.
           </motion.p>
 
-          <motion.div
-            className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12"
-            variants={item}
-          >
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Button size="lg" className="w-full sm:w-auto" asChild>
-                <Link to="/mentors">
-                  Find a Mentor <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
-            </motion.div>
-
-            {!isMentor && (
+          <motion.div className="mb-12" variants={item}>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Button size="lg" variant="outline" className="w-full sm:w-auto" asChild>
-                  <Link to="/become-mentor">
-                    Become a Mentor
+                <Button size="lg" className="w-full sm:w-auto" asChild>
+                  <Link to="/mentors">
+                    Find a Mentor <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>
                 </Button>
               </motion.div>
+
+              {/* "Become a Mentor" reads like a title you have to qualify for,
+                  which is the opposite of what happens: you fill in a form and
+                  you are listed. Naming the act rather than the rank lowers the
+                  bar it was accidentally raising. */}
+              {!isMentor && (
+                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                  <Button size="lg" variant="outline" className="w-full sm:w-auto" asChild>
+                    <Link to="/become-mentor">
+                      Help other students
+                    </Link>
+                  </Button>
+                </motion.div>
+              )}
+            </div>
+
+            {/* The two things that stop people clicking are how long it takes
+                and how long they then wait. Answered here rather than in a
+                tooltip, which nobody hovers on a phone. */}
+            {!isMentor && (
+              <motion.p className="mt-4 text-sm text-muted-foreground" variants={item}>
+                Takes a few minutes, and you're listed straight away.
+              </motion.p>
             )}
           </motion.div>
 

@@ -1,6 +1,6 @@
 
 import { useNavigate } from "react-router-dom";
-import { Loader2, Send } from "lucide-react";
+import { Check, Loader2, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -44,7 +44,7 @@ const MentorFormActions = ({
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Discard your application?</AlertDialogTitle>
+                <AlertDialogTitle>Leave without finishing?</AlertDialogTitle>
                 <AlertDialogDescription>
                   Nothing you've typed has been saved yet. Leaving now loses it.
                 </AlertDialogDescription>
@@ -67,16 +67,25 @@ const MentorFormActions = ({
           </Button>
         )}
 
+        {/* A first submission is not an application: auto_approve_mentor_application
+            approves it in the same statement and the profile is live before the
+            page has finished navigating. "Submit application" described a wait
+            that never happens. A resubmit genuinely is one — the trigger is
+            BEFORE INSERT, so an edited row goes back to 'pending' for a human. */}
         <Button type="submit" disabled={isSubmitting} size="lg" className="sm:min-w-52">
           {isSubmitting ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              {isEditMode ? "Resubmitting..." : "Submitting..."}
+              {isEditMode ? "Resubmitting..." : "Setting up your profile..."}
             </>
           ) : (
             <>
-              <Send className="mr-2 h-4 w-4" />
-              {isEditMode ? "Resubmit application" : "Submit application"}
+              {isEditMode ? (
+                <Send className="mr-2 h-4 w-4" />
+              ) : (
+                <Check className="mr-2 h-4 w-4" />
+              )}
+              {isEditMode ? "Resubmit application" : "Become a mentor"}
             </>
           )}
         </Button>
@@ -85,7 +94,9 @@ const MentorFormActions = ({
       <p className="text-xs text-muted-foreground sm:text-right">
         {remaining > 0
           ? `${remaining} required field${remaining === 1 ? "" : "s"} left to complete.`
-          : "Everything looks good — applications are usually reviewed within a few days."}
+          : isEditMode
+            ? "Everything looks good — we'll let you know once this has been reviewed."
+            : "Your profile goes live as soon as you confirm. You can edit it any time."}
       </p>
     </div>
   );
