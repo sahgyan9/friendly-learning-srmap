@@ -82,14 +82,16 @@ const MessagesLayout = () => {
     if (!otherUser) {
       return {
         id: conversation.user1_id === userId ? conversation.user2_id : conversation.user1_id,
-        name: "Unknown User",
+        name: "Student",
         profile_image: null,
         role: 'student'
       };
     }
 
-    // Ensure name is a trimmed string or a fallback
-    const finalName = otherUser.name?.trim() || "Unknown User";
+    // "Unknown User" used to appear here whenever RLS hid the other person's
+    // row, which described our failure to read a name rather than anything
+    // about them. The service now resolves it; this is only a last resort.
+    const finalName = otherUser.name?.trim() || "Student";
 
     return {
       ...otherUser,

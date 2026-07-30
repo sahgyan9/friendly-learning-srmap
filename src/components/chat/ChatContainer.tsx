@@ -73,7 +73,7 @@ const ChatContainer = ({
     const record = (id?: string, name?: string | null) => {
       if (!id || !name) return;
       const trimmed = name.trim();
-      if (!trimmed || trimmed === "Unknown User" || names.has(id)) return;
+      if (!trimmed || names.has(id)) return;
       names.set(id, trimmed);
     };
 

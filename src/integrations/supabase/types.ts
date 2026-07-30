@@ -1491,6 +1491,15 @@ export type Database = {
         }
         Returns: undefined
       }
+      chat_participant_profiles: {
+        Args: { p_user_ids: string[] }
+        Returns: {
+          id: string
+          name: string | null
+          profile_image: string | null
+          role: string | null
+        }[]
+      }
       get_certificate: {
         Args: { p_certificate_id: string }
         Returns: {

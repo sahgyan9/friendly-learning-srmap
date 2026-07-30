@@ -80,7 +80,7 @@ const ConversationList = ({
         const otherUser = getOtherUser(conversation);
         const hasUnread = hasUnreadMessages(conversation.id);
         const isActive = activeChat === conversation.id;
-        const displayName = otherUser?.name?.trim() || "Unknown User";
+        const displayName = otherUser?.name?.trim() || "Student";
         const isOnline = isUserOnline(otherUser?.id);
         const preview = conversation.last_message?.content ?? "No messages yet";
 
