@@ -1,19 +1,8 @@
 // Drains public.email_queue and sends the resulting email through Resend.
-//
-// Replaces send-message-notification, which took recipient_email, sender_name
-// and message_content from the request body with verify_jwt = false and no auth
-// of its own. That made it an open relay: anyone who knew the URL could send
-// arbitrary HTML, including arbitrary links, from this project's from-address.
-// It never delivered anything only because the sending domain was unverified in
-// Resend, so the hole would have opened the moment that was fixed.
-//
-// This function accepts no recipient and no content. It reads both from the
-// database with the service role, so the worst a caller can do is make it look
-// at the queue -- and it authenticates callers anyway.
-//
-// Invocation:
-//   POST /functions/v1/send-email-queue    (x-cron-secret header, or admin JWT)
-// Driven by the pg_cron job 'send-email-queue-sweep' every 5 minutes.
+// Authenticates callers with a CRON_SECRET header or an admin JWT, and takes no
+// recipient address or message body from the request -- both are read from the
+// database with the service role. Driven by the pg_cron job
+// 'send-email-queue-sweep' every 5 minutes.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { Resend } from "https://esm.sh/resend@4.0.0";
@@ -23,23 +12,16 @@ const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 const CRON_SECRET = Deno.env.get("CRON_SECRET");
 
-// The public origin. Must not be derived from SUPABASE_URL: the old function
-// built links by string-replacing 'supabase.co' with 'vercel.app', which
-// produced ruapdkrgcbqrhvsayvpf.vercel.app -- a host nobody owns. Every "Reply
-// Now" button in every email pointed there.
+// The public origin, taken from configuration rather than derived from
+// SUPABASE_URL, so links point at a host that actually exists.
 const SITE_URL = Deno.env.get("SITE_URL") ?? "https://friendly-learning-srmap.vercel.app";
 const FROM_ADDRESS = Deno.env.get("EMAIL_FROM") ?? "Friendly Learning <no-reply@friendlylearning.com>";
 
 /** How long to let a burst of messages settle before emailing about it. */
 const QUIET_PERIOD_MS = 3 * 60 * 1000;
 /**
- * Past this age a row is dropped unsent.
- *
- * Without it, a queue that sits idle while email is switched off would empty
- * itself the moment it was switched on -- so verifying a sending domain months
- * from now would fire "you have a new message" at everyone about conversations
- * they had long forgotten. A day-old notification is not worth sending, and
- * mail nobody expects is exactly what gets a new domain marked as spam.
+ * Past this age a row is dropped unsent, so a queue that sat idle while email
+ * was switched off does not empty itself the moment it is switched on.
  */
 const MAX_AGE_MS = 24 * 60 * 60 * 1000;
 /** Give up after this many tries so one poisoned row cannot block the queue. */
@@ -61,16 +43,10 @@ const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
   auth: { persistSession: false, autoRefreshToken: false },
 });
 
-/**
- * Escapes text for interpolation into HTML.
- *
- * The old template dropped ${sender_name} and ${messagePreview} into the body
- * raw. A message containing markup could restyle the email or add a link, which
- * is a phishing primitive when the mail carries this project's name and address.
- */
+/** Escapes text for interpolation into HTML, so message content cannot inject markup. */
 function escapeHtml(value: string): string {
   return value
-    .replace(/&/g, "&amp;")   // first, or the escapes below get double-escaped
+    .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
@@ -85,7 +61,6 @@ async function isAuthorised(req: Request): Promise<boolean> {
   if (!auth?.startsWith("Bearer ")) return false;
 
   const token = auth.slice(7);
-  // The anon key is a JWT too, so a bare anon token must not pass as a user.
   const { data, error } = await admin.auth.getUser(token);
   if (error || !data.user) return false;
 
@@ -132,45 +107,40 @@ function renderMessageEmail(opts: {
   const safeName = escapeHtml(recipientName);
   const safeWho = escapeHtml(who);
   const safePreview = escapeHtml(preview);
+  const countPhrase = messageCount === 1 ? "a new message" : `${messageCount} new messages`;
 
-  const html = `<!DOCTYPE html>
-<html lang="en">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${escapeHtml(subject)}</title></head>
-<body style="margin:0;padding:20px;font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;line-height:1.6;color:#1f2937;background:#f9fafb;">
-  <div style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:10px;overflow:hidden;border:1px solid #e5e7eb;">
-    <div style="background:#2563eb;padding:24px;text-align:center;">
-      <h1 style="color:#ffffff;margin:0;font-size:20px;">Friendly Learning</h1>
-    </div>
-    <div style="padding:28px;">
-      <p style="margin:0 0 16px;font-size:16px;">Hi ${safeName},</p>
-      <p style="margin:0 0 20px;font-size:16px;">
-        You have ${messageCount === 1 ? "a new message" : `${messageCount} new messages`} from <strong>${safeWho}</strong>.
-      </p>
-      <div style="background:#f3f4f6;padding:16px;border-radius:8px;border-left:3px solid #2563eb;margin:0 0 24px;">
-        <p style="margin:0;color:#4b5563;">${safePreview}</p>
-      </div>
-      <p style="text-align:center;margin:0 0 8px;">
-        <a href="${conversationUrl}" style="background:#2563eb;color:#ffffff;padding:12px 28px;text-decoration:none;border-radius:6px;font-weight:600;display:inline-block;">Reply</a>
-      </p>
-    </div>
-    <div style="padding:16px 28px;border-top:1px solid #e5e7eb;background:#f9fafb;">
-      <p style="margin:0;font-size:12px;color:#6b7280;text-align:center;">
-        <a href="${unsubscribeUrl}" style="color:#6b7280;">Unsubscribe from these emails</a>
-      </p>
-    </div>
-  </div>
-</body>
-</html>`;
+  const html = [
+    '<!DOCTYPE html>',
+    '<html lang="en"><head><meta charset="UTF-8">',
+    '<meta name="viewport" content="width=device-width, initial-scale=1.0">',
+    `<title>${escapeHtml(subject)}</title></head>`,
+    '<body style="margin:0;padding:20px;font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;line-height:1.6;color:#1f2937;background:#f9fafb;">',
+    '<div style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:10px;overflow:hidden;border:1px solid #e5e7eb;">',
+    '<div style="background:#2563eb;padding:24px;text-align:center;">',
+    '<h1 style="color:#ffffff;margin:0;font-size:20px;">Friendly Learning</h1></div>',
+    '<div style="padding:28px;">',
+    `<p style="margin:0 0 16px;font-size:16px;">Hi ${safeName},</p>`,
+    `<p style="margin:0 0 20px;font-size:16px;">You have ${countPhrase} from <strong>${safeWho}</strong>.</p>`,
+    '<div style="background:#f3f4f6;padding:16px;border-radius:8px;border-left:3px solid #2563eb;margin:0 0 24px;">',
+    `<p style="margin:0;color:#4b5563;">${safePreview}</p></div>`,
+    '<p style="text-align:center;margin:0 0 8px;">',
+    `<a href="${conversationUrl}" style="background:#2563eb;color:#ffffff;padding:12px 28px;text-decoration:none;border-radius:6px;font-weight:600;display:inline-block;">Reply</a>`,
+    '</p></div>',
+    '<div style="padding:16px 28px;border-top:1px solid #e5e7eb;background:#f9fafb;">',
+    '<p style="margin:0;font-size:12px;color:#6b7280;text-align:center;">',
+    `<a href="${unsubscribeUrl}" style="color:#6b7280;">Unsubscribe from these emails</a>`,
+    '</p></div></div></body></html>',
+  ].join("");
 
   const text = [
     `Hi ${recipientName},`,
-    ``,
-    `You have ${messageCount === 1 ? "a new message" : `${messageCount} new messages`} from ${who}.`,
-    ``,
+    "",
+    `You have ${countPhrase} from ${who}.`,
+    "",
     preview,
-    ``,
+    "",
     `Reply: ${conversationUrl}`,
-    ``,
+    "",
     `Unsubscribe: ${unsubscribeUrl}`,
   ].join("\n");
 
@@ -193,9 +163,7 @@ Deno.serve(async (req: Request) => {
   const ripeBefore = new Date(now - QUIET_PERIOD_MS).toISOString();
   const staleBefore = new Date(now - MAX_AGE_MS).toISOString();
 
-  // Retire anything too old to be worth sending, before selecting work. Done as
-  // its own statement so a large idle backlog is cleared in one go rather than
-  // BATCH_LIMIT at a time.
+  // Retire anything too old to be worth sending, before selecting work.
   const { count: expired } = await admin
     .from("email_queue")
     .update({ sent_at: new Date().toISOString(), last_error: "expired unsent" }, { count: "exact" })
@@ -244,8 +212,8 @@ Deno.serve(async (req: Request) => {
         .eq("id", recipientId)
         .maybeSingle();
 
-      // Re-checked here, not just at enqueue time: someone who opts out after a
-      // message arrives should not receive what was already queued.
+      // Re-checked here as well as at enqueue time, so someone who opts out in
+      // between does not receive what was already queued.
       if (!recipient?.email || recipient.email_notifications === false) {
         await settle(ids, { sent_at: new Date().toISOString(), last_error: "recipient opted out or has no email" });
         skipped += ids.length;
@@ -259,8 +227,7 @@ Deno.serve(async (req: Request) => {
         .in("id", messageIds.length > 0 ? messageIds : ["00000000-0000-0000-0000-000000000000"])
         .order("sent_at", { ascending: true });
 
-      // If they have already read it on the site, the email is noise. This is
-      // the single biggest difference from emailing straight from the trigger.
+      // Already read on the site means the email is noise.
       const unread = (messages ?? []).filter((m) => m.is_read !== true);
 
       if (unread.length === 0) {
@@ -277,7 +244,7 @@ Deno.serve(async (req: Request) => {
 
       const latest = unread[unread.length - 1];
       const raw = (latest.content ?? "").trim();
-      const preview = raw.length > 140 ? `${raw.slice(0, 140)}…` : raw;
+      const preview = raw.length > 140 ? `${raw.slice(0, 140)}...` : raw;
 
       const unsubscribeUrl =
         `${SUPABASE_URL}/functions/v1/email-unsubscribe?token=${recipient.unsubscribe_token}`;
@@ -298,15 +265,13 @@ Deno.serve(async (req: Request) => {
         html,
         text,
         headers: {
-          // Required by Gmail/Yahoo bulk sender rules for one-click opt-out.
           "List-Unsubscribe": `<${unsubscribeUrl}>`,
           "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
         },
       });
 
-      // The old function reported {"success": true} here regardless, so a year
-      // of 403s from an unverified domain looked like a year of delivered mail.
-      // Resend returns errors in the body rather than throwing.
+      // Resend reports failures in the body rather than throwing, so this must be
+      // checked explicitly or every failure looks like a success.
       if (result.error) {
         throw new Error(`${result.error.name ?? "resend_error"}: ${result.error.message}`);
       }

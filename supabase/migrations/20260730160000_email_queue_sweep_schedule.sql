@@ -1,16 +1,18 @@
 -- Schedule the email queue sweep.
 --
--- Created inactive on purpose. The send-email-queue function must be deployed
--- first, or every tick posts to a URL that 404s and fills the cron log with
--- failures that look like a bug in the queue.
+-- Created inactive, because a job pointing at a function that is not deployed
+-- yet posts to a 404 every five minutes and fills the cron log with failures
+-- that look like a bug in the queue. send-email-queue has since been deployed
+-- and the job enabled with:
 --
--- To enable, once the function is deployed:
 --   select cron.alter_job(
 --     (select jobid from cron.job where jobname = 'send-email-queue-sweep'),
 --     active := true);
 --
 -- Note cron.job cannot be UPDATEd directly on Supabase (permission denied for
--- table job); cron.alter_job is the supported way to toggle a schedule.
+-- table job); cron.alter_job is the supported way to toggle a schedule. Kept as
+-- created-inactive here so replaying the migrations never starts sending before
+-- the function exists.
 --
 -- Five minutes, not one: the function itself holds messages for a three-minute
 -- quiet period so a rapid exchange becomes one email instead of ten, and
