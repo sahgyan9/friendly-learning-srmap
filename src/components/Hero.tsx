@@ -118,7 +118,7 @@ const Hero = () => {
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                   <Button size="lg" variant="outline" className="w-full sm:w-auto" asChild>
                     <Link to="/become-mentor">
-                      Help other students
+                      Become Mentor
                     </Link>
                   </Button>
                 </motion.div>
