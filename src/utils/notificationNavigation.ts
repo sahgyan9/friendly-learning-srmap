@@ -80,6 +80,13 @@ export const getNotificationNavigationUrl = (notification: Notification): string
         return `${baseUrl}/profile`; // Redirect to profile to see badges
     }
 
+    // Handle the graduation prompt. Goes to the profile, where
+    // AlumniPromptBanner renders the same question with the confirm form behind
+    // it — so the bell and the page ask once, not twice.
+    if (notification.type === 'alumni_prompt') {
+        return `${baseUrl}/profile`;
+    }
+
     // Default: no navigation for unrecognized notification types
     return null;
 };

@@ -504,6 +504,50 @@ export type Database = {
           },
         ]
       }
+      email_queue: {
+        Row: {
+          attempts: number
+          conversation_id: string | null
+          created_at: string
+          id: string
+          kind: string
+          last_error: string | null
+          message_id: string | null
+          recipient_id: string
+          sent_at: string | null
+        }
+        Insert: {
+          attempts?: number
+          conversation_id?: string | null
+          created_at?: string
+          id?: string
+          kind?: string
+          last_error?: string | null
+          message_id?: string | null
+          recipient_id: string
+          sent_at?: string | null
+        }
+        Update: {
+          attempts?: number
+          conversation_id?: string | null
+          created_at?: string
+          id?: string
+          kind?: string
+          last_error?: string | null
+          message_id?: string | null
+          recipient_id?: string
+          sent_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_queue_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       faculty: {
         Row: {
           avg_grading: number
@@ -870,11 +914,14 @@ export type Database = {
         Row: {
           bio: string | null
           cgpa: number | null
+          company: string | null
           created_at: string | null
           department: string
           graduation_year: number | null
           hobbies: string | null
           id: string
+          is_alumni: boolean
+          job_title: string | null
           linkedin_url: string | null
           mobile: string | null
           name: string
@@ -888,11 +935,14 @@ export type Database = {
         Insert: {
           bio?: string | null
           cgpa?: number | null
+          company?: string | null
           created_at?: string | null
           department: string
           graduation_year?: number | null
           hobbies?: string | null
           id?: string
+          is_alumni?: boolean
+          job_title?: string | null
           linkedin_url?: string | null
           mobile?: string | null
           name: string
@@ -906,11 +956,14 @@ export type Database = {
         Update: {
           bio?: string | null
           cgpa?: number | null
+          company?: string | null
           created_at?: string | null
           department?: string
           graduation_year?: number | null
           hobbies?: string | null
           id?: string
+          is_alumni?: boolean
+          job_title?: string | null
           linkedin_url?: string | null
           mobile?: string | null
           name?: string
@@ -1281,8 +1334,10 @@ export type Database = {
       }
       users: {
         Row: {
+          alumni_confirmed_at: string | null
           bio: string | null
           college_id: string | null
+          company: string | null
           created_at: string | null
           department: string | null
           email: string
@@ -1292,17 +1347,21 @@ export type Database = {
           id: string
           is_admin: boolean
           is_available: boolean | null
+          job_title: string | null
           linkedin_url: string | null
           mobile: string | null
           name: string
           profile_image: string | null
           role: string
           skills: string[] | null
+          unsubscribe_token: string
           verification_status: string | null
         }
         Insert: {
+          alumni_confirmed_at?: string | null
           bio?: string | null
           college_id?: string | null
+          company?: string | null
           created_at?: string | null
           department?: string | null
           email: string
@@ -1312,17 +1371,21 @@ export type Database = {
           id?: string
           is_admin?: boolean
           is_available?: boolean | null
+          job_title?: string | null
           linkedin_url?: string | null
           mobile?: string | null
           name: string
           profile_image?: string | null
           role: string
           skills?: string[] | null
+          unsubscribe_token?: string
           verification_status?: string | null
         }
         Update: {
+          alumni_confirmed_at?: string | null
           bio?: string | null
           college_id?: string | null
+          company?: string | null
           created_at?: string | null
           department?: string | null
           email?: string
@@ -1332,12 +1395,14 @@ export type Database = {
           id?: string
           is_admin?: boolean
           is_available?: boolean | null
+          job_title?: string | null
           linkedin_url?: string | null
           mobile?: string | null
           name?: string
           profile_image?: string | null
           role?: string
           skills?: string[] | null
+          unsubscribe_token?: string
           verification_status?: string | null
         }
         Relationships: []
@@ -1417,6 +1482,14 @@ export type Database = {
       can_user_rate_mentor: {
         Args: { mentor_id: string; user_id: string }
         Returns: boolean
+      }
+      confirm_alumni_status: {
+        Args: {
+          p_company?: string
+          p_graduation_year?: number
+          p_job_title?: string
+        }
+        Returns: undefined
       }
       create_canvas_session:
         | {
@@ -1651,6 +1724,14 @@ export type Database = {
           slug: string
         }[]
       }
+      graduated_mentors_awaiting_confirmation: {
+        Args: never
+        Returns: {
+          graduation_year: number
+          name: string
+          user_id: string
+        }[]
+      }
       http: {
         Args: { request: Database["public"]["CompositeTypes"]["http_request"] }
         Returns: Database["public"]["CompositeTypes"]["http_response"]
@@ -1822,6 +1903,7 @@ export type Database = {
         Args: { recovery_code: string; target_user_id: string }
         Returns: boolean
       }
+      prompt_graduated_mentors: { Args: never; Returns: number }
       send_message: {
         Args: {
           p_content: string

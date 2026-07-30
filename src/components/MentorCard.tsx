@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Star, MapPin, Users, MessageCircle, Linkedin, Loader2 } from "lucide-react";
+import { Star, MapPin, Users, MessageCircle, Linkedin, Loader2, GraduationCap } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Mentor } from "@/types/mentor";
@@ -145,6 +145,29 @@ const MentorCard = ({ mentor }: MentorCardProps) => {
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors truncate">
                   {mentor.name}
                 </h3>
+
+                {/* The whole point of the alumni transition: a student scanning
+                    this list can tell who has already been through placements.
+                    Company beats cohort year when we have it — "at Google" is
+                    what makes someone worth asking. */}
+                {mentor.is_alumni && (
+                  <div className="mt-1 flex items-center gap-1.5">
+                    <Badge
+                      variant="secondary"
+                      className="gap-1 bg-indigo-100 text-indigo-800 text-xs dark:bg-indigo-950 dark:text-indigo-200"
+                    >
+                      <GraduationCap className="h-3 w-3" />
+                      Alumni
+                      {mentor.graduation_year ? ` '${String(mentor.graduation_year).slice(-2)}` : ""}
+                    </Badge>
+                    {(mentor.company || mentor.job_title) && (
+                      <span className="truncate text-xs text-gray-600 dark:text-gray-400">
+                        {[mentor.job_title, mentor.company].filter(Boolean).join(" at ")}
+                      </span>
+                    )}
+                  </div>
+                )}
+
                 <div className="flex items-center space-x-2 mt-1">
                   <div className="flex items-center space-x-1">
                     <MapPin className="h-4 w-4 text-gray-500 flex-shrink-0" />

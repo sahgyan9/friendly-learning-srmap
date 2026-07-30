@@ -12,6 +12,11 @@ export interface Mentor {
   hobbies?: string;
   created_at?: string;
   mobile?: string;
+  /** Set once the person has confirmed they graduated. Never inferred. */
+  is_alumni?: boolean;
+  graduation_year?: number | null;
+  company?: string | null;
+  job_title?: string | null;
 }
 
 export interface MentorFormData {

@@ -13,6 +13,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import BadgeDisplay from "@/components/badges/BadgeDisplay";
+import AlumniPromptBanner from "@/components/alumni/AlumniPromptBanner";
 import ReviewsList from "@/components/rating/ReviewsList";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -345,6 +346,10 @@ const UserProfile = () => {
                 </Badge>
               )}
             </div>
+
+            {/* Renders itself only for a mentor whose graduation year has passed
+                and who has not answered yet. */}
+            <AlumniPromptBanner />
 
             {/* Profile Picture Section */}
             <Card>

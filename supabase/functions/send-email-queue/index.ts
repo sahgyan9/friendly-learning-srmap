@@ -32,6 +32,16 @@ const FROM_ADDRESS = Deno.env.get("EMAIL_FROM") ?? "Friendly Learning <no-reply@
 
 /** How long to let a burst of messages settle before emailing about it. */
 const QUIET_PERIOD_MS = 3 * 60 * 1000;
+/**
+ * Past this age a row is dropped unsent.
+ *
+ * Without it, a queue that sits idle while email is switched off would empty
+ * itself the moment it was switched on -- so verifying a sending domain months
+ * from now would fire "you have a new message" at everyone about conversations
+ * they had long forgotten. A day-old notification is not worth sending, and
+ * mail nobody expects is exactly what gets a new domain marked as spam.
+ */
+const MAX_AGE_MS = 24 * 60 * 60 * 1000;
 /** Give up after this many tries so one poisoned row cannot block the queue. */
 const MAX_ATTEMPTS = 5;
 const BATCH_LIMIT = 200;
@@ -179,7 +189,18 @@ Deno.serve(async (req: Request) => {
   }
 
   const resend = new Resend(RESEND_API_KEY);
-  const cutoff = new Date(Date.now() - QUIET_PERIOD_MS).toISOString();
+  const now = Date.now();
+  const ripeBefore = new Date(now - QUIET_PERIOD_MS).toISOString();
+  const staleBefore = new Date(now - MAX_AGE_MS).toISOString();
+
+  // Retire anything too old to be worth sending, before selecting work. Done as
+  // its own statement so a large idle backlog is cleared in one go rather than
+  // BATCH_LIMIT at a time.
+  const { count: expired } = await admin
+    .from("email_queue")
+    .update({ sent_at: new Date().toISOString(), last_error: "expired unsent" }, { count: "exact" })
+    .is("sent_at", null)
+    .lt("created_at", staleBefore);
 
   // Let a burst settle before emailing, so a rapid exchange is one email.
   const { data: pending, error: queueError } = await admin
@@ -187,12 +208,14 @@ Deno.serve(async (req: Request) => {
     .select("id, recipient_id, kind, message_id, conversation_id, attempts")
     .is("sent_at", null)
     .lt("attempts", MAX_ATTEMPTS)
-    .lte("created_at", cutoff)
+    .lte("created_at", ripeBefore)
     .order("created_at", { ascending: true })
     .limit(BATCH_LIMIT);
 
   if (queueError) return json({ error: queueError.message }, 500);
-  if (!pending || pending.length === 0) return json({ sent: 0, skipped: 0, failed: 0 });
+  if (!pending || pending.length === 0) {
+    return json({ sent: 0, skipped: 0, failed: 0, expired: expired ?? 0 });
+  }
 
   // One email per recipient per conversation, however many messages arrived.
   const groups = new Map<string, QueueRow[]>();
@@ -304,5 +327,5 @@ Deno.serve(async (req: Request) => {
     }
   }
 
-  return json({ sent, skipped, failed, considered: pending.length });
+  return json({ sent, skipped, failed, expired: expired ?? 0, considered: pending.length });
 });
