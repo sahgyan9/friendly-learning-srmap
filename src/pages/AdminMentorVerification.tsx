@@ -8,8 +8,20 @@ import VerificationStats from "@/components/admin/verification/VerificationStats
 import VerificationFilters, { VerificationFilters as FilterType } from "@/components/admin/verification/VerificationFilters";
 import { getAllMentorVerifications, getVerificationStatistics } from "@/integrations/supabase/services/mentor-verification";
 
+/**
+ * The fields this page filters and counts on. The rows carry more than this —
+ * they are joined with the applicant's user record — but narrowing to what is
+ * actually read here keeps the predicates typed without having to describe the
+ * whole join.
+ */
+type VerificationRow = {
+  status: string;
+  flags?: string[] | null;
+  [key: string]: unknown;
+};
+
 const AdminMentorVerification = () => {
-  const [allVerifications, setAllVerifications] = useState([]);
+  const [allVerifications, setAllVerifications] = useState<VerificationRow[]>([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedStatus, setSelectedStatus] = useState("pending");
@@ -24,9 +36,13 @@ const AdminMentorVerification = () => {
 
   // Filter and process verifications
   const filteredVerifications = useMemo(() => {
-    let filtered = allVerifications.filter((verification: any) =>
-      verification.status === selectedStatus
-    );
+    // "flagged" is not a status — applications are approved on submission, so the
+    // review queue is the approved ones that failed an automated check. Without
+    // this tab the flags would never be seen, since Pending is always empty.
+    let filtered =
+      selectedStatus === "flagged"
+        ? allVerifications.filter((verification: VerificationRow) => verification.flags?.length > 0)
+        : allVerifications.filter((verification: VerificationRow) => verification.status === selectedStatus);
 
     // Apply search filter
     if (filters.search) {
@@ -137,7 +153,12 @@ const AdminMentorVerification = () => {
     setFilters(newFilters);
   };
 
-  const totalForStatus = allVerifications.filter((v: any) => v.status === selectedStatus).length;
+  const totalForStatus =
+    selectedStatus === "flagged"
+      ? allVerifications.filter((v: VerificationRow) => v.flags?.length > 0).length
+      : allVerifications.filter((v: VerificationRow) => v.status === selectedStatus).length;
+
+  const flaggedCount = allVerifications.filter((v: VerificationRow) => v.flags?.length > 0).length;
 
   return (
     <AdminLayout>
@@ -159,6 +180,7 @@ const AdminMentorVerification = () => {
           verifications={filteredVerifications}
           loading={loading}
           selectedStatus={selectedStatus}
+          flaggedCount={flaggedCount}
           onStatusChange={setSelectedStatus}
           onStatusUpdate={handleStatusUpdate}
         />

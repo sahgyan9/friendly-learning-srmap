@@ -34,6 +34,29 @@ export const submitMentorApplication = async (application: CreateMentorVerificat
   return { data, error: null };
 };
 
+/**
+ * Whether another account already claims this enrollment number.
+ *
+ * Goes through an RPC rather than a table query because RLS on public.users
+ * restricts SELECT to the caller's own row — a direct query would always report
+ * the ID as free. The RPC returns a bare boolean and never reveals the holder.
+ *
+ * Fails open: a network error must not stop someone applying, and the insert
+ * trigger re-checks and flags duplicates regardless.
+ */
+export const isCollegeIdTaken = async (collegeId: string): Promise<boolean> => {
+  const { data, error } = await supabase.rpc("is_college_id_taken", {
+    p_college_id: collegeId,
+  });
+
+  if (error) {
+    console.error("Error checking College ID:", error);
+    return false;
+  }
+
+  return data === true;
+};
+
 export const getMentorVerification = async (userId: string) => {
   if (!userId) {
     return { data: null, error: { message: 'User ID is required' } };

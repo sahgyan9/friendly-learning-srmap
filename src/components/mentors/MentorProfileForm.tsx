@@ -51,6 +51,7 @@ const MentorProfileForm = ({ userId, initialData, isEditMode = false }: MentorPr
     isSubmitting,
     isDirty,
     errors,
+    checkingCollegeId,
     completion,
     remainingRequired,
     handleChange,
@@ -104,6 +105,7 @@ const MentorProfileForm = ({ userId, initialData, isEditMode = false }: MentorPr
         <MentorAcademicInfo
           formData={formData}
           errors={errors}
+          checkingCollegeId={checkingCollegeId}
           handleChange={handleChange}
           handleBlur={handleBlur}
           markTouched={markTouched}

@@ -28,6 +28,8 @@ import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 import { updateVerificationStatus } from "@/integrations/supabase/services/mentor-verification";
 import { useAuth } from "@/context/AuthContext";
+import VerificationFlags from "./VerificationFlags";
+import { enrollmentYear } from "@/lib/college-id";
 
 interface VerificationDetailsCardProps {
     verification: any;
@@ -135,6 +137,8 @@ const VerificationDetailsCard = ({ verification, onStatusUpdate }: VerificationD
                 </div>
             </CardHeader>
             <CardContent className="space-y-6">
+                <VerificationFlags flags={verification.flags} />
+
                 {/* Quick Info */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div className="flex items-center space-x-2 text-sm">
@@ -163,6 +167,34 @@ const VerificationDetailsCard = ({ verification, onStatusUpdate }: VerificationD
                         <div>
                             <p className="font-medium">Mobile</p>
                             <p className="text-muted-foreground">{applicationData.mobile || 'N/A'}</p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Identity. The enrollment year is shown alongside the ID so the
+                    graduation year can be sanity-checked at a glance. */}
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="flex items-center space-x-2 text-sm">
+                        <MapPin className="h-4 w-4 text-rose-500" />
+                        <div>
+                            <p className="font-medium">College ID</p>
+                            <p className="font-mono text-muted-foreground">
+                                {verification.college_id || 'Not provided'}
+                            </p>
+                        </div>
+                    </div>
+                    <div className="flex items-center space-x-2 text-sm">
+                        <Award className="h-4 w-4 text-indigo-500" />
+                        <div>
+                            <p className="font-medium">Graduates</p>
+                            <p className="text-muted-foreground">
+                                {verification.graduation_year || 'Not provided'}
+                                {enrollmentYear(verification.college_id || '') !== null && (
+                                    <span className="ml-1 opacity-70">
+                                        (enrolled {enrollmentYear(verification.college_id)})
+                                    </span>
+                                )}
+                            </p>
                         </div>
                     </div>
                 </div>

@@ -1,10 +1,11 @@
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
   submitMentorApplication,
   updateMentorApplication,
-  getMentorVerification
+  getMentorVerification,
+  isCollegeIdTaken
 } from "@/integrations/supabase/services/mentor-verification";
 import { useNavigate } from "react-router-dom";
 import {
@@ -14,6 +15,7 @@ import {
   validateMentorForm,
   type MentorFormErrors,
 } from "@/lib/mentor-form-validation";
+import { COLLEGE_ID_PATTERN, normaliseCollegeId, suggestedGraduationYear } from "@/lib/college-id";
 
 export interface MentorFormData {
   name: string;
@@ -24,6 +26,8 @@ export interface MentorFormData {
   profile_image: string;
   cgpa: string;
   year_of_studies: string;
+  college_id: string;
+  graduation_year: string;
   university: string;
   hobbies: string;
   mobile: string;
@@ -35,7 +39,9 @@ const PROGRESS_FIELDS: (keyof MentorFormData)[] = [
   "department",
   "mobile",
   "university",
+  "college_id",
   "year_of_studies",
+  "graduation_year",
   "cgpa",
   "skills",
   "bio",
@@ -49,7 +55,51 @@ export const useMentorForm = (userId: string, initialData: MentorFormData, isEdi
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
 
-  const allErrors = useMemo(() => validateMentorForm(formData), [formData]);
+  /**
+   * Duplicate College IDs can only be detected server-side — RLS hides other
+   * users' rows from the browser — so this is checked asynchronously rather than
+   * in validateMentorForm with everything else.
+   */
+  const [collegeIdTaken, setCollegeIdTaken] = useState(false);
+  const [checkingCollegeId, setCheckingCollegeId] = useState(false);
+
+  const normalisedCollegeId = normaliseCollegeId(formData.college_id);
+  const collegeIdWellFormed = COLLEGE_ID_PATTERN.test(normalisedCollegeId);
+
+  useEffect(() => {
+    if (!collegeIdWellFormed) {
+      setCollegeIdTaken(false);
+      setCheckingCollegeId(false);
+      return;
+    }
+
+    // Debounced so typing an ID is one lookup, not thirteen.
+    let active = true;
+    setCheckingCollegeId(true);
+    const timer = setTimeout(async () => {
+      const taken = await isCollegeIdTaken(normalisedCollegeId);
+      if (!active) return;
+      setCollegeIdTaken(taken);
+      setCheckingCollegeId(false);
+    }, 450);
+
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
+  }, [normalisedCollegeId, collegeIdWellFormed]);
+
+  const allErrors = useMemo(() => {
+    const errors = validateMentorForm(formData);
+
+    // Only when the format is already good, so one mistake reports one problem.
+    if (collegeIdTaken && !errors.college_id) {
+      errors.college_id =
+        "That College ID is already registered to another account. Check the digits, or contact us if someone else has used your ID.";
+    }
+
+    return errors;
+  }, [formData, collegeIdTaken]);
 
   /**
    * Errors are only surfaced once a field has been left, or once submit has been
@@ -77,14 +127,33 @@ export const useMentorForm = (userId: string, initialData: MentorFormData, isEdi
    */
   const remainingRequired = useMemo(() => Object.keys(allErrors).length, [allErrors]);
 
+  /**
+   * Set once the applicant picks their own graduation year, after which the
+   * College ID stops suggesting one. Without this, correcting a typo in the ID
+   * would silently overwrite a year they had deliberately chosen.
+   */
+  const graduationYearChosen = useRef(false);
+
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
       const { name, value } = e.target;
       setIsDirty(true);
-      setFormData(prev => ({
-        ...prev,
-        [name]: value
-      }));
+
+      if (name === "graduation_year") graduationYearChosen.current = true;
+
+      setFormData(prev => {
+        const next = { ...prev, [name]: value };
+
+        // The ID encodes the enrollment year, so we can offer a graduation year
+        // rather than asking for it cold. It is only ever a suggestion: course
+        // lengths differ, so the applicant confirms or corrects it.
+        if (name === "college_id" && !graduationYearChosen.current) {
+          const suggestion = suggestedGraduationYear(value);
+          next.graduation_year = suggestion === null ? "" : String(suggestion);
+        }
+
+        return next;
+      });
     },
     [],
   );
@@ -144,6 +213,18 @@ export const useMentorForm = (userId: string, initialData: MentorFormData, isEdi
 
     setIsSubmitting(true);
 
+    // The debounced check may not have landed yet, so confirm before submitting
+    // rather than relying on whatever the last keystroke happened to resolve.
+    if (collegeIdWellFormed && (await isCollegeIdTaken(normalisedCollegeId))) {
+      setCollegeIdTaken(true);
+      setIsSubmitting(false);
+      toast.error("That College ID is already registered to another account");
+      const node = document.getElementById("college_id");
+      node?.scrollIntoView({ behavior: "smooth", block: "center" });
+      node?.focus({ preventScroll: true });
+      return;
+    }
+
     try {
       const applicationData = {
         user_id: userId,
@@ -158,6 +239,8 @@ export const useMentorForm = (userId: string, initialData: MentorFormData, isEdi
         },
         cgpa: Number.parseFloat(formData.cgpa),
         year_of_studies: formData.year_of_studies,
+        college_id: normaliseCollegeId(formData.college_id),
+        graduation_year: Number.parseInt(formData.graduation_year, 10),
         university: formData.university.trim(),
         hobbies: formData.hobbies?.trim() || '',
         status: 'pending'
@@ -225,6 +308,7 @@ export const useMentorForm = (userId: string, initialData: MentorFormData, isEdi
     isSubmitting,
     isDirty,
     errors: visibleErrors,
+    checkingCollegeId,
     completion,
     remainingRequired,
     handleChange,

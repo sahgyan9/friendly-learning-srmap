@@ -1,13 +1,17 @@
 
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { User } from "lucide-react";
+import { ShieldCheck, User } from "lucide-react";
 import VerificationDetailsCard from "./VerificationDetailsCard";
 
 interface VerificationListProps {
   verifications: any[];
   loading: boolean;
   selectedStatus: string;
+  /** Drives the count on the review tab; applications approve themselves, so
+   *  this is the only number that represents outstanding work. */
+  flaggedCount?: number;
   onStatusChange: (status: string) => void;
   onStatusUpdate: () => void;
 }
@@ -16,6 +20,7 @@ const VerificationList = ({
   verifications,
   loading,
   selectedStatus,
+  flaggedCount = 0,
   onStatusChange,
   onStatusUpdate
 }: VerificationListProps) => {
@@ -43,6 +48,14 @@ const VerificationList = ({
     <div className="space-y-6">
       <Tabs value={selectedStatus} onValueChange={onStatusChange}>
         <TabsList>
+          <TabsTrigger value="flagged" className="gap-1.5">
+            Needs review
+            {flaggedCount > 0 && (
+              <Badge variant="secondary" className="h-5 px-1.5 tabular-nums">
+                {flaggedCount}
+              </Badge>
+            )}
+          </TabsTrigger>
           <TabsTrigger value="pending">Pending</TabsTrigger>
           <TabsTrigger value="approved">Approved</TabsTrigger>
           <TabsTrigger value="rejected">Rejected</TabsTrigger>
@@ -52,10 +65,21 @@ const VerificationList = ({
           {verifications.length === 0 ? (
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-12">
-                <User className="h-12 w-12 text-gray-400 mb-4" />
-                <p className="text-gray-500 text-center">
-                  No {selectedStatus} mentor applications found
-                </p>
+                {selectedStatus === "flagged" ? (
+                  <>
+                    <ShieldCheck className="h-12 w-12 text-green-500 mb-4" />
+                    <p className="text-center text-muted-foreground">
+                      Nothing to review — every application passed its checks.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <User className="h-12 w-12 text-gray-400 mb-4" />
+                    <p className="text-gray-500 text-center">
+                      No {selectedStatus} mentor applications found
+                    </p>
+                  </>
+                )}
               </CardContent>
             </Card>
           ) : (

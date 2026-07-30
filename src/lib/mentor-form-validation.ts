@@ -1,4 +1,5 @@
 import type { MentorFormData } from "@/hooks/useMentorForm";
+import { enrollmentYear, isGraduationYearPlausible, validateCollegeId } from "@/lib/college-id";
 
 export type MentorFormErrors = Partial<Record<keyof MentorFormData, string>>;
 
@@ -16,7 +17,9 @@ export const FIELD_ORDER: (keyof MentorFormData)[] = [
   "department",
   "mobile",
   "university",
+  "college_id",
   "year_of_studies",
+  "graduation_year",
   "cgpa",
   "hobbies",
   "skills",
@@ -29,7 +32,9 @@ export const FIELD_LABELS: Record<keyof MentorFormData, string> = {
   department: "Department",
   mobile: "Mobile number",
   university: "University",
+  college_id: "College ID",
   year_of_studies: "Year of study",
+  graduation_year: "Graduation year",
   cgpa: "CGPA",
   hobbies: "Hobbies & interests",
   skills: "Skills",
@@ -104,7 +109,22 @@ export function validateMentorForm(data: MentorFormData): MentorFormErrors {
 
   if (!data.university?.trim()) errors.university = "University is required";
 
+  const collegeIdError = validateCollegeId(data.college_id ?? "");
+  if (collegeIdError) errors.college_id = collegeIdError;
+
   if (!data.year_of_studies) errors.year_of_studies = "Select your year of study";
+
+  const graduationYear = Number.parseInt(data.graduation_year ?? "", 10);
+  if (!data.graduation_year) {
+    errors.graduation_year = "Select the year you expect to graduate";
+  } else if (Number.isNaN(graduationYear)) {
+    errors.graduation_year = "Enter a four-digit year";
+  } else if (!collegeIdError && !isGraduationYearPlausible(data.college_id, graduationYear)) {
+    // Only checked once the ID itself is valid, so a mistyped ID reports one
+    // problem rather than two.
+    const enrolled = enrollmentYear(data.college_id);
+    errors.graduation_year = `Your ID says you enrolled in ${enrolled} — ${graduationYear} does not line up`;
+  }
 
   const cgpaRaw = (data.cgpa ?? "").toString().trim();
   if (!cgpaRaw) {

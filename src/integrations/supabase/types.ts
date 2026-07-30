@@ -787,6 +787,9 @@ export type Database = {
         Row: {
           application_data: Json | null
           cgpa: number | null
+          college_id: string | null
+          flags: string[]
+          graduation_year: number | null
           hobbies: string | null
           id: string
           rejection_reason: string | null
@@ -801,6 +804,9 @@ export type Database = {
         Insert: {
           application_data?: Json | null
           cgpa?: number | null
+          college_id?: string | null
+          flags?: string[]
+          graduation_year?: number | null
           hobbies?: string | null
           id?: string
           rejection_reason?: string | null
@@ -815,6 +821,9 @@ export type Database = {
         Update: {
           application_data?: Json | null
           cgpa?: number | null
+          college_id?: string | null
+          flags?: string[]
+          graduation_year?: number | null
           hobbies?: string | null
           id?: string
           rejection_reason?: string | null
@@ -863,6 +872,7 @@ export type Database = {
           cgpa: number | null
           created_at: string | null
           department: string
+          graduation_year: number | null
           hobbies: string | null
           id: string
           linkedin_url: string | null
@@ -880,6 +890,7 @@ export type Database = {
           cgpa?: number | null
           created_at?: string | null
           department: string
+          graduation_year?: number | null
           hobbies?: string | null
           id?: string
           linkedin_url?: string | null
@@ -897,6 +908,7 @@ export type Database = {
           cgpa?: number | null
           created_at?: string | null
           department?: string
+          graduation_year?: number | null
           hobbies?: string | null
           id?: string
           linkedin_url?: string | null
@@ -1270,11 +1282,13 @@ export type Database = {
       users: {
         Row: {
           bio: string | null
+          college_id: string | null
           created_at: string | null
           department: string | null
           email: string
           email_frequency: string | null
           email_notifications: boolean | null
+          graduation_year: number | null
           id: string
           is_admin: boolean
           is_available: boolean | null
@@ -1288,11 +1302,13 @@ export type Database = {
         }
         Insert: {
           bio?: string | null
+          college_id?: string | null
           created_at?: string | null
           department?: string | null
           email: string
           email_frequency?: string | null
           email_notifications?: boolean | null
+          graduation_year?: number | null
           id?: string
           is_admin?: boolean
           is_available?: boolean | null
@@ -1306,11 +1322,13 @@ export type Database = {
         }
         Update: {
           bio?: string | null
+          college_id?: string | null
           created_at?: string | null
           department?: string | null
           email?: string
           email_frequency?: string | null
           email_notifications?: boolean | null
+          graduation_year?: number | null
           id?: string
           is_admin?: boolean
           is_available?: boolean | null
@@ -1759,6 +1777,7 @@ export type Database = {
         Returns: boolean
       }
       is_admin_user: { Args: { user_id?: string }; Returns: boolean }
+      is_college_id_taken: { Args: { p_college_id: string }; Returns: boolean }
       join_canvas_session: {
         Args: { p_session_code: string; p_user_id: string }
         Returns: {

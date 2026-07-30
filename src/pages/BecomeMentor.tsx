@@ -31,6 +31,9 @@ const BecomeMentor = () => {
     profile_image: profile?.profile_image || "",
     cgpa: "",
     year_of_studies: "",
+    college_id: "",
+    // Suggested from the College ID once it is entered, then confirmed.
+    graduation_year: "",
     // Every mentor on this platform is an SRM AP student, so asking them to type
     // it out was pure friction — it stays editable for the rare exception.
     university: "SRM University AP",
@@ -81,6 +84,8 @@ const BecomeMentor = () => {
       profile_image: appData.profile_image || profile?.profile_image || "",
       cgpa: existingApplication.cgpa?.toString() || "",
       year_of_studies: existingApplication.year_of_studies || "",
+      college_id: existingApplication.college_id || "",
+      graduation_year: existingApplication.graduation_year?.toString() || "",
       university: existingApplication.university || "",
       hobbies: existingApplication.hobbies || "",
       mobile: appData.mobile || ""
