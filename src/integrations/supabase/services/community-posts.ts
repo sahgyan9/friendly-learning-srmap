@@ -331,6 +331,14 @@ export const addPostComment = async (postId: string, content: string) => {
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 
+/**
+ * The bucket's **id**, which is what the Storage API addresses. Its display name
+ * in the dashboard is "Community Post Images", and passing that name produced a
+ * 400 on every upload because no bucket has that id — the storage policy agrees,
+ * it checks `bucket_id = 'community-posts'`.
+ */
+const POST_IMAGE_BUCKET = "community-posts";
+
 export const uploadCommunityPostImage = async (file: File) => {
   if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
     throw new Error("Invalid file type. Only JPEG, PNG, GIF, and WebP images are allowed.");
@@ -342,7 +350,7 @@ export const uploadCommunityPostImage = async (file: File) => {
   const fileExt = file.name.split(".").pop();
   const filePath = `${crypto.randomUUID()}.${fileExt}`;
 
-  const { error } = await supabase.storage.from("Community Post Images").upload(filePath, file);
+  const { error } = await supabase.storage.from(POST_IMAGE_BUCKET).upload(filePath, file);
   if (error) {
     console.error("Error uploading community post image:", error);
     throw error;
@@ -350,7 +358,7 @@ export const uploadCommunityPostImage = async (file: File) => {
 
   const {
     data: { publicUrl },
-  } = supabase.storage.from("Community Post Images").getPublicUrl(filePath);
+  } = supabase.storage.from(POST_IMAGE_BUCKET).getPublicUrl(filePath);
 
   return { path: filePath, url: publicUrl };
 };

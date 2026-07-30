@@ -131,11 +131,21 @@ export const CreatePostModal = ({ open, onOpenChange, onPostCreated }: CreatePos
     try {
       let imageUrl: string | undefined;
       if (imageFile) {
-        // Goes through the shared uploader so it lands in the bucket that
-        // actually exists — this modal previously wrote to a "community-posts"
-        // bucket that was never created, so every attachment failed.
-        const { url } = await uploadCommunityPostImage(imageFile);
-        imageUrl = url;
+        // Reported separately from the post itself. A failed upload used to
+        // surface as "Failed to create post", which pointed at the wrong thing
+        // entirely: the post had never been attempted, and the actual fault was
+        // in storage.
+        try {
+          const { url } = await uploadCommunityPostImage(imageFile);
+          imageUrl = url;
+        } catch (uploadError) {
+          toast.error(
+            uploadError instanceof Error
+              ? `Couldn't upload the image: ${uploadError.message}`
+              : "Couldn't upload the image. Try posting without it.",
+          );
+          return;
+        }
       }
 
       const { error } = await createCommunityPost({

@@ -32,14 +32,17 @@ const NavbarProfileMenu = () => {
     }
     
     try {
+      // maybeSingle, not single: a student simply has no mentors row, and
+      // single() turns that ordinary case into a 406 plus a console error on
+      // every page load — noise that buries real failures in the API log.
       const { data, error } = await supabase
         .from('mentors')
         .select('department')
         .eq('id', user.id)
-        .single();
-      
+        .maybeSingle();
+
       if (error) {
-        console.log('User not found in mentors table or error:', error);
+        console.error('Error checking mentor status:', error);
         setIsRealMentor(false);
       } else {
         // Only consider as real mentor if not in General department and department exists
