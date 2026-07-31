@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CommunityCard } from "@/components/communities/CommunityCard";
 import { CreateCommunityModal } from "@/components/communities/CreateCommunityModal";
+import MyInvites from "@/components/communities/MyInvites";
 import { useAuth } from "@/context/AuthContext";
 import { useDebounce } from "@/hooks/useDebounce";
 import { cn } from "@/lib/utils";
@@ -54,8 +55,8 @@ const Communities = () => {
           <div>
             <h1 className="mb-2 text-3xl font-bold md:text-4xl">Groups</h1>
             <p className="max-w-2xl text-muted-foreground">
-              Hackathon teams, project groups, clubs and study circles. A mentor starts one, anyone
-              can join, and members post inside it.
+              Hackathon teams, project groups, clubs and study circles. A mentor starts one, and
+              members post inside it — some are open to everyone, some you ask to join.
             </p>
           </div>
 
@@ -66,6 +67,8 @@ const Communities = () => {
             </Button>
           )}
         </div>
+
+        <MyInvites />
 
         <div className="mb-6 space-y-3">
           <div className="relative">

@@ -1,7 +1,17 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
-import { ArrowLeft, Check, Loader2, LogOut, MessageSquare, Plus, Users } from "lucide-react";
+import {
+  ArrowLeft,
+  Check,
+  Loader2,
+  Lock,
+  LogOut,
+  MessageSquare,
+  Plus,
+  UserPlus,
+  Users,
+} from "lucide-react";
 
 import SEOHead from "@/components/SEOHead";
 import { Badge } from "@/components/ui/badge";
@@ -22,12 +32,17 @@ import {
 import { PostCard } from "@/components/community/PostCard";
 import { CreatePostModal } from "@/components/community/CreatePostModal";
 import { CommunityMemberList } from "@/components/communities/CommunityMemberList";
+import JoinRequestDialog from "@/components/communities/JoinRequestDialog";
+import JoinRequestsPanel from "@/components/communities/JoinRequestsPanel";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/context/AuthContext";
 import {
   getCommunityBySlug,
   getCommunityKindMeta,
   joinCommunity,
   leaveCommunity,
+  listMyInvites,
+  respondToInvite,
   type Community,
 } from "@/integrations/supabase/services/communities";
 import {
@@ -47,6 +62,7 @@ const CommunityDetail = () => {
   const [notFound, setNotFound] = useState(false);
   const [working, setWorking] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
+  const [requestOpen, setRequestOpen] = useState(false);
 
   const loadPosts = useCallback(async (communityId: string) => {
     const { data } = await getCommunityPosts({ communityId, limit: 50 });
@@ -64,7 +80,16 @@ const CommunityDetail = () => {
     }
 
     setCommunity(data);
-    await loadPosts(data.id);
+
+    // Skipped rather than fetched-and-discarded when the viewer cannot see
+    // inside: the database would return zero rows anyway, and asking for posts
+    // the caller has no claim on is a request worth not making.
+    if (data.viewer_can_view !== false) {
+      await loadPosts(data.id);
+    } else {
+      setPosts([]);
+    }
+
     setLoading(false);
   }, [slug, loadPosts]);
 
@@ -91,6 +116,33 @@ const CommunityDetail = () => {
     toast.success(`You're in — welcome to ${community.name}`, {
       description: "You can post here now.",
     });
+    load();
+  };
+
+  const handleAcceptInvite = async () => {
+    if (!community) return;
+
+    // The invite id is not on the community row, so this reads the viewer's
+    // outstanding invites and matches on the group. There is only ever one
+    // pending invite per person per group.
+    const { data: invites } = await listMyInvites();
+    const invite = invites.find((entry) => entry.community_id === community.id);
+    if (!invite) {
+      toast.error("That invitation is no longer available");
+      load();
+      return;
+    }
+
+    setWorking(true);
+    const { error } = await respondToInvite(invite.id, true);
+    setWorking(false);
+
+    if (error) {
+      toast.error(error.message || "Could not accept the invitation");
+      return;
+    }
+
+    toast.success(`You're in — welcome to ${community.name}`);
     load();
   };
 
@@ -185,6 +237,12 @@ const CommunityDetail = () => {
                 <span aria-hidden>{kind.emoji}</span>
                 {kind.label}
               </Badge>
+              {community.visibility === "private" && (
+                <Badge variant="outline" className="gap-1 text-muted-foreground">
+                  <Lock className="h-3 w-3" />
+                  Invite only
+                </Badge>
+              )}
               {community.is_archived && <Badge variant="outline">Archived</Badge>}
             </div>
 
@@ -241,6 +299,32 @@ const CommunityDetail = () => {
                 <p className="text-sm text-muted-foreground">
                   This group has been archived and isn't taking new members.
                 </p>
+              ) : community.visibility === "private" ? (
+                // An invitation outranks a pending request: if the owner has
+                // reached out in the meantime, offer the door rather than
+                // leaving them staring at "Requested".
+                community.viewer_has_invite ? (
+                  <Button onClick={handleAcceptInvite} disabled={working}>
+                    {working ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Check className="mr-2 h-4 w-4" />
+                    )}
+                    Accept invitation
+                  </Button>
+                ) : community.viewer_has_requested ? (
+                  <Button variant="outline" disabled>
+                    Requested
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={() => (user ? setRequestOpen(true) : navigate("/signin"))}
+                    disabled={working}
+                  >
+                    <UserPlus className="mr-2 h-4 w-4" />
+                    Request to join
+                  </Button>
+                )
               ) : (
                 <Button onClick={handleJoin} disabled={working}>
                   {working ? (
@@ -262,9 +346,88 @@ const CommunityDetail = () => {
           </CardContent>
         </Card>
 
+        {/* Nobody did anything wrong here, so this reads as a description of
+            the group rather than a refusal. "Access denied" would be both
+            unfriendly and untrue — they are one request away. */}
+        {community.viewer_can_view === false ? (
+          <Card>
+            <CardContent className="flex flex-col items-center gap-3 py-16 text-center">
+              <span className="flex h-12 w-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                <Lock className="h-6 w-6" />
+              </span>
+              <p className="text-lg font-semibold">This group is invite only</p>
+
+              {community.viewer_has_requested ? (
+                <p className="max-w-sm text-sm text-muted-foreground">
+                  <span className="font-medium text-foreground">Request sent.</span> You'll get a
+                  notification when {community.owner.name} replies.
+                </p>
+              ) : (
+                <>
+                  <p className="max-w-sm text-sm text-muted-foreground">
+                    Members can see the posts here. Ask {community.owner.name} to join and they'll
+                    get a notification.
+                  </p>
+                  {!community.viewer_has_invite && (
+                    <Button
+                      onClick={() => (user ? setRequestOpen(true) : navigate("/signin"))}
+                    >
+                      <UserPlus className="mr-2 h-4 w-4" />
+                      Request to join
+                    </Button>
+                  )}
+                </>
+              )}
+            </CardContent>
+          </Card>
+        ) : (
         <div className="grid gap-6 lg:grid-cols-[1fr_20rem]">
           <div className="space-y-4">
-            {posts.length > 0 ? (
+            {community.viewer_is_owner && community.visibility === "private" ? (
+              <Tabs defaultValue="posts">
+                <TabsList className="mb-4">
+                  <TabsTrigger value="posts">Posts</TabsTrigger>
+                  <TabsTrigger value="requests" className="gap-2">
+                    Requests
+                    {(community.pending_request_count ?? 0) > 0 && (
+                      <Badge variant="secondary" className="px-1.5 py-0 text-[11px]">
+                        {community.pending_request_count}
+                      </Badge>
+                    )}
+                  </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="posts" className="space-y-4">
+                  {posts.length > 0 ? (
+                    posts.map((post) => (
+                      <PostCard
+                        key={post.id}
+                        post={post}
+                        onOpen={(postId) => navigate(`/community-posts/${postId}`)}
+                        onLike={handleLike}
+                      />
+                    ))
+                  ) : (
+                    <Card>
+                      <CardContent className="flex flex-col items-center gap-3 py-14 text-center">
+                        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+                          <MessageSquare className="h-6 w-6" />
+                        </span>
+                        <p className="font-medium">Nothing posted here yet</p>
+                        <Button onClick={() => setCreateOpen(true)}>
+                          <Plus className="mr-2 h-4 w-4" />
+                          Write the first post
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  )}
+                </TabsContent>
+
+                <TabsContent value="requests">
+                  <JoinRequestsPanel communityId={community.id} onDecided={load} />
+                </TabsContent>
+              </Tabs>
+            ) : posts.length > 0 ? (
               posts.map((post) => (
                 <PostCard
                   key={post.id}
@@ -299,10 +462,21 @@ const CommunityDetail = () => {
           <CommunityMemberList
             communityId={community.id}
             isOwner={community.viewer_is_owner}
+            visibility={community.visibility}
             onChanged={load}
           />
         </div>
+        )}
       </div>
+
+      <JoinRequestDialog
+        open={requestOpen}
+        onOpenChange={setRequestOpen}
+        communityId={community.id}
+        communityName={community.name}
+        ownerName={community.owner.name}
+        onRequested={load}
+      />
 
       {community.viewer_can_post && (
         <CreatePostModal

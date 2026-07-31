@@ -52,6 +52,43 @@ export type Community = {
   viewer_is_owner: boolean;
   /** Only present from getCommunityBySlug. Members of a live group may post. */
   viewer_can_post?: boolean;
+  /**
+   * A private group is still listed and searchable — that is what makes it
+   * joinable at all. What changes is that joining goes through the owner and
+   * the posts are members-only.
+   */
+  visibility: CommunityVisibility;
+  viewer_has_requested: boolean;
+  viewer_has_invite: boolean;
+  /**
+   * Decides whether the posts render. True for every public group, and for
+   * members, the owner and admins of a private one. Only present from
+   * getCommunityBySlug.
+   */
+  viewer_can_view?: boolean;
+  /** Non-zero only for the owner and admins. */
+  pending_request_count?: number;
+};
+
+export type CommunityVisibility = "public" | "private";
+
+export type JoinRequest = {
+  id: string;
+  user_id: string;
+  name: string;
+  profile_image: string | null;
+  is_mentor: boolean;
+  message: string | null;
+  created_at: string;
+};
+
+export type MyInvite = {
+  id: string;
+  community_id: string;
+  community_name: string;
+  community_slug: string;
+  invited_by_name: string | null;
+  created_at: string;
 };
 
 export type CommunityMember = {
@@ -89,6 +126,11 @@ type CommunityRow = {
   viewer_is_member: boolean;
   viewer_is_owner: boolean;
   viewer_can_post?: boolean;
+  visibility?: string;
+  viewer_has_requested?: boolean;
+  viewer_has_invite?: boolean;
+  viewer_can_view?: boolean;
+  pending_request_count?: number;
   total_count?: number;
 };
 
@@ -114,6 +156,14 @@ function toCommunity(row: CommunityRow): Community {
     viewer_is_member: row.viewer_is_member,
     viewer_is_owner: row.viewer_is_owner,
     viewer_can_post: row.viewer_can_post,
+    // Defaulting to public matters for more than tidiness: anything that fails
+    // to come back gets the *open* treatment, so a missing column can never
+    // make a public group look locked and turn its Join button into a request.
+    visibility: row.visibility === "private" ? "private" : "public",
+    viewer_has_requested: row.viewer_has_requested ?? false,
+    viewer_has_invite: row.viewer_has_invite ?? false,
+    viewer_can_view: row.viewer_can_view,
+    pending_request_count: Number(row.pending_request_count ?? 0),
   };
 }
 
@@ -182,6 +232,8 @@ export type CreateCommunityInput = {
   name: string;
   description: string;
   kind: string;
+  /** Defaults to public. Most groups should be. */
+  visibility?: CommunityVisibility;
 };
 
 /**
@@ -212,7 +264,13 @@ export const createCommunity = async (input: CreateCommunityInput) => {
   // passed in. Sending a value here would be dead weight at best and a
   // misleading one at worst, so the cast records that the database owns the
   // column rather than inventing a slug to satisfy the checker.
-  const row = { name, description, kind: input.kind, owner_id: user.id } as CommunityInsert;
+  const row = {
+    name,
+    description,
+    kind: input.kind,
+    owner_id: user.id,
+    visibility: input.visibility ?? "public",
+  } as CommunityInsert;
 
   const { data, error } = await supabase
     .from("communities")
@@ -314,4 +372,101 @@ export const findAddableUsers = async (communityId: string, search: string) => {
   }
 
   return { data: data ?? [], error: null };
+};
+
+/*
+ * Private-group membership.
+ *
+ * Every one of these raises Postgres exceptions with sentences written to be
+ * read by a person — "You already have a request waiting on this group", "Only
+ * the group owner can invite people". Callers should surface `error.message`
+ * rather than substituting a generic string; the specific one is nearly always
+ * more use than "Something went wrong".
+ *
+ * Approving a request settles it and creates the membership in a single
+ * transaction, and the same goes for accepting an invite. Never follow these
+ * with an insert into community_members: two client calls leave an approved
+ * request with nobody in the group behind it the first time the second fails.
+ */
+
+export const requestToJoinCommunity = async (communityId: string, message?: string) => {
+  const trimmed = message ? sanitizeInput(message, 300).trim() : "";
+
+  const { data, error } = await supabase.rpc("request_to_join_community", {
+    p_community_id: communityId,
+    p_message: trimmed || undefined,
+  });
+
+  if (error) {
+    console.error("Error requesting to join community:", error);
+    return { data: null, error };
+  }
+
+  return { data, error: null };
+};
+
+export const decideJoinRequest = async (requestId: string, approve: boolean) => {
+  const { data, error } = await supabase.rpc("decide_join_request", {
+    p_request_id: requestId,
+    p_approve: approve,
+  });
+
+  if (error) {
+    console.error("Error deciding join request:", error);
+    return { data: null, error };
+  }
+
+  return { data, error: null };
+};
+
+export const listJoinRequests = async (communityId: string) => {
+  const { data, error } = await supabase.rpc("list_join_requests", {
+    p_community_id: communityId,
+  });
+
+  if (error) {
+    console.error("Error listing join requests:", error);
+    return { data: [] as JoinRequest[], error };
+  }
+
+  return { data: (data ?? []) as JoinRequest[], error: null };
+};
+
+export const inviteToCommunity = async (communityId: string, userId: string) => {
+  const { data, error } = await supabase.rpc("invite_to_community", {
+    p_community_id: communityId,
+    p_user_id: userId,
+  });
+
+  if (error) {
+    console.error("Error inviting to community:", error);
+    return { data: null, error };
+  }
+
+  return { data, error: null };
+};
+
+export const listMyInvites = async () => {
+  const { data, error } = await supabase.rpc("list_my_invites");
+
+  if (error) {
+    console.error("Error listing invites:", error);
+    return { data: [] as MyInvite[], error };
+  }
+
+  return { data: (data ?? []) as MyInvite[], error: null };
+};
+
+export const respondToInvite = async (inviteId: string, accept: boolean) => {
+  const { data, error } = await supabase.rpc("respond_to_invite", {
+    p_invite_id: inviteId,
+    p_accept: accept,
+  });
+
+  if (error) {
+    console.error("Error responding to invite:", error);
+    return { data: null, error };
+  }
+
+  return { data, error: null };
 };

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Globe, Lock } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -21,6 +22,7 @@ import {
   NAME_MAX,
   NAME_MIN,
   createCommunity,
+  type CommunityVisibility,
 } from "@/integrations/supabase/services/communities";
 
 interface CreateCommunityModalProps {
@@ -65,6 +67,7 @@ export const CreateCommunityModal = ({ open, onOpenChange }: CreateCommunityModa
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [kind, setKind] = useState("");
+  const [visibility, setVisibility] = useState<CommunityVisibility>("public");
   const [submitting, setSubmitting] = useState(false);
 
   const placeholders = PLACEHOLDERS[kind] ?? PLACEHOLDERS.general;
@@ -74,6 +77,7 @@ export const CreateCommunityModal = ({ open, onOpenChange }: CreateCommunityModa
     setName("");
     setDescription("");
     setKind("");
+    setVisibility("public");
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -85,7 +89,7 @@ export const CreateCommunityModal = ({ open, onOpenChange }: CreateCommunityModa
     }
 
     setSubmitting(true);
-    const { data, error } = await createCommunity({ name, description, kind });
+    const { data, error } = await createCommunity({ name, description, kind, visibility });
     setSubmitting(false);
 
     if (error || !data) {
@@ -94,7 +98,10 @@ export const CreateCommunityModal = ({ open, onOpenChange }: CreateCommunityModa
     }
 
     toast.success("Group created", {
-      description: "You're the owner. Share the link and students can join themselves.",
+      description:
+        visibility === "private"
+          ? "You're the owner. It's listed for everyone, but people have to ask you to join."
+          : "You're the owner. Share the link and students can join themselves.",
     });
     reset();
     onOpenChange(false);
@@ -178,6 +185,57 @@ export const CreateCommunityModal = ({ open, onOpenChange }: CreateCommunityModa
                 ? `${DESCRIPTION_MIN - description.trim().length} more characters — people decide whether to join from this`
                 : `${description.length}/${DESCRIPTION_MAX}`}
             </p>
+          </div>
+
+          {/* Two cards rather than a checkbox: "private" means something
+              specific here — still listed, but joining goes through you — and
+              a lone tickbox would leave people guessing which half it meant. */}
+          <div className="space-y-2">
+            <Label>Who can join?</Label>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {(
+                [
+                  {
+                    value: "public",
+                    icon: Globe,
+                    title: "Open",
+                    blurb: "Anyone signed in can join and read the posts.",
+                  },
+                  {
+                    value: "private",
+                    icon: Lock,
+                    title: "Invite only",
+                    blurb:
+                      "Your group still shows in the directory, but people have to ask to join and only members can read the posts.",
+                  },
+                ] as const
+              ).map((option) => {
+                const Icon = option.icon;
+                const selected = visibility === option.value;
+
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setVisibility(option.value)}
+                    aria-pressed={selected}
+                    className={cn(
+                      "rounded-lg border p-3 text-left transition-colors",
+                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                      selected
+                        ? "border-primary bg-primary/5"
+                        : "border-border hover:border-primary/40 hover:bg-muted/50",
+                    )}
+                  >
+                    <span className="flex items-center gap-2 font-medium text-foreground">
+                      <Icon className="h-4 w-4 flex-shrink-0" />
+                      {option.title}
+                    </span>
+                    <span className="mt-1 block text-xs text-muted-foreground">{option.blurb}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           <div className="flex justify-end gap-2">

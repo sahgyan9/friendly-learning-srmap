@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { MessageSquare, Users } from "lucide-react";
+import { Lock, MessageSquare, Users } from "lucide-react";
 
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -22,10 +22,28 @@ export function CommunityCard({ community }: CommunityCardProps) {
             <span aria-hidden>{kind.emoji}</span>
             {kind.label}
           </Badge>
+          {/* Stated plainly on the card so nobody clicks through expecting to
+              read the posts. Muted, not alarming — the group is still listed
+              and still joinable, just not instantly. */}
+          {community.visibility === "private" && (
+            <Badge variant="outline" className="gap-1 text-muted-foreground">
+              <Lock className="h-3 w-3" />
+              Invite only
+            </Badge>
+          )}
+
           {community.viewer_is_owner ? (
             <Badge variant="outline">You run this</Badge>
           ) : community.viewer_is_member ? (
             <Badge variant="outline">Joined</Badge>
+          ) : community.viewer_has_invite ? (
+            <Badge variant="outline" className="border-primary/40 text-primary">
+              You're invited
+            </Badge>
+          ) : community.viewer_has_requested ? (
+            <Badge variant="outline" className="text-muted-foreground">
+              Requested
+            </Badge>
           ) : null}
         </div>
 

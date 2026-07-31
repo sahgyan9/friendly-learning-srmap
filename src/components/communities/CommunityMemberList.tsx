@@ -23,19 +23,28 @@ import {
   addCommunityMember,
   findAddableUsers,
   getCommunityMembers,
+  inviteToCommunity,
   removeCommunityMember,
   type CommunityMember,
+  type CommunityVisibility,
 } from "@/integrations/supabase/services/communities";
 
 interface CommunityMemberListProps {
   communityId: string;
   isOwner: boolean;
+  /** Decides whether the owner adds people outright or invites them. */
+  visibility?: CommunityVisibility;
   onChanged: () => void;
 }
 
 type Addable = { user_id: string; name: string; profile_image: string | null; is_mentor: boolean };
 
-export function CommunityMemberList({ communityId, isOwner, onChanged }: CommunityMemberListProps) {
+export function CommunityMemberList({
+  communityId,
+  isOwner,
+  visibility = "public",
+  onChanged,
+}: CommunityMemberListProps) {
   const [members, setMembers] = useState<CommunityMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -75,13 +84,25 @@ export function CommunityMemberList({ communityId, isOwner, onChanged }: Communi
     };
   }, [search, isOwner, communityId]);
 
+  /**
+   * Open groups are joinable by anyone, so dropping someone straight in only
+   * saves them a click. An invite-only group is a different promise: being put
+   * somewhere private without being asked is not a favour, so there the owner
+   * sends an invitation and the person decides.
+   */
   const handleAdd = async (candidate: Addable) => {
-    const { error } = await addCommunityMember(communityId, candidate.user_id);
+    const invite = visibility === "private";
+
+    const { error } = invite
+      ? await inviteToCommunity(communityId, candidate.user_id)
+      : await addCommunityMember(communityId, candidate.user_id);
+
     if (error) {
-      toast.error("Could not add them to the group");
+      toast.error(error.message || (invite ? "Could not send the invitation" : "Could not add them to the group"));
       return;
     }
-    toast.success(`${candidate.name} added`);
+
+    toast.success(invite ? `Invitation sent to ${candidate.name}` : `${candidate.name} added`);
     setSearch("");
     setCandidates([]);
     await load();
@@ -107,7 +128,9 @@ export function CommunityMemberList({ communityId, isOwner, onChanged }: Communi
         </CardTitle>
         {isOwner && (
           <CardDescription>
-            You can add mentors, and anyone you've messaged. Everyone else joins themselves.
+            {visibility === "private"
+              ? "You can invite mentors, and anyone you've messaged. They choose whether to accept."
+              : "You can add mentors, and anyone you've messaged. Everyone else joins themselves."}
           </CardDescription>
         )}
       </CardHeader>
@@ -119,8 +142,14 @@ export function CommunityMemberList({ communityId, isOwner, onChanged }: Communi
               <Input
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder="Add someone by name…"
-                aria-label="Search for someone to add"
+                placeholder={
+                  visibility === "private" ? "Invite someone by name…" : "Add someone by name…"
+                }
+                aria-label={
+                  visibility === "private"
+                    ? "Search for someone to invite"
+                    : "Search for someone to add"
+                }
               />
               {searching && (
                 <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-muted-foreground" />
@@ -152,7 +181,7 @@ export function CommunityMemberList({ communityId, isOwner, onChanged }: Communi
                     )}
                     <Button size="sm" variant="ghost" onClick={() => handleAdd(candidate)}>
                       <UserPlus className="mr-1 h-3.5 w-3.5" />
-                      Add
+                      {visibility === "private" ? "Invite" : "Add"}
                     </Button>
                   </li>
                 ))}
