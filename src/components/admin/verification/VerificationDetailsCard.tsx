@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import WelcomeEmailButton from "./WelcomeEmailButton";
+import type { MentorWelcomeStatus } from "@/integrations/supabase/services/welcome-emails";
 import { toast } from "sonner";
 import { updateVerificationStatus } from "@/integrations/supabase/services/mentor-verification";
 import { useAuth } from "@/context/AuthContext";
@@ -35,9 +36,17 @@ import { enrollmentYear } from "@/lib/college-id";
 interface VerificationDetailsCardProps {
     verification: any;
     onStatusUpdate: () => void;
+    /** Email and welcome state for this mentor, from the admin-only RPC. */
+    welcome?: MentorWelcomeStatus;
+    onWelcomeSent?: () => void;
 }
 
-const VerificationDetailsCard = ({ verification, onStatusUpdate }: VerificationDetailsCardProps) => {
+const VerificationDetailsCard = ({
+    verification,
+    onStatusUpdate,
+    welcome,
+    onWelcomeSent,
+}: VerificationDetailsCardProps) => {
     const [updating, setUpdating] = useState<string | null>(null);
     const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
     const [rejectionReason, setRejectionReason] = useState("");
@@ -401,11 +410,19 @@ const VerificationDetailsCard = ({ verification, onStatusUpdate }: VerificationD
                 {verification.status === 'approved' && (
                     <div className="flex items-center justify-between gap-3 pt-4 border-t">
                         <p className="text-sm text-muted-foreground">
-                            Approved — send them a welcome so they know where to start.
+                            {welcome?.welcomed
+                                ? `Welcomed on ${new Date(welcome.sentAt as string).toLocaleDateString()}.`
+                                : 'Approved — send them a welcome so they know where to start.'}
                         </p>
+                        {/* The address comes from the admin RPC, not the page's
+                            users join — RLS hides other people's rows, so that
+                            join resolves to null and showed "No email on file". */}
                         <WelcomeEmailButton
+                            mentorId={verification.user_id}
                             mentorName={applicationData.name || verification.user?.name || ''}
-                            mentorEmail={verification.user?.email}
+                            mentorEmail={welcome?.email ?? verification.user?.email}
+                            sentAt={welcome?.sentAt ?? null}
+                            onMarkedSent={onWelcomeSent}
                         />
                     </div>
                 )}

@@ -1,9 +1,11 @@
 
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ShieldCheck, User } from "lucide-react";
+import { Mail, ShieldCheck, User } from "lucide-react";
 import VerificationDetailsCard from "./VerificationDetailsCard";
+import type { WelcomeStatusMap } from "@/integrations/supabase/services/welcome-emails";
 
 interface VerificationListProps {
   verifications: any[];
@@ -14,6 +16,13 @@ interface VerificationListProps {
   flaggedCount?: number;
   onStatusChange: (status: string) => void;
   onStatusUpdate: () => void;
+  /** Email + welcome state per mentor id, from the admin-only RPC. */
+  welcomeStatus?: WelcomeStatusMap;
+  /** Narrows the approved tab to mentors who have not been welcomed yet. */
+  unwelcomedOnly?: boolean;
+  onUnwelcomedOnlyChange?: (value: boolean) => void;
+  unwelcomedCount?: number;
+  onWelcomeSent?: () => void;
 }
 
 const VerificationList = ({
@@ -22,7 +31,12 @@ const VerificationList = ({
   selectedStatus,
   flaggedCount = 0,
   onStatusChange,
-  onStatusUpdate
+  onStatusUpdate,
+  welcomeStatus,
+  unwelcomedOnly = false,
+  onUnwelcomedOnlyChange,
+  unwelcomedCount = 0,
+  onWelcomeSent
 }: VerificationListProps) => {
   if (loading) {
     return (
@@ -61,6 +75,35 @@ const VerificationList = ({
           <TabsTrigger value="rejected">Rejected</TabsTrigger>
         </TabsList>
 
+        {/* Applications approve themselves now, so the approved tab is every
+            mentor who ever joined. Without a way to narrow it, finding who is
+            still owed a welcome means reading the whole list every time. */}
+        {selectedStatus === "approved" && onUnwelcomedOnlyChange && (
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <Button
+              type="button"
+              size="sm"
+              variant={unwelcomedOnly ? "default" : "outline"}
+              onClick={() => onUnwelcomedOnlyChange(!unwelcomedOnly)}
+              className="gap-1.5"
+            >
+              <Mail className="h-3.5 w-3.5" />
+              Not welcomed yet
+              {unwelcomedCount > 0 && (
+                <Badge variant="secondary" className="h-5 px-1.5 tabular-nums">
+                  {unwelcomedCount}
+                </Badge>
+              )}
+            </Button>
+
+            {unwelcomedOnly && (
+              <span className="text-xs text-muted-foreground">
+                Showing only mentors with no welcome recorded.
+              </span>
+            )}
+          </div>
+        )}
+
         <TabsContent value={selectedStatus} className="space-y-4">
           {verifications.length === 0 ? (
             <Card>
@@ -89,6 +132,8 @@ const VerificationList = ({
                   key={verification.id}
                   verification={verification}
                   onStatusUpdate={onStatusUpdate}
+                  welcome={welcomeStatus?.get(verification.user_id)}
+                  onWelcomeSent={onWelcomeSent}
                 />
               ))}
             </div>

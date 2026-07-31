@@ -7,6 +7,7 @@ import VerificationList from "@/components/admin/verification/VerificationList";
 import VerificationStats from "@/components/admin/verification/VerificationStats";
 import VerificationFilters, { VerificationFilters as FilterType } from "@/components/admin/verification/VerificationFilters";
 import { getAllMentorVerifications, getVerificationStatistics } from "@/integrations/supabase/services/mentor-verification";
+import { listMentorWelcomeStatus, type WelcomeStatusMap } from "@/integrations/supabase/services/welcome-emails";
 
 /**
  * The fields this page filters and counts on. The rows carry more than this —
@@ -25,6 +26,8 @@ const AdminMentorVerification = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedStatus, setSelectedStatus] = useState("pending");
+  const [welcomeStatus, setWelcomeStatus] = useState<WelcomeStatusMap>(new Map());
+  const [unwelcomedOnly, setUnwelcomedOnly] = useState(false);
   const [filters, setFilters] = useState<FilterType>({
     search: '',
     department: '',
@@ -43,6 +46,14 @@ const AdminMentorVerification = () => {
       selectedStatus === "flagged"
         ? allVerifications.filter((verification: VerificationRow) => verification.flags?.length > 0)
         : allVerifications.filter((verification: VerificationRow) => verification.status === selectedStatus);
+
+    // Only meaningful on the approved tab, which is where the welcome lives.
+    if (selectedStatus === "approved" && unwelcomedOnly) {
+      filtered = filtered.filter(
+        (verification: VerificationRow) =>
+          !welcomeStatus.get(verification.user_id as string)?.welcomed,
+      );
+    }
 
     // Apply search filter
     if (filters.search) {
@@ -108,15 +119,18 @@ const AdminMentorVerification = () => {
     }
 
     return filtered;
-  }, [allVerifications, selectedStatus, filters]);
+  }, [allVerifications, selectedStatus, filters, unwelcomedOnly, welcomeStatus]);
 
   const fetchData = async () => {
     try {
       setLoading(true);
 
-      const [verificationsResult, statsResult] = await Promise.all([
+      const [verificationsResult, statsResult, welcome] = await Promise.all([
         getAllMentorVerifications(), // Get all verifications, we'll filter on frontend
-        getVerificationStatistics()
+        getVerificationStatistics(),
+        // Resolves to an empty map rather than throwing if the tracking
+        // migration has not been applied, so the page still works without it.
+        listMentorWelcomeStatus()
       ]);
 
       if (verificationsResult.data) {
@@ -126,6 +140,8 @@ const AdminMentorVerification = () => {
       if (statsResult.data) {
         setStats(statsResult.data);
       }
+
+      setWelcomeStatus(welcome);
     } catch (error) {
       toast({
         title: "Error",
@@ -160,6 +176,11 @@ const AdminMentorVerification = () => {
 
   const flaggedCount = allVerifications.filter((v: VerificationRow) => v.flags?.length > 0).length;
 
+  const unwelcomedCount = allVerifications.filter(
+    (v: VerificationRow) =>
+      v.status === "approved" && !welcomeStatus.get(v.user_id as string)?.welcomed,
+  ).length;
+
   return (
     <AdminLayout>
       <AdminHeader
@@ -183,6 +204,11 @@ const AdminMentorVerification = () => {
           flaggedCount={flaggedCount}
           onStatusChange={setSelectedStatus}
           onStatusUpdate={handleStatusUpdate}
+          welcomeStatus={welcomeStatus}
+          unwelcomedOnly={unwelcomedOnly}
+          onUnwelcomedOnlyChange={setUnwelcomedOnly}
+          unwelcomedCount={unwelcomedCount}
+          onWelcomeSent={fetchData}
         />
       </div>
     </AdminLayout>
