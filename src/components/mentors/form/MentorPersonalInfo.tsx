@@ -62,6 +62,12 @@ const MentorPersonalInfo = ({
   }, []);
 
   const selectDepartment = (value: string) => {
+    // The list swaps from the fallback to the synced faculty departments once
+    // that request lands, and Radix answers a changed item list with an empty
+    // onValueChange — which would clear a department picked in the meantime.
+    // See the same guard, and the bug it was found through, in MentorAcademicInfo.
+    if (!value) return;
+
     markTouched("department");
     handleChange({
       target: { name: "department", value },
@@ -110,7 +116,7 @@ const MentorPersonalInfo = ({
         label="Mobile number"
         required
         error={errors.mobile}
-        hint="Only visible to reviewers, never shown on your profile"
+        hint="Only visible to the Friendly Learning team, never shown on your profile"
       >
         <Input
           id="mobile"

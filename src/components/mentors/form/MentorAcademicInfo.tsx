@@ -30,6 +30,15 @@ const MentorAcademicInfo = ({
   markTouched,
 }: MentorAcademicInfoProps) => {
   const selectField = (field: keyof MentorFormData) => (value: string) => {
+    // Radix fires onValueChange with "" when its item list changes underneath
+    // it, which the graduation-year list does the moment the College ID becomes
+    // valid and the options appear. Passing that on was doing real damage: it
+    // wiped the year just suggested from the ID, and because the hook reads any
+    // graduation_year change as the applicant choosing for themselves, it also
+    // switched the suggestion off for the rest of the session. Every option here
+    // is a real year, so an empty value is never a choice anyone made.
+    if (!value) return;
+
     markTouched(field);
     handleChange({
       target: { name: field, value },
