@@ -77,6 +77,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             .from("users")
             .update({ profile_image: googleAvatar })
             .eq("id", userId);
+
+          // Also sync to mentors table if the mentor record exists and has no custom photo
+          void supabase
+            .from("mentors")
+            .update({ profile_image: googleAvatar })
+            .eq("id", userId);
         }
 
         loadedUserId.current = userId;
