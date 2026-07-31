@@ -63,7 +63,7 @@ const MentorProfile = () => {
     }
   };
 
-  const isOwnProfile = user && mentor && user.id === mentor.id;
+  const isOwnProfile = Boolean(user && mentor && user.id === mentor.id);
 
   if (loading) {
     return (
@@ -167,6 +167,7 @@ const MentorProfile = () => {
             isOwnProfile={isOwnProfile}
             ratingLoading={ratingLoading}
             onShowRatingModal={() => setShowRatingModal(true)}
+            onMentorUpdated={setMentor}
           />
         </div>
       </main>

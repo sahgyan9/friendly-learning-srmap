@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { MessageCircle, Linkedin, Star, ShieldCheck, Loader2 } from "lucide-react";
+import { Camera, MessageCircle, Linkedin, Star, ShieldCheck, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
@@ -93,40 +93,32 @@ const MentorProfileActions = ({
   };
 
   return (
-    <motion.div 
-      className="flex flex-col sm:flex-row gap-3 mt-auto"
-      variants={itemVariants}
-    >
+    // Stacked and full-width: these now live in a fixed-width sidebar card, so
+    // a horizontal row would squeeze "Connect with Mentor" onto three lines.
+    <motion.div className="flex flex-col gap-2" variants={itemVariants}>
       {isOwnProfile ? (
         <>
-          <Button 
-            asChild
-            className="flex items-center gap-2"
-          >
+          {/* Bio, skills and interests are edited in place on this page. Photo,
+              name and department still live on the account page, so this points
+              at what the pencils cannot reach rather than at "editing" broadly. */}
+          <Button asChild variant="outline" className="w-full gap-2">
             <Link to="/profile">
-              Edit Profile
+              <Camera className="h-4 w-4" />
+              Change photo & details
             </Link>
           </Button>
           {isAdmin && (
-            <Button 
-              variant="outline"
-              className="flex items-center gap-2"
-              onClick={() => {
-                window.location.href = '/admin';
-              }}
-            >
-              <ShieldCheck className="h-4 w-4" />
-              Admin Dashboard
+            <Button asChild variant="outline" className="w-full gap-2">
+              <Link to="/admin">
+                <ShieldCheck className="h-4 w-4" />
+                Admin Dashboard
+              </Link>
             </Button>
           )}
         </>
       ) : (
         <>
-          <Button 
-            onClick={handleConnect}
-            className="flex items-center gap-2"
-            disabled={isConnecting}
-          >
+          <Button onClick={handleConnect} className="w-full gap-2" disabled={isConnecting}>
             {isConnecting ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
@@ -134,22 +126,18 @@ const MentorProfileActions = ({
             )}
             {isConnecting ? "Connecting..." : "Connect with Mentor"}
           </Button>
-          
+
           {canRate && !ratingLoading && (
-            <Button 
-              variant="outline"
-              onClick={onShowRatingModal}
-              className="flex items-center gap-2"
-            >
+            <Button variant="outline" onClick={onShowRatingModal} className="w-full gap-2">
               <Star className="h-4 w-4" />
               Rate Mentor
             </Button>
           )}
         </>
       )}
-      
+
       {mentor.linkedin_url && (
-        <Button variant="outline" asChild className="flex items-center gap-2">
+        <Button variant="outline" asChild className="w-full gap-2">
           <a href={mentor.linkedin_url} target="_blank" rel="noopener noreferrer">
             <Linkedin className="h-4 w-4" />
             LinkedIn Profile
