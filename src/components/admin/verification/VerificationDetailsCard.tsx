@@ -25,6 +25,7 @@ import {
     MapPin
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import WelcomeEmailButton from "./WelcomeEmailButton";
 import { toast } from "sonner";
 import { updateVerificationStatus } from "@/integrations/supabase/services/mentor-verification";
 import { useAuth } from "@/context/AuthContext";
@@ -392,6 +393,22 @@ const VerificationDetailsCard = ({ verification, onStatusUpdate }: VerificationD
                         </DialogContent>
                     </Dialog>
                 </div>
+
+                {/* Shown once someone is approved rather than on the approve
+                    button itself: the welcome should go out after the decision
+                    is saved, and this way it stays reachable if you close the
+                    tab before sending, or want to send it again later. */}
+                {verification.status === 'approved' && (
+                    <div className="flex items-center justify-between gap-3 pt-4 border-t">
+                        <p className="text-sm text-muted-foreground">
+                            Approved — send them a welcome so they know where to start.
+                        </p>
+                        <WelcomeEmailButton
+                            mentorName={applicationData.name || verification.user?.name || ''}
+                            mentorEmail={verification.user?.email}
+                        />
+                    </div>
+                )}
 
                 {/* Action Buttons */}
                 {verification.status === 'pending' && (
