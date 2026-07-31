@@ -18,8 +18,10 @@ const app = (
   </ErrorBoundary>
 );
 
-// Use hydration for SSR in production
-if (import.meta.env.PROD) {
+// Use hydration only if server pre-rendered HTML actually exists in the root element.
+// In client-side SPA navigation where #root is an empty div shell, hydrateRoot causes
+// React 18 hydration mismatch errors that corrupt the route tree and leave blank screens.
+if (import.meta.env.PROD && root.hasChildNodes() && root.innerHTML.trim() !== '') {
   hydrateRoot(root, app);
 } else {
   createRoot(root).render(app);

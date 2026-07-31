@@ -1,4 +1,4 @@
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, ComponentType } from "react";
 import { Route, Routes } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
@@ -15,42 +15,61 @@ import SiteHeader from "@/components/navigation/SiteHeader";
 // 1.4MB chunk containing every admin screen to every first-time visitor.
 import Index from "./pages/Index";
 
-const SignIn = lazy(() => import("./pages/SignIn"));
-const SignUp = lazy(() => import("./pages/SignUp"));
-const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
-const ResetPassword = lazy(() => import("./pages/ResetPassword"));
-const UserProfile = lazy(() => import("./pages/UserProfile"));
-const Mentors = lazy(() => import("./pages/Mentors"));
-const BecomeMentor = lazy(() => import("./pages/BecomeMentor"));
-const MentorProfile = lazy(() => import("./pages/MentorProfile"));
-const Messages = lazy(() => import("./pages/Messages"));
-const Contact = lazy(() => import("./pages/Contact"));
-const About = lazy(() => import("./pages/About"));
-const CommunityPosts = lazy(() => import("./pages/CommunityPosts"));
-const CommunityPostDetail = lazy(() => import("./pages/CommunityPostDetail"));
-const Communities = lazy(() => import("./pages/Communities"));
-const CommunityDetail = lazy(() => import("./pages/CommunityDetail"));
-const Faculty = lazy(() => import("./pages/Faculty"));
-const FacultyDetail = lazy(() => import("./pages/FacultyDetail"));
-const MarketPlace = lazy(() => import("./pages/MarketPlace"));
-const HowItWorks = lazy(() => import("./pages/HowItWorks"));
-const FindStudyPartners = lazy(() => import("./pages/FindStudyPartners"));
-const HackathonPartners = lazy(() => import("./pages/HackathonPartners"));
-const Blog = lazy(() => import("./pages/Blog"));
-const BlogPost = lazy(() => import("./pages/BlogPost"));
-const Certificate = lazy(() => import("./pages/Certificate"));
-const VerifyCertificate = lazy(() => import("./pages/VerifyCertificate"));
-const NotFound = lazy(() => import("./pages/NotFound"));
-const Unauthorized = lazy(() => import("./pages/Unauthorized"));
+// Helper to safely import lazy components with automatic retry if a network chunk or deployment update fails
+function lazyWithRetry<T extends ComponentType<any>>(factory: () => Promise<{ default: T }>) {
+  return lazy(async () => {
+    const pageHasBeenRefreshed = sessionStorage.getItem("page_refreshed_for_chunk") === "true";
+    try {
+      const component = await factory();
+      sessionStorage.removeItem("page_refreshed_for_chunk");
+      return component;
+    } catch (error) {
+      if (!pageHasBeenRefreshed) {
+        sessionStorage.setItem("page_refreshed_for_chunk", "true");
+        window.location.reload();
+        return new Promise<{ default: T }>(() => {});
+      }
+      throw error;
+    }
+  });
+}
 
-const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
-const AdminContactMessages = lazy(() => import("./pages/AdminContactMessages"));
-const AdminMentorVerification = lazy(() => import("./pages/AdminMentorVerification"));
-const AdminBadges = lazy(() => import("./pages/AdminBadges"));
-const AdminSettings = lazy(() => import("./pages/AdminSettings"));
-const AdminSecurity = lazy(() => import("./pages/AdminSecurity"));
-const TeamMembersAdmin = lazy(() => import("./pages/TeamMembersAdmin"));
-const MarketplaceAdmin = lazy(() => import("./pages/MarketplaceAdmin"));
+const SignIn = lazyWithRetry(() => import("./pages/SignIn"));
+const SignUp = lazyWithRetry(() => import("./pages/SignUp"));
+const ForgotPassword = lazyWithRetry(() => import("./pages/ForgotPassword"));
+const ResetPassword = lazyWithRetry(() => import("./pages/ResetPassword"));
+const UserProfile = lazyWithRetry(() => import("./pages/UserProfile"));
+const Mentors = lazyWithRetry(() => import("./pages/Mentors"));
+const BecomeMentor = lazyWithRetry(() => import("./pages/BecomeMentor"));
+const MentorProfile = lazyWithRetry(() => import("./pages/MentorProfile"));
+const Messages = lazyWithRetry(() => import("./pages/Messages"));
+const Contact = lazyWithRetry(() => import("./pages/Contact"));
+const About = lazyWithRetry(() => import("./pages/About"));
+const CommunityPosts = lazyWithRetry(() => import("./pages/CommunityPosts"));
+const CommunityPostDetail = lazyWithRetry(() => import("./pages/CommunityPostDetail"));
+const Communities = lazyWithRetry(() => import("./pages/Communities"));
+const CommunityDetail = lazyWithRetry(() => import("./pages/CommunityDetail"));
+const Faculty = lazyWithRetry(() => import("./pages/Faculty"));
+const FacultyDetail = lazyWithRetry(() => import("./pages/FacultyDetail"));
+const MarketPlace = lazyWithRetry(() => import("./pages/MarketPlace"));
+const HowItWorks = lazyWithRetry(() => import("./pages/HowItWorks"));
+const FindStudyPartners = lazyWithRetry(() => import("./pages/FindStudyPartners"));
+const HackathonPartners = lazyWithRetry(() => import("./pages/HackathonPartners"));
+const Blog = lazyWithRetry(() => import("./pages/Blog"));
+const BlogPost = lazyWithRetry(() => import("./pages/BlogPost"));
+const Certificate = lazyWithRetry(() => import("./pages/Certificate"));
+const VerifyCertificate = lazyWithRetry(() => import("./pages/VerifyCertificate"));
+const NotFound = lazyWithRetry(() => import("./pages/NotFound"));
+const Unauthorized = lazyWithRetry(() => import("./pages/Unauthorized"));
+
+const AdminDashboard = lazyWithRetry(() => import("./pages/AdminDashboard"));
+const AdminContactMessages = lazyWithRetry(() => import("./pages/AdminContactMessages"));
+const AdminMentorVerification = lazyWithRetry(() => import("./pages/AdminMentorVerification"));
+const AdminBadges = lazyWithRetry(() => import("./pages/AdminBadges"));
+const AdminSettings = lazyWithRetry(() => import("./pages/AdminSettings"));
+const AdminSecurity = lazyWithRetry(() => import("./pages/AdminSecurity"));
+const TeamMembersAdmin = lazyWithRetry(() => import("./pages/TeamMembersAdmin"));
+const MarketplaceAdmin = lazyWithRetry(() => import("./pages/MarketplaceAdmin"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
