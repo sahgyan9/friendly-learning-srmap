@@ -19,6 +19,13 @@ interface CreatePostModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onPostCreated: () => void;
+  /**
+   * Set when posting inside a community. Omitted, the post goes to the public
+   * board — which is what every existing caller wants and gets by default.
+   */
+  communityId?: string;
+  /** Shown in the header so nobody posts to a group thinking it's the board. */
+  communityName?: string;
 }
 
 const MAX_TAGS = 5;
@@ -58,7 +65,13 @@ const PLACEHOLDERS: Record<string, { title: string; content: string }> = {
   },
 };
 
-export const CreatePostModal = ({ open, onOpenChange, onPostCreated }: CreatePostModalProps) => {
+export const CreatePostModal = ({
+  open,
+  onOpenChange,
+  onPostCreated,
+  communityId,
+  communityName,
+}: CreatePostModalProps) => {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [postType, setPostType] = useState("");
@@ -154,6 +167,7 @@ export const CreatePostModal = ({ open, onOpenChange, onPostCreated }: CreatePos
         post_type: postType,
         tags: tags.length > 0 ? tags : undefined,
         image_url: imageUrl,
+        community_id: communityId,
       });
 
       if (error) {
@@ -181,9 +195,15 @@ export const CreatePostModal = ({ open, onOpenChange, onPostCreated }: CreatePos
     >
       <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Create a post</DialogTitle>
+          <DialogTitle>{communityName ? `Post in ${communityName}` : "Create a post"}</DialogTitle>
           <DialogDescription>
-            Ask for what you need — teammates, study help, collaborators — or share an announcement.
+            {/* Not "only members will see this" — group posts are readable by
+                anyone, exactly like board posts. Membership decides who can
+                write, not who can read, and saying otherwise would be a
+                privacy promise the database does not make. */}
+            {communityName
+              ? "This goes in the group's feed rather than the public board. Anyone can read it; only members can post."
+              : "Ask for what you need — teammates, study help, collaborators — or share an announcement."}
           </DialogDescription>
         </DialogHeader>
 

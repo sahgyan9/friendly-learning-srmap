@@ -1,7 +1,16 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Calendar, GraduationCap, Home, Mail, Menu, MessageSquare, Users } from "lucide-react";
+import {
+  Calendar,
+  GraduationCap,
+  Home,
+  Mail,
+  Menu,
+  MessageSquare,
+  Users,
+  UsersRound,
+} from "lucide-react";
 
 import Logo from "@/components/Logo";
 import DarkModeToggle from "@/components/DarkModeToggle";
@@ -37,6 +46,7 @@ const PRIMARY_NAV: NavItem[] = [
   { name: "Mentors", url: "/mentors", icon: Users },
   { name: "Faculty", url: "/faculty", icon: GraduationCap },
   { name: "Posts", url: "/community-posts", icon: MessageSquare },
+  { name: "Groups", url: "/communities", icon: UsersRound },
   { name: "Events", url: "/marketplace", icon: Calendar },
   { name: "Messages", url: "/messages", icon: Mail, requiresAuth: true },
 ];

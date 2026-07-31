@@ -28,6 +28,8 @@ const Contact = lazy(() => import("./pages/Contact"));
 const About = lazy(() => import("./pages/About"));
 const CommunityPosts = lazy(() => import("./pages/CommunityPosts"));
 const CommunityPostDetail = lazy(() => import("./pages/CommunityPostDetail"));
+const Communities = lazy(() => import("./pages/Communities"));
+const CommunityDetail = lazy(() => import("./pages/CommunityDetail"));
 const Faculty = lazy(() => import("./pages/Faculty"));
 const FacultyDetail = lazy(() => import("./pages/FacultyDetail"));
 const MarketPlace = lazy(() => import("./pages/MarketPlace"));
@@ -103,6 +105,10 @@ function App() {
                 <Route path="/about" element={<About />} />
                 <Route path="/community-posts" element={<CommunityPosts />} />
                 <Route path="/community-posts/:id" element={<CommunityPostDetail />} />
+                {/* Public on purpose. Membership decides who can post in a
+                    group, not who can read it — see the communities migration. */}
+                <Route path="/communities" element={<Communities />} />
+                <Route path="/communities/:slug" element={<CommunityDetail />} />
                 <Route path="/marketplace" element={<MarketPlace />} />
                 <Route path="/how-it-works" element={<HowItWorks />} />
                 <Route path="/find-study-partners" element={<FindStudyPartners />} />

@@ -3,6 +3,10 @@ import { useEffect, useRef, useState } from "react";
 import { getFacultyList } from "@/integrations/supabase/services/faculty";
 import { getCommunityPosts } from "@/integrations/supabase/services/community-posts";
 import { searchMentors } from "@/integrations/supabase/services/mentors";
+import {
+  getCommunityKindMeta,
+  listCommunities,
+} from "@/integrations/supabase/services/communities";
 import { BLOG_POSTS } from "@/data/blog-posts";
 import { normalise } from "@/lib/search/rank";
 
@@ -17,11 +21,18 @@ export interface SearchHit {
 export interface SiteSearchResults {
   mentors: SearchHit[];
   faculty: SearchHit[];
+  communities: SearchHit[];
   posts: SearchHit[];
   articles: SearchHit[];
 }
 
-const EMPTY: SiteSearchResults = { mentors: [], faculty: [], posts: [], articles: [] };
+const EMPTY: SiteSearchResults = {
+  mentors: [],
+  faculty: [],
+  communities: [],
+  posts: [],
+  articles: [],
+};
 
 /** Below this, a query matches so much that the results are noise. */
 const MIN_QUERY_LENGTH = 2;
@@ -72,12 +83,13 @@ export function useSiteSearch(query: string, enabled: boolean) {
     setLoading(true);
 
     const timer = setTimeout(async () => {
-      const [mentorResult, facultyResult, postResult] = await Promise.all([
+      const [mentorResult, facultyResult, postResult, communityResult] = await Promise.all([
         searchMentors(trimmed).catch(() => ({ data: null, error: true })),
         getFacultyList({ search: trimmed, limit: PER_GROUP, sort: "rating" }).catch(() => ({
           data: [],
         })),
         getCommunityPosts({ search: trimmed, limit: PER_GROUP }).catch(() => ({ data: null })),
+        listCommunities({ search: trimmed, limit: PER_GROUP }).catch(() => ({ data: [] })),
       ]);
 
       if (run !== sequence.current) return;
@@ -109,7 +121,16 @@ export function useSiteSearch(query: string, enabled: boolean) {
         to: `/community-posts/${post.id}`,
       }));
 
-      setResults({ mentors, faculty, posts, articles: searchArticles(trimmed) });
+      const communities: SearchHit[] = (communityResult.data ?? []).map((community) => ({
+        id: community.id,
+        title: community.name,
+        subtitle: `${getCommunityKindMeta(community.kind).label} · ${community.member_count} ${
+          community.member_count === 1 ? "member" : "members"
+        }`,
+        to: `/communities/${community.slug}`,
+      }));
+
+      setResults({ mentors, faculty, communities, posts, articles: searchArticles(trimmed) });
       setLoading(false);
     }, DEBOUNCE_MS);
 
@@ -119,6 +140,7 @@ export function useSiteSearch(query: string, enabled: boolean) {
   const isEmpty =
     results.mentors.length === 0 &&
     results.faculty.length === 0 &&
+    results.communities.length === 0 &&
     results.posts.length === 0 &&
     results.articles.length === 0;
 

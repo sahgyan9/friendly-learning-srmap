@@ -1,4 +1,4 @@
-import { ArrowRight, Award, Clock, Lock, Star, Users } from "lucide-react";
+import { ArrowRight, Award, Clock, Lock, Star, Users, UsersRound } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -21,6 +21,11 @@ const BENEFITS = [
     icon: Award,
     title: "Something to show for it",
     body: "Not a participation badge — a certificate recording how many students you actually helped, with a link anyone can check. There's a sample below.",
+  },
+  {
+    icon: UsersRound,
+    title: "You can start a group",
+    body: "Only mentors can. A hackathon team, a club, a study circle — you own it, students join from the link, and members post inside it.",
   },
   {
     icon: Star,

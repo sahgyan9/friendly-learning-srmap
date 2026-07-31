@@ -196,14 +196,19 @@ const SiteSearch = () => {
         aria-label="Search the site"
         className={cn(
           "h-9 gap-2 px-2.5 text-muted-foreground",
-          // A plain icon where the header is tight, a proper search field once
-          // there is room for one to read as a search field.
-          "w-9 justify-center md:w-56 md:justify-start md:px-3 xl:w-64",
+          // Widths track how much room the header actually has. Below lg the
+          // inline nav links are hidden, so a full field fits. Between lg and
+          // xl the links come back and everything together overflows 1024px, so
+          // the field collapses to an icon again. From xl there is room for both.
+          "w-9 justify-center",
+          "md:w-56 md:justify-start md:px-3",
+          "lg:w-9 lg:justify-center lg:px-2.5",
+          "xl:w-64 xl:justify-start xl:px-3",
         )}
       >
         <Search className="h-4 w-4 shrink-0" />
-        <span className="hidden md:inline">Search</span>
-        <kbd className="ml-auto hidden items-center gap-0.5 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium md:inline-flex">
+        <span className="hidden md:inline lg:hidden xl:inline">Search</span>
+        <kbd className="ml-auto hidden items-center gap-0.5 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium md:inline-flex lg:hidden xl:inline-flex">
           {isMac ? "⌘" : "Ctrl"} K
         </kbd>
       </Button>
@@ -264,6 +269,12 @@ const SiteSearch = () => {
               {results.faculty.length > 0 && (
                 <CommandGroup heading="Faculty">
                   {results.faculty.map((hit) => renderHit(hit, true))}
+                </CommandGroup>
+              )}
+
+              {results.communities.length > 0 && (
+                <CommandGroup heading="Groups">
+                  {results.communities.map((hit) => renderHit(hit, false))}
                 </CommandGroup>
               )}
 

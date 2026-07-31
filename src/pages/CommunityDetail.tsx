@@ -1,0 +1,323 @@
+import { useCallback, useEffect, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { toast } from "sonner";
+import { ArrowLeft, Check, Loader2, LogOut, MessageSquare, Plus, Users } from "lucide-react";
+
+import SEOHead from "@/components/SEOHead";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { PostCard } from "@/components/community/PostCard";
+import { CreatePostModal } from "@/components/community/CreatePostModal";
+import { CommunityMemberList } from "@/components/communities/CommunityMemberList";
+import { useAuth } from "@/context/AuthContext";
+import {
+  getCommunityBySlug,
+  getCommunityKindMeta,
+  joinCommunity,
+  leaveCommunity,
+  type Community,
+} from "@/integrations/supabase/services/communities";
+import {
+  getCommunityPosts,
+  togglePostLike,
+  type CommunityPost,
+} from "@/integrations/supabase/services/community-posts";
+
+const CommunityDetail = () => {
+  const { slug } = useParams<{ slug: string }>();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+
+  const [community, setCommunity] = useState<Community | null>(null);
+  const [posts, setPosts] = useState<CommunityPost[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
+  const [working, setWorking] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
+
+  const loadPosts = useCallback(async (communityId: string) => {
+    const { data } = await getCommunityPosts({ communityId, limit: 50 });
+    setPosts(data ?? []);
+  }, []);
+
+  const load = useCallback(async () => {
+    if (!slug) return;
+
+    const { data, error } = await getCommunityBySlug(slug);
+    if (error || !data) {
+      setNotFound(true);
+      setLoading(false);
+      return;
+    }
+
+    setCommunity(data);
+    await loadPosts(data.id);
+    setLoading(false);
+  }, [slug, loadPosts]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const handleJoin = async () => {
+    if (!user) {
+      navigate("/signin");
+      return;
+    }
+    if (!community) return;
+
+    setWorking(true);
+    const { error } = await joinCommunity(community.id);
+    setWorking(false);
+
+    if (error) {
+      toast.error("Could not join the group");
+      return;
+    }
+
+    toast.success(`You're in — welcome to ${community.name}`, {
+      description: "You can post here now.",
+    });
+    load();
+  };
+
+  const handleLeave = async () => {
+    if (!community) return;
+
+    setWorking(true);
+    const { error } = await leaveCommunity(community.id);
+    setWorking(false);
+
+    if (error) {
+      toast.error("Could not leave the group");
+      return;
+    }
+
+    toast.success("You've left the group");
+    load();
+  };
+
+  const handleLike = async (postId: string, event: React.MouseEvent) => {
+    event.stopPropagation();
+    if (!user) {
+      navigate("/signin");
+      return;
+    }
+
+    // Optimistic: the count moves under the finger, and reverts if the write fails.
+    setPosts((current) =>
+      current.map((post) =>
+        post.id === postId
+          ? {
+              ...post,
+              viewer_has_liked: !post.viewer_has_liked,
+              likes_count: post.likes_count + (post.viewer_has_liked ? -1 : 1),
+            }
+          : post,
+      ),
+    );
+
+    const { error } = await togglePostLike(postId);
+    if (error && community) loadPosts(community.id);
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto max-w-6xl px-4 py-12">
+          <Skeleton className="mb-4 h-40 w-full rounded-xl" />
+          <Skeleton className="h-64 w-full rounded-xl" />
+        </div>
+      </div>
+    );
+  }
+
+  if (notFound || !community) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto max-w-2xl px-4 py-24 text-center">
+          <h1 className="mb-3 text-2xl font-bold">That group doesn't exist</h1>
+          <p className="mb-6 text-muted-foreground">
+            It may have been removed, or the link may be wrong.
+          </p>
+          <Button asChild>
+            <Link to="/communities">See all groups</Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  const kind = getCommunityKindMeta(community.kind);
+
+  return (
+    <div className="min-h-screen bg-background">
+      <SEOHead
+        title={`${community.name} | Friendly Learning`}
+        description={community.description.slice(0, 155)}
+      />
+
+      <div className="container mx-auto max-w-6xl px-4 py-8 md:py-12">
+        <Button asChild variant="ghost" size="sm" className="mb-4 -ml-2">
+          <Link to="/communities">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            All groups
+          </Link>
+        </Button>
+
+        <Card className="mb-6">
+          <CardContent className="flex flex-col gap-4 p-6">
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant="secondary" className="gap-1">
+                <span aria-hidden>{kind.emoji}</span>
+                {kind.label}
+              </Badge>
+              {community.is_archived && <Badge variant="outline">Archived</Badge>}
+            </div>
+
+            <div>
+              <h1 className="mb-2 text-2xl font-bold md:text-3xl">{community.name}</h1>
+              <p className="whitespace-pre-line text-muted-foreground">{community.description}</p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+              <span className="flex items-center gap-1.5">
+                <Users className="h-4 w-4" />
+                {community.member_count} {community.member_count === 1 ? "member" : "members"}
+              </span>
+              <span className="flex items-center gap-1.5">
+                <MessageSquare className="h-4 w-4" />
+                {community.post_count} {community.post_count === 1 ? "post" : "posts"}
+              </span>
+              <span>
+                Run by{" "}
+                <Link to={`/mentor/${community.owner.id}`} className="font-medium hover:text-primary">
+                  {community.owner.name}
+                </Link>
+              </span>
+            </div>
+
+            <div className="flex flex-wrap gap-2 border-t pt-4">
+              {community.viewer_is_owner ? (
+                <Badge variant="outline" className="h-9 items-center px-3">
+                  You run this group
+                </Badge>
+              ) : community.viewer_is_member ? (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="outline" disabled={working}>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Leave group
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Leave {community.name}?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        You'll stop being able to post here. Your existing posts stay, and you can
+                        rejoin whenever you like.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Stay</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleLeave}>Leave</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              ) : community.is_archived ? (
+                <p className="text-sm text-muted-foreground">
+                  This group has been archived and isn't taking new members.
+                </p>
+              ) : (
+                <Button onClick={handleJoin} disabled={working}>
+                  {working ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Check className="mr-2 h-4 w-4" />
+                  )}
+                  Join group
+                </Button>
+              )}
+
+              {community.viewer_can_post && (
+                <Button variant="secondary" onClick={() => setCreateOpen(true)}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Post in this group
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        <div className="grid gap-6 lg:grid-cols-[1fr_20rem]">
+          <div className="space-y-4">
+            {posts.length > 0 ? (
+              posts.map((post) => (
+                <PostCard
+                  key={post.id}
+                  post={post}
+                  onOpen={(postId) => navigate(`/community-posts/${postId}`)}
+                  onLike={handleLike}
+                />
+              ))
+            ) : (
+              <Card>
+                <CardContent className="flex flex-col items-center gap-3 py-14 text-center">
+                  <span className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+                    <MessageSquare className="h-6 w-6" />
+                  </span>
+                  <p className="font-medium">Nothing posted here yet</p>
+                  <p className="max-w-sm text-sm text-muted-foreground">
+                    {community.viewer_can_post
+                      ? "You're a member — say what the group is working on and get it started."
+                      : "Join the group to post here."}
+                  </p>
+                  {community.viewer_can_post && (
+                    <Button onClick={() => setCreateOpen(true)}>
+                      <Plus className="mr-2 h-4 w-4" />
+                      Write the first post
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+          </div>
+
+          <CommunityMemberList
+            communityId={community.id}
+            isOwner={community.viewer_is_owner}
+            onChanged={load}
+          />
+        </div>
+      </div>
+
+      {community.viewer_can_post && (
+        <CreatePostModal
+          open={createOpen}
+          onOpenChange={setCreateOpen}
+          communityId={community.id}
+          communityName={community.name}
+          onPostCreated={() => {
+            setCreateOpen(false);
+            load();
+          }}
+        />
+      )}
+    </div>
+  );
+};
+
+export default CommunityDetail;

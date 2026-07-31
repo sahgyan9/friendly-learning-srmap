@@ -23,6 +23,7 @@ import {
   Users,
   Settings,
   Trophy,
+  UsersRound,
   Bell,
   type LucideIcon,
 } from "lucide-react";
@@ -118,11 +119,26 @@ export const DESTINATIONS: SearchDestination[] = [
     hint: "The community board — ask for teammates, study help or advice",
     icon: MessageSquare,
     group: "Go to",
+    // "community" on its own belongs to Groups now — that is what the word
+    // means once groups exist. The board keeps the phrase "community post".
     keywords: [
-      "post", "posts", "community", "community post", "board", "forum", "feed",
-      "discussion", "notice board", "share", "announcement", "ask the community",
+      "post", "posts", "community post", "board", "forum", "feed",
+      "discussion", "notice board", "share", "announcement", "ask everyone",
     ],
     to: "/community-posts",
+  },
+  {
+    id: "communities",
+    label: "Groups",
+    hint: "Hackathon teams, clubs and study circles you can join",
+    icon: UsersRound,
+    group: "Go to",
+    keywords: [
+      "group", "groups", "community", "communities", "team", "teams", "club",
+      "clubs", "society", "societies", "circle", "join a group", "start a group",
+      "create a group", "my groups", "chapter",
+    ],
+    to: "/communities",
   },
   {
     id: "events",
@@ -131,8 +147,11 @@ export const DESTINATIONS: SearchDestination[] = [
     icon: Calendar,
     group: "Go to",
     keywords: [
+      // "club" belongs to Groups — a club is a group you join, not a one-off
+      // event. Leaving it on both made an exact-keyword tie that Events won on
+      // nothing more meaningful than coming first alphabetically.
       "event", "events", "workshop", "fest", "seminar", "competition", "contest",
-      "club", "activity", "activities", "whats on", "marketplace", "calendar",
+      "activity", "activities", "whats on", "marketplace", "calendar",
     ],
     to: "/marketplace",
   },
@@ -190,9 +209,11 @@ export const DESTINATIONS: SearchDestination[] = [
     icon: Info,
     group: "Go to",
     keywords: [
+      // Not "team": somebody typing that wants a hackathon team or a group,
+      // not the page about who built the site. "the team" still gets here.
       "about", "about us", "aim", "aims", "goal", "mission", "purpose", "vision",
       "why", "why friendly learning", "what is friendly learning", "story",
-      "who we are", "team", "founders", "idea behind",
+      "who we are", "the team", "founders", "idea behind",
     ],
     to: "/about",
   },
@@ -433,6 +454,7 @@ export const DEFAULT_SUGGESTION_IDS = [
   "mentors",
   "faculty",
   "posts",
+  "communities",
   "events",
   "become-mentor",
   "messages",

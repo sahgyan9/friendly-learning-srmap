@@ -26,6 +26,7 @@ Some of the ones already set up:
 | --- | --- |
 | senior, buddy, guide, tutor, doubt | Mentors |
 | professor, prof, sir, madam, teacher, rating | Faculty |
+| group, community, club, society, team | Groups |
 | bug, issue, broken, not working, complaint, feedback | Contact |
 | aim, mission, purpose, why, who we are, story | About |
 | dm, inbox, chat, conversation | Messages |
@@ -103,6 +104,13 @@ Just add words to the `keywords` array. A few rules that keep the list useful:
   only one of them is ever visible to a given person. If you put the same word on
   two entries that are both visible, whichever scores higher wins, and that will
   feel arbitrary.
+
+  This has already bitten once. When Groups was added, `"club"` was on both
+  Groups and Events and `"team"` was on both Groups and About. Both were exact
+  keyword matches, so the tie broke **alphabetically** — "club" went to Events
+  and "team" went to About, which is not what anyone typing those words wants.
+  Both were removed from the losing entry. If a word only makes sense for one
+  destination, put it on one destination.
 
 ---
 
@@ -185,6 +193,11 @@ type each of these — the first result should be what's in brackets:
 ```
 senior      (Mentors)
 prof        (Faculty)
+group       (Groups)
+club        (Groups, not Events)
+team        (Groups, not About)
+community   (Groups, then Posts underneath)
+post        (Posts)
 bug         (Contact & report a problem)
 aim         (About Friendly Learning)
 dark        (Switch to light/dark theme)

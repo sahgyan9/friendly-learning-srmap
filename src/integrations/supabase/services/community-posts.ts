@@ -29,6 +29,8 @@ export type CommunityPost = {
   };
   viewer_has_liked: boolean;
   viewer_is_author: boolean;
+  /** Null on a board post. Set means the post lives inside that community. */
+  community: { id: string; name: string; slug: string } | null;
 };
 
 export type PostComment = {
@@ -50,6 +52,8 @@ export type CreatePostData = {
   post_type: string;
   tags?: string[];
   image_url?: string;
+  /** Omit for the public board. Set to post inside a community you belong to. */
+  community_id?: string;
 };
 
 export type UpdatePostData = Partial<CreatePostData> & { status?: string };
@@ -59,6 +63,12 @@ export type CommunityFeedOptions = {
   search?: string;
   limit?: number;
   offset?: number;
+  /**
+   * Which room to read. Undefined means the public board, and the RPC reads
+   * that as `community_id is null` — so group posts can never appear on the
+   * board by forgetting to pass anything.
+   */
+  communityId?: string;
 };
 
 /** Every post kind the board supports, in the order students see them. */
@@ -103,6 +113,9 @@ type FeedRow = {
   author_is_mentor: boolean;
   viewer_has_liked: boolean;
   viewer_is_author: boolean;
+  community_id: string | null;
+  community_name: string | null;
+  community_slug: string | null;
   total_count?: number;
 };
 
@@ -129,17 +142,24 @@ function toCommunityPost(row: FeedRow): CommunityPost {
     },
     viewer_has_liked: row.viewer_has_liked,
     viewer_is_author: row.viewer_is_author,
+    community:
+      row.community_id && row.community_slug
+        ? { id: row.community_id, name: row.community_name ?? "A group", slug: row.community_slug }
+        : null,
   };
 }
 
 export const getCommunityPosts = async (options: CommunityFeedOptions = {}) => {
-  const { postType = "all", search = "", limit = 20, offset = 0 } = options;
+  const { postType = "all", search = "", limit = 20, offset = 0, communityId } = options;
 
   const { data, error } = await supabase.rpc("get_community_feed", {
     p_post_type: postType,
     p_search: search,
     p_limit: limit,
     p_offset: offset,
+    // Passed explicitly rather than left to the default, so the intent is
+    // visible at the call site: undefined here means the public board.
+    p_community_id: communityId,
   });
 
   if (error) {
@@ -209,6 +229,7 @@ export const createCommunityPost = async (postData: CreatePostData) => {
       post_type: postData.post_type,
       tags: (postData.tags ?? []).map((tag) => sanitizeInput(tag, 50)).filter(Boolean).slice(0, 10),
       image_url: postData.image_url ?? null,
+      community_id: postData.community_id ?? null,
     })
     .select("id")
     .single();
