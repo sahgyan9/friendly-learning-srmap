@@ -24,7 +24,7 @@ interface CertificatePreviewProps {
  * certificate unfolding in front of them, but the offer should be visible.
  */
 const CertificatePreview = ({ name }: CertificatePreviewProps) => {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
   const data = useMemo(() => sampleCertificate(name), [name]);
 
   return (
