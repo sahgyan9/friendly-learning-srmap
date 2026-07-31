@@ -16,6 +16,11 @@ const CRON_SECRET = Deno.env.get("CRON_SECRET");
 // SUPABASE_URL, so links point at a host that actually exists.
 const SITE_URL = Deno.env.get("SITE_URL") ?? "https://friendly-learning-srmap.vercel.app";
 const FROM_ADDRESS = Deno.env.get("EMAIL_FROM") ?? "Friendly Learning <no-reply@friendlylearning.com>";
+// Where a reply goes, which is not where the mail is sent from. Resend will only
+// send from a domain whose DNS you control, and srmap.edu.in is the university's
+// -- so the human address belongs here, on a header any mail client honours,
+// rather than in From where it would simply be rejected.
+const REPLY_TO = Deno.env.get("EMAIL_REPLY_TO") ?? "";
 
 /** How long to let a burst of messages settle before emailing about it. */
 const QUIET_PERIOD_MS = 3 * 60 * 1000;
@@ -147,6 +152,158 @@ function renderMessageEmail(opts: {
   return { subject, html, text };
 }
 
+/**
+ * The one email a new mentor gets, sent once, right after approval.
+ *
+ * Written to be read on a phone in about forty seconds. The three steps are
+ * concrete and ordered by how much they matter: a profile with nothing in it is
+ * the single biggest reason a listed mentor never gets messaged, so it goes
+ * first and the other two follow from it.
+ *
+ * The tone is deliberately low-pressure. Most people accepted here are second-
+ * and third-years who are not sure they know enough to mentor anyone, and an
+ * email that implies otherwise is how you get someone to quietly never log in
+ * again. Hence the paragraph about small questions, and the sentence about
+ * pausing: knowing you can step away without deleting anything is what makes
+ * saying yes feel safe.
+ */
+function renderWelcomeMentorEmail(opts: {
+  recipientName: string;
+  unsubscribeUrl: string;
+}): { subject: string; html: string; text: string } {
+  const { recipientName, unsubscribeUrl } = opts;
+
+  // "gyan kumar sah | AP23111260062" is a real shape in this table. Greeting
+  // someone by their registration number is worse than not greeting them.
+  const firstName = recipientName.split("|")[0].trim().split(/\s+/)[0] || "there";
+  const safeName = escapeHtml(firstName);
+
+  const subject = "You're a mentor on Friendly Learning 🎉";
+
+  const steps: Array<[string, string]> = [
+    [
+      "Finish your profile",
+      "Add your skills, a two-line bio and your LinkedIn. Students pick who to message almost entirely off this — a blank profile gets scrolled past, and it takes about three minutes to fix.",
+    ],
+    [
+      "Say what you actually want to be asked about",
+      "&ldquo;DSA and internship prep&rdquo; gets you better questions than &ldquo;happy to help with anything&rdquo;. Being specific is what makes someone brave enough to send the first message.",
+    ],
+    [
+      "Start a group",
+      "Only mentors can. A study group, a hackathon team, a placement-prep room — anything you would have wanted in your first year. Groups can be open to everyone or invite-only, and you decide who gets in.",
+    ],
+  ];
+
+  const stepHtml = steps
+    .map(
+      ([title, body], i) => `
+      <tr>
+        <td style="padding:0 0 18px;vertical-align:top;">
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+            <td style="vertical-align:top;padding-right:12px;">
+              <div style="width:26px;height:26px;border-radius:13px;background:#2563eb;color:#ffffff;font-size:13px;font-weight:700;text-align:center;line-height:26px;">${i + 1}</div>
+            </td>
+            <td style="vertical-align:top;">
+              <p style="margin:0 0 4px;font-size:15px;font-weight:600;color:#111827;">${title}</p>
+              <p style="margin:0;font-size:14px;color:#4b5563;line-height:1.55;">${body}</p>
+            </td>
+          </tr></table>
+        </td>
+      </tr>`,
+    )
+    .join("");
+
+  const html = [
+    "<!DOCTYPE html>",
+    '<html lang="en"><head><meta charset="UTF-8">',
+    '<meta name="viewport" content="width=device-width, initial-scale=1.0">',
+    `<title>${escapeHtml(subject)}</title></head>`,
+    '<body style="margin:0;padding:20px;font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;line-height:1.6;color:#1f2937;background:#f9fafb;">',
+    '<div style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:10px;overflow:hidden;border:1px solid #e5e7eb;">',
+
+    '<div style="background:#2563eb;padding:28px 24px;text-align:center;">',
+    '<h1 style="color:#ffffff;margin:0 0 4px;font-size:21px;">You\'re in 🎉</h1>',
+    '<p style="color:#dbeafe;margin:0;font-size:14px;">You are now a mentor on Friendly Learning</p>',
+    "</div>",
+
+    '<div style="padding:28px;">',
+    `<p style="margin:0 0 16px;font-size:16px;">Hi ${safeName},</p>`,
+
+    '<p style="margin:0 0 16px;font-size:15px;color:#374151;">',
+    "Your application has been approved and your profile is live. Students at SRM AP can now find you and message you directly.",
+    "</p>",
+
+    '<p style="margin:0 0 24px;font-size:15px;color:#374151;">',
+    "Friendly Learning exists for one reason: the person best placed to explain something is usually the one who learned it a year ago, not ten. ",
+    "You do not need to be an expert to be useful here — you need to be one step ahead, and willing to say so.",
+    "</p>",
+
+    '<div style="height:1px;background:#e5e7eb;margin:0 0 22px;"></div>',
+
+    '<p style="margin:0 0 16px;font-size:15px;font-weight:600;color:#111827;">Three things worth doing this week</p>',
+    '<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">',
+    stepHtml,
+    "</table>",
+
+    '<div style="background:#f3f4f6;padding:16px;border-radius:8px;border-left:3px solid #2563eb;margin:6px 0 24px;">',
+    '<p style="margin:0;font-size:14px;color:#4b5563;line-height:1.6;">',
+    "<strong style=\"color:#111827;\">One thing people get wrong:</strong> waiting to feel qualified. ",
+    "Most messages here are small — which elective, how to start a project, is this internship worth it. ",
+    "Answering those well is the whole job.",
+    "</p></div>",
+
+    '<p style="text-align:center;margin:0 0 22px;">',
+    `<a href="${SITE_URL}/profile" style="background:#2563eb;color:#ffffff;padding:13px 30px;text-decoration:none;border-radius:6px;font-weight:600;display:inline-block;font-size:15px;">Complete your profile</a>`,
+    "</p>",
+
+    '<p style="margin:0 0 6px;font-size:13px;color:#6b7280;text-align:center;line-height:1.6;">',
+    `Browse the <a href="${SITE_URL}/communities" style="color:#2563eb;">groups</a> &middot; `,
+    `See the <a href="${SITE_URL}/mentors" style="color:#2563eb;">mentor directory</a>`,
+    "</p>",
+
+    '<p style="margin:18px 0 0;font-size:13px;color:#6b7280;line-height:1.6;">',
+    "Busy stretch coming up? You can pause your listing for a day, a week, or until you turn it back on — ",
+    "from your profile page. You stay a mentor, you just stop showing up in the directory while you are heads-down.",
+    "</p>",
+
+    "</div>",
+
+    '<div style="padding:16px 28px;border-top:1px solid #e5e7eb;background:#f9fafb;">',
+    '<p style="margin:0;font-size:12px;color:#6b7280;text-align:center;">',
+    "You are getting this because your mentor application was approved.<br>",
+    `<a href="${unsubscribeUrl}" style="color:#6b7280;">Unsubscribe from these emails</a>`,
+    "</p></div></div></body></html>",
+  ].join("");
+
+  const text = [
+    `Hi ${firstName},`,
+    "",
+    "Your mentor application has been approved and your profile is live. Students at SRM AP can now find you and message you directly.",
+    "",
+    "Friendly Learning exists for one reason: the person best placed to explain something is usually the one who learned it a year ago, not ten. You do not need to be an expert to be useful here.",
+    "",
+    "THREE THINGS WORTH DOING THIS WEEK",
+    "",
+    "1. Finish your profile. Add your skills, a two-line bio and your LinkedIn. Students pick who to message almost entirely off this.",
+    "",
+    "2. Say what you actually want to be asked about. \"DSA and internship prep\" gets better questions than \"happy to help with anything\".",
+    "",
+    "3. Start a group. Only mentors can. Groups can be open to everyone or invite-only, and you decide who gets in.",
+    "",
+    "One thing people get wrong: waiting to feel qualified. Most messages here are small - which elective, how to start a project, is this internship worth it. Answering those well is the whole job.",
+    "",
+    `Complete your profile: ${SITE_URL}/profile`,
+    `Browse groups: ${SITE_URL}/communities`,
+    "",
+    "Busy stretch coming up? You can pause your listing for a day, a week, or until you turn it back on, from your profile page.",
+    "",
+    `Unsubscribe: ${unsubscribeUrl}`,
+  ].join("\n");
+
+  return { subject, html, text };
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -186,9 +343,12 @@ Deno.serve(async (req: Request) => {
   }
 
   // One email per recipient per conversation, however many messages arrived.
+  // `kind` is part of the key so a welcome email is never folded into a message
+  // digest: both have a null conversation_id, and without this the two would
+  // group together and one of them would be settled without ever being sent.
   const groups = new Map<string, QueueRow[]>();
   for (const row of pending as QueueRow[]) {
-    const key = `${row.recipient_id}::${row.conversation_id ?? "none"}`;
+    const key = `${row.recipient_id}::${row.kind}::${row.conversation_id ?? "none"}`;
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key)!.push(row);
   }
@@ -220,46 +380,68 @@ Deno.serve(async (req: Request) => {
         continue;
       }
 
-      const messageIds = rows.map((r) => r.message_id).filter(Boolean) as string[];
-      const { data: messages } = await admin
-        .from("messages")
-        .select("id, content, sender_id, is_read, sent_at")
-        .in("id", messageIds.length > 0 ? messageIds : ["00000000-0000-0000-0000-000000000000"])
-        .order("sent_at", { ascending: true });
+      const unsubscribeUrl =
+        `${SUPABASE_URL}/functions/v1/email-unsubscribe?token=${recipient.unsubscribe_token}`;
 
-      // Already read on the site means the email is noise.
-      const unread = (messages ?? []).filter((m) => m.is_read !== true);
+      const kind = rows[0].kind;
+      let rendered: { subject: string; html: string; text: string };
 
-      if (unread.length === 0) {
-        await settle(ids, { sent_at: new Date().toISOString(), last_error: "already read on site" });
+      if (kind === "welcome_mentor") {
+        rendered = renderWelcomeMentorEmail({
+          recipientName: recipient.name ?? "there",
+          unsubscribeUrl,
+        });
+      } else if (kind === "message") {
+        const messageIds = rows.map((r) => r.message_id).filter(Boolean) as string[];
+        const { data: messages } = await admin
+          .from("messages")
+          .select("id, content, sender_id, is_read, sent_at")
+          .in("id", messageIds.length > 0 ? messageIds : ["00000000-0000-0000-0000-000000000000"])
+          .order("sent_at", { ascending: true });
+
+        // Already read on the site means the email is noise.
+        const unread = (messages ?? []).filter((m) => m.is_read !== true);
+
+        if (unread.length === 0) {
+          await settle(ids, { sent_at: new Date().toISOString(), last_error: "already read on site" });
+          skipped += ids.length;
+          continue;
+        }
+
+        const senderIds = [...new Set(unread.map((m) => m.sender_id))];
+        const { data: senders } = await admin.from("users").select("id, name").in("id", senderIds);
+        const senderNames = senderIds.map(
+          (id) => senders?.find((s) => s.id === id)?.name ?? "Someone",
+        );
+
+        const latest = unread[unread.length - 1];
+        const raw = (latest.content ?? "").trim();
+        const preview = raw.length > 140 ? `${raw.slice(0, 140)}...` : raw;
+
+        rendered = renderMessageEmail({
+          recipientName: recipient.name ?? "there",
+          senderNames,
+          preview,
+          messageCount: unread.length,
+          conversationId: rows[0].conversation_id,
+          unsubscribeUrl,
+        });
+      } else {
+        // A kind this deployment does not know how to render. Left unsent on
+        // purpose: falling through to the message branch would settle it as
+        // "already read" and destroy it. Waiting means a row queued by a newer
+        // migration survives until this function catches up, and MAX_AGE_MS
+        // still stops it waiting forever.
+        console.warn(`Unknown email_queue kind "${kind}", leaving ${ids.length} row(s) unsent`);
         skipped += ids.length;
         continue;
       }
 
-      const senderIds = [...new Set(unread.map((m) => m.sender_id))];
-      const { data: senders } = await admin.from("users").select("id, name").in("id", senderIds);
-      const senderNames = senderIds.map(
-        (id) => senders?.find((s) => s.id === id)?.name ?? "Someone",
-      );
-
-      const latest = unread[unread.length - 1];
-      const raw = (latest.content ?? "").trim();
-      const preview = raw.length > 140 ? `${raw.slice(0, 140)}...` : raw;
-
-      const unsubscribeUrl =
-        `${SUPABASE_URL}/functions/v1/email-unsubscribe?token=${recipient.unsubscribe_token}`;
-
-      const { subject, html, text } = renderMessageEmail({
-        recipientName: recipient.name ?? "there",
-        senderNames,
-        preview,
-        messageCount: unread.length,
-        conversationId: rows[0].conversation_id,
-        unsubscribeUrl,
-      });
+      const { subject, html, text } = rendered;
 
       const result = await resend.emails.send({
         from: FROM_ADDRESS,
+        ...(REPLY_TO ? { replyTo: REPLY_TO } : {}),
         to: [recipient.email],
         subject,
         html,
