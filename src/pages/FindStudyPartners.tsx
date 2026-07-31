@@ -66,7 +66,7 @@ const FindStudyPartners = () => {
                             <div className="bg-muted p-8 rounded-lg mb-12">
                                 <h2 className="text-2xl font-bold mb-4">How to Find Study Partners on Friendly Learning SRMAP</h2>
                                 <ol className="list-decimal list-inside space-y-3">
-                                    <li>Sign up with your university email address</li>
+                                    <li>Sign up with any email, or continue with Google</li>
                                     <li>Add your courses, subjects, and study preferences</li>
                                     <li>Search for students by course, major, or study topics</li>
                                     <li>Connect and arrange study sessions or join groups</li>

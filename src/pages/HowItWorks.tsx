@@ -15,8 +15,8 @@ const HowItWorks = () => {
         "step": [
             {
                 "@type": "HowToStep",
-                "name": "Sign Up with University Email",
-                "text": "Create your account using your verified university email address to join the Friendly Learning SRMAP community."
+                "name": "Create Your Account",
+                "text": "Sign up with any email address, or continue with Google. It takes under a minute."
             },
             {
                 "@type": "HowToStep",
@@ -55,8 +55,8 @@ const HowItWorks = () => {
                             <div className="grid md:grid-cols-3 gap-8 mb-12">
                                 <div className="text-center p-6 border rounded-lg">
                                     <div className="w-16 h-16 bg-primary/10 text-primary rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4">1</div>
-                                    <h3 className="text-xl font-bold mb-3">Sign Up with University Email</h3>
-                                    <p>Create your account using your verified university email address to join our trusted student community.</p>
+                                    <h3 className="text-xl font-bold mb-3">Create Your Account</h3>
+                                    <p>Sign up with any email address, or continue with Google. No university email needed — it takes under a minute.</p>
                                 </div>
                                 <div className="text-center p-6 border rounded-lg">
                                     <div className="w-16 h-16 bg-primary/10 text-primary rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4">2</div>
