@@ -18,9 +18,9 @@ import { markMentorWelcomed } from "@/integrations/supabase/services/welcome-ema
 import { buildWelcomeEmail } from "./welcome-email";
 
 /**
- * Length past which a `mailto:` link stops being reliable. Browsers and mail
- * clients each impose their own cap and none of them warn — the mail simply
- * opens with the end missing.
+ * Length past which the Gmail compose URL stops being reliable. Browsers cap
+ * URL length and Gmail itself trims very long query params without warning —
+ * the draft simply opens with the end missing.
  */
 const MAILTO_SAFE_LENGTH = 1800;
 
@@ -74,11 +74,19 @@ const WelcomeEmailButton = ({
 
   const openMailClient = () => {
     if (!mentorEmail) return;
-    const link = `mailto:${mentorEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    // Not _self: replacing this tab with a mailto: hand-off can leave the admin
-    // staring at a blank page with the list gone, and they still have to come
-    // back to confirm they sent it.
-    window.open(link, "_blank");
+    // Gmail's own compose URL, not mailto:. A mailto: link depends on the OS
+    // having a default mail app registered to handle it — on a machine
+    // without one, Chrome just opens a blank tab and does nothing. This goes
+    // straight into Gmail's web compose in the signed-in account instead,
+    // which is what actually gets used here.
+    const params = new URLSearchParams({
+      view: "cm",
+      fs: "1",
+      to: mentorEmail,
+      su: subject,
+      body,
+    });
+    window.open(`https://mail.google.com/mail/?${params.toString()}`, "_blank");
     setHandedOff(true);
   };
 
@@ -144,8 +152,8 @@ const WelcomeEmailButton = ({
         <DialogHeader>
           <DialogTitle>Welcome {mentorName}</DialogTitle>
           <DialogDescription>
-            This opens your own email app with the message ready. You press send, so it comes from
-            your address — edit anything below first.
+            This opens Gmail with the message ready to send. You press send, so it comes from your
+            address — edit anything below first.
           </DialogDescription>
         </DialogHeader>
 
@@ -185,7 +193,7 @@ const WelcomeEmailButton = ({
           <div className="flex flex-col gap-2 sm:flex-row">
             <Button onClick={openMailClient} className="flex-1">
               <ExternalLink className="mr-2 h-4 w-4" />
-              {handedOff ? "Open again" : "Open in my email app"}
+              {handedOff ? "Open again in Gmail" : "Open in Gmail"}
             </Button>
             <Button variant="outline" onClick={copyAll}>
               <Copy className="mr-2 h-4 w-4" />
@@ -221,7 +229,7 @@ const WelcomeEmailButton = ({
           )}
 
           <p className="text-xs text-muted-foreground">
-            Nothing is sent from this site — it only hands the draft to your mail app.
+            Nothing is sent from this site — it only hands the draft to Gmail.
           </p>
         </div>
       </DialogContent>
