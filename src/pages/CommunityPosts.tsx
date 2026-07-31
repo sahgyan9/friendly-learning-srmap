@@ -157,15 +157,15 @@ const CommunityPosts = () => {
   return (
     <>
       <SEOHead
-        title="Community Board | Find Hackathon Partners & Study Help at SRM AP"
+        title="Posts | Find Hackathon Partners & Study Help at SRM AP"
         description="Post and browse requests from SRM AP students — hackathon teammates, study help, project collaborators, research partners and campus announcements."
-        keywords="find hackathon partners srm ap, study help srmap, student project collaboration, srm ap community board"
+        keywords="find hackathon partners srm ap, study help srmap, student project collaboration, srm ap posts"
         canonical={canonical}
       />
       <StructuredData
         data={getBreadcrumbSchema([
           { name: "Home", url: `${PRIMARY_DOMAIN}/` },
-          { name: "Community Board", url: canonical },
+          { name: "Posts", url: canonical },
         ])}
       />
 
@@ -174,7 +174,7 @@ const CommunityPosts = () => {
         <div className="container mx-auto max-w-3xl px-4 py-6">
           <header className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h1 className="text-3xl font-bold">Community Board</h1>
+              <h1 className="text-3xl font-bold">Posts</h1>
               <p className="text-muted-foreground">
                 Find hackathon teammates, study help and project partners — anyone can post.
               </p>

@@ -96,10 +96,10 @@ const Blog = () => {
                             <div className="rounded-xl border bg-muted/40 p-8 text-center">
                                 <h2 className="mb-2 text-2xl font-bold">Got a question these don't answer?</h2>
                                 <p className="mb-6 text-muted-foreground">
-                                    Ask it on the community board — every SRM AP student can post and reply.
+                                    Ask it on Posts — every SRM AP student can post and reply.
                                 </p>
                                 <Button asChild size="lg">
-                                    <Link to="/community-posts">Go to the board</Link>
+                                    <Link to="/community-posts">Go to Posts</Link>
                                 </Button>
                             </div>
                         </div>

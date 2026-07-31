@@ -167,25 +167,24 @@ const CommunityPostDetail = () => {
   return (
     <>
       <SEOHead
-        title={`${post.title} | Community Board`}
+        title={`${post.title} | Community Posts`}
         description={post.content.slice(0, 160)}
         canonical={canonical}
       />
       <StructuredData
         data={getBreadcrumbSchema([
           { name: "Home", url: `${PRIMARY_DOMAIN}/` },
-          { name: "Community Board", url: `${PRIMARY_DOMAIN}/community-posts` },
+          { name: "Posts", url: `${PRIMARY_DOMAIN}/community-posts` },
           { name: post.title, url: canonical },
         ])}
       />
-
 
       <div className="min-h-screen bg-background">
         <div className="container mx-auto max-w-3xl px-4 py-6">
           <Button asChild variant="ghost" size="sm" className="-ml-2 mb-4 gap-1.5">
             <Link to="/community-posts">
               <ArrowLeft className="h-4 w-4" />
-              Back to the board
+              Back to posts
             </Link>
           </Button>
 

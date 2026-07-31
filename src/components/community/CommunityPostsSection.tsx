@@ -96,7 +96,7 @@ export const CommunityPostsSection = () => {
       <div className="container mx-auto px-4">
         {/* Centred to match the rhythm of every other homepage section. */}
         <div className="mb-8 text-center">
-          <h2 className="mb-2 text-3xl font-bold">Community Board</h2>
+          <h2 className="mb-2 text-3xl font-bold">Posts</h2>
           <p className="mx-auto max-w-xl text-muted-foreground">
             Looking for a hackathon teammate, study help or a project partner? Ask here.
           </p>
@@ -105,7 +105,7 @@ export const CommunityPostsSection = () => {
         {posts.length === 0 ? (
           <div className="rounded-lg border border-dashed py-12 text-center">
             <PenLine className="mx-auto mb-3 h-8 w-8 text-muted-foreground" />
-            <h3 className="mb-1 font-semibold">The board is empty</h3>
+            <h3 className="mb-1 font-semibold">No posts yet</h3>
             <p className="mb-4 text-sm text-muted-foreground">
               Be the first to post — every student can.
             </p>
@@ -143,7 +143,7 @@ export const CommunityPostsSection = () => {
               <CreatePostButton onPostCreated={reload} />
               <Button asChild variant="outline" className="gap-2">
                 <Link to="/community-posts">
-                  Browse the board
+                  Browse posts
                   <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
