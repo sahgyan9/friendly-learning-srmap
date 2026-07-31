@@ -1,5 +1,8 @@
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 import { sanitizeInput } from "@/utils/input-sanitization";
+
+type CommunityInsert = Database["public"]["Tables"]["communities"]["Insert"];
 
 /**
  * Communities: groups a mentor starts and students join.
@@ -203,9 +206,17 @@ export const createCommunity = async (input: CreateCommunityInput) => {
     };
   }
 
+  // `slug` is NOT NULL with no column default, so the generated types insist
+  // callers supply it. They cannot see triggers: communities_set_slug runs
+  // BEFORE INSERT, derives the slug from the name, and overwrites anything
+  // passed in. Sending a value here would be dead weight at best and a
+  // misleading one at worst, so the cast records that the database owns the
+  // column rather than inventing a slug to satisfy the checker.
+  const row = { name, description, kind: input.kind, owner_id: user.id } as CommunityInsert;
+
   const { data, error } = await supabase
     .from("communities")
-    .insert({ name, description, kind: input.kind, owner_id: user.id })
+    .insert(row)
     .select("slug")
     .single();
 
