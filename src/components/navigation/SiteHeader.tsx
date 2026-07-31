@@ -8,6 +8,7 @@ import DarkModeToggle from "@/components/DarkModeToggle";
 import NavbarProfileMenu from "@/components/NavbarProfileMenu";
 import MessagesIcon from "@/components/navbar/MessagesIcon";
 import NotificationBell from "@/components/notifications/NotificationBell";
+import SiteSearch from "@/components/search/SiteSearch";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
@@ -134,6 +135,13 @@ export function SiteHeader() {
             </nav>
 
             <div className="ml-auto flex shrink-0 items-center gap-1 lg:ml-0">
+              {/* Ahead of the icon cluster so it reads as part of the page
+                  rather than as one more button. The six links above cannot
+                  cover twenty destinations; this is how the rest are found. */}
+              <div className="mr-1">
+                <SiteSearch />
+              </div>
+
               {user ? (
                 <>
                   <MessagesIcon />

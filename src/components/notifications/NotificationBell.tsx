@@ -19,6 +19,7 @@ import {
   Notification
 } from "@/integrations/supabase/services/notifications";
 import NotificationItem from "./NotificationItem";
+import { OPEN_NOTIFICATIONS_EVENT } from "@/lib/search/events";
 
 const NotificationBell = () => {
   const { user } = useAuth();
@@ -63,6 +64,14 @@ const NotificationBell = () => {
 
     return unsubscribe;
   }, [user]);
+
+  // Searching for "notifications" opens this popover. There is no notifications
+  // page to navigate to, so the search result asks the bell to open instead.
+  useEffect(() => {
+    const openFromSearch = () => setIsOpen(true);
+    window.addEventListener(OPEN_NOTIFICATIONS_EVENT, openFromSearch);
+    return () => window.removeEventListener(OPEN_NOTIFICATIONS_EVENT, openFromSearch);
+  }, []);
 
   const handleMarkAsRead = async (notificationId: string) => {
     try {

@@ -1,0 +1,443 @@
+import {
+  Award,
+  BookOpen,
+  Building2,
+  Calendar,
+  FileText,
+  Flag,
+  GraduationCap,
+  Handshake,
+  Home,
+  Info,
+  LifeBuoy,
+  LogIn,
+  Mail,
+  MessageSquare,
+  Moon,
+  Route,
+  Shield,
+  ShieldCheck,
+  Sparkles,
+  User,
+  UserPlus,
+  Users,
+  Settings,
+  Trophy,
+  Bell,
+  type LucideIcon,
+} from "lucide-react";
+
+/**
+ * Everything the search bar can take you to that is not a database row.
+ *
+ * The point of the `keywords` list is that people search for what they want,
+ * not for what we called it. A fresher looking for help types "senior", not
+ * "mentor"; someone with a broken page types "bug", not "contact". Every one of
+ * those has to land somewhere sensible or the search feels broken, and a
+ * visitor who searches once and gets nothing does not search again.
+ *
+ * Keywords are matched as whole words and as prefixes, so there is no need to
+ * list plurals of a word already here — "mentor" already answers "mentors".
+ */
+
+/** Non-navigation entries, run instead of followed. */
+export type SearchActionId = "toggle-theme" | "open-notifications";
+
+/**
+ * Who an entry is for. An entry with no rule shows to everyone; an entry with
+ * several shows if any of them holds.
+ */
+export type Audience = "signedIn" | "signedOut" | "mentor" | "notMentor" | "admin";
+
+export interface SearchDestination {
+  id: string;
+  label: string;
+  /** The second line. Says what the page is for, not what it is called. */
+  hint: string;
+  icon: LucideIcon;
+  group: string;
+  keywords: string[];
+  /** Where it goes. Exactly one of `to` or `action` is set. */
+  to?: string;
+  action?: SearchActionId;
+  audience?: Audience[];
+}
+
+export const GROUP_ORDER = [
+  "Best match",
+  "Mentors",
+  "Faculty",
+  "Posts",
+  "Reading",
+  "Go to",
+  "Your account",
+  "Actions",
+  "Admin",
+] as const;
+
+export const DESTINATIONS: SearchDestination[] = [
+  // ---------------------------------------------------------------- Go to
+  {
+    id: "home",
+    label: "Home",
+    hint: "The front page",
+    icon: Home,
+    group: "Go to",
+    keywords: ["home", "homepage", "front page", "start", "main", "landing", "index"],
+    to: "/",
+  },
+  {
+    id: "mentors",
+    label: "Mentors",
+    hint: "Browse students a year or two ahead who can help",
+    icon: Users,
+    group: "Go to",
+    keywords: [
+      "mentor", "mentors", "mentorship", "senior", "seniors", "senior student",
+      "buddy", "guide", "tutor", "coach", "helper", "help me", "ask", "doubt",
+      "doubts", "find a mentor", "talk to a senior", "juniors", "guidance",
+    ],
+    to: "/mentors",
+  },
+  {
+    id: "faculty",
+    label: "Faculty",
+    hint: "Ratings and reviews for lecturers, by department",
+    icon: GraduationCap,
+    group: "Go to",
+    keywords: [
+      "faculty", "professor", "prof", "teacher", "lecturer", "sir", "madam",
+      "maam", "staff", "instructor", "rating", "ratings", "review", "reviews",
+      "course", "subject", "class", "teaching", "grading", "who teaches",
+    ],
+    to: "/faculty",
+  },
+  {
+    id: "posts",
+    label: "Posts",
+    hint: "The community board — ask for teammates, study help or advice",
+    icon: MessageSquare,
+    group: "Go to",
+    keywords: [
+      "post", "posts", "community", "community post", "board", "forum", "feed",
+      "discussion", "notice board", "share", "announcement", "ask the community",
+    ],
+    to: "/community-posts",
+  },
+  {
+    id: "events",
+    label: "Events",
+    hint: "Workshops, fests, competitions and club activities",
+    icon: Calendar,
+    group: "Go to",
+    keywords: [
+      "event", "events", "workshop", "fest", "seminar", "competition", "contest",
+      "club", "activity", "activities", "whats on", "marketplace", "calendar",
+    ],
+    to: "/marketplace",
+  },
+  {
+    id: "hackathon-partners",
+    label: "Hackathon partners",
+    hint: "Find teammates for a hackathon",
+    icon: Trophy,
+    group: "Go to",
+    keywords: [
+      "hackathon", "hack", "teammate", "team", "team member", "partner", "sih",
+      "smart india hackathon", "coding competition", "build together",
+    ],
+    to: "/hackathon-partners",
+  },
+  {
+    id: "study-partners",
+    label: "Study partners",
+    hint: "Find someone to prepare with",
+    icon: BookOpen,
+    group: "Go to",
+    keywords: [
+      "study", "study partner", "study buddy", "study group", "group study",
+      "exam", "exams", "revision", "prepare", "prep", "practice together",
+    ],
+    to: "/find-study-partners",
+  },
+
+  // ------------------------------------------------------------- Reading
+  {
+    id: "blog",
+    label: "Blog",
+    hint: "Guides on electives, exams and campus life",
+    icon: FileText,
+    group: "Go to",
+    keywords: ["blog", "article", "articles", "guide", "guides", "read", "reading", "tips", "advice", "how to"],
+    to: "/blog",
+  },
+  {
+    id: "how-it-works",
+    label: "How it works",
+    hint: "What to do first, and what happens after",
+    icon: Route,
+    group: "Go to",
+    keywords: [
+      "how it works", "how to use", "how does this work", "getting started",
+      "get started", "tutorial", "walkthrough", "steps", "explain", "new here",
+    ],
+    to: "/how-it-works",
+  },
+  {
+    id: "about",
+    label: "About Friendly Learning",
+    hint: "What this is for, who runs it and why it exists",
+    icon: Info,
+    group: "Go to",
+    keywords: [
+      "about", "about us", "aim", "aims", "goal", "mission", "purpose", "vision",
+      "why", "why friendly learning", "what is friendly learning", "story",
+      "who we are", "team", "founders", "idea behind",
+    ],
+    to: "/about",
+  },
+  {
+    id: "contact",
+    label: "Contact & report a problem",
+    hint: "Report a bug, send feedback or ask for help",
+    icon: LifeBuoy,
+    group: "Go to",
+    keywords: [
+      "contact", "contact us", "bug", "bugs", "issue", "issues", "problem",
+      "broken", "not working", "error", "report", "report a bug", "feedback",
+      "complaint", "complain", "suggestion", "suggest", "support", "help desk",
+      "email us", "reach out", "get in touch",
+    ],
+    to: "/contact",
+  },
+
+  // ------------------------------------------------------- Your account
+  {
+    id: "profile",
+    label: "My profile",
+    hint: "Your details, badges and public profile",
+    icon: User,
+    group: "Your account",
+    keywords: [
+      "profile", "my profile", "account", "my account", "settings", "my settings",
+      "edit profile", "my details", "me", "my page", "photo", "avatar",
+    ],
+    to: "/profile",
+    audience: ["signedIn"],
+  },
+  {
+    id: "messages",
+    label: "Messages",
+    hint: "Your conversations with mentors and students",
+    icon: Mail,
+    group: "Your account",
+    keywords: [
+      "message", "messages", "chat", "chats", "dm", "dms", "inbox",
+      "conversation", "conversations", "talk", "reply", "unread messages",
+    ],
+    to: "/messages",
+    audience: ["signedIn"],
+  },
+  {
+    id: "notifications",
+    label: "Notifications",
+    hint: "Open the notification bell",
+    icon: Bell,
+    group: "Your account",
+    keywords: [
+      "notification", "notifications", "bell", "alert", "alerts", "updates",
+      "unread", "whats new", "activity",
+    ],
+    action: "open-notifications",
+    audience: ["signedIn"],
+  },
+  {
+    id: "certificate",
+    label: "My certificate",
+    hint: "Your mentoring certificate, and how far off it is",
+    icon: Award,
+    group: "Your account",
+    keywords: [
+      "certificate", "my certificate", "award", "proof", "linkedin", "download",
+      "verify", "credential", "recognition",
+    ],
+    to: "/certificate",
+    audience: ["mentor"],
+  },
+  {
+    id: "become-mentor",
+    label: "Become a mentor",
+    hint: "What you get for helping, and how to get listed",
+    icon: Handshake,
+    group: "Go to",
+    keywords: [
+      "become a mentor", "be a mentor", "join as mentor", "sign up as mentor",
+      "volunteer", "help others", "help juniors", "willing to help", "give back",
+      "mentor benefits", "benefits", "why become a mentor", "whats in it for me",
+      "perks", "reward", "rewards", "certificate",
+    ],
+    to: "/become-mentor",
+    audience: ["notMentor"],
+  },
+  {
+    id: "signin",
+    label: "Sign in",
+    hint: "Already have an account",
+    icon: LogIn,
+    group: "Your account",
+    keywords: ["sign in", "signin", "log in", "login", "logon", "enter"],
+    to: "/signin",
+    audience: ["signedOut"],
+  },
+  {
+    id: "signup",
+    label: "Sign up",
+    hint: "Create an account with your SRM AP email",
+    icon: UserPlus,
+    group: "Your account",
+    keywords: ["sign up", "signup", "register", "registration", "create account", "join", "new account"],
+    to: "/signup",
+    audience: ["signedOut"],
+  },
+
+  // ------------------------------------------------------------- Actions
+  {
+    id: "toggle-theme",
+    label: "Switch theme",
+    hint: "Between dark and light",
+    icon: Moon,
+    group: "Actions",
+    keywords: [
+      "theme", "dark", "light", "dark mode", "light mode", "night", "night mode",
+      "day mode", "appearance", "brightness", "colour", "color", "switch theme",
+    ],
+    action: "toggle-theme",
+  },
+
+  // --------------------------------------------------------------- Admin
+  {
+    id: "admin",
+    label: "Admin dashboard",
+    hint: "Overview of the whole platform",
+    icon: Shield,
+    group: "Admin",
+    keywords: ["admin", "dashboard", "control panel", "manage", "backend"],
+    to: "/admin",
+    audience: ["admin"],
+  },
+  {
+    id: "admin-mentor-verification",
+    label: "Mentor verification",
+    hint: "Applications and flagged profiles",
+    icon: ShieldCheck,
+    group: "Admin",
+    keywords: ["verification", "verify", "applications", "applicants", "flag", "flags", "flagged", "approve", "reject", "review mentors"],
+    to: "/admin/mentor-verification",
+    audience: ["admin"],
+  },
+  {
+    id: "admin-contact-messages",
+    label: "Contact messages",
+    hint: "What people have sent through the contact form",
+    icon: Mail,
+    group: "Admin",
+    keywords: ["contact messages", "enquiries", "enquiry", "inbox", "support inbox", "reports"],
+    to: "/admin/contact-messages",
+    audience: ["admin"],
+  },
+  {
+    id: "admin-badges",
+    label: "Badges",
+    hint: "Award and manage mentor badges",
+    icon: Sparkles,
+    group: "Admin",
+    keywords: ["badge", "badges", "award badge", "achievements"],
+    to: "/admin/badges",
+    audience: ["admin"],
+  },
+  {
+    id: "admin-events",
+    label: "Manage events",
+    hint: "Add and edit what shows on the events page",
+    icon: Calendar,
+    group: "Admin",
+    keywords: ["manage events", "edit events", "add event", "marketplace admin"],
+    to: "/admin/events",
+    audience: ["admin"],
+  },
+  {
+    id: "admin-team",
+    label: "Team members",
+    hint: "Who appears on the About page",
+    icon: Building2,
+    group: "Admin",
+    keywords: ["team members", "team", "about page team", "contributors"],
+    to: "/admin/team-members",
+    audience: ["admin"],
+  },
+  {
+    id: "admin-settings",
+    label: "Platform settings",
+    hint: "Site-wide configuration",
+    icon: Settings,
+    group: "Admin",
+    keywords: ["platform settings", "site settings", "configuration", "config"],
+    to: "/admin/settings",
+    audience: ["admin"],
+  },
+  {
+    id: "admin-security",
+    label: "Security",
+    hint: "Audit log and access controls",
+    icon: Flag,
+    group: "Admin",
+    keywords: ["security", "audit", "audit log", "access", "permissions", "roles"],
+    to: "/admin/security",
+    audience: ["admin"],
+  },
+];
+
+export interface Viewer {
+  signedIn: boolean;
+  isMentor: boolean;
+  isAdmin: boolean;
+}
+
+/** Whether this viewer should be offered this destination at all. */
+export function isVisibleTo(destination: SearchDestination, viewer: Viewer): boolean {
+  if (!destination.audience || destination.audience.length === 0) return true;
+
+  return destination.audience.some((rule) => {
+    switch (rule) {
+      case "signedIn":
+        return viewer.signedIn;
+      case "signedOut":
+        return !viewer.signedIn;
+      case "mentor":
+        return viewer.isMentor;
+      case "notMentor":
+        return !viewer.isMentor;
+      case "admin":
+        return viewer.isAdmin;
+      default:
+        return false;
+    }
+  });
+}
+
+/**
+ * What to show before anything has been typed. Deliberately short — a wall of
+ * options on open is as unhelpful as none.
+ */
+export const DEFAULT_SUGGESTION_IDS = [
+  "mentors",
+  "faculty",
+  "posts",
+  "events",
+  "become-mentor",
+  "messages",
+  "profile",
+  "how-it-works",
+  "contact",
+  "toggle-theme",
+];
