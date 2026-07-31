@@ -514,7 +514,7 @@ const UserProfile = () => {
                                 'secondary'
                           }>
                             {profile.verification_status === 'verified' && '✓ '}
-                            {profile.verification_status.charAt(0).toUpperCase() + profile.verification_status.slice(1)}
+                            {(profile.verification_status || 'pending').charAt(0).toUpperCase() + (profile.verification_status || 'pending').slice(1)}
                           </Badge>
                         </div>
 
@@ -725,7 +725,7 @@ const UserProfile = () => {
                           </Label>
                           <div className="flex items-center gap-4 p-3 bg-muted rounded-lg">
                             <div>
-                              <p className="text-2xl font-bold">{mentorProfile.rating.toFixed(1)}</p>
+                              <p className="text-2xl font-bold">{(mentorProfile.rating || 0).toFixed(1)}</p>
                               <p className="text-xs text-muted-foreground">⭐ Rating</p>
                             </div>
                             <div className="h-10 w-px bg-border" />

@@ -25,6 +25,18 @@ class ErrorBoundary extends Component<Props, State> {
     }
 
     componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+        // Automatically handle Vite / Vercel dynamic import chunk loading errors after new deployments
+        const isChunkLoadError =
+            error?.name === "ChunkLoadError" ||
+            error?.message?.includes("Failed to fetch dynamically imported module") ||
+            error?.message?.includes("Importing a module script failed") ||
+            error?.message?.includes("dynamically imported module");
+
+        if (isChunkLoadError) {
+            window.location.reload();
+            return;
+        }
+
         // Log error to Sentry in production
         if (import.meta.env.PROD) {
             Sentry.captureException(error, {
