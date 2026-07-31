@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import MentorProfileForm from "@/components/mentors/MentorProfileForm";
 import MentorFormHeader from "@/components/mentors/MentorFormHeader";
+import MentorWelcome from "@/components/mentors/MentorWelcome";
 import { getMentorVerification, canEditApplication } from "@/integrations/supabase/services/mentor-verification";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,6 +20,12 @@ const BecomeMentor = () => {
   const [editMode, setEditMode] = useState(false);
   const [existingApplication, setExistingApplication] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  /**
+   * Whether the applicant has moved past the welcome screen. Landing straight on
+   * ten fields is what turned people away, so the form is now something you opt
+   * into after reading what it's for.
+   */
+  const [started, setStarted] = useState(false);
 
   const editParam = searchParams.get('edit');
 
@@ -321,14 +328,30 @@ const BecomeMentor = () => {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-16 md:py-24">
-        <MentorFormHeader />
-        <div className="max-w-4xl mx-auto">
-          <MentorProfileForm
-            userId={user.id}
-            initialData={initialFormData}
-            isEditMode={false}
+        {started ? (
+          <>
+            <MentorFormHeader
+              title="Set up your mentor profile"
+              description="Three short steps. Your profile is live the moment you finish."
+            />
+            <div className="max-w-4xl mx-auto">
+              <MentorProfileForm
+                userId={user.id}
+                initialData={initialFormData}
+                isEditMode={false}
+              />
+            </div>
+          </>
+        ) : (
+          <MentorWelcome
+            name={profile?.name || ""}
+            onStart={() => {
+              setStarted(true);
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+            onLeave={() => navigate("/")}
           />
-        </div>
+        )}
       </div>
     </div>
   );

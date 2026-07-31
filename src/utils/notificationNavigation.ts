@@ -18,6 +18,19 @@ export const getNotificationNavigationUrl = (notification: Notification): string
         return `${baseUrl}/admin/contact-messages`;
     }
 
+    // The "you're a mentor" notification sent on a first successful signup.
+    // Goes to the certificate page rather than the profile: for a brand-new
+    // mentor that page reads "3 more students to go", which is the next thing
+    // they can act on.
+    if (
+        notification.type === 'system' &&
+        notification.data &&
+        typeof notification.data === 'object' &&
+        'mentor_welcome' in notification.data
+    ) {
+        return `${baseUrl}/certificate`;
+    }
+
     // Handle mentor application notifications
     if (
         notification.type === 'system' &&

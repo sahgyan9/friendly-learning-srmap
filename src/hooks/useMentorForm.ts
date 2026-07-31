@@ -16,6 +16,8 @@ import {
   type MentorFormErrors,
 } from "@/lib/mentor-form-validation";
 import { COLLEGE_ID_PATTERN, normaliseCollegeId, suggestedGraduationYear } from "@/lib/college-id";
+import { createNotification } from "@/integrations/supabase/services/notifications";
+import { MIN_STUDENTS_FOR_CERTIFICATE } from "@/lib/certificate";
 
 export interface MentorFormData {
   name: string;
@@ -171,6 +173,20 @@ export const useMentorForm = (userId: string, initialData: MentorFormData, isEdi
     setTouched(prev => new Set(prev).add(field));
   }, []);
 
+  /**
+   * Used when a step is left via Next. Pressing Next is the same promise as
+   * pressing Submit for that slice of the form, so every field on the step earns
+   * the right to show its error at once — otherwise Next would refuse to advance
+   * while pointing at nothing.
+   */
+  const markManyTouched = useCallback((fields: (keyof MentorFormData)[]) => {
+    setTouched(prev => {
+      const next = new Set(prev);
+      for (const field of fields) next.add(field);
+      return next;
+    });
+  }, []);
+
   const handleImageUploaded = useCallback((imageUrl: string) => {
     setIsDirty(true);
     setFormData(prev => ({
@@ -290,8 +306,29 @@ export const useMentorForm = (userId: string, initialData: MentorFormData, isEdi
           throw new Error(result.error.message || "Failed to submit mentor application");
         }
 
-        // Approved by the insert trigger before this line runs, so say so.
-        toast.success("You're a mentor — your profile is live. Students can find you now.");
+        // Approved by the insert trigger before this line runs, so say so — and
+        // say it here rather than on the button that opens the form, which is
+        // where it would have been a claim with no row behind it.
+        toast.success("You're a mentor 🎉", {
+          description:
+            "Your profile is live. Students looking for help in your department can find and message you now.",
+          duration: 8000,
+        });
+
+        // The toast is gone in eight seconds. This is the copy of it they can
+        // come back to, and it points at the certificate page, which shows how
+        // many students are left before theirs is issued.
+        try {
+          await createNotification({
+            user_id: userId,
+            type: "system",
+            title: "You're a mentor 🎉",
+            content: `Your profile is live and students can message you. Help ${MIN_STUDENTS_FOR_CERTIFICATE} of them through a real conversation and you earn your certificate.`,
+            data: { mentor_welcome: true },
+          });
+        } catch {
+          // A missing bell entry is not worth failing a successful signup over.
+        }
       }
 
       setIsDirty(false);
@@ -311,12 +348,17 @@ export const useMentorForm = (userId: string, initialData: MentorFormData, isEdi
     isSubmitting,
     isDirty,
     errors: visibleErrors,
+    /** Every error, whether or not it has been earned yet — the stepper asks
+     *  "is this step actually complete?", which is not the same question as
+     *  "what may this applicant be shown?". */
+    allErrors,
     checkingCollegeId,
     completion,
     remainingRequired,
     handleChange,
     handleBlur,
     markTouched,
+    markManyTouched,
     handleImageUploaded,
     applyImportedData,
     handleSubmit
