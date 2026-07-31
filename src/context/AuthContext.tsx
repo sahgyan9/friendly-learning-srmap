@@ -54,7 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const fetchUserProfile = useCallback(
-    async (userId: string) => {
+    async (userId: string, authUser?: User | null) => {
       try {
         const [{ data: profileData, error: profileError }, { data: mentorData }] = await Promise.all([
           supabase.from("users").select("*").eq("id", userId).maybeSingle(),
@@ -64,6 +64,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (profileError || !profileData) {
           clearProfile();
           return;
+        }
+
+        // Automatically populate Google profile image if user has no profile photo set
+        const googleAvatar =
+          authUser?.user_metadata?.avatar_url ||
+          authUser?.user_metadata?.picture;
+
+        if (!profileData.profile_image && googleAvatar) {
+          profileData.profile_image = googleAvatar;
+          void supabase
+            .from("users")
+            .update({ profile_image: googleAvatar })
+            .eq("id", userId);
         }
 
         loadedUserId.current = userId;
@@ -108,7 +121,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // Deferred to a microtask: Supabase warns against awaiting other client
       // calls synchronously inside this callback.
-      void Promise.resolve().then(() => fetchUserProfile(nextUserId));
+      void Promise.resolve().then(() => fetchUserProfile(nextUserId, nextSession?.user));
     });
 
     return () => subscription.unsubscribe();
