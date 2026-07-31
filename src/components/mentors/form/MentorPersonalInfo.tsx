@@ -22,9 +22,9 @@ interface MentorPersonalInfoProps {
  * as a Biology mentor, and React logged a duplicate-key warning on every render.
  */
 const FALLBACK_DEPARTMENTS = [
-  "Computer Science and Engineering",
-  "Electronics and Communication Engineering",
-  "Electrical and Electronics Engineering",
+  "CSE",
+  "ECE",
+  "EEE",
   "Mechanical Engineering",
   "Civil Engineering",
   "Physics",

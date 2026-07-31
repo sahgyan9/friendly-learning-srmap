@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Star, University, Heart } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Mentor } from "@/types/mentor";
+import { formatDepartment } from "@/utils/user-utils";
 
 interface MentorProfileHeaderProps {
   mentor: Mentor;
@@ -78,7 +79,7 @@ const MentorProfileHeader = ({ mentor }: MentorProfileHeaderProps) => {
           className="text-lg text-muted-foreground mb-4"
           variants={itemVariants}
         >
-          {mentor.department}
+          {formatDepartment(mentor.department)}
         </motion.p>
 
         {/* University and Hobbies Section */}

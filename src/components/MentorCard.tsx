@@ -12,7 +12,7 @@ import { useBadges } from "@/hooks/useBadges";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import { getMentorById } from "@/integrations/supabase/services/mentors";
-import { getOrCreateConversation } from "@/integrations/supabase/services/chat";
+import { getInitials, formatDepartment } from "@/utils/user-utils";
 
 interface MentorCardProps {
   mentor: Mentor;
@@ -172,7 +172,7 @@ const MentorCard = ({ mentor }: MentorCardProps) => {
                   <div className="flex items-center space-x-1">
                     <MapPin className="h-4 w-4 text-gray-500 flex-shrink-0" />
                     <span className="text-sm text-gray-600 dark:text-gray-400 truncate">
-                      {mentor.department}
+                      {formatDepartment(mentor.department)}
                     </span>
                   </div>
                   {/* LinkedIn icon */}
