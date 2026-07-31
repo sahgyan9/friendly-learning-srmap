@@ -196,19 +196,19 @@ const SiteSearch = () => {
         aria-label="Search the site"
         className={cn(
           "h-9 gap-2 px-2.5 text-muted-foreground",
-          // Widths track how much room the header actually has. Below lg the
-          // inline nav links are hidden, so a full field fits. Between lg and
-          // xl the links come back and everything together overflows 1024px, so
-          // the field collapses to an icon again. From xl there is room for both.
+          // The field used to shrink back to a bare icon between lg and xl,
+          // because the nav links shared the row and the three together
+          // overflowed 1024px. The links moved to their own row underneath, so
+          // the width can now just grow with the viewport.
           "w-9 justify-center",
           "md:w-56 md:justify-start md:px-3",
-          "lg:w-9 lg:justify-center lg:px-2.5",
-          "xl:w-64 xl:justify-start xl:px-3",
+          "lg:w-72",
+          "xl:w-80",
         )}
       >
         <Search className="h-4 w-4 shrink-0" />
-        <span className="hidden md:inline lg:hidden xl:inline">Search</span>
-        <kbd className="ml-auto hidden items-center gap-0.5 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium md:inline-flex lg:hidden xl:inline-flex">
+        <span className="hidden md:inline">Search</span>
+        <kbd className="ml-auto hidden items-center gap-0.5 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium md:inline-flex">
           {isMac ? "⌘" : "Ctrl"} K
         </kbd>
       </Button>

@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/context/AuthContext";
+import { useCollapseOnScroll } from "@/hooks/useCollapseOnScroll";
 import { useHasSeenFacultyRatings } from "@/hooks/useFeatureAnnouncement";
 import { cn } from "@/lib/utils";
 
@@ -34,12 +35,13 @@ interface NavItem {
 }
 
 /**
- * One list, used by both the desktop row and the mobile sheet.
+ * One list, rendered identically by the desktop row and the mobile sheet.
  *
  * There were previously three navigations with three different link sets: a
  * floating pill, a hamburger menu, and this. Faculty — the newest feature —
  * appeared in none of the mobile ones, and /community-posts was labelled
- * "Board" in one and "Community" in another.
+ * "Board" in one and "Community" in another. Keeping one array is what stops
+ * that drift coming back.
  */
 const PRIMARY_NAV: NavItem[] = [
   { name: "Home", url: "/", icon: Home },
@@ -61,16 +63,23 @@ const SECONDARY_NAV = [
 /**
  * The site's only navigation.
  *
- * It replaced a `fixed`, centre-positioned pill that shared the header band
- * with a separate sticky bar. Between roughly 768px and 1150px the pill sat on
- * top of the logo and the Sign In button, clipping both. Everything is in
- * normal flex flow now, so the elements cannot overlap at any width.
+ * Desktop splits it across two rows — identity and search on top, links
+ * underneath — because a single 64px band was holding a logo, seven links, a
+ * search field and four icons: about 1080px of content in a 1280px container,
+ * tight enough that the search field had to collapse to a bare icon between
+ * 1024px and 1280px just to fit. The second row collapses on scroll (see
+ * useCollapseOnScroll) so the taller header is only paid for at the top of a
+ * page, not the whole way down a feed.
+ *
+ * Below `lg` there is still one row and a sheet, which was never the crowded
+ * case.
  */
 export function SiteHeader() {
   const { user } = useAuth();
   const location = useLocation();
   const { hasSeen: hasSeenFaculty } = useHasSeenFacultyRatings();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const navCollapsed = useCollapseOnScroll();
 
   // Route changes must close the sheet, or tapping a link leaves the overlay
   // covering the page you just navigated to.
@@ -82,6 +91,11 @@ export function SiteHeader() {
     url === "/" ? location.pathname === "/" : location.pathname.startsWith(url);
 
   const visibleNav = PRIMARY_NAV.filter((item) => !item.requiresAuth || user);
+
+  // The collapsed row is clipped to zero height rather than unmounted, so that
+  // it can animate. `inert` is what keeps a Tab press out of links nobody can
+  // see; React 18 has no typing for it, hence the string spread.
+  const inertWhenCollapsed = (navCollapsed ? { inert: "" } : {}) as Record<string, string>;
 
   return (
     <>
@@ -101,50 +115,7 @@ export function SiteHeader() {
               <Logo />
             </Link>
 
-            {/* Inline links appear only once there is genuinely room for them. */}
-            <nav aria-label="Primary" className="hidden flex-1 items-center justify-center lg:flex">
-              <ul className="flex items-center gap-1">
-                {visibleNav.map((item) => {
-                  const active = isActive(item.url);
-                  const showDot = item.url === "/faculty" && !hasSeenFaculty;
-
-                  return (
-                    <li key={item.url}>
-                      <Link
-                        to={item.url}
-                        aria-current={active ? "page" : undefined}
-                        className={cn(
-                          "relative block rounded-full px-3.5 py-2 text-sm font-medium transition-colors",
-                          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                          active ? "text-primary" : "text-muted-foreground hover:text-foreground",
-                        )}
-                      >
-                        {item.name}
-
-                        {showDot && (
-                          <span
-                            aria-hidden
-                            className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-primary"
-                          />
-                        )}
-                        {showDot && <span className="sr-only">(new)</span>}
-
-                        {active && (
-                          <motion.span
-                            layoutId="site-nav-active"
-                            className="absolute inset-0 -z-10 rounded-full bg-primary/10"
-                            initial={false}
-                            transition={{ type: "spring", stiffness: 350, damping: 30 }}
-                          />
-                        )}
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
-            </nav>
-
-            <div className="ml-auto flex shrink-0 items-center gap-1 lg:ml-0">
+            <div className="ml-auto flex shrink-0 items-center gap-1">
               {/* Ahead of the icon cluster so it reads as part of the page
                   rather than as one more button. The six links above cannot
                   cover twenty destinations; this is how the rest are found. */}
@@ -270,6 +241,70 @@ export function SiteHeader() {
                 </SheetContent>
               </Sheet>
             </div>
+          </div>
+        </div>
+
+        {/* Row two: the links, on desktop only. Clipped to zero height on the
+            way down the page and restored on the way back up. `h-12` is
+            duplicated on the clip and on the nav so the collapse animates
+            against a known height — `h-auto` would not transition. */}
+        <div
+          className={cn(
+            "hidden overflow-hidden transition-[height] duration-200 ease-out motion-reduce:transition-none lg:block",
+            navCollapsed ? "h-0" : "h-12",
+          )}
+        >
+          <div className="container mx-auto px-4">
+            {/* No rule between the rows: the two bands share a background and
+                read as one header, and a divider only chopped it in half. */}
+            <nav
+              aria-label="Primary"
+              className="flex h-12 items-center justify-center"
+              {...inertWhenCollapsed}
+            >
+              {/* Roomy on purpose. Six labels centred at the old gap-1 read as
+                  one clump of text rather than six destinations; the space is
+                  free here, since nothing else shares the row. */}
+              <ul className="flex items-center gap-2 xl:gap-4">
+                {visibleNav.map((item) => {
+                  const active = isActive(item.url);
+                  const showDot = item.url === "/faculty" && !hasSeenFaculty;
+
+                  return (
+                    <li key={item.url}>
+                      <Link
+                        to={item.url}
+                        aria-current={active ? "page" : undefined}
+                        className={cn(
+                          "relative block rounded-full px-4 py-2 text-sm font-medium transition-colors",
+                          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                          active ? "text-primary" : "text-muted-foreground hover:text-foreground",
+                        )}
+                      >
+                        {item.name}
+
+                        {showDot && (
+                          <span
+                            aria-hidden
+                            className="absolute right-1.5 top-0.5 h-1.5 w-1.5 rounded-full bg-primary"
+                          />
+                        )}
+                        {showDot && <span className="sr-only">(new)</span>}
+
+                        {active && (
+                          <motion.span
+                            layoutId="site-nav-active"
+                            className="absolute inset-0 -z-10 rounded-full bg-primary/10"
+                            initial={false}
+                            transition={{ type: "spring", stiffness: 350, damping: 30 }}
+                          />
+                        )}
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </nav>
           </div>
         </div>
       </header>

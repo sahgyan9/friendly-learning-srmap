@@ -97,7 +97,11 @@ const ChatContainer = ({
   );
 
   return (
-    <div className="flex h-[calc(100dvh-9rem)] min-h-[28rem] overflow-hidden rounded-xl border bg-card shadow-sm">
+    // The lg offset is 3rem larger because that is where the header grows a
+    // second nav row. Without it the chat overflows by exactly that much and
+    // the page picks up a scrollbar, which then collapses the row and leaves
+    // the layout oscillating.
+    <div className="flex h-[calc(100dvh-9rem)] min-h-[28rem] overflow-hidden rounded-xl border bg-card shadow-sm lg:h-[calc(100dvh-12rem)]">
       {showList && (
         <aside
           className={`flex flex-col border-r bg-background ${
