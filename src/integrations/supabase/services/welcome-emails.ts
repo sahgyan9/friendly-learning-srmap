@@ -12,7 +12,12 @@ const rpc = supabase.rpc.bind(supabase) as (
 ) => Promise<{ data: unknown; error: { message: string } | null }>;
 
 export type MentorWelcomeStatus = {
+  userId: string;
+  name: string;
   email: string | null;
+  profileImage: string | null;
+  department: string | null;
+  approvedAt: string | null;
   sentAt: string | null;
   welcomed: boolean;
 };
@@ -31,30 +36,43 @@ export type WelcomeStatusMap = Map<string, MentorWelcomeStatus>;
  * "Welcomed" is the admin's confirmation, not an observation: the mail is sent
  * from their own client and nothing in the browser can watch that happen.
  */
-export async function listMentorWelcomeStatus(): Promise<WelcomeStatusMap> {
+export async function listMentorWelcomeStatus(): Promise<{
+  rows: MentorWelcomeStatus[];
+  byId: WelcomeStatusMap;
+  error: { message: string } | null;
+}> {
   const { data, error } = await rpc("admin_list_mentor_welcome_status");
 
   if (error) {
-    // An empty map rather than a throw: the tracking migration is applied
-    // separately, and a missing RPC should cost the admin the welcome column,
-    // not the whole verification screen.
+    // Empty rather than a throw: the tracking migration is applied separately,
+    // and a missing RPC should cost the welcome column, not the whole screen.
+    // The error is returned so a dedicated page can explain itself instead of
+    // rendering an empty list that looks like "no mentors".
     console.error("Could not read mentor welcome status:", error);
-    return new Map();
+    return { rows: [], byId: new Map(), error };
   }
 
-  const rows = (data ?? []) as {
+  const rows = ((data ?? []) as {
     user_id: string;
+    name: string | null;
     email: string | null;
+    profile_image: string | null;
+    department: string | null;
+    approved_at: string | null;
     sent_at: string | null;
     welcomed: boolean;
-  }[];
+  }[]).map<MentorWelcomeStatus>((row) => ({
+    userId: row.user_id,
+    name: row.name ?? "A mentor",
+    email: row.email,
+    profileImage: row.profile_image,
+    department: row.department,
+    approvedAt: row.approved_at,
+    sentAt: row.sent_at,
+    welcomed: row.welcomed,
+  }));
 
-  return new Map(
-    rows.map((row) => [
-      row.user_id,
-      { email: row.email, sentAt: row.sent_at, welcomed: row.welcomed },
-    ]),
-  );
+  return { rows, byId: new Map(rows.map((row) => [row.userId, row])), error: null };
 }
 
 export async function markMentorWelcomed(mentorId: string) {

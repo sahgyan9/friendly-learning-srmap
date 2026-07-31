@@ -27,7 +27,6 @@ const AdminMentorVerification = () => {
   const [loading, setLoading] = useState(true);
   const [selectedStatus, setSelectedStatus] = useState("pending");
   const [welcomeStatus, setWelcomeStatus] = useState<WelcomeStatusMap>(new Map());
-  const [unwelcomedOnly, setUnwelcomedOnly] = useState(false);
   const [filters, setFilters] = useState<FilterType>({
     search: '',
     department: '',
@@ -47,13 +46,6 @@ const AdminMentorVerification = () => {
         ? allVerifications.filter((verification: VerificationRow) => verification.flags?.length > 0)
         : allVerifications.filter((verification: VerificationRow) => verification.status === selectedStatus);
 
-    // Only meaningful on the approved tab, which is where the welcome lives.
-    if (selectedStatus === "approved" && unwelcomedOnly) {
-      filtered = filtered.filter(
-        (verification: VerificationRow) =>
-          !welcomeStatus.get(verification.user_id as string)?.welcomed,
-      );
-    }
 
     // Apply search filter
     if (filters.search) {
@@ -119,7 +111,7 @@ const AdminMentorVerification = () => {
     }
 
     return filtered;
-  }, [allVerifications, selectedStatus, filters, unwelcomedOnly, welcomeStatus]);
+  }, [allVerifications, selectedStatus, filters]);
 
   const fetchData = async () => {
     try {
@@ -141,7 +133,7 @@ const AdminMentorVerification = () => {
         setStats(statsResult.data);
       }
 
-      setWelcomeStatus(welcome);
+      setWelcomeStatus(welcome.byId);
     } catch (error) {
       toast({
         title: "Error",
@@ -205,8 +197,6 @@ const AdminMentorVerification = () => {
           onStatusChange={setSelectedStatus}
           onStatusUpdate={handleStatusUpdate}
           welcomeStatus={welcomeStatus}
-          unwelcomedOnly={unwelcomedOnly}
-          onUnwelcomedOnlyChange={setUnwelcomedOnly}
           unwelcomedCount={unwelcomedCount}
           onWelcomeSent={fetchData}
         />

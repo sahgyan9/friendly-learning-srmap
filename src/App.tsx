@@ -65,6 +65,7 @@ const Unauthorized = lazyWithRetry(() => import("./pages/Unauthorized"));
 const AdminDashboard = lazyWithRetry(() => import("./pages/AdminDashboard"));
 const AdminContactMessages = lazyWithRetry(() => import("./pages/AdminContactMessages"));
 const AdminMentorVerification = lazyWithRetry(() => import("./pages/AdminMentorVerification"));
+const AdminWelcomeEmails = lazyWithRetry(() => import("./pages/AdminWelcomeEmails"));
 const AdminBadges = lazyWithRetry(() => import("./pages/AdminBadges"));
 const AdminSettings = lazyWithRetry(() => import("./pages/AdminSettings"));
 const AdminSecurity = lazyWithRetry(() => import("./pages/AdminSecurity"));
@@ -195,6 +196,14 @@ function App() {
                   element={
                     <ProtectedRoute requiredRole="admin">
                       <AdminMentorVerification />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/welcome-emails"
+                  element={
+                    <ProtectedRoute requiredRole="admin">
+                      <AdminWelcomeEmails />
                     </ProtectedRoute>
                   }
                 />

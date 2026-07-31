@@ -28,7 +28,16 @@
  * no mobile, no ID. An admin can already see the rest of the application.
  */
 create or replace function public.admin_list_mentor_welcome_status()
-returns table (user_id uuid, email text, sent_at timestamptz, welcomed boolean)
+returns table (
+  user_id uuid,
+  name text,
+  email text,
+  profile_image text,
+  department text,
+  approved_at timestamptz,
+  sent_at timestamptz,
+  welcomed boolean
+)
 language plpgsql
 security definer
 set search_path = public
@@ -41,14 +50,22 @@ begin
   return query
   select
     v.user_id,
+    coalesce(m.name, u.name, v.application_data->>'name') as name,
     u.email,
+    coalesce(m.profile_image, u.profile_image) as profile_image,
+    coalesce(m.department, u.department) as department,
+    -- reviewed_at is null on the auto-approve path, which is now every
+    -- application, so submission time is the only date that reliably exists.
+    coalesce(v.reviewed_at, v.submitted_at) as approved_at,
     q.sent_at,
     (q.recipient_id is not null and q.sent_at is not null) as welcomed
   from public.mentor_verifications v
   join public.users u on u.id = v.user_id
+  left join public.mentors m on m.id = v.user_id
   left join public.email_queue q
     on q.recipient_id = v.user_id and q.kind = 'welcome_mentor'
-  where v.status = 'approved';
+  where v.status = 'approved'
+  order by q.sent_at is not null, coalesce(v.reviewed_at, v.submitted_at) desc;
 end;
 $$;
 

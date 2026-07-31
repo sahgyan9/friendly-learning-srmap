@@ -12,6 +12,7 @@ import {
   BarChart3,
   ChevronLeft,
   ChevronRight,
+  Mail,
   Sparkles
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
@@ -44,6 +45,12 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
       href: "/admin/mentor-verification",
       icon: UserCheck,
       current: location.pathname === "/admin/mentor-verification",
+    },
+    {
+      name: "Welcome Emails",
+      href: "/admin/welcome-emails",
+      icon: Mail,
+      current: location.pathname === "/admin/welcome-emails",
     },
     {
       name: "Badge Management",
