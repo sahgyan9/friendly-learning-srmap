@@ -5,18 +5,10 @@ import { supabase } from '../client';
 export async function getMentors() {
   const { data, error } = await supabase
     .from('mentors')
-    .select('*, users(profile_image)')
+    .select('*')
     .neq('department', 'General')
     .not('department', 'is', null)
     .order('rating', { ascending: false });
-
-  if (data) {
-    const formattedData = data.map((mentor: any) => ({
-      ...mentor,
-      profile_image: mentor.profile_image || mentor.users?.profile_image || "",
-    }));
-    return { data: formattedData, error: null };
-  }
 
   return { data, error };
 }
@@ -48,7 +40,7 @@ export async function searchMentors(query: string) {
     // Search in name, department, and bio with proper formatting, excluding General department
     const { data, error } = await supabase
       .from('mentors')
-      .select('*, users(profile_image)')
+      .select('*')
       .neq('department', 'General')
       .not('department', 'is', null)
       .or(`name.ilike.%${lowerQuery}%,department.ilike.%${lowerQuery}%,bio.ilike.%${lowerQuery}%`)
@@ -58,20 +50,15 @@ export async function searchMentors(query: string) {
       throw error;
     }
 
-    const formattedData = (data || []).map((mentor: any) => ({
-      ...mentor,
-      profile_image: mentor.profile_image || mentor.users?.profile_image || "",
-    }));
-
     // For skills array, we need to filter in JS since it's complex in SQL
-    const mentorsWithMatchingSkills = formattedData.filter(mentor =>
+    const mentorsWithMatchingSkills = data?.filter(mentor =>
       mentor.skills && mentor.skills.some(skill =>
         skill.toLowerCase().includes(lowerQuery)
       )
-    );
+    ) || [];
 
     // Merge SQL results with JS filtered results for skills
-    const mergedResults = [...formattedData, ...mentorsWithMatchingSkills];
+    const mergedResults = [...(data || []), ...mentorsWithMatchingSkills];
 
     // Remove duplicates based on id
     const uniqueResults = Array.from(
@@ -88,17 +75,9 @@ export async function searchMentors(query: string) {
 export async function getMentorById(id: string) {
   const { data, error } = await supabase
     .from('mentors')
-    .select('*, users(profile_image)')
+    .select('*')
     .eq('id', id)
     .single();
-
-  if (data) {
-    const formatted = {
-      ...data,
-      profile_image: data.profile_image || (data as any).users?.profile_image || "",
-    };
-    return { data: formatted, error: null };
-  }
 
   return { data, error };
 }
