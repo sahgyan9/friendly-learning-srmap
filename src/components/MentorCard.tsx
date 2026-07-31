@@ -1,18 +1,19 @@
 
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Star, MapPin, Users, MessageCircle, Linkedin, Loader2, GraduationCap } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Mentor } from "@/types/mentor";
 import BadgeGrid from "@/components/badges/BadgeGrid";
+import MentorAvatar from "@/components/mentors/MentorAvatar";
 import { useBadges } from "@/hooks/useBadges";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import { getMentorById } from "@/integrations/supabase/services/mentors";
-import { getInitials, formatDepartment } from "@/utils/user-utils";
+import { getOrCreateConversation } from "@/integrations/supabase/services/chat";
+import { formatDepartment } from "@/utils/user-utils";
 
 interface MentorCardProps {
   mentor: Mentor;
@@ -25,14 +26,6 @@ const MentorCard = ({ mentor }: MentorCardProps) => {
   const [isNavigating, setIsNavigating] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const navigate = useNavigate();
-
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase();
-  };
 
   const handleConnect = async () => {
     if (!user) {
@@ -108,86 +101,87 @@ const MentorCard = ({ mentor }: MentorCardProps) => {
         )}
         
         <CardContent className="p-6 flex flex-col h-full">
-          {/* Header section with avatar and basic info */}
-          <div className="flex items-start space-x-4 mb-4">
-            <div className="flex flex-col items-center flex-shrink-0">
-              <Avatar className="h-16 w-16 ring-2 ring-blue-100 dark:ring-blue-900 mb-2">
-                <AvatarImage 
-                  src={mentor.profile_image} 
-                  alt={mentor.name}
-                  loading="lazy"
-                />
-                <AvatarFallback className="bg-blue-600 text-white text-lg font-semibold">
-                  {getInitials(mentor.name)}
-                </AvatarFallback>
-              </Avatar>
-              
-              {/* Rating or New Mentor Badge - moved below avatar */}
-              {mentor.review_count === 0 || mentor.rating === 0 ? (
-                <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 text-xs">
-                  New Mentor
-                </Badge>
-              ) : (
-                <div className="flex items-center space-x-1 bg-yellow-50 dark:bg-yellow-900/20 px-2 py-1 rounded-full">
-                  <Star className="h-3 w-3 text-yellow-500 fill-current" />
-                  <span className="text-xs font-medium text-gray-900 dark:text-gray-100">
-                    {mentor.rating.toFixed(1)}
-                  </span>
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
-                    ({mentor.review_count})
+          {/* Header section with avatar and basic info.
+              The status badge used to sit under the avatar, which widened that
+              column and left the name about 150px to live in — every mentor
+              with a three-part name rendered as "Aarav Raj Shr...". The badge
+              now sits with the other metadata, and the name gets the full
+              width and two lines before it clips. */}
+          <div className="mb-4 flex items-start gap-3">
+            <MentorAvatar
+              name={mentor.name}
+              src={mentor.profile_image}
+              seed={mentor.id}
+              className="h-14 w-14 flex-shrink-0 ring-2 ring-blue-100 dark:ring-blue-900"
+              fallbackClassName="text-base"
+            />
+
+            <div className="min-w-0 flex-1">
+              <h3 className="line-clamp-2 text-lg font-semibold leading-tight text-gray-900 transition-colors group-hover:text-blue-600 dark:text-gray-100 dark:group-hover:text-blue-400">
+                {mentor.name}
+              </h3>
+
+              <div className="mt-1.5 flex items-center gap-2">
+                <div className="flex min-w-0 items-center gap-1">
+                  <MapPin className="h-3.5 w-3.5 flex-shrink-0 text-gray-500" />
+                  <span className="truncate text-sm text-gray-600 dark:text-gray-400">
+                    {formatDepartment(mentor.department)}
                   </span>
                 </div>
-              )}
-            </div>
-            
-            <div className="flex-1 min-w-0">
-              <div className="mb-2">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors truncate">
-                  {mentor.name}
-                </h3>
+                {mentor.linkedin_url && (
+                  <a
+                    href={mentor.linkedin_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={`${mentor.name} on LinkedIn`}
+                    className="flex-shrink-0 text-blue-600 transition-colors hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Linkedin className="h-4 w-4" />
+                  </a>
+                )}
+              </div>
 
+              <div className="mt-2 flex flex-wrap items-center gap-1.5">
                 {/* The whole point of the alumni transition: a student scanning
                     this list can tell who has already been through placements.
                     Company beats cohort year when we have it — "at Google" is
                     what makes someone worth asking. */}
                 {mentor.is_alumni && (
-                  <div className="mt-1 flex items-center gap-1.5">
-                    <Badge
-                      variant="secondary"
-                      className="gap-1 bg-indigo-100 text-indigo-800 text-xs dark:bg-indigo-950 dark:text-indigo-200"
-                    >
-                      <GraduationCap className="h-3 w-3" />
-                      Alumni
-                      {mentor.graduation_year ? ` '${String(mentor.graduation_year).slice(-2)}` : ""}
-                    </Badge>
-                    {(mentor.company || mentor.job_title) && (
-                      <span className="truncate text-xs text-gray-600 dark:text-gray-400">
-                        {[mentor.job_title, mentor.company].filter(Boolean).join(" at ")}
-                      </span>
-                    )}
-                  </div>
+                  <Badge
+                    variant="secondary"
+                    className="gap-1 bg-indigo-100 text-xs text-indigo-800 dark:bg-indigo-950 dark:text-indigo-200"
+                  >
+                    <GraduationCap className="h-3 w-3" />
+                    Alumni
+                    {mentor.graduation_year ? ` '${String(mentor.graduation_year).slice(-2)}` : ""}
+                  </Badge>
                 )}
 
-                <div className="flex items-center space-x-2 mt-1">
-                  <div className="flex items-center space-x-1">
-                    <MapPin className="h-4 w-4 text-gray-500 flex-shrink-0" />
-                    <span className="text-sm text-gray-600 dark:text-gray-400 truncate">
-                      {formatDepartment(mentor.department)}
+                {mentor.review_count === 0 || mentor.rating === 0 ? (
+                  <Badge
+                    variant="secondary"
+                    className="bg-green-100 text-xs text-green-800 dark:bg-green-900 dark:text-green-300"
+                  >
+                    New Mentor
+                  </Badge>
+                ) : (
+                  <span className="flex items-center gap-1 rounded-full bg-yellow-50 px-2 py-0.5 dark:bg-yellow-900/20">
+                    <Star className="h-3 w-3 fill-current text-yellow-500" />
+                    <span className="text-xs font-medium text-gray-900 dark:text-gray-100">
+                      {mentor.rating.toFixed(1)}
                     </span>
-                  </div>
-                  {/* LinkedIn icon */}
-                  {mentor.linkedin_url && (
-                    <a
-                      href={mentor.linkedin_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <Linkedin className="h-4 w-4" />
-                    </a>
-                  )}
-                </div>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                      ({mentor.review_count})
+                    </span>
+                  </span>
+                )}
+
+                {mentor.is_alumni && (mentor.company || mentor.job_title) && (
+                  <span className="w-full truncate text-xs text-gray-600 dark:text-gray-400">
+                    {[mentor.job_title, mentor.company].filter(Boolean).join(" at ")}
+                  </span>
+                )}
               </div>
             </div>
           </div>
