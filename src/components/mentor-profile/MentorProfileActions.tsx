@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
-import { getMentorById } from "@/integrations/supabase/services/mentors";
+import { getMentorById, isMentorListed } from "@/integrations/supabase/services/mentors";
 import { getOrCreateConversation } from "@/integrations/supabase/services/chat";
 import { useNavigate } from "react-router-dom";
 import { Mentor } from "@/types/mentor";
@@ -118,13 +118,24 @@ const MentorProfileActions = ({
         </>
       ) : (
         <>
-          <Button onClick={handleConnect} className="w-full gap-2" disabled={isConnecting}>
+          {/* The banner above the page carries the explanation, so the button
+              only has to stop being clickable — repeating "taking a break" here
+              would say it twice on one screen. */}
+          <Button
+            onClick={handleConnect}
+            className="w-full gap-2"
+            disabled={isConnecting || !isMentorListed(mentor)}
+          >
             {isConnecting ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <MessageCircle className="h-4 w-4" />
             )}
-            {isConnecting ? "Connecting..." : "Connect with Mentor"}
+            {!isMentorListed(mentor)
+              ? "Not accepting requests"
+              : isConnecting
+                ? "Connecting..."
+                : "Connect with Mentor"}
           </Button>
 
           {canRate && !ratingLoading && (

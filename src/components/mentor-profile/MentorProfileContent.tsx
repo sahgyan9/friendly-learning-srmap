@@ -1,8 +1,10 @@
 import { motion } from "framer-motion";
 import { Eye } from "lucide-react";
 
+import AvailabilityBanner from "./AvailabilityBanner";
 import MentorProfileSidebar from "./MentorProfileSidebar";
 import MentorProfileSections from "./MentorProfileSections";
+import { isMentorListed } from "@/integrations/supabase/services/mentors";
 import { Mentor } from "@/types/mentor";
 
 interface MentorProfileContentProps {
@@ -44,6 +46,14 @@ const MentorProfileContent = ({
             <span className="font-medium">pencil icons</span> to edit any section.
           </span>
         </div>
+      )}
+
+      {!isMentorListed(mentor) && (
+        <AvailabilityBanner
+          mentor={mentor}
+          isOwnProfile={isOwnProfile}
+          onResumed={(patch) => onMentorUpdated({ ...mentor, ...patch })}
+        />
       )}
 
       {/* One column until lg. The sidebar is only sticky where there is a

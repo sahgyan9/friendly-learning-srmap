@@ -12,6 +12,14 @@ export interface Mentor {
   hobbies?: string;
   created_at?: string;
   mobile?: string;
+  /**
+   * False hides them from the directory. Their profile URL still resolves, so
+   * existing links and conversations are unaffected.
+   */
+  is_available?: boolean;
+  /** When a timed pause ends. Null while paused means "until I turn it back on". */
+  available_from?: string | null;
+  availability_note?: string | null;
   /** Set once the person has confirmed they graduated. Never inferred. */
   is_alumni?: boolean;
   graduation_year?: number | null;

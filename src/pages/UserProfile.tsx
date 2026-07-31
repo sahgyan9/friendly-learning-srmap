@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import BadgeDisplay from "@/components/badges/BadgeDisplay";
 import AlumniPromptBanner from "@/components/alumni/AlumniPromptBanner";
+import AvailabilityControl from "@/components/mentors/AvailabilityControl";
 import ReviewsList from "@/components/rating/ReviewsList";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -40,6 +41,10 @@ interface MentorProfile {
   hobbies: string;
   rating: number;
   review_count: number;
+  /** Directory listing state. Lives on `mentors`, and only the RPC may write it. */
+  is_available: boolean;
+  available_from: string | null;
+  availability_note: string | null;
 }
 
 interface UserStats {
@@ -74,6 +79,9 @@ const UserProfile = () => {
     hobbies: "",
     rating: 0,
     review_count: 0,
+    is_available: true,
+    available_from: null,
+    availability_note: null,
   });
   const [userStats, setUserStats] = useState<UserStats>({
     totalConnections: 0,
@@ -137,6 +145,9 @@ const UserProfile = () => {
               hobbies: mentorData.hobbies || "",
               rating: mentorData.rating || 0,
               review_count: mentorData.review_count || 0,
+              is_available: mentorData.is_available ?? true,
+              available_from: mentorData.available_from ?? null,
+              availability_note: mentorData.availability_note ?? null,
             });
           }
         }
@@ -262,7 +273,9 @@ const UserProfile = () => {
           linkedin_url: profile.linkedin_url,
           department: profile.department,
           skills: profile.skills,
-          is_available: profile.is_available,
+          // `is_available` is deliberately not written here. The directory
+          // reads public.mentors, so this column was never the switch anyone
+          // thought it was — AvailabilityControl owns the real one now.
         })
         .eq("id", user?.id);
 
@@ -604,23 +617,18 @@ const UserProfile = () => {
                               </div>
                             </div>
 
-                            <div className="space-y-2">
-                              <Label htmlFor="is_available" className="flex items-center gap-2">
-                                Available for Connections
-                              </Label>
-                              <Select
-                                value={profile.is_available ? "yes" : "no"}
-                                onValueChange={(value) => setProfile({ ...profile, is_available: value === "yes" })}
-                              >
-                                <SelectTrigger>
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="yes">Yes, I'm available</SelectItem>
-                                  <SelectItem value="no">No, not available</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
+                            {/* Saves itself through set_mentor_availability
+                                rather than joining this form's submit. The
+                                dropdown that used to be here wrote
+                                users.is_available, which nothing reads. */}
+                            <AvailabilityControl
+                              isAvailable={mentorProfile.is_available}
+                              availableFrom={mentorProfile.available_from}
+                              note={mentorProfile.availability_note}
+                              onChange={(next) =>
+                                setMentorProfile({ ...mentorProfile, ...next })
+                              }
+                            />
                           </>
                         )}
 

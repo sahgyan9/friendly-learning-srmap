@@ -11,7 +11,7 @@ import MentorAvatar from "@/components/mentors/MentorAvatar";
 import { useBadges } from "@/hooks/useBadges";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
-import { getMentorById } from "@/integrations/supabase/services/mentors";
+import { getMentorById, isMentorListed } from "@/integrations/supabase/services/mentors";
 import { getOrCreateConversation } from "@/integrations/supabase/services/chat";
 import { formatDepartment } from "@/utils/user-utils";
 
@@ -26,6 +26,11 @@ const MentorCard = ({ mentor }: MentorCardProps) => {
   const [isNavigating, setIsNavigating] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const navigate = useNavigate();
+
+  // Paused mentors are filtered out of the directory query, so this only shows
+  // in the places they still surface: their own view of themselves, and any
+  // cached or directly linked list.
+  const listed = isMentorListed(mentor);
 
   const handleConnect = async () => {
     if (!user) {
@@ -158,6 +163,18 @@ const MentorCard = ({ mentor }: MentorCardProps) => {
                   </Badge>
                 )}
 
+                {/* Neutral grey on purpose. Taking a break is a choice, not a
+                    fault, and a red or amber chip would read as a warning about
+                    the person. */}
+                {!listed && (
+                  <Badge
+                    variant="secondary"
+                    className="bg-gray-100 text-xs text-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                  >
+                    Taking a break
+                  </Badge>
+                )}
+
                 {mentor.review_count === 0 || mentor.rating === 0 ? (
                   <Badge
                     variant="secondary"
@@ -230,21 +247,24 @@ const MentorCard = ({ mentor }: MentorCardProps) => {
                 </span>
               </div>
               
-              <Button 
-                size="sm" 
+              {/* The card stays clickable through to the profile even when
+                  paused — you can still read about someone you cannot message
+                  yet. Only the action is withdrawn. */}
+              <Button
+                size="sm"
                 className="text-sm px-4 py-2 h-9"
                 onClick={(e) => {
                   e.stopPropagation();
                   handleConnect();
                 }}
-                disabled={isConnecting}
+                disabled={isConnecting || !listed}
               >
                 {isConnecting ? (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 ) : (
                   <MessageCircle className="h-4 w-4 mr-2" />
                 )}
-                {isConnecting ? "Connecting..." : "Connect"}
+                {!listed ? "Unavailable" : isConnecting ? "Connecting..." : "Connect"}
               </Button>
             </div>
           </div>

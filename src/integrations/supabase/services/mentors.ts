@@ -2,14 +2,40 @@
 import { supabase } from '../client';
 import type { Mentor } from '@/types/mentor';
 
+/**
+ * Mirrors public.mentor_is_listed. A pause whose deadline has passed is over.
+ *
+ * Kept as a shared helper because the same rule is needed by the query filter,
+ * the card and the profile banner, and three hand-rolled copies of it are three
+ * chances for a mentor to be hidden in one place and visible in another.
+ */
+export function isMentorListed(
+  mentor: Pick<Mentor, 'is_available' | 'available_from'>,
+): boolean {
+  if (mentor.is_available !== false) return true;
+  return !!mentor.available_from && new Date(mentor.available_from) <= new Date();
+}
+
+/**
+ * Excludes paused mentors from a directory query.
+ *
+ * The second clause is not redundant: a cron job relists people every 15
+ * minutes, so between the deadline passing and the sweep running the row still
+ * reads `is_available = false`. Someone whose pause expired two minutes ago
+ * should already be back, not waiting on a scheduler.
+ */
+const listedOnly = <T extends { or: (filter: string) => T }>(query: T): T =>
+  query.or(`is_available.eq.true,available_from.lte.${new Date().toISOString()}`);
+
 // Helper function to get typed data from Supabase tables
 export async function getMentors() {
-  const { data, error } = await supabase
-    .from('mentors')
-    .select('*')
-    .neq('department', 'General')
-    .not('department', 'is', null)
-    .order('rating', { ascending: false });
+  const { data, error } = await listedOnly(
+    supabase
+      .from('mentors')
+      .select('*')
+      .neq('department', 'General')
+      .not('department', 'is', null),
+  ).order('rating', { ascending: false });
 
   return { data, error };
 }
@@ -39,13 +65,14 @@ export async function searchMentors(query: string) {
 
   try {
     // Search in name, department, and bio with proper formatting, excluding General department
-    const { data, error } = await supabase
-      .from('mentors')
-      .select('*')
-      .neq('department', 'General')
-      .not('department', 'is', null)
-      .or(`name.ilike.%${lowerQuery}%,department.ilike.%${lowerQuery}%,bio.ilike.%${lowerQuery}%`)
-      .order('rating', { ascending: false });
+    const { data, error } = await listedOnly(
+      supabase
+        .from('mentors')
+        .select('*')
+        .neq('department', 'General')
+        .not('department', 'is', null)
+        .or(`name.ilike.%${lowerQuery}%,department.ilike.%${lowerQuery}%,bio.ilike.%${lowerQuery}%`),
+    ).order('rating', { ascending: false });
 
     if (error) {
       throw error;
@@ -72,7 +99,35 @@ export async function searchMentors(query: string) {
   }
 }
 
-// Get a single mentor by ID
+/**
+ * Pause or resume the caller's own listing.
+ *
+ * Goes through the RPC rather than writing the three columns, because the
+ * deadline and the master switch have to move together: setting `is_available`
+ * by hand and forgetting `available_from` is how "pause for 7 days" becomes a
+ * disappearance nobody remembers agreeing to.
+ *
+ * @param days 1..365 while pausing; null means "until I turn it back on".
+ *             Ignored when resuming.
+ */
+export async function setMentorAvailability(
+  available: boolean,
+  days: number | null,
+  note: string | null,
+) {
+  const { data, error } = await supabase
+    .rpc('set_mentor_availability', {
+      p_available: available,
+      p_days: available ? null : days,
+      p_note: available ? null : note,
+    })
+    .single();
+
+  return { data, error };
+}
+
+// Get a single mentor by ID. Deliberately unfiltered: a paused mentor's own
+// profile, and every link anyone has already shared, must keep resolving.
 export async function getMentorById(id: string) {
   const { data, error } = await supabase
     .from('mentors')
