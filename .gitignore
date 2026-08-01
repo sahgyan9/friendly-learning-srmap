@@ -1,3 +1,16 @@
+# Environment & Secret files
+.env
+.env.*
+!.env.example
+credentials.json
+token.json
+*.pem
+*.key
+*.pfx
+*.p12
+*.crt
+*.secret
+
 # Logs
 logs
 *.log
@@ -7,6 +20,7 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Dependencies & Build outputs
 node_modules
 dist
 dist-ssr
@@ -29,3 +43,4 @@ dist-ssr
 # Scratch space for intermediate data (DB dumps, scraped output). Disposable,
 # and may hold real user data, so it must never be committed.
 .tmp/
+
