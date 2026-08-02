@@ -6,7 +6,11 @@ The search box in the navbar covers three different things at once:
 2. **People and content** — mentors, the 619 lecturers, board posts, blog articles.
 3. **Actions** — things that aren't pages, like switching the theme or opening the bell.
 
-Open it by clicking the box, or with **Ctrl+K** (**⌘K** on a Mac).
+Open it by clicking the box, or with **Ctrl+D** (**⌘D** on a Mac).
+
+> The handler calls `preventDefault()` before anything else, because Ctrl+D is
+> the browser's own "bookmark this page". Drop that line and every search also
+> adds a bookmark. If the shortcut ever moves again, that call moves with it.
 
 ---
 

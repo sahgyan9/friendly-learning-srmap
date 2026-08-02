@@ -58,9 +58,13 @@ const SiteSearch = () => {
     if (open) setThemeState(getTheme());
   }, [open]);
 
+  // Ctrl/⌘ D. preventDefault is not optional here — the browser's own binding on
+  // this combination is "bookmark this page", and without it every attempt at
+  // search would also drop a bookmark. It runs before the toggle so a stray
+  // re-render or an early return can never leave the default in place.
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key.toLowerCase() === "k" && (event.metaKey || event.ctrlKey)) {
+      if (event.key.toLowerCase() === "d" && (event.metaKey || event.ctrlKey) && !event.altKey) {
         event.preventDefault();
         setOpen((value) => !value);
       }
@@ -209,7 +213,7 @@ const SiteSearch = () => {
         <Search className="h-4 w-4 shrink-0" />
         <span className="hidden md:inline">Search</span>
         <kbd className="ml-auto hidden items-center gap-0.5 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium md:inline-flex">
-          {isMac ? "⌘" : "Ctrl"} K
+          {isMac ? "⌘" : "Ctrl"} D
         </kbd>
       </Button>
 

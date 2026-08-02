@@ -42,18 +42,25 @@ interface NavItem {
  * appeared in none of the mobile ones, and /community-posts was labelled
  * "Board" in one and "Community" in another. Keeping one array is what stops
  * that drift coming back.
+ *
+ * Five entries, ordered by what someone signed in actually opens: the group
+ * they're in, the board, what's on, their messages. Mentors and Faculty moved
+ * to the secondary list below — they are destinations you go to once, when you
+ * are looking for a particular person, and search reaches both by name as well
+ * as through a dozen aliases ("senior", "professor", "doubt").
  */
 const PRIMARY_NAV: NavItem[] = [
   { name: "Home", url: "/", icon: Home },
-  { name: "Mentors", url: "/mentors", icon: Users },
-  { name: "Faculty", url: "/faculty", icon: GraduationCap },
-  { name: "Posts", url: "/community-posts", icon: MessageSquare },
   { name: "Groups", url: "/communities", icon: UsersRound },
+  { name: "Posts", url: "/community-posts", icon: MessageSquare },
   { name: "Events", url: "/marketplace", icon: Calendar },
   { name: "Messages", url: "/messages", icon: Mail, requiresAuth: true },
 ];
 
+/** Rendered in the mobile sheet, under a rule. Reachable from search anywhere. */
 const SECONDARY_NAV = [
+  { name: "Mentors", url: "/mentors", icon: Users },
+  { name: "Faculty", url: "/faculty", icon: GraduationCap },
   { name: "How it works", url: "/how-it-works" },
   { name: "Blog", url: "/blog" },
   { name: "About", url: "/about" },
@@ -67,7 +74,9 @@ const SECONDARY_NAV = [
  * underneath — because a single 64px band was holding a logo, seven links, a
  * search field and four icons: about 1080px of content in a 1280px container,
  * tight enough that the search field had to collapse to a bare icon between
- * 1024px and 1280px just to fit. The second row collapses on scroll (see
+ * 1024px and 1280px just to fit. The link row has since been cut to five, but
+ * the split stays: it is what lets the search field be a real field rather than
+ * an icon. The second row collapses on scroll (see
  * useCollapseOnScroll) so the taller header is only paid for at the top of a
  * page, not the whole way down a feed.
  *
@@ -117,8 +126,9 @@ export function SiteHeader() {
 
             <div className="ml-auto flex shrink-0 items-center gap-1">
               {/* Ahead of the icon cluster so it reads as part of the page
-                  rather than as one more button. The six links above cannot
-                  cover twenty destinations; this is how the rest are found. */}
+                  rather than as one more button. Five links cannot cover twenty
+                  destinations — Mentors and Faculty among them — and this is how
+                  the rest are found. */}
               <div className="mr-1">
                 <SiteSearch />
               </div>
@@ -173,7 +183,6 @@ export function SiteHeader() {
                       {visibleNav.map((item) => {
                         const Icon = item.icon;
                         const active = isActive(item.url);
-                        const showDot = item.url === "/faculty" && !hasSeenFaculty;
 
                         return (
                           <li key={item.url}>
@@ -189,11 +198,6 @@ export function SiteHeader() {
                             >
                               <Icon className="h-4 w-4 shrink-0" aria-hidden />
                               {item.name}
-                              {showDot && (
-                                <span className="ml-auto rounded-full bg-primary/15 px-2 py-0.5 text-[11px] font-semibold text-primary">
-                                  New
-                                </span>
-                              )}
                             </Link>
                           </li>
                         );
@@ -203,22 +207,34 @@ export function SiteHeader() {
                     <Separator className="my-3" />
 
                     <ul className="space-y-1">
-                      {SECONDARY_NAV.map((item) => (
-                        <li key={item.url}>
-                          <Link
-                            to={item.url}
-                            aria-current={isActive(item.url) ? "page" : undefined}
-                            className={cn(
-                              "block rounded-lg px-3 py-2 text-sm transition-colors",
-                              isActive(item.url)
-                                ? "text-primary"
-                                : "text-muted-foreground hover:bg-muted hover:text-foreground",
-                            )}
-                          >
-                            {item.name}
-                          </Link>
-                        </li>
-                      ))}
+                      {SECONDARY_NAV.map((item) => {
+                        // Faculty ratings are the newest thing here and no
+                        // longer sit in the top row, so the announcement badge
+                        // followed the link down rather than being dropped.
+                        const showNew = item.url === "/faculty" && !hasSeenFaculty;
+
+                        return (
+                          <li key={item.url}>
+                            <Link
+                              to={item.url}
+                              aria-current={isActive(item.url) ? "page" : undefined}
+                              className={cn(
+                                "flex items-center rounded-lg px-3 py-2 text-sm transition-colors",
+                                isActive(item.url)
+                                  ? "text-primary"
+                                  : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                              )}
+                            >
+                              {item.name}
+                              {showNew && (
+                                <span className="ml-auto rounded-full bg-primary/15 px-2 py-0.5 text-[11px] font-semibold text-primary">
+                                  New
+                                </span>
+                              )}
+                            </Link>
+                          </li>
+                        );
+                      })}
                     </ul>
                   </nav>
 
@@ -262,13 +278,12 @@ export function SiteHeader() {
               className="flex h-12 items-center justify-center"
               {...inertWhenCollapsed}
             >
-              {/* Roomy on purpose. Six labels centred at the old gap-1 read as
-                  one clump of text rather than six destinations; the space is
-                  free here, since nothing else shares the row. */}
+              {/* Roomy on purpose. Labels centred at the old gap-1 read as one
+                  clump of text rather than as separate destinations; the space
+                  is free here, since nothing else shares the row. */}
               <ul className="flex items-center gap-2 xl:gap-4">
                 {visibleNav.map((item) => {
                   const active = isActive(item.url);
-                  const showDot = item.url === "/faculty" && !hasSeenFaculty;
 
                   return (
                     <li key={item.url}>
@@ -282,14 +297,6 @@ export function SiteHeader() {
                         )}
                       >
                         {item.name}
-
-                        {showDot && (
-                          <span
-                            aria-hidden
-                            className="absolute right-1.5 top-0.5 h-1.5 w-1.5 rounded-full bg-primary"
-                          />
-                        )}
-                        {showDot && <span className="sr-only">(new)</span>}
 
                         {active && (
                           <motion.span

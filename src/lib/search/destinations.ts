@@ -449,6 +449,11 @@ export function isVisibleTo(destination: SearchDestination, viewer: Viewer): boo
 /**
  * What to show before anything has been typed. Deliberately short — a wall of
  * options on open is as unhelpful as none.
+ *
+ * Mentors and Faculty lead on purpose, and the order matters more than it used
+ * to: neither one is in the navbar any more, so for a signed-in student this
+ * list is the shortest route to both. Do not demote them without giving them a
+ * home somewhere else first.
  */
 export const DEFAULT_SUGGESTION_IDS = [
   "mentors",
