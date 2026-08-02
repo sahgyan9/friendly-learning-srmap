@@ -93,7 +93,15 @@ const routesToPrerender = [
         template
           .replace(`<!--app-html-->`, appHtml)
           // Add status code meta tag for search engines
-          .replace('</head>', `<meta name="http-status" content="${statusCode}">\n</head>`),
+          // and record which route this markup is for. main.tsx hydrates only
+          // when that matches the page being loaded — vercel.json serves this
+          // file as the fallback for every un-prerendered route, so without the
+          // stamp the client tries to hydrate the homepage against /messages.
+          .replace(
+            '</head>',
+            `<meta name="http-status" content="${statusCode}">\n` +
+              `<meta name="prerendered-path" content="${escapeAttr(url)}">\n</head>`,
+          ),
         url,
       )
 

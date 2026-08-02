@@ -2,7 +2,6 @@ import { Component, ReactNode } from "react";
 import * as Sentry from "@sentry/react";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, RefreshCw, Home } from "lucide-react";
-import { Link } from "react-router-dom";
 
 interface Props {
     children: ReactNode;
@@ -32,9 +31,19 @@ class ErrorBoundary extends Component<Props, State> {
             error?.message?.includes("Importing a module script failed") ||
             error?.message?.includes("dynamically imported module");
 
+        // One reload, not a loop. A chunk that 404s because the deploy moved on
+        // is fixed by fetching the new index.html; a chunk that fails for any
+        // other reason will keep failing, and reloading on every catch spins the
+        // tab forever. The stamp is per-tab and expires, so a genuine second
+        // deploy an hour later still gets its own retry.
         if (isChunkLoadError) {
-            window.location.reload();
-            return;
+            const RETRY_KEY = "chunk_reload_at";
+            const last = Number(sessionStorage.getItem(RETRY_KEY) ?? 0);
+            if (Date.now() - last > 30_000) {
+                sessionStorage.setItem(RETRY_KEY, String(Date.now()));
+                window.location.reload();
+                return;
+            }
         }
 
         // Log error to Sentry in production
@@ -53,10 +62,21 @@ class ErrorBoundary extends Component<Props, State> {
         window.location.reload();
     };
 
-    handleReset = () => {
-        this.setState({ hasError: false, error: null });
-    };
-
+    /**
+     * Everything below is deliberately plain DOM.
+     *
+     * This boundary is mounted *outside* <BrowserRouter>, so nothing it renders
+     * can use a router hook. It used to reach for <Link>, whose useHref reads
+     * the navigation context and destructures `basename` off it — and outside a
+     * Router that context is null. So the moment the boundary caught anything,
+     * the fallback threw too, and an error thrown while rendering a boundary's
+     * own fallback is unrecoverable: React unmounted the whole root and left a
+     * blank page. That turned every recoverable error in the app into a white
+     * screen that a refresh could not clear.
+     *
+     * A full page load is also the better recovery here. The tree that just
+     * crashed is not one to hand back to a client-side navigation.
+     */
     render() {
         if (this.state.hasError) {
             // Custom fallback UI if provided
@@ -96,19 +116,19 @@ class ErrorBoundary extends Component<Props, State> {
                                 <RefreshCw className="h-4 w-4 mr-2" />
                                 Refresh Page
                             </Button>
-                            <Link to="/">
-                                <Button variant="outline" onClick={this.handleReset}>
+                            <Button variant="outline" asChild>
+                                <a href="/">
                                     <Home className="h-4 w-4 mr-2" />
                                     Go to Home
-                                </Button>
-                            </Link>
+                                </a>
+                            </Button>
                         </div>
 
                         <p className="text-sm text-muted-foreground">
                             If this problem persists, please{" "}
-                            <Link to="/contact" className="text-primary hover:underline" onClick={this.handleReset}>
+                            <a href="/contact" className="text-primary hover:underline">
                                 contact support
-                            </Link>
+                            </a>
                         </p>
                     </div>
                 </div>

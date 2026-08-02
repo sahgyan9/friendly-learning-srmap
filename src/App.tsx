@@ -15,62 +15,87 @@ import SiteHeader from "@/components/navigation/SiteHeader";
 // 1.4MB chunk containing every admin screen to every first-time visitor.
 import Index from "./pages/Index";
 
-// Helper to safely import lazy components with automatic retry if a network chunk or deployment update fails
-function lazyWithRetry<T extends ComponentType<any>>(factory: () => Promise<{ default: T }>) {
+/**
+ * Lazy import that survives a deploy landing under an open tab.
+ *
+ * When a new build ships, the hashed chunk the current page is holding a URL for
+ * stops existing, so the next route change 404s. Reloading picks up the new
+ * index.html and its new chunk names, which fixes it.
+ *
+ * The retry stamp is per-route and expires. It used to be a single shared
+ * "page_refreshed_for_chunk" flag that was only ever cleared on a *successful*
+ * import — so one chunk that could not load (an extension blocking it, a dropped
+ * connection) left that flag set for the life of the tab, and from then on every
+ * lazy route in the app threw immediately instead of retrying.
+ */
+const RETRY_WINDOW_MS = 30_000;
+
+function lazyWithRetry<T extends ComponentType<any>>(
+  name: string,
+  factory: () => Promise<{ default: T }>,
+) {
+  const key = `chunk_retry:${name}`;
+
   return lazy(async () => {
-    const pageHasBeenRefreshed = sessionStorage.getItem("page_refreshed_for_chunk") === "true";
     try {
       const component = await factory();
-      sessionStorage.removeItem("page_refreshed_for_chunk");
+      sessionStorage.removeItem(key);
       return component;
     } catch (error) {
-      if (!pageHasBeenRefreshed) {
-        sessionStorage.setItem("page_refreshed_for_chunk", "true");
+      const lastAttempt = Number(sessionStorage.getItem(key) ?? 0);
+
+      if (Date.now() - lastAttempt > RETRY_WINDOW_MS) {
+        sessionStorage.setItem(key, String(Date.now()));
         window.location.reload();
+        // Never settles: the reload is already on its way, and resolving here
+        // would flash an error in the moment before the page goes away.
         return new Promise<{ default: T }>(() => {});
       }
+
+      // Reloading did not help. Let it reach ErrorBoundary, which shows a real
+      // message and a working way out.
       throw error;
     }
   });
 }
 
-const SignIn = lazyWithRetry(() => import("./pages/SignIn"));
-const SignUp = lazyWithRetry(() => import("./pages/SignUp"));
-const ForgotPassword = lazyWithRetry(() => import("./pages/ForgotPassword"));
-const ResetPassword = lazyWithRetry(() => import("./pages/ResetPassword"));
-const UserProfile = lazyWithRetry(() => import("./pages/UserProfile"));
-const Mentors = lazyWithRetry(() => import("./pages/Mentors"));
-const BecomeMentor = lazyWithRetry(() => import("./pages/BecomeMentor"));
-const MentorProfile = lazyWithRetry(() => import("./pages/MentorProfile"));
-const Messages = lazyWithRetry(() => import("./pages/Messages"));
-const Contact = lazyWithRetry(() => import("./pages/Contact"));
-const About = lazyWithRetry(() => import("./pages/About"));
-const CommunityPosts = lazyWithRetry(() => import("./pages/CommunityPosts"));
-const CommunityPostDetail = lazyWithRetry(() => import("./pages/CommunityPostDetail"));
-const Communities = lazyWithRetry(() => import("./pages/Communities"));
-const CommunityDetail = lazyWithRetry(() => import("./pages/CommunityDetail"));
-const Faculty = lazyWithRetry(() => import("./pages/Faculty"));
-const FacultyDetail = lazyWithRetry(() => import("./pages/FacultyDetail"));
-const MarketPlace = lazyWithRetry(() => import("./pages/MarketPlace"));
-const HowItWorks = lazyWithRetry(() => import("./pages/HowItWorks"));
-const FindStudyPartners = lazyWithRetry(() => import("./pages/FindStudyPartners"));
-const HackathonPartners = lazyWithRetry(() => import("./pages/HackathonPartners"));
-const Blog = lazyWithRetry(() => import("./pages/Blog"));
-const BlogPost = lazyWithRetry(() => import("./pages/BlogPost"));
-const Certificate = lazyWithRetry(() => import("./pages/Certificate"));
-const VerifyCertificate = lazyWithRetry(() => import("./pages/VerifyCertificate"));
-const NotFound = lazyWithRetry(() => import("./pages/NotFound"));
-const Unauthorized = lazyWithRetry(() => import("./pages/Unauthorized"));
+const SignIn = lazyWithRetry("SignIn", () => import("./pages/SignIn"));
+const SignUp = lazyWithRetry("SignUp", () => import("./pages/SignUp"));
+const ForgotPassword = lazyWithRetry("ForgotPassword", () => import("./pages/ForgotPassword"));
+const ResetPassword = lazyWithRetry("ResetPassword", () => import("./pages/ResetPassword"));
+const UserProfile = lazyWithRetry("UserProfile", () => import("./pages/UserProfile"));
+const Mentors = lazyWithRetry("Mentors", () => import("./pages/Mentors"));
+const BecomeMentor = lazyWithRetry("BecomeMentor", () => import("./pages/BecomeMentor"));
+const MentorProfile = lazyWithRetry("MentorProfile", () => import("./pages/MentorProfile"));
+const Messages = lazyWithRetry("Messages", () => import("./pages/Messages"));
+const Contact = lazyWithRetry("Contact", () => import("./pages/Contact"));
+const About = lazyWithRetry("About", () => import("./pages/About"));
+const CommunityPosts = lazyWithRetry("CommunityPosts", () => import("./pages/CommunityPosts"));
+const CommunityPostDetail = lazyWithRetry("CommunityPostDetail", () => import("./pages/CommunityPostDetail"));
+const Communities = lazyWithRetry("Communities", () => import("./pages/Communities"));
+const CommunityDetail = lazyWithRetry("CommunityDetail", () => import("./pages/CommunityDetail"));
+const Faculty = lazyWithRetry("Faculty", () => import("./pages/Faculty"));
+const FacultyDetail = lazyWithRetry("FacultyDetail", () => import("./pages/FacultyDetail"));
+const MarketPlace = lazyWithRetry("MarketPlace", () => import("./pages/MarketPlace"));
+const HowItWorks = lazyWithRetry("HowItWorks", () => import("./pages/HowItWorks"));
+const FindStudyPartners = lazyWithRetry("FindStudyPartners", () => import("./pages/FindStudyPartners"));
+const HackathonPartners = lazyWithRetry("HackathonPartners", () => import("./pages/HackathonPartners"));
+const Blog = lazyWithRetry("Blog", () => import("./pages/Blog"));
+const BlogPost = lazyWithRetry("BlogPost", () => import("./pages/BlogPost"));
+const Certificate = lazyWithRetry("Certificate", () => import("./pages/Certificate"));
+const VerifyCertificate = lazyWithRetry("VerifyCertificate", () => import("./pages/VerifyCertificate"));
+const NotFound = lazyWithRetry("NotFound", () => import("./pages/NotFound"));
+const Unauthorized = lazyWithRetry("Unauthorized", () => import("./pages/Unauthorized"));
 
-const AdminDashboard = lazyWithRetry(() => import("./pages/AdminDashboard"));
-const AdminContactMessages = lazyWithRetry(() => import("./pages/AdminContactMessages"));
-const AdminMentorVerification = lazyWithRetry(() => import("./pages/AdminMentorVerification"));
-const AdminWelcomeEmails = lazyWithRetry(() => import("./pages/AdminWelcomeEmails"));
-const AdminBadges = lazyWithRetry(() => import("./pages/AdminBadges"));
-const AdminSettings = lazyWithRetry(() => import("./pages/AdminSettings"));
-const AdminSecurity = lazyWithRetry(() => import("./pages/AdminSecurity"));
-const TeamMembersAdmin = lazyWithRetry(() => import("./pages/TeamMembersAdmin"));
-const MarketplaceAdmin = lazyWithRetry(() => import("./pages/MarketplaceAdmin"));
+const AdminDashboard = lazyWithRetry("AdminDashboard", () => import("./pages/AdminDashboard"));
+const AdminContactMessages = lazyWithRetry("AdminContactMessages", () => import("./pages/AdminContactMessages"));
+const AdminMentorVerification = lazyWithRetry("AdminMentorVerification", () => import("./pages/AdminMentorVerification"));
+const AdminWelcomeEmails = lazyWithRetry("AdminWelcomeEmails", () => import("./pages/AdminWelcomeEmails"));
+const AdminBadges = lazyWithRetry("AdminBadges", () => import("./pages/AdminBadges"));
+const AdminSettings = lazyWithRetry("AdminSettings", () => import("./pages/AdminSettings"));
+const AdminSecurity = lazyWithRetry("AdminSecurity", () => import("./pages/AdminSecurity"));
+const TeamMembersAdmin = lazyWithRetry("TeamMembersAdmin", () => import("./pages/TeamMembersAdmin"));
+const MarketplaceAdmin = lazyWithRetry("MarketplaceAdmin", () => import("./pages/MarketplaceAdmin"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
