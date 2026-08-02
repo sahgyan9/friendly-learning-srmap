@@ -20,7 +20,7 @@ import {
 } from "@/integrations/supabase/services/communities";
 
 const Communities = () => {
-  const { user, isMentor } = useAuth();
+  const { user } = useAuth();
   const [communities, setCommunities] = useState<Community[]>([]);
   const [loading, setLoading] = useState(true);
   const [kind, setKind] = useState("all");
@@ -41,13 +41,26 @@ const Communities = () => {
     load();
   }, [load]);
 
+  /**
+   * Patches one card in place after a join or a leave.
+   *
+   * The alternative is re-running `load()`, which throws away the whole grid and
+   * flashes six skeletons because one button was pressed. Membership only ever
+   * changes two fields on one row, so only those move.
+   */
+  const applyMembership = useCallback((id: string, patch: Partial<Community>) => {
+    setCommunities((current) =>
+      current.map((entry) => (entry.id === id ? { ...entry, ...patch } : entry)),
+    );
+  }, []);
+
   const filtering = debouncedSearch.trim().length > 0 || kind !== "all" || mine;
 
   return (
     <div className="min-h-screen bg-background">
       <SEOHead
         title="Groups | Friendly Learning"
-        description="Hackathon teams, project groups, clubs and study circles started by mentors at SRM AP."
+        description="Hackathon teams, project groups, clubs and study circles run by students at SRM AP."
       />
 
       <div className="container mx-auto max-w-6xl px-4 py-12 md:py-16">
@@ -55,15 +68,22 @@ const Communities = () => {
           <div>
             <h1 className="mb-2 text-3xl font-bold md:text-4xl">Groups</h1>
             <p className="max-w-2xl text-muted-foreground">
-              Hackathon teams, project groups, clubs and study circles. A mentor starts one, and
+              Hackathon teams, project groups, clubs and study circles. Anyone can start one, and
               members post inside it — some are open to everyone, some you ask to join.
             </p>
           </div>
 
-          {isMentor && (
+          {/* Signed-out visitors get the button too. It sends them to sign-in
+              rather than hiding the feature, which is the only way someone
+              browsing without an account learns that starting one is an option. */}
+          {user ? (
             <Button onClick={() => setCreateOpen(true)} size="lg" className="shrink-0">
               <Plus className="mr-2 h-4 w-4" />
               Start a group
+            </Button>
+          ) : (
+            <Button asChild size="lg" variant="outline" className="shrink-0">
+              <Link to="/signin">Sign in to start a group</Link>
             </Button>
           )}
         </div>
@@ -142,7 +162,11 @@ const Communities = () => {
         ) : communities.length > 0 ? (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {communities.map((community) => (
-              <CommunityCard key={community.id} community={community} />
+              <CommunityCard
+                key={community.id}
+                community={community}
+                onMembershipChange={applyMembership}
+              />
             ))}
           </div>
         ) : (
@@ -159,12 +183,12 @@ const Communities = () => {
                     Try a different kind, or clear the search.
                   </p>
                 </>
-              ) : isMentor ? (
+              ) : user ? (
                 <>
                   <p className="font-medium">No groups yet — start the first one</p>
                   <p className="max-w-md text-sm text-muted-foreground">
-                    A hackathon team, a club, a study circle. You'll own it, and students can join
-                    from the link.
+                    A hackathon team, a club, a study circle. You'll own it, and other students can
+                    join from the link.
                   </p>
                   <Button onClick={() => setCreateOpen(true)}>
                     <Plus className="mr-2 h-4 w-4" />
@@ -175,11 +199,11 @@ const Communities = () => {
                 <>
                   <p className="font-medium">No groups yet</p>
                   <p className="max-w-md text-sm text-muted-foreground">
-                    Mentors start the groups here. Become one and you can run your own — a hackathon
-                    team, a club, or a study circle.
+                    Sign in and you can start the first one — a hackathon team, a club, or a study
+                    circle.
                   </p>
                   <Button asChild variant="outline">
-                    <Link to="/become-mentor">Become a mentor</Link>
+                    <Link to="/signin">Sign in</Link>
                   </Button>
                 </>
               )}
@@ -188,7 +212,7 @@ const Communities = () => {
         )}
       </div>
 
-      {isMentor && <CreateCommunityModal open={createOpen} onOpenChange={setCreateOpen} />}
+      {user && <CreateCommunityModal open={createOpen} onOpenChange={setCreateOpen} />}
     </div>
   );
 };

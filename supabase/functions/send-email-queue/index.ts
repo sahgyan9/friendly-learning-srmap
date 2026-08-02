@@ -191,7 +191,7 @@ function renderWelcomeMentorEmail(opts: {
     ],
     [
       "Start a group",
-      "Only mentors can. A study group, a hackathon team, a placement-prep room — anything you would have wanted in your first year. Groups can be open to everyone or invite-only, and you decide who gets in.",
+      "A study group, a hackathon team, a placement-prep room — anything you would have wanted in your first year. Groups can be open to everyone or invite-only, and you decide who gets in.",
     ],
   ];
 
@@ -289,7 +289,7 @@ function renderWelcomeMentorEmail(opts: {
     "",
     "2. Say what you actually want to be asked about. \"DSA and internship prep\" gets better questions than \"happy to help with anything\".",
     "",
-    "3. Start a group. Only mentors can. Groups can be open to everyone or invite-only, and you decide who gets in.",
+    "3. Start a group. A study group, a hackathon team, a placement-prep room. Groups can be open to everyone or invite-only, and you decide who gets in.",
     "",
     "One thing people get wrong: waiting to feel qualified. Most messages here are small - which elective, how to start a project, is this internship worth it. Answering those well is the whole job.",
     "",

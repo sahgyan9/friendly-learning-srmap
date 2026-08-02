@@ -6,6 +6,7 @@ import {
   Check,
   Loader2,
   Lock,
+  LogIn,
   LogOut,
   MessageSquare,
   Plus,
@@ -32,6 +33,8 @@ import {
 import { PostCard } from "@/components/community/PostCard";
 import { CreatePostModal } from "@/components/community/CreatePostModal";
 import { CommunityMemberList } from "@/components/communities/CommunityMemberList";
+import { CommunityAvatar } from "@/components/communities/CommunityAvatar";
+import { InviteLinkButton } from "@/components/communities/InviteLinkButton";
 import JoinRequestDialog from "@/components/communities/JoinRequestDialog";
 import JoinRequestsPanel from "@/components/communities/JoinRequestsPanel";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -232,24 +235,36 @@ const CommunityDetail = () => {
 
         <Card className="mb-6">
           <CardContent className="flex flex-col gap-4 p-6">
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="secondary" className="gap-1">
-                <span aria-hidden>{kind.emoji}</span>
-                {kind.label}
-              </Badge>
-              {community.visibility === "private" && (
-                <Badge variant="outline" className="gap-1 text-muted-foreground">
-                  <Lock className="h-3 w-3" />
-                  Invite only
-                </Badge>
-              )}
-              {community.is_archived && <Badge variant="outline">Archived</Badge>}
+            <div className="flex items-start gap-4">
+              <CommunityAvatar
+                slug={community.slug}
+                kind={community.kind}
+                name={community.name}
+                coverImage={community.cover_image}
+                className="h-14 w-14 md:h-16 md:w-16"
+                emojiClassName="text-2xl md:text-3xl"
+              />
+
+              <div className="min-w-0 flex-1">
+                <div className="mb-2 flex flex-wrap items-center gap-2">
+                  <Badge variant="secondary" className="gap-1">
+                    <span aria-hidden>{kind.emoji}</span>
+                    {kind.label}
+                  </Badge>
+                  {community.visibility === "private" && (
+                    <Badge variant="outline" className="gap-1 text-muted-foreground">
+                      <Lock className="h-3 w-3" />
+                      Invite only
+                    </Badge>
+                  )}
+                  {community.is_archived && <Badge variant="outline">Archived</Badge>}
+                </div>
+
+                <h1 className="text-2xl font-bold md:text-3xl">{community.name}</h1>
+              </div>
             </div>
 
-            <div>
-              <h1 className="mb-2 text-2xl font-bold md:text-3xl">{community.name}</h1>
-              <p className="whitespace-pre-line text-muted-foreground">{community.description}</p>
-            </div>
+            <p className="whitespace-pre-line text-muted-foreground">{community.description}</p>
 
             <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
               <span className="flex items-center gap-1.5">
@@ -260,11 +275,10 @@ const CommunityDetail = () => {
                 <MessageSquare className="h-4 w-4" />
                 {community.post_count} {community.post_count === 1 ? "post" : "posts"}
               </span>
+              {/* Not a link any more. Owners no longer have to be mentors, and
+                  /mentor/:id for a student who never applied is a dead end. */}
               <span>
-                Run by{" "}
-                <Link to={`/mentor/${community.owner.id}`} className="font-medium hover:text-primary">
-                  {community.owner.name}
-                </Link>
+                Run by <span className="font-medium text-foreground">{community.owner.name}</span>
               </span>
             </div>
 
@@ -326,13 +340,18 @@ const CommunityDetail = () => {
                   </Button>
                 )
               ) : (
+                // handleJoin already redirects a signed-out visitor to sign-in,
+                // but "Join group" promises something that will not happen on
+                // this click. Say where the button actually goes.
                 <Button onClick={handleJoin} disabled={working}>
                   {working ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : (
+                  ) : user ? (
                     <Check className="mr-2 h-4 w-4" />
+                  ) : (
+                    <LogIn className="mr-2 h-4 w-4" />
                   )}
-                  Join group
+                  {user ? "Join group" : "Sign in to join"}
                 </Button>
               )}
 
@@ -341,6 +360,14 @@ const CommunityDetail = () => {
                   <Plus className="mr-2 h-4 w-4" />
                   Post in this group
                 </Button>
+              )}
+
+              {/* Shown to everyone who can see the group, not just the owner.
+                  A member forwarding the link to a friend is how a group grows;
+                  restricting that to one person is how it doesn't. Archived
+                  groups are excluded — there is nothing to invite anyone to. */}
+              {!community.is_archived && (
+                <InviteLinkButton slug={community.slug} name={community.name} />
               )}
             </div>
           </CardContent>

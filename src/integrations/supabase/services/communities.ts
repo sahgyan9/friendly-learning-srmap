@@ -5,7 +5,7 @@ import { sanitizeInput } from "@/utils/input-sanitization";
 type CommunityInsert = Database["public"]["Tables"]["communities"]["Insert"];
 
 /**
- * Communities: groups a mentor starts and students join.
+ * Communities: groups anyone signed in can start, and anyone can join.
  *
  * Reads go through SECURITY DEFINER RPCs because every one of them needs the
  * owner's or a member's name, and public.users is owner-only readable by design.
@@ -149,8 +149,9 @@ function toCommunity(row: CommunityRow): Community {
     owner: {
       id: row.owner_id,
       // A missing name means the owner's row is gone, not that they are called
-      // "Unknown" — say the least alarming true thing.
-      name: row.owner_name ?? "A mentor",
+      // "Unknown" — say the least alarming true thing. No longer "A mentor":
+      // owners are not necessarily mentors now.
+      name: row.owner_name ?? "A student",
       profile_image: row.owner_image,
     },
     viewer_is_member: row.viewer_is_member,
@@ -236,9 +237,16 @@ export type CreateCommunityInput = {
   visibility?: CommunityVisibility;
 };
 
+/** Owning this many live groups at once stops you starting another. */
+export const OWNED_GROUP_LIMIT = 10;
+
 /**
- * Only mentors can get past the insert policy. The client checks first purely so
- * a student sees an explanation rather than a raw policy violation.
+ * Anyone signed in may start a group. The insert policy allows it as long as
+ * `owner_id` is you and you own fewer than OWNED_GROUP_LIMIT live ones.
+ *
+ * That cap is the only thing that can reject an otherwise valid group, and
+ * Postgres reports it as "new row violates row-level security policy" — true,
+ * and no use whatsoever to the person reading it. Translated below.
  */
 export const createCommunity = async (input: CreateCommunityInput) => {
   const { data: auth } = await supabase.auth.getUser();
@@ -280,6 +288,19 @@ export const createCommunity = async (input: CreateCommunityInput) => {
 
   if (error) {
     console.error("Error creating community:", error);
+
+    // The insert policy is the only gate left, and the cap is the only part of
+    // it a well-behaved client can trip. Anything else here is a bug, so it is
+    // passed through untouched rather than dressed up as a limit.
+    if (error.code === "42501" || /row-level security/i.test(error.message)) {
+      return {
+        data: null,
+        error: new Error(
+          `You can run ${OWNED_GROUP_LIMIT} groups at a time. Archive one you've finished with to start another.`,
+        ),
+      };
+    }
+
     return { data: null, error };
   }
 

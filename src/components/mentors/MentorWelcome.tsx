@@ -1,4 +1,4 @@
-import { ArrowRight, Award, Clock, Lock, Star, Users, UsersRound } from "lucide-react";
+import { ArrowRight, Award, Clock, Lock, Star, Users } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -23,9 +23,15 @@ const BENEFITS = [
     body: "Not a participation badge — a certificate recording how many students you actually helped, with a link anyone can check. There's a sample below.",
   },
   {
-    icon: UsersRound,
-    title: "You can start a group",
-    body: "Only mentors can. A hackathon team, a club, a study circle — you own it, students join from the link, and members post inside it.",
+    // This slot used to read "You can start a group — only mentors can". That
+    // stopped being true when group creation opened up to every student, and a
+    // benefit that is not a benefit is worse than one fewer bullet. Replaced
+    // with the pause, which is mentor-only, real, and answers the thing that
+    // actually stops people applying: that this will cost them time they don't
+    // have during exams.
+    icon: Clock,
+    title: "You decide when you're on",
+    body: "Busy with exams or placements? Set yourself to taking a break and you come off the directory until you're back. Your existing chats stay open, and nothing is deleted.",
   },
   {
     icon: Star,

@@ -58,9 +58,14 @@ const PLACEHOLDERS: Record<string, { name: string; description: string }> = {
 };
 
 /**
- * Creating a group is a mentor privilege, so this dialog is only ever rendered
- * behind that check. The insert policy enforces it regardless — this is the
- * explanation, not the gate.
+ * Open to anyone signed in. It used to be a mentor privilege, on the theory that
+ * mentors were likeliest to actually run a group — which also meant a first-year
+ * looking for a hackathon team, the exact person this is for, had to apply to be
+ * a mentor first.
+ *
+ * The only remaining limit is a cap of ten live groups per person, enforced by
+ * the insert policy and surfaced by createCommunity as a sentence rather than a
+ * policy violation.
  */
 export const CreateCommunityModal = ({ open, onOpenChange }: CreateCommunityModalProps) => {
   const navigate = useNavigate();
