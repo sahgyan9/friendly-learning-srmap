@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
-import { Search } from "lucide-react";
+import { ChevronDown, Search } from "lucide-react";
 
 import SEOHead from "@/components/SEOHead";
 import StructuredData from "@/components/StructuredData";
@@ -12,6 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { CreatePostButton } from "@/components/community/CreatePostButton";
 import { InlineComments } from "@/components/community/InlineComments";
 import { PostCard } from "@/components/community/PostCard";
+import { ImageLightbox } from "@/components/community/ImageLightbox";
 import { useAuth } from "@/context/AuthContext";
 import { useDebounce } from "@/hooks/useDebounce";
 import { getBreadcrumbSchema } from "@/lib/structured-data";
@@ -20,6 +21,7 @@ import { cn } from "@/lib/utils";
 import {
   POST_TYPES,
   getCommunityPosts,
+  getPostTypeCounts,
   togglePostLike,
   type CommunityPost,
 } from "@/integrations/supabase/services/community-posts";
@@ -36,6 +38,9 @@ const CommunityPosts = () => {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [expandedComments, setExpandedComments] = useState<Set<string>>(new Set());
+  const [typeCounts, setTypeCounts] = useState<Record<string, number>>({});
+  const [showAllTypes, setShowAllTypes] = useState(false);
+  const [lightbox, setLightbox] = useState<{ src: string; title: string } | null>(null);
 
   const selectedType = searchParams.get("type") ?? "all";
   const [searchTerm, setSearchTerm] = useState(searchParams.get("q") ?? "");
@@ -71,6 +76,38 @@ const CommunityPosts = () => {
   useEffect(() => {
     loadPosts(0);
   }, [loadPosts]);
+
+  // Read once on mount rather than after every filter change: the counts are
+  // for the whole board and do not depend on what is currently selected.
+  useEffect(() => {
+    getPostTypeCounts().then(setTypeCounts);
+  }, []);
+
+  /**
+   * Which chips to show. A category earns its place by having posts in it.
+   *
+   * Two exceptions, both about not stranding anyone. "All posts" is always
+   * there because it is the way back. And whatever is currently selected stays
+   * visible even at zero, because arriving on ?type=research and finding no
+   * chip pressed would read as a broken page rather than an empty category.
+   *
+   * When counts are unknown — the RPC failed, or nothing has loaded yet —
+   * everything shows, which is exactly the behaviour that existed before.
+   */
+  const { visibleTypes, hiddenTypes } = useMemo(() => {
+    const known = Object.keys(typeCounts).length > 0;
+    if (!known || showAllTypes) return { visibleTypes: [...POST_TYPES], hiddenTypes: [] };
+
+    const visible = POST_TYPES.filter(
+      (type) =>
+        type.value === "all" || type.value === selectedType || (typeCounts[type.value] ?? 0) > 0,
+    );
+
+    return {
+      visibleTypes: visible,
+      hiddenTypes: POST_TYPES.filter((type) => !visible.includes(type)),
+    };
+  }, [typeCounts, showAllTypes, selectedType]);
 
   // Keep the filter in the URL so a filtered feed can be linked and the back
   // button behaves.
@@ -195,26 +232,64 @@ const CommunityPosts = () => {
 
           {/* Chips beat a <select>: every category stays one tap away. They
               scroll on a phone and wrap on a desktop, where a scrolling strip
-              would just clip the last category out of sight. */}
+              would just clip the last category out of sight.
+
+              Only the categories that hold something are shown. All eight, at
+              equal weight, was eight decisions asked of someone who came to
+              read two posts — and most of them led to an empty page you could
+              only find by tapping. The rest are one "More" away, and the count
+              on each chip means you know what you are getting before you
+              choose. */}
           <div className="mb-6 -mx-4 overflow-x-auto px-4 pb-1 sm:mx-0 sm:overflow-visible sm:px-0">
             <div className="flex w-max gap-2 sm:w-auto sm:flex-wrap">
-              {POST_TYPES.map((type) => (
+              {visibleTypes.map((type) => {
+                const count = typeCounts[type.value];
+
+                return (
+                  <button
+                    key={type.value}
+                    type="button"
+                    onClick={() => selectType(type.value)}
+                    aria-pressed={selectedType === type.value}
+                    className={cn(
+                      "flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition-colors",
+                      selectedType === type.value
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-border bg-background hover:bg-muted",
+                    )}
+                  >
+                    <span aria-hidden>{type.emoji}</span>
+                    {type.label}
+                    {type.value !== "all" && count > 0 && (
+                      <span
+                        className={cn(
+                          "tabular-nums",
+                          selectedType === type.value
+                            ? "text-primary-foreground/70"
+                            : "text-muted-foreground",
+                        )}
+                      >
+                        {count}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+
+              {hiddenTypes.length > 0 && (
                 <button
-                  key={type.value}
                   type="button"
-                  onClick={() => selectType(type.value)}
-                  aria-pressed={selectedType === type.value}
-                  className={cn(
-                    "flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition-colors",
-                    selectedType === type.value
-                      ? "border-primary bg-primary text-primary-foreground"
-                      : "border-border bg-background hover:bg-muted",
-                  )}
+                  onClick={() => setShowAllTypes((value) => !value)}
+                  aria-expanded={showAllTypes}
+                  className="flex shrink-0 items-center gap-1 rounded-full border border-dashed border-border px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted"
                 >
-                  <span aria-hidden>{type.emoji}</span>
-                  {type.label}
+                  {showAllTypes ? "Fewer" : `More (${hiddenTypes.length})`}
+                  <ChevronDown
+                    aria-hidden
+                    className={cn("h-3.5 w-3.5 transition-transform", showAllTypes && "rotate-180")}
+                  />
                 </button>
-              ))}
+              )}
             </div>
           </div>
 
@@ -260,6 +335,7 @@ const CommunityPosts = () => {
                       event.stopPropagation();
                       if (post.author.is_mentor) navigate(`/mentor/${authorId}`);
                     }}
+                    onImageClick={(src, title) => setLightbox({ src, title })}
                   />
 
                   {expandedComments.has(post.id) && (
@@ -296,6 +372,12 @@ const CommunityPosts = () => {
           )}
         </div>
       </div>
+
+      <ImageLightbox
+        src={lightbox?.src ?? null}
+        title={lightbox?.title}
+        onClose={() => setLightbox(null)}
+      />
     </>
   );
 };

@@ -94,6 +94,54 @@ export function getPostTypeMeta(value: string) {
   return POST_TYPES.find((type) => type.value === value) ?? POST_TYPES[POST_TYPES.length - 1];
 }
 
+/**
+ * Post count per category on the public board.
+ *
+ * Added by migration 20260802100000 and so not in the generated types; the cast
+ * is kept to this one call rather than hand-editing types.ts, which the next
+ * regeneration would throw away.
+ */
+export const getPostTypeCounts = async () => {
+  const { data, error } = await (supabase.rpc as unknown as (
+    fn: string,
+  ) => Promise<{ data: { post_type: string; post_count: number }[] | null; error: unknown }>)(
+    "community_post_type_counts",
+  );
+
+  if (error) {
+    // An empty map means "counts unknown", and the caller falls back to showing
+    // every category — the behaviour before counts existed. A filter row that
+    // vanishes because one RPC failed would be much worse than one that is
+    // merely longer than it needs to be.
+    console.error("Could not read post type counts:", error);
+    return {} as Record<string, number>;
+  }
+
+  return Object.fromEntries(
+    (data ?? []).map((row) => [row.post_type, Number(row.post_count)]),
+  ) as Record<string, number>;
+};
+
+/**
+ * The types that are a request for help, as opposed to something being told.
+ *
+ * An announcement with no replies is an announcement working correctly. Only
+ * these types are asks, so only these can be waiting on an answer.
+ */
+const ASK_TYPES = new Set(["hackathon", "study-help", "project", "research", "problem-solving"]);
+
+/**
+ * Whether this post is an unanswered request.
+ *
+ * Everything here comes from the row itself — status is set by the author, and
+ * comments_count is maintained by a trigger. Nothing is inferred or estimated,
+ * which matters because the badge this drives is a claim that somebody is still
+ * waiting.
+ */
+export function isAwaitingReply(post: Pick<CommunityPost, "post_type" | "status" | "comments_count">) {
+  return ASK_TYPES.has(post.post_type) && post.status === "open" && post.comments_count === 0;
+}
+
 type FeedRow = {
   id: string;
   title: string;

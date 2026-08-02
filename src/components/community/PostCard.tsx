@@ -2,12 +2,13 @@ import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Heart, MessageCircle, Share2, BadgeCheck } from "lucide-react";
+import { Heart, MessageCircle, Share2, BadgeCheck, Maximize2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { getInitials } from "@/utils/user-utils";
 import type { CommunityPost } from "@/integrations/supabase/services/community-posts";
-import { PostStatusBadge, PostTypeBadge, postTypeAccent } from "./PostTypeBadge";
+import { isAwaitingReply } from "@/integrations/supabase/services/community-posts";
+import { AwaitingReplyBadge, PostStatusBadge, PostTypeBadge, postTypeAccent } from "./PostTypeBadge";
 
 interface PostCardProps {
   post: CommunityPost;
@@ -16,6 +17,8 @@ interface PostCardProps {
   onShare?: (post: CommunityPost, event: React.MouseEvent) => void;
   onComment?: (postId: string, event: React.MouseEvent) => void;
   onAuthorClick?: (authorId: string, event: React.MouseEvent) => void;
+  /** Opens the full-size view. Omitted on the compact rail, which has thumbnails. */
+  onImageClick?: (src: string, title: string) => void;
   /** `compact` is the homepage rail; `full` is the /community-posts feed. */
   variant?: "full" | "compact";
   className?: string;
@@ -35,6 +38,7 @@ export function PostCard({
   onShare,
   onComment,
   onAuthorClick,
+  onImageClick,
   variant = "full",
   className,
 }: PostCardProps) {
@@ -59,6 +63,7 @@ export function PostCard({
         <div className="flex flex-wrap items-center gap-2">
           <PostTypeBadge type={post.post_type} />
           <PostStatusBadge status={post.status} />
+          {isAwaitingReply(post) && <AwaitingReplyBadge />}
           <span className="ml-auto shrink-0 text-xs text-muted-foreground">{postedAt}</span>
         </div>
 
@@ -102,19 +107,52 @@ export function PostCard({
 
             The compact rail keeps `cover`. That one is a fixed-height thumbnail
             where a crop is the intended behaviour, not an accident. */}
-        {post.image_url && (
-          <img
-            src={post.image_url}
-            alt=""
-            loading="lazy"
-            className={cn(
-              "rounded-lg border",
-              isCompact
-                ? "h-28 w-full object-cover"
-                : "mx-auto h-auto max-h-[32rem] w-auto max-w-full",
-            )}
-          />
-        )}
+        {post.image_url &&
+          (isCompact ? (
+            <img
+              src={post.image_url}
+              alt=""
+              loading="lazy"
+              className="h-28 w-full rounded-lg border object-cover"
+            />
+          ) : (
+            // A button, not a bare image with a click handler: this is a real
+            // action and it needs to be reachable by keyboard. stopPropagation
+            // matters because the whole card navigates on click — without it,
+            // tapping the picture opens the post instead of the picture.
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                onImageClick?.(post.image_url as string, post.title);
+              }}
+              className="group/img relative mx-auto block cursor-zoom-in rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              aria-label={`View the image on "${post.title}" full size`}
+            >
+              {/* Capped at 288px, not the 512px it started at. Showing a square
+                  image whole at full card width made one post as tall as a
+                  screen and pushed everything below it out of view — the feed
+                  stopped being a feed. Shrinking is the fix rather than
+                  cropping: the picture stays complete, it is just smaller, and
+                  the full-size view is one tap away. */}
+              <img
+                src={post.image_url}
+                alt=""
+                loading="lazy"
+                className="mx-auto h-auto max-h-72 w-auto max-w-full rounded-lg border"
+              />
+
+              {/* Small images are easy to mistake for the whole story, and a
+                  zoom cursor does not exist on a phone. This says there is
+                  more to see. */}
+              <span
+                aria-hidden
+                className="absolute bottom-2 right-2 rounded-md bg-black/55 p-1.5 text-white opacity-80 transition-opacity group-hover/img:opacity-100"
+              >
+                <Maximize2 className="h-3.5 w-3.5" />
+              </span>
+            </button>
+          ))}
 
         {post.tags && post.tags.length > 0 && (
           <div className="flex flex-wrap gap-1.5">

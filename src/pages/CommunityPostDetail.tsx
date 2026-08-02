@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
-import { ArrowLeft, BadgeCheck, Heart, MessageCircle, Pencil, Share2, Trash2 } from "lucide-react";
+import { ArrowLeft, BadgeCheck, Heart, Maximize2, MessageCircle, Pencil, Share2, Trash2 } from "lucide-react";
 
 import SEOHead from "@/components/SEOHead";
 import StructuredData from "@/components/StructuredData";
@@ -12,8 +12,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EditPostModal } from "@/components/community/EditPostModal";
+import { ImageLightbox } from "@/components/community/ImageLightbox";
 import { InlineComments } from "@/components/community/InlineComments";
-import { PostStatusBadge, PostTypeBadge } from "@/components/community/PostTypeBadge";
+import {
+  AwaitingReplyBadge,
+  PostStatusBadge,
+  PostTypeBadge,
+} from "@/components/community/PostTypeBadge";
 import { useAuth } from "@/context/AuthContext";
 import { getBreadcrumbSchema } from "@/lib/structured-data";
 import { PRIMARY_DOMAIN } from "@/lib/constants";
@@ -24,6 +29,7 @@ import {
   POST_STATUSES,
   deleteCommunityPost,
   getCommunityPostById,
+  isAwaitingReply,
   togglePostLike,
   updateCommunityPost,
   type CommunityPost,
@@ -37,6 +43,7 @@ const CommunityPostDetail = () => {
   const [post, setPost] = useState<CommunityPost | null>(null);
   const [loading, setLoading] = useState(true);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
 
   const loadPost = useCallback(async () => {
     if (!postId) return;
@@ -216,9 +223,10 @@ const CommunityPostDetail = () => {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <PostTypeBadge type={post.post_type} />
                   <PostStatusBadge status={post.status} />
+                  {isAwaitingReply(post) && <AwaitingReplyBadge />}
                 </div>
               </div>
             </CardHeader>
@@ -234,13 +242,29 @@ const CommunityPostDetail = () => {
                 </p>
               </div>
 
+              {/* Roomier than the feed — this is the page where somebody reads
+                  one post rather than scans twenty — but still capped, and
+                  still one tap from the full-size view. */}
               {post.image_url && (
-                <img
-                  src={post.image_url}
-                  alt=""
-                  className="w-full rounded-lg border object-contain"
-                  loading="lazy"
-                />
+                <button
+                  type="button"
+                  onClick={() => setLightboxOpen(true)}
+                  className="group/img relative block w-full cursor-zoom-in rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  aria-label="View this image full size"
+                >
+                  <img
+                    src={post.image_url}
+                    alt=""
+                    className="mx-auto h-auto max-h-[60vh] w-auto max-w-full rounded-lg border"
+                    loading="lazy"
+                  />
+                  <span
+                    aria-hidden
+                    className="absolute bottom-2 right-2 rounded-md bg-black/55 p-1.5 text-white opacity-80 transition-opacity group-hover/img:opacity-100"
+                  >
+                    <Maximize2 className="h-3.5 w-3.5" />
+                  </span>
+                </button>
               )}
 
               {post.tags && post.tags.length > 0 && (
@@ -341,6 +365,12 @@ const CommunityPostDetail = () => {
           }}
         />
       )}
+
+      <ImageLightbox
+        src={lightboxOpen ? post.image_url : null}
+        title={post.title}
+        onClose={() => setLightboxOpen(false)}
+      />
     </>
   );
 };

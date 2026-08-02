@@ -63,3 +63,29 @@ export function PostStatusBadge({ status, className }: { status: string; classNa
     </Badge>
   );
 }
+
+/**
+ * Marks an ask nobody has answered.
+ *
+ * A request with ten replies and a request with none looked identical, so the
+ * board gave no clue where help was actually wanted — the posts most in need of
+ * an answer were the least distinguishable.
+ *
+ * The wording is a fact, not an instruction. "No replies yet" is verifiably
+ * true from comments_count; "Needs help" or "Answer this" would be us deciding
+ * on the author's behalf what they still want, when they may have sorted it out
+ * over DM and never come back to close the post.
+ *
+ * Outline rather than a colour fill: it should read as a quiet gap in the feed,
+ * not as an error or a warning about the post.
+ */
+export function AwaitingReplyBadge({ className }: { className?: string }) {
+  return (
+    <Badge
+      variant="outline"
+      className={cn("border-dashed font-normal text-muted-foreground", className)}
+    >
+      No replies yet
+    </Badge>
+  );
+}
