@@ -60,7 +60,7 @@ const AdminWelcomeEmails = () => {
 
     return base.filter(
       (row) =>
-        row.name.toLowerCase().includes(term) ||
+        (row.name || "").toLowerCase().includes(term) ||
         (row.email ?? "").toLowerCase().includes(term) ||
         (row.department ?? "").toLowerCase().includes(term),
     );
@@ -186,7 +186,9 @@ const AdminWelcomeEmails = () => {
                 <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center">
                   <Avatar className="h-11 w-11 shrink-0">
                     <AvatarImage src={row.profileImage ?? undefined} alt="" />
-                    <AvatarFallback className="text-xs">{getInitials(row.name)}</AvatarFallback>
+                    <AvatarFallback className="text-xs">
+                      {getInitials(row.name || "A mentor")}
+                    </AvatarFallback>
                   </Avatar>
 
                   <div className="min-w-0 flex-1">
@@ -195,7 +197,7 @@ const AdminWelcomeEmails = () => {
                         to={`/mentor/${row.userId}`}
                         className="font-medium hover:text-primary"
                       >
-                        {row.name}
+                        {row.name || "A mentor"}
                       </Link>
                       {row.welcomed ? (
                         <Badge

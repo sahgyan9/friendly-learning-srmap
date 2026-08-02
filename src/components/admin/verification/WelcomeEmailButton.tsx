@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { markMentorWelcomed } from "@/integrations/supabase/services/welcome-emails";
-import { buildWelcomeEmail } from "./welcome-email";
+import { buildWelcomeEmail, firstNameFrom } from "./welcome-email";
 
 /**
  * Length past which the Gmail compose URL stops being reliable. Browsers cap
@@ -59,6 +59,10 @@ const WelcomeEmailButton = ({
   const [body, setBody] = useState(template.body);
   const [handedOff, setHandedOff] = useState(false);
   const [marking, setMarking] = useState(false);
+
+  // For headings and toasts only. The template gets the raw value, because
+  // firstNameFrom("A mentor") would greet somebody as "Hi A,".
+  const displayName = mentorName.trim() || "this mentor";
 
   // Reseed when the dialog opens on a different application, or the second
   // mentor you approve gets the first one's name.
@@ -109,7 +113,7 @@ const WelcomeEmailButton = ({
 
     setOpen(false);
     onMarkedSent?.();
-    toast.success(`Marked ${mentorName} as welcomed`);
+    toast.success(`Marked ${displayName} as welcomed`);
   };
 
   const copyAll = async () => {
@@ -150,7 +154,7 @@ const WelcomeEmailButton = ({
 
       <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Welcome {mentorName}</DialogTitle>
+          <DialogTitle>Welcome {displayName}</DialogTitle>
           <DialogDescription>
             This opens Gmail with the message ready to send. You press send, so it comes from your
             address — edit anything below first.
@@ -208,7 +212,7 @@ const WelcomeEmailButton = ({
               <p className="text-sm font-medium">Did you send it?</p>
               <p className="mt-0.5 text-xs text-muted-foreground">
                 This page can't tell — your mail app handles the sending. Confirm and{" "}
-                {mentorName.split(" ")[0]} won't show up as waiting any more.
+                {firstNameFrom(mentorName) || "they"} won't show up as waiting any more.
               </p>
               <Button size="sm" className="mt-2" onClick={confirmSent} disabled={marking}>
                 {marking ? (

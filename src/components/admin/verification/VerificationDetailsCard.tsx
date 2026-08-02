@@ -414,12 +414,15 @@ const VerificationDetailsCard = ({
                                 ? `Welcomed on ${new Date(welcome.sentAt as string).toLocaleDateString()}.`
                                 : 'Approved — send them a welcome so they know where to start.'}
                         </p>
-                        {/* The address comes from the admin RPC, not the page's
-                            users join — RLS hides other people's rows, so that
-                            join resolves to null and showed "No email on file". */}
+                        {/* Both the address and the name come from the admin RPC
+                            first. RLS hides other people's users rows, so the
+                            page's own join resolves to null — which is what put
+                            "No email on file" next to people who had one, and
+                            what left the greeting blank when an application was
+                            submitted without a typed name. */}
                         <WelcomeEmailButton
                             mentorId={verification.user_id}
-                            mentorName={applicationData.name || verification.user?.name || ''}
+                            mentorName={applicationData.name || welcome?.name || verification.user?.name || ''}
                             mentorEmail={welcome?.email ?? verification.user?.email}
                             sentAt={welcome?.sentAt ?? null}
                             onMarkedSent={onWelcomeSent}

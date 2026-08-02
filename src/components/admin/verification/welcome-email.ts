@@ -1,6 +1,36 @@
 import { PRIMARY_DOMAIN } from "@/lib/constants";
 
 /**
+ * Works out what to call someone from whatever the database happens to hold.
+ *
+ * Names in this app arrive from three places and none of them are tidy. Google
+ * sign-in gives lowercase ("ankush adhikari"). The university SSO appends the
+ * registration number ("gyan kumar sah | AP23111260062"). A hand-typed
+ * application can be anything, including empty.
+ *
+ * Greeting someone "Hi ankush," or "Hi gyan kumar sah | AP23111260062," is the
+ * kind of detail that makes a personal email read as an automated one, which is
+ * the opposite of the point — so this is worth the twenty lines.
+ */
+export const firstNameFrom = (fullName: string): string => {
+  const withoutId = (fullName || "").split("|")[0];
+
+  const first = withoutId
+    .replace(/[^\p{L}\p{M}\s'-]/gu, " ") // digits, brackets, stray punctuation
+    .trim()
+    .split(/\s+/)[0];
+
+  if (!first) return "";
+
+  // Capitalise only when the whole word is one case. "McCarthy" and "D'Souza"
+  // are already right and would be wrecked by a blind toLowerCase first.
+  const alreadyMixed = first !== first.toLowerCase() && first !== first.toUpperCase();
+  if (alreadyMixed) return first;
+
+  return first.charAt(0).toUpperCase() + first.slice(1).toLowerCase();
+};
+
+/**
  * The welcome a newly approved mentor gets.
  *
  * Written to be sent from a person, because it is: this goes out through the
@@ -11,40 +41,35 @@ import { PRIMARY_DOMAIN } from "@/lib/constants";
  * most often go quiet because they assume being a mentor means scheduled
  * sessions they don't have time for.
  *
- * Kept deliberately short. It is delivered through a `mailto:` link, and
- * browsers and mail clients truncate long ones — anything much past ~1,500
+ * Kept deliberately short. It is delivered through a Gmail compose URL, and
+ * browsers and Gmail both trim long query strings — anything much past ~1,500
  * characters risks arriving cut off. The Copy button in the dialog is the
  * escape hatch when it does.
  */
 export const buildWelcomeEmail = (fullName: string) => {
-  const firstName = (fullName || "").trim().split(" ")[0] || "there";
+  const firstName = firstNameFrom(fullName) || "there";
 
   const subject = `Welcome aboard, ${firstName} — you're now a mentor on Friendly Learning`;
 
   const body = `Hi ${firstName},
 
-Your application has been approved — you're officially a mentor on Friendly Learning SRMAP. Thank you for signing up to help.
+Your application has been approved. You're a mentor on Friendly Learning SRMAP now, and your profile is already live — juniors can find you and message you from today.
 
-If you haven't seen it from this side yet: juniors here are looking for someone who has already been through the thing they're stuck on. A course, a hackathon team, an interview, picking electives. It's students helping students — no fees, nothing formal.
+One thing worth knowing before anything else: nobody expects you to be an expert. Almost every message that comes through here is small. Which elective, how to start the project, is this internship worth it, how did you prepare. The person best placed to answer that is someone who did it a year ago, which is you.
 
-Three things worth doing this week:
+Two things that make the difference:
 
 1. Finish your profile — ${PRIMARY_DOMAIN}/profile
-   Your bio and skills are what students actually search. A profile with a few real sentences and specific skills ("DSA interviews", "Fusion 360") gets messaged; a blank one doesn't.
+   Add a photo, two lines about yourself, and be specific about your skills. "DSA and internship prep" gets you better questions than "happy to help with anything". A blank profile gets scrolled past; this takes about three minutes.
 
-2. Add a photo.
-   Profiles with a face get noticeably more requests. Juniors are nervous about reaching out and a photo makes you look approachable.
+2. Answer one post — ${PRIMARY_DOMAIN}/community-posts
+   Find a question you already know the answer to and reply. It's the easiest possible start.
 
-3. Answer one post — ${PRIMARY_DOMAIN}/community-posts
-   The quickest way to start. Find a question you already know the answer to and reply.
+And when you want it, you can start a group — a hackathon team, a study circle, a club: ${PRIMARY_DOMAIN}/communities
 
-A few things people usually ask:
+You set your own pace. Reply when you have time, and if exams or placements hit, switch yourself to "Taking a break" on your profile. You come off the directory until you're ready and your existing chats stay open.
 
-- You choose your own workload. Reply when you have time.
-- If you get busy — exams, placements — set yourself to "Taking a break" in your profile. You'll come off the directory until you're ready, and your existing chats stay open.
-- You can start a group for a hackathon team, project or study circle: ${PRIMARY_DOMAIN}/communities
-
-If anything is confusing or broken, just reply to this email — it comes straight to me.
+If anything is confusing or broken, just reply to this email. It comes straight to me.
 
 Glad to have you here.
 

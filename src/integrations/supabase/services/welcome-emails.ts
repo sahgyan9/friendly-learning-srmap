@@ -63,7 +63,11 @@ export async function listMentorWelcomeStatus(): Promise<{
     welcomed: boolean;
   }[]).map<MentorWelcomeStatus>((row) => ({
     userId: row.user_id,
-    name: row.name ?? "A mentor",
+    // Left empty rather than filled with a placeholder. This value is fed to
+    // buildWelcomeEmail, which takes the first word as a first name — a stand-in
+    // like "A mentor" would come out of that as "Hi A,". Callers that need
+    // something to print supply their own fallback.
+    name: (row.name ?? "").trim(),
     email: row.email,
     profileImage: row.profile_image,
     department: row.department,
