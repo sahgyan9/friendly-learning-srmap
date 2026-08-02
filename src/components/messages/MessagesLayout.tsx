@@ -10,6 +10,7 @@ import { formatMessageTime } from "@/utils/date-utils";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import MessagesHeader from "./MessagesHeader";
 import { supabase } from "@/integrations/supabase/client";
+import { announceMessagesRead } from "@/lib/message-events";
 
 const MessagesLayout = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -58,7 +59,14 @@ const MessagesLayout = () => {
 
         if (error) {
           console.error('Error marking messages as read:', error);
+          return;
         }
+
+        // Tell the navbar badge to re-count now. It also listens for the
+        // realtime UPDATE, but that arrives a moment later and, on a flaky
+        // connection, sometimes not at all — which is what left a "1" sitting
+        // over the message icon after the conversation had plainly been read.
+        announceMessagesRead();
       } catch (error) {
         console.error('Error in markAsRead:', error);
       }
