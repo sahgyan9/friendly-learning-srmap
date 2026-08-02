@@ -8,6 +8,41 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <script>
+    // Send Lovable's preview hosts to the real site.
+    //
+    // Google indexed the *.lovable.app copy before the Vercel domain had been
+    // crawled, so a search for the site can still land people on a build that is
+    // not the one being maintained. Every page already carries a canonical tag
+    // pointing here, but canonical is a hint Google may take weeks to act on,
+    // and it does nothing for the person who has already clicked.
+    //
+    // First thing in <head>, before the bundle loads, so there is no flash of
+    // the wrong site. `replace` keeps the redirect out of history — otherwise
+    // Back would land on the lovable URL and bounce straight forward again.
+    //
+    // Host is duplicated from site.config.js on purpose: index.html is static
+    // and cannot import it. The canonical tag below is hardcoded for the same
+    // reason. Change both together.
+    (function () {
+      try {
+        // top === self skips the Lovable editor, which renders the app in an
+        // iframe. Redirecting there would break editing the project.
+        if (window.top !== window.self) return;
+
+        var host = window.location.hostname;
+        if (!/(^|\.)(lovable\.app|lovableproject\.com|lovable\.dev)$/.test(host)) return;
+
+        window.location.replace(
+          'https://friendly-learning-srmap.vercel.app' +
+          window.location.pathname + window.location.search + window.location.hash
+        );
+      } catch (e) {
+        // Never let this stop the page rendering.
+      }
+    })();
+  </script>
+
+  <script>
     // Runs before first paint, so a visitor who chose light mode never sees a
     // dark flash first. Only an explicit "light" opts out — anything else,
     // including no stored value at all, keeps the dark default above.
