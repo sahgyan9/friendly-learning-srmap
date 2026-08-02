@@ -226,7 +226,10 @@ const CommunityPostDetail = () => {
             <CardContent className="space-y-5">
               <div>
                 <h1 className="mb-3 text-2xl font-bold leading-tight">{post.title}</h1>
-                <p className="whitespace-pre-line leading-relaxed text-muted-foreground">
+                {/* Capped at ~65 characters a line, same reasoning as PostCard.
+                    This is the page where someone reads the whole thing, so it
+                    matters more here than in the feed. */}
+                <p className="max-w-prose whitespace-pre-line leading-relaxed text-muted-foreground">
                   {post.content}
                 </p>
               </div>

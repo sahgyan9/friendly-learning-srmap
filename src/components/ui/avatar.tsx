@@ -22,9 +22,15 @@ const AvatarImage = React.forwardRef<
   React.ElementRef<typeof AvatarPrimitive.Image>,
   React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Image>
 >(({ className, ...props }, ref) => (
+  // `object-cover` is not decoration. The box is forced square, and an <img>
+  // defaults to `object-fit: fill`, so every portrait photo was being squashed
+  // to fit — a 3024x4032 phone picture drawn into 28x28 loses a quarter of its
+  // height, which on a face is the difference between someone and a caricature
+  // of them. A few call sites had already worked this out and passed
+  // `object-cover` by hand; the ones that hadn't were quietly distorting.
   <AvatarPrimitive.Image
     ref={ref}
-    className={cn("aspect-square h-full w-full", className)}
+    className={cn("aspect-square h-full w-full object-cover", className)}
     {...props}
   />
 ))

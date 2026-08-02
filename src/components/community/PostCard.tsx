@@ -73,24 +73,45 @@ export function PostCard({
             {post.title}
           </h3>
 
+          {/* max-w-prose caps the line at about 65 characters. The card is
+              ~700px wide, which at this size was running to nearly 100
+              characters a line — past roughly 75 the eye starts missing the
+              start of the next line on the return sweep, which is felt as
+              "this is tiring" rather than noticed. The compact rail is already
+              narrow and clamped to two lines, so it needs no help. */}
           <p
             className={cn(
               "whitespace-pre-line text-sm leading-relaxed text-muted-foreground",
-              isCompact ? "line-clamp-2" : "line-clamp-4",
+              isCompact ? "line-clamp-2" : "line-clamp-4 max-w-prose",
             )}
           >
             {post.content}
           </p>
         </div>
 
+        {/* `object-cover` with `max-h-72` was throwing most of the picture away.
+            Measured on a real post: a 1024x1024 image rendered into a 696x286
+            box, so the browser kept a horizontal strip and discarded 72% of it —
+            a shared certificate lost its heading and its signatures.
+
+            The cause is that `w-full` sets the width, the natural height then
+            exceeds the cap, and `object-cover` resolves the mismatch by
+            cropping. Sizing the image itself instead of a box for it means the
+            aspect ratio survives: it shrinks until it fits both limits, and
+            nothing is cut.
+
+            The compact rail keeps `cover`. That one is a fixed-height thumbnail
+            where a crop is the intended behaviour, not an accident. */}
         {post.image_url && (
           <img
             src={post.image_url}
             alt=""
             loading="lazy"
             className={cn(
-              "w-full rounded-lg border object-cover",
-              isCompact ? "h-28" : "max-h-72",
+              "rounded-lg border",
+              isCompact
+                ? "h-28 w-full object-cover"
+                : "mx-auto h-auto max-h-[32rem] w-auto max-w-full",
             )}
           />
         )}
