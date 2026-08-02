@@ -1,6 +1,9 @@
 
 import ReactDOMServer from 'react-dom/server';
-import { StaticRouter } from 'react-router-dom/server';
+// React Router 7 dropped the `react-router-dom/server` entry point; StaticRouter
+// is exported from `react-router` itself now. Everything else the app uses is
+// unchanged, because `react-router-dom` still re-exports the DOM bindings.
+import { StaticRouter } from 'react-router';
 import App from './App';
 
 // List of known routes for status code handling

@@ -2,13 +2,26 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 
+import { cn } from '@/lib/utils';
+
 interface LogoProps {
   className?: string;
   showText?: boolean;
   textColor?: string;
+  /**
+   * Applied to the wordmark wrapper, so a caller can hide or restyle just the
+   * text while keeping the mark. The site header uses this to drop the wordmark
+   * on phones — see the note there for why.
+   */
+  textClassName?: string;
 }
 
-const Logo = ({ className = "", showText = true, textColor = "text-gray-700" }: LogoProps) => {
+const Logo = ({
+  className = "",
+  showText = true,
+  textColor = "text-gray-700",
+  textClassName = "",
+}: LogoProps) => {
   return (
     <motion.div
       className={`flex items-center ${className}`}
@@ -37,7 +50,7 @@ const Logo = ({ className = "", showText = true, textColor = "text-gray-700" }: 
 
       {showText && (
         <motion.div
-          className="ml-1 flex items-center"
+          className={cn("ml-1 flex items-center", textClassName)}
           initial={{ opacity: 0, x: -10 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.2, duration: 0.4 }}

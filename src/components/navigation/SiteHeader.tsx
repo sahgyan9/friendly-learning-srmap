@@ -121,7 +121,14 @@ export function SiteHeader() {
         <div className="container mx-auto px-4">
           <div className="flex h-16 items-center gap-4">
             <Link to="/" className="shrink-0 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-              <Logo />
+              {/* Mark only on phones. The wordmark is 243px and the icon
+                  cluster is 216px once someone is signed in (search, messages,
+                  bell, theme, menu) — 475px of content fighting for the 328px a
+                  360px phone actually has, which scrolled the whole page
+                  sideways by 131px. Both children are shrink-0, so nothing gave
+                  way on its own. The wordmark returns at `sm`, the first width
+                  where the signed-in row genuinely fits. */}
+              <Logo textClassName="hidden sm:flex" />
             </Link>
 
             <div className="ml-auto flex shrink-0 items-center gap-1">
