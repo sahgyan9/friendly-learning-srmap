@@ -23,10 +23,39 @@ dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Supabase configuration
-const supabaseUrl = process.env.VITE_SUPABASE_URL || 'your-supabase-url';
-const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || 'your-supabase-key';
-const supabase = createClient(supabaseUrl, supabaseKey);
+// Supabase configuration.
+//
+// Guarded, because this runs first in `npm run build` and used to take the
+// whole deploy down with it. The credentials arrived via a committed .env;
+// once that was removed from the repo (correctly — it should never have been
+// tracked) dotenv loaded nothing, `createClient` was handed the literal string
+// 'your-supabase-url', and it threw at module load, before the try/catch at the
+// bottom of this file could ever run. Every deploy failed from that point on.
+//
+// A sitemap missing its dynamic entries is a bad day. A site that cannot ship
+// at all is a worse one, so this degrades instead: the static sitemap is still
+// written, and the per-table sections are skipped with a warning.
+const supabaseUrl = process.env.VITE_SUPABASE_URL;
+const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
+
+const supabase = (() => {
+  if (!supabaseUrl || !supabaseKey) {
+    console.warn(
+      '[sitemap] VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY are not set. ' +
+        'Writing the static sitemap only — mentors, posts, blog and faculty ' +
+        'URLs will be missing. Set them in the Vercel project environment ' +
+        'variables to restore the full sitemap.',
+    );
+    return null;
+  }
+
+  try {
+    return createClient(supabaseUrl, supabaseKey);
+  } catch (error) {
+    console.warn(`[sitemap] Could not create the Supabase client: ${error.message}`);
+    return null;
+  }
+})();
 
 // Site configuration
 const config = {
@@ -144,6 +173,10 @@ function generateMainSitemap() {
  * Fetch mentor profiles from Supabase and generate a sitemap
  */
 async function generateMentorsSitemap() {
+    // No client, no dynamic entries — the caller treats false as
+    // "this sitemap was not produced" and leaves it out of the index.
+    if (!supabase) return false;
+
     console.log('Fetching mentor data from Supabase...');
 
     try {
@@ -220,6 +253,10 @@ async function generateMentorsSitemap() {
  * Fetch community posts from Supabase and generate a sitemap
  */
 async function generateCommunityPostsSitemap() {
+    // No client, no dynamic entries — the caller treats false as
+    // "this sitemap was not produced" and leaves it out of the index.
+    if (!supabase) return false;
+
     console.log('Fetching community posts data from Supabase...');
 
     try {
@@ -299,6 +336,10 @@ async function generateCommunityPostsSitemap() {
  * Fetch blog posts from Supabase and generate a sitemap
  */
 async function generateBlogSitemap() {
+    // No client, no dynamic entries — the caller treats false as
+    // "this sitemap was not produced" and leaves it out of the index.
+    if (!supabase) return false;
+
     console.log('Checking if blog_posts table exists...');
 
     try {
@@ -450,6 +491,10 @@ function generateStaticBlogSitemap() {
  * effectively unreachable by crawlers.
  */
 async function generateFacultySitemap() {
+    // No client, no dynamic entries — the caller treats false as
+    // "this sitemap was not produced" and leaves it out of the index.
+    if (!supabase) return false;
+
     console.log('Fetching faculty data from Supabase...');
 
     try {
