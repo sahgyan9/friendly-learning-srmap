@@ -74,7 +74,7 @@ export function FacultyDiscoveryCard() {
 
               <div>
                 <h2 className="text-2xl font-bold sm:text-3xl">
-                  Know your professor before you register
+                  Know your professor before classes start
                 </h2>
                 <p className="mt-2 max-w-xl text-muted-foreground">
                   Rate and read honest student reviews on teaching quality, grading fairness and
