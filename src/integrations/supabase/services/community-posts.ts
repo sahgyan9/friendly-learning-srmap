@@ -70,6 +70,8 @@ export type CommunityFeedOptions = {
    * board by forgetting to pass anything.
    */
   communityId?: string;
+  /** Limit the feed to the signed-in caller's own posts. */
+  mine?: boolean;
 };
 
 /** Every post kind the board supports, in the order students see them. */
@@ -199,7 +201,7 @@ function toCommunityPost(row: FeedRow): CommunityPost {
 }
 
 export const getCommunityPosts = async (options: CommunityFeedOptions = {}) => {
-  const { postType = "all", search = "", limit = 20, offset = 0, communityId } = options;
+  const { postType = "all", search = "", limit = 20, offset = 0, communityId, mine = false } = options;
 
   const { data, error } = await supabase.rpc("get_community_feed", {
     p_post_type: postType,
@@ -209,7 +211,11 @@ export const getCommunityPosts = async (options: CommunityFeedOptions = {}) => {
     // Passed explicitly rather than left to the default, so the intent is
     // visible at the call site: undefined here means the public board.
     p_community_id: communityId,
-  });
+    // Added by migration 20260802110000 and so not in the generated types yet.
+    // Filtering happens in Postgres because the feed is paginated there — doing
+    // it on the client would only ever filter the page you happen to be holding.
+    p_mine: mine,
+  } as never);
 
   if (error) {
     console.error("Error fetching community posts:", error);

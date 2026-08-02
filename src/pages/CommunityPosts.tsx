@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { ChevronDown, Search } from "lucide-react";
 
@@ -41,6 +41,7 @@ const CommunityPosts = () => {
   const [expandedComments, setExpandedComments] = useState<Set<string>>(new Set());
   const [typeCounts, setTypeCounts] = useState<Record<string, number>>({});
   const [showAllTypes, setShowAllTypes] = useState(false);
+  const [mine, setMine] = useState(false);
   const [lightbox, setLightbox] = useState<{ src: string; title: string } | null>(null);
 
   const selectedType = searchParams.get("type") ?? "all";
@@ -59,6 +60,7 @@ const CommunityPosts = () => {
         search: debouncedSearch,
         limit: PAGE_SIZE,
         offset,
+        mine,
       });
 
       if (error) {
@@ -71,8 +73,14 @@ const CommunityPosts = () => {
       setLoading(false);
       setLoadingMore(false);
     },
-    [selectedType, debouncedSearch],
+    [selectedType, debouncedSearch, mine],
   );
+
+  // Signing out with "Only mine" still pressed would ask the server for the
+  // posts of nobody, and show an empty board with no explanation.
+  useEffect(() => {
+    if (!user) setMine(false);
+  }, [user]);
 
   useEffect(() => {
     loadPosts(0);
@@ -291,6 +299,24 @@ const CommunityPosts = () => {
                   />
                 </button>
               )}
+
+              {/* Same filter Groups has. Signed-in only, because for everyone
+                  else it is a control that can only ever return nothing. */}
+              {user && (
+                <button
+                  type="button"
+                  onClick={() => setMine((value) => !value)}
+                  aria-pressed={mine}
+                  className={cn(
+                    "shrink-0 rounded-full border px-3 py-1.5 text-sm transition-colors sm:ml-auto",
+                    mine
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-border bg-background hover:bg-muted",
+                  )}
+                >
+                  Only mine
+                </button>
+              )}
             </div>
           </div>
 
@@ -314,13 +340,47 @@ const CommunityPosts = () => {
               ))}
             </div>
           ) : posts.length === 0 ? (
-            <div className="rounded-lg border border-dashed py-16 text-center">
-              <h3 className="mb-1 text-lg font-semibold">Nothing here yet</h3>
-              <p className="mx-auto max-w-sm text-sm text-muted-foreground">
-                {searchTerm || selectedType !== "all"
-                  ? "Try a different search or category."
-                  : "Be the first to post — ask for a hackathon teammate, study help or share an announcement."}
-              </p>
+            <div className="rounded-lg border border-dashed px-6 py-16 text-center">
+              {mine ? (
+                <>
+                  <h3 className="mb-1 text-lg font-semibold">You haven't posted yet</h3>
+                  <p className="mx-auto mb-4 max-w-sm text-sm text-muted-foreground">
+                    Ask for a hackathon teammate, study help or a project partner — it takes a
+                    minute, and it is the fastest way to be found.
+                  </p>
+                  <Button variant="outline" onClick={() => setMine(false)}>
+                    Show all posts
+                  </Button>
+                </>
+              ) : searchTerm || selectedType !== "all" ? (
+                <>
+                  <h3 className="mb-1 text-lg font-semibold">Nothing here yet</h3>
+                  <p className="mx-auto max-w-sm text-sm text-muted-foreground">
+                    Try a different search or category.
+                  </p>
+                </>
+              ) : user ? (
+                <>
+                  <h3 className="mb-1 text-lg font-semibold">Nothing here yet</h3>
+                  <p className="mx-auto max-w-sm text-sm text-muted-foreground">
+                    Be the first to post — ask for a hackathon teammate, study help or share an
+                    announcement.
+                  </p>
+                </>
+              ) : (
+                /* Mirrors the Groups empty state: say what signing in unlocks
+                   rather than describing an action they cannot take. */
+                <>
+                  <h3 className="mb-1 text-lg font-semibold">Nothing here yet</h3>
+                  <p className="mx-auto mb-4 max-w-sm text-sm text-muted-foreground">
+                    Sign in and you can post the first one — a hackathon teammate, study help, or a
+                    project partner.
+                  </p>
+                  <Button asChild variant="outline">
+                    <Link to="/signin">Sign in</Link>
+                  </Button>
+                </>
+              )}
             </div>
           ) : (
             <div className="space-y-4">
