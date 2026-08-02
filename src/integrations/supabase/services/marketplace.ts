@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { v4 as uuidv4 } from "uuid";
+import { downscaleImage } from "@/lib/image/downscale";
 
 export interface MarketplacePost {
   id: string;
@@ -157,20 +158,25 @@ export async function deleteMarketplacePost(id: string) {
   }
 }
 
-export async function uploadMarketplaceImage(file: File) {
+export async function uploadMarketplaceImage(original: File) {
   try {
     // Validate file type
     const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-    if (!allowedTypes.includes(file.type)) {
+    if (!allowedTypes.includes(original.type)) {
       throw new Error('Invalid file type. Only JPEG, PNG, GIF, and WebP images are allowed.');
     }
-    
+
     // Validate file size (5MB limit)
     const maxSize = 5 * 1024 * 1024;
-    if (file.size > maxSize) {
+    if (original.size > maxSize) {
       throw new Error('File size too large. Maximum size is 5MB.');
     }
-    
+
+    // Event posters are the most likely thing here to be an untouched phone
+    // photo of a printed notice. Checked against the original above so the
+    // limit still means what it says, then shrunk.
+    const file = await downscaleImage(original);
+
     const fileExt = file.name.split('.').pop();
     const fileName = `${uuidv4()}.${fileExt}`;
     const filePath = `${fileName}`;

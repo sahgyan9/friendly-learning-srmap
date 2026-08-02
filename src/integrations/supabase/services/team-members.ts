@@ -1,5 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
+import { downscaleImage } from '@/lib/image/downscale';
 
 export type TeamMember = {
   id: string;
@@ -80,7 +81,11 @@ export async function deleteTeamMember(id: string) {
   return { error };
 }
 
-export async function uploadTeamMemberImage(file: File) {
+export async function uploadTeamMemberImage(original: File) {
+  // Shown as a small round portrait on the About page; a full-size phone photo
+  // is several megabytes to draw a thumbnail.
+  const file = await downscaleImage(original);
+
   const fileExt = file.name.split('.').pop();
   const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
   const filePath = `${fileName}`;

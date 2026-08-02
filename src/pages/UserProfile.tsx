@@ -17,6 +17,8 @@ import AlumniPromptBanner from "@/components/alumni/AlumniPromptBanner";
 import AvailabilityControl from "@/components/mentors/AvailabilityControl";
 import ReviewsList from "@/components/rating/ReviewsList";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import AvatarCropDialog from "@/components/profile/AvatarCropDialog";
+import { downscaleImage } from "@/lib/image/downscale";
 
 interface UserProfile {
   name: string;
@@ -93,6 +95,8 @@ const UserProfile = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  /** Chosen but not yet positioned. Non-null means the cropper is open. */
+  const [pendingImage, setPendingImage] = useState<File | null>(null);
   const [newSkill, setNewSkill] = useState("");
 
   useEffect(() => {
@@ -201,8 +205,15 @@ const UserProfile = () => {
     }
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  /**
+   * Choosing a file no longer uploads it. It opens the cropper, and the crop is
+   * what gets uploaded — see handleCropped.
+   */
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    // Cleared here so picking the same file twice still fires a change event,
+    // which it otherwise would not if the first attempt was cancelled.
+    e.target.value = "";
     if (!file) return;
 
     // Validate file type
@@ -217,9 +228,18 @@ const UserProfile = () => {
       return;
     }
 
+    setPendingImage(file);
+  };
+
+  const handleCropped = async (cropped: File) => {
     setIsUploadingImage(true);
 
     try {
+      // Already a 512px square from the cropper, so this is nearly always a
+      // no-op. Kept because the cropper's output size is its own business to
+      // change, and this is the one place that guarantees what reaches storage.
+      const file = await downscaleImage(cropped);
+
       // Create unique file name
       const fileExt = file.name.split('.').pop();
       const fileName = `${user?.id}-${Date.now()}.${fileExt}`;
@@ -248,6 +268,7 @@ const UserProfile = () => {
       if (updateError) throw updateError;
 
       setProfile({ ...profile, profile_image: imageUrl });
+      setPendingImage(null);
       toast.success("Profile picture updated successfully!");
     } catch (error: any) {
       console.error("Error uploading image:", error);
@@ -423,12 +444,19 @@ const UserProfile = () => {
                       disabled={isUploadingImage}
                     />
                     <p className="text-xs text-muted-foreground">
-                      JPG, PNG or GIF (max 5MB)
+                      JPG, PNG or GIF (max 5MB) — you'll get to position it
                     </p>
                   </div>
                 </div>
               </CardContent>
             </Card>
+
+            <AvatarCropDialog
+              file={pendingImage}
+              saving={isUploadingImage}
+              onCancel={() => setPendingImage(null)}
+              onCropped={handleCropped}
+            />
 
             {/* Statistics Overview */}
             <Card>

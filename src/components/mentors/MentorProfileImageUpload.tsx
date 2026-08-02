@@ -5,6 +5,8 @@ import { toast } from "sonner";
 import { Loader2, Upload } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { v4 as uuidv4 } from 'uuid';
+import AvatarCropDialog from "@/components/profile/AvatarCropDialog";
+import { downscaleImage } from "@/lib/image/downscale";
 
 interface MentorProfileImageUploadProps {
   profileImage: string;
@@ -20,23 +22,41 @@ const MentorProfileImageUpload = ({
   onImageUploaded,
 }: MentorProfileImageUploadProps) => {
   const [uploading, setUploading] = useState(false);
+  /** Chosen but not yet positioned. Non-null means the cropper is open. */
+  const [pendingImage, setPendingImage] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleImageClick = () => {
     fileInputRef.current?.click();
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  /** Opens the cropper. The crop is what gets uploaded — see handleCropped. */
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    // Cleared so re-picking the same file after a cancel still fires a change.
+    e.target.value = "";
     if (!file || !userId) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please choose an image file");
+      return;
+    }
+
+    setPendingImage(file);
+  };
+
+  const handleCropped = async (cropped: File) => {
+    if (!userId) return;
 
     try {
       setUploading(true);
-      
+
+      const file = await downscaleImage(cropped);
+
       // Generate a unique file name to avoid collisions
       const fileExt = file.name.split('.').pop();
       const fileName = `profile-images/${userId}-${uuidv4()}.${fileExt}`;
-      
+
       const { data, error } = await supabase.storage
         .from('profiles')
         .upload(fileName, file, {
@@ -57,6 +77,7 @@ const MentorProfileImageUpload = ({
         
       if (publicUrlData) {
         onImageUploaded(publicUrlData.publicUrl);
+        setPendingImage(null);
         toast.success("Profile image uploaded successfully");
       }
     } catch (error: any) {
@@ -99,6 +120,13 @@ const MentorProfileImageUpload = ({
       <p className="text-sm text-muted-foreground mt-2">
         Click to upload profile picture
       </p>
+
+      <AvatarCropDialog
+        file={pendingImage}
+        saving={uploading}
+        onCancel={() => setPendingImage(null)}
+        onCropped={handleCropped}
+      />
     </div>
   );
 };

@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { sanitizeInput } from "@/utils/input-sanitization";
+import { downscaleImage } from "@/lib/image/downscale";
 
 /**
  * A post as rendered in the feed. Author fields are flattened by the
@@ -360,13 +361,19 @@ const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
  */
 const POST_IMAGE_BUCKET = "community-posts";
 
-export const uploadCommunityPostImage = async (file: File) => {
-  if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+export const uploadCommunityPostImage = async (original: File) => {
+  if (!ALLOWED_IMAGE_TYPES.includes(original.type)) {
     throw new Error("Invalid file type. Only JPEG, PNG, GIF, and WebP images are allowed.");
   }
-  if (file.size > MAX_IMAGE_BYTES) {
+  if (original.size > MAX_IMAGE_BYTES) {
     throw new Error("File size too large. Maximum size is 5MB.");
   }
+
+  // Shrunk here rather than in the modal so no future caller can skip it. The
+  // post column renders at most 512 CSS px wide; uploading a 12-megapixel phone
+  // photo to fill it costs the storage bill once and every reader's data
+  // allowance forever. Returns the original untouched if it cannot help.
+  const file = await downscaleImage(original);
 
   const fileExt = file.name.split(".").pop();
   const filePath = `${crypto.randomUUID()}.${fileExt}`;
