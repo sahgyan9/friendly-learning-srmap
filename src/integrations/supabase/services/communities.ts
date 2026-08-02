@@ -192,6 +192,24 @@ export const listCommunities = async (options: CommunityListOptions = {}) => {
   };
 };
 
+/** Live group count per kind, so the filter chips can hide the ones with nothing in them. */
+export const getCommunityKindCounts = async () => {
+  const { data, error } = await (supabase.rpc as unknown as (
+    fn: string,
+  ) => Promise<{ data: { kind: string; group_count: number }[] | null; error: unknown }>)(
+    "community_kind_counts",
+  );
+
+  if (error) {
+    console.error("Could not read community kind counts:", error);
+    return {} as Record<string, number>;
+  }
+
+  return Object.fromEntries(
+    (data ?? []).map((row) => [row.kind, Number(row.group_count)]),
+  ) as Record<string, number>;
+};
+
 export const getCommunityBySlug = async (slug: string) => {
   const { data, error } = await supabase.rpc("get_community", { p_slug: slug });
 

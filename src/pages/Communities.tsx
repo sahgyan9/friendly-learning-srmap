@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Plus, Search, Users } from "lucide-react";
+import { ChevronDown, Plus, Search, Users } from "lucide-react";
 
 import SEOHead from "@/components/SEOHead";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,7 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { cn } from "@/lib/utils";
 import {
   COMMUNITY_KINDS,
+  getCommunityKindCounts,
   listCommunities,
   type Community,
 } from "@/integrations/supabase/services/communities";
@@ -27,6 +28,8 @@ const Communities = () => {
   const [mine, setMine] = useState(false);
   const [search, setSearch] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
+  const [kindCounts, setKindCounts] = useState<Record<string, number>>({});
+  const [showAllKinds, setShowAllKinds] = useState(false);
 
   const debouncedSearch = useDebounce(search, 300);
 
@@ -40,6 +43,37 @@ const Communities = () => {
   useEffect(() => {
     load();
   }, [load]);
+
+  // Read once on mount rather than after every filter change: the counts are
+  // for every group on the site and do not depend on what is currently selected.
+  useEffect(() => {
+    getCommunityKindCounts().then(setKindCounts);
+  }, []);
+
+  /**
+   * Which kind chips to show. A kind earns its place by having a live group in it.
+   *
+   * Same exceptions as the Posts board: "All groups" always shows because it is
+   * the way back, and whatever kind is currently selected stays visible even at
+   * zero, so arriving on ?kind=research with nothing in it still shows a pressed
+   * chip instead of looking broken.
+   *
+   * When counts are unknown — the RPC failed, or nothing has loaded yet —
+   * everything shows, which is exactly the behaviour that existed before.
+   */
+  const { visibleKinds, hiddenKinds } = useMemo(() => {
+    const known = Object.keys(kindCounts).length > 0;
+    if (!known || showAllKinds) return { visibleKinds: [...COMMUNITY_KINDS], hiddenKinds: [] };
+
+    const visible = COMMUNITY_KINDS.filter(
+      (option) => option.value === kind || (kindCounts[option.value] ?? 0) > 0,
+    );
+
+    return {
+      visibleKinds: visible,
+      hiddenKinds: COMMUNITY_KINDS.filter((option) => !visible.includes(option)),
+    };
+  }, [kindCounts, showAllKinds, kind]);
 
   /**
    * Patches one card in place after a join or a leave.
@@ -117,23 +151,52 @@ const Communities = () => {
               All groups
             </button>
 
-            {COMMUNITY_KINDS.map((option) => (
+            {visibleKinds.map((option) => {
+              const count = kindCounts[option.value];
+
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setKind(option.value)}
+                  aria-pressed={kind === option.value}
+                  className={cn(
+                    "flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition-colors",
+                    kind === option.value
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-border hover:bg-muted",
+                  )}
+                >
+                  <span aria-hidden>{option.emoji}</span>
+                  {option.label}
+                  {count > 0 && (
+                    <span
+                      className={cn(
+                        "tabular-nums",
+                        kind === option.value ? "text-primary-foreground/70" : "text-muted-foreground",
+                      )}
+                    >
+                      {count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+
+            {hiddenKinds.length > 0 && (
               <button
-                key={option.value}
                 type="button"
-                onClick={() => setKind(option.value)}
-                aria-pressed={kind === option.value}
-                className={cn(
-                  "flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition-colors",
-                  kind === option.value
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-border hover:bg-muted",
-                )}
+                onClick={() => setShowAllKinds((value) => !value)}
+                aria-expanded={showAllKinds}
+                className="flex items-center gap-1 rounded-full border border-dashed border-border px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted"
               >
-                <span aria-hidden>{option.emoji}</span>
-                {option.label}
+                {showAllKinds ? "Fewer" : `More (${hiddenKinds.length})`}
+                <ChevronDown
+                  aria-hidden
+                  className={cn("h-3.5 w-3.5 transition-transform", showAllKinds && "rotate-180")}
+                />
               </button>
-            ))}
+            )}
 
             {user && (
               <button
