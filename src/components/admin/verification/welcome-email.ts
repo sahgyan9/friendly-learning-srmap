@@ -42,31 +42,29 @@ export interface WelcomeEmailContent {
 export const buildWelcomeEmail = (fullName: string): WelcomeEmailContent => {
   const firstName = firstNameFrom(fullName) || "there";
 
-  const subject = `Welcome aboard, ${firstName}! You're automatically approved as a Mentor on Friendly Learning`;
+  const subject = `${firstName}, you're live as a mentor on Friendly Learning`;
 
   const body = `Hi ${firstName},
 
-Great news! Your mentor application on Friendly Learning SRMAP has been automatically approved. Your mentor profile is now live, and juniors can discover and message you starting today!
+Your mentor profile just went live — no approval queue, no waiting. Juniors in your department can already find you and start a conversation.
 
-You set your own pace — nobody expects you to be an expert. Most questions are quick: which elective to choose, project guidance, internship tips, or interview prep.
+Nobody's expecting office hours. Most questions take two minutes: which elective to pick, a project idea, a gut check on an internship offer.
 
-Here are a few quick ways to get started:
+One more thing worth knowing: help 3 students — meaning they actually reply, not just receive a message — and you earn a real certificate. Not a participation badge: a verifiable one with a public link anyone can check.
 
-1. Answer a Community Question:
-   Browse questions asked by students and share quick insights.
-   Link: ${PRIMARY_DOMAIN}/community-posts
+Three ways to start:
 
-2. Explore or Create a Group:
-   Build or join hackathon teams, study circles, or clubs.
-   Link: ${PRIMARY_DOMAIN}/communities
+1. Answer a question that's already waiting
+   ${PRIMARY_DOMAIN}/community-posts
 
-3. Manage Your Profile & Availability:
-   Your profile is active! Whenever exams or placements arrive, toggle "Taking a break" on your profile to pause incoming chats.
-   Link: ${PRIMARY_DOMAIN}/profile
+2. Join or start a group
+   ${PRIMARY_DOMAIN}/communities
 
-If you ever need help or have feedback, just reply directly to this email.
+3. Set your pace
+   Exams or placements coming up? Toggle "Taking a break" on your profile any time — your existing chats stay open, you just come off the directory.
+   ${PRIMARY_DOMAIN}/profile
 
-Glad to have you with us!
+Reply to this email if anything's confusing or broken.
 
 Warm regards,
 Gyan & The Friendly Learning Team
@@ -92,10 +90,10 @@ ${PRIMARY_DOMAIN}`;
                 Friendly Learning SRMAP
               </div>
               <h1 style="color:#ffffff; margin:0; font-size:24px; font-weight:700; line-height:1.3;">
-                Welcome aboard, ${firstName}! 🎉
+                You're live, ${firstName}! 🎉
               </h1>
               <p style="color:#e0e7ff; font-size:15px; margin:8px 0 0 0;">
-                Your mentor application has been <strong>automatically approved</strong>.
+                No approval queue — your mentor profile is already up.
               </p>
             </td>
           </tr>
@@ -107,12 +105,12 @@ ${PRIMARY_DOMAIN}`;
                 Hi <strong>${firstName}</strong>,
               </p>
               <p style="font-size:15px; line-height:1.6; color:#334155;">
-                We are thrilled to welcome you! Your mentor profile is officially live. Juniors on campus can now discover your expertise and reach out to you directly.
+                Juniors in your department can already find you and start a conversation — no introductions needed.
               </p>
 
               <div style="background-color:#f8fafc; border-left:4px solid #6366f1; padding:14px 18px; border-radius:0 8px 8px 0; margin: 20px 0;">
                 <p style="margin:0; font-size:14px; line-height:1.5; color:#475569;">
-                  💡 <em>You set your own pace! Nobody expects you to spend hours. A quick answer about electives, project ideas, or placement prep makes a huge impact.</em>
+                  💡 <em>Nobody's expecting office hours — most questions take two minutes. Help 3 students (real replies, not just messages sent) and you earn a certificate with a public verify link. Not a participation badge — an earned one.</em>
                 </p>
               </div>
 
@@ -128,9 +126,9 @@ ${PRIMARY_DOMAIN}`;
                       <tr>
                         <td width="36" valign="top" style="font-size:20px; padding-right:12px;">💬</td>
                         <td>
-                          <h3 style="margin:0; font-size:15px; font-weight:600; color:#0f172a;">Answer Community Questions</h3>
+                          <h3 style="margin:0; font-size:15px; font-weight:600; color:#0f172a;">Answer a Question</h3>
                           <p style="margin:4px 0 12px 0; font-size:13px; color:#64748b; line-height:1.4;">
-                            Browse questions posted by juniors looking for study advice, project ideas, and career guidance.
+                            Juniors are already waiting on advice about electives, projects, and careers. Each real reply counts toward your certificate.
                           </p>
                           <a href="${PRIMARY_DOMAIN}/community-posts" style="display:inline-block; background-color:#4f46e5; color:#ffffff; text-decoration:none; font-size:13px; font-weight:600; padding:8px 16px; border-radius:6px;">
                             Browse Questions →
@@ -150,9 +148,9 @@ ${PRIMARY_DOMAIN}`;
                       <tr>
                         <td width="36" valign="top" style="font-size:20px; padding-right:12px;">👥</td>
                         <td>
-                          <h3 style="margin:0; font-size:15px; font-weight:600; color:#0f172a;">Explore or Create Groups</h3>
+                          <h3 style="margin:0; font-size:15px; font-weight:600; color:#0f172a;">Join or Start a Group</h3>
                           <p style="margin:4px 0 12px 0; font-size:13px; color:#64748b; line-height:1.4;">
-                            Join interest groups, start a hackathon team, or host a subject study circle with fellow students.
+                            Hackathon teams, study circles, subject clubs — with fellow students, not just people you're mentoring.
                           </p>
                           <a href="${PRIMARY_DOMAIN}/communities" style="display:inline-block; background-color:#0284c7; color:#ffffff; text-decoration:none; font-size:13px; font-weight:600; padding:8px 16px; border-radius:6px;">
                             Explore Groups →
@@ -172,9 +170,9 @@ ${PRIMARY_DOMAIN}`;
                       <tr>
                         <td width="36" valign="top" style="font-size:20px; padding-right:12px;">⚡</td>
                         <td>
-                          <h3 style="margin:0; font-size:15px; font-weight:600; color:#0f172a;">Manage Availability & Skills</h3>
+                          <h3 style="margin:0; font-size:15px; font-weight:600; color:#0f172a;">Set Your Pace</h3>
                           <p style="margin:4px 0 12px 0; font-size:13px; color:#64748b; line-height:1.4;">
-                            Your profile is live! During exams or busy weeks, toggle "Taking a break" anytime to pause chat requests.
+                            During exams or busy weeks, toggle "Taking a break" anytime — your existing chats stay open, you just come off the directory.
                           </p>
                           <a href="${PRIMARY_DOMAIN}/profile" style="display:inline-block; background-color:#475569; color:#ffffff; text-decoration:none; font-size:13px; font-weight:600; padding:8px 16px; border-radius:6px;">
                             View Profile Settings →
@@ -187,7 +185,7 @@ ${PRIMARY_DOMAIN}`;
               </table>
 
               <p style="font-size:14px; line-height:1.5; color:#334155; margin-top:24px;">
-                Have questions or spot something broken? Simply reply to this email anytime.
+                Spot something broken, or just want to say hi? Reply to this email — I read these.
               </p>
             </td>
           </tr>

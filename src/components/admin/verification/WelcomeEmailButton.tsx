@@ -96,12 +96,31 @@ const WelcomeEmailButton = ({
     }
   };
 
-  const copyHtml = async () => {
+  const copyStyledEmail = async () => {
     try {
-      await navigator.clipboard.writeText(html);
-      toast.success("Copied rich HTML template code!");
+      if (typeof ClipboardItem === "undefined" || !navigator.clipboard?.write) {
+        throw new Error("Rich clipboard not supported");
+      }
+      // Writing both MIME types means Gmail's compose box (a rich-text editor)
+      // renders the styled version on paste, while an editor that only
+      // understands plain text still gets something sensible.
+      await navigator.clipboard.write([
+        new ClipboardItem({
+          "text/html": new Blob([html], { type: "text/html" }),
+          "text/plain": new Blob([body], { type: "text/plain" }),
+        }),
+      ]);
+      toast.success("Copied the styled email — paste it into the Gmail body to send it as designed.");
     } catch {
-      toast.error("Could not copy HTML code.");
+      // Safari and locked-down browsers can't write rich clipboard content.
+      // The raw source is still worth having — for a code editor, or for the
+      // automated send pipeline later — so fall back to that.
+      try {
+        await navigator.clipboard.writeText(html);
+        toast.error("Your browser can't paste rich formatting — copied the raw HTML source instead.");
+      } catch {
+        toast.error("Could not copy the email.");
+      }
     }
   };
 
@@ -183,7 +202,7 @@ const WelcomeEmailButton = ({
             {tooLongForMailto && (
               <p className="rounded-md bg-amber-50 p-3 text-xs text-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
                 This message is long enough that some mail clients will cut it off when opened from a link.
-                Use <strong>Copy Text</strong> and paste it directly into your mail app.
+                Use <strong>Copy Plain Text</strong> and paste it directly into your mail app.
               </p>
             )}
           </TabsContent>
@@ -200,18 +219,27 @@ const WelcomeEmailButton = ({
         </Tabs>
 
         <div className="mt-4 space-y-4">
+          <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 text-xs text-muted-foreground">
+            <p className="font-medium text-foreground">To send the styled version:</p>
+            <ol className="mt-1 list-decimal space-y-0.5 pl-4">
+              <li>Click <strong>Copy Styled Email</strong> below.</li>
+              <li>Click <strong>Open in Gmail</strong>, then select all in the body (Ctrl/Cmd+A).</li>
+              <li>Paste (Ctrl/Cmd+V) — the design replaces the plain-text draft.</li>
+            </ol>
+          </div>
+
           <div className="flex flex-wrap gap-2">
-            <Button onClick={openMailClient} className="flex-1">
+            <Button onClick={copyStyledEmail} className="flex-1">
+              <Copy className="mr-2 h-4 w-4" />
+              Copy Styled Email
+            </Button>
+            <Button variant="outline" onClick={openMailClient}>
               <ExternalLink className="mr-2 h-4 w-4" />
               {handedOff ? "Open again in Gmail" : "Open in Gmail"}
             </Button>
             <Button variant="outline" onClick={copyText}>
               <Copy className="mr-2 h-4 w-4" />
               Copy Plain Text
-            </Button>
-            <Button variant="outline" onClick={copyHtml}>
-              <Copy className="mr-2 h-4 w-4" />
-              Copy HTML Template
             </Button>
           </div>
 
