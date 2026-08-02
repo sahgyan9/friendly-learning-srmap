@@ -136,7 +136,7 @@ export function GroupIconPicker({ value, onChange, name, description }: GroupIco
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-3">
-        <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl border bg-muted">
+        <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl border bg-background">
           {value ? (
             <img src={value} alt="" className="h-full w-full object-cover" />
           ) : (
