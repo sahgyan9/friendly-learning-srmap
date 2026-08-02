@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { GroupIconPicker } from "@/components/communities/GroupIconPicker";
 import {
   COMMUNITY_KINDS,
   DESCRIPTION_MAX,
@@ -73,6 +74,7 @@ export const CreateCommunityModal = ({ open, onOpenChange }: CreateCommunityModa
   const [description, setDescription] = useState("");
   const [kind, setKind] = useState("");
   const [visibility, setVisibility] = useState<CommunityVisibility>("public");
+  const [coverImage, setCoverImage] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   const placeholders = PLACEHOLDERS[kind] ?? PLACEHOLDERS.general;
@@ -83,6 +85,7 @@ export const CreateCommunityModal = ({ open, onOpenChange }: CreateCommunityModa
     setDescription("");
     setKind("");
     setVisibility("public");
+    setCoverImage(null);
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -94,7 +97,7 @@ export const CreateCommunityModal = ({ open, onOpenChange }: CreateCommunityModa
     }
 
     setSubmitting(true);
-    const { data, error } = await createCommunity({ name, description, kind, visibility });
+    const { data, error } = await createCommunity({ name, description, kind, visibility, coverImage });
     setSubmitting(false);
 
     if (error || !data) {
@@ -165,6 +168,11 @@ export const CreateCommunityModal = ({ open, onOpenChange }: CreateCommunityModa
               maxLength={NAME_MAX}
               required
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Icon</Label>
+            <GroupIconPicker value={coverImage} onChange={setCoverImage} name={name} description={description} />
           </div>
 
           <div className="space-y-2">

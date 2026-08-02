@@ -256,6 +256,8 @@ export type CreateCommunityInput = {
   kind: string;
   /** Defaults to public. Most groups should be. */
   visibility?: CommunityVisibility;
+  /** A preset data: URL, an uploaded storage URL, or any pasted image link. */
+  coverImage?: string | null;
 };
 
 /** Owning this many live groups at once stops you starting another. */
@@ -299,6 +301,7 @@ export const createCommunity = async (input: CreateCommunityInput) => {
     kind: input.kind,
     owner_id: user.id,
     visibility: input.visibility ?? "public",
+    cover_image: input.coverImage || null,
   } as CommunityInsert;
 
   const { data, error } = await supabase
@@ -340,10 +343,25 @@ export const updateCommunity = async (
   }
   if (patch.kind !== undefined) update.kind = patch.kind;
   if (patch.is_archived !== undefined) update.is_archived = patch.is_archived;
+  if (patch.coverImage !== undefined) update.cover_image = patch.coverImage || null;
 
   const { error } = await supabase.from("communities").update(update).eq("id", communityId);
 
   if (error) console.error("Error updating community:", error);
+  return { error };
+};
+
+/**
+ * Owner-only, enforced by the "Owners can delete their community" RLS policy
+ * rather than anything here. `community_posts.community_id`,
+ * `community_members.community_id` and the group chat tables all reference
+ * `communities(id) on delete cascade`, so this takes the whole group —
+ * members, posts and messages — with it. There is no undo.
+ */
+export const deleteCommunity = async (communityId: string) => {
+  const { error } = await supabase.from("communities").delete().eq("id", communityId);
+
+  if (error) console.error("Error deleting community:", error);
   return { error };
 };
 

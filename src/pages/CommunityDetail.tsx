@@ -10,7 +10,10 @@ import {
   LogIn,
   LogOut,
   MessageSquare,
+  MoreHorizontal,
+  Pencil,
   Plus,
+  Trash2,
   UserPlus,
   Users,
 } from "lucide-react";
@@ -39,9 +42,17 @@ import { InviteLinkButton } from "@/components/communities/InviteLinkButton";
 import JoinRequestDialog from "@/components/communities/JoinRequestDialog";
 import JoinRequestsPanel from "@/components/communities/JoinRequestsPanel";
 import { CommunityGroupChat } from "@/components/communities/CommunityGroupChat";
+import { EditCommunityModal } from "@/components/communities/EditCommunityModal";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/context/AuthContext";
 import {
+  deleteCommunity,
   getCommunityBySlug,
   getCommunityKindMeta,
   joinCommunity,
@@ -68,6 +79,8 @@ const CommunityDetail = () => {
   const [working, setWorking] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [requestOpen, setRequestOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const loadPosts = useCallback(async (communityId: string) => {
     const { data } = await getCommunityPosts({ communityId, limit: 50 });
@@ -165,6 +178,22 @@ const CommunityDetail = () => {
 
     toast.success("You've left the group");
     load();
+  };
+
+  const handleDelete = async () => {
+    if (!community) return;
+
+    setDeleting(true);
+    const { error } = await deleteCommunity(community.id);
+    setDeleting(false);
+
+    if (error) {
+      toast.error("Could not delete the group");
+      return;
+    }
+
+    toast.success(`${community.name} has been deleted`);
+    navigate("/communities");
   };
 
   const handleLike = async (postId: string, event: React.MouseEvent) => {
@@ -296,9 +325,54 @@ const CommunityDetail = () => {
 
             <div className="flex flex-wrap gap-2 border-t pt-4">
               {community.viewer_is_owner ? (
-                <Badge variant="outline" className="h-9 items-center px-3">
-                  You run this group
-                </Badge>
+                <>
+                  <Badge variant="outline" className="h-9 items-center px-3">
+                    You run this group
+                  </Badge>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="icon" aria-label="Manage group">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start">
+                      <DropdownMenuItem onSelect={() => setEditOpen(true)}>
+                        <Pencil className="mr-2 h-4 w-4" />
+                        Edit group
+                      </DropdownMenuItem>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <DropdownMenuItem
+                            onSelect={(event) => event.preventDefault()}
+                            className="text-destructive focus:text-destructive"
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete group
+                          </DropdownMenuItem>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete {community.name}?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This permanently deletes the group — its posts, chat history and member
+                              list all go with it. This can't be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={handleDelete}
+                              disabled={deleting}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              {deleting ? "Deleting..." : "Delete group"}
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </>
               ) : community.viewer_is_member ? (
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
@@ -423,17 +497,30 @@ const CommunityDetail = () => {
         <div className="grid gap-6 lg:grid-cols-[1fr_20rem]">
           <div className="space-y-4">
             <Tabs defaultValue="posts">
-              <TabsList className="mb-4 flex flex-wrap h-auto gap-1">
-                <TabsTrigger value="posts" className="gap-2">
+              {/* bg-muted sits at 96% lightness against a 100% white card, so the
+                  pill was nearly invisible in light mode and the inactive tab read
+                  as plain text rather than a second clickable control. A visible
+                  border plus stronger inactive-text contrast fixes both. */}
+              <TabsList className="mb-4 flex h-auto flex-wrap gap-1 border bg-muted/70 p-1 shadow-sm">
+                <TabsTrigger
+                  value="posts"
+                  className="gap-2 data-[state=inactive]:text-foreground/75"
+                >
                   <MessageSquare className="h-4 w-4" />
                   Posts & Discussions
                 </TabsTrigger>
-                <TabsTrigger value="chat" className="gap-2">
+                <TabsTrigger
+                  value="chat"
+                  className="gap-2 data-[state=inactive]:text-foreground/75"
+                >
                   <Hash className="h-4 w-4" />
                   Group Chat
                 </TabsTrigger>
                 {community.viewer_is_owner && community.visibility === "private" && (
-                  <TabsTrigger value="requests" className="gap-2">
+                  <TabsTrigger
+                    value="requests"
+                    className="gap-2 data-[state=inactive]:text-foreground/75"
+                  >
                     Requests
                     {(community.pending_request_count ?? 0) > 0 && (
                       <Badge variant="secondary" className="px-1.5 py-0 text-[11px]">
@@ -527,6 +614,15 @@ const CommunityDetail = () => {
             setCreateOpen(false);
             load();
           }}
+        />
+      )}
+
+      {community.viewer_is_owner && (
+        <EditCommunityModal
+          open={editOpen}
+          onOpenChange={setEditOpen}
+          community={community}
+          onSaved={load}
         />
       )}
     </div>
