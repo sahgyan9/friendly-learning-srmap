@@ -7,10 +7,6 @@ import { PRIMARY_DOMAIN } from "@/lib/constants";
  * sign-in gives lowercase ("ankush adhikari"). The university SSO appends the
  * registration number ("gyan kumar sah | AP23111260062"). A hand-typed
  * application can be anything, including empty.
- *
- * Greeting someone "Hi ankush," or "Hi gyan kumar sah | AP23111260062," is the
- * kind of detail that makes a personal email read as an automated one, which is
- * the opposite of the point — so this is worth the twenty lines.
  */
 export const firstNameFrom = (fullName: string): string => {
   const withoutId = (fullName || "").split("|")[0];
@@ -22,60 +18,201 @@ export const firstNameFrom = (fullName: string): string => {
 
   if (!first) return "";
 
-  // Capitalise only when the whole word is one case. "McCarthy" and "D'Souza"
-  // are already right and would be wrecked by a blind toLowerCase first.
+  // Capitalise only when the whole word is one case.
   const alreadyMixed = first !== first.toLowerCase() && first !== first.toUpperCase();
   if (alreadyMixed) return first;
 
   return first.charAt(0).toUpperCase() + first.slice(1).toLowerCase();
 };
 
+export interface WelcomeEmailContent {
+  subject: string;
+  body: string;
+  html: string;
+}
+
 /**
- * The welcome a newly approved mentor gets.
+ * The welcome a newly auto-approved mentor gets.
  *
- * Written to be sent from a person, because it is: this goes out through the
- * admin's own mail client, so it should not read like a system notification.
- * Three things it has to do, in order — tell them they're in, tell them the one
- * action that actually matters (fill in the profile, because an empty one gets
- * no requests), and set the expectation that this is light-touch. New mentors
- * most often go quiet because they assume being a mentor means scheduled
- * sessions they don't have time for.
- *
- * Kept deliberately short. It is delivered through a Gmail compose URL, and
- * browsers and Gmail both trim long query strings — anything much past ~1,500
- * characters risks arriving cut off. The Copy button in the dialog is the
- * escape hatch when it does.
+ * Built to be sent cleanly via Gmail or direct HTML preview:
+ * - Clear announcement of automatic approval.
+ * - Non-redundant profile section (since user created profile on setup, we guide on enhancing & availability).
+ * - Styled cards with actionable buttons & direct links matching UI design.
  */
-export const buildWelcomeEmail = (fullName: string) => {
+export const buildWelcomeEmail = (fullName: string): WelcomeEmailContent => {
   const firstName = firstNameFrom(fullName) || "there";
 
-  const subject = `Welcome aboard, ${firstName} — you're now a mentor on Friendly Learning`;
+  const subject = `Welcome aboard, ${firstName}! You're automatically approved as a Mentor on Friendly Learning`;
 
   const body = `Hi ${firstName},
 
-Your application has been approved. You're a mentor on Friendly Learning SRMAP now, and your profile is already live — juniors can find you and message you from today.
+Great news! Your mentor application on Friendly Learning SRMAP has been automatically approved. Your mentor profile is now live, and juniors can discover and message you starting today!
 
-One thing worth knowing before anything else: nobody expects you to be an expert. Almost every message that comes through here is small. Which elective, how to start the project, is this internship worth it, how did you prepare. The person best placed to answer that is someone who did it a year ago, which is you.
+You set your own pace — nobody expects you to be an expert. Most questions are quick: which elective to choose, project guidance, internship tips, or interview prep.
 
-Two things that make the difference:
+Here are a few quick ways to get started:
 
-1. Finish your profile — ${PRIMARY_DOMAIN}/profile
-   Add a photo, two lines about yourself, and be specific about your skills. "DSA and internship prep" gets you better questions than "happy to help with anything". A blank profile gets scrolled past; this takes about three minutes.
+1. Answer a Community Question:
+   Browse questions asked by students and share quick insights.
+   Link: ${PRIMARY_DOMAIN}/community-posts
 
-2. Answer one post — ${PRIMARY_DOMAIN}/community-posts
-   Find a question you already know the answer to and reply. It's the easiest possible start.
+2. Explore or Create a Group:
+   Build or join hackathon teams, study circles, or clubs.
+   Link: ${PRIMARY_DOMAIN}/communities
 
-And when you want it, you can start a group — a hackathon team, a study circle, a club: ${PRIMARY_DOMAIN}/communities
+3. Manage Your Profile & Availability:
+   Your profile is active! Whenever exams or placements arrive, toggle "Taking a break" on your profile to pause incoming chats.
+   Link: ${PRIMARY_DOMAIN}/profile
 
-You set your own pace. Reply when you have time, and if exams or placements hit, switch yourself to "Taking a break" on your profile. You come off the directory until you're ready and your existing chats stay open.
+If you ever need help or have feedback, just reply directly to this email.
 
-If anything is confusing or broken, just reply to this email. It comes straight to me.
+Glad to have you with us!
 
-Glad to have you here.
-
-Gyan
-Friendly Learning SRMAP
+Warm regards,
+Gyan & The Friendly Learning Team
 ${PRIMARY_DOMAIN}`;
 
-  return { subject, body };
+  const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${subject}</title>
+</head>
+<body style="margin:0; padding:0; background-color:#f4f6f8; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color:#1e293b;">
+  <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color:#f4f6f8; padding: 24px 12px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width:600px; background-color:#ffffff; border-radius:16px; overflow:hidden; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);">
+          
+          <!-- Header Banner -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); padding: 32px 28px; text-align: center;">
+              <div style="display:inline-block; background-color:rgba(255,255,255,0.15); padding:8px 16px; border-radius:30px; color:#ffffff; font-size:13px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:12px;">
+                Friendly Learning SRMAP
+              </div>
+              <h1 style="color:#ffffff; margin:0; font-size:24px; font-weight:700; line-height:1.3;">
+                Welcome aboard, ${firstName}! 🎉
+              </h1>
+              <p style="color:#e0e7ff; font-size:15px; margin:8px 0 0 0;">
+                Your mentor application has been <strong>automatically approved</strong>.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Main Content -->
+          <tr>
+            <td style="padding: 28px 24px;">
+              <p style="font-size:15px; line-height:1.6; color:#334155; margin-top:0;">
+                Hi <strong>${firstName}</strong>,
+              </p>
+              <p style="font-size:15px; line-height:1.6; color:#334155;">
+                We are thrilled to welcome you! Your mentor profile is officially live. Juniors on campus can now discover your expertise and reach out to you directly.
+              </p>
+
+              <div style="background-color:#f8fafc; border-left:4px solid #6366f1; padding:14px 18px; border-radius:0 8px 8px 0; margin: 20px 0;">
+                <p style="margin:0; font-size:14px; line-height:1.5; color:#475569;">
+                  💡 <em>You set your own pace! Nobody expects you to spend hours. A quick answer about electives, project ideas, or placement prep makes a huge impact.</em>
+                </p>
+              </div>
+
+              <h2 style="font-size:17px; font-weight:700; color:#0f172a; margin-top:24px; margin-bottom:16px;">
+                🚀 Quick Ways to Get Started
+              </h2>
+
+              <!-- Section Card 1 -->
+              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom:16px; border:1px solid #e2e8f0; border-radius:12px; background-color:#ffffff;">
+                <tr>
+                  <td style="padding: 16px;">
+                    <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
+                      <tr>
+                        <td width="36" valign="top" style="font-size:20px; padding-right:12px;">💬</td>
+                        <td>
+                          <h3 style="margin:0; font-size:15px; font-weight:600; color:#0f172a;">Answer Community Questions</h3>
+                          <p style="margin:4px 0 12px 0; font-size:13px; color:#64748b; line-height:1.4;">
+                            Browse questions posted by juniors looking for study advice, project ideas, and career guidance.
+                          </p>
+                          <a href="${PRIMARY_DOMAIN}/community-posts" style="display:inline-block; background-color:#4f46e5; color:#ffffff; text-decoration:none; font-size:13px; font-weight:600; padding:8px 16px; border-radius:6px;">
+                            Browse Questions →
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Section Card 2 -->
+              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom:16px; border:1px solid #e2e8f0; border-radius:12px; background-color:#ffffff;">
+                <tr>
+                  <td style="padding: 16px;">
+                    <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
+                      <tr>
+                        <td width="36" valign="top" style="font-size:20px; padding-right:12px;">👥</td>
+                        <td>
+                          <h3 style="margin:0; font-size:15px; font-weight:600; color:#0f172a;">Explore or Create Groups</h3>
+                          <p style="margin:4px 0 12px 0; font-size:13px; color:#64748b; line-height:1.4;">
+                            Join interest groups, start a hackathon team, or host a subject study circle with fellow students.
+                          </p>
+                          <a href="${PRIMARY_DOMAIN}/communities" style="display:inline-block; background-color:#0284c7; color:#ffffff; text-decoration:none; font-size:13px; font-weight:600; padding:8px 16px; border-radius:6px;">
+                            Explore Groups →
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Section Card 3 -->
+              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom:16px; border:1px solid #e2e8f0; border-radius:12px; background-color:#ffffff;">
+                <tr>
+                  <td style="padding: 16px;">
+                    <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
+                      <tr>
+                        <td width="36" valign="top" style="font-size:20px; padding-right:12px;">⚡</td>
+                        <td>
+                          <h3 style="margin:0; font-size:15px; font-weight:600; color:#0f172a;">Manage Availability & Skills</h3>
+                          <p style="margin:4px 0 12px 0; font-size:13px; color:#64748b; line-height:1.4;">
+                            Your profile is live! During exams or busy weeks, toggle "Taking a break" anytime to pause chat requests.
+                          </p>
+                          <a href="${PRIMARY_DOMAIN}/profile" style="display:inline-block; background-color:#475569; color:#ffffff; text-decoration:none; font-size:13px; font-weight:600; padding:8px 16px; border-radius:6px;">
+                            View Profile Settings →
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="font-size:14px; line-height:1.5; color:#334155; margin-top:24px;">
+                Have questions or spot something broken? Simply reply to this email anytime.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color:#f8fafc; border-top:1px solid #e2e8f0; padding: 20px 24px; text-align: center;">
+              <p style="margin:0 0 4px 0; font-size:13px; font-weight:600; color:#475569;">
+                Friendly Learning SRMAP
+              </p>
+              <p style="margin:0; font-size:12px; color:#94a3b8;">
+                Connecting students, mentors, and learning communities across campus.
+              </p>
+              <p style="margin:8px 0 0 0; font-size:12px;">
+                <a href="${PRIMARY_DOMAIN}" style="color:#4f46e5; text-decoration:none; font-weight:500;">${PRIMARY_DOMAIN}</a>
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+  return { subject, body, html };
 };

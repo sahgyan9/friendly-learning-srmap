@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Check, Copy, ExternalLink, Loader2, Mail } from "lucide-react";
+import { Check, Copy, ExternalLink, Eye, FileText, Loader2, Mail } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -14,14 +14,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { markMentorWelcomed } from "@/integrations/supabase/services/welcome-emails";
 import { buildWelcomeEmail, firstNameFrom } from "./welcome-email";
 
-/**
- * Length past which the Gmail compose URL stops being reliable. Browsers cap
- * URL length and Gmail itself trims very long query params without warning —
- * the draft simply opens with the end missing.
- */
 const MAILTO_SAFE_LENGTH = 1800;
 
 interface WelcomeEmailButtonProps {
@@ -33,19 +29,6 @@ interface WelcomeEmailButtonProps {
   onMarkedSent?: () => void;
 }
 
-/**
- * Sends a newly approved mentor their welcome, through the admin's own mail
- * client rather than the server.
- *
- * The queued/Resend path needs a domain whose DNS we control, and
- * `srmap.edu.in` belongs to the university — mail sent as that address would be
- * rejected. Opening the admin's own Gmail sidesteps the problem entirely: they
- * press send, so the message genuinely comes from their college address, with
- * no DNS records and no verified domain involved.
- *
- * The trade is that it is one click per mentor. At the volume this site
- * approves people, that is a fair price for mail that actually arrives.
- */
 const WelcomeEmailButton = ({
   mentorId,
   mentorName,
@@ -57,20 +40,19 @@ const WelcomeEmailButton = ({
   const template = buildWelcomeEmail(mentorName);
   const [subject, setSubject] = useState(template.subject);
   const [body, setBody] = useState(template.body);
+  const [html, setHtml] = useState(template.html);
+  const [activeTab, setActiveTab] = useState<"edit" | "preview">("edit");
   const [handedOff, setHandedOff] = useState(false);
   const [marking, setMarking] = useState(false);
 
-  // For headings and toasts only. The template gets the raw value, because
-  // firstNameFrom("A mentor") would greet somebody as "Hi A,".
   const displayName = mentorName.trim() || "this mentor";
 
-  // Reseed when the dialog opens on a different application, or the second
-  // mentor you approve gets the first one's name.
   useEffect(() => {
     if (!open) return;
     const next = buildWelcomeEmail(mentorName);
     setSubject(next.subject);
     setBody(next.body);
+    setHtml(next.html);
     setHandedOff(false);
   }, [open, mentorName]);
 
@@ -78,11 +60,6 @@ const WelcomeEmailButton = ({
 
   const openMailClient = () => {
     if (!mentorEmail) return;
-    // Gmail's own compose URL, not mailto:. A mailto: link depends on the OS
-    // having a default mail app registered to handle it — on a machine
-    // without one, Chrome just opens a blank tab and does nothing. This goes
-    // straight into Gmail's web compose in the signed-in account instead,
-    // which is what actually gets used here.
     const params = new URLSearchParams({
       view: "cm",
       fs: "1",
@@ -94,12 +71,6 @@ const WelcomeEmailButton = ({
     setHandedOff(true);
   };
 
-  /**
-   * Nothing here can see whether Gmail actually sent anything — the draft
-   * leaves the browser and that is the end of our visibility. So the admin
-   * says, and we record what they said. Guessing from the click would mark
-   * people welcomed who were never written to.
-   */
   const confirmSent = async () => {
     if (!mentorId) return;
     setMarking(true);
@@ -116,12 +87,21 @@ const WelcomeEmailButton = ({
     toast.success(`Marked ${displayName} as welcomed`);
   };
 
-  const copyAll = async () => {
+  const copyText = async () => {
     try {
       await navigator.clipboard.writeText(`To: ${mentorEmail ?? ""}\nSubject: ${subject}\n\n${body}`);
-      toast.success("Copied — paste it into Gmail");
+      toast.success("Copied plain text email format!");
     } catch {
-      toast.error("Could not copy. Select the text and copy it manually.");
+      toast.error("Could not copy plain text. Please select manually.");
+    }
+  };
+
+  const copyHtml = async () => {
+    try {
+      await navigator.clipboard.writeText(html);
+      toast.success("Copied rich HTML template code!");
+    } catch {
+      toast.error("Could not copy HTML code.");
     }
   };
 
@@ -152,61 +132,89 @@ const WelcomeEmailButton = ({
         </Button>
       </DialogTrigger>
 
-      <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
+      <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Welcome {displayName}</DialogTitle>
           <DialogDescription>
-            This opens Gmail with the message ready to send. You press send, so it comes from your
-            address — edit anything below first.
+            Mentors are automatically approved upon registration. Preview or edit the styled welcome message below.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
-          <div className="space-y-1.5">
-            <Label>To</Label>
-            <Input value={mentorEmail} readOnly className="bg-muted" />
+        <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as "edit" | "preview")}>
+          <div className="flex items-center justify-between">
+            <TabsList>
+              <TabsTrigger value="edit" className="gap-2">
+                <FileText className="h-4 w-4" />
+                Edit / Mailto Draft
+              </TabsTrigger>
+              <TabsTrigger value="preview" className="gap-2">
+                <Eye className="h-4 w-4" />
+                Rich Visual Email Preview
+              </TabsTrigger>
+            </TabsList>
           </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="welcome-subject">Subject</Label>
-            <Input
-              id="welcome-subject"
-              value={subject}
-              onChange={(event) => setSubject(event.target.value)}
-            />
-          </div>
+          <TabsContent value="edit" className="mt-4 space-y-4">
+            <div className="space-y-1.5">
+              <Label>To</Label>
+              <Input value={mentorEmail} readOnly className="bg-muted" />
+            </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="welcome-body">Message</Label>
-            <Textarea
-              id="welcome-body"
-              value={body}
-              onChange={(event) => setBody(event.target.value)}
-              rows={16}
-              className="font-sans text-sm"
-            />
-          </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="welcome-subject">Subject</Label>
+              <Input
+                id="welcome-subject"
+                value={subject}
+                onChange={(event) => setSubject(event.target.value)}
+              />
+            </div>
 
-          {tooLongForMailto && (
-            <p className="rounded-md bg-amber-50 p-3 text-xs text-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
-              This is long enough that some mail clients will cut it off when opened from a link.
-              Use <strong>Copy</strong> and paste it into Gmail instead.
-            </p>
-          )}
+            <div className="space-y-1.5">
+              <Label htmlFor="welcome-body">Message</Label>
+              <Textarea
+                id="welcome-body"
+                value={body}
+                onChange={(event) => setBody(event.target.value)}
+                rows={14}
+                className="font-sans text-sm"
+              />
+            </div>
 
-          <div className="flex flex-col gap-2 sm:flex-row">
+            {tooLongForMailto && (
+              <p className="rounded-md bg-amber-50 p-3 text-xs text-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
+                This message is long enough that some mail clients will cut it off when opened from a link.
+                Use <strong>Copy Text</strong> and paste it directly into your mail app.
+              </p>
+            )}
+          </TabsContent>
+
+          <TabsContent value="preview" className="mt-4">
+            <div className="overflow-hidden rounded-xl border bg-slate-100 p-2 dark:bg-slate-900">
+              <iframe
+                title="Email Preview"
+                srcDoc={html}
+                className="h-[450px] w-full rounded-lg border-0 bg-white"
+              />
+            </div>
+          </TabsContent>
+        </Tabs>
+
+        <div className="mt-4 space-y-4">
+          <div className="flex flex-wrap gap-2">
             <Button onClick={openMailClient} className="flex-1">
               <ExternalLink className="mr-2 h-4 w-4" />
               {handedOff ? "Open again in Gmail" : "Open in Gmail"}
             </Button>
-            <Button variant="outline" onClick={copyAll}>
+            <Button variant="outline" onClick={copyText}>
               <Copy className="mr-2 h-4 w-4" />
-              Copy
+              Copy Plain Text
+            </Button>
+            <Button variant="outline" onClick={copyHtml}>
+              <Copy className="mr-2 h-4 w-4" />
+              Copy HTML Template
             </Button>
           </div>
 
-          {/* Appears only after the draft has been handed over, so it cannot be
-              pressed by someone who has not opened anything yet. */}
           {handedOff && !sentAt && mentorId && (
             <div className="rounded-lg border border-primary/30 bg-primary/5 p-3">
               <p className="text-sm font-medium">Did you send it?</p>
@@ -233,7 +241,7 @@ const WelcomeEmailButton = ({
           )}
 
           <p className="text-xs text-muted-foreground">
-            Nothing is sent from this site — it only hands the draft to Gmail.
+            Opening Gmail hands the draft to your signed-in browser email address.
           </p>
         </div>
       </DialogContent>

@@ -37,6 +37,7 @@ import { CommunityAvatar } from "@/components/communities/CommunityAvatar";
 import { InviteLinkButton } from "@/components/communities/InviteLinkButton";
 import JoinRequestDialog from "@/components/communities/JoinRequestDialog";
 import JoinRequestsPanel from "@/components/communities/JoinRequestsPanel";
+import { CommunityGroupChat } from "@/components/communities/CommunityGroupChat";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/context/AuthContext";
 import {
@@ -410,10 +411,17 @@ const CommunityDetail = () => {
         ) : (
         <div className="grid gap-6 lg:grid-cols-[1fr_20rem]">
           <div className="space-y-4">
-            {community.viewer_is_owner && community.visibility === "private" ? (
-              <Tabs defaultValue="posts">
-                <TabsList className="mb-4">
-                  <TabsTrigger value="posts">Posts</TabsTrigger>
+            <Tabs defaultValue="posts">
+              <TabsList className="mb-4 flex flex-wrap h-auto gap-1">
+                <TabsTrigger value="posts" className="gap-2">
+                  <MessageSquare className="h-4 w-4" />
+                  Posts & Discussions
+                </TabsTrigger>
+                <TabsTrigger value="chat" className="gap-2">
+                  <span className="text-indigo-500 font-bold">#</span>
+                  Group Chat (Discord)
+                </TabsTrigger>
+                {community.viewer_is_owner && community.visibility === "private" && (
                   <TabsTrigger value="requests" className="gap-2">
                     Requests
                     {(community.pending_request_count ?? 0) > 0 && (
@@ -422,68 +430,58 @@ const CommunityDetail = () => {
                       </Badge>
                     )}
                   </TabsTrigger>
-                </TabsList>
+                )}
+              </TabsList>
 
-                <TabsContent value="posts" className="space-y-4">
-                  {posts.length > 0 ? (
-                    posts.map((post) => (
-                      <PostCard
-                        key={post.id}
-                        post={post}
-                        onOpen={(postId) => navigate(`/community-posts/${postId}`)}
-                        onLike={handleLike}
-                      />
-                    ))
-                  ) : (
-                    <Card>
-                      <CardContent className="flex flex-col items-center gap-3 py-14 text-center">
-                        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
-                          <MessageSquare className="h-6 w-6" />
-                        </span>
-                        <p className="font-medium">Nothing posted here yet</p>
+              <TabsContent value="posts" className="space-y-4">
+                {posts.length > 0 ? (
+                  posts.map((post) => (
+                    <PostCard
+                      key={post.id}
+                      post={post}
+                      onOpen={(postId) => navigate(`/community-posts/${postId}`)}
+                      onLike={handleLike}
+                    />
+                  ))
+                ) : (
+                  <Card>
+                    <CardContent className="flex flex-col items-center gap-3 py-14 text-center">
+                      <span className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+                        <MessageSquare className="h-6 w-6" />
+                      </span>
+                      <p className="font-medium">Nothing posted here yet</p>
+                      <p className="max-w-sm text-sm text-muted-foreground">
+                        {community.viewer_can_post
+                          ? "You're a member — say what the group is working on and get it started."
+                          : "Join the group to post here."}
+                      </p>
+                      {community.viewer_can_post && (
                         <Button onClick={() => setCreateOpen(true)}>
                           <Plus className="mr-2 h-4 w-4" />
                           Write the first post
                         </Button>
-                      </CardContent>
-                    </Card>
-                  )}
-                </TabsContent>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
+              </TabsContent>
 
+              <TabsContent value="chat" className="space-y-4">
+                <CommunityGroupChat
+                  communityId={community.id}
+                  communityName={community.name}
+                  ownerName={community.owner.name}
+                  isMember={Boolean(community.viewer_is_member)}
+                  isOwner={Boolean(community.viewer_is_owner)}
+                />
+              </TabsContent>
+
+              {community.viewer_is_owner && community.visibility === "private" && (
                 <TabsContent value="requests">
                   <JoinRequestsPanel communityId={community.id} onDecided={load} />
                 </TabsContent>
-              </Tabs>
-            ) : posts.length > 0 ? (
-              posts.map((post) => (
-                <PostCard
-                  key={post.id}
-                  post={post}
-                  onOpen={(postId) => navigate(`/community-posts/${postId}`)}
-                  onLike={handleLike}
-                />
-              ))
-            ) : (
-              <Card>
-                <CardContent className="flex flex-col items-center gap-3 py-14 text-center">
-                  <span className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
-                    <MessageSquare className="h-6 w-6" />
-                  </span>
-                  <p className="font-medium">Nothing posted here yet</p>
-                  <p className="max-w-sm text-sm text-muted-foreground">
-                    {community.viewer_can_post
-                      ? "You're a member — say what the group is working on and get it started."
-                      : "Join the group to post here."}
-                  </p>
-                  {community.viewer_can_post && (
-                    <Button onClick={() => setCreateOpen(true)}>
-                      <Plus className="mr-2 h-4 w-4" />
-                      Write the first post
-                    </Button>
-                  )}
-                </CardContent>
-              </Card>
-            )}
+              )}
+            </Tabs>
           </div>
 
           <CommunityMemberList
