@@ -496,7 +496,7 @@ const CommunityDetail = () => {
         ) : (
         <div className="grid gap-6 lg:grid-cols-[1fr_20rem]">
           <div className="space-y-4">
-            <Tabs defaultValue="posts">
+            <Tabs defaultValue="chat">
               {/* bg-muted sits at 96% lightness against a 100% white card, so the
                   pill was nearly invisible in light mode and the inactive tab read
                   as plain text rather than a second clickable control. A visible
