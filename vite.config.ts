@@ -1,6 +1,31 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
-import path from "path";
+import { fileURLToPath } from "node:url";
+
+/**
+ * Dependencies worth keeping in their own chunk, so that they stay in the
+ * browser cache across deploys instead of being invalidated whenever a page
+ * changes.
+ *
+ * Expressed as a function rather than the `{ name: [packages] }` object this
+ * used to be: Rolldown, which Vite 8 bundles with, accepts only the function
+ * form. Matching is anchored on `/node_modules/<pkg>/` so that `react` claims
+ * react itself and not react-hook-form, and the alternation is longest-first
+ * for the same reason.
+ */
+const VENDOR_CHUNKS: [RegExp, string][] = [
+  [/\/node_modules\/(react-router-dom|react-router|react-dom|react|scheduler)\//, "react"],
+  [/\/node_modules\/@supabase\//, "supabase"],
+  [/\/node_modules\/framer-motion\//, "motion"],
+  [/\/node_modules\/recharts\//, "charts"],
+];
+
+const chunkFor = (id: string): string | undefined => {
+  if (!id.includes("node_modules")) return undefined;
+  // Windows ids arrive with backslashes; the patterns above are POSIX.
+  const normalised = id.replace(/\\/g, "/");
+  return VENDOR_CHUNKS.find(([pattern]) => pattern.test(normalised))?.[1];
+};
 
 // https://vitejs.dev/config/
 export default defineConfig(({ isSsrBuild }) => ({
@@ -15,7 +40,9 @@ export default defineConfig(({ isSsrBuild }) => ({
   ],
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src"),
+      // Not `__dirname`: Vite 8's native config loader cannot see CommonJS
+      // globals, and warns that it will stop supporting them.
+      "@": fileURLToPath(new URL("./src", import.meta.url)),
     },
   },
   // Configure static asset handling
@@ -27,20 +54,9 @@ export default defineConfig(({ isSsrBuild }) => ({
     manifest: true,
     rollupOptions: {
       output: {
-        // Split the big, rarely-changing dependencies into their own chunks so
-        // they stay cached across deploys instead of being invalidated every
-        // time a page changes.
-        //
         // Client build only: in the SSR build these packages are externalised,
-        // and naming an external module in manualChunks is a hard rollup error.
-        manualChunks: isSsrBuild
-          ? undefined
-          : {
-              react: ["react", "react-dom", "react-router-dom"],
-              supabase: ["@supabase/supabase-js"],
-              motion: ["framer-motion"],
-              charts: ["recharts"],
-            },
+        // and naming an external module in manualChunks is a hard error.
+        manualChunks: isSsrBuild ? undefined : chunkFor,
       },
     },
   },
