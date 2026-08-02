@@ -1,6 +1,7 @@
 import { PRIMARY_DOMAIN } from "@/lib/constants";
 
 import SEOHead from "@/components/SEOHead";
+import { ROUTE_META } from "@/lib/seo/route-meta";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -34,8 +35,8 @@ const HowItWorks = () => {
     return (
         <>
             <SEOHead
-                title="How Friendly Learning SRMAP Works | University Student Collaboration Guide"
-                description="Learn how Friendly Learning SRMAP connects university students worldwide for mentoring, study partnerships, hackathon teams, and academic collaboration. Simple 3-step process to start collaborating."
+                title={ROUTE_META["/how-it-works"].title}
+                description={ROUTE_META["/how-it-works"].description}
                 keywords="how Friendly Learning SRMAP works, university student collaboration guide, student mentoring platform, academic help process, Friendly Learning SRMAP tutorial"
                 canonical={`${PRIMARY_DOMAIN}/how-it-works`}
                 structuredData={structuredData}

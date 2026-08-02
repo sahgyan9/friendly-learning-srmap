@@ -1,5 +1,6 @@
 import { PRIMARY_DOMAIN } from "@/lib/constants";
 import SEOHead from "@/components/SEOHead";
+import { ROUTE_META } from "@/lib/seo/route-meta";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -26,8 +27,8 @@ const FindStudyPartners = () => {
     return (
         <>
             <SEOHead
-                title="Find Study Partners at Your University | Friendly Learning SRMAP Student Collaboration Platform"
-                description="Connect with study partners at your university through Friendly Learning SRMAP. Find students in your courses, form study groups, and improve academic performance together. University student networking made easy."
+                title={ROUTE_META["/find-study-partners"].title}
+                description={ROUTE_META["/find-study-partners"].description}
                 keywords="find study partners university, university study groups, student collaboration, academic study partners, college study buddies, Friendly Learning SRMAP study partners, university networking"
                 canonical={`${PRIMARY_DOMAIN}/find-study-partners`}
                 structuredData={structuredData}

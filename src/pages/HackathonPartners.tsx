@@ -1,5 +1,6 @@
 import { PRIMARY_DOMAIN } from "@/lib/constants";
 import SEOHead from "@/components/SEOHead";
+import { ROUTE_META } from "@/lib/seo/route-meta";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -25,8 +26,8 @@ const HackathonPartners = () => {
     return (
         <>
             <SEOHead
-                title="Find Hackathon Partners & Build Winning Teams | Friendly Learning SRMAP University Platform"
-                description="Connect with skilled developers, designers, and business minds for hackathon teams through Friendly Learning SRMAP. Build winning teams with complementary skills at your university. Perfect team formation for coding competitions."
+                title={ROUTE_META["/hackathon-partners"].title}
+                description={ROUTE_META["/hackathon-partners"].description}
                 keywords="find hackathon partners, hackathon team formation, coding competition teams, university hackathon, Friendly Learning SRMAP hackathon, student developer teams, hackathon teammates"
                 canonical={`${PRIMARY_DOMAIN}/hackathon-partners`}
                 structuredData={structuredData}

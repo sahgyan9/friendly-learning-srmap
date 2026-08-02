@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import Footer from "@/components/Footer";
 import SEOHead from "@/components/SEOHead";
+import { ROUTE_META } from "@/lib/seo/route-meta";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 
@@ -90,8 +91,8 @@ const Contact = () => {
   return (
     <>
       <SEOHead
-        title="Contact Friendly Learning - Get Support for SRM AP Mentorship Platform"
-        description="Have questions about Friendly Learning? Contact our support team for help with mentor connections, platform features, or technical support. We're here to help SRM AP students succeed!"
+        title={ROUTE_META["/contact"].title}
+        description={ROUTE_META["/contact"].description}
         keywords="contact Friendly Learning, SRM AP mentorship support, student platform help, mentorship questions, technical support"
         canonical={`${PRIMARY_DOMAIN}/contact`}
         structuredData={structuredData}

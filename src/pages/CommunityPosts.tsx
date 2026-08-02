@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { ChevronDown, Search } from "lucide-react";
 
 import SEOHead from "@/components/SEOHead";
+import { ROUTE_META } from "@/lib/seo/route-meta";
 import StructuredData from "@/components/StructuredData";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -194,8 +195,8 @@ const CommunityPosts = () => {
   return (
     <>
       <SEOHead
-        title="Posts | Find Hackathon Partners & Study Help at SRM AP"
-        description="Post and browse requests from SRM AP students — hackathon teammates, study help, project collaborators, research partners and campus announcements."
+        title={ROUTE_META["/community-posts"].title}
+        description={ROUTE_META["/community-posts"].description}
         keywords="find hackathon partners srm ap, study help srmap, student project collaboration, srm ap posts"
         canonical={canonical}
       />

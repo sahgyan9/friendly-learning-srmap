@@ -5,6 +5,7 @@ import WhyFriendlyLearning from "@/components/WhyFriendlyLearning";
 import CallToAction from "@/components/CallToAction";
 import Footer from "@/components/Footer";
 import SEOHead from "@/components/SEOHead";
+import { ROUTE_META } from "@/lib/seo/route-meta";
 import FloatingChatbot from "@/components/chatbot/FloatingChatbot";
 import RejectedApplicationNotice from "@/components/mentors/RejectedApplicationNotice";
 import StructuredData from "@/components/StructuredData";
@@ -54,8 +55,8 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <SEOHead
-        title="Friendly Learning SRMAP - Student Mentorship Platform | SRM AP Academic Mentors"
-        description="Friendly Learning SRMAP connects SRM AP university students with experienced peer mentors for academic guidance, project collaboration, and study partnerships. Get personalized help from verified mentors in your department."
+        title={ROUTE_META["/"].title}
+        description={ROUTE_META["/"].description}
         canonical={`${PRIMARY_DOMAIN}/`}
         ogTitle="Friendly Learning SRMAP - Connect with SRM AP Student Mentors"
         ogDescription="Find academic guidance, study partners, project collaborators, and hackathon teams through the official SRM AP student mentorship platform."

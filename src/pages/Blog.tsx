@@ -3,6 +3,7 @@ import { ArrowRight, Clock } from "lucide-react";
 
 import { PRIMARY_DOMAIN } from "@/lib/constants";
 import SEOHead from "@/components/SEOHead";
+import { ROUTE_META } from "@/lib/seo/route-meta";
 import Footer from "@/components/Footer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -36,8 +37,8 @@ const Blog = () => {
     return (
         <>
             <SEOHead
-                title="Blog | Friendly Learning SRMAP"
-                description="Practical guides for SRM AP students — choosing electives with faculty ratings, finding hackathon teammates who show up, and asking for academic help early."
+                title={ROUTE_META["/blog"].title}
+                description={ROUTE_META["/blog"].description}
                 keywords="srm ap student guides, srmap electives, hackathon teammates srm ap, study help srmap, friendly learning blog"
                 canonical={`${PRIMARY_DOMAIN}/blog`}
                 structuredData={structuredData}

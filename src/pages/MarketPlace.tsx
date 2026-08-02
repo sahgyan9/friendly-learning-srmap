@@ -13,6 +13,7 @@ import { fetchMarketplacePosts, fetchMarketplacePost, CategoryType, MarketplaceP
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
 import SEOHead from "@/components/SEOHead";
+import { ROUTE_META } from "@/lib/seo/route-meta";
 import StructuredData from "@/components/StructuredData";
 import { getBreadcrumbSchema } from "@/lib/structured-data";
 import {
@@ -126,8 +127,8 @@ const MarketPlace = () => {
     return (
         <>
             <SEOHead
-                title="Events & News | Friendly Learning SRMAP University Student Hub | Find University Events, News & Advertisements"
-                description="Discover university events, news, advertisements, and course materials at Friendly Learning SRMAP. Stay updated with campus activities, announcements, and educational resources for university students."
+                title={ROUTE_META["/marketplace"].title}
+                description={ROUTE_META["/marketplace"].description}
                 keywords="university events, campus news, student advertisements, course materials, university announcements, student hub, campus activities, educational resources"
                 canonical={`${PRIMARY_DOMAIN}/marketplace`}
             />

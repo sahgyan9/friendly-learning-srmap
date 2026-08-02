@@ -6,6 +6,10 @@ import ReactDOMServer from 'react-dom/server';
 import { StaticRouter } from 'react-router';
 import App from './App';
 
+// Re-exported so prerender.js can read the head tags from the same module the
+// pages use, rather than keeping a second copy of every title in a build script.
+export { ROUTE_META, canonicalFor } from './lib/seo/route-meta';
+
 // List of known routes for status code handling
 const KNOWN_ROUTES = [
   '/',

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import Footer from "@/components/Footer";
 import SEOHead from "@/components/SEOHead";
+import { ROUTE_META } from "@/lib/seo/route-meta";
 import TeamMembers from "@/components/about/TeamMembers";
 import StructuredData from "@/components/StructuredData";
 import { getOrganizationSchema } from "@/lib/structured-data";
@@ -66,8 +67,8 @@ const About = () => {
   return (
     <>
       <SEOHead
-        title="About Friendly Learning SRMAP - University Student Collaboration Platform | Find Study Partners & Hackathon Teams"
-        description="Learn about Friendly Learning SRMAP's mission to connect university students for academic help, hackathon partnerships, project collaborations, startup discussions, and finding study partners. Discover how our platform builds stronger university communities."
+        title={ROUTE_META["/about"].title}
+        description={ROUTE_META["/about"].description}
         keywords="about Friendly Learning SRMAP, university student collaboration, find hackathon partners, student project collaboration, university community platform, study partner matching, startup team formation, skill-based student discovery"
         canonical={`${PRIMARY_DOMAIN}/about`}
       />

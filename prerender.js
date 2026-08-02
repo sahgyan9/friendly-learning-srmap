@@ -7,7 +7,67 @@ const __dirname = path.dirname(url.fileURLToPath(import.meta.url))
 const toAbsolute = (p) => path.resolve(__dirname, p)
 
 const template = fs.readFileSync(toAbsolute('dist/index.html'), 'utf-8')
-const { render } = await import('./dist/server/entry-server.js')
+const { render, ROUTE_META, canonicalFor } = await import('./dist/server/entry-server.js')
+
+const escapeAttr = (value) =>
+  value.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+
+/**
+ * Rewrites the head tags that describe the page.
+ *
+ * Every pre-rendered file is stamped out of dist/index.html, so without this
+ * they all carry the homepage's title, description and share card. That is
+ * invisible in a browser — SEOHead corrects it on mount — but WhatsApp,
+ * LinkedIn, Slack and X never run that code. They read the HTML as delivered,
+ * which is why a shared /blog link previewed as the homepage.
+ *
+ * Replacements are anchored on the exact tags in index.html. If one stops
+ * matching, the count check below fails the build rather than letting the page
+ * ship with the wrong description.
+ */
+const applyMeta = (html, route) => {
+  const meta = ROUTE_META[route]
+  if (!meta) {
+    throw new Error(
+      `No entry in ROUTE_META for "${route}". Add one in src/lib/seo/route-meta.ts — ` +
+        `without it this page would ship with the homepage's title and share card.`,
+    )
+  }
+
+  const title = escapeAttr(meta.title)
+  const description = escapeAttr(meta.description)
+  const url = canonicalFor(route)
+
+  const substitutions = [
+    [/<title>[\s\S]*?<\/title>/, `<title>${title}</title>`],
+    [/<meta name="description"\s+content="[\s\S]*?"\s*\/?>/, `<meta name="description" content="${description}" />`],
+    [/<link rel="canonical" href="[^"]*"\s*\/?>/, `<link rel="canonical" href="${url}" />`],
+    [/<meta property="og:url" content="[^"]*"\s*\/?>/, `<meta property="og:url" content="${url}" />`],
+    [/<meta property="og:title" content="[^"]*"\s*\/?>/, `<meta property="og:title" content="${title}" />`],
+    [/<meta property="og:description"\s+content="[\s\S]*?"\s*\/?>/, `<meta property="og:description" content="${description}" />`],
+    [/<meta property="twitter:title" content="[^"]*"\s*\/?>/, `<meta property="twitter:title" content="${title}" />`],
+    [/<meta property="twitter:description"\s+content="[\s\S]*?"\s*\/?>/, `<meta property="twitter:description" content="${description}" />`],
+  ]
+
+  let out = html
+  const unmatched = []
+  for (const [pattern, replacement] of substitutions) {
+    if (!pattern.test(out)) {
+      unmatched.push(pattern.source.slice(0, 48))
+      continue
+    }
+    out = out.replace(pattern, replacement)
+  }
+
+  if (unmatched.length) {
+    throw new Error(
+      `These head tags no longer match index.html, so ${route} would keep the ` +
+        `homepage values:\n  ${unmatched.join('\n  ')}`,
+    )
+  }
+
+  return out
+}
 
 // Comprehensive list of public, SEO-friendly routes
 const routesToPrerender = [
@@ -29,10 +89,13 @@ const routesToPrerender = [
   ; (async () => {
     for (const url of routesToPrerender) {
       const { html: appHtml, statusCode } = render(url);
-      const html = template
-        .replace(`<!--app-html-->`, appHtml)
-        // Add status code meta tag for search engines
-        .replace('</head>', `<meta name="http-status" content="${statusCode}">\n</head>`)
+      const html = applyMeta(
+        template
+          .replace(`<!--app-html-->`, appHtml)
+          // Add status code meta tag for search engines
+          .replace('</head>', `<meta name="http-status" content="${statusCode}">\n</head>`),
+        url,
+      )
 
       const filePath = `dist${url === '/' ? '/index' : url}.html`
       fs.writeFileSync(toAbsolute(filePath), html)
