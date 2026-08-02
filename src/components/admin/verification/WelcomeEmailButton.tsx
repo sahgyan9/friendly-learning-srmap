@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Check, Copy, ExternalLink, Eye, FileText, Loader2, Mail } from "lucide-react";
+import { Check, Code, Copy, ExternalLink, Eye, FileText, Loader2, Mail } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -41,7 +41,7 @@ const WelcomeEmailButton = ({
   const [subject, setSubject] = useState(template.subject);
   const [body, setBody] = useState(template.body);
   const [html, setHtml] = useState(template.html);
-  const [activeTab, setActiveTab] = useState<"edit" | "preview">("edit");
+  const [activeTab, setActiveTab] = useState<"edit" | "html" | "preview">("edit");
   const [handedOff, setHandedOff] = useState(false);
   const [marking, setMarking] = useState(false);
 
@@ -121,6 +121,15 @@ const WelcomeEmailButton = ({
       } catch {
         toast.error("Could not copy the email.");
       }
+    }
+  };
+
+  const copyRawHtml = async () => {
+    try {
+      await navigator.clipboard.writeText(html);
+      toast.success("Copied the raw HTML source.");
+    } catch {
+      toast.error("Could not copy the HTML source. Please select it manually.");
     }
   };
 
@@ -207,6 +216,32 @@ const WelcomeEmailButton = ({
             )}
           </TabsContent>
 
+          <TabsContent value="html" className="mt-4 space-y-1.5">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="welcome-html">HTML source</Label>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-7 text-xs text-muted-foreground"
+                onClick={() => setHtml(buildWelcomeEmail(mentorName).html)}
+              >
+                Reset to template
+              </Button>
+            </div>
+            <Textarea
+              id="welcome-html"
+              value={html}
+              onChange={(event) => setHtml(event.target.value)}
+              rows={16}
+              className="font-mono text-xs"
+              spellCheck={false}
+            />
+            <p className="text-xs text-muted-foreground">
+              Changes here show up in the preview tab and in Copy Styled Email / Copy Raw HTML below.
+            </p>
+          </TabsContent>
+
           <TabsContent value="preview" className="mt-4">
             <div className="overflow-hidden rounded-xl border bg-slate-100 p-2 dark:bg-slate-900">
               <iframe
@@ -240,6 +275,10 @@ const WelcomeEmailButton = ({
             <Button variant="outline" onClick={copyText}>
               <Copy className="mr-2 h-4 w-4" />
               Copy Plain Text
+            </Button>
+            <Button variant="outline" onClick={copyRawHtml}>
+              <Code className="mr-2 h-4 w-4" />
+              Copy Raw HTML
             </Button>
           </div>
 
