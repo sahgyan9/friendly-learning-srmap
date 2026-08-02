@@ -34,17 +34,28 @@ const Logo = ({
         whileHover={{ rotate: 5, scale: 1.05 }}
         transition={{ type: "spring", stiffness: 300 }}
       >
+        {/*
+          Two SVGs instead of one raster image + a brightness filter. The mark's
+          navy ink used to nearly vanish on the dark theme because a CSS filter
+          was doing the lifting instead of a real reversed asset — see
+          brand_assets/BRAND_GUIDELINES.md §1. Swapping via dark:hidden/dark:block
+          costs nothing extra (both are a few hundred bytes) and needs no JS.
+        */}
         <img
-          src="/lovable-uploads/df76e963-f250-4f25-8f7b-3917f857fe63.png"
+          src="/logo-mark-light.svg"
           alt="Friendly Learning - SRM AP Student Mentorship Platform Logo"
-          // The mark is drawn in two dark inks (#4060c0 and #404060) on a
-          // transparent background, so the darker half all but vanished
-          // against the dark page. Lifting brightness keeps both brand hues
-          // rather than flattening the whole mark to white.
-          className="h-full w-auto object-contain dark:brightness-[1.75] dark:saturate-125"
+          className="h-full w-auto object-contain dark:hidden"
           loading="eager"
-          width="48"
-          height="36"
+          width="38"
+          height="40"
+        />
+        <img
+          src="/logo-mark-dark.svg"
+          alt="Friendly Learning - SRM AP Student Mentorship Platform Logo"
+          className="hidden h-full w-auto object-contain dark:block"
+          loading="eager"
+          width="38"
+          height="40"
         />
       </motion.div>
 

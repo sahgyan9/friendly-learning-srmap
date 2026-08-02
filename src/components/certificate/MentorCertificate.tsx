@@ -54,18 +54,6 @@ const MentorCertificate = forwardRef<SVGSVGElement, MentorCertificateProps>(
       { value: formatMonthYear(mentorSince), label: "mentor since" },
     ];
 
-    // Scalloped seal lobes (16 outer circles forming the gold seal crest)
-    const sealCenter = { x: 190, y: 240 };
-    const sealRadius = 64;
-    const scallopCount = 16;
-    const scallops = Array.from({ length: scallopCount }, (_, i) => {
-      const angle = (i * 360) / scallopCount * (Math.PI / 180);
-      return {
-        cx: sealCenter.x + sealRadius * Math.cos(angle),
-        cy: sealCenter.y + sealRadius * Math.sin(angle),
-      };
-    });
-
     return (
       <svg
         ref={ref}
@@ -92,23 +80,10 @@ const MentorCertificate = forwardRef<SVGSVGElement, MentorCertificateProps>(
             <stop offset="100%" stopColor="#fef08a" />
           </linearGradient>
 
-          {/* Dark Navy Column Background */}
-          <linearGradient id="fl-ribbon-navy" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor="#111827" />
-            <stop offset="50%" stopColor="#1e293b" />
-            <stop offset="100%" stopColor="#0f172a" />
-          </linearGradient>
-
-          {/* Inner Lighter Royal Blue Ribbon */}
-          <linearGradient id="fl-ribbon-inner" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor="#2563eb" />
-            <stop offset="50%" stopColor="#3b82f6" />
-            <stop offset="100%" stopColor="#1d4ed8" />
-          </linearGradient>
-
-          {/* Shadow for ribbon and seal */}
-          <filter id="cert-shadow" x="-20%" y="-20%" width="140%" height="140%">
-            <feDropShadow dx="3" dy="5" stdDeviation="4" floodColor="#0f172a" floodOpacity="0.3" />
+          {/* Shadow for ribbon and badge -- kept light on purpose, flat shapes
+              only need enough shadow to lift off the page, not a 3D bevel. */}
+          <filter id="cert-shadow" x="-30%" y="-30%" width="160%" height="160%">
+            <feDropShadow dx="0" dy="3" stdDeviation="3" floodColor="#0f172a" floodOpacity="0.18" />
           </filter>
         </defs>
 
@@ -128,73 +103,27 @@ const MentorCertificate = forwardRef<SVGSVGElement, MentorCertificateProps>(
           <path d="M 1532 1047 L 1516 1047 L 1516 1063" />
         </g>
 
-        {/* Left Vertical Ribbon Bar (Matching Reference Image) */}
+        {/* Left Ribbon: one flat shape, one flat color -- no navy backing, no
+            gradient, no gold trim lines. A modern badge ribbon reads as a
+            single die-cut tail, not a layered 3D column. */}
         <g id="cert-ribbon-bar" filter="url(#cert-shadow)">
-          {/* Base Dark Navy Column */}
-          <rect x="116" y="40" width="148" height="1051" fill="url(#fl-ribbon-navy)" />
-
-          {/* Outer Double Gold Border Lines on Navy Column */}
-          <line x1="120" y1="40" x2="120" y2="1091" stroke="url(#fl-cert-gold)" strokeWidth="1.5" />
-          <line x1="124" y1="40" x2="124" y2="1091" stroke="url(#fl-cert-gold)" strokeWidth="1" />
-
-          <line x1="260" y1="40" x2="260" y2="1091" stroke="url(#fl-cert-gold)" strokeWidth="1.5" />
-          <line x1="256" y1="40" x2="256" y2="1091" stroke="url(#fl-cert-gold)" strokeWidth="1" />
-
-          {/* Inner Lighter Royal Blue Ribbon Band with V-Notch End */}
           <path
-            d="M 136 40 L 244 40 L 244 470 L 190 425 L 136 470 Z"
-            fill="url(#fl-ribbon-inner)"
+            d="M 128 40 L 220 40 L 220 340 L 174 300 L 128 340 Z"
+            fill="#1e40af"
           />
-
-          {/* Inner Ribbon Band Gold Borders */}
-          <line x1="138" y1="40" x2="138" y2="467" stroke="url(#fl-cert-gold)" strokeWidth="1.5" />
-          <line x1="242" y1="40" x2="242" y2="467" stroke="url(#fl-cert-gold)" strokeWidth="1.5" />
-          <path d="M 138 467 L 190 423 L 242 467" fill="none" stroke="url(#fl-cert-gold)" strokeWidth="1.5" />
         </g>
 
-        {/* Golden Medallion Seal (Pinned on Ribbon Bar) */}
-        <g id="cert-gold-medal" filter="url(#cert-shadow)">
-          {/* Scalloped Gold Outer Crest */}
-          <g fill="url(#fl-cert-gold)">
-            {scallops.map((scallop, index) => (
-              <circle key={index} cx={scallop.cx} cy={scallop.cy} r="10" />
-            ))}
-            <circle cx="190" cy="240" r="64" />
+        {/* Solid Badge (pinned near the top of the ribbon, not mid-ribbon) */}
+        <g id="cert-badge">
+          <g filter="url(#cert-shadow)">
+            <circle cx="174" cy="132" r="56" fill="#d97706" />
+            <circle cx="174" cy="132" r="48" fill="none" stroke="#ffffff" strokeWidth="3" />
           </g>
-
-          <circle cx="190" cy="240" r="56" fill="#0f172a" stroke="url(#fl-cert-gold)" strokeWidth="2.5" />
-          <circle cx="190" cy="240" r="50" fill="none" stroke="url(#fl-cert-gold)" strokeWidth="1" strokeDasharray="3 2" />
-
-          {/* Laurel Wreath Leaves */}
-          <g fill="url(#fl-cert-gold)">
-            {/* Left Laurel Arc */}
-            <path d="M 152 235 C 150 220 158 208 168 200 C 164 206 162 216 166 226 C 160 228 154 232 152 235 Z" />
-            <path d="M 148 245 C 148 235 154 225 162 218 C 158 224 158 234 164 242 Z" />
-            <path d="M 152 258 C 150 248 156 238 166 232 C 162 238 164 248 170 254 Z" />
-            <path d="M 160 270 C 156 262 162 252 172 246 C 168 252 172 262 178 266 Z" />
-
-            {/* Right Laurel Arc */}
-            <path d="M 228 235 C 230 220 222 208 212 200 C 216 206 218 216 214 226 C 220 228 226 232 228 235 Z" />
-            <path d="M 232 245 C 232 235 226 225 218 218 C 222 224 222 234 216 242 Z" />
-            <path d="M 228 258 C 230 248 224 238 214 232 C 218 238 216 248 210 254 Z" />
-            <path d="M 220 270 C 224 262 218 252 208 246 C 212 252 208 262 202 266 Z" />
-
-            {/* Gold Star at Bottom of Laurel Wreath */}
-            <polygon points="190,283 192.5,289 199,289 193.5,293 195.5,299 190,295 184.5,299 186.5,293 181,289 187.5,289" />
-          </g>
-
-          {/* Golden Shield in Center */}
           <path
-            d="M 190 216 C 204 216 212 220 212 229 C 212 247 190 264 190 270 C 190 264 168 247 168 229 C 168 220 176 216 190 216 Z"
-            fill="url(#fl-cert-gold)"
-          />
-
-          {/* Dark Navy Checkmark Inside Shield */}
-          <path
-            d="M 181 243 L 187 250 L 199 237"
+            d="M 154 132 L 168 146 L 196 116"
             fill="none"
-            stroke="#0f172a"
-            strokeWidth="4"
+            stroke="#ffffff"
+            strokeWidth="7"
             strokeLinecap="round"
             strokeLinejoin="round"
           />

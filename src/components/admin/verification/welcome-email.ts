@@ -86,9 +86,32 @@ ${PRIMARY_DOMAIN}`;
           <!-- Header Banner -->
           <tr>
             <td style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); padding: 32px 28px; text-align: center;">
-              <div style="display:inline-block; background-color:rgba(255,255,255,0.15); padding:8px 16px; border-radius:30px; color:#ffffff; font-size:13px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:12px;">
-                Friendly Learning SRMAP
-              </div>
+              <!--
+                The mark is two-tone (blue F, navy L) on a transparent PNG, made
+                for light backgrounds — see brand_assets/BRAND_GUIDELINES.md §1.
+                It sits in its own white chip here rather than directly on the
+                gradient so the navy half stays visible; there is no reversed/
+                white version of the asset yet. The <img> points at the hosted
+                file (not a data URI) because Gmail's rich-paste strips inline
+                data: images from copied HTML — a remote https URL is what
+                actually survives copy/paste into a compose window.
+              -->
+              <table role="presentation" border="0" cellspacing="0" cellpadding="0" style="margin:0 auto 16px auto; background-color:#ffffff; border-radius:10px; box-shadow:0 4px 12px rgba(15,23,42,0.18);">
+                <tr>
+                  <td style="padding:9px 16px;">
+                    <table role="presentation" border="0" cellspacing="0" cellpadding="0">
+                      <tr>
+                        <td style="vertical-align:middle; padding-right:8px;">
+                          <img src="${PRIMARY_DOMAIN}/lovable-uploads/df76e963-f250-4f25-8f7b-3917f857fe63.png" width="40" height="26" alt="Friendly Learning" style="display:block; border:0;">
+                        </td>
+                        <td style="vertical-align:middle; white-space:nowrap; font-size:15px; font-weight:700; letter-spacing:-0.2px;">
+                          <span style="color:#3963c6;">Friendly</span><span style="color:#0f172a;">Learning</span><span style="color:#3963c6; font-size:10px; font-weight:600; letter-spacing:0.3px; margin-left:4px;">SRMAP</span>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
               <h1 style="color:#ffffff; margin:0; font-size:24px; font-weight:700; line-height:1.3;">
                 You're live, ${firstName}! 🎉
               </h1>

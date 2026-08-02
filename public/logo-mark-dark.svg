@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="201 81 397 421" role="img" aria-label="Friendly Learning SRMAP logo mark">
+  <title>Friendly Learning SRMAP</title>
+  <!-- Same trace as logo-mark-light-bg.svg. Inks are the app's dark-mode lift
+       (brightness 1.75, saturate 1.25, see Logo.tsx) computed and baked in as
+       flat colors instead of a CSS filter, per BRAND_GUIDELINES.md's note that
+       a reversed asset should not rely on a filter hack. The bracket is pure
+       black (#000000) in the source PNG, which a brightness filter cannot
+       lift, so it's rendered here in the app's dark mode foreground color
+       (F8FAFC) instead, the one deliberate deviation from a literal filter
+       replica, needed so the mark stays visible on the dark surface. -->
+  <path d="M273,216L277,216L277,217L278,217L278,219L277,219L277,220L276,220L276,221L275,221L275,220L224,220L224,349L426,349L426,217L542,217L542,218L543,218L543,220L542,220L542,349L543,349L543,351L542,351L542,352L515,352L515,353L513,353L513,352L512,352L512,351L511,351L511,350L512,350L512,348L516,348L516,349L539,349L539,220L429,220L429,352L221,352L221,217L273,217Z" fill="#F8FAFC"/>
+  <path d="M286,101L429,101L429,147L335,147L335,199L409,199L409,243L335,243L335,334L286,334Z" fill="#54AFFF"/>
+  <path d="M447,243L496,243L496,435L578,435L578,482L447,482Z" fill="#5C7295"/>
+</svg>
