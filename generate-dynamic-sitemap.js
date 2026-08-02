@@ -671,6 +671,27 @@ async function generateSitemaps() {
         // Generate faculty profiles sitemap
         availableSitemaps.faculty = await generateFacultySitemap();
 
+        // A section that could not be regenerated but whose file is still in
+        // public/ stays in the index, because that file still gets served.
+        // Dropping it would hide pages that are live and reachable — the
+        // faculty sitemap alone carries ~620 URLs — and a sitemap listing
+        // slightly stale lastmod dates is far better for discovery than one
+        // that omits the pages entirely.
+        const fileNames = {
+            blog: 'sitemap-blog.xml',
+            mentors: 'sitemap-mentors.xml',
+            community: 'sitemap-community.xml',
+            faculty: 'sitemap-faculty.xml',
+        };
+
+        for (const [key, fileName] of Object.entries(fileNames)) {
+            if (availableSitemaps[key]) continue;
+            if (fs.existsSync(path.join(config.publicDir, fileName))) {
+                console.warn(`[sitemap] Keeping the existing ${fileName} in the index; it was not regenerated this build.`);
+                availableSitemaps[key] = true;
+            }
+        }
+
         // Generate the sitemap index based on available sitemaps
         await generateSitemapIndex(availableSitemaps);
 
