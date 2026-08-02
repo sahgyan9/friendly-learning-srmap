@@ -47,7 +47,7 @@ export type Community = {
   post_count: number;
   is_archived: boolean;
   created_at: string;
-  owner: { id: string; name: string; profile_image: string | null };
+  owner: { id: string; name: string; profile_image: string | null; is_mentor: boolean };
   viewer_is_member: boolean;
   viewer_is_owner: boolean;
   /** Only present from getCommunityBySlug. Members of a live group may post. */
@@ -123,6 +123,8 @@ type CommunityRow = {
   owner_id: string;
   owner_name: string | null;
   owner_image: string | null;
+  /** Only present from getCommunityBySlug. */
+  owner_is_mentor?: boolean;
   viewer_is_member: boolean;
   viewer_is_owner: boolean;
   viewer_can_post?: boolean;
@@ -153,6 +155,7 @@ function toCommunity(row: CommunityRow): Community {
       // owners are not necessarily mentors now.
       name: row.owner_name ?? "A student",
       profile_image: row.owner_image,
+      is_mentor: Boolean(row.owner_is_mentor),
     },
     viewer_is_member: row.viewer_is_member,
     viewer_is_owner: row.viewer_is_owner,

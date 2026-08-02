@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import {
   ArrowLeft,
   Check,
+  Hash,
   Loader2,
   Lock,
   LogIn,
@@ -276,10 +277,20 @@ const CommunityDetail = () => {
                 <MessageSquare className="h-4 w-4" />
                 {community.post_count} {community.post_count === 1 ? "post" : "posts"}
               </span>
-              {/* Not a link any more. Owners no longer have to be mentors, and
-                  /mentor/:id for a student who never applied is a dead end. */}
+              {/* Owners no longer have to be mentors, so /mentor/:id would be a
+                  dead end for most of them. Link only when it actually resolves. */}
               <span>
-                Run by <span className="font-medium text-foreground">{community.owner.name}</span>
+                Run by{" "}
+                {community.owner.is_mentor ? (
+                  <Link
+                    to={`/mentor/${community.owner.id}`}
+                    className="font-medium text-foreground hover:text-primary"
+                  >
+                    {community.owner.name}
+                  </Link>
+                ) : (
+                  <span className="font-medium text-foreground">{community.owner.name}</span>
+                )}
               </span>
             </div>
 
@@ -418,8 +429,8 @@ const CommunityDetail = () => {
                   Posts & Discussions
                 </TabsTrigger>
                 <TabsTrigger value="chat" className="gap-2">
-                  <span className="text-indigo-500 font-bold">#</span>
-                  Group Chat (Discord)
+                  <Hash className="h-4 w-4" />
+                  Group Chat
                 </TabsTrigger>
                 {community.viewer_is_owner && community.visibility === "private" && (
                   <TabsTrigger value="requests" className="gap-2">

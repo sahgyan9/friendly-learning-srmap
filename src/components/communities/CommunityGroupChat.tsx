@@ -1,43 +1,30 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { useRealtimeSubscription } from "@/hooks/useRealtime";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
+import { getInitials } from "@/utils/user-utils";
 import {
   Hash,
   Send,
-  Smile,
+  Loader2,
   MessageSquare,
-  ShieldCheck,
   Crown,
+  ShieldCheck,
   CornerDownRight,
   Sparkles,
   Users,
-  Paperclip,
 } from "lucide-react";
 import { toast } from "sonner";
-
-export interface GroupChatMessage {
-  id: string;
-  communityId: string;
-  senderId: string;
-  senderName: string;
-  senderAvatar?: string | null;
-  senderRole?: string | null;
-  isOwner?: boolean;
-  isMentor?: boolean;
-  content: string;
-  timestamp: string;
-  channel: string;
-  replyTo?: {
-    senderName: string;
-    content: string;
-  };
-  reactions: Record<string, number>;
-  userReactions: string[]; // Emojis caller reacted with
-}
+import {
+  listGroupMessages,
+  sendGroupMessage,
+  toggleGroupMessageReaction,
+  type GroupChatMessage,
+} from "@/integrations/supabase/services/community-group-chat";
 
 interface CommunityGroupChatProps {
   communityId: string;
@@ -48,12 +35,12 @@ interface CommunityGroupChatProps {
 }
 
 const CHANNELS = [
-  { id: "general", name: "general", icon: Hash, desc: "General group discussions & chat" },
+  { id: "general", name: "general", icon: Hash, desc: "General group discussion" },
   { id: "announcements", name: "announcements", icon: Sparkles, desc: "Important updates & announcements" },
   { id: "project-ideas", name: "project-ideas", icon: MessageSquare, desc: "Collaborate on projects & hackathons" },
 ];
 
-const QUICK_EMOJIS = ["👍", "❤️", "🔥", "🚀", "💡", "👏", "💯"];
+const QUICK_EMOJIS = ["👍", "❤️", "🔥", "🚀", "💡", "👏"];
 
 export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
   communityId,
@@ -65,111 +52,70 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
   const { user } = useAuth();
   const [activeChannel, setActiveChannel] = useState("general");
   const [messages, setMessages] = useState<GroupChatMessage[]>([]);
+  const [loading, setLoading] = useState(true);
   const [inputText, setInputText] = useState("");
+  const [sending, setSending] = useState(false);
   const [replyingTo, setReplyingTo] = useState<GroupChatMessage | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const canPost = isMember || isOwner;
 
-  const storageKey = `group_chat_messages_${communityId}`;
+  const load = useCallback(
+    async (channel: string) => {
+      const { data } = await listGroupMessages(communityId, channel);
+      setMessages(data);
+      setLoading(false);
+    },
+    [communityId],
+  );
 
-  // Load chat messages from localStorage or initialize with seed welcome messages
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(storageKey);
-      if (saved) {
-        setMessages(JSON.parse(saved));
-      } else {
-        const initialSeedMessages: GroupChatMessage[] = [
-          {
-            id: "seed-1",
-            communityId,
-            senderId: "owner-id",
-            senderName: ownerName || "Group Lead",
-            senderAvatar: null,
-            senderRole: "Group Leader",
-            isOwner: true,
-            isMentor: true,
-            content: `Welcome everyone to #${activeChannel} in ${communityName}! Feel free to drop a message or start a discussion. 🎉`,
-            timestamp: new Date(Date.now() - 3600000 * 2).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            channel: "general",
-            reactions: { "👋": 3, "🚀": 2 },
-            userReactions: [],
-          },
-          {
-            id: "seed-2",
-            communityId,
-            senderId: "system-id",
-            senderName: "Study Buddy Bot",
-            senderAvatar: null,
-            senderRole: "Bot",
-            isOwner: false,
-            isMentor: false,
-            content: "💡 Tip: You can react to messages with emojis or reply directly just like on Discord!",
-            timestamp: new Date(Date.now() - 3600000 * 1).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            channel: "general",
-            reactions: { "💡": 4 },
-            userReactions: [],
-          },
-        ];
-        setMessages(initialSeedMessages);
-        localStorage.setItem(storageKey, JSON.stringify(initialSeedMessages));
-      }
-    } catch {
-      // Fallback
-    }
-  }, [communityId, communityName, ownerName, storageKey]);
+    setLoading(true);
+    load(activeChannel);
+  }, [load, activeChannel]);
 
-  // Scroll to bottom when messages update
+  // payload.old/new on this table only carries changed columns, not a joined
+  // sender name — simplest correct move is to re-fetch rather than patch
+  // state off the raw row. Debounced so a burst of reactions or messages
+  // doesn't fire a refetch per event.
+  const refetchTimer = useRef<ReturnType<typeof setTimeout>>();
+  useRealtimeSubscription(
+    "community_group_messages",
+    () => {
+      clearTimeout(refetchTimer.current);
+      refetchTimer.current = setTimeout(() => load(activeChannel), 250);
+    },
+    { column: "community_id", value: communityId },
+  );
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, activeChannel]);
+  }, [messages]);
 
-  const saveMessages = (updated: GroupChatMessage[]) => {
-    setMessages(updated);
-    try {
-      localStorage.setItem(storageKey, JSON.stringify(updated));
-    } catch (e) {
-      console.error("Failed saving group chat messages", e);
-    }
-  };
-
-  const handleSendMessage = () => {
-    if (!inputText.trim()) return;
+  const handleSendMessage = async () => {
+    const content = inputText.trim();
+    if (!content) return;
 
     if (!user) {
       toast.error("Please sign in to send messages");
       return;
     }
-
-    if (!isMember && !isOwner) {
+    if (!canPost) {
       toast.error("You must join this group to post messages");
       return;
     }
 
-    const newMessage: GroupChatMessage = {
-      id: `msg-${Date.now()}`,
-      communityId,
-      senderId: user.id,
-      senderName: user.user_metadata?.full_name || user.email?.split("@")[0] || "Student",
-      senderAvatar: user.user_metadata?.avatar_url || null,
-      senderRole: isOwner ? "Owner" : "Member",
-      isOwner,
-      isMentor: false,
-      content: inputText.trim(),
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      channel: activeChannel,
-      replyTo: replyingTo
-        ? {
-            senderName: replyingTo.senderName,
-            content: replyingTo.content.slice(0, 60),
-          }
-        : undefined,
-      reactions: {},
-      userReactions: [],
-    };
+    setSending(true);
+    const { error } = await sendGroupMessage(communityId, activeChannel, content, replyingTo?.id ?? null);
+    setSending(false);
 
-    saveMessages([...messages, newMessage]);
+    if (error) {
+      toast.error(error.message || "Could not send that message");
+      return;
+    }
+
     setInputText("");
     setReplyingTo(null);
+    load(activeChannel);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -179,52 +125,30 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
     }
   };
 
-  const handleToggleReaction = (msgId: string, emoji: string) => {
+  const handleToggleReaction = async (msgId: string, emoji: string) => {
     if (!user) {
       toast.error("Sign in to react");
       return;
     }
-
-    const updated = messages.map((msg) => {
-      if (msg.id !== msgId) return msg;
-
-      const userReactions = msg.userReactions || [];
-      const hasReacted = userReactions.includes(emoji);
-      const reactions = { ...(msg.reactions || {}) };
-
-      if (hasReacted) {
-        reactions[emoji] = Math.max(0, (reactions[emoji] || 1) - 1);
-        if (reactions[emoji] === 0) delete reactions[emoji];
-        return {
-          ...msg,
-          reactions,
-          userReactions: userReactions.filter((e) => e !== emoji),
-        };
-      } else {
-        reactions[emoji] = (reactions[emoji] || 0) + 1;
-        return {
-          ...msg,
-          reactions,
-          userReactions: [...userReactions, emoji],
-        };
-      }
-    });
-
-    saveMessages(updated);
+    const { error } = await toggleGroupMessageReaction(msgId, emoji);
+    if (error) {
+      toast.error(error.message || "Could not react to that message");
+      return;
+    }
+    load(activeChannel);
   };
 
-  const channelMessages = messages.filter((m) => m.channel === activeChannel);
   const currentChannelMeta = CHANNELS.find((c) => c.id === activeChannel);
 
   return (
-    <Card className="border shadow-md overflow-hidden bg-background">
+    <Card className="border shadow-sm overflow-hidden bg-background">
       <div className="grid grid-cols-1 md:grid-cols-[220px_1fr] min-h-[550px] h-[600px]">
-        
-        {/* Discord-style Channel Sidebar */}
-        <div className="border-r bg-muted/40 p-4 flex flex-col justify-between hidden md:flex">
+
+        {/* Channel Sidebar */}
+        <div className="border-r bg-muted/40 p-4 flex-col justify-between hidden md:flex">
           <div>
             <div className="flex items-center gap-2 px-2 pb-3 mb-3 border-b">
-              <div className="h-8 w-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold text-sm">
+              <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold text-sm">
                 {communityName.charAt(0).toUpperCase()}
               </div>
               <div className="min-w-0 flex-1">
@@ -236,7 +160,7 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
             </div>
 
             <p className="text-[11px] font-semibold text-muted-foreground uppercase px-2 mb-2 tracking-wider">
-              Text Channels
+              Channels
             </p>
 
             <div className="space-y-1">
@@ -249,7 +173,7 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
                     onClick={() => setActiveChannel(ch.id)}
                     className={`w-full flex items-center gap-2 px-2.5 py-2 rounded-md text-xs font-medium transition-colors ${
                       active
-                        ? "bg-indigo-600/10 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400 font-semibold"
+                        ? "bg-primary/10 text-primary font-semibold"
                         : "text-muted-foreground hover:bg-muted hover:text-foreground"
                     }`}
                   >
@@ -263,7 +187,7 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
 
           <div className="p-2 bg-background/80 rounded-lg border text-[11px] text-muted-foreground">
             <p className="font-semibold text-foreground flex items-center gap-1">
-              <Crown className="h-3 w-3 text-amber-500" /> Admin
+              <Crown className="h-3 w-3 text-amber-500" /> Group lead
             </p>
             <p className="truncate">{ownerName}</p>
           </div>
@@ -271,7 +195,7 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
 
         {/* Chat Area */}
         <div className="flex flex-col h-full bg-background/50">
-          
+
           {/* Channel Header Bar */}
           <div className="flex items-center justify-between px-4 py-3 border-b bg-background/95 backdrop-blur">
             <div className="flex items-center gap-2">
@@ -280,14 +204,13 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
               </div>
               <div>
                 <h3 className="font-bold text-sm flex items-center gap-1.5">
-                  <Hash className="h-4 w-4 text-indigo-500 hidden md:inline" />
+                  <Hash className="h-4 w-4 text-primary hidden md:inline" />
                   {activeChannel}
                 </h3>
                 <p className="text-[11px] text-muted-foreground">{currentChannelMeta?.desc}</p>
               </div>
             </div>
 
-            {/* Mobile Channel switcher buttons */}
             <div className="flex md:hidden gap-1">
               {CHANNELS.map((ch) => (
                 <Button
@@ -305,24 +228,26 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
 
           {/* Messages Stream */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {channelMessages.length === 0 ? (
+            {loading ? (
+              <div className="h-full flex items-center justify-center text-muted-foreground">
+                <Loader2 className="h-5 w-5 animate-spin" />
+              </div>
+            ) : messages.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-center text-muted-foreground p-6">
-                <div className="h-12 w-12 rounded-full bg-indigo-500/10 text-indigo-500 flex items-center justify-center mb-3">
+                <div className="h-12 w-12 rounded-full bg-primary/10 text-primary flex items-center justify-center mb-3">
                   <Hash className="h-6 w-6" />
                 </div>
                 <h4 className="font-bold text-base text-foreground">Welcome to #{activeChannel}!</h4>
                 <p className="text-xs max-w-sm mt-1">This is the start of the #{activeChannel} channel. Say hello to your group members.</p>
               </div>
             ) : (
-              channelMessages.map((msg, index) => {
-                const isMe = user?.id === msg.senderId;
-
+              messages.map((msg) => {
                 return (
                   <div key={msg.id} className="group relative flex gap-3 hover:bg-muted/30 p-2 rounded-lg transition-colors">
                     <Avatar className="h-9 w-9 border shrink-0">
-                      <AvatarImage src={msg.senderAvatar || undefined} />
-                      <AvatarFallback className="bg-indigo-100 text-indigo-700 text-xs font-bold">
-                        {msg.senderName.slice(0, 2).toUpperCase()}
+                      <AvatarImage src={msg.senderAvatar ?? undefined} />
+                      <AvatarFallback className="text-xs font-bold">
+                        {getInitials(msg.senderName)}
                       </AvatarFallback>
                     </Avatar>
 
@@ -331,43 +256,43 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
                         <span className="font-semibold text-xs text-foreground flex items-center gap-1">
                           {msg.senderName}
                           {msg.isOwner && (
-                            <Badge variant="secondary" className="h-4 text-[9px] px-1 bg-amber-500/10 text-amber-600 border-amber-500/20">
+                            <Badge variant="outline" className="h-4 text-[9px] px-1">
                               <Crown className="h-2.5 w-2.5 mr-0.5 inline" /> Owner
                             </Badge>
                           )}
                           {msg.isMentor && (
-                            <Badge variant="secondary" className="h-4 text-[9px] px-1 bg-indigo-500/10 text-indigo-600 border-indigo-500/20">
+                            <Badge variant="secondary" className="h-4 text-[9px] px-1">
                               <ShieldCheck className="h-2.5 w-2.5 mr-0.5 inline" /> Mentor
                             </Badge>
                           )}
                         </span>
-                        <span className="text-[10px] text-muted-foreground">{msg.timestamp}</span>
+                        <span className="text-[10px] text-muted-foreground">
+                          {new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                        </span>
                       </div>
 
-                      {/* Reply reference banner if any */}
                       {msg.replyTo && (
-                        <div className="flex items-center gap-1 text-[11px] text-muted-foreground bg-muted/50 px-2 py-0.5 rounded border-l-2 border-indigo-500 mb-1">
+                        <div className="flex items-center gap-1 text-[11px] text-muted-foreground bg-muted/50 px-2 py-0.5 rounded border-l-2 border-primary mb-1">
                           <CornerDownRight className="h-3 w-3" />
                           <span className="font-medium text-foreground">{msg.replyTo.senderName}:</span>
                           <span className="truncate max-w-[250px]">{msg.replyTo.content}</span>
                         </div>
                       )}
 
-                      <p className="text-xs text-slate-800 dark:text-slate-200 whitespace-pre-wrap leading-relaxed">
+                      <p className="text-xs text-foreground whitespace-pre-wrap leading-relaxed">
                         {msg.content}
                       </p>
 
-                      {/* Reactions bar */}
                       <div className="flex flex-wrap gap-1 mt-1.5 items-center">
-                        {Object.entries(msg.reactions || {}).map(([emoji, count]) => {
-                          const reacted = msg.userReactions?.includes(emoji);
+                        {Object.entries(msg.reactions).map(([emoji, count]) => {
+                          const reacted = msg.viewerReactions.includes(emoji);
                           return (
                             <button
                               key={emoji}
                               onClick={() => handleToggleReaction(msg.id, emoji)}
                               className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full border transition-colors ${
                                 reacted
-                                  ? "bg-indigo-50 border-indigo-300 text-indigo-700 dark:bg-indigo-950 dark:border-indigo-800 dark:text-indigo-300 font-bold"
+                                  ? "bg-primary/10 border-primary/30 text-primary font-bold"
                                   : "bg-muted/40 border-muted text-muted-foreground hover:bg-muted"
                               }`}
                             >
@@ -377,7 +302,6 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
                           );
                         })}
 
-                        {/* Quick Add Reaction floating toolbar on hover */}
                         <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5 ml-2 bg-background border shadow-xs rounded-full px-1 py-0.5">
                           {QUICK_EMOJIS.slice(0, 4).map((emoji) => (
                             <button
@@ -391,7 +315,7 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
                           ))}
                           <button
                             onClick={() => setReplyingTo(msg)}
-                            className="text-[10px] text-muted-foreground hover:text-indigo-600 px-1 font-medium"
+                            className="text-[10px] text-muted-foreground hover:text-primary px-1 font-medium"
                           >
                             Reply
                           </button>
@@ -407,7 +331,7 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
 
           {/* Reply Banner */}
           {replyingTo && (
-            <div className="flex items-center justify-between px-4 py-1.5 bg-indigo-50 dark:bg-indigo-950/40 border-t border-indigo-200 text-xs text-indigo-800 dark:text-indigo-200">
+            <div className="flex items-center justify-between px-4 py-1.5 bg-primary/5 border-t border-primary/20 text-xs text-foreground">
               <span className="flex items-center gap-1.5 truncate">
                 <CornerDownRight className="h-3.5 w-3.5" /> Replying to <strong className="font-semibold">{replyingTo.senderName}</strong>: "{replyingTo.content.slice(0, 40)}..."
               </span>
@@ -419,7 +343,7 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
 
           {/* Message Input Box */}
           <div className="p-3 border-t bg-background">
-            {!isMember && !isOwner ? (
+            {!canPost ? (
               <div className="text-center py-2 px-4 bg-muted/50 rounded-lg text-xs text-muted-foreground">
                 Join this group to participate in the conversation.
               </div>
@@ -430,10 +354,11 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
                   onChange={(e) => setInputText(e.target.value)}
                   onKeyDown={handleKeyDown}
                   placeholder={`Message #${activeChannel}...`}
-                  className="text-xs font-sans h-10 bg-muted/30 focus-visible:ring-indigo-500"
+                  className="text-xs font-sans h-10 bg-muted/30"
+                  disabled={sending}
                 />
-                <Button size="icon" onClick={handleSendMessage} disabled={!inputText.trim()} className="bg-indigo-600 hover:bg-indigo-700 h-10 w-10 shrink-0">
-                  <Send className="h-4 w-4" />
+                <Button size="icon" onClick={handleSendMessage} disabled={!inputText.trim() || sending} className="h-10 w-10 shrink-0">
+                  {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                 </Button>
               </div>
             )}
