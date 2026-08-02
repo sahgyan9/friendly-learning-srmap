@@ -1,75 +1,76 @@
-# Friendly Learning SRMAP - Friendly Learning Platform
+# Friendly Learning SRMAP
 
-## About Friendly Learning SRMAP
+**Friendly Learning SRMAP** (FL SRMAP) is a student mentorship platform for SRM
+AP university. It connects students with peer mentors for academic guidance,
+project collaboration, study partnerships, and hackathon teams.
 
-**Friendly Learning SRMAP** is a premier friendly learning platform that connects students with student mentor within university. Our mission is to provide personalized academic guidance, career advice, and peer learning support through an innovative mentorship ecosystem.
+**Live site**: https://friendly-learning-srmap.vercel.app
 
-**FL** stands for **Friendly Learning** - embodying our core values of accessible, supportive, and collaborative education.
+## Tech stack
 
-## Project info
+- [Vite](https://vitejs.dev/) + [React](https://react.dev/) + TypeScript
+- [shadcn-ui](https://ui.shadcn.com/) + [Tailwind CSS](https://tailwindcss.com/)
+- [Supabase](https://supabase.com/) (database, auth, storage, edge functions)
+- Deployed on [Vercel](https://vercel.com/), with server-side rendering and
+  route prerendering for SEO (see [`DEPLOYMENT_GUIDE.md`](DEPLOYMENT_GUIDE.md))
 
-**URL**: https://lovable.dev/projects/e093ef85-09e5-45f6-847c-78f020e13e61
+## Getting started
 
-## How can I edit this code?
-
-There are several ways of editing your application.
-
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/e093ef85-09e5-45f6-847c-78f020e13e61) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+Requires Node.js 24.x.
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+# Clone the repository
+git clone https://github.com/sahgyan9/friendly-learning-srmap.git
+cd friendly-learning-srmap
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
+# Install dependencies
 npm i
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Copy the env template and fill in your Supabase project details
+cp .env.example .env
+
+# Start the dev server
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+See [`.env.example`](.env.example) for the environment variables the app
+needs (Supabase URL/anon key, app URL, optional Sentry DSN).
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Scripts
 
-**Use GitHub Codespaces**
+| Command | Description |
+| --- | --- |
+| `npm run dev` | Start the Vite dev server |
+| `npm run build` | Production build: sitemap generation, client + SSR bundles, prerendering |
+| `npm run lint` | Run ESLint |
+| `npm run typecheck` | Type-check with `tsc` |
+| `npm run preview` | Preview the production build locally |
+| `npm run test:migrations` | Verify Supabase migrations |
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## Project structure
 
-## What technologies are used for this project?
+- `src/` — application code (pages, components, hooks, Supabase integration)
+- `supabase/` — database migrations, edge functions, and storage bucket config
+- `public/` — static assets, robots.txt, sitemaps
+- `prerender.js` / `generate-dynamic-sitemap.js` — build-time SEO tooling
 
-This project is built with .
+## Deployment and domain
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+The site deploys to Vercel on every push to `main`. The canonical domain is
+`friendly-learning-srmap.vercel.app`, defined once in
+[`site.config.js`](site.config.js) and consumed by the app, sitemaps, and
+prerender step.
 
-## How can I deploy this project?
+The project previously ran on Lovable, which briefly got indexed by Google
+under `*.lovable.app` ahead of the Vercel domain. Any visitor who lands on a
+`lovable.app`, `lovableproject.com`, or `lovable.dev` host is redirected to
+the equivalent page on the Vercel domain via a small script at the top of
+[`index.html`](index.html), so old search results and bookmarks still resolve
+to the live, maintained site. Full details in
+[`DEPLOYMENT_GUIDE.md`](DEPLOYMENT_GUIDE.md).
 
-Simply open [Lovable](https://lovable.dev/projects/e093ef85-09e5-45f6-847c-78f020e13e61) and click on Share -> Publish.
+## Editing
 
-## I want to use a custom domain - is that possible?
-
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
+Clone the repo, make changes locally, and open a pull request — there is no
+external editor or drag-and-drop builder involved. Direct edits are also
+possible from the GitHub file view or in a Codespace.
