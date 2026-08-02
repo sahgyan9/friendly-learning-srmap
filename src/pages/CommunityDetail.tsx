@@ -480,7 +480,10 @@ const CommunityDetail = () => {
               <TabsContent value="chat" className="space-y-4">
                 <CommunityGroupChat
                   communityId={community.id}
+                  communitySlug={community.slug}
+                  communityKind={community.kind}
                   communityName={community.name}
+                  communityCoverImage={community.cover_image}
                   ownerName={community.owner.name}
                   isMember={Boolean(community.viewer_is_member)}
                   isOwner={Boolean(community.viewer_is_owner)}

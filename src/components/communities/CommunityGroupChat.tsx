@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { CommunityAvatar } from "@/components/communities/CommunityAvatar";
 import { getInitials } from "@/utils/user-utils";
 import {
   Hash,
@@ -28,7 +29,10 @@ import {
 
 interface CommunityGroupChatProps {
   communityId: string;
+  communitySlug: string;
+  communityKind: string;
   communityName: string;
+  communityCoverImage?: string | null;
   ownerName: string;
   isMember: boolean;
   isOwner: boolean;
@@ -44,7 +48,10 @@ const QUICK_EMOJIS = ["👍", "❤️", "🔥", "🚀", "💡", "👏"];
 
 export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
   communityId,
+  communitySlug,
+  communityKind,
   communityName,
+  communityCoverImage,
   ownerName,
   isMember,
   isOwner,
@@ -148,9 +155,14 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
         <div className="border-r bg-muted/40 p-4 flex-col justify-between hidden md:flex">
           <div>
             <div className="flex items-center gap-2 px-2 pb-3 mb-3 border-b">
-              <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold text-sm">
-                {communityName.charAt(0).toUpperCase()}
-              </div>
+              <CommunityAvatar
+                slug={communitySlug}
+                kind={communityKind}
+                name={communityName}
+                coverImage={communityCoverImage}
+                className="h-8 w-8 rounded-lg"
+                emojiClassName="text-sm"
+              />
               <div className="min-w-0 flex-1">
                 <p className="font-bold text-sm truncate">{communityName}</p>
                 <p className="text-[11px] text-muted-foreground flex items-center gap-1">
