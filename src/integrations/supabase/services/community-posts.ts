@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { sanitizeInput } from "@/utils/input-sanitization";
 import { downscaleImage } from "@/lib/image/downscale";
+import { storagePathFromPublicUrl } from "@/lib/image/storage-path";
 
 /**
  * A post as rendered in the feed. Author fields are flattened by the
@@ -309,6 +310,20 @@ export const updateCommunityPost = async (postId: string, updateData: UpdatePost
     patch.tags = updateData.tags.map((tag) => sanitizeInput(tag, 50)).filter(Boolean).slice(0, 10);
   }
 
+  // Read the outgoing image before it's overwritten, so a swapped or removed
+  // image can be cleaned out of storage once the swap is confirmed to have
+  // taken. Best-effort: fetched even when the image isn't changing, but only
+  // acted on below when it actually is.
+  let previousImageUrl: string | null = null;
+  if (updateData.image_url !== undefined) {
+    const { data: existing } = await supabase
+      .from("community_posts")
+      .select("image_url")
+      .eq("id", postId)
+      .maybeSingle();
+    previousImageUrl = existing?.image_url ?? null;
+  }
+
   const { error } = await supabase.from("community_posts").update(patch).eq("id", postId);
 
   if (error) {
@@ -316,17 +331,44 @@ export const updateCommunityPost = async (postId: string, updateData: UpdatePost
     return { data: null, error };
   }
 
+  if (previousImageUrl && previousImageUrl !== updateData.image_url) {
+    await removePostImageIfOwned(previousImageUrl);
+  }
+
   return getCommunityPostById(postId);
 };
 
+/** Removes a post image from storage if the URL is actually one of ours. Never throws. */
+async function removePostImageIfOwned(imageUrl: string) {
+  const path = storagePathFromPublicUrl(POST_IMAGE_BUCKET, imageUrl);
+  if (!path) return;
+
+  const { error } = await supabase.storage.from(POST_IMAGE_BUCKET).remove([path]);
+  if (error) console.error("Error removing community post image:", error);
+}
+
 export const deleteCommunityPost = async (postId: string) => {
+  const { data: existing } = await supabase
+    .from("community_posts")
+    .select("image_url")
+    .eq("id", postId)
+    .maybeSingle();
+
   const { error } = await supabase.from("community_posts").delete().eq("id", postId);
 
   if (error) {
     console.error("Error deleting community post:", error);
+    return { error };
   }
 
-  return { error };
+  // Deliberately after the row delete succeeds: a failed storage removal
+  // leaves a harmless orphaned file, while doing it the other way round risks
+  // deleting the image out from under a post whose row delete then fails.
+  if (existing?.image_url) {
+    await removePostImageIfOwned(existing.image_url);
+  }
+
+  return { error: null };
 };
 
 export const togglePostLike = async (postId: string) => {
@@ -413,7 +455,7 @@ const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
  * 400 on every upload because no bucket has that id — the storage policy agrees,
  * it checks `bucket_id = 'community-posts'`.
  */
-const POST_IMAGE_BUCKET = "community-posts";
+export const POST_IMAGE_BUCKET = "community-posts";
 
 export const uploadCommunityPostImage = async (original: File) => {
   if (!ALLOWED_IMAGE_TYPES.includes(original.type)) {

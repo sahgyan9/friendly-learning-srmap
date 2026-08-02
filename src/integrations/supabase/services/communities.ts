@@ -1,6 +1,8 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { sanitizeInput } from "@/utils/input-sanitization";
+import { storagePathFromPublicUrl } from "@/lib/image/storage-path";
+import { POST_IMAGE_BUCKET } from "@/integrations/supabase/services/community-posts";
 
 type CommunityInsert = Database["public"]["Tables"]["communities"]["Insert"];
 
@@ -345,11 +347,46 @@ export const updateCommunity = async (
   if (patch.is_archived !== undefined) update.is_archived = patch.is_archived;
   if (patch.coverImage !== undefined) update.cover_image = patch.coverImage || null;
 
+  // Read the outgoing icon before it's overwritten, mirroring the pattern in
+  // updateCommunityPost — swapped or removed icons are cleaned out of storage
+  // once the swap is confirmed to have taken.
+  let previousCoverImage: string | null = null;
+  if (patch.coverImage !== undefined) {
+    const { data: existing } = await supabase
+      .from("communities")
+      .select("cover_image")
+      .eq("id", communityId)
+      .maybeSingle();
+    previousCoverImage = existing?.cover_image ?? null;
+  }
+
   const { error } = await supabase.from("communities").update(update).eq("id", communityId);
 
-  if (error) console.error("Error updating community:", error);
-  return { error };
+  if (error) {
+    console.error("Error updating community:", error);
+    return { error };
+  }
+
+  if (previousCoverImage && previousCoverImage !== update.cover_image) {
+    await removeCoverImageIfOwned(previousCoverImage);
+  }
+
+  return { error: null };
 };
+
+/**
+ * Removes a group icon from storage if the URL is actually one of ours —
+ * uploaded icons live in the same bucket as post images (see
+ * GroupIconPicker), while presets are data: URLs and pasted links are
+ * someone else's storage. Never throws.
+ */
+async function removeCoverImageIfOwned(imageUrl: string) {
+  const path = storagePathFromPublicUrl(POST_IMAGE_BUCKET, imageUrl);
+  if (!path) return;
+
+  const { error } = await supabase.storage.from(POST_IMAGE_BUCKET).remove([path]);
+  if (error) console.error("Error removing community cover image:", error);
+}
 
 /**
  * Owner-only, enforced by the "Owners can delete their community" RLS policy
@@ -357,12 +394,30 @@ export const updateCommunity = async (
  * `community_members.community_id` and the group chat tables all reference
  * `communities(id) on delete cascade`, so this takes the whole group —
  * members, posts and messages — with it. There is no undo.
+ *
+ * The row delete cascades in the database; it does not touch Storage, so the
+ * icon is fetched first and removed afterward. Deliberately after the row
+ * delete succeeds — see the matching comment on deleteCommunityPost.
  */
 export const deleteCommunity = async (communityId: string) => {
+  const { data: existing } = await supabase
+    .from("communities")
+    .select("cover_image")
+    .eq("id", communityId)
+    .maybeSingle();
+
   const { error } = await supabase.from("communities").delete().eq("id", communityId);
 
-  if (error) console.error("Error deleting community:", error);
-  return { error };
+  if (error) {
+    console.error("Error deleting community:", error);
+    return { error };
+  }
+
+  if (existing?.cover_image) {
+    await removeCoverImageIfOwned(existing.cover_image);
+  }
+
+  return { error: null };
 };
 
 export const joinCommunity = async (communityId: string) => {

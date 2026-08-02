@@ -2,6 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { v4 as uuidv4 } from "uuid";
 import { downscaleImage } from "@/lib/image/downscale";
+import { storagePathFromPublicUrl } from "@/lib/image/storage-path";
 
 export interface MarketplacePost {
   id: string;
@@ -110,7 +111,7 @@ export async function updateMarketplacePost(id: string, post: Partial<Marketplac
   try {
     // Sanitize inputs if provided
     const sanitizedUpdate: any = { updated_at: new Date().toISOString() };
-    
+
     if (post.title) sanitizedUpdate.title = sanitizeInput(post.title, 200);
     if (post.description) sanitizedUpdate.description = sanitizeInput(post.description, 2000);
     if (post.author) sanitizedUpdate.author = sanitizeInput(post.author, 100);
@@ -119,19 +120,33 @@ export async function updateMarketplacePost(id: string, post: Partial<Marketplac
     if (post.category) sanitizedUpdate.category = post.category;
     if (post.image_url) sanitizedUpdate.image_url = post.image_url;
     if (post.date) sanitizedUpdate.date = post.date;
-    
+
+    let previousImageUrl: string | undefined;
+    if (post.image_url) {
+      const { data: existing } = await supabase
+        .from("marketplace_posts")
+        .select("image_url")
+        .eq("id", id)
+        .maybeSingle();
+      previousImageUrl = existing?.image_url ?? undefined;
+    }
+
     const { data, error } = await supabase
       .from("marketplace_posts")
       .update(sanitizedUpdate)
       .eq("id", id)
       .select()
       .single();
-    
+
     if (error) {
       console.error("Error in updateMarketplacePost:", error);
       throw error;
     }
-    
+
+    if (previousImageUrl && previousImageUrl !== post.image_url) {
+      await removeMarketplaceImageIfOwned(previousImageUrl);
+    }
+
     return data as MarketplacePost;
   } catch (error) {
     console.error("Exception in updateMarketplacePost:", error);
@@ -141,20 +156,42 @@ export async function updateMarketplacePost(id: string, post: Partial<Marketplac
 
 export async function deleteMarketplacePost(id: string) {
   try {
+    const { data: existing } = await supabase
+      .from("marketplace_posts")
+      .select("image_url")
+      .eq("id", id)
+      .maybeSingle();
+
     const { error } = await supabase
       .from("marketplace_posts")
       .delete()
       .eq("id", id);
-    
+
     if (error) {
       console.error("Error in deleteMarketplacePost:", error);
       throw error;
     }
-    
+
+    // Deliberately after the row delete succeeds — see the matching comment
+    // on deleteCommunityPost/deleteTeamMember.
+    if (existing?.image_url) {
+      await removeMarketplaceImageIfOwned(existing.image_url);
+    }
+
     return true;
   } catch (error) {
     console.error("Exception in deleteMarketplacePost:", error);
     throw error;
+  }
+}
+
+async function removeMarketplaceImageIfOwned(imageUrl: string) {
+  const path = storagePathFromPublicUrl("marketplace", imageUrl);
+  if (!path) return;
+  try {
+    await deleteMarketplaceImage(path);
+  } catch (error) {
+    console.error("Error removing marketplace image:", error);
   }
 }
 

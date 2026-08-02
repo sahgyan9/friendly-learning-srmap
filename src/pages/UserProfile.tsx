@@ -19,6 +19,7 @@ import ReviewsList from "@/components/rating/ReviewsList";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AvatarCropDialog from "@/components/profile/AvatarCropDialog";
 import { downscaleImage } from "@/lib/image/downscale";
+import { storagePathFromPublicUrl } from "@/lib/image/storage-path";
 
 interface UserProfile {
   name: string;
@@ -233,6 +234,7 @@ const UserProfile = () => {
 
   const handleCropped = async (cropped: File) => {
     setIsUploadingImage(true);
+    const previousImageUrl = profile.profile_image;
 
     try {
       // Already a 512px square from the cropper, so this is nearly always a
@@ -270,6 +272,17 @@ const UserProfile = () => {
       setProfile({ ...profile, profile_image: imageUrl });
       setPendingImage(null);
       toast.success("Profile picture updated successfully!");
+
+      // After the DB row points at the new image, not before — deleting first
+      // and having the update fail would strand the old avatar's URL pointing
+      // at nothing.
+      if (previousImageUrl) {
+        const oldPath = storagePathFromPublicUrl("profiles", previousImageUrl);
+        if (oldPath) {
+          const { error: removeError } = await supabase.storage.from("profiles").remove([oldPath]);
+          if (removeError) console.error("Error removing old profile image:", removeError);
+        }
+      }
     } catch (error: any) {
       console.error("Error uploading image:", error);
       toast.error(error.message || "Failed to upload image");
