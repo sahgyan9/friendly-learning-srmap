@@ -235,7 +235,6 @@ export const CreatePostModal = ({
             <Label htmlFor="title">Title</Label>
             <Input
               id="title"
-              className="bg-black/5 dark:bg-black/40"
               placeholder={placeholders.title}
               value={title}
               onChange={(event) => setTitle(event.target.value)}
@@ -248,7 +247,6 @@ export const CreatePostModal = ({
             <Label htmlFor="content">Details</Label>
             <Textarea
               id="content"
-              className="bg-black/5 dark:bg-black/40"
               placeholder={placeholders.content}
               rows={6}
               value={content}
@@ -264,7 +262,6 @@ export const CreatePostModal = ({
             <div className="flex gap-2">
               <Input
                 id="tags"
-                className="bg-black/5 dark:bg-black/40"
                 placeholder="react, machine-learning, cse-2nd-year"
                 value={tagInput}
                 onChange={(event) => setTagInput(event.target.value)}
@@ -310,7 +307,6 @@ export const CreatePostModal = ({
             <Label htmlFor="image">Image (optional)</Label>
             <Input
               id="image"
-              className="bg-black/5 dark:bg-black/40"
               type="file"
               accept="image/*"
               onChange={handleImageChange}

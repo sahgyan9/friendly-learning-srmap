@@ -161,7 +161,6 @@ export const CreateCommunityModal = ({ open, onOpenChange }: CreateCommunityModa
             <Label htmlFor="community-name">Name</Label>
             <Input
               id="community-name"
-              className="bg-black/5 dark:bg-black/40"
               value={name}
               onChange={(event) => setName(event.target.value)}
               placeholder={placeholders.name}
@@ -180,7 +179,6 @@ export const CreateCommunityModal = ({ open, onOpenChange }: CreateCommunityModa
             <Label htmlFor="community-description">What is it for?</Label>
             <Textarea
               id="community-description"
-              className="bg-black/5 dark:bg-black/40"
               value={description}
               onChange={(event) => setDescription(event.target.value)}
               placeholder={placeholders.description}
