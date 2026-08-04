@@ -27,12 +27,24 @@ export function isMentorListed(
 const listedOnly = <T extends { or: (filter: string) => T }>(query: T): T =>
   query.or(`is_available.eq.true,available_from.lte.${new Date().toISOString()}`);
 
+/**
+ * Every mentor column except `mobile` and `cgpa`.
+ *
+ * Those two are personal data and are no longer readable by signed-out
+ * visitors at the database level, so asking for `*` here would make the whole
+ * directory fail for anyone who is not logged in.
+ *
+ * Must stay one string literal so supabase-js can infer the row type.
+ */
+const MENTOR_PUBLIC_COLUMNS =
+  'id, name, department, skills, rating, profile_image, linkedin_url, bio, review_count, created_at, year_of_studies, university, hobbies, graduation_year, is_alumni, company, job_title, is_available, available_from, availability_note' as const;
+
 // Helper function to get typed data from Supabase tables
 export async function getMentors() {
   const { data, error } = await listedOnly(
     supabase
       .from('mentors')
-      .select('*')
+      .select(MENTOR_PUBLIC_COLUMNS)
       .neq('department', 'General')
       .not('department', 'is', null),
   ).order('rating', { ascending: false });
