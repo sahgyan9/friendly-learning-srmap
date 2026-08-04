@@ -9,12 +9,22 @@
  * If you change the storage key or the default here, change the inline script
  * in index.html to match.
  */
+import { supabase } from "@/integrations/supabase/client";
+
 export type Theme = "dark" | "light";
 
 export const THEME_STORAGE_KEY = "theme";
 
 /** Dark is the default. Only an explicit stored "light" opts out. */
 export const DEFAULT_THEME: Theme = "dark";
+
+// Set by AuthContext on sign-in/sign-out. Module-level rather than a param
+// threaded through every call site, matching setUserContext in lib/sentry.ts.
+let currentUserId: string | null = null;
+
+export function setThemeUserId(userId: string | null): void {
+  currentUserId = userId;
+}
 
 export function getTheme(): Theme {
   if (typeof document === "undefined") return DEFAULT_THEME;
@@ -32,7 +42,12 @@ export function applyTheme(theme: Theme): void {
   root.style.colorScheme = theme;
 }
 
-export function setTheme(theme: Theme): void {
+/**
+ * Applies a theme fetched from the user's account and mirrors it to
+ * localStorage, without writing back to the database. Used when a saved
+ * preference is pulled down on sign-in, so it doesn't just echo itself back.
+ */
+export function syncLocalTheme(theme: Theme): void {
   applyTheme(theme);
 
   try {
@@ -40,6 +55,14 @@ export function setTheme(theme: Theme): void {
   } catch {
     // Storage can be unavailable (private browsing, blocked cookies). The
     // theme still applies to this page; it just will not be remembered.
+  }
+}
+
+export function setTheme(theme: Theme): void {
+  syncLocalTheme(theme);
+
+  if (currentUserId) {
+    void supabase.from("users").update({ theme }).eq("id", currentUserId);
   }
 }
 

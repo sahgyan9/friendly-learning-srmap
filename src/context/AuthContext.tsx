@@ -3,6 +3,7 @@ import { Session, User } from "@supabase/supabase-js";
 
 import { supabase } from "@/integrations/supabase/client";
 import { setUserContext } from "@/lib/sentry";
+import { setThemeUserId, syncLocalTheme, type Theme } from "@/lib/theme";
 
 interface UserProfile {
   id: string;
@@ -19,6 +20,7 @@ interface UserProfile {
   bio?: string;
   phone?: string;
   is_available?: boolean;
+  theme?: string | null;
 }
 
 interface AuthContextType {
@@ -51,6 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setProfile(null);
     setIsMentor(false);
     setUserContext(null);
+    setThemeUserId(null);
   }, []);
 
   const fetchUserProfile = useCallback(
@@ -88,6 +91,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loadedUserId.current = userId;
         setProfile(profileData);
         setUserContext({ id: profileData.id, email: profileData.email, name: profileData.name });
+
+        // Enables future toggles (DarkModeToggle, SiteSearch) to persist to
+        // this row. Pull the saved choice down to localStorage now so it
+        // survives to the next load's pre-paint script; a null theme means
+        // the account has never set one, so the local/default value stands.
+        setThemeUserId(userId);
+        if (profileData.theme === "dark" || profileData.theme === "light") {
+          syncLocalTheme(profileData.theme as Theme);
+        }
 
         // "General" is the placeholder department auto-created rows get, so it
         // does not count as a real mentor profile.

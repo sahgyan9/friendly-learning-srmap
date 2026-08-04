@@ -1764,6 +1764,7 @@ export type Database = {
           profile_image: string | null
           role: string
           skills: string[] | null
+          theme: string | null
           unsubscribe_token: string
           verification_status: string | null
         }
@@ -1788,6 +1789,7 @@ export type Database = {
           profile_image?: string | null
           role: string
           skills?: string[] | null
+          theme?: string | null
           unsubscribe_token?: string
           verification_status?: string | null
         }
@@ -1812,6 +1814,7 @@ export type Database = {
           profile_image?: string | null
           role?: string
           skills?: string[] | null
+          theme?: string | null
           unsubscribe_token?: string
           verification_status?: string | null
         }
