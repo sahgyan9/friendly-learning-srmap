@@ -1,8 +1,10 @@
 import {
+  Calendar,
   GraduationCap,
   HelpCircle,
   Rocket,
   Sparkles,
+  Star,
   UsersRound,
   Users,
   type LucideIcon,
@@ -18,7 +20,7 @@ export interface WelcomeTourStep {
 
 /**
  * The first customer segment is freshers — university is entirely new to them,
- * so the tour is built around the five things the platform lets them do, not a
+ * so the tour is built around the things the platform lets them do, not a
  * feature-by-feature UI walkthrough.
  */
 export const WELCOME_TOUR_STEPS: WelcomeTourStep[] = [
@@ -43,6 +45,13 @@ export const WELCOME_TOUR_STEPS: WelcomeTourStep[] = [
     cta: { label: "Find study partners", url: "/find-study-partners" },
   },
   {
+    icon: Star,
+    title: "Rate your faculty",
+    description:
+      "Picking courses? See honest, anonymous ratings on teaching, grading, and helpfulness from students who've taken them.",
+    cta: { label: "Rate faculty", url: "/faculty" },
+  },
+  {
     icon: Rocket,
     title: "Build something together",
     description: "Find teammates for hackathons, projects, and competitions.",
@@ -54,6 +63,13 @@ export const WELCOME_TOUR_STEPS: WelcomeTourStep[] = [
     description:
       "Find your people — department groups, interest communities, or start your own.",
     cta: { label: "Browse groups", url: "/communities" },
+  },
+  {
+    icon: Calendar,
+    title: "See what's happening",
+    description:
+      "Browse fests, workshops, and events happening across university so you never miss out.",
+    cta: { label: "View events", url: "/marketplace" },
   },
   {
     icon: GraduationCap,
