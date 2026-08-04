@@ -304,6 +304,130 @@ function renderWelcomeMentorEmail(opts: {
   return { subject, html, text };
 }
 
+/**
+ * The one email a brand-new account gets, sent once, right after signup.
+ *
+ * Mirrors renderWelcomeMentorEmail in tone and shape. Everyone lands here as a
+ * student regardless of what they end up doing on the site, so this stays
+ * generic -- find a mentor, ask a question, or start a group -- rather than
+ * assuming a track. Someone who later becomes a mentor gets that welcome too,
+ * from the separate trigger; the two are not mutually exclusive.
+ */
+function renderWelcomeStudentEmail(opts: {
+  recipientName: string;
+  unsubscribeUrl: string;
+}): { subject: string; html: string; text: string } {
+  const { recipientName, unsubscribeUrl } = opts;
+
+  // Same shape problem as the mentor email: SSO names can carry a trailing
+  // "| AP23111260062", and a greeting should never include it.
+  const firstName = recipientName.split("|")[0].trim().split(/\s+/)[0] || "there";
+  const safeName = escapeHtml(firstName);
+
+  const subject = "Welcome to Friendly Learning 🎉";
+
+  const steps: Array<[string, string]> = [
+    [
+      "Find someone one step ahead",
+      "Every mentor here was a student a year or two ago, not a decade. Browse by department and message directly — no introductions needed.",
+    ],
+    [
+      "Ask the question you already have",
+      "Which elective, how to start a project, whether an offer is worth taking. Small questions are exactly what this is for.",
+    ],
+    [
+      "Join a group",
+      "Study circles, hackathon teams, placement-prep rooms. Some are open to anyone, some are invite-only — join what fits.",
+    ],
+  ];
+
+  const stepHtml = steps
+    .map(
+      ([title, body], i) => `
+      <tr>
+        <td style="padding:0 0 18px;vertical-align:top;">
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+            <td style="vertical-align:top;padding-right:12px;">
+              <div style="width:26px;height:26px;border-radius:13px;background:#2563eb;color:#ffffff;font-size:13px;font-weight:700;text-align:center;line-height:26px;">${i + 1}</div>
+            </td>
+            <td style="vertical-align:top;">
+              <p style="margin:0 0 4px;font-size:15px;font-weight:600;color:#111827;">${title}</p>
+              <p style="margin:0;font-size:14px;color:#4b5563;line-height:1.55;">${body}</p>
+            </td>
+          </tr></table>
+        </td>
+      </tr>`,
+    )
+    .join("");
+
+  const html = [
+    "<!DOCTYPE html>",
+    '<html lang="en"><head><meta charset="UTF-8">',
+    '<meta name="viewport" content="width=device-width, initial-scale=1.0">',
+    `<title>${escapeHtml(subject)}</title></head>`,
+    '<body style="margin:0;padding:20px;font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;line-height:1.6;color:#1f2937;background:#f9fafb;">',
+    '<div style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:10px;overflow:hidden;border:1px solid #e5e7eb;">',
+
+    '<div style="background:#2563eb;padding:28px 24px;text-align:center;">',
+    '<h1 style="color:#ffffff;margin:0 0 4px;font-size:21px;">You\'re in 🎉</h1>',
+    '<p style="color:#dbeafe;margin:0;font-size:14px;">Welcome to Friendly Learning</p>',
+    "</div>",
+
+    '<div style="padding:28px;">',
+    `<p style="margin:0 0 16px;font-size:16px;">Hi ${safeName},</p>`,
+
+    '<p style="margin:0 0 24px;font-size:15px;color:#374151;">',
+    "Friendly Learning exists for one reason: the person best placed to explain something is usually the one who learned it a year ago, not ten. That's here, waiting.",
+    "</p>",
+
+    '<div style="height:1px;background:#e5e7eb;margin:0 0 22px;"></div>',
+
+    '<p style="margin:0 0 16px;font-size:15px;font-weight:600;color:#111827;">Three ways to start</p>',
+    '<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">',
+    stepHtml,
+    "</table>",
+
+    '<p style="text-align:center;margin:6px 0 22px;">',
+    `<a href="${SITE_URL}/mentors" style="background:#2563eb;color:#ffffff;padding:13px 30px;text-decoration:none;border-radius:6px;font-weight:600;display:inline-block;font-size:15px;">Browse mentors</a>`,
+    "</p>",
+
+    '<p style="margin:0 0 6px;font-size:13px;color:#6b7280;text-align:center;line-height:1.6;">',
+    `Ask a <a href="${SITE_URL}/community-posts" style="color:#2563eb;">question</a> &middot; `,
+    `See <a href="${SITE_URL}/communities" style="color:#2563eb;">groups</a>`,
+    "</p>",
+
+    "</div>",
+
+    '<div style="padding:16px 28px;border-top:1px solid #e5e7eb;background:#f9fafb;">',
+    '<p style="margin:0;font-size:12px;color:#6b7280;text-align:center;">',
+    "You are getting this because you just created an account.<br>",
+    `<a href="${unsubscribeUrl}" style="color:#6b7280;">Unsubscribe from these emails</a>`,
+    "</p></div></div></body></html>",
+  ].join("");
+
+  const text = [
+    `Hi ${firstName},`,
+    "",
+    "Friendly Learning exists for one reason: the person best placed to explain something is usually the one who learned it a year ago, not ten. That's here, waiting.",
+    "",
+    "THREE WAYS TO START",
+    "",
+    "1. Find someone one step ahead. Browse mentors by department and message directly.",
+    "",
+    "2. Ask the question you already have. Which elective, how to start a project, whether an offer is worth taking.",
+    "",
+    "3. Join a group. Study circles, hackathon teams, placement-prep rooms.",
+    "",
+    `Browse mentors: ${SITE_URL}/mentors`,
+    `Ask a question: ${SITE_URL}/community-posts`,
+    `See groups: ${SITE_URL}/communities`,
+    "",
+    `Unsubscribe: ${unsubscribeUrl}`,
+  ].join("\n");
+
+  return { subject, html, text };
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -388,6 +512,11 @@ Deno.serve(async (req: Request) => {
 
       if (kind === "welcome_mentor") {
         rendered = renderWelcomeMentorEmail({
+          recipientName: recipient.name ?? "there",
+          unsubscribeUrl,
+        });
+      } else if (kind === "welcome_student") {
+        rendered = renderWelcomeStudentEmail({
           recipientName: recipient.name ?? "there",
           unsubscribeUrl,
         });
