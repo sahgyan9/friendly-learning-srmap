@@ -1,13 +1,17 @@
 
 import { ReactNode } from "react";
+import { Link } from "react-router-dom";
+import { UsersRound, Calendar, Star, BadgeCheck } from "lucide-react";
 
 interface FeatureCardProps {
   icon: ReactNode;
   title: string;
   description: string;
+  href: string;
+  className?: string;
 }
 
-const FeatureCard = ({ icon, title, description }: FeatureCardProps) => {
+const FeatureCard = ({ icon, title, description, href, className }: FeatureCardProps) => {
   // Parse description for keywords that should be bolded
   const boldedDescription = () => {
     if (title === "Direct Messaging") {
@@ -31,17 +35,48 @@ const FeatureCard = ({ icon, title, description }: FeatureCardProps) => {
         </>
       );
     }
+    else if (title === "Study Groups") {
+      return (
+        <>
+          Join <strong className="font-bold">subject and interest groups</strong> to learn and collaborate with peers across SRM AP.
+        </>
+      );
+    }
+    else if (title === "Campus Events") {
+      return (
+        <>
+          Stay on top of <strong className="font-bold">workshops, hackathons, and meetups</strong> happening around campus.
+        </>
+      );
+    }
+    else if (title === "Faculty Ratings") {
+      return (
+        <>
+          Browse faculty profiles and share <strong className="font-bold">honest ratings and reviews</strong> before you enroll.
+        </>
+      );
+    }
+    else if (title === "Verified Certificates") {
+      return (
+        <>
+          Earn a <strong className="font-bold">shareable, verifiable certificate</strong> once you've completed real mentorship exchanges.
+        </>
+      );
+    }
     return description;
   };
 
   return (
-    <div className="p-6 rounded-xl bg-card shadow-sm border border-border text-center">
+    <Link
+      to={href}
+      className={`block p-6 rounded-xl bg-card shadow-sm border border-border text-center transition-colors hover:border-primary/40 hover:shadow-md ${className ?? ""}`}
+    >
       <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
         {icon}
       </div>
       <h3 className="text-lg font-semibold mb-2">{title}</h3>
       <p className="text-muted-foreground">{boldedDescription()}</p>
-    </div>
+    </Link>
   );
 };
 
@@ -56,7 +91,7 @@ const WhyFriendlyLearning = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
           <FeatureCard
             icon={
               <svg className="w-6 h-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -65,6 +100,7 @@ const WhyFriendlyLearning = () => {
             }
             title="Direct Messaging"
             description="Connect with mentors through our real-time messaging system for quick help."
+            href="/messages"
           />
 
           <FeatureCard
@@ -75,6 +111,7 @@ const WhyFriendlyLearning = () => {
             }
             title="Verified Mentors"
             description="All our mentors are verified students from your university with proven expertise."
+            href="/mentors"
           />
 
           <FeatureCard
@@ -85,6 +122,36 @@ const WhyFriendlyLearning = () => {
             }
             title="Smart Matching"
             description="Our intelligent search helps you find mentors with the exact skills you need."
+            href="/mentors"
+          />
+
+          <FeatureCard
+            icon={<UsersRound className="w-6 h-6 text-primary" strokeWidth={2} />}
+            title="Study Groups"
+            description="Join subject and interest groups to learn and collaborate with peers across SRM AP."
+            href="/communities"
+          />
+
+          <FeatureCard
+            icon={<Calendar className="w-6 h-6 text-primary" strokeWidth={2} />}
+            title="Campus Events"
+            description="Stay on top of workshops, hackathons, and meetups happening around campus."
+            href="/marketplace"
+          />
+
+          <FeatureCard
+            icon={<Star className="w-6 h-6 text-primary" strokeWidth={2} />}
+            title="Faculty Ratings"
+            description="Browse faculty profiles and share honest ratings and reviews before you enroll."
+            href="/faculty"
+          />
+
+          <FeatureCard
+            icon={<BadgeCheck className="w-6 h-6 text-primary" strokeWidth={2} />}
+            title="Verified Certificates"
+            description="Earn a shareable, verifiable certificate once you've completed real mentorship exchanges."
+            href="/certificate"
+            className="sm:col-span-2 lg:col-span-1 lg:col-start-2"
           />
         </div>
       </div>
