@@ -23,10 +23,26 @@ export type MarketplacePostInput = Omit<MarketplacePost, "id" | "created_at" | "
 
 export type CategoryType = 'all' | 'news' | 'events' | 'ads' | 'courses';
 
+/**
+ * Every marketplace column except `contact_info`.
+ *
+ * Contact details are personal data and are no longer readable by signed-out
+ * visitors at the database level, so a signed-out request must not ask for
+ * them — a listing still shows everything else.
+ */
+const PUBLIC_COLUMNS =
+  "id, title, description, category, date, author, image_url, external_link, user_id, created_at, updated_at";
+const FULL_COLUMNS = `${PUBLIC_COLUMNS}, contact_info`;
+
+async function readableColumns() {
+  const { data: { session } } = await supabase.auth.getSession();
+  return session ? FULL_COLUMNS : PUBLIC_COLUMNS;
+}
+
 export async function fetchMarketplacePosts(category?: CategoryType) {
   try {
-    let query = supabase.from("marketplace_posts").select("*");
-    
+    let query = supabase.from("marketplace_posts").select(await readableColumns());
+
     if (category && category !== 'all') {
       query = query.eq('category', category);
     }
@@ -40,7 +56,7 @@ export async function fetchMarketplacePosts(category?: CategoryType) {
       throw error;
     }
     
-    return data as MarketplacePost[];
+    return data as unknown as MarketplacePost[];
   } catch (error) {
     console.error("Exception in fetchMarketplacePosts:", error);
     throw error;
@@ -51,7 +67,7 @@ export async function fetchMarketplacePost(id: string) {
   try {
     const { data, error } = await supabase
       .from("marketplace_posts")
-      .select("*")
+      .select(await readableColumns())
       .eq("id", id)
       .maybeSingle();
     
@@ -60,7 +76,7 @@ export async function fetchMarketplacePost(id: string) {
       throw error;
     }
     
-    return data as MarketplacePost | null;
+    return data as unknown as MarketplacePost | null;
   } catch (error) {
     console.error("Exception in fetchMarketplacePost:", error);
     throw error;
