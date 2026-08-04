@@ -25,10 +25,10 @@ export async function getPlatformStats(): Promise<PlatformStats> {
     // only one mentor was browsable.
     supabase
       .from("mentors")
-      .select("*", { count: "exact", head: true })
+      .select("id", { count: "exact", head: true })
       .neq("department", "General")
       .not("department", "is", null),
-    supabase.from("faculty").select("*", { count: "exact", head: true }).eq("is_active", true),
+    supabase.from("faculty").select("id", { count: "exact", head: true }).eq("is_active", true),
     supabase.from("community_posts").select("*", { count: "exact", head: true }),
     supabase.rpc("get_faculty_directory_stats"),
   ]);

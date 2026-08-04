@@ -1,0 +1,1 @@
+GRANT SELECT (hobbies) ON public.mentors TO anon;
