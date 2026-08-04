@@ -1,5 +1,5 @@
 
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Conversation, Message } from "@/types/chat";
 import ConversationList from "./ConversationList";
 import MessageList from "./MessageList";
@@ -8,6 +8,55 @@ import MessageInput from "./MessageInput";
 import SearchInput from "./SearchInput";
 import { MessagesSquare } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+
+/**
+ * Measures actual space left below the element, in px, instead of guessing it.
+ *
+ * This used to be a hard-coded `calc(100dvh-9rem)` that assumed the site
+ * header's height. SiteHeader mounts once above <Routes> and stays alive
+ * across navigations, so its collapsible second row can already be collapsed
+ * (or the "Connecting with mentor…" line can be showing) by the time this
+ * page appears — the guess and the real header height then disagree. With
+ * `overflow-hidden` on this panel and `overscroll-contain` on the scrollers
+ * inside it, that mismatch is what read as scrolling getting "stuck": the
+ * panel was sized for a header that wasn't the one actually there, and nested
+ * scroll had nowhere to hand the gesture off to.
+ */
+function useAvailableHeight<T extends HTMLElement>() {
+  const ref = useRef<T>(null);
+  const [height, setHeight] = useState<number | null>(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    const recalc = () => {
+      const top = el.getBoundingClientRect().top;
+      const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
+      setHeight(Math.max(viewportHeight - top, 0));
+    };
+
+    recalc();
+
+    // Catches header height changes (nav row collapsing, the mentor-connect
+    // line appearing) since they resize the document body around this panel.
+    const resizeObserver = new ResizeObserver(recalc);
+    resizeObserver.observe(document.body);
+
+    window.addEventListener("resize", recalc);
+    window.visualViewport?.addEventListener("resize", recalc);
+    window.visualViewport?.addEventListener("scroll", recalc);
+
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener("resize", recalc);
+      window.visualViewport?.removeEventListener("resize", recalc);
+      window.visualViewport?.removeEventListener("scroll", recalc);
+    };
+  }, []);
+
+  return { ref, height };
+}
 
 interface ChatContainerProps {
   conversations: Conversation[];
@@ -49,6 +98,7 @@ const ChatContainer = ({
   // rotating a phone or dragging a window edge left the wrong pane showing.
   const isMobile = useIsMobile();
   const [mobileView, setMobileView] = useState<"list" | "chat">("list");
+  const { ref: heightRef, height: availableHeight } = useAvailableHeight<HTMLDivElement>();
 
   const currentConversation = conversations.find((c) => c.id === activeChat);
 
@@ -97,11 +147,15 @@ const ChatContainer = ({
   );
 
   return (
-    // The lg offset is 3rem larger because that is where the header grows a
-    // second nav row. Without it the chat overflows by exactly that much and
-    // the page picks up a scrollbar, which then collapses the row and leaves
-    // the layout oscillating.
-    <div className="flex h-[calc(100dvh-9rem)] min-h-[28rem] overflow-hidden rounded-xl border bg-card shadow-sm lg:h-[calc(100dvh-12rem)]">
+    // Height is measured at runtime (see useAvailableHeight) rather than
+    // assumed, so it stays correct whether the site header's second row is
+    // expanded or collapsed. The calc is only a pre-measurement fallback for
+    // the first paint.
+    <div
+      ref={heightRef}
+      className="flex min-h-[28rem] overflow-hidden rounded-xl border bg-card shadow-sm"
+      style={{ height: availableHeight != null ? `${availableHeight}px` : "calc(100dvh - 9rem)" }}
+    >
       {showList && (
         <aside
           className={`flex flex-col border-r bg-background ${

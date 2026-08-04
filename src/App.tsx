@@ -8,6 +8,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/context/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import RouteRobots from "@/components/RouteRobots";
+import ScrollToTop from "@/components/ScrollToTop";
 import SiteHeader from "@/components/navigation/SiteHeader";
 
 // The landing page is the most common entry point, so it stays in the main
@@ -127,6 +128,7 @@ function App() {
           <div className="min-h-screen">
             <Toaster />
             <RouteRobots />
+            <ScrollToTop />
 
             {/* One header for the whole app. Pages used to render their own
                 <Navbar /> underneath a separately-mounted floating nav, which
