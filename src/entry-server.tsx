@@ -1,5 +1,6 @@
 
-import ReactDOMServer from 'react-dom/server';
+import { renderToPipeableStream } from 'react-dom/server';
+import { Writable } from 'node:stream';
 // React Router 7 dropped the `react-router-dom/server` entry point; StaticRouter
 // is exported from `react-router` itself now. Everything else the app uses is
 // unchanged, because `react-router-dom` still re-exports the DOM bindings.
@@ -73,11 +74,70 @@ export function render(url: string) {
     statusCode = 403;
   }
 
-  const html = ReactDOMServer.renderToString(
-    <StaticRouter location={url}>
-      <App />
-    </StaticRouter>
-  );
+  return renderFully(url, statusCode);
+}
 
-  return { html, statusCode };
+/** How long a single page may take to settle before the build gives up on it. */
+const RENDER_TIMEOUT_MS = 20_000;
+
+/**
+ * Renders a route to complete HTML, lazy routes included.
+ *
+ * `renderToString` cannot wait for a promise. Every page except the landing one
+ * is behind `lazy()`, so it emitted the Suspense fallback and moved on — which
+ * is how 12 of the 13 pre-rendered files came to ship an empty <main> while
+ * still looking like a working build. It also produced markup the client could
+ * not reconcile, so hydration threw React error #419 on every pre-rendered
+ * route and re-rendered the page from scratch.
+ *
+ * `renderToPipeableStream` does wait. `onAllReady` fires once every boundary has
+ * resolved, so piping from there yields the finished page in one piece, with
+ * none of the fallback-swapping inline scripts that streaming to a live response
+ * would produce.
+ */
+function renderFully(url: string, statusCode: number) {
+  return new Promise<{ html: string; statusCode: number }>((resolve, reject) => {
+    const chunks: Buffer[] = [];
+    let failure: unknown = null;
+
+    const sink = new Writable({
+      write(chunk, _encoding, callback) {
+        chunks.push(Buffer.from(chunk));
+        callback();
+      },
+    });
+
+    sink.on('finish', () => {
+      // A page that rendered empty is a failure worth stopping the build for.
+      // Shipping it silently is the bug this function exists to fix.
+      if (failure) reject(failure);
+      else resolve({ html: Buffer.concat(chunks).toString('utf8'), statusCode });
+    });
+
+    const { pipe, abort } = renderToPipeableStream(
+      <StaticRouter location={url}>
+        <App />
+      </StaticRouter>,
+      {
+        onAllReady() {
+          clearTimeout(timer);
+          pipe(sink);
+        },
+        // Fires for errors inside a boundary as well as fatal ones. Either way
+        // the output would be incomplete, so record it and let `finish` reject.
+        onError(error) {
+          failure = error;
+        },
+        onShellError(error) {
+          clearTimeout(timer);
+          reject(error);
+        },
+      },
+    );
+
+    const timer = setTimeout(() => {
+      abort();
+      reject(new Error(`Timed out after ${RENDER_TIMEOUT_MS}ms pre-rendering ${url}`));
+    }, RENDER_TIMEOUT_MS);
+  });
 }

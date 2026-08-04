@@ -83,12 +83,50 @@ const routesToPrerender = [
   '/find-study-partners',
   '/hackathon-partners',
   '/blog',
-  '/become-mentor'
+  // '/become-mentor' is deliberately absent. It sits behind ProtectedRoute, so a
+  // build — which has no session — can only ever render the "Loading..." guard.
+  // It shipped exactly that for as long as it was listed here. It now falls
+  // through to /index.html like the other authenticated routes, and main.tsx
+  // discards that markup rather than hydrating against it.
 ]
 
   ; (async () => {
     for (const url of routesToPrerender) {
-      const { html: appHtml, statusCode } = render(url);
+      const { html: appHtml, statusCode } = await render(url)
+
+      // The point of pre-rendering is the body copy, and for a long time none of
+      // it was here: every lazy route emitted its Suspense fallback, so these
+      // files shipped a nav bar wrapped around an empty <main> and the build
+      // still reported success for all 13.
+      //
+      // Neither signal works alone. Length alone misjudges it: /signin and
+      // /contact are legitimately under 200 characters because a form is mostly
+      // inputs. A spinner alone misjudges it too: /marketplace renders its real
+      // heading and tabs and then one spinner where the event list will land,
+      // which is a working page.
+      //
+      // A fallback is both at once — the whole page replaced by a Loader2 and
+      // almost no text. That is what ProtectedRoute's guard and the Suspense
+      // fallback each produce, and no real page does.
+      const main = appHtml.match(/<main[^>]*>([\s\S]*?)<\/main>/)?.[1] ?? ''
+      const mainText = main.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+
+      if (/animate-spin/.test(main) && mainText.length < 60) {
+        throw new Error(
+          `${url} pre-rendered to a loading spinner, not the page. Either it is behind ` +
+            `ProtectedRoute — auth never resolves during a build, so it can only ever ` +
+            `render the guard — or a lazy import failed. Remove it from ` +
+            `routesToPrerender along with its rewrite in vercel.json, or make it public.`,
+        )
+      }
+
+      if (mainText.length < 50) {
+        throw new Error(
+          `${url} pre-rendered with only ${mainText.length} characters inside <main> ` +
+            `("${mainText.slice(0, 60)}"). Serving that would give crawlers an empty document.`,
+        )
+      }
+
       const html = applyMeta(
         template
           .replace(`<!--app-html-->`, appHtml)

@@ -33,6 +33,33 @@ import Index from "./pages/Index";
  */
 const RETRY_WINDOW_MS = 30_000;
 
+const isBrowser = typeof window !== "undefined" && typeof sessionStorage !== "undefined";
+
+/**
+ * The retry stamp, which simply does nothing off the browser.
+ *
+ * Recovering from a stale chunk is a browser concern — a pre-render imports
+ * straight from disk and has no hashed URL to go stale — but reading the stamp
+ * unguarded did not merely skip that, it broke server rendering outright.
+ * `sessionStorage.removeItem` sat on the *success* path, so in Node it threw
+ * ReferenceError after the import had already worked; the catch below then threw
+ * a second time reading the same missing global, and the lazy component
+ * rejected. Every lazy route rendered as its Suspense fallback, which is why 12
+ * of the 13 pre-rendered pages shipped an empty <main> and one shipped the word
+ * "Loading...".
+ */
+const retryStamp = {
+  read(key: string) {
+    return isBrowser ? Number(sessionStorage.getItem(key) ?? 0) : 0;
+  },
+  write(key: string) {
+    if (isBrowser) sessionStorage.setItem(key, String(Date.now()));
+  },
+  clear(key: string) {
+    if (isBrowser) sessionStorage.removeItem(key);
+  },
+};
+
 function lazyWithRetry<T extends ComponentType<any>>(
   name: string,
   factory: () => Promise<{ default: T }>,
@@ -42,13 +69,18 @@ function lazyWithRetry<T extends ComponentType<any>>(
   return lazy(async () => {
     try {
       const component = await factory();
-      sessionStorage.removeItem(key);
+      retryStamp.clear(key);
       return component;
     } catch (error) {
-      const lastAttempt = Number(sessionStorage.getItem(key) ?? 0);
+      // Off the browser there is nothing to reload and no stamp to keep, so a
+      // genuine import failure has to surface rather than hang forever on the
+      // never-settling promise below — that would stall the pre-render.
+      if (!isBrowser) throw error;
+
+      const lastAttempt = retryStamp.read(key);
 
       if (Date.now() - lastAttempt > RETRY_WINDOW_MS) {
-        sessionStorage.setItem(key, String(Date.now()));
+        retryStamp.write(key);
         window.location.reload();
         // Never settles: the reload is already on its way, and resolving here
         // would flash an error in the moment before the page goes away.
