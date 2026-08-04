@@ -221,7 +221,7 @@ export const CreatePostModal = ({
                     "flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition-colors",
                     postType === type.value
                       ? "border-primary bg-primary text-primary-foreground"
-                      : "border-border hover:bg-muted",
+                      : "border-border bg-black/5 hover:bg-black/10 dark:bg-black/40 dark:hover:bg-black/50",
                   )}
                 >
                   <span aria-hidden>{type.emoji}</span>
@@ -235,6 +235,7 @@ export const CreatePostModal = ({
             <Label htmlFor="title">Title</Label>
             <Input
               id="title"
+              className="bg-black/5 dark:bg-black/40"
               placeholder={placeholders.title}
               value={title}
               onChange={(event) => setTitle(event.target.value)}
@@ -247,6 +248,7 @@ export const CreatePostModal = ({
             <Label htmlFor="content">Details</Label>
             <Textarea
               id="content"
+              className="bg-black/5 dark:bg-black/40"
               placeholder={placeholders.content}
               rows={6}
               value={content}
@@ -262,6 +264,7 @@ export const CreatePostModal = ({
             <div className="flex gap-2">
               <Input
                 id="tags"
+                className="bg-black/5 dark:bg-black/40"
                 placeholder="react, machine-learning, cse-2nd-year"
                 value={tagInput}
                 onChange={(event) => setTagInput(event.target.value)}
@@ -307,6 +310,7 @@ export const CreatePostModal = ({
             <Label htmlFor="image">Image (optional)</Label>
             <Input
               id="image"
+              className="bg-black/5 dark:bg-black/40"
               type="file"
               accept="image/*"
               onChange={handleImageChange}

@@ -147,7 +147,7 @@ export const CreateCommunityModal = ({ open, onOpenChange }: CreateCommunityModa
                     "flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition-colors",
                     kind === option.value
                       ? "border-primary bg-primary text-primary-foreground"
-                      : "border-border hover:bg-muted",
+                      : "border-border bg-black/5 hover:bg-black/10 dark:bg-black/40 dark:hover:bg-black/50",
                   )}
                 >
                   <span aria-hidden>{option.emoji}</span>
@@ -161,6 +161,7 @@ export const CreateCommunityModal = ({ open, onOpenChange }: CreateCommunityModa
             <Label htmlFor="community-name">Name</Label>
             <Input
               id="community-name"
+              className="bg-black/5 dark:bg-black/40"
               value={name}
               onChange={(event) => setName(event.target.value)}
               placeholder={placeholders.name}
@@ -179,6 +180,7 @@ export const CreateCommunityModal = ({ open, onOpenChange }: CreateCommunityModa
             <Label htmlFor="community-description">What is it for?</Label>
             <Textarea
               id="community-description"
+              className="bg-black/5 dark:bg-black/40"
               value={description}
               onChange={(event) => setDescription(event.target.value)}
               placeholder={placeholders.description}
@@ -237,7 +239,7 @@ export const CreateCommunityModal = ({ open, onOpenChange }: CreateCommunityModa
                       "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                       selected
                         ? "border-primary bg-primary/5"
-                        : "border-border hover:border-primary/40 hover:bg-muted/50",
+                        : "border-border bg-black/5 hover:border-primary/40 hover:bg-black/10 dark:bg-black/40 dark:hover:bg-black/50",
                     )}
                   >
                     <span className="flex items-center gap-2 font-medium text-foreground">
