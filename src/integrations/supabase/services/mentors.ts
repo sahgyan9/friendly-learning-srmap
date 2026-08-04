@@ -80,7 +80,7 @@ export async function searchMentors(query: string) {
     const { data, error } = await listedOnly(
       supabase
         .from('mentors')
-        .select('*')
+        .select(MENTOR_PUBLIC_COLUMNS)
         .neq('department', 'General')
         .not('department', 'is', null)
         .or(`name.ilike.%${lowerQuery}%,department.ilike.%${lowerQuery}%,bio.ilike.%${lowerQuery}%`),
@@ -143,7 +143,7 @@ export async function setMentorAvailability(
 export async function getMentorById(id: string) {
   const { data, error } = await supabase
     .from('mentors')
-    .select('*')
+    .select(MENTOR_PUBLIC_COLUMNS)
     .eq('id', id)
     .single();
 
