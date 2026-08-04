@@ -406,6 +406,114 @@ export type Database = {
           },
         ]
       }
+      community_group_message_reactions: {
+        Row: {
+          created_at: string
+          emoji: string
+          message_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          emoji: string
+          message_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          emoji?: string
+          message_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_group_message_reactions_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "community_group_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "community_group_message_reactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "community_group_message_reactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      community_group_messages: {
+        Row: {
+          channel: string
+          community_id: string
+          content: string
+          created_at: string
+          id: string
+          reactions: Json | null
+          reply_to_id: string | null
+          sender_id: string
+          updated_at: string
+        }
+        Insert: {
+          channel?: string
+          community_id: string
+          content: string
+          created_at?: string
+          id?: string
+          reactions?: Json | null
+          reply_to_id?: string | null
+          sender_id: string
+          updated_at?: string
+        }
+        Update: {
+          channel?: string
+          community_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          reactions?: Json | null
+          reply_to_id?: string | null
+          sender_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_group_messages_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "community_group_messages_reply_to_id_fkey"
+            columns: ["reply_to_id"]
+            isOneToOne: false
+            referencedRelation: "community_group_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "community_group_messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "community_group_messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "users_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       community_invites: {
         Row: {
           community_id: string
@@ -1779,8 +1887,26 @@ export type Database = {
       }
     }
     Functions: {
+      admin_list_mentor_welcome_status: {
+        Args: never
+        Returns: {
+          approved_at: string
+          department: string
+          email: string
+          name: string
+          profile_image: string
+          sent_at: string
+          user_id: string
+          welcomed: boolean
+        }[]
+      }
+      admin_mark_mentor_welcomed: {
+        Args: { p_mentor_id: string }
+        Returns: string
+      }
       auto_award_performance_badges: { Args: never; Returns: undefined }
       bytea_to_text: { Args: { data: string }; Returns: string }
+      can_start_another_group: { Args: { p_user: string }; Returns: boolean }
       can_user_rate_mentor: {
         Args: { mentor_id: string; user_id: string }
         Returns: boolean
@@ -1809,6 +1935,20 @@ export type Database = {
           name: string
           profile_image: string
           user_id: string
+        }[]
+      }
+      community_kind_counts: {
+        Args: never
+        Returns: {
+          group_count: number
+          kind: string
+        }[]
+      }
+      community_post_type_counts: {
+        Args: never
+        Returns: {
+          post_count: number
+          post_type: string
         }[]
       }
       confirm_alumni_status: {
@@ -1913,6 +2053,7 @@ export type Database = {
           name: string
           owner_id: string
           owner_image: string
+          owner_is_mentor: boolean
           owner_name: string
           pending_request_count: number
           post_count: number
@@ -1930,6 +2071,7 @@ export type Database = {
         Args: {
           p_community_id?: string
           p_limit?: number
+          p_mine?: boolean
           p_offset?: number
           p_post_type?: string
           p_search?: string
@@ -2306,6 +2448,25 @@ export type Database = {
           visibility: string
         }[]
       }
+      list_group_messages: {
+        Args: { p_channel?: string; p_community_id: string; p_limit?: number }
+        Returns: {
+          channel: string
+          content: string
+          created_at: string
+          id: string
+          is_mentor: boolean
+          is_owner: boolean
+          reactions: Json
+          reply_to_content: string
+          reply_to_id: string
+          reply_to_sender_name: string
+          sender_avatar: string
+          sender_id: string
+          sender_name: string
+          viewer_reactions: string[]
+        }[]
+      }
       list_join_requests: {
         Args: { p_community_id: string }
         Returns: {
@@ -2404,6 +2565,15 @@ export type Database = {
         Returns: undefined
       }
       resume_expired_mentor_availability: { Args: never; Returns: number }
+      send_group_message: {
+        Args: {
+          p_channel: string
+          p_community_id: string
+          p_content: string
+          p_reply_to_id?: string
+        }
+        Returns: string
+      }
       send_message: {
         Args: {
           p_content: string
@@ -2442,6 +2612,10 @@ export type Database = {
       }
       slugify: { Args: { p_text: string }; Returns: string }
       text_to_bytea: { Args: { data: string }; Returns: string }
+      toggle_group_message_reaction: {
+        Args: { p_emoji: string; p_message_id: string }
+        Returns: boolean
+      }
       update_conversation: {
         Args: { conversation_id: string; message_id: string }
         Returns: undefined
