@@ -12,6 +12,7 @@ import { sampleMentors } from "@/data/mentors";
 import { getBreadcrumbSchema } from "@/lib/structured-data";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
+import { useHasVisitedMentorsNav } from "@/hooks/useFeatureAnnouncement";
 
 // Import refactored components
 import MentorList from "@/components/mentors/MentorList";
@@ -24,6 +25,12 @@ const Mentors = () => {
   const [isAiSearch, setIsAiSearch] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  const { markSeen: markMentorsNavSeen } = useHasVisitedMentorsNav();
+
+  // Reaching this page is what clears the welcome tour's navbar dot.
+  useEffect(() => {
+    markMentorsNavSeen();
+  }, [markMentorsNavSeen]);
 
   // Fade in animation variants
   const pageVariants = {

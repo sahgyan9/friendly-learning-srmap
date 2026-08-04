@@ -12,6 +12,7 @@ import { CreateCommunityModal } from "@/components/communities/CreateCommunityMo
 import MyInvites from "@/components/communities/MyInvites";
 import { useAuth } from "@/context/AuthContext";
 import { useDebounce } from "@/hooks/useDebounce";
+import { useHasVisitedGroupsNav } from "@/hooks/useFeatureAnnouncement";
 import { cn } from "@/lib/utils";
 import {
   COMMUNITY_KINDS,
@@ -22,6 +23,13 @@ import {
 
 const Communities = () => {
   const { user } = useAuth();
+  const { markSeen: markGroupsNavSeen } = useHasVisitedGroupsNav();
+
+  // Reaching this page is what clears the welcome tour's navbar dot.
+  useEffect(() => {
+    markGroupsNavSeen();
+  }, [markGroupsNavSeen]);
+
   const [communities, setCommunities] = useState<Community[]>([]);
   const [loading, setLoading] = useState(true);
   const [kind, setKind] = useState("all");

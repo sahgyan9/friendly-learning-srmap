@@ -42,3 +42,25 @@ export const FACULTY_RATINGS_FEATURE = "faculty-ratings-v1";
 export function useHasSeenFacultyRatings() {
   return useFeatureSeen(FACULTY_RATINGS_FEATURE);
 }
+
+/**
+ * Distinct from the announcement above: these mark whether someone has ever
+ * visited the page itself, so the welcome tour's navbar dot ("here's where
+ * that lives") can clear per-item as they actually go find each thing,
+ * rather than all four dots vanishing together.
+ */
+export const GROUPS_NAV_FEATURE = "nav-visited-groups-v1";
+export const EVENTS_NAV_FEATURE = "nav-visited-events-v1";
+export const MENTORS_NAV_FEATURE = "nav-visited-mentors-v1";
+
+export function useHasVisitedGroupsNav() {
+  return useFeatureSeen(GROUPS_NAV_FEATURE);
+}
+
+export function useHasVisitedEventsNav() {
+  return useFeatureSeen(EVENTS_NAV_FEATURE);
+}
+
+export function useHasVisitedMentorsNav() {
+  return useFeatureSeen(MENTORS_NAV_FEATURE);
+}

@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { fetchMarketplacePosts, fetchMarketplacePost, CategoryType, MarketplacePost, isUserAdmin } from '@/integrations/supabase/services/marketplace';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
+import { useHasVisitedEventsNav } from "@/hooks/useFeatureAnnouncement";
 import SEOHead from "@/components/SEOHead";
 import { ROUTE_META } from "@/lib/seo/route-meta";
 import StructuredData from "@/components/StructuredData";
@@ -36,6 +37,12 @@ const MarketPlace = () => {
     const { toast } = useToast();
     const { events: srmapEvents, loading: srmapLoading, error: srmapError } = useSRMAPEvents();
     const [searchParams, setSearchParams] = useSearchParams();
+    const { markSeen: markEventsNavSeen } = useHasVisitedEventsNav();
+
+    // Reaching this page is what clears the welcome tour's navbar dot.
+    useEffect(() => {
+        markEventsNavSeen();
+    }, [markEventsNavSeen]);
 
     useEffect(() => {
         loadPosts();

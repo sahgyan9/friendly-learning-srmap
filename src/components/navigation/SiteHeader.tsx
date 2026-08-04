@@ -23,7 +23,12 @@ import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/s
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/context/AuthContext";
 import { useCollapseOnScroll } from "@/hooks/useCollapseOnScroll";
-import { useHasSeenFacultyRatings } from "@/hooks/useFeatureAnnouncement";
+import {
+  useHasSeenFacultyRatings,
+  useHasVisitedEventsNav,
+  useHasVisitedGroupsNav,
+  useHasVisitedMentorsNav,
+} from "@/hooks/useFeatureAnnouncement";
 import { cn } from "@/lib/utils";
 
 interface NavItem {
@@ -84,11 +89,24 @@ const SECONDARY_NAV = [
  * case.
  */
 export function SiteHeader() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const location = useLocation();
   const { hasSeen: hasSeenFaculty } = useHasSeenFacultyRatings();
+  const { hasSeen: hasVisitedGroups } = useHasVisitedGroupsNav();
+  const { hasSeen: hasVisitedEvents } = useHasVisitedEventsNav();
+  const { hasSeen: hasVisitedMentors } = useHasVisitedMentorsNav();
   const [mobileOpen, setMobileOpen] = useState(false);
   const navCollapsed = useCollapseOnScroll();
+
+  // Points at where the welcome tour's features actually live in the nav,
+  // once someone has been through the tour and hasn't found that page yet.
+  // Faculty gets its own separate "New" badge below — this doesn't duplicate it.
+  const tourCompleted = profile?.has_seen_welcome_tour === true;
+  const navHighlights: Record<string, boolean> = {
+    "/communities": tourCompleted && !hasVisitedGroups,
+    "/marketplace": tourCompleted && !hasVisitedEvents,
+    "/mentors": tourCompleted && !hasVisitedMentors,
+  };
 
   // Route changes must close the sheet, or tapping a link leaves the overlay
   // covering the page you just navigated to.
@@ -190,6 +208,7 @@ export function SiteHeader() {
                       {visibleNav.map((item) => {
                         const Icon = item.icon;
                         const active = isActive(item.url);
+                        const highlighted = navHighlights[item.url];
 
                         return (
                           <li key={item.url}>
@@ -205,6 +224,9 @@ export function SiteHeader() {
                             >
                               <Icon className="h-4 w-4 shrink-0" aria-hidden />
                               {item.name}
+                              {highlighted && (
+                                <span className="ml-auto h-2 w-2 shrink-0 rounded-full bg-primary" aria-hidden />
+                              )}
                             </Link>
                           </li>
                         );
@@ -219,6 +241,7 @@ export function SiteHeader() {
                         // longer sit in the top row, so the announcement badge
                         // followed the link down rather than being dropped.
                         const showNew = item.url === "/faculty" && !hasSeenFaculty;
+                        const highlighted = !showNew && navHighlights[item.url];
 
                         return (
                           <li key={item.url}>
@@ -237,6 +260,9 @@ export function SiteHeader() {
                                 <span className="ml-auto rounded-full bg-primary/15 px-2 py-0.5 text-[11px] font-semibold text-primary">
                                   New
                                 </span>
+                              )}
+                              {highlighted && (
+                                <span className="ml-auto h-2 w-2 shrink-0 rounded-full bg-primary" aria-hidden />
                               )}
                             </Link>
                           </li>
@@ -291,6 +317,7 @@ export function SiteHeader() {
               <ul className="flex items-center gap-2 xl:gap-4">
                 {visibleNav.map((item) => {
                   const active = isActive(item.url);
+                  const highlighted = navHighlights[item.url];
 
                   return (
                     <li key={item.url}>
@@ -304,6 +331,13 @@ export function SiteHeader() {
                         )}
                       >
                         {item.name}
+
+                        {highlighted && (
+                          <span
+                            className="absolute right-1 top-1 h-2 w-2 rounded-full bg-primary"
+                            aria-hidden
+                          />
+                        )}
 
                         {active && (
                           <motion.span
