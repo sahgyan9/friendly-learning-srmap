@@ -48,11 +48,11 @@ interface NavItem {
  * "Board" in one and "Community" in another. Keeping one array is what stops
  * that drift coming back.
  *
- * Five entries, ordered by what someone signed in actually opens: the group
- * they're in, the board, what's on, their messages. Mentors and Faculty moved
- * to the secondary list below — they are destinations you go to once, when you
- * are looking for a particular person, and search reaches both by name as well
- * as through a dozen aliases ("senior", "professor", "doubt").
+ * Six entries, ordered by what someone signed in actually opens: the group
+ * they're in, the board, what's on, their messages, faculty ratings. Mentors
+ * stays in the secondary list below — a destination you go to once, when you
+ * are looking for a particular person, and search reaches it both by name as
+ * well as through a dozen aliases ("senior", "professor", "doubt").
  */
 const PRIMARY_NAV: NavItem[] = [
   { name: "Home", url: "/", icon: Home },
@@ -60,12 +60,12 @@ const PRIMARY_NAV: NavItem[] = [
   { name: "Posts", url: "/community-posts", icon: MessageSquare },
   { name: "Events", url: "/marketplace", icon: Calendar },
   { name: "Messages", url: "/messages", icon: Mail, requiresAuth: true },
+  { name: "Faculty", url: "/faculty", icon: GraduationCap },
 ];
 
 /** Rendered in the mobile sheet, under a rule. Reachable from search anywhere. */
 const SECONDARY_NAV = [
   { name: "Mentors", url: "/mentors", icon: Users },
-  { name: "Faculty", url: "/faculty", icon: GraduationCap },
   { name: "How it works", url: "/how-it-works" },
   { name: "Blog", url: "/blog" },
   { name: "About", url: "/about" },
@@ -79,7 +79,7 @@ const SECONDARY_NAV = [
  * underneath — because a single 64px band was holding a logo, seven links, a
  * search field and four icons: about 1080px of content in a 1280px container,
  * tight enough that the search field had to collapse to a bare icon between
- * 1024px and 1280px just to fit. The link row has since been cut to five, but
+ * 1024px and 1280px just to fit. The link row has since settled at six, but
  * the split stays: it is what lets the search field be a real field rather than
  * an icon. The second row collapses on scroll (see
  * useCollapseOnScroll) so the taller header is only paid for at the top of a
@@ -98,14 +98,16 @@ export function SiteHeader() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const navCollapsed = useCollapseOnScroll();
 
-  // Points at where the welcome tour's features actually live in the nav,
-  // once someone has been through the tour and hasn't found that page yet.
-  // Faculty gets its own separate "New" badge below — this doesn't duplicate it.
+  // Points at where a feature lives in the nav until someone's found it.
+  // Groups/Events/Mentors only light up once the welcome tour has actually
+  // shown them the feature; Faculty ratings is its own standalone
+  // announcement and lights up for everyone regardless of the tour.
   const tourCompleted = profile?.has_seen_welcome_tour === true;
   const navHighlights: Record<string, boolean> = {
     "/communities": tourCompleted && !hasVisitedGroups,
     "/marketplace": tourCompleted && !hasVisitedEvents,
     "/mentors": tourCompleted && !hasVisitedMentors,
+    "/faculty": !hasSeenFaculty,
   };
 
   // Route changes must close the sheet, or tapping a link leaves the overlay
@@ -151,8 +153,8 @@ export function SiteHeader() {
 
             <div className="ml-auto flex shrink-0 items-center gap-1">
               {/* Ahead of the icon cluster so it reads as part of the page
-                  rather than as one more button. Five links cannot cover twenty
-                  destinations — Mentors and Faculty among them — and this is how
+                  rather than as one more button. Six links cannot cover twenty
+                  destinations — Mentors among them — and this is how
                   the rest are found. */}
               <div className="mr-1">
                 <SiteSearch />
@@ -237,11 +239,7 @@ export function SiteHeader() {
 
                     <ul className="space-y-1">
                       {SECONDARY_NAV.map((item) => {
-                        // Faculty ratings are the newest thing here and no
-                        // longer sit in the top row, so the announcement badge
-                        // followed the link down rather than being dropped.
-                        const showNew = item.url === "/faculty" && !hasSeenFaculty;
-                        const highlighted = !showNew && navHighlights[item.url];
+                        const highlighted = navHighlights[item.url];
 
                         return (
                           <li key={item.url}>
@@ -256,11 +254,6 @@ export function SiteHeader() {
                               )}
                             >
                               {item.name}
-                              {showNew && (
-                                <span className="ml-auto rounded-full bg-primary/15 px-2 py-0.5 text-[11px] font-semibold text-primary">
-                                  New
-                                </span>
-                              )}
                               {highlighted && (
                                 <span className="ml-auto h-2 w-2 shrink-0 rounded-full bg-primary" aria-hidden />
                               )}
