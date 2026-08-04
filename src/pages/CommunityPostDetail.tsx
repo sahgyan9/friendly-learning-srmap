@@ -14,6 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { EditPostModal } from "@/components/community/EditPostModal";
 import { ImageLightbox } from "@/components/community/ImageLightbox";
 import { InlineComments } from "@/components/community/InlineComments";
+import { LinkifiedText } from "@/components/common/LinkifiedText";
 import {
   AwaitingReplyBadge,
   PostStatusBadge,
@@ -238,7 +239,7 @@ const CommunityPostDetail = () => {
                     This is the page where someone reads the whole thing, so it
                     matters more here than in the feed. */}
                 <p className="max-w-prose whitespace-pre-line leading-relaxed text-muted-foreground">
-                  {post.content}
+                  <LinkifiedText text={post.content} />
                 </p>
               </div>
 

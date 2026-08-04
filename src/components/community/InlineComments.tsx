@@ -10,6 +10,7 @@ import { getPostComments, addPostComment, type PostComment } from "@/integration
 import { formatDistanceToNow } from "date-fns";
 import { getInitials } from "@/utils/user-utils";
 import { toast } from "sonner";
+import { LinkifiedText } from "@/components/common/LinkifiedText";
 
 interface InlineCommentsProps {
   postId: string;
@@ -158,7 +159,9 @@ export const InlineComments = ({ postId, onCommentAdded }: InlineCommentsProps) 
                         {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
                       </span>
                     </div>
-                    <p className="text-sm text-foreground">{comment.content}</p>
+                    <p className="text-sm text-foreground">
+                      <LinkifiedText text={comment.content} />
+                    </p>
                   </div>
                 </div>
               </CardContent>

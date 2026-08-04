@@ -9,6 +9,7 @@ import { getInitials } from "@/utils/user-utils";
 import type { CommunityPost } from "@/integrations/supabase/services/community-posts";
 import { isAwaitingReply } from "@/integrations/supabase/services/community-posts";
 import { AwaitingReplyBadge, PostStatusBadge, PostTypeBadge, postTypeAccent } from "./PostTypeBadge";
+import { LinkifiedText } from "@/components/common/LinkifiedText";
 
 interface PostCardProps {
   post: CommunityPost;
@@ -90,7 +91,7 @@ export function PostCard({
               isCompact ? "line-clamp-2" : "line-clamp-4 max-w-prose",
             )}
           >
-            {post.content}
+            <LinkifiedText text={post.content} />
           </p>
         </div>
 
