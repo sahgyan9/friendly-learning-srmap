@@ -1754,6 +1754,7 @@ export type Database = {
           email_frequency: string | null
           email_notifications: boolean | null
           graduation_year: number | null
+          has_seen_welcome_tour: boolean
           id: string
           is_admin: boolean
           is_available: boolean | null
@@ -1779,6 +1780,7 @@ export type Database = {
           email_frequency?: string | null
           email_notifications?: boolean | null
           graduation_year?: number | null
+          has_seen_welcome_tour?: boolean
           id?: string
           is_admin?: boolean
           is_available?: boolean | null
@@ -1804,6 +1806,7 @@ export type Database = {
           email_frequency?: string | null
           email_notifications?: boolean | null
           graduation_year?: number | null
+          has_seen_welcome_tour?: boolean
           id?: string
           is_admin?: boolean
           is_available?: boolean | null

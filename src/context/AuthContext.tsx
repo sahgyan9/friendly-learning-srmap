@@ -21,6 +21,7 @@ interface UserProfile {
   phone?: string;
   is_available?: boolean;
   theme?: string | null;
+  has_seen_welcome_tour?: boolean;
 }
 
 interface AuthContextType {

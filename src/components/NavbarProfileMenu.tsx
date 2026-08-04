@@ -15,9 +15,11 @@ import {
 import { getInitials } from "@/utils/user-utils";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useWelcomeTour } from "@/components/onboarding/WelcomeTourContext";
 
 const NavbarProfileMenu = () => {
   const { user, profile, signOut, loading } = useAuth();
+  const { openTour } = useWelcomeTour();
   const [isRealMentor, setIsRealMentor] = useState(false);
   const [checkingMentorStatus, setCheckingMentorStatus] = useState(true);
 
@@ -105,6 +107,9 @@ const NavbarProfileMenu = () => {
               </Link>
             </DropdownMenuItem>
           )}
+          <DropdownMenuItem onClick={openTour} className="cursor-pointer">
+            Take the tour
+          </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={signOut} className="cursor-pointer text-red-500 focus:text-red-500">
             <LogOut className="h-4 w-4 mr-2" />

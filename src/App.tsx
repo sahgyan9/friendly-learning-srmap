@@ -6,6 +6,8 @@ import { Loader2 } from "lucide-react";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/context/AuthContext";
+import { WelcomeTourProvider } from "@/components/onboarding/WelcomeTourContext";
+import WelcomeTour from "@/components/onboarding/WelcomeTour";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import RouteRobots from "@/components/RouteRobots";
 import ScrollToTop from "@/components/ScrollToTop";
@@ -125,10 +127,12 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <TooltipProvider>
+          <WelcomeTourProvider>
           <div className="min-h-screen">
             <Toaster />
             <RouteRobots />
             <ScrollToTop />
+            <WelcomeTour />
 
             {/* One header for the whole app. Pages used to render their own
                 <Navbar /> underneath a separately-mounted floating nav, which
@@ -280,6 +284,7 @@ function App() {
             </Suspense>
             </main>
           </div>
+          </WelcomeTourProvider>
         </TooltipProvider>
       </AuthProvider>
     </QueryClientProvider>
