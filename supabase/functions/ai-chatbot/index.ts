@@ -84,14 +84,12 @@ async function generate(prompt: string): Promise<{ text: string; model: string }
   const tried: string[] = [];
 
   for (const model of GENERATION_MODELS) {
-    // 2.5-series models think before answering, and those thinking tokens are
-    // billed against maxOutputTokens. Left alone the budget is spent reasoning
-    // and the student gets a reply truncated mid-sentence — exactly what the
-    // first deploy produced. Thinking is disabled (this is a 120-word grounded
-    // summary, not a reasoning task) and the ceiling raised. The field is only
-    // sent to models that understand it.
-    const thinking = model.includes("2.5") ? { thinkingConfig: { thinkingBudget: 0 } } : {};
-
+    // Reasoning models bill thinking tokens against maxOutputTokens, which cut
+    // an early reply off mid-sentence at ~40 words. The obvious fix —
+    // thinkingConfig: { thinkingBudget: 0 } — is a trap: `gemini-flash-latest`
+    // rejects it with 400 INVALID_ARGUMENT on v1beta, so it broke the one model
+    // still answering. A generous ceiling plus the MAX_TOKENS guard below
+    // handles it without depending on a parameter a model may not accept.
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_KEY}`,
       {
@@ -99,7 +97,7 @@ async function generate(prompt: string): Promise<{ text: string; model: string }
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.4, maxOutputTokens: 1200, topP: 0.9, ...thinking },
+          generationConfig: { temperature: 0.4, maxOutputTokens: 3000, topP: 0.9 },
         }),
       },
     );
@@ -113,7 +111,15 @@ async function generate(prompt: string): Promise<{ text: string; model: string }
     }
 
     const body = await response.json();
-    const text = body.candidates?.[0]?.content?.parts?.[0]?.text;
+    const candidate = body.candidates?.[0];
+    const text = candidate?.content?.parts?.[0]?.text;
+
+    // A MAX_TOKENS finish means the student would see half a sentence. Better to
+    // fall through to another model than to ship a truncated reply.
+    if (text && candidate?.finishReason === "MAX_TOKENS") {
+      tried.push(`${model}=truncated-at-${text.length}-chars`);
+      continue;
+    }
     if (text) return { text: text.trim(), model };
 
     // An empty candidate means a safety block or an exhausted token budget;
