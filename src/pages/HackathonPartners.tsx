@@ -92,8 +92,12 @@ const HackathonPartners = () => {
                                 <h2 className="text-2xl font-bold mb-4">Ready to Build Your Dream Team?</h2>
                                 <p className="mb-6">Join Friendly Learning SRMAP and connect with talented students for your next hackathon</p>
                                 <div className="space-x-4">
+                                    {/* Was /signup, which asked people to make an account before
+                                        showing them anything. /opportunities is the thing this page
+                                        has always advertised, and it is now real — teams, skills
+                                        wanted, and a group chat. Browsing needs no account. */}
                                     <Button asChild size="lg">
-                                        <Link to="/signup">Find Hackathon Partners</Link>
+                                        <Link to="/opportunities">Find Hackathon Partners</Link>
                                     </Button>
                                     <Button variant="outline" size="lg" asChild>
                                         <Link to="/mentors">Browse Skills</Link>

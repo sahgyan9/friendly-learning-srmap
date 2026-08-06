@@ -69,7 +69,7 @@ export const WELCOME_TOUR_STEPS: WelcomeTourStep[] = [
     accent: "violet",
     title: "Build something together",
     description: "Find teammates for hackathons, projects, and competitions.",
-    cta: { label: "Find hackathon partners", url: "/hackathon-partners" },
+    cta: { label: "Find hackathon partners", url: "/opportunities" },
   },
   {
     icon: UsersRound,

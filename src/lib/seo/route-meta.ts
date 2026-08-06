@@ -86,6 +86,16 @@ export const ROUTE_META: Record<string, RouteMeta> = {
     description:
       "Connect with skilled developers, designers, and business minds for hackathon teams through Friendly Learning SRMAP. Build winning teams with complementary skills at your university. Perfect team formation for coding competitions.",
   },
+  "/opportunities": {
+    title: "Hackathons & Opportunities at SRM AP | Find a Team",
+    description:
+      "Hackathons, competitions and internships open to SRM University-AP students — and the teammates to enter them with. See who else is interested, start a team, and get a group chat.",
+  },
+  "/ask": {
+    title: "Who Can Help? | Find SRM AP Faculty and Senior Mentors by Topic",
+    description:
+      "Describe what you're working on or stuck on, and find the SRM University-AP faculty who research it and the seniors who've already done it — in one answer.",
+  },
   "/blog": {
     title: "Blog | Friendly Learning SRMAP",
     description:
