@@ -1,8 +1,13 @@
-// Topic search: one question, faculty and mentors in one answer.
+// Topic search: one question, faculty and seniors and things to enter, in one
+// answer.
 //
 // "I have a project on quantum computing, who can help?" returns professors
 // whose listed research matches AND seniors who have the skills. Nothing else
 // on campus answers across both halves at once — that is the whole feature.
+//
+// Opportunities are in the same index, which is what makes "is there any
+// national level coding contest I can enter" work: the question says "contest",
+// the listing says "hackathon", and they share no keyword at all.
 //
 // Retrieve, then (optionally) explain. This function only retrieves. It embeds
 // the question and hands it to search_knowledge(), which does a vector lookup
@@ -158,7 +163,7 @@ serve(async (req) => {
 
     const { data: results, error } = await supabaseAdmin.rpc("search_knowledge", {
       p_embedding: JSON.stringify(embedding),
-      p_entity_types: payload.types ?? ["faculty", "mentor"],
+      p_entity_types: payload.types ?? ["faculty", "mentor", "opportunity"],
       p_limit: Math.min(Math.max(payload.limit ?? 12, 1), 50),
       p_viewer: viewer,
     });
@@ -177,14 +182,28 @@ serve(async (req) => {
 
     const rows = (results ?? []) as Row[];
 
-    // Grouped server-side so the client renders two lists without re-filtering,
+    // Grouped server-side so the client renders each list without re-filtering,
     // and so "no faculty but three mentors" is expressible.
+    //
+    // Every entity type search_knowledge can return needs a group here. It had
+    // only faculty and mentors when opportunities were added to the index, so
+    // opportunity rows were retrieved, counted in `total`, and then dropped —
+    // silently, because a healthy-looking count hid a short list. `other` exists
+    // so the next entity type degrades to visible-but-ungrouped instead of
+    // vanishing.
+    const grouped = {
+      faculty: rows.filter((r) => r.entity_type === "faculty"),
+      mentors: rows.filter((r) => r.entity_type === "mentor"),
+      opportunities: rows.filter((r) => r.entity_type === "opportunity"),
+    };
+    const claimed = new Set(["faculty", "mentor", "opportunity"]);
+
     return json({
       query,
       cached,
       total: rows.length,
-      faculty: rows.filter((r) => r.entity_type === "faculty"),
-      mentors: rows.filter((r) => r.entity_type === "mentor"),
+      ...grouped,
+      other: rows.filter((r) => !claimed.has(r.entity_type)),
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

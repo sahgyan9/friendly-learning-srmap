@@ -3,6 +3,7 @@ import type { Database } from "@/integrations/supabase/types";
 import { sanitizeInput } from "@/utils/input-sanitization";
 
 type CommunityInsert = Database["public"]["Tables"]["communities"]["Insert"];
+type OpportunityInsert = Database["public"]["Tables"]["opportunities"]["Insert"];
 
 export type OpportunityKind =
   | "hackathon"
@@ -208,6 +209,108 @@ export async function getInterestedPeople(opportunityId: string) {
   }
 
   return { data: data ?? [], error: null };
+}
+
+export type NewOpportunity = {
+  title: string;
+  organiser: string;
+  kind: OpportunityKind;
+  description: string;
+  tags: string[];
+  isOnline: boolean;
+  location: string;
+  registerBy: string;
+  externalUrl: string;
+  teamMin: string;
+  teamMax: string;
+};
+
+/**
+ * Post an opportunity. Open to any signed-in student, not just admins.
+ *
+ * The deliberate choice is that whoever spots the hackathon can list it, because
+ * the person who finds one first is a student and not the site owner, and a
+ * queue that only one person can clear is the thing that makes a listings page
+ * go stale. Three guards make that safe, and all three live in the database
+ * rather than here, so they hold no matter what calls the table:
+ *
+ *   - RLS restricts INSERT to `auth.uid() = posted_by`, so nobody can post as
+ *     somebody else, and only the poster or an admin can edit or delete it.
+ *   - A trigger caps a non-admin at five posts a day.
+ *   - `slug` is derived server-side, so two people posting the same hackathon
+ *     get `-2` rather than a unique-violation.
+ *
+ * `external_url` is the only field that leaves the site, so it is restricted to
+ * http(s) here — a `javascript:` URL rendered into an anchor on a public page is
+ * the one input on this form that could hurt a reader rather than just look
+ * wrong.
+ */
+export async function createOpportunity(input: NewOpportunity) {
+  const { data: auth } = await supabase.auth.getUser();
+  if (!auth.user) return { data: null, error: new Error("Sign in to post an opportunity") };
+
+  const title = sanitizeInput(input.title, 140).trim();
+  if (title.length < 4) return { data: null, error: new Error("Give it a title") };
+
+  let externalUrl: string | null = null;
+  const rawUrl = input.externalUrl.trim();
+  if (rawUrl) {
+    let parsed: URL;
+    try {
+      parsed = new URL(/^https?:\/\//i.test(rawUrl) ? rawUrl : `https://${rawUrl}`);
+    } catch {
+      return { data: null, error: new Error("That registration link is not a valid URL") };
+    }
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+      return { data: null, error: new Error("The registration link must start with http or https") };
+    }
+    externalUrl = parsed.toString();
+  }
+
+  const toCount = (value: string) => {
+    const parsedCount = Number.parseInt(value, 10);
+    return Number.isFinite(parsedCount) && parsedCount > 0 ? Math.min(parsedCount, 100) : null;
+  };
+
+  // `slug` is left off entirely: opportunities_set_slug derives it from the
+  // title before insert and resolves collisions with a suffix. The generated
+  // types cannot see the trigger and insist on it, hence the cast — the same
+  // reasoning as createTeam() below.
+  const row = {
+    title,
+    organiser: input.organiser.trim() ? sanitizeInput(input.organiser, 120) : null,
+    kind: input.kind,
+    description: input.description.trim() ? sanitizeInput(input.description, 2000) : null,
+    tags: input.tags.slice(0, 10).map((tag) => sanitizeInput(tag, 40)).filter(Boolean),
+    is_online: input.isOnline,
+    location: !input.isOnline && input.location.trim() ? sanitizeInput(input.location, 120) : null,
+    // A date input gives a bare day. Registration almost always closes at the
+    // end of that day, so it is stored as the day's last moment rather than
+    // midnight — otherwise a deadline of "the 15th" disappears on the 14th.
+    register_by: input.registerBy ? new Date(`${input.registerBy}T23:59:59`).toISOString() : null,
+    external_url: externalUrl,
+    team_min: toCount(input.teamMin),
+    team_max: toCount(input.teamMax),
+    posted_by: auth.user.id,
+  } as OpportunityInsert;
+
+  const { data, error } = await supabase
+    .from("opportunities")
+    .insert(row)
+    .select("slug, title")
+    .single();
+
+  if (error) {
+    console.error("Error posting opportunity:", error);
+    // The rate limit raises check_violation with a message written for a
+    // student. Anything else gets a generic line rather than raw Postgres.
+    const friendly = error.message?.includes("posted 5 opportunities")
+      ? error.message
+      : "Could not post that. Check the fields and try again.";
+    return { data: null, error: new Error(friendly) };
+  }
+
+  return { data, error: null };
 }
 
 /**

@@ -9,11 +9,23 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import MentorSuggestionCard from "./MentorSuggestionCard";
 
+/** One matched lecturer, as ai-chatbot returns them alongside the mentors. */
+interface FacultySuggestion {
+  id: string;
+  name: string;
+  department: string | null;
+  slug: string | null;
+  image_url: string | null;
+  interests: string[];
+  path: string;
+}
+
 interface Message {
   id: string;
   type: 'user' | 'ai';
   content: string;
   mentorSuggestions?: any[];
+  facultySuggestions?: FacultySuggestion[];
   timestamp: Date;
 }
 
@@ -136,6 +148,11 @@ const ChatbotModal = ({ isOpen, onClose }: ChatbotModalProps) => {
         type: 'ai',
         content: data.aiResponse,
         mentorSuggestions: data.suggestedMentors || [],
+        // The function has returned these on every reply since it moved to
+        // retrieval, and nothing read them — four matched lecturers were
+        // computed and thrown away per message. They are the half of the answer
+        // a mentor cannot give.
+        facultySuggestions: data.suggestedFaculty || [],
         timestamp: new Date()
       };
 
@@ -264,6 +281,54 @@ const ChatbotModal = ({ isOpen, onClose }: ChatbotModalProps) => {
                           onConnect={() => handleMentorConnect(mentor)}
                         />
                       ))}
+                    </div>
+                  )}
+
+                  {/* Lecturers. Kept visually lighter than the mentor cards:
+                      a senior can be messaged from here, a professor cannot, so
+                      these link to the profile instead of implying a chat. No
+                      rating is shown — the assistant is not ranking staff. */}
+                  {message.facultySuggestions && message.facultySuggestions.length > 0 && (
+                    <div className="mt-3 space-y-2">
+                      <p className="text-sm text-muted-foreground">
+                        Lecturers whose research lines up:
+                      </p>
+                      <div className="space-y-1.5">
+                        {message.facultySuggestions.map((faculty) => (
+                          <button
+                            key={faculty.id}
+                            type="button"
+                            onClick={() => {
+                              onClose();
+                              navigate(faculty.path);
+                            }}
+                            className="flex w-full items-start gap-2.5 rounded-lg border border-border bg-card p-2.5 text-left transition-colors hover:border-primary/40"
+                          >
+                            {faculty.image_url ? (
+                              <img
+                                src={faculty.image_url}
+                                alt=""
+                                loading="lazy"
+                                className="h-9 w-9 shrink-0 rounded-full object-cover"
+                              />
+                            ) : (
+                              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-medium">
+                                {faculty.name.slice(0, 2)}
+                              </span>
+                            )}
+                            <span className="min-w-0">
+                              <span className="block truncate text-sm font-medium">
+                                {faculty.name}
+                              </span>
+                              <span className="block truncate text-xs text-muted-foreground">
+                                {faculty.interests.length > 0
+                                  ? faculty.interests.slice(0, 3).join(" · ")
+                                  : faculty.department ?? "Faculty"}
+                              </span>
+                            </span>
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>

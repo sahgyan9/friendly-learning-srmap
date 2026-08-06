@@ -3,11 +3,13 @@ import { Link, useSearchParams } from "react-router-dom";
 import { CalendarClock, Users, Globe, MapPin, Trophy, ExternalLink } from "lucide-react";
 
 import Footer from "@/components/Footer";
+import PostOpportunityDialog from "@/components/opportunities/PostOpportunityDialog";
 import SEOHead from "@/components/SEOHead";
 import StructuredData from "@/components/StructuredData";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useAuth } from "@/context/AuthContext";
 import { getBreadcrumbSchema } from "@/lib/structured-data";
 import { PRIMARY_DOMAIN } from "@/lib/constants";
 import { cn } from "@/lib/utils";
@@ -98,6 +100,7 @@ function OpportunityCard({ opportunity }: { opportunity: Opportunity }) {
 
 const Opportunities = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const { user } = useAuth();
   const kind = searchParams.get("kind") ?? "all";
 
   const [items, setItems] = useState<Opportunity[]>([]);
@@ -148,13 +151,33 @@ const Opportunities = () => {
               Opportunities
             </div>
 
-            <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-              Find something to enter — and someone to enter it with.
-            </h1>
-            <p className="mt-2 max-w-2xl text-base text-muted-foreground">
-              Hackathons and competitions open to SRM AP students. Register on the organiser's
-              site; find your team here.
-            </p>
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div className="min-w-0">
+                <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+                  Find something to enter — and someone to enter it with.
+                </h1>
+                <p className="mt-2 max-w-2xl text-base text-muted-foreground">
+                  Hackathons and competitions open to SRM AP students. Register on the organiser's
+                  site; find your team here.
+                </p>
+              </div>
+
+              {/* Anyone signed in can post. The student who spots a hackathon
+                  first is never the one running this site, so a listing that
+                  waits on an admin is a listing that arrives after the
+                  deadline. */}
+              {user ? (
+                <PostOpportunityDialog onPosted={load} />
+              ) : (
+                <Button asChild size="sm" variant="outline">
+                  {/* SignIn reads the return path from location.state.from, not
+                      a query param — see the note in SignIn.tsx. */}
+                  <Link to="/signin" state={{ from: { pathname: "/opportunities" } }}>
+                    Sign in to post one
+                  </Link>
+                </Button>
+              )}
+            </div>
 
             <div className="mt-5 flex flex-wrap gap-1.5">
               <button
@@ -203,9 +226,15 @@ const Opportunities = () => {
                   ? "When a hackathon or competition opens, it shows up here with the people who want to enter it."
                   : "Nothing in this category is open. Try another."}
               </p>
-              <Button asChild variant="outline">
-                <Link to="/ask">Find people to work with instead</Link>
-              </Button>
+              {/* An empty listings page is the moment someone is most likely to
+                  know of something worth listing, so posting leads here and
+                  browsing people is the fallback — not the other way round. */}
+              <div className="flex flex-wrap items-center justify-center gap-2">
+                {user && <PostOpportunityDialog onPosted={load} />}
+                <Button asChild variant="outline">
+                  <Link to="/ask">Find people to work with instead</Link>
+                </Button>
+              </div>
             </div>
           ) : (
             <div className="grid gap-3 sm:grid-cols-2">

@@ -246,8 +246,13 @@ const SiteSearch = () => {
               {nothingAtAll && (
                 <CommandEmpty>
                   <p className="font-medium">Nothing matched “{query.trim()}”</p>
+                  {/* This used to coach people into the index's vocabulary
+                      ("try a word like hackathon"). A phrase now falls through
+                      to meaning-based search, so the only advice still worth
+                      giving is to write a bit more, not to guess our wording. */}
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Try a person's name, a department, or a word like “hackathon” or “bug”.
+                    Try describing what you need — “someone who knows machine learning”
+                    works as well as a name.
                   </p>
                 </CommandEmpty>
               )}
@@ -291,6 +296,16 @@ const SiteSearch = () => {
               {results.articles.length > 0 && (
                 <CommandGroup heading="From the blog">
                   {results.articles.map((hit) => renderHit(hit, false))}
+                </CommandGroup>
+              )}
+
+              {/* Shown only when nothing above matched literally. The heading
+                  says "closest to what you asked" rather than naming a type,
+                  because this group mixes lecturers, seniors and things to
+                  enter — whichever the question was actually about. */}
+              {results.related.length > 0 && (
+                <CommandGroup heading="Closest to what you asked">
+                  {results.related.map((hit) => renderHit(hit, true))}
                 </CommandGroup>
               )}
 

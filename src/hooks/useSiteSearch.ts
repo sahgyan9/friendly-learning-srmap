@@ -7,6 +7,7 @@ import {
   getCommunityKindMeta,
   listCommunities,
 } from "@/integrations/supabase/services/communities";
+import { askWhoCanHelp } from "@/integrations/supabase/services/ask";
 import { BLOG_POSTS } from "@/data/blog-posts";
 import { normalise } from "@/lib/search/rank";
 
@@ -24,6 +25,8 @@ export interface SiteSearchResults {
   communities: SearchHit[];
   posts: SearchHit[];
   articles: SearchHit[];
+  /** Meaning-matched, only when the literal pass found nothing. See below. */
+  related: SearchHit[];
 }
 
 const EMPTY: SiteSearchResults = {
@@ -32,12 +35,28 @@ const EMPTY: SiteSearchResults = {
   communities: [],
   posts: [],
   articles: [],
+  related: [],
 };
 
 /** Below this, a query matches so much that the results are noise. */
 const MIN_QUERY_LENGTH = 2;
 const DEBOUNCE_MS = 220;
 const PER_GROUP = 4;
+
+/**
+ * Gate for the semantic fallback.
+ *
+ * Every literal miss could be sent to the embedding search, but most misses are
+ * half-typed names ("anj", "dr r") that the next keystroke fixes on its own, and
+ * each uncached call spends one of a limited number of embedding requests per
+ * minute. A phrase — two words with some length to them, or one long word — is
+ * the cheapest signal that someone finished expressing a thought rather than
+ * started spelling a name. "dr r" has a space and is deliberately excluded.
+ */
+function looksLikeAPhrase(query: string): boolean {
+  const trimmed = query.trim();
+  return trimmed.length >= 14 || (/\s/.test(trimmed) && trimmed.length >= 8);
+}
 
 /** Blog posts ship with the app, so they are matched here rather than fetched. */
 function searchArticles(query: string): SearchHit[] {
@@ -130,19 +149,69 @@ export function useSiteSearch(query: string, enabled: boolean) {
         to: `/communities/${community.slug}`,
       }));
 
-      setResults({ mentors, faculty, communities, posts, articles: searchArticles(trimmed) });
+      const articles = searchArticles(trimmed);
+      setResults({ mentors, faculty, communities, posts, articles, related: [] });
+      setLoading(false);
+
+      // Second pass, meaning rather than spelling.
+      //
+      // Everything above is ILIKE: it can only find a row that literally
+      // contains what was typed. So "someone who knows machine learning" misses
+      // a professor listing "Deep Learning", and "coding contest" misses a
+      // hackathon. That gap is why this box used to tell people to rephrase
+      // ("try a word like hackathon") instead of just answering them.
+      //
+      // It runs *after* the literal pass and only when that pass found nothing,
+      // so the common case is untouched — same speed, no extra request, and no
+      // embedding spend on the searches that already work.
+      const literalMiss =
+        mentors.length === 0 &&
+        faculty.length === 0 &&
+        communities.length === 0 &&
+        posts.length === 0 &&
+        articles.length === 0;
+
+      if (!literalMiss || !looksLikeAPhrase(trimmed)) return;
+
+      setLoading(true);
+      const { data } = await askWhoCanHelp(trimmed, 6).catch(() => ({ data: null }));
+
+      if (run !== sequence.current) return;
+
+      const related: SearchHit[] = data
+        ? [...data.faculty, ...data.mentors, ...data.opportunities, ...(data.other ?? [])]
+            .sort((a, b) => b.similarity - a.similarity)
+            .slice(0, 6)
+            .map((result) => ({
+              id: `semantic-${result.entity_id}`,
+              title: result.title,
+              subtitle: result.subtitle ?? "",
+              to: result.source_path,
+              image:
+                typeof result.metadata?.image_url === "string"
+                  ? result.metadata.image_url
+                  : typeof result.metadata?.profile_image === "string"
+                    ? result.metadata.profile_image
+                    : null,
+            }))
+        : [];
+
+      setResults((current) => ({ ...current, related }));
       setLoading(false);
     }, DEBOUNCE_MS);
 
     return () => clearTimeout(timer);
   }, [query, enabled]);
 
+  // `related` counts here. Without it the palette renders "Nothing matched"
+  // directly above the results the semantic pass just found.
   const isEmpty =
     results.mentors.length === 0 &&
     results.faculty.length === 0 &&
     results.communities.length === 0 &&
     results.posts.length === 0 &&
-    results.articles.length === 0;
+    results.articles.length === 0 &&
+    results.related.length === 0;
 
   return { results, loading, isEmpty };
 }

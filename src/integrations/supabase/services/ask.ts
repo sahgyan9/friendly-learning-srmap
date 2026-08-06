@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
  * shape that fits neither.
  */
 export type AskResult = {
-  entity_type: "faculty" | "mentor";
+  entity_type: "faculty" | "mentor" | "opportunity";
   entity_id: string;
   title: string;
   subtitle: string | null;
@@ -23,6 +23,9 @@ export type AskResponse = {
   total: number;
   faculty: AskResult[];
   mentors: AskResult[];
+  opportunities: AskResult[];
+  /** Entity types the server has no group for yet. Never silently dropped. */
+  other: AskResult[];
 };
 
 /** Reads a metadata field without spraying casts through the components. */
