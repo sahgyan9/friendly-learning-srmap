@@ -7,26 +7,61 @@ import { Notification } from "@/integrations/supabase/services/notifications";
  */
 export const getNotificationNavigationUrl = (notification: Notification): string | null => {
     const baseUrl = window.location.origin;
+    const data = (notification.data && typeof notification.data === 'object') ? (notification.data as Record<string, any>) : {};
+
+    // Direct URL in data payload
+    if (data.url && typeof data.url === 'string') {
+        return data.url.startsWith('http') ? data.url : `${baseUrl}${data.url.startsWith('/') ? '' : '/'}${data.url}`;
+    }
+
     // Handle contact message notifications
     if (
         notification.type === 'system' &&
-        notification.data &&
-        typeof notification.data === 'object' &&
-        'contact_message_id' in notification.data
+        'contact_message_id' in data
     ) {
-        // Admin contact message notifications redirect to admin contact messages page
         return `${baseUrl}/admin/contact-messages`;
     }
 
+    // Community join request notifications (e.g. "Someone wants to join your group")
+    if (
+        notification.title?.includes("wants to join your group") ||
+        notification.content?.includes("asked to join") ||
+        data.type === "community_join_request"
+    ) {
+        if (data.community_slug) {
+            return `${baseUrl}/communities/${data.community_slug}?tab=requests`;
+        }
+        return `${baseUrl}/communities`;
+    }
+
+    // Community invites or decision notifications (e.g. "You are in 🎉" or "Request not accepted" or "invited to join")
+    if (
+        notification.title?.includes("invited to a group") ||
+        notification.title?.includes("You are in") ||
+        notification.title?.includes("Request not accepted") ||
+        notification.content?.includes("invited to join") ||
+        notification.content?.includes("request to join")
+    ) {
+        if (data.community_slug) {
+            return `${baseUrl}/communities/${data.community_slug}`;
+        }
+        return `${baseUrl}/communities`;
+    }
+
+    // Direct post reference
+    if (data.post_id) {
+        return `${baseUrl}/community-posts/${data.post_id}`;
+    }
+
+    // Direct community reference
+    if (data.community_slug) {
+        return `${baseUrl}/communities/${data.community_slug}`;
+    }
+
     // The "you're a mentor" notification sent on a first successful signup.
-    // Goes to the certificate page rather than the profile: for a brand-new
-    // mentor that page reads "3 more students to go", which is the next thing
-    // they can act on.
     if (
         notification.type === 'system' &&
-        notification.data &&
-        typeof notification.data === 'object' &&
-        'mentor_welcome' in notification.data
+        'mentor_welcome' in data
     ) {
         return `${baseUrl}/certificate`;
     }
@@ -34,12 +69,8 @@ export const getNotificationNavigationUrl = (notification: Notification): string
     // Handle mentor application notifications
     if (
         notification.type === 'system' &&
-        notification.data &&
-        typeof notification.data === 'object' &&
-        'verification_id' in notification.data
+        'verification_id' in data
     ) {
-        // Mentor application notifications redirect to mentor verification page
-        // This is for admin notifications about new mentor applications
         return `${baseUrl}/admin/mentor-verification`;
     }
 
@@ -49,15 +80,11 @@ export const getNotificationNavigationUrl = (notification: Notification): string
         (notification.title?.includes('Mentor Application') ||
             notification.content?.includes('mentor application'))
     ) {
-        // For users receiving notifications about their mentor application status
         if (notification.content?.includes('approved')) {
-            // If approved, redirect to their profile
             return `${baseUrl}/profile`;
         } else if (notification.content?.includes('rejected') || notification.content?.includes('attention')) {
-            // If rejected, redirect to edit application
             return `${baseUrl}/become-mentor?edit=true`;
         } else {
-            // For pending or other status, redirect to application status page
             return `${baseUrl}/become-mentor`;
         }
     }
@@ -65,42 +92,30 @@ export const getNotificationNavigationUrl = (notification: Notification): string
     // Handle mentor-specific notifications with user_id in data
     if (
         notification.type === 'mentor_application' &&
-        notification.data &&
-        typeof notification.data === 'object' &&
-        'user_id' in notification.data
+        'user_id' in data
     ) {
-        const userId = notification.data.user_id;
-        // Redirect to the specific mentor's profile
+        const userId = data.user_id;
         return `${baseUrl}/mentors/${userId}`;
     }
 
     // Handle message notifications 
     if (notification.type === 'message') {
-        // If the notification has conversation data, navigate to specific conversation
-        if (
-            notification.data &&
-            typeof notification.data === 'object' &&
-            'conversation_id' in notification.data
-        ) {
-            return `${baseUrl}/messages?chat=${notification.data.conversation_id}`;
+        if ('conversation_id' in data) {
+            return `${baseUrl}/messages?chat=${data.conversation_id}`;
         }
-        // Otherwise, navigate to general messages page
         return `${baseUrl}/messages`;
     }
 
     // Handle badge/achievement notifications
     if (notification.type === 'badge') {
-        return `${baseUrl}/profile`; // Redirect to profile to see badges
+        return `${baseUrl}/profile`;
     }
 
-    // Handle the graduation prompt. Goes to the profile, where
-    // AlumniPromptBanner renders the same question with the confirm form behind
-    // it — so the bell and the page ask once, not twice.
+    // Handle the graduation prompt
     if (notification.type === 'alumni_prompt') {
         return `${baseUrl}/profile`;
     }
 
-    // Default: no navigation for unrecognized notification types
     return null;
 };
 

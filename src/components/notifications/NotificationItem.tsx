@@ -1,7 +1,7 @@
 
 import { formatDistanceToNow } from "date-fns";
 import { Button } from "@/components/ui/button";
-import { Badge, Star, MessageCircle, Settings, ChevronRight } from "lucide-react";
+import { Badge, Star, MessageCircle, Settings, ChevronRight, UserPlus, Users, Award, Bell } from "lucide-react";
 import { Notification } from "@/integrations/supabase/services/notifications";
 import { getNotificationNavigationUrl, isNotificationClickable } from "@/utils/notificationNavigation";
 
@@ -13,15 +13,28 @@ interface NotificationItemProps {
 
 const NotificationItem = ({ notification, onMarkAsRead, onNotificationClick }: NotificationItemProps) => {
   const getIcon = () => {
+    const title = notification.title || "";
+    const content = notification.content || "";
+
+    if (title.includes("wants to join") || content.includes("asked to join")) {
+      return <UserPlus className="h-4 w-4 text-emerald-500" />;
+    }
+    if (title.includes("invited to") || title.includes("You are in") || content.includes("joined")) {
+      return <Users className="h-4 w-4 text-emerald-500" />;
+    }
+    if (title.includes("Mentor") || content.includes("mentor")) {
+      return <Award className="h-4 w-4 text-purple-500" />;
+    }
+
     switch (notification.type) {
       case 'badge':
-        return <Star className="h-4 w-4 text-yellow-500" />;
+        return <Star className="h-4 w-4 text-amber-500" />;
       case 'message':
         return <MessageCircle className="h-4 w-4 text-blue-500" />;
       case 'system':
-        return <Settings className="h-4 w-4 text-gray-500" />;
+        return <Bell className="h-4 w-4 text-emerald-500" />;
       default:
-        return <Badge className="h-4 w-4 text-gray-500" />;
+        return <Badge className="h-4 w-4 text-muted-foreground" />;
     }
   };
 

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import {
   ArrowLeft,
@@ -70,7 +70,17 @@ import {
 const CommunityDetail = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
+
+  const tabParam = searchParams.get("tab");
+  const [activeTab, setActiveTab] = useState<string>(tabParam || "chat");
+
+  useEffect(() => {
+    if (tabParam) {
+      setActiveTab(tabParam);
+    }
+  }, [tabParam]);
 
   const [community, setCommunity] = useState<Community | null>(null);
   const [posts, setPosts] = useState<CommunityPost[]>([]);
@@ -496,7 +506,7 @@ const CommunityDetail = () => {
         ) : (
         <div className="grid gap-6 lg:grid-cols-[1fr_20rem]">
           <div className="space-y-4">
-            <Tabs defaultValue="chat">
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
               {/* bg-muted sits at 96% lightness against a 100% white card, so the
                   pill was nearly invisible in light mode and the inactive tab read
                   as plain text rather than a second clickable control. A visible
