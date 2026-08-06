@@ -217,3 +217,63 @@ worth keeping literal across future transactional emails:
   The welcome email and certificate are unchanged on purpose (see §1's
   email-compatibility note, and the certificate's LOGO_DATA_URL is a separate
   base64 PNG embed not covered by this swap).
+
+---
+
+## 8. Page hero header pattern
+
+All feature pages (Faculty, Events, Groups, Posts) share a standardised hero
+header that mirrors the FeaturesShowcase card design language. Keep new pages
+consistent with this pattern.
+
+### Structure
+
+```tsx
+<div className="relative overflow-hidden border-b border-border/60 bg-gradient-to-br from-{accent}/5 via-background to-background">
+  {/* Decorative blobs */}
+  <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-{accent}/8 blur-3xl" />
+  <div className="pointer-events-none absolute -left-16 bottom-0 h-48 w-48 rounded-full bg-{accent}/5 blur-2xl" />
+
+  <div className="container mx-auto px-4 pb-8 pt-28">
+    <motion.div initial={{ opacity:0, y:16 }} animate={{ opacity:1, y:0 }} transition={{ duration:0.5 }}>
+      {/* Pill label */}
+      <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-{accent}/20 bg-{accent}/10 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-{accent}-600 dark:text-{accent}-400">
+        <FeatureIcon className="h-3.5 w-3.5" />
+        NN — Feature Name
+      </div>
+
+      <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Page Title</h1>
+      <p className="mt-2 max-w-2xl text-base text-muted-foreground">One sentence.</p>
+    </motion.div>
+  </div>
+</div>
+```
+
+### Feature-to-accent mapping (matches FeaturesShowcase)
+
+| Feature | Number | Icon | Accent colour |
+|---------|--------|------|---------------|
+| Mentors | 01 | `GraduationCap` | `text-[#3963C6]` (brand primary) |
+| Messaging | 02 | `MessageSquare` | `sky` |
+| Events | 03 | `CalendarDays` | `violet` |
+| Faculty | 04 | `BookOpen` | `rose` |
+| Groups | 05 | `Users` | `amber` |
+| Posts | 06 | `FileText` | `emerald` |
+| Matching | 07 | `Lightbulb` | `orange` |
+| Certificates | 08 | `BadgeCheck` | `teal` |
+
+### Card hover glow (FeaturesShowcase-consistent)
+
+Every card that links to a feature page carries a hover glow overlay. Add to
+`<Card>` or the outermost wrapper:
+
+```tsx
+className="group relative overflow-hidden ... hover:border-primary/30"
+// Inside:
+<div className="pointer-events-none absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-primary/3 to-transparent" />
+```
+
+The glow uses `--primary` (brand blue) regardless of the feature accent colour
+— the accent lives in the pill label and icon, not the hover state. This keeps
+hover behaviour visually unified across all cards on the same page.
+
