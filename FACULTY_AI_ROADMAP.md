@@ -227,7 +227,42 @@ The corpus is the moat; the model is a commodity.
 
 ---
 
-## Opportunities page — planned, not started
+## Opportunities — SHIPPED 2026-08-06 (needs a posting UI)
+
+Live at **`/opportunities`** and `/opportunities/:slug`. Migration
+`20260806190000_opportunities.sql`.
+
+**A team is a community.** `public.communities` already had `kind`, `visibility`,
+membership, invites, group chat and reactions — and its `kind` check already
+allowed `'hackathon'`, which is strong evidence this reuse was the intended
+design. `opportunity_teams` is a thin join, not a parallel implementation.
+Verified in a transaction: creating a team auto-added the owner as a member via
+the existing `communities_add_owner_as_member` trigger, so **no membership code
+was written at all**. There is deliberately no `team_messages` table.
+
+Two traps checked rather than assumed:
+- `public.team_members` is **not** teams — it holds the about-us staff list
+  (name, position, email). Do not reuse it.
+- `communities.description` has a **20-character minimum** and
+  `communities_set_slug` rewrites the slug on insert, so the generated types
+  demanding a `slug` are wrong in practice. Same cast + reasoning as
+  `createCommunity()`.
+
+The projector proved the retrieval architecture: making opportunities searchable
+was **one function plus one line** in `rebuild_knowledge_chunks()`. No change to
+the embed job, the search RPC, `/ask`, or the assistant. Only opportunities still
+open are indexed, so *"any AI hackathons?"* cannot return one that closed.
+
+### Known gap — nothing can post an opportunity yet
+
+There is no form. Rows go in by SQL, which is a defensible launch model (curated
+listings, quality control) but is not a feature. Decide between an admin-only
+form and letting any signed-in student post; the RLS already supports the latter
+(`auth.uid() = posted_by`).
+
+---
+
+## Opportunities page — original plan (kept for the reasoning)
 
 Hackathons and competitions, with team formation. Discovery → register interest
 → post what you need → team forms → group chat.
