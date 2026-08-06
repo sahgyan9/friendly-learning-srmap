@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
-import { ChevronDown, Search } from "lucide-react";
+import { ChevronDown, FileText, Search } from "lucide-react";
+import { motion } from "framer-motion";
 
 import SEOHead from "@/components/SEOHead";
 import { ROUTE_META } from "@/lib/seo/route-meta";
@@ -217,16 +218,38 @@ const CommunityPosts = () => {
 
 
       <div className="min-h-screen bg-background">
+        {/* Hero header — same design language as FeaturesShowcase cards */}
+        <div className="relative overflow-hidden border-b border-border/60 bg-gradient-to-br from-emerald-500/5 via-background to-background">
+          {/* Decorative blobs */}
+          <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-emerald-500/8 blur-3xl" />
+          <div className="pointer-events-none absolute -left-16 bottom-0 h-48 w-48 rounded-full bg-emerald-500/5 blur-2xl" />
+
+          <div className="container mx-auto max-w-3xl px-4 pb-8 pt-28">
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              {/* Pill label — matches FeaturesShowcase numbering */}
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">
+                <FileText className="h-3.5 w-3.5" />
+                06 — Posts
+              </div>
+
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <h1 className="text-3xl font-bold tracking-tight">Posts</h1>
+                  <p className="mt-2 max-w-2xl text-base text-muted-foreground">
+                    Find hackathon teammates, study help and project partners — anyone can post.
+                  </p>
+                </div>
+                <CreatePostButton onPostCreated={() => loadPosts(0)} />
+              </div>
+            </motion.div>
+          </div>
+        </div>
+
         <div className="container mx-auto max-w-3xl px-4 py-6">
-          <header className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h1 className="text-3xl font-bold">Posts</h1>
-              <p className="text-muted-foreground">
-                Find hackathon teammates, study help and project partners — anyone can post.
-              </p>
-            </div>
-            <CreatePostButton onPostCreated={() => loadPosts(0)} />
-          </header>
 
           <div className="relative mb-4">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />

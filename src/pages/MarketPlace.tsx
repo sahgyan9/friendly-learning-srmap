@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
-import { Search, Plus, Loader2 } from "lucide-react";
+import { CalendarDays, Search, Plus, Loader2, Sparkles } from "lucide-react";
+import { motion } from "framer-motion";
 import { PostCard } from "@/components/marketplace/PostCard";
 import { SRMAPEventCard } from "@/components/marketplace/SRMAPEventCard";
 import { useSRMAPEvents } from "@/hooks/useSRMAPEvents";
@@ -147,12 +148,44 @@ const MarketPlace = () => {
 
             <div className="min-h-screen bg-background">
 
-                <div className="container mx-auto px-4 py-8 pt-24">
-                    <div className="mb-6">
-                        <h1 className="text-2xl sm:text-3xl font-bold">Events</h1>
-                        <p className="text-sm text-muted-foreground mt-1">Official SRMAP events, ads and course materials</p>
-                    </div>
+                {/* Hero header — same design language as FeaturesShowcase cards */}
+                <div className="relative overflow-hidden border-b border-border/60 bg-gradient-to-br from-violet-500/5 via-background to-background">
+                  {/* Decorative blobs */}
+                  <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-violet-500/8 blur-3xl" />
+                  <div className="pointer-events-none absolute -left-16 bottom-0 h-48 w-48 rounded-full bg-violet-500/5 blur-2xl" />
 
+                  <div className="container mx-auto px-4 pb-8 pt-28">
+                    <motion.div
+                      initial={{ opacity: 0, y: 16 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.5 }}
+                    >
+                      {/* Pill label — matches FeaturesShowcase numbering */}
+                      <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-violet-500/20 bg-violet-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-violet-600 dark:text-violet-400">
+                        <CalendarDays className="h-3.5 w-3.5" />
+                        03 — Events
+                      </div>
+
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                        <div>
+                          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Events</h1>
+                          <p className="mt-2 max-w-2xl text-base text-muted-foreground">
+                            Official SRMAP events, ads and course materials — all in one place.
+                            Never miss what's happening on campus again.
+                          </p>
+                        </div>
+
+                        {/* Live badge */}
+                        <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1.5 text-xs font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">
+                          <Sparkles className="h-3 w-3" />
+                          Live
+                        </span>
+                      </div>
+                    </motion.div>
+                  </div>
+                </div>
+
+                <div className="container mx-auto px-4 py-8">
                     <div className="mb-8">
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                             <div className="flex-1 w-full sm:w-auto">

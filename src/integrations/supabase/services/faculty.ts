@@ -112,14 +112,20 @@ export async function getFacultyList(query: FacultyQuery = {}) {
   }
 
   if (sort === "name") {
-    request = request.order("name", { ascending: true });
+    request = request
+      .order("image_url", { ascending: false, nullsFirst: false })
+      .order("name", { ascending: true });
   } else if (sort === "reviews") {
-    request = request.order("rating_count", { ascending: false }).order("name", { ascending: true });
+    request = request
+      .order("image_url", { ascending: false, nullsFirst: false })
+      .order("rating_count", { ascending: false })
+      .order("name", { ascending: true });
   } else {
-    // Unrated faculty sort last so the top of the page is always useful.
+    // Default: highest rated first; unrated last; no-image last within each group.
     request = request
       .order("rating_count", { ascending: false })
       .order("avg_overall", { ascending: false })
+      .order("image_url", { ascending: false, nullsFirst: false })
       .order("name", { ascending: true });
   }
 

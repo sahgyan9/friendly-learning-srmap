@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { EyeOff, Search, SlidersHorizontal } from "lucide-react";
+import { BookOpen, EyeOff, Search, SlidersHorizontal, Star } from "lucide-react";
+import { motion } from "framer-motion";
 
 import Footer from "@/components/Footer";
 import SEOHead from "@/components/SEOHead";
@@ -119,34 +120,68 @@ const Faculty = () => {
 
       <div className="min-h-screen bg-background">
 
-        <div className="container mx-auto px-4 py-8 pt-24">
-          <header className="mb-6">
-            <h1 className="text-2xl font-bold sm:text-3xl">Faculty Ratings</h1>
-            <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-              Honest, anonymous ratings from SRM AP students on teaching quality, grading fairness
-              and helpfulness. Know what a course is like before you register.
-            </p>
+        {/* Hero header — same design language as FeaturesShowcase cards */}
+        <div className="relative overflow-hidden border-b border-border/60 bg-gradient-to-br from-rose-500/5 via-background to-background">
+          {/* Decorative blobs */}
+          <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-rose-500/8 blur-3xl" />
+          <div className="pointer-events-none absolute -left-16 bottom-0 h-48 w-48 rounded-full bg-rose-500/5 blur-2xl" />
 
-            <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
-              {stats.faculty_count > 0 && (
-                <span>
-                  <strong className="text-foreground">{stats.faculty_count}</strong> faculty
+          <div className="container mx-auto px-4 pb-8 pt-28">
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              {/* Pill label — matches FeaturesShowcase numbering */}
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-rose-500/20 bg-rose-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-rose-600 dark:text-rose-400">
+                <BookOpen className="h-3.5 w-3.5" />
+                04 — Faculty
+              </div>
+
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Faculty Ratings</h1>
+                  <p className="mt-2 max-w-2xl text-base text-muted-foreground">
+                    Honest, anonymous ratings from SRM AP students on teaching quality, grading fairness
+                    and helpfulness. Know what a course is like before you register.
+                  </p>
+                </div>
+
+                {/* Anonymous badge */}
+                <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm">
+                  <EyeOff className="h-3.5 w-3.5" />
+                  Ratings are anonymous
                 </span>
-              )}
-              {stats.department_count > 0 && (
-                <span>
-                  <strong className="text-foreground">{stats.department_count}</strong> departments
-                </span>
-              )}
-              <span>
-                <strong className="text-foreground">{stats.rating_count}</strong>{" "}
-                {stats.rating_count === 1 ? "rating" : "ratings"}
-              </span>
-              <span className="flex items-center gap-1 text-xs">
-                <EyeOff className="h-3.5 w-3.5" />
-                Ratings are anonymous
-              </span>
-            </div>
+              </div>
+
+              {/* Stats pills */}
+              <div className="mt-5 flex flex-wrap gap-2">
+                {stats.faculty_count > 0 && (
+                  <div className="flex items-center gap-1.5 rounded-full border border-rose-500/20 bg-rose-500/10 px-3 py-1 text-sm">
+                    <BookOpen className="h-3.5 w-3.5 text-rose-600 dark:text-rose-400" />
+                    <strong className="text-rose-600 dark:text-rose-400">{stats.faculty_count}</strong>
+                    <span className="text-muted-foreground">faculty</span>
+                  </div>
+                )}
+                {stats.department_count > 0 && (
+                  <div className="flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-sm shadow-sm">
+                    <strong className="text-foreground">{stats.department_count}</strong>
+                    <span className="text-muted-foreground">departments</span>
+                  </div>
+                )}
+                <div className="flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-sm shadow-sm">
+                  <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                  <strong className="text-foreground">{stats.rating_count}</strong>
+                  <span className="text-muted-foreground">{stats.rating_count === 1 ? "rating" : "ratings"}</span>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+
+        <div className="container mx-auto px-4 py-8">
+          <header className="sr-only">
+            <h2>Browse and filter faculty</h2>
           </header>
 
           <div className="mb-6 flex flex-col gap-3 sm:flex-row">

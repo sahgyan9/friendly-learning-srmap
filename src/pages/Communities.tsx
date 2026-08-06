@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { ChevronDown, Plus, Search, Users } from "lucide-react";
+import { motion } from "framer-motion";
 
 import SEOHead from "@/components/SEOHead";
 import { Button } from "@/components/ui/button";
@@ -105,31 +106,49 @@ const Communities = () => {
         description="Hackathon teams, project groups, clubs and study circles run by students at SRM AP."
       />
 
-      <div className="container mx-auto max-w-6xl px-4 py-12 md:py-16">
-        <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-          <div>
-            <h1 className="mb-2 text-3xl font-bold md:text-4xl">Groups</h1>
-            <p className="max-w-2xl text-muted-foreground">
-              Hackathon teams, project groups, clubs and study circles. Anyone can start one, and
-              members post inside it — some are open to everyone, some you ask to join.
-            </p>
-          </div>
+      {/* Hero header — same design language as FeaturesShowcase cards */}
+      <div className="relative overflow-hidden border-b border-border/60 bg-gradient-to-br from-amber-500/5 via-background to-background">
+        {/* Decorative blobs */}
+        <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-amber-500/8 blur-3xl" />
+        <div className="pointer-events-none absolute -left-16 bottom-0 h-48 w-48 rounded-full bg-amber-500/5 blur-2xl" />
 
-          {/* Signed-out visitors get the button too. It sends them to sign-in
-              rather than hiding the feature, which is the only way someone
-              browsing without an account learns that starting one is an option. */}
-          {user ? (
-            <Button onClick={() => setCreateOpen(true)} size="lg" className="shrink-0">
-              <Plus className="mr-2 h-4 w-4" />
-              Start a group
-            </Button>
-          ) : (
-            <Button asChild size="lg" variant="outline" className="shrink-0">
-              <Link to="/signin">Sign in to start a group</Link>
-            </Button>
-          )}
+        <div className="container mx-auto max-w-6xl px-4 pb-8 pt-28">
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            {/* Pill label — matches FeaturesShowcase numbering */}
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-amber-500/20 bg-amber-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-amber-600 dark:text-amber-400">
+              <Users className="h-3.5 w-3.5" />
+              05 — Groups
+            </div>
+
+            <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+              <div>
+                <h1 className="text-3xl font-bold tracking-tight md:text-4xl">Groups</h1>
+                <p className="mt-2 max-w-2xl text-base text-muted-foreground">
+                  Hackathon teams, project groups, clubs and study circles. Anyone can start one, and
+                  members post inside it — some are open to everyone, some you ask to join.
+                </p>
+              </div>
+
+              {user ? (
+                <Button onClick={() => setCreateOpen(true)} size="lg" className="shrink-0">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Start a group
+                </Button>
+              ) : (
+                <Button asChild size="lg" variant="outline" className="shrink-0">
+                  <Link to="/signin">Sign in to start a group</Link>
+                </Button>
+              )}
+            </div>
+          </motion.div>
         </div>
+      </div>
 
+      <div className="container mx-auto max-w-6xl px-4 py-8">
         <MyInvites />
 
         <div className="mb-6 space-y-3">

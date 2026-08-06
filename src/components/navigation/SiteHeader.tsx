@@ -63,6 +63,70 @@ const PRIMARY_NAV: NavItem[] = [
   { name: "Faculty", url: "/faculty", icon: GraduationCap },
 ];
 
+/**
+ * Per-route accent palette — mirrors FeaturesShowcase card colours.
+ * Each entry has Tailwind classes for: pill bg, text, dot, and border.
+ */
+const ROUTE_ACCENT: Record<string, {
+  pill: string;      // active pill bg
+  text: string;      // active link text
+  dot: string;       // "new" dot colour
+  border: string;    // bottom accent border
+}> = {
+  "/": {
+    pill: "bg-primary/10",
+    text: "text-primary",
+    dot: "bg-primary",
+    border: "border-primary/40",
+  },
+  "/communities": {
+    pill: "bg-amber-500/10",
+    text: "text-amber-600 dark:text-amber-400",
+    dot: "bg-amber-500",
+    border: "border-amber-500/40",
+  },
+  "/community-posts": {
+    pill: "bg-emerald-500/10",
+    text: "text-emerald-600 dark:text-emerald-400",
+    dot: "bg-emerald-500",
+    border: "border-emerald-500/40",
+  },
+  "/marketplace": {
+    pill: "bg-violet-500/10",
+    text: "text-violet-600 dark:text-violet-400",
+    dot: "bg-violet-500",
+    border: "border-violet-500/40",
+  },
+  "/messages": {
+    pill: "bg-sky-500/10",
+    text: "text-sky-600 dark:text-sky-400",
+    dot: "bg-sky-500",
+    border: "border-sky-500/40",
+  },
+  "/faculty": {
+    pill: "bg-rose-500/10",
+    text: "text-rose-600 dark:text-rose-400",
+    dot: "bg-rose-500",
+    border: "border-rose-500/40",
+  },
+  "/mentors": {
+    pill: "bg-primary/10",
+    text: "text-primary",
+    dot: "bg-primary",
+    border: "border-primary/40",
+  },
+};
+
+/** Returns the accent for the current location, falling back to the primary. */
+function useRouteAccent() {
+  const location = useLocation();
+  // Match the most specific prefix first
+  const key = Object.keys(ROUTE_ACCENT)
+    .filter((prefix) => prefix === "/" ? location.pathname === "/" : location.pathname.startsWith(prefix))
+    .sort((a, b) => b.length - a.length)[0];
+  return ROUTE_ACCENT[key] ?? ROUTE_ACCENT["/"];
+}
+
 /** Rendered in the mobile sheet, under a rule. Reachable from search anywhere. */
 const SECONDARY_NAV = [
   { name: "Mentors", url: "/mentors", icon: Users },
@@ -91,6 +155,7 @@ const SECONDARY_NAV = [
 export function SiteHeader() {
   const { user, profile } = useAuth();
   const location = useLocation();
+  const accent = useRouteAccent();
   const { hasSeen: hasSeenFaculty } = useHasSeenFacultyRatings();
   const { hasSeen: hasVisitedGroups } = useHasVisitedGroupsNav();
   const { hasSeen: hasVisitedEvents } = useHasVisitedEventsNav();
@@ -137,7 +202,10 @@ export function SiteHeader() {
         Skip to content
       </a>
 
-      <header className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/75">
+      <header className={cn(
+        "sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/75 transition-colors duration-300",
+        accent.border,
+      )}>
         <div className="container mx-auto px-4">
           <div className="flex h-16 items-center gap-4">
             <Link to="/" className="shrink-0 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
@@ -207,10 +275,11 @@ export function SiteHeader() {
 
                   <nav aria-label="Primary" className="p-3">
                     <ul className="space-y-1">
-                      {visibleNav.map((item) => {
+                       {visibleNav.map((item) => {
                         const Icon = item.icon;
                         const active = isActive(item.url);
                         const highlighted = navHighlights[item.url];
+                        const itemAccent = ROUTE_ACCENT[item.url] ?? ROUTE_ACCENT["/"];
 
                         return (
                           <li key={item.url}>
@@ -220,14 +289,14 @@ export function SiteHeader() {
                               className={cn(
                                 "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                                 active
-                                  ? "bg-primary/10 text-primary"
+                                  ? `${itemAccent.pill} ${itemAccent.text}`
                                   : "text-foreground/80 hover:bg-muted hover:text-foreground",
                               )}
                             >
                               <Icon className="h-4 w-4 shrink-0" aria-hidden />
                               {item.name}
                               {highlighted && (
-                                <span className="ml-auto h-2 w-2 shrink-0 rounded-full bg-primary" aria-hidden />
+                                <span className={cn("ml-auto h-2 w-2 shrink-0 rounded-full", itemAccent.dot)} aria-hidden />
                               )}
                             </Link>
                           </li>
@@ -308,9 +377,10 @@ export function SiteHeader() {
                   clump of text rather than as separate destinations; the space
                   is free here, since nothing else shares the row. */}
               <ul className="flex items-center gap-2 xl:gap-4">
-                {visibleNav.map((item) => {
+                  {visibleNav.map((item) => {
                   const active = isActive(item.url);
                   const highlighted = navHighlights[item.url];
+                  const itemAccent = ROUTE_ACCENT[item.url] ?? ROUTE_ACCENT["/"];
 
                   return (
                     <li key={item.url}>
@@ -320,14 +390,14 @@ export function SiteHeader() {
                         className={cn(
                           "relative block rounded-full px-4 py-2 text-sm font-medium transition-colors",
                           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                          active ? "text-primary" : "text-muted-foreground hover:text-foreground",
+                          active ? itemAccent.text : "text-muted-foreground hover:text-foreground",
                         )}
                       >
                         {item.name}
 
                         {highlighted && (
                           <span
-                            className="absolute right-1 top-1 h-2 w-2 rounded-full bg-primary"
+                            className={cn("absolute right-1 top-1 h-2 w-2 rounded-full", itemAccent.dot)}
                             aria-hidden
                           />
                         )}
@@ -335,7 +405,7 @@ export function SiteHeader() {
                         {active && (
                           <motion.span
                             layoutId="site-nav-active"
-                            className="absolute inset-0 -z-10 rounded-full bg-primary/10"
+                            className={cn("absolute inset-0 -z-10 rounded-full", itemAccent.pill)}
                             initial={false}
                             transition={{ type: "spring", stiffness: 350, damping: 30 }}
                           />
