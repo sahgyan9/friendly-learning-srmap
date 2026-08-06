@@ -1,9 +1,10 @@
 
 import React, { useEffect, useRef, useState } from "react";
-import { Send, Loader2, Smile } from "lucide-react";
+import { Send, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useTypingIndicator } from "@/hooks/useTypingIndicator";
+import EmojiPicker from "./EmojiPicker";
 
 interface MessageInputProps {
   onSendMessage: (content: string) => Promise<void>;
@@ -81,6 +82,27 @@ const MessageInput = ({
     else stopTyping();
   };
 
+  const handleEmojiSelect = (emoji: string) => {
+    const el = textareaRef.current;
+    if (el) {
+      const start = el.selectionStart ?? message.length;
+      const end = el.selectionEnd ?? message.length;
+      const newValue = message.slice(0, start) + emoji + message.slice(end);
+      setMessage(newValue);
+
+      // Move cursor after the inserted emoji
+      requestAnimationFrame(() => {
+        el.focus();
+        const pos = start + emoji.length;
+        el.setSelectionRange(pos, pos);
+      });
+
+      if (conversationId) startTyping();
+    } else {
+      setMessage((prev) => prev + emoji);
+    }
+  };
+
   return (
     <form
       onSubmit={handleSubmit}
@@ -94,17 +116,8 @@ const MessageInput = ({
             : "border-white/10 bg-white/5",
         )}
       >
-        {/* Emoji hint icon */}
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="mb-0.5 h-8 w-8 shrink-0 rounded-xl text-muted-foreground/50 hover:bg-white/8 hover:text-muted-foreground"
-          tabIndex={-1}
-          disabled={busy}
-        >
-          <Smile className="h-4 w-4" />
-        </Button>
+        {/* Emoji picker */}
+        <EmojiPicker onEmojiSelect={handleEmojiSelect} disabled={busy} />
 
         <textarea
           ref={textareaRef}
