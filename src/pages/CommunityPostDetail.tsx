@@ -15,6 +15,7 @@ import { EditPostModal } from "@/components/community/EditPostModal";
 import { ImageLightbox } from "@/components/community/ImageLightbox";
 import { InlineComments } from "@/components/community/InlineComments";
 import { LinkifiedText } from "@/components/common/LinkifiedText";
+import { CardAccentBorder } from "@/components/ui/CardAccentBorder";
 import {
   AwaitingReplyBadge,
   PostStatusBadge,
@@ -22,6 +23,17 @@ import {
 } from "@/components/community/PostTypeBadge";
 import { useAuth } from "@/context/AuthContext";
 import { getBreadcrumbSchema } from "@/lib/structured-data";
+
+/** Maps post_type directly to a CardAccentBorder gradient key. */
+const POST_TYPE_GRADIENT: Record<string, string> = {
+  hackathon: "amber",
+  "study-help": "sky",
+  project: "violet",
+  research: "emerald",
+  "problem-solving": "rose",
+  announcement: "orange",
+  general: "muted",
+};
 import { PRIMARY_DOMAIN } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { getInitials } from "@/utils/user-utils";
@@ -188,38 +200,39 @@ const CommunityPostDetail = () => {
       />
 
       <div className="min-h-screen bg-background">
-        <div className="container mx-auto max-w-3xl px-4 py-6">
-          <Button asChild variant="ghost" size="sm" className="-ml-2 mb-4 gap-1.5">
+        <div className="container mx-auto max-w-3xl px-4 pt-28 pb-10">
+          <Button asChild variant="ghost" size="sm" className="-ml-2 mb-6 gap-1.5 text-muted-foreground hover:text-foreground">
             <Link to="/community-posts">
               <ArrowLeft className="h-4 w-4" />
               Back to posts
             </Link>
           </Button>
 
-          <Card>
+          <Card className="relative overflow-hidden">
+            {/* Accent border colour tracks the post type — same as the feed cards */}
+            <CardAccentBorder gradient={(POST_TYPE_GRADIENT[post.post_type] ?? 'muted') as any} />
             <CardHeader>
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <Avatar className="h-12 w-12">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                {/* Author — larger, more prominent on the detail page */}
+                <div className="flex items-center gap-4">
+                  <Avatar className="h-16 w-16 ring-2 ring-primary/20 shrink-0">
                     <AvatarImage src={post.author.profile_image ?? undefined} alt={post.author.name} />
-                    <AvatarFallback className="bg-primary/10 font-semibold text-primary">
+                    <AvatarFallback className="bg-primary/10 text-lg font-semibold text-primary">
                       {getInitials(post.author.name)}
                     </AvatarFallback>
                   </Avatar>
                   <div>
                     <div className="flex items-center gap-1.5">
-                      <span className="font-semibold">{post.author.name}</span>
+                      <h2 className="text-lg font-semibold leading-tight">{post.author.name}</h2>
                       {post.author.is_mentor && (
                         <BadgeCheck className="h-4 w-4 text-primary" aria-label="Verified mentor" />
                       )}
                     </div>
+                    {post.author.department && (
+                      <p className="text-sm text-muted-foreground">{post.author.department}</p>
+                    )}
                     <p className="text-xs text-muted-foreground">
-                      {[
-                        post.author.department,
-                        formatDistanceToNow(new Date(post.created_at), { addSuffix: true }),
-                      ]
-                        .filter(Boolean)
-                        .join(" · ")}
+                      {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
                     </p>
                   </div>
                 </div>
@@ -342,6 +355,13 @@ const CommunityPostDetail = () => {
 
           <Card className="mt-4">
             <CardContent className="pt-6">
+              <h2 className="mb-4 flex items-center gap-2 text-base font-semibold">
+                <MessageCircle className="h-4 w-4 text-muted-foreground" />
+                Replies
+                {post.comments_count > 0 && (
+                  <span className="text-sm font-normal text-muted-foreground">({post.comments_count})</span>
+                )}
+              </h2>
               <InlineComments
                 postId={post.id}
                 onCommentAdded={() =>

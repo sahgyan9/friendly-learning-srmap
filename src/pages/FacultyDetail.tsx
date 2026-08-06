@@ -8,6 +8,7 @@ import StructuredData from "@/components/StructuredData";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { CardAccentBorder } from "@/components/ui/CardAccentBorder";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FacultyRatingModal } from "@/components/faculty/FacultyRatingModal";
@@ -91,6 +92,9 @@ const FacultyDetail = () => {
   }
 
   const hasRatings = faculty.rating_count > 0;
+  // research_areas is a sparser second taxonomy (74 of 629 profiles); it reads
+  // as the same kind of thing to a student, so both render as one list.
+  const interests = [...(faculty.interests ?? []), ...(faculty.research_areas ?? [])];
   const canonical = `${PRIMARY_DOMAIN}/faculty/${faculty.slug}`;
   const ownReview = reviews.find((review) => review.is_own);
 
@@ -135,7 +139,8 @@ const FacultyDetail = () => {
             </Link>
           </Button>
 
-          <Card className="mb-6">
+          <Card className="relative mb-6 overflow-hidden">
+            <CardAccentBorder gradient="rose" />
             <CardContent className="pt-6">
               <div className="flex flex-col gap-6 sm:flex-row">
                 <div className="mx-auto h-32 w-32 shrink-0 overflow-hidden rounded-lg bg-muted sm:mx-0">
@@ -182,6 +187,28 @@ const FacultyDetail = () => {
                     </p>
                   )}
 
+                  {interests.length > 0 && (
+                    <div className="space-y-1.5">
+                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                        Works on
+                      </p>
+                      <div className="flex flex-wrap justify-center gap-1.5 sm:justify-start">
+                        {interests.map((interest) => (
+                          <Link
+                            key={interest}
+                            to={`/faculty?interest=${encodeURIComponent(interest)}`}
+                            className="rounded-full border border-rose-500/25 bg-rose-500/5 px-2.5 py-1 text-xs text-rose-700 transition-colors hover:bg-rose-500/10 dark:text-rose-300"
+                          >
+                            {interest}
+                          </Link>
+                        ))}
+                      </div>
+                      <p className="text-[11px] text-muted-foreground">
+                        Listed on the university directory. Tap one to see who else works on it.
+                      </p>
+                    </div>
+                  )}
+
                   <div className="flex flex-wrap justify-center gap-2 sm:justify-start">
                     <Button onClick={() => setShowRatingModal(true)}>
                       <Star className="mr-1.5 h-4 w-4" />
@@ -204,7 +231,8 @@ const FacultyDetail = () => {
 
           {hasRatings && (
             <div className="mb-6 grid gap-4 sm:grid-cols-2">
-              <Card>
+              <Card className="relative overflow-hidden">
+                <CardAccentBorder gradient="rose" />
                 <CardContent className="space-y-3 pt-6">
                   <h2 className="text-sm font-semibold">Rated on</h2>
                   {RATING_CRITERIA.map((criterion) => {
@@ -222,7 +250,8 @@ const FacultyDetail = () => {
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="relative overflow-hidden">
+                <CardAccentBorder gradient="rose" />
                 <CardContent className="space-y-2 pt-6">
                   <h2 className="text-sm font-semibold">Score distribution</h2>
                   {distribution.map(({ star, count }) => (
