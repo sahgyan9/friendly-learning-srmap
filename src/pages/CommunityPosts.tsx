@@ -233,7 +233,7 @@ const CommunityPosts = () => {
               {/* Pill label — matches FeaturesShowcase numbering */}
               <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">
                 <FileText className="h-3.5 w-3.5" />
-                06 — Posts
+                Posts
               </div>
 
               <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -251,29 +251,34 @@ const CommunityPosts = () => {
 
         <div className="container mx-auto max-w-3xl px-4 py-6">
 
-          <div className="relative mb-4">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Search posts, tags or content..."
-              value={searchTerm}
-              onChange={(event) => setSearchTerm(event.target.value)}
-              className="pl-10"
-              aria-label="Search community posts"
-            />
-          </div>
+          {/* Sticky filter bar: search + type chips stay visible while scrolling
+              a long feed. backdrop-blur-sm + bg-background/90 keeps it readable
+              without fully covering the card below. z-10 is enough because there
+              are no other stacked contexts on this page. */}
+          <div className="sticky top-[57px] z-10 -mx-4 bg-background/90 px-4 pt-3 pb-3 backdrop-blur-sm border-b border-border/40 mb-4">
+            <div className="relative mb-3">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Search posts, tags or content..."
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+                className="pl-10"
+                aria-label="Search community posts"
+              />
+            </div>
 
-          {/* Chips beat a <select>: every category stays one tap away. They
-              scroll on a phone and wrap on a desktop, where a scrolling strip
-              would just clip the last category out of sight.
+            {/* Chips beat a <select>: every category stays one tap away. They
+                scroll on a phone and wrap on a desktop, where a scrolling strip
+                would just clip the last category out of sight.
 
-              Only the categories that hold something are shown. All eight, at
-              equal weight, was eight decisions asked of someone who came to
-              read two posts — and most of them led to an empty page you could
-              only find by tapping. The rest are one "More" away, and the count
-              on each chip means you know what you are getting before you
-              choose. */}
-          <div className="mb-6 -mx-4 overflow-x-auto px-4 pb-1 sm:mx-0 sm:overflow-visible sm:px-0">
-            <div className="flex w-max gap-2 sm:w-auto sm:flex-wrap">
+                Only the categories that hold something are shown. All eight, at
+                equal weight, was eight decisions asked of someone who came to
+                read two posts — and most of them led to an empty page you could
+                only find by tapping. The rest are one "More" away, and the count
+                on each chip means you know what you are getting before you
+                choose. */}
+            <div className="-mx-4 overflow-x-auto px-4 pb-1 sm:mx-0 sm:overflow-visible sm:px-0">
+              <div className="flex w-max gap-2 sm:w-auto sm:flex-wrap">
               {visibleTypes.map((type) => {
                 const count = typeCounts[type.value];
 
@@ -342,6 +347,9 @@ const CommunityPosts = () => {
               )}
             </div>
           </div>
+          </div>
+
+          {/* Feed */}
 
           {loading ? (
             <div className="space-y-4">

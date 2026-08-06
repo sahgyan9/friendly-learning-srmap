@@ -1,30 +1,27 @@
 import { PRIMARY_DOMAIN } from "@/lib/constants";
 
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
+import { GraduationCap } from "lucide-react";
+import { motion } from "framer-motion";
 import SearchBar from "@/components/SearchBar";
 import SEOHead from "@/components/SEOHead";
 import StructuredData from "@/components/StructuredData";
 import { getMentors } from "@/integrations/supabase/services/mentors";
 import { Mentor } from "@/types/mentor";
-import { useToast } from "@/components/ui/use-toast";
-import { motion } from "framer-motion";
-import { sampleMentors } from "@/data/mentors";
 import { getBreadcrumbSchema } from "@/lib/structured-data";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Card } from "@/components/ui/card";
 import { useHasVisitedMentorsNav } from "@/hooks/useFeatureAnnouncement";
 
 // Import refactored components
 import MentorList from "@/components/mentors/MentorList";
-import MentorsHeader from "@/components/mentors/MentorsHeader";
 import MentorsFooter from "@/components/mentors/MentorsFooter";
 
 const Mentors = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredMentors, setFilteredMentors] = useState<Mentor[]>([]);
+  const [mentorCount, setMentorCount] = useState(0);
   const [isAiSearch, setIsAiSearch] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const { toast } = useToast();
   const { markSeen: markMentorsNavSeen } = useHasVisitedMentorsNav();
 
   // Reaching this page is what clears the welcome tour's navbar dot.
@@ -32,27 +29,7 @@ const Mentors = () => {
     markMentorsNavSeen();
   }, [markMentorsNavSeen]);
 
-  // Fade in animation variants
-  const pageVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        duration: 0.6,
-        when: "beforeChildren",
-        staggerChildren: 0.2
-      }
-    }
-  };
 
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.5 }
-    }
-  };
 
   // Fetch mentors from Supabase on component mount
   useEffect(() => {
@@ -63,40 +40,25 @@ const Mentors = () => {
 
         if (error) {
           console.error("Error fetching mentors:", error);
-          toast({
-            title: "Error",
-            description: "Failed to load mentors. Using sample data instead.",
-            variant: "destructive",
-          });
-          setFilteredMentors(sampleMentors);
+          toast.error("Failed to load mentors. Please try again.");
+          setFilteredMentors([]);
           return;
         }
 
-        if (data && data.length > 0) {
-          setFilteredMentors(data);
-        } else {
-          console.log("No mentors found in database, using sample data");
-          setFilteredMentors(sampleMentors);
-          toast({
-            title: "Using sample data",
-            description: "No mentors found in database. Using sample data instead.",
-          });
-        }
+        const mentors = data ?? [];
+        setFilteredMentors(mentors);
+        setMentorCount(mentors.length);
       } catch (err) {
         console.error("Exception fetching mentors:", err);
-        setFilteredMentors(sampleMentors);
-        toast({
-          title: "Error",
-          description: "An unexpected error occurred. Using sample data instead.",
-          variant: "destructive",
-        });
+        toast.error("An unexpected error occurred loading mentors.");
+        setFilteredMentors([]);
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchMentors();
-  }, [toast]);
+  }, []);
 
   // Handle both normal search and AI search
   const handleSearch = async (query: string, results?: Mentor[]) => {
@@ -104,16 +66,13 @@ const Mentors = () => {
     setIsAiSearch(false);
 
     if (results) {
-      // If results are provided directly (from dynamic search)
       setFilteredMentors(results);
     } else if (!query) {
-      // If search is cleared, show all mentors again
       setIsLoading(true);
       const { data, error } = await getMentors();
       if (data && !error) {
         setFilteredMentors(data);
-      } else {
-        setFilteredMentors(sampleMentors);
+        setMentorCount(data.length);
       }
       setIsLoading(false);
     }
@@ -121,13 +80,7 @@ const Mentors = () => {
 
   const handleGeminiSearch = (geminiResults: Mentor[]) => {
     setIsAiSearch(true);
-
-    if (!geminiResults || geminiResults.length === 0) {
-      setFilteredMentors([]);
-      return;
-    }
-
-    setFilteredMentors(geminiResults);
+    setFilteredMentors(geminiResults ?? []);
   };
 
   const structuredData = {
@@ -135,7 +88,7 @@ const Mentors = () => {
     "@type": "ItemList",
     "name": "SRM AP Student Mentors",
     "description": "Browse verified student mentors at SRM University AP offering academic guidance and career support",
-    "numberOfItems": filteredMentors.length,
+    "numberOfItems": mentorCount,
     "itemListElement": filteredMentors.slice(0, 10).map((mentor, index) => ({
       "@type": "Person",
       "position": index + 1,
@@ -152,55 +105,67 @@ const Mentors = () => {
   return (
     <>
       <SEOHead
-        title={`Find Student Mentors at Friendly Learning SRM AP | Browse ${filteredMentors.length} Verified SRMAP Mentors`}
+        title={`Find Student Mentors at Friendly Learning SRM AP | Browse ${mentorCount} Verified SRMAP Mentors`}
         description="Discover experienced student mentors at Friendly Learning SRM AP University in Amaravati. Browse profiles, skills, and reviews to find the perfect mentor for your academic journey. Connect with verified peer mentors from SRMAP today!"
         keywords="friendly learning srm ap, srmap mentorship platform, srmap friendly learning, SRM AP mentors directory, student mentors SRMAP, academic guidance amaravati, peer mentoring andhra pradesh, university mentorship srmap, SRM AP academic support, student tutoring amaravati"
         canonical={`${PRIMARY_DOMAIN}/mentors`}
       />
 
-      {/* Add structured data using our dedicated component */}
       <StructuredData data={structuredData} />
-
-      {/* Add breadcrumb schema */}
       <StructuredData data={getBreadcrumbSchema([
         { name: "Home", url: `${PRIMARY_DOMAIN}/` },
         { name: "Mentors", url: `${PRIMARY_DOMAIN}/mentors` }
       ])} />
 
-      <motion.div
-        className="min-h-screen"
-        initial="hidden"
-        animate="visible"
-        variants={pageVariants}
-      >
+      <div className="min-h-screen bg-background">
+        {/* Hero header — same design language as Faculty / Groups / Posts */}
+        <div className="relative overflow-hidden border-b border-border/60 bg-gradient-to-br from-primary/5 via-background to-background">
+          {/* Decorative blobs */}
+          <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-primary/8 blur-3xl" />
+          <div className="pointer-events-none absolute -left-16 bottom-0 h-48 w-48 rounded-full bg-primary/5 blur-2xl" />
 
-        <main className="pt-24 pb-16">
-          <div className="container px-4 md:px-6">
-            <motion.div variants={itemVariants}>
-              <MentorsHeader
-                title="Find Your Perfect Mentor at SRM AP"
-                description="Browse our extensive directory of verified student mentors or use our AI-powered search to find mentors with specific skills and expertise tailored to your academic needs."
-              />
-            </motion.div>
+          <div className="container mx-auto max-w-6xl px-4 pb-8 pt-28">
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              {/* Pill label */}
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-primary">
+                <GraduationCap className="h-3.5 w-3.5" />
+                Mentors
+              </div>
 
-            {/* Search */}
-            <motion.div variants={itemVariants}>
-              <SearchBar onSearch={handleSearch} onGeminiSearch={handleGeminiSearch} />
-            </motion.div>
+              <h1 className="text-3xl font-bold tracking-tight md:text-4xl">Find Your Mentor</h1>
+              <p className="mt-2 max-w-2xl text-base text-muted-foreground">
+                Browse verified student mentors at SRM AP or use AI-powered search to find someone
+                with the exact skills you need.
+              </p>
 
-            {/* Mentors List */}
-            <motion.div variants={itemVariants}>
-              <MentorList
-                isLoading={isLoading}
-                mentors={filteredMentors}
-                isAiSearch={isAiSearch}
-              />
+              {/* Live count pill */}
+              {mentorCount > 0 && (
+                <div className="mt-5 inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-sm">
+                  <strong className="text-primary">{mentorCount}</strong>
+                  <span className="text-muted-foreground">verified mentors</span>
+                </div>
+              )}
             </motion.div>
           </div>
-        </main>
+        </div>
+
+        {/* Search + list */}
+        <div className="container mx-auto max-w-6xl px-4 py-8">
+          <SearchBar onSearch={handleSearch} onGeminiSearch={handleGeminiSearch} />
+
+          <MentorList
+            isLoading={isLoading}
+            mentors={filteredMentors}
+            isAiSearch={isAiSearch}
+          />
+        </div>
 
         <MentorsFooter />
-      </motion.div>
+      </div>
     </>
   );
 };
