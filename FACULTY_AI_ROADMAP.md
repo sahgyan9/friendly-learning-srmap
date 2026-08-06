@@ -253,12 +253,72 @@ was **one function plus one line** in `rebuild_knowledge_chunks()`. No change to
 the embed job, the search RPC, `/ask`, or the assistant. Only opportunities still
 open are indexed, so *"any AI hackathons?"* cannot return one that closed.
 
-### Known gap — nothing can post an opportunity yet
+### Posting — SHIPPED 2026-08-06, open to any signed-in student
 
-There is no form. Rows go in by SQL, which is a defensible launch model (curated
-listings, quality control) but is not a feature. Decide between an admin-only
-form and letting any signed-in student post; the RLS already supports the latter
-(`auth.uid() = posted_by`).
+Decided in favour of open posting over an admin-only form: the student who spots
+a hackathon first is never the person running this site, and a queue only one
+person can clear is exactly how a listings page goes stale.
+
+The guards for that are in the database, not the form, so they hold no matter
+what writes to the table — a second client, a script, or a future page:
+
+| Guard | Where | Behaviour |
+| --- | --- | --- |
+| Post only as yourself | RLS `WITH CHECK (auth.uid() = posted_by)` | Verified refused when posting as another user |
+| Slug collisions | `opportunities_set_slug` BEFORE INSERT | Second "Smart India Hackathon 2026" becomes `-2`; retitling keeps the old slug so shared links survive |
+| Spam ceiling | `opportunities_rate_limit` BEFORE INSERT | 5/day for non-admins, with a message written for a student, not a Postgres error |
+
+**`rebuild_knowledge_chunks()` was never on a schedule.** The projector comment
+in `20260806190000_opportunities.sql` says "the schedule already calls" it. It
+did not — `cron.job` had `embed-knowledge-topup` and no rebuild. A posted
+opportunity therefore got no chunk, was never embedded, and was never
+searchable; it only looked like it worked because the rebuild was run by hand
+after each manual insert. Fixed two ways in `20260806220000_opportunity_posting.sql`:
+a statement-level trigger reprojects opportunities on write (immediate), and
+`rebuild-knowledge-chunks-hourly` now runs the full rebuild at `7 * * * *` so
+faculty and mentor edits stop going stale silently. The embedding still follows
+within ten minutes, when the top-up next runs.
+
+### Where semantic search actually lives
+
+`/ask` is a destination, and students do not navigate to destinations. The two
+surfaces that carry real traffic now use the same retrieval:
+
+- **The header palette (Ctrl/⌘ D), on every page.** It was pure `ILIKE`, so
+  "someone who knows machine learning" matched nothing and its empty state
+  coached people into our vocabulary — *"try a word like hackathon"*. It now
+  falls through to `semantic-search`, but **only when the literal pass returns
+  nothing and the query is a phrase** (`looksLikeAPhrase` in `useSiteSearch.ts`).
+  Half-typed names like "dr r" are deliberately excluded: they are fixed by the
+  next keystroke and each uncached call spends one of ~100 embeddings a minute.
+  Results render under "Closest to what you asked" and mix all entity types.
+- **The chatbot.** `ai-chatbot` had been returning `suggestedFaculty` on every
+  reply since it moved to retrieval, and `ChatbotModal` read only
+  `suggestedMentors` — four matched lecturers computed and discarded per
+  message. They render now, styled lighter than mentor cards and linking to the
+  profile, because a senior can be messaged from there and a professor cannot.
+
+**`semantic-search` was dropping opportunities.** It grouped rows into `faculty`
+and `mentors` only, so an opportunity was retrieved, counted in `total`, and
+then filtered out of the response — six retrieved, five returned. The count
+looking healthy is what hid it. There is now an `opportunities` group and an
+`other` bucket, so the next entity type added to the index degrades to
+visible-but-ungrouped rather than vanishing. **Any new `entity_type` needs a
+group here.**
+
+Worked example, and the reason this exists at all — query *"is there any
+national level coding contest I can enter"*:
+
+```
+opportunity  Smart India Hackathon 2026   0.667   <- top hit
+mentor       ankush adhikari              0.622
+mentor       Aarav Raj Shrestha           0.611
+```
+
+The question never says "hackathon"; the listing never says "contest". They
+share no keyword, so `ILIKE` returns nothing and the vector search ranks it
+first. That is the whole case for the embedding layer, and it is also why tags
+on the posting form are the field worth nudging people to fill in.
 
 ---
 
