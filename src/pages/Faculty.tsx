@@ -196,9 +196,19 @@ const Faculty = () => {
                 placeholder="Search by name, department or research interest..."
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                className="pl-10"
+                className="pl-10 pr-9"
                 aria-label="Search faculty"
               />
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => setSearch("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  aria-label="Clear search"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
             </div>
 
             <Select value={department} onValueChange={(value) => updateParam("dept", value, "all")}>
