@@ -1524,6 +1524,150 @@ export type Database = {
           },
         ]
       }
+      opportunities: {
+        Row: {
+          created_at: string
+          description: string | null
+          ends_at: string | null
+          external_url: string | null
+          id: string
+          interest_count: number
+          is_online: boolean
+          is_published: boolean
+          kind: string
+          location: string | null
+          organiser: string | null
+          posted_by: string | null
+          register_by: string | null
+          slug: string
+          starts_at: string | null
+          tags: string[]
+          team_count: number
+          team_max: number | null
+          team_min: number | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          ends_at?: string | null
+          external_url?: string | null
+          id?: string
+          interest_count?: number
+          is_online?: boolean
+          is_published?: boolean
+          kind?: string
+          location?: string | null
+          organiser?: string | null
+          posted_by?: string | null
+          register_by?: string | null
+          slug: string
+          starts_at?: string | null
+          tags?: string[]
+          team_count?: number
+          team_max?: number | null
+          team_min?: number | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          ends_at?: string | null
+          external_url?: string | null
+          id?: string
+          interest_count?: number
+          is_online?: boolean
+          is_published?: boolean
+          kind?: string
+          location?: string | null
+          organiser?: string | null
+          posted_by?: string | null
+          register_by?: string | null
+          slug?: string
+          starts_at?: string | null
+          tags?: string[]
+          team_count?: number
+          team_max?: number | null
+          team_min?: number | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      opportunity_interest: {
+        Row: {
+          created_at: string
+          note: string | null
+          opportunity_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          note?: string | null
+          opportunity_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          note?: string | null
+          opportunity_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      opportunity_teams: {
+        Row: {
+          community_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          is_open: boolean
+          looking_for: string[]
+          opportunity_id: string
+          pitch: string | null
+          updated_at: string
+        }
+        Insert: {
+          community_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_open?: boolean
+          looking_for?: string[]
+          opportunity_id: string
+          pitch?: string | null
+          updated_at?: string
+        }
+        Update: {
+          community_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_open?: boolean
+          looking_for?: string[]
+          opportunity_id?: string
+          pitch?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "opportunity_teams_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: true
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunity_teams_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       post_comments: {
         Row: {
           content: string

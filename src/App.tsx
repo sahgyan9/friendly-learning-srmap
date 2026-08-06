@@ -111,6 +111,8 @@ const Communities = lazyWithRetry("Communities", () => import("./pages/Communiti
 const CommunityDetail = lazyWithRetry("CommunityDetail", () => import("./pages/CommunityDetail"));
 const Faculty = lazyWithRetry("Faculty", () => import("./pages/Faculty"));
 const Ask = lazyWithRetry("Ask", () => import("./pages/Ask"));
+const Opportunities = lazyWithRetry("Opportunities", () => import("./pages/Opportunities"));
+const OpportunityDetail = lazyWithRetry("OpportunityDetail", () => import("./pages/OpportunityDetail"));
 const FacultyDetail = lazyWithRetry("FacultyDetail", () => import("./pages/FacultyDetail"));
 const MarketPlace = lazyWithRetry("MarketPlace", () => import("./pages/MarketPlace"));
 const HowItWorks = lazyWithRetry("HowItWorks", () => import("./pages/HowItWorks"));
@@ -184,6 +186,8 @@ function App() {
                 <Route path="/mentors" element={<Mentors />} />
                 <Route path="/mentor/:id" element={<MentorProfile />} />
                 <Route path="/ask" element={<Ask />} />
+                <Route path="/opportunities" element={<Opportunities />} />
+                <Route path="/opportunities/:slug" element={<OpportunityDetail />} />
                 <Route path="/faculty" element={<Faculty />} />
                 <Route path="/faculty/:slug" element={<FacultyDetail />} />
                 <Route path="/contact" element={<Contact />} />
