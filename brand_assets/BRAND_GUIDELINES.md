@@ -39,23 +39,7 @@ emails already reference it.
 `logo-mark-light-bg.svg` uses the exact source inks above and is for white or
 near-white surfaces (`#FFFFFF`–`#F8FAFC`), same rule as the PNG always had.
 
-`logo-mark-dark-bg.svg` is the reversed lockup this doc used to flag as
-missing (see former "known gaps" note). Its blue and navy are the same lift
-the app already applies in dark mode —
-
-```
-dark:brightness-[1.75] dark:saturate-125   — Logo.tsx
-```
-
-— computed once and baked in as flat colors (`#54AFFF`, `#5C7295`) instead of
-shipping as a filter, so the asset carries its own correct color outside the
-Tailwind build (emails, certificate, anywhere `dark:` doesn't apply). The
-bracket is the one deliberate deviation: it's pure black in the source, and a
-brightness filter cannot lift pure black, so on a dark background it would
-stay invisible. It's rendered in the app's dark-mode foreground white
-(`#F8FAFC`) instead. Use this file (or the PNG-in-a-chip fallback below) on
-any colored or dark surface; don't reapply the CSS filter to the light SVG or
-PNG, they won't lift the bracket either.
+`logo-mark-dark-bg.svg` uses the brand blue (`#3963C6`) for **F**, while **L** and the bracket are rendered in crisp white (`#F8FAFC`) so they stay clean and legible against dark surfaces.
 
 If a colored (non-dark-theme) background comes up that neither SVG suits, put
 the light-bg mark inside a small white/near-white chip or card rather than

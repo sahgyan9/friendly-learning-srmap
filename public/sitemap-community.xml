@@ -6,13 +6,13 @@
                             http://www.google.com/schemas/sitemap-image/1.1 http://www.google.com/schemas/sitemap-image/1.1/sitemap-image.xsd">
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/community-posts</loc>
-    <lastmod>2026-08-06T12:18:45.900Z</lastmod>
+    <lastmod>2026-08-06T13:21:25.771Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://friendly-learning-srmap.vercel.app/community-posts/a167399f-b4f9-409f-aaac-64af7d82396c</loc>
-    <lastmod>2026-08-06T11:56:30.279445+00:00</lastmod>
+    <loc>https://friendly-learning-srmap.vercel.app/community-posts/0b47aba5-f346-48fa-91de-061414e06eca</loc>
+    <lastmod>2026-08-06T12:35:10.961496+00:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
