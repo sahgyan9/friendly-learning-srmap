@@ -236,7 +236,7 @@ const MentorCertificate = forwardRef<SVGSVGElement, MentorCertificateProps>(
               fontSize="190"
               fontWeight="bold"
               fill="#0f172a"
-              opacity="0.07"
+              opacity="0.15"
               transform="rotate(-16 900 740)"
               letterSpacing="14"
             >
