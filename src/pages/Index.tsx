@@ -1,7 +1,5 @@
-
 import Hero from "@/components/Hero";
 import MentorsSection from "@/components/MentorsSection";
-import WhyFriendlyLearning from "@/components/WhyFriendlyLearning";
 import CallToAction from "@/components/CallToAction";
 import Footer from "@/components/Footer";
 import SEOHead from "@/components/SEOHead";
@@ -14,6 +12,8 @@ import { FacultyDiscoveryCard } from "@/components/faculty/FacultyDiscoveryCard"
 import { useAuth } from "@/context/AuthContext";
 import { getOrganizationSchema, getWebsiteSchema } from "@/lib/structured-data";
 import { PRIMARY_DOMAIN } from "@/lib/constants";
+import { FeaturesShowcase } from "@/components/FeaturesShowcase";
+import { FutureVision } from "@/components/FutureVision";
 
 const Index = () => {
   const { user } = useAuth();
@@ -83,7 +83,13 @@ const Index = () => {
       <CommunityPostsSection />
 
       <MentorsSection />
-      <WhyFriendlyLearning />
+
+      {/* All 8 live features with direct navigation links */}
+      <FeaturesShowcase />
+
+      {/* Roadmap: complete ecosystem + indigenous AI vision */}
+      <FutureVision />
+
       <CallToAction />
       <Footer />
       <FloatingChatbot />
