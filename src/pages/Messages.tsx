@@ -26,16 +26,13 @@ const Messages = () => {
 
     try {
       setIsInitializingConversation(true);
-      
       const { data: conversation, error } = await getOrCreateConversation(user.id, mentorId);
-
       if (error) {
         console.error('Error creating/getting conversation:', error);
         toast.error('Failed to start conversation');
       } else {
         toast.success('Conversation ready!');
       }
-
       setSearchParams({});
     } catch (error) {
       console.error('Error initializing conversation:', error);
@@ -45,65 +42,39 @@ const Messages = () => {
     }
   };
 
-  // Redirect unauthenticated users to sign in instead of showing a bare alert.
   if (!user) {
     return (
-      <div className="min-h-screen bg-background">
-        {/* Hero header */}
-        <div className="relative overflow-hidden border-b border-border/60 bg-gradient-to-br from-primary/5 via-background to-background">
-          <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-primary/8 blur-3xl" />
-          <div className="pointer-events-none absolute -left-16 bottom-0 h-48 w-48 rounded-full bg-primary/5 blur-2xl" />
-          <div className="container mx-auto max-w-3xl px-4 pb-8 pt-28">
-            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-primary">
-                <MessageSquare className="h-3.5 w-3.5" />
-                Messages
-              </div>
-              <h1 className="text-3xl font-bold tracking-tight">Messages</h1>
-              <p className="mt-2 text-base text-muted-foreground">Sign in to view and send messages.</p>
-            </motion.div>
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-6 px-4">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="text-center"
+        >
+          <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 ring-1 ring-primary/20">
+            <MessageSquare className="h-8 w-8 text-primary" />
           </div>
-        </div>
-        <div className="container mx-auto max-w-3xl px-4 py-16 text-center">
-          <p className="mb-4 text-muted-foreground">You need to be signed in to view your messages.</p>
-          <Button asChild>
+          <h1 className="text-2xl font-bold tracking-tight">Messages</h1>
+          <p className="mt-2 text-muted-foreground">Sign in to view your conversations.</p>
+          <Button asChild className="mt-6">
             <Link to="/signin">Sign in</Link>
           </Button>
-        </div>
+        </motion.div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Hero header — primary brand colour matching Mentors */}
-      <div className="relative overflow-hidden border-b border-border/60 bg-gradient-to-br from-primary/5 via-background to-background">
-        <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-primary/8 blur-3xl" />
-        <div className="pointer-events-none absolute -left-16 bottom-0 h-48 w-48 rounded-full bg-primary/5 blur-2xl" />
-        <div className="container mx-auto max-w-3xl px-4 pb-6 pt-28">
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-primary">
-              <MessageSquare className="h-3.5 w-3.5" />
-              Messages
-            </div>
-            <h1 className="text-3xl font-bold tracking-tight">Messages</h1>
-            <p className="mt-1.5 text-base text-muted-foreground">Your conversations with mentors and students.</p>
-          </motion.div>
-        </div>
-      </div>
-
+    <div className="flex min-h-screen flex-col bg-background pt-[var(--navbar-height,4rem)]">
       {isInitializingConversation ? (
-        <div className="flex items-center justify-center min-h-[40vh]">
+        <div className="flex flex-1 items-center justify-center">
           <div className="text-center">
             <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-            <p className="text-muted-foreground">Starting conversation...</p>
+            <p className="text-muted-foreground text-sm">Starting conversation…</p>
           </div>
         </div>
       ) : (
-        // Every other page frames its content in this same container — the
-        // chat panel was rendering full-bleed with no side margins, which
-        // read as unfinished next to Groups, Events and Posts.
-        <div className="container mx-auto max-w-6xl px-4 py-6">
+        <div className="flex flex-1 flex-col px-4 py-4 sm:px-6 lg:px-8">
           <MessagesLayout />
         </div>
       )}
