@@ -114,16 +114,16 @@ const NotificationBell = () => {
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80 p-0" align="end">
-        <div className="p-4 border-b">
+      <PopoverContent className="w-[360px] sm:w-[420px] max-w-[calc(100vw-2rem)] p-0 shadow-xl border-border/80" align="end">
+        <div className="p-3.5 px-4 border-b border-border/60 bg-muted/30">
           <div className="flex items-center justify-between">
-            <h3 className="font-semibold">Notifications</h3>
+            <h3 className="font-semibold text-sm">Notifications</h3>
             {unreadCount > 0 && (
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={handleMarkAllAsRead}
-                className="text-sm"
+                className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
               >
                 Mark all read
               </Button>
@@ -132,15 +132,15 @@ const NotificationBell = () => {
         </div>
         <ScrollArea className="h-[400px]">
           {loading ? (
-            <div className="p-4 text-center text-muted-foreground">
+            <div className="p-6 text-center text-xs text-muted-foreground">
               Loading notifications...
             </div>
           ) : notifications.length === 0 ? (
-            <div className="p-4 text-center text-muted-foreground">
+            <div className="p-6 text-center text-xs text-muted-foreground">
               No notifications yet
             </div>
           ) : (
-            <div className="space-y-1">
+            <div className="divide-y divide-border/40">
               {notifications.map((notification) => (
                 <NotificationItem
                   key={notification.id}
