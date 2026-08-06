@@ -222,15 +222,60 @@ a fixed claim, and they will be wrong within weeks.
 
 ---
 
-## Open questions
+## Answered 2026-08-06 — and what changed as a result
 
-Unanswered as of 2026-08-06; they gate the phases above.
+**1. Is there a line to administration? → No.** Not aspirational-but-likely;
+there is no contact. The Dean deck is the mechanism for *creating* that line, not
+evidence one exists.
 
-1. Is there a real line to administration, or is that aspirational? Decides
-   whether Phase 2's override table is the primary path or the fallback.
-2. Should topic search be public or signed-in only? Ratings are public today;
-   AI-ranking named faculty is a larger reputational surface. Affects SEO.
-3. May pgvector be enabled on the production project? Gates Phase 3.
+**2. Public or signed-in? → Public.** Chosen for reach: topic pages can rank in
+search, which is free distribution the project badly needs. Two guardrails are
+therefore not optional:
+
+- Rank by **topical fit, never by rating.** Ratings may be displayed as
+  information; they must not order a list of named faculty.
+- The assistant explains a match using **only the interest tags on file**. It
+  never writes free prose about a named professor. These are real employees of a
+  real university and the page is publicly indexable.
+
+`visibility` on `knowledge_chunks` still matters despite public faculty search —
+private communities, group messages and DMs pass through the same retrieval
+layer later.
+
+**3. pgvector? → Yes, when Phase 3 starts.** Confirmed available on the project
+(`vector` 0.8.0, not yet enabled). First-party, free, one line, touches no
+existing table, reversible. Enable it as step one of Phase 3, not before.
+
+---
+
+## Sequencing correction — Phase 3 should come before Phase 2
+
+The original order put courses before search. With no administration contact,
+that is wrong, and the reason is worth stating plainly:
+
+**Phase 2 needs users. Phase 3 does not.**
+
+Phase 2 derives the course map from `course_code` on faculty ratings. There were
+**2 ratings** in the database when this was written, so the derived map would
+have ~2 entries. It is not blocked on administration — it is blocked on having a
+student body. Even with an admin override table, there is no admin to ask.
+
+Phase 3 runs on the interest data **the university already supplied**: 589
+professors, no student contribution required, working the day it ships. It also
+delivers the original request — *"I have a project on X, who can help?"* —
+directly.
+
+**Revised order: 1 → 3 → 4 → 2 → Opportunities**, with the caveat that
+Opportunities may deserve to jump ahead of everything, since it is the growth
+loop and the whole plan is gated on having students at all.
+
+### When Phase 2 does come
+
+Decouple contributing a course from leaving a review. A full rating is a large
+ask for a fresher; *"Did they teach you? Which course?"* is one tap, and it is
+the only mechanism likely to populate the map without administration. Keep the
+admin override table in the design — it costs nothing and slots in if a contact
+ever materialises.
 
 ---
 
