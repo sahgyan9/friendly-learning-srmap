@@ -96,7 +96,8 @@ export function JoinCommunityButton({
     );
   }
 
-  const handleJoin = async () => {
+  const handleJoin = async (e?: React.MouseEvent) => {
+    e?.stopPropagation();
     setBusy(true);
 
     if (isPrivate) {
@@ -143,7 +144,7 @@ export function JoinCommunityButton({
       ) : (
         <UserPlus className="mr-1.5 h-3.5 w-3.5" />
       )}
-      {isPrivate ? "Ask to join" : "Join"}
+      {isPrivate ? "Request to Join" : "Join"}
     </Button>
   );
 }

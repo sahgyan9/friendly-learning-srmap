@@ -38,9 +38,16 @@ function hostnameOf(url: string) {
 function communitySlugFromUrl(url: string): string | null {
   try {
     const parsed = new URL(withProtocol(url));
-    if (parsed.hostname !== window.location.hostname) return null;
+    const isAppHost =
+      parsed.hostname === window.location.hostname ||
+      parsed.hostname.includes("friendly-learning-srmap") ||
+      parsed.hostname.includes("vercel.app") ||
+      parsed.hostname === "localhost" ||
+      parsed.hostname === "127.0.0.1";
 
-    const match = parsed.pathname.match(/^\/communities\/([^/]+)$/);
+    if (!isAppHost) return null;
+
+    const match = parsed.pathname.match(/^\/communities\/([^/?#]+)/);
     return match ? decodeURIComponent(match[1]) : null;
   } catch {
     return null;

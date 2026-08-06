@@ -39,10 +39,24 @@ const GEMINI_KEY = Deno.env.get("Gemini_API_Key") ?? "";
  */
 const GENERATION_MODELS = [
   Deno.env.get("CHAT_MODEL"),
-  "gemini-2.0-flash",
+  // Ordered by what actually answers on this key, measured rather than assumed.
+  // gemini-2.0-flash and -001 return 429 on *every* attempt — this key has no
+  // free quota for them at all, so having them first burned one wasted round
+  // trip on every single request. flash-latest is the workhorse; the 2.0 names
+  // stay as fallbacks in case a paid plan opens them up, and CHAT_MODEL
+  // overrides the whole order without a redeploy.
   "gemini-flash-latest",
+  "gemini-2.0-flash",
   "gemini-2.0-flash-001",
 ].filter(Boolean) as string[];
+
+/**
+ * A 503 from Gemini is "we are busy", not "you are over quota" — it clears in
+ * seconds, unlike a 429. Worth one short retry before falling through, because
+ * flash-latest is currently the only model that answers at all and giving up on
+ * a transient capacity blip would look like an outage to the student.
+ */
+const RETRY_503_MS = 900;
 
 const supabase = createClient(SUPABASE_URL, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "");
 
@@ -90,17 +104,28 @@ async function generate(prompt: string): Promise<{ text: string; model: string }
     // rejects it with 400 INVALID_ARGUMENT on v1beta, so it broke the one model
     // still answering. A generous ceiling plus the MAX_TOKENS guard below
     // handles it without depending on a parameter a model may not accept.
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_KEY}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.4, maxOutputTokens: 3000, topP: 0.9 },
-        }),
-      },
-    );
+    const call = () =>
+      fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_KEY}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { temperature: 0.4, maxOutputTokens: 3000, topP: 0.9 },
+          }),
+        },
+      );
+
+    let response = await call();
+
+    // 503 means Gemini is busy, not that the key is over quota — it clears in
+    // seconds. One retry, only for that status; a 429 is retried by the student
+    // a minute later, not by us.
+    if (response.status === 503) {
+      await new Promise((resolve) => setTimeout(resolve, RETRY_503_MS));
+      response = await call();
+    }
 
     // Any failure falls through to the next candidate rather than throwing.
     // Throwing on the first non-404 made a transient 429 on one model take the
