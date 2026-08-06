@@ -131,7 +131,43 @@ confirmed as allowed.
 
 ---
 
-## Phase 4 — Wire retrieval into the assistant
+## Phase 4 — Assistant on retrieval · SHIPPED 2026-08-06
+
+`ai-chatbot` now calls `semantic-search` instead of prompt-stuffing. What it
+replaced: mentors fetched with `.limit(10)`, pasted into a prompt, model asked
+to reply with IDs. It could only ever see ten mentors, it asked a language model
+to act as a database (so it could return an ID that does not exist), and faculty
+were invisible to it entirely.
+
+Retrieval is shared with `/ask`, so there is one definition of "what matches
+this question" and both paths hit the same query cache.
+
+### Generation-model facts, all established by testing
+
+- `gemini-2.5-flash` → **404, "no longer available to new users."** Removed.
+- `gemini-flash-latest` → works, but is an **alias for a reasoning model**.
+- Reasoning models bill thinking tokens against `maxOutputTokens`, which cut
+  replies off mid-sentence at ~40 words.
+- **`thinkingConfig: { thinkingBudget: 0 }` is a trap.** `gemini-flash-latest`
+  rejects it with `400 INVALID_ARGUMENT` on v1beta. Adding it broke the only
+  model still answering. Use a generous ceiling (3000) and treat
+  `finishReason: MAX_TOKENS` as a failed candidate instead.
+- **Never throw on the first bad model.** A transient 429 on one candidate took
+  the whole assistant down when a later one would have answered. Every failure
+  falls through; only an exhausted list throws.
+- Free-tier generation quota is **per-minute, not per-day**, and shared with
+  embeddings. A 429 returns "busy, try in a minute" pointing at `/ask`.
+
+### Guardrails that must survive any edit
+
+Only the faculty whose **cards are rendered** go into the prompt. The model
+named a fifth retrieved professor who had no card beside them — not a
+hallucination, but indistinguishable from one to a student. The prompt also
+forbids biography, quality judgements, ranking, and any mention of ratings.
+
+---
+
+## Phase 4 — original plan (kept for the reasoning)
 
 Same retrieval layer, exposed to `ai-chatbot` as a lookup step rather than
 prompt-stuffing.
