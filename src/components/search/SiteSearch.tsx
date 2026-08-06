@@ -168,29 +168,53 @@ const SiteSearch = () => {
     );
   };
 
+  // A plain click still behaves as before: navigate and close. But cmdk items
+  // aren't links, so there was no way to open a result without losing the
+  // dialog's query and re-typing it for the next candidate. Nesting a real
+  // anchor gives Ctrl/Cmd-click and middle-click their native "open in a new
+  // tab" behaviour for free — we only need to stop it from also bubbling up
+  // into cmdk's own click handler, which would additionally navigate the
+  // current tab and close the dialog.
   const renderHit = (hit: SearchHit, withAvatar: boolean) => (
-    <CommandItem key={hit.id} value={hit.id} onSelect={() => goTo(hit.to)} className="gap-3">
-      {withAvatar ? (
-        <Avatar className="h-8 w-8 shrink-0">
-          <AvatarImage src={hit.image ?? undefined} alt="" />
-          <AvatarFallback className="text-xs">{getInitials(hit.title)}</AvatarFallback>
-        </Avatar>
-      ) : (
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
-          <Search className="h-4 w-4" />
-        </span>
-      )}
-      <span className="min-w-0">
-        <span className="block truncate font-medium">{hit.title}</span>
-        {hit.subtitle && (
-          <span className="block truncate text-xs text-muted-foreground">{hit.subtitle}</span>
+    <CommandItem key={hit.id} value={hit.id} onSelect={() => goTo(hit.to)} className="p-0">
+      <a
+        href={hit.to}
+        className="flex w-full items-center gap-3 px-2 py-1.5"
+        onClick={(event) => {
+          if (event.metaKey || event.ctrlKey || event.shiftKey) {
+            // Let the browser open the new tab; just don't also navigate here.
+            event.stopPropagation();
+            return;
+          }
+          event.preventDefault();
+          event.stopPropagation();
+          goTo(hit.to);
+        }}
+      >
+        {withAvatar ? (
+          <Avatar className="h-8 w-8 shrink-0">
+            <AvatarImage src={hit.image ?? undefined} alt="" />
+            <AvatarFallback className="text-xs">{getInitials(hit.title)}</AvatarFallback>
+          </Avatar>
+        ) : (
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+            <Search className="h-4 w-4" />
+          </span>
         )}
-      </span>
+        <span className="min-w-0">
+          <span className="block truncate font-medium">{hit.title}</span>
+          {hit.subtitle && (
+            <span className="block truncate text-xs text-muted-foreground">{hit.subtitle}</span>
+          )}
+        </span>
+      </a>
     </CommandItem>
   );
 
   const searching = query.trim().length > 0;
   const nothingAtAll = searching && !loading && ranked.length === 0 && isEmpty;
+  const hasPeopleHits =
+    results.mentors.length > 0 || results.faculty.length > 0 || results.related.length > 0;
 
   return (
     <>
@@ -241,6 +265,12 @@ const SiteSearch = () => {
               onValueChange={setQuery}
               placeholder="Search pages, mentors, lecturers, posts…"
             />
+
+            {hasPeopleHits && (
+              <p className="border-b px-3 py-1.5 text-[11px] text-muted-foreground">
+                {isMac ? "⌘" : "Ctrl"}-click a profile to open it in a new tab and keep browsing here
+              </p>
+            )}
 
             <CommandList className="max-h-[min(70vh,28rem)]">
               {nothingAtAll && (
