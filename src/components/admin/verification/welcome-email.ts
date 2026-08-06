@@ -34,10 +34,14 @@ export interface WelcomeEmailContent {
 /**
  * The welcome a newly auto-approved mentor gets.
  *
- * Built to be sent cleanly via Gmail or direct HTML preview:
- * - Clear announcement of automatic approval.
- * - Non-redundant profile section (since user created profile on setup, we guide on enhancing & availability).
- * - Styled cards with actionable buttons & direct links matching UI design.
+ * Design notes:
+ * - Header gradient uses the app's brand primary: hsl(222 55% 50%) → #3b63c4,
+ *   shading to a slightly deeper hsl(222 55% 38%) → #2c4c96. This matches what
+ *   a mentor sees the moment they open the app, so email and product feel like
+ *   siblings.
+ * - Primary CTA button also uses the brand blue (#3963c6), not indigo (#4f46e5).
+ * - Supplementary feature links (study partners, hackathons, faculty) mirror the
+ *   tour so nothing the tour mentions is invisible in the email.
  */
 export const buildWelcomeEmail = (fullName: string): WelcomeEmailContent => {
   const firstName = firstNameFrom(fullName) || "there";
@@ -64,6 +68,11 @@ Three ways to start:
    Exams or placements coming up? Toggle "Taking a break" on your profile any time — your existing chats stay open, you just come off the directory.
    ${PRIMARY_DOMAIN}/profile
 
+Also worth exploring:
+- Find study partners → ${PRIMARY_DOMAIN}/find-study-partners
+- Hackathon teammates → ${PRIMARY_DOMAIN}/hackathon-partners
+- Anonymous faculty ratings (pick better courses) → ${PRIMARY_DOMAIN}/faculty
+
 Reply to this email if anything's confusing or broken.
 
 Warm regards,
@@ -83,9 +92,9 @@ ${PRIMARY_DOMAIN}`;
       <td align="center">
         <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width:600px; background-color:#ffffff; border-radius:16px; overflow:hidden; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);">
           
-          <!-- Header Banner -->
+          <!-- Header Banner — brand primary hsl(222 55% 50%) to hsl(222 55% 38%) -->
           <tr>
-            <td style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); padding: 32px 28px; text-align: center;">
+            <td style="background: linear-gradient(135deg, #3b63c4 0%, #2c4c96 100%); padding: 32px 28px; text-align: center;">
               <!--
                 The mark is two-tone (blue F, navy L) on a transparent PNG, made
                 for light backgrounds — see brand_assets/BRAND_GUIDELINES.md §1.
@@ -115,7 +124,7 @@ ${PRIMARY_DOMAIN}`;
               <h1 style="color:#ffffff; margin:0; font-size:24px; font-weight:700; line-height:1.3;">
                 You're live, ${firstName}! 🎉
               </h1>
-              <p style="color:#e0e7ff; font-size:15px; margin:8px 0 0 0;">
+              <p style="color:#dbeafe; font-size:15px; margin:8px 0 0 0;">
                 No approval queue — your mentor profile is already up.
               </p>
             </td>
@@ -131,8 +140,8 @@ ${PRIMARY_DOMAIN}`;
                 Juniors in your department can already find you and start a conversation — no introductions needed.
               </p>
 
-              <div style="background-color:#f8fafc; border-left:4px solid #6366f1; padding:14px 18px; border-radius:0 8px 8px 0; margin: 20px 0;">
-                <p style="margin:0; font-size:14px; line-height:1.5; color:#475569;">
+              <div style="background-color:#eff6ff; border-left:4px solid #3963c6; padding:14px 18px; border-radius:0 8px 8px 0; margin: 20px 0;">
+                <p style="margin:0; font-size:14px; line-height:1.5; color:#1e40af;">
                   💡 <em>Nobody's expecting office hours — most questions take two minutes. Help 3 students (real replies, not just messages sent) and you earn a certificate with a public verify link. Not a participation badge — an earned one.</em>
                 </p>
               </div>
@@ -153,7 +162,7 @@ ${PRIMARY_DOMAIN}`;
                           <p style="margin:4px 0 12px 0; font-size:13px; color:#64748b; line-height:1.4;">
                             Juniors are already waiting on advice about electives, projects, and careers. Each real reply counts toward your certificate.
                           </p>
-                          <a href="${PRIMARY_DOMAIN}/community-posts" style="display:inline-block; background-color:#4f46e5; color:#ffffff; text-decoration:none; font-size:13px; font-weight:600; padding:8px 16px; border-radius:6px;">
+                          <a href="${PRIMARY_DOMAIN}/community-posts" style="display:inline-block; background-color:#3963c6; color:#ffffff; text-decoration:none; font-size:13px; font-weight:600; padding:8px 16px; border-radius:6px;">
                             Browse Questions →
                           </a>
                         </td>
@@ -175,7 +184,7 @@ ${PRIMARY_DOMAIN}`;
                           <p style="margin:4px 0 12px 0; font-size:13px; color:#64748b; line-height:1.4;">
                             Hackathon teams, study circles, subject clubs — with fellow students, not just people you're mentoring.
                           </p>
-                          <a href="${PRIMARY_DOMAIN}/communities" style="display:inline-block; background-color:#0284c7; color:#ffffff; text-decoration:none; font-size:13px; font-weight:600; padding:8px 16px; border-radius:6px;">
+                          <a href="${PRIMARY_DOMAIN}/communities" style="display:inline-block; background-color:#3963c6; color:#ffffff; text-decoration:none; font-size:13px; font-weight:600; padding:8px 16px; border-radius:6px;">
                             Explore Groups →
                           </a>
                         </td>
@@ -186,7 +195,7 @@ ${PRIMARY_DOMAIN}`;
               </table>
 
               <!-- Section Card 3 -->
-              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom:16px; border:1px solid #e2e8f0; border-radius:12px; background-color:#ffffff;">
+              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom:24px; border:1px solid #e2e8f0; border-radius:12px; background-color:#ffffff;">
                 <tr>
                   <td style="padding: 16px;">
                     <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
@@ -207,6 +216,34 @@ ${PRIMARY_DOMAIN}`;
                 </tr>
               </table>
 
+              <!-- Also worth exploring section -->
+              <div style="background-color:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:16px 18px; margin-bottom:16px;">
+                <p style="margin:0 0 10px 0; font-size:14px; font-weight:700; color:#0f172a;">Also worth exploring</p>
+                <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
+                  <tr>
+                    <td style="padding:4px 0;">
+                      <span style="font-size:14px; margin-right:8px;">🤝</span>
+                      <a href="${PRIMARY_DOMAIN}/find-study-partners" style="font-size:13px; color:#3963c6; text-decoration:none; font-weight:500;">Find study partners</a>
+                      <span style="font-size:13px; color:#94a3b8; margin-left:6px;">— never prep for exams alone</span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding:4px 0;">
+                      <span style="font-size:14px; margin-right:8px;">🚀</span>
+                      <a href="${PRIMARY_DOMAIN}/hackathon-partners" style="font-size:13px; color:#3963c6; text-decoration:none; font-weight:500;">Hackathon teammates</a>
+                      <span style="font-size:13px; color:#94a3b8; margin-left:6px;">— build something real</span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding:4px 0;">
+                      <span style="font-size:14px; margin-right:8px;">⭐</span>
+                      <a href="${PRIMARY_DOMAIN}/faculty" style="font-size:13px; color:#3963c6; text-decoration:none; font-weight:500;">Anonymous faculty ratings</a>
+                      <span style="font-size:13px; color:#94a3b8; margin-left:6px;">— pick better courses next semester</span>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+
               <p style="font-size:14px; line-height:1.5; color:#334155; margin-top:24px;">
                 Spot something broken, or just want to say hi? Reply to this email — I read these.
               </p>
@@ -223,7 +260,7 @@ ${PRIMARY_DOMAIN}`;
                 Connecting students, mentors, and learning communities across campus.
               </p>
               <p style="margin:8px 0 0 0; font-size:12px;">
-                <a href="${PRIMARY_DOMAIN}" style="color:#4f46e5; text-decoration:none; font-weight:500;">${PRIMARY_DOMAIN}</a>
+                <a href="${PRIMARY_DOMAIN}" style="color:#3963c6; text-decoration:none; font-weight:500;">${PRIMARY_DOMAIN}</a>
               </p>
             </td>
           </tr>
