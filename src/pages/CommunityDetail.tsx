@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import {
   ArrowLeft,
   Check,
+  Globe,
   Hash,
   Loader2,
   Lock,
@@ -292,10 +293,18 @@ const CommunityDetail = () => {
                     <span aria-hidden>{kind.emoji}</span>
                     {kind.label}
                   </Badge>
-                  {community.visibility === "private" && (
+                  {community.visibility === "private" ? (
                     <Badge variant="outline" className="gap-1 text-muted-foreground">
                       <Lock className="h-3 w-3" />
                       Invite only
+                    </Badge>
+                  ) : (
+                    <Badge
+                      variant="outline"
+                      className="gap-1 border-green-500/30 text-green-700 dark:text-green-400"
+                    >
+                      <Globe className="h-3 w-3" />
+                      Open group
                     </Badge>
                   )}
                   {community.is_archived && <Badge variant="outline">Archived</Badge>}

@@ -63,7 +63,7 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
   const [inputText, setInputText] = useState("");
   const [sending, setSending] = useState(false);
   const [replyingTo, setReplyingTo] = useState<GroupChatMessage | null>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const canPost = isMember || isOwner;
 
   const load = useCallback(
@@ -94,8 +94,15 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
     { column: "community_id", value: communityId },
   );
 
+  // Scrolls only the message pane itself, never the outer page. A plain
+  // messagesEndRef.scrollIntoView() walks every scrollable ancestor —
+  // including the window — so opening a group (default tab: chat) was
+  // yanking the whole page down past the header before anyone could see
+  // the join button or the open/invite-only badge.
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    const container = messagesContainerRef.current;
+    if (!container) return;
+    container.scrollTo({ top: container.scrollHeight, behavior: "smooth" });
   }, [messages]);
 
   const handleSendMessage = async () => {
@@ -239,7 +246,7 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
           </div>
 
           {/* Messages Stream */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4">
             {loading ? (
               <div className="h-full flex items-center justify-center text-muted-foreground">
                 <Loader2 className="h-5 w-5 animate-spin" />
@@ -338,7 +345,6 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
                 );
               })
             )}
-            <div ref={messagesEndRef} />
           </div>
 
           {/* Reply Banner */}

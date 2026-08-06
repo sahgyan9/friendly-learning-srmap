@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, Lock, MessageSquare, Users } from "lucide-react";
+import { ArrowRight, Globe, Lock, MessageSquare, Users } from "lucide-react";
 
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -68,22 +68,30 @@ export function CommunityCard({ community, onMembershipChange }: CommunityCardPr
           </div>
         </div>
 
-        {/* Privacy / invite badges */}
-        {(community.visibility === "private" || community.viewer_has_invite) && (
-          <div className="flex flex-wrap gap-2">
-            {community.visibility === "private" && (
-              <Badge variant="outline" className="gap-1 text-muted-foreground text-xs">
-                <Lock className="h-3 w-3" />
-                Invite only
-              </Badge>
-            )}
-            {community.viewer_has_invite && !community.viewer_is_member && (
-              <Badge variant="outline" className="border-primary/40 text-primary text-xs">
-                You're invited
-              </Badge>
-            )}
-          </div>
-        )}
+        {/* Privacy / invite badges — always shown, not just for private
+            groups, so open-vs-invite-only is never left to be inferred from
+            which button happens to be in the footer. */}
+        <div className="flex flex-wrap gap-2">
+          {community.visibility === "private" ? (
+            <Badge variant="outline" className="gap-1 text-muted-foreground text-xs">
+              <Lock className="h-3 w-3" />
+              Invite only
+            </Badge>
+          ) : (
+            <Badge
+              variant="outline"
+              className="gap-1 border-green-500/30 text-green-700 text-xs dark:text-green-400"
+            >
+              <Globe className="h-3 w-3" />
+              Open · anyone can join
+            </Badge>
+          )}
+          {community.viewer_has_invite && !community.viewer_is_member && (
+            <Badge variant="outline" className="border-primary/40 text-primary text-xs">
+              You're invited
+            </Badge>
+          )}
+        </div>
 
         {/* Description */}
         <p className="line-clamp-3 flex-1 text-sm leading-relaxed text-muted-foreground">
