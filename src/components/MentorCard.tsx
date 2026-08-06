@@ -14,31 +14,10 @@ import { getMentorById, isMentorListed } from "@/integrations/supabase/services/
 import { getOrCreateConversation } from "@/integrations/supabase/services/chat";
 import { formatDepartment } from "@/utils/user-utils";
 import { CardAccentBorder } from "@/components/ui/CardAccentBorder";
-import { cn } from "@/lib/utils";
 
 interface MentorCardProps {
   mentor: Mentor;
 }
-
-const getSkillBadgeStyle = (skill: string) => {
-  const s = skill.toLowerCase();
-  if (s.includes("web") || s.includes("react") || s.includes("front") || s.includes("js") || s.includes("ts") || s.includes("node") || s.includes("code") || s.includes("html") || s.includes("css")) {
-    return "bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/20 hover:bg-sky-500/20";
-  }
-  if (s.includes("ai") || s.includes("ml") || s.includes("python") || s.includes("data") || s.includes("sql") || s.includes("algo") || s.includes("c++") || s.includes("java")) {
-    return "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20 hover:bg-indigo-500/20";
-  }
-  if (s.includes("design") || s.includes("figma") || s.includes("ui") || s.includes("ux") || s.includes("art") || s.includes("creative")) {
-    return "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20 hover:bg-rose-500/20";
-  }
-  if (s.includes("lead") || s.includes("manage") || s.includes("speak") || s.includes("career") || s.includes("resume") || s.includes("placement")) {
-    return "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20 hover:bg-amber-500/20";
-  }
-  if (s.includes("math") || s.includes("physic") || s.includes("dsa") || s.includes("os") || s.includes("dbms") || s.includes("network")) {
-    return "bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-500/20 hover:bg-violet-500/20";
-  }
-  return "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20";
-};
 
 const MentorCard = ({ mentor }: MentorCardProps) => {
   const { getUserBadges } = useBadges();
@@ -241,7 +220,7 @@ const MentorCard = ({ mentor }: MentorCardProps) => {
                 <Badge
                   key={index}
                   variant="secondary"
-                  className={cn("text-xs border transition-colors", getSkillBadgeStyle(skill))}
+                  className="text-xs bg-primary/10 text-primary border-primary/20 hover:bg-primary/15 transition-colors"
                 >
                   {skill}
                 </Badge>

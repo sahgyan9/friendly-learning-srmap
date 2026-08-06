@@ -6,29 +6,9 @@
                             http://www.google.com/schemas/sitemap-image/1.1 http://www.google.com/schemas/sitemap-image/1.1/sitemap-image.xsd">
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty</loc>
-    <lastmod>2026-08-06T15:09:56.196Z</lastmod>
+    <lastmod>2026-08-06T13:21:26.532Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-satish-anamalamudi</loc>
-    <lastmod>2026-08-06T13:32:20.634073+00:00</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-    <image:image>
-      <image:loc>https://www.srmap.edu.in/wp-content/uploads/2025/08/satish-anamalamudi-300x300.jpg</image:loc>
-      <image:title>Dr Satish Anamalamudi — Computer Science and Engineering, SRM University-AP</image:title>
-    </image:image>
-  </url>
-  <url>
-    <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-amit-gupta</loc>
-    <lastmod>2026-08-06T14:16:04.992804+00:00</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-    <image:image>
-      <image:loc>https://www.srmap.edu.in/wp-content/uploads/2026/05/Dr.-Amit-Gupta-300x300.png</image:loc>
-      <image:title>Dr. Amit Gupta — Health Engineering, SRM University-AP</image:title>
-    </image:image>
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-basabendu-barman</loc>
@@ -41,53 +21,13 @@
     </image:image>
   </url>
   <url>
-    <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-mohammad-abdussami</loc>
-    <lastmod>2026-08-06T13:59:46.437251+00:00</lastmod>
+    <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-satish-anamalamudi</loc>
+    <lastmod>2026-08-06T10:14:15.517608+00:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <image:image>
-      <image:loc>https://www.srmap.edu.in/wp-content/uploads/2025/08/mohammad-abdussami-300x300.png</image:loc>
-      <image:title>Dr Mohammad Abdussami — Computer Science and Engineering, SRM University-AP</image:title>
-    </image:image>
-  </url>
-  <url>
-    <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-srinivas-arukonda</loc>
-    <lastmod>2026-08-06T13:59:58.153329+00:00</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-    <image:image>
-      <image:loc>https://www.srmap.edu.in/wp-content/uploads/2025/08/srinivas-arukonda-300x300.png</image:loc>
-      <image:title>Dr Srinivas Arukonda — Computer Science and Engineering, SRM University-AP</image:title>
-    </image:image>
-  </url>
-  <url>
-    <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-suraj-singh-khurana</loc>
-    <lastmod>2026-08-06T13:32:50.288973+00:00</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-    <image:image>
-      <image:loc>https://www.srmap.edu.in/wp-content/uploads/2025/09/Dr-Suraj-Singh-Khurana-300x300.png</image:loc>
-      <image:title>Dr Suraj Singh Khurana — Mathematics, SRM University-AP</image:title>
-    </image:image>
-  </url>
-  <url>
-    <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-susmi-jacob</loc>
-    <lastmod>2026-08-06T13:58:52.156037+00:00</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-    <image:image>
-      <image:loc>https://www.srmap.edu.in/wp-content/uploads/2025/08/susmi-jacob-300x300.png</image:loc>
-      <image:title>Dr Susmi Jacob — Computer Science and Engineering, SRM University-AP</image:title>
-    </image:image>
-  </url>
-  <url>
-    <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-yasir-afaq</loc>
-    <lastmod>2026-08-06T14:13:32.121877+00:00</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-    <image:image>
-      <image:loc>https://www.srmap.edu.in/wp-content/uploads/2025/08/Dr-Yasir-Afaq-300x300.png</image:loc>
-      <image:title>Dr Yasir Afaq — Computer Science and Engineering, SRM University-AP</image:title>
+      <image:loc>https://www.srmap.edu.in/wp-content/uploads/2025/08/satish-anamalamudi-300x300.jpg</image:loc>
+      <image:title>Dr Satish Anamalamudi — Computer Science and Engineering, SRM University-AP</image:title>
     </image:image>
   </url>
   <url>
@@ -342,6 +282,16 @@
     <image:image>
       <image:loc>https://www.srmap.edu.in/wp-content/uploads/2025/02/Dr.-Amit-Chakraborty-resize-300x300.png</image:loc>
       <image:title>Dr. Amit Chakraborty — Physics, SRM University-AP</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-amit-gupta</loc>
+    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+    <image:image>
+      <image:loc>https://www.srmap.edu.in/wp-content/uploads/2026/05/Dr.-Amit-Gupta-300x300.png</image:loc>
+      <image:title>Dr. Amit Gupta — Health Engineering, SRM University-AP</image:title>
     </image:image>
   </url>
   <url>
@@ -2559,6 +2509,16 @@
     </image:image>
   </url>
   <url>
+    <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-mohammad-abdussami</loc>
+    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+    <image:image>
+      <image:loc>https://www.srmap.edu.in/wp-content/uploads/2025/08/mohammad-abdussami-300x300.png</image:loc>
+      <image:title>Dr Mohammad Abdussami — Computer Science and Engineering, SRM University-AP</image:title>
+    </image:image>
+  </url>
+  <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/mohammed-nazibul-hasan</loc>
     <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
     <changefreq>monthly</changefreq>
@@ -4181,16 +4141,6 @@
     </image:image>
   </url>
   <url>
-    <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-sonali-mondal</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-    <image:image>
-      <image:loc>https://www.srmap.edu.in/wp-content/uploads/2025/08/sonali-mondal-300x300.jpg</image:loc>
-      <image:title>Dr Sonali Mondal — Mathematics, SRM University-AP</image:title>
-    </image:image>
-  </url>
-  <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-sonali-mondal-2</loc>
     <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
     <changefreq>monthly</changefreq>
@@ -4198,6 +4148,16 @@
     <image:image>
       <image:loc>https://www.srmap.edu.in/wp-content/uploads/2026/08/Dr-Sonali-Mondal-300x200.jpg</image:loc>
       <image:title>Dr Sonali Mondal — Computer Science and Engineering, SRM University-AP</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-sonali-mondal</loc>
+    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+    <image:image>
+      <image:loc>https://www.srmap.edu.in/wp-content/uploads/2025/08/sonali-mondal-300x300.jpg</image:loc>
+      <image:title>Dr Sonali Mondal — Mathematics, SRM University-AP</image:title>
     </image:image>
   </url>
   <url>
@@ -4300,6 +4260,16 @@
     <image:image>
       <image:loc>https://www.srmap.edu.in/wp-content/uploads/2026/03/Dr.-Srikanta-Pradhan-300x200.jpg</image:loc>
       <image:title>Dr Srikanta Pradhan — Computer Science and Engineering, SRM University-AP</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-srinivas-arukonda</loc>
+    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+    <image:image>
+      <image:loc>https://www.srmap.edu.in/wp-content/uploads/2025/08/srinivas-arukonda-300x300.png</image:loc>
+      <image:title>Dr Srinivas Arukonda — Computer Science and Engineering, SRM University-AP</image:title>
     </image:image>
   </url>
   <url>
@@ -4519,6 +4489,16 @@
     </image:image>
   </url>
   <url>
+    <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-suraj-singh-khurana</loc>
+    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+    <image:image>
+      <image:loc>https://www.srmap.edu.in/wp-content/uploads/2025/09/Dr-Suraj-Singh-Khurana-300x300.png</image:loc>
+      <image:title>Dr Suraj Singh Khurana — Mathematics, SRM University-AP</image:title>
+    </image:image>
+  </url>
+  <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-surfarazhussain-s-halkarni</loc>
     <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
     <changefreq>monthly</changefreq>
@@ -4583,6 +4563,16 @@
     <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-susmi-jacob</loc>
+    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+    <image:image>
+      <image:loc>https://www.srmap.edu.in/wp-content/uploads/2025/08/susmi-jacob-300x300.png</image:loc>
+      <image:title>Dr Susmi Jacob — Computer Science and Engineering, SRM University-AP</image:title>
+    </image:image>
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/sutharsan-govindarajan</loc>
@@ -5098,6 +5088,16 @@
     <image:image>
       <image:loc>https://www.srmap.edu.in/wp-content/uploads/2025/09/Mr-Yara-Srinivas-300x300.jpg</image:loc>
       <image:title>Dr Yara Srinivas — Computer Science and Engineering, SRM University-AP</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-yasir-afaq</loc>
+    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+    <image:image>
+      <image:loc>https://www.srmap.edu.in/wp-content/uploads/2025/08/Dr-Yasir-Afaq-300x300.png</image:loc>
+      <image:title>Dr Yasir Afaq — Computer Science and Engineering, SRM University-AP</image:title>
     </image:image>
   </url>
   <url>

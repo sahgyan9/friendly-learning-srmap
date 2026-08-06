@@ -35,14 +35,14 @@ export interface WelcomeTourStep {
 export const WELCOME_TOUR_STEPS: WelcomeTourStep[] = [
   {
     icon: Sparkles,
-    accent: "indigo",
+    accent: "primary",
     title: "Welcome to Friendly Learning SRMAP",
     description:
       "New to university? You don't have to figure it out alone. Here's what you can do here.",
   },
   {
     icon: HelpCircle,
-    accent: "blue",
+    accent: "primary",
     title: "Ask a mentor any doubt",
     description:
       "Stuck on a course, an assignment, or just how things work here? Message a peer mentor for one-on-one help.",
@@ -89,7 +89,7 @@ export const WELCOME_TOUR_STEPS: WelcomeTourStep[] = [
   },
   {
     icon: GraduationCap,
-    accent: "teal",
+    accent: "primary",
     title: "Become a mentor yourself",
     description:
       "Once you've settled in, become a mentor so other freshers can find and learn from you.",
