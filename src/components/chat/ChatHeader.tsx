@@ -1,12 +1,13 @@
 
 import { Link } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Video, Phone, MoreVertical } from "lucide-react";
 import { Conversation } from "@/types/chat";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { getInitials } from "@/utils/user-utils";
 import { useUserPresenceRealtime } from "@/hooks/useUserPresenceRealtime";
 import OnlineStatus from "./OnlineStatus";
+import { cn } from "@/lib/utils";
 
 interface ChatHeaderProps {
   conversation?: Conversation;
@@ -25,45 +26,61 @@ const ChatHeader = ({ conversation, getOtherUser, onBack }: ChatHeaderProps) => 
   const isOnline = isUserOnline(otherUser?.id);
   const isMentor = otherUser?.role === "mentor";
 
-  const avatar = (
-    <div className="relative shrink-0">
-      <Avatar className="h-10 w-10">
-        <AvatarImage src={otherUser?.profile_image} alt="" className="object-cover" />
-        <AvatarFallback className="bg-primary/10 font-medium text-primary">
-          {getInitials(displayName)}
-        </AvatarFallback>
-      </Avatar>
-      <span className="absolute -bottom-0.5 -right-0.5">
-        <OnlineStatus isOnline={isOnline} size="sm" />
-      </span>
-    </div>
-  );
-
   return (
-    <header className="flex items-center gap-3 border-b bg-background px-3 py-3 sm:px-4">
+    <header className="relative flex items-center gap-3 border-b border-white/8 bg-card/60 px-3 py-3 backdrop-blur-md sm:px-4">
+      {/* Subtle gradient line at the bottom */}
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
+
       {onBack && (
-        <Button variant="ghost" size="icon" onClick={onBack} aria-label="Back to conversations">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onBack}
+          aria-label="Back to conversations"
+          className="shrink-0 rounded-xl hover:bg-white/8"
+        >
           <ArrowLeft className="h-5 w-5" />
         </Button>
       )}
 
-      {/* The avatar links too when there is a profile behind it, so the whole
-          identity block behaves as one target rather than half of it. */}
-      {isMentor && otherUser?.id ? (
-        <Link to={`/mentor/${otherUser.id}`} tabIndex={-1} aria-hidden>
-          {avatar}
-        </Link>
-      ) : (
-        avatar
-      )}
+      {/* Avatar */}
+      <div className="relative shrink-0">
+        <div className={cn(
+          "rounded-full p-0.5 transition-all duration-300",
+          isOnline
+            ? "bg-gradient-to-br from-emerald-400/60 via-primary/40 to-transparent"
+            : "bg-white/8"
+        )}>
+          <Avatar className="h-10 w-10 ring-1 ring-background">
+            {isMentor && otherUser?.id ? (
+              <Link to={`/mentor/${otherUser.id}`} tabIndex={-1} aria-hidden>
+                <AvatarImage src={otherUser?.profile_image} alt="" className="object-cover" />
+                <AvatarFallback className="bg-primary/15 font-semibold text-primary">
+                  {getInitials(displayName)}
+                </AvatarFallback>
+              </Link>
+            ) : (
+              <>
+                <AvatarImage src={otherUser?.profile_image} alt="" className="object-cover" />
+                <AvatarFallback className="bg-primary/15 font-semibold text-primary">
+                  {getInitials(displayName)}
+                </AvatarFallback>
+              </>
+            )}
+          </Avatar>
+        </div>
+        {/* Online dot on avatar corner */}
+        <span className="absolute -bottom-0.5 -right-0.5">
+          <OnlineStatus isOnline={isOnline} size="sm" />
+        </span>
+      </div>
 
+      {/* Name + status */}
       <div className="min-w-0 flex-1">
-        {/* The name is the profile link — a separate "View profile" button
-            spent a whole control on something the name already affords. */}
         {isMentor && otherUser?.id ? (
           <Link
             to={`/mentor/${otherUser.id}`}
-            className="block truncate font-semibold leading-tight hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="block truncate font-semibold leading-tight hover:text-primary transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             {displayName}
           </Link>
@@ -71,10 +88,30 @@ const ChatHeader = ({ conversation, getOtherUser, onBack }: ChatHeaderProps) => 
           <h2 className="truncate font-semibold leading-tight">{displayName}</h2>
         )}
 
-        {/* Presence is the useful second line — "Mentor" never changes. */}
-        <p className="truncate text-xs text-muted-foreground">
-          {isOnline ? "Online now" : isMentor ? "Mentor" : "Student"}
-        </p>
+        <div className="mt-0.5 flex items-center gap-1.5">
+          {isOnline && (
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400" />
+            </span>
+          )}
+          <p className={cn(
+            "truncate text-xs font-medium",
+            isOnline ? "text-emerald-400" : "text-muted-foreground/70"
+          )}>
+            {isOnline ? "Online now" : isMentor ? "Mentor · Offline" : "Student · Offline"}
+          </p>
+        </div>
+      </div>
+
+      {/* Action icons (decorative — future-proof for video/call) */}
+      <div className="flex items-center gap-1 shrink-0">
+        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl hover:bg-white/8 text-muted-foreground" disabled>
+          <Phone className="h-4 w-4" />
+        </Button>
+        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl hover:bg-white/8 text-muted-foreground" disabled>
+          <Video className="h-4 w-4" />
+        </Button>
       </div>
     </header>
   );

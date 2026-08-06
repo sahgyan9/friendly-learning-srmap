@@ -60,18 +60,12 @@ const MessageList = ({
   const [unseenCount, setUnseenCount] = useState(0);
   const { typingUsers } = useTypingIndicator(conversationId, currentUserId);
 
-  // Scrolls the thread's own container rather than calling scrollIntoView on a
-  // sentinel: scrollIntoView walks up the ancestor chain and will happily move
-  // the whole page as well, and it stops short of the container's bottom
-  // padding so the view never quite reaches the end.
   const scrollToBottom = useCallback((behavior: ScrollBehavior = "smooth") => {
     const el = containerRef.current;
     if (el) el.scrollTo({ top: el.scrollHeight, behavior });
     setUnseenCount(0);
   }, []);
 
-  // The first paint of a thread should already be at the newest message rather
-  // than animating down through the whole history.
   useEffect(() => {
     isFirstRender.current = true;
     setIsPinnedToBottom(true);
@@ -80,17 +74,14 @@ const MessageList = ({
 
   useEffect(() => {
     if (loading || messages.length === 0) return;
-
     if (isFirstRender.current) {
       isFirstRender.current = false;
       scrollToBottom("auto");
       return;
     }
-
     if (isPinnedToBottom) {
       scrollToBottom("smooth");
     } else {
-      // Reading older messages should not be interrupted; count instead.
       const newest = messages[messages.length - 1];
       if (newest?.sender_id !== currentUserId) setUnseenCount((n) => n + 1);
     }
@@ -108,11 +99,6 @@ const MessageList = ({
     if (atBottom) setUnseenCount(0);
   };
 
-  /**
-   * Precomputes what each row needs to know about its neighbours: whether it
-   * starts a new day, opens a group, or closes one. Doing it here keeps the
-   * render body free of index arithmetic.
-   */
   const rows = useMemo(
     () =>
       messages.map((message, index) => {
@@ -144,9 +130,9 @@ const MessageList = ({
 
   if (loading) {
     return (
-      <div className="flex h-full items-center justify-center gap-2 text-sm text-muted-foreground">
-        <Loader2 className="h-4 w-4 animate-spin" />
-        Loading messages…
+      <div className="flex h-full flex-col items-center justify-center gap-3 text-sm text-muted-foreground">
+        <Loader2 className="h-5 w-5 animate-spin text-primary/60" />
+        <span>Loading messages…</span>
       </div>
     );
   }
@@ -154,12 +140,12 @@ const MessageList = ({
   if (messages.length === 0) {
     return (
       <div className="flex h-full flex-col items-center justify-center px-6 text-center">
-        <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-muted">
-          <MessagesSquare className="h-6 w-6 text-muted-foreground" aria-hidden />
+        <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-white/5 ring-1 ring-white/10">
+          <MessagesSquare className="h-7 w-7 text-muted-foreground/60" aria-hidden />
         </div>
-        <p className="font-medium">No messages yet</p>
-        <p className="mt-1 max-w-xs text-sm text-muted-foreground">
-          Say hello — mention what you're working on and what you'd like help with.
+        <p className="font-semibold">No messages yet</p>
+        <p className="mt-1.5 max-w-xs text-sm text-muted-foreground/70">
+          Say hello — share what you're working on and what you'd love help with.
         </p>
       </div>
     );
@@ -171,7 +157,7 @@ const MessageList = ({
         ref={containerRef}
         onScroll={handleScroll}
         data-testid="message-scroller"
-        className="h-full overflow-y-auto overscroll-contain px-4 py-4"
+        className="h-full overflow-y-auto overscroll-contain px-4 py-5 space-y-0"
       >
         {rows.map(({ message, startsDay, isFirstInGroup, isLastInGroup }) => {
           const isMine = message.sender_id === currentUserId;
@@ -179,13 +165,14 @@ const MessageList = ({
 
           return (
             <React.Fragment key={message.id}>
+              {/* Day separator */}
               {startsDay && (
-                <div className="my-4 flex items-center gap-3">
-                  <span className="h-px flex-1 bg-border" />
-                  <span className="rounded-full bg-muted px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground">
+                <div className="my-5 flex items-center gap-3">
+                  <span className="h-px flex-1 bg-white/8" />
+                  <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-medium text-muted-foreground/70 backdrop-blur-sm">
                     {formatDayLabel(message.sent_at)}
                   </span>
-                  <span className="h-px flex-1 bg-border" />
+                  <span className="h-px flex-1 bg-white/8" />
                 </div>
               )}
 
@@ -193,48 +180,53 @@ const MessageList = ({
                 className={cn(
                   "flex items-end gap-2",
                   isMine ? "justify-end" : "justify-start",
-                  isFirstInGroup ? "mt-3" : "mt-0.5",
+                  isFirstInGroup ? "mt-4" : "mt-0.5",
                 )}
               >
+                {/* Received: avatar placeholder column */}
                 {!isMine &&
                   (isLastInGroup ? (
-                    <Avatar className="h-7 w-7 shrink-0">
+                    <Avatar className="h-7 w-7 shrink-0 ring-1 ring-white/10">
                       <AvatarImage src={message.sender?.profile_image} alt="" className="object-cover" />
-                      <AvatarFallback className="bg-muted text-[10px] font-medium">
+                      <AvatarFallback className="bg-white/8 text-[10px] font-semibold text-muted-foreground">
                         {getInitials(message.sender?.name || senderName)}
                       </AvatarFallback>
                     </Avatar>
                   ) : (
-                    // Keeps the column aligned without repeating the avatar.
                     <span className="w-7 shrink-0" aria-hidden />
                   ))}
 
-                {/* No sender name above the bubble: conversations here are
-                    strictly two-party, so the header already says who this is
-                    and repeating it above every group is noise. */}
-                <div className={cn("flex max-w-[78%] flex-col sm:max-w-[68%]", isMine && "items-end")}>
+                <div className={cn("flex max-w-[75%] flex-col sm:max-w-[65%]", isMine && "items-end")}>
                   <div
                     className={cn(
-                      "whitespace-pre-wrap break-words px-3.5 py-2 text-sm leading-relaxed",
+                      "whitespace-pre-wrap break-words px-4 py-2.5 text-sm leading-relaxed shadow-sm",
+                      // SENT bubble — gradient primary
                       isMine
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted text-foreground",
-                      // Square off the inner corner so a run of messages reads
-                      // as one block rather than a stack of separate pills.
+                        ? "bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-primary/20"
+                        : // RECEIVED bubble — glass
+                          "border border-white/10 bg-white/6 text-foreground backdrop-blur-sm",
+                      // Corner rounding logic
                       isMine
-                        ? cn("rounded-2xl", isFirstInGroup ? "rounded-br-md" : "rounded-tr-md rounded-br-md")
-                        : cn("rounded-2xl", isFirstInGroup ? "rounded-bl-md" : "rounded-tl-md rounded-bl-md"),
-                      isLastInGroup && (isMine ? "rounded-br-2xl" : "rounded-bl-2xl"),
+                        ? cn(
+                            "rounded-2xl",
+                            isFirstInGroup ? "rounded-br-sm" : "rounded-tr-sm rounded-br-sm",
+                            isLastInGroup && "rounded-br-2xl",
+                          )
+                        : cn(
+                            "rounded-2xl",
+                            isFirstInGroup ? "rounded-bl-sm" : "rounded-tl-sm rounded-bl-sm",
+                            isLastInGroup && "rounded-bl-2xl",
+                          ),
                     )}
                   >
                     {message.content}
                   </div>
 
-                  {/* One timestamp per group, not one per message. */}
+                  {/* One timestamp per group */}
                   {isLastInGroup && (
                     <div
                       className={cn(
-                        "mt-1 flex items-center gap-1 px-1 text-[11px] text-muted-foreground",
+                        "mt-1.5 flex items-center gap-1.5 px-1 text-[10px] text-muted-foreground/60",
                         isMine ? "justify-end" : "justify-start",
                       )}
                     >
@@ -257,14 +249,13 @@ const MessageList = ({
         />
       </div>
 
-      {/* Appears only when you have scrolled away from the newest message. */}
+      {/* Jump-to-latest button */}
       {!isPinnedToBottom && (
-        <div className="pointer-events-none absolute inset-x-0 bottom-3 flex justify-center">
+        <div className="pointer-events-none absolute inset-x-0 bottom-4 flex justify-center">
           <Button
             size="sm"
-            variant="secondary"
             onClick={() => scrollToBottom("smooth")}
-            className="pointer-events-auto gap-1.5 rounded-full shadow-md"
+            className="pointer-events-auto gap-1.5 rounded-full bg-primary/90 px-4 text-primary-foreground shadow-lg shadow-primary/25 hover:bg-primary"
           >
             <ArrowDown className="h-3.5 w-3.5" />
             {unseenCount > 0

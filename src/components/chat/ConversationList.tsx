@@ -37,35 +37,42 @@ const ConversationList = ({
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center gap-2 py-10 text-sm text-muted-foreground">
-        <Loader2 className="h-4 w-4 animate-spin" />
-        Loading conversations…
+      <div className="flex flex-col gap-3 p-3">
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="flex items-center gap-3 rounded-xl p-2.5 animate-pulse">
+            <div className="h-11 w-11 shrink-0 rounded-full bg-white/8" />
+            <div className="flex-1 space-y-2">
+              <div className="h-3.5 w-28 rounded-full bg-white/8" />
+              <div className="h-3 w-40 rounded-full bg-white/5" />
+            </div>
+          </div>
+        ))}
       </div>
     );
   }
 
   if (filteredConversations.length === 0) {
     return (
-      <div className="px-6 py-12 text-center">
-        <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-muted">
+      <div className="px-6 py-14 text-center">
+        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-white/5 ring-1 ring-white/10">
           {searchQuery.trim() ? (
-            <SearchX className="h-5 w-5 text-muted-foreground" aria-hidden />
+            <SearchX className="h-6 w-6 text-muted-foreground" aria-hidden />
           ) : (
-            <MessagesSquare className="h-5 w-5 text-muted-foreground" aria-hidden />
+            <MessagesSquare className="h-6 w-6 text-muted-foreground" aria-hidden />
           )}
         </div>
 
         {searchQuery.trim() ? (
           <p className="text-sm text-muted-foreground">
-            No conversations match “{searchQuery.trim()}”
+            No conversations match "<span className="text-foreground">{searchQuery.trim()}</span>"
           </p>
         ) : (
           <>
-            <p className="mb-1 text-sm font-medium">No conversations yet</p>
-            <p className="mb-4 text-xs text-muted-foreground">
-              Message a mentor from their profile to start one.
+            <p className="mb-1 text-sm font-semibold">No conversations yet</p>
+            <p className="mb-5 text-xs text-muted-foreground">
+              Message a mentor from their profile to get started.
             </p>
-            <Button size="sm" asChild>
+            <Button size="sm" asChild className="rounded-full px-5">
               <Link to="/mentors">Browse mentors</Link>
             </Button>
           </>
@@ -75,7 +82,7 @@ const ConversationList = ({
   }
 
   return (
-    <ul className="p-2">
+    <ul className="space-y-0.5 p-2">
       {filteredConversations.map((conversation) => {
         const otherUser = getOtherUser(conversation);
         const hasUnread = hasUnreadMessages(conversation.id);
@@ -86,22 +93,30 @@ const ConversationList = ({
 
         return (
           <li key={conversation.id}>
-            {/* A button, not a div with onClick — this is focusable and
-                operable from the keyboard, which the previous row was not. */}
             <button
               type="button"
               onClick={() => setActiveChat(conversation.id)}
               aria-current={isActive ? "true" : undefined}
               className={cn(
-                "flex w-full items-center gap-3 rounded-lg p-2.5 text-left transition-colors",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                isActive ? "bg-primary/10" : "hover:bg-muted",
+                "group relative flex w-full items-center gap-3 rounded-xl p-2.5 text-left transition-all duration-200",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
+                isActive
+                  ? "bg-gradient-to-r from-primary/20 via-primary/10 to-transparent shadow-sm ring-1 ring-primary/20"
+                  : "hover:bg-white/5",
               )}
             >
+              {/* Active indicator bar */}
+              {isActive && (
+                <span className="absolute left-0 top-1/2 h-8 w-0.5 -translate-y-1/2 rounded-full bg-primary shadow-[0_0_8px_0px_hsl(var(--primary))]" />
+              )}
+
               <div className="relative shrink-0">
-                <Avatar className="h-11 w-11">
+                <Avatar className={cn("h-11 w-11 transition-all duration-200", isActive && "ring-2 ring-primary/40 ring-offset-1 ring-offset-transparent")}>
                   <AvatarImage src={otherUser?.profile_image} alt="" className="object-cover" />
-                  <AvatarFallback className="bg-primary/10 font-medium text-primary">
+                  <AvatarFallback className={cn(
+                    "font-semibold text-sm transition-colors duration-200",
+                    isActive ? "bg-primary/20 text-primary" : "bg-white/8 text-muted-foreground"
+                  )}>
                     {getInitials(displayName)}
                   </AvatarFallback>
                 </Avatar>
@@ -114,14 +129,17 @@ const ConversationList = ({
                 <div className="flex items-baseline justify-between gap-2">
                   <span
                     className={cn(
-                      "truncate text-sm",
-                      hasUnread ? "font-semibold" : "font-medium",
-                      isActive && "text-primary",
+                      "truncate text-sm transition-colors duration-200",
+                      hasUnread ? "font-bold" : "font-medium",
+                      isActive ? "text-foreground" : "text-foreground/90",
                     )}
                   >
                     {displayName}
                   </span>
-                  <span className="shrink-0 text-[11px] text-muted-foreground">
+                  <span className={cn(
+                    "shrink-0 text-[10px] tabular-nums transition-colors duration-200",
+                    isActive ? "text-primary/80" : "text-muted-foreground/60"
+                  )}>
                     {formatTime(conversation.last_updated)}
                   </span>
                 </div>
@@ -129,17 +147,15 @@ const ConversationList = ({
                 <div className="mt-0.5 flex items-center gap-2">
                   <p
                     className={cn(
-                      "truncate text-xs",
-                      hasUnread ? "font-medium text-foreground" : "text-muted-foreground",
+                      "truncate text-xs leading-relaxed transition-colors duration-200",
+                      hasUnread ? "font-medium text-foreground/80" : "text-muted-foreground/60",
                     )}
                   >
                     {preview}
                   </p>
-                  {/* A dot beats a red badge: it marks the row without
-                      claiming a count the data can't back up. */}
                   {hasUnread && (
                     <span
-                      className="ml-auto h-2 w-2 shrink-0 rounded-full bg-primary"
+                      className="ml-auto h-2 w-2 shrink-0 rounded-full bg-primary shadow-[0_0_6px_1px_hsl(var(--primary)/0.6)] animate-pulse"
                       aria-label="Unread messages"
                     />
                   )}

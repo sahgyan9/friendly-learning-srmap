@@ -1,8 +1,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
-import { Send, Loader2 } from "lucide-react";
+import { Send, Loader2, Smile } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { useTypingIndicator } from "@/hooks/useTypingIndicator";
 
@@ -25,6 +24,7 @@ const MessageInput = ({
 }: MessageInputProps) => {
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const { startTyping, stopTyping, refreshTyping } = useTypingIndicator(conversationId, userId);
@@ -32,8 +32,6 @@ const MessageInput = ({
   const busy = disabled || sending || isSubmitting;
   const canSend = message.trim().length > 0 && !busy;
 
-  // Grow with the content up to a ceiling, then scroll. A fixed-height box
-  // hides the top of anything longer than two lines while you write it.
   useEffect(() => {
     const el = textareaRef.current;
     if (!el) return;
@@ -41,7 +39,6 @@ const MessageInput = ({
     el.style.height = `${Math.min(el.scrollHeight, MAX_ROWS_PX)}px`;
   }, [message]);
 
-  // Switching conversations should not carry a half-written message across.
   useEffect(() => {
     setMessage("");
   }, [conversationId]);
@@ -51,8 +48,6 @@ const MessageInput = ({
     if (!content || busy) return;
 
     setIsSubmitting(true);
-    // Clear immediately: the send is optimistic upstream, and leaving the text
-    // sitting there makes it look like nothing happened.
     setMessage("");
 
     try {
@@ -60,7 +55,7 @@ const MessageInput = ({
       await onSendMessage(content);
     } catch (error) {
       console.error("Failed to send message:", error);
-      setMessage(content); // hand it back rather than losing what was typed
+      setMessage(content);
     } finally {
       setIsSubmitting(false);
       textareaRef.current?.focus();
@@ -87,34 +82,64 @@ const MessageInput = ({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="border-t bg-background p-3">
+    <form
+      onSubmit={handleSubmit}
+      className="border-t border-white/8 bg-card/60 p-3 backdrop-blur-md"
+    >
       <div
         className={cn(
-          "flex items-end gap-2 rounded-2xl border bg-muted/40 p-1.5 transition-colors",
-          "focus-within:border-primary focus-within:bg-background",
+          "flex items-end gap-2 rounded-2xl border px-1.5 py-1.5 transition-all duration-200",
+          isFocused
+            ? "border-primary/40 bg-background/80 shadow-[0_0_0_3px_hsl(var(--primary)/0.12)]"
+            : "border-white/10 bg-white/5",
         )}
       >
-        <Textarea
+        {/* Emoji hint icon */}
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="mb-0.5 h-8 w-8 shrink-0 rounded-xl text-muted-foreground/50 hover:bg-white/8 hover:text-muted-foreground"
+          tabIndex={-1}
+          disabled={busy}
+        >
+          <Smile className="h-4 w-4" />
+        </Button>
+
+        <textarea
           ref={textareaRef}
           value={message}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
-          onFocus={() => message.trim() && conversationId && refreshTyping()}
-          onBlur={stopTyping}
+          onFocus={() => {
+            setIsFocused(true);
+            if (message.trim() && conversationId) refreshTyping();
+          }}
+          onBlur={() => {
+            setIsFocused(false);
+            stopTyping();
+          }}
           placeholder="Write a message…"
           aria-label="Message"
           disabled={busy}
           rows={1}
           className={cn(
-            "min-h-0 resize-none border-0 bg-transparent px-3 py-2 text-sm shadow-none",
-            "focus-visible:ring-0 focus-visible:ring-offset-0",
+            "min-h-0 flex-1 resize-none bg-transparent py-2 pr-1 text-sm leading-relaxed text-foreground",
+            "placeholder:text-muted-foreground/40",
+            "outline-none",
           )}
+          style={{ maxHeight: `${MAX_ROWS_PX}px` }}
         />
 
         <Button
           type="submit"
           size="icon"
-          className="h-9 w-9 shrink-0 rounded-xl"
+          className={cn(
+            "mb-0.5 h-9 w-9 shrink-0 rounded-xl transition-all duration-200",
+            canSend
+              ? "bg-gradient-to-br from-primary to-primary/80 shadow-md shadow-primary/30 hover:shadow-primary/50 hover:scale-105"
+              : "opacity-40",
+          )}
           disabled={!canSend}
           aria-label="Send message"
         >
@@ -126,10 +151,9 @@ const MessageInput = ({
         </Button>
       </div>
 
-      <p className="mt-1.5 px-1 text-[11px] text-muted-foreground">
-        <kbd className="rounded border bg-muted px-1 font-sans">Enter</kbd> to send ·{" "}
-        <kbd className="rounded border bg-muted px-1 font-sans">Shift</kbd>+
-        <kbd className="rounded border bg-muted px-1 font-sans">Enter</kbd> for a new line
+      <p className="mt-1.5 px-2 text-[10px] text-muted-foreground/40">
+        <kbd className="font-sans">Enter</kbd> to send ·{" "}
+        <kbd className="font-sans">Shift + Enter</kbd> for new line
       </p>
     </form>
   );
