@@ -7,7 +7,7 @@ import {
   getCommunityKindMeta,
   listCommunities,
 } from "@/integrations/supabase/services/communities";
-import { askWhoCanHelp } from "@/integrations/supabase/services/ask";
+import { askWhoCanHelp, metaList, type AskResult } from "@/integrations/supabase/services/ask";
 import { BLOG_POSTS } from "@/data/blog-posts";
 import { normalise } from "@/lib/search/rank";
 
@@ -56,6 +56,27 @@ const PER_GROUP = 4;
 function looksLikeAPhrase(query: string): boolean {
   const trimmed = query.trim();
   return trimmed.length >= 14 || (/\s/.test(trimmed) && trimmed.length >= 8);
+}
+
+/**
+ * Every "Closest to what you asked" row used to show department, so four
+ * professors from the same CS department rendered an identical subtitle —
+ * a list you had to trust rather than one you could verify. The actual
+ * reason a person matched (their listed interests or skills) is already in
+ * `metadata`; this just surfaces it instead of the department.
+ */
+function relatedSubtitle(result: AskResult): string {
+  if (result.entity_type === "faculty") {
+    const interests = metaList(result, "interests");
+    if (interests.length) return interests.slice(0, 3).join(", ");
+  }
+
+  if (result.entity_type === "mentor") {
+    const skills = metaList(result, "skills");
+    if (skills.length) return skills.slice(0, 3).join(", ");
+  }
+
+  return result.subtitle ?? "";
 }
 
 /** Blog posts ship with the app, so they are matched here rather than fetched. */
@@ -185,7 +206,7 @@ export function useSiteSearch(query: string, enabled: boolean) {
             .map((result) => ({
               id: `semantic-${result.entity_id}`,
               title: result.title,
-              subtitle: result.subtitle ?? "",
+              subtitle: relatedSubtitle(result),
               to: result.source_path,
               image:
                 typeof result.metadata?.image_url === "string"
