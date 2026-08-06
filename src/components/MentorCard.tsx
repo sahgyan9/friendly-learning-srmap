@@ -1,8 +1,7 @@
-
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Star, MapPin, Users, MessageCircle, Linkedin, Loader2, GraduationCap } from "lucide-react";
+import { Star, MapPin, Users, MessageCircle, Linkedin, Loader2, GraduationCap, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Mentor } from "@/types/mentor";
@@ -14,6 +13,7 @@ import { toast } from "sonner";
 import { getMentorById, isMentorListed } from "@/integrations/supabase/services/mentors";
 import { getOrCreateConversation } from "@/integrations/supabase/services/chat";
 import { formatDepartment } from "@/utils/user-utils";
+import { CardAccentBorder } from "@/components/ui/CardAccentBorder";
 
 interface MentorCardProps {
   mentor: Mentor;
@@ -95,41 +95,43 @@ const MentorCard = ({ mentor }: MentorCardProps) => {
 
   return (
     <div className="relative group">
-      <Card 
-        className="group hover:shadow-lg transition-all duration-200 border border-gray-200 dark:border-gray-700 overflow-hidden h-full flex flex-col hover:scale-[1.01] cursor-pointer"
+      <Card
+        className="group relative flex h-full flex-col overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-primary/30 cursor-pointer"
         onClick={handleCardClick}
       >
+        {/* Solid full-width accent border — same pattern as portfolio-insight */}
+        <CardAccentBorder gradient="primary" />
+
+        {/* Hover glow — matches FeaturesShowcase card hover pattern */}
+        <div className="pointer-events-none absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-primary/5 to-transparent" />
+
+        {/* Loading overlay */}
         {isNavigating && (
-          <div className="absolute inset-0 bg-white/80 dark:bg-gray-900/80 flex items-center justify-center z-10">
+          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-10 rounded-xl">
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
           </div>
         )}
-        
-        <CardContent className="p-6 flex flex-col h-full">
-          {/* Header section with avatar and basic info.
-              The status badge used to sit under the avatar, which widened that
-              column and left the name about 150px to live in — every mentor
-              with a three-part name rendered as "Aarav Raj Shr...". The badge
-              now sits with the other metadata, and the name gets the full
-              width and two lines before it clips. */}
+
+        <CardContent className="relative z-10 flex flex-col h-full p-5">
+          {/* Header — avatar + name + meta */}
           <div className="mb-4 flex items-start gap-3">
             <MentorAvatar
               name={mentor.name}
               src={mentor.profile_image}
               seed={mentor.id}
-              className="h-14 w-14 flex-shrink-0 ring-2 ring-blue-100 dark:ring-blue-900"
+              className="h-14 w-14 flex-shrink-0 ring-2 ring-primary/20"
               fallbackClassName="text-base"
             />
 
             <div className="min-w-0 flex-1">
-              <h3 className="line-clamp-2 text-lg font-semibold leading-tight text-gray-900 transition-colors group-hover:text-blue-600 dark:text-gray-100 dark:group-hover:text-blue-400">
+              <h3 className="line-clamp-2 text-base font-semibold leading-tight transition-colors group-hover:text-primary">
                 {mentor.name}
               </h3>
 
               <div className="mt-1.5 flex items-center gap-2">
                 <div className="flex min-w-0 items-center gap-1">
-                  <MapPin className="h-3.5 w-3.5 flex-shrink-0 text-gray-500" />
-                  <span className="truncate text-sm text-gray-600 dark:text-gray-400">
+                  <MapPin className="h-3.5 w-3.5 flex-shrink-0 text-muted-foreground" />
+                  <span className="truncate text-sm text-muted-foreground">
                     {formatDepartment(mentor.department)}
                   </span>
                 </div>
@@ -139,7 +141,7 @@ const MentorCard = ({ mentor }: MentorCardProps) => {
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label={`${mentor.name} on LinkedIn`}
-                    className="flex-shrink-0 text-blue-600 transition-colors hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                    className="flex-shrink-0 text-primary/60 transition-colors hover:text-primary"
                     onClick={(e) => e.stopPropagation()}
                   >
                     <Linkedin className="h-4 w-4" />
@@ -147,6 +149,7 @@ const MentorCard = ({ mentor }: MentorCardProps) => {
                 )}
               </div>
 
+              {/* Status + rating row */}
               <div className="mt-2 flex flex-wrap items-center gap-1.5">
                 {/* The whole point of the alumni transition: a student scanning
                     this list can tell who has already been through placements.
@@ -155,7 +158,7 @@ const MentorCard = ({ mentor }: MentorCardProps) => {
                 {mentor.is_alumni && (
                   <Badge
                     variant="secondary"
-                    className="gap-1 bg-indigo-100 text-xs text-indigo-800 dark:bg-indigo-950 dark:text-indigo-200"
+                    className="gap-1 bg-primary/10 text-xs text-primary border-primary/20"
                   >
                     <GraduationCap className="h-3 w-3" />
                     Alumni
@@ -163,13 +166,13 @@ const MentorCard = ({ mentor }: MentorCardProps) => {
                   </Badge>
                 )}
 
-                {/* Neutral grey on purpose. Taking a break is a choice, not a
+                {/* Neutral on purpose. Taking a break is a choice, not a
                     fault, and a red or amber chip would read as a warning about
                     the person. */}
                 {!listed && (
                   <Badge
                     variant="secondary"
-                    className="bg-gray-100 text-xs text-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                    className="bg-muted text-xs text-muted-foreground"
                   >
                     Taking a break
                   </Badge>
@@ -178,24 +181,24 @@ const MentorCard = ({ mentor }: MentorCardProps) => {
                 {mentor.review_count === 0 || mentor.rating === 0 ? (
                   <Badge
                     variant="secondary"
-                    className="bg-green-100 text-xs text-green-800 dark:bg-green-900 dark:text-green-300"
+                    className="bg-emerald-500/10 text-xs text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
                   >
                     New Mentor
                   </Badge>
                 ) : (
-                  <span className="flex items-center gap-1 rounded-full bg-yellow-50 px-2 py-0.5 dark:bg-yellow-900/20">
-                    <Star className="h-3 w-3 fill-current text-yellow-500" />
-                    <span className="text-xs font-medium text-gray-900 dark:text-gray-100">
+                  <span className="flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 border border-amber-500/20">
+                    <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                    <span className="text-xs font-semibold text-foreground">
                       {mentor.rating.toFixed(1)}
                     </span>
-                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                    <span className="text-xs text-muted-foreground">
                       ({mentor.review_count})
                     </span>
                   </span>
                 )}
 
                 {mentor.is_alumni && (mentor.company || mentor.job_title) && (
-                  <span className="w-full truncate text-xs text-gray-600 dark:text-gray-400">
+                  <span className="w-full truncate text-xs text-muted-foreground">
                     {[mentor.job_title, mentor.company].filter(Boolean).join(" at ")}
                   </span>
                 )}
@@ -203,56 +206,56 @@ const MentorCard = ({ mentor }: MentorCardProps) => {
             </div>
           </div>
 
-          {/* Bio section */}
+          {/* Bio */}
           <div className="mb-4 flex-grow">
-            <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
+            <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
               {mentor.bio}
             </p>
           </div>
 
-          {/* Skills section */}
+          {/* Skills */}
           <div className="mb-4">
-            <div className="flex flex-wrap gap-1">
+            <div className="flex flex-wrap gap-1.5">
               {mentor.skills.slice(0, 3).map((skill, index) => (
-                <Badge 
-                  key={index} 
-                  variant="secondary" 
-                  className="text-xs bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300"
+                <Badge
+                  key={index}
+                  variant="secondary"
+                  className="text-xs bg-primary/10 text-primary border-primary/20 hover:bg-primary/15 transition-colors"
                 >
                   {skill}
                 </Badge>
               ))}
               {mentor.skills.length > 3 && (
-                <Badge variant="outline" className="text-xs">
-                  +{mentor.skills.length - 3} more
+                <Badge variant="outline" className="text-xs text-muted-foreground">
+                  +{mentor.skills.length - 3}
                 </Badge>
               )}
             </div>
           </div>
 
-          {/* Badges section */}
+          {/* Achievement badges */}
           {userBadges.length > 0 && (
             <div className="mb-4">
               <BadgeGrid badges={userBadges} maxDisplay={3} />
             </div>
           )}
 
-          {/* Footer section - pushed to bottom */}
-          <div className="mt-auto pt-4 border-t border-gray-100 dark:border-gray-700">
+          {/* Footer */}
+          <div className="mt-auto border-t border-border pt-3">
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-1 text-sm text-gray-500 dark:text-gray-400">
-                <Users className="h-4 w-4" />
+              <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                <Users className="h-3.5 w-3.5" />
                 <span>
                   {mentor.review_count === 0 ? "No reviews yet" : `${mentor.review_count} reviews`}
                 </span>
               </div>
-              
+
               {/* The card stays clickable through to the profile even when
                   paused — you can still read about someone you cannot message
                   yet. Only the action is withdrawn. */}
               <Button
                 size="sm"
-                className="text-sm px-4 py-2 h-9"
+                className="h-8 gap-1.5 px-3 text-xs group-hover:gap-2.5 transition-all duration-200"
                 onClick={(e) => {
                   e.stopPropagation();
                   handleConnect();
@@ -260,11 +263,14 @@ const MentorCard = ({ mentor }: MentorCardProps) => {
                 disabled={isConnecting || !listed}
               >
                 {isConnecting ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
                 ) : (
-                  <MessageCircle className="h-4 w-4 mr-2" />
+                  <MessageCircle className="h-3.5 w-3.5" />
                 )}
                 {!listed ? "Unavailable" : isConnecting ? "Connecting..." : "Connect"}
+                {listed && !isConnecting && (
+                  <ArrowRight className="h-3 w-3 transition-transform duration-200 group-hover:translate-x-0.5" />
+                )}
               </Button>
             </div>
           </div>

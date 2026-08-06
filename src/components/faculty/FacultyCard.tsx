@@ -4,6 +4,7 @@ import { Star, UserRound } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { CardAccentBorder } from "@/components/ui/CardAccentBorder";
 import { cn } from "@/lib/utils";
 import type { Faculty } from "@/integrations/supabase/services/faculty";
 import { StarRating } from "./StarRating";
@@ -18,36 +19,52 @@ export function FacultyCard({ faculty, onRate, className }: FacultyCardProps) {
   const hasRatings = faculty.rating_count > 0;
 
   return (
-    <Card className={cn("group flex flex-col overflow-hidden transition-shadow hover:shadow-md", className)}>
-      <Link to={`/faculty/${faculty.slug}`} className="flex flex-1 flex-col">
-        <div className="relative aspect-[4/3] overflow-hidden bg-muted">
+    <Card className={cn(
+      "group relative flex flex-col overflow-hidden transition-all duration-300",
+      "hover:-translate-y-0.5 hover:shadow-lg hover:border-rose-500/30",
+      className,
+    )}>
+      {/* Solid full-width accent border — same pattern as portfolio-insight */}
+      <CardAccentBorder gradient="rose" />
+
+      {/* Subtle hover glow in rose — Faculty brand colour */}
+      <div className="pointer-events-none absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-rose-500/5 to-transparent" />
+
+      <Link to={`/faculty/${faculty.slug}`} className="relative flex flex-1 flex-col">
+        {/* Photo area */}
+        <div className="relative aspect-[4/3] overflow-hidden bg-muted/50">
           {faculty.image_url ? (
             <img
               src={faculty.image_url}
               alt={faculty.name}
               loading="lazy"
-              className="h-full w-full object-cover object-top transition-transform duration-300 group-hover:scale-105"
+              className="h-full w-full object-cover object-top transition-transform duration-500 group-hover:scale-105"
               onError={(event) => {
+                // Hide broken images; the fallback below is already rendered
                 event.currentTarget.style.display = "none";
               }}
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center">
-              <UserRound className="h-10 w-10 text-muted-foreground/50" />
+            /* Clean neutral fallback — no jarring colour */
+            <div className="flex h-full w-full items-center justify-center bg-muted/70">
+              <UserRound className="h-12 w-12 text-muted-foreground/30" />
             </div>
           )}
 
-          {/* Score sits on the photo so the grid is scannable without reading. */}
+          {/* Rating chip — only shown when there are ratings */}
           {hasRatings && (
-            <div className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-background/90 px-2 py-1 text-xs font-semibold shadow-sm backdrop-blur">
+            <div className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-background/90 px-2 py-1 text-xs font-semibold shadow-sm backdrop-blur-sm border border-border/30">
               <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
               {Number(faculty.avg_overall).toFixed(1)}
             </div>
           )}
         </div>
 
-        <div className="flex flex-1 flex-col gap-1.5 p-3">
-          <h3 className="line-clamp-2 text-sm font-semibold leading-tight">{faculty.name}</h3>
+        {/* Text body */}
+        <div className="flex flex-1 flex-col gap-1.5 px-3 pt-3 pb-2">
+          <h3 className="line-clamp-2 text-sm font-semibold leading-tight transition-colors duration-200 group-hover:text-rose-600 dark:group-hover:text-rose-400">
+            {faculty.name}
+          </h3>
 
           {faculty.designation && (
             <p className="line-clamp-1 text-[11px] text-muted-foreground">{faculty.designation}</p>
@@ -72,14 +89,18 @@ export function FacultyCard({ faculty, onRate, className }: FacultyCardProps) {
         </div>
       </Link>
 
-      <div className="border-t p-2">
+      {/* Rate button footer */}
+      <div className="border-t border-border/50 p-2">
         <Button
           size="sm"
           variant={hasRatings ? "outline" : "default"}
-          className="h-8 w-full text-xs"
+          className={cn(
+            "h-8 w-full gap-1.5 text-xs",
+            !hasRatings && "bg-rose-500 hover:bg-rose-600 text-white border-transparent",
+          )}
           onClick={() => onRate?.(faculty)}
         >
-          <Star className="mr-1.5 h-3 w-3" />
+          <Star className={cn("h-3 w-3", !hasRatings && "fill-white")} />
           {hasRatings ? "Rate" : "Be the first to rate"}
         </Button>
       </div>

@@ -8,8 +8,9 @@ import { cn } from "@/lib/utils";
 import { getInitials } from "@/utils/user-utils";
 import type { CommunityPost } from "@/integrations/supabase/services/community-posts";
 import { isAwaitingReply } from "@/integrations/supabase/services/community-posts";
-import { AwaitingReplyBadge, PostStatusBadge, PostTypeBadge, postTypeAccent } from "./PostTypeBadge";
+import { AwaitingReplyBadge, PostStatusBadge, PostTypeBadge } from "./PostTypeBadge";
 import { LinkifiedText } from "@/components/common/LinkifiedText";
+import { CardAccentBorder } from "@/components/ui/CardAccentBorder";
 
 interface PostCardProps {
   post: CommunityPost;
@@ -24,6 +25,20 @@ interface PostCardProps {
   variant?: "full" | "compact";
   className?: string;
 }
+
+/**
+ * Maps each post type to its CardAccentBorder gradient key.
+ * Keeps the visual language consistent with PostTypeBadge's TYPE_ACCENTS.
+ */
+const POST_TYPE_GRADIENT: Record<string, string> = {
+  hackathon:        "amber",
+  "study-help":     "sky",
+  project:          "violet",
+  research:         "emerald",
+  "problem-solving":"rose",
+  announcement:     "orange",
+  general:          "muted",
+};
 
 /**
  * The single source of truth for how a community post looks.
@@ -45,22 +60,27 @@ export function PostCard({
 }: PostCardProps) {
   const isCompact = variant === "compact";
   const postedAt = formatDistanceToNow(new Date(post.created_at), { addSuffix: true });
+  const accentGradient = POST_TYPE_GRADIENT[post.post_type] ?? "muted";
 
   return (
     <Card
       className={cn(
-        "group relative flex flex-col overflow-hidden transition-all",
-        onOpen && "cursor-pointer hover:-translate-y-0.5 hover:shadow-lg",
+        "group relative flex flex-col overflow-hidden transition-all duration-300",
+        onOpen && "cursor-pointer hover:-translate-y-0.5 hover:shadow-lg hover:border-emerald-500/30",
         className,
       )}
       onClick={onOpen ? () => onOpen(post.id) : undefined}
     >
-      <span
-        aria-hidden
-        className={cn("absolute inset-y-0 left-0 w-1", postTypeAccent(post.post_type))}
-      />
+      {/* Solid full-width top accent border — colour tracks the post type */}
+      <CardAccentBorder gradient={accentGradient} />
 
-      <div className={cn("flex flex-1 flex-col gap-3 pl-5 pr-4", isCompact ? "py-4" : "py-5")}>
+      {/* Hover glow — Posts brand colour (emerald) */}
+      <div className="pointer-events-none absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-emerald-500/4 to-transparent" />
+
+      {/* ── Body ── */}
+      <div className={cn("relative flex flex-1 flex-col gap-3 px-4", isCompact ? "py-4" : "py-5")}>
+
+        {/* Type + status badges row */}
         <div className="flex flex-wrap items-center gap-2">
           <PostTypeBadge type={post.post_type} />
           <PostStatusBadge status={post.status} />
@@ -68,12 +88,13 @@ export function PostCard({
           <span className="ml-auto shrink-0 text-xs text-muted-foreground">{postedAt}</span>
         </div>
 
+        {/* Title + content */}
         <div className="space-y-1.5">
           <h3
             className={cn(
               "font-semibold leading-snug tracking-tight",
               isCompact ? "line-clamp-2 text-base" : "text-xl",
-              onOpen && "group-hover:text-primary",
+              onOpen && "group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-200",
             )}
           >
             {post.title}
@@ -95,19 +116,7 @@ export function PostCard({
           </p>
         </div>
 
-        {/* `object-cover` with `max-h-72` was throwing most of the picture away.
-            Measured on a real post: a 1024x1024 image rendered into a 696x286
-            box, so the browser kept a horizontal strip and discarded 72% of it —
-            a shared certificate lost its heading and its signatures.
-
-            The cause is that `w-full` sets the width, the natural height then
-            exceeds the cap, and `object-cover` resolves the mismatch by
-            cropping. Sizing the image itself instead of a box for it means the
-            aspect ratio survives: it shrinks until it fits both limits, and
-            nothing is cut.
-
-            The compact rail keeps `cover`. That one is a fixed-height thumbnail
-            where a crop is the intended behaviour, not an accident. */}
+        {/* Image — see long comment in original for why object-contain over object-cover */}
         {post.image_url &&
           (isCompact ? (
             <img
@@ -118,9 +127,7 @@ export function PostCard({
             />
           ) : (
             // A button, not a bare image with a click handler: this is a real
-            // action and it needs to be reachable by keyboard. stopPropagation
-            // matters because the whole card navigates on click — without it,
-            // tapping the picture opens the post instead of the picture.
+            // action and it needs to be reachable by keyboard.
             <button
               type="button"
               onClick={(event) => {
@@ -130,22 +137,12 @@ export function PostCard({
               className="group/img relative mx-auto block cursor-zoom-in rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               aria-label={`View the image on "${post.title}" full size`}
             >
-              {/* Capped at 288px, not the 512px it started at. Showing a square
-                  image whole at full card width made one post as tall as a
-                  screen and pushed everything below it out of view — the feed
-                  stopped being a feed. Shrinking is the fix rather than
-                  cropping: the picture stays complete, it is just smaller, and
-                  the full-size view is one tap away. */}
               <img
                 src={post.image_url}
                 alt=""
                 loading="lazy"
                 className="mx-auto h-auto max-h-72 w-auto max-w-full rounded-lg border"
               />
-
-              {/* Small images are easy to mistake for the whole story, and a
-                  zoom cursor does not exist on a phone. This says there is
-                  more to see. */}
               <span
                 aria-hidden
                 className="absolute bottom-2 right-2 rounded-md bg-black/55 p-1.5 text-white opacity-80 transition-opacity group-hover/img:opacity-100"
@@ -155,93 +152,101 @@ export function PostCard({
             </button>
           ))}
 
+        {/* Tags — emerald accent matching Posts brand colour */}
         {post.tags && post.tags.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
             {post.tags.slice(0, isCompact ? 2 : 6).map((tag) => (
-              <Badge key={tag} variant="outline" className="text-xs font-normal text-muted-foreground">
+              <Badge
+                key={tag}
+                variant="outline"
+                className="text-xs font-normal bg-emerald-500/8 text-emerald-700 dark:text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/15 transition-colors"
+              >
                 #{tag}
               </Badge>
             ))}
           </div>
         )}
+      </div>
 
-        {/* Byline and actions share the last row: the author is context for the
-            ask, not the headline, and the actions stay reachable without a
-            separate bordered footer eating vertical space. */}
-        <div className="mt-auto flex items-center justify-between gap-2 pt-2">
-          <div className="flex min-w-0 items-center gap-2">
-            <Avatar
-              className={cn("h-7 w-7 shrink-0", onAuthorClick && "cursor-pointer")}
-              onClick={onAuthorClick ? (event) => onAuthorClick(post.author.id, event) : undefined}
-            >
-              <AvatarImage src={post.author.profile_image ?? undefined} alt={post.author.name} />
-              <AvatarFallback className="bg-primary/10 text-[10px] font-semibold text-primary">
-                {getInitials(post.author.name)}
-              </AvatarFallback>
-            </Avatar>
+      {/* ── Footer — separated with border-t for breathing room ── */}
+      <div className="relative flex items-center justify-between gap-2 border-t border-border/60 px-4 py-2.5">
+        {/* Author byline */}
+        <div className="flex min-w-0 items-center gap-2">
+          <Avatar
+            className={cn(
+              "h-7 w-7 shrink-0 ring-1 ring-border transition-all duration-200",
+              onAuthorClick && "cursor-pointer hover:ring-emerald-500/40",
+            )}
+            onClick={onAuthorClick ? (event) => onAuthorClick(post.author.id, event) : undefined}
+          >
+            <AvatarImage src={post.author.profile_image ?? undefined} alt={post.author.name} />
+            <AvatarFallback className="bg-emerald-500/10 text-[10px] font-semibold text-emerald-700 dark:text-emerald-400">
+              {getInitials(post.author.name)}
+            </AvatarFallback>
+          </Avatar>
 
-            <div className="min-w-0 leading-tight">
-              <span className="flex items-center gap-1">
-                <span
-                  className={cn(
-                    "truncate text-xs font-medium",
-                    onAuthorClick && "cursor-pointer hover:text-primary",
-                  )}
-                  onClick={onAuthorClick ? (event) => onAuthorClick(post.author.id, event) : undefined}
-                >
-                  {post.author.name}
-                </span>
-                {post.author.is_mentor && (
-                  <BadgeCheck className="h-3.5 w-3.5 shrink-0 text-primary" aria-label="Verified mentor" />
+          <div className="min-w-0 leading-tight">
+            <span className="flex items-center gap-1">
+              <span
+                className={cn(
+                  "truncate text-xs font-medium",
+                  onAuthorClick && "cursor-pointer hover:text-primary transition-colors",
                 )}
+                onClick={onAuthorClick ? (event) => onAuthorClick(post.author.id, event) : undefined}
+              >
+                {post.author.name}
               </span>
-              {post.author.department && (
-                <span className="block truncate text-[11px] text-muted-foreground">
-                  {post.author.department}
-                </span>
+              {post.author.is_mentor && (
+                <BadgeCheck className="h-3.5 w-3.5 shrink-0 text-primary" aria-label="Verified mentor" />
               )}
-            </div>
+            </span>
+            {post.author.department && (
+              <span className="block truncate text-[11px] text-muted-foreground">
+                {post.author.department}
+              </span>
+            )}
           </div>
+        </div>
 
-          <div className="flex shrink-0 items-center">
-            <Button
-              variant="ghost"
-              size="sm"
-              className={cn(
-                "h-8 gap-1.5 px-2 text-muted-foreground hover:text-rose-600",
-                post.viewer_has_liked && "text-rose-600 dark:text-rose-400",
-              )}
-              onClick={onLike ? (event) => onLike(post.id, event) : undefined}
-              aria-pressed={post.viewer_has_liked}
-              aria-label={post.viewer_has_liked ? "Unlike post" : "Like post"}
-            >
-              <Heart className={cn("h-4 w-4", post.viewer_has_liked && "fill-current")} />
-              {/* A row of zeroes makes a young board look abandoned; the count
-                  appears once there is something to count. */}
-              {post.likes_count > 0 && <span className="text-xs">{post.likes_count}</span>}
-            </Button>
+        {/* Action buttons */}
+        <div className="flex shrink-0 items-center">
+          <Button
+            variant="ghost"
+            size="sm"
+            className={cn(
+              "h-8 gap-1.5 px-2 text-muted-foreground hover:text-rose-600 transition-colors",
+              post.viewer_has_liked && "text-rose-600 dark:text-rose-400",
+            )}
+            onClick={onLike ? (event) => onLike(post.id, event) : undefined}
+            aria-pressed={post.viewer_has_liked}
+            aria-label={post.viewer_has_liked ? "Unlike post" : "Like post"}
+          >
+            <Heart className={cn("h-4 w-4", post.viewer_has_liked && "fill-current")} />
+            {/* A row of zeroes makes a young board look abandoned; count
+                appears once there is something to count. */}
+            {post.likes_count > 0 && <span className="text-xs">{post.likes_count}</span>}
+          </Button>
 
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 gap-1.5 px-2 text-muted-foreground hover:text-primary"
-              onClick={onComment ? (event) => onComment(post.id, event) : undefined}
-              aria-label="Comments"
-            >
-              <MessageCircle className="h-4 w-4" />
-              {post.comments_count > 0 && <span className="text-xs">{post.comments_count}</span>}
-            </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 gap-1.5 px-2 text-muted-foreground hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+            onClick={onComment ? (event) => onComment(post.id, event) : undefined}
+            aria-label="Comments"
+          >
+            <MessageCircle className="h-4 w-4" />
+            {post.comments_count > 0 && <span className="text-xs">{post.comments_count}</span>}
+          </Button>
 
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 px-2 text-muted-foreground hover:text-primary"
-              onClick={onShare ? (event) => onShare(post, event) : undefined}
-              aria-label="Share post"
-            >
-              <Share2 className="h-4 w-4" />
-            </Button>
-          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 px-2 text-muted-foreground hover:text-primary transition-colors"
+            onClick={onShare ? (event) => onShare(post, event) : undefined}
+            aria-label="Share post"
+          >
+            <Share2 className="h-4 w-4" />
+          </Button>
         </div>
       </div>
     </Card>
