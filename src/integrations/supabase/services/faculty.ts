@@ -10,6 +10,9 @@ export type Faculty = {
   school: string | null;
   profile_url: string | null;
   image_url: string | null;
+  /** Research interests, synced from the university directory. Often empty. */
+  interests: string[];
+  research_areas: string[];
   rating_count: number;
   avg_overall: number;
   avg_teaching: number;
@@ -51,6 +54,8 @@ export type FacultySort = "rating" | "reviews" | "name";
 export type FacultyQuery = {
   search?: string;
   department?: string;
+  /** Exact interest tag, as clicked from a chip. Distinct from free-text search. */
+  interest?: string;
   sort?: FacultySort;
   limit?: number;
   offset?: number;
@@ -92,10 +97,28 @@ export const REVIEW_TAGS = [
 // Must stay a single string literal: supabase-js resolves the row type from the
 // select string at the type level, and a concatenated expression defeats that.
 const FACULTY_COLUMNS =
-  "id, slug, name, designation, department, school, profile_url, image_url, rating_count, avg_overall, avg_teaching, avg_grading, avg_helpfulness" as const;
+  "id, slug, name, designation, department, school, profile_url, image_url, interests, research_areas, rating_count, avg_overall, avg_teaching, avg_grading, avg_helpfulness" as const;
+
+/**
+ * PostgREST's .or() takes a comma-separated filter list, so a search term
+ * containing a comma would be read as two filters. Parentheses delimit values
+ * the same way, and a backslash escapes the quote character. Quoting the value
+ * and escaping what can break out of the quotes keeps a term like
+ * "machine learning, vision" a single filter.
+ */
+function escapeOrValue(term: string): string {
+  return `"${term.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
+}
 
 export async function getFacultyList(query: FacultyQuery = {}) {
-  const { search = "", department = "all", sort = "rating", limit = 24, offset = 0 } = query;
+  const {
+    search = "",
+    department = "all",
+    interest = "",
+    sort = "rating",
+    limit = 24,
+    offset = 0,
+  } = query;
 
   let request = supabase
     .from("faculty")
@@ -106,9 +129,18 @@ export async function getFacultyList(query: FacultyQuery = {}) {
     request = request.eq("department", department);
   }
 
+  // Exact tag match, served by the GIN index on interests. Kept separate from
+  // the free-text search below so clicking "Machine Learning" cannot also drag
+  // in every profile that merely mentions it inside a longer phrase.
+  if (interest.trim()) {
+    request = request.contains("interests", [interest.trim()]);
+  }
+
   if (search.trim()) {
-    const term = `%${search.trim()}%`;
-    request = request.or(`name.ilike.${term},department.ilike.${term},designation.ilike.${term}`);
+    const term = escapeOrValue(`%${search.trim()}%`);
+    request = request.or(
+      `name.ilike.${term},department.ilike.${term},designation.ilike.${term},interests_text.ilike.${term}`,
+    );
   }
 
   if (sort === "name") {
@@ -172,6 +204,28 @@ export async function getFacultyDepartments() {
     .sort((a, b) => a.localeCompare(b));
 
   return { data: departments, error: null };
+}
+
+/**
+ * The interests shared by more than one faculty member, most common first.
+ *
+ * The directory carries ~1380 distinct interest terms across 590 people, but
+ * most are used exactly once — listing them all would be a wall of noise. The
+ * RPC filters to the ~200 that are actually shared, which are the only ones
+ * worth offering as something to browse by.
+ */
+export async function getFacultyInterestFacets(limit = 40) {
+  const { data, error } = await supabase.rpc("get_faculty_interest_facets", { p_limit: limit });
+
+  if (error) {
+    console.error("Error fetching interest facets:", error);
+    return { data: [] as { interest: string; count: number }[], error };
+  }
+
+  return {
+    data: (data ?? []).map((row) => ({ interest: row.interest, count: Number(row.faculty_count) })),
+    error: null,
+  };
 }
 
 export async function getFacultyReviews(facultyId: string) {

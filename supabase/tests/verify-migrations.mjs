@@ -107,6 +107,7 @@ console.log('Scaffolding ready.\n');
 for (const file of [
   '20260726010000_faculty_ratings.sql',
   '20260726010100_community_posts_open_to_students.sql',
+  '20260806100000_faculty_research_interests.sql',
 ]) {
   const sql = fs.readFileSync(path.join(MIGRATIONS, file), 'utf8');
   try {
@@ -180,6 +181,60 @@ check('helpful_count trigger decrements', unvoted.helpful_count === 0, `got ${un
 await q(`DELETE FROM public.faculty_ratings WHERE reviewer_id=$1`, [OTHER_UID]);
 const { rows: [agg2] } = await q(`SELECT rating_count, avg_teaching FROM public.faculty WHERE id=$1`, [fac.id]);
 check('aggregates recomputed after delete', agg2.rating_count === 1 && Number(agg2.avg_teaching) === 5, JSON.stringify(agg2));
+
+// ------------------------------------------------------- research interests
+console.log('\nfaculty research interests:');
+
+// Trigger fires on UPDATE OF interests.
+await q(`UPDATE public.faculty
+         SET interests = ARRAY['Artificial Intelligence','2D Materials and its device applications']
+         WHERE id = $1`, [fac.id]);
+const { rows: [ix] } = await q(`SELECT interests, interests_text FROM public.faculty WHERE id=$1`, [fac.id]);
+check('interests stored as array', ix.interests.length === 2, JSON.stringify(ix.interests));
+check(
+  'interests_text flattened with a separator',
+  ix.interests_text === 'Artificial Intelligence | 2D Materials and its device applications',
+  ix.interests_text,
+);
+
+// research_areas must land in the same searchable column.
+await q(`UPDATE public.faculty SET research_areas = ARRAY['Computational Physics'] WHERE id=$1`, [fac.id]);
+const { rows: [ix2] } = await q(`SELECT interests_text FROM public.faculty WHERE id=$1`, [fac.id]);
+check('research_areas appended to interests_text', ix2.interests_text.endsWith('| Computational Physics'), ix2.interests_text);
+
+// The separator is the whole point: it must block a match that spans two terms.
+const { rows: spanning } = await q(
+  `SELECT id FROM public.faculty WHERE interests_text ILIKE '%Intelligence 2D%'`,
+);
+check('separator prevents matching across two interests', spanning.length === 0, `${spanning.length} rows`);
+
+// A search a student would actually type.
+const { rows: hits } = await q(`SELECT id FROM public.faculty WHERE interests_text ILIKE '%artificial intel%'`);
+check('case-insensitive partial search finds the faculty member', hits.length === 1, `${hits.length} rows`);
+
+// A new row inserted with interests gets interests_text without a second write.
+await q(`INSERT INTO public.faculty (slug, name, department, interests)
+         VALUES ('dr-test-two', 'Dr Test Two', 'CSE', ARRAY['Artificial Intelligence','Blockchain'])`);
+const { rows: [ins] } = await q(`SELECT interests_text FROM public.faculty WHERE slug='dr-test-two'`);
+check('INSERT populates interests_text', ins.interests_text === 'Artificial Intelligence | Blockchain', ins.interests_text);
+
+// Facets: only terms shared by more than one active faculty member.
+const { rows: facets } = await q(`SELECT * FROM public.get_faculty_interest_facets(40)`);
+const ai = facets.find((f) => f.interest === 'Artificial Intelligence');
+check('facet counts shared interests', ai && Number(ai.faculty_count) === 2, JSON.stringify(facets));
+check('facet excludes single-use interests', !facets.some((f) => f.interest === 'Blockchain'), JSON.stringify(facets.map((f) => f.interest)));
+
+// Inactive faculty must not appear in facets.
+await q(`UPDATE public.faculty SET is_active = false WHERE slug='dr-test-two'`);
+const { rows: facets2 } = await q(`SELECT * FROM public.get_faculty_interest_facets(40)`);
+check('facets ignore inactive faculty', !facets2.some((f) => f.interest === 'Artificial Intelligence'), JSON.stringify(facets2));
+await q(`UPDATE public.faculty SET is_active = true WHERE slug='dr-test-two'`);
+
+// GIN index path: exact-tag browse.
+const { rows: tagged } = await q(
+  `SELECT slug FROM public.faculty WHERE interests @> ARRAY['Blockchain']::text[]`,
+);
+check('array containment finds by exact tag', tagged.length === 1 && tagged[0].slug === 'dr-test-two', JSON.stringify(tagged));
 
 // ---------------------------------------------------------------- community
 console.log('\ncommunity posts:');

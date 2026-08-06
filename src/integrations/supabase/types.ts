@@ -962,10 +962,13 @@ export type Database = {
           email: string | null
           id: string
           image_url: string | null
+          interests: string[]
+          interests_text: string
           is_active: boolean
           last_synced_at: string | null
           name: string
           profile_image: string | null
+          research_areas: string[]
           profile_url: string | null
           rating_count: number
           school: string | null
@@ -985,10 +988,13 @@ export type Database = {
           email?: string | null
           id?: string
           image_url?: string | null
+          interests?: string[]
+          interests_text?: string
           is_active?: boolean
           last_synced_at?: string | null
           name: string
           profile_image?: string | null
+          research_areas?: string[]
           profile_url?: string | null
           rating_count?: number
           school?: string | null
@@ -1008,12 +1014,15 @@ export type Database = {
           email?: string | null
           id?: string
           image_url?: string | null
+          interests?: string[]
+          interests_text?: string
           is_active?: boolean
           last_synced_at?: string | null
           name?: string
           profile_image?: string | null
           profile_url?: string | null
           rating_count?: number
+          research_areas?: string[]
           school?: string | null
           slug?: string
           source?: string
@@ -2191,6 +2200,13 @@ export type Database = {
           department_count: number
           faculty_count: number
           rating_count: number
+        }[]
+      }
+      get_faculty_interest_facets: {
+        Args: { p_limit?: number }
+        Returns: {
+          faculty_count: number
+          interest: string
         }[]
       }
       get_faculty_reviews: {

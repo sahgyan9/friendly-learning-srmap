@@ -17,6 +17,8 @@ interface FacultyCardProps {
 
 export function FacultyCard({ faculty, onRate, className }: FacultyCardProps) {
   const hasRatings = faculty.rating_count > 0;
+  // Rows synced before the interests column existed come back without the field.
+  const interests = faculty.interests ?? [];
 
   return (
     <Card className={cn(
@@ -73,6 +75,25 @@ export function FacultyCard({ faculty, onRate, className }: FacultyCardProps) {
           <Badge variant="secondary" className="w-fit text-[10px] font-normal">
             {faculty.department}
           </Badge>
+
+          {/* What they work on. Two chips is what fits without pushing the
+              rating out of the card; the rest are on the profile. */}
+          {interests.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1">
+              {interests.slice(0, 2).map((interest) => (
+                <span
+                  key={interest}
+                  title={interest}
+                  className="max-w-full truncate rounded border border-rose-500/20 bg-rose-500/5 px-1.5 py-0.5 text-[10px] leading-tight text-rose-700 dark:text-rose-300"
+                >
+                  {interest}
+                </span>
+              ))}
+              {interests.length > 2 && (
+                <span className="text-[10px] text-muted-foreground">+{interests.length - 2}</span>
+              )}
+            </div>
+          )}
 
           <div className="mt-auto pt-1.5">
             {hasRatings ? (

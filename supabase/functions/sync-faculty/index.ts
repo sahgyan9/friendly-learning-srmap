@@ -52,6 +52,10 @@ interface WpFacultyProfile {
   title: { rendered: string };
   class_list?: string[];
   featured_media?: number;
+  /** `interest` taxonomy term IDs — what this person researches. */
+  interest?: number[];
+  /** `department-research-area` term IDs. Sparser: ~74 of 629 profiles carry it. */
+  "department-research-area"?: number[];
 }
 
 interface Taxonomy {
@@ -109,6 +113,46 @@ async function fetchSchoolCategories(): Promise<Taxonomy> {
   };
 }
 
+/**
+ * id -> display name for a flat taxonomy, paged to exhaustion.
+ *
+ * `interest` has ~1900 terms, well past WP's 100-per-request cap, so unlike
+ * fetchSchoolCategories this one has to page. WordPress answers a page past the
+ * end with HTTP 400 (`rest_post_invalid_page_number`) rather than an empty
+ * array, so the throw is the terminator, not an error worth failing the sync
+ * over — whatever was collected before it is still correct.
+ */
+async function fetchTermNames(taxonomy: string, maxPages = 40): Promise<Map<number, string>> {
+  const names = new Map<number, string>();
+
+  for (let page = 1; page <= maxPages; page += 1) {
+    let batch: WpTerm[];
+    try {
+      batch = await fetchJson<WpTerm[]>(
+        `${WP_BASE}/${taxonomy}?per_page=${PER_PAGE}&page=${page}&_fields=id,name`,
+      );
+    } catch {
+      break;
+    }
+
+    // Term names carry the same HTML entities as post titles ("Accounting &amp;
+    // Finance"), and these end up rendered as chips, so decode here not in the UI.
+    for (const term of batch) names.set(term.id, decodeEntities(term.name));
+    if (batch.length < PER_PAGE) break;
+  }
+
+  return names;
+}
+
+/** Term IDs on a profile resolved to names, deduped, empties dropped. */
+function resolveTerms(ids: number[] | undefined, names: Map<number, string>): string[] {
+  const resolved = (ids ?? [])
+    .map((id) => names.get(id))
+    .filter((name): name is string => Boolean(name && name.trim()));
+
+  return Array.from(new Set(resolved));
+}
+
 async function fetchAllFacultyProfiles(): Promise<WpFacultyProfile[]> {
   const all: WpFacultyProfile[] = [];
 
@@ -118,7 +162,8 @@ async function fetchAllFacultyProfiles(): Promise<WpFacultyProfile[]> {
     // them in one batch below keeps the payload at ~48KB/page instead of ~1.2MB.
     const url =
       `${WP_BASE}/faculty-profile?per_page=${PER_PAGE}&page=${page}` +
-      `&_fields=id,slug,link,modified,title,class_list,featured_media`;
+      `&_fields=id,slug,link,modified,title,class_list,featured_media` +
+      `,interest,department-research-area`;
 
     const batch = await fetchJson<WpFacultyProfile[]>(url);
     all.push(...batch);
@@ -211,6 +256,8 @@ function toFacultyRow(
   profile: WpFacultyProfile,
   taxonomy: Taxonomy,
   mediaUrls: Map<number, string>,
+  interestNames: Map<number, string>,
+  researchAreaNames: Map<number, string>,
   syncedAt: string,
 ) {
   const { department, school } = resolveAffiliation(profile, taxonomy);
@@ -222,6 +269,8 @@ function toFacultyRow(
     school,
     profile_url: profile.link ?? null,
     image_url: mediaUrls.get(profile.featured_media ?? 0) ?? null,
+    interests: resolveTerms(profile.interest, interestNames),
+    research_areas: resolveTerms(profile["department-research-area"], researchAreaNames),
     source: "srmap-directory",
     is_active: true,
     last_synced_at: syncedAt,
@@ -358,9 +407,11 @@ serve(async (req) => {
   const syncStartedAt = new Date().toISOString();
 
   try {
-    const [taxonomy, profiles] = await Promise.all([
+    const [taxonomy, profiles, interestNames, researchAreaNames] = await Promise.all([
       fetchSchoolCategories(),
       fetchAllFacultyProfiles(),
+      fetchTermNames("interest"),
+      fetchTermNames("department-research-area"),
     ]);
 
     const mediaUrls = await fetchMediaUrls(
@@ -373,7 +424,10 @@ serve(async (req) => {
       new Map(
         profiles
           .filter((profile) => profile.slug)
-          .map((profile) => [profile.slug, toFacultyRow(profile, taxonomy, mediaUrls, syncedAt)]),
+          .map((profile) => [
+            profile.slug,
+            toFacultyRow(profile, taxonomy, mediaUrls, interestNames, researchAreaNames, syncedAt),
+          ]),
       ).values(),
     );
 

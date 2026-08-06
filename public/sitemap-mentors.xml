@@ -6,15 +6,9 @@
                             http://www.google.com/schemas/sitemap-image/1.1 http://www.google.com/schemas/sitemap-image/1.1/sitemap-image.xsd">
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/mentors</loc>
-    <lastmod>2026-08-02T07:01:36.690Z</lastmod>
+    <lastmod>2026-08-06T10:07:39.590Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://friendly-learning-srmap.vercel.app/mentor/3f5a2ffd-dce9-4854-8d2d-5ae5362d1ba1</loc>
-    <lastmod>2026-07-30T16:34:14.531944+00:00</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/mentor/54774a25-67a8-48da-abc7-3621f35fbb26</loc>
@@ -27,14 +21,10 @@
     </image:image>
   </url>
   <url>
-    <loc>https://friendly-learning-srmap.vercel.app/mentor/bdb12eee-6e79-496f-a173-2a335cb615e2</loc>
-    <lastmod>2026-07-31T13:53:08.372783+00:00</lastmod>
+    <loc>https://friendly-learning-srmap.vercel.app/mentor/3f5a2ffd-dce9-4854-8d2d-5ae5362d1ba1</loc>
+    <lastmod>2026-07-30T16:34:14.531944+00:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
-    <image:image>
-      <image:loc>https://lh3.googleusercontent.com/a/ACg8ocL24_34LBs5B6wCu9mVGSX4m3DfwIZYsQf4gQJo5udF77DCldLv=s96-c</image:loc>
-      <image:title>ankush adhikari - Friendly Learning SRMAP Mentor</image:title>
-    </image:image>
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/mentor/d6bbb4f1-bba4-4817-b884-db17cc8492a9</loc>
@@ -44,6 +34,16 @@
     <image:image>
       <image:loc>https://ruapdkrgcbqrhvsayvpf.supabase.co/storage/v1/object/public/profiles/profile-images/d6bbb4f1-bba4-4817-b884-db17cc8492a9-1785505271046.jpeg</image:loc>
       <image:title>Aarav Raj Shrestha - Friendly Learning SRMAP Mentor</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://friendly-learning-srmap.vercel.app/mentor/bdb12eee-6e79-496f-a173-2a335cb615e2</loc>
+    <lastmod>2026-07-31T13:53:08.372783+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <image:image>
+      <image:loc>https://ruapdkrgcbqrhvsayvpf.supabase.co/storage/v1/object/public/profiles/profile-images/bdb12eee-6e79-496f-a173-2a335cb615e2-1785661151280.jpg</image:loc>
+      <image:title>ankush adhikari - Friendly Learning SRMAP Mentor</image:title>
     </image:image>
   </url>
 </urlset>

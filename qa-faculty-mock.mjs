@@ -30,6 +30,45 @@ const NAMES = [
 
 const DESIGNATIONS = ['Professor & HoD', 'Associate Professor', 'Assistant Professor', 'Professor'];
 
+// Interest sets mirroring the real shape of the upstream taxonomy: mostly short
+// topical labels, with the occasional sentence-length one that has to truncate
+// rather than blow out the card.
+const INTEREST_SETS = [
+  ['Machine Learning', 'Deep Learning', 'Computer Vision'],
+  ['Artificial Intelligence', 'Natural Language Processing'],
+  ['Graph Theory', 'Combinatorics'],
+  ['Structural Health Monitoring', 'Reduced-Order Modeling', 'Bayesian Filtering', 'Crack Modeling and Detection'],
+  ['IoT', 'Cyber Security', 'Blockchain'],
+  ['Accelerating Material Discovery For Various Applications Using Large Language Models'],
+  ['Machine Learning'],
+  ['Data Science', 'Image Processing'],
+  [],
+  ['Quantum Computing', 'Cryptography'],
+  ['Machine Learning', 'Networking'],
+  ['Corporate Governance', 'Financial Performance', 'IFRS'],
+];
+
+const INTEREST_FACETS = [
+  { interest: 'Machine Learning', faculty_count: 111 },
+  { interest: 'Artificial Intelligence', faculty_count: 68 },
+  { interest: 'Deep Learning', faculty_count: 59 },
+  { interest: 'IoT', faculty_count: 32 },
+  { interest: 'Image Processing', faculty_count: 27 },
+  { interest: 'Computer Vision', faculty_count: 24 },
+  { interest: 'Data Science', faculty_count: 24 },
+  { interest: 'Cyber Security', faculty_count: 18 },
+  { interest: 'Natural Language Processing', faculty_count: 18 },
+  { interest: 'Networking', faculty_count: 17 },
+  { interest: 'Blockchain', faculty_count: 14 },
+  { interest: 'Internet of Things', faculty_count: 12 },
+  { interest: 'Distributed Computing', faculty_count: 12 },
+  { interest: 'Vision Computing', faculty_count: 10 },
+  { interest: 'Cloud Computing', faculty_count: 9 },
+  { interest: 'Information Security', faculty_count: 9 },
+  { interest: 'Graph Theory', faculty_count: 8 },
+  { interest: 'Quantum Computing', faculty_count: 7 },
+];
+
 const FACULTY = NAMES.map((name, index) => {
   const rated = index % 4 !== 3;
   const overall = rated ? Number((5 - (index % 5) * 0.35).toFixed(2)) : 0;
@@ -42,6 +81,8 @@ const FACULTY = NAMES.map((name, index) => {
     school: 'School of Engineering and Sciences',
     profile_url: 'https://www.srmap.edu.in/faculty/example/',
     image_url: null,
+    interests: INTEREST_SETS[index % INTEREST_SETS.length],
+    research_areas: index === 3 ? ['Computational Mechanics'] : [],
     rating_count: rated ? 18 - index : 0,
     avg_overall: overall,
     avg_teaching: rated ? Number((overall + 0.2).toFixed(2)) : 0,
@@ -120,6 +161,9 @@ async function route(request) {
   if (url.includes('/rpc/get_top_rated_faculty')) {
     return respondJson(request, FACULTY.filter((f) => f.rating_count > 0).slice(0, 4));
   }
+  if (url.includes('/rpc/get_faculty_interest_facets')) {
+    return respondJson(request, INTEREST_FACETS);
+  }
   if (url.includes('/rpc/get_faculty_reviews')) return respondJson(request, REVIEWS);
   if (url.includes('/rpc/get_faculty_tag_counts')) return respondJson(request, TAG_COUNTS);
   if (url.includes('/rpc/get_community_feed')) return respondJson(request, []);
@@ -136,6 +180,19 @@ async function route(request) {
       const found = FACULTY.find((f) => f.slug === slug) ?? FACULTY[0];
       return respondJson(request, found);
     }
+
+    // Interest chip filter: .contains() serialises as interests=cs.{"Term"}.
+    // URLSearchParams encodes a space as '+', which decodeURIComponent leaves
+    // alone — PostgREST form-decodes it, so the mock has to as well.
+    const containsMatch = url.match(/interests=cs\.([^&]+)/);
+    if (containsMatch) {
+      const term = decodeURIComponent(containsMatch[1].replace(/\+/g, ' ')).replace(
+        /^\{"?|"?\}$/g,
+        '',
+      );
+      return respondJson(request, FACULTY.filter((f) => f.interests.includes(term)));
+    }
+
     return respondJson(request, FACULTY);
   }
 
@@ -154,6 +211,11 @@ const browser = await puppeteer.launch({
 const shots = [
   { name: 'faculty-list', path: '/faculty', viewport: { width: 1280, height: 900 } },
   { name: 'faculty-list-mobile', path: '/faculty', viewport: { width: 390, height: 844 } },
+  {
+    name: 'faculty-filtered',
+    path: '/faculty?interest=Machine%20Learning',
+    viewport: { width: 1280, height: 900 },
+  },
   { name: 'faculty-detail', path: `/faculty/${FACULTY[0].slug}`, viewport: { width: 1280, height: 900 } },
   { name: 'faculty-detail-mobile', path: `/faculty/${FACULTY[0].slug}`, viewport: { width: 390, height: 844 } },
   { name: 'home-discovery', path: '/', viewport: { width: 1280, height: 900 } },

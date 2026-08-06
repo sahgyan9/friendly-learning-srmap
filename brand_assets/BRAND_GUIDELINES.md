@@ -277,3 +277,99 @@ The glow uses `--primary` (brand blue) regardless of the feature accent colour
 — the accent lives in the pill label and icon, not the hover state. This keeps
 hover behaviour visually unified across all cards on the same page.
 
+---
+
+## 9. Card design system
+
+All feature cards share a consistent set of micro-patterns. Apply them whenever building a new card.
+
+### 9.1 CardAccentBorder
+
+A 2px solid gradient strip at the top of every card, rendered with `<CardAccentBorder>` from
+`@/components/ui/CardAccentBorder`. The component applies `opacity-40` internally so it reads as
+a subtle accent rather than a heavy coloured bar.
+
+```tsx
+<Card className="relative overflow-hidden ...">
+  <CardAccentBorder gradient="violet" />
+  ...
+</Card>
+```
+
+Available gradient keys and their mapped colours:
+
+| Key | Gradient | Used for |
+|-----|----------|----------|
+| `primary` | blue → indigo | Mentors, default |
+| `rose` | rose → pink | Faculty |
+| `emerald` | emerald → teal | Posts (feed), Research type |
+| `amber` | amber → orange | Groups, Hackathon type |
+| `violet` | violet → purple | Events (all cards) |
+| `sky` | sky → cyan | Messages, Study Help type |
+| `orange` | orange → amber | Announcements type |
+| `muted` | border → border | General / neutral |
+
+### 9.2 Card hover recipe
+
+Every interactive card uses the same three-layer hover treatment:
+
+```tsx
+// 1. Card wrapper
+className="group relative overflow-hidden transition-all duration-300
+           hover:-translate-y-0.5 hover:shadow-lg hover:border-{accent}/30"
+
+// 2. Glow overlay — first child inside Card, after CardAccentBorder
+<div className="pointer-events-none absolute inset-0 rounded-xl opacity-0
+                group-hover:opacity-100 transition-opacity duration-500
+                bg-gradient-to-br from-{accent}/5 to-transparent" />
+
+// 3. Title text
+className="transition-colors duration-200
+           group-hover:text-{accent}-600 dark:group-hover:text-{accent}-400"
+```
+
+### 9.3 Card footer pattern
+
+Cards with a primary action use a `border-t border-border/60` footer section.
+This separates meta (author, date, stats) from the CTA and gives breathing room.
+
+```tsx
+<div className="relative flex items-center justify-between gap-3
+                border-t border-border/60 px-4 py-2.5">
+  {/* secondary meta */}
+  {/* primary CTA */}
+</div>
+```
+
+### 9.4 Events page — PostCard category colours
+
+Marketplace/Events posts are colour-coded by category within the Events page:
+
+| Category | Border gradient | Badge style |
+|----------|----------------|-------------|
+| `events` | `violet` | `bg-violet-500/10 text-violet-600 border-violet-500/20` |
+| `news` | `sky` | `bg-sky-500/10 text-sky-600 border-sky-500/20` |
+| `ads` | `amber` | `bg-amber-500/10 text-amber-600 border-amber-500/20` |
+| `courses` | `emerald` | `bg-emerald-500/10 text-emerald-600 border-emerald-500/20` |
+
+SRMAPEventCard (official events): violet accent throughout, Live badge violet, department
+badge with `bg-violet-500/8 text-violet-600 border-violet-500/20`.
+
+### 9.5 Community Posts — per-type top border
+
+PostCard derives its `CardAccentBorder` gradient from `post_type`:
+
+| post_type | gradient key |
+|-----------|-------------|
+| `hackathon` | `amber` |
+| `study-help` | `sky` |
+| `project` | `violet` |
+| `research` | `emerald` |
+| `problem-solving` | `rose` |
+| `announcement` | `orange` |
+| `general` | `muted` |
+
+Additional Posts brand colour tokens:
+- Tags: `bg-emerald-500/8 text-emerald-700 border-emerald-500/20`
+- Avatar fallback: `bg-emerald-500/10 text-emerald-700`
+- Comment button hover: `hover:text-emerald-600 dark:hover:text-emerald-400`
