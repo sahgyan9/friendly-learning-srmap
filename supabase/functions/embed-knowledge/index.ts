@@ -30,14 +30,28 @@ const corsHeaders = {
 };
 
 // Overridable so the model can be changed without a code edit.
-const MODEL = Deno.env.get("EMBEDDING_MODEL") ?? "text-embedding-004";
+// Confirmed against ListModels rather than taken from documentation: this key
+// exposes gemini-embedding-001, gemini-embedding-2 and -2-preview. The widely
+// documented `text-embedding-004` does not exist here at all and 404s.
+const MODEL = Deno.env.get("EMBEDDING_MODEL") ?? "gemini-embedding-001";
 const GEMINI_KEY = Deno.env.get("Gemini_API_Key") ?? "";
+
+// knowledge_chunks.embedding is vector(768). gemini-embedding-001 returns 3072
+// by default, so this is not optional — without it every insert fails on a
+// dimension mismatch. Pinned here rather than in the table so the model can be
+// swapped without an ALTER TABLE and a full re-embed.
+const DIMENSIONS = 768;
 
 // Gemini caps batchEmbedContents at 100 requests. 250 rows/run keeps a single
 // invocation well inside the edge function CPU budget while still clearing ~600
 // faculty in three runs.
+// batchEmbedContents bills each item in the batch as a separate request against
+// the free tier's ~100/minute quota, so a 100-item batch consumes the whole
+// minute. Doing exactly one batch per invocation keeps every run inside quota;
+// the pg_cron schedule supplies the pacing instead of a sleep inside the
+// function, which would burn wall-clock against the edge runtime's timeout.
 const BATCH = 100;
-const MAX_ROWS_PER_RUN = 250;
+const MAX_ROWS_PER_RUN = 100;
 
 const supabaseAdmin = createClient(
   Deno.env.get("SUPABASE_URL") ?? "",
@@ -61,6 +75,7 @@ async function embedBatch(texts: string[], taskType: string): Promise<number[][]
           model: `models/${MODEL}`,
           content: { parts: [{ text }] },
           taskType,
+          outputDimensionality: DIMENSIONS,
         })),
       }),
     },
@@ -77,7 +92,24 @@ async function embedBatch(texts: string[], taskType: string): Promise<number[][]
     throw new Error(`asked for ${texts.length} embeddings, got ${embeddings.length}`);
   }
 
-  return embeddings;
+  for (const vector of embeddings) {
+    if (vector.length !== DIMENSIONS) {
+      throw new Error(
+        `${MODEL} returned ${vector.length} dimensions, table expects ${DIMENSIONS}. ` +
+          `Either outputDimensionality was ignored or the model changed.`,
+      );
+    }
+  }
+
+  // gemini-embedding-001 only guarantees unit-length output at its native 3072
+  // dimensions; a truncated vector has to be renormalised. Cosine ranking is
+  // scale-invariant so ordering would survive either way, but the similarity
+  // score we return to callers would not be on a 0-1 scale, and the 0.30
+  // relevance floor in search_knowledge would stop meaning anything.
+  return embeddings.map((vector: number[]) => {
+    const norm = Math.sqrt(vector.reduce((sum, v) => sum + v * v, 0));
+    return norm > 0 ? vector.map((v) => v / norm) : vector;
+  });
 }
 
 async function isAuthorised(req: Request): Promise<boolean> {
@@ -157,14 +189,28 @@ serve(async (req) => {
     if (!pending?.length) return json({ embedded: 0, remaining: 0, note: "nothing pending" });
 
     let embedded = 0;
+    let quotaHit = false;
     for (let i = 0; i < pending.length; i += BATCH) {
       const slice = pending.slice(i, i + BATCH);
-      const vectors = await embedBatch(
+      // A 429 is a pacing signal, not a failure. Rows already written stay
+      // written, so the run reports the progress it made and the next scheduled
+      // invocation picks up where this one stopped. Throwing here instead would
+      // make a normal, expected condition look like an outage.
+      let vectors: number[][];
+      try {
+        vectors = await embedBatch(
         // Gemini rejects an empty string; a projector should never produce one,
         // but a single bad row must not stall the whole queue forever.
-        slice.map((row) => (row.body?.trim() ? row.body.slice(0, 8000) : "(no description)")),
-        "RETRIEVAL_DOCUMENT",
-      );
+          slice.map((row) => (row.body?.trim() ? row.body.slice(0, 8000) : "(no description)")),
+          "RETRIEVAL_DOCUMENT",
+        );
+      } catch (batchError) {
+        if (String(batchError).includes("429")) {
+          quotaHit = true;
+          break;
+        }
+        throw batchError;
+      }
 
       for (let j = 0; j < slice.length; j += 1) {
         const { error } = await supabaseAdmin
@@ -181,7 +227,7 @@ serve(async (req) => {
       .select("id", { count: "exact", head: true })
       .is("embedding", null);
 
-    return json({ model: MODEL, embedded, remaining: remaining ?? 0 });
+    return json({ model: MODEL, embedded, remaining: remaining ?? 0, quotaHit });
   } catch (error) {
     return json({ error: error instanceof Error ? error.message : String(error) }, 500);
   }
