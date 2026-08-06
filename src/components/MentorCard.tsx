@@ -94,7 +94,7 @@ const MentorCard = ({ mentor }: MentorCardProps) => {
   };
 
   return (
-    <div className="relative group">
+    <div className="relative group h-full">
       <Card
         className="group relative flex h-full flex-col overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-primary/30 cursor-pointer"
         onClick={handleCardClick}
