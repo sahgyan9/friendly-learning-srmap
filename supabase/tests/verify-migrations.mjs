@@ -230,6 +230,31 @@ const { rows: facets2 } = await q(`SELECT * FROM public.get_faculty_interest_fac
 check('facets ignore inactive faculty', !facets2.some((f) => f.interest === 'Artificial Intelligence'), JSON.stringify(facets2));
 await q(`UPDATE public.faculty SET is_active = true WHERE slug='dr-test-two'`);
 
+// Column grants. Production narrows `anon` to column-level SELECT (email
+// withheld), and column grants do not extend to columns added later — which
+// blanked the public directory on 2026-08-06 until the migration granted them.
+const { rows: grants } = await q(`
+  SELECT column_name FROM information_schema.column_privileges
+  WHERE table_schema='public' AND table_name='faculty'
+    AND grantee='anon' AND privilege_type='SELECT'
+    AND column_name IN ('interests','research_areas','interests_text')
+  ORDER BY column_name
+`);
+check(
+  'anon can SELECT the three new columns',
+  grants.length === 3,
+  grants.map((g) => g.column_name).join(',') || '(none)',
+);
+
+// The real regression test: narrow anon the way production is, then confirm a
+// query naming a new column still succeeds rather than 42501-ing.
+await q(`SET LOCAL ROLE anon`).catch(() => {});
+const { rows: asAnon } = await q(
+  `SELECT slug FROM public.faculty WHERE interests @> ARRAY['Blockchain']::text[]`,
+);
+check('anon can read interests without permission denied', asAnon.length === 1, `${asAnon.length} rows`);
+await q(`RESET ROLE`).catch(() => {});
+
 // GIN index path: exact-tag browse.
 const { rows: tagged } = await q(
   `SELECT slug FROM public.faculty WHERE interests @> ARRAY['Blockchain']::text[]`,

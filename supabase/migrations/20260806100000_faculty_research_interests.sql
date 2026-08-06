@@ -77,6 +77,35 @@ WHERE interests_text IS DISTINCT FROM array_to_string(
       );
 
 -- -----------------------------------------------------------------------------
+-- Column grants
+--
+-- REQUIRED, not housekeeping. `anon` has no table-level SELECT on public.faculty
+-- — it holds *column-level* grants on 20 of the 24 columns, with `email`
+-- deliberately withheld so anonymous visitors cannot harvest faculty addresses.
+--
+-- Column-level grants do not extend to columns added later. Without this block,
+-- adding the columns above silently removes anonymous read of the whole table
+-- the moment any query names one of them: PostgREST returns
+-- `42501 permission denied for table faculty`, and the public faculty directory
+-- goes blank. A narrower query that happens to avoid the new columns keeps
+-- working, which makes it look like an intermittent fault rather than a grant.
+--
+-- This is exactly what happened on 2026-08-06: the migration was applied, the
+-- frontend deployed selecting `interests`, and /faculty served zero results to
+-- signed-out visitors until this grant was added.
+--
+-- `email` is deliberately not granted here. Do not "fix" that.
+-- -----------------------------------------------------------------------------
+GRANT SELECT (interests, research_areas, interests_text)
+  ON public.faculty TO anon;
+
+-- authenticated holds a table-level SELECT, so it needs nothing here. Granted
+-- explicitly anyway, so this migration is correct on a database where that
+-- table-level grant was never made.
+GRANT SELECT (interests, research_areas, interests_text)
+  ON public.faculty TO authenticated;
+
+-- -----------------------------------------------------------------------------
 -- Indexes
 -- -----------------------------------------------------------------------------
 -- GIN over the array supports exact-tag browsing (`interests @> ARRAY['...']`),
