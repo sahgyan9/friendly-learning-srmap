@@ -100,7 +100,12 @@ const Messages = () => {
           </div>
         </div>
       ) : (
-        <MessagesLayout />
+        // Every other page frames its content in this same container — the
+        // chat panel was rendering full-bleed with no side margins, which
+        // read as unfinished next to Groups, Events and Posts.
+        <div className="container mx-auto max-w-6xl px-4 py-6">
+          <MessagesLayout />
+        </div>
       )}
     </div>
   );

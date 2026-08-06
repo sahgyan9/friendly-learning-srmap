@@ -163,7 +163,7 @@ const MarketPlace = () => {
                       {/* Pill label — matches FeaturesShowcase numbering */}
                       <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-violet-500/20 bg-violet-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-violet-600 dark:text-violet-400">
                         <CalendarDays className="h-3.5 w-3.5" />
-                        03 — Events
+                        Events
                       </div>
 
                       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">

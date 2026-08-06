@@ -1,6 +1,7 @@
 
 import React from "react";
 import { Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
 
 interface SearchInputProps {
   searchQuery: string;
@@ -10,13 +11,13 @@ interface SearchInputProps {
 const SearchInput = ({ searchQuery, setSearchQuery }: SearchInputProps) => {
   return (
     <div className="relative">
-      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-      <input 
-        type="text" 
-        placeholder="Search messages..." 
+      <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+      <Input
         value={searchQuery}
         onChange={(e) => setSearchQuery && setSearchQuery(e.target.value)}
-        className="w-full pl-10 p-2 border border-border rounded-md bg-background text-foreground placeholder:text-muted-foreground"
+        placeholder="Search messages"
+        className="pl-9"
+        aria-label="Search messages"
       />
     </div>
   );

@@ -121,7 +121,7 @@ const Communities = () => {
             {/* Pill label — matches FeaturesShowcase numbering */}
             <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-amber-500/20 bg-amber-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-amber-600 dark:text-amber-400">
               <Users className="h-3.5 w-3.5" />
-              05 — Groups
+              Groups
             </div>
 
             <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
