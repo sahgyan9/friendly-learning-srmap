@@ -7,6 +7,7 @@ import { CardAccentBorder } from "@/components/ui/CardAccentBorder";
 import { CommunityAvatar } from "@/components/communities/CommunityAvatar";
 import { JoinCommunityButton } from "@/components/communities/JoinCommunityButton";
 import { getCommunityKindMeta, type Community } from "@/integrations/supabase/services/communities";
+import { getKindStyle } from "@/integrations/supabase/services/community-kind-styles";
 
 interface CommunityCardProps {
   community: Community;
@@ -25,14 +26,15 @@ interface CommunityCardProps {
  */
 export function CommunityCard({ community, onMembershipChange }: CommunityCardProps) {
   const kind = getCommunityKindMeta(community.kind);
+  const style = getKindStyle(community.kind);
 
   return (
     <Card className="group relative flex h-full flex-col overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-primary/30">
-      {/* Solid full-width accent border — same pattern as portfolio-insight */}
-      <CardAccentBorder gradient="amber" />
+      {/* Solid full-width accent border — colour tracks the community kind */}
+      <CardAccentBorder gradient={style.gradient} />
 
-      {/* Hover glow — matches FeaturesShowcase card hover pattern */}
-      <div className="pointer-events-none absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-amber-500/5 to-transparent" />
+      {/* Hover glow — colour tracks the community kind */}
+      <div className={`pointer-events-none absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br ${style.hoverGlow}`} />
 
       <Link
         to={`/communities/${community.slug}`}
@@ -45,7 +47,7 @@ export function CommunityCard({ community, onMembershipChange }: CommunityCardPr
             kind={community.kind}
             name={community.name}
             coverImage={community.cover_image}
-            className="h-12 w-12 ring-2 ring-border group-hover:ring-amber-500/30 transition-all duration-300"
+            className={`h-12 w-12 ring-2 ring-border ${style.avatarRing} transition-all duration-300`}
             emojiClassName="text-xl"
           />
 
@@ -54,8 +56,8 @@ export function CommunityCard({ community, onMembershipChange }: CommunityCardPr
               {community.name}
             </h2>
             <div className="mt-1 flex items-center gap-1.5">
-              {/* Kind pill */}
-              <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400">
+              {/* Kind pill — colour matches the card's accent gradient */}
+              <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${style.pill}`}>
                 <span aria-hidden>{kind.emoji}</span>
                 {kind.label}
               </span>
@@ -88,8 +90,8 @@ export function CommunityCard({ community, onMembershipChange }: CommunityCardPr
           {community.description}
         </p>
 
-        {/* View link — secondary CTA sits inside the <Link> */}
-        <div className="inline-flex items-center gap-1 text-xs font-semibold text-amber-600 dark:text-amber-400 opacity-0 group-hover:opacity-100 transition-all duration-200 -mb-1">
+        {/* View link — secondary CTA uses kind accent colour */}
+        <div className={`inline-flex items-center gap-1 text-xs font-semibold opacity-0 group-hover:opacity-100 transition-all duration-200 -mb-1 ${style.cta}`}>
           View group
           <ArrowRight className="h-3 w-3 transition-transform duration-200 group-hover:translate-x-0.5" />
         </div>

@@ -4,6 +4,7 @@ import { GraduationCap, Star, University } from "lucide-react";
 import MentorAvatar from "@/components/mentors/MentorAvatar";
 import MentorProfileActions from "./MentorProfileActions";
 import { Badge } from "@/components/ui/badge";
+import { CardAccentBorder } from "@/components/ui/CardAccentBorder";
 import { Mentor } from "@/types/mentor";
 import { formatDepartment } from "@/utils/user-utils";
 
@@ -37,7 +38,11 @@ const MentorProfileSidebar = ({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+      <div className="group relative rounded-xl border border-border bg-card p-6 shadow-sm overflow-hidden">
+        {/* Accent border — same primary brand colour as Mentors directory cards */}
+        <CardAccentBorder gradient="primary" />
+        {/* Subtle hover glow */}
+        <div className="pointer-events-none absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-primary/5 to-transparent" />
         <div className="flex flex-col items-center text-center">
           <MentorAvatar
             name={mentor.name}

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { BookOpen, EyeOff, Search, SlidersHorizontal, Star } from "lucide-react";
+import { BookOpen, EyeOff, Search, SlidersHorizontal, ArrowUpDown, Star, X } from "lucide-react";
 import { motion } from "framer-motion";
 
 import Footer from "@/components/Footer";
@@ -26,6 +26,7 @@ import { cn } from "@/lib/utils";
 import {
   getFacultyDepartments,
   getFacultyDirectoryStats,
+  getFacultyInterestFacets,
   getFacultyList,
   type Faculty as FacultyMember,
   type FacultySort,
@@ -45,6 +46,7 @@ const Faculty = () => {
 
   const [faculty, setFaculty] = useState<FacultyMember[]>([]);
   const [departments, setDepartments] = useState<string[]>([]);
+  const [facets, setFacets] = useState<{ interest: string; count: number }[]>([]);
   const [stats, setStats] = useState({ faculty_count: 0, rating_count: 0, department_count: 0 });
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -52,12 +54,14 @@ const Faculty = () => {
   const [ratingTarget, setRatingTarget] = useState<FacultyMember | null>(null);
 
   const department = searchParams.get("dept") ?? "all";
+  const interest = searchParams.get("interest") ?? "";
   const sort = (searchParams.get("sort") as FacultySort) ?? "rating";
   const [search, setSearch] = useState(searchParams.get("q") ?? "");
   const debouncedSearch = useDebounce(search, 300);
 
   useEffect(() => {
     getFacultyDepartments().then(({ data }) => setDepartments(data));
+    getFacultyInterestFacets(24).then(({ data }) => setFacets(data));
     getFacultyDirectoryStats().then(({ data }) => setStats(data));
     // Reaching this page is what counts as having discovered the feature; it
     // clears the "New" flags in the nav and on the homepage card.
@@ -72,6 +76,7 @@ const Faculty = () => {
       const { data, total: matched } = await getFacultyList({
         search: debouncedSearch,
         department,
+        interest,
         sort,
         limit: PAGE_SIZE,
         offset,
@@ -82,7 +87,7 @@ const Faculty = () => {
       setLoading(false);
       setLoadingMore(false);
     },
-    [debouncedSearch, department, sort],
+    [debouncedSearch, department, interest, sort],
   );
 
   useEffect(() => {
@@ -135,7 +140,7 @@ const Faculty = () => {
               {/* Pill label — matches FeaturesShowcase numbering */}
               <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-rose-500/20 bg-rose-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-rose-600 dark:text-rose-400">
                 <BookOpen className="h-3.5 w-3.5" />
-                04 — Faculty
+                Faculty
               </div>
 
               <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
@@ -179,7 +184,7 @@ const Faculty = () => {
           </div>
         </div>
 
-        <div className="container mx-auto px-4 py-8">
+        <div className="container mx-auto max-w-6xl px-4 py-8">
           <header className="sr-only">
             <h2>Browse and filter faculty</h2>
           </header>
@@ -188,7 +193,7 @@ const Faculty = () => {
             <div className="relative flex-1">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Search by name, department or designation..."
+                placeholder="Search by name, department or research interest..."
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 className="pl-10"
@@ -213,6 +218,7 @@ const Faculty = () => {
 
             <Select value={sort} onValueChange={(value) => updateParam("sort", value, "rating")}>
               <SelectTrigger className="w-full sm:w-[160px]">
+                <ArrowUpDown className="mr-2 h-4 w-4 shrink-0 text-muted-foreground" />
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -224,6 +230,47 @@ const Faculty = () => {
               </SelectContent>
             </Select>
           </div>
+
+          {/* Browse by research interest.
+              Hidden once a filter is active — the active chip below replaces it,
+              so the page never shows two competing sets of interest controls. */}
+          {interest ? (
+            <div className="mb-6 flex flex-wrap items-center gap-2">
+              <span className="text-sm text-muted-foreground">Showing faculty who work on</span>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-rose-500/25 bg-rose-500/10 px-3 py-1 text-sm font-medium text-rose-700 dark:text-rose-300">
+                {interest}
+                <button
+                  type="button"
+                  onClick={() => updateParam("interest", "", "")}
+                  aria-label={`Clear ${interest} filter`}
+                  className="rounded-full p-0.5 transition-colors hover:bg-rose-500/20"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </span>
+            </div>
+          ) : (
+            facets.length > 0 && (
+              <div className="mb-6">
+                <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  Browse by research interest
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {facets.map((facet) => (
+                    <button
+                      key={facet.interest}
+                      type="button"
+                      onClick={() => updateParam("interest", facet.interest, "")}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-xs transition-colors hover:border-rose-500/30 hover:bg-rose-500/5"
+                    >
+                      {facet.interest}
+                      <span className="tabular-nums text-muted-foreground">{facet.count}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )
+          )}
 
           {loading ? (
             <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6">
@@ -239,8 +286,8 @@ const Faculty = () => {
             <div className="rounded-lg border border-dashed py-16 text-center">
               <h3 className="mb-1 text-lg font-semibold">No faculty found</h3>
               <p className="mx-auto max-w-md text-sm text-muted-foreground">
-                {search || department !== "all"
-                  ? "Try a different search or department."
+                {search || department !== "all" || interest
+                  ? "Try a different search, department or research interest."
                   : "The directory hasn't been synced yet. An admin can run the sync-faculty function to pull it from srmap.edu.in."}
               </p>
             </div>
