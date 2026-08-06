@@ -9,6 +9,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { CommunityLinkPreview } from "@/components/common/CommunityLinkPreview";
 
 // Matches http(s):// and bare www. links. Trailing punctuation (sentence
 // periods, closing parens picked up from prose, etc.) is stripped separately
@@ -25,6 +26,24 @@ function hostnameOf(url: string) {
     return new URL(withProtocol(url)).hostname;
   } catch {
     return url;
+  }
+}
+
+/**
+ * A pasted invite link (see InviteLinkButton) is `origin/communities/:slug`.
+ * Only same-origin matches count — a link that merely *looks* like one
+ * (`evil.example/communities/real-slug`) must not borrow a real group's Join
+ * button while its visible href points somewhere else entirely.
+ */
+function communitySlugFromUrl(url: string): string | null {
+  try {
+    const parsed = new URL(withProtocol(url));
+    if (parsed.hostname !== window.location.hostname) return null;
+
+    const match = parsed.pathname.match(/^\/communities\/([^/]+)$/);
+    return match ? decodeURIComponent(match[1]) : null;
+  } catch {
+    return null;
   }
 }
 
@@ -59,19 +78,25 @@ function renderWithLinks(text: string, onLinkClick: (url: string) => void) {
 
     if (start > lastIndex) nodes.push(text.slice(lastIndex, start));
 
+    const communitySlug = communitySlugFromUrl(url);
+
     nodes.push(
-      <a
-        key={key++}
-        href={withProtocol(url)}
-        className="text-blue-600 underline decoration-blue-600/40 underline-offset-2 hover:decoration-blue-600 dark:text-blue-400"
-        onClick={(event) => {
-          event.preventDefault();
-          event.stopPropagation();
-          onLinkClick(withProtocol(url));
-        }}
-      >
-        {url}
-      </a>,
+      communitySlug ? (
+        <CommunityLinkPreview key={key++} slug={communitySlug} label={url} />
+      ) : (
+        <a
+          key={key++}
+          href={withProtocol(url)}
+          className="text-blue-600 underline decoration-blue-600/40 underline-offset-2 hover:decoration-blue-600 dark:text-blue-400"
+          onClick={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            onLinkClick(withProtocol(url));
+          }}
+        >
+          {url}
+        </a>
+      ),
     );
 
     if (trailing) nodes.push(trailing);
