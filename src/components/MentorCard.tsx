@@ -22,10 +22,16 @@ interface MentorCardProps {
 
 const getSkillBadgeStyle = (skill: string) => {
   const s = skill.toLowerCase();
+  if (s.includes("quantum") || s.includes("physic") || s.includes("qiskit") || s.includes("atomic")) {
+    return "bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/20 hover:bg-teal-500/20";
+  }
+  if (s.includes("dsa") || s.includes("algo") || s.includes("data structure") || s.includes("os") || s.includes("dbms") || s.includes("network")) {
+    return "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20 hover:bg-purple-500/20";
+  }
   if (s.includes("web") || s.includes("react") || s.includes("front") || s.includes("js") || s.includes("ts") || s.includes("node") || s.includes("code") || s.includes("html") || s.includes("css")) {
     return "bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/20 hover:bg-sky-500/20";
   }
-  if (s.includes("ai") || s.includes("ml") || s.includes("python") || s.includes("data") || s.includes("sql") || s.includes("algo") || s.includes("c++") || s.includes("java")) {
+  if (s.includes("ai") || s.includes("ml") || s.includes("python") || s.includes("data") || s.includes("sql") || s.includes("c++") || s.includes("java")) {
     return "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20 hover:bg-indigo-500/20";
   }
   if (s.includes("design") || s.includes("figma") || s.includes("ui") || s.includes("ux") || s.includes("art") || s.includes("creative")) {
@@ -33,9 +39,6 @@ const getSkillBadgeStyle = (skill: string) => {
   }
   if (s.includes("lead") || s.includes("manage") || s.includes("speak") || s.includes("career") || s.includes("resume") || s.includes("placement")) {
     return "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20 hover:bg-amber-500/20";
-  }
-  if (s.includes("math") || s.includes("physic") || s.includes("dsa") || s.includes("os") || s.includes("dbms") || s.includes("network")) {
-    return "bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-500/20 hover:bg-violet-500/20";
   }
   return "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20";
 };

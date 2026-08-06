@@ -2,7 +2,7 @@ import { PRIMARY_DOMAIN } from "@/lib/constants";
 
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { GraduationCap, Sparkles, Code, Cpu, Palette, Star, Users, CheckCircle2 } from "lucide-react";
+import { GraduationCap, Sparkles, Code, Cpu, Palette, Star, Users, CheckCircle2, Atom, Binary } from "lucide-react";
 import { motion } from "framer-motion";
 import SearchBar from "@/components/SearchBar";
 import SEOHead from "@/components/SEOHead";
@@ -21,6 +21,8 @@ const DOMAIN_FILTERS = [
   { id: "all", label: "All Mentors", icon: Sparkles, color: "border-blue-500/30 text-blue-600 dark:text-blue-400 bg-blue-500/10 hover:bg-blue-500/20" },
   { id: "tech", label: "Web & Dev", icon: Code, color: "border-sky-500/30 text-sky-600 dark:text-sky-400 bg-sky-500/10 hover:bg-sky-500/20" },
   { id: "ai", label: "AI & Data Science", icon: Cpu, color: "border-indigo-500/30 text-indigo-600 dark:text-indigo-400 bg-indigo-500/10 hover:bg-indigo-500/20" },
+  { id: "dsa", label: "DSA & Core CS", icon: Binary, color: "border-purple-500/30 text-purple-600 dark:text-purple-400 bg-purple-500/10 hover:bg-purple-500/20" },
+  { id: "quantum", label: "Quantum & Physics", icon: Atom, color: "border-teal-500/30 text-teal-600 dark:text-teal-400 bg-teal-500/10 hover:bg-teal-500/20" },
   { id: "design", label: "Design & UI/UX", icon: Palette, color: "border-rose-500/30 text-rose-600 dark:text-rose-400 bg-rose-500/10 hover:bg-rose-500/20" },
   { id: "alumni", label: "Alumni", icon: GraduationCap, color: "border-amber-500/30 text-amber-600 dark:text-amber-400 bg-amber-500/10 hover:bg-amber-500/20" },
   { id: "top", label: "Top Rated ⭐", icon: Star, color: "border-emerald-500/30 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20" },
@@ -88,6 +90,8 @@ const Mentors = () => {
 
     const keyword = filterId === "tech" ? ["web", "code", "react", "node", "dev", "frontend", "backend", "fullstack", "js", "ts"]
                   : filterId === "ai" ? ["ai", "ml", "data", "python", "machine learning", "sql", "model"]
+                  : filterId === "dsa" ? ["dsa", "algo", "data structure", "c++", "java", "os", "dbms", "core"]
+                  : filterId === "quantum" ? ["quantum", "physic", "research", "qiskit", "atomic", "paper"]
                   : ["design", "ui", "ux", "figma", "art", "creative"];
 
     setFilteredMentors(
@@ -203,8 +207,8 @@ const Mentors = () => {
         <div className="container mx-auto max-w-6xl px-4 py-8">
           <SearchBar onSearch={handleSearch} onGeminiSearch={handleGeminiSearch} />
 
-          {/* Colorful Quick Domain Filter Pills */}
-          <div className="mt-6 mb-8 flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+          {/* Colorful Quick Domain Filter Pills — py-2 px-1 ensures active ring borders don't get clipped */}
+          <div className="mt-6 mb-8 flex items-center gap-2 overflow-x-auto py-2.5 px-1 scrollbar-none">
             <span className="text-xs font-medium text-muted-foreground whitespace-nowrap mr-1">Filter by:</span>
             {DOMAIN_FILTERS.map((filter) => {
               const Icon = filter.icon;
@@ -215,10 +219,10 @@ const Mentors = () => {
                   type="button"
                   onClick={() => applyCategoryFilter(filter.id)}
                   className={cn(
-                    "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-all duration-200 whitespace-nowrap",
+                    "inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-medium transition-all duration-200 whitespace-nowrap shrink-0",
                     filter.color,
                     isActive
-                      ? "ring-2 ring-blue-500/50 shadow-md font-semibold scale-105"
+                      ? "ring-2 ring-blue-500/60 shadow-md font-semibold bg-blue-500/20"
                       : "opacity-80 hover:opacity-100"
                   )}
                 >
