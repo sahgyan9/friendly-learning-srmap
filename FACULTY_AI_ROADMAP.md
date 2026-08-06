@@ -67,7 +67,49 @@ never does, there is still a working feature.
 
 ---
 
-## Phase 3 — Topic search across faculty *and* mentors
+## Phase 3 — Topic search · SHIPPED 2026-08-06
+
+Live at **`/ask`**. 631 chunks embedded (627 faculty, 4 mentors), verified end to
+end in production. *"I am struggling with data structures"* returns matching
+professors **and** the seniors whose skills list it, in one answer.
+
+Pieces: `knowledge_chunks` + projectors + `search_knowledge()` (migration
+`20260806160000`), `search_query_cache`, the `embed-knowledge` and
+`semantic-search` edge functions, and the `/ask` page.
+
+### Hard-won details — do not rediscover these
+
+- **Model is `gemini-embedding-001`, confirmed via ListModels, not docs.**
+  `text-embedding-004` does not exist on this key and 404s. `embed-knowledge`
+  keeps a `{"listModels":true}` mode for when this changes again.
+- **It returns 3072 dimensions by default against a `vector(768)` column.**
+  `outputDimensionality: 768` is forced on every call, and results are
+  renormalised — a truncated Gemini vector is not unit length, which would make
+  the 0.30 relevance floor meaningless.
+- **`batchEmbedContents` bills each item separately** against ~100/min on the
+  free tier. The embed job therefore does exactly one batch per invocation and
+  pg_cron supplies the pacing; a 429 is a pacing signal that reports partial
+  progress, not an error. Backfilling 631 rows took ~7 minutes at 100/min.
+- **`taskType` matters.** Documents are embedded `RETRIEVAL_DOCUMENT`, queries
+  `RETRIEVAL_QUERY`. Using one for both measurably degrades matching.
+- **`/ask` is public, so the query cache is not an optimisation.** Without it
+  one person holding down a key exhausts the day's embedding budget and takes
+  the faculty backfill down with it.
+- **pgvector lives in `extensions`**, so every function touching the vector type
+  or `<=>` needs `SET search_path = public, extensions, pg_temp`.
+- **The test harness cannot cover any of this** — PGlite has no pgvector. These
+  migrations were verified with `BEGIN`/`ROLLBACK` against production instead.
+
+### Adding a new searchable entity later
+
+Write one projector function modelled on `rebuild_faculty_chunks()`, call it
+from `rebuild_knowledge_chunks()`. Nothing else changes — not the embed job, not
+the search RPC, not `/ask`. Set `visibility` correctly and it is filtered in SQL
+before any row reaches a caller or a model.
+
+---
+
+## Phase 3 — original plan (kept for the reasoning)
 
 Retrieval over the interests from Phase 1 and the courses from Phase 2.
 
