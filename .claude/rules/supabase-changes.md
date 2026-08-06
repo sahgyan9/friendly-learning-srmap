@@ -33,6 +33,25 @@ The short version:
   PUBLIC, anon, authenticated` for anything that is not deliberately an API.
   Revoking from `PUBLIC` alone is not enough — Supabase's default privileges
   grant to `anon` and `authenticated` separately.
+- **Adding a column can silently revoke read access to its whole table.** Some
+  tables here grant `anon` *column-level* SELECT rather than table-level, to
+  withhold specific columns (`public.faculty` withholds `email` so anonymous
+  visitors cannot harvest addresses). Column grants **do not extend to columns
+  added later**, so the first query naming a new column fails with
+  `42501 permission denied for table faculty` — rejecting the entire statement,
+  not just that column. Before adding a column, check:
+
+  ```sql
+  SELECT grantee, count(*) FROM information_schema.column_privileges
+  WHERE table_schema='public' AND table_name='<table>' AND privilege_type='SELECT'
+  GROUP BY grantee;
+  ```
+
+  If that returns fewer columns than the table has, the table uses column-level
+  grants and your migration must `GRANT SELECT (<new cols>) ON <table> TO anon,
+  authenticated`. This blanked the public faculty directory on 2026-08-06 and
+  looked intermittent, because sibling queries that happened not to name the new
+  column kept returning 200.
 - **Register new migrations in the test harness.** `npm run test:migrations`
   only executes the files listed inside `supabase/tests/verify-migrations.mjs`.
   A green run proves nothing about SQL that is not in that list. Add real
