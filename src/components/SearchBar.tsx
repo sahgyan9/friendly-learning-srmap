@@ -7,7 +7,6 @@ import { useDebounce } from "@/hooks/useDebounce";
 import type { Mentor } from "@/types/mentor";
 import SearchInput from "./search/SearchInput";
 import SearchButton from "./search/SearchButton";
-import PopularTags from "./search/PopularTags";
 import SearchToggle from "./search/SearchToggle";
 
 interface SearchBarProps {
@@ -129,13 +128,6 @@ const SearchBar = ({ onSearch, onGeminiSearch }: SearchBarProps) => {
     }
   };
 
-  const handleTagClick = (tag: string) => {
-    setQuery(tag);
-    if (isAiSearchEnabled) {
-      setTimeout(() => handleGeminiSearch(), 100);
-    }
-  };
-
   return (
     <div className="w-full mb-4">
       <form 
@@ -156,8 +148,7 @@ const SearchBar = ({ onSearch, onGeminiSearch }: SearchBarProps) => {
         />
       </form>
       
-      <div className="mt-3 flex items-center justify-between px-1">
-        <PopularTags onTagClick={handleTagClick} />
+      <div className="mt-3 flex items-center justify-end px-1">
         <SearchToggle 
           isEnabled={isAiSearchEnabled}
           onChange={setIsAiSearchEnabled}
