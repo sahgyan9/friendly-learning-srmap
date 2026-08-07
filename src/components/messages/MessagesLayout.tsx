@@ -107,12 +107,14 @@ const MessagesLayout = () => {
     };
   };
 
+  // `messages` only ever holds the currently open conversation's history, so
+  // it can't tell us anything about unread state in the *other* rows of the
+  // list. Each conversation's own last_message (fetched for every row up
+  // front) already carries is_read/receiver_id, so read that instead.
   const hasUnreadMessages = (conversationId) => {
-    return messages.some(msg =>
-      msg.conversation_id === conversationId &&
-      msg.receiver_id === userId &&
-      !msg.is_read
-    );
+    const conversation = conversations.find(c => c.id === conversationId);
+    const lastMessage = conversation?.last_message;
+    return Boolean(lastMessage && lastMessage.receiver_id === userId && !lastMessage.is_read);
   };
 
   const filteredConversations = searchQuery.trim()

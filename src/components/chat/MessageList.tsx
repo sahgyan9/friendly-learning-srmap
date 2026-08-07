@@ -157,7 +157,7 @@ const MessageList = ({
         ref={containerRef}
         onScroll={handleScroll}
         data-testid="message-scroller"
-        className="h-full overflow-y-auto overscroll-contain px-4 py-5 space-y-0"
+        className="h-full overflow-y-auto px-4 py-5 space-y-0"
       >
         {rows.map(({ message, startsDay, isFirstInGroup, isLastInGroup }) => {
           const isMine = message.sender_id === currentUserId;

@@ -161,7 +161,10 @@ const ChatContainer = ({
             <SearchInput searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
           </div>
 
-          <div className="flex-1 overflow-y-auto overscroll-contain">
+          {/* overscroll-behavior left at its default (auto) on purpose: once
+              this list has nothing left to scroll, the wheel/touch gesture
+              should chain up to the page instead of dead-ending here. */}
+          <div className="flex-1 overflow-y-auto">
             <ConversationList
               conversations={conversations}
               filteredConversations={filteredConversations}

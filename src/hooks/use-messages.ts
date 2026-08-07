@@ -55,10 +55,14 @@ export const useMessages = (userId: string) => {
         });
       }
 
-      // Update conversations list to show latest message
+      // Update conversations list to show latest message, and re-sort so the
+      // conversation that just got a message jumps to the top — same as any
+      // chat app. .map() alone preserves the old row order, which is why a
+      // brand-new message could land at the bottom of the list, below chats
+      // from days ago.
       console.log('Updating conversation list with new message:', newMessage);
-      setConversations(prev => 
-        prev.map(conv => 
+      setConversations(prev => {
+        const updated = prev.map(conv =>
           conv.id === newMessage.conversation_id
             ? {
                 ...conv,
@@ -67,14 +71,28 @@ export const useMessages = (userId: string) => {
                 last_updated: newMessage.sent_at
               }
             : conv
-        )
-      );
+        );
+        return [...updated].sort(
+          (a, b) => new Date(b.last_updated).getTime() - new Date(a.last_updated).getTime()
+        );
+      });
     },
     // On message update
     (updatedMessage: Message) => {
-      setMessages(prev => 
-        prev.map(msg => 
+      setMessages(prev =>
+        prev.map(msg =>
           msg.id === updatedMessage.id ? updatedMessage : msg
+        )
+      );
+
+      // The conversation list's unread dot reads conv.last_message.is_read,
+      // not the active chat's `messages` array — patch it too, or reading a
+      // conversation only clears the dot once you happen to reopen the page.
+      setConversations(prev =>
+        prev.map(conv =>
+          conv.last_message?.id === updatedMessage.id
+            ? { ...conv, last_message: updatedMessage }
+            : conv
         )
       );
     },
