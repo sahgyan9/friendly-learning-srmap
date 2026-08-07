@@ -155,17 +155,13 @@ function renderMessageEmail(opts: {
 /**
  * The one email a new mentor gets, sent once, right after approval.
  *
- * Written to be read on a phone in about forty seconds. The three steps are
- * concrete and ordered by how much they matter: a profile with nothing in it is
- * the single biggest reason a listed mentor never gets messaged, so it goes
- * first and the other two follow from it.
- *
- * The tone is deliberately low-pressure. Most people accepted here are second-
- * and third-years who are not sure they know enough to mentor anyone, and an
- * email that implies otherwise is how you get someone to quietly never log in
- * again. Hence the paragraph about small questions, and the sentence about
- * pausing: knowing you can step away without deleting anything is what makes
- * saying yes feel safe.
+ * Content and design mirror buildWelcomeEmail() in
+ * src/components/admin/verification/welcome-email.ts — the admin's manual
+ * Gmail-draft template — so the automatic send and the manual fallback read
+ * as the same email. Two deliberate differences from that source: the name is
+ * HTML-escaped here (nothing reviews this copy before it goes out, unlike a
+ * draft a human proofreads before hitting send), and the footer carries the
+ * unsubscribe link this automated pipeline is required to offer.
  */
 function renderWelcomeMentorEmail(opts: {
   recipientName: string;
@@ -178,125 +174,108 @@ function renderWelcomeMentorEmail(opts: {
   const firstName = recipientName.split("|")[0].trim().split(/\s+/)[0] || "there";
   const safeName = escapeHtml(firstName);
 
-  const subject = "You're a mentor on Friendly Learning 🎉";
-
-  const steps: Array<[string, string]> = [
-    [
-      "Finish your profile",
-      "Add your skills, a two-line bio and your LinkedIn. Students pick who to message almost entirely off this — a blank profile gets scrolled past, and it takes about three minutes to fix.",
-    ],
-    [
-      "Say what you actually want to be asked about",
-      "&ldquo;DSA and internship prep&rdquo; gets you better questions than &ldquo;happy to help with anything&rdquo;. Being specific is what makes someone brave enough to send the first message.",
-    ],
-    [
-      "Start a group",
-      "A study group, a hackathon team, a placement-prep room — anything you would have wanted in your first year. Groups can be open to everyone or invite-only, and you decide who gets in.",
-    ],
-  ];
-
-  const stepHtml = steps
-    .map(
-      ([title, body], i) => `
-      <tr>
-        <td style="padding:0 0 18px;vertical-align:top;">
-          <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
-            <td style="vertical-align:top;padding-right:12px;">
-              <div style="width:26px;height:26px;border-radius:13px;background:#2563eb;color:#ffffff;font-size:13px;font-weight:700;text-align:center;line-height:26px;">${i + 1}</div>
-            </td>
-            <td style="vertical-align:top;">
-              <p style="margin:0 0 4px;font-size:15px;font-weight:600;color:#111827;">${title}</p>
-              <p style="margin:0;font-size:14px;color:#4b5563;line-height:1.55;">${body}</p>
-            </td>
-          </tr></table>
-        </td>
-      </tr>`,
-    )
-    .join("");
+  const subject = `${firstName}, you're live as a mentor on Friendly Learning`;
 
   const html = [
     "<!DOCTYPE html>",
     '<html lang="en"><head><meta charset="UTF-8">',
     '<meta name="viewport" content="width=device-width, initial-scale=1.0">',
     `<title>${escapeHtml(subject)}</title></head>`,
-    '<body style="margin:0;padding:20px;font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;line-height:1.6;color:#1f2937;background:#f9fafb;">',
-    '<div style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:10px;overflow:hidden;border:1px solid #e5e7eb;">',
+    '<body style="margin:0;padding:0;background-color:#f4f6f8;font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,Helvetica,Arial,sans-serif;color:#1e293b;">',
+    '<table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color:#f4f6f8;padding:24px 12px;"><tr><td align="center">',
+    '<table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width:600px;background-color:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 10px 25px -5px rgba(0,0,0,0.05);">',
 
-    '<div style="background:#2563eb;padding:28px 24px;text-align:center;">',
-    '<h1 style="color:#ffffff;margin:0 0 4px;font-size:21px;">You\'re in 🎉</h1>',
-    '<p style="color:#dbeafe;margin:0;font-size:14px;">You are now a mentor on Friendly Learning</p>',
+    '<tr><td style="background:linear-gradient(135deg,#3b63c4 0%,#2c4c96 100%);padding:32px 28px;text-align:center;">',
+    '<table role="presentation" border="0" cellspacing="0" cellpadding="0" style="margin:0 auto 16px auto;background-color:#ffffff;border-radius:10px;box-shadow:0 4px 12px rgba(15,23,42,0.18);"><tr><td style="padding:9px 16px;">',
+    '<table role="presentation" border="0" cellspacing="0" cellpadding="0"><tr>',
+    `<td style="vertical-align:middle;padding-right:8px;"><img src="${SITE_URL}/lovable-uploads/df76e963-f250-4f25-8f7b-3917f857fe63.png" width="40" height="26" alt="Friendly Learning" style="display:block;border:0;"></td>`,
+    '<td style="vertical-align:middle;white-space:nowrap;font-size:15px;font-weight:700;letter-spacing:-0.2px;"><span style="color:#3963c6;">Friendly</span><span style="color:#0f172a;">Learning</span><span style="color:#3963c6;font-size:10px;font-weight:600;letter-spacing:0.3px;margin-left:4px;">SRMAP</span></td>',
+    "</tr></table></td></tr></table>",
+    `<h1 style="color:#ffffff;margin:0;font-size:24px;font-weight:700;line-height:1.3;">You're live, ${safeName}! 🎉</h1>`,
+    '<p style="color:#dbeafe;font-size:15px;margin:8px 0 0 0;">No approval queue — your mentor profile is already up.</p>',
+    "</td></tr>",
+
+    '<tr><td style="padding:28px 24px;">',
+    `<p style="font-size:15px;line-height:1.6;color:#334155;margin-top:0;">Hi <strong>${safeName}</strong>,</p>`,
+    '<p style="font-size:15px;line-height:1.6;color:#334155;">Juniors in your department can already find you and start a conversation — no introductions needed.</p>',
+
+    '<div style="background-color:#eff6ff;border-left:4px solid #3963c6;padding:14px 18px;border-radius:0 8px 8px 0;margin:20px 0;">',
+    "<p style=\"margin:0;font-size:14px;line-height:1.5;color:#1e40af;\">💡 <em>Nobody's expecting office hours — most questions take two minutes. Help 3 students (real replies, not just messages sent) and you earn a certificate with a public verify link. Not a participation badge — an earned one.</em></p>",
     "</div>",
 
-    '<div style="padding:28px;">',
-    `<p style="margin:0 0 16px;font-size:16px;">Hi ${safeName},</p>`,
+    '<h2 style="font-size:17px;font-weight:700;color:#0f172a;margin-top:24px;margin-bottom:16px;">🚀 Quick Ways to Get Started</h2>',
 
-    '<p style="margin:0 0 16px;font-size:15px;color:#374151;">',
-    "Your application has been approved and your profile is live. Students at SRM AP can now find you and message you directly.",
-    "</p>",
+    '<table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom:16px;border:1px solid #e2e8f0;border-radius:12px;background-color:#ffffff;"><tr><td style="padding:16px;">',
+    '<table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0"><tr>',
+    '<td width="36" valign="top" style="font-size:20px;padding-right:12px;">💬</td>',
+    '<td><h3 style="margin:0;font-size:15px;font-weight:600;color:#0f172a;">Answer a Question</h3>',
+    '<p style="margin:4px 0 12px 0;font-size:13px;color:#64748b;line-height:1.4;">Juniors are already waiting on advice about electives, projects, and careers. Each real reply counts toward your certificate.</p>',
+    `<a href="${SITE_URL}/community-posts" style="display:inline-block;background-color:#3963c6;color:#ffffff;text-decoration:none;font-size:13px;font-weight:600;padding:8px 16px;border-radius:6px;">Browse Questions →</a>`,
+    "</td></tr></table></td></tr></table>",
 
-    '<p style="margin:0 0 24px;font-size:15px;color:#374151;">',
-    "Friendly Learning exists for one reason: the person best placed to explain something is usually the one who learned it a year ago, not ten. ",
-    "You do not need to be an expert to be useful here — you need to be one step ahead, and willing to say so.",
-    "</p>",
+    '<table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom:16px;border:1px solid #e2e8f0;border-radius:12px;background-color:#ffffff;"><tr><td style="padding:16px;">',
+    '<table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0"><tr>',
+    '<td width="36" valign="top" style="font-size:20px;padding-right:12px;">👥</td>',
+    '<td><h3 style="margin:0;font-size:15px;font-weight:600;color:#0f172a;">Join or Start a Group</h3>',
+    "<p style=\"margin:4px 0 12px 0;font-size:13px;color:#64748b;line-height:1.4;\">Hackathon teams, study circles, subject clubs — with fellow students, not just people you're mentoring.</p>",
+    `<a href="${SITE_URL}/communities" style="display:inline-block;background-color:#3963c6;color:#ffffff;text-decoration:none;font-size:13px;font-weight:600;padding:8px 16px;border-radius:6px;">Explore Groups →</a>`,
+    "</td></tr></table></td></tr></table>",
 
-    '<div style="height:1px;background:#e5e7eb;margin:0 0 22px;"></div>',
+    '<table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom:24px;border:1px solid #e2e8f0;border-radius:12px;background-color:#ffffff;"><tr><td style="padding:16px;">',
+    '<table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0"><tr>',
+    '<td width="36" valign="top" style="font-size:20px;padding-right:12px;">⚡</td>',
+    '<td><h3 style="margin:0;font-size:15px;font-weight:600;color:#0f172a;">Set Your Pace</h3>',
+    '<p style="margin:4px 0 12px 0;font-size:13px;color:#64748b;line-height:1.4;">During exams or busy weeks, toggle "Taking a break" anytime — your existing chats stay open, you just come off the directory.</p>',
+    `<a href="${SITE_URL}/profile" style="display:inline-block;background-color:#475569;color:#ffffff;text-decoration:none;font-size:13px;font-weight:600;padding:8px 16px;border-radius:6px;">View Profile Settings →</a>`,
+    "</td></tr></table></td></tr></table>",
 
-    '<p style="margin:0 0 16px;font-size:15px;font-weight:600;color:#111827;">Three things worth doing this week</p>',
-    '<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">',
-    stepHtml,
-    "</table>",
+    '<div style="background-color:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:16px 18px;margin-bottom:16px;">',
+    '<p style="margin:0 0 10px 0;font-size:14px;font-weight:700;color:#0f172a;">Also worth exploring</p>',
+    '<table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">',
+    `<tr><td style="padding:4px 0;"><span style="font-size:14px;margin-right:8px;">🤝</span><a href="${SITE_URL}/find-study-partners" style="font-size:13px;color:#3963c6;text-decoration:none;font-weight:500;">Find study partners</a><span style="font-size:13px;color:#94a3b8;margin-left:6px;">— never prep for exams alone</span></td></tr>`,
+    `<tr><td style="padding:4px 0;"><span style="font-size:14px;margin-right:8px;">🚀</span><a href="${SITE_URL}/hackathon-partners" style="font-size:13px;color:#3963c6;text-decoration:none;font-weight:500;">Hackathon teammates</a><span style="font-size:13px;color:#94a3b8;margin-left:6px;">— build something real</span></td></tr>`,
+    `<tr><td style="padding:4px 0;"><span style="font-size:14px;margin-right:8px;">⭐</span><a href="${SITE_URL}/faculty" style="font-size:13px;color:#3963c6;text-decoration:none;font-weight:500;">Anonymous faculty ratings</a><span style="font-size:13px;color:#94a3b8;margin-left:6px;">— pick better courses next semester</span></td></tr>`,
+    "</table></div>",
 
-    '<div style="background:#f3f4f6;padding:16px;border-radius:8px;border-left:3px solid #2563eb;margin:6px 0 24px;">',
-    '<p style="margin:0;font-size:14px;color:#4b5563;line-height:1.6;">',
-    "<strong style=\"color:#111827;\">One thing people get wrong:</strong> waiting to feel qualified. ",
-    "Most messages here are small — which elective, how to start a project, is this internship worth it. ",
-    "Answering those well is the whole job.",
-    "</p></div>",
+    '<p style="font-size:14px;line-height:1.5;color:#334155;margin-top:24px;">Spot something broken, or just want to say hi? Reply to this email — I read these.</p>',
+    "</td></tr>",
 
-    '<p style="text-align:center;margin:0 0 22px;">',
-    `<a href="${SITE_URL}/profile" style="background:#2563eb;color:#ffffff;padding:13px 30px;text-decoration:none;border-radius:6px;font-weight:600;display:inline-block;font-size:15px;">Complete your profile</a>`,
-    "</p>",
+    '<tr><td style="background-color:#f8fafc;border-top:1px solid #e2e8f0;padding:20px 24px;text-align:center;">',
+    '<p style="margin:0 0 4px 0;font-size:13px;font-weight:600;color:#475569;">Friendly Learning SRMAP</p>',
+    '<p style="margin:0;font-size:12px;color:#94a3b8;">You are getting this because your mentor application was approved.</p>',
+    `<p style="margin:8px 0 0 0;font-size:12px;"><a href="${unsubscribeUrl}" style="color:#3963c6;text-decoration:none;font-weight:500;">Unsubscribe from these emails</a></p>`,
+    "</td></tr>",
 
-    '<p style="margin:0 0 6px;font-size:13px;color:#6b7280;text-align:center;line-height:1.6;">',
-    `Browse the <a href="${SITE_URL}/communities" style="color:#2563eb;">groups</a> &middot; `,
-    `See the <a href="${SITE_URL}/mentors" style="color:#2563eb;">mentor directory</a>`,
-    "</p>",
-
-    '<p style="margin:18px 0 0;font-size:13px;color:#6b7280;line-height:1.6;">',
-    "Busy stretch coming up? You can pause your listing for a day, a week, or until you turn it back on — ",
-    "from your profile page. You stay a mentor, you just stop showing up in the directory while you are heads-down.",
-    "</p>",
-
-    "</div>",
-
-    '<div style="padding:16px 28px;border-top:1px solid #e5e7eb;background:#f9fafb;">',
-    '<p style="margin:0;font-size:12px;color:#6b7280;text-align:center;">',
-    "You are getting this because your mentor application was approved.<br>",
-    `<a href="${unsubscribeUrl}" style="color:#6b7280;">Unsubscribe from these emails</a>`,
-    "</p></div></div></body></html>",
+    "</table></td></tr></table></body></html>",
   ].join("");
 
   const text = [
     `Hi ${firstName},`,
     "",
-    "Your mentor application has been approved and your profile is live. Students at SRM AP can now find you and message you directly.",
+    "Your mentor profile just went live — no approval queue, no waiting. Juniors in your department can already find you and start a conversation.",
     "",
-    "Friendly Learning exists for one reason: the person best placed to explain something is usually the one who learned it a year ago, not ten. You do not need to be an expert to be useful here.",
+    "Nobody's expecting office hours. Most questions take two minutes: which elective to pick, a project idea, a gut check on an internship offer.",
     "",
-    "THREE THINGS WORTH DOING THIS WEEK",
+    "One more thing worth knowing: help 3 students — meaning they actually reply, not just receive a message — and you earn a real certificate. Not a participation badge: a verifiable one with a public link anyone can check.",
     "",
-    "1. Finish your profile. Add your skills, a two-line bio and your LinkedIn. Students pick who to message almost entirely off this.",
+    "Three ways to start:",
     "",
-    "2. Say what you actually want to be asked about. \"DSA and internship prep\" gets better questions than \"happy to help with anything\".",
+    "1. Answer a question that's already waiting",
+    `   ${SITE_URL}/community-posts`,
     "",
-    "3. Start a group. A study group, a hackathon team, a placement-prep room. Groups can be open to everyone or invite-only, and you decide who gets in.",
+    "2. Join or start a group",
+    `   ${SITE_URL}/communities`,
     "",
-    "One thing people get wrong: waiting to feel qualified. Most messages here are small - which elective, how to start a project, is this internship worth it. Answering those well is the whole job.",
+    "3. Set your pace",
+    "   Exams or placements coming up? Toggle \"Taking a break\" on your profile any time — your existing chats stay open, you just come off the directory.",
+    `   ${SITE_URL}/profile`,
     "",
-    `Complete your profile: ${SITE_URL}/profile`,
-    `Browse groups: ${SITE_URL}/communities`,
+    "Also worth exploring:",
+    `- Find study partners → ${SITE_URL}/find-study-partners`,
+    `- Hackathon teammates → ${SITE_URL}/hackathon-partners`,
+    `- Anonymous faculty ratings (pick better courses) → ${SITE_URL}/faculty`,
     "",
-    "Busy stretch coming up? You can pause your listing for a day, a week, or until you turn it back on, from your profile page.",
+    "Reply to this email if anything's confusing or broken.",
     "",
     `Unsubscribe: ${unsubscribeUrl}`,
   ].join("\n");
