@@ -1776,6 +1776,45 @@ export type Database = {
         }
         Relationships: []
       }
+      srmap_events_cache: {
+        Row: {
+          department: string
+          end_date: string
+          event_type: string
+          excerpt: string
+          id: number
+          image_url: string | null
+          last_synced_at: string
+          link: string
+          start_date: string
+          title: string
+        }
+        Insert: {
+          department?: string
+          end_date: string
+          event_type?: string
+          excerpt?: string
+          id: number
+          image_url?: string | null
+          last_synced_at?: string
+          link: string
+          start_date: string
+          title: string
+        }
+        Update: {
+          department?: string
+          end_date?: string
+          event_type?: string
+          excerpt?: string
+          id?: number
+          image_url?: string | null
+          last_synced_at?: string
+          link?: string
+          start_date?: string
+          title?: string
+        }
+        Relationships: []
+      }
       typing_indicators: {
         Row: {
           conversation_id: string
