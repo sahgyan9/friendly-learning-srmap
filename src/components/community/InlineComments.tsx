@@ -159,9 +159,9 @@ export const InlineComments = ({ postId, onCommentAdded }: InlineCommentsProps) 
                         {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
                       </span>
                     </div>
-                    <p className="text-sm text-foreground">
+                    <div className="text-sm text-foreground">
                       <LinkifiedText text={comment.content} />
-                    </p>
+                    </div>
                   </div>
                 </div>
               </CardContent>

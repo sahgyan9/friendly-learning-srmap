@@ -49,12 +49,12 @@ export function JoinCommunityButton({
     return (
       <span
         className={cn(
-          "inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground",
+          "inline-flex items-center justify-center gap-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400 shadow-xs",
           className,
         )}
       >
-        <Check className="h-3.5 w-3.5 text-green-600 dark:text-green-500" />
-        {community.viewer_is_owner ? "Yours" : "Joined"}
+        <Check className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+        {community.viewer_is_owner ? "Group Owner" : "Joined"}
       </span>
     );
   }

@@ -77,6 +77,7 @@ export function PostCard({
    */
   const images = getPostImageUrls(post.image_url);
   const isCompactTextOnly = isCompact && images.length === 0;
+  const hasGroupLink = /\/communities\/[^\s<]+/i.test(post.content);
 
   return (
     <Card
@@ -116,21 +117,15 @@ export function PostCard({
             {post.title}
           </h3>
 
-          {/* max-w-prose caps the line at about 65 characters. The card is
-              ~700px wide, which at this size was running to nearly 100
-              characters a line — past roughly 75 the eye starts missing the
-              start of the next line on the return sweep, which is felt as
-              "this is tiring" rather than noticed. The compact rail is already
-              narrow and clamped to two lines, so it needs no help. */}
-          <p
+          <div
             className={cn(
               "whitespace-pre-line text-sm leading-relaxed text-muted-foreground",
-              !isCompact && "line-clamp-4 max-w-prose",
-              isCompact && (isCompactTextOnly ? "line-clamp-6" : "line-clamp-2"),
+              !isCompact && !hasGroupLink && "line-clamp-4 max-w-prose",
+              isCompact && !hasGroupLink && (isCompactTextOnly ? "line-clamp-6" : "line-clamp-2"),
             )}
           >
             <LinkifiedText text={post.content} />
-          </p>
+          </div>
         </div>
 
         {/* LinkedIn-style Multi-Image Auto Gallery */}
