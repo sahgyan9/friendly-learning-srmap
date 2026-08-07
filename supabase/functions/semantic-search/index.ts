@@ -9,6 +9,12 @@
 // national level coding contest I can enter" work: the question says "contest",
 // the listing says "hackathon", and they share no keyword at all.
 //
+// Groups and board posts joined the index too, because on a campus the answer
+// is often a room rather than a person — "where do people build robots" wants
+// the robotics group, and "my laptop won't boot before the demo" wants the
+// thread where three people already solved it. A private group is findable by
+// name (that is how anyone asks to join); the posts inside it are not.
+//
 // Retrieve, then (optionally) explain. This function only retrieves. It embeds
 // the question and hands it to search_knowledge(), which does a vector lookup
 // in Postgres. No model is asked to *pick* people, so it structurally cannot
@@ -163,7 +169,7 @@ serve(async (req) => {
 
     const { data: results, error } = await supabaseAdmin.rpc("search_knowledge", {
       p_embedding: JSON.stringify(embedding),
-      p_entity_types: payload.types ?? ["faculty", "mentor", "opportunity"],
+      p_entity_types: payload.types ?? ["faculty", "mentor", "opportunity", "community", "post"],
       p_limit: Math.min(Math.max(payload.limit ?? 12, 1), 50),
       p_viewer: viewer,
     });
@@ -195,8 +201,10 @@ serve(async (req) => {
       faculty: rows.filter((r) => r.entity_type === "faculty"),
       mentors: rows.filter((r) => r.entity_type === "mentor"),
       opportunities: rows.filter((r) => r.entity_type === "opportunity"),
+      communities: rows.filter((r) => r.entity_type === "community"),
+      posts: rows.filter((r) => r.entity_type === "post"),
     };
-    const claimed = new Set(["faculty", "mentor", "opportunity"]);
+    const claimed = new Set(["faculty", "mentor", "opportunity", "community", "post"]);
 
     return json({
       query,

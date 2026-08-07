@@ -1,13 +1,14 @@
 import { supabase } from "@/integrations/supabase/client";
 
 /**
- * A person the search matched, faculty or mentor. `metadata` differs by kind —
- * faculty carry `slug` and `interests`, mentors carry `skills` — so the two are
+ * Something the search matched: a person, a thing to enter, a group or a
+ * thread. `metadata` differs by kind — faculty carry `slug` and `interests`,
+ * mentors carry `skills`, groups carry `kind` and `member_count` — so each is
  * narrowed separately at the point of rendering rather than forced into one
- * shape that fits neither.
+ * shape that fits none of them.
  */
 export type AskResult = {
-  entity_type: "faculty" | "mentor" | "opportunity";
+  entity_type: "faculty" | "mentor" | "opportunity" | "community" | "post";
   entity_id: string;
   title: string;
   subtitle: string | null;
@@ -24,9 +25,32 @@ export type AskResponse = {
   faculty: AskResult[];
   mentors: AskResult[];
   opportunities: AskResult[];
+  communities: AskResult[];
+  posts: AskResult[];
   /** Entity types the server has no group for yet. Never silently dropped. */
   other: AskResult[];
 };
+
+/**
+ * Every group in an AskResponse, flattened and re-sorted by score.
+ *
+ * The server groups by type so a caller can say "no faculty but three
+ * mentors"; a caller that wants one ranked list has to undo that, and doing it
+ * here means a new entity type is picked up without touching the callers.
+ * `other` is included deliberately — that field exists so a type the server has
+ * no group for yet degrades to visible-but-ungrouped instead of vanishing, and
+ * dropping it here would reintroduce exactly the silent loss it prevents.
+ */
+export function allResults(data: AskResponse): AskResult[] {
+  return [
+    ...data.faculty,
+    ...data.mentors,
+    ...data.opportunities,
+    ...(data.communities ?? []),
+    ...(data.posts ?? []),
+    ...(data.other ?? []),
+  ].sort((a, b) => b.similarity - a.similarity);
+}
 
 /** Reads a metadata field without spraying casts through the components. */
 export function metaString(result: AskResult, key: string): string | null {
