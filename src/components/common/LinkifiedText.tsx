@@ -10,6 +10,12 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { CommunityLinkPreview } from "@/components/common/CommunityLinkPreview";
+import { BecomeMentorLinkPreview } from "@/components/common/BecomeMentorLinkPreview";
+import { FacultyLinkPreview } from "@/components/common/FacultyLinkPreview";
+import { MentorsLinkPreview } from "@/components/common/MentorsLinkPreview";
+import { HackathonLinkPreview } from "@/components/common/HackathonLinkPreview";
+import { MarketplaceLinkPreview } from "@/components/common/MarketplaceLinkPreview";
+import { PostEmbedLinkPreview } from "@/components/common/PostEmbedLinkPreview";
 
 // Matches http(s):// and bare www. links. Trailing punctuation (sentence
 // periods, closing parens picked up from prose, etc.) is stripped separately
@@ -29,6 +35,16 @@ function hostnameOf(url: string) {
   }
 }
 
+function isAppHost(parsed: URL): boolean {
+  return (
+    parsed.hostname === window.location.hostname ||
+    parsed.hostname.includes("friendly-learning-srmap") ||
+    parsed.hostname.includes("vercel.app") ||
+    parsed.hostname === "localhost" ||
+    parsed.hostname === "127.0.0.1"
+  );
+}
+
 /**
  * A pasted invite link (see InviteLinkButton) is `origin/communities/:slug`.
  * Only same-origin matches count — a link that merely *looks* like one
@@ -38,19 +54,72 @@ function hostnameOf(url: string) {
 function communitySlugFromUrl(url: string): string | null {
   try {
     const parsed = new URL(withProtocol(url));
-    const isAppHost =
-      parsed.hostname === window.location.hostname ||
-      parsed.hostname.includes("friendly-learning-srmap") ||
-      parsed.hostname.includes("vercel.app") ||
-      parsed.hostname === "localhost" ||
-      parsed.hostname === "127.0.0.1";
-
-    if (!isAppHost) return null;
+    if (!isAppHost(parsed)) return null;
 
     const match = parsed.pathname.match(/^\/communities\/([^/?#]+)/);
     return match ? decodeURIComponent(match[1]) : null;
   } catch {
     return null;
+  }
+}
+
+function isBecomeMentorUrl(url: string): boolean {
+  try {
+    const parsed = new URL(withProtocol(url));
+    if (!isAppHost(parsed)) return false;
+    return /^\/become-mentor/i.test(parsed.pathname);
+  } catch {
+    return false;
+  }
+}
+
+function isFacultyUrl(url: string): boolean {
+  try {
+    const parsed = new URL(withProtocol(url));
+    if (!isAppHost(parsed)) return false;
+    return /^\/faculty/i.test(parsed.pathname);
+  } catch {
+    return false;
+  }
+}
+
+function isMentorsUrl(url: string): boolean {
+  try {
+    const parsed = new URL(withProtocol(url));
+    if (!isAppHost(parsed)) return false;
+    return /^\/mentors(\/|$)/i.test(parsed.pathname);
+  } catch {
+    return false;
+  }
+}
+
+function isHackathonUrl(url: string): boolean {
+  try {
+    const parsed = new URL(withProtocol(url));
+    if (!isAppHost(parsed)) return false;
+    return /^\/hackathon-partners/i.test(parsed.pathname);
+  } catch {
+    return false;
+  }
+}
+
+function isMarketplaceUrl(url: string): boolean {
+  try {
+    const parsed = new URL(withProtocol(url));
+    if (!isAppHost(parsed)) return false;
+    return /^\/(marketplace|events)/i.test(parsed.pathname);
+  } catch {
+    return false;
+  }
+}
+
+function isCommunityPostsUrl(url: string): boolean {
+  try {
+    const parsed = new URL(withProtocol(url));
+    if (!isAppHost(parsed)) return false;
+    return /^\/community-posts/i.test(parsed.pathname);
+  } catch {
+    return false;
   }
 }
 
@@ -86,10 +155,28 @@ function renderWithLinks(text: string, onLinkClick: (url: string) => void) {
     if (start > lastIndex) nodes.push(text.slice(lastIndex, start));
 
     const communitySlug = communitySlugFromUrl(url);
+    const isBecomeMentor = isBecomeMentorUrl(url);
+    const isFaculty = isFacultyUrl(url);
+    const isMentors = isMentorsUrl(url);
+    const isHackathon = isHackathonUrl(url);
+    const isMarketplace = isMarketplaceUrl(url);
+    const isCommunityPosts = isCommunityPostsUrl(url);
 
     nodes.push(
       communitySlug ? (
         <CommunityLinkPreview key={key++} slug={communitySlug} label={url} />
+      ) : isBecomeMentor ? (
+        <BecomeMentorLinkPreview key={key++} label={url} />
+      ) : isFaculty ? (
+        <FacultyLinkPreview key={key++} label={url} />
+      ) : isMentors ? (
+        <MentorsLinkPreview key={key++} label={url} />
+      ) : isHackathon ? (
+        <HackathonLinkPreview key={key++} label={url} />
+      ) : isMarketplace ? (
+        <MarketplaceLinkPreview key={key++} label={url} />
+      ) : isCommunityPosts ? (
+        <PostEmbedLinkPreview key={key++} url={url} />
       ) : (
         <a
           key={key++}
