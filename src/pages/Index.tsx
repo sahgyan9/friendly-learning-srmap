@@ -15,6 +15,7 @@ import { PRIMARY_DOMAIN } from "@/lib/constants";
 import { FeaturesShowcase } from "@/components/FeaturesShowcase";
 import { FutureVision } from "@/components/FutureVision";
 import { AboutQuickstartStrip } from "@/components/AboutQuickstartStrip";
+import { HomeIntro } from "@/components/HomeIntro";
 import { CommunitiesSection } from "@/components/communities/CommunitiesSection";
 
 const Index = () => {
@@ -69,7 +70,7 @@ const Index = () => {
       <StructuredData data={getOrganizationSchema()} />
       <StructuredData data={getWebsiteSchema()} />
 
-      {/* 1. Hero — "Your campus, one feed." */}
+      {/* 1. Headline only — the feed starts immediately under it */}
       <Hero />
 
       {/* Rejected application notice for authenticated users */}
@@ -82,25 +83,31 @@ const Index = () => {
       {/* 2. Posts — centre of attraction, real content on load */}
       <CommunityPostsSection />
 
-      {/* 3. About Quickstart Strip — "what can I do right now?" */}
+      {/* 3. The pitch, deliberately after the evidence: the ask box, the two
+             CTAs and the stats all used to sit above the feed, where they
+             asked to be believed before a visitor had seen a single real
+             thread. Here they confirm what was just scrolled past. */}
+      <HomeIntro />
+
+      {/* 4. About Quickstart Strip — "what can I do right now?" */}
       <AboutQuickstartStrip />
 
-      {/* 4. Groups — find your people */}
+      {/* 5. Groups — find your people */}
       <CommunitiesSection />
 
-      {/* 5. Mentors — someone's already done your exact course */}
+      {/* 6. Mentors — someone's already done your exact course */}
       <MentorsSection />
 
-      {/* 6. Faculty Ratings — moved down from top; earns its moment here */}
+      {/* 7. Faculty Ratings — moved down from top; earns its moment here */}
       <FacultyDiscoveryCard />
 
-      {/* 7. All 8 live features with direct navigation links */}
+      {/* 8. All 8 live features with direct navigation links */}
       <FeaturesShowcase />
 
-      {/* 8. Roadmap: complete ecosystem + indigenous AI vision */}
+      {/* 9. Roadmap: complete ecosystem + indigenous AI vision */}
       <FutureVision />
 
-      {/* 9. CTA — your profile is someone else's answer */}
+      {/* 10. CTA — your profile is someone else's answer */}
       <CallToAction />
 
       <Footer />
