@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +21,9 @@ import {
 import NotificationItem from "./NotificationItem";
 import { OPEN_NOTIFICATIONS_EVENT } from "@/lib/search/events";
 
+/** Coalesces a burst of realtime events (e.g. "mark all read" touching many rows) into one refetch. */
+const SETTLE_MS = 250;
+
 const NotificationBell = () => {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -28,42 +31,73 @@ const NotificationBell = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (!user) return;
+  const userId = user?.id ?? null;
+  // Guards every setState so a response landing after sign-out/unmount can't
+  // resurrect stale state.
+  const activeRef = useRef(true);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    // Fetch initial notifications and unread count
-    const fetchNotifications = async () => {
-      setLoading(true);
-      try {
-        const [notificationsResult, unreadResult] = await Promise.all([
-          getUserNotifications(user.id),
-          getUnreadNotificationsCount(user.id)
-        ]);
+  const fetchNotifications = useCallback(async () => {
+    if (!userId) return;
+    setLoading(true);
+    try {
+      const [notificationsResult, unreadResult] = await Promise.all([
+        getUserNotifications(userId),
+        getUnreadNotificationsCount(userId)
+      ]);
 
-        if (notificationsResult.data) {
-          setNotifications(notificationsResult.data);
-        }
+      if (!activeRef.current) return;
 
-        if (unreadResult.data !== null) {
-          setUnreadCount(unreadResult.data);
-        }
-      } catch (error) {
-        console.error('Error fetching notifications:', error);
-      } finally {
-        setLoading(false);
+      if (notificationsResult.data) {
+        setNotifications(notificationsResult.data);
       }
+      if (unreadResult.data !== null) {
+        setUnreadCount(unreadResult.data);
+      }
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+    } finally {
+      if (activeRef.current) setLoading(false);
+    }
+  }, [userId]);
+
+  useEffect(() => {
+    activeRef.current = true;
+
+    if (!userId) {
+      setNotifications([]);
+      setUnreadCount(0);
+      return () => {
+        activeRef.current = false;
+      };
+    }
+
+    const refresh = () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+      timerRef.current = setTimeout(fetchNotifications, SETTLE_MS);
     };
 
     fetchNotifications();
 
-    // Subscribe to real-time notifications
-    const unsubscribe = subscribeToNotifications(user.id, (newNotification) => {
-      setNotifications(prev => [newNotification, ...prev]);
-      setUnreadCount(prev => prev + 1);
-    });
+    // Treats every realtime event purely as "go look again" rather than
+    // patching state from the payload — see subscribeToNotifications for why.
+    const unsubscribe = subscribeToNotifications(userId, refresh);
 
-    return unsubscribe;
-  }, [user]);
+    // Catches a read made on another tab/device without waiting on realtime.
+    const onVisible = () => {
+      if (document.visibilityState === "visible") refresh();
+    };
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", onVisible);
+
+    return () => {
+      activeRef.current = false;
+      if (timerRef.current) clearTimeout(timerRef.current);
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", onVisible);
+      unsubscribe();
+    };
+  }, [userId, fetchNotifications]);
 
   // Searching for "notifications" opens this popover. There is no notifications
   // page to navigate to, so the search result asks the bell to open instead.
@@ -86,10 +120,10 @@ const NotificationBell = () => {
   };
 
   const handleMarkAllAsRead = async () => {
-    if (!user) return;
+    if (!userId) return;
 
     try {
-      await markAllNotificationsAsRead(user.id);
+      await markAllNotificationsAsRead(userId);
       setNotifications(prev => prev.map(n => ({ ...n, read: true })));
       setUnreadCount(0);
     } catch (error) {

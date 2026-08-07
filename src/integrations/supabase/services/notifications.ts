@@ -96,20 +96,26 @@ export const deleteNotification = async (notificationId: string) => {
   return { data, error: null };
 };
 
-export const subscribeToNotifications = (userId: string, callback: (notification: Notification) => void) => {
+/**
+ * Notifies the caller that something changed for this user's notifications —
+ * a new one arrived, one was marked read (possibly from another tab/device),
+ * or one was deleted. Deliberately payload-less: `notifications` has default
+ * replica identity, so UPDATE/DELETE events only carry the primary key in
+ * `payload.old`, not the fields that changed. The caller re-fetches instead
+ * of trying to patch state from the event.
+ */
+export const subscribeToNotifications = (userId: string, onChange: () => void) => {
   const channel = supabase
-    .channel('notifications')
+    .channel(`notifications-${userId}`)
     .on(
       'postgres_changes',
       {
-        event: 'INSERT',
+        event: '*',
         schema: 'public',
         table: 'notifications',
         filter: `user_id=eq.${userId}`
       },
-      (payload) => {
-        callback(payload.new as Notification);
-      }
+      onChange
     )
     .subscribe();
 

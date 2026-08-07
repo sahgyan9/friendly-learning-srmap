@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 
 interface NotificationItemProps {
   notification: Notification;
-  onMarkAsRead: (id: string) => void;
+  onMarkAsRead: (id: string) => Promise<void>;
   onNotificationClick?: () => void; // Optional callback to close popover
 }
 
@@ -39,10 +39,14 @@ const NotificationItem = ({ notification, onMarkAsRead, onNotificationClick }: N
     }
   };
 
-  const handleClick = () => {
-    // Mark as read if not already read
+  const handleClick = async () => {
+    // Mark as read if not already read. This must be awaited before the full
+    // page navigation below — window.location.href tears down the page
+    // immediately, which cancels any in-flight fetch. Firing this off without
+    // awaiting it silently drops the "mark as read" write, so the badge count
+    // reverts on the next load even though the click looked like it worked.
     if (!notification.read) {
-      onMarkAsRead(notification.id);
+      await onMarkAsRead(notification.id);
     }
 
     // Navigate if the notification is clickable
