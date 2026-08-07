@@ -1,5 +1,8 @@
 import type { ComponentType, SVGProps } from "react";
+import { EventsIcon } from "@/components/icons/EventsIcon";
 import { FacultyIcon } from "@/components/icons/FacultyIcon";
+import { MentorIcon } from "@/components/icons/MentorIcon";
+import { PostIcon } from "@/components/icons/PostIcon";
 import {
   Award,
   BookOpen,
@@ -96,7 +99,7 @@ export const DESTINATIONS: SearchDestination[] = [
     id: "mentors",
     label: "Mentors",
     hint: "Browse students a year or two ahead who can help",
-    icon: Users,
+    icon: MentorIcon,
     group: "Go to",
     keywords: [
       "mentor", "mentors", "mentorship", "senior", "seniors", "senior student",
@@ -122,7 +125,7 @@ export const DESTINATIONS: SearchDestination[] = [
     id: "posts",
     label: "Posts",
     hint: "The community board — ask for teammates, study help or advice",
-    icon: MessageSquare,
+    icon: PostIcon,
     group: "Go to",
     // "community" on its own belongs to Groups now — that is what the word
     // means once groups exist. The board keeps the phrase "community post".
@@ -149,7 +152,7 @@ export const DESTINATIONS: SearchDestination[] = [
     id: "events",
     label: "Events",
     hint: "Workshops, fests, competitions and club activities",
-    icon: Calendar,
+    icon: EventsIcon,
     group: "Go to",
     keywords: [
       // "club" belongs to Groups — a club is a group you join, not a one-off

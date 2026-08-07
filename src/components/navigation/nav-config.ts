@@ -8,8 +8,10 @@ import {
   UsersRound,
 } from "lucide-react";
 
+import { EventsIcon } from "@/components/icons/EventsIcon";
 import { FacultyIcon } from "@/components/icons/FacultyIcon";
-
+import { MentorIcon } from "@/components/icons/MentorIcon";
+import { PostIcon } from "@/components/icons/PostIcon";
 export interface NavItem {
   name: string;
   url: string;
@@ -45,15 +47,15 @@ export interface NavItem {
 export const PRIMARY_NAV: NavItem[] = [
   { name: "Home", url: "/", icon: Home },
   { name: "Groups", url: "/communities", icon: UsersRound },
-  { name: "Posts", url: "/community-posts", icon: MessageSquare },
-  { name: "Events", url: "/marketplace", icon: Calendar },
+  { name: "Posts", url: "/community-posts", icon: PostIcon },
+  { name: "Events", url: "/marketplace", icon: EventsIcon },
   { name: "Messages", url: "/messages", icon: Mail, requiresAuth: true },
   { name: "Faculty", url: "/faculty", icon: FacultyIcon },
+  { name: "Mentors", url: "/mentors", icon: MentorIcon },
 ];
 
 /** Rendered under a rule in the rail and the sheet. Reachable from search anywhere. */
 export const SECONDARY_NAV = [
-  { name: "Mentors", url: "/mentors", icon: Users },
   { name: "How it works", url: "/how-it-works" },
   { name: "Blog", url: "/blog" },
   { name: "About", url: "/about" },
