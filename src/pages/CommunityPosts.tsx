@@ -16,6 +16,7 @@ import { InlineComments } from "@/components/community/InlineComments";
 import { PostCard } from "@/components/community/PostCard";
 import { EditPostModal } from "@/components/community/EditPostModal";
 import { ImageLightbox } from "@/components/community/ImageLightbox";
+import { HorizontalScroller } from "@/components/ui/HorizontalScroller";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -373,7 +374,7 @@ const CommunityPosts = () => {
                 only find by tapping. The rest are one "More" away, and the count
                 on each chip means you know what you are getting before you
                 choose. */}
-            <div className="flex items-center gap-2 overflow-x-auto py-2 px-1 scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+            <HorizontalScroller className="flex items-center gap-2 py-2 px-1" ariaLabel="Post type filters">
               {visibleTypes.map((type) => {
                 const count = typeCounts[type.value];
 
@@ -440,7 +441,7 @@ const CommunityPosts = () => {
                   Only mine
                 </button>
               )}
-            </div>
+            </HorizontalScroller>
           </div>
 
           {/* Feed */}

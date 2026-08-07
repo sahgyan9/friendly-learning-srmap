@@ -9,6 +9,7 @@ import StructuredData from "@/components/StructuredData";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { HorizontalScroller } from "@/components/ui/HorizontalScroller";
 import {
   Select,
   SelectContent,
@@ -395,7 +396,7 @@ const Faculty = () => {
                     Swipe to explore ({facets.length})
                   </span>
                 </div>
-                <div className="flex items-center gap-1.5 overflow-x-auto py-1 px-0.5 scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+                <HorizontalScroller className="flex items-center gap-1.5 py-1 px-0.5" ariaLabel="Research interest filters">
                   {facets.map((facet) => (
                     <button
                       key={facet.interest}
@@ -407,7 +408,7 @@ const Faculty = () => {
                       <span className="tabular-nums text-muted-foreground">{facet.count}</span>
                     </button>
                   ))}
-                </div>
+                </HorizontalScroller>
               </div>
             )
           )}

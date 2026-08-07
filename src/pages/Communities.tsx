@@ -12,6 +12,7 @@ import { CommunityCard } from "@/components/communities/CommunityCard";
 import { CommunityRow } from "@/components/communities/CommunityRow";
 import { CreateCommunityModal } from "@/components/communities/CreateCommunityModal";
 import MyInvites from "@/components/communities/MyInvites";
+import { HorizontalScroller } from "@/components/ui/HorizontalScroller";
 import { useAuth } from "@/context/AuthContext";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useHasVisitedGroupsNav } from "@/hooks/useFeatureAnnouncement";
@@ -202,7 +203,7 @@ const Communities = () => {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 overflow-x-auto py-2 px-1 scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+          <HorizontalScroller className="flex items-center gap-2 py-2 px-1" ariaLabel="Community category filters">
             <button
               type="button"
               onClick={() => setKind("all")}
@@ -279,7 +280,7 @@ const Communities = () => {
                 Only mine
               </button>
             )}
-          </div>
+          </HorizontalScroller>
         </div>
 
         {loading ? (

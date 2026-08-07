@@ -15,6 +15,7 @@ import { useHasVisitedMentorsNav } from "@/hooks/useFeatureAnnouncement";
 // Import refactored components
 import MentorList from "@/components/mentors/MentorList";
 import MentorsFooter from "@/components/mentors/MentorsFooter";
+import { HorizontalScroller } from "@/components/ui/HorizontalScroller";
 import { cn } from "@/lib/utils";
 
 const DOMAIN_FILTERS = [
@@ -224,7 +225,7 @@ const Mentors = () => {
           <SearchBar onSearch={handleSearch} onGeminiSearch={handleGeminiSearch} />
 
           {/* Clean Standard Domain Filter Pills — horizontally scrollable */}
-          <div className="mt-4 mb-4 flex items-center gap-2 overflow-x-auto py-2 px-1 scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+          <HorizontalScroller className="mt-4 mb-4 flex items-center gap-2 py-2 px-1" ariaLabel="Mentor domain filters">
             <span className="text-xs font-medium text-muted-foreground whitespace-nowrap mr-1 shrink-0">Filter by:</span>
             {DOMAIN_FILTERS.map((filter) => {
               const Icon = filter.icon;
@@ -246,7 +247,7 @@ const Mentors = () => {
                 </button>
               );
             })}
-          </div>
+          </HorizontalScroller>
 
           <MentorList
             isLoading={isLoading}

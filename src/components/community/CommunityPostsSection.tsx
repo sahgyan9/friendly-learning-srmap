@@ -4,6 +4,7 @@ import { ArrowRight, PenLine } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { HorizontalScroller } from "@/components/ui/HorizontalScroller";
 import { CreatePostButton } from "@/components/community/CreatePostButton";
 import { PostComposerStrip } from "@/components/community/PostComposerStrip";
 import { PostCard } from "@/components/community/PostCard";
@@ -195,7 +196,16 @@ export const CommunityPostsSection = () => {
           </div>
         ) : (
           <>
-            <div ref={scrollContainerRef} className="-mx-4 overflow-x-auto px-4 pb-4 [scrollbar-width:thin]">
+            <HorizontalScroller
+              scrollRef={scrollContainerRef}
+              className="-mx-4 px-4 pb-4 [scrollbar-width:thin]"
+              hideScrollbar={false}
+              fadeFrom="from-muted/30"
+              edgeWidth="w-16"
+              arrowSize="md"
+              scrollAmount={416}
+              ariaLabel="Recent community posts"
+            >
               {/* `items-stretch` gives every card the height of the tallest,
                   so the rail reads as one row rather than a ragged skyline.
                   This replaced `items-start`, which avoided stretching
@@ -241,7 +251,7 @@ export const CommunityPostsSection = () => {
                   );
                 })}
               </div>
-            </div>
+            </HorizontalScroller>
 
             <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <CreatePostButton onPostCreated={reload} />
