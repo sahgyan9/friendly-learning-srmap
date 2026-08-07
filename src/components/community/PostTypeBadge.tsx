@@ -9,6 +9,7 @@ const TYPE_STYLES: Record<string, string> = {
   project: "bg-violet-100 text-violet-900 dark:bg-violet-950 dark:text-violet-200",
   research: "bg-emerald-100 text-emerald-900 dark:bg-emerald-950 dark:text-emerald-200",
   "problem-solving": "bg-rose-100 text-rose-900 dark:bg-rose-950 dark:text-rose-200",
+  achievement: "bg-yellow-100 text-yellow-900 dark:bg-yellow-950 dark:text-yellow-200",
   announcement: "bg-orange-100 text-orange-900 dark:bg-orange-950 dark:text-orange-200",
   general: "bg-muted text-muted-foreground",
 };
@@ -24,6 +25,7 @@ const TYPE_ACCENTS: Record<string, string> = {
   project: "bg-violet-400",
   research: "bg-emerald-400",
   "problem-solving": "bg-rose-400",
+  achievement: "bg-yellow-400",
   announcement: "bg-orange-400",
   general: "bg-border",
 };

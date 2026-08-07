@@ -55,6 +55,10 @@ const PLACEHOLDERS: Record<string, { title: string; content: string }> = {
     title: "Stuck on a DSA problem — segment trees",
     content: "The problem, what you've tried, and where it breaks.",
   },
+  achievement: {
+    title: "Won 1st place in National Hackathon 2026!",
+    content: "Share your milestone, competition or project wins, key takeaways, and experience.",
+  },
   announcement: {
     title: "Robotics Club orientation — Friday 5pm, Lab 3",
     content: "What's happening, when, where, and who should come.",
@@ -203,7 +207,7 @@ export const CreatePostModal = ({
                 privacy promise the database does not make. */}
             {communityName
               ? "This goes in the group's feed rather than the public board. Anyone can read it; only members can post."
-              : "Ask for what you need — teammates, study help, collaborators — or share an announcement."}
+              : "Ask for what you need — teammates, study help, collaborators — or share an achievement or announcement."}
           </DialogDescription>
         </DialogHeader>
 

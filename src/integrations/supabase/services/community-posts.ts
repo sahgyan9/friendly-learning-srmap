@@ -83,6 +83,7 @@ export const POST_TYPES = [
   { value: "project", label: "Project ideas", emoji: "🛠️" },
   { value: "research", label: "Research collaboration", emoji: "🔬" },
   { value: "problem-solving", label: "Problem solving", emoji: "🧩" },
+  { value: "achievement", label: "Achievement", emoji: "🏆" },
   { value: "announcement", label: "Announcements", emoji: "📢" },
   { value: "general", label: "General discussion", emoji: "💬" },
 ] as const;
