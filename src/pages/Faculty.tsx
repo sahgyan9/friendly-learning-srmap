@@ -262,16 +262,21 @@ const Faculty = () => {
           ) : (
             facets.length > 0 && (
               <div className="mb-6">
-                <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  Browse by research interest
-                </p>
-                <div className="flex flex-wrap gap-1.5">
+                <div className="mb-2 flex items-center justify-between">
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    Browse by research interest
+                  </p>
+                  <span className="hidden text-[11px] text-muted-foreground/70 sm:inline-block">
+                    Swipe to explore ({facets.length})
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5 overflow-x-auto py-1 px-0.5 scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                   {facets.map((facet) => (
                     <button
                       key={facet.interest}
                       type="button"
                       onClick={() => updateParam("interest", facet.interest, "")}
-                      className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-xs transition-colors hover:border-rose-500/30 hover:bg-rose-500/5"
+                      className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-xs whitespace-nowrap transition-colors hover:border-rose-500/30 hover:bg-rose-500/5"
                     >
                       {facet.interest}
                       <span className="tabular-nums text-muted-foreground">{facet.count}</span>
