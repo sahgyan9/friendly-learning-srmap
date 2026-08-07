@@ -91,7 +91,7 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
   ownerName,
   isMember,
   isOwner,
-  posts,
+  posts = [],
   onOpenPost,
   onCreatePost,
 }) => {
