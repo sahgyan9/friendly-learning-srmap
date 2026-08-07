@@ -5,7 +5,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Heart, MessageCircle, Share2, BadgeCheck, ChevronDown, ArrowRight } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Heart, MessageCircle, Share2, BadgeCheck, ChevronDown, ArrowRight, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getInitials } from "@/utils/user-utils";
 import { formatRelativeTime } from "@/utils/date-utils";
@@ -25,6 +31,9 @@ interface PostCardProps {
   onAuthorClick?: (authorId: string, event: React.MouseEvent) => void;
   /** Opens the full-size view. Omitted on the compact rail, which has thumbnails. */
   onImageClick?: (src: string, title: string, index?: number, allImages?: string[]) => void;
+  /** Only ever called for the viewer's own posts — the menu that offers it is gated on `post.viewer_is_author`. */
+  onEdit?: (post: CommunityPost) => void;
+  onDelete?: (post: CommunityPost) => void;
   /** `compact` is the homepage rail; `full` is the /community-posts feed. */
   variant?: "full" | "compact";
   className?: string;
@@ -60,6 +69,8 @@ export function PostCard({
   onComment,
   onAuthorClick,
   onImageClick,
+  onEdit,
+  onDelete,
   variant = "full",
   className,
 }: PostCardProps) {
@@ -171,6 +182,39 @@ export function PostCard({
             <PostTypeBadge type={post.post_type} />
             <PostStatusBadge status={post.status} />
             {isAwaitingReply(post) && <AwaitingReplyBadge />}
+
+            {post.viewer_is_author && (onEdit || onDelete) && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground"
+                    onClick={(event) => event.stopPropagation()}
+                    aria-label="Post options"
+                  >
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" onClick={(event) => event.stopPropagation()}>
+                  {onEdit && (
+                    <DropdownMenuItem onClick={() => onEdit(post)}>
+                      <Pencil className="mr-2 h-3.5 w-3.5" />
+                      Edit
+                    </DropdownMenuItem>
+                  )}
+                  {onDelete && (
+                    <DropdownMenuItem
+                      className="text-destructive focus:text-destructive"
+                      onClick={() => onDelete(post)}
+                    >
+                      <Trash2 className="mr-2 h-3.5 w-3.5" />
+                      Delete
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
         </div>
 

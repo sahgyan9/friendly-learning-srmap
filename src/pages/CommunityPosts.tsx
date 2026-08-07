@@ -14,7 +14,18 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { CreatePostButton } from "@/components/community/CreatePostButton";
 import { InlineComments } from "@/components/community/InlineComments";
 import { PostCard } from "@/components/community/PostCard";
+import { EditPostModal } from "@/components/community/EditPostModal";
 import { ImageLightbox } from "@/components/community/ImageLightbox";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useAuth } from "@/context/AuthContext";
 import { useDebounce } from "@/hooks/useDebounce";
 import { getBreadcrumbSchema } from "@/lib/structured-data";
@@ -27,6 +38,7 @@ import {
   getPostImageUrls,
   getPostTypeCounts,
   togglePostLike,
+  deleteCommunityPost,
   type CommunityPost,
 } from "@/integrations/supabase/services/community-posts";
 
@@ -47,6 +59,9 @@ const CommunityPosts = () => {
   const [showAllTypes, setShowAllTypes] = useState(false);
   const [mine, setMine] = useState(false);
   const [lightbox, setLightbox] = useState<{ images: string[]; title?: string; index: number } | null>(null);
+  const [editingPost, setEditingPost] = useState<CommunityPost | null>(null);
+  const [deletingPost, setDeletingPost] = useState<CommunityPost | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const selectedType = searchParams.get("type") ?? "all";
   const [searchTerm, setSearchTerm] = useState(searchParams.get("q") ?? "");
@@ -251,6 +266,24 @@ const CommunityPosts = () => {
 
     await navigator.clipboard.writeText(url);
     toast.success("Link copied to clipboard");
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deletingPost) return;
+
+    setIsDeleting(true);
+    const { error } = await deleteCommunityPost(deletingPost.id);
+    setIsDeleting(false);
+
+    if (error) {
+      toast.error("Failed to delete post");
+      return;
+    }
+
+    setPosts((previous) => previous.filter((post) => post.id !== deletingPost.id));
+    setTotal((previous) => Math.max(0, previous - 1));
+    setDeletingPost(null);
+    toast.success("Post deleted");
   };
 
   const toggleComments = (postId: string, event: React.MouseEvent) => {
@@ -504,6 +537,8 @@ const CommunityPosts = () => {
                         index: index ?? 0,
                       });
                     }}
+                    onEdit={setEditingPost}
+                    onDelete={setDeletingPost}
                   />
 
                   {expandedComments.has(post.id) && (
@@ -547,6 +582,40 @@ const CommunityPosts = () => {
         title={lightbox?.title}
         onClose={() => setLightbox(null)}
       />
+
+      {editingPost && (
+        <EditPostModal
+          post={editingPost}
+          open={!!editingPost}
+          onOpenChange={(open) => !open && setEditingPost(null)}
+          onPostUpdated={(updated) => {
+            setPosts((previous) => previous.map((post) => (post.id === updated.id ? updated : post)));
+            setEditingPost(null);
+          }}
+        />
+      )}
+
+      <AlertDialog open={!!deletingPost} onOpenChange={(open) => !open && setDeletingPost(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this post?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This can't be undone. "{deletingPost?.title}" and its replies will be permanently
+              removed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };
