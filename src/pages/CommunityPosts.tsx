@@ -102,11 +102,11 @@ const CommunityPosts = () => {
       const timer = setTimeout(() => {
         const element = document.getElementById(`post-${targetPostId}`);
         if (element) {
-          element.scrollIntoView({ behavior: "smooth", block: "center" });
+          element.scrollIntoView({ behavior: "smooth", block: "start" });
           setHighlightedPostId(targetPostId);
           const clearTimer = setTimeout(() => {
             setHighlightedPostId(null);
-          }, 3000);
+          }, 500);
           return () => clearTimeout(clearTimer);
         }
       }, 150);
@@ -463,7 +463,7 @@ const CommunityPosts = () => {
                   key={post.id}
                   id={`post-${post.id}`}
                   className={cn(
-                    "scroll-mt-24 rounded-xl transition-all duration-700",
+                    "scroll-mt-24 md:scroll-mt-28 rounded-xl transition-all duration-700",
                     highlightedPostId === post.id &&
                       "ring-2 ring-emerald-500 ring-offset-4 ring-offset-background shadow-xl shadow-emerald-500/10",
                   )}

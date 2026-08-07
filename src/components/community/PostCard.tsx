@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Heart, MessageCircle, Share2, BadgeCheck, ChevronDown } from "lucide-react";
+import { Heart, MessageCircle, Share2, BadgeCheck, ChevronDown, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getInitials } from "@/utils/user-utils";
 import { formatRelativeTime } from "@/utils/date-utils";
@@ -95,7 +95,13 @@ export function PostCard({
   const isLongText = post.content.length > 180 || (post.content.match(/\n/g) || []).length >= 3;
 
   const handleCardClick = () => {
-    if (isLongText && !hasGroupLink) {
+    if (isCompact) {
+      if (onOpen) {
+        onOpen(post.id);
+      } else {
+        navigate(`/community-posts#post-${post.id}`);
+      }
+    } else if (isLongText && !hasGroupLink) {
       setIsExpanded((prev) => !prev);
     }
   };
@@ -104,7 +110,7 @@ export function PostCard({
     <Card
       className={cn(
         "group relative flex flex-col overflow-hidden transition-all duration-300 select-text",
-        isLongText && "cursor-pointer hover:-translate-y-0.5 hover:shadow-lg hover:border-emerald-500/30",
+        (isCompact || isLongText) && "cursor-pointer hover:-translate-y-0.5 hover:shadow-lg hover:border-emerald-500/30",
         className,
       )}
       onClick={handleCardClick}
@@ -196,14 +202,26 @@ export function PostCard({
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                setIsExpanded((prev) => !prev);
+                if (isCompact) {
+                  if (onOpen) {
+                    onOpen(post.id);
+                  } else {
+                    navigate(`/community-posts#post-${post.id}`);
+                  }
+                } else {
+                  setIsExpanded((prev) => !prev);
+                }
               }}
               className="mt-1 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 transition-all duration-200 focus:outline-none"
             >
-              <span>{isExpanded ? "📖 Show less" : "📖 Read full post"}</span>
-              <ChevronDown
-                className={cn("h-3.5 w-3.5 transition-transform duration-200", isExpanded && "rotate-180")}
-              />
+              <span>{isCompact ? "📖 Read full post" : isExpanded ? "📖 Show less" : "📖 Read full post"}</span>
+              {isCompact ? (
+                <ArrowRight className="h-3.5 w-3.5" />
+              ) : (
+                <ChevronDown
+                  className={cn("h-3.5 w-3.5 transition-transform duration-200", isExpanded && "rotate-180")}
+                />
+              )}
             </button>
           )}
         </div>
