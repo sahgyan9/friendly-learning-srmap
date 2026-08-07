@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { toast } from "sonner";
-import { X } from "lucide-react";
+import { X, ImagePlus } from "lucide-react";
 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 import {
   POST_TYPES,
   createCommunityPost,
-  uploadCommunityPostImage,
+  uploadCommunityPostImages,
 } from "@/integrations/supabase/services/community-posts";
 
 interface CreatePostModalProps {
@@ -29,6 +29,7 @@ interface CreatePostModalProps {
 }
 
 const MAX_TAGS = 5;
+const MAX_IMAGES = 5;
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 
 /** "all" is a filter, not something you can post as. */
@@ -82,8 +83,9 @@ export const CreatePostModal = ({
   const [tagInput, setTagInput] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const placeholders = PLACEHOLDERS[postType] ?? PLACEHOLDERS.general;
 
@@ -93,11 +95,14 @@ export const CreatePostModal = ({
     setPostType("");
     setTags([]);
     setTagInput("");
-    setImageFile(null);
-    setImagePreview((current) => {
-      if (current) URL.revokeObjectURL(current);
-      return null;
+    setImageFiles([]);
+    setImagePreviews((current) => {
+      current.forEach((url) => URL.revokeObjectURL(url));
+      return [];
     });
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
 
   const addTag = () => {
@@ -108,31 +113,56 @@ export const CreatePostModal = ({
   };
 
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(event.target.files ?? []);
+    if (files.length === 0) return;
 
-    if (!file.type.startsWith("image/")) {
-      toast.error("Only image files are allowed");
-      return;
-    }
-    if (file.size > MAX_IMAGE_BYTES) {
-      toast.error("Image must be smaller than 5MB");
+    const availableSlots = MAX_IMAGES - imageFiles.length;
+    if (availableSlots <= 0) {
+      toast.error(`Maximum ${MAX_IMAGES} images allowed per post`);
+      if (fileInputRef.current) fileInputRef.current.value = "";
       return;
     }
 
-    setImageFile(file);
-    setImagePreview((current) => {
-      if (current) URL.revokeObjectURL(current);
-      return URL.createObjectURL(file);
-    });
+    const validFiles: File[] = [];
+    const newPreviews: string[] = [];
+
+    for (const file of files.slice(0, availableSlots)) {
+      if (!file.type.startsWith("image/")) {
+        toast.error(`${file.name} is not an image file`);
+        continue;
+      }
+      if (file.size > MAX_IMAGE_BYTES) {
+        toast.error(`${file.name} exceeds 5MB limit`);
+        continue;
+      }
+      validFiles.push(file);
+      newPreviews.push(URL.createObjectURL(file));
+    }
+
+    if (validFiles.length > 0) {
+      setImageFiles((prev) => [...prev, ...validFiles]);
+      setImagePreviews((prev) => [...prev, ...newPreviews]);
+    }
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
 
-  const removeImage = () => {
-    setImageFile(null);
-    setImagePreview((current) => {
-      if (current) URL.revokeObjectURL(current);
-      return null;
+  const removeImage = (indexToRemove: number, event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    setImagePreviews((prev) => {
+      const targetUrl = prev[indexToRemove];
+      if (targetUrl) URL.revokeObjectURL(targetUrl);
+      return prev.filter((_, idx) => idx !== indexToRemove);
     });
+    setImageFiles((prev) => prev.filter((_, idx) => idx !== indexToRemove));
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -146,21 +176,17 @@ export const CreatePostModal = ({
     setIsSubmitting(true);
 
     try {
-      let imageUrl: string | undefined;
-      if (imageFile) {
-        // Reported separately from the post itself. A failed upload used to
-        // surface as "Failed to create post", which pointed at the wrong thing
-        // entirely: the post had never been attempted, and the actual fault was
-        // in storage.
+      let uploadedUrls: string[] = [];
+      if (imageFiles.length > 0) {
         try {
-          const { url } = await uploadCommunityPostImage(imageFile);
-          imageUrl = url;
+          uploadedUrls = await uploadCommunityPostImages(imageFiles);
         } catch (uploadError) {
           toast.error(
             uploadError instanceof Error
-              ? `Couldn't upload the image: ${uploadError.message}`
-              : "Couldn't upload the image. Try posting without it.",
+              ? `Couldn't upload images: ${uploadError.message}`
+              : "Couldn't upload images. Try posting without them.",
           );
+          setIsSubmitting(false);
           return;
         }
       }
@@ -170,7 +196,7 @@ export const CreatePostModal = ({
         content: content.trim(),
         post_type: postType,
         tags: tags.length > 0 ? tags : undefined,
-        image_url: imageUrl,
+        image_urls: uploadedUrls,
         community_id: communityId,
       });
 
@@ -201,10 +227,6 @@ export const CreatePostModal = ({
         <DialogHeader>
           <DialogTitle>{communityName ? `Post in ${communityName}` : "Create a post"}</DialogTitle>
           <DialogDescription>
-            {/* Not "only members will see this" — group posts are readable by
-                anyone, exactly like board posts. Membership decides who can
-                write, not who can read, and saying otherwise would be a
-                privacy promise the database does not make. */}
             {communityName
               ? "This goes in the group's feed rather than the public board. Anyone can read it; only members can post."
               : "Ask for what you need — teammates, study help, collaborators — or share an achievement or announcement."}
@@ -308,32 +330,66 @@ export const CreatePostModal = ({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="image">Image (optional)</Label>
-            <Input
-              id="image"
+            <div className="flex items-center justify-between">
+              <Label htmlFor="images">Images (optional)</Label>
+              <span className="text-xs text-muted-foreground">
+                {imageFiles.length}/{MAX_IMAGES} images (max 5MB each)
+              </span>
+            </div>
+
+            {/* Hidden file input */}
+            <input
+              ref={fileInputRef}
+              id="images"
               type="file"
               accept="image/*"
+              multiple
               onChange={handleImageChange}
-              disabled={isSubmitting}
+              disabled={isSubmitting || imageFiles.length >= MAX_IMAGES}
+              className="hidden"
             />
-            {imagePreview && (
-              <div className="relative mt-2 h-32 w-32">
-                <img src={imagePreview} alt="Preview" className="h-full w-full rounded object-cover" />
-                <Button
-                  type="button"
-                  size="icon"
-                  variant="secondary"
-                  className="absolute right-1 top-1 h-6 w-6"
-                  onClick={removeImage}
-                  aria-label="Remove image"
+
+            {/* Image previews and add button grid */}
+            <div className="flex flex-wrap gap-3 pt-1">
+              {imagePreviews.map((previewUrl, idx) => (
+                <div
+                  key={previewUrl}
+                  className="group relative h-24 w-24 overflow-hidden rounded-lg border border-border bg-muted shadow-sm transition-all"
                 >
-                  <X className="h-3 w-3" />
-                </Button>
-              </div>
-            )}
+                  <img
+                    src={previewUrl}
+                    alt={`Upload preview ${idx + 1}`}
+                    className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                  />
+                  <button
+                    type="button"
+                    onClick={(e) => removeImage(idx, e)}
+                    className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-black/70 text-white shadow-md transition-all hover:bg-red-600 focus:outline-none"
+                    aria-label={`Remove image ${idx + 1}`}
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                  <span className="absolute bottom-1 left-1 rounded bg-black/60 px-1 py-0.5 text-[10px] font-medium text-white">
+                    {idx + 1}
+                  </span>
+                </div>
+              ))}
+
+              {imageFiles.length < MAX_IMAGES && (
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isSubmitting}
+                  className="flex h-24 w-24 flex-col items-center justify-center gap-1.5 rounded-lg border-2 border-dashed border-border bg-muted/30 text-muted-foreground transition-colors hover:border-primary/50 hover:bg-muted/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <ImagePlus className="h-5 w-5" />
+                  <span className="text-[11px] font-medium">Add Image</span>
+                </button>
+              )}
+            </div>
           </div>
 
-          <div className="flex justify-end gap-2">
+          <div className="flex justify-end gap-2 pt-2">
             <Button
               type="button"
               variant="outline"

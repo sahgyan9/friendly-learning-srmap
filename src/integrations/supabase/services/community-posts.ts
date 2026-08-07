@@ -53,12 +53,40 @@ export type CreatePostData = {
   content: string;
   post_type: string;
   tags?: string[];
-  image_url?: string;
+  image_url?: string | null;
+  image_urls?: string[];
   /** Omit for the public board. Set to post inside a community you belong to. */
   community_id?: string;
 };
 
 export type UpdatePostData = Partial<CreatePostData> & { status?: string };
+
+/**
+ * Resolves post image(s) into an array of URLs.
+ * Handles single legacy URL strings, JSON stringified arrays, and comma-separated lists.
+ */
+export function getPostImageUrls(imageUrl: string | null | undefined): string[] {
+  if (!imageUrl) return [];
+  const trimmed = imageUrl.trim();
+  if (!trimmed) return [];
+  if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (Array.isArray(parsed)) {
+        return parsed.filter((u): u is string => typeof u === "string" && Boolean(u.trim()));
+      }
+    } catch {
+      // Fallthrough to standard string handling
+    }
+  }
+  if (trimmed.includes(",")) {
+    return trimmed
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+  }
+  return [trimmed];
+}
 
 export type CommunityFeedOptions = {
   postType?: string;
@@ -277,6 +305,14 @@ export const createCommunityPost = async (postData: CreatePostData) => {
     return { data: null, error: new Error("Title and content are required") };
   }
 
+  let finalImageUrl: string | null = postData.image_url ?? null;
+  if (postData.image_urls && postData.image_urls.length > 0) {
+    finalImageUrl =
+      postData.image_urls.length === 1
+        ? postData.image_urls[0]
+        : JSON.stringify(postData.image_urls);
+  }
+
   const { data, error } = await supabase
     .from("community_posts")
     .insert({
@@ -285,7 +321,7 @@ export const createCommunityPost = async (postData: CreatePostData) => {
       content,
       post_type: postData.post_type,
       tags: (postData.tags ?? []).map((tag) => sanitizeInput(tag, 50)).filter(Boolean).slice(0, 10),
-      image_url: postData.image_url ?? null,
+      image_url: finalImageUrl,
       community_id: postData.community_id ?? null,
     })
     .select("id")
@@ -306,17 +342,24 @@ export const updateCommunityPost = async (postId: string, updateData: UpdatePost
   if (updateData.content !== undefined) patch.content = sanitizeInput(updateData.content, 5000);
   if (updateData.post_type !== undefined) patch.post_type = updateData.post_type;
   if (updateData.status !== undefined) patch.status = updateData.status;
-  if (updateData.image_url !== undefined) patch.image_url = updateData.image_url;
+
+  if (updateData.image_urls !== undefined) {
+    patch.image_url =
+      updateData.image_urls.length === 0
+        ? null
+        : updateData.image_urls.length === 1
+        ? updateData.image_urls[0]
+        : JSON.stringify(updateData.image_urls);
+  } else if (updateData.image_url !== undefined) {
+    patch.image_url = updateData.image_url;
+  }
+
   if (updateData.tags !== undefined) {
     patch.tags = updateData.tags.map((tag) => sanitizeInput(tag, 50)).filter(Boolean).slice(0, 10);
   }
 
-  // Read the outgoing image before it's overwritten, so a swapped or removed
-  // image can be cleaned out of storage once the swap is confirmed to have
-  // taken. Best-effort: fetched even when the image isn't changing, but only
-  // acted on below when it actually is.
   let previousImageUrl: string | null = null;
-  if (updateData.image_url !== undefined) {
+  if (updateData.image_url !== undefined || updateData.image_urls !== undefined) {
     const { data: existing } = await supabase
       .from("community_posts")
       .select("image_url")
@@ -332,20 +375,22 @@ export const updateCommunityPost = async (postId: string, updateData: UpdatePost
     return { data: null, error };
   }
 
-  if (previousImageUrl && previousImageUrl !== updateData.image_url) {
+  if (previousImageUrl && previousImageUrl !== patch.image_url) {
     await removePostImageIfOwned(previousImageUrl);
   }
 
   return getCommunityPostById(postId);
 };
 
-/** Removes a post image from storage if the URL is actually one of ours. Never throws. */
+/** Removes post image(s) from storage if the URLs are actually ours. Never throws. */
 async function removePostImageIfOwned(imageUrl: string) {
-  const path = storagePathFromPublicUrl(POST_IMAGE_BUCKET, imageUrl);
-  if (!path) return;
-
-  const { error } = await supabase.storage.from(POST_IMAGE_BUCKET).remove([path]);
-  if (error) console.error("Error removing community post image:", error);
+  const urls = getPostImageUrls(imageUrl);
+  for (const url of urls) {
+    const path = storagePathFromPublicUrl(POST_IMAGE_BUCKET, url);
+    if (!path) continue;
+    const { error } = await supabase.storage.from(POST_IMAGE_BUCKET).remove([path]);
+    if (error) console.error("Error removing community post image:", error);
+  }
 }
 
 export const deleteCommunityPost = async (postId: string) => {
@@ -486,4 +531,13 @@ export const uploadCommunityPostImage = async (original: File) => {
   } = supabase.storage.from(POST_IMAGE_BUCKET).getPublicUrl(filePath);
 
   return { path: filePath, url: publicUrl };
+};
+
+export const uploadCommunityPostImages = async (files: File[]): Promise<string[]> => {
+  const urls: string[] = [];
+  for (const file of files) {
+    const { url } = await uploadCommunityPostImage(file);
+    urls.push(url);
+  }
+  return urls;
 };

@@ -7,10 +7,11 @@ import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { getInitials } from "@/utils/user-utils";
 import type { CommunityPost } from "@/integrations/supabase/services/community-posts";
-import { isAwaitingReply } from "@/integrations/supabase/services/community-posts";
+import { isAwaitingReply, getPostImageUrls } from "@/integrations/supabase/services/community-posts";
 import { AwaitingReplyBadge, PostStatusBadge, PostTypeBadge } from "./PostTypeBadge";
 import { LinkifiedText } from "@/components/common/LinkifiedText";
 import { CardAccentBorder } from "@/components/ui/CardAccentBorder";
+import { PostImageGallery } from "./PostImageGallery";
 
 interface PostCardProps {
   post: CommunityPost;
@@ -20,7 +21,7 @@ interface PostCardProps {
   onComment?: (postId: string, event: React.MouseEvent) => void;
   onAuthorClick?: (authorId: string, event: React.MouseEvent) => void;
   /** Opens the full-size view. Omitted on the compact rail, which has thumbnails. */
-  onImageClick?: (src: string, title: string) => void;
+  onImageClick?: (src: string, title: string, index?: number, allImages?: string[]) => void;
   /** `compact` is the homepage rail; `full` is the /community-posts feed. */
   variant?: "full" | "compact";
   className?: string;
@@ -117,41 +118,15 @@ export function PostCard({
           </p>
         </div>
 
-        {/* Image — see long comment in original for why object-contain over object-cover */}
-        {post.image_url &&
-          (isCompact ? (
-            <img
-              src={post.image_url}
-              alt=""
-              loading="lazy"
-              className="h-28 w-full rounded-lg border object-cover"
-            />
-          ) : (
-            // A button, not a bare image with a click handler: this is a real
-            // action and it needs to be reachable by keyboard.
-            <button
-              type="button"
-              onClick={(event) => {
-                event.stopPropagation();
-                onImageClick?.(post.image_url as string, post.title);
-              }}
-              className="group/img relative mx-auto block cursor-zoom-in rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              aria-label={`View the image on "${post.title}" full size`}
-            >
-              <img
-                src={post.image_url}
-                alt=""
-                loading="lazy"
-                className="mx-auto h-auto max-h-72 w-auto max-w-full rounded-lg border"
-              />
-              <span
-                aria-hidden
-                className="absolute bottom-2 right-2 rounded-md bg-black/55 p-1.5 text-white opacity-80 transition-opacity group-hover/img:opacity-100"
-              >
-                <Maximize2 className="h-3.5 w-3.5" />
-              </span>
-            </button>
-          ))}
+        {/* LinkedIn-style Multi-Image Auto Gallery */}
+        <PostImageGallery
+          images={getPostImageUrls(post.image_url)}
+          title={post.title}
+          variant={variant}
+          onImageClick={(src, index) => {
+            onImageClick?.(src, post.title, index, getPostImageUrls(post.image_url));
+          }}
+        />
 
         {/* Tags — emerald accent matching Posts brand colour */}
         {post.tags && post.tags.length > 0 && (

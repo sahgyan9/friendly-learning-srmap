@@ -14,6 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { EditPostModal } from "@/components/community/EditPostModal";
 import { ImageLightbox } from "@/components/community/ImageLightbox";
 import { InlineComments } from "@/components/community/InlineComments";
+import { PostImageGallery } from "@/components/community/PostImageGallery";
 import { LinkifiedText } from "@/components/common/LinkifiedText";
 import { CardAccentBorder } from "@/components/ui/CardAccentBorder";
 import {
@@ -46,6 +47,7 @@ import {
   isAwaitingReply,
   togglePostLike,
   updateCommunityPost,
+  getPostImageUrls,
   type CommunityPost,
 } from "@/integrations/supabase/services/community-posts";
 
@@ -58,6 +60,7 @@ const CommunityPostDetail = () => {
   const [loading, setLoading] = useState(true);
   const [showEditModal, setShowEditModal] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
 
   const loadPost = useCallback(async () => {
     if (!postId) return;
@@ -257,30 +260,15 @@ const CommunityPostDetail = () => {
                 </p>
               </div>
 
-              {/* Roomier than the feed — this is the page where somebody reads
-                  one post rather than scans twenty — but still capped, and
-                  still one tap from the full-size view. */}
-              {post.image_url && (
-                <button
-                  type="button"
-                  onClick={() => setLightboxOpen(true)}
-                  className="group/img relative block w-full cursor-zoom-in rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  aria-label="View this image full size"
-                >
-                  <img
-                    src={post.image_url}
-                    alt=""
-                    className="mx-auto h-auto max-h-[60vh] w-auto max-w-full rounded-lg border"
-                    loading="lazy"
-                  />
-                  <span
-                    aria-hidden
-                    className="absolute bottom-2 right-2 rounded-md bg-black/55 p-1.5 text-white opacity-80 transition-opacity group-hover/img:opacity-100"
-                  >
-                    <Maximize2 className="h-3.5 w-3.5" />
-                  </span>
-                </button>
-              )}
+              {/* LinkedIn-style Multi-Image Gallery */}
+              <PostImageGallery
+                images={getPostImageUrls(post.image_url)}
+                title={post.title}
+                onImageClick={(src, index) => {
+                  setLightboxIndex(index);
+                  setLightboxOpen(true);
+                }}
+              />
 
               {post.tags && post.tags.length > 0 && (
                 <div className="flex flex-wrap gap-2">
@@ -389,7 +377,8 @@ const CommunityPostDetail = () => {
       )}
 
       <ImageLightbox
-        src={lightboxOpen ? post.image_url : null}
+        images={lightboxOpen ? getPostImageUrls(post.image_url) : []}
+        initialIndex={lightboxIndex}
         title={post.title}
         onClose={() => setLightboxOpen(false)}
       />
