@@ -390,9 +390,13 @@ const SiteSearch = () => {
           "transition-all duration-300",
           "hover:border-primary/50 hover:from-[#3963C6]/20 hover:via-violet-500/20 hover:to-emerald-500/20 hover:text-foreground hover:shadow-sm",
           "w-9 justify-center",
+          // Narrower from `lg` up than it looks like it could be, because from
+          // `lg` this sits immediately right of the mark and the header's
+          // centre icons start at the true middle of the viewport. At the old
+          // lg:w-72/xl:w-80 the left block overran that middle and the first
+          // icon was painted over the end of this field.
           "md:w-56 md:justify-start md:px-3",
-          "lg:w-72",
-          "xl:w-80",
+          "xl:w-72",
         )}
       >
         <Sparkles className="h-4 w-4 shrink-0 text-primary animate-pulse" />

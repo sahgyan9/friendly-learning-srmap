@@ -12,6 +12,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import RouteRobots from "@/components/RouteRobots";
 import ScrollToTop from "@/components/ScrollToTop";
 import SiteHeader from "@/components/navigation/SiteHeader";
+import { MainWithRail } from "@/components/navigation/SiteRail";
 
 // The landing page is the most common entry point, so it stays in the main
 // bundle. Everything else is split per route — the app previously shipped one
@@ -174,7 +175,7 @@ function App() {
                 is how the two ended up overlapping. */}
             <SiteHeader />
 
-            <main id="main-content">
+            <MainWithRail>
             <Suspense fallback={<RouteFallback />}>
               <Routes>
                 {/* Public */}
@@ -318,7 +319,7 @@ function App() {
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>
-            </main>
+            </MainWithRail>
           </div>
           </WelcomeTourProvider>
         </TooltipProvider>

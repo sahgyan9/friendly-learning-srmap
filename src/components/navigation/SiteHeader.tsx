@@ -1,16 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { motion } from "framer-motion";
-import {
-  Calendar,
-  GraduationCap,
-  Home,
-  Mail,
-  Menu,
-  MessageSquare,
-  Users,
-  UsersRound,
-} from "lucide-react";
+import { Menu } from "lucide-react";
 
 import Logo from "@/components/Logo";
 import DarkModeToggle from "@/components/DarkModeToggle";
@@ -21,8 +11,8 @@ import SiteSearch from "@/components/search/SiteSearch";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useAuth } from "@/context/AuthContext";
-import { useCollapseOnScroll } from "@/hooks/useCollapseOnScroll";
 import {
   useHasSeenFacultyRatings,
   useHasVisitedEventsNav,
@@ -30,138 +20,47 @@ import {
   useHasVisitedMentorsNav,
 } from "@/hooks/useFeatureAnnouncement";
 import { cn } from "@/lib/utils";
-
-interface NavItem {
-  name: string;
-  url: string;
-  icon: typeof Home;
-  /** Hidden from signed-out visitors, who can only be bounced to sign-in. */
-  requiresAuth?: boolean;
-}
-
-/**
- * One list, rendered identically by the desktop row and the mobile sheet.
- *
- * There were previously three navigations with three different link sets: a
- * floating pill, a hamburger menu, and this. Faculty — the newest feature —
- * appeared in none of the mobile ones, and /community-posts was labelled
- * "Board" in one and "Community" in another. Keeping one array is what stops
- * that drift coming back.
- *
- * Six entries, ordered by what someone signed in actually opens: the group
- * they're in, the board, what's on, their messages, faculty ratings. Mentors
- * stays in the secondary list below — a destination you go to once, when you
- * are looking for a particular person, and search reaches it both by name as
- * well as through a dozen aliases ("senior", "professor", "doubt").
- */
-const PRIMARY_NAV: NavItem[] = [
-  { name: "Home", url: "/", icon: Home },
-  { name: "Groups", url: "/communities", icon: UsersRound },
-  { name: "Posts", url: "/community-posts", icon: MessageSquare },
-  { name: "Events", url: "/marketplace", icon: Calendar },
-  { name: "Messages", url: "/messages", icon: Mail, requiresAuth: true },
-  { name: "Faculty", url: "/faculty", icon: GraduationCap },
-];
+import {
+  PRIMARY_NAV,
+  ROUTE_ACCENT,
+  SECONDARY_NAV,
+  accentFor,
+  isActivePath,
+} from "./nav-config";
 
 /**
- * Per-route accent palette — mirrors FeaturesShowcase card colours.
- * Each entry has Tailwind classes for: pill bg, text, dot, and border.
- */
-const ROUTE_ACCENT: Record<string, {
-  pill: string;      // active pill bg
-  text: string;      // active link text
-  dot: string;       // "new" dot colour
-  border: string;    // bottom accent border
-}> = {
-  "/": {
-    pill: "bg-primary/10",
-    text: "text-primary",
-    dot: "bg-primary",
-    border: "border-primary/40",
-  },
-  "/communities": {
-    pill: "bg-amber-500/10",
-    text: "text-amber-600 dark:text-amber-400",
-    dot: "bg-amber-500",
-    border: "border-amber-500/40",
-  },
-  "/community-posts": {
-    pill: "bg-emerald-500/10",
-    text: "text-emerald-600 dark:text-emerald-400",
-    dot: "bg-emerald-500",
-    border: "border-emerald-500/40",
-  },
-  "/marketplace": {
-    pill: "bg-violet-500/10",
-    text: "text-violet-600 dark:text-violet-400",
-    dot: "bg-violet-500",
-    border: "border-violet-500/40",
-  },
-  "/messages": {
-    pill: "bg-sky-500/10",
-    text: "text-sky-600 dark:text-sky-400",
-    dot: "bg-sky-500",
-    border: "border-sky-500/40",
-  },
-  "/faculty": {
-    pill: "bg-rose-500/10",
-    text: "text-rose-600 dark:text-rose-400",
-    dot: "bg-rose-500",
-    border: "border-rose-500/40",
-  },
-  "/mentors": {
-    pill: "bg-primary/10",
-    text: "text-primary",
-    dot: "bg-primary",
-    border: "border-primary/40",
-  },
-};
-
-/** Returns the accent for the current location, falling back to the primary. */
-function useRouteAccent() {
-  const location = useLocation();
-  // Match the most specific prefix first
-  const key = Object.keys(ROUTE_ACCENT)
-    .filter((prefix) => prefix === "/" ? location.pathname === "/" : location.pathname.startsWith(prefix))
-    .sort((a, b) => b.length - a.length)[0];
-  return ROUTE_ACCENT[key] ?? ROUTE_ACCENT["/"];
-}
-
-/** Rendered in the mobile sheet, under a rule. Reachable from search anywhere. */
-const SECONDARY_NAV = [
-  { name: "Mentors", url: "/mentors", icon: Users },
-  { name: "How it works", url: "/how-it-works" },
-  { name: "Blog", url: "/blog" },
-  { name: "About", url: "/about" },
-  { name: "Contact", url: "/contact" },
-];
-
-/**
- * The site's only navigation.
+ * The site's top bar: one 64px row, three blocks.
  *
- * Desktop splits it across two rows — identity and search on top, links
- * underneath — because a single 64px band was holding a logo, seven links, a
- * search field and four icons: about 1080px of content in a 1280px container,
- * tight enough that the search field had to collapse to a bare icon between
- * 1024px and 1280px just to fit. The link row has since settled at six, but
- * the split stays: it is what lets the search field be a real field rather than
- * an icon. The second row collapses on scroll (see
- * useCollapseOnScroll) so the taller header is only paid for at the top of a
- * page, not the whole way down a feed.
+ * Left is identity and search, together, because search is the thing people
+ * reach for second after the logo. Centre is the primary nav as bare icons.
+ * Right is messages, notifications and the account.
  *
- * Below `lg` there is still one row and a sheet, which was never the crowded
+ * The two side blocks are both `flex-1` with a zero basis, so they resolve to
+ * equal widths whatever they contain and the centre block lands on the true
+ * middle of the viewport. Sizing them by content instead would drift the icons
+ * left or right as the account cluster changes between signed-out (two
+ * buttons) and signed-in (three icons and an avatar).
+ *
+ * This replaced a two-row header. The old second row held the same links as
+ * text and collapsed on scroll, which meant that on the pages you actually
+ * scroll, the navigation was gone by the time you wanted it. Those links now
+ * live in two always-visible places: these icons, and SiteRail down the left
+ * with their labels. All three surfaces render PRIMARY_NAV from nav-config, so
+ * there is still one list.
+ *
+ * Below `lg` there are no centre icons and no rail — there is no width for
+ * either — and the sheet is the whole navigation, which was never the crowded
  * case.
  */
 export function SiteHeader() {
   const { user, profile } = useAuth();
   const location = useLocation();
-  const accent = useRouteAccent();
+  const accent = accentFor(location.pathname);
   const { hasSeen: hasSeenFaculty } = useHasSeenFacultyRatings();
   const { hasSeen: hasVisitedGroups } = useHasVisitedGroupsNav();
   const { hasSeen: hasVisitedEvents } = useHasVisitedEventsNav();
   const { hasSeen: hasVisitedMentors } = useHasVisitedMentorsNav();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const navCollapsed = useCollapseOnScroll();
 
   // Points at where a feature lives in the nav until someone's found it.
   // Groups/Events/Mentors only light up once the welcome tour has actually
@@ -181,15 +80,20 @@ export function SiteHeader() {
     setMobileOpen(false);
   }, [location.pathname]);
 
-  const isActive = (url: string) =>
-    url === "/" ? location.pathname === "/" : location.pathname.startsWith(url);
-
+  const isActive = (url: string) => isActivePath(location.pathname, url);
   const visibleNav = PRIMARY_NAV.filter((item) => !item.requiresAuth || user);
 
-  // The collapsed row is clipped to zero height rather than unmounted, so that
-  // it can animate. `inert` is what keeps a Tab press out of links nobody can
-  // see; React 18 has no typing for it, hence the string spread.
-  const inertWhenCollapsed = (navCollapsed ? { inert: "" } : {}) as Record<string, string>;
+  /**
+   * The centre row, minus Messages.
+   *
+   * MessagesIcon already sits in the account cluster a few hundred pixels to
+   * the right, and it is the better of the two: it carries the unread count.
+   * Rendering the nav entry as well put two icons for the same destination in
+   * one 64px bar, one of them silently wrong about whether anything was
+   * waiting. Messages keeps its place in the rail and the sheet, where there
+   * is no cluster to collide with.
+   */
+  const centreNav = visibleNav.filter((item) => item.url !== "/messages");
 
   return (
     <>
@@ -202,220 +106,243 @@ export function SiteHeader() {
         Skip to content
       </a>
 
-      <header className={cn(
-        "sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/75 transition-colors duration-300",
-        accent.border,
-      )}>
-        <div className="container mx-auto px-4">
-          <div className="flex h-16 items-center gap-4">
-            <Link to="/" className="shrink-0 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-              {/* Mark only on phones. The wordmark is 243px and the icon
-                  cluster is 216px once someone is signed in (search, messages,
-                  bell, theme, menu) — 475px of content fighting for the 328px a
-                  360px phone actually has, which scrolled the whole page
-                  sideways by 131px. Both children are shrink-0, so nothing gave
-                  way on its own. The wordmark returns at `sm`, the first width
-                  where the signed-in row genuinely fits. */}
-              <Logo textClassName="hidden sm:flex" />
+      <header
+        className={cn(
+          "sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/75 transition-colors duration-300",
+          accent.border,
+        )}
+      >
+        <div className="flex h-16 items-center gap-2 px-3 sm:px-4">
+          {/* Left: identity and search. shrink-0 on both children — the mark
+              and the search trigger each have a floor, and letting flexbox
+              take it out of them is what used to scroll a 360px phone
+              sideways. */}
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            <Link
+              to="/"
+              className="shrink-0 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              {/* Wordmark between `sm` and `lg` only. From `lg` the centre
+                  icons appear and the left block has to end before the middle
+                  of the viewport; 245px of wordmark plus a search field does
+                  not. Dropping the words is also what Facebook does, and for
+                  the same reason — the search field is what wants that space. */}
+              <Logo textClassName="hidden sm:flex lg:hidden" />
             </Link>
-
-            <div className="ml-auto flex shrink-0 items-center gap-1">
-              {/* Ahead of the icon cluster so it reads as part of the page
-                  rather than as one more button. Six links cannot cover twenty
-                  destinations — Mentors among them — and this is how
-                  the rest are found. */}
-              <div className="mr-1">
-                <SiteSearch />
-              </div>
-
-              {user ? (
-                <>
-                  <MessagesIcon />
-                  <NotificationBell />
-                  <DarkModeToggle />
-                  <div className="hidden lg:block">
-                    <NavbarProfileMenu />
-                  </div>
-                </>
-              ) : (
-                <>
-                  <DarkModeToggle />
-                  <div className="hidden items-center gap-2 lg:flex">
-                    {/* `state.from` returns the visitor to the page they were
-                        on rather than dropping them on the homepage. */}
-                    <Link to="/signin" state={{ from: location }}>
-                      <Button variant="ghost" size="sm">
-                        Sign in
-                      </Button>
-                    </Link>
-                    <Link to="/signup">
-                      <Button size="sm">Sign up</Button>
-                    </Link>
-                  </div>
-                </>
-              )}
-
-              <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-                <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" className="lg:hidden" aria-label="Open menu">
-                    <Menu className="h-5 w-5" />
-                  </Button>
-                </SheetTrigger>
-
-                <SheetContent side="right" className="w-[300px] overflow-y-auto p-0">
-                  {/* Radix requires a title for the dialog to be announced;
-                      the logo below is the visible equivalent. */}
-                  <SheetTitle className="sr-only">Site menu</SheetTitle>
-
-                  {/* pr-12 clears the sheet's own close button, which would
-                      otherwise sit on top of the logo's "SRMAP" suffix. */}
-                  <div className="flex h-16 items-center border-b pl-5 pr-12">
-                    <Logo />
-                  </div>
-
-                  <nav aria-label="Primary" className="p-3">
-                    <ul className="space-y-1">
-                       {visibleNav.map((item) => {
-                        const Icon = item.icon;
-                        const active = isActive(item.url);
-                        const highlighted = navHighlights[item.url];
-                        const itemAccent = ROUTE_ACCENT[item.url] ?? ROUTE_ACCENT["/"];
-
-                        return (
-                          <li key={item.url}>
-                            <Link
-                              to={item.url}
-                              aria-current={active ? "page" : undefined}
-                              className={cn(
-                                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-                                active
-                                  ? `${itemAccent.pill} ${itemAccent.text}`
-                                  : "text-foreground/80 hover:bg-muted hover:text-foreground",
-                              )}
-                            >
-                              <Icon className="h-4 w-4 shrink-0" aria-hidden />
-                              {item.name}
-                              {highlighted && (
-                                <span className={cn("ml-auto h-2 w-2 shrink-0 rounded-full", itemAccent.dot)} aria-hidden />
-                              )}
-                            </Link>
-                          </li>
-                        );
-                      })}
-                    </ul>
-
-                    <Separator className="my-3" />
-
-                    <ul className="space-y-1">
-                      {SECONDARY_NAV.map((item) => {
-                        const highlighted = navHighlights[item.url];
-
-                        return (
-                          <li key={item.url}>
-                            <Link
-                              to={item.url}
-                              aria-current={isActive(item.url) ? "page" : undefined}
-                              className={cn(
-                                "flex items-center rounded-lg px-3 py-2 text-sm transition-colors",
-                                isActive(item.url)
-                                  ? "text-primary"
-                                  : "text-muted-foreground hover:bg-muted hover:text-foreground",
-                              )}
-                            >
-                              {item.name}
-                              {highlighted && (
-                                <span className="ml-auto h-2 w-2 shrink-0 rounded-full bg-primary" aria-hidden />
-                              )}
-                            </Link>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </nav>
-
-                  <div className="border-t p-3">
-                    {user ? (
-                      <NavbarProfileMenu />
-                    ) : (
-                      <div className="space-y-2">
-                        <Button asChild className="w-full">
-                          <Link to="/signup">Sign up</Link>
-                        </Button>
-                        <Button asChild variant="outline" className="w-full">
-                          <Link to="/signin" state={{ from: location }}>
-                            Sign in
-                          </Link>
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                </SheetContent>
-              </Sheet>
+            <div className="shrink-0">
+              <SiteSearch />
             </div>
           </div>
-        </div>
 
-        {/* Row two: the links, on desktop only. Clipped to zero height on the
-            way down the page and restored on the way back up. `h-12` is
-            duplicated on the clip and on the nav so the collapse animates
-            against a known height — `h-auto` would not transition. */}
-        <div
-          className={cn(
-            "hidden overflow-hidden transition-[height] duration-200 ease-out motion-reduce:transition-none lg:block",
-            navCollapsed ? "h-0" : "h-12",
-          )}
-        >
-          <div className="container mx-auto px-4">
-            {/* No rule between the rows: the two bands share a background and
-                read as one header, and a divider only chopped it in half. */}
-            <nav
-              aria-label="Primary"
-              className="flex h-12 items-center justify-center"
-              {...inertWhenCollapsed}
-            >
-              {/* Roomy on purpose. Labels centred at the old gap-1 read as one
-                  clump of text rather than as separate destinations; the space
-                  is free here, since nothing else shares the row. */}
-              <ul className="flex items-center gap-2 xl:gap-4">
-                  {visibleNav.map((item) => {
-                  const active = isActive(item.url);
-                  const highlighted = navHighlights[item.url];
-                  const itemAccent = ROUTE_ACCENT[item.url] ?? ROUTE_ACCENT["/"];
+          {/* Centre: the primary nav as icons only. Labels for these live in
+              the rail; here they are tooltips and aria-labels, which is the
+              whole reason this block fits in one row. */}
+          <nav aria-label="Primary" className="hidden shrink-0 items-center lg:flex">
+            <ul className="flex items-center">
+              {centreNav.map((item) => {
+                const Icon = item.icon;
+                const active = isActive(item.url);
+                const highlighted = navHighlights[item.url];
+                const itemAccent = ROUTE_ACCENT[item.url] ?? ROUTE_ACCENT["/"];
 
-                  return (
-                    <li key={item.url}>
-                      <Link
-                        to={item.url}
-                        aria-current={active ? "page" : undefined}
-                        className={cn(
-                          "relative block rounded-full px-4 py-2 text-sm font-medium transition-colors",
-                          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                          active ? itemAccent.text : "text-muted-foreground hover:text-foreground",
-                        )}
-                      >
-                        {item.name}
-
-                        {highlighted && (
+                return (
+                  <li key={item.url}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Link
+                          to={item.url}
+                          aria-label={item.name}
+                          aria-current={active ? "page" : undefined}
+                          className="relative flex h-16 w-16 items-center justify-center xl:w-20"
+                        >
+                          {/* The hover target is this inset rectangle rather
+                              than the full 64px cell, so hovering never paints
+                              a block that touches the header's own border. */}
                           <span
-                            className={cn("absolute right-1 top-1 h-2 w-2 rounded-full", itemAccent.dot)}
-                            aria-hidden
-                          />
-                        )}
+                            className={cn(
+                              "flex h-11 w-full items-center justify-center rounded-lg transition-colors",
+                              active ? itemAccent.pill : "hover:bg-muted",
+                            )}
+                          >
+                            <Icon
+                              className={cn(
+                                "h-6 w-6 transition-colors",
+                                active ? itemAccent.text : "text-muted-foreground",
+                              )}
+                              aria-hidden
+                            />
+                          </span>
 
-                        {active && (
-                          <motion.span
-                            layoutId="site-nav-active"
-                            className={cn("absolute inset-0 -z-10 rounded-full", itemAccent.pill)}
-                            initial={false}
-                            transition={{ type: "spring", stiffness: 350, damping: 30 }}
-                          />
-                        )}
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
-            </nav>
+                          {highlighted && (
+                            <span
+                              className={cn(
+                                "absolute right-2.5 top-2.5 h-2 w-2 rounded-full xl:right-4",
+                                itemAccent.dot,
+                              )}
+                              aria-hidden
+                            />
+                          )}
+
+                          {/* Sits on the header's bottom border, the way a
+                              tab indicator should. -bottom-px covers the
+                              border itself rather than stacking above it. */}
+                          {active && (
+                            <span
+                              className={cn(
+                                "absolute inset-x-0 -bottom-px h-[3px] rounded-full",
+                                itemAccent.dot,
+                              )}
+                              aria-hidden
+                            />
+                          )}
+                        </Link>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom">{item.name}</TooltipContent>
+                    </Tooltip>
+                  </li>
+                );
+              })}
+            </ul>
+          </nav>
+
+          {/* Right: account. Matches the left block's flex-1 so the centre
+              stays centred. */}
+          <div className="flex min-w-0 flex-1 items-center justify-end gap-1.5">
+            {user ? (
+              <>
+                <MessagesIcon />
+                <NotificationBell />
+                <div className="hidden lg:block">
+                  <NavbarProfileMenu />
+                </div>
+              </>
+            ) : (
+              <>
+                {/* Signed out there is no rail on the auth pages this leads
+                    to, and no profile menu to hang the theme toggle off, so
+                    it stays in the bar. Signed in it lives in the rail. */}
+                <div className="lg:hidden">
+                  <DarkModeToggle />
+                </div>
+                <div className="hidden items-center gap-2 lg:flex">
+                  {/* `state.from` returns the visitor to the page they were
+                      on rather than dropping them on the homepage. */}
+                  <Link to="/signin" state={{ from: location }}>
+                    <Button variant="ghost" size="sm">
+                      Sign in
+                    </Button>
+                  </Link>
+                  <Link to="/signup">
+                    <Button size="sm">Sign up</Button>
+                  </Link>
+                </div>
+              </>
+            )}
+
+            <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="lg:hidden" aria-label="Open menu">
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+
+              <SheetContent side="right" className="w-[300px] overflow-y-auto p-0">
+                {/* Radix requires a title for the dialog to be announced;
+                    the logo below is the visible equivalent. */}
+                <SheetTitle className="sr-only">Site menu</SheetTitle>
+
+                {/* pr-12 clears the sheet's own close button, which would
+                    otherwise sit on top of the logo's "SRMAP" suffix. */}
+                <div className="flex h-16 items-center border-b pl-5 pr-12">
+                  <Logo />
+                </div>
+
+                <nav aria-label="Primary" className="p-3">
+                  <ul className="space-y-1">
+                    {visibleNav.map((item) => {
+                      const Icon = item.icon;
+                      const active = isActive(item.url);
+                      const highlighted = navHighlights[item.url];
+                      const itemAccent = ROUTE_ACCENT[item.url] ?? ROUTE_ACCENT["/"];
+
+                      return (
+                        <li key={item.url}>
+                          <Link
+                            to={item.url}
+                            aria-current={active ? "page" : undefined}
+                            className={cn(
+                              "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                              active
+                                ? `${itemAccent.pill} ${itemAccent.text}`
+                                : "text-foreground/80 hover:bg-muted hover:text-foreground",
+                            )}
+                          >
+                            <Icon className="h-4 w-4 shrink-0" aria-hidden />
+                            {item.name}
+                            {highlighted && (
+                              <span className={cn("ml-auto h-2 w-2 shrink-0 rounded-full", itemAccent.dot)} aria-hidden />
+                            )}
+                          </Link>
+                        </li>
+                      );
+                    })}
+                  </ul>
+
+                  <Separator className="my-3" />
+
+                  <ul className="space-y-1">
+                    {SECONDARY_NAV.map((item) => {
+                      const highlighted = navHighlights[item.url];
+
+                      return (
+                        <li key={item.url}>
+                          <Link
+                            to={item.url}
+                            aria-current={isActive(item.url) ? "page" : undefined}
+                            className={cn(
+                              "flex items-center rounded-lg px-3 py-2 text-sm transition-colors",
+                              isActive(item.url)
+                                ? "text-primary"
+                                : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                            )}
+                          >
+                            {item.name}
+                            {highlighted && (
+                              <span className="ml-auto h-2 w-2 shrink-0 rounded-full bg-primary" aria-hidden />
+                            )}
+                          </Link>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </nav>
+
+                {/* The theme toggle's desktop home is the rail, which does not
+                    exist at this width. Without this row there is no way to
+                    change theme on a phone once signed in. */}
+                <div className="flex items-center justify-between border-t px-5 py-3">
+                  <span className="text-sm text-muted-foreground">Theme</span>
+                  <DarkModeToggle />
+                </div>
+
+                <div className="border-t p-3">
+                  {user ? (
+                    <NavbarProfileMenu />
+                  ) : (
+                    <div className="space-y-2">
+                      <Button asChild className="w-full">
+                        <Link to="/signup">Sign up</Link>
+                      </Button>
+                      <Button asChild variant="outline" className="w-full">
+                        <Link to="/signin" state={{ from: location }}>
+                          Sign in
+                        </Link>
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </SheetContent>
+            </Sheet>
           </div>
         </div>
       </header>

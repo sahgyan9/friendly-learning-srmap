@@ -1,3 +1,5 @@
+import type { ComponentType, SVGProps } from "react";
+import { FacultyIcon } from "@/components/icons/FacultyIcon";
 import {
   Award,
   BookOpen,
@@ -5,7 +7,6 @@ import {
   Calendar,
   FileText,
   Flag,
-  GraduationCap,
   Handshake,
   Home,
   Info,
@@ -25,7 +26,6 @@ import {
   Trophy,
   UsersRound,
   Bell,
-  type LucideIcon,
 } from "lucide-react";
 
 /**
@@ -55,7 +55,12 @@ export interface SearchDestination {
   label: string;
   /** The second line. Says what the page is for, not what it is called. */
   hint: string;
-  icon: LucideIcon;
+  /**
+   * Wider than lucide's own icon type on purpose: lucide icons are
+   * `ForwardRefExoticComponent`s, and naming that type here rejects any
+   * hand-written SVG component — which is what the Faculty entry uses.
+   */
+  icon: ComponentType<SVGProps<SVGSVGElement>>;
   group: string;
   keywords: string[];
   /** Where it goes. Exactly one of `to` or `action` is set. */
@@ -104,7 +109,7 @@ export const DESTINATIONS: SearchDestination[] = [
     id: "faculty",
     label: "Faculty",
     hint: "Ratings and reviews for lecturers, by department",
-    icon: GraduationCap,
+    icon: FacultyIcon,
     group: "Go to",
     keywords: [
       "faculty", "professor", "prof", "teacher", "lecturer", "sir", "madam",

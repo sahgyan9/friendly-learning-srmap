@@ -217,3 +217,37 @@ a[href*="lovable.dev"],
     padding-bottom: max(8px, env(safe-area-inset-bottom));
   }
 }
+
+/*
+ * Makes room for the fixed left rail (SiteRail, 14rem wide, `xl` and up).
+ *
+ * The inset goes on the containers rather than on <main> itself, and that is
+ * the whole point of doing it here in CSS instead of with a padding class on
+ * <main>. Padding <main> also insets every child's *background*, and the
+ * homepage's sections are full-bleed colour bands — so the bands stopped
+ * 14rem short of each edge and left a visible seam down both sides (in light
+ * mode, #ffffff against #f8fafc). Containers already centre themselves with
+ * `mx-auto`; letting them stay full-width and padding their contents keeps the
+ * bands edge-to-edge while putting the content itself on the true centre of
+ * the viewport.
+ *
+ * Left-only, not symmetric. `.container` is already centred on the full
+ * viewport via Tailwind's own `mx-auto`; adding equal padding to both sides
+ * cannot re-centre it in the narrower space beside the rail; it only shrinks
+ * the box while its centre point stays put. In practice that crushed content
+ * into a strip a few hundred pixels narrower than it needed to be, shifted
+ * left, with a matching dead zone on the right — clipped cards, stray
+ * horizontal scrollbars on rails that didn't need to scroll. Padding the left
+ * side alone, and leaving the right at Tailwind's normal container padding,
+ * clears the rail without also cannibalising width nothing is asking for.
+ *
+ * Safe to scope to `.container` because every route that renders the rail uses
+ * it — the pages that do not (admin, messages, auth) are exactly the ones
+ * RAIL_EXCLUDED_PREFIXES already opts out. A new rail page laid out without
+ * `.container` would slide under the rail; give it one.
+ */
+@media (min-width: 1280px) {
+  main[data-rail] .container {
+    padding-left: 15rem;
+  }
+}

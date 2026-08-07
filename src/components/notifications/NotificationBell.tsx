@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 import {
   Popover,
   PopoverContent,
@@ -136,17 +136,30 @@ const NotificationBell = () => {
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
-        <Button variant="ghost" size="sm" className="relative">
-          <Bell className="h-5 w-5" />
+        {/* Filled circle to match MessagesIcon and the avatar beside it — see
+            the note there on why these three share a shape, and on why the
+            badge uses a ring rather than a border under the header's blur. */}
+        <button
+          type="button"
+          aria-label={unreadCount > 0 ? `Notifications, ${unreadCount} unread` : "Notifications"}
+          className={cn(
+            "relative flex h-10 w-10 items-center justify-center rounded-full transition-colors",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+            isOpen
+              ? "bg-primary/15 text-primary"
+              : "bg-muted text-foreground/80 hover:bg-muted/70 hover:text-foreground",
+          )}
+        >
+          <Bell className="h-5 w-5" aria-hidden />
           {unreadCount > 0 && (
-            <Badge
-              variant="destructive"
-              className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs"
+            <span
+              className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[11px] font-semibold leading-none text-white ring-2 ring-background"
+              aria-hidden
             >
               {unreadCount > 99 ? '99+' : unreadCount}
-            </Badge>
+            </span>
           )}
-        </Button>
+        </button>
       </PopoverTrigger>
       <PopoverContent className="w-[360px] sm:w-[420px] max-w-[calc(100vw-2rem)] p-0 shadow-xl border-border/80" align="end">
         <div className="p-3.5 px-4 border-b border-border/60 bg-muted/30">
