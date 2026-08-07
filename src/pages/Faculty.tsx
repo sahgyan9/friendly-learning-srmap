@@ -103,29 +103,19 @@ const Faculty = () => {
   const didRestoreScroll = useRef(false);
   const cardsRef = useRef<HTMLDivElement>(null);
 
-  // On mount (if not back navigation restoring previous position), scroll so faculty search & filters are visible.
-  // The hero remains accessible by scrolling up.
-  // We offset by navbar height so search bar isn't hidden behind it.
-  // We re-run when loading finishes so the position is accurate after cards render.
-  useEffect(() => {
+  // Scroll to cards before the first paint so the hero is never visible on load.
+  // useLayoutEffect fires synchronously after DOM mutation but before the browser renders,
+  // eliminating the flash where the hero briefly appears before scrolling away.
+  // The isBackNav guard preserves back-navigation scroll restoration.
+  useLayoutEffect(() => {
     if (!isBackNav) {
-      const scrollToCards = () => {
-        if (cardsRef.current) {
-          const navbarHeight = 64; // matches fixed navbar height
-          const top = cardsRef.current.getBoundingClientRect().top + window.scrollY - navbarHeight;
-          window.scrollTo({ top, behavior: "instant" });
-        }
-      };
-
-      scrollToCards();
-      const t1 = setTimeout(scrollToCards, 60);
-      const t2 = setTimeout(scrollToCards, 200);
-      return () => {
-        clearTimeout(t1);
-        clearTimeout(t2);
-      };
+      if (cardsRef.current) {
+        const navbarHeight = 64;
+        const top = cardsRef.current.getBoundingClientRect().top + window.scrollY - navbarHeight;
+        window.scrollTo({ top, behavior: "instant" });
+      }
     }
-  }, [isBackNav, loading]);
+  }, [isBackNav]);
 
   useEffect(() => {
     markSeen();
