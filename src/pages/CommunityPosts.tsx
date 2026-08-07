@@ -322,8 +322,7 @@ const CommunityPosts = () => {
                 only find by tapping. The rest are one "More" away, and the count
                 on each chip means you know what you are getting before you
                 choose. */}
-            <div className="-mx-4 overflow-x-auto px-4 pb-1 sm:mx-0 sm:overflow-visible sm:px-0">
-              <div className="flex w-max gap-2 sm:w-auto sm:flex-wrap">
+            <div className="flex items-center gap-2 overflow-x-auto py-2 px-1 scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
               {visibleTypes.map((type) => {
                 const count = typeCounts[type.value];
 
@@ -334,10 +333,10 @@ const CommunityPosts = () => {
                     onClick={() => selectType(type.value)}
                     aria-pressed={selectedType === type.value}
                     className={cn(
-                      "flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition-colors",
+                      "inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-medium transition-all duration-200 whitespace-nowrap shrink-0",
                       selectedType === type.value
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "border-border bg-background hover:bg-muted",
+                        ? "border-primary bg-primary text-primary-foreground font-semibold shadow-xs"
+                        : "border-border bg-card text-muted-foreground hover:bg-accent hover:text-accent-foreground",
                     )}
                   >
                     <span aria-hidden>{type.emoji}</span>
@@ -345,9 +344,9 @@ const CommunityPosts = () => {
                     {type.value !== "all" && count > 0 && (
                       <span
                         className={cn(
-                          "tabular-nums",
+                          "tabular-nums text-[11px]",
                           selectedType === type.value
-                            ? "text-primary-foreground/70"
+                            ? "text-primary-foreground/80"
                             : "text-muted-foreground",
                         )}
                       >
@@ -363,7 +362,7 @@ const CommunityPosts = () => {
                   type="button"
                   onClick={() => setShowAllTypes((value) => !value)}
                   aria-expanded={showAllTypes}
-                  className="flex shrink-0 items-center gap-1 rounded-full border border-dashed border-border px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-dashed border-border bg-card px-3.5 py-1.5 text-xs font-medium text-muted-foreground transition-all duration-200 hover:bg-accent hover:text-accent-foreground whitespace-nowrap shrink-0"
                 >
                   {showAllTypes ? "Fewer" : `More (${hiddenCount})`}
                   <ChevronDown
@@ -381,17 +380,16 @@ const CommunityPosts = () => {
                   onClick={() => setMine((value) => !value)}
                   aria-pressed={mine}
                   className={cn(
-                    "shrink-0 rounded-full border px-3 py-1.5 text-sm transition-colors sm:ml-auto",
+                    "inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-medium transition-all duration-200 whitespace-nowrap shrink-0 sm:ml-auto",
                     mine
-                      ? "border-primary bg-primary text-primary-foreground"
-                      : "border-border bg-background hover:bg-muted",
+                      ? "border-primary bg-primary text-primary-foreground font-semibold shadow-xs"
+                      : "border-border bg-card text-muted-foreground hover:bg-accent hover:text-accent-foreground",
                   )}
                 >
                   Only mine
                 </button>
               )}
             </div>
-          </div>
           </div>
 
           {/* Feed */}

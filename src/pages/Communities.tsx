@@ -172,16 +172,16 @@ const Communities = () => {
             />
           </div>
 
-          <div className="flex flex-wrap gap-2">
+          <div className="flex items-center gap-2 overflow-x-auto py-2 px-1 scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
             <button
               type="button"
               onClick={() => setKind("all")}
               aria-pressed={kind === "all"}
               className={cn(
-                "rounded-full border px-3 py-1.5 text-sm transition-colors",
+                "inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-medium transition-all duration-200 whitespace-nowrap shrink-0",
                 kind === "all"
-                  ? "border-primary bg-primary text-primary-foreground"
-                  : "border-border hover:bg-muted",
+                  ? "border-primary bg-primary text-primary-foreground font-semibold shadow-xs"
+                  : "border-border bg-card text-muted-foreground hover:bg-accent hover:text-accent-foreground",
               )}
             >
               All groups
@@ -197,10 +197,10 @@ const Communities = () => {
                   onClick={() => setKind(option.value)}
                   aria-pressed={kind === option.value}
                   className={cn(
-                    "flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition-colors",
+                    "inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-medium transition-all duration-200 whitespace-nowrap shrink-0",
                     kind === option.value
-                      ? "border-primary bg-primary text-primary-foreground"
-                      : "border-border hover:bg-muted",
+                      ? "border-primary bg-primary text-primary-foreground font-semibold shadow-xs"
+                      : "border-border bg-card text-muted-foreground hover:bg-accent hover:text-accent-foreground",
                   )}
                 >
                   <span aria-hidden>{option.emoji}</span>
@@ -208,8 +208,8 @@ const Communities = () => {
                   {count > 0 && (
                     <span
                       className={cn(
-                        "tabular-nums",
-                        kind === option.value ? "text-primary-foreground/70" : "text-muted-foreground",
+                        "tabular-nums text-[11px]",
+                        kind === option.value ? "text-primary-foreground/80" : "text-muted-foreground",
                       )}
                     >
                       {count}
@@ -224,7 +224,7 @@ const Communities = () => {
                 type="button"
                 onClick={() => setShowAllKinds((value) => !value)}
                 aria-expanded={showAllKinds}
-                className="flex items-center gap-1 rounded-full border border-dashed border-border px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted"
+                className="inline-flex items-center gap-1.5 rounded-full border border-dashed border-border bg-card px-3.5 py-1.5 text-xs font-medium text-muted-foreground transition-all duration-200 hover:bg-accent hover:text-accent-foreground whitespace-nowrap shrink-0"
               >
                 {showAllKinds ? "Fewer" : `More (${hiddenCount})`}
                 <ChevronDown
@@ -240,10 +240,10 @@ const Communities = () => {
                 onClick={() => setMine((value) => !value)}
                 aria-pressed={mine}
                 className={cn(
-                  "ml-auto rounded-full border px-3 py-1.5 text-sm transition-colors",
+                  "inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-medium transition-all duration-200 whitespace-nowrap shrink-0 ml-auto",
                   mine
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-border hover:bg-muted",
+                    ? "border-primary bg-primary text-primary-foreground font-semibold shadow-xs"
+                    : "border-border bg-card text-muted-foreground hover:bg-accent hover:text-accent-foreground",
                 )}
               >
                 Only mine
