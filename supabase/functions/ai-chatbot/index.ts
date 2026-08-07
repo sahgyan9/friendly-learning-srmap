@@ -219,6 +219,43 @@ function matchCannedAnswer(message: string, path: string | null): CannedAnswer |
   return null;
 }
 
+/**
+ * "How do I find faculty for research?" is a navigational question, not a
+ * content one — the student wants to know a way exists, not a paragraph that
+ * re-describes the cards already rendered beside the reply. Sending that kind
+ * of question to Gemini produced a full restatement of every retrieved name
+ * (real, but redundant with the cards) and inconsistently mentioned the thing
+ * that actually answers "how do I find": CampusMind. Retrieval still runs, so
+ * the cards stay real and topical — only the prose is templated instead of
+ * generated, for both of the suggested chip questions and their near variants.
+ * A query that names an actual topic ("who knows computer vision") does not
+ * match these and still gets a generated, content-aware reply.
+ */
+const FIND_INTENT: Array<[test: RegExp, kind: "faculty" | "mentor"]> = [
+  [
+    /how (do|can) i find (a |some )?faculty|find (me )?(a |some )?faculty (for|to)|faculty for (a |my )?research|professor for (a |my )?(project|research)/i,
+    "faculty",
+  ],
+  [/how (do|can) i find (a |some )?mentor|find (me )?(a |some )?mentor\b/i, "mentor"],
+];
+
+function matchFindIntent(message: string): "faculty" | "mentor" | null {
+  for (const [test, kind] of FIND_INTENT) {
+    if (test.test(message)) return kind;
+  }
+  return null;
+}
+
+function buildFindReply(kind: "faculty" | "mentor", hasMatches: boolean): string {
+  if (!hasMatches) {
+    return kind === "faculty"
+      ? "No faculty match that yet — try **CampusMind** at [/ask](/ask) with different wording, or browse the **Faculty Directory** directly."
+      : "No mentors match that yet — try **CampusMind** at [/ask](/ask) with different wording, or browse **Mentors** directly.";
+  }
+  const noun = kind === "faculty" ? "faculty" : "mentors";
+  return `A few ${noun} match — see the cards below. Search this yourself any time with **CampusMind** at [/ask](/ask).`;
+}
+
 /** One retrieval definition for the whole platform, cache included. */
 async function retrieve(query: string): Promise<{ faculty: Retrieved[]; mentors: Retrieved[] }> {
   try {
@@ -433,25 +470,35 @@ serve(async (req) => {
       relevanceScore: f.similarity,
     }));
 
-    // Only the people whose cards are rendered may be named in the prose.
-    // More may be retrieved than shown, and the model happily named the extra
-    // one — not a hallucination (it was retrieved) but the student sees a name
-    // with no card beside it, which reads exactly like one.
-    const { text: rawResponse, model: usedModel } = await generate(
-      buildPrompt(message, shownFaculty, shownMentors, currentPath),
-    );
+    const findIntent = matchFindIntent(message);
+    let aiResponse: string;
+    let usedModel: string;
 
-    // Whether the model's prose mentions CampusMind is up to Gemini and it
-    // regularly doesn't, even though buildPrompt describes it — a free-form
-    // reply about "how do I find faculty" is exactly the case where a student
-    // should be pointed at the thing that does this automatically for any
-    // query. Appended in code rather than asked of the model so it's guaranteed
-    // rather than hoped for, and only when real matches were actually found —
-    // a student already looking at cards is the one this tip is for.
-    const aiResponse =
-      shownFaculty.length > 0 || shownMentors.length > 0
-        ? `${rawResponse}\n\n💡 **CampusMind** — the smart search at [/ask](/ask) — does this automatically. Describe your project or what you're looking for, and it surfaces the best-matching faculty and seniors on its own.`
-        : rawResponse;
+    if (findIntent) {
+      // Skips Gemini entirely: instant, free, and the reply can't drift into
+      // restating the cards. hasMentorSuggestions/hasFacultySuggestions below
+      // still reflect real retrieval, so the cards are never empty behind a
+      // reply that implies matches exist.
+      aiResponse = buildFindReply(findIntent, shownFaculty.length > 0 || shownMentors.length > 0);
+      usedModel = "template";
+    } else {
+      // Only the people whose cards are rendered may be named in the prose.
+      // More may be retrieved than shown, and the model happily named the
+      // extra one — not a hallucination (it was retrieved) but the student
+      // sees a name with no card beside it, which reads exactly like one.
+      const generated = await generate(buildPrompt(message, shownFaculty, shownMentors, currentPath));
+      usedModel = generated.model;
+
+      // Whether the model's prose mentions CampusMind is up to Gemini and it
+      // regularly doesn't, even though buildPrompt describes it. Appended in
+      // code rather than asked of the model so it's guaranteed rather than
+      // hoped for, and only when real matches were actually found — a student
+      // already looking at cards is the one this tip is for.
+      aiResponse =
+        shownFaculty.length > 0 || shownMentors.length > 0
+          ? `${generated.text}\n\n💡 **CampusMind** — the smart search at [/ask](/ask) — does this automatically. Describe your project or what you're looking for, and it surfaces the best-matching faculty and seniors on its own.`
+          : generated.text;
+    }
 
     await supabase.from("ai_conversations").insert({
       id: crypto.randomUUID(),
