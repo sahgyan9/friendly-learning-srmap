@@ -35,7 +35,7 @@ const MentorList = ({ isLoading, mentors, isAiSearch }: MentorListProps) => {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {[...Array(8)].map((_, index) => (
           <Card key={index} className="p-6 space-y-4">
             {/* Avatar skeleton */}
@@ -108,7 +108,7 @@ const MentorList = ({ isLoading, mentors, isAiSearch }: MentorListProps) => {
 
       {/* Mentors Grid */}
       <motion.div
-        className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6"
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
         variants={container}
       >
         {mentors.map((mentor) => (

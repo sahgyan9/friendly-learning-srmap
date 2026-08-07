@@ -240,7 +240,7 @@ const MentorCard = ({ mentor }: MentorCardProps) => {
           {/* Skills */}
           <div className="mb-4">
             <div className="flex flex-wrap gap-1.5">
-              {mentor.skills.slice(0, 3).map((skill, index) => (
+              {mentor.skills.slice(0, 4).map((skill, index) => (
                 <Badge
                   key={index}
                   variant="secondary"
@@ -249,9 +249,9 @@ const MentorCard = ({ mentor }: MentorCardProps) => {
                   {skill}
                 </Badge>
               ))}
-              {mentor.skills.length > 3 && (
+              {mentor.skills.length > 4 && (
                 <Badge variant="outline" className="text-xs text-muted-foreground">
-                  +{mentor.skills.length - 3}
+                  +{mentor.skills.length - 4}
                 </Badge>
               )}
             </div>
