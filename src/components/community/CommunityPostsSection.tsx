@@ -94,8 +94,6 @@ export const CommunityPostsSection = () => {
     toast.success("Link copied to clipboard");
   };
 
-  if (loading) return null;
-
   // Tighter at the top than the sections below it: this one sits directly under
   // the hero and the fold runs through it, so its padding is competing with the
   // post cards it exists to introduce.
@@ -112,7 +110,25 @@ export const CommunityPostsSection = () => {
             on the page. */}
         <PostComposerStrip onPostCreated={reload} />
 
-        {posts.length === 0 ? (
+        {loading ? (
+          // Returning null here used to skip this whole section during SSR: the
+          // posts fetch runs in an effect, which never fires during prerendering,
+          // so `loading` was still true at render time and this section vanished
+          // from the static homepage entirely. HomeIntro became the first thing
+          // painted, then the real feed popped in above it once the client fetch
+          // resolved on hydration — a full-section layout jump on every load. A
+          // same-shaped skeleton keeps the slot occupied instead.
+          <div className="-mx-4 overflow-x-auto px-4 pb-4 [scrollbar-width:thin]">
+            <div className="mx-auto flex w-max items-stretch gap-4">
+              {[0, 1, 2, 3].map((i) => (
+                <div
+                  key={i}
+                  className="h-[280px] w-[400px] shrink-0 animate-pulse rounded-xl border border-border bg-card md:w-[460px]"
+                />
+              ))}
+            </div>
+          </div>
+        ) : posts.length === 0 ? (
           <div className="rounded-lg border border-dashed py-12 text-center">
             <PenLine className="mx-auto mb-3 h-8 w-8 text-muted-foreground" />
             <h3 className="mb-1 font-semibold">No posts yet</h3>
