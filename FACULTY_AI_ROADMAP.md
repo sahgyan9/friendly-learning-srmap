@@ -201,7 +201,8 @@ a single derived table every entity projects into.
 
 ```
 knowledge_chunks
-  entity_type   'faculty' | 'mentor' | 'course' | 'opportunity' | 'community_post'
+  entity_type   'faculty' | 'mentor' | 'opportunity' | 'community' | 'post' | 'course'
+                 ^^^^^^^ all live except 'course'
   entity_id     -> the source row
   title         'Dr X — CSE'
   body          the searchable text
@@ -314,6 +315,46 @@ opportunity  Smart India Hackathon 2026   0.667   <- top hit
 mentor       ankush adhikari              0.622
 mentor       Aarav Raj Shrestha           0.611
 ```
+
+## Groups and posts in the index — SHIPPED 2026-08-07
+
+Migration `20260807030000_search_groups_and_posts.sql`. The prediction in rule 3
+above held: two projectors and a grouping line, no new AI integration.
+
+Half the answers on a campus are a room or a thread rather than a person, and
+until now neither was reachable except by literal spelling. Query *"where can I
+work on batteries with other students"*:
+
+```
+community  Battery Technology                        0.754   <- top hit
+post       Join my Battery Technology Research Group 0.751
+faculty    Dr Sujith Kalluri                         0.675
+```
+
+**The two halves have opposite privacy rules, and that is not an inconsistency.**
+A private group *is* indexed — `Anyone can view communities` has qual `true`, and
+a private group nobody can find is a group nobody can ask to join. Its posts are
+not: their RLS is `(community_id IS NULL) OR can_view_community(...)`. Posts in a
+private group are skipped rather than written as `members_only`, because
+`search_knowledge` can never return that visibility and projecting them would
+spend embedding quota on rows no caller can ever retrieve. Flipping a group
+public makes its posts appear in the same statement; flipping it back removes
+them. Verified against production in a transaction, then rolled back.
+
+**Posts reproject per row, not per statement** — the opposite of the
+opportunities trigger. Opportunities are a small curated table where rebuilding
+all of them per write is free. Posts are the highest-volume table here and grow
+without a ceiling, so a full rebuild per insert would make every new post scan
+every post. `rebuild_post_chunks(p_id)` takes an optional id for this.
+
+**The semantic pass no longer waits for the literal one to fail.** `useSiteSearch`
+ran it only when ILIKE found *nothing*, which sounded thrifty and quietly capped
+the ceiling: one incidental keyword hit was enough to suppress the group and the
+thread that actually answered the question. It now runs whenever the input reads
+like a phrase, deduped against the literal hits by primary key. The phrase gate
+and the edge function's query cache are what keep the spend bounded.
+
+---
 
 The question never says "hackathon"; the listing never says "contest". They
 share no keyword, so `ILIKE` returns nothing and the vector search ranks it
