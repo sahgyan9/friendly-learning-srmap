@@ -163,38 +163,38 @@ const Mentors = () => {
           <div className="pointer-events-none absolute -left-16 bottom-0 h-56 w-56 rounded-full bg-purple-500/15 blur-3xl" />
           <div className="pointer-events-none absolute left-1/3 top-1/2 h-40 w-40 rounded-full bg-sky-500/10 blur-2xl" />
 
-          <div className="container mx-auto max-w-6xl px-4 pb-10 pt-28">
+          <div className="container mx-auto max-w-6xl px-4 pb-5 pt-20 sm:pt-22">
             <motion.div
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
               {/* Vibrant Pill Label */}
-              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-blue-500/30 bg-blue-500/10 px-3.5 py-1 text-xs font-semibold uppercase tracking-widest text-blue-600 dark:text-blue-400 backdrop-blur-sm shadow-sm">
+              <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-blue-500/30 bg-blue-500/10 px-3.5 py-1 text-xs font-semibold uppercase tracking-widest text-blue-600 dark:text-blue-400 backdrop-blur-sm shadow-sm">
                 <GraduationCap className="h-4 w-4 text-blue-500" />
                 01 — Peer Mentors
               </div>
 
-              <h1 className="text-3xl font-bold tracking-tight md:text-5xl bg-gradient-to-r from-foreground via-foreground to-foreground/80 bg-clip-text">
+              <h1 className="text-2xl font-bold tracking-tight md:text-4xl bg-gradient-to-r from-foreground via-foreground to-foreground/80 bg-clip-text">
                 Find Your Perfect Mentor
               </h1>
-              <p className="mt-3 max-w-2xl text-base md:text-lg text-muted-foreground leading-relaxed">
+              <p className="mt-1.5 max-w-2xl text-sm md:text-base text-muted-foreground leading-relaxed">
                 Connect 1-on-1 with verified senior student & alumni mentors at SRM AP for course guidance, project help, and career advice.
               </p>
 
               {/* Colorful feature badges bar */}
-              <div className="mt-6 flex flex-wrap items-center gap-3">
+              <div className="mt-3 flex flex-wrap items-center gap-2.5">
                 {mentorCount > 0 && (
-                  <div className="inline-flex items-center gap-2 rounded-full border border-blue-500/25 bg-blue-500/10 px-3.5 py-1.5 text-xs font-medium text-blue-700 dark:text-blue-300">
+                  <div className="inline-flex items-center gap-2 rounded-full border border-blue-500/25 bg-blue-500/10 px-3 py-1 text-xs font-medium text-blue-700 dark:text-blue-300">
                     <Users className="h-3.5 w-3.5 text-blue-500" />
                     <strong>{mentorCount}</strong> Verified Mentors
                   </div>
                 )}
-                <div className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-3.5 py-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-300">
+                <div className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-300">
                   <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
                   Free 1-on-1 Chat
                 </div>
-                <div className="inline-flex items-center gap-1.5 rounded-full border border-purple-500/25 bg-purple-500/10 px-3.5 py-1.5 text-xs font-medium text-purple-700 dark:text-purple-300">
+                <div className="inline-flex items-center gap-1.5 rounded-full border border-purple-500/25 bg-purple-500/10 px-3 py-1 text-xs font-medium text-purple-700 dark:text-purple-300">
                   <Sparkles className="h-3.5 w-3.5 text-purple-500" />
                   AI Skill Matching
                 </div>
@@ -204,11 +204,11 @@ const Mentors = () => {
         </div>
 
         {/* Search + Quick Filter Chips + Grid */}
-        <div className="container mx-auto max-w-6xl px-4 py-8">
+        <div className="container mx-auto max-w-6xl px-4 py-4">
           <SearchBar onSearch={handleSearch} onGeminiSearch={handleGeminiSearch} />
 
           {/* Colorful Quick Domain Filter Pills — py-2 px-1 ensures active ring borders don't get clipped */}
-          <div className="mt-6 mb-8 flex items-center gap-2 overflow-x-auto py-2.5 px-1 scrollbar-none">
+          <div className="mt-4 mb-4 flex items-center gap-2 overflow-x-auto py-2 px-1 scrollbar-none">
             <span className="text-xs font-medium text-muted-foreground whitespace-nowrap mr-1">Filter by:</span>
             {DOMAIN_FILTERS.map((filter) => {
               const Icon = filter.icon;

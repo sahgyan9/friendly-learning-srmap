@@ -131,50 +131,50 @@ const Faculty = () => {
           <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-rose-500/8 blur-3xl" />
           <div className="pointer-events-none absolute -left-16 bottom-0 h-48 w-48 rounded-full bg-rose-500/5 blur-2xl" />
 
-          <div className="container mx-auto px-4 pb-8 pt-28">
+          <div className="container mx-auto px-4 pb-5 pt-20 sm:pt-22">
             <motion.div
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
               {/* Pill label — matches FeaturesShowcase numbering */}
-              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-rose-500/20 bg-rose-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-rose-600 dark:text-rose-400">
+              <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-rose-500/20 bg-rose-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-rose-600 dark:text-rose-400">
                 <BookOpen className="h-3.5 w-3.5" />
                 Faculty
               </div>
 
               <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                 <div>
-                  <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Faculty Ratings</h1>
-                  <p className="mt-2 max-w-2xl text-base text-muted-foreground">
+                  <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Faculty Ratings</h1>
+                  <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
                     Honest, anonymous ratings from SRM AP students on teaching quality, grading fairness
                     and helpfulness. Know what a course is like before you register.
                   </p>
                 </div>
 
                 {/* Anonymous badge */}
-                <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm">
+                <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground shadow-sm">
                   <EyeOff className="h-3.5 w-3.5" />
                   Ratings are anonymous
                 </span>
               </div>
 
               {/* Stats pills */}
-              <div className="mt-5 flex flex-wrap gap-2">
+              <div className="mt-3 flex flex-wrap gap-2">
                 {stats.faculty_count > 0 && (
-                  <div className="flex items-center gap-1.5 rounded-full border border-rose-500/20 bg-rose-500/10 px-3 py-1 text-sm">
+                  <div className="flex items-center gap-1.5 rounded-full border border-rose-500/20 bg-rose-500/10 px-3 py-0.5 text-xs sm:text-sm">
                     <BookOpen className="h-3.5 w-3.5 text-rose-600 dark:text-rose-400" />
                     <strong className="text-rose-600 dark:text-rose-400">{stats.faculty_count}</strong>
                     <span className="text-muted-foreground">faculty</span>
                   </div>
                 )}
                 {stats.department_count > 0 && (
-                  <div className="flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-sm shadow-sm">
+                  <div className="flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-0.5 text-xs sm:text-sm shadow-sm">
                     <strong className="text-foreground">{stats.department_count}</strong>
                     <span className="text-muted-foreground">departments</span>
                   </div>
                 )}
-                <div className="flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-sm shadow-sm">
+                <div className="flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-0.5 text-xs sm:text-sm shadow-sm">
                   <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
                   <strong className="text-foreground">{stats.rating_count}</strong>
                   <span className="text-muted-foreground">{stats.rating_count === 1 ? "rating" : "ratings"}</span>
@@ -184,12 +184,12 @@ const Faculty = () => {
           </div>
         </div>
 
-        <div className="container mx-auto px-4 py-8">
+        <div className="container mx-auto px-4 py-4">
           <header className="sr-only">
             <h2>Browse and filter faculty</h2>
           </header>
 
-          <div className="mb-6 flex flex-col gap-3 sm:flex-row">
+          <div className="mb-4 flex flex-col gap-3 sm:flex-row">
             <div className="relative flex-1">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -245,7 +245,7 @@ const Faculty = () => {
               Hidden once a filter is active — the active chip below replaces it,
               so the page never shows two competing sets of interest controls. */}
           {interest ? (
-            <div className="mb-6 flex flex-wrap items-center gap-2">
+            <div className="mb-4 flex flex-wrap items-center gap-2">
               <span className="text-sm text-muted-foreground">Showing faculty who work on</span>
               <span className="inline-flex items-center gap-1.5 rounded-full border border-rose-500/25 bg-rose-500/10 px-3 py-1 text-sm font-medium text-rose-700 dark:text-rose-300">
                 {interest}
@@ -261,8 +261,8 @@ const Faculty = () => {
             </div>
           ) : (
             facets.length > 0 && (
-              <div className="mb-6">
-                <div className="mb-2 flex items-center justify-between">
+              <div className="mb-4">
+                <div className="mb-1.5 flex items-center justify-between">
                   <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                     Browse by research interest
                   </p>
