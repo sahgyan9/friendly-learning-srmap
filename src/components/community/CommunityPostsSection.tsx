@@ -100,7 +100,7 @@ export const CommunityPostsSection = () => {
   // the hero and the fold runs through it, so its padding is competing with the
   // post cards it exists to introduce.
   return (
-    <section className="bg-muted/30 pt-8 pb-16">
+    <section className="bg-muted/30 pt-4 pb-16">
       <div className="container mx-auto px-4">
         {/* No section header here — not a pill, not a heading. This is the top
             of the page, and the composer strip plus the first row of cards say
@@ -137,7 +137,7 @@ export const CommunityPostsSection = () => {
                 {posts.map((post) => (
                   <div
                     key={post.id}
-                    className="shrink-0 snap-start w-[300px] md:w-[340px] opacity-60 blur-[2px] transition-all duration-300 ease-out hover:opacity-100 hover:blur-none focus-within:opacity-100 focus-within:blur-none"
+                    className="shrink-0 snap-start w-[400px] md:w-[460px] opacity-60 blur-[2px] transition-all duration-300 ease-out hover:opacity-100 hover:blur-none focus-within:opacity-100 focus-within:blur-none"
                   >
                     <PostCard
                       post={post}

@@ -44,9 +44,9 @@ export const PostComposerStrip = ({ onPostCreated }: PostComposerStripProps) => 
   // `from` is what sends them back here afterwards instead of to the homepage.
   if (!user) {
     return (
-      <div className="mx-auto mb-6 max-w-2xl rounded-xl border bg-card p-3 shadow-sm">
-        <div className="flex items-center gap-3">
-          <Avatar className="h-10 w-10 shrink-0 ring-1 ring-border">
+      <div className="mx-auto mb-4 max-w-2xl rounded-xl border bg-card px-3 py-2 shadow-sm">
+        <div className="flex items-center gap-2">
+          <Avatar className="h-8 w-8 shrink-0 ring-1 ring-border">
             <AvatarFallback className="bg-muted text-xs font-semibold text-muted-foreground">
               ?
             </AvatarFallback>
@@ -54,21 +54,18 @@ export const PostComposerStrip = ({ onPostCreated }: PostComposerStripProps) => 
           <Link
             to="/signin"
             state={{ from: location }}
-            className="flex-1 truncate rounded-full bg-muted/60 px-4 py-2.5 text-left text-sm
+            className="flex-1 truncate rounded-full bg-muted/60 px-4 py-2 text-left text-sm
                        text-muted-foreground transition-colors hover:bg-muted"
           >
             Sign in to share something with campus…
           </Link>
-        </div>
-
-        <div className="mt-3 flex items-center justify-around gap-2 border-t pt-2">
-          <Link to="/signin" state={{ from: location }} className={`${actionClass} flex-1`}>
+          <Link to="/signin" state={{ from: location }} className={actionClass}>
             <ImagePlus className="h-4 w-4 text-emerald-500" />
             Post
           </Link>
-          <Link to="/signin" state={{ from: location }} className={`${actionClass} flex-1`}>
+          <Link to="/signin" state={{ from: location }} className={actionClass}>
             <Users className="h-4 w-4 text-amber-500" />
-            Make Group
+            Group
           </Link>
         </div>
       </div>
@@ -77,9 +74,9 @@ export const PostComposerStrip = ({ onPostCreated }: PostComposerStripProps) => 
 
   return (
     <>
-      <div className="mx-auto mb-6 max-w-2xl rounded-xl border bg-card p-3 shadow-sm">
-        <div className="flex items-center gap-3">
-          <Avatar className="h-10 w-10 shrink-0 ring-1 ring-border">
+      <div className="mx-auto mb-4 max-w-2xl rounded-xl border bg-card px-3 py-2 shadow-sm">
+        <div className="flex items-center gap-2">
+          <Avatar className="h-8 w-8 shrink-0 ring-1 ring-border">
             <AvatarImage src={profile?.profile_image ?? undefined} alt={profile?.name ?? ""} />
             <AvatarFallback className="bg-emerald-500/10 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
               {getInitials(profile?.name ?? "")}
@@ -89,21 +86,19 @@ export const PostComposerStrip = ({ onPostCreated }: PostComposerStripProps) => 
           <button
             type="button"
             onClick={() => setShowPost(true)}
-            className="flex-1 truncate rounded-full bg-muted/60 px-4 py-2.5 text-left text-sm
+            className="flex-1 truncate rounded-full bg-muted/60 px-4 py-2 text-left text-sm
                        text-muted-foreground transition-colors hover:bg-muted"
           >
             {firstName ? `What's on your mind, ${firstName}?` : "What's on your mind?"}
           </button>
-        </div>
 
-        <div className="mt-3 flex items-center justify-around gap-2 border-t pt-2">
-          <button type="button" onClick={() => setShowPost(true)} className={`${actionClass} flex-1`}>
+          <button type="button" onClick={() => setShowPost(true)} className={actionClass}>
             <ImagePlus className="h-4 w-4 text-emerald-500" />
             Post
           </button>
-          <button type="button" onClick={() => setShowGroup(true)} className={`${actionClass} flex-1`}>
+          <button type="button" onClick={() => setShowGroup(true)} className={actionClass}>
             <Users className="h-4 w-4 text-amber-500" />
-            Make Group
+            Group
           </button>
         </div>
       </div>
