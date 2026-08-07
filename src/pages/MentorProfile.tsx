@@ -1,7 +1,7 @@
 import { PRIMARY_DOMAIN } from "@/lib/constants";
 
 import { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -18,6 +18,7 @@ import { getMentorSchema, getBreadcrumbSchema } from "@/lib/structured-data";
 
 const MentorProfile = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [mentor, setMentor] = useState<Mentor | null>(null);
   const [loading, setLoading] = useState(true);
   const [showRatingModal, setShowRatingModal] = useState(false);
@@ -153,11 +154,19 @@ const MentorProfile = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
           >
-            <Button variant="ghost" asChild className="px-0 text-muted-foreground">
-              <Link to="/mentors">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Mentors
-              </Link>
+            <Button
+              variant="ghost"
+              className="px-0 text-muted-foreground hover:bg-transparent"
+              onClick={() => {
+                if (window.history.state && window.history.state.idx > 0) {
+                  navigate(-1);
+                } else {
+                  navigate("/mentors");
+                }
+              }}
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Mentors
             </Button>
           </motion.div>
 

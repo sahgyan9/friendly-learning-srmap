@@ -132,11 +132,20 @@ const FacultyDetail = () => {
       <div className="min-h-screen bg-background">
 
         <div className="container mx-auto max-w-4xl px-4 py-8 pt-24">
-          <Button asChild variant="ghost" size="sm" className="-ml-2 mb-4 gap-1.5">
-            <Link to="/faculty">
-              <ArrowLeft className="h-4 w-4" />
-              All faculty
-            </Link>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="-ml-2 mb-4 gap-1.5"
+            onClick={() => {
+              if (window.history.state && window.history.state.idx > 0) {
+                navigate(-1);
+              } else {
+                navigate("/faculty");
+              }
+            }}
+          >
+            <ArrowLeft className="h-4 w-4" />
+            All faculty
           </Button>
 
           <Card className="relative mb-6 overflow-hidden">

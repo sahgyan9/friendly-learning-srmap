@@ -210,11 +210,20 @@ const CommunityPostDetail = () => {
 
       <div className="min-h-screen bg-background">
         <div className="container mx-auto max-w-3xl px-4 pt-28 pb-10">
-          <Button asChild variant="ghost" size="sm" className="-ml-2 mb-6 gap-1.5 text-muted-foreground hover:text-foreground">
-            <Link to="/community-posts">
-              <ArrowLeft className="h-4 w-4" />
-              Back to posts
-            </Link>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="-ml-2 mb-6 gap-1.5 text-muted-foreground hover:text-foreground"
+            onClick={() => {
+              if (window.history.state && window.history.state.idx > 0) {
+                navigate(-1);
+              } else {
+                navigate("/community-posts");
+              }
+            }}
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to posts
           </Button>
 
           <Card className="relative overflow-hidden">
