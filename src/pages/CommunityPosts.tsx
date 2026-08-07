@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { ChevronDown, FileText, Search } from "lucide-react";
@@ -115,11 +115,8 @@ const CommunityPosts = () => {
     }
   }, [loading, targetPostId, posts.length]);
 
-  // On mount (if not jumping to a specific post), scroll so search & feed controls are visible.
-  // The hero remains accessible by scrolling up.
-  // We offset by navbar height so search isn't hidden behind it.
-  // We re-run when loading finishes so position is accurate after posts render.
-  useEffect(() => {
+  // Scroll to cards before paint so hero is not visible on load, and re-run when loading finishes.
+  useLayoutEffect(() => {
     if (!targetPostId) {
       const scrollToCards = () => {
         if (cardsRef.current) {
@@ -130,12 +127,8 @@ const CommunityPosts = () => {
       };
 
       scrollToCards();
-      const t1 = setTimeout(scrollToCards, 60);
-      const t2 = setTimeout(scrollToCards, 200);
-      return () => {
-        clearTimeout(t1);
-        clearTimeout(t2);
-      };
+      const timer = setTimeout(scrollToCards, 60);
+      return () => clearTimeout(timer);
     }
   }, [targetPostId, loading]);
 

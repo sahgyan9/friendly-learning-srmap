@@ -41,16 +41,20 @@ const Communities = () => {
     markGroupsNavSeen();
   }, [markGroupsNavSeen]);
 
-  // Scroll to cards before the first paint so the hero is never visible on load.
-  // useLayoutEffect fires synchronously after DOM mutation but before the browser renders,
-  // eliminating the flash where the hero briefly appears before scrolling away.
+  // Scroll to cards before paint so hero is not visible on load, and re-run when loading finishes.
   useLayoutEffect(() => {
-    if (cardsRef.current) {
-      const navbarHeight = 64;
-      const top = cardsRef.current.getBoundingClientRect().top + window.scrollY - navbarHeight;
-      window.scrollTo({ top, behavior: "instant" });
-    }
-  }, []);
+    const scrollToCards = () => {
+      if (cardsRef.current) {
+        const navbarHeight = 64;
+        const top = cardsRef.current.getBoundingClientRect().top + window.scrollY - navbarHeight;
+        window.scrollTo({ top, behavior: "instant" });
+      }
+    };
+
+    scrollToCards();
+    const timer = setTimeout(scrollToCards, 60);
+    return () => clearTimeout(timer);
+  }, [loading]);
 
   const debouncedSearch = useDebounce(search, 300);
 

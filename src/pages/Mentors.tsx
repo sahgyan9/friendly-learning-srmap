@@ -1,6 +1,6 @@
 import { PRIMARY_DOMAIN } from "@/lib/constants";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { toast } from "sonner";
 import { GraduationCap, Sparkles, Code, Cpu, Palette, Star, Users, CheckCircle2, Atom, Binary } from "lucide-react";
 import { motion } from "framer-motion";
@@ -44,11 +44,8 @@ const Mentors = () => {
     markMentorsNavSeen();
   }, [markMentorsNavSeen]);
 
-  // On mount, scroll so the mentor cards section is the first thing visible.
-  // The hero remains accessible by scrolling up.
-  // We offset by navbar height so search bar isn't hidden behind it.
-  // We re-run when isLoading finishes so position is accurate after mentors render.
-  useEffect(() => {
+  // Scroll to cards before paint so hero is not visible on load, and re-run when isLoading finishes.
+  useLayoutEffect(() => {
     const scrollToCards = () => {
       if (cardsRef.current) {
         const navbarHeight = 64; // matches fixed navbar height
@@ -58,12 +55,8 @@ const Mentors = () => {
     };
 
     scrollToCards();
-    const t1 = setTimeout(scrollToCards, 60);
-    const t2 = setTimeout(scrollToCards, 200);
-    return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
-    };
+    const timer = setTimeout(scrollToCards, 60);
+    return () => clearTimeout(timer);
   }, [isLoading]);
 
   // Fetch mentors from Supabase on component mount
