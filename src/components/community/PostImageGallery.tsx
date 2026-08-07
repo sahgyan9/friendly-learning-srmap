@@ -136,7 +136,7 @@ export function PostImageGallery({
   // 2 Images Layout (50/50 Split)
   if (count === 2) {
     return (
-      <div className={cn("grid h-72 sm:h-80 grid-cols-2 gap-1.5 overflow-hidden rounded-xl border border-border/60 bg-muted/20", className)}>
+      <div className={cn("grid h-80 sm:h-96 grid-cols-2 gap-1.5 overflow-hidden rounded-xl border border-border/60 bg-muted/20", className)}>
         {images.map((src, index) => (
           <button
             key={src + index}

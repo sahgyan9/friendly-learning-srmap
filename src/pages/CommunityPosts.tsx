@@ -225,7 +225,7 @@ const CommunityPosts = () => {
           <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-emerald-500/8 blur-3xl" />
           <div className="pointer-events-none absolute -left-16 bottom-0 h-48 w-48 rounded-full bg-emerald-500/5 blur-2xl" />
 
-          <div className="container mx-auto max-w-3xl px-4 pb-8 pt-28">
+          <div className="container mx-auto max-w-5xl px-4 pb-8 pt-28">
             <motion.div
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
@@ -250,13 +250,12 @@ const CommunityPosts = () => {
           </div>
         </div>
 
-        <div className="container mx-auto max-w-3xl px-4 py-6">
+        <div className="container mx-auto max-w-5xl px-4 py-6">
 
-          {/* Sticky filter bar: search + type chips stay visible while scrolling
-              a long feed. backdrop-blur-sm + bg-background/90 keeps it readable
-              without fully covering the card below. z-10 is enough because there
-              are no other stacked contexts on this page. */}
-          <div className="sticky top-[57px] z-10 -mx-4 bg-background/90 px-4 pt-3 pb-3 backdrop-blur-sm border-b border-border/40 mb-4">
+          {/* Search + type chips. Not sticky — every other feed page (Faculty,
+              Groups, Events) scrolls its filters away with the content, and a
+              pinned bar here was the odd one out. */}
+          <div className="mb-4">
             <div className="relative mb-3">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input

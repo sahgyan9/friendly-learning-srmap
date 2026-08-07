@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowRight, FileText, PenLine } from "lucide-react";
+import { ArrowRight, PenLine } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -102,23 +102,14 @@ export const CommunityPostsSection = () => {
   return (
     <section className="bg-muted/30 pt-8 pb-16">
       <div className="container mx-auto px-4">
-        {/* Section header — brand pill pattern (emerald accent, §8 of brand guidelines) */}
-        <div className="mb-4 text-center">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/8 text-emerald-700 dark:text-emerald-400 text-xs font-semibold tracking-widest uppercase">
-            <FileText className="w-3.5 h-3.5" />
-            Posts
-          </div>
-          {/* Commented out, not deleted — restore if the feed ever needs
-              introducing again. It does not right now: the composer strip and
-              the cards below say "this is a student board" faster than a
-              heading describing them can, and this is the top of the page.
-          <h2 className="text-3xl font-bold tracking-tight mb-2">What students are talking about</h2>
-          <p className="mx-auto max-w-xl text-muted-foreground">
-            Hackathon teams, study help, project collabs — posted live by SRM AP students.
-          </p>
-          */}
-        </div>
-
+        {/* No section header here — not a pill, not a heading. This is the top
+            of the page, and the composer strip plus the first row of cards say
+            "this is a student board" faster than any label describing them can.
+            The "POSTS" pill in particular was labelling the one section on the
+            page that needs no introduction, and once the left rail carries the
+            navigation it is also naming a place you can already see you are in.
+            Restore a heading here only if the feed stops being the first thing
+            on the page. */}
         <PostComposerStrip onPostCreated={reload} />
 
         {posts.length === 0 ? (
