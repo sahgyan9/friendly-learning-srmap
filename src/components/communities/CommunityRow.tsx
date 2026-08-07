@@ -1,10 +1,11 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, Globe, Lock, MessageSquare, Users } from "lucide-react";
+import { ArrowRight, Clock, Globe, Lock, MessageSquare, Users } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { CardAccentBorder } from "@/components/ui/CardAccentBorder";
 import { CommunityAvatar } from "@/components/communities/CommunityAvatar";
 import { JoinCommunityButton } from "@/components/communities/JoinCommunityButton";
+import { formatRelativeTime } from "@/utils/date-utils";
 import { getCommunityKindMeta, type Community } from "@/integrations/supabase/services/communities";
 import { getKindStyle } from "@/integrations/supabase/services/community-kind-styles";
 
@@ -84,7 +85,7 @@ export function CommunityRow({ community, onMembershipChange }: CommunityRowProp
             {community.description}
           </p>
 
-          {/* Secondary stats row */}
+          {/* Secondary stats row with Recency */}
           <div className="flex items-center gap-3 text-xs text-muted-foreground pt-0.5">
             <span className="truncate max-w-[140px] sm:max-w-[200px]">
               Run by <span className="font-medium text-foreground">{community.owner.name}</span>
@@ -95,9 +96,9 @@ export function CommunityRow({ community, onMembershipChange }: CommunityRowProp
               <strong className="text-foreground font-medium">{community.member_count}</strong> members
             </span>
             <span>•</span>
-            <span className="inline-flex items-center gap-1">
-              <MessageSquare className="h-3.5 w-3.5 text-muted-foreground" />
-              <strong className="text-foreground font-medium">{community.post_count}</strong> discussions
+            <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-medium">
+              <Clock className="h-3.5 w-3.5" />
+              Active {formatRelativeTime(community.last_activity_at)}
             </span>
           </div>
         </div>

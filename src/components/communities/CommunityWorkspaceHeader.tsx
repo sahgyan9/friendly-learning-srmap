@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import {
   ArrowLeft,
   Check,
+  Clock,
   Globe,
   Loader2,
   Lock,
@@ -21,6 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CommunityAvatar } from "@/components/communities/CommunityAvatar";
 import { InviteLinkButton } from "@/components/communities/InviteLinkButton";
+import { formatRelativeTime } from "@/utils/date-utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -139,7 +141,9 @@ export function CommunityWorkspaceHeader({
                 <Users className="h-3.5 w-3.5 text-primary" />
                 <span>{community.member_count} members</span>
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse ml-0.5" />
-                <span className="text-[11px] text-muted-foreground">Active</span>
+                <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
+                  Active {formatRelativeTime(community.last_activity_at)}
+                </span>
               </button>
 
               <span className="inline-flex items-center gap-1.5 rounded-full border border-border/80 bg-accent/20 px-3 py-1 font-medium">
