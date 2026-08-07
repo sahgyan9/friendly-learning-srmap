@@ -27,6 +27,15 @@ const Communities = () => {
   const { markSeen: markGroupsNavSeen } = useHasVisitedGroupsNav();
   const cardsRef = useRef<HTMLDivElement>(null);
 
+  const [communities, setCommunities] = useState<Community[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [kind, setKind] = useState("all");
+  const [mine, setMine] = useState(false);
+  const [search, setSearch] = useState("");
+  const [createOpen, setCreateOpen] = useState(false);
+  const [kindCounts, setKindCounts] = useState<Record<string, number>>({});
+  const [showAllKinds, setShowAllKinds] = useState(false);
+
   // Reaching this page is what clears the welcome tour's navbar dot.
   useEffect(() => {
     markGroupsNavSeen();
@@ -53,15 +62,6 @@ const Communities = () => {
       clearTimeout(t2);
     };
   }, [loading]);
-
-  const [communities, setCommunities] = useState<Community[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [kind, setKind] = useState("all");
-  const [mine, setMine] = useState(false);
-  const [search, setSearch] = useState("");
-  const [createOpen, setCreateOpen] = useState(false);
-  const [kindCounts, setKindCounts] = useState<Record<string, number>>({});
-  const [showAllKinds, setShowAllKinds] = useState(false);
 
   const debouncedSearch = useDebounce(search, 300);
 
