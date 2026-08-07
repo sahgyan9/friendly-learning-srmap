@@ -1,4 +1,5 @@
-import { Maximize2 } from "lucide-react";
+import { useState } from "react";
+import { ChevronLeft, ChevronRight, Maximize2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface PostImageGalleryProps {
@@ -10,14 +11,12 @@ interface PostImageGalleryProps {
 }
 
 /**
- * Smart, LinkedIn-style multi-image auto-arranger.
+ * Smart, LinkedIn-style multi-image slider and auto-arranger.
  *
- * Automatically adapts image layout based on count:
- * - 1 image: Hero view bounded with high resolution display.
- * - 2 images: Balanced 50/50 vertical split gallery.
- * - 3 images: 60% Hero main left + 2 stacked right.
- * - 4 images: 60% Hero main left + 3 stacked right (LinkedIn signature layout).
- * - 5+ images: 60% Hero main left + 3 stacked right with +N badge overlay.
+ * Provides LinkedIn's exact document/carousel experience:
+ * - 1/N pill counter badge in top-right.
+ * - Floating white Next (>) and Prev (<) navigation buttons on hover/touch.
+ * - Non-cropping object-contain container on dark backdrop (no text cut off).
  */
 export function PostImageGallery({
   images,
@@ -26,25 +25,79 @@ export function PostImageGallery({
   variant = "full",
   className,
 }: PostImageGalleryProps) {
+  const [activeSlide, setActiveSlide] = useState(0);
+
   if (!images || images.length === 0) return null;
 
   const count = images.length;
   const isCompact = variant === "compact";
 
-  // Compact Homepage Rail view — object-contain on dark backdrop so posters are never cut off
+  const handleNextSlide = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setActiveSlide((prev) => (prev < count - 1 ? prev + 1 : 0));
+  };
+
+  const handlePrevSlide = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setActiveSlide((prev) => (prev > 0 ? prev - 1 : count - 1));
+  };
+
+  // Compact Homepage Rail view — LinkedIn Carousel Slider
   if (isCompact) {
     return (
-      <div className={cn("relative flex h-36 sm:h-40 w-full items-center justify-center overflow-hidden rounded-lg border border-border/60 bg-zinc-950/90 dark:bg-black/95", className)}>
-        <img
-          src={images[0]}
-          alt=""
-          loading="lazy"
-          className="h-full w-full object-contain"
-        />
+      <div className={cn("group/slider relative flex h-48 sm:h-52 w-full items-center justify-center overflow-hidden rounded-lg border border-border/60 bg-zinc-950/90 dark:bg-black/95 select-none", className)}>
+        {/* Active Image (object-contain so no text is cut off) */}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onImageClick?.(images[activeSlide], activeSlide);
+          }}
+          className="h-full w-full cursor-zoom-in focus-visible:outline-none"
+          aria-label={`View image ${activeSlide + 1} of ${count} for "${title}"`}
+        >
+          <img
+            src={images[activeSlide]}
+            alt=""
+            loading="lazy"
+            className="h-full w-full object-contain transition-all duration-300"
+          />
+        </button>
+
+        {/* Multi-image LinkedIn Carousel Controls */}
         {count > 1 && (
-          <span className="absolute bottom-2 right-2 rounded-md bg-black/80 px-2 py-0.5 text-[11px] font-semibold text-white backdrop-blur-md shadow-md">
-            +{count - 1} more
-          </span>
+          <>
+            {/* Top Right Counter Badge (1/4) */}
+            <span className="absolute top-2 right-2 rounded-full bg-black/80 px-2.5 py-0.5 text-xs font-semibold text-white backdrop-blur-md shadow-md">
+              {activeSlide + 1}/{count}
+            </span>
+
+            {/* Prev (<) Floating Button */}
+            {activeSlide > 0 && (
+              <button
+                type="button"
+                onClick={handlePrevSlide}
+                className="absolute left-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-black shadow-lg transition-all hover:bg-white hover:scale-110 active:scale-95 focus:outline-none"
+                aria-label="Previous image"
+              >
+                <ChevronLeft className="h-5 w-5 stroke-[2.5]" />
+              </button>
+            )}
+
+            {/* Next (>) Floating Button */}
+            {activeSlide < count - 1 && (
+              <button
+                type="button"
+                onClick={handleNextSlide}
+                className="absolute right-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-black shadow-lg transition-all hover:bg-white hover:scale-110 active:scale-95 focus:outline-none"
+                aria-label="Next image"
+              >
+                <ChevronRight className="h-5 w-5 stroke-[2.5]" />
+              </button>
+            )}
+          </>
         )}
       </div>
     );
