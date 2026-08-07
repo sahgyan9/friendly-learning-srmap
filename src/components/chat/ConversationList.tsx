@@ -19,7 +19,7 @@ interface ConversationListProps {
   formatTime: (timestamp: string) => string;
   getOtherUser: (conversation: Conversation) => any;
   setActiveChat: (id: string) => void;
-  hasUnreadMessages: (conversationId: string) => boolean;
+  getUnreadCount: (conversationId: string) => number;
   currentUserId: string;
 }
 
@@ -31,7 +31,7 @@ const ConversationList = ({
   formatTime,
   getOtherUser,
   setActiveChat,
-  hasUnreadMessages,
+  getUnreadCount,
 }: ConversationListProps) => {
   const { isUserOnline } = useUserPresenceRealtime();
 
@@ -85,7 +85,8 @@ const ConversationList = ({
     <ul className="space-y-0.5 p-2">
       {filteredConversations.map((conversation) => {
         const otherUser = getOtherUser(conversation);
-        const hasUnread = hasUnreadMessages(conversation.id);
+        const unreadCount = getUnreadCount(conversation.id);
+        const hasUnread = unreadCount > 0;
         const isActive = activeChat === conversation.id;
         const displayName = otherUser?.name?.trim() || "Student";
         const isOnline = isUserOnline(otherUser?.id);
@@ -156,9 +157,11 @@ const ConversationList = ({
                     {preview}
                   </p>
                   {hasUnread && (
-                    <span className="relative ml-auto flex h-2 w-2 shrink-0" aria-label="Unread messages">
-                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-sky-400 opacity-75" />
-                      <span className="relative inline-flex h-2 w-2 rounded-full bg-sky-400 shadow-[0_0_6px_1px_rgba(56,189,248,0.7)]" />
+                    <span
+                      className="ml-auto flex h-[18px] min-w-[18px] shrink-0 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold leading-none text-destructive-foreground"
+                      aria-label={`${unreadCount} unread message${unreadCount === 1 ? "" : "s"}`}
+                    >
+                      {unreadCount > 99 ? "99+" : unreadCount}
                     </span>
                   )}
                 </div>

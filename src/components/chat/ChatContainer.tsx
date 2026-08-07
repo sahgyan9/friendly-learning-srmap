@@ -66,7 +66,7 @@ interface ChatContainerProps {
   formatTime: (timestamp: string) => string;
   getOtherUser: (conversation: Conversation) => any;
   setActiveChat: (id: string) => void;
-  hasUnreadMessages: (conversationId: string) => boolean;
+  getUnreadCount: (conversationId: string) => number;
   handleSendMessage: (content: string) => Promise<void>;
 }
 
@@ -84,7 +84,7 @@ const ChatContainer = ({
   formatTime,
   getOtherUser,
   setActiveChat,
-  hasUnreadMessages,
+  getUnreadCount,
   handleSendMessage
 }: ChatContainerProps) => {
   const isMobile = useIsMobile();
@@ -174,7 +174,7 @@ const ChatContainer = ({
               formatTime={formatTime}
               getOtherUser={getOtherUser}
               setActiveChat={setActiveChat}
-              hasUnreadMessages={hasUnreadMessages}
+              getUnreadCount={getUnreadCount}
               currentUserId={currentUserId}
             />
           </div>

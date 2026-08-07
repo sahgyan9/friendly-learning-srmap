@@ -11,6 +11,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import MessagesHeader from "./MessagesHeader";
 import { supabase } from "@/integrations/supabase/client";
 import { announceMessagesRead } from "@/lib/message-events";
+import { useConversationUnreadCounts } from "@/hooks/useConversationUnreadCounts";
 
 const MessagesLayout = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -33,6 +34,7 @@ const MessagesLayout = () => {
 
   const { isProcessingMentor } = useMentorConnection(userId, setActiveChat);
   const { isProcessingChat } = useChatConnection(userId, setActiveChat);
+  const getUnreadCount = useConversationUnreadCounts(userId || null);
 
   // Mark messages as read when viewing a conversation
   useEffect(() => {
@@ -107,16 +109,6 @@ const MessagesLayout = () => {
     };
   };
 
-  // `messages` only ever holds the currently open conversation's history, so
-  // it can't tell us anything about unread state in the *other* rows of the
-  // list. Each conversation's own last_message (fetched for every row up
-  // front) already carries is_read/receiver_id, so read that instead.
-  const hasUnreadMessages = (conversationId) => {
-    const conversation = conversations.find(c => c.id === conversationId);
-    const lastMessage = conversation?.last_message;
-    return Boolean(lastMessage && lastMessage.receiver_id === userId && !lastMessage.is_read);
-  };
-
   const filteredConversations = searchQuery.trim()
     ? conversations.filter(conv => {
       const otherUser = getOtherUser(conv);
@@ -162,7 +154,7 @@ const MessagesLayout = () => {
         formatTime={formatMessageTime}
         getOtherUser={getOtherUser}
         setActiveChat={setActiveChat}
-        hasUnreadMessages={hasUnreadMessages}
+        getUnreadCount={getUnreadCount}
         handleSendMessage={sendMessage}
       />
     </>
