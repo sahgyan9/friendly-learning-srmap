@@ -47,7 +47,7 @@ export function CommunityWorkspaceSidebar({
 
   return (
     <div className="space-y-4">
-      {/* Today's Activity Pulse Card */}
+      {/* Today's Activity Pulse Card (Commented out)
       <div className="rounded-xl border border-amber-500/20 bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-transparent p-4">
         <div className="flex items-center gap-2 text-xs font-semibold text-amber-600 dark:text-amber-400 mb-2">
           <Sparkles className="h-4 w-4" />
@@ -68,6 +68,7 @@ export function CommunityWorkspaceSidebar({
           </div>
         </div>
       </div>
+      */}
 
       {/* Navigation Channels */}
       <div className="rounded-xl border border-border/60 bg-card p-3 space-y-1">
