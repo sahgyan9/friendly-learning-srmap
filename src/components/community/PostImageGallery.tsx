@@ -31,18 +31,18 @@ export function PostImageGallery({
   const count = images.length;
   const isCompact = variant === "compact";
 
-  // Compact Homepage Rail view
+  // Compact Homepage Rail view — object-contain on dark backdrop so posters are never cut off
   if (isCompact) {
     return (
-      <div className={cn("relative overflow-hidden rounded-lg border border-border/60 bg-muted/20", className)}>
+      <div className={cn("relative flex h-36 sm:h-40 w-full items-center justify-center overflow-hidden rounded-lg border border-border/60 bg-zinc-950/90 dark:bg-black/95", className)}>
         <img
           src={images[0]}
           alt=""
           loading="lazy"
-          className="h-28 w-full object-cover"
+          className="h-full w-full object-contain"
         />
         {count > 1 && (
-          <span className="absolute bottom-2 right-2 rounded-md bg-black/75 px-2 py-0.5 text-[11px] font-semibold text-white backdrop-blur-md shadow-md">
+          <span className="absolute bottom-2 right-2 rounded-md bg-black/80 px-2 py-0.5 text-[11px] font-semibold text-white backdrop-blur-md shadow-md">
             +{count - 1} more
           </span>
         )}
@@ -53,14 +53,14 @@ export function PostImageGallery({
   // Single Image Layout
   if (count === 1) {
     return (
-      <div className={cn("relative overflow-hidden rounded-xl border border-border/60 bg-black/5 dark:bg-black/20", className)}>
+      <div className={cn("relative overflow-hidden rounded-xl border border-border/60 bg-zinc-950/90 dark:bg-black/95", className)}>
         <button
           type="button"
           onClick={(e) => {
             e.stopPropagation();
             onImageClick?.(images[0], 0);
           }}
-          className="group/img relative mx-auto block w-full cursor-zoom-in focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="group/img relative flex min-h-[220px] max-h-[480px] w-full items-center justify-center cursor-zoom-in focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           aria-label={`View full size image for "${title}"`}
         >
           <img
@@ -92,14 +92,14 @@ export function PostImageGallery({
               e.stopPropagation();
               onImageClick?.(src, index);
             }}
-            className="group/img relative h-full w-full overflow-hidden cursor-zoom-in focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="group/img relative flex h-full w-full items-center justify-center overflow-hidden cursor-zoom-in bg-zinc-950/90 dark:bg-black/95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             aria-label={`View image ${index + 1} of 2 for "${title}"`}
           >
             <img
               src={src}
               alt=""
               loading="lazy"
-              className="h-full w-full object-cover transition-transform duration-300 group-hover/img:scale-105"
+              className="h-full w-full object-contain transition-transform duration-300 group-hover/img:scale-105"
             />
           </button>
         ))}
