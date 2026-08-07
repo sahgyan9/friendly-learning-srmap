@@ -1,7 +1,7 @@
 import React from "react";
 
 /**
- * Traced from public/lovable-uploads/groups2.svg — network graph of 3 connected people,
+ * Traced from public/lovable-uploads/groups3.svg — 3 people group arrangement,
  * using `stroke="currentColor"` so it recolors with the accent and switches for light/dark
  * like every other nav icon.
  */
@@ -20,20 +20,17 @@ export const GroupsIcon: React.FC<React.SVGProps<SVGSVGElement>> = ({
       className={className}
       {...props}
     >
-      {/* Heads */}
-      <circle cx="12" cy="5" r="2" />
-      <circle cx="6" cy="16" r="2" />
-      <circle cx="18" cy="16" r="2" />
+      {/* Center person */}
+      <circle cx="12" cy="7" r="2.2" />
+      <path d="M9.5 12c0-1.7 1.3-3 2.5-3s2.5 1.3 2.5 3" />
 
-      {/* Connections */}
-      <path d="M10.7 6.7L7.3 14" />
-      <path d="M13.3 6.7L16.7 14" />
-      <path d="M8 16h8" />
+      {/* Left person */}
+      <circle cx="5.5" cy="13" r="1.8" />
+      <path d="M3.5 17c0-1.3 1-2.3 2-2.3s2 1 2 2.3" />
 
-      {/* Bodies */}
-      <path d="M12 9v2" />
-      <path d="M6 18v1" />
-      <path d="M18 18v1" />
+      {/* Right person */}
+      <circle cx="18.5" cy="13" r="1.8" />
+      <path d="M16.5 17c0-1.3 1-2.3 2-2.3s2 1 2 2.3" />
     </svg>
   );
 };
