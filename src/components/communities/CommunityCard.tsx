@@ -52,16 +52,16 @@ export function CommunityCard({ community, onMembershipChange }: CommunityCardPr
           />
 
           <div className="min-w-0 flex-1">
-            <h2 className="truncate font-semibold leading-snug transition-colors duration-200 group-hover:text-primary">
+            <h2 className="truncate font-semibold text-base leading-snug transition-colors duration-200 group-hover:text-primary">
               {community.name}
             </h2>
-            <div className="mt-1 flex items-center gap-1.5">
+            <div className="mt-1 flex items-center gap-1.5 overflow-hidden">
               {/* Kind pill — colour matches the card's accent gradient */}
-              <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${style.pill}`}>
+              <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold whitespace-nowrap shrink-0 ${style.pill}`}>
                 <span aria-hidden>{kind.emoji}</span>
                 {kind.label}
               </span>
-              <span className="truncate text-xs text-muted-foreground">
+              <span className="truncate text-xs text-muted-foreground min-w-0 flex-1" title={community.owner.name}>
                 · {community.owner.name}
               </span>
             </div>
@@ -71,30 +71,30 @@ export function CommunityCard({ community, onMembershipChange }: CommunityCardPr
         {/* Privacy / invite badges — always shown, not just for private
             groups, so open-vs-invite-only is never left to be inferred from
             which button happens to be in the footer. */}
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-1.5">
           {community.visibility === "private" ? (
-            <Badge variant="outline" className="gap-1 text-muted-foreground text-xs">
-              <Lock className="h-3 w-3" />
+            <Badge variant="outline" className="gap-1 text-muted-foreground text-[11px] font-medium py-0.5">
+              <Lock className="h-3 w-3 shrink-0" />
               Invite only
             </Badge>
           ) : (
             <Badge
               variant="outline"
-              className="gap-1 border-green-500/30 text-green-700 text-xs dark:text-green-400"
+              className="gap-1 border-green-500/30 text-green-700 text-[11px] font-medium py-0.5 dark:text-green-400"
             >
-              <Globe className="h-3 w-3" />
+              <Globe className="h-3 w-3 shrink-0" />
               Open · anyone can join
             </Badge>
           )}
           {community.viewer_has_invite && !community.viewer_is_member && (
-            <Badge variant="outline" className="border-primary/40 text-primary text-xs">
+            <Badge variant="outline" className="border-primary/40 text-primary text-[11px] font-medium py-0.5">
               You're invited
             </Badge>
           )}
         </div>
 
         {/* Description */}
-        <p className="line-clamp-3 flex-1 text-sm leading-relaxed text-muted-foreground">
+        <p className="line-clamp-2 flex-1 text-sm leading-relaxed text-muted-foreground">
           {community.description}
         </p>
 
