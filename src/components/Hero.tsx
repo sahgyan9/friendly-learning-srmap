@@ -1,80 +1,13 @@
 
-import { CalendarDays, FileText, GraduationCap, Star, Users } from "lucide-react";
+import { FileText, Users } from "lucide-react";
 import { Link } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { getPlatformStats, type PlatformStats } from "@/integrations/supabase/services/platform-stats";
 import AskBox from "@/components/search/AskBox";
 
-/** Rotating CTAs — each has its own colour identity matching the brand accent map */
-const CYCLING_CTАС = [
-  {
-    label: "Explore Posts",
-    href: "/community-posts",
-    icon: <FileText className="w-4 h-4" />,
-    gradient: "from-emerald-500 to-teal-500",
-    shadow: "shadow-emerald-500/30",
-    ring: "ring-emerald-500/40",
-  },
-  {
-    label: "Explore Groups",
-    href: "/communities",
-    icon: <Users className="w-4 h-4" />,
-    gradient: "from-amber-500 to-orange-500",
-    shadow: "shadow-amber-500/30",
-    ring: "ring-amber-500/40",
-  },
-  {
-    label: "University Events",
-    href: "/marketplace",
-    icon: <CalendarDays className="w-4 h-4" />,
-    gradient: "from-violet-500 to-purple-600",
-    shadow: "shadow-violet-500/30",
-    ring: "ring-violet-500/40",
-  },
-  {
-    label: "Rate Faculty",
-    href: "/faculty",
-    icon: <Star className="w-4 h-4" />,
-    gradient: "from-rose-500 to-pink-500",
-    shadow: "shadow-rose-500/30",
-    ring: "ring-rose-500/40",
-  },
-  {
-    label: "Find a Mentor",
-    href: "/mentors",
-    icon: <GraduationCap className="w-4 h-4" />,
-    gradient: "from-[#3963C6] to-indigo-500",
-    shadow: "shadow-blue-500/30",
-    ring: "ring-blue-500/40",
-  },
-] as const;
-
-/** Visual styling only — position/enter/exit animation is handled by the caller's shared layout. */
-const CtaPill = ({ cta }: { cta: (typeof CYCLING_CTАС)[number] }) => (
-  <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
-    <Link
-      to={cta.href}
-      className={`relative group inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold text-white
-                 shadow ${cta.shadow} hover:shadow-lg hover:brightness-110
-                 transition-all duration-300 whitespace-nowrap overflow-hidden`}
-    >
-      <span
-        aria-hidden
-        className={`absolute inset-0 bg-gradient-to-r ${cta.gradient} opacity-60 group-hover:opacity-100 transition-opacity duration-300`}
-      />
-      <span className="relative z-10 flex items-center gap-2 text-white">
-        {cta.icon}
-        {cta.label}
-      </span>
-    </Link>
-  </motion.div>
-);
-
 const Hero = () => {
   const [stats, setStats] = useState<PlatformStats | null>(null);
-  const [ctaIndex, setCtaIndex] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -84,15 +17,6 @@ const Hero = () => {
     return () => { cancelled = true; };
   }, []);
 
-  // Both CTA slots advance together every 2.5 s, paused while the row is hovered
-  useEffect(() => {
-    if (isPaused) return;
-    const id = setInterval(() => {
-      setCtaIndex((i) => (i + 1) % CYCLING_CTАС.length);
-    }, 2500);
-    return () => clearInterval(id);
-  }, [isPaused]);
-
   const container = {
     hidden: { opacity: 0 },
     show: { opacity: 1, transition: { staggerChildren: 0.2, delayChildren: 0.3 } },
@@ -100,10 +24,6 @@ const Hero = () => {
   const item = {
     hidden: { opacity: 0, y: 20 },
     show: { opacity: 1, y: 0, transition: { duration: 0.6 } },
-  };
-  const statVariants = {
-    hidden: { opacity: 0, scale: 0.8 },
-    show: { opacity: 1, scale: 1, transition: { type: "spring", stiffness: 100, delay: 0.8 } },
   };
 
   /**
@@ -155,11 +75,13 @@ const Hero = () => {
     stats === null ? s.floor === 0 : (s.value ?? 0) > s.floor,
   );
 
-  // Padding is deliberately tight at the bottom: the Posts section is the hook,
-  // and letting its first cards break the fold is the strongest cue there is
-  // that the page continues.
+  // The whole hero is sized against one constraint: real post cards must be
+  // visible at 1440x900 without scrolling. A visitor asking "what is this site?"
+  // is answered by seeing an actual thread, not by reading a claim about one,
+  // so every element here is competing with the feed for the same pixels and
+  // has to earn them.
   return (
-    <section className="relative pt-16 pb-10 md:pt-20 md:pb-12 overflow-hidden">
+    <section className="relative pt-8 pb-6 md:pt-12 md:pb-8 overflow-hidden">
       {/* Animated background blobs */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
         <motion.div
@@ -186,17 +108,14 @@ const Hero = () => {
           initial="hidden"
           animate="show"
         >
-          {/* Platform pill */}
-          <motion.div
-            className="inline-block px-4 py-1.5 mb-6 rounded-full bg-primary/10 text-primary text-sm font-medium"
-            variants={item}
-          >
-            Friendly Learning SRMAP · SRM AP Student Platform
-          </motion.div>
+          {/* The "Friendly Learning SRMAP · SRM AP Student Platform" pill that
+              was here is gone: it repeated the wordmark sitting directly above
+              it in the header, and it cost 54 px of the only screen most
+              visitors ever see. */}
 
           {/* Headline */}
           <motion.h1
-            className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6 text-balance"
+            className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight mb-4 text-balance"
             variants={item}
           >
             Your campus,{" "}
@@ -206,59 +125,51 @@ const Hero = () => {
           </motion.h1>
 
           <motion.p
-            className="text-lg md:text-xl text-muted-foreground mb-7 max-w-2xl mx-auto text-balance"
+            className="text-base md:text-lg text-muted-foreground mb-6 max-w-2xl mx-auto text-balance"
             variants={item}
           >
-            Posts, Groups, Mentors, Faculty Ratings — all from SRM AP students,
-            for SRM AP students. Built by people who sat in the same classrooms.
+            Posts, Groups, Mentors, Faculty Ratings — by SRM AP students, for
+            SRM AP students.
           </motion.p>
 
           {/* Above the CTAs, not below them. The pills each send you to one
               section; this answers the question you actually arrived with, and
               a visitor who does not already know which section holds their
               answer is exactly who it is for. */}
-          <motion.div className="mb-9" variants={item}>
+          <motion.div className="mb-6" variants={item}>
             <AskBox />
           </motion.div>
 
-          {/* CTA row */}
-          <motion.div className="mb-12" variants={item}>
-            <div
-              className="flex flex-col sm:flex-row items-center justify-center gap-4"
-              onMouseEnter={() => setIsPaused(true)}
-              onMouseLeave={() => setIsPaused(false)}
-            >
-              {/* The item in slot 2 keeps its layoutId as it becomes slot 1, so it visibly slides over instead of cross-fading in place. */}
-              <AnimatePresence mode="popLayout" initial={false}>
-                {[CYCLING_CTАС[ctaIndex], CYCLING_CTАС[(ctaIndex + 1) % CYCLING_CTАС.length]].map((cta) => (
-                  <motion.div
-                    key={cta.label}
-                    layout
-                    initial={{ opacity: 0, x: 40 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -40 }}
-                    transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-                  >
-                    <CtaPill cta={cta} />
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-            </div>
-
-            {/* Cycling indicator dots */}
-            <div className="mt-5 flex items-center justify-center gap-1.5">
-              {CYCLING_CTАС.map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setCtaIndex(i)}
-                  aria-label={`Show ${CYCLING_CTАС[i].label}`}
-                  className={`rounded-full transition-all duration-300 ${
-                    i === ctaIndex
-                      ? "w-5 h-1.5 bg-primary"
-                      : "w-1.5 h-1.5 bg-muted-foreground/30 hover:bg-muted-foreground/60"
-                  }`}
-                />
-              ))}
+          {/* CTA row — two fixed destinations, no carousel.
+              The five rotating gradient pills that used to sit here were the
+              same five links already in the header nav, re-stated in five
+              different colours and moved every 2.5 s. Motion in the one spot a
+              visitor is trying to read from is what made the page read as an
+              ad rather than as a campus site. Posts is the hook, Groups is the
+              second thing we want clicked; the rest stay in the nav. */}
+          <motion.div className="mb-6" variants={item}>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              {/* Brand blue rather than bg-primary: --primary inverts to near-white
+                  in dark mode, which both erases white label text and makes the
+                  hero CTA look identical to the header's Sign up pill. */}
+              <Link
+                to="/community-posts"
+                className="inline-flex w-full sm:w-auto items-center justify-center gap-2 px-6 py-3 rounded-xl
+                           text-sm font-semibold text-white bg-[#3963C6] shadow-sm
+                           hover:bg-[#31569F] transition-colors"
+              >
+                <FileText className="w-4 h-4" />
+                Browse Posts
+              </Link>
+              <Link
+                to="/communities"
+                className="inline-flex w-full sm:w-auto items-center justify-center gap-2 px-6 py-3 rounded-xl
+                           text-sm font-semibold text-foreground bg-transparent border border-border
+                           hover:bg-muted/60 transition-colors"
+              >
+                <Users className="w-4 h-4" />
+                Explore Groups
+              </Link>
             </div>
 
             <motion.p className="mt-3 text-sm text-muted-foreground" variants={item}>
@@ -266,31 +177,35 @@ const Hero = () => {
             </motion.p>
           </motion.div>
 
-          {/* Stats row */}
+          {/* Stats, inline rather than as a row of 3xl tiles. Four big numbers
+              cost ~120 px of the first screen, and once real post cards clear
+              the fold the numbers are no longer the strongest evidence on it —
+              the posts are. Each one still links to the page it came from. */}
           <motion.div
-            className="flex flex-wrap items-start justify-center gap-x-12 gap-y-8 px-4 max-w-3xl mx-auto"
+            className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-sm text-muted-foreground"
             variants={item}
           >
-            {visibleStats.map((stat) => (
-              <motion.div
-                key={stat.label}
-                variants={statVariants}
-                whileHover={{ y: -5, transition: { duration: 0.2 } }}
-              >
+            {visibleStats.map((stat, i) => (
+              <span key={stat.label} className="flex items-center gap-2">
+                {i > 0 && (
+                  <span aria-hidden className="text-muted-foreground/40">
+                    ·
+                  </span>
+                )}
                 <Link
                   to={stat.href}
-                  className="block text-center rounded-lg px-3 py-1 transition-colors hover:bg-muted/40"
+                  className="rounded px-1 py-0.5 transition-colors hover:text-foreground"
                 >
-                  <div className={`text-3xl font-bold tabular-nums ${stat.color}`}>
-                    {stat.value === undefined ? (
-                      <span className="inline-block h-8 w-14 animate-pulse rounded bg-muted/50 align-middle" />
-                    ) : (
-                      stat.value.toLocaleString("en-IN")
-                    )}
-                  </div>
-                  <p className="text-muted-foreground text-sm">{stat.label}</p>
+                  {stat.value === undefined ? (
+                    <span className="inline-block h-4 w-8 animate-pulse rounded bg-muted/50 align-middle" />
+                  ) : (
+                    <span className={`font-semibold tabular-nums ${stat.color}`}>
+                      {stat.value.toLocaleString("en-IN")}
+                    </span>
+                  )}{" "}
+                  {stat.label.toLowerCase()}
                 </Link>
-              </motion.div>
+              </span>
             ))}
           </motion.div>
         </motion.div>

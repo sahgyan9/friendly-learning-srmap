@@ -95,11 +95,14 @@ export const CommunityPostsSection = () => {
 
   if (loading) return null;
 
+  // Tighter at the top than the sections below it: this one sits directly under
+  // the hero and the fold runs through it, so its padding is competing with the
+  // post cards it exists to introduce.
   return (
-    <section className="bg-muted/30 py-16">
+    <section className="bg-muted/30 pt-8 pb-16">
       <div className="container mx-auto px-4">
         {/* Section header — brand pill pattern (emerald accent, §8 of brand guidelines) */}
-        <div className="mb-8 text-center">
+        <div className="mb-6 text-center">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 mb-4 rounded-full border border-emerald-500/20 bg-emerald-500/8 text-emerald-700 dark:text-emerald-400 text-xs font-semibold tracking-widest uppercase">
             <FileText className="w-3.5 h-3.5" />
             Posts
