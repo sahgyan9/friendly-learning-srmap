@@ -268,14 +268,17 @@ const Communities = () => {
           </div>
         </div>
 
+        {/* A list, not a grid. Groups are places; a three-across grid of cards
+            made them look like the post feed and the mentor directory, which is
+            exactly the thing people had learned to scroll past. */}
         {loading ? (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {Array.from({ length: 6 }).map((_, index) => (
-              <Skeleton key={index} className="h-52 w-full rounded-xl" />
+          <div className="space-y-3">
+            {Array.from({ length: 5 }).map((_, index) => (
+              <Skeleton key={index} className="h-[104px] w-full rounded-xl" />
             ))}
           </div>
         ) : communities.length > 0 ? (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-8">
+          <div className="mb-8 space-y-3">
             {communities.map((community) => (
               <CommunityCard
                 key={community.id}

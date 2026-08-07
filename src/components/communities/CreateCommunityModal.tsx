@@ -25,38 +25,50 @@ import {
   createCommunity,
   type CommunityVisibility,
 } from "@/integrations/supabase/services/communities";
+import { sendGroupMessage } from "@/integrations/supabase/services/community-group-chat";
 
 interface CreateCommunityModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-const PLACEHOLDERS: Record<string, { name: string; description: string }> = {
+const PLACEHOLDERS: Record<
+  string,
+  { name: string; description: string; firstMessage: string }
+> = {
   hackathon: {
     name: "SIH 2026 — Team Alpha",
     description: "What you're building, which skills the team still needs, and when you meet.",
+    firstMessage: "Starting this for SIH prep — drop your name and what you're good at.",
   },
   project: {
     name: "Campus food delivery app",
     description: "The idea, what's built so far, the stack, and who you're looking for.",
+    firstMessage: "Here's where the project is so far, and what I need help with —",
   },
   club: {
     name: "Robotics Club",
     description: "What the club does, who can join, and when you meet.",
+    firstMessage: "Welcome! Next meet is on — say hi so I know who's here.",
   },
   study: {
     name: "DSA prep — placements 2027",
     description: "What you're revising, how often you meet, and what a member is expected to do.",
+    firstMessage: "Plan for this week: — anyone want to go through it together?",
   },
   research: {
     name: "ML reading group",
     description: "The area, what you read, and what someone joining should already know.",
+    firstMessage: "First paper I'd like us to read is —",
   },
   general: {
     name: "Give the group a clear name",
     description: "Say what this group is for and who should join. People decide from this alone.",
+    firstMessage: "Hi everyone — here's what I'm hoping we do with this group.",
   },
 };
+
+const FIRST_MESSAGE_MAX = 500;
 
 /**
  * Open to anyone signed in. It used to be a mentor privilege, on the theory that
@@ -75,6 +87,7 @@ export const CreateCommunityModal = ({ open, onOpenChange }: CreateCommunityModa
   const [kind, setKind] = useState("");
   const [visibility, setVisibility] = useState<CommunityVisibility>("public");
   const [coverImage, setCoverImage] = useState<string | null>(null);
+  const [firstMessage, setFirstMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   const placeholders = PLACEHOLDERS[kind] ?? PLACEHOLDERS.general;
@@ -86,6 +99,7 @@ export const CreateCommunityModal = ({ open, onOpenChange }: CreateCommunityModa
     setKind("");
     setVisibility("public");
     setCoverImage(null);
+    setFirstMessage("");
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -103,6 +117,23 @@ export const CreateCommunityModal = ({ open, onOpenChange }: CreateCommunityModa
     if (error || !data) {
       toast.error(error?.message ?? "Could not create the group");
       return;
+    }
+
+    // The opening message, if one was written. A group whose room is empty on
+    // arrival asks every visitor to be the first to speak, and mostly nobody
+    // is — so the person who had a reason to start the group says the first
+    // thing, in their own words, at the moment they are most motivated to.
+    //
+    // Deliberately not fatal: the group exists either way, and blocking the
+    // navigation on a chat write would turn a nice-to-have into a failure.
+    const opener = firstMessage.trim();
+    if (opener) {
+      const { error: messageError } = await sendGroupMessage(data.id, "general", opener);
+      if (messageError) {
+        toast.warning("Group created, but that first message didn't send", {
+          description: "You can post it from the group page.",
+        });
+      }
     }
 
     toast.success("Group created", {
@@ -249,6 +280,28 @@ export const CreateCommunityModal = ({ open, onOpenChange }: CreateCommunityModa
                 );
               })}
             </div>
+          </div>
+
+          {/* The first message. Optional, and the only field here that is
+              about the room rather than the listing — a group that opens with
+              something already said reads as started, not abandoned. */}
+          <div className="space-y-2">
+            <Label htmlFor="community-first-message">
+              First message{" "}
+              <span className="font-normal text-muted-foreground">— optional</span>
+            </Label>
+            <Textarea
+              id="community-first-message"
+              value={firstMessage}
+              onChange={(event) => setFirstMessage(event.target.value)}
+              placeholder={placeholders.firstMessage}
+              rows={2}
+              maxLength={FIRST_MESSAGE_MAX}
+            />
+            <p className="text-xs text-muted-foreground">
+              Posted in the group chat as you, right after the group is created. It's the first
+              thing anyone who joins will read.
+            </p>
           </div>
 
           <div className="flex justify-end gap-2">

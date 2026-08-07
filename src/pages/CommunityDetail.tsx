@@ -5,15 +5,12 @@ import {
   ArrowLeft,
   Check,
   Globe,
-  Hash,
   Loader2,
   Lock,
   LogIn,
   LogOut,
-  MessageSquare,
   MoreHorizontal,
   Pencil,
-  Plus,
   Trash2,
   UserPlus,
   Users,
@@ -35,7 +32,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { PostCard } from "@/components/community/PostCard";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { CreatePostModal } from "@/components/community/CreatePostModal";
 import { CommunityMemberList } from "@/components/communities/CommunityMemberList";
 import { CommunityAvatar } from "@/components/communities/CommunityAvatar";
@@ -44,7 +47,6 @@ import JoinRequestDialog from "@/components/communities/JoinRequestDialog";
 import JoinRequestsPanel from "@/components/communities/JoinRequestsPanel";
 import { CommunityGroupChat } from "@/components/communities/CommunityGroupChat";
 import { EditCommunityModal } from "@/components/communities/EditCommunityModal";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -52,6 +54,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/context/AuthContext";
+import { formatRelativeTime } from "@/utils/date-utils";
 import {
   deleteCommunity,
   getCommunityBySlug,
@@ -64,24 +67,26 @@ import {
 } from "@/integrations/supabase/services/communities";
 import {
   getCommunityPosts,
-  togglePostLike,
   type CommunityPost,
 } from "@/integrations/supabase/services/community-posts";
 
+/**
+ * A group is a room, not a card.
+ *
+ * The page used to be a bordered header card above a tab strip — "Posts &
+ * Discussions" | "Group Chat" — beside a fixed 20rem member panel. That gave a
+ * quarter of the screen to a list of three avatars, and split an already quiet
+ * room across two tabs, one of which was empty in every group on the site.
+ *
+ * Now: one header that is part of the page rather than a box sitting on it, one
+ * conversation with the posts folded into it, full width. Members moved behind
+ * the member count, which is where people look for them anyway.
+ */
 const CommunityDetail = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
-
-  const tabParam = searchParams.get("tab");
-  const [activeTab, setActiveTab] = useState<string>(tabParam || "chat");
-
-  useEffect(() => {
-    if (tabParam) {
-      setActiveTab(tabParam);
-    }
-  }, [tabParam]);
 
   const [community, setCommunity] = useState<Community | null>(null);
   const [posts, setPosts] = useState<CommunityPost[]>([]);
@@ -91,7 +96,15 @@ const CommunityDetail = () => {
   const [createOpen, setCreateOpen] = useState(false);
   const [requestOpen, setRequestOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const [membersOpen, setMembersOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+
+  // The join-request notification deep-links to ?tab=requests, from back when
+  // requests were a tab. The panel is inline now and normally only appears when
+  // there is something in it, but arriving from that link must always land on
+  // something — including the reassuring empty case after the owner has already
+  // dealt with the request from somewhere else.
+  const cameForRequests = searchParams.get("tab") === "requests";
 
   const loadPosts = useCallback(async (communityId: string) => {
     const { data } = await getCommunityPosts({ communityId, limit: 50 });
@@ -207,34 +220,10 @@ const CommunityDetail = () => {
     navigate("/communities");
   };
 
-  const handleLike = async (postId: string, event: React.MouseEvent) => {
-    event.stopPropagation();
-    if (!user) {
-      navigate("/signin");
-      return;
-    }
-
-    // Optimistic: the count moves under the finger, and reverts if the write fails.
-    setPosts((current) =>
-      current.map((post) =>
-        post.id === postId
-          ? {
-              ...post,
-              viewer_has_liked: !post.viewer_has_liked,
-              likes_count: post.likes_count + (post.viewer_has_liked ? -1 : 1),
-            }
-          : post,
-      ),
-    );
-
-    const { error } = await togglePostLike(postId);
-    if (error && community) loadPosts(community.id);
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
-        <div className="container mx-auto max-w-6xl px-4 py-12">
+        <div className="container mx-auto max-w-5xl px-4 py-12">
           <Skeleton className="mb-4 h-40 w-full rounded-xl" />
           <Skeleton className="h-64 w-full rounded-xl" />
         </div>
@@ -259,6 +248,11 @@ const CommunityDetail = () => {
   }
 
   const kind = getCommunityKindMeta(community.kind);
+  const pendingRequests = community.pending_request_count ?? 0;
+  const showRequests =
+    Boolean(community.viewer_is_owner) &&
+    community.visibility === "private" &&
+    (pendingRequests > 0 || cameForRequests);
 
   return (
     <div className="min-h-screen bg-background">
@@ -267,7 +261,7 @@ const CommunityDetail = () => {
         description={community.description.slice(0, 155)}
       />
 
-      <div className="container mx-auto max-w-6xl px-4 pt-6 pb-36 md:pt-8 md:pb-48">
+      <div className="container mx-auto max-w-5xl px-4 pt-6 pb-36 md:pt-8 md:pb-48">
         <Button asChild variant="ghost" size="sm" className="mb-4 -ml-2">
           <Link to="/communities">
             <ArrowLeft className="mr-2 h-4 w-4" />
@@ -275,208 +269,211 @@ const CommunityDetail = () => {
           </Link>
         </Button>
 
-        <Card className="mb-6">
-          <CardContent className="flex flex-col gap-4 p-6">
-            <div className="flex items-start gap-4">
-              <CommunityAvatar
-                slug={community.slug}
-                kind={community.kind}
-                name={community.name}
-                coverImage={community.cover_image}
-                className="h-14 w-14 md:h-16 md:w-16"
-                emojiClassName="text-2xl md:text-3xl"
-              />
+        {/* Header. Deliberately not a Card: it is the top of the room, not an
+            object sitting inside it. One rule under it does the separating that
+            a border, a radius and a shadow were doing before. */}
+        <header className="mb-6 border-b pb-6">
+          <div className="flex items-start gap-4">
+            <CommunityAvatar
+              slug={community.slug}
+              kind={community.kind}
+              name={community.name}
+              coverImage={community.cover_image}
+              className="h-16 w-16 shrink-0 md:h-20 md:w-20"
+              emojiClassName="text-3xl md:text-4xl"
+            />
 
-              <div className="min-w-0 flex-1">
-                <div className="mb-2 flex flex-wrap items-center gap-2">
-                  <Badge variant="secondary" className="gap-1">
-                    <span aria-hidden>{kind.emoji}</span>
-                    {kind.label}
-                  </Badge>
-                  {community.visibility === "private" ? (
-                    <Badge variant="outline" className="gap-1 text-muted-foreground">
-                      <Lock className="h-3 w-3" />
-                      Invite only
-                    </Badge>
-                  ) : (
-                    <Badge
-                      variant="outline"
-                      className="gap-1 border-green-500/30 text-green-700 dark:text-green-400"
-                    >
-                      <Globe className="h-3 w-3" />
-                      Open group
-                    </Badge>
-                  )}
-                  {community.is_archived && <Badge variant="outline">Archived</Badge>}
-                </div>
+            <div className="min-w-0 flex-1">
+              <h1 className="text-2xl font-bold leading-tight md:text-3xl">{community.name}</h1>
 
-                <h1 className="text-2xl font-bold md:text-3xl">{community.name}</h1>
+              <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
+                <span className="font-medium text-foreground">
+                  <span aria-hidden>{kind.emoji}</span> {kind.label}
+                </span>
+                <span aria-hidden>·</span>
+                {community.visibility === "private" ? (
+                  <span className="inline-flex items-center gap-1">
+                    <Lock className="h-3.5 w-3.5" />
+                    Invite only
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 text-green-700 dark:text-green-400">
+                    <Globe className="h-3.5 w-3.5" />
+                    Open
+                  </span>
+                )}
+                <span aria-hidden>·</span>
+                {/* Recency, not a total. "34 discussions" is a number this
+                    product does not have; when it was last talked in is the
+                    thing worth knowing before walking in. */}
+                <span>Active {formatRelativeTime(community.last_activity_at)}</span>
+                {community.is_archived && (
+                  <>
+                    <span aria-hidden>·</span>
+                    <Badge variant="outline">Archived</Badge>
+                  </>
+                )}
               </div>
             </div>
+          </div>
 
-            <p className="whitespace-pre-line text-muted-foreground">{community.description}</p>
+          <p className="mt-4 whitespace-pre-line text-muted-foreground">{community.description}</p>
 
-            <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-              <span className="flex items-center gap-1.5">
-                <Users className="h-4 w-4" />
-                {community.member_count} {community.member_count === 1 ? "member" : "members"}
-              </span>
-              <span className="flex items-center gap-1.5">
-                <MessageSquare className="h-4 w-4" />
-                {community.post_count} {community.post_count === 1 ? "post" : "posts"}
-              </span>
-              {/* Owners no longer have to be mentors, so /mentor/:id would be a
-                  dead end for most of them. Link only when it actually resolves. */}
-              <span>
-                Run by{" "}
-                {community.owner.is_mentor ? (
-                  <Link
-                    to={`/mentor/${community.owner.id}`}
-                    className="font-medium text-foreground hover:text-primary"
-                  >
-                    {community.owner.name}
-                  </Link>
-                ) : (
-                  <span className="font-medium text-foreground">{community.owner.name}</span>
-                )}
-              </span>
-            </div>
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            {/* The member count is the door to the member list. It used to be a
+                permanent 20rem column rendering three avatars. */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setMembersOpen(true)}
+              className="gap-1.5"
+            >
+              <Users className="h-4 w-4" />
+              {community.member_count} {community.member_count === 1 ? "member" : "members"}
+            </Button>
 
-            <div className="flex flex-wrap gap-2 border-t pt-4">
-              {community.viewer_is_owner ? (
-                <>
-                  <Badge variant="outline" className="h-9 items-center px-3">
-                    You run this group
-                  </Badge>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size="icon" aria-label="Manage group">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start">
-                      <DropdownMenuItem onSelect={() => setEditOpen(true)}>
-                        <Pencil className="mr-2 h-4 w-4" />
-                        Edit group
-                      </DropdownMenuItem>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <DropdownMenuItem
-                            onSelect={(event) => event.preventDefault()}
-                            className="text-destructive focus:text-destructive"
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Delete group
-                          </DropdownMenuItem>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Delete {community.name}?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              This permanently deletes the group — its posts, chat history and member
-                              list all go with it. This can't be undone.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={handleDelete}
-                              disabled={deleting}
-                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                            >
-                              {deleting ? "Deleting..." : "Delete group"}
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </>
-              ) : community.viewer_is_member ? (
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="outline" disabled={working}>
-                      <LogOut className="mr-2 h-4 w-4" />
-                      Leave group
+            {community.viewer_is_owner ? (
+              <>
+                <Badge variant="outline" className="h-9 items-center px-3">
+                  You run this group
+                </Badge>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="icon" aria-label="Manage group">
+                      <MoreHorizontal className="h-4 w-4" />
                     </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Leave {community.name}?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        You'll stop being able to post here. Your existing posts stay, and you can
-                        rejoin whenever you like.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Stay</AlertDialogCancel>
-                      <AlertDialogAction onClick={handleLeave}>Leave</AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              ) : community.is_archived ? (
-                <p className="text-sm text-muted-foreground">
-                  This group has been archived and isn't taking new members.
-                </p>
-              ) : community.visibility === "private" ? (
-                // An invitation outranks a pending request: if the owner has
-                // reached out in the meantime, offer the door rather than
-                // leaving them staring at "Requested".
-                community.viewer_has_invite ? (
-                  <Button onClick={handleAcceptInvite} disabled={working}>
-                    {working ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                      <Check className="mr-2 h-4 w-4" />
-                    )}
-                    Accept invitation
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start">
+                    <DropdownMenuItem onSelect={() => setEditOpen(true)}>
+                      <Pencil className="mr-2 h-4 w-4" />
+                      Edit group
+                    </DropdownMenuItem>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <DropdownMenuItem
+                          onSelect={(event) => event.preventDefault()}
+                          className="text-destructive focus:text-destructive"
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Delete group
+                        </DropdownMenuItem>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete {community.name}?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This permanently deletes the group — its posts, chat history and member
+                            list all go with it. This can't be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={handleDelete}
+                            disabled={deleting}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            {deleting ? "Deleting..." : "Delete group"}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </>
+            ) : community.viewer_is_member ? (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="outline" disabled={working}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Leave group
                   </Button>
-                ) : community.viewer_has_requested ? (
-                  <Button variant="outline" disabled>
-                    Requested
-                  </Button>
-                ) : (
-                  <Button
-                    onClick={() => (user ? setRequestOpen(true) : navigate("/signin"))}
-                    disabled={working}
-                  >
-                    <UserPlus className="mr-2 h-4 w-4" />
-                    Request to join
-                  </Button>
-                )
-              ) : (
-                // handleJoin already redirects a signed-out visitor to sign-in,
-                // but "Join group" promises something that will not happen on
-                // this click. Say where the button actually goes.
-                <Button onClick={handleJoin} disabled={working}>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Leave {community.name}?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      You'll stop being able to post here. Your existing posts stay, and you can
+                      rejoin whenever you like.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Stay</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleLeave}>Leave</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            ) : community.is_archived ? (
+              <p className="text-sm text-muted-foreground">
+                This group has been archived and isn't taking new members.
+              </p>
+            ) : community.visibility === "private" ? (
+              // An invitation outranks a pending request: if the owner has
+              // reached out in the meantime, offer the door rather than
+              // leaving them staring at "Requested".
+              community.viewer_has_invite ? (
+                <Button onClick={handleAcceptInvite} disabled={working}>
                   {working ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : user ? (
-                    <Check className="mr-2 h-4 w-4" />
                   ) : (
-                    <LogIn className="mr-2 h-4 w-4" />
+                    <Check className="mr-2 h-4 w-4" />
                   )}
-                  {user ? "Join group" : "Sign in to join"}
+                  Accept invitation
                 </Button>
-              )}
-
-              {community.viewer_can_post && (
-                <Button variant="secondary" onClick={() => setCreateOpen(true)}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Post in this group
+              ) : community.viewer_has_requested ? (
+                <Button variant="outline" disabled>
+                  Requested
                 </Button>
-              )}
+              ) : (
+                <Button
+                  onClick={() => (user ? setRequestOpen(true) : navigate("/signin"))}
+                  disabled={working}
+                >
+                  <UserPlus className="mr-2 h-4 w-4" />
+                  Request to join
+                </Button>
+              )
+            ) : (
+              // handleJoin already redirects a signed-out visitor to sign-in,
+              // but "Join group" promises something that will not happen on
+              // this click. Say where the button actually goes.
+              <Button onClick={handleJoin} disabled={working}>
+                {working ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : user ? (
+                  <Check className="mr-2 h-4 w-4" />
+                ) : (
+                  <LogIn className="mr-2 h-4 w-4" />
+                )}
+                {user ? "Join group" : "Sign in to join"}
+              </Button>
+            )}
 
-              {/* Shown to everyone who can see the group, not just the owner.
-                  A member forwarding the link to a friend is how a group grows;
-                  restricting that to one person is how it doesn't. Archived
-                  groups are excluded — there is nothing to invite anyone to. */}
-              {!community.is_archived && (
-                <InviteLinkButton slug={community.slug} name={community.name} />
+            {/* Shown to everyone who can see the group, not just the owner.
+                A member forwarding the link to a friend is how a group grows;
+                restricting that to one person is how it doesn't. Archived
+                groups are excluded — there is nothing to invite anyone to. */}
+            {!community.is_archived && (
+              <InviteLinkButton slug={community.slug} name={community.name} />
+            )}
+
+            <span className="ml-auto text-sm text-muted-foreground">
+              {/* Owners no longer have to be mentors, so /mentor/:id would be a
+                  dead end for most of them. Link only when it actually resolves. */}
+              Run by{" "}
+              {community.owner.is_mentor ? (
+                <Link
+                  to={`/mentor/${community.owner.id}`}
+                  className="font-medium text-foreground hover:text-primary"
+                >
+                  {community.owner.name}
+                </Link>
+              ) : (
+                <span className="font-medium text-foreground">{community.owner.name}</span>
               )}
-            </div>
-          </CardContent>
-        </Card>
+            </span>
+          </div>
+        </header>
 
         {/* Nobody did anything wrong here, so this reads as a description of
             the group rather than a refusal. "Access denied" would be both
@@ -501,9 +498,7 @@ const CommunityDetail = () => {
                     get a notification.
                   </p>
                   {!community.viewer_has_invite && (
-                    <Button
-                      onClick={() => (user ? setRequestOpen(true) : navigate("/signin"))}
-                    >
+                    <Button onClick={() => (user ? setRequestOpen(true) : navigate("/signin"))}>
                       <UserPlus className="mr-2 h-4 w-4" />
                       Request to join
                     </Button>
@@ -513,106 +508,47 @@ const CommunityDetail = () => {
             </CardContent>
           </Card>
         ) : (
-        <div className="grid gap-6 lg:grid-cols-[1fr_20rem]">
           <div className="space-y-4">
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
-              {/* bg-muted sits at 96% lightness against a 100% white card, so the
-                  pill was nearly invisible in light mode and the inactive tab read
-                  as plain text rather than a second clickable control. A visible
-                  border plus stronger inactive-text contrast fixes both. */}
-              <TabsList className="mb-4 flex h-auto flex-wrap gap-1 border bg-muted/70 p-1 shadow-sm">
-                <TabsTrigger
-                  value="posts"
-                  className="gap-2 data-[state=inactive]:text-foreground/75"
-                >
-                  <MessageSquare className="h-4 w-4" />
-                  Posts & Discussions
-                </TabsTrigger>
-                <TabsTrigger
-                  value="chat"
-                  className="gap-2 data-[state=inactive]:text-foreground/75"
-                >
-                  <Hash className="h-4 w-4" />
-                  Group Chat
-                </TabsTrigger>
-                {community.viewer_is_owner && community.visibility === "private" && (
-                  <TabsTrigger
-                    value="requests"
-                    className="gap-2 data-[state=inactive]:text-foreground/75"
-                  >
-                    Requests
-                    {(community.pending_request_count ?? 0) > 0 && (
-                      <Badge variant="secondary" className="px-1.5 py-0 text-[11px]">
-                        {community.pending_request_count}
-                      </Badge>
-                    )}
-                  </TabsTrigger>
-                )}
-              </TabsList>
+            {/* Join requests appear when there are join requests, rather than
+                living in a permanently-visible tab that is usually empty. */}
+            {showRequests && <JoinRequestsPanel communityId={community.id} onDecided={load} />}
 
-              <TabsContent value="posts" className="space-y-4">
-                {posts.length > 0 ? (
-                  posts.map((post) => (
-                    <PostCard
-                      key={post.id}
-                      post={post}
-                      onOpen={(postId) => navigate(`/community-posts/${postId}`)}
-                      onLike={handleLike}
-                    />
-                  ))
-                ) : (
-                  <Card>
-                    <CardContent className="flex flex-col items-center gap-3 py-14 text-center">
-                      <span className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
-                        <MessageSquare className="h-6 w-6" />
-                      </span>
-                      <p className="font-medium">Nothing posted here yet</p>
-                      <p className="max-w-sm text-sm text-muted-foreground">
-                        {community.viewer_can_post
-                          ? "You're a member — say what the group is working on and get it started."
-                          : "Join the group to post here."}
-                      </p>
-                      {community.viewer_can_post && (
-                        <Button onClick={() => setCreateOpen(true)}>
-                          <Plus className="mr-2 h-4 w-4" />
-                          Write the first post
-                        </Button>
-                      )}
-                    </CardContent>
-                  </Card>
-                )}
-              </TabsContent>
-
-              <TabsContent value="chat" className="space-y-4">
-                <CommunityGroupChat
-                  communityId={community.id}
-                  communitySlug={community.slug}
-                  communityKind={community.kind}
-                  communityName={community.name}
-                  communityCoverImage={community.cover_image}
-                  ownerName={community.owner.name}
-                  isMember={Boolean(community.viewer_is_member)}
-                  isOwner={Boolean(community.viewer_is_owner)}
-                />
-              </TabsContent>
-
-              {community.viewer_is_owner && community.visibility === "private" && (
-                <TabsContent value="requests">
-                  <JoinRequestsPanel communityId={community.id} onDecided={load} />
-                </TabsContent>
-              )}
-            </Tabs>
+            <CommunityGroupChat
+              communityId={community.id}
+              communityKind={community.kind}
+              ownerName={community.owner.name}
+              isMember={Boolean(community.viewer_is_member)}
+              isOwner={Boolean(community.viewer_is_owner)}
+              posts={posts}
+              onOpenPost={(postId) => navigate(`/community-posts/${postId}`)}
+              onCreatePost={community.viewer_can_post ? () => setCreateOpen(true) : undefined}
+            />
           </div>
-
-          <CommunityMemberList
-            communityId={community.id}
-            isOwner={community.viewer_is_owner}
-            visibility={community.visibility}
-            onChanged={load}
-          />
-        </div>
         )}
       </div>
+
+      {/* Members, on demand. */}
+      <Sheet open={membersOpen} onOpenChange={setMembersOpen}>
+        <SheetContent className="w-full overflow-y-auto sm:max-w-md">
+          <SheetHeader>
+            <SheetTitle>
+              Members{" "}
+              <span className="font-normal text-muted-foreground">({community.member_count})</span>
+            </SheetTitle>
+            <SheetDescription>Everyone who has joined {community.name}.</SheetDescription>
+          </SheetHeader>
+
+          <div className="mt-4">
+            <CommunityMemberList
+              communityId={community.id}
+              isOwner={community.viewer_is_owner}
+              visibility={community.visibility}
+              onChanged={load}
+              variant="plain"
+            />
+          </div>
+        </SheetContent>
+      </Sheet>
 
       <JoinRequestDialog
         open={requestOpen}

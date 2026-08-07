@@ -49,6 +49,17 @@ export type Community = {
   post_count: number;
   is_archived: boolean;
   created_at: string;
+  /**
+   * Newest of: last chat message, last post, and the group's own creation.
+   *
+   * This is what the UI shows instead of a total. "34 discussions" is a number
+   * this product does not have yet; "active 2 hours ago" is one it does, and it
+   * answers the question a student is actually asking before walking in.
+   *
+   * Falls back to created_at when the deployed RPC predates the column, so the
+   * frontend can ship ahead of the migration and quietly get more accurate.
+   */
+  last_activity_at: string;
   owner: { id: string; name: string; profile_image: string | null; is_mentor: boolean };
   viewer_is_member: boolean;
   viewer_is_owner: boolean;
@@ -122,6 +133,8 @@ type CommunityRow = {
   post_count: number;
   is_archived: boolean;
   created_at: string;
+  /** Absent until the last-activity migration is applied. */
+  last_activity_at?: string | null;
   owner_id: string;
   owner_name: string | null;
   owner_image: string | null;
@@ -150,6 +163,7 @@ function toCommunity(row: CommunityRow): Community {
     post_count: row.post_count,
     is_archived: row.is_archived,
     created_at: row.created_at,
+    last_activity_at: row.last_activity_at ?? row.created_at,
     owner: {
       id: row.owner_id,
       // A missing name means the owner's row is gone, not that they are called
@@ -309,7 +323,10 @@ export const createCommunity = async (input: CreateCommunityInput) => {
   const { data, error } = await supabase
     .from("communities")
     .insert(row)
-    .select("slug")
+    // `id` as well as `slug`: the create flow posts the owner's opening message
+    // into the new group straight after this returns, so no group is born with
+    // an empty room.
+    .select("id, slug")
     .single();
 
   if (error) {
