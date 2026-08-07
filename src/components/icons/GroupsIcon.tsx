@@ -2,8 +2,8 @@ import React from "react";
 
 /**
  * Traced from public/lovable-uploads/groups3.svg — 3 people group arrangement,
- * using `stroke="currentColor"` so it recolors with the accent and switches for light/dark
- * like every other nav icon.
+ * with tuned viewBox ("1.5 4 21 15.5") and strokeWidth="2.2" so it matches the exact
+ * visual scale, height, and line weight of the surrounding navbar icons.
  */
 export const GroupsIcon: React.FC<React.SVGProps<SVGSVGElement>> = ({
   className = "h-5 w-5",
@@ -11,10 +11,10 @@ export const GroupsIcon: React.FC<React.SVGProps<SVGSVGElement>> = ({
 }) => {
   return (
     <svg
-      viewBox="0 0 24 24"
+      viewBox="1.5 4 21 15.5"
       fill="none"
       stroke="currentColor"
-      strokeWidth="2"
+      strokeWidth="2.2"
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
