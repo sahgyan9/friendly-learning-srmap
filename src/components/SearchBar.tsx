@@ -137,7 +137,7 @@ const SearchBar = ({ onSearch, onGeminiSearch }: SearchBarProps) => {
   };
 
   return (
-    <div className="w-full max-w-3xl mx-auto mb-10">
+    <div className="w-full mb-4">
       <form 
         onSubmit={handleSubmit}
         className="relative flex items-center transition-all duration-300 group"
