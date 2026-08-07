@@ -118,14 +118,14 @@ export function PostImageGallery({
             e.stopPropagation();
             onImageClick?.(images[0], 0);
           }}
-          className="group/img relative col-span-3 h-full w-full overflow-hidden cursor-zoom-in focus-visible:outline-none"
+          className="group/img relative col-span-3 flex h-full w-full items-center justify-center overflow-hidden cursor-zoom-in bg-zinc-950/90 dark:bg-black/95 focus-visible:outline-none"
           aria-label={`View main image for "${title}"`}
         >
           <img
             src={images[0]}
             alt=""
             loading="lazy"
-            className="h-full w-full object-cover transition-transform duration-300 group-hover/img:scale-105"
+            className="h-full w-full object-contain transition-transform duration-300 group-hover/img:scale-102"
           />
         </button>
 
@@ -139,14 +139,14 @@ export function PostImageGallery({
                 e.stopPropagation();
                 onImageClick?.(src, index + 1);
               }}
-              className="group/img relative h-[calc(50%-3px)] w-full overflow-hidden cursor-zoom-in focus-visible:outline-none"
+              className="group/img relative h-[calc(50%-3px)] w-full overflow-hidden cursor-zoom-in bg-zinc-900/60 focus-visible:outline-none"
               aria-label={`View image ${index + 2} of 3 for "${title}"`}
             >
               <img
                 src={src}
                 alt=""
                 loading="lazy"
-                className="h-full w-full object-cover transition-transform duration-300 group-hover/img:scale-105"
+                className="h-full w-full object-cover object-top transition-transform duration-300 group-hover/img:scale-105"
               />
             </button>
           ))}
@@ -160,21 +160,21 @@ export function PostImageGallery({
 
   return (
     <div className={cn("grid h-96 sm:h-[440px] grid-cols-5 gap-1.5 overflow-hidden rounded-xl border border-border/60 bg-muted/20", className)}>
-      {/* Main Hero Image on Left (60% width) */}
+      {/* Main Hero Image on Left (60% width) - object-contain ensures no title/text is cut off */}
       <button
         type="button"
         onClick={(e) => {
           e.stopPropagation();
           onImageClick?.(images[0], 0);
         }}
-        className="group/img relative col-span-3 h-full w-full overflow-hidden cursor-zoom-in focus-visible:outline-none"
+        className="group/img relative col-span-3 flex h-full w-full items-center justify-center overflow-hidden cursor-zoom-in bg-zinc-950/90 dark:bg-black/95 focus-visible:outline-none"
         aria-label={`View main image for "${title}"`}
       >
         <img
           src={images[0]}
           alt=""
           loading="lazy"
-          className="h-full w-full object-cover transition-transform duration-300 group-hover/img:scale-105"
+          className="h-full w-full object-contain transition-transform duration-300 group-hover/img:scale-102"
         />
       </button>
 
@@ -193,14 +193,14 @@ export function PostImageGallery({
                 e.stopPropagation();
                 onImageClick?.(src, actualIndex);
               }}
-              className="group/img relative h-[calc(33.333%-2px)] w-full overflow-hidden cursor-zoom-in focus-visible:outline-none"
+              className="group/img relative h-[calc(33.333%-2px)] w-full overflow-hidden cursor-zoom-in bg-zinc-900/60 focus-visible:outline-none"
               aria-label={`View image ${actualIndex + 1} of ${count} for "${title}"`}
             >
               <img
                 src={src}
                 alt=""
                 loading="lazy"
-                className="h-full w-full object-cover transition-transform duration-300 group-hover/img:scale-105"
+                className="h-full w-full object-cover object-top transition-transform duration-300 group-hover/img:scale-105"
               />
               {hasMore && (
                 <div className="absolute inset-0 flex items-center justify-center bg-black/65 font-bold text-white text-xl sm:text-2xl backdrop-blur-[2px] transition-bg group-hover/img:bg-black/75">

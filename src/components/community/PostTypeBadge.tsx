@@ -7,9 +7,9 @@ const TYPE_STYLES: Record<string, string> = {
   hackathon: "bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200",
   "study-help": "bg-sky-100 text-sky-900 dark:bg-sky-950 dark:text-sky-200",
   project: "bg-violet-100 text-violet-900 dark:bg-violet-950 dark:text-violet-200",
-  research: "bg-emerald-100 text-emerald-900 dark:bg-emerald-950 dark:text-emerald-200",
+  research: "bg-teal-100 text-teal-900 dark:bg-teal-950 dark:text-teal-200",
   "problem-solving": "bg-rose-100 text-rose-900 dark:bg-rose-950 dark:text-rose-200",
-  achievement: "bg-yellow-100 text-yellow-900 dark:bg-yellow-950 dark:text-yellow-200",
+  achievement: "bg-emerald-100 text-emerald-900 border border-emerald-300/80 dark:bg-emerald-950/80 dark:text-emerald-300 dark:border-emerald-500/50 font-semibold shadow-xs",
   announcement: "bg-orange-100 text-orange-900 dark:bg-orange-950 dark:text-orange-200",
   general: "bg-muted text-muted-foreground",
 };
@@ -23,9 +23,9 @@ const TYPE_ACCENTS: Record<string, string> = {
   hackathon: "bg-amber-400",
   "study-help": "bg-sky-400",
   project: "bg-violet-400",
-  research: "bg-emerald-400",
+  research: "bg-teal-400",
   "problem-solving": "bg-rose-400",
-  achievement: "bg-yellow-400",
+  achievement: "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]",
   announcement: "bg-orange-400",
   general: "bg-border",
 };

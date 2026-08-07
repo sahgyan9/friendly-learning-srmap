@@ -19,6 +19,7 @@ const GRADIENT_MAP: Record<string, string> = {
   rose:    "from-rose-400 via-rose-500 to-pink-500",
   emerald: "from-emerald-400 via-emerald-500 to-teal-500",
   amber:   "from-amber-400 via-orange-400 to-amber-500",
+  gold:    "from-yellow-300 via-amber-400 to-yellow-500",
   violet:  "from-violet-400 via-purple-500 to-violet-500",
   sky:     "from-sky-400 via-blue-400 to-cyan-400",
   orange:  "from-orange-400 via-amber-500 to-orange-500",
