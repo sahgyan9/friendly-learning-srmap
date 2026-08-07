@@ -150,6 +150,22 @@ const SignIn = () => {
           
           <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
             <div className="bg-card text-card-foreground px-4 py-8 shadow sm:rounded-lg sm:px-10">
+              {/* Google button at the top — primary OAuth action */}
+              <GoogleAuthButton 
+                mode="signin" 
+                isLoading={isLoading} 
+                setIsLoading={setIsLoading} 
+              />
+
+              <div className="my-6 relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-border"></div>
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-3 bg-card text-muted-foreground">or sign in with email</span>
+                </div>
+              </div>
+
               <form className="space-y-6" onSubmit={handleSubmit}>
                 <div>
                   <Label htmlFor="email-address">Email address</Label>
@@ -201,25 +217,6 @@ const SignIn = () => {
                   </Button>
                 </div>
               </form>
-              
-              <div className="mt-6">
-                <div className="relative">
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-border"></div>
-                  </div>
-                  <div className="relative flex justify-center text-sm">
-                    <span className="px-2 bg-card text-muted-foreground">Or continue with</span>
-                  </div>
-                </div>
-
-                <div className="mt-6">
-                  <GoogleAuthButton 
-                    mode="signin" 
-                    isLoading={isLoading} 
-                    setIsLoading={setIsLoading} 
-                  />
-                </div>
-              </div>
             </div>
           </div>
         </motion.div>
