@@ -86,7 +86,6 @@ export const useSendMessage = (userId: string) => {
         setMessages(prev =>
           prev.map(msg => (msg.id === tempMessage.id ? data : msg))
         );
-        toast.success("Message sent successfully");
       }
     } catch (err) {
       console.error("Exception sending message:", err);
