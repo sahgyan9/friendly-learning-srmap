@@ -1,6 +1,6 @@
 import { PRIMARY_DOMAIN } from "@/lib/constants";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { GraduationCap, Sparkles, Code, Cpu, Palette, Star, Users, CheckCircle2, Atom, Binary } from "lucide-react";
 import { motion } from "framer-motion";
@@ -37,11 +37,26 @@ const Mentors = () => {
   const [isAiSearch, setIsAiSearch] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const { markSeen: markMentorsNavSeen } = useHasVisitedMentorsNav();
+  const cardsRef = useRef<HTMLDivElement>(null);
 
   // Reaching this page is what clears the welcome tour's navbar dot.
   useEffect(() => {
     markMentorsNavSeen();
   }, [markMentorsNavSeen]);
+
+  // On mount, scroll so the mentor cards section is the first thing visible.
+  // The hero remains accessible by scrolling up.
+  // We manually offset by the navbar height so the search bar isn't hidden behind it.
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (cardsRef.current) {
+        const navbarHeight = 64; // matches the fixed navbar height
+        const top = cardsRef.current.getBoundingClientRect().top + window.scrollY - navbarHeight;
+        window.scrollTo({ top, behavior: "instant" });
+      }
+    }, 50);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Fetch mentors from Supabase on component mount
   useEffect(() => {
@@ -204,7 +219,7 @@ const Mentors = () => {
         </div>
 
         {/* Search + Quick Filter Chips + Grid */}
-        <div className="container mx-auto px-4 py-4">
+        <div ref={cardsRef} className="container mx-auto px-4 py-4">
           <SearchBar onSearch={handleSearch} onGeminiSearch={handleGeminiSearch} />
 
           {/* Clean Standard Domain Filter Pills — horizontally scrollable */}
