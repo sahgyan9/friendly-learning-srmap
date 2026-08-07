@@ -97,13 +97,13 @@ export function CommunityWorkspaceHeader({
             name={community.name}
             coverImage={community.cover_image}
             className={`h-16 w-16 md:h-20 md:w-20 shrink-0 rounded-2xl ring-2 ring-border ${style.avatarRing}`}
-            emojiClassName="text-3xl md:text-4xl"
+            iconClassName="h-8 w-8 md:h-10 md:w-10"
           />
 
           <div className="min-w-0 flex-1 space-y-2">
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="secondary" className={`gap-1 ${style.pill}`}>
-                <span aria-hidden>{kind.emoji}</span>
+                <kind.icon className="h-3 w-3" aria-hidden />
                 {kind.label}
               </Badge>
 

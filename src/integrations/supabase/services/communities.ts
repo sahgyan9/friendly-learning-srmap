@@ -1,3 +1,5 @@
+import { BookOpen, Drama, MessagesSquare, Microscope, Wrench, Zap } from "lucide-react";
+
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { sanitizeInput } from "@/utils/input-sanitization";
@@ -16,12 +18,12 @@ type CommunityInsert = Database["public"]["Tables"]["communities"]["Insert"];
  */
 
 export const COMMUNITY_KINDS = [
-  { value: "hackathon", label: "Hackathon team", emoji: "⚡" },
-  { value: "project", label: "Project group", emoji: "🛠️" },
-  { value: "club", label: "Club or society", emoji: "🎭" },
-  { value: "study", label: "Study group", emoji: "📚" },
-  { value: "research", label: "Research group", emoji: "🔬" },
-  { value: "general", label: "Something else", emoji: "💬" },
+  { value: "hackathon", label: "Hackathon team", icon: Zap },
+  { value: "project", label: "Project group", icon: Wrench },
+  { value: "club", label: "Club or society", icon: Drama },
+  { value: "study", label: "Study group", icon: BookOpen },
+  { value: "research", label: "Research group", icon: Microscope },
+  { value: "general", label: "Something else", icon: MessagesSquare },
 ] as const;
 
 export type CommunityKind = (typeof COMMUNITY_KINDS)[number]["value"];

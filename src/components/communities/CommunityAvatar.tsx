@@ -42,8 +42,8 @@ interface CommunityAvatarProps {
   name: string;
   coverImage?: string | null;
   className?: string;
-  /** Roughly the emoji size. Tailwind text-* class. */
-  emojiClassName?: string;
+  /** Icon size. Tailwind h-/w- classes. */
+  iconClassName?: string;
 }
 
 export function CommunityAvatar({
@@ -52,7 +52,7 @@ export function CommunityAvatar({
   name,
   coverImage,
   className,
-  emojiClassName = "text-xl",
+  iconClassName = "h-5 w-5",
 }: CommunityAvatarProps) {
   const meta = getCommunityKindMeta(kind);
   const hue = HUES[hashOf(slug) % HUES.length];
@@ -70,7 +70,7 @@ export function CommunityAvatar({
   return (
     <span
       // Decorative: the group's name is always next to it in the markup, and a
-      // screen reader announcing "hackathon emoji" before it adds nothing.
+      // screen reader announcing "hackathon icon" before it adds nothing.
       aria-hidden
       title={name}
       className={cn(
@@ -82,7 +82,7 @@ export function CommunityAvatar({
         background: `linear-gradient(140deg, hsl(${hue} 62% 46%), hsl(${(hue + 24) % 360} 58% 38%))`,
       }}
     >
-      <span className={emojiClassName}>{meta.emoji}</span>
+      <meta.icon className={cn("text-white", iconClassName)} strokeWidth={2} />
     </span>
   );
 }

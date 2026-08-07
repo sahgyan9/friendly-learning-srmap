@@ -54,7 +54,7 @@ export function CommunityCard({ community, onMembershipChange }: CommunityCardPr
             name={community.name}
             coverImage={community.cover_image}
             className={`h-14 w-14 shrink-0 ring-2 ring-border transition-all duration-300 ${style.avatarRing}`}
-            emojiClassName="text-2xl"
+            iconClassName="h-6 w-6"
           />
 
           <div className="min-w-0 flex-1">
@@ -66,8 +66,9 @@ export function CommunityCard({ community, onMembershipChange }: CommunityCardPr
                 five unrelated facts the same visual weight and wrapped on
                 narrow screens; this reads left to right. */}
             <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
-              <span className={`font-semibold ${style.cta}`}>
-                <span aria-hidden>{kind.emoji}</span> {kind.label}
+              <span className={`inline-flex items-center gap-1 font-semibold ${style.cta}`}>
+                <kind.icon className="h-3 w-3 shrink-0" aria-hidden />
+                {kind.label}
               </span>
 
               <span aria-hidden>·</span>

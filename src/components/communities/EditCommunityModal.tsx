@@ -109,7 +109,7 @@ export const EditCommunityModal = ({ open, onOpenChange, community, onSaved }: E
                       : "border-border hover:bg-muted",
                   )}
                 >
-                  <span aria-hidden>{option.emoji}</span>
+                  <option.icon className="h-3.5 w-3.5" aria-hidden />
                   {option.label}
                 </button>
               ))}

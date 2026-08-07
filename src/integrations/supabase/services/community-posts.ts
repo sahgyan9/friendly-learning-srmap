@@ -1,3 +1,15 @@
+import {
+  BookOpen,
+  ClipboardList,
+  Megaphone,
+  MessagesSquare,
+  Microscope,
+  Puzzle,
+  Trophy,
+  Wrench,
+  Zap,
+} from "lucide-react";
+
 import { supabase } from "@/integrations/supabase/client";
 import { sanitizeInput } from "@/utils/input-sanitization";
 import { downscaleImage } from "@/lib/image/downscale";
@@ -105,15 +117,15 @@ export type CommunityFeedOptions = {
 
 /** Every post kind the board supports, in the order students see them. */
 export const POST_TYPES = [
-  { value: "all", label: "All posts", emoji: "📋" },
-  { value: "hackathon", label: "Hackathon partners", emoji: "⚡" },
-  { value: "study-help", label: "Study help", emoji: "📚" },
-  { value: "project", label: "Project ideas", emoji: "🛠️" },
-  { value: "research", label: "Research collaboration", emoji: "🔬" },
-  { value: "problem-solving", label: "Problem solving", emoji: "🧩" },
-  { value: "achievement", label: "Achievement", emoji: "🏆" },
-  { value: "announcement", label: "Announcements", emoji: "📢" },
-  { value: "general", label: "General discussion", emoji: "💬" },
+  { value: "all", label: "All posts", icon: ClipboardList },
+  { value: "hackathon", label: "Hackathon partners", icon: Zap },
+  { value: "study-help", label: "Study help", icon: BookOpen },
+  { value: "project", label: "Project ideas", icon: Wrench },
+  { value: "research", label: "Research collaboration", icon: Microscope },
+  { value: "problem-solving", label: "Problem solving", icon: Puzzle },
+  { value: "achievement", label: "Achievement", icon: Trophy },
+  { value: "announcement", label: "Announcements", icon: Megaphone },
+  { value: "general", label: "General discussion", icon: MessagesSquare },
 ] as const;
 
 export const POST_STATUSES = [

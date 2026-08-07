@@ -41,7 +41,7 @@ export function CommunityRow({ community, onMembershipChange }: CommunityRowProp
           name={community.name}
           coverImage={community.cover_image}
           className={`h-12 w-12 shrink-0 rounded-xl ring-1 ring-border ${style.avatarRing} transition-transform duration-200 group-hover:scale-105`}
-          emojiClassName="text-2xl"
+          iconClassName="h-6 w-6"
         />
 
         <div className="min-w-0 flex-1 space-y-1">
@@ -53,7 +53,7 @@ export function CommunityRow({ community, onMembershipChange }: CommunityRowProp
 
             {/* Category pill */}
             <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold whitespace-nowrap shrink-0 ${style.pill}`}>
-              <span aria-hidden>{kind.emoji}</span>
+              <kind.icon className="h-3 w-3 shrink-0" aria-hidden />
               {kind.label}
             </span>
 

@@ -250,7 +250,7 @@ export const CreatePostModal = ({
                       : "border-border bg-black/5 hover:bg-black/10 dark:bg-black/40 dark:hover:bg-black/50",
                   )}
                 >
-                  <span aria-hidden>{type.emoji}</span>
+                  <type.icon className="h-3.5 w-3.5" aria-hidden />
                   {type.label}
                 </button>
               ))}

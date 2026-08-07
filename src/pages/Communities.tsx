@@ -233,7 +233,7 @@ const Communities = () => {
                       : "border-border bg-card text-muted-foreground hover:bg-accent hover:text-accent-foreground",
                   )}
                 >
-                  <span aria-hidden>{option.emoji}</span>
+                  <option.icon className="h-3.5 w-3.5" aria-hidden />
                   {option.label}
                   {count > 0 && (
                     <span

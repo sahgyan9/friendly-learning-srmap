@@ -181,7 +181,7 @@ export const CreateCommunityModal = ({ open, onOpenChange }: CreateCommunityModa
                       : "border-border bg-black/5 hover:bg-black/10 dark:bg-black/40 dark:hover:bg-black/50",
                   )}
                 >
-                  <span aria-hidden>{option.emoji}</span>
+                  <option.icon className="h-3.5 w-3.5" aria-hidden />
                   {option.label}
                 </button>
               ))}

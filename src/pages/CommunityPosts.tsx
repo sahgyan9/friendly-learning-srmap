@@ -390,7 +390,7 @@ const CommunityPosts = () => {
                         : "border-border bg-card text-muted-foreground hover:bg-accent hover:text-accent-foreground",
                     )}
                   >
-                    <span aria-hidden>{type.emoji}</span>
+                    <type.icon className="h-3.5 w-3.5" aria-hidden />
                     {type.label}
                     {type.value !== "all" && count > 0 && (
                       <span
