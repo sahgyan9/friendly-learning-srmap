@@ -18,3 +18,9 @@ verify_jwt = false
 # can only ever turn notifications off.
 [functions.email-unsubscribe]
 verify_jwt = false
+
+# sync-srmap-events authenticates callers itself (CRON_SECRET header, or an
+# admin JWT), same reasoning as sync-faculty: the scheduled daily sync carries
+# no user JWT at all.
+[functions.sync-srmap-events]
+verify_jwt = false
