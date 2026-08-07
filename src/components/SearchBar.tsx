@@ -7,7 +7,6 @@ import { useDebounce } from "@/hooks/useDebounce";
 import type { Mentor } from "@/types/mentor";
 import SearchInput from "./search/SearchInput";
 import SearchButton from "./search/SearchButton";
-import SearchToggle from "./search/SearchToggle";
 
 interface SearchBarProps {
   onSearch: (query: string, results?: Mentor[]) => void;
@@ -147,13 +146,6 @@ const SearchBar = ({ onSearch, onGeminiSearch }: SearchBarProps) => {
           onRegularSearch={() => handleDynamicSearch(query)}
         />
       </form>
-      
-      <div className="mt-3 flex items-center justify-end px-1">
-        <SearchToggle 
-          isEnabled={isAiSearchEnabled}
-          onChange={setIsAiSearchEnabled}
-        />
-      </div>
     </div>
   );
 };
