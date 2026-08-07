@@ -135,27 +135,31 @@ export const CommunityPostsSection = () => {
                   it still fits and lets it scroll once it doesn't. */}
               <div className="mx-auto flex w-max snap-x snap-mandatory items-stretch gap-4">
                 {posts.map((post) => (
-                  <PostCard
+                  <div
                     key={post.id}
-                    post={post}
-                    variant="compact"
-                    className="w-[300px] shrink-0 snap-start md:w-[340px]"
-                    onOpen={(postId) => navigate(`/community-posts#post-${postId}`)}
-                    onLike={handleLike}
-                    onShare={handleShare}
-                    onComment={(postId, event) => {
-                      event.stopPropagation();
-                      navigate(`/community-posts#post-${postId}`);
-                    }}
-                    onImageClick={(src, title, index, allImages) => {
-                      const urls = allImages && allImages.length > 0 ? allImages : getPostImageUrls(post.image_url);
-                      setLightbox({
-                        images: urls,
-                        title: title || post.title,
-                        index: index ?? 0,
-                      });
-                    }}
-                  />
+                    className="shrink-0 snap-start w-[300px] md:w-[340px] opacity-60 blur-[2px] transition-all duration-300 ease-out hover:opacity-100 hover:blur-none focus-within:opacity-100 focus-within:blur-none"
+                  >
+                    <PostCard
+                      post={post}
+                      variant="compact"
+                      className="w-full h-full"
+                      onOpen={(postId) => navigate(`/community-posts#post-${postId}`)}
+                      onLike={handleLike}
+                      onShare={handleShare}
+                      onComment={(postId, event) => {
+                        event.stopPropagation();
+                        navigate(`/community-posts#post-${postId}`);
+                      }}
+                      onImageClick={(src, title, index, allImages) => {
+                        const urls = allImages && allImages.length > 0 ? allImages : getPostImageUrls(post.image_url);
+                        setLightbox({
+                          images: urls,
+                          title: title || post.title,
+                          index: index ?? 0,
+                        });
+                      }}
+                    />
+                  </div>
                 ))}
               </div>
             </div>
