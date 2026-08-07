@@ -4,6 +4,7 @@ export interface PlatformStats {
   mentors: number;
   faculty: number;
   departments: number;
+  groups: number;
   posts: number;
 }
 
@@ -19,7 +20,7 @@ export interface PlatformStats {
  * rows.
  */
 export async function getPlatformStats(): Promise<PlatformStats> {
-  const [mentors, faculty, posts, directory] = await Promise.all([
+  const [mentors, faculty, posts, groups, directory] = await Promise.all([
     // Same filter getMentors() applies, so the headline count matches what a
     // visitor actually finds on /mentors. A raw table count reported 11 while
     // only one mentor was browsable.
@@ -30,6 +31,10 @@ export async function getPlatformStats(): Promise<PlatformStats> {
       .not("department", "is", null),
     supabase.from("faculty").select("id", { count: "exact", head: true }).eq("is_active", true),
     supabase.from("community_posts").select("*", { count: "exact", head: true }),
+    // "Anyone can view communities" is a USING (true) policy for PUBLIC and anon
+    // holds table-level SELECT, so this count is the same number a signed-out
+    // visitor can reach on /communities.
+    supabase.from("communities").select("id", { count: "exact", head: true }),
     supabase.rpc("get_faculty_directory_stats"),
   ]);
 
@@ -39,6 +44,7 @@ export async function getPlatformStats(): Promise<PlatformStats> {
     mentors: mentors.count ?? 0,
     faculty: faculty.count ?? 0,
     departments,
+    groups: groups.count ?? 0,
     posts: posts.count ?? 0,
   };
 }

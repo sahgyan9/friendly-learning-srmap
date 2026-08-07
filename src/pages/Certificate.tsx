@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { Award, Check, Copy, Download, Loader2 } from "lucide-react";
+import { Award, Check, Copy, Download, Loader2, MessageSquare, UserCircle } from "lucide-react";
 import { toast } from "sonner";
 
 import SEOHead from "@/components/SEOHead";
@@ -107,8 +107,8 @@ const Certificate = () => {
   return (
     <div className="min-h-screen bg-background">
       <SEOHead
-        title="Your mentor certificate | Friendly Learning"
-        description="The certificate you earn by mentoring students at SRM AP."
+        title="The mentor certificate | Friendly Learning SRMAP"
+        description="A verifiable certificate SRM AP students earn by actually helping juniors — three real conversations, a public verification link, and no application form."
       />
 
       <div className="container mx-auto max-w-5xl px-4 py-12 md:py-16">
@@ -123,63 +123,9 @@ const Certificate = () => {
           </p>
         </div>
 
-        {!status?.is_mentor && (
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle className="text-lg">You're not listed as a mentor yet</CardTitle>
-              <CardDescription>
-                The certificate is for mentors. Listing yourself takes a few minutes and your
-                profile goes live straight away.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button asChild>
-                <Link to="/become-mentor">Help other students</Link>
-              </Button>
-            </CardContent>
-          </Card>
-        )}
-
-        {status?.revoked && (
-          <Card className="mb-8 border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/40">
-            <CardHeader>
-              <CardTitle className="text-lg text-red-800 dark:text-red-200">
-                This certificate has been withdrawn
-              </CardTitle>
-              <CardDescription className="text-red-700 dark:text-red-300">
-                Get in touch through the contact page if you think this is a mistake.
-              </CardDescription>
-            </CardHeader>
-          </Card>
-        )}
-
-        {status?.is_mentor && !earned && (
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Award className="h-5 w-5 text-primary" />
-                {remaining === 0
-                  ? "Your certificate is being prepared"
-                  : `${remaining} more ${remaining === 1 ? "student" : "students"} to go`}
-              </CardTitle>
-              <CardDescription>
-                A student counts once you have had a real back-and-forth — you answered, and they
-                replied. Opening a chat that nobody responds to does not count, which is what makes
-                the number on the certificate worth something.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <Progress value={(helped / required) * 100} className="h-2" />
-              <p className="text-sm text-muted-foreground">
-                {helped} of {required} students helped
-              </p>
-              <Button asChild variant="outline">
-                <Link to="/messages">Go to your messages</Link>
-              </Button>
-            </CardContent>
-          </Card>
-        )}
-
+        {/* The preview leads. Someone who has just arrived from the homepage has
+            no idea what this thing is, and no amount of copy explains it as
+            quickly as showing it. Everything about earning it comes after. */}
         <div className="overflow-hidden rounded-xl border shadow-sm">
           <MentorCertificate ref={svgRef} data={data} />
         </div>
@@ -199,6 +145,140 @@ const Certificate = () => {
           <p className="mt-4 text-center text-sm text-muted-foreground">
             This is a sample. The download unlocks once you've earned it.
           </p>
+        )}
+
+        {!earned && (
+          <div className="mt-14">
+            <h2 className="mb-2 text-center text-2xl font-bold">How it's earned</h2>
+            <p className="mx-auto mb-8 max-w-2xl text-center text-muted-foreground">
+              There is no application and no button that grants it. It follows
+              from helping people, which is the only reason it means anything.
+            </p>
+
+            <div className="grid gap-4 md:grid-cols-3">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <UserCircle className="h-5 w-5 text-primary" />
+                    1. Be findable
+                  </CardTitle>
+                  <CardDescription>
+                    Nobody can ask you for help if they can't find you. Your
+                    profile is what puts you in search — by subject, skill and
+                    year — when a junior goes looking for someone who has already
+                    taken their course.
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <MessageSquare className="h-5 w-5 text-primary" />
+                    2. Actually help
+                  </CardTitle>
+                  <CardDescription>
+                    A student counts once you've had a real back-and-forth — you
+                    answered, and they replied. A chat nobody responds to doesn't
+                    count, which is exactly what keeps the number honest.
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <Award className="h-5 w-5 text-primary" />
+                    3. It issues itself
+                  </CardTitle>
+                  <CardDescription>
+                    After {required} real exchanges the certificate appears here
+                    on its own, carrying a public verification link that anyone —
+                    a recruiter, a professor — can check without an account.
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+            </div>
+          </div>
+        )}
+
+        {/* Signed-out visitors get the one step that is actually theirs to take.
+            /become-mentor is behind ProtectedRoute, so sending them there would
+            just bounce them to sign-in with no explanation. */}
+        {!user && (
+          <Card className="mt-8">
+            <CardHeader>
+              <CardTitle className="text-lg">Start with a profile</CardTitle>
+              <CardDescription>
+                It takes a few minutes and you're listed straight away. The
+                helping — and the certificate — follows from there.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-wrap gap-3">
+              <Button asChild>
+                <Link to="/signup">Set up your profile</Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link to="/mentors">See who's already listed</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {user && !status?.is_mentor && (
+          <Card className="mt-8">
+            <CardHeader>
+              <CardTitle className="text-lg">You're not listed as a mentor yet</CardTitle>
+              <CardDescription>
+                The certificate is for mentors. Listing yourself takes a few minutes and your
+                profile goes live straight away.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button asChild>
+                <Link to="/become-mentor">Help other students</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {status?.revoked && (
+          <Card className="mt-8 border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/40">
+            <CardHeader>
+              <CardTitle className="text-lg text-red-800 dark:text-red-200">
+                This certificate has been withdrawn
+              </CardTitle>
+              <CardDescription className="text-red-700 dark:text-red-300">
+                Get in touch through the contact page if you think this is a mistake.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        )}
+
+        {status?.is_mentor && !earned && (
+          <Card className="mt-8">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Award className="h-5 w-5 text-primary" />
+                {remaining === 0
+                  ? "Your certificate is being prepared"
+                  : `${remaining} more ${remaining === 1 ? "student" : "students"} to go`}
+              </CardTitle>
+              <CardDescription>
+                Your progress so far. Every one of these is a conversation that
+                went both ways.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Progress value={(helped / required) * 100} className="h-2" />
+              <p className="text-sm text-muted-foreground">
+                {helped} of {required} students helped
+              </p>
+              <Button asChild variant="outline">
+                <Link to="/messages">Go to your messages</Link>
+              </Button>
+            </CardContent>
+          </Card>
         )}
       </div>
     </div>

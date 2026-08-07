@@ -207,6 +207,12 @@ function App() {
                 {/* Public on purpose: a certificate nobody can check without an
                     account is worth no more than the image itself. */}
                 <Route path="/verify/:id" element={<VerifyCertificate />} />
+                {/* Also public. It used to sit behind ProtectedRoute, which put
+                    a sign-in wall in front of the one homepage button whose job
+                    is to explain what the certificate is. The page shows the
+                    preview and how it's earned to anyone; only the download and
+                    the verification link need an account. */}
+                <Route path="/certificate" element={<Certificate />} />
                 <Route path="/unauthorized" element={<Unauthorized />} />
 
                 {/* Authenticated */}
@@ -231,14 +237,6 @@ function App() {
                   element={
                     <ProtectedRoute>
                       <Messages />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/certificate"
-                  element={
-                    <ProtectedRoute>
-                      <Certificate />
                     </ProtectedRoute>
                   }
                 />
