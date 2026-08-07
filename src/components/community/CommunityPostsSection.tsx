@@ -32,7 +32,6 @@ export const CommunityPostsSection = () => {
   const [lightbox, setLightbox] = useState<{ images: string[]; title?: string; index: number } | null>(null);
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const [activeIndex, setActiveIndex] = useState<number>(0);
 
   const reload = useCallback(async () => {
     const { data } = await getCommunityPosts({ limit: 12 });
@@ -58,50 +57,61 @@ export const CommunityPostsSection = () => {
     if (!scrollContainerRef.current || posts.length === 0) return;
     const container = scrollContainerRef.current;
 
-    const handleScroll = () => {
+    let ticking = false;
+
+    const updateScrollEffects = () => {
+      ticking = false;
       const cards = Array.from(container.querySelectorAll<HTMLDivElement>("[data-post-card]"));
       if (cards.length === 0) return;
 
-      // When scrolled near or to the right edge, activate the last card
-      const isAtEnd = container.scrollLeft + container.clientWidth >= container.scrollWidth - 60;
-      if (isAtEnd) {
-        setActiveIndex(cards.length - 1);
-        return;
-      }
-
-      // When at or near the left edge, activate the first card
-      const isAtStart = container.scrollLeft <= 30;
-      if (isAtStart) {
-        setActiveIndex(0);
-        return;
-      }
-
       const containerRect = container.getBoundingClientRect();
-      const targetFocusX = containerRect.left + containerRect.width / 2;
+      const isAtEnd = container.scrollLeft + container.clientWidth >= container.scrollWidth - 60;
+      const isAtStart = container.scrollLeft <= 30;
 
-      let closestIdx = 0;
-      let minDistance = Infinity;
+      // Dynamic focal point: adjusts seamlessly at ends of scroll
+      const firstCardWidth = cards[0]?.offsetWidth || 400;
+      const lastCardWidth = cards[cards.length - 1]?.offsetWidth || 400;
 
-      cards.forEach((card, idx) => {
+      const focusX = isAtStart
+        ? containerRect.left + firstCardWidth / 2
+        : isAtEnd
+        ? containerRect.right - lastCardWidth / 2
+        : containerRect.left + containerRect.width / 2;
+
+      cards.forEach((card) => {
         const cardRect = card.getBoundingClientRect();
         const cardCenter = cardRect.left + cardRect.width / 2;
-        const distance = Math.abs(cardCenter - targetFocusX);
-        if (distance < minDistance) {
-          minDistance = distance;
-          closestIdx = idx;
-        }
-      });
+        const distance = Math.abs(cardCenter - focusX);
 
-      setActiveIndex(closestIdx);
+        // Distance over which full blur happens (~card width)
+        const maxDist = (cardRect.width || 420) * 0.85;
+        const progress = Math.min(1, Math.max(0, distance / maxDist));
+
+        // Smooth continuous values
+        const blurPx = (progress * 3.5).toFixed(2);
+        const opacity = (1 - progress * 0.55).toFixed(2);
+        const scale = (1 - progress * 0.03).toFixed(3);
+
+        card.style.setProperty("--card-blur", `${blurPx}px`);
+        card.style.setProperty("--card-opacity", opacity);
+        card.style.setProperty("--card-scale", scale);
+      });
     };
 
-    handleScroll();
-    container.addEventListener("scroll", handleScroll, { passive: true });
-    window.addEventListener("resize", handleScroll, { passive: true });
+    updateScrollEffects();
+    const onScroll = () => {
+      if (!ticking) {
+        requestAnimationFrame(updateScrollEffects);
+        ticking = true;
+      }
+    };
+
+    container.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll, { passive: true });
 
     return () => {
-      container.removeEventListener("scroll", handleScroll);
-      window.removeEventListener("resize", handleScroll);
+      container.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
     };
   }, [posts]);
 
@@ -204,19 +214,18 @@ export const CommunityPostsSection = () => {
                   more of its own text. `w-max mx-auto` centres the rail while
                   it still fits and lets it scroll once it doesn't. */}
               <div className="mx-auto flex w-max snap-x snap-mandatory items-stretch gap-4">
-                {posts.map((post, index) => {
-                  const isActive = index === activeIndex;
-                  return (
-                    <div
-                      key={post.id}
-                      data-post-card
-                      data-post-id={post.id}
-                      className={`shrink-0 snap-start w-[400px] md:w-[460px] transition-all duration-500 ease-out ${
-                        isActive
-                          ? "opacity-100 blur-none scale-100 z-10"
-                          : "opacity-40 blur-[3px] scale-[0.97] hover:opacity-100 hover:blur-none hover:scale-100 focus-within:opacity-100 focus-within:blur-none"
-                      }`}
-                    >
+                {posts.map((post) => (
+                  <div
+                    key={post.id}
+                    data-post-card
+                    data-post-id={post.id}
+                    style={{
+                      filter: "blur(var(--card-blur, 0px))",
+                      opacity: "var(--card-opacity, 1)",
+                      transform: "scale(var(--card-scale, 1))",
+                    }}
+                    className="shrink-0 snap-start w-[400px] md:w-[460px] transition-all duration-150 ease-out hover:!filter-none hover:!opacity-100 hover:!scale-100 focus-within:!filter-none focus-within:!opacity-100 focus-within:!scale-100"
+                  >
                       <PostCard
                         post={post}
                         variant="compact"
@@ -238,8 +247,7 @@ export const CommunityPostsSection = () => {
                         }}
                       />
                     </div>
-                  );
-                })}
+                ))}
               </div>
             </div>
 
