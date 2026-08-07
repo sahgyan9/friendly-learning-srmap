@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, ExternalLink, GraduationCap, ArrowRight } from "lucide-react";
@@ -9,6 +10,29 @@ interface SRMAPEventCardProps {
   event: SRMAPEvent;
 }
 
+/**
+ * Routes the image through wsrv.nl (images.weserv.nl) instead of hotlinking
+ * events.srmap.edu.in directly.
+ *
+ * That WordPress host serves full-size, unoptimized originals with no CDN in
+ * front of it, so every card paid for a slow third-party fetch on every page
+ * view. wsrv.nl fetches the original once, resizes/re-encodes it, and caches
+ * the result on its own edge -- shared across every visitor, not just one
+ * browser's cache -- so the first person to load a given event's image is the
+ * only one who ever pays the slow-origin cost. It's a free service with no
+ * storage or bandwidth cost on our side.
+ */
+function optimizedImageUrl(url: string): string {
+  const params = new URLSearchParams({
+    url,
+    w: "640",
+    q: "75",
+    output: "webp",
+    fit: "cover",
+  });
+  return `https://wsrv.nl/?${params.toString()}`;
+}
+
 export function SRMAPEventCard({ event }: SRMAPEventCardProps) {
   const parseDate = (value: string) => new Date(value.replace(" ", "T") + "+05:30");
   const start = parseDate(event.startDate);
@@ -16,6 +40,15 @@ export function SRMAPEventCard({ event }: SRMAPEventCardProps) {
   const now = new Date();
   const isLive = now >= start && now <= end;
   const hasEnded = now > end;
+
+  // If wsrv.nl itself has a hiccup, fall back to the original SRMAP URL
+  // rather than showing a broken image.
+  const [proxyFailed, setProxyFailed] = useState(false);
+  const imageSrc = event.imageUrl
+    ? proxyFailed
+      ? event.imageUrl
+      : optimizedImageUrl(event.imageUrl)
+    : null;
 
   const formattedStartDate = start.toLocaleDateString("en-IN", {
     day: "numeric",
@@ -49,12 +82,14 @@ export function SRMAPEventCard({ event }: SRMAPEventCardProps) {
 
       {/* Cover image */}
       <div className="relative aspect-video w-full overflow-hidden bg-muted">
-        {event.imageUrl ? (
+        {imageSrc ? (
           <img
-            src={event.imageUrl}
+            src={imageSrc}
             alt=""
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
             loading="lazy"
+            decoding="async"
+            onError={() => setProxyFailed(true)}
           />
         ) : (
           /* Styled fallback — violet tint matching Events colour */
