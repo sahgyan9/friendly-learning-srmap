@@ -1,5 +1,5 @@
 import { Suspense, lazy, ComponentType } from "react";
-import { Route, Routes } from "react-router-dom";
+import { Route, Routes, useLocation } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 
@@ -13,6 +13,7 @@ import RouteRobots from "@/components/RouteRobots";
 import ScrollToTop from "@/components/ScrollToTop";
 import SiteHeader from "@/components/navigation/SiteHeader";
 import { MainWithRail } from "@/components/navigation/SiteRail";
+import FloatingChatbot from "@/components/chatbot/FloatingChatbot";
 
 // The landing page is the most common entry point, so it stays in the main
 // bundle. Everything else is split per route — the app previously shipped one
@@ -151,6 +152,19 @@ function RouteFallback() {
       <Loader2 className="h-8 w-8 animate-spin text-primary" />
     </div>
   );
+}
+
+/**
+ * Hidden on auth screens (nothing useful to ask before signing in, and it
+ * would float over the form) and on every /admin page (a staff tool, not a
+ * student-facing surface).
+ */
+const CHATBOT_HIDDEN_PATHS = ["/signin", "/signup", "/forgot-password", "/reset-password"];
+
+function SiteChatbot() {
+  const { pathname } = useLocation();
+  const hidden = CHATBOT_HIDDEN_PATHS.includes(pathname) || pathname.startsWith("/admin");
+  return hidden ? null : <FloatingChatbot />;
 }
 
 /**
@@ -320,6 +334,7 @@ function App() {
               </Routes>
             </Suspense>
             </MainWithRail>
+            <SiteChatbot />
           </div>
           </WelcomeTourProvider>
         </TooltipProvider>

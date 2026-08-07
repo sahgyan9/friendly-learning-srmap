@@ -6,7 +6,7 @@
                             http://www.google.com/schemas/sitemap-image/1.1 http://www.google.com/schemas/sitemap-image/1.1/sitemap-image.xsd">
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty</loc>
-    <lastmod>2026-08-07T03:37:55.864Z</lastmod>
+    <lastmod>2026-08-07T16:08:26.757Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
@@ -38,6 +38,16 @@
     <image:image>
       <image:loc>https://www.srmap.edu.in/wp-content/uploads/2025/04/Basabendu-Barman-300x200.jpg</image:loc>
       <image:title>Dr Basabendu Barman — Physics, SRM University-AP</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-krishna-prasad-maity</loc>
+    <lastmod>2026-08-07T08:48:43.086838+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.srmap.edu.in/wp-content/uploads/2025/08/krishnaprasad-maity-300x300.jpg</image:loc>
+      <image:title>Dr Krishna Prasad Maity — Physics, SRM University-AP</image:title>
     </image:image>
   </url>
   <url>
@@ -281,13 +291,13 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://friendly-learning-srmap.vercel.app/faculty/akshaya-kumar-das</loc>
+    <loc>https://friendly-learning-srmap.vercel.app/faculty/vadlamudi-aadarsh</loc>
     <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://friendly-learning-srmap.vercel.app/faculty/vadlamudi-aadarsh</loc>
+    <loc>https://friendly-learning-srmap.vercel.app/faculty/akshaya-kumar-das</loc>
     <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
@@ -2059,16 +2069,6 @@
     <lastmod>2026-08-06T10:06:14.093148+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-krishna-prasad-maity</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-    <image:image>
-      <image:loc>https://www.srmap.edu.in/wp-content/uploads/2025/08/krishnaprasad-maity-300x300.jpg</image:loc>
-      <image:title>Dr Krishna Prasad Maity — Physics, SRM University-AP</image:title>
-    </image:image>
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/krishnarjun-krishnamoorthy</loc>

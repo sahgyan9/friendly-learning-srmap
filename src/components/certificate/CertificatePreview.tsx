@@ -9,6 +9,8 @@ import { MIN_STUDENTS_FOR_CERTIFICATE, sampleCertificate } from "@/lib/certifica
 interface CertificatePreviewProps {
   /** Shown on the sample so it reads as theirs rather than as stock artwork. */
   name: string;
+  /** Collapsed contexts (e.g. a chat bubble) shouldn't unfold a full certificate unasked. */
+  defaultOpen?: boolean;
 }
 
 /**
@@ -23,8 +25,8 @@ interface CertificatePreviewProps {
  * Collapsed by default: someone halfway through a form does not need a full
  * certificate unfolding in front of them, but the offer should be visible.
  */
-const CertificatePreview = ({ name }: CertificatePreviewProps) => {
-  const [open, setOpen] = useState(true);
+const CertificatePreview = ({ name, defaultOpen = true }: CertificatePreviewProps) => {
+  const [open, setOpen] = useState(defaultOpen);
   const data = useMemo(() => sampleCertificate(name), [name]);
 
   return (

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { ChevronDown, Plus, Search, Users } from "lucide-react";
+import { ChevronDown, LayoutGrid, List, Plus, Search, Users } from "lucide-react";
 import { motion } from "framer-motion";
 
 import SEOHead from "@/components/SEOHead";
@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CommunityCard } from "@/components/communities/CommunityCard";
+import { CommunityRow } from "@/components/communities/CommunityRow";
 import { CreateCommunityModal } from "@/components/communities/CreateCommunityModal";
 import MyInvites from "@/components/communities/MyInvites";
 import { useAuth } from "@/context/AuthContext";
@@ -35,6 +36,7 @@ const Communities = () => {
   const [createOpen, setCreateOpen] = useState(false);
   const [kindCounts, setKindCounts] = useState<Record<string, number>>({});
   const [showAllKinds, setShowAllKinds] = useState(false);
+  const [viewMode, setViewMode] = useState<"rows" | "grid">("rows");
 
   // Reaching this page is what clears the welcome tour's navbar dot.
   useEffect(() => {
@@ -69,23 +71,10 @@ const Communities = () => {
     load();
   }, [load]);
 
-  // Read once on mount rather than after every filter change: the counts are
-  // for every group on the site and do not depend on what is currently selected.
   useEffect(() => {
     getCommunityKindCounts().then(setKindCounts);
   }, []);
 
-  /**
-   * Which kind chips to show. A kind earns its place by having a live group in it.
-   *
-   * Same exceptions as the Posts board: "All groups" always shows because it is
-   * the way back, and whatever kind is currently selected stays visible even at
-   * zero, so arriving on ?kind=research with nothing in it still shows a pressed
-   * chip instead of looking broken.
-   *
-   * When counts are unknown — the RPC failed, or nothing has loaded yet —
-   * everything shows, which is exactly the behaviour that existed before.
-   */
   const { visibleKinds, hiddenCount, hasMoreKinds } = useMemo(() => {
     const known = Object.keys(kindCounts).length > 0;
     const defaultVisible = COMMUNITY_KINDS.filter(
@@ -109,13 +98,6 @@ const Communities = () => {
     };
   }, [kindCounts, showAllKinds, kind]);
 
-  /**
-   * Patches one card in place after a join or a leave.
-   *
-   * The alternative is re-running `load()`, which throws away the whole grid and
-   * flashes six skeletons because one button was pressed. Membership only ever
-   * changes two fields on one row, so only those move.
-   */
   const applyMembership = useCallback((id: string, patch: Partial<Community>) => {
     setCommunities((current) =>
       current.map((entry) => (entry.id === id ? { ...entry, ...patch } : entry)),
@@ -127,8 +109,8 @@ const Communities = () => {
   return (
     <div className="min-h-screen bg-background">
       <SEOHead
-        title="Groups | Friendly Learning"
-        description="Hackathon teams, project groups, clubs and study circles run by students at SRM AP."
+        title="Groups & Workspaces | Friendly Learning"
+        description="Hackathon teams, project groups, research labs and study circles run by students at SRM AP."
       />
 
       {/* Hero header — same design language as FeaturesShowcase cards */}
@@ -146,15 +128,15 @@ const Communities = () => {
             {/* Pill label — matches FeaturesShowcase numbering */}
             <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-amber-500/20 bg-amber-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-amber-600 dark:text-amber-400">
               <Users className="h-3.5 w-3.5" />
-              Groups
+              05 — Groups & Workspaces
             </div>
 
             <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
               <div>
-                <h1 className="text-3xl font-bold tracking-tight md:text-4xl">Groups</h1>
+                <h1 className="text-3xl font-bold tracking-tight md:text-4xl">Workspaces & Groups</h1>
                 <p className="mt-2 max-w-2xl text-base text-muted-foreground">
-                  Hackathon teams, project groups, clubs and study circles. Anyone can start one, and
-                  members post inside it — some are open to everyone, some you ask to join.
+                  Step inside dedicated student communities—hackathon teams, project labs, clubs, and study rooms.
+                  Join a room to chat, post, and collaborate in real-time.
                 </p>
               </div>
 
@@ -177,15 +159,47 @@ const Communities = () => {
         <MyInvites />
 
         <div className="mb-6 space-y-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search groups"
-              className="pl-9"
-              aria-label="Search groups"
-            />
+          <div className="flex gap-2 items-center">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Search groups and workspaces..."
+                className="pl-9"
+                aria-label="Search groups"
+              />
+            </div>
+
+            {/* View Mode Toggle: Rows vs Grid */}
+            <div className="flex items-center rounded-lg border border-border bg-card p-1 shrink-0">
+              <button
+                type="button"
+                onClick={() => setViewMode("rows")}
+                title="Destination list view"
+                className={cn(
+                  "flex items-center justify-center rounded-md p-1.5 text-xs transition-colors",
+                  viewMode === "rows"
+                    ? "bg-primary text-primary-foreground font-semibold"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <List className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode("grid")}
+                title="Grid view"
+                className={cn(
+                  "flex items-center justify-center rounded-md p-1.5 text-xs transition-colors",
+                  viewMode === "grid"
+                    ? "bg-primary text-primary-foreground font-semibold"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <LayoutGrid className="h-4 w-4" />
+              </button>
+            </div>
           </div>
 
           <div className="flex items-center gap-2 overflow-x-auto py-2 px-1 scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
@@ -268,25 +282,34 @@ const Communities = () => {
           </div>
         </div>
 
-        {/* A list, not a grid. Groups are places; a three-across grid of cards
-            made them look like the post feed and the mentor directory, which is
-            exactly the thing people had learned to scroll past. */}
         {loading ? (
-          <div className="space-y-3">
-            {Array.from({ length: 5 }).map((_, index) => (
-              <Skeleton key={index} className="h-[104px] w-full rounded-xl" />
+          <div className={viewMode === "grid" ? "grid gap-4 sm:grid-cols-2 lg:grid-cols-3" : "space-y-3"}>
+            {Array.from({ length: 6 }).map((_, index) => (
+              <Skeleton key={index} className={viewMode === "grid" ? "h-52 w-full rounded-xl" : "h-24 w-full rounded-xl"} />
             ))}
           </div>
         ) : communities.length > 0 ? (
-          <div className="mb-8 space-y-3">
-            {communities.map((community) => (
-              <CommunityCard
-                key={community.id}
-                community={community}
-                onMembershipChange={applyMembership}
-              />
-            ))}
-          </div>
+          viewMode === "rows" ? (
+            <div className="space-y-3 mb-8">
+              {communities.map((community) => (
+                <CommunityRow
+                  key={community.id}
+                  community={community}
+                  onMembershipChange={applyMembership}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-8">
+              {communities.map((community) => (
+                <CommunityCard
+                  key={community.id}
+                  community={community}
+                  onMembershipChange={applyMembership}
+                />
+              ))}
+            </div>
+          )
         ) : (
           <Card>
             <CardContent className="flex flex-col items-center gap-4 py-14 text-center">

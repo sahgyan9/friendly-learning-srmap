@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import ReactMarkdown from "react-markdown";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +9,8 @@ import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import MentorSuggestionCard from "./MentorSuggestionCard";
+import CertificatePreview from "@/components/certificate/CertificatePreview";
+import { BecomeMentorLinkPreview } from "@/components/common/BecomeMentorLinkPreview";
 
 /** One matched lecturer, as ai-chatbot returns them alongside the mentors. */
 interface FacultySuggestion {
@@ -20,12 +23,16 @@ interface FacultySuggestion {
   path: string;
 }
 
+/** Names a component the chat already has access to, rendered below the reply. */
+type RichContent = "certificate-preview" | "mentor-benefits";
+
 interface Message {
   id: string;
   type: 'user' | 'ai';
   content: string;
   mentorSuggestions?: any[];
   facultySuggestions?: FacultySuggestion[];
+  richContent?: RichContent | null;
   timestamp: Date;
 }
 
@@ -41,7 +48,8 @@ const ChatbotModal = ({ isOpen, onClose }: ChatbotModalProps) => {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const location = useLocation();
+  const { user, profile } = useAuth();
 
   // Load conversation history when modal opens
   useEffect(() => {
@@ -137,7 +145,8 @@ const ChatbotModal = ({ isOpen, onClose }: ChatbotModalProps) => {
         body: {
           message: inputValue,
           sessionId: sessionId,
-          userId: user?.id || null
+          userId: user?.id || null,
+          path: location.pathname
         }
       });
 
@@ -153,6 +162,7 @@ const ChatbotModal = ({ isOpen, onClose }: ChatbotModalProps) => {
         // computed and thrown away per message. They are the half of the answer
         // a mentor cannot give.
         facultySuggestions: data.suggestedFaculty || [],
+        richContent: data.richContent ?? null,
         timestamp: new Date()
       };
 
@@ -265,8 +275,29 @@ const ChatbotModal = ({ isOpen, onClose }: ChatbotModalProps) => {
                         : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100'
                       }`}
                   >
-                    {message.content}
+                    {message.type === 'ai' ? (
+                      <div className="prose prose-sm dark:prose-invert max-w-none prose-p:my-1.5 prose-ul:my-1.5 prose-li:my-0">
+                        <ReactMarkdown>{message.content}</ReactMarkdown>
+                      </div>
+                    ) : (
+                      message.content
+                    )}
                   </div>
+
+                  {/* Rich blocks for canned answers — reuses components that
+                      already exist elsewhere (the certificate form preview,
+                      the become-a-mentor CTA) rather than building new ones. */}
+                  {message.richContent === 'mentor-benefits' && (
+                    <div className="mt-3 space-y-3">
+                      <CertificatePreview name={profile?.name ?? ''} defaultOpen={false} />
+                      <BecomeMentorLinkPreview />
+                    </div>
+                  )}
+                  {message.richContent === 'certificate-preview' && (
+                    <div className="mt-3">
+                      <CertificatePreview name={profile?.name ?? ''} defaultOpen={false} />
+                    </div>
+                  )}
 
                   {/* Mentor Suggestions */}
                   {message.mentorSuggestions && message.mentorSuggestions.length > 0 && (

@@ -3,7 +3,6 @@ import CallToAction from "@/components/CallToAction";
 import Footer from "@/components/Footer";
 import SEOHead from "@/components/SEOHead";
 import { ROUTE_META } from "@/lib/seo/route-meta";
-import FloatingChatbot from "@/components/chatbot/FloatingChatbot";
 import RejectedApplicationNotice from "@/components/mentors/RejectedApplicationNotice";
 import StructuredData from "@/components/StructuredData";
 import { CommunityPostsSection } from "@/components/community/CommunityPostsSection";
@@ -110,7 +109,6 @@ const Index = () => {
       <CallToAction />
 
       <Footer />
-      <FloatingChatbot />
     </div>
   );
 };

@@ -74,6 +74,146 @@ function tagsOf(row: Retrieved): string[] {
   return Array.isArray(raw) ? raw.filter((v): v is string => typeof v === "string") : [];
 }
 
+/** How many cards render below a reply. Kept low on purpose — a wall of cards in a chat bubble reads as a dump, not an answer. */
+const MAX_FACULTY_SUGGESTIONS = 3;
+const MAX_MENTOR_SUGGESTIONS = 3;
+
+/**
+ * Short, one-line descriptions of what a route is, used to tell Gemini what
+ * the student is looking at and to pick the right "how do I use this" canned
+ * reply. Dynamic routes (a specific mentor, a specific post) are matched by
+ * prefix since the slug/id itself carries no useful context.
+ */
+const PAGE_CONTEXT: Array<[test: (path: string) => boolean, label: string]> = [
+  [(p) => p === "/", "the homepage"],
+  [(p) => p === "/mentors", "the mentors directory, browsing senior student mentors"],
+  [(p) => p.startsWith("/mentor/"), "a specific mentor's profile"],
+  [(p) => p === "/faculty", "the faculty directory"],
+  [(p) => p.startsWith("/faculty/"), "a specific faculty member's profile"],
+  [(p) => p === "/ask", "the /ask topic search, which searches mentors, faculty, groups and opportunities at once"],
+  [(p) => p === "/opportunities", "the opportunities page (hackathons, internships, contests)"],
+  [(p) => p.startsWith("/opportunities/"), "a specific opportunity's detail page"],
+  [(p) => p === "/communities", "the groups/communities directory"],
+  [(p) => p.startsWith("/communities/"), "a specific group's page"],
+  [(p) => p === "/community-posts", "the community board"],
+  [(p) => p.startsWith("/community-posts/"), "a community post"],
+  [(p) => p === "/marketplace", "the campus marketplace"],
+  [(p) => p === "/become-mentor", "the mentor application form"],
+  [(p) => p === "/certificate", "the certificate info page"],
+  [(p) => p === "/messages", "their messages"],
+  [(p) => p === "/profile", "their profile page"],
+];
+
+function describePage(path: string | null | undefined): string {
+  if (!path) return "the Friendly Learning platform";
+  const match = PAGE_CONTEXT.find(([test]) => test(path));
+  return match ? match[1] : "the Friendly Learning platform";
+}
+
+/**
+ * Fixed, deterministic answers for questions that don't need retrieval or a
+ * model call: what the platform is, how to use the page someone's on, is it
+ * free, and so on. Checked before touching Gemini so these are instant, free,
+ * and worded the same way every time — the kind of thing that shouldn't be
+ * left to chance.
+ *
+ * `richContent` names a component the frontend already has (the certificate
+ * preview, the "become a mentor" CTA card) rather than anything built new for
+ * this — see ChatbotModal for the render side.
+ */
+type CannedAnswer = { text: string; richContent?: "certificate-preview" | "mentor-benefits" };
+
+const CANNED_FAQ: Array<[test: RegExp, build: (path: string | null) => CannedAnswer]> = [
+  [
+    /^\s*(hi|hey|hello|yo|sup|hii+|heyy+)[\s!.,]*$/i,
+    () => ({
+      text: "Hey! I can help you find a mentor, point you to the right faculty, or explain how a page works. What are you looking for?",
+    }),
+  ],
+  [
+    /what\s+(is|does)\s+(this|friendly learning)\b.*(platform|site|app|do|for|about)|^what is this\??$|purpose of this platform/i,
+    () => ({
+      text:
+        "**Friendly Learning** is a peer-mentorship platform for SRM University-AP.\n\n" +
+        "It connects:\n" +
+        "- **First-year students** with **senior mentors** who've already taken the courses you're taking\n" +
+        "- Anyone with **faculty** whose research matches what they're working on\n\n" +
+        "Mentors who genuinely help enough students earn a certificate — everything here is built around real back-and-forth, not just browsing profiles.",
+    }),
+  ],
+  [
+    /how (do|can) i use this|how does this (page|site|work)|how to use this|what can i do here/i,
+    (path) => ({ text: howToUse(path) }),
+  ],
+  [
+    /(is (this|it) free)|(how much (does|would) (this|it) cost)|what.?s the (price|cost)|\bpricing\b/i,
+    () => ({
+      text: "Yes — **Friendly Learning is free** for every SRM AP student. No payment, no subscription, no hidden tier.",
+    }),
+  ],
+  [
+    /who (built|made|created) this|is this official|affiliated with srm|is this (run|made) by srm/i,
+    () => ({
+      text:
+        "Friendly Learning is a **student-built platform**, not an official SRM University-AP product. " +
+        "It's built by students, for students, to make it easier to find mentors and faculty on campus.",
+    }),
+  ],
+  [
+    /benefit|why (should i|to) become a mentor|why become a mentor|what do i get.*mentor|advantage.*(being|becoming) a mentor|how (do|can) i become a mentor/i,
+    () => ({
+      text:
+        "Becoming a mentor gets you:\n" +
+        "- **A certificate** once you've genuinely helped 3 students — real conversations, not just profile views\n" +
+        "- Practice explaining what you know, which sharpens it\n" +
+        "- Visibility to juniors in your department\n\n" +
+        "Here's what the certificate looks like, and there's an application link below.",
+      richContent: "mentor-benefits",
+    }),
+  ],
+  [
+    /verify.*certificate|how do i verify|certificate verification/i,
+    () => ({
+      text:
+        "Every certificate has a public verification link, so anyone can check it's real without an account.\n\n" +
+        "If you have a certificate ID, go to **/verify/<id>** — the link is printed on the certificate itself. " +
+        "To check your own progress toward earning one, that's on your **profile**.",
+    }),
+  ],
+  [
+    /difference between mentor and faculty|mentor or faculty|should i (ask|contact) a mentor or (a )?faculty/i,
+    () => ({
+      text:
+        "**Mentors** are senior students — message them directly for course help, career advice, or to ask what a subject is actually like.\n\n" +
+        "**Faculty** are professors — their profiles show research interests so you can find one for a project, but you reach them the way you'd normally contact a professor, not through in-app chat.",
+    }),
+  ],
+];
+
+const PAGE_HOWTO: Record<string, string> = {
+  "/mentors": "This page lists **senior mentors** by department and skill. Filter by what you're stuck on, then tap **Connect** to message one directly.",
+  "/faculty": "This page lists **faculty** by department and research interest. Tap a card to see their profile — faculty aren't messageable in-app, so reach out through their listed contact.",
+  "/ask": 'Type a question in plain English — like *"who can help me with DSA"* — and this page searches mentors, faculty, groups, and opportunities in one shot.',
+  "/opportunities": "Browse **hackathons, internships, and contests** posted by the community. Filter by type, then tap one for details and how to apply.",
+  "/communities": "Browse and join **student groups** by interest. Inside a group you can read and post to its board.",
+  "/become-mentor": "Fill out this form to apply as a mentor. Once approved, students can find and message you — help **3 students** with real back-and-forth and you'll earn a certificate.",
+  "/certificate": "This page shows what the **mentor certificate** looks like and how it's earned — help 3 students with genuine conversations and it's issued automatically.",
+  "/marketplace": "Browse items **students are selling or looking for** on campus.",
+  "/": "This is the homepage — scroll down for an overview, or head to **/mentors**, **/faculty**, or **/ask** to start looking for someone.",
+};
+
+function howToUse(path: string | null): string {
+  if (path && PAGE_HOWTO[path]) return PAGE_HOWTO[path];
+  return "Use the **search bar** or the **/ask** page to find a mentor or faculty member by topic. Tap the **AI** button any time — like now — to ask a question directly.";
+}
+
+function matchCannedAnswer(message: string, path: string | null): CannedAnswer | null {
+  for (const [test, build] of CANNED_FAQ) {
+    if (test.test(message)) return build(path);
+  }
+  return null;
+}
+
 /** One retrieval definition for the whole platform, cache included. */
 async function retrieve(query: string): Promise<{ faculty: Retrieved[]; mentors: Retrieved[] }> {
   try {
@@ -160,7 +300,7 @@ async function generate(prompt: string): Promise<{ text: string; model: string }
  * employees of a real university and named students; the model may summarise
  * what is on file and nothing else.
  */
-function buildPrompt(message: string, faculty: Retrieved[], mentors: Retrieved[]): string {
+function buildPrompt(message: string, faculty: Retrieved[], mentors: Retrieved[], path: string | null): string {
   const describe = (row: Retrieved, kind: string) => {
     const tags = tagsOf(row);
     return `- ${row.title} (${kind}${row.subtitle ? `, ${row.subtitle}` : ""})` +
@@ -174,6 +314,8 @@ function buildPrompt(message: string, faculty: Retrieved[], mentors: Retrieved[]
 
   return `You are the assistant for Friendly Learning, a student-built platform at SRM University-AP that connects first-year students to senior mentors and to faculty.
 
+The student is currently looking at: ${describePage(path)}.
+
 A student asked: "${message}"
 
 ${people ? `These people were retrieved from the platform's database as topical matches:\n${people}` : "No people in the database matched this question."}
@@ -185,6 +327,8 @@ Rules you must follow:
 4. Do not mention grades, ratings, or how easy a professor is.
 5. Be warm and brief — you are talking to a nervous first-year. 120 words or fewer.
 6. Do not repeat the list verbatim; it is already shown to the student as cards beside your reply. Refer to it naturally.
+7. Format the reply in markdown: short paragraphs (1-3 sentences), **bold** on key terms or names, and a bullet list when you're enumerating more than two things. Never return one undifferentiated block of text.
+8. If the question is about the page they're currently on, answer with that page in mind rather than generically.
 
 Answer the student's question directly.`;
 }
@@ -195,10 +339,11 @@ serve(async (req) => {
   const currentSessionId = crypto.randomUUID();
 
   try {
-    const { message, sessionId, userId } = await req.json();
+    const { message, sessionId, userId, path } = await req.json();
     if (!message) throw new Error("No message provided");
 
     const session = sessionId || currentSessionId;
+    const currentPath: string | null = typeof path === "string" ? path : null;
 
     const userConversationId = crypto.randomUUID();
     await supabase.from("ai_conversations").insert({
@@ -211,31 +356,67 @@ serve(async (req) => {
       context: { original_query: message },
     });
 
+    // Fixed answers for questions that don't need retrieval or a model call —
+    // instant, free, and worded consistently. Still logged to history like any
+    // other reply.
+    const canned = matchCannedAnswer(message, currentPath);
+    if (canned) {
+      await supabase.from("ai_conversations").insert({
+        id: crypto.randomUUID(),
+        user_id: userId,
+        session_id: session,
+        message,
+        response: canned.text,
+        message_type: "ai",
+        suggested_mentors: [],
+        context: {
+          user_message_id: userConversationId,
+          grounded: false,
+          model: "canned",
+        },
+      });
+
+      return new Response(
+        JSON.stringify({
+          aiResponse: canned.text,
+          model: "canned",
+          richContent: canned.richContent ?? null,
+          suggestedMentors: [],
+          suggestedFaculty: [],
+          hasMentorSuggestions: false,
+          hasFacultySuggestions: false,
+          sessionId: session,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
     const { faculty, mentors } = await retrieve(message);
+    const shownMentors = mentors.slice(0, MAX_MENTOR_SUGGESTIONS);
+    const shownFaculty = faculty.slice(0, MAX_FACULTY_SUGGESTIONS);
 
     // The suggestion cards read full mentor rows (skills.slice, rating.toFixed),
     // so the retrieved IDs are rehydrated rather than passed through as chunks.
     // Nulls here would crash the card, hence the defaults.
-    let suggestedMentors: unknown[] = [];
-    if (mentors.length) {
+    let suggestedMentors: Array<Record<string, unknown>> = [];
+    if (shownMentors.length) {
       const { data } = await supabase
         .from("mentors")
         .select("id, name, department, skills, rating, profile_image, bio")
-        .in("id", mentors.map((m) => m.entity_id));
+        .in("id", shownMentors.map((m) => m.entity_id));
 
-      const order = new Map(mentors.map((m, index) => [m.entity_id, index]));
+      const order = new Map(shownMentors.map((m, index) => [m.entity_id, index]));
       suggestedMentors = (data ?? [])
         .map((row) => ({
           ...row,
           skills: row.skills ?? [],
           rating: row.rating ?? 0,
-          relevanceScore: mentors.find((m) => m.entity_id === row.id)?.similarity ?? 0,
+          relevanceScore: shownMentors.find((m) => m.entity_id === row.id)?.similarity ?? 0,
         }))
         // Keep the retrieval ranking; the IN query returns arbitrary order.
-        .sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
+        .sort((a, b) => (order.get(a.id as string) ?? 0) - (order.get(b.id as string) ?? 0));
     }
 
-    const shownFaculty = faculty.slice(0, 4);
     const suggestedFaculty = shownFaculty.map((f) => ({
       id: f.entity_id,
       name: f.title,
@@ -248,11 +429,11 @@ serve(async (req) => {
     }));
 
     // Only the people whose cards are rendered may be named in the prose.
-    // Eight are retrieved but four faculty are shown, and the model happily
-    // named a fifth — not a hallucination (it was retrieved) but the student
-    // sees a name with no card beside it, which reads exactly like one.
+    // More may be retrieved than shown, and the model happily named the extra
+    // one — not a hallucination (it was retrieved) but the student sees a name
+    // with no card beside it, which reads exactly like one.
     const { text: aiResponse, model: usedModel } = await generate(
-      buildPrompt(message, shownFaculty, mentors),
+      buildPrompt(message, shownFaculty, shownMentors, currentPath),
     );
 
     await supabase.from("ai_conversations").insert({
@@ -276,6 +457,7 @@ serve(async (req) => {
       JSON.stringify({
         aiResponse,
         model: usedModel,
+        richContent: null,
         suggestedMentors,
         suggestedFaculty,
         hasMentorSuggestions: suggestedMentors.length > 0,
@@ -294,18 +476,24 @@ serve(async (req) => {
     const cronSecret = Deno.env.get("CRON_SECRET");
     const debug = cronSecret && req.headers.get("x-cron-secret") === cronSecret;
 
+    // Quota is the failure a student will actually meet on the free tier, and
+    // "wait a minute" is actionable where a generic apology is not.
+    const busy = detail.includes("429") || detail.includes("503");
+
     return new Response(
       JSON.stringify({
         ...(debug ? { debug: detail } : {}),
-        aiResponse:
-          "I hit a problem answering that. Try again in a moment — or browse /ask, which searches faculty and seniors directly.",
+        aiResponse: busy
+          ? "I'm getting a lot of questions right now — give me a minute and ask again. In the meantime, /ask searches faculty and seniors directly and always works."
+          : "I hit a problem answering that. Try again in a moment — or browse /ask, which searches faculty and seniors directly.",
+        richContent: null,
         suggestedMentors: [],
         suggestedFaculty: [],
         hasMentorSuggestions: false,
         hasFacultySuggestions: false,
         sessionId: currentSessionId,
       }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      { status: busy ? 429 : 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
 });
