@@ -1,11 +1,20 @@
 import { motion } from "framer-motion";
-import { Eye } from "lucide-react";
-
+import { Eye, Award } from "lucide-react";
 import AvailabilityBanner from "./AvailabilityBanner";
-import MentorProfileSidebar from "./MentorProfileSidebar";
-import MentorProfileSections from "./MentorProfileSections";
+import MentorHeroHeader from "./MentorHeroHeader";
+import SmartMatchBanner from "./SmartMatchBanner";
+import MentorOutcomesSection from "./MentorOutcomesSection";
+import IdealMenteeSection from "./IdealMenteeSection";
+import CategorizedSkillsDisplay from "./CategorizedSkillsDisplay";
+import MentorAvailabilityCard from "./MentorAvailabilityCard";
+import MentorExperienceSection from "./MentorExperienceSection";
+import MentorProjectsSection from "./MentorProjectsSection";
+import MentorReviewHighlights from "./MentorReviewHighlights";
+import SimilarMentorsSection from "./SimilarMentorsSection";
+import BadgeDisplay from "@/components/badges/BadgeDisplay";
 import { isMentorListed } from "@/integrations/supabase/services/mentors";
 import { Mentor } from "@/types/mentor";
+import { getEnhancedMentorProfile } from "@/utils/mentor-enhancements";
 
 interface MentorProfileContentProps {
   mentor: Mentor;
@@ -17,13 +26,15 @@ interface MentorProfileContentProps {
 }
 
 const MentorProfileContent = ({
-  mentor,
+  mentor: rawMentor,
   canRate,
   isOwnProfile,
   ratingLoading,
   onShowRatingModal,
   onMentorUpdated,
 }: MentorProfileContentProps) => {
+  const mentor = getEnhancedMentorProfile(rawMentor);
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: { opacity: 1, transition: { duration: 0.3, staggerChildren: 0.05 } },
@@ -31,23 +42,22 @@ const MentorProfileContent = ({
 
   return (
     <motion.div
-      className="mx-auto max-w-6xl"
+      className="mx-auto max-w-5xl space-y-8 pb-12"
       variants={containerVariants}
       initial="hidden"
       animate="visible"
     >
-      {/* Says both things at once: the page is yours, and what you are looking
-          at is what a student sees. Without it the pencils read as a bug. */}
+      {/* Profile view banner for mentor owner */}
       {isOwnProfile && (
-        <div className="mb-6 flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 px-4 py-3 text-sm text-foreground">
+        <div className="flex items-center gap-2 rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 text-sm text-foreground shadow-xs">
           <Eye className="h-4 w-4 flex-shrink-0 text-primary" />
           <span>
-            This is your profile, as students see it. Use the{" "}
-            <span className="font-medium">pencil icons</span> to edit any section.
+            This is your profile as students see it. Keep your skills and bio updated to help students find you!
           </span>
         </div>
       )}
 
+      {/* Unlisted / Paused Availability Banner */}
       {!isMentorListed(mentor) && (
         <AvailabilityBanner
           mentor={mentor}
@@ -56,25 +66,62 @@ const MentorProfileContent = ({
         />
       )}
 
-      {/* One column until lg. The sidebar is only sticky where there is a
-          second column for it to sit beside. */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[20rem_minmax(0,1fr)] lg:gap-8">
-        <MentorProfileSidebar
-          mentor={mentor}
-          canRate={canRate}
-          ratingLoading={ratingLoading}
-          onShowRatingModal={onShowRatingModal}
-        />
+      {/* SECTION 1: WHO I AM (Hero Header Card with Photo, Tagline, Trust Stats & Connect CTA) */}
+      <MentorHeroHeader
+        mentor={mentor}
+        canRate={canRate}
+        ratingLoading={ratingLoading}
+        onShowRatingModal={onShowRatingModal}
+      />
 
-        <MentorProfileSections
-          mentor={mentor}
-          canRate={canRate}
-          isOwnProfile={isOwnProfile}
-          ratingLoading={ratingLoading}
-          onShowRatingModal={onShowRatingModal}
-          onMentorUpdated={onMentorUpdated}
-        />
-      </div>
+      {/* SECTION 2: SMART MATCH BANNER */}
+      <SmartMatchBanner mentor={mentor} />
+
+      {/* SECTION 3: HOW I CAN HELP YOU */}
+      <MentorOutcomesSection mentor={mentor} />
+
+      {/* SECTION 4: IDEAL MENTEES ("Perfect if you are...") */}
+      <IdealMenteeSection mentor={mentor} />
+
+      {/* SECTION 5: CATEGORIZED SKILLS */}
+      <CategorizedSkillsDisplay mentor={mentor} />
+
+      {/* SECTION 6: AVAILABILITY & SCHEDULE */}
+      <MentorAvailabilityCard mentor={mentor} />
+
+      {/* SECTION 7: WHY YOU SHOULD TRUST ME - EXPERIENCE & PROJECTS */}
+      <MentorExperienceSection mentor={mentor} />
+
+      <MentorProjectsSection mentor={mentor} />
+
+      {/* Badges Section */}
+      <motion.section
+        className="rounded-2xl border border-border/80 bg-card p-6 shadow-sm"
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+      >
+        <h2 className="mb-4 flex items-center gap-2 text-lg font-bold text-foreground">
+          <Award className="h-5 w-5 text-primary" />
+          Badges & Platform Achievements
+        </h2>
+        <BadgeDisplay userId={mentor.id} />
+      </motion.section>
+
+      {/* SECTION 8: REVIEWS & TESTIMONIAL HIGHLIGHTS */}
+      <MentorReviewHighlights
+        mentor={mentor}
+        canRate={canRate}
+        isOwnProfile={isOwnProfile}
+        ratingLoading={ratingLoading}
+        onShowRatingModal={onShowRatingModal}
+      />
+
+      {/* SECTION 9: DISCOVERY - SIMILAR MENTORS */}
+      <SimilarMentorsSection
+        currentMentorId={mentor.id}
+        department={mentor.department}
+      />
     </motion.div>
   );
 };

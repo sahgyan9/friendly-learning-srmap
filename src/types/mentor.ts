@@ -25,6 +25,41 @@ export interface Mentor {
   graduation_year?: number | null;
   company?: string | null;
   job_title?: string | null;
+  tagline?: string;
+  year_of_studies?: string | number;
+  outcomes?: string[];
+  ask_me_anything?: string[];
+  ideal_mentees?: string[];
+  experiences?: Array<{
+    id: string;
+    title: string;
+    organization?: string;
+    period?: string;
+    icon?: string;
+    type?: string;
+  }>;
+  projects?: Array<{
+    id: string;
+    title: string;
+    description: string;
+    link?: string;
+    tags?: string[];
+    color?: string;
+  }>;
+  availability_schedule?: {
+    response_time?: string;
+    response_rate?: string;
+    mentees_count?: number;
+    available_days?: string[];
+    typical_time?: string;
+  };
+  review_highlights?: Array<{
+    id: string;
+    quote: string;
+    author?: string;
+    rating?: number;
+  }>;
+  categorized_skills?: Record<string, string[]>;
 }
 
 export interface MentorFormData {
