@@ -1,7 +1,7 @@
 import React from "react";
 
 /**
- * Traced from public/lovable-uploads/Posts.svg — layered post cards with text lines,
+ * Traced from public/lovable-uploads/posts2.svg — layered post card with top tab,
  * using `stroke="currentColor"` so it recolors with the accent and switches for light/dark
  * like every other nav icon.
  */
@@ -20,15 +20,10 @@ export const PostIcon: React.FC<React.SVGProps<SVGSVGElement>> = ({
       className={className}
       {...props}
     >
-      {/* Back Card */}
-      <rect x="7" y="5" width="11" height="13" rx="2" />
-
-      {/* Front Card */}
-      <rect x="4" y="8" width="11" height="13" rx="2" />
-
-      {/* Text Lines */}
-      <line x1="7" y1="12" x2="12" y2="12" />
-      <line x1="7" y1="15" x2="10" y2="15" />
+      <rect x="5" y="5" width="12" height="14" rx="2" />
+      <path d="M9 5v-1a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v10" />
+      <line x1="8" y1="10" x2="14" y2="10" />
+      <line x1="8" y1="13" x2="12" y2="13" />
     </svg>
   );
 };
