@@ -11,7 +11,7 @@ export const GroupsIcon: React.FC<React.SVGProps<SVGSVGElement>> = ({
 }) => {
   return (
     <svg
-      viewBox="0 0 512 487.41"
+      viewBox="50 10 412 430"
       fill="currentColor"
       className={className}
       {...props}
