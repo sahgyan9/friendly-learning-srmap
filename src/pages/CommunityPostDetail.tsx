@@ -39,6 +39,7 @@ const POST_TYPE_GRADIENT: Record<string, string> = {
 import { PRIMARY_DOMAIN } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { getInitials } from "@/utils/user-utils";
+import { formatRelativeTime } from "@/utils/date-utils";
 import { getOrCreateConversation } from "@/integrations/supabase/services/chat/conversation.service";
 import {
   POST_STATUSES,
@@ -223,7 +224,15 @@ const CommunityPostDetail = () => {
               <div className="flex flex-wrap items-start justify-between gap-4">
                 {/* Author — larger, more prominent on the detail page */}
                 <div className="flex items-center gap-4">
-                  <Avatar className="h-16 w-16 ring-2 ring-primary/20 shrink-0">
+                  <Avatar
+                    className={cn(
+                      "h-16 w-16 ring-2 ring-primary/20 shrink-0 transition-all duration-200",
+                      post.author.is_mentor && "cursor-pointer hover:ring-primary/50 hover:scale-105",
+                    )}
+                    onClick={() => {
+                      if (post.author.is_mentor) navigate(`/mentor/${post.author.id}`);
+                    }}
+                  >
                     <AvatarImage src={post.author.profile_image ?? undefined} alt={post.author.name} />
                     <AvatarFallback className="bg-primary/10 text-lg font-semibold text-primary">
                       {getInitials(post.author.name)}
@@ -231,16 +240,30 @@ const CommunityPostDetail = () => {
                   </Avatar>
                   <div>
                     <div className="flex items-center gap-1.5">
-                      <h2 className="text-lg font-semibold leading-tight">{post.author.name}</h2>
+                      <h2
+                        className={cn(
+                          "text-lg font-semibold leading-tight",
+                          post.author.is_mentor && "cursor-pointer hover:text-primary hover:underline transition-colors",
+                        )}
+                        onClick={() => {
+                          if (post.author.is_mentor) navigate(`/mentor/${post.author.id}`);
+                        }}
+                      >
+                        {post.author.name}
+                      </h2>
                       {post.author.is_mentor && (
-                        <BadgeCheck className="h-4 w-4 text-primary" aria-label="Verified mentor" />
+                        <BadgeCheck
+                          className="h-4 w-4 text-primary cursor-pointer"
+                          aria-label="Verified mentor"
+                          onClick={() => navigate(`/mentor/${post.author.id}`)}
+                        />
                       )}
                     </div>
                     {post.author.department && (
                       <p className="text-sm text-muted-foreground">{post.author.department}</p>
                     )}
                     <p className="text-xs text-muted-foreground">
-                      {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
+                      {formatRelativeTime(post.created_at)}
                     </p>
                   </div>
                 </div>

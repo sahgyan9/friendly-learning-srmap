@@ -1,13 +1,14 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Heart, MessageCircle, Share2, BadgeCheck, ChevronDown } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { getInitials } from "@/utils/user-utils";
+import { formatRelativeTime } from "@/utils/date-utils";
 import type { CommunityPost } from "@/integrations/supabase/services/community-posts";
 import { isAwaitingReply, getPostImageUrls } from "@/integrations/supabase/services/community-posts";
 import { AwaitingReplyBadge, PostStatusBadge, PostTypeBadge } from "./PostTypeBadge";
@@ -62,10 +63,20 @@ export function PostCard({
   variant = "full",
   className,
 }: PostCardProps) {
+  const navigate = useNavigate();
   const [isExpanded, setIsExpanded] = useState(false);
   const isCompact = variant === "compact";
-  const postedAt = formatDistanceToNow(new Date(post.created_at), { addSuffix: true });
+  const postedAt = formatRelativeTime(post.created_at);
   const accentGradient = POST_TYPE_GRADIENT[post.post_type] ?? "muted";
+
+  const handleAuthorClick = (event: React.MouseEvent) => {
+    event.stopPropagation();
+    if (onAuthorClick) {
+      onAuthorClick(post.author.id, event);
+    } else if (post.author.is_mentor) {
+      navigate(`/mentor/${post.author.id}`);
+    }
+  };
 
   /**
    * On the homepage rail every card is stretched to the height of the tallest,
@@ -107,12 +118,54 @@ export function PostCard({
       {/* ── Body ── */}
       <div className={cn("relative flex flex-1 flex-col gap-3 px-4", isCompact ? "py-4" : "py-5")}>
 
-        {/* Type + status badges row */}
-        <div className="flex flex-wrap items-center gap-2">
-          <PostTypeBadge type={post.post_type} />
-          <PostStatusBadge status={post.status} />
-          {isAwaitingReply(post) && <AwaitingReplyBadge />}
-          <span className="ml-auto shrink-0 text-xs text-muted-foreground">{postedAt}</span>
+        {/* ── Top Header: Author details & Post Type Badges ── */}
+        <div className="flex items-start justify-between gap-3">
+          {/* Author avatar & info */}
+          <div className="flex min-w-0 items-center gap-2.5">
+            <Avatar
+              className="h-9 w-9 shrink-0 ring-1 ring-border/80 transition-all duration-200 cursor-pointer hover:ring-2 hover:ring-emerald-500/60 hover:scale-105"
+              onClick={handleAuthorClick}
+            >
+              <AvatarImage src={post.author.profile_image ?? undefined} alt={post.author.name} />
+              <AvatarFallback className="bg-emerald-500/10 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+                {getInitials(post.author.name)}
+              </AvatarFallback>
+            </Avatar>
+
+            <div className="min-w-0 leading-tight text-left">
+              <div className="flex items-center gap-1">
+                <span
+                  className="truncate text-xs font-semibold text-foreground text-left cursor-pointer hover:text-emerald-600 dark:hover:text-emerald-400 hover:underline transition-colors"
+                  onClick={handleAuthorClick}
+                >
+                  {post.author.name}
+                </span>
+                {post.author.is_mentor && (
+                  <BadgeCheck
+                    className="h-3.5 w-3.5 shrink-0 text-emerald-600 dark:text-emerald-400 cursor-pointer"
+                    aria-label="Verified mentor"
+                    onClick={handleAuthorClick}
+                  />
+                )}
+              </div>
+              <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                {post.author.department && (
+                  <>
+                    <span className="truncate max-w-[120px]">{post.author.department}</span>
+                    <span>•</span>
+                  </>
+                )}
+                <span className="shrink-0">{postedAt}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Badges */}
+          <div className="flex flex-wrap items-center justify-end gap-1.5 shrink-0">
+            <PostTypeBadge type={post.post_type} />
+            <PostStatusBadge status={post.status} />
+            {isAwaitingReply(post) && <AwaitingReplyBadge />}
+          </div>
         </div>
 
         {/* Title + content */}
@@ -181,108 +234,71 @@ export function PostCard({
         )}
       </div>
 
-      {/* ── Footer — separated with border-t for breathing room ── */}
-      <div className="relative flex items-center justify-between gap-2 border-t border-border/60 px-4 py-2.5">
-        {/* Author byline */}
-        <div className="flex min-w-0 items-center gap-2">
-          <Avatar
-            className={cn(
-              "h-7 w-7 shrink-0 ring-1 ring-border transition-all duration-200",
-              onAuthorClick && "cursor-pointer hover:ring-emerald-500/40",
-            )}
-            onClick={onAuthorClick ? (event) => onAuthorClick(post.author.id, event) : undefined}
-          >
-            <AvatarImage src={post.author.profile_image ?? undefined} alt={post.author.name} />
-            <AvatarFallback className="bg-emerald-500/10 text-[10px] font-semibold text-emerald-700 dark:text-emerald-400">
-              {getInitials(post.author.name)}
-            </AvatarFallback>
-          </Avatar>
-
-          <div className="min-w-0 leading-tight text-left">
-            <span className="flex items-center gap-1">
-              <span
-                className={cn(
-                  "truncate text-xs font-medium text-left",
-                  onAuthorClick && "cursor-pointer hover:text-primary transition-colors",
-                )}
-                onClick={onAuthorClick ? (event) => onAuthorClick(post.author.id, event) : undefined}
-              >
-                {post.author.name}
-              </span>
-              {post.author.is_mentor && (
-                <BadgeCheck className="h-3.5 w-3.5 shrink-0 text-primary" aria-label="Verified mentor" />
+      {/* ── Footer — strictly action buttons ── */}
+      <div
+        className="relative flex items-center justify-between gap-1 border-t border-border/60 px-4 py-2"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className={cn(
+                "h-8 gap-1.5 px-3 text-xs font-medium text-muted-foreground hover:text-rose-600 transition-all duration-200 hover:scale-105",
+                post.viewer_has_liked && "text-rose-600 dark:text-rose-400 font-semibold",
               )}
-            </span>
-            {post.author.department && (
-              <span className="block truncate text-[11px] text-muted-foreground text-left">
-                {post.author.department}
-              </span>
-            )}
-          </div>
-        </div>
+              onClick={onLike ? (event) => onLike(post.id, event) : undefined}
+              aria-pressed={post.viewer_has_liked}
+              aria-label={post.viewer_has_liked ? "Unlike post" : "Like post"}
+            >
+              <Heart className={cn("h-4 w-4 transition-transform", post.viewer_has_liked && "fill-current scale-110")} />
+              <span>{post.likes_count > 0 ? post.likes_count : "Like"}</span>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="top" className="flex items-center gap-1 text-xs font-medium">
+            {post.viewer_has_liked ? "💖 Liked" : "❤️ Like"}
+          </TooltipContent>
+        </Tooltip>
 
-        {/* Action buttons with Emoji Tooltips */}
-        <div className="flex shrink-0 items-center gap-1" onClick={(e) => e.stopPropagation()}>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className={cn(
-                  "h-8 gap-1.5 px-2.5 text-muted-foreground hover:text-rose-600 transition-all duration-200 hover:scale-105",
-                  post.viewer_has_liked && "text-rose-600 dark:text-rose-400",
-                )}
-                onClick={onLike ? (event) => onLike(post.id, event) : undefined}
-                aria-pressed={post.viewer_has_liked}
-                aria-label={post.viewer_has_liked ? "Unlike post" : "Like post"}
-              >
-                <Heart className={cn("h-4 w-4 transition-transform", post.viewer_has_liked && "fill-current scale-110")} />
-                {post.likes_count > 0 && <span className="text-xs font-medium">{post.likes_count}</span>}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="top" className="flex items-center gap-1 text-xs font-medium">
-              {post.viewer_has_liked ? "💖 Liked" : "❤️ Like"}
-            </TooltipContent>
-          </Tooltip>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 gap-1.5 px-3 text-xs font-medium text-muted-foreground hover:text-emerald-600 dark:hover:text-emerald-400 transition-all duration-200 hover:scale-105"
+              onClick={(event) => {
+                event.stopPropagation();
+                onComment?.(post.id, event);
+              }}
+              aria-label="Comments"
+            >
+              <MessageCircle className="h-4 w-4" />
+              <span>{post.comments_count > 0 ? `${post.comments_count} Comment${post.comments_count > 1 ? "s" : ""}` : "Comment"}</span>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="top" className="flex items-center gap-1 text-xs font-medium">
+            💬 {post.comments_count > 0 ? `${post.comments_count} Comments` : "Write a comment"}
+          </TooltipContent>
+        </Tooltip>
 
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 gap-1.5 px-2.5 text-muted-foreground hover:text-emerald-600 dark:hover:text-emerald-400 transition-all duration-200 hover:scale-105"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  onComment?.(post.id, event);
-                }}
-                aria-label="Comments"
-              >
-                <MessageCircle className="h-4 w-4" />
-                {post.comments_count > 0 && <span className="text-xs font-medium">{post.comments_count}</span>}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="top" className="flex items-center gap-1 text-xs font-medium">
-              💬 {post.comments_count > 0 ? `${post.comments_count} Comments` : "Write a comment"}
-            </TooltipContent>
-          </Tooltip>
-
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 px-2.5 text-muted-foreground hover:text-primary transition-all duration-200 hover:scale-105"
-                onClick={onShare ? (event) => onShare(post, event) : undefined}
-                aria-label="Share post"
-              >
-                <Share2 className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="top" className="flex items-center gap-1 text-xs font-medium">
-              🔗 Share link
-            </TooltipContent>
-          </Tooltip>
-        </div>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 gap-1.5 px-3 text-xs font-medium text-muted-foreground hover:text-primary transition-all duration-200 hover:scale-105"
+              onClick={onShare ? (event) => onShare(post, event) : undefined}
+              aria-label="Share post"
+            >
+              <Share2 className="h-4 w-4" />
+              <span>Share</span>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="top" className="flex items-center gap-1 text-xs font-medium">
+            🔗 Share link
+          </TooltipContent>
+        </Tooltip>
       </div>
     </Card>
   );
