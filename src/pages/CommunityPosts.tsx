@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { ChevronDown, FileText, Search } from "lucide-react";
 import { motion } from "framer-motion";
@@ -23,6 +23,7 @@ import { cn } from "@/lib/utils";
 import {
   POST_TYPES,
   getCommunityPosts,
+  getCommunityPostById,
   getPostImageUrls,
   getPostTypeCounts,
   togglePostLike,
@@ -50,6 +51,16 @@ const CommunityPosts = () => {
   const [searchTerm, setSearchTerm] = useState(searchParams.get("q") ?? "");
   const debouncedSearch = useDebounce(searchTerm, 300);
 
+  const location = useLocation();
+  const [highlightedPostId, setHighlightedPostId] = useState<string | null>(null);
+
+  const targetPostId = useMemo(() => {
+    if (location.hash && location.hash.startsWith("#post-")) {
+      return location.hash.replace("#post-", "");
+    }
+    return searchParams.get("post");
+  }, [location.hash, searchParams]);
+
   // The feed is filtered and paginated in Postgres now, so the client no longer
   // pulls every post and filters in memory.
   const loadPosts = useCallback(
@@ -68,15 +79,40 @@ const CommunityPosts = () => {
       if (error) {
         toast.error("Failed to load community posts");
       } else if (data) {
-        setPosts((previous) => (offset === 0 ? data : [...previous, ...data]));
+        let loadedPosts = data;
+        if (offset === 0 && targetPostId && !loadedPosts.some((p) => p.id === targetPostId)) {
+          const { data: targetPost } = await getCommunityPostById(targetPostId);
+          if (targetPost) {
+            loadedPosts = [targetPost, ...loadedPosts.filter((p) => p.id !== targetPost.id)];
+          }
+        }
+        setPosts((previous) => (offset === 0 ? loadedPosts : [...previous, ...data]));
         setTotal(matched);
       }
 
       setLoading(false);
       setLoadingMore(false);
     },
-    [selectedType, debouncedSearch, mine],
+    [selectedType, debouncedSearch, mine, targetPostId],
   );
+
+  // Auto-scroll and highlight target post when specified via hash or query param
+  useEffect(() => {
+    if (!loading && targetPostId && posts.length > 0) {
+      const timer = setTimeout(() => {
+        const element = document.getElementById(`post-${targetPostId}`);
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth", block: "center" });
+          setHighlightedPostId(targetPostId);
+          const clearTimer = setTimeout(() => {
+            setHighlightedPostId(null);
+          }, 3000);
+          return () => clearTimeout(clearTimer);
+        }
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [loading, targetPostId, posts.length]);
 
   // Signing out with "Only mine" still pressed would ask the server for the
   // posts of nobody, and show an empty board with no explanation.
@@ -175,7 +211,7 @@ const CommunityPosts = () => {
 
   const handleShare = async (post: CommunityPost, event: React.MouseEvent) => {
     event.stopPropagation();
-    const url = `${window.location.origin}/community-posts/${post.id}`;
+    const url = `${window.location.origin}/community-posts#post-${post.id}`;
 
     if (navigator.share) {
       try {
@@ -416,10 +452,18 @@ const CommunityPosts = () => {
           ) : (
             <div className="space-y-4">
               {posts.map((post) => (
-                <div key={post.id}>
+                <div
+                  key={post.id}
+                  id={`post-${post.id}`}
+                  className={cn(
+                    "scroll-mt-24 rounded-xl transition-all duration-700",
+                    highlightedPostId === post.id &&
+                      "ring-2 ring-emerald-500 ring-offset-4 ring-offset-background shadow-xl shadow-emerald-500/10",
+                  )}
+                >
                   <PostCard
                     post={post}
-                    onOpen={(postId) => navigate(`/community-posts/${postId}`)}
+                    onOpen={(postId) => toggleComments(postId, { stopPropagation: () => {} } as any)}
                     onLike={handleLike}
                     onShare={handleShare}
                     onComment={toggleComments}

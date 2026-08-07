@@ -78,8 +78,12 @@ const CommunityPostDetail = () => {
   }, [postId, navigate]);
 
   useEffect(() => {
-    loadPost();
-  }, [loadPost]);
+    if (postId) {
+      navigate(`/community-posts#post-${postId}`, { replace: true });
+    } else {
+      navigate("/community-posts", { replace: true });
+    }
+  }, [postId, navigate]);
 
   const handleLike = async () => {
     if (!user) {

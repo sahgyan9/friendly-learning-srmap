@@ -79,7 +79,7 @@ export const CommunityPostsSection = () => {
 
   const handleShare = async (post: CommunityPost, event: React.MouseEvent) => {
     event.stopPropagation();
-    const url = `${window.location.origin}/community-posts/${post.id}`;
+    const url = `${window.location.origin}/community-posts#post-${post.id}`;
 
     if (navigator.share) {
       try {
@@ -140,12 +140,12 @@ export const CommunityPostsSection = () => {
                     post={post}
                     variant="compact"
                     className="w-[300px] shrink-0 snap-start md:w-[340px]"
-                    onOpen={(postId) => navigate(`/community-posts/${postId}`)}
+                    onOpen={(postId) => navigate(`/community-posts#post-${postId}`)}
                     onLike={handleLike}
                     onShare={handleShare}
                     onComment={(postId, event) => {
                       event.stopPropagation();
-                      navigate(`/community-posts/${postId}`);
+                      navigate(`/community-posts#post-${postId}`);
                     }}
                     onImageClick={(src, title, index, allImages) => {
                       const urls = allImages && allImages.length > 0 ? allImages : getPostImageUrls(post.image_url);
