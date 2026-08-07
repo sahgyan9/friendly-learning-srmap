@@ -163,7 +163,7 @@ const Mentors = () => {
           <div className="pointer-events-none absolute -left-16 bottom-0 h-56 w-56 rounded-full bg-purple-500/15 blur-3xl" />
           <div className="pointer-events-none absolute left-1/3 top-1/2 h-40 w-40 rounded-full bg-sky-500/10 blur-2xl" />
 
-          <div className="container mx-auto max-w-6xl px-4 pb-5 pt-20 sm:pt-22">
+          <div className="container mx-auto px-4 pb-5 pt-20 sm:pt-22">
             <motion.div
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
@@ -204,7 +204,7 @@ const Mentors = () => {
         </div>
 
         {/* Search + Quick Filter Chips + Grid */}
-        <div className="container mx-auto max-w-6xl px-4 py-4">
+        <div className="container mx-auto px-4 py-4">
           <SearchBar onSearch={handleSearch} onGeminiSearch={handleGeminiSearch} />
 
           {/* Colorful Quick Domain Filter Pills — py-2 px-1 ensures active ring borders don't get clipped */}
