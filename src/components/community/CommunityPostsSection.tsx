@@ -134,10 +134,14 @@ export const CommunityPostsSection = () => {
                   more of its own text. `w-max mx-auto` centres the rail while
                   it still fits and lets it scroll once it doesn't. */}
               <div className="mx-auto flex w-max snap-x snap-mandatory items-stretch gap-4">
-                {posts.map((post) => (
+                {posts.map((post, index) => (
                   <div
                     key={post.id}
-                    className="shrink-0 snap-start w-[400px] md:w-[460px] opacity-60 blur-[2px] transition-all duration-300 ease-out hover:opacity-100 hover:blur-none focus-within:opacity-100 focus-within:blur-none"
+                    className={`shrink-0 snap-start w-[400px] md:w-[460px] transition-all duration-300 ease-out${
+                      index === 0
+                        ? ""
+                        : " opacity-60 blur-[2px] hover:opacity-100 hover:blur-none focus-within:opacity-100 focus-within:blur-none"
+                    }`}
                   >
                     <PostCard
                       post={post}
