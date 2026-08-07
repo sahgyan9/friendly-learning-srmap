@@ -17,6 +17,7 @@ import {
   Award,
   ShieldCheck,
   Rocket,
+  SquarePen,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
@@ -225,6 +226,13 @@ const ChatbotModal = ({ isOpen, onClose }: ChatbotModalProps) => {
     setTimeout(() => inputRef.current?.focus(), 50);
   };
 
+  const handleNewConversation = () => {
+    setMessages([]);
+    setInputValue("");
+    setSessionId(crypto.randomUUID());
+    setTimeout(() => inputRef.current?.focus(), 50);
+  };
+
   const sendMessage = async () => {
     if (!inputValue.trim() || isLoading) return;
 
@@ -276,13 +284,25 @@ const ChatbotModal = ({ isOpen, onClose }: ChatbotModalProps) => {
       <DialogContent className="sm:max-w-[580px] h-[80vh] flex flex-col p-0 overflow-hidden gap-0">
 
         {/* ── Header ── */}
-        <DialogHeader className="flex-none px-5 py-4 border-b border-border/60">
+        <DialogHeader className="flex-none flex-row items-center justify-between pl-5 pr-12 py-4 border-b border-border/60 space-y-0">
           <DialogTitle className="flex items-center gap-2.5 text-sm font-semibold">
             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-600 text-white">
               <Bot className="h-4 w-4" />
             </div>
             AI Assistant
           </DialogTitle>
+          {hasMessages && (
+            <Button
+              onClick={handleNewConversation}
+              disabled={isLoading}
+              variant="ghost"
+              size="sm"
+              className="h-7 gap-1.5 rounded-full px-2.5 text-xs text-muted-foreground hover:text-foreground"
+            >
+              <SquarePen className="h-3.5 w-3.5" />
+              New chat
+            </Button>
+          )}
         </DialogHeader>
 
         {/* ── Scrollable body ── */}
