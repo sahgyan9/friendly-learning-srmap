@@ -13,6 +13,9 @@ import {
   type CommunityPost,
 } from "@/integrations/supabase/services/community-posts";
 
+import { ImageLightbox } from "@/components/community/ImageLightbox";
+import { getPostImageUrls } from "@/integrations/supabase/services/community-posts";
+
 /**
  * Homepage rail of recent community posts.
  *
@@ -25,6 +28,7 @@ export const CommunityPostsSection = () => {
   const navigate = useNavigate();
   const [posts, setPosts] = useState<CommunityPost[]>([]);
   const [loading, setLoading] = useState(true);
+  const [lightbox, setLightbox] = useState<{ images: string[]; title?: string; index: number } | null>(null);
 
   const reload = useCallback(async () => {
     const { data } = await getCommunityPosts({ limit: 12 });
@@ -138,6 +142,14 @@ export const CommunityPostsSection = () => {
                       event.stopPropagation();
                       navigate(`/community-posts/${postId}`);
                     }}
+                    onImageClick={(src, title, index, allImages) => {
+                      const urls = allImages && allImages.length > 0 ? allImages : getPostImageUrls(post.image_url);
+                      setLightbox({
+                        images: urls,
+                        title: title || post.title,
+                        index: index ?? 0,
+                      });
+                    }}
                   />
                 ))}
               </div>
@@ -155,6 +167,13 @@ export const CommunityPostsSection = () => {
           </>
         )}
       </div>
+
+      <ImageLightbox
+        images={lightbox?.images ?? []}
+        initialIndex={lightbox?.index ?? 0}
+        title={lightbox?.title}
+        onClose={() => setLightbox(null)}
+      />
     </section>
   );
 };

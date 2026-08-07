@@ -23,6 +23,7 @@ import { cn } from "@/lib/utils";
 import {
   POST_TYPES,
   getCommunityPosts,
+  getPostImageUrls,
   getPostTypeCounts,
   togglePostLike,
   type CommunityPost,
@@ -43,7 +44,7 @@ const CommunityPosts = () => {
   const [typeCounts, setTypeCounts] = useState<Record<string, number>>({});
   const [showAllTypes, setShowAllTypes] = useState(false);
   const [mine, setMine] = useState(false);
-  const [lightbox, setLightbox] = useState<{ src: string; title: string } | null>(null);
+  const [lightbox, setLightbox] = useState<{ images: string[]; title?: string; index: number } | null>(null);
 
   const selectedType = searchParams.get("type") ?? "all";
   const [searchTerm, setSearchTerm] = useState(searchParams.get("q") ?? "");
@@ -427,7 +428,14 @@ const CommunityPosts = () => {
                       event.stopPropagation();
                       if (post.author.is_mentor) navigate(`/mentor/${authorId}`);
                     }}
-                    onImageClick={(src, title) => setLightbox({ src, title })}
+                    onImageClick={(src, title, index, allImages) => {
+                      const urls = allImages && allImages.length > 0 ? allImages : getPostImageUrls(post.image_url);
+                      setLightbox({
+                        images: urls,
+                        title: title || post.title,
+                        index: index ?? 0,
+                      });
+                    }}
                   />
 
                   {expandedComments.has(post.id) && (
@@ -466,7 +474,8 @@ const CommunityPosts = () => {
       </div>
 
       <ImageLightbox
-        src={lightbox?.src ?? null}
+        images={lightbox?.images ?? []}
+        initialIndex={lightbox?.index ?? 0}
         title={lightbox?.title}
         onClose={() => setLightbox(null)}
       />
