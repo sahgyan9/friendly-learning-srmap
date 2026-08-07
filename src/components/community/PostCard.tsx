@@ -1,8 +1,10 @@
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Heart, MessageCircle, Share2, BadgeCheck, Maximize2 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Heart, MessageCircle, Share2, BadgeCheck, ChevronDown } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { getInitials } from "@/utils/user-utils";
@@ -60,6 +62,7 @@ export function PostCard({
   variant = "full",
   className,
 }: PostCardProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
   const isCompact = variant === "compact";
   const postedAt = formatDistanceToNow(new Date(post.created_at), { addSuffix: true });
   const accentGradient = POST_TYPE_GRADIENT[post.post_type] ?? "muted";
@@ -78,15 +81,22 @@ export function PostCard({
   const images = getPostImageUrls(post.image_url);
   const isCompactTextOnly = isCompact && images.length === 0;
   const hasGroupLink = /\/communities\/[^\s<]+/i.test(post.content);
+  const isLongText = post.content.length > 180 || (post.content.match(/\n/g) || []).length >= 3;
+
+  const handleCardClick = () => {
+    if (isLongText && !hasGroupLink) {
+      setIsExpanded((prev) => !prev);
+    }
+  };
 
   return (
     <Card
       className={cn(
-        "group relative flex flex-col overflow-hidden transition-all duration-300",
-        onOpen && "cursor-pointer hover:-translate-y-0.5 hover:shadow-lg hover:border-emerald-500/30",
+        "group relative flex flex-col overflow-hidden transition-all duration-300 select-text",
+        isLongText && "cursor-pointer hover:-translate-y-0.5 hover:shadow-lg hover:border-emerald-500/30",
         className,
       )}
-      onClick={onOpen ? () => onOpen(post.id) : undefined}
+      onClick={handleCardClick}
     >
       {/* Solid full-width top accent border — colour tracks the post type */}
       <CardAccentBorder gradient={accentGradient} />
@@ -106,12 +116,12 @@ export function PostCard({
         </div>
 
         {/* Title + content */}
-        <div className={cn("space-y-1.5", isCompactTextOnly && "flex-1")}>
+        <div className={cn("space-y-1.5 text-left", isCompactTextOnly && "flex-1")}>
           <h3
             className={cn(
-              "font-semibold leading-snug tracking-tight",
+              "font-semibold leading-snug tracking-tight text-left text-foreground",
               isCompact ? "line-clamp-2 text-base" : "text-xl",
-              onOpen && "group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-200",
+              "group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-200",
             )}
           >
             {post.title}
@@ -119,13 +129,30 @@ export function PostCard({
 
           <div
             className={cn(
-              "whitespace-pre-line text-sm leading-relaxed text-muted-foreground",
-              !isCompact && !hasGroupLink && "line-clamp-4 max-w-prose",
-              isCompact && !hasGroupLink && (isCompactTextOnly ? "line-clamp-6" : "line-clamp-2"),
+              "whitespace-pre-line text-sm leading-relaxed text-muted-foreground text-left transition-all duration-300 w-full",
+              !isExpanded && !isCompact && !hasGroupLink && "line-clamp-4",
+              !isExpanded && isCompact && !hasGroupLink && (isCompactTextOnly ? "line-clamp-6" : "line-clamp-2"),
+              isExpanded && "line-clamp-none",
             )}
           >
             <LinkifiedText text={post.content} />
           </div>
+
+          {isLongText && !hasGroupLink && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsExpanded((prev) => !prev);
+              }}
+              className="mt-1 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 transition-all duration-200 focus:outline-none"
+            >
+              <span>{isExpanded ? "📖 Show less" : "📖 Read full post"}</span>
+              <ChevronDown
+                className={cn("h-3.5 w-3.5 transition-transform duration-200", isExpanded && "rotate-180")}
+              />
+            </button>
+          )}
         </div>
 
         {/* LinkedIn-style Multi-Image Auto Gallery */}
@@ -171,11 +198,11 @@ export function PostCard({
             </AvatarFallback>
           </Avatar>
 
-          <div className="min-w-0 leading-tight">
+          <div className="min-w-0 leading-tight text-left">
             <span className="flex items-center gap-1">
               <span
                 className={cn(
-                  "truncate text-xs font-medium",
+                  "truncate text-xs font-medium text-left",
                   onAuthorClick && "cursor-pointer hover:text-primary transition-colors",
                 )}
                 onClick={onAuthorClick ? (event) => onAuthorClick(post.author.id, event) : undefined}
@@ -187,52 +214,74 @@ export function PostCard({
               )}
             </span>
             {post.author.department && (
-              <span className="block truncate text-[11px] text-muted-foreground">
+              <span className="block truncate text-[11px] text-muted-foreground text-left">
                 {post.author.department}
               </span>
             )}
           </div>
         </div>
 
-        {/* Action buttons */}
-        <div className="flex shrink-0 items-center">
-          <Button
-            variant="ghost"
-            size="sm"
-            className={cn(
-              "h-8 gap-1.5 px-2 text-muted-foreground hover:text-rose-600 transition-colors",
-              post.viewer_has_liked && "text-rose-600 dark:text-rose-400",
-            )}
-            onClick={onLike ? (event) => onLike(post.id, event) : undefined}
-            aria-pressed={post.viewer_has_liked}
-            aria-label={post.viewer_has_liked ? "Unlike post" : "Like post"}
-          >
-            <Heart className={cn("h-4 w-4", post.viewer_has_liked && "fill-current")} />
-            {/* A row of zeroes makes a young board look abandoned; count
-                appears once there is something to count. */}
-            {post.likes_count > 0 && <span className="text-xs">{post.likes_count}</span>}
-          </Button>
+        {/* Action buttons with Emoji Tooltips */}
+        <div className="flex shrink-0 items-center gap-1" onClick={(e) => e.stopPropagation()}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className={cn(
+                  "h-8 gap-1.5 px-2.5 text-muted-foreground hover:text-rose-600 transition-all duration-200 hover:scale-105",
+                  post.viewer_has_liked && "text-rose-600 dark:text-rose-400",
+                )}
+                onClick={onLike ? (event) => onLike(post.id, event) : undefined}
+                aria-pressed={post.viewer_has_liked}
+                aria-label={post.viewer_has_liked ? "Unlike post" : "Like post"}
+              >
+                <Heart className={cn("h-4 w-4 transition-transform", post.viewer_has_liked && "fill-current scale-110")} />
+                {post.likes_count > 0 && <span className="text-xs font-medium">{post.likes_count}</span>}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="flex items-center gap-1 text-xs font-medium">
+              {post.viewer_has_liked ? "💖 Liked" : "❤️ Like"}
+            </TooltipContent>
+          </Tooltip>
 
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 gap-1.5 px-2 text-muted-foreground hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
-            onClick={onComment ? (event) => onComment(post.id, event) : undefined}
-            aria-label="Comments"
-          >
-            <MessageCircle className="h-4 w-4" />
-            {post.comments_count > 0 && <span className="text-xs">{post.comments_count}</span>}
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 gap-1.5 px-2.5 text-muted-foreground hover:text-emerald-600 dark:hover:text-emerald-400 transition-all duration-200 hover:scale-105"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onComment?.(post.id, event);
+                }}
+                aria-label="Comments"
+              >
+                <MessageCircle className="h-4 w-4" />
+                {post.comments_count > 0 && <span className="text-xs font-medium">{post.comments_count}</span>}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="flex items-center gap-1 text-xs font-medium">
+              💬 {post.comments_count > 0 ? `${post.comments_count} Comments` : "Write a comment"}
+            </TooltipContent>
+          </Tooltip>
 
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 px-2 text-muted-foreground hover:text-primary transition-colors"
-            onClick={onShare ? (event) => onShare(post, event) : undefined}
-            aria-label="Share post"
-          >
-            <Share2 className="h-4 w-4" />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 px-2.5 text-muted-foreground hover:text-primary transition-all duration-200 hover:scale-105"
+                onClick={onShare ? (event) => onShare(post, event) : undefined}
+                aria-label="Share post"
+              >
+                <Share2 className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="flex items-center gap-1 text-xs font-medium">
+              🔗 Share link
+            </TooltipContent>
+          </Tooltip>
         </div>
       </div>
     </Card>

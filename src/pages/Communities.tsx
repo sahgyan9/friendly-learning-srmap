@@ -70,17 +70,26 @@ const Communities = () => {
    * When counts are unknown — the RPC failed, or nothing has loaded yet —
    * everything shows, which is exactly the behaviour that existed before.
    */
-  const { visibleKinds, hiddenKinds } = useMemo(() => {
+  const { visibleKinds, hiddenCount, hasMoreKinds } = useMemo(() => {
     const known = Object.keys(kindCounts).length > 0;
-    if (!known || showAllKinds) return { visibleKinds: [...COMMUNITY_KINDS], hiddenKinds: [] };
-
-    const visible = COMMUNITY_KINDS.filter(
+    const defaultVisible = COMMUNITY_KINDS.filter(
       (option) => option.value === kind || (kindCounts[option.value] ?? 0) > 0,
     );
+    const defaultHidden = COMMUNITY_KINDS.filter((option) => !defaultVisible.includes(option));
+    const hasMore = known && defaultHidden.length > 0;
+
+    if (!known || showAllKinds) {
+      return {
+        visibleKinds: [...COMMUNITY_KINDS],
+        hiddenCount: defaultHidden.length,
+        hasMoreKinds: hasMore,
+      };
+    }
 
     return {
-      visibleKinds: visible,
-      hiddenKinds: COMMUNITY_KINDS.filter((option) => !visible.includes(option)),
+      visibleKinds: defaultVisible,
+      hiddenCount: defaultHidden.length,
+      hasMoreKinds: hasMore,
     };
   }, [kindCounts, showAllKinds, kind]);
 
@@ -210,17 +219,17 @@ const Communities = () => {
               );
             })}
 
-            {hiddenKinds.length > 0 && (
+            {hasMoreKinds && (
               <button
                 type="button"
                 onClick={() => setShowAllKinds((value) => !value)}
                 aria-expanded={showAllKinds}
                 className="flex items-center gap-1 rounded-full border border-dashed border-border px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted"
               >
-                {showAllKinds ? "Fewer" : `More (${hiddenKinds.length})`}
+                {showAllKinds ? "Fewer" : `More (${hiddenCount})`}
                 <ChevronDown
                   aria-hidden
-                  className={cn("h-3.5 w-3.5 transition-transform", showAllKinds && "rotate-180")}
+                  className={cn("h-3.5 w-3.5 transition-transform duration-200", showAllKinds && "rotate-180")}
                 />
               </button>
             )}

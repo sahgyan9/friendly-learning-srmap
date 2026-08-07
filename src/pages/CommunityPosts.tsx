@@ -141,18 +141,27 @@ const CommunityPosts = () => {
    * When counts are unknown — the RPC failed, or nothing has loaded yet —
    * everything shows, which is exactly the behaviour that existed before.
    */
-  const { visibleTypes, hiddenTypes } = useMemo(() => {
+  const { visibleTypes, hiddenCount, hasMoreTypes } = useMemo(() => {
     const known = Object.keys(typeCounts).length > 0;
-    if (!known || showAllTypes) return { visibleTypes: [...POST_TYPES], hiddenTypes: [] };
-
-    const visible = POST_TYPES.filter(
+    const defaultVisible = POST_TYPES.filter(
       (type) =>
         type.value === "all" || type.value === selectedType || (typeCounts[type.value] ?? 0) > 0,
     );
+    const defaultHidden = POST_TYPES.filter((type) => !defaultVisible.includes(type));
+    const hasMore = known && defaultHidden.length > 0;
+
+    if (!known || showAllTypes) {
+      return {
+        visibleTypes: [...POST_TYPES],
+        hiddenCount: defaultHidden.length,
+        hasMoreTypes: hasMore,
+      };
+    }
 
     return {
-      visibleTypes: visible,
-      hiddenTypes: POST_TYPES.filter((type) => !visible.includes(type)),
+      visibleTypes: defaultVisible,
+      hiddenCount: defaultHidden.length,
+      hasMoreTypes: hasMore,
     };
   }, [typeCounts, showAllTypes, selectedType]);
 
@@ -349,17 +358,17 @@ const CommunityPosts = () => {
                 );
               })}
 
-              {hiddenTypes.length > 0 && (
+              {hasMoreTypes && (
                 <button
                   type="button"
                   onClick={() => setShowAllTypes((value) => !value)}
                   aria-expanded={showAllTypes}
                   className="flex shrink-0 items-center gap-1 rounded-full border border-dashed border-border px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted"
                 >
-                  {showAllTypes ? "Fewer" : `More (${hiddenTypes.length})`}
+                  {showAllTypes ? "Fewer" : `More (${hiddenCount})`}
                   <ChevronDown
                     aria-hidden
-                    className={cn("h-3.5 w-3.5 transition-transform", showAllTypes && "rotate-180")}
+                    className={cn("h-3.5 w-3.5 transition-transform duration-200", showAllTypes && "rotate-180")}
                   />
                 </button>
               )}

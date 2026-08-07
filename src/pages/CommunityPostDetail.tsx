@@ -259,7 +259,7 @@ const CommunityPostDetail = () => {
                 {/* Capped at ~65 characters a line, same reasoning as PostCard.
                     This is the page where someone reads the whole thing, so it
                     matters more here than in the feed. */}
-                <div className="max-w-prose whitespace-pre-line leading-relaxed text-muted-foreground">
+                <div className="w-full whitespace-pre-line leading-relaxed text-muted-foreground">
                   <LinkifiedText text={post.content} />
                 </div>
               </div>
