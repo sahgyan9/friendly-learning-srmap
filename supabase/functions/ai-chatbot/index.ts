@@ -127,18 +127,22 @@ const CANNED_FAQ: Array<[test: RegExp, build: (path: string | null) => CannedAns
   [
     /^\s*(hi|hey|hello|yo|sup|hii+|heyy+)[\s!.,]*$/i,
     () => ({
-      text: "Hey! I can help you find a mentor, point you to the right faculty, or explain how a page works. What are you looking for?",
+      text: "Hey! 👋 I'm your campus guide. Whether you're looking for a mentor, want to find faculty for research, need a hackathon team, or just want to know how a page works — ask away.",
     }),
   ],
   [
     /what\s+(is|does)\s+(this|friendly learning)\b.*(platform|site|app|do|for|about)|^what is this\??$|purpose of this platform/i,
     () => ({
       text:
-        "**Friendly Learning** is a peer-mentorship platform for SRM University-AP.\n\n" +
-        "It connects:\n" +
-        "- **First-year students** with **senior mentors** who've already taken the courses you're taking\n" +
-        "- Anyone with **faculty** whose research matches what they're working on\n\n" +
-        "Mentors who genuinely help enough students earn a certificate — everything here is built around real back-and-forth, not just browsing profiles.",
+        "**Friendly Learning** is a complete campus ecosystem for SRM University-AP students — not just a mentorship directory, but a full toolkit to help you find people, form teams, and get things done.\n\n" +
+        "Here's what you can do:\n" +
+        "- **Community Posts** — share what's on your mind, post a call for hackathon teammates or research collaborators, reply and get replies\n" +
+        "- **CampusMind Search** — the smart search at **/ask**: type a natural-language query like *\"who knows computer vision for a research project\"* and it surfaces matching students and faculty at once\n" +
+        "- **Mentors** — senior students who've taken your courses; message them directly, and the best ones earn a verified certificate\n" +
+        "- **Faculty** — the full SRM AP faculty directory with research interests, so you can find the right professor for a project or elective\n" +
+        "- **Groups** — once you find your people, create a private or public workspace to plan, coordinate, and win together\n" +
+        "- **Opportunities** — hackathons, internships, and research calls posted by the campus community\n\n" +
+        "The goal: go from *I have an idea* to *I have a team* — without leaving campus.",
     }),
   ],
   [
@@ -156,7 +160,8 @@ const CANNED_FAQ: Array<[test: RegExp, build: (path: string | null) => CannedAns
     () => ({
       text:
         "Friendly Learning is a **student-built platform**, not an official SRM University-AP product. " +
-        "It's built by students, for students, to make it easier to find mentors and faculty on campus.",
+        "It was created by students at SRM AP to solve a real gap: finding the right people on campus — a senior mentor, a faculty member for research, or teammates for a hackathon — used to mean asking around and hoping for luck. " +
+        "This platform makes that search fast, specific, and campus-wide.",
     }),
   ],
   [
@@ -312,7 +317,7 @@ function buildPrompt(message: string, faculty: Retrieved[], mentors: Retrieved[]
     ...mentors.map((m) => describe(m, "senior student")),
   ].join("\n");
 
-  return `You are the assistant for Friendly Learning, a student-built platform at SRM University-AP that connects first-year students to senior mentors and to faculty.
+  return `You are the assistant for Friendly Learning, a student-built campus ecosystem at SRM University-AP. The platform lets students: post ideas and calls for teammates on the community board; use CampusMind (the smart natural-language search at /ask) to find matching students and faculty in one query; connect with senior student mentors for course help and career advice; browse the full SRM AP faculty directory by research interest; form private or public group workspaces after finding the right people; discover hackathons, internships and research opportunities; and earn a verified certificate by genuinely helping 3 students as a mentor.
 
 The student is currently looking at: ${describePage(path)}.
 

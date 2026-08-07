@@ -97,6 +97,60 @@ await db.exec(`
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
   );
+
+  -- Groups, as of 20260731090000 + 20260731130000, trimmed to the columns the
+  -- channels migration actually touches.
+  CREATE TABLE public.communities (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    slug TEXT NOT NULL UNIQUE,
+    name TEXT NOT NULL,
+    description TEXT NOT NULL,
+    kind TEXT NOT NULL DEFAULT 'general',
+    owner_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+    visibility TEXT NOT NULL DEFAULT 'public',
+    member_count INT NOT NULL DEFAULT 0,
+    post_count INT NOT NULL DEFAULT 0,
+    is_archived BOOLEAN NOT NULL DEFAULT false,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  );
+  CREATE TABLE public.community_members (
+    community_id UUID NOT NULL REFERENCES public.communities(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+    role TEXT NOT NULL DEFAULT 'member',
+    joined_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    PRIMARY KEY (community_id, user_id)
+  );
+  CREATE TABLE public.community_group_messages (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    community_id UUID NOT NULL REFERENCES public.communities(id) ON DELETE CASCADE,
+    sender_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+    channel TEXT NOT NULL DEFAULT 'general',
+    content TEXT NOT NULL,
+    reply_to_id UUID REFERENCES public.community_group_messages(id) ON DELETE SET NULL,
+    reactions JSONB DEFAULT '{}'::jsonb,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  );
+
+  CREATE FUNCTION public.slugify(p_text text) RETURNS text LANGUAGE sql IMMUTABLE AS $$
+    SELECT trim(both '-' FROM regexp_replace(
+      regexp_replace(lower(coalesce(p_text, '')), '[^a-z0-9]+', '-', 'g'), '-{2,}', '-', 'g'))
+  $$;
+
+  CREATE FUNCTION public.can_view_community(p_community_id uuid, p_user_id uuid)
+    RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER AS $$
+    SELECT CASE WHEN p_community_id IS NULL THEN true ELSE EXISTS (
+      SELECT 1 FROM public.communities c WHERE c.id = p_community_id AND (
+        c.visibility = 'public'
+        OR (auth.uid() IS NOT NULL AND p_user_id IS NOT DISTINCT FROM auth.uid() AND (
+             c.owner_id = auth.uid()
+             OR EXISTS (SELECT 1 FROM public.community_members m
+                         WHERE m.community_id = c.id AND m.user_id = auth.uid())
+             OR public.is_admin_user(auth.uid())))))
+    END $$;
+
+  -- Supabase creates this publication; the channels migration adds a table to it.
+  CREATE PUBLICATION supabase_realtime;
 `);
 
 // A pre-existing post authored by the mentor, to exercise the backfill.
@@ -108,6 +162,7 @@ for (const file of [
   '20260726010000_faculty_ratings.sql',
   '20260726010100_community_posts_open_to_students.sql',
   '20260806100000_faculty_research_interests.sql',
+  '20260807140000_community_channels.sql',
 ]) {
   const sql = fs.readFileSync(path.join(MIGRATIONS, file), 'utf8');
   try {
@@ -378,6 +433,130 @@ const { rows: [fk] } = await q(
   `SELECT count(*)::int AS n FROM pg_constraint WHERE conname='fk_mentor' AND conrelid='public.community_posts'::regclass`,
 );
 check('mentors foreign key dropped', fk.n === 0);
+
+// ---------------------------------------------------------------- channels
+console.log('\ncommunity channels:');
+
+const actAs = (uid) => q(`UPDATE auth._session SET uid = $1`, [uid]);
+
+/** Asserts the statement fails, and fails with the sentence a person would read. */
+async function refuses(label, sql, params, fragment) {
+  try {
+    await q(sql, params);
+    check(label, false, 'no error raised');
+  } catch (error) {
+    check(label, error.message.includes(fragment), error.message);
+  }
+}
+
+const OWNER = OTHER_UID; // Ravi owns the group; Asha (CURRENT_UID) is the outsider.
+await q(
+  `INSERT INTO public.communities (slug, name, description, kind, owner_id)
+   VALUES ('sih-team-alpha', 'SIH Team Alpha', 'Building for SIH 2026.', 'hackathon', $1)`,
+  [OWNER],
+);
+const { rows: [grp] } = await q(`SELECT id FROM public.communities WHERE slug='sih-team-alpha'`);
+await q(
+  `INSERT INTO public.community_group_messages (community_id, sender_id, channel, content)
+   VALUES ($1, $2, 'general', 'hello everyone')`,
+  [grp.id, OWNER],
+);
+
+await actAs(OWNER);
+const { rows: [made] } = await q(
+  `SELECT public.create_community_channel($1, 'Resources & Links!', '  where links live  ') AS id`,
+  [grp.id],
+);
+const { rows: [ch] } = await q(`SELECT slug, topic FROM public.community_channels WHERE id=$1`, [made.id]);
+check('owner creates a channel, name slugified server-side', ch?.slug === 'resources-links', `slug=${ch?.slug}`);
+check('topic is trimmed', ch?.topic === 'where links live', `topic=${ch?.topic}`);
+
+// A new group starts with no channels — the built-in room is implicit, not a row.
+// This is the whole reason the last attempt at channels was removed.
+await q(
+  `INSERT INTO public.communities (slug, name, description, owner_id)
+   VALUES ('quiet-group', 'Quiet Group', 'No channels here.', $1)`,
+  [OWNER],
+);
+const { rows: quiet } = await q(
+  `SELECT * FROM public.list_community_channels((SELECT id FROM public.communities WHERE slug='quiet-group'))`,
+);
+check('a new group has zero channels', quiet.length === 0, `rows=${quiet.length}`);
+
+await q(
+  `INSERT INTO public.community_group_messages (community_id, sender_id, channel, content)
+   VALUES ($1,$2,'resources-links','a link'), ($1,$2,'resources-links','another link')`,
+  [grp.id, OWNER],
+);
+const { rows: listed } = await q(`SELECT * FROM public.list_community_channels($1)`, [grp.id]);
+check('list returns the one channel with its message count',
+  listed.length === 1 && listed[0].message_count === 2, JSON.stringify(listed.map((r) => r.message_count)));
+
+await refuses('reserved #general refused',
+  `SELECT public.create_community_channel($1, 'General')`, [grp.id], 'already part of every group');
+await refuses('duplicate slug refused',
+  `SELECT public.create_community_channel($1, 'resources links')`, [grp.id], 'already exists');
+await refuses('punctuation-only name refused',
+  `SELECT public.create_community_channel($1, '???')`, [grp.id], 'letters or numbers');
+
+for (let i = 2; i <= 10; i += 1) {
+  await q(`SELECT public.create_community_channel($1, $2)`, [grp.id, `room-${i}`]);
+}
+const { rows: [capped] } = await q(
+  `SELECT count(*)::int AS n FROM public.community_channels WHERE community_id=$1`, [grp.id],
+);
+check('ten channels allowed', capped.n === 10, `rows=${capped.n}`);
+await refuses('eleventh refused',
+  `SELECT public.create_community_channel($1, 'room-11')`, [grp.id], '10 channels');
+
+await actAs(CURRENT_UID);
+await refuses('non-owner cannot create',
+  `SELECT public.create_community_channel($1, 'not mine')`, [grp.id], 'Only the group owner');
+await refuses('non-owner cannot delete',
+  `SELECT public.delete_community_channel($1)`, [made.id], 'Only the group owner');
+const { rows: [survived] } = await q(`SELECT count(*)::int AS n FROM public.community_channels WHERE id=$1`, [made.id]);
+check('channel survived the non-owner delete', survived.n === 1, `rows=${survived.n}`);
+
+// Deleting takes the channel's messages with it — they are joined by slug text,
+// so nothing cascades — and must leave the built-in room alone.
+await actAs(OWNER);
+const { rows: [removed] } = await q(`SELECT public.delete_community_channel($1) AS n`, [made.id]);
+check('delete reports the messages it destroyed', removed.n === 2, `removed=${removed.n}`);
+const { rows: [general] } = await q(
+  `SELECT count(*)::int AS n FROM public.community_group_messages WHERE community_id=$1 AND channel='general'`,
+  [grp.id],
+);
+check("delete leaves the built-in 'general' room untouched", general.n === 1, `general=${general.n}`);
+
+// Signed out: the RPC is not granted to anon, and the body refuses as well, so
+// the room names are not readable even if a grant is ever loosened by accident.
+await q(`UPDATE auth._session SET uid = NULL`);
+const { rows: anonRows } = await q(`SELECT * FROM public.list_community_channels($1)`, [grp.id]);
+check('signed-out reads no channels', anonRows.length === 0, `rows=${anonRows.length}`);
+await actAs(CURRENT_UID);
+
+const { rows: acl } = await q(
+  `SELECT proname, proacl::text AS acl FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
+    WHERE n.nspname='public' AND proname LIKE '%community_channel%' ORDER BY proname`,
+);
+check('three channel functions created', acl.length === 3, acl.map((r) => r.proname).join(' | '));
+check('none of them executable by anon or PUBLIC',
+  acl.every((r) => !r.acl.includes('anon=X') && !r.acl.includes('{=X') && r.acl.includes('authenticated=X')),
+  acl.map((r) => r.acl).join(' | '));
+
+// Supabase's default privileges hand every new table ALL to anon and
+// authenticated. Writes here go through the RPCs, so the table keeps only the
+// SELECT that realtime needs.
+const { rows: tableAcl } = await q(
+  `SELECT grantee, string_agg(DISTINCT privilege_type, ',' ORDER BY privilege_type) AS privs
+     FROM information_schema.table_privileges
+    WHERE table_schema='public' AND table_name='community_channels' AND grantee IN ('anon','authenticated')
+    GROUP BY grantee`,
+);
+const anonGrants = tableAcl.find((r) => r.grantee === 'anon');
+const authGrants = tableAcl.find((r) => r.grantee === 'authenticated');
+check('table grants nothing to anon', !anonGrants, anonGrants?.privs ?? 'none');
+check('table grants SELECT only to authenticated', authGrants?.privs === 'SELECT', authGrants?.privs ?? 'none');
 
 console.log(failures === 0
   ? '\nAll migration checks passed against real Postgres.'

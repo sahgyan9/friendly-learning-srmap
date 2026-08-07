@@ -45,8 +45,9 @@ import JoinRequestsPanel from "@/components/communities/JoinRequestsPanel";
 import { CommunityGroupChat } from "@/components/communities/CommunityGroupChat";
 import { EditCommunityModal } from "@/components/communities/EditCommunityModal";
 import { CommunityWorkspaceHeader } from "@/components/communities/CommunityWorkspaceHeader";
-import { CommunityWorkspaceSidebar } from "@/components/communities/CommunityWorkspaceSidebar";
+import { CommunityWorkspaceSidebar, channelTabId } from "@/components/communities/CommunityWorkspaceSidebar";
 import { CommunityMemberDrawer } from "@/components/communities/CommunityMemberDrawer";
+import CreateChannelModal from "@/components/communities/CreateChannelModal";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   DropdownMenu,
@@ -55,6 +56,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/context/AuthContext";
+import { useRealtimeSubscription } from "@/hooks/useRealtime";
 import {
   deleteCommunity,
   getCommunityBySlug,
@@ -70,6 +72,11 @@ import {
   togglePostLike,
   type CommunityPost,
 } from "@/integrations/supabase/services/community-posts";
+import {
+  listCommunityChannels,
+  deleteCommunityChannel,
+  type CommunityChannel,
+} from "@/integrations/supabase/services/community-channels";
 
 const CommunityDetail = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -88,10 +95,14 @@ const CommunityDetail = () => {
 
   const [community, setCommunity] = useState<Community | null>(null);
   const [posts, setPosts] = useState<CommunityPost[]>([]);
+  const [channels, setChannels] = useState<CommunityChannel[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [working, setWorking] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
+  const [createChannelOpen, setCreateChannelOpen] = useState(false);
+  const [channelPendingDelete, setChannelPendingDelete] = useState<CommunityChannel | null>(null);
+  const [deletingChannel, setDeletingChannel] = useState(false);
   const [requestOpen, setRequestOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -101,6 +112,22 @@ const CommunityDetail = () => {
     const { data } = await getCommunityPosts({ communityId, limit: 50 });
     setPosts(data ?? []);
   }, []);
+
+  // list_community_channels is granted to `authenticated` only, so for a
+  // signed-out visitor this is a request that can only come back 401. Skipping
+  // it keeps the console clean and matches what they can actually do with the
+  // answer: the chat itself is unreadable to them either way.
+  const loadChannels = useCallback(
+    async (communityId: string) => {
+      if (!user) {
+        setChannels([]);
+        return;
+      }
+      const { data } = await listCommunityChannels(communityId);
+      setChannels(data ?? []);
+    },
+    [user],
+  );
 
   const load = useCallback(async () => {
     if (!slug) return;
@@ -118,17 +145,40 @@ const CommunityDetail = () => {
     // inside: the database would return zero rows anyway, and asking for posts
     // the caller has no claim on is a request worth not making.
     if (data.viewer_can_view !== false) {
-      await loadPosts(data.id);
+      await Promise.all([loadPosts(data.id), loadChannels(data.id)]);
     } else {
       setPosts([]);
+      setChannels([]);
     }
 
     setLoading(false);
-  }, [slug, loadPosts]);
+  }, [slug, loadPosts, loadChannels]);
 
   useEffect(() => {
     load();
   }, [load]);
+
+  // New and removed channels reach everyone already in the group without a
+  // refresh. payload.old on this table is PK-only, so this re-reads the list
+  // rather than trying to patch state from the row.
+  useRealtimeSubscription(
+    "community_channels",
+    () => {
+      if (community) loadChannels(community.id);
+    },
+    { column: "community_id", value: community?.id ?? "" },
+  );
+
+  // A tab can name a channel that is not there: a stale ?tab= link, or one the
+  // owner removed while this page was open. Falling back to the built-in room
+  // beats rendering an empty room with no way back to the conversation.
+  useEffect(() => {
+    if (loading || !activeTab.startsWith("channel:")) return;
+    const slug = activeTab.slice("channel:".length);
+    if (!channels.some((channel) => channel.slug === slug)) {
+      setActiveTab("chat");
+    }
+  }, [loading, activeTab, channels]);
 
   const handleJoin = async () => {
     if (!user) {
@@ -262,6 +312,37 @@ const CommunityDetail = () => {
     );
   }
 
+  // Removing a channel destroys every message in it, and nothing anywhere can
+  // bring those back — so the trash icon opens a confirmation that states the
+  // count rather than acting on the click. The count comes from the same RPC
+  // that lists the channels, so the number in the dialog is the real one.
+  const handleConfirmDeleteChannel = async () => {
+    const channel = channelPendingDelete;
+    if (!channel) return;
+
+    setDeletingChannel(true);
+    const { data: removed, error } = await deleteCommunityChannel(channel.id);
+    setDeletingChannel(false);
+
+    if (error) {
+      toast.error(error.message || `Could not remove #${channel.slug}`);
+      return;
+    }
+
+    setChannelPendingDelete(null);
+    toast.success(`#${channel.slug} removed`, {
+      description:
+        removed && removed > 0
+          ? `${removed} message${removed === 1 ? "" : "s"} went with it.`
+          : undefined,
+    });
+
+    if (activeTab === channelTabId(channel.slug)) {
+      setActiveTab("chat");
+    }
+    if (community) loadChannels(community.id);
+  };
+
   const kind = getCommunityKindMeta(community.kind);
 
   return (
@@ -328,12 +409,16 @@ const CommunityDetail = () => {
                 activeTab={activeTab}
                 onSelectTab={setActiveTab}
                 onOpenMembersDrawer={() => setMembersDrawerOpen(true)}
+                channels={channels}
+                canManageChannels={Boolean(community.viewer_is_owner)}
+                onCreateChannel={() => setCreateChannelOpen(true)}
+                onDeleteChannel={setChannelPendingDelete}
               />
             </aside>
 
             {/* Main Canvas Area */}
             <main className="min-w-0 space-y-4">
-              {activeTab === "chat" && (
+              {(activeTab === "chat" || activeTab.startsWith("channel:")) && (
                 <CommunityGroupChat
                   communityId={community.id}
                   communityKind={community.kind}
@@ -343,6 +428,12 @@ const CommunityDetail = () => {
                   posts={posts}
                   onOpenPost={(postId) => navigate(`/community-posts/${postId}`)}
                   onCreatePost={community.viewer_can_post ? () => setCreateOpen(true) : undefined}
+                  channel={activeTab.startsWith("channel:") ? activeTab.replace("channel:", "") : undefined}
+                  channelTopic={
+                    activeTab.startsWith("channel:")
+                      ? channels.find((c) => c.slug === activeTab.replace("channel:", ""))?.topic
+                      : undefined
+                  }
                 />
               )}
 
@@ -430,6 +521,58 @@ const CommunityDetail = () => {
           onPostCreated={() => {
             setCreateOpen(false);
             load();
+          }}
+        />
+      )}
+
+      <AlertDialog
+        open={Boolean(channelPendingDelete)}
+        onOpenChange={(next) => {
+          if (!next && !deletingChannel) setChannelPendingDelete(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove #{channelPendingDelete?.slug}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {channelPendingDelete?.messageCount
+                ? `The ${channelPendingDelete.messageCount} message${
+                    channelPendingDelete.messageCount === 1 ? "" : "s"
+                  } in this channel will be deleted for everyone. This cannot be undone.`
+                : "This channel is empty, so nothing is lost. You can add it again later."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deletingChannel}>Keep it</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(event) => {
+                // The dialog closes itself on action; this keeps it open until
+                // the delete has actually come back, so a failure is visible.
+                event.preventDefault();
+                handleConfirmDeleteChannel();
+              }}
+              disabled={deletingChannel}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deletingChannel && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Remove channel
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {community.viewer_is_owner && (
+        <CreateChannelModal
+          open={createChannelOpen}
+          onOpenChange={setCreateChannelOpen}
+          communityId={community.id}
+          channelCount={channels.length}
+          onCreated={async (newSlug) => {
+            // Reload first, then switch. The other way round leaves a moment
+            // where the tab names a channel the list has not caught up with,
+            // and the stale-tab guard above would bounce it back to #general.
+            await loadChannels(community.id);
+            setActiveTab(channelTabId(newSlug));
           }}
         />
       )}

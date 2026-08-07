@@ -31,6 +31,67 @@ export interface BlogPost {
 
 export const BLOG_POSTS: BlogPost[] = [
   {
+    slug: "everything-you-can-do-on-friendly-learning",
+    title: "Everything You Can Do on Friendly Learning (It's More Than You Think)",
+    excerpt:
+      "Most students use one or two features. Here's the full picture — from CampusMind search and community posts to groups, mentors, faculty, and opportunities.",
+    date: "2026-08-07",
+    readingMinutes: 7,
+    tags: ["Platform Guide", "Getting Started", "CampusMind"],
+    standfirst:
+      "You probably landed here to find a mentor or look up a professor. That's a good start. But Friendly Learning is built to take you all the way from 'I have an idea' to 'I have a team' — and most of those tools are sitting unused.",
+    sections: [
+      {
+        heading: "The one-sentence version",
+        body: [
+          "Friendly Learning is a complete campus ecosystem: post what's on your mind, find the right people using natural-language search, connect with senior mentors and faculty, form a group to coordinate, and discover opportunities — all without leaving campus.",
+        ],
+      },
+      {
+        heading: "Community Posts — say what you're looking for",
+        body: [
+          "The community board is the fastest way to get in front of the whole campus. Post a call for a hackathon teammate with specific skills. Ask whether anyone has taken a particular elective. Announce that you're starting a research project and need a co-author.",
+          "A specific post outperforms a vague one every time. 'Looking for a frontend developer for a fintech hackathon this January — I'll handle the pitch and product side' will get you better replies than 'anyone interested in hackathons?'",
+        ],
+      },
+      {
+        heading: "CampusMind — search in plain English",
+        body: [
+          "The /ask page is the smartest search on campus. You don't need to know a name, a department, or a filter to use it. Type what you're actually looking for — 'someone who knows NLP for a research project' or 'mentor who's done GSoC' — and CampusMind searches students and faculty together and surfaces the closest matches.",
+          "It's the difference between searching a database and describing your problem to a knowledgeable friend. Most people find it in week three and wish they'd found it in week one.",
+        ],
+      },
+      {
+        heading: "Mentors — people who've been exactly where you are",
+        body: [
+          "Every mentor on the platform is a verified SRM AP student who has recently taken the courses you're in now. They remember what was confusing. They know which assignments are actually hard and which just look hard.",
+          "Message them directly — not through a form, not by email, just a message. The mentors who consistently help students earn a verified certificate, which means the active ones are genuinely invested in being useful.",
+        ],
+      },
+      {
+        heading: "Faculty — the whole directory, searchable by research interest",
+        body: [
+          "The faculty page carries the complete SRM AP faculty directory, synced from the university's own listings. Every profile shows the professor's research interests and department, so you can find someone whose work matches yours before reaching out.",
+          "This is especially useful for elective decisions — reading the profile and student ratings before you register is far more informative than reading the syllabus.",
+        ],
+      },
+      {
+        heading: "Groups — from finding to doing",
+        body: [
+          "Once you've found the right people, create a group. Private groups are for your team: plan the hackathon timeline, share files, coordinate without switching to another app. Public groups are for communities — anyone can join, read, and post.",
+          "The pattern that works: post on the board, get replies, move the confirmed team into a private group, and get to work.",
+        ],
+      },
+      {
+        heading: "Opportunities — the ones worth knowing about",
+        body: [
+          "The opportunities page collects hackathons, internships, and research calls posted by students and faculty. The key difference from generic job boards: these are filtered to what's relevant for SRM AP students, and the community posts section lets you find teammates for the ones you want to enter.",
+        ],
+      },
+    ],
+    cta: { label: "Try CampusMind", to: "/ask" },
+  },
+  {
     slug: "choosing-electives-srm-ap",
     title: "How to Choose Your Electives at SRM AP Without Guessing",
     excerpt:

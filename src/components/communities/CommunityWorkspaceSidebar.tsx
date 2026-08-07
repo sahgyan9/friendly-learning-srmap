@@ -1,24 +1,42 @@
 import React from "react";
-import { Hash, MessageSquare, ShieldCheck, Sparkles, UserCheck, Users } from "lucide-react";
+import { Hash, MessageSquare, Plus, ShieldCheck, Sparkles, Trash2, UserCheck, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { formatRelativeTime } from "@/utils/date-utils";
 import { type Community } from "@/integrations/supabase/services/communities";
+import {
+  MAX_CHANNELS,
+  type CommunityChannel,
+} from "@/integrations/supabase/services/community-channels";
 
 interface CommunityWorkspaceSidebarProps {
   community: Community;
   activeTab: string;
   onSelectTab: (tab: string) => void;
   onOpenMembersDrawer: () => void;
+  /** Rooms the owner has added. Empty for a group that never made any. */
+  channels?: CommunityChannel[];
+  /** Only the owner (and admins) get the add and remove controls. */
+  canManageChannels?: boolean;
+  onCreateChannel?: () => void;
+  onDeleteChannel?: (channel: CommunityChannel) => void;
 }
+
+/** The tab id for one of the owner's channels. Namespaced so a channel called
+ *  "posts" can never collide with the built-in views. */
+export const channelTabId = (slug: string) => `channel:${slug}`;
 
 export function CommunityWorkspaceSidebar({
   community,
   activeTab,
   onSelectTab,
   onOpenMembersDrawer,
+  channels = [],
+  canManageChannels = false,
+  onCreateChannel,
+  onDeleteChannel,
 }: CommunityWorkspaceSidebarProps) {
-  const channels = [
+  const views = [
     {
       id: "chat",
       label: "general-chat",
@@ -36,7 +54,7 @@ export function CommunityWorkspaceSidebar({
   ];
 
   if (community.viewer_is_owner && community.visibility === "private") {
-    channels.push({
+    views.push({
       id: "requests",
       label: "join-requests",
       icon: UserCheck,
@@ -44,6 +62,8 @@ export function CommunityWorkspaceSidebar({
       count: community.pending_request_count ?? 0,
     });
   }
+
+  const atChannelLimit = channels.length >= MAX_CHANNELS;
 
   return (
     <div className="space-y-4">
@@ -72,19 +92,40 @@ export function CommunityWorkspaceSidebar({
 
       {/* Navigation Channels */}
       <div className="rounded-xl border border-border/60 bg-card p-3 space-y-1">
-        <div className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-          Workspace Channels
+        <div className="flex items-center justify-between gap-2 px-3 py-1.5">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+            Workspace Channels
+          </span>
+
+          {/* Owner-only. Disabled rather than hidden at the cap, so the reason
+              the button stopped working is legible instead of mysterious. */}
+          {canManageChannels && (
+            <button
+              type="button"
+              onClick={onCreateChannel}
+              disabled={atChannelLimit}
+              title={
+                atChannelLimit
+                  ? `A group can have ${MAX_CHANNELS} channels`
+                  : "Add a channel"
+              }
+              aria-label="Add a channel"
+              className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-border/70 text-muted-foreground transition-colors hover:border-primary/40 hover:bg-primary/5 hover:text-primary disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-border/70 disabled:hover:bg-transparent disabled:hover:text-muted-foreground"
+            >
+              <Plus className="h-3.5 w-3.5" />
+            </button>
+          )}
         </div>
 
-        {channels.map((channel) => {
-          const Icon = channel.icon;
-          const isActive = activeTab === channel.id;
+        {views.map((view) => {
+          const Icon = view.icon;
+          const isActive = activeTab === view.id;
 
           return (
             <button
-              key={channel.id}
+              key={view.id}
               type="button"
-              onClick={() => onSelectTab(channel.id)}
+              onClick={() => onSelectTab(view.id)}
               className={cn(
                 "flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-colors",
                 isActive
@@ -94,10 +135,10 @@ export function CommunityWorkspaceSidebar({
             >
               <div className="flex items-center gap-2.5 min-w-0">
                 <Icon className={cn("h-4 w-4 shrink-0", isActive ? "text-primary-foreground" : "text-muted-foreground")} />
-                <span className="truncate">#{channel.label}</span>
+                <span className="truncate">#{view.label}</span>
               </div>
 
-              {channel.badge ? (
+              {view.badge ? (
                 <Badge
                   variant="secondary"
                   className={cn(
@@ -105,9 +146,9 @@ export function CommunityWorkspaceSidebar({
                     isActive ? "bg-primary-foreground/20 text-primary-foreground" : "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
                   )}
                 >
-                  {channel.badge}
+                  {view.badge}
                 </Badge>
-              ) : channel.count !== undefined && channel.count > 0 ? (
+              ) : view.count !== undefined && view.count > 0 ? (
                 <Badge
                   variant="secondary"
                   className={cn(
@@ -115,12 +156,95 @@ export function CommunityWorkspaceSidebar({
                     isActive ? "bg-primary-foreground/20 text-primary-foreground" : "bg-muted text-muted-foreground"
                   )}
                 >
-                  {channel.count}
+                  {view.count}
                 </Badge>
               ) : null}
             </button>
           );
         })}
+
+        {/* The owner's own channels. Below the built-in views rather than mixed
+            into them: these are rooms someone chose to make, and the separator
+            is what keeps a group with none looking exactly as it did before. */}
+        {channels.length > 0 && (
+          <div className="!mt-2 space-y-1 border-t border-border/50 pt-2">
+            {channels.map((channel) => {
+              const id = channelTabId(channel.slug);
+              const isActive = activeTab === id;
+
+              return (
+                <div key={channel.id} className="group/channel relative">
+                  <button
+                    type="button"
+                    onClick={() => onSelectTab(id)}
+                    title={channel.topic ?? undefined}
+                    className={cn(
+                      "flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-colors",
+                      isActive
+                        ? "bg-primary text-primary-foreground font-semibold shadow-xs"
+                        : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                    )}
+                  >
+                    <div className="flex min-w-0 items-center gap-2.5">
+                      <Hash
+                        className={cn(
+                          "h-4 w-4 shrink-0",
+                          isActive ? "text-primary-foreground" : "text-muted-foreground"
+                        )}
+                      />
+                      {/* The literal # matches the built-in rows above, which
+                          carry it in their label text alongside the icon. */}
+                      <span className="truncate">#{channel.slug}</span>
+                    </div>
+
+                    {/* The count shifts left on hover so the remove control has
+                        somewhere to sit without covering it. */}
+                    {channel.messageCount > 0 && (
+                      <Badge
+                        variant="secondary"
+                        className={cn(
+                          "h-4 px-1.5 py-0 text-[10px] transition-transform",
+                          canManageChannels && "group-hover/channel:-translate-x-6",
+                          isActive
+                            ? "bg-primary-foreground/20 text-primary-foreground"
+                            : "bg-muted text-muted-foreground"
+                        )}
+                      >
+                        {channel.messageCount}
+                      </Badge>
+                    )}
+                  </button>
+
+                  {canManageChannels && (
+                    <button
+                      type="button"
+                      onClick={() => onDeleteChannel(channel)}
+                      aria-label={`Remove #${channel.slug}`}
+                      title={`Remove #${channel.slug}`}
+                      className={cn(
+                        "absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md opacity-0 transition-opacity focus:opacity-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring group-hover/channel:opacity-100",
+                        isActive
+                          ? "text-primary-foreground hover:bg-primary-foreground/20"
+                          : "text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                      )}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Said once, to the one person who can act on it, and only while the
+            group has no channels of its own. */}
+        {canManageChannels && channels.length === 0 && (
+          <p className="px-3 pb-1 pt-2 text-[11px] leading-relaxed text-muted-foreground">
+            Add a channel when one topic keeps interrupting another — a room for
+            resources, or one for announcements.
+          </p>
+        )}
       </div>
 
       {/* Member Directory Drawer Trigger */}

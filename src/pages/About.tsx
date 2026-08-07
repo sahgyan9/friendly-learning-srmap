@@ -25,22 +25,21 @@ const About = () => {
     "@context": "https://schema.org",
     "@type": "AboutPage",
     "name": "About Friendly Learning SRMAP",
-    "description": "Learn about Friendly Learning SRMAP, the university student collaboration platform for finding study partners, hackathon teams, and project collaborators",
+    "description": "Learn about Friendly Learning SRMAP — the complete campus ecosystem for SRM AP students to post ideas, find teammates, search using CampusMind, form groups, and earn recognition.",
     "mainEntity": {
       "@type": "Organization",
       "name": "Friendly Learning SRMAP",
-      "description": "University student collaboration platform connecting students for academic help, hackathon partnerships, project collaborations, startup discussions, and finding study partners with specific skills",
+      "description": "A complete campus ecosystem for SRM AP students: community posts, CampusMind natural-language search, peer mentors, faculty directory, private and public groups, and verified certificates.",
       "foundingDate": "2024",
-      "serviceArea": "Universities Worldwide",
-      "mission": "To build the strongest university communities by connecting students with each other for academic success, project collaboration, and personal growth",
+      "serviceArea": "SRM University-AP",
+      "mission": "Go from 'I have an idea' to 'I have a team' — without leaving campus.",
       "services": [
-        "Academic Help and Tutoring",
-        "Hackathon Team Formation",
-        "Project Collaboration",
-        "Startup Team Building",
-        "Study Partner Matching",
-        "Skill-based Student Discovery",
-        "University Community Posts"
+        "Community Posts & Team Building",
+        "CampusMind Natural-Language Search",
+        "Peer Mentorship & Certificates",
+        "Faculty Directory & Research Matching",
+        "Private and Public Group Workspaces",
+        "Hackathon & Internship Opportunities"
       ],
       ...(teamMembers.length > 0 && {
         "member": teamMembers.map(m => ({
@@ -50,8 +49,8 @@ const About = () => {
           ...(m.email && { "email": m.email }),
           ...(m.image_url && { "image": m.image_url })
         })),
-        "founder": teamMembers.filter(m => 
-          m.position.toLowerCase().includes('founder') || 
+        "founder": teamMembers.filter(m =>
+          m.position.toLowerCase().includes('founder') ||
           m.position.toLowerCase().includes('lead') ||
           m.position.toLowerCase().includes('ceo')
         ).map(m => ({
@@ -69,11 +68,10 @@ const About = () => {
       <SEOHead
         title={ROUTE_META["/about"].title}
         description={ROUTE_META["/about"].description}
-        keywords="about Friendly Learning SRMAP, university student collaboration, find hackathon partners, student project collaboration, university community platform, study partner matching, startup team formation, skill-based student discovery"
+        keywords="about Friendly Learning SRMAP, campus ecosystem SRM AP, CampusMind search, find hackathon partners, peer mentorship, faculty directory, student groups, community posts, team building"
         canonical={`${PRIMARY_DOMAIN}/about`}
       />
 
-      {/* Add structured data using our dedicated component */}
       <StructuredData data={structuredData} />
       <StructuredData data={getOrganizationSchema()} />
 
@@ -81,133 +79,109 @@ const About = () => {
         <main className="pt-24 pb-16">
           <div className="container px-4 md:px-6">
             <div className="max-w-3xl mx-auto">
+
+              {/* ── Hero ── */}
               <header>
                 <h1 className="text-4xl font-bold mb-6">About Friendly Learning SRMAP</h1>
               </header>
               <section className="mb-8">
                 <p className="text-lg mb-6">
-                  <strong>Friendly Learning SRMAP</strong> is a university student collaboration platform that connects students within the same university for various academic and project-based needs. Whether you need academic help, looking for hackathon partners, seeking project collaborators, or want to find like-minded peers for startups - Friendly Learning SRMAP brings the university community together.
+                  <strong>Friendly Learning SRMAP</strong> is a complete campus ecosystem for SRM University-AP students — not just a mentorship directory, but a full toolkit to help you find the right people, form teams, and turn ideas into outcomes.
                 </p>
                 <p className="text-lg mb-6">
-                  Our platform eliminates the traditional barriers of finding the right people within your university. Instead of wondering who might have the skills you need or share your interests, Friendly Learning SRMAP helps you discover and connect with fellow students who can help you succeed.
+                  The platform was built because finding the right person on campus — whether a senior who's taken your course, a professor who researches what you care about, or teammates for your next hackathon — used to mean asking around and hoping for luck. <strong>Friendly Learning makes that search specific, fast, and campus-wide.</strong>
                 </p>
-                <p className="text-lg mb-6">
-                  <strong>FL stands for Friendly Learning</strong> — emphasizing our commitment to creating a collaborative environment where students support each other's academic and professional growth within their university community.
-                </p>
+                <blockquote className="text-lg mb-4 italic text-muted-foreground border-l-4 border-primary pl-4">
+                  "Go from <em>I have an idea</em> to <em>I have a team</em> — without leaving campus."
+                </blockquote>
               </section>
 
+              {/* ── Feature grid ── */}
               <section className="mb-8">
-                <h2 className="text-2xl font-bold mb-6">What You Can Do on Friendly Learning SRMAP</h2>
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div className="p-6 border rounded-lg">
-                    <div className="text-4xl mb-4">🤝</div>
-                    <h3 className="text-xl font-bold mb-3">Get Academic Help</h3>
-                    <p>Connect with fellow students for academic guidance, study sessions, assignment help, or clarifying concepts. Find students who excel in subjects you're struggling with.</p>
+                <h2 className="text-2xl font-bold mb-6">Everything the Platform Does</h2>
+                <div className="grid md:grid-cols-2 gap-5">
+                  <div className="p-5 border rounded-xl">
+                    <div className="text-3xl mb-3">💬</div>
+                    <h3 className="text-lg font-bold mb-2">Community Posts</h3>
+                    <p className="text-muted-foreground text-sm">Share what's on your mind. Post a call for hackathon teammates, a research collaborator, or a study partner. The campus community can reply, react, and connect with you directly.</p>
                   </div>
-                  <div className="p-6 border rounded-lg">
-                    <div className="text-4xl mb-4">💬</div>
-                    <h3 className="text-xl font-bold mb-3">Community Posts</h3>
-                    <p>Post your problems, questions, or requests in the community. Get responses from university students and arrange one-on-one meetings for detailed discussions.</p>
+                  <div className="p-5 border rounded-xl">
+                    <div className="text-3xl mb-3">🧠</div>
+                    <h3 className="text-lg font-bold mb-2">CampusMind Search</h3>
+                    <p className="text-muted-foreground text-sm">The smartest search on campus. Type a natural-language query — <em>"who knows computer vision for a research project"</em> — and CampusMind surfaces matching students and faculty together in one result.</p>
                   </div>
-                  <div className="p-6 border rounded-lg">
-                    <div className="text-4xl mb-4">💻</div>
-                    <h3 className="text-xl font-bold mb-3">Find Hackathon Partners</h3>
-                    <p>Looking for a hackathon team? Find students with complementary skills like coding, design, or business development to form the perfect team for competitions.</p>
+                  <div className="p-5 border rounded-xl">
+                    <div className="text-3xl mb-3">🎓</div>
+                    <h3 className="text-lg font-bold mb-2">Peer Mentors</h3>
+                    <p className="text-muted-foreground text-sm">Senior students who've taken your exact courses. Message them directly for course help, project feedback, or career advice. Mentors who genuinely help 3 students earn a verified certificate.</p>
                   </div>
-                  <div className="p-6 border rounded-lg">
-                    <div className="text-4xl mb-4">🚀</div>
-                    <h3 className="text-xl font-bold mb-3">Project Collaboration</h3>
-                    <p>Working on a project or planning a startup? Discover students with specific technical skills, domain expertise, or shared entrepreneurial interests within your university.</p>
+                  <div className="p-5 border rounded-xl">
+                    <div className="text-3xl mb-3">👨‍🏫</div>
+                    <h3 className="text-lg font-bold mb-2">Faculty Directory</h3>
+                    <p className="text-muted-foreground text-sm">The full SRM AP faculty catalogue with research interests, department, and ratings. Find the right professor for your next project, paper, or elective decision — before you commit.</p>
                   </div>
-                  <div className="p-6 border rounded-lg">
-                    <div className="text-4xl mb-4">🎯</div>
-                    <h3 className="text-xl font-bold mb-3">Interest-Based Connections</h3>
-                    <p>Find students who share your hobbies, interests, or career aspirations. Build friendships and networks that extend beyond academics.</p>
+                  <div className="p-5 border rounded-xl">
+                    <div className="text-3xl mb-3">🏠</div>
+                    <h3 className="text-lg font-bold mb-2">Groups & Workspaces</h3>
+                    <p className="text-muted-foreground text-sm">Once you find your people, create a group. Private groups for your team to plan and coordinate. Public groups for communities of interest. Start the conversation and work toward the win together.</p>
                   </div>
-                  <div className="p-6 border rounded-lg">
-                    <div className="text-4xl mb-4">⭐</div>
-                    <h3 className="text-xl font-bold mb-3">Skill-Based Matching</h3>
-                    <p>Search for students based on specific skills, expertise, or academic strengths. Whether it's programming languages, research areas, or creative skills - find the right match.</p>
+                  <div className="p-5 border rounded-xl">
+                    <div className="text-3xl mb-3">🚀</div>
+                    <h3 className="text-lg font-bold mb-2">Opportunities</h3>
+                    <p className="text-muted-foreground text-sm">Hackathons, internships, and research calls — posted by students and faculty across campus. Filter by type, find what matches your skills, and form your team right on the platform.</p>
                   </div>
                 </div>
               </section>
 
+              {/* ── Mission ── */}
               <section className="mb-8">
                 <h2 className="text-2xl font-bold mb-4">Our Mission</h2>
                 <p className="text-lg mb-6">
-                  To build the strongest university communities by connecting students with each other for academic success, project collaboration, and personal growth. We believe that the best help often comes from fellow students who understand your challenges and can provide peer-to-peer support.
+                  Every student has an idea, a question, or a goal — and somewhere on campus, the right person exists to help with it. Our mission is to close that gap: make finding that person as easy as typing a sentence, and make working with them as natural as starting a group chat. We believe the best help comes from people who've been exactly where you are, and the best teams form when the right people can actually find each other.
                 </p>
               </section>
 
+              {/* ── How it works ── */}
               <section className="mb-8">
                 <h2 className="text-2xl font-bold mb-4">How It Works</h2>
                 <div className="grid md:grid-cols-3 gap-6">
                   <div className="text-center p-4">
-                    <div className="text-4xl mb-4">🔍</div>
-                    <h3 className="text-xl font-bold mb-2">Search & Discover</h3>
-                    <p>Search for students by skills, interests, courses, or projects. Use filters to find exactly what you're looking for within your university.</p>
+                    <div className="text-4xl mb-4">📝</div>
+                    <h3 className="text-xl font-bold mb-2">Post or Search</h3>
+                    <p className="text-sm text-muted-foreground">Post what you're looking for on the community board, or use CampusMind to search in plain English — <em>"ML researcher for a CV project"</em> — and get matched instantly.</p>
                   </div>
                   <div className="text-center p-4">
-                    <div className="text-4xl mb-4">💬</div>
-                    <h3 className="text-xl font-bold mb-2">Connect & Collaborate</h3>
-                    <p>Send messages, join community discussions, or arrange meetups. Build meaningful connections for studies, projects, or shared interests.</p>
+                    <div className="text-4xl mb-4">🤝</div>
+                    <h3 className="text-xl font-bold mb-2">Find & Connect</h3>
+                    <p className="text-sm text-muted-foreground">Browse mentor profiles, faculty research pages, or group listings. Message a mentor directly, or reach out to collaborators who replied to your post.</p>
                   </div>
                   <div className="text-center p-4">
-                    <div className="text-4xl mb-4">🌟</div>
-                    <h3 className="text-xl font-bold mb-2">Succeed Together</h3>
-                    <p>Whether it's acing exams, winning hackathons, or launching startups - achieve more through collaborative student networks.</p>
+                    <div className="text-4xl mb-4">🏆</div>
+                    <h3 className="text-xl font-bold mb-2">Form a Group & Win</h3>
+                    <p className="text-sm text-muted-foreground">Once you have your people, start a private or public group workspace. Plan, coordinate, build — and submit that hackathon project, research paper, or startup pitch together.</p>
                   </div>
                 </div>
               </section>
 
-              <section className="mb-8">
-                <h2 className="text-2xl font-bold mb-4">Why Choose Friendly Learning SRMAP?</h2>
-                <div className="space-y-4">
-                  <div className="flex items-start space-x-3">
-                    <span className="text-primary text-xl">✓</span>
-                    <div>
-                      <h3 className="font-bold">University-Specific Networks</h3>
-                      <p>Connect only with students from your university, ensuring relevance and proximity for meetups and collaborations.</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start space-x-3">
-                    <span className="text-primary text-xl">✓</span>
-                    <div>
-                      <h3 className="font-bold">Skill-Based Discovery</h3>
-                      <p>Find students based on specific skills, courses, or expertise areas that match your project or learning needs.</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start space-x-3">
-                    <span className="text-primary text-xl">✓</span>
-                    <div>
-                      <h3 className="font-bold">Community-Driven Help</h3>
-                      <p>Post questions and get help from your university community, with options for follow-up discussions and meetings.</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start space-x-3">
-                    <span className="text-primary text-xl">✓</span>
-                    <div>
-                      <h3 className="font-bold">Versatile Use Cases</h3>
-                      <p>From academic help to hackathons, startups to social connections - one platform for all your university networking needs.</p>
-                    </div>
-                  </div>
-                </div>
-              </section>
-
+              {/* ── CTA ── */}
               <section className="text-center mb-8">
-                <h2 className="text-3xl font-bold mb-4">Ready to Connect with Your University Community?</h2>
-                <p className="text-lg mb-6">
-                  Join Friendly Learning SRMAP today and discover the power of student collaboration within your university. Whether you need help, want to help others, or looking for project partners - your university community is here for you.
+                <h2 className="text-3xl font-bold mb-4">Ready to find your people?</h2>
+                <p className="text-lg mb-6 text-muted-foreground">
+                  Your next mentor, research partner, or hackathon team is already on campus. Start with a post, a search, or browsing what's out there.
                 </p>
-                <div className="space-x-4">
+                <div className="flex flex-wrap gap-3 justify-center">
                   <Button asChild size="lg">
-                    <Link to="/signup">Join Your University Network</Link>
+                    <Link to="/ask">Search with CampusMind</Link>
                   </Button>
                   <Button variant="outline" size="lg" asChild>
-                    <Link to="/community-posts">Explore Community Posts</Link>
+                    <Link to="/community-posts">Browse Community Posts</Link>
+                  </Button>
+                  <Button variant="outline" size="lg" asChild>
+                    <Link to="/mentors">Find a Mentor</Link>
                   </Button>
                 </div>
               </section>
+
             </div>
           </div>
         </main>

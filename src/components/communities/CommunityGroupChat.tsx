@@ -39,6 +39,13 @@ interface CommunityGroupChatProps {
   onOpenPost: (postId: string) => void;
   /** Opens the write-a-post composer. Absent when the viewer cannot post. */
   onCreatePost?: () => void;
+  /**
+   * Which room to read and write. Defaults to the built-in one, so every
+   * existing call site keeps the behaviour it had.
+   */
+  channel?: string;
+  /** The channel's stated purpose, shown in its empty state. */
+  channelTopic?: string | null;
 }
 
 /**
@@ -57,9 +64,21 @@ interface CommunityGroupChatProps {
  * abandoned. Everything is written to the "general" channel still, so the
  * history stays addressable and channels can come back the day there is enough
  * traffic to be worth splitting.
+ *
+ * That day is now partly here: an owner can add rooms of their own, and this
+ * component renders whichever one is selected via the `channel` prop. The
+ * difference from the version that was removed is who decides. Nothing is
+ * created by default, so a group that wants one conversation still has exactly
+ * one — the failure last time was three rooms every group was given, not the
+ * existence of a second room a group asked for.
+ *
+ * Posts stay in the built-in room only. A post belongs to the group rather than
+ * to any channel, and duplicating the whole post stream into every room would
+ * make each one look busier than it is — the exact illusion this is trying to
+ * avoid.
  */
 
-const CHANNEL = "general";
+const DEFAULT_CHANNEL = "general";
 
 const QUICK_EMOJIS = ["👍", "❤️", "🔥", "🚀", "💡", "👏"];
 
@@ -94,8 +113,11 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
   posts = [],
   onOpenPost,
   onCreatePost,
+  channel = DEFAULT_CHANNEL,
+  channelTopic,
 }) => {
   const { user } = useAuth();
+  const isDefaultChannel = channel === DEFAULT_CHANNEL;
   const [messages, setMessages] = useState<GroupChatMessage[]>([]);
   const [loading, setLoading] = useState(true);
   /**
@@ -116,16 +138,24 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
   const canPost = isMember || isOwner;
 
   const load = useCallback(async () => {
-    const { data, error } = await listGroupMessages(communityId, CHANNEL);
+    const { data, error } = await listGroupMessages(communityId, channel);
     setMessages(data);
     setUnreadable(Boolean(error));
     setLoading(false);
-  }, [communityId]);
+  }, [communityId, channel]);
 
   useEffect(() => {
     setLoading(true);
     load();
   }, [load]);
+
+  // Switching rooms drops a half-attached reply. Nothing server-side would stop
+  // it — reply_to_id is a plain foreign key to any message in the table, so a
+  // cross-channel reply saves fine and then renders a quoted line from a room
+  // the reader cannot see from here. Clearing it on the way out is the whole fix.
+  useEffect(() => {
+    setReplyingTo(null);
+  }, [channel]);
 
   // payload.old/new on this table only carries changed columns, not a joined
   // sender name — simplest correct move is to re-fetch rather than patch
@@ -149,14 +179,19 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
         at: new Date(message.createdAt).getTime(),
         message,
       })),
-      ...posts.map((post) => ({
-        kind: "post" as const,
-        at: new Date(post.created_at).getTime(),
-        post,
-      })),
+      // Only in the built-in room. A post is attached to the group, not to a
+      // channel, so repeating it in every room would pad each one with the same
+      // content and make five quiet rooms all look active.
+      ...(isDefaultChannel
+        ? posts.map((post) => ({
+            kind: "post" as const,
+            at: new Date(post.created_at).getTime(),
+            post,
+          }))
+        : []),
     ];
     return merged.sort((a, b) => a.at - b.at);
-  }, [messages, posts]);
+  }, [messages, posts, isDefaultChannel]);
 
   // Scrolls only the message pane itself, never the outer page. A plain
   // scrollIntoView() walks every scrollable ancestor — including the window —
@@ -182,7 +217,7 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
     }
 
     setSending(true);
-    const { error } = await sendGroupMessage(communityId, CHANNEL, content, replyingTo?.id ?? null);
+    const { error } = await sendGroupMessage(communityId, channel, content, replyingTo?.id ?? null);
     setSending(false);
 
     if (error) {
@@ -266,14 +301,25 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
             <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
               <MessageSquare className="h-6 w-6" />
             </div>
-            <h4 className="text-base font-semibold text-foreground">Nobody's said anything yet</h4>
+            <h4 className="text-base font-semibold text-foreground">
+              {isDefaultChannel ? "Nobody's said anything yet" : `#${channel} is empty`}
+            </h4>
             <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-              {canPost
-                ? `Whatever you write here is what everyone who joins later reads first. ${ownerName} runs this group.`
-                : `Join the group to say something. ${ownerName} runs it.`}
+              {!isDefaultChannel
+                ? /* A channel's own description is the best answer to "what goes
+                     in here", and the owner already wrote it. */
+                  channelTopic ||
+                  (canPost
+                    ? "This room was made for a reason — say what belongs in it."
+                    : "Join the group to post here.")
+                : canPost
+                  ? `Whatever you write here is what everyone who joins later reads first. ${ownerName} runs this group.`
+                  : `Join the group to say something. ${ownerName} runs it.`}
             </p>
 
-            {canPost && (
+            {/* Starters are for the group's first conversation. A channel made
+                on purpose does not need "What is this group for?" offered in it. */}
+            {canPost && isDefaultChannel && (
               <div className="mt-4 flex flex-wrap justify-center gap-2">
                 {starters.map((starter) => (
                   <button
@@ -471,12 +517,18 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Write a message…"
+              placeholder={isDefaultChannel ? "Write a message…" : `Message #${channel}…`}
               className="h-10 bg-muted/30 font-sans text-sm"
               disabled={sending}
-              aria-label="Write a message to this group"
+              aria-label={
+                isDefaultChannel
+                  ? "Write a message to this group"
+                  : `Write a message in #${channel}`
+              }
             />
-            {onCreatePost && (
+            {/* Posting is a group-level act and its result only shows in the
+                built-in room, so the shortcut is not offered from elsewhere. */}
+            {onCreatePost && isDefaultChannel && (
               <Button
                 type="button"
                 variant="ghost"
