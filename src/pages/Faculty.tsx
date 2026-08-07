@@ -184,7 +184,7 @@ const Faculty = () => {
           </div>
         </div>
 
-        <div className="container mx-auto max-w-6xl px-4 py-8">
+        <div className="container mx-auto px-4 py-8">
           <header className="sr-only">
             <h2>Browse and filter faculty</h2>
           </header>
