@@ -1,8 +1,9 @@
-import { ArrowRight, Award, Clock, Lock, Star, Users } from "lucide-react";
+import { ArrowRight, Clock } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import CertificatePreview from "@/components/certificate/CertificatePreview";
+import { MENTOR_BENEFITS } from "@/data/mentor-benefits";
 
 interface MentorWelcomeProps {
   /** Shown on the sample certificate, so it reads as theirs. */
@@ -10,40 +11,6 @@ interface MentorWelcomeProps {
   onStart: () => void;
   onLeave: () => void;
 }
-
-const BENEFITS = [
-  {
-    icon: Users,
-    title: "Juniors come to you",
-    body: "You appear in the mentor list with your department and skills. Students message you directly — no introductions, no asking around.",
-  },
-  {
-    icon: Award,
-    title: "Something to show for it",
-    body: "Not a participation badge — a certificate recording how many students you actually helped, with a link anyone can check. There's a sample below.",
-  },
-  {
-    // This slot used to read "You can start a group — only mentors can". That
-    // stopped being true when group creation opened up to every student, and a
-    // benefit that is not a benefit is worse than one fewer bullet. Replaced
-    // with the pause, which is mentor-only, real, and answers the thing that
-    // actually stops people applying: that this will cost them time they don't
-    // have during exams.
-    icon: Clock,
-    title: "You decide when you're on",
-    body: "Busy with exams or placements? Set yourself to taking a break and you come off the directory until you're back. Your existing chats stay open, and nothing is deleted.",
-  },
-  {
-    icon: Star,
-    title: "Badges from real reviews",
-    body: "Students you help can rate you. Those ratings turn into badges on your profile and count towards your certificate.",
-  },
-  {
-    icon: Lock,
-    title: "You stay in control",
-    body: "Your College ID, CGPA and phone number are never shown publicly. Edit your profile, or step back, whenever you want.",
-  },
-];
 
 /**
  * Shown before the form rather than dropping people straight into it.
@@ -85,15 +52,26 @@ const MentorWelcome = ({ name, onStart, onLeave }: MentorWelcomeProps) => (
       </div>
     </div>
 
-    <div className="mb-8 grid gap-4 sm:grid-cols-2">
-      {BENEFITS.map(({ icon: Icon, title, body }) => (
-        <Card key={title}>
-          <CardContent className="flex gap-4 p-5">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-              <Icon className="h-4 w-4" />
+    {/* Two benefits, stacked. They were a 2-up grid when there were five of
+        them; with two, a half-width card beside the full-width featured one
+        would just leave a hole. */}
+    <div className="mb-8 grid gap-4">
+      {MENTOR_BENEFITS.map(({ icon: Icon, title, body, accent, featured }) => (
+        <Card key={title} className={`bg-gradient-to-br ${accent.card}`}>
+          <CardContent className={`flex gap-4 ${featured ? "p-6" : "p-5"}`}>
+            <span
+              className={`flex shrink-0 items-center justify-center rounded-lg ${accent.chip} ${
+                featured ? "h-12 w-12" : "h-9 w-9"
+              }`}
+            >
+              <Icon className={featured ? "h-6 w-6" : "h-4 w-4"} />
             </span>
             <div className="space-y-1">
-              <h2 className="font-semibold leading-snug">{title}</h2>
+              <h2
+                className={`font-semibold leading-snug ${accent.title} ${featured ? "text-lg" : ""}`}
+              >
+                {title}
+              </h2>
               <p className="text-sm leading-relaxed text-muted-foreground">{body}</p>
             </div>
           </CardContent>

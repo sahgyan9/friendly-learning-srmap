@@ -9,6 +9,11 @@ import { CreatePostModal } from "./CreatePostModal";
 interface CreatePostButtonProps {
   onPostCreated: () => void;
   className?: string;
+  /**
+   * Wording for the signed-in button. The signed-out button is deliberately not
+   * configurable — it has to say that signing in is what happens next.
+   */
+  label?: string;
 }
 
 /**
@@ -21,7 +26,11 @@ interface CreatePostButtonProps {
  * sign-in on the click — which spends someone's intent to find out a rule we
  * already knew, and reads as the page having failed rather than as a step.
  */
-export const CreatePostButton = ({ onPostCreated, className }: CreatePostButtonProps) => {
+export const CreatePostButton = ({
+  onPostCreated,
+  className,
+  label = "Create post",
+}: CreatePostButtonProps) => {
   const { user } = useAuth();
   const location = useLocation();
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -42,7 +51,7 @@ export const CreatePostButton = ({ onPostCreated, className }: CreatePostButtonP
     <>
       <Button onClick={() => setShowCreateModal(true)} className={className}>
         <Plus className="mr-2 h-4 w-4" />
-        Create post
+        {label}
       </Button>
 
       <CreatePostModal

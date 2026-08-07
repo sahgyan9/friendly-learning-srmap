@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowRight, PenLine } from "lucide-react";
+import { ArrowRight, FileText, PenLine } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -27,7 +27,7 @@ export const CommunityPostsSection = () => {
   const [loading, setLoading] = useState(true);
 
   const reload = useCallback(async () => {
-    const { data } = await getCommunityPosts({ limit: 8 });
+    const { data } = await getCommunityPosts({ limit: 12 });
     if (data) setPosts(data);
     setLoading(false);
   }, []);
@@ -35,7 +35,7 @@ export const CommunityPostsSection = () => {
   useEffect(() => {
     let cancelled = false;
 
-    getCommunityPosts({ limit: 8 }).then(({ data }) => {
+    getCommunityPosts({ limit: 12 }).then(({ data }) => {
       if (cancelled) return;
       if (data) setPosts(data);
       setLoading(false);
@@ -94,11 +94,15 @@ export const CommunityPostsSection = () => {
   return (
     <section className="bg-muted/30 py-16">
       <div className="container mx-auto px-4">
-        {/* Centred to match the rhythm of every other homepage section. */}
+        {/* Section header — brand pill pattern (emerald accent, §8 of brand guidelines) */}
         <div className="mb-8 text-center">
-          <h2 className="mb-2 text-3xl font-bold">Posts</h2>
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 mb-4 rounded-full border border-emerald-500/20 bg-emerald-500/8 text-emerald-700 dark:text-emerald-400 text-xs font-semibold tracking-widest uppercase">
+            <FileText className="w-3.5 h-3.5" />
+            Posts
+          </div>
+          <h2 className="text-3xl font-bold tracking-tight mb-2">What students are talking about</h2>
           <p className="mx-auto max-w-xl text-muted-foreground">
-            Looking for a hackathon teammate, study help or a project partner? Ask here.
+            Hackathon teams, study help, project collabs — posted live by SRM AP students.
           </p>
         </div>
 

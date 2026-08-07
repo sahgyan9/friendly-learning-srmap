@@ -14,6 +14,8 @@ import { getOrganizationSchema, getWebsiteSchema } from "@/lib/structured-data";
 import { PRIMARY_DOMAIN } from "@/lib/constants";
 import { FeaturesShowcase } from "@/components/FeaturesShowcase";
 import { FutureVision } from "@/components/FutureVision";
+import { AboutQuickstartStrip } from "@/components/AboutQuickstartStrip";
+import { CommunitiesSection } from "@/components/communities/CommunitiesSection";
 
 const Index = () => {
   const { user } = useAuth();
@@ -67,30 +69,40 @@ const Index = () => {
       <StructuredData data={getOrganizationSchema()} />
       <StructuredData data={getWebsiteSchema()} />
 
+      {/* 1. Hero — "Your campus, one feed." */}
       <Hero />
 
-      {/* Show rejected application notice for authenticated users */}
+      {/* Rejected application notice for authenticated users */}
       {user && (
         <div className="container mx-auto px-4 py-4">
           <RejectedApplicationNotice />
         </div>
       )}
 
-      {/* Faculty ratings sit directly under the hero: it is the newest feature
-          and the one a first-time visitor is least likely to stumble into. */}
-      <FacultyDiscoveryCard />
-
+      {/* 2. Posts — centre of attraction, real content on load */}
       <CommunityPostsSection />
 
+      {/* 3. About Quickstart Strip — "what can I do right now?" */}
+      <AboutQuickstartStrip />
+
+      {/* 4. Groups — find your people */}
+      <CommunitiesSection />
+
+      {/* 5. Mentors — someone's already done your exact course */}
       <MentorsSection />
 
-      {/* All 8 live features with direct navigation links */}
+      {/* 6. Faculty Ratings — moved down from top; earns its moment here */}
+      <FacultyDiscoveryCard />
+
+      {/* 7. All 8 live features with direct navigation links */}
       <FeaturesShowcase />
 
-      {/* Roadmap: complete ecosystem + indigenous AI vision */}
+      {/* 8. Roadmap: complete ecosystem + indigenous AI vision */}
       <FutureVision />
 
+      {/* 9. CTA — your profile is someone else's answer */}
       <CallToAction />
+
       <Footer />
       <FloatingChatbot />
     </div>
@@ -98,3 +110,4 @@ const Index = () => {
 };
 
 export default Index;
+

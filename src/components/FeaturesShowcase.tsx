@@ -1,5 +1,12 @@
+import { useRef } from "react";
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
+import {
+  motion,
+  useScroll,
+  useTransform,
+  useReducedMotion,
+  type MotionValue,
+} from "framer-motion";
 import {
   GraduationCap,
   CalendarDays,
@@ -8,8 +15,6 @@ import {
   BookOpen,
   ArrowRight,
   Sparkles,
-  MessageSquare,
-  Lightbulb,
   BadgeCheck,
 } from "lucide-react";
 
@@ -41,24 +46,11 @@ const features: Feature[] = [
     badge: "Live",
   },
   {
-    id: "messaging",
-    icon: <MessageSquare className="w-7 h-7" />,
-    accent: "text-sky-600 dark:text-sky-400",
-    accentBg: "bg-sky-500/10 dark:bg-sky-500/20",
-    label: "02 — Messaging",
-    title: "Direct Messaging",
-    description:
-      "Talk to mentors and collaborators in real time. No email chains, no waiting — just quick help when you need it.",
-    cta: "Open messages",
-    href: "/messages",
-    badge: "Live",
-  },
-  {
     id: "events",
     icon: <CalendarDays className="w-7 h-7" />,
     accent: "text-violet-600 dark:text-violet-400",
     accentBg: "bg-violet-500/10 dark:bg-violet-500/20",
-    label: "03 — Events",
+    label: "02 — Events",
     title: "Campus Events",
     description:
       "Workshops, hackathons, career fairs — all in one place. Never miss what's happening on campus again.",
@@ -71,7 +63,7 @@ const features: Feature[] = [
     icon: <BookOpen className="w-7 h-7" />,
     accent: "text-rose-600 dark:text-rose-400",
     accentBg: "bg-rose-500/10 dark:bg-rose-500/20",
-    label: "04 — Faculty",
+    label: "03 — Faculty",
     title: "Faculty Discovery",
     description:
       "Browse every professor's profile, read honest student ratings, and choose your courses with full information before you enrol.",
@@ -84,7 +76,7 @@ const features: Feature[] = [
     icon: <Users className="w-7 h-7" />,
     accent: "text-amber-600 dark:text-amber-400",
     accentBg: "bg-amber-500/10 dark:bg-amber-500/20",
-    label: "05 — Groups",
+    label: "04 — Groups",
     title: "Study Communities",
     description:
       "Create or join subject-specific groups. Collaborate on assignments, find study partners for exams, and build your academic circle.",
@@ -97,7 +89,7 @@ const features: Feature[] = [
     icon: <FileText className="w-7 h-7" />,
     accent: "text-emerald-600 dark:text-emerald-400",
     accentBg: "bg-emerald-500/10 dark:bg-emerald-500/20",
-    label: "06 — Posts",
+    label: "05 — Posts",
     title: "Community Posts",
     description:
       "Share knowledge, ask questions, post resources. A student-run knowledge feed built for SRM AP — not the whole internet.",
@@ -106,24 +98,11 @@ const features: Feature[] = [
     badge: "Live",
   },
   {
-    id: "matching",
-    icon: <Lightbulb className="w-7 h-7" />,
-    accent: "text-orange-600 dark:text-orange-400",
-    accentBg: "bg-orange-500/10 dark:bg-orange-500/20",
-    label: "07 — Matching",
-    title: "Smart Matching",
-    description:
-      "Intelligent search finds mentors with the exact skills you need — not just anyone who signed up, but the right fit for your goal.",
-    cta: "Find your match",
-    href: "/mentors",
-    badge: "Live",
-  },
-  {
     id: "certificates",
     icon: <BadgeCheck className="w-7 h-7" />,
     accent: "text-teal-600 dark:text-teal-400",
     accentBg: "bg-teal-500/10 dark:bg-teal-500/20",
-    label: "08 — Certificates",
+    label: "06 — Certificates",
     title: "Verified Certificates",
     description:
       "Earn a shareable, publicly verifiable certificate once you've completed real mentorship exchanges — proof that lives beyond your CV.",
@@ -133,16 +112,97 @@ const features: Feature[] = [
   },
 ];
 
-const cardVariants = {
-  hidden: { opacity: 0, y: 32 },
-  show: (i: number) => ({
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.55, delay: i * 0.1, ease: [0.22, 1, 0.36, 1] },
-  }),
-};
+/**
+ * Each card owns a slice of the grid's scroll progress, so cards reveal one at
+ * a time as you scroll rather than a whole row arriving at once. The slices
+ * overlap slightly (window is wider than the step) to keep the sequence from
+ * feeling like six separate pops.
+ */
+const REVEAL_START = 0.06;
+const REVEAL_STEP = 0.12;
+const REVEAL_WINDOW = 0.16;
+
+function FeatureCard({
+  feat,
+  index,
+  progress,
+  reduced,
+}: {
+  feat: Feature;
+  index: number;
+  progress: MotionValue<number>;
+  reduced: boolean;
+}) {
+  const start = REVEAL_START + index * REVEAL_STEP;
+  const range: [number, number] = [start, start + REVEAL_WINDOW];
+
+  const opacity = useTransform(progress, range, [0, 1]);
+  const y = useTransform(progress, range, [48, 0]);
+  const scale = useTransform(progress, range, [0.96, 1]);
+
+  return (
+    <motion.div style={reduced ? undefined : { opacity, y, scale }}>
+      <Link
+        to={feat.href}
+        className="group relative flex flex-col h-full p-7 rounded-2xl border border-border bg-card shadow-sm
+                   hover:shadow-lg hover:border-primary/30 transition-all duration-300 overflow-hidden"
+      >
+        {/* Hover glow */}
+        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none bg-gradient-to-br from-primary/3 to-transparent" />
+
+        {/* Badge */}
+        {feat.badge && (
+          <span className="absolute top-5 right-5 text-[10px] font-bold tracking-widest uppercase px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+            {feat.badge}
+          </span>
+        )}
+
+        {/* Icon */}
+        <div
+          className={`mb-5 flex items-center justify-center rounded-xl ${feat.accentBg} ${feat.accent} transition-transform duration-300 group-hover:scale-110`}
+          style={{ width: "52px", height: "52px" }}
+        >
+          {feat.icon}
+        </div>
+
+        {/* Label */}
+        <p className="text-xs font-semibold tracking-widest uppercase text-muted-foreground mb-2">
+          {feat.label}
+        </p>
+
+        {/* Title */}
+        <h3 className="text-xl font-bold mb-3 group-hover:text-primary transition-colors duration-200">
+          {feat.title}
+        </h3>
+
+        {/* Description */}
+        <p className="text-muted-foreground text-sm leading-relaxed flex-1">
+          {feat.description}
+        </p>
+
+        {/* CTA */}
+        <div
+          className={`mt-6 inline-flex items-center gap-1.5 text-sm font-semibold ${feat.accent} group-hover:gap-2.5 transition-all duration-200`}
+        >
+          {feat.cta}
+          <ArrowRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1" />
+        </div>
+      </Link>
+    </motion.div>
+  );
+}
 
 export function FeaturesShowcase() {
+  const gridRef = useRef<HTMLDivElement>(null);
+  const reduced = useReducedMotion() ?? false;
+
+  // 0 when the grid's top reaches the bottom of the viewport, 1 when its
+  // bottom reaches the middle — the span over which the six cards arrive.
+  const { scrollYProgress } = useScroll({
+    target: gridRef,
+    offset: ["start end", "end center"],
+  });
+
   return (
     <section
       id="features"
@@ -180,70 +240,24 @@ export function FeaturesShowcase() {
             transition={{ duration: 0.55, delay: 0.1 }}
             className="text-muted-foreground text-lg"
           >
-            Five features already live at SRM AP — each solving a real problem
+            Six features already live at SRM AP — each solving a real problem
             students face every semester.
           </motion.p>
         </div>
 
         {/* Feature Cards Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div
+          ref={gridRef}
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+        >
           {features.map((feat, i) => (
-            <motion.div
+            <FeatureCard
               key={feat.id}
-              custom={i}
-              variants={cardVariants}
-              initial="hidden"
-              whileInView="show"
-              viewport={{ once: true, margin: "-60px" }}
-              className=""
-            >
-              <Link
-                to={feat.href}
-                className="group relative flex flex-col h-full p-7 rounded-2xl border border-border bg-card shadow-sm
-                           hover:shadow-lg hover:border-primary/30 transition-all duration-300 overflow-hidden"
-              >
-                {/* Hover glow */}
-                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none bg-gradient-to-br from-primary/3 to-transparent" />
-
-                {/* Badge */}
-                {feat.badge && (
-                  <span className="absolute top-5 right-5 text-[10px] font-bold tracking-widest uppercase px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                    {feat.badge}
-                  </span>
-                )}
-
-                {/* Icon */}
-                <div
-                  className={`w-13 h-13 mb-5 flex items-center justify-center rounded-xl ${feat.accentBg} ${feat.accent} transition-transform duration-300 group-hover:scale-110`}
-                  style={{ width: "52px", height: "52px" }}
-                >
-                  {feat.icon}
-                </div>
-
-                {/* Label */}
-                <p className="text-xs font-semibold tracking-widest uppercase text-muted-foreground mb-2">
-                  {feat.label}
-                </p>
-
-                {/* Title */}
-                <h3 className="text-xl font-bold mb-3 group-hover:text-primary transition-colors duration-200">
-                  {feat.title}
-                </h3>
-
-                {/* Description */}
-                <p className="text-muted-foreground text-sm leading-relaxed flex-1">
-                  {feat.description}
-                </p>
-
-                {/* CTA */}
-                <div
-                  className={`mt-6 inline-flex items-center gap-1.5 text-sm font-semibold ${feat.accent} group-hover:gap-2.5 transition-all duration-200`}
-                >
-                  {feat.cta}
-                  <ArrowRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1" />
-                </div>
-              </Link>
-            </motion.div>
+              feat={feat}
+              index={i}
+              progress={scrollYProgress}
+              reduced={reduced}
+            />
           ))}
         </div>
       </div>

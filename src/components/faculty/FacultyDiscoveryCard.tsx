@@ -1,11 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, EyeOff, Sparkles, Star } from "lucide-react";
+import { ArrowRight, EyeOff, Star } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { useHasSeenFacultyRatings } from "@/hooks/useFeatureAnnouncement";
 import {
   getFacultyDirectoryStats,
   getTopRatedFaculty,
@@ -26,11 +25,9 @@ type TopFaculty = {
  * Homepage entry point for faculty ratings.
  *
  * The feature previously lived as an unlabelled tab inside /marketplace, so
- * nobody knew it existed. This puts it on the landing page with a "New" flag
- * until the visitor has actually opened it.
+ * nobody knew it existed. This puts it on the landing page front and center.
  */
 export function FacultyDiscoveryCard() {
-  const { hasSeen } = useHasSeenFacultyRatings();
   const [stats, setStats] = useState({ faculty_count: 0, rating_count: 0, department_count: 0 });
   const [topRated, setTopRated] = useState<TopFaculty[]>([]);
 
@@ -59,18 +56,16 @@ export function FacultyDiscoveryCard() {
         <CardContent className="p-6 sm:p-8">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-center">
             <div className="flex-1 space-y-4">
-              <div className="flex flex-wrap items-center gap-2">
-                {!hasSeen && (
-                  <Badge className="gap-1">
-                    <Sparkles className="h-3 w-3" />
-                    New
-                  </Badge>
-                )}
-                <Badge variant="secondary" className="gap-1">
-                  <EyeOff className="h-3 w-3" />
-                  Anonymous
-                </Badge>
-              </div>
+              <Button
+                asChild
+                size="lg"
+                className="rounded-xl bg-gradient-to-r from-rose-500 to-pink-500 text-white shadow-lg shadow-rose-500/30 hover:shadow-xl hover:brightness-110 transition-all duration-300"
+              >
+                <Link to="/faculty">
+                  Browse faculty ratings
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
 
               <div>
                 <h2 className="text-2xl font-bold sm:text-3xl">
@@ -85,15 +80,16 @@ export function FacultyDiscoveryCard() {
                 </p>
               </div>
 
-              <div className="flex flex-wrap gap-3">
-                <Button asChild size="lg">
-                  <Link to="/faculty">
-                    Browse faculty ratings
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
-                </Button>
+              <div className="flex flex-wrap items-center gap-3">
+                <Badge
+                  variant="secondary"
+                  className="gap-1 border-rose-500/20 bg-rose-500/10 text-rose-600 dark:text-rose-400"
+                >
+                  <EyeOff className="h-3 w-3" />
+                  Anonymous
+                </Badge>
                 {stats.rating_count > 0 && (
-                  <span className="self-center text-sm text-muted-foreground">
+                  <span className="text-sm text-muted-foreground">
                     {stats.rating_count} {stats.rating_count === 1 ? "rating" : "ratings"} so far
                   </span>
                 )}
@@ -129,7 +125,7 @@ export function FacultyDiscoveryCard() {
                     <div className="flex shrink-0 flex-col items-end">
                       <StarRating value={Number(member.avg_overall)} size="sm" />
                       <span className="text-[10px] text-muted-foreground">
-                        {Number(member.avg_overall).toFixed(1)} · {member.rating_count}
+                        {Number(member.avg_overall).toFixed(1)} ({member.rating_count})
                       </span>
                     </div>
                   </Link>
