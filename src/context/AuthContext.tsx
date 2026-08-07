@@ -57,54 +57,65 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setThemeUserId(null);
   }, []);
 
+  const PROFILE_COLUMNS =
+    "id,name,email,role,profile_image,verification_status,is_admin,mobile,department,skills,linkedin_url,bio,phone,is_available,theme,has_seen_welcome_tour" as const;
+
+  const applyProfile = (
+    resolvedProfile: UserProfile,
+    mentorDepartment: string | null | undefined,
+    userId: string,
+    authUser?: User | null,
+  ) => {
+    const googleAvatar =
+      authUser?.user_metadata?.avatar_url ||
+      authUser?.user_metadata?.picture;
+
+    if (!resolvedProfile.profile_image && googleAvatar) {
+      resolvedProfile.profile_image = googleAvatar;
+      void supabase.from("users").update({ profile_image: googleAvatar }).eq("id", userId);
+      void supabase.from("mentors").update({ profile_image: googleAvatar }).eq("id", userId);
+    }
+
+    loadedUserId.current = userId;
+    setProfile(resolvedProfile);
+    setUserContext({ id: resolvedProfile.id, email: resolvedProfile.email, name: resolvedProfile.name });
+    setThemeUserId(userId);
+    if (resolvedProfile.theme === "dark" || resolvedProfile.theme === "light") {
+      syncLocalTheme(resolvedProfile.theme as Theme);
+    }
+    setIsMentor(Boolean(mentorDepartment && mentorDepartment !== "General"));
+  };
+
   const fetchUserProfile = useCallback(
     async (userId: string, authUser?: User | null) => {
       try {
         const [{ data: profileData, error: profileError }, { data: mentorData }] = await Promise.all([
-          supabase.from("users").select("*").eq("id", userId).maybeSingle(),
+          supabase.from("users").select(PROFILE_COLUMNS).eq("id", userId).maybeSingle(),
           supabase.from("mentors").select("department").eq("id", userId).maybeSingle(),
         ]);
 
+        // If the row is missing this is almost always a brand-new OAuth user
+        // whose public.users row is still being written by the
+        // handle_new_user trigger.  One short retry after a brief delay is
+        // sufficient for the trigger to commit on a typical Supabase instance.
         if (profileError || !profileData) {
+          if (!profileError) {
+            await new Promise((r) => setTimeout(r, 600));
+            const { data: retryData, error: retryError } = await supabase
+              .from("users")
+              .select(PROFILE_COLUMNS)
+              .eq("id", userId)
+              .maybeSingle();
+            if (!retryError && retryData) {
+              applyProfile(retryData, mentorData?.department, userId, authUser);
+              return;
+            }
+          }
           clearProfile();
           return;
         }
 
-        // Automatically populate Google profile image if user has no profile photo set
-        const googleAvatar =
-          authUser?.user_metadata?.avatar_url ||
-          authUser?.user_metadata?.picture;
-
-        if (!profileData.profile_image && googleAvatar) {
-          profileData.profile_image = googleAvatar;
-          void supabase
-            .from("users")
-            .update({ profile_image: googleAvatar })
-            .eq("id", userId);
-
-          // Also sync to mentors table if the mentor record exists and has no custom photo
-          void supabase
-            .from("mentors")
-            .update({ profile_image: googleAvatar })
-            .eq("id", userId);
-        }
-
-        loadedUserId.current = userId;
-        setProfile(profileData);
-        setUserContext({ id: profileData.id, email: profileData.email, name: profileData.name });
-
-        // Enables future toggles (DarkModeToggle, SiteSearch) to persist to
-        // this row. Pull the saved choice down to localStorage now so it
-        // survives to the next load's pre-paint script; a null theme means
-        // the account has never set one, so the local/default value stands.
-        setThemeUserId(userId);
-        if (profileData.theme === "dark" || profileData.theme === "light") {
-          syncLocalTheme(profileData.theme as Theme);
-        }
-
-        // "General" is the placeholder department auto-created rows get, so it
-        // does not count as a real mentor profile.
-        setIsMentor(Boolean(mentorData?.department && mentorData.department !== "General"));
+        applyProfile(profileData, mentorData?.department, userId, authUser);
       } catch {
         clearProfile();
       } finally {
