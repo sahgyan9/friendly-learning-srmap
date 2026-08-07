@@ -173,7 +173,7 @@ const Communities = () => {
         </div>
       </div>
 
-      <div ref={cardsRef} className="container mx-auto max-w-6xl px-4 py-8">
+      <div ref={cardsRef} className="container mx-auto max-w-6xl px-4 pt-6 pb-36 md:pb-48">
         <MyInvites />
 
         <div className="mb-6 space-y-3">
@@ -275,7 +275,7 @@ const Communities = () => {
             ))}
           </div>
         ) : communities.length > 0 ? (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-8">
             {communities.map((community) => (
               <CommunityCard
                 key={community.id}

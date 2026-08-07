@@ -267,7 +267,7 @@ const CommunityDetail = () => {
         description={community.description.slice(0, 155)}
       />
 
-      <div className="container mx-auto max-w-6xl px-4 py-8 md:py-12">
+      <div className="container mx-auto max-w-6xl px-4 pt-6 pb-36 md:pt-8 md:pb-48">
         <Button asChild variant="ghost" size="sm" className="mb-4 -ml-2">
           <Link to="/communities">
             <ArrowLeft className="mr-2 h-4 w-4" />
