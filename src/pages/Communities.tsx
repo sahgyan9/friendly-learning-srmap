@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { ChevronDown, Plus, Search, Users } from "lucide-react";
 import { motion } from "framer-motion";
@@ -25,11 +25,34 @@ import {
 const Communities = () => {
   const { user } = useAuth();
   const { markSeen: markGroupsNavSeen } = useHasVisitedGroupsNav();
+  const cardsRef = useRef<HTMLDivElement>(null);
 
   // Reaching this page is what clears the welcome tour's navbar dot.
   useEffect(() => {
     markGroupsNavSeen();
   }, [markGroupsNavSeen]);
+
+  // On mount, scroll so the groups search & cards section is the first thing visible.
+  // The hero remains accessible by scrolling up.
+  // We offset by navbar height so search bar isn't hidden behind it.
+  // We re-run when loading finishes so position is accurate after groups render.
+  useEffect(() => {
+    const scrollToCards = () => {
+      if (cardsRef.current) {
+        const navbarHeight = 64; // matches fixed navbar height
+        const top = cardsRef.current.getBoundingClientRect().top + window.scrollY - navbarHeight;
+        window.scrollTo({ top, behavior: "instant" });
+      }
+    };
+
+    scrollToCards();
+    const t1 = setTimeout(scrollToCards, 60);
+    const t2 = setTimeout(scrollToCards, 200);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
+  }, [loading]);
 
   const [communities, setCommunities] = useState<Community[]>([]);
   const [loading, setLoading] = useState(true);
@@ -157,7 +180,7 @@ const Communities = () => {
         </div>
       </div>
 
-      <div className="container mx-auto max-w-6xl px-4 py-8">
+      <div ref={cardsRef} className="container mx-auto max-w-6xl px-4 py-8">
         <MyInvites />
 
         <div className="mb-6 space-y-3">

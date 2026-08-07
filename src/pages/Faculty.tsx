@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useLocation, useNavigationType, useSearchParams } from "react-router-dom";
 import { BookOpen, EyeOff, Search, SlidersHorizontal, ArrowUpDown, Star, X } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -40,18 +40,39 @@ const SORT_OPTIONS: { value: FacultySort; label: string }[] = [
   { value: "name", label: "Name (A–Z)" },
 ];
 
+/**
+ * Module-level cache that survives component unmount/remount.
+ *
+ * When the user navigates to a professor's page and hits Back, the Faculty
+ * component remounts from scratch. Without a cache, it would show 12 skeletons
+ * while re-fetching, then replace them with real cards — causing a DOM reflow
+ * that makes scroll position restoration impossible (the page height changes
+ * after the scroll was already attempted).
+ *
+ * Keyed by the filter combination so that changing search/dept/sort never
+ * serves stale results. Max age of 2 minutes — fresh enough for a session
+ * but stale enough not to serve 10-minute-old data.
+ */
+interface CacheEntry {
+  faculty: FacultyMember[];
+  total: number;
+  departments: string[];
+  facets: { interest: string; count: number }[];
+  stats: { faculty_count: number; rating_count: number; department_count: number };
+  fetchedAt: number;
+}
+const PAGE_CACHE = new Map<string, CacheEntry>();
+const CACHE_TTL_MS = 2 * 60 * 1000;
+
+function makeCacheKey(search: string, department: string, interest: string, sort: string, limit: number) {
+  return `${search}|${department}|${interest}|${sort}|${limit}`;
+}
+
 const Faculty = () => {
+  const location = useLocation();
+  const navigationType = useNavigationType();
   const [searchParams, setSearchParams] = useSearchParams();
   const { markSeen } = useHasSeenFacultyRatings();
-
-  const [faculty, setFaculty] = useState<FacultyMember[]>([]);
-  const [departments, setDepartments] = useState<string[]>([]);
-  const [facets, setFacets] = useState<{ interest: string; count: number }[]>([]);
-  const [stats, setStats] = useState({ faculty_count: 0, rating_count: 0, department_count: 0 });
-  const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [ratingTarget, setRatingTarget] = useState<FacultyMember | null>(null);
 
   const department = searchParams.get("dept") ?? "all";
   const interest = searchParams.get("interest") ?? "";
@@ -59,40 +80,151 @@ const Faculty = () => {
   const [search, setSearch] = useState(searchParams.get("q") ?? "");
   const debouncedSearch = useDebounce(search, 300);
 
+  // On back navigation, restore the limit that was loaded before leaving
+  const savedLimit = Number(sessionStorage.getItem(`faculty_limit:${location.key}`));
+  const initialLimit = savedLimit && savedLimit > PAGE_SIZE ? savedLimit : PAGE_SIZE;
+
+  const cacheKey = makeCacheKey(debouncedSearch, department, interest, sort, initialLimit);
+  const cached = PAGE_CACHE.get(cacheKey);
+  const isFresh = cached && Date.now() - cached.fetchedAt < CACHE_TTL_MS;
+
+  const [faculty, setFaculty] = useState<FacultyMember[]>(isFresh ? cached.faculty : []);
+  const [departments, setDepartments] = useState<string[]>(isFresh ? cached.departments : []);
+  const [facets, setFacets] = useState<{ interest: string; count: number }[]>(isFresh ? cached.facets : []);
+  const [stats, setStats] = useState(isFresh ? cached.stats : { faculty_count: 0, rating_count: 0, department_count: 0 });
+  const [total, setTotal] = useState(isFresh ? cached.total : 0);
+  // Skip the loading skeleton entirely if we have cached data
+  const [loading, setLoading] = useState(!isFresh);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [ratingTarget, setRatingTarget] = useState<FacultyMember | null>(null);
+
+  // Track whether this is the first mount with back navigation
+  const isBackNav = navigationType === "POP";
+  const didRestoreScroll = useRef(false);
+  const cardsRef = useRef<HTMLDivElement>(null);
+
+  // On mount (if not back navigation restoring previous position), scroll so faculty search & filters are visible.
+  // The hero remains accessible by scrolling up.
+  // We offset by navbar height so search bar isn't hidden behind it.
+  // We re-run when loading finishes so the position is accurate after cards render.
   useEffect(() => {
-    getFacultyDepartments().then(({ data }) => setDepartments(data));
-    getFacultyInterestFacets(24).then(({ data }) => setFacets(data));
-    getFacultyDirectoryStats().then(({ data }) => setStats(data));
-    // Reaching this page is what counts as having discovered the feature; it
-    // clears the "New" flags in the nav and on the homepage card.
+    if (!isBackNav) {
+      const scrollToCards = () => {
+        if (cardsRef.current) {
+          const navbarHeight = 64; // matches fixed navbar height
+          const top = cardsRef.current.getBoundingClientRect().top + window.scrollY - navbarHeight;
+          window.scrollTo({ top, behavior: "instant" });
+        }
+      };
+
+      scrollToCards();
+      const t1 = setTimeout(scrollToCards, 60);
+      const t2 = setTimeout(scrollToCards, 200);
+      return () => {
+        clearTimeout(t1);
+        clearTimeout(t2);
+      };
+    }
+  }, [isBackNav, loading]);
+
+  useEffect(() => {
     markSeen();
   }, [markSeen]);
 
   const loadFaculty = useCallback(
-    async (offset = 0) => {
-      if (offset === 0) setLoading(true);
-      else setLoadingMore(true);
+    async (offset = 0, forceRefresh = false) => {
+      if (offset === 0) {
+        // For back navigation with fresh cache, skip re-fetching entirely
+        const ck = makeCacheKey(debouncedSearch, department, interest, sort, initialLimit);
+        const hit = PAGE_CACHE.get(ck);
+        if (!forceRefresh && hit && Date.now() - hit.fetchedAt < CACHE_TTL_MS) {
+          setFaculty(hit.faculty);
+          setTotal(hit.total);
+          setDepartments(hit.departments);
+          setFacets(hit.facets);
+          setStats(hit.stats);
+          setLoading(false);
+          return;
+        }
+        setLoading(true);
+      } else {
+        setLoadingMore(true);
+      }
 
-      const { data, total: matched } = await getFacultyList({
-        search: debouncedSearch,
-        department,
-        interest,
-        sort,
-        limit: PAGE_SIZE,
-        offset,
-      });
+      const fetchLimit = offset === 0 ? initialLimit : PAGE_SIZE;
 
-      setFaculty((previous) => (offset === 0 ? data : [...previous, ...data]));
+      const [{ data, total: matched }, { data: deptData }, { data: facetData }, { data: statsData }] =
+        offset === 0
+          ? await Promise.all([
+              getFacultyList({ search: debouncedSearch, department, interest, sort, limit: fetchLimit, offset }),
+              getFacultyDepartments(),
+              getFacultyInterestFacets(24),
+              getFacultyDirectoryStats(),
+            ])
+          : [
+              await getFacultyList({ search: debouncedSearch, department, interest, sort, limit: PAGE_SIZE, offset }),
+              { data: departments },
+              { data: facets },
+              { data: stats },
+            ];
+
+      const nextList = offset === 0 ? data : [...faculty, ...data];
+
+      // Store in module cache so back navigation gets instant results
+      PAGE_CACHE.set(
+        makeCacheKey(debouncedSearch, department, interest, sort, nextList.length),
+        {
+          faculty: nextList,
+          total: matched,
+          departments: deptData,
+          facets: facetData,
+          stats: statsData,
+          fetchedAt: Date.now(),
+        }
+      );
+
+      // Persist the loaded count so back navigation fetches the right limit
+      sessionStorage.setItem(`faculty_limit:${location.key}`, String(nextList.length));
+
+      setFaculty(nextList);
       setTotal(matched);
+      if (offset === 0) {
+        setDepartments(deptData);
+        setFacets(facetData);
+        setStats(statsData);
+      }
       setLoading(false);
       setLoadingMore(false);
     },
-    [debouncedSearch, department, interest, sort],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [debouncedSearch, department, interest, sort, location.key],
   );
 
   useEffect(() => {
     loadFaculty(0);
+    didRestoreScroll.current = false;
   }, [loadFaculty]);
+
+  // On back navigation: once cards are rendered (loading=false), restore scroll
+  // position. Using a ref guard so this only fires once per mount.
+  useEffect(() => {
+    if (!loading && isBackNav && !didRestoreScroll.current) {
+      didRestoreScroll.current = true;
+      const saved = sessionStorage.getItem(`scrollpos:${location.key}`);
+      if (!saved) return;
+      const target = Number(saved);
+      if (!target || target <= 0) return;
+
+      // Cards are already in the DOM (cache hit = no skeleton phase), so we
+      // can scroll immediately. We still do two follow-up frames to catch
+      // lazy-loaded images that might shift layout.
+      const snap = () => window.scrollTo({ top: target, behavior: "instant" as ScrollBehavior });
+      snap();
+      requestAnimationFrame(snap);
+      setTimeout(snap, 80);
+      setTimeout(snap, 200);
+    }
+  }, [loading, isBackNav, location.key]);
 
   const updateParam = (key: string, value: string, clearWhen: string) => {
     const next = new URLSearchParams(searchParams);
@@ -184,7 +316,7 @@ const Faculty = () => {
           </div>
         </div>
 
-        <div className="container mx-auto px-4 py-4">
+        <div ref={cardsRef} className="container mx-auto px-4 py-4">
           <header className="sr-only">
             <h2>Browse and filter faculty</h2>
           </header>
@@ -344,7 +476,7 @@ const Faculty = () => {
           if (!open) setRatingTarget(null);
         }}
         onSubmitted={() => {
-          loadFaculty(0);
+          loadFaculty(0, true); // force refresh after rating
           getFacultyDirectoryStats().then(({ data }) => setStats(data));
         }}
       />

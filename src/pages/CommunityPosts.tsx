@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { ChevronDown, FileText, Search } from "lucide-react";
@@ -36,6 +36,7 @@ const CommunityPosts = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const cardsRef = useRef<HTMLDivElement>(null);
 
   const [posts, setPosts] = useState<CommunityPost[]>([]);
   const [total, setTotal] = useState(0);
@@ -113,6 +114,30 @@ const CommunityPosts = () => {
       return () => clearTimeout(timer);
     }
   }, [loading, targetPostId, posts.length]);
+
+  // On mount (if not jumping to a specific post), scroll so search & feed controls are visible.
+  // The hero remains accessible by scrolling up.
+  // We offset by navbar height so search isn't hidden behind it.
+  // We re-run when loading finishes so position is accurate after posts render.
+  useEffect(() => {
+    if (!targetPostId) {
+      const scrollToCards = () => {
+        if (cardsRef.current) {
+          const navbarHeight = 64; // matches fixed navbar height
+          const top = cardsRef.current.getBoundingClientRect().top + window.scrollY - navbarHeight;
+          window.scrollTo({ top, behavior: "instant" });
+        }
+      };
+
+      scrollToCards();
+      const t1 = setTimeout(scrollToCards, 60);
+      const t2 = setTimeout(scrollToCards, 200);
+      return () => {
+        clearTimeout(t1);
+        clearTimeout(t2);
+      };
+    }
+  }, [targetPostId, loading]);
 
   // Signing out with "Only mine" still pressed would ask the server for the
   // posts of nobody, and show an empty board with no explanation.
@@ -295,7 +320,7 @@ const CommunityPosts = () => {
           </div>
         </div>
 
-        <div className="container mx-auto max-w-5xl px-4 py-6">
+        <div ref={cardsRef} className="container mx-auto max-w-5xl px-4 py-6">
 
           {/* Search + type chips. Not sticky — every other feed page (Faculty,
               Groups, Events) scrolls its filters away with the content, and a

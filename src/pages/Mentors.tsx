@@ -46,17 +46,25 @@ const Mentors = () => {
 
   // On mount, scroll so the mentor cards section is the first thing visible.
   // The hero remains accessible by scrolling up.
-  // We manually offset by the navbar height so the search bar isn't hidden behind it.
+  // We offset by navbar height so search bar isn't hidden behind it.
+  // We re-run when isLoading finishes so position is accurate after mentors render.
   useEffect(() => {
-    const timer = setTimeout(() => {
+    const scrollToCards = () => {
       if (cardsRef.current) {
-        const navbarHeight = 64; // matches the fixed navbar height
+        const navbarHeight = 64; // matches fixed navbar height
         const top = cardsRef.current.getBoundingClientRect().top + window.scrollY - navbarHeight;
         window.scrollTo({ top, behavior: "instant" });
       }
-    }, 50);
-    return () => clearTimeout(timer);
-  }, []);
+    };
+
+    scrollToCards();
+    const t1 = setTimeout(scrollToCards, 60);
+    const t2 = setTimeout(scrollToCards, 200);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
+  }, [isLoading]);
 
   // Fetch mentors from Supabase on component mount
   useEffect(() => {

@@ -1,5 +1,5 @@
 import { PRIMARY_DOMAIN } from "@/lib/constants";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Input } from "@/components/ui/input";
 import { Search, Plus, Loader2, Sparkles } from "lucide-react";
@@ -21,11 +21,34 @@ const MarketPlace = () => {
     const { user } = useAuth();
     const { events: srmapEvents, loading: srmapLoading, error: srmapError } = useSRMAPEvents();
     const { markSeen: markEventsNavSeen } = useHasVisitedEventsNav();
+    const cardsRef = useRef<HTMLDivElement>(null);
 
     // Reaching this page is what clears the welcome tour's navbar dot.
     useEffect(() => {
         markEventsNavSeen();
     }, [markEventsNavSeen]);
+
+    // On mount, scroll so the events search & grid section is the first thing visible.
+    // The hero remains accessible by scrolling up.
+    // We offset by navbar height so search bar isn't hidden behind it.
+    // We re-run when srmapLoading finishes so the position is accurate after events render.
+    useEffect(() => {
+        const scrollToCards = () => {
+            if (cardsRef.current) {
+                const navbarHeight = 64; // matches fixed navbar height
+                const top = cardsRef.current.getBoundingClientRect().top + window.scrollY - navbarHeight;
+                window.scrollTo({ top, behavior: "instant" });
+            }
+        };
+
+        scrollToCards();
+        const t1 = setTimeout(scrollToCards, 60);
+        const t2 = setTimeout(scrollToCards, 200);
+        return () => {
+            clearTimeout(t1);
+            clearTimeout(t2);
+        };
+    }, [srmapLoading]);
 
     useEffect(() => {
         if (user) {
@@ -94,7 +117,7 @@ const MarketPlace = () => {
                   </div>
                 </div>
 
-                <div className="container mx-auto px-4 py-8">
+                <div ref={cardsRef} className="container mx-auto px-4 py-8">
                     <div className="mb-8">
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                             <div className="flex-1 w-full sm:w-auto">
