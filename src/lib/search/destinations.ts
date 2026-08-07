@@ -1,6 +1,7 @@
 import type { ComponentType, SVGProps } from "react";
 import { EventsIcon } from "@/components/icons/EventsIcon";
 import { FacultyIcon } from "@/components/icons/FacultyIcon";
+import { GroupsIcon } from "@/components/icons/GroupsIcon";
 import { MentorIcon } from "@/components/icons/MentorIcon";
 import { PostIcon } from "@/components/icons/PostIcon";
 import {
@@ -139,7 +140,7 @@ export const DESTINATIONS: SearchDestination[] = [
     id: "communities",
     label: "Groups",
     hint: "Hackathon teams, clubs and study circles you can join",
-    icon: UsersRound,
+    icon: GroupsIcon,
     group: "Go to",
     keywords: [
       "group", "groups", "community", "communities", "team", "teams", "club",

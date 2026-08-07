@@ -10,6 +10,7 @@ import {
 
 import { EventsIcon } from "@/components/icons/EventsIcon";
 import { FacultyIcon } from "@/components/icons/FacultyIcon";
+import { GroupsIcon } from "@/components/icons/GroupsIcon";
 import { MentorIcon } from "@/components/icons/MentorIcon";
 import { PostIcon } from "@/components/icons/PostIcon";
 export interface NavItem {
@@ -46,7 +47,7 @@ export interface NavItem {
  */
 export const PRIMARY_NAV: NavItem[] = [
   { name: "Home", url: "/", icon: Home },
-  { name: "Groups", url: "/communities", icon: UsersRound },
+  { name: "Groups", url: "/communities", icon: GroupsIcon },
   { name: "Posts", url: "/community-posts", icon: PostIcon },
   { name: "Events", url: "/marketplace", icon: EventsIcon },
   { name: "Messages", url: "/messages", icon: Mail, requiresAuth: true },
