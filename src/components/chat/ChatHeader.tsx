@@ -94,12 +94,6 @@ const ChatHeader = ({ conversation, getOtherUser, onBack }: ChatHeaderProps) => 
           )}
 
           <div className="mt-0.5 flex items-center gap-1.5">
-            {isOnline && (
-              <span className="relative flex h-1.5 w-1.5">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400" />
-              </span>
-            )}
             <p
               className={cn(
                 "truncate text-xs font-medium",

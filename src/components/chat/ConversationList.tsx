@@ -102,7 +102,9 @@ const ConversationList = ({
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
                 isActive
                   ? "bg-gradient-to-r from-primary/20 via-primary/10 to-transparent shadow-sm ring-1 ring-primary/20"
-                  : "hover:bg-white/5",
+                  : hasUnread
+                    ? "bg-sky-400/[0.06] hover:bg-sky-400/10"
+                    : "hover:bg-white/5",
               )}
             >
               {/* Active indicator bar */}
@@ -148,16 +150,16 @@ const ConversationList = ({
                   <p
                     className={cn(
                       "truncate text-xs leading-relaxed transition-colors duration-200",
-                      hasUnread ? "font-medium text-foreground/80" : "text-muted-foreground/60",
+                      hasUnread ? "font-semibold text-foreground" : "text-muted-foreground/60",
                     )}
                   >
                     {preview}
                   </p>
                   {hasUnread && (
-                    <span
-                      className="ml-auto h-2 w-2 shrink-0 rounded-full bg-primary shadow-[0_0_6px_1px_hsl(var(--primary)/0.6)] animate-pulse"
-                      aria-label="Unread messages"
-                    />
+                    <span className="relative ml-auto flex h-2 w-2 shrink-0" aria-label="Unread messages">
+                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-sky-400 opacity-75" />
+                      <span className="relative inline-flex h-2 w-2 rounded-full bg-sky-400 shadow-[0_0_6px_1px_rgba(56,189,248,0.7)]" />
+                    </span>
                   )}
                 </div>
               </div>
