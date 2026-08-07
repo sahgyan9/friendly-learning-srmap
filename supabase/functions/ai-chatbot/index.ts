@@ -437,9 +437,21 @@ serve(async (req) => {
     // More may be retrieved than shown, and the model happily named the extra
     // one — not a hallucination (it was retrieved) but the student sees a name
     // with no card beside it, which reads exactly like one.
-    const { text: aiResponse, model: usedModel } = await generate(
+    const { text: rawResponse, model: usedModel } = await generate(
       buildPrompt(message, shownFaculty, shownMentors, currentPath),
     );
+
+    // Whether the model's prose mentions CampusMind is up to Gemini and it
+    // regularly doesn't, even though buildPrompt describes it — a free-form
+    // reply about "how do I find faculty" is exactly the case where a student
+    // should be pointed at the thing that does this automatically for any
+    // query. Appended in code rather than asked of the model so it's guaranteed
+    // rather than hoped for, and only when real matches were actually found —
+    // a student already looking at cards is the one this tip is for.
+    const aiResponse =
+      shownFaculty.length > 0 || shownMentors.length > 0
+        ? `${rawResponse}\n\n💡 **CampusMind** — the smart search at [/ask](/ask) — does this automatically. Describe your project or what you're looking for, and it surfaces the best-matching faculty and seniors on its own.`
+        : rawResponse;
 
     await supabase.from("ai_conversations").insert({
       id: crypto.randomUUID(),
