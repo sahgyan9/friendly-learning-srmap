@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowRight, PenLine } from "lucide-react";
 import { toast } from "sonner";
@@ -31,6 +31,9 @@ export const CommunityPostsSection = () => {
   const [loading, setLoading] = useState(true);
   const [lightbox, setLightbox] = useState<{ images: string[]; title?: string; index: number } | null>(null);
 
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [activeIndex, setActiveIndex] = useState<number>(0);
+
   const reload = useCallback(async () => {
     const { data } = await getCommunityPosts({ limit: 12 });
     if (data) setPosts(data);
@@ -50,6 +53,57 @@ export const CommunityPostsSection = () => {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    if (!scrollContainerRef.current || posts.length === 0) return;
+    const container = scrollContainerRef.current;
+
+    const handleScroll = () => {
+      const cards = Array.from(container.querySelectorAll<HTMLDivElement>("[data-post-card]"));
+      if (cards.length === 0) return;
+
+      // When scrolled near or to the right edge, activate the last card
+      const isAtEnd = container.scrollLeft + container.clientWidth >= container.scrollWidth - 60;
+      if (isAtEnd) {
+        setActiveIndex(cards.length - 1);
+        return;
+      }
+
+      // When at or near the left edge, activate the first card
+      const isAtStart = container.scrollLeft <= 30;
+      if (isAtStart) {
+        setActiveIndex(0);
+        return;
+      }
+
+      const containerRect = container.getBoundingClientRect();
+      const targetFocusX = containerRect.left + containerRect.width / 2;
+
+      let closestIdx = 0;
+      let minDistance = Infinity;
+
+      cards.forEach((card, idx) => {
+        const cardRect = card.getBoundingClientRect();
+        const cardCenter = cardRect.left + cardRect.width / 2;
+        const distance = Math.abs(cardCenter - targetFocusX);
+        if (distance < minDistance) {
+          minDistance = distance;
+          closestIdx = idx;
+        }
+      });
+
+      setActiveIndex(closestIdx);
+    };
+
+    handleScroll();
+    container.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("resize", handleScroll, { passive: true });
+
+    return () => {
+      container.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", handleScroll);
+    };
+  }, [posts]);
 
   const handleLike = async (postId: string, event: React.MouseEvent) => {
     event.stopPropagation();
@@ -141,7 +195,7 @@ export const CommunityPostsSection = () => {
           </div>
         ) : (
           <>
-            <div className="-mx-4 overflow-x-auto px-4 pb-4 [scrollbar-width:thin]">
+            <div ref={scrollContainerRef} className="-mx-4 overflow-x-auto px-4 pb-4 [scrollbar-width:thin]">
               {/* `items-stretch` gives every card the height of the tallest,
                   so the rail reads as one row rather than a ragged skyline.
                   This replaced `items-start`, which avoided stretching
@@ -150,37 +204,42 @@ export const CommunityPostsSection = () => {
                   more of its own text. `w-max mx-auto` centres the rail while
                   it still fits and lets it scroll once it doesn't. */}
               <div className="mx-auto flex w-max snap-x snap-mandatory items-stretch gap-4">
-                {posts.map((post, index) => (
-                  <div
-                    key={post.id}
-                    className={`shrink-0 snap-start w-[400px] md:w-[460px] transition-all duration-300 ease-out${
-                      index === 0
-                        ? ""
-                        : " opacity-60 blur-[2px] hover:opacity-100 hover:blur-none focus-within:opacity-100 focus-within:blur-none"
-                    }`}
-                  >
-                    <PostCard
-                      post={post}
-                      variant="compact"
-                      className="w-full h-full"
-                      onOpen={(postId) => navigate(`/community-posts#post-${postId}`)}
-                      onLike={handleLike}
-                      onShare={handleShare}
-                      onComment={(postId, event) => {
-                        event.stopPropagation();
-                        navigate(`/community-posts#post-${postId}`);
-                      }}
-                      onImageClick={(src, title, index, allImages) => {
-                        const urls = allImages && allImages.length > 0 ? allImages : getPostImageUrls(post.image_url);
-                        setLightbox({
-                          images: urls,
-                          title: title || post.title,
-                          index: index ?? 0,
-                        });
-                      }}
-                    />
-                  </div>
-                ))}
+                {posts.map((post, index) => {
+                  const isActive = index === activeIndex;
+                  return (
+                    <div
+                      key={post.id}
+                      data-post-card
+                      data-post-id={post.id}
+                      className={`shrink-0 snap-start w-[400px] md:w-[460px] transition-all duration-500 ease-out ${
+                        isActive
+                          ? "opacity-100 blur-none scale-100 z-10"
+                          : "opacity-40 blur-[3px] scale-[0.97] hover:opacity-100 hover:blur-none hover:scale-100 focus-within:opacity-100 focus-within:blur-none"
+                      }`}
+                    >
+                      <PostCard
+                        post={post}
+                        variant="compact"
+                        className="w-full h-full"
+                        onOpen={(postId) => navigate(`/community-posts#post-${postId}`)}
+                        onLike={handleLike}
+                        onShare={handleShare}
+                        onComment={(postId, event) => {
+                          event.stopPropagation();
+                          navigate(`/community-posts#post-${postId}`);
+                        }}
+                        onImageClick={(src, title, index, allImages) => {
+                          const urls = allImages && allImages.length > 0 ? allImages : getPostImageUrls(post.image_url);
+                          setLightbox({
+                            images: urls,
+                            title: title || post.title,
+                            index: index ?? 0,
+                          });
+                        }}
+                      />
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
