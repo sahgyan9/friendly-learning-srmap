@@ -89,8 +89,23 @@ export const HomeIntro = () => {
   );
 
   return (
-    <section className="py-12 md:py-16">
-      <div className="container">
+    <section className="relative overflow-hidden py-12 md:py-16">
+      {/* The drifting blobs came down from the old hero along with everything
+          else in this block — they were only ever decoration for it. */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
+        <motion.div
+          className="absolute -top-24 -right-24 w-64 h-64 rounded-full bg-primary/5"
+          animate={{ rotate: 360 }}
+          transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
+        />
+        <motion.div
+          className="absolute -bottom-24 right-1/3 w-72 h-72 rounded-full bg-emerald-500/4"
+          animate={{ rotate: -360 }}
+          transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+        />
+      </div>
+
+      <div className="container relative z-10">
         <motion.div
           className="max-w-4xl mx-auto text-center"
           variants={container}
@@ -98,6 +113,20 @@ export const HomeIntro = () => {
           whileInView="show"
           viewport={{ once: true, amount: 0.3 }}
         >
+          {/* Still the page's h1, just no longer the page's first pixel. It
+              reads as a summary of what was scrolled past rather than a claim
+              made before any evidence — and the document still has exactly one
+              h1 where a crawler expects it. */}
+          <motion.h1
+            className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight mb-4 text-balance"
+            variants={item}
+          >
+            Your campus,{" "}
+            <span className="bg-gradient-to-r from-[#3963C6] via-violet-500 to-emerald-500 bg-clip-text text-transparent">
+              one feed.
+            </span>
+          </motion.h1>
+
           <motion.p
             className="text-base md:text-lg text-muted-foreground mb-6 max-w-2xl mx-auto text-balance"
             variants={item}

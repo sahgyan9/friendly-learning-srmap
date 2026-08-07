@@ -5,6 +5,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { CreatePostButton } from "@/components/community/CreatePostButton";
+import { PostComposerStrip } from "@/components/community/PostComposerStrip";
 import { PostCard } from "@/components/community/PostCard";
 import { useAuth } from "@/context/AuthContext";
 import {
@@ -102,16 +103,23 @@ export const CommunityPostsSection = () => {
     <section className="bg-muted/30 pt-8 pb-16">
       <div className="container mx-auto px-4">
         {/* Section header — brand pill pattern (emerald accent, §8 of brand guidelines) */}
-        <div className="mb-6 text-center">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 mb-4 rounded-full border border-emerald-500/20 bg-emerald-500/8 text-emerald-700 dark:text-emerald-400 text-xs font-semibold tracking-widest uppercase">
+        <div className="mb-4 text-center">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/8 text-emerald-700 dark:text-emerald-400 text-xs font-semibold tracking-widest uppercase">
             <FileText className="w-3.5 h-3.5" />
             Posts
           </div>
+          {/* Commented out, not deleted — restore if the feed ever needs
+              introducing again. It does not right now: the composer strip and
+              the cards below say "this is a student board" faster than a
+              heading describing them can, and this is the top of the page.
           <h2 className="text-3xl font-bold tracking-tight mb-2">What students are talking about</h2>
           <p className="mx-auto max-w-xl text-muted-foreground">
             Hackathon teams, study help, project collabs — posted live by SRM AP students.
           </p>
+          */}
         </div>
+
+        <PostComposerStrip onPostCreated={reload} />
 
         {posts.length === 0 ? (
           <div className="rounded-lg border border-dashed py-12 text-center">
@@ -127,11 +135,14 @@ export const CommunityPostsSection = () => {
         ) : (
           <>
             <div className="-mx-4 overflow-x-auto px-4 pb-4 [scrollbar-width:thin]">
-              {/* `items-start` stops a card with an image stretching its
-                  neighbours into a column of empty space; `w-max mx-auto`
-                  centres the rail while it still fits and lets it scroll once
-                  it doesn't. */}
-              <div className="mx-auto flex w-max snap-x snap-mandatory items-start gap-4">
+              {/* `items-stretch` gives every card the height of the tallest,
+                  so the rail reads as one row rather than a ragged skyline.
+                  This replaced `items-start`, which avoided stretching
+                  text-only cards into empty space — PostCard now solves that
+                  properly by letting a card with no image spend the height on
+                  more of its own text. `w-max mx-auto` centres the rail while
+                  it still fits and lets it scroll once it doesn't. */}
+              <div className="mx-auto flex w-max snap-x snap-mandatory items-stretch gap-4">
                 {posts.map((post) => (
                   <PostCard
                     key={post.id}

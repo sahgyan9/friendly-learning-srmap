@@ -64,6 +64,20 @@ export function PostCard({
   const postedAt = formatDistanceToNow(new Date(post.created_at), { addSuffix: true });
   const accentGradient = POST_TYPE_GRADIENT[post.post_type] ?? "muted";
 
+  /**
+   * On the homepage rail every card is stretched to the height of the tallest,
+   * which is set by whichever card carries an image. A text-only post clamped
+   * to two lines then leaves that height as a blank column — the ragged, empty
+   * look that makes text posts read as second-class next to image posts.
+   *
+   * So a compact card with no image spends the space on its own content
+   * instead: the text block grows to fill and the excerpt clamps at six lines
+   * rather than two. Same footprint, no void, and the post that had no picture
+   * gets to say more rather than less.
+   */
+  const images = getPostImageUrls(post.image_url);
+  const isCompactTextOnly = isCompact && images.length === 0;
+
   return (
     <Card
       className={cn(
@@ -91,7 +105,7 @@ export function PostCard({
         </div>
 
         {/* Title + content */}
-        <div className="space-y-1.5">
+        <div className={cn("space-y-1.5", isCompactTextOnly && "flex-1")}>
           <h3
             className={cn(
               "font-semibold leading-snug tracking-tight",
@@ -111,7 +125,8 @@ export function PostCard({
           <p
             className={cn(
               "whitespace-pre-line text-sm leading-relaxed text-muted-foreground",
-              isCompact ? "line-clamp-2" : "line-clamp-4 max-w-prose",
+              !isCompact && "line-clamp-4 max-w-prose",
+              isCompact && (isCompactTextOnly ? "line-clamp-6" : "line-clamp-2"),
             )}
           >
             <LinkifiedText text={post.content} />
@@ -120,11 +135,11 @@ export function PostCard({
 
         {/* LinkedIn-style Multi-Image Auto Gallery */}
         <PostImageGallery
-          images={getPostImageUrls(post.image_url)}
+          images={images}
           title={post.title}
           variant={variant}
           onImageClick={(src, index) => {
-            onImageClick?.(src, post.title, index, getPostImageUrls(post.image_url));
+            onImageClick?.(src, post.title, index, images);
           }}
         />
 

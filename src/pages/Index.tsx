@@ -1,4 +1,3 @@
-import Hero from "@/components/Hero";
 import MentorsSection from "@/components/MentorsSection";
 import CallToAction from "@/components/CallToAction";
 import Footer from "@/components/Footer";
@@ -70,9 +69,6 @@ const Index = () => {
       <StructuredData data={getOrganizationSchema()} />
       <StructuredData data={getWebsiteSchema()} />
 
-      {/* 1. Headline only — the feed starts immediately under it */}
-      <Hero />
-
       {/* Rejected application notice for authenticated users */}
       {user && (
         <div className="container mx-auto px-4 py-4">
@@ -80,34 +76,37 @@ const Index = () => {
         </div>
       )}
 
-      {/* 2. Posts — centre of attraction, real content on load */}
+      {/* 1. Posts — the page opens straight onto the feed. There is no hero
+             above this any more: the composer strip and the first row of real
+             cards answer "what is this site?" before a headline gets the
+             chance to, and they answer it with evidence. */}
       <CommunityPostsSection />
 
-      {/* 3. The pitch, deliberately after the evidence: the ask box, the two
-             CTAs and the stats all used to sit above the feed, where they
-             asked to be believed before a visitor had seen a single real
-             thread. Here they confirm what was just scrolled past. */}
+      {/* 2. The pitch, deliberately after the evidence: the headline, the ask
+             box, the two CTAs and the stats all used to sit above the feed,
+             where they asked to be believed before a visitor had seen a single
+             real thread. Here they confirm what was just scrolled past. */}
       <HomeIntro />
 
-      {/* 4. About Quickstart Strip — "what can I do right now?" */}
+      {/* 3. About Quickstart Strip — "what can I do right now?" */}
       <AboutQuickstartStrip />
 
-      {/* 5. Groups — find your people */}
+      {/* 4. Groups — find your people */}
       <CommunitiesSection />
 
-      {/* 6. Mentors — someone's already done your exact course */}
+      {/* 5. Mentors — someone's already done your exact course */}
       <MentorsSection />
 
-      {/* 7. Faculty Ratings — moved down from top; earns its moment here */}
+      {/* 6. Faculty Ratings — moved down from top; earns its moment here */}
       <FacultyDiscoveryCard />
 
-      {/* 8. All 8 live features with direct navigation links */}
+      {/* 7. All 8 live features with direct navigation links */}
       <FeaturesShowcase />
 
-      {/* 9. Roadmap: complete ecosystem + indigenous AI vision */}
+      {/* 8. Roadmap: complete ecosystem + indigenous AI vision */}
       <FutureVision />
 
-      {/* 10. CTA — your profile is someone else's answer */}
+      {/* 9. CTA — your profile is someone else's answer */}
       <CallToAction />
 
       <Footer />
