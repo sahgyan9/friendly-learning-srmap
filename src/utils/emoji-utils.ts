@@ -46,8 +46,8 @@ export function getEmojiCount(text: string): number {
  * Returns Tailwind font size classes for emoji-only messages (WhatsApp style).
  */
 export function getEmojiFontSizeClass(count: number): string {
-  if (count === 1) return "text-4xl sm:text-5xl leading-none select-none";
-  if (count === 2) return "text-3xl sm:text-4xl leading-none select-none";
-  if (count === 3) return "text-2xl sm:text-3xl leading-none select-none";
-  return "text-xl sm:text-2xl leading-none select-none";
+  if (count === 1) return "text-4xl sm:text-5xl leading-normal select-none";
+  if (count === 2) return "text-3xl sm:text-4xl leading-normal select-none";
+  if (count === 3) return "text-2xl sm:text-3xl leading-normal select-none";
+  return "text-xl sm:text-2xl leading-normal select-none";
 }

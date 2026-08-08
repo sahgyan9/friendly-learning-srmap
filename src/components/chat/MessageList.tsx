@@ -160,11 +160,13 @@ const MessageList = ({
         data-testid="message-scroller"
         className="h-full overflow-y-auto px-4 py-5 space-y-0"
       >
-        {rows.map(({ message, startsDay, isFirstInGroup, isLastInGroup }) => {
+        {rows.map(({ message, startsDay, isFirstInGroup, isLastInGroup }, index) => {
+          const previous = index > 0 ? rows[index - 1].message : null;
           const isMine = message.sender_id === currentUserId;
           const senderName = isMine ? "You" : getSenderName?.(message.sender_id) ?? "User";
           const emojiOnly = isEmojiOnly(message.content);
           const emojiCount = emojiOnly ? getEmojiCount(message.content) : 0;
+          const prevEmojiOnly = previous ? isEmojiOnly(previous.content) : false;
 
           return (
             <React.Fragment key={message.id}>
@@ -183,7 +185,11 @@ const MessageList = ({
                 className={cn(
                   "flex items-end gap-2",
                   isMine ? "justify-end" : "justify-start",
-                  isFirstInGroup ? "mt-4" : "mt-0.5",
+                  isFirstInGroup
+                    ? "mt-4"
+                    : (emojiOnly || prevEmojiOnly)
+                      ? "mt-2.5"
+                      : "mt-0.5",
                 )}
               >
                 {/* Received: avatar placeholder column */}
@@ -204,7 +210,7 @@ const MessageList = ({
                     className={cn(
                       "whitespace-pre-wrap break-words",
                       emojiOnly
-                        ? cn("p-1 bg-transparent border-none shadow-none", getEmojiFontSizeClass(emojiCount))
+                        ? cn("px-1.5 py-1 bg-transparent border-none shadow-none", getEmojiFontSizeClass(emojiCount))
                         : cn(
                             "px-4 py-2.5 text-sm leading-relaxed shadow-sm",
                             isMine
