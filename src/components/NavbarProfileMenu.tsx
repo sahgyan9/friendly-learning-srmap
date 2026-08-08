@@ -1,7 +1,7 @@
 
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { LogOut } from "lucide-react";
+import { LogOut, GraduationCap } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -16,12 +16,14 @@ import { getInitials } from "@/utils/user-utils";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useWelcomeTour } from "@/components/onboarding/WelcomeTourContext";
+import { ImportSrmPortalDialog } from "@/components/profile/ImportSrmPortal";
 
 const NavbarProfileMenu = () => {
   const { user, profile, signOut, loading } = useAuth();
   const { openTour } = useWelcomeTour();
   const [isRealMentor, setIsRealMentor] = useState(false);
   const [checkingMentorStatus, setCheckingMentorStatus] = useState(true);
+  const [srmImportOpen, setSrmImportOpen] = useState(false);
 
   useEffect(() => {
     checkMentorStatus();
@@ -93,6 +95,10 @@ const NavbarProfileMenu = () => {
               Profile
             </Link>
           </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setSrmImportOpen(true)} className="cursor-pointer">
+            <GraduationCap className="h-4 w-4 mr-2" />
+            Import from SRM portal
+          </DropdownMenuItem>
           {isRealMentor && (
             <DropdownMenuItem asChild>
               <Link to="/certificate" className="cursor-pointer w-full">
@@ -117,6 +123,11 @@ const NavbarProfileMenu = () => {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+
+      <ImportSrmPortalDialog
+        open={srmImportOpen}
+        onOpenChange={setSrmImportOpen}
+      />
     </>
   );
 };

@@ -15,7 +15,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 
-interface AcademicImport {
+export interface AcademicImport {
   program: string | null;
   current_semester: number | null;
   cgpa: number | null;
@@ -30,18 +30,21 @@ interface CaptchaStepData {
   guess: string | null;
 }
 
-/**
- * "Import from SRM Portal" — a student's own program/subjects/CGPA, pulled
- * from student.srmap.edu.in instead of typed in by hand. The password field
- * never leaves this component's local state and is cleared the moment the
- * submit call resolves, success or failure — it is never something we store.
- */
-const ImportSrmPortal = () => {
-  const { user } = useAuth();
-  const [record, setRecord] = useState<AcademicImport | null>(null);
-  const [loadingRecord, setLoadingRecord] = useState(true);
+interface ImportSrmPortalDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSuccess?: () => void;
+}
 
-  const [open, setOpen] = useState(false);
+/**
+ * Standalone dialog for authenticating with student.srmap.edu.in and importing
+ * academic details. Can be rendered from anywhere (profile page, navbar, etc.).
+ */
+export const ImportSrmPortalDialog = ({
+  open,
+  onOpenChange,
+  onSuccess,
+}: ImportSrmPortalDialogProps) => {
   const [captchaData, setCaptchaData] = useState<CaptchaStepData | null>(null);
   const [fetchingCaptcha, setFetchingCaptcha] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -49,23 +52,6 @@ const ImportSrmPortal = () => {
   const [registerNumber, setRegisterNumber] = useState("");
   const [password, setPassword] = useState("");
   const [captchaText, setCaptchaText] = useState("");
-
-  const loadRecord = async () => {
-    if (!user) return;
-    setLoadingRecord(true);
-    const { data } = await supabase
-      .from("academic_imports")
-      .select("program, current_semester, cgpa, subjects, sync_status, last_synced_at")
-      .eq("user_id", user.id)
-      .maybeSingle();
-    setRecord((data as AcademicImport | null) ?? null);
-    setLoadingRecord(false);
-  };
-
-  useEffect(() => {
-    loadRecord();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id]);
 
   const fetchCaptcha = async () => {
     setFetchingCaptcha(true);
@@ -82,18 +68,23 @@ const ImportSrmPortal = () => {
       if (step.guess) setCaptchaText(step.guess);
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Couldn't reach the SRM portal");
-      setOpen(false);
+      onOpenChange(false);
     } finally {
       setFetchingCaptcha(false);
     }
   };
 
-  const openDialog = () => {
-    setOpen(true);
-    setRegisterNumber("");
-    setPassword("");
-    fetchCaptcha();
-  };
+  useEffect(() => {
+    if (open) {
+      setRegisterNumber("");
+      setPassword("");
+      fetchCaptcha();
+    } else {
+      setPassword("");
+      setCaptchaData(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   const handleSubmit = async () => {
     if (!captchaData || !registerNumber.trim() || !password.trim() || !captchaText.trim()) return;
@@ -114,13 +105,11 @@ const ImportSrmPortal = () => {
       if (data?.error) throw new Error(data.error);
 
       toast.success("Imported! Your profile now includes real coursework.", { id: loadingId });
-      setOpen(false);
-      await loadRecord();
+      onOpenChange(false);
+      onSuccess?.();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Import failed";
       toast.error(message, { id: loadingId });
-      // A failed attempt likely burned the captcha/session either way — get a
-      // fresh one rather than let the student retry against a stale session.
       fetchCaptcha();
     } finally {
       setPassword("");
@@ -128,13 +117,118 @@ const ImportSrmPortal = () => {
     }
   };
 
-  const handleOpenChange = (next: boolean) => {
-    if (!next) {
-      setPassword("");
-      setCaptchaData(null);
-    }
-    setOpen(next);
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Import your academic profile</DialogTitle>
+          <DialogDescription>
+            We'll sign in to your SRM student portal once, read your program,
+            subjects and CGPA, then fill in your profile. Your portal password
+            is never stored — it's used once, in memory, and discarded.
+          </DialogDescription>
+        </DialogHeader>
+
+        {fetchingCaptcha && (
+          <div className="flex items-center justify-center gap-2 py-8 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" /> Fetching a captcha from the portal...
+          </div>
+        )}
+
+        {!fetchingCaptcha && captchaData && (
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="srm-register-number">Application / Register Number</Label>
+              <Input
+                id="srm-register-number"
+                placeholder="AP23111260062"
+                value={registerNumber}
+                onChange={(e) => setRegisterNumber(e.target.value)}
+                autoComplete="off"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="srm-password">Portal Password</Label>
+              <Input
+                id="srm-password"
+                type="password"
+                placeholder="DDMMYYYY (your date of birth)"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="off"
+              />
+              <p className="text-[11px] text-muted-foreground">
+                Same password you use to sign in at student.srmap.edu.in
+              </p>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="srm-captcha">Captcha</Label>
+              <img
+                src={captchaData.imageDataUrl}
+                alt="SRM portal captcha"
+                className="h-10 rounded border border-border bg-secondary px-2"
+              />
+              <Input
+                id="srm-captcha"
+                placeholder="Enter the captcha text"
+                value={captchaText}
+                onChange={(e) => setCaptchaText(e.target.value)}
+                autoComplete="off"
+              />
+            </div>
+
+            <p className="text-[11px] text-muted-foreground">
+              Independent student project — not affiliated with or endorsed by SRM University AP.
+            </p>
+
+            <div className="flex gap-2 pt-1">
+              <Button variant="outline" className="flex-1" onClick={() => onOpenChange(false)}>
+                Cancel
+              </Button>
+              <Button
+                className="flex-1"
+                disabled={submitting || !registerNumber.trim() || !password.trim() || !captchaText.trim()}
+                onClick={handleSubmit}
+              >
+                {submitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                Continue
+              </Button>
+            </div>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+/**
+ * Banner widget placed on the Profile page that displays current import status
+ * and triggers the import dialog.
+ */
+const ImportSrmPortal = () => {
+  const { user } = useAuth();
+  const [record, setRecord] = useState<AcademicImport | null>(null);
+  const [loadingRecord, setLoadingRecord] = useState(true);
+  const [open, setOpen] = useState(false);
+
+  const loadRecord = async () => {
+    if (!user) return;
+    setLoadingRecord(true);
+    const { data } = await supabase
+      .from("academic_imports")
+      .select("program, current_semester, cgpa, subjects, sync_status, last_synced_at")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    setRecord((data as AcademicImport | null) ?? null);
+    setLoadingRecord(false);
   };
+
+  useEffect(() => {
+    loadRecord();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
 
   return (
     <>
@@ -172,7 +266,7 @@ const ImportSrmPortal = () => {
             type="button"
             variant={record?.sync_status === "success" ? "outline" : "default"}
             size="sm"
-            onClick={openDialog}
+            onClick={() => setOpen(true)}
             className="shrink-0"
           >
             {record?.sync_status === "success" ? (
@@ -188,90 +282,14 @@ const ImportSrmPortal = () => {
         </div>
       </div>
 
-      <Dialog open={open} onOpenChange={handleOpenChange}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Import your academic profile</DialogTitle>
-            <DialogDescription>
-              We'll sign in to your SRM student portal once, read your program,
-              subjects and CGPA, then fill in your profile. Your portal password
-              is never stored — it's used once, in memory, and discarded.
-            </DialogDescription>
-          </DialogHeader>
-
-          {fetchingCaptcha && (
-            <div className="flex items-center justify-center gap-2 py-8 text-sm text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" /> Fetching a captcha from the portal...
-            </div>
-          )}
-
-          {!fetchingCaptcha && captchaData && (
-            <div className="space-y-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="srm-register-number">Application / Register Number</Label>
-                <Input
-                  id="srm-register-number"
-                  placeholder="AP23111260062"
-                  value={registerNumber}
-                  onChange={(e) => setRegisterNumber(e.target.value)}
-                  autoComplete="off"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="srm-password">Portal Password</Label>
-                <Input
-                  id="srm-password"
-                  type="password"
-                  placeholder="DDMMYYYY (your date of birth)"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  autoComplete="off"
-                />
-                <p className="text-[11px] text-muted-foreground">
-                  Same password you use to sign in at student.srmap.edu.in
-                </p>
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="srm-captcha">Captcha</Label>
-                <img
-                  src={captchaData.imageDataUrl}
-                  alt="SRM portal captcha"
-                  className="h-10 rounded border border-border bg-secondary px-2"
-                />
-                <Input
-                  id="srm-captcha"
-                  placeholder="Enter the captcha text"
-                  value={captchaText}
-                  onChange={(e) => setCaptchaText(e.target.value)}
-                  autoComplete="off"
-                />
-              </div>
-
-              <p className="text-[11px] text-muted-foreground">
-                Independent student project — not affiliated with or endorsed by SRM University AP.
-              </p>
-
-              <div className="flex gap-2 pt-1">
-                <Button variant="outline" className="flex-1" onClick={() => handleOpenChange(false)}>
-                  Cancel
-                </Button>
-                <Button
-                  className="flex-1"
-                  disabled={submitting || !registerNumber.trim() || !password.trim() || !captchaText.trim()}
-                  onClick={handleSubmit}
-                >
-                  {submitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                  Continue
-                </Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      <ImportSrmPortalDialog
+        open={open}
+        onOpenChange={setOpen}
+        onSuccess={loadRecord}
+      />
     </>
   );
 };
 
 export default ImportSrmPortal;
+
