@@ -49,6 +49,17 @@ interface ImportSuccessResult {
   subjects: AcademicSubject[];
 }
 
+/**
+ * Strips a transcript down to what's safe to show on a public profile:
+ * course code + name only, deduped (a retaken course appears once), never
+ * grades, credits, semester, or CGPA.
+ */
+function dedupeCourses(subjects: AcademicSubject[]): Array<{ code: string; name: string }> {
+  const seen = new Map<string, string>();
+  for (const s of subjects) if (!seen.has(s.code)) seen.set(s.code, s.name);
+  return Array.from(seen, ([code, name]) => ({ code, name }));
+}
+
 interface ImportSrmPortalDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -79,6 +90,8 @@ export const ImportSrmPortalDialog = ({
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [applyingToProfile, setApplyingToProfile] = useState(false);
   const [appliedToProfile, setAppliedToProfile] = useState(false);
+  const [coursesOnProfile, setCoursesOnProfile] = useState(false);
+  const [togglingCourses, setTogglingCourses] = useState(false);
 
   const fetchCaptcha = async () => {
     setFetchingCaptcha(true);
@@ -121,6 +134,15 @@ export const ImportSrmPortalDialog = ({
           .then(({ data }) => {
             if (data?.register_number) setRegisterNumber(data.register_number);
           });
+
+        supabase
+          .from("mentors")
+          .select("courses")
+          .eq("id", user.id)
+          .maybeSingle()
+          .then(({ data }) => {
+            setCoursesOnProfile(Array.isArray(data?.courses) && data.courses.length > 0);
+          });
       }
     } else {
       setPassword("");
@@ -128,9 +150,27 @@ export const ImportSrmPortalDialog = ({
       setSuccessResult(null);
       setDetailsOpen(false);
       setAppliedToProfile(false);
+      setCoursesOnProfile(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
+
+  const handleToggleCoursesOnProfile = async (next: boolean) => {
+    if (!user || !successResult) return;
+    setTogglingCourses(true);
+    try {
+      const courses = next ? dedupeCourses(successResult.subjects) : [];
+      const { error } = await supabase.from("mentors").update({ courses }).eq("id", user.id);
+      if (error) throw error;
+      setCoursesOnProfile(next);
+      toast.success(next ? "Courses are now visible on your public profile" : "Courses removed from your public profile");
+    } catch (err: unknown) {
+      console.error("Error toggling courses on profile:", err);
+      toast.error("Failed to update your profile");
+    } finally {
+      setTogglingCourses(false);
+    }
+  };
 
   const handleApplyToProfile = async () => {
     if (!user || !successResult) return;
@@ -415,6 +455,9 @@ export const ImportSrmPortalDialog = ({
           }}
           onApplyToProfile={handleApplyToProfile}
           isApplyingToProfile={applyingToProfile}
+          coursesOnProfile={coursesOnProfile}
+          onToggleCoursesOnProfile={handleToggleCoursesOnProfile}
+          isTogglingCourses={togglingCourses}
         />
       )}
     </Dialog>
@@ -436,17 +479,23 @@ const ImportSrmPortal = ({ onProfileUpdate }: ImportSrmPortalProps) => {
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [applyingToProfile, setApplyingToProfile] = useState(false);
+  const [coursesOnProfile, setCoursesOnProfile] = useState(false);
+  const [togglingCourses, setTogglingCourses] = useState(false);
 
   const loadRecord = async () => {
     if (!user) return;
     setLoadingRecord(true);
-    const { data } = await supabase
-      .from("academic_imports")
-      .select("program, current_semester, cgpa, subjects, sync_status, last_synced_at, register_number")
-      .eq("user_id", user.id)
-      .maybeSingle();
-    
+    const [{ data }, { data: mentorData }] = await Promise.all([
+      supabase
+        .from("academic_imports")
+        .select("program, current_semester, cgpa, subjects, sync_status, last_synced_at, register_number")
+        .eq("user_id", user.id)
+        .maybeSingle(),
+      supabase.from("mentors").select("courses").eq("id", user.id).maybeSingle(),
+    ]);
+
     setRecord((data as unknown as AcademicImport | null) ?? null);
+    setCoursesOnProfile(Array.isArray(mentorData?.courses) && mentorData.courses.length > 0);
     setLoadingRecord(false);
   };
 
@@ -493,6 +542,23 @@ const ImportSrmPortal = ({ onProfileUpdate }: ImportSrmPortalProps) => {
       toast.error("Failed to update profile values");
     } finally {
       setApplyingToProfile(false);
+    }
+  };
+
+  const handleToggleCoursesOnProfile = async (next: boolean) => {
+    if (!user || !record) return;
+    setTogglingCourses(true);
+    try {
+      const courses = next ? dedupeCourses(record.subjects) : [];
+      const { error } = await supabase.from("mentors").update({ courses }).eq("id", user.id);
+      if (error) throw error;
+      setCoursesOnProfile(next);
+      toast.success(next ? "Courses are now visible on your public profile" : "Courses removed from your public profile");
+    } catch (err: unknown) {
+      console.error("Error toggling courses on profile:", err);
+      toast.error("Failed to update your profile");
+    } finally {
+      setTogglingCourses(false);
     }
   };
 
@@ -622,6 +688,9 @@ const ImportSrmPortal = ({ onProfileUpdate }: ImportSrmPortalProps) => {
         onReSync={() => setImportDialogOpen(true)}
         onApplyToProfile={handleApplyToProfile}
         isApplyingToProfile={applyingToProfile}
+        coursesOnProfile={coursesOnProfile}
+        onToggleCoursesOnProfile={handleToggleCoursesOnProfile}
+        isTogglingCourses={togglingCourses}
       />
     </>
   );

@@ -42,6 +42,9 @@ export interface Mentor {
     description: string;
     link?: string;
   }>;
+  /** Opt-in course list (code + name only) written by the "Show courses on
+   * public profile" toggle — not free-text edited like the other fields. */
+  courses?: Array<{ code: string; name: string }>;
   availability_schedule?: {
     response_time?: string;
     response_rate?: string;

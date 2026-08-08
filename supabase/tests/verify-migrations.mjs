@@ -202,6 +202,7 @@ for (const file of [
   '20260807140000_community_channels.sql',
   '20260808150000_mentor_projects_experience.sql',
   '20260808160000_academic_imports.sql',
+  '20260808170000_mentor_courses.sql',
 ]) {
   const sql = fs.readFileSync(path.join(MIGRATIONS, file), 'utf8');
   try {
@@ -731,6 +732,33 @@ const importAnon = importAcl.find((r) => r.grantee === 'anon');
 const importAuth = importAcl.find((r) => r.grantee === 'authenticated');
 check('academic_imports grants nothing to anon', !importAnon, importAnon?.privs ?? 'none');
 check('academic_imports grants SELECT only to authenticated', importAuth?.privs === 'SELECT', importAuth?.privs ?? 'none');
+
+// ----------------------------------------------------------- mentor courses
+console.log('\nmentor courses:');
+
+const { rows: [courseDefaults] } = await q(`SELECT courses FROM public.mentors WHERE id=$1`, [OTHER_UID]);
+check('courses defaults to an empty array', Array.isArray(courseDefaults.courses) && courseDefaults.courses.length === 0, JSON.stringify(courseDefaults.courses));
+
+const eightyCourses = JSON.stringify(Array.from({ length: 80 }, (_, i) => ({ code: `CS${i}`, name: `Course ${i}` })));
+await q(`UPDATE public.mentors SET courses = $1::jsonb WHERE id=$2`, [eightyCourses, OTHER_UID]);
+const { rows: [savedEighty] } = await q(`SELECT courses FROM public.mentors WHERE id=$1`, [OTHER_UID]);
+check('80 courses saved', savedEighty.courses.length === 80, `got ${savedEighty.courses.length}`);
+
+const eightyOneCourses = JSON.stringify(Array.from({ length: 81 }, (_, i) => ({ code: `CS${i}`, name: `Course ${i}` })));
+let rejectedCourses = false;
+try { await q(`UPDATE public.mentors SET courses = $1::jsonb WHERE id=$2`, [eightyOneCourses, OTHER_UID]); }
+catch { rejectedCourses = true; }
+check('an 81st course is rejected by the CHECK constraint', rejectedCourses);
+
+// Same regression class as projects/experiences: anon only has column-level
+// SELECT on `mentors`, and that does not extend to columns added later.
+const { rows: courseGrants } = await q(`
+  SELECT column_name FROM information_schema.column_privileges
+  WHERE table_schema='public' AND table_name='mentors'
+    AND grantee='anon' AND privilege_type='SELECT'
+    AND column_name = 'courses'
+`);
+check('anon can SELECT the new courses column', courseGrants.length === 1, courseGrants.length ? 'ok' : '(missing)');
 
 console.log(failures === 0
   ? '\nAll migration checks passed against real Postgres.'

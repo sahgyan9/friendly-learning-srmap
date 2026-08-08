@@ -6,6 +6,7 @@ import SmartMatchBanner from "./SmartMatchBanner";
 import MentorOutcomesSection from "./MentorOutcomesSection";
 import IdealMenteeSection from "./IdealMenteeSection";
 import CategorizedSkillsDisplay from "./CategorizedSkillsDisplay";
+import MentorCoursesSection from "./MentorCoursesSection";
 import MentorAvailabilityCard from "./MentorAvailabilityCard";
 import MentorExperienceSection from "./MentorExperienceSection";
 import MentorProjectsSection from "./MentorProjectsSection";
@@ -85,6 +86,9 @@ const MentorProfileContent = ({
 
       {/* SECTION 5: CATEGORIZED SKILLS */}
       <CategorizedSkillsDisplay mentor={mentor} />
+
+      {/* SECTION 5b: COURSES TAKEN (opt-in) */}
+      <MentorCoursesSection mentor={mentor} />
 
       {/* SECTION 6: AVAILABILITY & SCHEDULE */}
       <MentorAvailabilityCard mentor={mentor} />

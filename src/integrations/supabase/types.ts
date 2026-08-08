@@ -1493,6 +1493,7 @@ export type Database = {
           bio: string | null
           cgpa: number | null
           company: string | null
+          courses: Json
           created_at: string | null
           department: string
           experiences: Json
@@ -1519,6 +1520,7 @@ export type Database = {
           bio?: string | null
           cgpa?: number | null
           company?: string | null
+          courses?: Json
           created_at?: string | null
           department: string
           experiences?: Json
@@ -1545,6 +1547,7 @@ export type Database = {
           bio?: string | null
           cgpa?: number | null
           company?: string | null
+          courses?: Json
           created_at?: string | null
           department?: string
           experiences?: Json

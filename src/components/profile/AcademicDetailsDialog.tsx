@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import {
   GraduationCap,
   Search,
@@ -47,6 +49,11 @@ interface AcademicDetailsDialogProps {
   onReSync?: () => void;
   onApplyToProfile?: () => void;
   isApplyingToProfile?: boolean;
+  /** Whether the mentor's stripped course list (code + name only) is
+   * currently visible on their public profile. Independent of onApplyToProfile. */
+  coursesOnProfile?: boolean;
+  onToggleCoursesOnProfile?: (next: boolean) => void;
+  isTogglingCourses?: boolean;
 }
 
 export const AcademicDetailsDialog = ({
@@ -56,6 +63,9 @@ export const AcademicDetailsDialog = ({
   onReSync,
   onApplyToProfile,
   isApplyingToProfile = false,
+  coursesOnProfile = false,
+  onToggleCoursesOnProfile,
+  isTogglingCourses = false,
 }: AcademicDetailsDialogProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSemester, setSelectedSemester] = useState<number | "all">("all");
@@ -265,6 +275,26 @@ export const AcademicDetailsDialog = ({
             ))
           )}
         </div>
+
+        {/* Public visibility toggle — deliberately separate from Apply to Profile below */}
+        {onToggleCoursesOnProfile && (
+          <div className="px-4 py-3 border-t border-border bg-muted/20 flex items-center justify-between gap-3">
+            <div className="space-y-0.5">
+              <Label htmlFor="courses-on-profile" className="text-xs font-medium text-foreground cursor-pointer">
+                Show courses on public profile
+              </Label>
+              <p className="text-[11px] text-muted-foreground">
+                Course code & name only — no grades, credits, CGPA, or semester.
+              </p>
+            </div>
+            <Switch
+              id="courses-on-profile"
+              checked={coursesOnProfile}
+              disabled={isTogglingCourses}
+              onCheckedChange={onToggleCoursesOnProfile}
+            />
+          </div>
+        )}
 
         {/* Footer Actions */}
         <div className="p-4 border-t border-border bg-muted/30 flex flex-col sm:flex-row items-center justify-between gap-2">
