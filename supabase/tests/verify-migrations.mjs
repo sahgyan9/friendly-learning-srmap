@@ -163,6 +163,7 @@ for (const file of [
   '20260726010100_community_posts_open_to_students.sql',
   '20260806100000_faculty_research_interests.sql',
   '20260807140000_community_channels.sql',
+  '20260808150000_mentor_projects_experience.sql',
 ]) {
   const sql = fs.readFileSync(path.join(MIGRATIONS, file), 'utf8');
   try {
@@ -557,6 +558,47 @@ const anonGrants = tableAcl.find((r) => r.grantee === 'anon');
 const authGrants = tableAcl.find((r) => r.grantee === 'authenticated');
 check('table grants nothing to anon', !anonGrants, anonGrants?.privs ?? 'none');
 check('table grants SELECT only to authenticated', authGrants?.privs === 'SELECT', authGrants?.privs ?? 'none');
+
+// ---------------------------------------------------------- mentor projects
+console.log('\nmentor projects & experiences:');
+
+const { rows: [defaults] } = await q(`SELECT projects, experiences FROM public.mentors WHERE id=$1`, [OTHER_UID]);
+check('projects defaults to an empty array', Array.isArray(defaults.projects) && defaults.projects.length === 0, JSON.stringify(defaults.projects));
+check('experiences defaults to an empty array', Array.isArray(defaults.experiences) && defaults.experiences.length === 0, JSON.stringify(defaults.experiences));
+
+const sixProjects = JSON.stringify(Array.from({ length: 6 }, (_, i) => ({ id: `p${i}`, title: `Project ${i}`, description: 'x' })));
+await q(`UPDATE public.mentors SET projects = $1::jsonb WHERE id=$2`, [sixProjects, OTHER_UID]);
+const { rows: [savedSix] } = await q(`SELECT projects FROM public.mentors WHERE id=$1`, [OTHER_UID]);
+check('six projects saved', savedSix.projects.length === 6, `got ${savedSix.projects.length}`);
+
+const sevenProjects = JSON.stringify(Array.from({ length: 7 }, (_, i) => ({ id: `p${i}`, title: `Project ${i}`, description: 'x' })));
+let rejectedProjects = false;
+try { await q(`UPDATE public.mentors SET projects = $1::jsonb WHERE id=$2`, [sevenProjects, OTHER_UID]); }
+catch { rejectedProjects = true; }
+check('a 7th project is rejected by the CHECK constraint', rejectedProjects);
+
+const sevenExperiences = JSON.stringify(Array.from({ length: 7 }, (_, i) => ({ id: `e${i}`, title: `Role ${i}` })));
+let rejectedExperiences = false;
+try { await q(`UPDATE public.mentors SET experiences = $1::jsonb WHERE id=$2`, [sevenExperiences, OTHER_UID]); }
+catch { rejectedExperiences = true; }
+check('a 7th experience is rejected by the CHECK constraint', rejectedExperiences);
+
+// The regression this migration itself caused once already: `mentors` narrows
+// anon to column-level SELECT (mobile/cgpa withheld), and that grant does not
+// extend to columns added later. A first version of this migration shipped
+// without the explicit grant below and 42501'd every signed-out directory read.
+const { rows: mentorGrants } = await q(`
+  SELECT column_name FROM information_schema.column_privileges
+  WHERE table_schema='public' AND table_name='mentors'
+    AND grantee='anon' AND privilege_type='SELECT'
+    AND column_name IN ('projects','experiences')
+  ORDER BY column_name
+`);
+check(
+  'anon can SELECT the two new columns',
+  mentorGrants.length === 2,
+  mentorGrants.map((g) => g.column_name).join(',') || '(none)',
+);
 
 console.log(failures === 0
   ? '\nAll migration checks passed against real Postgres.'

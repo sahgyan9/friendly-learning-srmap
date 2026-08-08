@@ -35,16 +35,12 @@ export interface Mentor {
     title: string;
     organization?: string;
     period?: string;
-    icon?: string;
-    type?: string;
   }>;
   projects?: Array<{
     id: string;
     title: string;
     description: string;
     link?: string;
-    tags?: string[];
-    color?: string;
   }>;
   availability_schedule?: {
     response_time?: string;
@@ -53,12 +49,6 @@ export interface Mentor {
     available_days?: string[];
     typical_time?: string;
   };
-  review_highlights?: Array<{
-    id: string;
-    quote: string;
-    author?: string;
-    rating?: number;
-  }>;
   categorized_skills?: Record<string, string[]>;
 }
 

@@ -12,16 +12,12 @@ export interface EnhancedMentor extends Mentor {
     title: string;
     organization?: string;
     period?: string;
-    icon: string;
-    type?: string;
   }>;
   projects: Array<{
     id: string;
     title: string;
     description: string;
     link?: string;
-    tags?: string[];
-    color: string;
   }>;
   availability_schedule: {
     status_text: string;
@@ -31,12 +27,6 @@ export interface EnhancedMentor extends Mentor {
     available_days: string[];
     typical_time: string;
   };
-  review_highlights: Array<{
-    id: string;
-    quote: string;
-    author: string;
-    rating: number;
-  }>;
 }
 
 const SKILL_CATEGORIES: Record<string, string[]> = {
@@ -132,66 +122,12 @@ export function getEnhancedMentorProfile(mentor: Mentor): EnhancedMentor {
     ];
   }
 
-  // 7. Experiences
-  let experiences = mentor.experiences;
-  if (!experiences || experiences.length === 0) {
-    experiences = [
-      {
-        id: "exp-1",
-        title: "Teaching Assistant / Peer Mentor",
-        organization: `${dept} Department`,
-        period: "2024 - Present",
-        icon: "👨‍🏫",
-        type: "Leadership",
-      },
-      {
-        id: "exp-2",
-        title: "Hackathon Winner & Finalist",
-        organization: "Campus Tech Fest",
-        period: "2023 - 2024",
-        icon: "🏆",
-        type: "Achievement",
-      },
-      {
-        id: "exp-3",
-        title: "Lead Developer",
-        organization: "Student Developer Club",
-        period: "2023 - Present",
-        icon: "💻",
-        type: "Project Lead",
-      },
-    ];
-  }
+  // 7. Experiences — mentor-entered, no fallback. An invented work history
+  // read as real, so an empty list now just means the section is empty.
+  const experiences = mentor.experiences || [];
 
-  // 8. Projects
-  let projects = mentor.projects;
-  if (!projects || projects.length === 0) {
-    const tech1 = skills[0] || "Python";
-    const tech2 = skills[1] || "React";
-    projects = [
-      {
-        id: "proj-1",
-        title: "Student Management Portal",
-        description: `Full-stack platform built with ${tech1} & ${tech2} handling authentication and student records.`,
-        tags: [tech1, tech2, "Database"],
-        color: "from-blue-500/20 to-indigo-500/20 text-blue-500",
-      },
-      {
-        id: "proj-2",
-        title: "AI Resume Analyzer",
-        description: "Automated tool evaluating resume metrics, keyword matching, and skill gap recommendations.",
-        tags: ["AI", tech1, "REST API"],
-        color: "from-purple-500/20 to-pink-500/20 text-purple-500",
-      },
-      {
-        id: "proj-3",
-        title: "Hackathon Project Portal",
-        description: "Real-time collaborative project submission and peer voting system.",
-        tags: [tech1, "Realtime", "Git"],
-        color: "from-emerald-500/20 to-teal-500/20 text-emerald-500",
-      },
-    ];
-  }
+  // 8. Projects — same as experiences: real entries only.
+  const projects = mentor.projects || [];
 
   // 9. Availability Schedule
   const availability_schedule = {
@@ -202,32 +138,6 @@ export function getEnhancedMentorProfile(mentor: Mentor): EnhancedMentor {
     available_days: mentor.availability_schedule?.available_days || ["Mon", "Wed", "Fri"],
     typical_time: mentor.availability_schedule?.typical_time || "Evening (6 PM - 10 PM)",
   };
-
-  // 10. Review Highlights
-  let review_highlights = mentor.review_highlights;
-  if (!review_highlights || review_highlights.length === 0) {
-    const mainSkill = skills[0] || "the tech stack";
-    review_highlights = [
-      {
-        id: "rev-1",
-        quote: `Gave me a clear, structured roadmap for learning ${mainSkill}. Super helpful!`,
-        author: "CSE 2nd Year Student",
-        rating: 5,
-      },
-      {
-        id: "rev-2",
-        quote: "Reviewed my resume and project architecture in detail. Highly recommended mentor!",
-        author: "ECE Junior",
-        rating: 5,
-      },
-      {
-        id: "rev-3",
-        quote: "Explained tricky concepts very clearly and helped us win our first hackathon.",
-        author: "CSE Freshman",
-        rating: 5,
-      },
-    ];
-  }
 
   return {
     ...mentor,
@@ -240,7 +150,6 @@ export function getEnhancedMentorProfile(mentor: Mentor): EnhancedMentor {
     experiences,
     projects,
     availability_schedule,
-    review_highlights,
   };
 }
 

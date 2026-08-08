@@ -37,19 +37,24 @@ const listedOnly = <T extends { or: (filter: string) => T }>(query: T): T =>
  * Must stay one string literal so supabase-js can infer the row type.
  */
 const MENTOR_PUBLIC_COLUMNS =
-  'id, name, department, skills, rating, profile_image, linkedin_url, bio, review_count, created_at, year_of_studies, university, hobbies, graduation_year, is_alumni, company, job_title, is_available, available_from, availability_note' as const;
+  'id, name, department, skills, rating, profile_image, linkedin_url, bio, review_count, created_at, year_of_studies, university, hobbies, graduation_year, is_alumni, company, job_title, is_available, available_from, availability_note, projects, experiences' as const;
 
 // Helper function to get typed data from Supabase tables
 export async function getMentors() {
-  const { data, error } = await listedOnly(
+  // listedOnly's self-referential generic constraint has to structurally verify
+  // the whole query builder type against itself; with `projects`/`experiences`
+  // now in the selected columns that recursion exceeds tsc's instantiation
+  // depth. Pinning T explicitly skips that inference — Mentor is already
+  // supplied to select() above it, so the returned data stays properly typed.
+  const { data, error } = await listedOnly<any>(
     supabase
       .from('mentors')
-      .select(MENTOR_PUBLIC_COLUMNS)
+      .select<typeof MENTOR_PUBLIC_COLUMNS, Mentor>(MENTOR_PUBLIC_COLUMNS)
       .neq('department', 'General')
       .not('department', 'is', null),
   ).order('rating', { ascending: false });
 
-  return { data, error };
+  return { data, error } as { data: Mentor[] | null; error: unknown };
 }
 
 export async function addMentor(mentor: {
@@ -77,14 +82,14 @@ export async function searchMentors(query: string) {
 
   try {
     // Search in name, department, and bio with proper formatting, excluding General department
-    const { data, error } = await listedOnly(
+    const { data, error } = (await listedOnly<any>(
       supabase
         .from('mentors')
-        .select(MENTOR_PUBLIC_COLUMNS)
+        .select<typeof MENTOR_PUBLIC_COLUMNS, Mentor>(MENTOR_PUBLIC_COLUMNS)
         .neq('department', 'General')
         .not('department', 'is', null)
         .or(`name.ilike.%${lowerQuery}%,department.ilike.%${lowerQuery}%,bio.ilike.%${lowerQuery}%`),
-    ).order('rating', { ascending: false });
+    ).order('rating', { ascending: false })) as { data: Mentor[] | null; error: unknown };
 
     if (error) {
       throw error;
@@ -143,7 +148,7 @@ export async function setMentorAvailability(
 export async function getMentorById(id: string) {
   const { data, error } = await supabase
     .from('mentors')
-    .select(MENTOR_PUBLIC_COLUMNS)
+    .select<typeof MENTOR_PUBLIC_COLUMNS, Mentor>(MENTOR_PUBLIC_COLUMNS)
     .eq('id', id)
     .single();
 
@@ -152,7 +157,10 @@ export async function getMentorById(id: string) {
 
 /** The subset of a mentor that the profile page lets its owner edit in place. */
 export type EditableMentorFields = Partial<
-  Pick<Mentor, 'name' | 'bio' | 'skills' | 'department' | 'university' | 'hobbies' | 'linkedin_url'>
+  Pick<
+    Mentor,
+    'name' | 'bio' | 'skills' | 'department' | 'university' | 'hobbies' | 'linkedin_url' | 'projects' | 'experiences'
+  >
 >;
 
 /**
@@ -161,7 +169,7 @@ export type EditableMentorFields = Partial<
  * reads the mentor grid from one and the account pages from the other. Saving
  * only `mentors` is how a name ends up correct on a profile and stale in chat.
  */
-const MENTOR_ONLY_FIELDS = new Set(['university', 'hobbies']);
+const MENTOR_ONLY_FIELDS = new Set(['university', 'hobbies', 'projects', 'experiences']);
 
 /**
  * Save an inline edit from the mentor's own profile page.
@@ -191,7 +199,11 @@ export async function updateMentorFields(id: string, fields: EditableMentorField
   );
 
   if (Object.keys(userPatch).length > 0) {
-    const { error: userError } = await supabase.from('users').update(userPatch).eq('id', id);
+    // Only ever contains university/hobbies-shaped strings at runtime — MENTOR_ONLY_FIELDS
+    // already filtered out projects/experiences above. Object.fromEntries widens the value
+    // type to the full EditableMentorFields union though, which is more than Supabase's
+    // strict update() typing will structurally match against `users`.
+    const { error: userError } = await supabase.from('users').update(userPatch as never).eq('id', id);
     if (userError) {
       console.error('Mentor profile saved, but the users mirror was not updated:', userError);
     }

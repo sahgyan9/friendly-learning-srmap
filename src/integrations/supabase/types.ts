@@ -406,6 +406,55 @@ export type Database = {
           },
         ]
       }
+      community_channels: {
+        Row: {
+          community_id: string
+          created_at: string
+          created_by: string
+          id: string
+          slug: string
+          topic: string | null
+        }
+        Insert: {
+          community_id: string
+          created_at?: string
+          created_by: string
+          id?: string
+          slug: string
+          topic?: string | null
+        }
+        Update: {
+          community_id?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          slug?: string
+          topic?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_channels_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "community_channels_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "community_channels_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       community_group_message_reactions: {
         Row: {
           created_at: string
@@ -968,9 +1017,9 @@ export type Database = {
           last_synced_at: string | null
           name: string
           profile_image: string | null
-          research_areas: string[]
           profile_url: string | null
           rating_count: number
+          research_areas: string[]
           school: string | null
           slug: string
           source: string
@@ -994,9 +1043,9 @@ export type Database = {
           last_synced_at?: string | null
           name: string
           profile_image?: string | null
-          research_areas?: string[]
           profile_url?: string | null
           rating_count?: number
+          research_areas?: string[]
           school?: string | null
           slug: string
           source?: string
@@ -1139,6 +1188,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      knowledge_chunks: {
+        Row: {
+          body: string
+          content_hash: string
+          created_at: string
+          embedded_at: string | null
+          embedding: string | null
+          entity_id: string
+          entity_type: string
+          id: string
+          metadata: Json
+          source_path: string | null
+          subtitle: string | null
+          title: string
+          updated_at: string
+          visibility: string
+        }
+        Insert: {
+          body: string
+          content_hash: string
+          created_at?: string
+          embedded_at?: string | null
+          embedding?: string | null
+          entity_id: string
+          entity_type: string
+          id?: string
+          metadata?: Json
+          source_path?: string | null
+          subtitle?: string | null
+          title: string
+          updated_at?: string
+          visibility?: string
+        }
+        Update: {
+          body?: string
+          content_hash?: string
+          created_at?: string
+          embedded_at?: string | null
+          embedding?: string | null
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          metadata?: Json
+          source_path?: string | null
+          subtitle?: string | null
+          title?: string
+          updated_at?: string
+          visibility?: string
+        }
+        Relationships: []
       }
       marketplace_posts: {
         Row: {
@@ -1329,6 +1429,7 @@ export type Database = {
           company: string | null
           created_at: string | null
           department: string
+          experiences: Json
           graduation_year: number | null
           hobbies: string | null
           id: string
@@ -1339,6 +1440,7 @@ export type Database = {
           mobile: string | null
           name: string
           profile_image: string | null
+          projects: Json
           rating: number
           review_count: number
           skills: string[]
@@ -1353,6 +1455,7 @@ export type Database = {
           company?: string | null
           created_at?: string | null
           department: string
+          experiences?: Json
           graduation_year?: number | null
           hobbies?: string | null
           id?: string
@@ -1363,6 +1466,7 @@ export type Database = {
           mobile?: string | null
           name: string
           profile_image?: string | null
+          projects?: Json
           rating?: number
           review_count?: number
           skills: string[]
@@ -1377,6 +1481,7 @@ export type Database = {
           company?: string | null
           created_at?: string | null
           department?: string
+          experiences?: Json
           graduation_year?: number | null
           hobbies?: string | null
           id?: string
@@ -1387,6 +1492,7 @@ export type Database = {
           mobile?: string | null
           name?: string
           profile_image?: string | null
+          projects?: Json
           rating?: number
           review_count?: number
           skills?: string[]
@@ -1594,7 +1700,22 @@ export type Database = {
           title?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "opportunities_posted_by_fkey"
+            columns: ["posted_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunities_posted_by_fkey"
+            columns: ["posted_by"]
+            isOneToOne: false
+            referencedRelation: "users_public"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       opportunity_interest: {
         Row: {
@@ -1615,7 +1736,29 @@ export type Database = {
           opportunity_id?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "opportunity_interest_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunity_interest_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunity_interest_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users_public"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       opportunity_teams: {
         Row: {
@@ -1657,6 +1800,20 @@ export type Database = {
             columns: ["community_id"]
             isOneToOne: true
             referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunity_teams_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunity_teams_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users_public"
             referencedColumns: ["id"]
           },
           {
@@ -1746,33 +1903,30 @@ export type Database = {
           },
         ]
       }
-      team_members: {
+      search_query_cache: {
         Row: {
-          created_at: string | null
-          email: string | null
-          id: string
-          image_url: string | null
-          name: string
-          position: string
-          updated_at: string | null
+          created_at: string
+          embedding: string
+          hit_count: number
+          last_used_at: string
+          query_hash: string
+          query_text: string
         }
         Insert: {
-          created_at?: string | null
-          email?: string | null
-          id?: string
-          image_url?: string | null
-          name: string
-          position: string
-          updated_at?: string | null
+          created_at?: string
+          embedding: string
+          hit_count?: number
+          last_used_at?: string
+          query_hash: string
+          query_text: string
         }
         Update: {
-          created_at?: string | null
-          email?: string | null
-          id?: string
-          image_url?: string | null
-          name?: string
-          position?: string
-          updated_at?: string | null
+          created_at?: string
+          embedding?: string
+          hit_count?: number
+          last_used_at?: string
+          query_hash?: string
+          query_text?: string
         }
         Relationships: []
       }
@@ -1812,6 +1966,36 @@ export type Database = {
           link?: string
           start_date?: string
           title?: string
+        }
+        Relationships: []
+      }
+      team_members: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          id: string
+          image_url: string | null
+          name: string
+          position: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          image_url?: string | null
+          name: string
+          position: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          image_url?: string | null
+          name?: string
+          position?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -2186,6 +2370,10 @@ export type Database = {
               isSetofReturn: false
             }
           }
+      create_community_channel: {
+        Args: { p_community_id: string; p_name: string; p_topic?: string }
+        Returns: string
+      }
       create_conversation: {
         Args: { user1_id: string; user2_id: string }
         Returns: {
@@ -2206,7 +2394,10 @@ export type Database = {
         Args: { p_approve: boolean; p_request_id: string }
         Returns: undefined
       }
-      delete_all_messages: { Args: never; Returns: undefined }
+      delete_community_channel: {
+        Args: { p_channel_id: string }
+        Returns: number
+      }
       generate_session_code: { Args: never; Returns: string }
       get_canvas_session_participants: {
         Args: { p_session_id: string }
@@ -2247,6 +2438,7 @@ export type Database = {
           id: string
           is_archived: boolean
           kind: string
+          last_activity_at: string
           member_count: number
           name: string
           owner_id: string
@@ -2638,6 +2830,7 @@ export type Database = {
           id: string
           is_archived: boolean
           kind: string
+          last_activity_at: string
           member_count: number
           name: string
           owner_id: string
@@ -2651,6 +2844,17 @@ export type Database = {
           viewer_is_member: boolean
           viewer_is_owner: boolean
           visibility: string
+        }[]
+      }
+      list_community_channels: {
+        Args: { p_community_id: string }
+        Returns: {
+          created_at: string
+          created_by: string
+          id: string
+          message_count: number
+          slug: string
+          topic: string
         }[]
       }
       list_group_messages: {
@@ -2761,6 +2965,18 @@ export type Database = {
         Returns: boolean
       }
       prompt_graduated_mentors: { Args: never; Returns: number }
+      rebuild_community_chunks: { Args: { p_id?: string }; Returns: number }
+      rebuild_faculty_chunks: { Args: never; Returns: number }
+      rebuild_knowledge_chunks: {
+        Args: never
+        Returns: {
+          entity_type: string
+          rows_upserted: number
+        }[]
+      }
+      rebuild_mentor_chunks: { Args: never; Returns: number }
+      rebuild_opportunity_chunks: { Args: never; Returns: number }
+      rebuild_post_chunks: { Args: { p_id?: string }; Returns: number }
       request_to_join_community: {
         Args: { p_community_id: string; p_message?: string }
         Returns: string
@@ -2770,6 +2986,24 @@ export type Database = {
         Returns: undefined
       }
       resume_expired_mentor_availability: { Args: never; Returns: number }
+      search_knowledge: {
+        Args: {
+          p_embedding: string
+          p_entity_types?: string[]
+          p_limit?: number
+          p_min_similarity?: number
+          p_viewer?: string
+        }
+        Returns: {
+          entity_id: string
+          entity_type: string
+          metadata: Json
+          similarity: number
+          source_path: string
+          subtitle: string
+          title: string
+        }[]
+      }
       send_group_message: {
         Args: {
           p_channel: string
@@ -2821,6 +3055,7 @@ export type Database = {
         Args: { p_emoji: string; p_message_id: string }
         Returns: boolean
       }
+      touch_search_cache: { Args: { p_hash: string }; Returns: undefined }
       update_conversation: {
         Args: { conversation_id: string; message_id: string }
         Returns: undefined
