@@ -37,8 +37,11 @@ dist-ssr
 *.sln
 *.sw?
 
-# Local visual QA output
+# Local visual QA output. The harnesses (qa-*.mjs) are committed on purpose —
+# only their screenshot output is disposable, and each one picks its own
+# directory, hence the glob rather than a single path.
 .qa/
+.qa-*/
 
 # Scratch space for intermediate data (DB dumps, scraped output). Disposable,
 # and may hold real user data, so it must never be committed.
