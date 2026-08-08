@@ -15,7 +15,7 @@ import { useHasVisitedMentorsNav } from "@/hooks/useFeatureAnnouncement";
 
 // Import refactored components
 import MentorList from "@/components/mentors/MentorList";
-import MentorsFooter from "@/components/mentors/MentorsFooter";
+import Footer from "@/components/Footer";
 import { HorizontalScroller } from "@/components/ui/HorizontalScroller";
 import { cn } from "@/lib/utils";
 
@@ -257,7 +257,7 @@ const Mentors = () => {
           />
         </div>
 
-        <MentorsFooter />
+        <Footer />
       </div>
     </>
   );

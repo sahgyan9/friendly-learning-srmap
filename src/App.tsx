@@ -126,6 +126,8 @@ const Blog = lazyWithRetry("Blog", () => import("./pages/Blog"));
 const BlogPost = lazyWithRetry("BlogPost", () => import("./pages/BlogPost"));
 const Certificate = lazyWithRetry("Certificate", () => import("./pages/Certificate"));
 const VerifyCertificate = lazyWithRetry("VerifyCertificate", () => import("./pages/VerifyCertificate"));
+const HowVerificationWorks = lazyWithRetry("HowVerificationWorks", () => import("./pages/HowVerificationWorks"));
+const YourData = lazyWithRetry("YourData", () => import("./pages/YourData"));
 const NotFound = lazyWithRetry("NotFound", () => import("./pages/NotFound"));
 const Unauthorized = lazyWithRetry("Unauthorized", () => import("./pages/Unauthorized"));
 const Search = lazyWithRetry("Search", () => import("./pages/Search"));
@@ -211,6 +213,8 @@ function App() {
                 <Route path="/faculty/:slug" element={<FacultyDetail />} />
                 <Route path="/contact" element={<Contact />} />
                 <Route path="/about" element={<About />} />
+                <Route path="/how-verification-works" element={<HowVerificationWorks />} />
+                <Route path="/your-data" element={<YourData />} />
                 <Route path="/community-posts" element={<CommunityPosts />} />
                 <Route path="/community-posts/:id" element={<CommunityPostDetail />} />
                 {/* Public on purpose. Membership decides who can post in a

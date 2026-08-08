@@ -113,7 +113,10 @@ const About = () => {
                   <div className="p-5 border rounded-xl">
                     <div className="text-3xl mb-3">🎓</div>
                     <h3 className="text-lg font-bold mb-2">Peer Mentors</h3>
-                    <p className="text-muted-foreground text-sm">Senior students who've taken your exact courses. Message them directly for course help, project feedback, or career advice. Mentors who genuinely help 3 students earn a verified certificate.</p>
+                    <p className="text-muted-foreground text-sm">
+                      Senior students who've taken your exact courses. Message them directly for course help, project feedback, or career advice. Mentors who genuinely help 3 students earn a verified certificate — see{" "}
+                      <Link to="/how-verification-works" className="text-primary underline underline-offset-2">how verification works</Link>.
+                    </p>
                   </div>
                   <div className="p-5 border rounded-xl">
                     <div className="text-3xl mb-3">👨‍🏫</div>
@@ -180,6 +183,10 @@ const About = () => {
                     <Link to="/mentors">Find a Mentor</Link>
                   </Button>
                 </div>
+                <p className="text-sm text-muted-foreground mt-6">
+                  Curious what we store and how verification works?{" "}
+                  <Link to="/your-data" className="text-primary underline underline-offset-2">See your data</Link>.
+                </p>
               </section>
 
             </div>

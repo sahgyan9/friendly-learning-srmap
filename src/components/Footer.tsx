@@ -17,7 +17,7 @@ const Footer = () => {
             </p>
           </div>
 
-          <div className="flex space-x-6">
+          <div className="flex flex-wrap justify-center gap-x-6 gap-y-2">
             <Link to="/about" className="text-muted-foreground hover:text-primary transition-colors">
               About
             </Link>
@@ -27,11 +27,22 @@ const Footer = () => {
             <Link to="/mentors" className="text-muted-foreground hover:text-primary transition-colors">
               Mentors
             </Link>
+            <Link to="/how-verification-works" className="text-muted-foreground hover:text-primary transition-colors">
+              How Verification Works
+            </Link>
+            <Link to="/your-data" className="text-muted-foreground hover:text-primary transition-colors">
+              Your Data
+            </Link>
           </div>
         </div>
 
-        <div className="mt-8 pt-8 border-t border-border text-center text-sm text-muted-foreground">
+        <div className="mt-8 pt-8 border-t border-border text-center text-sm text-muted-foreground space-y-1">
           <p>© {new Date().getFullYear()} Friendly Learning SRMAP. All rights reserved.</p>
+          {/* Product red line: SRM University-AP is a location in this copy, never an
+              issuer or endorser. Same wording as the SRM portal import dialog
+              (src/components/profile/ImportSrmPortal.tsx) so it reads consistently
+              wherever it appears. */}
+          <p>Independent student project — not affiliated with or endorsed by SRM University AP.</p>
         </div>
       </div>
     </footer>

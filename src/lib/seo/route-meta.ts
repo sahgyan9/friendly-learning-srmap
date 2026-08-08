@@ -119,6 +119,16 @@ export const ROUTE_META: Record<string, RouteMeta> = {
     description:
       "Help juniors at SRM AP with the things you have already been through — courses, hackathons, interviews, electives. Set your own pace, and pause whenever you need to.",
   },
+  "/how-verification-works": {
+    title: "How Verification Works | Friendly Learning SRMAP",
+    description:
+      "How mentor applications, College ID checks, and mentor certificates actually work on Friendly Learning SRMAP — in plain language, verified against the code that runs them.",
+  },
+  "/your-data": {
+    title: "Your Data | Friendly Learning SRMAP",
+    description:
+      "What Friendly Learning SRMAP stores, what's public versus private, and how to ask for your data to be removed.",
+  },
 };
 
 /** Absolute URL for a pre-rendered route, used for canonical and og:url. */

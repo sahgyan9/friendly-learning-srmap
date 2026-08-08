@@ -83,6 +83,8 @@ const routesToPrerender = [
   '/find-study-partners',
   '/hackathon-partners',
   '/blog',
+  '/how-verification-works',
+  '/your-data',
   // '/become-mentor' is deliberately absent. It sits behind ProtectedRoute, so a
   // build — which has no session — can only ever render the "Loading..." guard.
   // It shipped exactly that for as long as it was listed here. It now falls

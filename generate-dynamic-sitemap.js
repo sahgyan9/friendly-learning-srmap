@@ -78,7 +78,9 @@ const config = {
         '/how-it-works': { changefreq: 'monthly', priority: 0.8 },
         '/find-study-partners': { changefreq: 'weekly', priority: 0.9 },
         '/hackathon-partners': { changefreq: 'weekly', priority: 0.9 },
-        '/blog': { changefreq: 'weekly', priority: 0.8 }
+        '/blog': { changefreq: 'weekly', priority: 0.8 },
+        '/how-verification-works': { changefreq: 'monthly', priority: 0.5 },
+        '/your-data': { changefreq: 'monthly', priority: 0.5 }
     }
 };
 

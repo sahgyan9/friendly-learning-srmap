@@ -102,6 +102,10 @@ const HowItWorks = () => {
                                         <Link to="/mentors">Browse Mentors</Link>
                                     </Button>
                                 </div>
+                                <p className="text-sm text-muted-foreground mt-6">
+                                    Wondering how mentor applications and certificates are checked?{" "}
+                                    <Link to="/how-verification-works" className="text-primary underline underline-offset-2">How verification works</Link>.
+                                </p>
                             </div>
                         </div>
                     </div>
