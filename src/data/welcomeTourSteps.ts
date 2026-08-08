@@ -1,6 +1,7 @@
 import {
   Calendar,
   HelpCircle,
+  MessageSquarePlus,
   Rocket,
   Sparkles,
   Star,
@@ -46,6 +47,14 @@ export const WELCOME_TOUR_STEPS: WelcomeTourStep[] = [
     description:
       "Add a photo, a short bio, and your skills so mentors and other students actually recognize you.",
     cta: { label: "Complete your profile", url: "/profile" },
+  },
+  {
+    icon: MessageSquarePlus,
+    accent: "emerald",
+    title: "Share what's happening on campus",
+    description:
+      "Got news, study wins, or campus moments to celebrate? Share your joy, ask questions, and connect with everyone on campus.",
+    cta: { label: "Browse campus posts", url: "/community-posts" },
   },
   {
     icon: Star,
