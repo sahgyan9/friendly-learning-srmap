@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Globe, Lock, Users } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
+import { CardAccentBorder } from "@/components/ui/CardAccentBorder";
 import { CommunityAvatar } from "@/components/communities/CommunityAvatar";
 import { JoinCommunityButton } from "@/components/communities/JoinCommunityButton";
 import { formatRelativeTime } from "@/utils/date-utils";
@@ -15,105 +16,97 @@ interface CommunityCardProps {
 }
 
 /**
- * A row, not a card.
- *
- * As a grid of cards this looked exactly like the post cards, the mentor cards
- * and everything else on the site — which taught people to skim past it, when a
- * group is the one thing here that is a place rather than a piece of content.
- * A full-width row with the icon as the hero reads as a directory of rooms and
- * scans about three times faster.
- *
- * The whole row is clickable via a stretched overlay link rather than by
- * wrapping everything in an <a>. That is what keeps the Join button working: a
- * <button> nested inside an <a> is invalid HTML, and browsers resolve it by
- * following the link, so joining used to navigate away instead.
+ * CommunityCard - Card representation of a group / community for multi-column grids.
+ * 
+ * Styled according to brand guidelines with CardAccentBorder, responsive flex header,
+ * proper description truncation, and a clean card footer housing metadata and action CTA.
  */
 export function CommunityCard({ community, onMembershipChange }: CommunityCardProps) {
   const kind = getCommunityKindMeta(community.kind);
   const style = getKindStyle(community.kind);
 
   return (
-    <article className="group relative rounded-xl border bg-card p-4 transition-colors duration-200 hover:border-primary/30 hover:bg-accent/30">
+    <article className="group relative flex flex-col justify-between h-full rounded-xl border border-border/70 bg-card p-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md overflow-hidden">
+      {/* Accent border top strip */}
+      <CardAccentBorder gradient={style.gradient} />
+
+      {/* Hover glow overlay */}
+      <div className={`pointer-events-none absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br ${style.hoverGlow}`} />
+
+      {/* Main destination click area */}
       <Link
         to={`/communities/${community.slug}`}
         aria-label={`Open ${community.name}`}
-        className="absolute inset-0 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="absolute inset-0 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring z-0"
       />
 
-      {/* Side by side once there is room for it. On a phone the action drops to
-          its own line instead: "Sign in to join" is a wide button, and keeping
-          it in the row left the name with about 90px and truncated it to
-          "hackthon ...". */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
-        <div className="flex min-w-0 flex-1 items-start gap-4">
-          {/* The icon carries the group's identity — the one thing that makes
-              "Battery Technology" and "Drama Club" instantly distinguishable. */}
+      <div className="relative z-10 space-y-3">
+        {/* Top Header Row: Icon + Title & Badges */}
+        <div className="flex items-start gap-3">
           <CommunityAvatar
-            slug={community.slug}
             kind={community.kind}
             name={community.name}
             coverImage={community.cover_image}
-            className={`h-14 w-14 shrink-0 ring-2 ring-border transition-all duration-300 ${style.avatarRing}`}
-            iconClassName="h-6 w-6"
+            className={`h-11 w-11 shrink-0 rounded-xl ring-1 ring-border transition-transform duration-200 ${style.avatarRing} group-hover:scale-105`}
+            iconClassName="h-5.5 w-5.5"
           />
 
           <div className="min-w-0 flex-1">
-            <h2 className="truncate font-semibold leading-snug transition-colors duration-200 group-hover:text-primary">
+            <h3 className="truncate font-semibold text-base leading-snug text-foreground transition-colors duration-200 group-hover:text-primary">
               {community.name}
-            </h2>
+            </h3>
 
-            {/* One line of plain text instead of a row of pills. Pills gave
-                five unrelated facts the same visual weight and wrapped on
-                narrow screens; this reads left to right. */}
-            <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
-              <span className={`inline-flex items-center gap-1 font-semibold ${style.cta}`}>
+            {/* Sub-header badges */}
+            <div className="mt-1 flex flex-wrap items-center gap-1.5">
+              <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap ${style.pill}`}>
                 <kind.icon className="h-3 w-3 shrink-0" aria-hidden />
                 {kind.label}
               </span>
 
-              <span aria-hidden>·</span>
               {community.visibility === "private" ? (
-                <span className="inline-flex items-center gap-1">
-                  <Lock className="h-3 w-3 shrink-0" />
+                <Badge variant="outline" className="gap-1 text-muted-foreground text-[10px] font-medium py-0 px-1.5 h-5 shrink-0">
+                  <Lock className="h-2.5 w-2.5 shrink-0" />
                   Invite only
-                </span>
+                </Badge>
               ) : (
-                <span className="inline-flex items-center gap-1 text-green-700 dark:text-green-400">
-                  <Globe className="h-3 w-3 shrink-0" />
-                  Open
-                </span>
-              )}
-
-              <span aria-hidden>·</span>
-              <span className="inline-flex items-center gap-1">
-                <Users className="h-3 w-3 shrink-0" />
-                {community.member_count}
-              </span>
-
-              {/* Recency rather than a post total: whether anyone is still
-                  here is the question someone browsing is actually asking. */}
-              <span aria-hidden>·</span>
-              <span>Active {formatRelativeTime(community.last_activity_at)}</span>
-
-              {community.viewer_has_invite && !community.viewer_is_member && (
                 <Badge
                   variant="outline"
-                  className="border-primary/40 py-0 text-[10px] font-medium text-primary"
+                  className="gap-1 border-green-500/30 text-green-700 text-[10px] font-medium py-0 px-1.5 h-5 dark:text-green-400 shrink-0"
                 >
-                  You're invited
+                  <Globe className="h-2.5 w-2.5 shrink-0" />
+                  Open
+                </Badge>
+              )}
+
+              {community.viewer_has_invite && !community.viewer_is_member && (
+                <Badge variant="outline" className="border-primary/40 text-primary text-[10px] font-medium py-0 px-1.5 h-5 shrink-0">
+                  Invited
                 </Badge>
               )}
             </div>
-
-            <p className="mt-1.5 line-clamp-2 text-sm leading-relaxed text-muted-foreground">
-              {community.description}
-            </p>
           </div>
         </div>
 
-        {/* Above the stretched link, so the button is the button. Indented on
-            mobile to line up with the text column rather than the icon. */}
-        <div className="relative z-10 shrink-0 pl-[4.5rem] sm:pl-0">
+        {/* Description */}
+        <p className="line-clamp-2 text-xs leading-relaxed text-muted-foreground min-h-[2.5rem]">
+          {community.description || "No description available."}
+        </p>
+      </div>
+
+      {/* Footer: Metadata & Action CTA */}
+      <div className="relative z-10 mt-4 flex items-center justify-between gap-2 border-t border-border/60 pt-3 text-xs text-muted-foreground">
+        <div className="flex items-center gap-2 text-[11px] min-w-0">
+          <span className="inline-flex items-center gap-1 shrink-0 font-medium text-foreground">
+            <Users className="h-3.5 w-3.5 text-muted-foreground" />
+            {community.member_count}
+          </span>
+          <span aria-hidden className="text-border">·</span>
+          <span className="truncate">
+            Active {formatRelativeTime(community.last_activity_at)}
+          </span>
+        </div>
+
+        <div className="shrink-0">
           <JoinCommunityButton community={community} onJoined={onMembershipChange} />
         </div>
       </div>
