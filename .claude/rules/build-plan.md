@@ -22,5 +22,11 @@ Use it when:
 It defers to [FACULTY_AI_ROADMAP.md](../../FACULTY_AI_ROADMAP.md) on anything
 retrieval- or AI-related; that file stays the deeper authority there.
 
+This repo is also worked on by other agent tools, so the same guidance exists
+in tool-neutral form at [AGENTS.md](../../AGENTS.md) (read by Antigravity,
+Codex, Cursor, Gemini CLI) with a matching pointer at `.agent/rules/`. If you
+change a rule that AGENTS.md repeats, change it there too — three copies drift
+fast.
+
 Keep it current: when a remaining task ships, update its row in the status
 table and move its entry out of "What is left" in the same commit.

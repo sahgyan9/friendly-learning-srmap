@@ -181,6 +181,10 @@ collapses synonyms, so do not build a curated taxonomy.
 
 ## Related documents, and which one wins
 
+- [AGENTS.md](AGENTS.md) — the **tool-neutral** entry point (Antigravity, Codex,
+  Cursor, Gemini CLI all read it at session start; `.claude/rules/` is Claude
+  Code only). It points here and carries a condensed copy of the rules below.
+  When a rule in this file changes, check whether AGENTS.md repeats it.
 - [FACULTY_AI_ROADMAP.md](FACULTY_AI_ROADMAP.md) — **plan of record for search
   and the AI layer**, including approaches deliberately rejected. This file
   defers to it on anything retrieval-related.
