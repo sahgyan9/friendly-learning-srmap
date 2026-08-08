@@ -108,6 +108,20 @@ export const ImportSrmPortalDialog = ({
       setPassword("");
       setAppliedToProfile(false);
       fetchCaptcha();
+
+      // Prefill the register number from a prior successful sync, if any —
+      // it's not sensitive (unlike the portal password, which is never
+      // stored), so there's no reason to make the student retype it.
+      if (user) {
+        supabase
+          .from("academic_imports")
+          .select("register_number")
+          .eq("user_id", user.id)
+          .maybeSingle()
+          .then(({ data }) => {
+            if (data?.register_number) setRegisterNumber(data.register_number);
+          });
+      }
     } else {
       setPassword("");
       setCaptchaData(null);
