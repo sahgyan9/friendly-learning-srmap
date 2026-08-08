@@ -130,7 +130,7 @@ const MentorPersonalInfo = ({
           aria-describedby={describedBy("mobile", errors.mobile, true)}
           aria-invalid={Boolean(errors.mobile)}
           className={invalidControlClass(errors.mobile)}
-          placeholder="9876543210"
+          placeholder="e.g. 9876543210"
         />
       </FormField>
     </div>

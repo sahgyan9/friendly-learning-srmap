@@ -105,7 +105,7 @@ const MentorAcademicInfo = ({
               aria-invalid={Boolean(errors.college_id)}
               aria-busy={checkingCollegeId}
               className={`font-mono uppercase ${checkingCollegeId ? "pr-9" : ""} ${invalidControlClass(errors.college_id)}`}
-              placeholder="AP23111260062"
+              placeholder="AP99999999999"
             />
             {checkingCollegeId && (
               <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-muted-foreground" />
@@ -191,7 +191,7 @@ const MentorAcademicInfo = ({
             aria-describedby={describedBy("cgpa", errors.cgpa, true)}
             aria-invalid={Boolean(errors.cgpa)}
             className={invalidControlClass(errors.cgpa)}
-            placeholder="8.5"
+            placeholder="e.g. 8.5"
           />
         </FormField>
 

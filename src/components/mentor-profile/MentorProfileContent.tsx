@@ -90,9 +90,9 @@ const MentorProfileContent = ({
       <MentorAvailabilityCard mentor={mentor} />
 
       {/* SECTION 7: WHY YOU SHOULD TRUST ME - EXPERIENCE & PROJECTS */}
-      <MentorExperienceSection mentor={mentor} />
+      <MentorExperienceSection mentor={mentor} isOwnProfile={isOwnProfile} onMentorUpdated={onMentorUpdated} />
 
-      <MentorProjectsSection mentor={mentor} />
+      <MentorProjectsSection mentor={mentor} isOwnProfile={isOwnProfile} onMentorUpdated={onMentorUpdated} />
 
       {/* Badges Section */}
       <motion.section

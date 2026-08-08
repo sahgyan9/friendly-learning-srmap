@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Star, Quote, MessageSquare } from "lucide-react";
+import { Star, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ReviewsList from "@/components/rating/ReviewsList";
 import { EnhancedMentor } from "@/utils/mentor-enhancements";
@@ -52,43 +52,6 @@ export default function MentorReviewHighlights({
           </Button>
         )}
       </div>
-
-      {/* Featured Quote Snippets Carousel / Grid */}
-      {mentor.review_highlights && mentor.review_highlights.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          {mentor.review_highlights.map((rev) => (
-            <div
-              key={rev.id}
-              className="relative flex flex-col justify-between rounded-xl border border-border/50 bg-background/60 p-4 shadow-2xs hover:border-amber-500/30 transition-all"
-            >
-              <div className="space-y-2">
-                <div className="flex items-center gap-1">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Star
-                      key={i}
-                      className={`h-3.5 w-3.5 ${
-                        i < (rev.rating || 5)
-                          ? "fill-amber-400 text-amber-400"
-                          : "text-muted-foreground/30"
-                      }`}
-                    />
-                  ))}
-                </div>
-
-                <p className="text-xs text-foreground/90 font-medium italic leading-relaxed">
-                  "{rev.quote}"
-                </p>
-              </div>
-
-              {rev.author && (
-                <span className="text-[11px] font-semibold text-muted-foreground pt-2 mt-2 border-t border-border/30 block">
-                  — {rev.author}
-                </span>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
 
       {/* Full Detailed Reviews List */}
       <div className="pt-2 border-t border-border/40">
