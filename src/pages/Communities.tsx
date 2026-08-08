@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { ChevronDown, LayoutGrid, List, Plus, Search, Users } from "lucide-react";
 import { motion } from "framer-motion";
@@ -27,7 +27,6 @@ import {
 const Communities = () => {
   const { user } = useAuth();
   const { markSeen: markGroupsNavSeen } = useHasVisitedGroupsNav();
-  const cardsRef = useRef<HTMLDivElement>(null);
 
   const [communities, setCommunities] = useState<Community[]>([]);
   const [loading, setLoading] = useState(true);
@@ -43,21 +42,6 @@ const Communities = () => {
   useEffect(() => {
     markGroupsNavSeen();
   }, [markGroupsNavSeen]);
-
-  // Scroll to cards before paint so hero is not visible on load, and re-run when loading finishes.
-  useLayoutEffect(() => {
-    const scrollToCards = () => {
-      if (cardsRef.current) {
-        const navbarHeight = 64;
-        const top = cardsRef.current.getBoundingClientRect().top + window.scrollY - navbarHeight;
-        window.scrollTo({ top, behavior: "instant" });
-      }
-    };
-
-    scrollToCards();
-    const timer = setTimeout(scrollToCards, 60);
-    return () => clearTimeout(timer);
-  }, [loading]);
 
   const debouncedSearch = useDebounce(search, 300);
 
@@ -156,7 +140,7 @@ const Communities = () => {
         </div>
       </div>
 
-      <div ref={cardsRef} className="container mx-auto max-w-6xl px-4 pt-6 pb-36 md:pb-48">
+      <div className="container mx-auto max-w-6xl px-4 pt-6 pb-36 md:pb-48">
         <MyInvites />
 
         <div className="mb-6 space-y-3">

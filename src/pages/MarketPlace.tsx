@@ -1,5 +1,5 @@
 import { PRIMARY_DOMAIN } from "@/lib/constants";
-import { useState, useEffect, useLayoutEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Input } from "@/components/ui/input";
 import { Search, Plus, Loader2, Sparkles } from "lucide-react";
@@ -21,27 +21,11 @@ const MarketPlace = () => {
     const { user } = useAuth();
     const { events: srmapEvents, loading: srmapLoading, error: srmapError } = useSRMAPEvents();
     const { markSeen: markEventsNavSeen } = useHasVisitedEventsNav();
-    const cardsRef = useRef<HTMLDivElement>(null);
 
     // Reaching this page is what clears the welcome tour's navbar dot.
     useEffect(() => {
         markEventsNavSeen();
     }, [markEventsNavSeen]);
-
-    // Scroll to cards before paint so hero is not visible on load, and re-run when srmapLoading finishes.
-    useLayoutEffect(() => {
-      const scrollToCards = () => {
-        if (cardsRef.current) {
-          const navbarHeight = 64;
-          const top = cardsRef.current.getBoundingClientRect().top + window.scrollY - navbarHeight;
-          window.scrollTo({ top, behavior: "instant" });
-        }
-      };
-
-      scrollToCards();
-      const timer = setTimeout(scrollToCards, 60);
-      return () => clearTimeout(timer);
-    }, [srmapLoading]);
 
     useEffect(() => {
         if (user) {
@@ -110,7 +94,7 @@ const MarketPlace = () => {
                   </div>
                 </div>
 
-                <div ref={cardsRef} className="container mx-auto px-4 py-8">
+                <div className="container mx-auto px-4 py-8">
                     <div className="mb-8">
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                             <div className="flex-1 w-full sm:w-auto">
