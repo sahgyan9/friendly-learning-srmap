@@ -8,9 +8,6 @@ import {
   Eye,
   CheckCircle2,
   UserCheck,
-  BookOpen,
-  Calendar,
-  Award,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -56,19 +53,20 @@ interface ImportSrmPortalDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: (result?: ImportSuccessResult) => void;
-  onViewDetails?: () => void;
 }
 
 /**
  * Standalone dialog for authenticating with student.srmap.edu.in and importing
  * academic details. Can be rendered from anywhere (profile page, navbar, etc.).
+ * Fully self-contained: the success step includes its own course list viewer
+ * and "Apply to Profile" action, so every entry point behaves the same way.
  */
 export const ImportSrmPortalDialog = ({
   open,
   onOpenChange,
   onSuccess,
-  onViewDetails,
 }: ImportSrmPortalDialogProps) => {
+  const { user } = useAuth();
   const [captchaData, setCaptchaData] = useState<CaptchaStepData | null>(null);
   const [fetchingCaptcha, setFetchingCaptcha] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -78,6 +76,9 @@ export const ImportSrmPortalDialog = ({
   const [captchaText, setCaptchaText] = useState("");
 
   const [successResult, setSuccessResult] = useState<ImportSuccessResult | null>(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [applyingToProfile, setApplyingToProfile] = useState(false);
+  const [appliedToProfile, setAppliedToProfile] = useState(false);
 
   const fetchCaptcha = async () => {
     setFetchingCaptcha(true);
@@ -105,14 +106,46 @@ export const ImportSrmPortalDialog = ({
       setSuccessResult(null);
       setRegisterNumber("");
       setPassword("");
+      setAppliedToProfile(false);
       fetchCaptcha();
     } else {
       setPassword("");
       setCaptchaData(null);
       setSuccessResult(null);
+      setDetailsOpen(false);
+      setAppliedToProfile(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
+
+  const handleApplyToProfile = async () => {
+    if (!user || !successResult) return;
+    setApplyingToProfile(true);
+    try {
+      const updates: { department?: string } = {};
+      if (successResult.program) updates.department = successResult.program;
+
+      if (Object.keys(updates).length > 0) {
+        const { error } = await supabase.from("users").update(updates).eq("id", user.id);
+        if (error) throw error;
+      }
+
+      if (successResult.cgpa != null || successResult.program) {
+        const mentorUpdates: { cgpa?: number | null; department?: string } = {};
+        if (successResult.cgpa != null) mentorUpdates.cgpa = successResult.cgpa;
+        if (successResult.program) mentorUpdates.department = successResult.program;
+        await supabase.from("mentors").update(mentorUpdates).eq("id", user.id);
+      }
+
+      setAppliedToProfile(true);
+      toast.success("Profile updated with your imported department & CGPA!");
+    } catch (err: unknown) {
+      console.error("Error applying imported data to profile:", err);
+      toast.error("Failed to update profile values");
+    } finally {
+      setApplyingToProfile(false);
+    }
+  };
 
   const handleSubmit = async () => {
     if (!captchaData || !registerNumber.trim() || !password.trim() || !captchaText.trim()) return;
@@ -148,15 +181,6 @@ export const ImportSrmPortalDialog = ({
         {
           id: loadingId,
           description: "Your academic details are synced with your account.",
-          action: onViewDetails
-            ? {
-                label: "View Summary",
-                onClick: () => {
-                  onOpenChange(false);
-                  onViewDetails();
-                },
-              }
-            : undefined,
         }
       );
 
@@ -182,7 +206,8 @@ export const ImportSrmPortalDialog = ({
               </div>
               <DialogTitle className="text-xl font-bold">Academic Profile Imported!</DialogTitle>
               <DialogDescription className="text-xs text-muted-foreground max-w-xs">
-                We successfully signed in to SRM portal and synced your current coursework and academic standings.
+                We signed in to the SRM portal and read your coursework and academic standing below.
+                This raw data is already saved to your account — nothing to do there.
               </DialogDescription>
             </div>
 
@@ -221,33 +246,58 @@ export const ImportSrmPortalDialog = ({
 
                 <div>
                   <p className="text-muted-foreground text-[11px]">Coursework</p>
-                  <p className="font-semibold text-foreground">
+                  <button
+                    type="button"
+                    onClick={() => setDetailsOpen(true)}
+                    className="font-semibold text-primary hover:underline text-left"
+                  >
                     {successResult.subjectCount} Subjects Loaded
-                  </p>
+                  </button>
                 </div>
               </div>
-            </div>
 
-            <div className="flex flex-col sm:flex-row gap-2 pt-1">
-              {onViewDetails && (
-                <Button
-                  variant="outline"
-                  className="flex-1 text-xs"
-                  onClick={() => {
-                    onOpenChange(false);
-                    onViewDetails();
-                  }}
-                >
-                  <Eye className="mr-1.5 h-3.5 w-3.5" /> View Course List
-                </Button>
-              )}
               <Button
-                className="flex-1 text-xs"
-                onClick={() => onOpenChange(false)}
+                type="button"
+                variant="outline"
+                size="sm"
+                className="w-full text-xs"
+                onClick={() => setDetailsOpen(true)}
               >
-                Done
+                <Eye className="mr-1.5 h-3.5 w-3.5" /> View full course list
               </Button>
             </div>
+
+            {/* Explicit save action — separate from the auto-sync above */}
+            <div className="rounded-lg border border-primary/20 bg-primary/5 p-3.5 space-y-2.5">
+              <p className="text-[11px] text-muted-foreground leading-relaxed">
+                Want your <span className="font-medium text-foreground">program and CGPA</span> to also
+                show up on your public FriendlyLearning profile (so mentors/search can see it)? Apply it below.
+                This step is optional.
+              </p>
+              <Button
+                type="button"
+                className="w-full text-xs"
+                onClick={handleApplyToProfile}
+                disabled={applyingToProfile || appliedToProfile}
+              >
+                {applyingToProfile ? (
+                  <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                ) : appliedToProfile ? (
+                  <CheckCircle2 className="mr-1.5 h-3.5 w-3.5" />
+                ) : (
+                  <UserCheck className="mr-1.5 h-3.5 w-3.5" />
+                )}
+                {appliedToProfile ? "Applied to Profile" : "Apply to Profile"}
+              </Button>
+            </div>
+
+            <Button
+              variant="ghost"
+              className="w-full text-xs"
+              onClick={() => onOpenChange(false)}
+            >
+              Done
+            </Button>
           </div>
         ) : (
           <>
@@ -335,6 +385,24 @@ export const ImportSrmPortalDialog = ({
           </>
         )}
       </DialogContent>
+
+      {successResult && (
+        <AcademicDetailsDialog
+          open={detailsOpen}
+          onOpenChange={setDetailsOpen}
+          record={{
+            program: successResult.program,
+            current_semester: successResult.currentSemester,
+            cgpa: successResult.cgpa,
+            subjects: successResult.subjects,
+            sync_status: "success",
+            last_synced_at: new Date().toISOString(),
+            register_number: registerNumber || null,
+          }}
+          onApplyToProfile={handleApplyToProfile}
+          isApplyingToProfile={applyingToProfile}
+        />
+      )}
     </Dialog>
   );
 };
@@ -530,7 +598,6 @@ const ImportSrmPortal = ({ onProfileUpdate }: ImportSrmPortalProps) => {
         open={importDialogOpen}
         onOpenChange={setImportDialogOpen}
         onSuccess={loadRecord}
-        onViewDetails={() => setDetailsDialogOpen(true)}
       />
 
       {/* Course Details Inspector Dialog */}
