@@ -444,11 +444,17 @@ for (const file of [
 console.log('');
 
 // =====================================================================
-// SKIPPED (60 of the 88 files in supabase/migrations/, not executed above).
+// SKIPPED (61 of the 89 files in supabase/migrations/, not executed above).
 // Every migration in the repo falls into exactly one of these five groups.
 // None of them are silently missing -- each is listed below with why.
 //
-// 1. PGVECTOR (2 files) -- genuinely cannot run in PGlite.
+// 1. PGVECTOR (3 files) -- genuinely cannot run in PGlite.
+//
+//    20260809150000_admin_health_metrics.sql
+//    Counts rows of the pgvector-backed knowledge_chunks and reads
+//    cron.job_run_details (the stub cron schema has no run history).
+//    Verified against production 2026-08-09 with BEGIN/ROLLBACK: the
+//    42501 gate for non-admin callers, and a non-NULL metrics build.
 //    20260806160000_knowledge_chunks.sql
 //    Creates `extensions.vector(768)`. The installed @electric-sql/pglite
 //    (0.5.4, currently latest) ships no pgvector build at all, in any
