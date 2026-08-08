@@ -18,6 +18,7 @@ const VENDOR_CHUNKS: [RegExp, string][] = [
   [/\/node_modules\/@supabase\//, "supabase"],
   [/\/node_modules\/framer-motion\//, "motion"],
   [/\/node_modules\/recharts\//, "charts"],
+  [/\/node_modules\/(lucide-react|date-fns|sonner)\//, "ui-libs"],
 ];
 
 const chunkFor = (id: string): string | undefined => {
@@ -52,6 +53,7 @@ export default defineConfig(({ isSsrBuild }) => ({
     copyPublicDir: true,
     // Generate manifest for better caching
     manifest: true,
+    chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
         // Client build only: in the SSR build these packages are externalised,
