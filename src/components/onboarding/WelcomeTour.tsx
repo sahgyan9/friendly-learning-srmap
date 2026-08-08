@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -10,6 +10,9 @@ import { cn } from "@/lib/utils";
 import { WELCOME_TOUR_STEPS } from "@/data/welcomeTourSteps";
 import { useWelcomeTour } from "@/components/onboarding/WelcomeTourContext";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useAuth } from "@/context/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import InterestsEditor from "@/components/profile/InterestsEditor";
 
 /**
  * Maps an accent token (e.g. "emerald", "rose", "primary") to the Tailwind
@@ -89,6 +92,14 @@ const ACCENT_CLASSES: Record<
     pillBg: "bg-teal-500/10",
     pillText: "text-teal-600 dark:text-teal-400",
   },
+  pink: {
+    bg: "bg-pink-500/10",
+    text: "text-pink-600 dark:text-pink-400",
+    blobBg: "bg-pink-500/8",
+    pillBorder: "border-pink-500/20",
+    pillBg: "bg-pink-500/10",
+    pillText: "text-pink-600 dark:text-pink-400",
+  },
   sky: {
     bg: "bg-sky-500/10",
     text: "text-sky-600 dark:text-sky-400",
@@ -121,9 +132,18 @@ const slideVariants = {
 
 export function WelcomeTour() {
   const { open, closeTour } = useWelcomeTour();
+  const { user } = useAuth();
   const [step, setStep] = useState(0);
   const directionRef = useRef(1);
   const isMobile = useIsMobile();
+
+  // Interests step state. Loaded fresh every time the tour opens (first run
+  // or a replay from the profile menu) so a replay pre-fills whatever the
+  // user already saved, and edits here never clobber it unless the user
+  // actually changes something and advances past the step.
+  const [interests, setInterests] = useState<string[]>([]);
+  const [discoverable, setDiscoverable] = useState(false);
+  const initialInterestsRef = useRef<{ interests: string[]; discoverable: boolean } | null>(null);
 
   // Every open — first login or a manual replay from the profile menu —
   // starts back at slide one.
@@ -134,10 +154,43 @@ export function WelcomeTour() {
     }
   }, [open]);
 
+  useEffect(() => {
+    if (!open || !user) return;
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from("users")
+          .select("interests, interests_discoverable")
+          .eq("id", user.id)
+          .maybeSingle();
+
+        if (cancelled) return;
+        const loadedInterests = data?.interests ?? [];
+        const loadedDiscoverable = data?.interests_discoverable ?? false;
+        initialInterestsRef.current = { interests: loadedInterests, discoverable: loadedDiscoverable };
+        setInterests(loadedInterests);
+        setDiscoverable(loadedDiscoverable);
+      } catch {
+        // No pre-fill on failure — the step still works as an empty editor.
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [open, user]);
+
   const isLast = step === WELCOME_TOUR_STEPS.length - 1;
   const current = WELCOME_TOUR_STEPS[step];
   const Icon = current.icon;
   const accent = ACCENT_CLASSES[current.accent] ?? ACCENT_CLASSES.primary;
+
+  // True once the user has added at least one interest beyond whatever was
+  // pre-filled from a prior save — used to swap in the "nice, try /ask"
+  // acknowledgement copy on the step itself (it doubles as the closing slide).
+  const hasAddedInterests = interests.length > (initialInterestsRef.current?.interests.length ?? 0);
 
   const handleCtaClick = () => {
     if (isMobile) {
@@ -148,7 +201,47 @@ export function WelcomeTour() {
     }
   };
 
+  // Writes interests/discoverability through the same users update path the
+  // profile page uses — only when something actually changed, so replaying
+  // the tour and immediately advancing (nothing edited) never fires a write.
+  const persistInterests = useCallback(async () => {
+    if (!user) return;
+    const initial = initialInterestsRef.current;
+    if (!initial) return;
+
+    const changed =
+      discoverable !== initial.discoverable ||
+      interests.length !== initial.interests.length ||
+      interests.some((value, index) => value !== initial.interests[index]);
+    if (!changed) return;
+
+    const { error } = await supabase
+      .from("users")
+      .update({ interests, interests_discoverable: discoverable })
+      .eq("id", user.id);
+
+    if (error) {
+      console.error("Error saving interests from welcome tour:", error);
+      toast.error("Couldn't save your interests", {
+        description: "You can still add them anytime from your profile.",
+      });
+    }
+  }, [user, interests, discoverable]);
+
   const goNext = () => {
+    if (isLast) {
+      if (current.kind === "interests") void persistInterests();
+      closeTour();
+    } else {
+      directionRef.current = 1;
+      setStep((s) => s + 1);
+    }
+  };
+
+  // "Skip for now" on the interests step: advances (or closes, since it's
+  // currently the last step) without writing anything, and without touching
+  // whatever was pre-filled from a prior save.
+  const skipInterests = () => {
     if (isLast) {
       closeTour();
     } else {
@@ -164,7 +257,7 @@ export function WelcomeTour() {
 
   return (
     <Dialog open={open} onOpenChange={(next) => !next && closeTour()}>
-      <DialogContent className="overflow-hidden sm:max-w-md">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
         <DialogTitle className="sr-only">{current.title}</DialogTitle>
         <DialogDescription className="sr-only">{current.description}</DialogDescription>
 
@@ -188,8 +281,12 @@ export function WelcomeTour() {
         </div>
 
         {/* Slide area — fixed height prevents the dialog from jumping between
-            slides with different content lengths */}
-        <div className="relative overflow-hidden" style={{ minHeight: 260 }}>
+            slides with different content lengths. The interests step carries
+            a chip editor + suggestions + a switch, so it needs more room. */}
+        <div
+          className="relative overflow-hidden"
+          style={{ minHeight: current.kind === "interests" ? 420 : 260 }}
+        >
           {/* Decorative accent blob — unique per step, fades between colors */}
           <AnimatePresence mode="sync">
             <motion.div
@@ -241,25 +338,60 @@ export function WelcomeTour() {
               </div>
 
               <h2 className="text-xl font-bold tracking-tight">{current.title}</h2>
-              <p className="max-w-xs text-sm text-muted-foreground">{current.description}</p>
 
-              {current.cta && (
-                <Button
-                  asChild
-                  variant="outline"
-                  size="sm"
-                  className="mt-1"
-                  onClick={handleCtaClick}
-                >
-                  <Link
-                    to={current.cta.url}
-                    target={isMobile ? undefined : "_blank"}
-                    rel={isMobile ? undefined : "noopener noreferrer"}
-                  >
-                    {current.cta.label}
-                    <ArrowRight className="ml-1.5 h-3.5 w-3.5" aria-hidden />
-                  </Link>
-                </Button>
+              {current.kind === "interests" ? (
+                <div className="w-full space-y-3 text-left">
+                  <p className="text-center text-sm text-muted-foreground">
+                    {hasAddedInterests
+                      ? "Nice — we'll help you find people and posts about that."
+                      : current.description}
+                  </p>
+
+                  {hasAddedInterests && (
+                    <div className="flex justify-center">
+                      <Button asChild variant="outline" size="sm" onClick={handleCtaClick}>
+                        <Link
+                          to="/ask"
+                          target={isMobile ? undefined : "_blank"}
+                          rel={isMobile ? undefined : "noopener noreferrer"}
+                        >
+                          Try searching what you're into
+                          <ArrowRight className="ml-1.5 h-3.5 w-3.5" aria-hidden />
+                        </Link>
+                      </Button>
+                    </div>
+                  )}
+
+                  <InterestsEditor
+                    interests={interests}
+                    onInterestsChange={setInterests}
+                    discoverable={discoverable}
+                    onDiscoverableChange={setDiscoverable}
+                  />
+                </div>
+              ) : (
+                <>
+                  <p className="max-w-xs text-sm text-muted-foreground">{current.description}</p>
+
+                  {current.cta && (
+                    <Button
+                      asChild
+                      variant="outline"
+                      size="sm"
+                      className="mt-1"
+                      onClick={handleCtaClick}
+                    >
+                      <Link
+                        to={current.cta.url}
+                        target={isMobile ? undefined : "_blank"}
+                        rel={isMobile ? undefined : "noopener noreferrer"}
+                      >
+                        {current.cta.label}
+                        <ArrowRight className="ml-1.5 h-3.5 w-3.5" aria-hidden />
+                      </Link>
+                    </Button>
+                  )}
+                </>
               )}
             </motion.div>
           </AnimatePresence>
@@ -276,9 +408,16 @@ export function WelcomeTour() {
             </Button>
           )}
 
-          <Button size="sm" onClick={goNext}>
-            {isLast ? "Get started" : "Next"}
-          </Button>
+          <div className="flex items-center gap-2">
+            {current.kind === "interests" && (
+              <Button variant="ghost" size="sm" onClick={skipInterests}>
+                Skip for now
+              </Button>
+            )}
+            <Button size="sm" onClick={goNext}>
+              {isLast ? "Get started" : "Next"}
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

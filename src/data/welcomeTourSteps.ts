@@ -1,5 +1,5 @@
 import type { ComponentType, SVGProps } from "react";
-import { Rocket, Sparkles, UserCircle } from "lucide-react";
+import { Heart, Rocket, Sparkles, UserCircle } from "lucide-react";
 
 import { EventsIcon } from "@/components/icons/EventsIcon";
 import { FacultyIcon } from "@/components/icons/FacultyIcon";
@@ -18,6 +18,12 @@ export interface WelcomeTourStep {
   accent: string;
   /** Omitted on the welcome and closing slides, which have nothing to link to yet. */
   cta?: { label: string; url: string };
+  /**
+   * "interests" swaps the generic icon+description+CTA body for the interests
+   * chip editor (WelcomeTour.tsx renders it inline). Omitted/undefined means
+   * the standard informational slide.
+   */
+  kind?: "interests";
 }
 
 /**
@@ -91,5 +97,13 @@ export const WELCOME_TOUR_STEPS: WelcomeTourStep[] = [
     description:
       "Stuck on a course, an assignment, or just how things work here? Message a peer mentor for one-on-one help.",
     cta: { label: "Find a mentor", url: "/mentors" },
+  },
+  {
+    icon: Heart,
+    accent: "pink",
+    title: "What are you into?",
+    description:
+      "Add a few interests and other students (and mentors) who are into the same things can find you. Totally optional, and you can change this anytime from your profile.",
+    kind: "interests",
   },
 ];
