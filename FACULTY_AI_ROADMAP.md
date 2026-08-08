@@ -354,6 +354,46 @@ thread that actually answered the question. It now runs whenever the input reads
 like a phrase, deduped against the literal hits by primary key. The phrase gate
 and the edge function's query cache are what keep the spend bounded.
 
+## Students in the index — SHIPPED 2026-08-09 (opt-in, signed-in only)
+
+Migration `20260809120000_student_interest_chunks.sql`. `users` gained
+`interests text[]` and `interests_discoverable boolean` (default **false**), and
+`rebuild_student_chunks()` projects an opted-in student as `entity_type =
+'student'`. Rule 3 held again: one projector, one line in
+`rebuild_knowledge_chunks()`, one group in `semantic-search`.
+
+This is the first entity type representing **people who never applied for
+anything**, so the privacy posture is deliberately stricter than faculty or
+mentors:
+
+- Chunks are always `visibility = 'signed_in'`. `search_knowledge()` returns
+  that visibility only when `p_viewer IS NOT NULL`, so a signed-out caller
+  structurally cannot receive a student row. **The gate is in SQL, not in the
+  edge function** — this is the first real use of the `visibility` column that
+  Phase 3 built and never needed.
+- Reprojection is **per row**, like posts and unlike opportunities: `users` is
+  the largest people table and grows without a ceiling, so a full rebuild per
+  profile edit would eventually scan every user on every toggle. The trigger
+  fires only on `interests` / `interests_discoverable`; name and bio edits ride
+  the hourly rebuild.
+- Mentors are excluded from the projector. `mentors.id = users.id` here, and
+  mentors already project *public* chunks, so indexing both would duplicate
+  every mentor under two entity types.
+
+**`ai-chatbot` was permanently anonymous and nobody noticed.** It called
+`semantic-search` with no `Authorization` header, which was invisible while
+every chunk was public — the moment a `signed_in` entity existed, the assistant
+became the one surface that could never see it. Fixed in v155 by forwarding the
+caller's header on the retrieval hop. **Any future caller of `semantic-search`
+must forward auth or it silently loses signed-in results.**
+
+Recommendations (`RecommendedPeople`, homepage) reuse the same retrieval with no
+new infrastructure, exactly as the "Recommendations" section below predicted.
+The one addition worth copying: the profile query string is built
+**deterministically** — sorted, lowercased, no timestamps — so identical
+profiles hash to the same cache key and cost one embedding per profile *change*
+rather than per page view.
+
 ---
 
 The question never says "hackathon"; the listing never says "contest". They
