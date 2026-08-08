@@ -190,20 +190,247 @@ await db.exec(`
   CREATE PUBLICATION supabase_realtime;
 `);
 
+// ---------------------------------------------------------------------------
+// Extended baseline: tables/columns this repo never created via a migration
+// file (created by hand in the Supabase dashboard before migration tracking
+// began, or added there mid-life -- `mentor_verifications.cgpa` is a real
+// example: it is read starting in 20250707001657 with no ADD COLUMN anywhere
+// in history). No migration defines their base shape, so an empty PGlite
+// database cannot reconstruct them by replaying migrations; they are
+// hand-authored here instead, matching the shape those tables have today.
+// This is what unlocks running the large 2026-07/08 batch below for real
+// instead of by hand -- see the SKIP list at the bottom of this file for the
+// migrations this still leaves unreplayed.
+await db.exec(`
+  -- auth.users: only needed as an FK target (email_queue.recipient_id).
+  CREATE TABLE auth.users (id uuid PRIMARY KEY, email text, raw_user_meta_data jsonb);
+  INSERT INTO auth.users (id, email) VALUES
+    ('${CURRENT_UID}', 'asha@srmap.edu.in'),
+    ('${OTHER_UID}', 'ravi@srmap.edu.in');
+
+  ALTER TABLE public.users
+    ADD COLUMN verification_status text,
+    ADD COLUMN skills text[],
+    ADD COLUMN linkedin_url text,
+    ADD COLUMN bio text,
+    ADD COLUMN mobile text,
+    ADD COLUMN email_notifications boolean DEFAULT true;
+
+  ALTER TABLE public.mentors
+    ADD COLUMN linkedin_url text,
+    ADD COLUMN cgpa numeric,
+    ADD COLUMN university text,
+    ADD COLUMN mobile text,
+    ADD COLUMN created_at timestamptz NOT NULL DEFAULT now(),
+    ADD COLUMN is_available boolean NOT NULL DEFAULT true,
+    ADD COLUMN available_from date,
+    ADD COLUMN availability_note text;
+
+  -- 1:1 chat. Dashboard-origin (see above); still live (mentor_certificates'
+  -- mentor_impact() and chat_participant_profiles() both read it).
+  CREATE TABLE public.conversations (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    user1_id uuid NOT NULL,
+    user2_id uuid NOT NULL,
+    last_message_id uuid,
+    last_updated timestamptz,
+    created_at timestamptz NOT NULL DEFAULT now()
+  );
+  CREATE TABLE public.messages (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    conversation_id uuid NOT NULL REFERENCES public.conversations(id) ON DELETE CASCADE,
+    sender_id uuid NOT NULL,
+    receiver_id uuid NOT NULL,
+    content text NOT NULL,
+    sent_at timestamptz NOT NULL DEFAULT now(),
+    is_read boolean DEFAULT false,
+    delivery_status text DEFAULT 'sent',
+    message_type text DEFAULT 'text'
+  );
+
+  -- mentor_reviews: legacy single-score mentor rating (distinct from
+  -- faculty_ratings above). Still read by mentor_impact() for the certificate.
+  CREATE TABLE public.mentor_reviews (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    mentor_id uuid NOT NULL REFERENCES public.mentors(id) ON DELETE CASCADE,
+    reviewer_id uuid NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+    rating integer NOT NULL CHECK (rating BETWEEN 1 AND 5),
+    review_text text,
+    created_at timestamptz NOT NULL DEFAULT now(),
+    updated_at timestamptz NOT NULL DEFAULT now(),
+    UNIQUE (mentor_id, reviewer_id)
+  );
+
+  -- badge_types / user_badges / notifications / mentor_verifications: created
+  -- by 20250615102334 (part of the SKIPped legacy cluster). Shape below is
+  -- that migration's final state, which the 2026-04+ migrations replayed here
+  -- build on directly.
+  CREATE TABLE public.badge_types (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    name text NOT NULL UNIQUE,
+    description text, icon text, color text DEFAULT '#3B82F6',
+    category text CHECK (category IN ('performance','expertise','contribution','special')),
+    created_at timestamptz DEFAULT now(), updated_at timestamptz DEFAULT now()
+  );
+  CREATE TABLE public.user_badges (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id uuid REFERENCES public.users(id) ON DELETE CASCADE,
+    badge_type_id uuid REFERENCES public.badge_types(id) ON DELETE CASCADE,
+    awarded_by uuid REFERENCES public.users(id),
+    awarded_at timestamptz DEFAULT now(),
+    notes text,
+    UNIQUE (user_id, badge_type_id)
+  );
+  CREATE TABLE public.notifications (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id uuid REFERENCES public.users(id) ON DELETE CASCADE,
+    type text, title text NOT NULL, content text, read boolean DEFAULT false,
+    data jsonb, created_at timestamptz DEFAULT now()
+  );
+  CREATE TABLE public.mentor_verifications (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id uuid UNIQUE REFERENCES public.users(id) ON DELETE CASCADE,
+    status text CHECK (status IN ('pending','approved','rejected')) DEFAULT 'pending',
+    submitted_at timestamptz DEFAULT now(),
+    reviewed_at timestamptz,
+    reviewed_by uuid,
+    rejection_reason text,
+    application_data jsonb,
+    cgpa numeric, year_of_studies text, university text, hobbies text, mobile text
+  );
+
+  -- Functions defined by the same SKIPped 20250615102334/20250815121408
+  -- migrations. auto_award_performance_badges() is what 20260730210000
+  -- (RUN below) merely schedules; nothing later redefines it.
+  CREATE OR REPLACE FUNCTION public.notify_badge_award()
+    RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER AS $$
+    DECLARE badge_name TEXT;
+    BEGIN
+      SELECT name INTO badge_name FROM public.badge_types WHERE id = NEW.badge_type_id;
+      INSERT INTO public.notifications (user_id, type, title, content, data)
+      VALUES (NEW.user_id, 'badge', 'New Badge Earned!',
+        'Congratulations! You have earned the "' || badge_name || '" badge.',
+        jsonb_build_object('badge_type_id', NEW.badge_type_id, 'badge_name', badge_name));
+      RETURN NEW;
+    END; $$;
+  CREATE TRIGGER badge_award_notification AFTER INSERT ON public.user_badges
+    FOR EACH ROW EXECUTE FUNCTION public.notify_badge_award();
+
+  CREATE OR REPLACE FUNCTION public.auto_award_performance_badges()
+    RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS $$
+    BEGIN
+      INSERT INTO public.user_badges (user_id, badge_type_id, notes)
+      SELECT DISTINCT m.id, bt.id, 'Auto-awarded for exceptional performance'
+      FROM public.mentors m JOIN public.badge_types bt ON bt.name = 'Top Mentor'
+      WHERE m.rating >= 4.5 AND m.review_count >= 10
+        AND NOT EXISTS (SELECT 1 FROM public.user_badges ub WHERE ub.user_id = m.id AND ub.badge_type_id = bt.id);
+      INSERT INTO public.user_badges (user_id, badge_type_id, notes)
+      SELECT DISTINCT m.id, bt.id, 'Auto-awarded for promising new mentor'
+      FROM public.mentors m JOIN public.badge_types bt ON bt.name = 'Rising Star'
+      WHERE m.rating >= 4.0 AND m.review_count >= 3 AND m.review_count < 10
+        AND m.created_at > NOW() - INTERVAL '3 months'
+        AND NOT EXISTS (SELECT 1 FROM public.user_badges ub WHERE ub.user_id = m.id AND ub.badge_type_id = bt.id);
+    END; $$;
+  INSERT INTO public.badge_types (name, category) VALUES ('Top Mentor', 'performance'), ('Rising Star', 'performance');
+
+  -- marketplace_posts / team_members: dashboard-origin "about us" / classifieds
+  -- tables. Only stubbed with the columns 20260804132345 (RUN below) grants.
+  CREATE TABLE public.marketplace_posts (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    title text, description text, category text, date text, author text,
+    image_url text, external_link text, user_id uuid,
+    created_at timestamptz DEFAULT now(), updated_at timestamptz DEFAULT now()
+  );
+
+  -- storage.objects: platform-provided by Supabase Storage, not by any
+  -- migration. Only stubbed for the bucket policies 20260804132345 adds.
+  CREATE SCHEMA storage;
+  CREATE TABLE storage.objects (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    bucket_id text, name text, owner uuid, created_at timestamptz DEFAULT now()
+  );
+
+  -- cron / net: pg_cron and pg_net are pre-installed on every Supabase
+  -- project but PGlite ships neither. Stubbed so the four "schedule this on
+  -- cron" migrations run for real and their intent (job name + cadence) is
+  -- assertable, without ever actually firing the scheduled SQL.
+  CREATE SCHEMA cron;
+  CREATE TABLE cron.job (
+    jobid bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    jobname text UNIQUE, schedule text, command text, active boolean DEFAULT true
+  );
+  CREATE FUNCTION cron.schedule(p_jobname text, p_schedule text, p_command text)
+    RETURNS bigint LANGUAGE plpgsql AS $$
+    DECLARE v_id bigint;
+    BEGIN
+      INSERT INTO cron.job (jobname, schedule, command) VALUES (p_jobname, p_schedule, p_command)
+      ON CONFLICT (jobname) DO UPDATE SET schedule = EXCLUDED.schedule, command = EXCLUDED.command
+      RETURNING jobid INTO v_id;
+      RETURN v_id;
+    END; $$;
+  CREATE FUNCTION cron.unschedule(p_jobname text) RETURNS boolean LANGUAGE plpgsql AS $$
+    BEGIN DELETE FROM cron.job WHERE jobname = p_jobname; RETURN true; END; $$;
+  CREATE FUNCTION cron.alter_job(job_id bigint, active boolean DEFAULT NULL)
+    RETURNS void LANGUAGE sql AS $$
+    UPDATE cron.job SET active = COALESCE(alter_job.active, cron.job.active) WHERE jobid = job_id;
+  $$;
+
+  CREATE SCHEMA net;
+  CREATE FUNCTION net.http_post(
+    url text, headers jsonb DEFAULT '{}'::jsonb, body jsonb DEFAULT '{}'::jsonb,
+    timeout_milliseconds integer DEFAULT 5000
+  ) RETURNS bigint LANGUAGE sql AS $$ SELECT 1::bigint $$;
+`);
+
 // A pre-existing post authored by the mentor, to exercise the backfill.
 await q(`INSERT INTO public.community_posts (mentor_id, title, content) VALUES ($1, 'Legacy mentor post', 'body')`, [OTHER_UID]);
 console.log('Scaffolding ready.\n');
 
 // ---------------------------------------------------------------- migrations
+// Chronological order, matching how these actually landed in production.
+// Every file here is applied for real (db.exec of the file's own SQL) and
+// has at least one behavioral assertion below. Files NOT in this list are
+// enumerated with a reason at the bottom of this file (search SKIPPED).
 for (const file of [
+  '20260418030116_b5e49be0-53c5-4f02-b002-9690984a3ba4.sql',
   '20260726010000_faculty_ratings.sql',
   '20260726010100_community_posts_open_to_students.sql',
+  '20260730120000_college_id_and_graduation_year.sql',
+  '20260730130000_mentor_application_flags.sql',
+  '20260730140000_is_college_id_taken.sql',
+  '20260730150000_email_queue.sql',
+  '20260730160000_email_queue_sweep_schedule.sql',
+  '20260730170000_alumni_transition.sql',
+  '20260730180000_alumni_prompt_schedule.sql',
+  '20260730190000_mentor_certificates.sql',
+  '20260730200000_chat_participant_profiles.sql',
+  '20260730210000_badge_award_schedule.sql',
+  '20260804132345_b843f814-46d5-4c25-bc80-32e5f6ebba59.sql',
+  '20260804132512_fd08b60a-6119-47f3-aff7-c5e9214ee616.sql',
+  '20260804140000_add_user_theme_preference.sql',
+  '20260804160000_welcome_tour_flag.sql',
+  '20260804170000_lock_down_anon_rpc_surface.sql',
   '20260806100000_faculty_research_interests.sql',
+  '20260806190000_opportunities.sql',
+  '20260806220000_opportunity_posting.sql',
+  '20260807040000_notifications_realtime.sql',
+  '20260807120000_srmap_events_cache.sql',
+  '20260807120100_srmap_events_sync_schedule.sql',
   '20260807140000_community_channels.sql',
   '20260808150000_mentor_projects_experience.sql',
   '20260808160000_academic_imports.sql',
   '20260808170000_mentor_courses.sql',
 ]) {
+  if (file === '20260804132345_b843f814-46d5-4c25-bc80-32e5f6ebba59.sql') {
+    // Production's `faculty` table still carries `profile_image`, a column
+    // from the reverted single-score schema that this repo's CREATE TABLE IF
+    // NOT EXISTS never recreates on a clean install (see verify-upgrade.mjs).
+    // This migration's column-grant list names it, so it must exist here too.
+    await db.exec(`
+      ALTER TABLE public.faculty ADD COLUMN IF NOT EXISTS profile_image text;
+      ALTER TABLE public.faculty ADD COLUMN IF NOT EXISTS avg_rating numeric;
+    `);
+  }
   const sql = fs.readFileSync(path.join(MIGRATIONS, file), 'utf8');
   try {
     await db.exec(sql);
@@ -215,6 +442,140 @@ for (const file of [
   }
 }
 console.log('');
+
+// =====================================================================
+// SKIPPED (59 of the 87 files in supabase/migrations/, not executed above).
+// Every migration in the repo falls into exactly one of these five groups.
+// None of them are silently missing -- each is listed below with why.
+//
+// 1. PGVECTOR (1 file) -- genuinely cannot run in PGlite.
+//    20260806160000_knowledge_chunks.sql
+//    Creates `extensions.vector(768)`. The installed @electric-sql/pglite
+//    (0.5.4, currently latest) ships no pgvector build at all, in any
+//    version. A trimmed jsonb stand-in for the table is hand-built in the
+//    scaffolding above (search "Trimmed stand-in for public.knowledge_chunks")
+//    so later migrations that write to it (academic_imports, opportunities)
+//    can still be exercised for real. HNSW / cosine-similarity behaviour is
+//    verified separately against the live Supabase Postgres with
+//    BEGIN/ROLLBACK, which does have pgvector.
+//
+// 2. HTTP EXTENSION (1 file) -- genuinely cannot run in PGlite.
+//    20250830093916_929b871a-3813-4027-b579-bc3b114062c6.sql
+//    `CREATE EXTENSION IF NOT EXISTS http;` -- PGlite ships no `http`
+//    (pgsql-http) build either, so this statement errors immediately,
+//    before anything else in the file runs. Moot in practice: the
+//    synchronous http_post() call this file adds to notify_message_email()
+//    was replaced by the queued architecture in 20260730150000_email_queue.sql
+//    (run above), which is what production runs today.
+//
+// 3. LEGACY 2025-06-15 -> 2025-08-30 CLUSTER (29 files) -- patches tables this
+//    repo never created via a migration. `public.users`, `public.mentors`,
+//    `public.conversations`, `public.messages`, `public.marketplace_posts`
+//    and `public.team_members` were created by hand in the Supabase Studio
+//    table editor before migration tracking began here; no CREATE TABLE for
+//    any of them exists anywhere in supabase/migrations/. An empty PGlite
+//    database has no way to reconstruct their starting shape, so these files
+//    cannot be replayed from scratch -- a different kind of PGlite
+//    incompatibility than pgvector, but a real one. Their cumulative effect
+//    (badge_types, user_badges, mentor_verifications, notifications,
+//    mentor_reviews, contact_messages/responses, admin_audit_log,
+//    admin_recovery, typing_indicators, user_presence, the conversations/
+//    messages columns, and the final handle_new_user/update_verification_status
+//    bodies) is instead hand-authored into the "Extended baseline" scaffolding
+//    block above, in the shape those tables and functions have today -- which
+//    is what makes replaying the 2026-04+ migrations on top of it possible.
+//    Most of these files also just redefine the same function repeatedly
+//    (update_verification_status alone: 20250615102334, 124443, 619023547,
+//    707001657, 809110610, 815121408 -- six bodies, all superseded by the
+//    version 20260804170000_lock_down_anon_rpc_surface.sql installs, which
+//    IS exercised above); testing each intermediate body would assert
+//    nothing the final version doesn't already cover.
+//      20250615014216-4414210c-8775-4a73-ba82-a12a1326a0ca.sql
+//      20250615020750-cf59d3b8-f81a-4ec9-b671-70380e022e95.sql
+//      20250615023337-f55db0f0-f00f-4473-98fc-bee33668cc42.sql
+//      20250615074533-d83027e2-abe6-4eb6-928e-561f0cd653eb.sql
+//      20250615102334-410a876e-290d-4626-97c6-add4369ca89c.sql
+//      20250615124443-d84cd39c-1feb-4653-9c54-251833e83170.sql
+//      20250615134440-bdd0fbbd-d53d-4811-b0e2-98ed1debd014.sql
+//      20250615140729-71084747-0678-4fb5-94ec-b86eaa1327fe.sql
+//      20250615153039-d14b1ec8-dc59-4138-93ae-df371b7e9b6c.sql
+//      20250615165032-17e46eb2-2e7d-4144-a817-a25fe131e94c.sql
+//      20250615171202-938022c7-067c-456c-a2ef-dff76e0c4a0c.sql
+//      20250615172358-2ac3c5c3-8c51-41af-9859-587a8030ba07.sql
+//      20250615180805-889098e7-0739-4f6f-9503-1f7855c75c13.sql
+//      20250618012117-45f7c644-838e-464b-8da4-114be692e618.sql
+//      20250619023547-79c7520e-be29-4a0a-b365-53684b686cc5.sql
+//      20250704051730-1ec2dd7d-6a09-406e-a5da-ec055884bada.sql
+//      20250707001657-01c2ce35-41ea-40a3-b376-c67b1da81af0.sql
+//      20250707170643-ae110841-4859-4228-a5fe-da7ea50d8f45.sql
+//      20250708043620-458d0f9a-4323-476b-b03f-9353f27d82ac.sql
+//      20250809110610_e96312df-0dd9-45a0-87f2-24d693689205.sql
+//      20250815120417_e4915e5d-8d6e-41b9-b4e4-7f213c6b4e9a.sql
+//      20250815120439_4023bf50-7f69-438c-96d2-e94a2fabe82e.sql
+//      20250815120500_5fd3742d-51c2-43f9-a40e-a7056f572292.sql
+//      20250815120521_92bde878-84c8-4d0e-a426-388064bfbf3d.sql
+//      20250815121408_073dbf8f-cac1-4ee5-94b7-375b48e730a8.sql
+//      20250815220000_prevent_duplicate_conversations.sql
+//      20250816000000_create_contact_responses.sql
+//      20250816054105_1250c9ba-da86-48cf-9c6f-acf6424cc82d.sql
+//      20250821024831_af941fad-5b8d-4422-92bc-fe7acabdafa4.sql
+//
+// 4. NOV-2025 / APRIL-2026 PATCHES TO THE SAME DASHBOARD-ORIGIN TABLES (7
+//    files) -- same reasoning as group 3: they redefine functions the
+//    scaffolding already hand-authors in final form (update_verification_status
+//    again; is_admin_user/team_members_public/users_public view security), or
+//    add RLS to storage.objects/marketplace_posts columns this harness does
+//    not otherwise touch.
+//      20251107000000_fix_mentor_verifications_columns.sql (empty file)
+//      20251107031953_6921a78b-b383-4f3a-86bb-e7add9c01d2a.sql
+//      20251107032340_67d54873-ba81-4b6b-95a9-51fe18b5d20e.sql
+//      20251107032715_e762f658-7833-44c5-b511-e0653f6b5566.sql
+//      20260418024920_e41e59ab-3f50-4bd2-abd5-10d3c15168c3.sql
+//      20260418024940_a745043f-0b83-4660-a19d-342bf252ebc8.sql
+//      20260418025448_a4b8a106-6764-4bb8-a590-f6cb7d3efc85.sql
+//
+// 5. COMMUNITIES / PRIVATE-COMMUNITIES CLUSTER (12 files) -- the schema this
+//    harness needs for 20260807140000_community_channels.sql (executed and
+//    exercised above) is hand-authored directly into the scaffolding
+//    (`CREATE TABLE public.communities`, `community_members`,
+//    `community_group_messages`, `can_view_community`, `slugify`) rather
+//    than built up by replaying every migration that shaped it. That
+//    baseline already reflects each of these files' end state, so replaying
+//    them again on top would mostly hit "already exists" -- the honest fix is
+//    to fold them into the scaffolding as their own migration steps, which is
+//    follow-up work, not something this pass silently swept under the rug.
+//      20260731090000_communities.sql
+//      20260731130000_private_communities.sql
+//      20260802092000_anyone_signed_in_can_start_a_group.sql
+//      20260802100000_community_post_type_counts.sql
+//      20260802110000_community_feed_only_mine.sql
+//      20260802120000_community_kind_counts.sql
+//      20260802130000_community_group_messages.sql
+//      20260802140000_community_group_chat_backend.sql
+//      20260802150000_community_owner_mentor_flag.sql
+//      20260806200000_community_notification_deep_links.sql
+//      20260807030000_search_groups_and_posts.sql
+//      20260807130000_community_last_activity.sql
+//
+// 6. OUT OF SCOPE FOR THIS PASS (9 files) -- self-contained, plausibly
+//    runnable features (mentor availability, profile-image mirroring, the
+//    welcome-email surface) that were not read/replayed here for real. Said
+//    plainly rather than assigned a reason that would overstate what was
+//    checked: nobody has verified these files apply cleanly against this
+//    harness's baseline. Recommended follow-up, same technique as this pass --
+//    read each, extend the scaffolding if it touches a dashboard-origin
+//    table, add it to the MIGRATIONS array in date order, assert its one most
+//    breakable behaviour.
+//      20260731100000_google_profile_image.sql
+//      20260731110000_restore_mentor_rls_policies.sql
+//      20260731120000_mentor_availability.sql
+//      20260731140000_mentor_welcome_email.sql
+//      20260731150000_welcome_email_tracking.sql
+//      20260802090000_welcome_status_real_sends_and_names.sql
+//      20260802091000_mirror_profile_image_to_mentors.sql
+//      20260804150000_student_welcome_email.sql
+//      20260806210000_mentor_application_notification_welcome_link.sql
+// =====================================================================
 
 // ---------------------------------------------------------------- faculty
 console.log('faculty ratings:');
@@ -759,6 +1120,319 @@ const { rows: courseGrants } = await q(`
     AND column_name = 'courses'
 `);
 check('anon can SELECT the new courses column', courseGrants.length === 1, courseGrants.length ? 'ok' : '(missing)');
+
+// =====================================================================
+// The 2026-04 through 2026-08 batch (T4.2 catch-up). Two fresh students so
+// this block does not disturb state the sections above already asserted on.
+// =====================================================================
+const THIRD_UID = '33333333-3333-3333-3333-333333333333';
+const FOURTH_UID = '44444444-4444-4444-4444-444444444444';
+await q(`INSERT INTO public.users (id, name, email, role, department) VALUES ($1, 'Priya Student', 'priya@srmap.edu.in', 'student', 'CSE')`, [THIRD_UID]);
+await q(`INSERT INTO public.users (id, name, email, role, department) VALUES ($1, 'Rahul Student', 'rahul@srmap.edu.in', 'student', 'ECE')`, [FOURTH_UID]);
+
+console.log('\nmentor verification (auto-approve + flags):');
+
+// A clean application: valid college_id, plausible graduation_year, sane cgpa.
+await q(
+  `INSERT INTO public.mentor_verifications (user_id, application_data, cgpa, year_of_studies, university, hobbies, college_id, graduation_year)
+   VALUES ($1, $2::jsonb, 8.5, '3rd year', 'SRM AP', 'Chess', 'AP23111260099', 2027)`,
+  [THIRD_UID, JSON.stringify({ department: 'CSE', skills: 'React,Node' })],
+);
+const { rows: [verif] } = await q(`SELECT status, flags FROM public.mentor_verifications WHERE user_id=$1`, [THIRD_UID]);
+check('application auto-approved on insert (approve then flag, never blocked)', verif.status === 'approved', verif.status);
+check('a clean application carries no flags', Array.isArray(verif.flags) && verif.flags.length === 0, JSON.stringify(verif.flags));
+const { rows: [promoted] } = await q(`SELECT role, college_id FROM public.users WHERE id=$1`, [THIRD_UID]);
+check('user role promoted to mentor', promoted.role === 'mentor', promoted.role);
+check('college_id propagated to users', promoted.college_id === 'AP23111260099', promoted.college_id);
+const { rows: [mentorRow] } = await q(`SELECT id FROM public.mentors WHERE id=$1`, [THIRD_UID]);
+check('mentor row created by the trigger', !!mentorRow);
+const { rows: [welcomeNote] } = await q(`SELECT count(*)::int AS n FROM public.notifications WHERE user_id=$1 AND title LIKE 'Welcome, Mentor%'`, [THIRD_UID]);
+check('welcome notification created', welcomeNote.n === 1, `n=${welcomeNote.n}`);
+
+// A messy application: no graduation year, a 4-point-scale-looking cgpa, and a
+// college_id that collides with Priya's -- must still approve instantly.
+await q(
+  `INSERT INTO public.mentor_verifications (user_id, application_data, cgpa, college_id)
+   VALUES ($1, $2::jsonb, 3.8, 'AP23111260099')`,
+  [FOURTH_UID, JSON.stringify({ department: 'ECE' })],
+);
+const { rows: [verif2] } = await q(`SELECT status, flags FROM public.mentor_verifications WHERE user_id=$1`, [FOURTH_UID]);
+check('messy application still auto-approved', verif2.status === 'approved', verif2.status);
+check('flag: missing graduation year', verif2.flags.includes('graduation_year_missing'), JSON.stringify(verif2.flags));
+check('flag: cgpa looks like a 4-point scale', verif2.flags.includes('cgpa_possibly_4_point_scale'), JSON.stringify(verif2.flags));
+check('flag: duplicate college_id (already claimed by Priya)', verif2.flags.includes('college_id_duplicate'), JSON.stringify(verif2.flags));
+const { rows: [notPromotedId] } = await q(`SELECT college_id FROM public.users WHERE id=$1`, [FOURTH_UID]);
+check('a flagged duplicate college_id is never written (the flag records why, the unique index is never at risk)', notPromotedId.college_id === null, notPromotedId.college_id);
+
+let badFormatRejected = false;
+try { await q(`UPDATE public.users SET college_id = 'BADFORMAT' WHERE id=$1`, [THIRD_UID]); }
+catch { badFormatRejected = true; }
+check('malformed college_id rejected by the CHECK constraint', badFormatRejected);
+
+let badYearRejected = false;
+try { await q(`UPDATE public.users SET graduation_year = 1900 WHERE id=$1`, [THIRD_UID]); }
+catch { badYearRejected = true; }
+check('graduation_year outside 2015-2040 rejected by the CHECK constraint', badYearRejected);
+
+console.log('\nis_college_id_taken:');
+await actAs(THIRD_UID);
+const { rows: [takenSelf] } = await q(`SELECT public.is_college_id_taken('AP23111260099') AS taken`);
+check('own college_id does not count as taken (re-editing)', takenSelf.taken === false);
+await actAs(FOURTH_UID);
+const { rows: [takenByOther] } = await q(`SELECT public.is_college_id_taken('AP23111260099') AS taken`);
+check('a college_id already claimed by someone else reports taken', takenByOther.taken === true);
+const { rows: [freeOne] } = await q(`SELECT public.is_college_id_taken('AP23111260123') AS taken`);
+check('an unclaimed college_id reports free', freeOne.taken === false);
+const { rows: [caseNorm] } = await q(`SELECT public.is_college_id_taken('ap23111260099') AS taken`);
+check('lowercase input is normalised before the lookup', caseNorm.taken === true);
+await q(`UPDATE auth._session SET uid = NULL`);
+let signedOutRejected = false;
+try { await q(`SELECT public.is_college_id_taken('AP23111260099')`); }
+catch (e) { signedOutRejected = /Sign in/.test(e.message); }
+check('a signed-out call is rejected outright', signedOutRejected);
+await actAs(CURRENT_UID);
+
+console.log('\nemail queue:');
+const { rows: [conv] } = await q(
+  `INSERT INTO public.conversations (user1_id, user2_id) VALUES ($1,$2) RETURNING id`, [CURRENT_UID, OTHER_UID],
+);
+const { rows: [msg] } = await q(
+  `INSERT INTO public.messages (conversation_id, sender_id, receiver_id, content) VALUES ($1,$2,$3,'hi there') RETURNING id`,
+  [conv.id, CURRENT_UID, OTHER_UID],
+);
+const { rows: [queued] } = await q(`SELECT recipient_id FROM public.email_queue WHERE message_id=$1`, [msg.id]);
+check('a new message enqueues an email row instead of calling out synchronously', queued?.recipient_id === OTHER_UID, JSON.stringify(queued));
+
+await q(`UPDATE public.users SET email_notifications = false WHERE id=$1`, [CURRENT_UID]);
+const { rows: [msg2] } = await q(
+  `INSERT INTO public.messages (conversation_id, sender_id, receiver_id, content) VALUES ($1,$2,$3,'hey') RETURNING id`,
+  [conv.id, OTHER_UID, CURRENT_UID],
+);
+const { rows: [notQueued] } = await q(`SELECT count(*)::int AS n FROM public.email_queue WHERE message_id=$1`, [msg2.id]);
+check('an opted-out recipient gets nothing queued', notQueued.n === 0, `n=${notQueued.n}`);
+await q(`UPDATE public.users SET email_notifications = true WHERE id=$1`, [CURRENT_UID]);
+
+const { rows: [emailQueuePolicies] } = await q(`SELECT count(*)::int AS n FROM pg_policies WHERE tablename='email_queue'`);
+check('email_queue has zero RLS policies (only the service role, which bypasses RLS, can ever touch it)', emailQueuePolicies.n === 0, `n=${emailQueuePolicies.n}`);
+
+console.log('\nemail queue sweep schedule:');
+const { rows: [sweepJob] } = await q(`SELECT schedule, active FROM cron.job WHERE jobname='send-email-queue-sweep'`);
+check('sweep job registered on a 5-minute cadence', sweepJob?.schedule === '*/5 * * * *', sweepJob?.schedule);
+check('sweep job created inactive (the migration turns it on only after the function is deployed)', sweepJob?.active === false, sweepJob?.active);
+
+console.log('\nalumni transition:');
+await q(`UPDATE public.users SET graduation_year = 2020 WHERE id=$1`, [OTHER_UID]);
+const { rows: awaiting } = await q(`SELECT * FROM public.graduated_mentors_awaiting_confirmation()`);
+check('graduated_mentors_awaiting_confirmation lists the overdue mentor', awaiting.some((r) => r.user_id === OTHER_UID), JSON.stringify(awaiting));
+
+const { rows: [promptedCount] } = await q(`SELECT public.prompt_graduated_mentors() AS n`);
+check('prompt_graduated_mentors notifies the overdue mentor', promptedCount.n >= 1, `n=${promptedCount.n}`);
+const { rows: [alumniPromptNotif] } = await q(`SELECT count(*)::int AS n FROM public.notifications WHERE user_id=$1 AND type='alumni_prompt'`, [OTHER_UID]);
+check('an alumni_prompt notification was recorded', alumniPromptNotif.n === 1, `n=${alumniPromptNotif.n}`);
+await q(`SELECT public.prompt_graduated_mentors()`);
+const { rows: [alumniPromptNotifAgain] } = await q(`SELECT count(*)::int AS n FROM public.notifications WHERE user_id=$1 AND type='alumni_prompt'`, [OTHER_UID]);
+check('running the prompt again does not re-notify the same mentor (ask once)', alumniPromptNotifAgain.n === 1, `n=${alumniPromptNotifAgain.n}`);
+
+await actAs(OTHER_UID);
+await q(`SELECT public.confirm_alumni_status($1,$2,$3)`, [2020, 'Acme Corp', 'Software Engineer']);
+const { rows: [confirmedUser] } = await q(`SELECT alumni_confirmed_at, company, job_title FROM public.users WHERE id=$1`, [OTHER_UID]);
+check('confirm_alumni_status stamps alumni_confirmed_at', confirmedUser.alumni_confirmed_at !== null);
+check('confirm_alumni_status records company/job_title', confirmedUser.company === 'Acme Corp' && confirmedUser.job_title === 'Software Engineer');
+const { rows: [confirmedMentor] } = await q(`SELECT is_alumni FROM public.mentors WHERE id=$1`, [OTHER_UID]);
+check('is_alumni mirrored onto the public mentors row', confirmedMentor.is_alumni === true);
+const { rows: [clearedPrompt] } = await q(`SELECT read FROM public.notifications WHERE user_id=$1 AND type='alumni_prompt'`, [OTHER_UID]);
+check('confirming clears the alumni_prompt notification', clearedPrompt.read === true);
+const { rows: awaiting2 } = await q(`SELECT * FROM public.graduated_mentors_awaiting_confirmation()`);
+check('a confirmed mentor drops out of the awaiting-confirmation list', !awaiting2.some((r) => r.user_id === OTHER_UID));
+let badGradYear = false;
+try { await q(`SELECT public.confirm_alumni_status($1)`, [1800]); } catch { badGradYear = true; }
+check('confirm_alumni_status rejects an out-of-range graduation year', badGradYear);
+await actAs(CURRENT_UID);
+
+console.log('\nalumni prompt schedule:');
+const { rows: [alumniJob] } = await q(`SELECT schedule FROM cron.job WHERE jobname='alumni-prompt-monthly'`);
+check('alumni prompt job scheduled monthly (04:00 on the 1st)', alumniJob?.schedule === '0 4 1 * *', alumniJob?.schedule);
+
+console.log('\nmentor certificates:');
+// Two more distinct students exchange messages with the mentor, bringing the
+// total to three -- the eligibility bar in src/lib/certificate.ts.
+for (const studentId of [THIRD_UID, FOURTH_UID]) {
+  const { rows: [c] } = await q(`INSERT INTO public.conversations (user1_id, user2_id) VALUES ($1,$2) RETURNING id`, [studentId, OTHER_UID]);
+  await q(`INSERT INTO public.messages (conversation_id, sender_id, receiver_id, content) VALUES ($1,$2,$3,'help?')`, [c.id, studentId, OTHER_UID]);
+  await q(`INSERT INTO public.messages (conversation_id, sender_id, receiver_id, content) VALUES ($1,$2,$3,'sure!')`, [c.id, OTHER_UID, studentId]);
+}
+const { rows: [impact] } = await q(`SELECT students_helped FROM public.mentor_impact($1)`, [OTHER_UID]);
+check('mentor_impact counts three distinct two-way exchanges', impact.students_helped === 3, `got ${impact.students_helped}`);
+
+await actAs(OTHER_UID);
+const { rows: [issued] } = await q(`SELECT public.issue_certificate_if_earned() AS id`);
+check('a certificate is issued once the threshold is met', issued.id !== null);
+const { rows: [cert] } = await q(`SELECT id, certificate_number FROM public.certificates WHERE user_id=$1`, [OTHER_UID]);
+check('the certificate number follows the FL-YYYY-#### shape', /^FL-\d{4}-\d{4}$/.test(cert.certificate_number), cert.certificate_number);
+const { rows: [reissued] } = await q(`SELECT public.issue_certificate_if_earned() AS id`);
+check('re-issuing is idempotent (the same certificate id comes back)', reissued.id === issued.id);
+
+await actAs(THIRD_UID); // Priya is a mentor too (see above), but has helped nobody
+const { rows: [notEarned] } = await q(`SELECT public.issue_certificate_if_earned() AS id`);
+check('a mentor below the threshold earns nothing', notEarned.id === null);
+await actAs(CURRENT_UID);
+
+const { rows: [pub] } = await q(`SELECT students_helped FROM public.get_certificate($1)`, [cert.id]);
+check('get_certificate is public/unauthenticated and returns the figures', pub?.students_helped === 3, JSON.stringify(pub));
+const { rows: pubMissing } = await q(`SELECT * FROM public.get_certificate('00000000-0000-0000-0000-000000000000')`);
+check('an unknown certificate id returns no row rather than an error', pubMissing.length === 0);
+
+await actAs(OTHER_UID);
+const { rows: [mine] } = await q(`SELECT is_mentor, students_required, students_helped FROM public.my_certificate_status()`);
+check('my_certificate_status reports the 3-student bar', mine.students_required === 3 && mine.is_mentor === true);
+await actAs(CURRENT_UID);
+
+console.log('\nchat participant profiles:');
+const { rows: profiles } = await q(`SELECT id, name FROM public.chat_participant_profiles(ARRAY[$1,$2]::uuid[])`, [CURRENT_UID, OTHER_UID]);
+check('returns the caller and a conversation partner', profiles.length === 2, JSON.stringify(profiles));
+check("resolves the partner's real name (the bug this migration fixed)", profiles.some((p) => p.id === OTHER_UID && p.name === 'Ravi Mentor'), JSON.stringify(profiles));
+await actAs(FOURTH_UID);
+const { rows: strangerView } = await q(`SELECT id FROM public.chat_participant_profiles(ARRAY[$1]::uuid[])`, [CURRENT_UID]);
+check('a user with no shared conversation cannot resolve a stranger', strangerView.length === 0, JSON.stringify(strangerView));
+await actAs(CURRENT_UID);
+
+console.log('\nbadge award schedule:');
+const { rows: [badgeJob] } = await q(`SELECT schedule FROM cron.job WHERE jobname='award-performance-badges-weekly'`);
+check('badge job scheduled weekly (Monday 05:00)', badgeJob?.schedule === '0 5 * * 1', badgeJob?.schedule);
+await q(`UPDATE public.mentors SET rating = 4.8, review_count = 12 WHERE id=$1`, [OTHER_UID]);
+await q(`SELECT public.auto_award_performance_badges()`);
+const { rows: [topMentorBadge] } = await q(
+  `SELECT count(*)::int AS n FROM public.user_badges ub JOIN public.badge_types bt ON bt.id=ub.badge_type_id
+   WHERE ub.user_id=$1 AND bt.name='Top Mentor'`, [OTHER_UID],
+);
+check('Top Mentor badge awarded once the rating/review bar is cleared -- nothing did this before this migration scheduled it', topMentorBadge.n === 1, `n=${topMentorBadge.n}`);
+const { rows: [badgeNotif] } = await q(`SELECT count(*)::int AS n FROM public.notifications WHERE user_id=$1 AND type='badge'`, [OTHER_UID]);
+check('the award fires the existing badge notification trigger', badgeNotif.n === 1, `n=${badgeNotif.n}`);
+await q(`SELECT public.auto_award_performance_badges()`);
+const { rows: [stillOneBadge] } = await q(
+  `SELECT count(*)::int AS n FROM public.user_badges ub JOIN public.badge_types bt ON bt.id=ub.badge_type_id
+   WHERE ub.user_id=$1 AND bt.name='Top Mentor'`, [OTHER_UID],
+);
+check('running the job again does not award the same badge twice (idempotent)', stillOneBadge.n === 1, `n=${stillOneBadge.n}`);
+
+console.log('\ncolumn-level lockdown (mentors/faculty) + storage bucket ownership:');
+const columnGrantCheck = async (table) => {
+  const { rows } = await q(`
+    SELECT column_name FROM information_schema.column_privileges
+    WHERE table_schema='public' AND table_name=$1 AND grantee='anon' AND privilege_type='SELECT'`, [table]);
+  return rows.map((r) => r.column_name);
+};
+const mentorAnonCols = await columnGrantCheck('mentors');
+check('anon cannot select mentors.mobile', !mentorAnonCols.includes('mobile'), mentorAnonCols.join(','));
+check('anon cannot select mentors.cgpa', !mentorAnonCols.includes('cgpa'), mentorAnonCols.join(','));
+check('anon can select mentors.is_available (public directory field)', mentorAnonCols.includes('is_available'));
+check('anon can select mentors.hobbies (granted by the immediate follow-up migration, 20260804132512)', mentorAnonCols.includes('hobbies'));
+const facultyAnonCols = await columnGrantCheck('faculty');
+check('anon can select faculty.avg_overall and the legacy avg_rating column alike', facultyAnonCols.includes('avg_overall') && facultyAnonCols.includes('avg_rating'), facultyAnonCols.join(','));
+
+await db.exec(`
+  GRANT USAGE ON SCHEMA storage TO authenticated;
+  ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
+  GRANT SELECT, INSERT, UPDATE, DELETE ON storage.objects TO authenticated;
+`);
+const ownUpload = await asAuthenticated(() => attempt(
+  `INSERT INTO storage.objects (bucket_id, name, owner) VALUES ('community-posts','pic.png',$1)`, [CURRENT_UID]));
+check('a user can upload to community-posts as themselves', ownUpload === null, ownUpload ?? '');
+const impersonatedUpload = await asAuthenticated(() => attempt(
+  `INSERT INTO storage.objects (bucket_id, name, owner) VALUES ('community-posts','pic2.png',$1)`, [OTHER_UID]));
+check('a user cannot upload to community-posts claiming to be someone else', impersonatedUpload !== null, impersonatedUpload ?? 'INSERT SUCCEEDED');
+const nonAdminUpload = await asAuthenticated(() => attempt(
+  `INSERT INTO storage.objects (bucket_id, name, owner) VALUES ('team_members','staff.png',$1)`, [CURRENT_UID]));
+check('a non-admin cannot upload to the admin-only team_members bucket', nonAdminUpload !== null, nonAdminUpload ?? 'INSERT SUCCEEDED');
+await q(`UPDATE public.users SET is_admin = true WHERE id=$1`, [CURRENT_UID]);
+const adminUpload = await asAuthenticated(() => attempt(
+  `INSERT INTO storage.objects (bucket_id, name, owner) VALUES ('team_members','staff2.png',$1)`, [CURRENT_UID]));
+check('an admin can upload to the team_members bucket', adminUpload === null, adminUpload ?? '');
+await q(`UPDATE public.users SET is_admin = false WHERE id=$1`, [CURRENT_UID]);
+
+console.log('\nuser theme preference & welcome tour flag:');
+let badTheme = false;
+try { await q(`UPDATE public.users SET theme='blue' WHERE id=$1`, [CURRENT_UID]); } catch { badTheme = true; }
+check('theme must be dark or light (CHECK constraint)', badTheme);
+await q(`UPDATE public.users SET theme='dark' WHERE id=$1`, [CURRENT_UID]);
+const { rows: [themed] } = await q(`SELECT theme FROM public.users WHERE id=$1`, [CURRENT_UID]);
+check('a valid theme choice is saved', themed.theme === 'dark');
+const { rows: [tourDefault] } = await q(`SELECT has_seen_welcome_tour FROM public.users WHERE id=$1`, [FOURTH_UID]);
+check('has_seen_welcome_tour defaults to false for existing rows', tourDefault.has_seen_welcome_tour === false);
+
+console.log('\nlock down anon RPC surface:');
+const procAcl = async (fn) => {
+  const { rows: [r] } = await q(
+    `SELECT p.proacl::text AS acl FROM pg_proc p WHERE p.oid = $1::regprocedure`, [fn]);
+  return r?.acl ?? '';
+};
+const collegeIdAcl = await procAcl('public.is_college_id_taken(text)');
+check('is_college_id_taken: revoked from PUBLIC/anon, granted to authenticated', !collegeIdAcl.includes('anon=X') && collegeIdAcl.includes('authenticated=X'), collegeIdAcl);
+const internalAcl = await procAcl('public.auto_approve_mentor_application()');
+check('a trigger function has no anon/authenticated EXECUTE at all', !internalAcl.includes('anon=X') && !internalAcl.includes('authenticated=X'), internalAcl);
+check('...and no bare PUBLIC grant either (revoking from anon alone would have been a no-op)', !/(^|,)=X\//.test(internalAcl), internalAcl);
+const publicFnAcl = await procAcl('public.is_admin_user(uuid)');
+check('is_admin_user stays callable by anon (RLS policy expressions run as the querying role)', publicFnAcl.includes('anon=X'), publicFnAcl);
+
+await actAs(FOURTH_UID); // not an admin
+let impersonationBlocked = false;
+try {
+  await q(`SELECT public.update_verification_status($1, 'approved', $2, null)`,
+    ['00000000-0000-0000-0000-000000000000', OTHER_UID]);
+} catch (e) {
+  impersonationBlocked = /Only admins/.test(e.message);
+}
+check('naming an admin in the admin_id argument no longer grants admin power (the actor is auth.uid(), not the argument)', impersonationBlocked);
+await actAs(CURRENT_UID);
+
+console.log('\nopportunities & opportunity posting:');
+const { rows: [opp] } = await q(
+  `INSERT INTO public.opportunities (title, kind, description, posted_by, tags)
+   VALUES ('Smart India Hackathon 2026!', 'hackathon', 'National hackathon', $1, ARRAY['AI','Web'])
+   RETURNING id, slug`, [CURRENT_UID],
+);
+check('slug generated server-side from the title', opp.slug === 'smart-india-hackathon-2026', opp.slug);
+const { rows: [opp2] } = await q(
+  `INSERT INTO public.opportunities (title, posted_by) VALUES ('Smart India Hackathon 2026!', $1) RETURNING slug`, [CURRENT_UID],
+);
+check('a slug collision gets a numeric suffix', opp2.slug === 'smart-india-hackathon-2026-2', opp2.slug);
+const { rows: [oppChunk] } = await q(`SELECT body FROM public.knowledge_chunks WHERE entity_type='opportunity' AND entity_id=$1`, [opp.id]);
+check('posting projects into the search index immediately', oppChunk?.body?.includes('Smart India Hackathon'), oppChunk?.body ?? '(none)');
+
+for (let i = 0; i < 3; i += 1) {
+  await q(`INSERT INTO public.opportunities (title, posted_by) VALUES ($1, $2)`, [`Filler ${i}`, CURRENT_UID]);
+}
+let oppRateLimited = false;
+try { await q(`INSERT INTO public.opportunities (title, posted_by) VALUES ('One too many', $1)`, [CURRENT_UID]); }
+catch (e) { oppRateLimited = /posted 5 opportunities/.test(e.message); }
+check('a 6th opportunity within 24 hours is rate-limited (admins exempt, this poster is not one)', oppRateLimited);
+
+await q(`INSERT INTO public.opportunity_interest (opportunity_id, user_id, note) VALUES ($1,$2,'backend dev')`, [opp.id, FOURTH_UID]);
+const { rows: [oppCommunity] } = await q(
+  `INSERT INTO public.communities (slug, name, description, kind, owner_id) VALUES ('team-alpha-sih','Team Alpha','SIH team','hackathon',$1) RETURNING id`,
+  [CURRENT_UID],
+);
+await q(`INSERT INTO public.opportunity_teams (opportunity_id, community_id, looking_for, created_by) VALUES ($1,$2,ARRAY['Designer'],$3)`, [opp.id, oppCommunity.id, CURRENT_UID]);
+const { rows: [oppCounts] } = await q(`SELECT interest_count, team_count FROM public.opportunities WHERE id=$1`, [opp.id]);
+check('interest_count and team_count recount via trigger', oppCounts.interest_count === 1 && oppCounts.team_count === 1, JSON.stringify(oppCounts));
+await q(`DELETE FROM public.opportunity_interest WHERE opportunity_id=$1 AND user_id=$2`, [opp.id, FOURTH_UID]);
+const { rows: [oppCountsAfter] } = await q(`SELECT interest_count FROM public.opportunities WHERE id=$1`, [opp.id]);
+check('interest_count decrements when interest is withdrawn', oppCountsAfter.interest_count === 0);
+const { rows: [oppRls] } = await q(`SELECT relrowsecurity FROM pg_class WHERE oid='public.opportunities'::regclass`);
+check('RLS is enabled on opportunities', oppRls.relrowsecurity === true);
+
+console.log('\nnotifications realtime:');
+const { rows: [inPub] } = await q(`SELECT count(*)::int AS n FROM pg_publication_tables WHERE pubname='supabase_realtime' AND tablename='notifications'`);
+check('notifications added to the realtime publication (previously nothing pushed to the bell without a manual refresh)', inPub.n === 1, `n=${inPub.n}`);
+
+console.log('\nsrmap events cache + sync schedule:');
+await q(`INSERT INTO public.srmap_events_cache (id, title, start_date, end_date, link) VALUES (1, 'Tech Fest', '2026-09-01','2026-09-03','https://events.srmap.edu.in/1')`);
+await q(`SET LOCAL ROLE anon`).catch(() => {});
+const { rows: eventsAnon } = await q(`SELECT title FROM public.srmap_events_cache`);
+check('anon can read the public events cache', eventsAnon.length === 1, JSON.stringify(eventsAnon));
+await q(`RESET ROLE`).catch(() => {});
+const { rows: [eventsJob] } = await q(`SELECT schedule FROM cron.job WHERE jobname='sync-srmap-events-daily'`);
+check('events sync job scheduled daily at 20:30 UTC (02:00 IST)', eventsJob?.schedule === '30 20 * * *', eventsJob?.schedule);
 
 console.log(failures === 0
   ? '\nAll migration checks passed against real Postgres.'
