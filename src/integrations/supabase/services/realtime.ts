@@ -35,13 +35,27 @@ export async function updateUserPresence(userId: string, isOnline: boolean) {
     });
 
     if (error) {
-      console.error('Error updating user presence:', error);
+      console.error(
+        'Error updating user presence:',
+        error.message,
+        error.code ? `(code: ${error.code})` : ''
+      );
       return { error };
     }
 
     return { error: null };
   } catch (err) {
-    console.error('Exception updating user presence:', err);
+    // Navigating away (e.g. leaving /messages) cancels the in-flight request
+    // out from under this call — the browser aborts the fetch, which is
+    // expected here (this runs from the presence-effect's unmount cleanup)
+    // and not worth logging as an error.
+    const isAbort = err instanceof DOMException && err.name === 'AbortError';
+    if (!isAbort) {
+      console.error(
+        'Exception updating user presence:',
+        err instanceof Error ? err.message : err
+      );
+    }
     return { error: err as Error };
   }
 }

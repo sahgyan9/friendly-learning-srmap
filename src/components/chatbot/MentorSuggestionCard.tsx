@@ -61,9 +61,9 @@ const MentorSuggestionCard = ({ mentor, onConnect }: MentorSuggestionCardProps) 
   };
 
   return (
-    <Card className="p-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow">
+    <Card className="p-4 hover:shadow-md transition-shadow">
       <div className="flex items-start gap-3">
-        <Avatar className="h-12 w-12 border-2 border-gray-100 dark:border-gray-700">
+        <Avatar className="h-12 w-12 border-2 border-border">
           <AvatarImage src={mentor.profile_image} alt={mentor.name} />
           <AvatarFallback className="bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300">
             {getInitials(mentor.name)}
@@ -73,7 +73,7 @@ const MentorSuggestionCard = ({ mentor, onConnect }: MentorSuggestionCardProps) 
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between mb-2">
             <div className="flex-1 min-w-0">
-              <h4 className="font-semibold text-base truncate text-gray-900 dark:text-gray-100">
+              <h4 className="font-semibold text-base truncate text-foreground">
                 {mentor.name}
               </h4>
               <p className="text-sm text-blue-600 dark:text-blue-400 font-medium">
@@ -90,7 +90,7 @@ const MentorSuggestionCard = ({ mentor, onConnect }: MentorSuggestionCardProps) 
           
           {/* Bio preview */}
           {truncatedBio && (
-            <p className="text-xs text-gray-600 dark:text-gray-400 mb-3 leading-relaxed">
+            <p className="text-xs text-muted-foreground mb-3 leading-relaxed">
               {truncatedBio}
             </p>
           )}
@@ -109,7 +109,7 @@ const MentorSuggestionCard = ({ mentor, onConnect }: MentorSuggestionCardProps) 
             {mentor.skills.length > 3 && (
               <Badge 
                 variant="outline" 
-                className="text-xs px-2 py-0.5 text-gray-500 dark:text-gray-400"
+                className="text-xs px-2 py-0.5 text-muted-foreground"
               >
                 +{mentor.skills.length - 3} more
               </Badge>

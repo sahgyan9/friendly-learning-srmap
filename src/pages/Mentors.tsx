@@ -161,7 +161,7 @@ const Mentors = () => {
   return (
     <>
       <SEOHead
-        title={`Find Student Mentors at Friendly Learning SRM AP | Browse ${mentorCount} Verified SRMAP Mentors`}
+        title={`Find Student Mentors at Friendly Learning SRM AP | Browse ${mentorCount} Verified SRMAP Mentor${mentorCount === 1 ? "" : "s"}`}
         description="Discover experienced student mentors at Friendly Learning SRM AP University in Amaravati. Browse profiles, skills, and reviews to find the perfect mentor for your academic journey. Connect with verified peer mentors from SRMAP today!"
         keywords="friendly learning srm ap, srmap mentorship platform, srmap friendly learning, SRM AP mentors directory, student mentors SRMAP, academic guidance amaravati, peer mentoring andhra pradesh, university mentorship srmap, SRM AP academic support, student tutoring amaravati"
         canonical={`${PRIMARY_DOMAIN}/mentors`}
@@ -205,7 +205,7 @@ const Mentors = () => {
                 {mentorCount > 0 && (
                   <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-foreground shadow-2xs">
                     <Users className="h-3.5 w-3.5 text-muted-foreground" />
-                    <strong>{mentorCount}</strong> Verified Mentors
+                    <strong>{mentorCount}</strong> Verified Mentor{mentorCount === 1 ? "" : "s"}
                   </div>
                 )}
                 <div className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-foreground shadow-2xs">

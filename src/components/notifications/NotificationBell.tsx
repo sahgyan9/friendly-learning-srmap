@@ -153,7 +153,7 @@ const NotificationBell = () => {
           <Bell className="h-5 w-5" aria-hidden />
           {unreadCount > 0 && (
             <span
-              className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[11px] font-semibold leading-none text-white ring-2 ring-background"
+              className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1 text-[11px] font-semibold leading-none text-destructive-foreground ring-2 ring-background"
               aria-hidden
             >
               {unreadCount > 99 ? '99+' : unreadCount}
