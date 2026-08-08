@@ -15,6 +15,7 @@ import { FutureVision } from "@/components/FutureVision";
 import { AboutQuickstartStrip } from "@/components/AboutQuickstartStrip";
 import { HomeIntro } from "@/components/HomeIntro";
 import { CommunitiesSection } from "@/components/communities/CommunitiesSection";
+import { RecommendedPeople } from "@/components/home/RecommendedPeople";
 
 const Index = () => {
   const { user } = useAuth();
@@ -86,6 +87,12 @@ const Index = () => {
              where they asked to be believed before a visitor had seen a single
              real thread. Here they confirm what was just scrolled past. */}
       <HomeIntro />
+
+      {/* 2b. Signed-in only: people who match your interests. Hero-adjacent —
+             right after the pitch confirms what the feed just showed, before
+             the quickstart strip. Renders nothing for signed-out visitors and
+             defers its own network call, so it never affects LCP for anyone. */}
+      {user && <RecommendedPeople />}
 
       {/* 3. About Quickstart Strip — "what can I do right now?" */}
       <AboutQuickstartStrip />

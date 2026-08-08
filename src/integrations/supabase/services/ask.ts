@@ -79,14 +79,17 @@ export function metaList(result: AskResult, key: string): string[] {
  * function embeds the question and does the retrieval; nothing here needs an
  * API key.
  */
-export async function askWhoCanHelp(query: string, limit = 12) {
+export async function askWhoCanHelp(query: string, limit = 12, types?: AskResult["entity_type"][]) {
   const trimmed = query.trim();
   if (trimmed.length < 3) {
     return { data: null, error: new Error("Type at least 3 characters") };
   }
 
+  const body: { query: string; limit: number; types?: string[] } = { query: trimmed, limit };
+  if (types && types.length > 0) body.types = types;
+
   const { data, error } = await supabase.functions.invoke<AskResponse>("semantic-search", {
-    body: { query: trimmed, limit },
+    body,
   });
 
   if (error) {
