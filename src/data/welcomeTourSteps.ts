@@ -57,6 +57,14 @@ export const WELCOME_TOUR_STEPS: WelcomeTourStep[] = [
     cta: { label: "Browse campus posts", url: "/community-posts" },
   },
   {
+    icon: UsersRound,
+    accent: "amber",
+    title: "Your own workspace to collaborate & work",
+    description:
+      "Create or join dedicated workspace channels — your personal hub to chat, share resources, work on projects, and build together with your team.",
+    cta: { label: "Explore workspaces", url: "/communities" },
+  },
+  {
     icon: Star,
     accent: "rose",
     title: "Rate your faculty",
@@ -70,14 +78,6 @@ export const WELCOME_TOUR_STEPS: WelcomeTourStep[] = [
     title: "Build something together",
     description: "Find teammates for hackathons, projects, and competitions.",
     cta: { label: "Find hackathon partners", url: "/opportunities" },
-  },
-  {
-    icon: UsersRound,
-    accent: "amber",
-    title: "Join or create a workspace",
-    description:
-      "Find your people — department groups, interest communities, or create or start a workspace.",
-    cta: { label: "Browse workspaces", url: "/communities" },
   },
   {
     icon: Calendar,
