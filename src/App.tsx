@@ -128,6 +128,7 @@ const Certificate = lazyWithRetry("Certificate", () => import("./pages/Certifica
 const VerifyCertificate = lazyWithRetry("VerifyCertificate", () => import("./pages/VerifyCertificate"));
 const NotFound = lazyWithRetry("NotFound", () => import("./pages/NotFound"));
 const Unauthorized = lazyWithRetry("Unauthorized", () => import("./pages/Unauthorized"));
+const Search = lazyWithRetry("Search", () => import("./pages/Search"));
 
 const AdminDashboard = lazyWithRetry("AdminDashboard", () => import("./pages/AdminDashboard"));
 const AdminContactMessages = lazyWithRetry("AdminContactMessages", () => import("./pages/AdminContactMessages"));
@@ -231,6 +232,7 @@ function App() {
                     preview and how it's earned to anyone; only the download and
                     the verification link need an account. */}
                 <Route path="/certificate" element={<Certificate />} />
+                <Route path="/search" element={<Search />} />
                 <Route path="/unauthorized" element={<Unauthorized />} />
 
                 {/* Authenticated */}

@@ -12,8 +12,8 @@
  * registries refuse, so the coined word carries the claim and the sentence
  * explains it.
  */
-export const SEARCH_BRAND = "CampusMind";
-export const SEARCH_TAGLINE = "the smartest search on campus";
+export const SEARCH_BRAND = "Friendly Learning";
+export const SEARCH_TAGLINE = "Search mentors, faculty, groups & posts";
 
 /**
  * The questions the hero cycles through, and the placeholder inside the dialog.
