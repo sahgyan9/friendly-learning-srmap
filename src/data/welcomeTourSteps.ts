@@ -6,7 +6,6 @@ import {
   Star,
   UserCircle,
   UsersRound,
-  Users,
   type LucideIcon,
 } from "lucide-react";
 
@@ -41,20 +40,12 @@ export const WELCOME_TOUR_STEPS: WelcomeTourStep[] = [
       "New to university? You don't have to figure it out alone. Here's what you can do here.",
   },
   {
-    icon: HelpCircle,
-    accent: "blue",
-    title: "Ask a mentor any doubt",
+    icon: UserCircle,
+    accent: "teal",
+    title: "Set up your profile",
     description:
-      "Stuck on a course, an assignment, or just how things work here? Message a peer mentor for one-on-one help.",
-    cta: { label: "Find a mentor", url: "/mentors" },
-  },
-  {
-    icon: Users,
-    accent: "emerald",
-    title: "Find study partners",
-    description:
-      "Never study alone. Match with classmates in your courses to prep for exams and assignments together.",
-    cta: { label: "Find study partners", url: "/find-study-partners" },
+      "Add a photo, a short bio, and your skills so mentors and other students actually recognize you.",
+    cta: { label: "Complete your profile", url: "/profile" },
   },
   {
     icon: Star,
@@ -88,11 +79,11 @@ export const WELCOME_TOUR_STEPS: WelcomeTourStep[] = [
     cta: { label: "View events", url: "/marketplace" },
   },
   {
-    icon: UserCircle,
-    accent: "teal",
-    title: "Set up your profile",
+    icon: HelpCircle,
+    accent: "blue",
+    title: "Ask a mentor any doubt",
     description:
-      "Add a photo, a short bio, and your skills so mentors and other students actually recognize you.",
-    cta: { label: "Complete your profile", url: "/profile" },
+      "Stuck on a course, an assignment, or just how things work here? Message a peer mentor for one-on-one help.",
+    cta: { label: "Find a mentor", url: "/mentors" },
   },
 ];

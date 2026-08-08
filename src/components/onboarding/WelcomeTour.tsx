@@ -2,12 +2,14 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
+import { toast } from "sonner";
 
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { WELCOME_TOUR_STEPS } from "@/data/welcomeTourSteps";
 import { useWelcomeTour } from "@/components/onboarding/WelcomeTourContext";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 /**
  * Maps an accent token (e.g. "emerald", "rose", "primary") to the Tailwind
@@ -121,6 +123,7 @@ export function WelcomeTour() {
   const { open, closeTour } = useWelcomeTour();
   const [step, setStep] = useState(0);
   const directionRef = useRef(1);
+  const isMobile = useIsMobile();
 
   // Every open — first login or a manual replay from the profile menu —
   // starts back at slide one.
@@ -135,6 +138,15 @@ export function WelcomeTour() {
   const current = WELCOME_TOUR_STEPS[step];
   const Icon = current.icon;
   const accent = ACCENT_CLASSES[current.accent] ?? ACCENT_CLASSES.primary;
+
+  const handleCtaClick = () => {
+    if (isMobile) {
+      closeTour();
+      toast.info("Replay the welcome tour anytime", {
+        description: "Tap your profile icon at the top right to open the tour again.",
+      });
+    }
+  };
 
   const goNext = () => {
     if (isLast) {
@@ -237,9 +249,13 @@ export function WelcomeTour() {
                   variant="outline"
                   size="sm"
                   className="mt-1"
-                  onClick={closeTour}
+                  onClick={handleCtaClick}
                 >
-                  <Link to={current.cta.url}>
+                  <Link
+                    to={current.cta.url}
+                    target={isMobile ? undefined : "_blank"}
+                    rel={isMobile ? undefined : "noopener noreferrer"}
+                  >
                     {current.cta.label}
                     <ArrowRight className="ml-1.5 h-3.5 w-3.5" aria-hidden />
                   </Link>
