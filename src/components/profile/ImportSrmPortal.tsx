@@ -1,6 +1,17 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { GraduationCap, Loader2, RefreshCw, ShieldCheck } from "lucide-react";
+import {
+  GraduationCap,
+  Loader2,
+  RefreshCw,
+  ShieldCheck,
+  Eye,
+  CheckCircle2,
+  UserCheck,
+  BookOpen,
+  Calendar,
+  Award,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,14 +25,17 @@ import {
 } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
+import AcademicDetailsDialog, { AcademicSubject } from "./AcademicDetailsDialog";
+import { formatRelativeTime } from "@/utils/date-utils";
 
 export interface AcademicImport {
   program: string | null;
   current_semester: number | null;
   cgpa: number | null;
-  subjects: { code: string; name: string }[];
+  subjects: AcademicSubject[];
   sync_status: "pending" | "success" | "failed";
   last_synced_at: string | null;
+  register_number?: string | null;
 }
 
 interface CaptchaStepData {
@@ -30,10 +44,19 @@ interface CaptchaStepData {
   guess: string | null;
 }
 
+interface ImportSuccessResult {
+  program: string | null;
+  currentSemester: number | null;
+  cgpa: number | null;
+  subjectCount: number;
+  subjects: AcademicSubject[];
+}
+
 interface ImportSrmPortalDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSuccess?: () => void;
+  onSuccess?: (result?: ImportSuccessResult) => void;
+  onViewDetails?: () => void;
 }
 
 /**
@@ -44,6 +67,7 @@ export const ImportSrmPortalDialog = ({
   open,
   onOpenChange,
   onSuccess,
+  onViewDetails,
 }: ImportSrmPortalDialogProps) => {
   const [captchaData, setCaptchaData] = useState<CaptchaStepData | null>(null);
   const [fetchingCaptcha, setFetchingCaptcha] = useState(false);
@@ -52,6 +76,8 @@ export const ImportSrmPortalDialog = ({
   const [registerNumber, setRegisterNumber] = useState("");
   const [password, setPassword] = useState("");
   const [captchaText, setCaptchaText] = useState("");
+
+  const [successResult, setSuccessResult] = useState<ImportSuccessResult | null>(null);
 
   const fetchCaptcha = async () => {
     setFetchingCaptcha(true);
@@ -76,12 +102,14 @@ export const ImportSrmPortalDialog = ({
 
   useEffect(() => {
     if (open) {
+      setSuccessResult(null);
       setRegisterNumber("");
       setPassword("");
       fetchCaptcha();
     } else {
       setPassword("");
       setCaptchaData(null);
+      setSuccessResult(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
@@ -104,9 +132,35 @@ export const ImportSrmPortalDialog = ({
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      toast.success("Imported! Your profile now includes real coursework.", { id: loadingId });
-      onOpenChange(false);
-      onSuccess?.();
+      const result: ImportSuccessResult = {
+        program: data.data?.program ?? null,
+        currentSemester: data.data?.currentSemester ?? null,
+        cgpa: data.data?.cgpa ?? null,
+        subjectCount: data.data?.subjectCount ?? data.data?.subjects?.length ?? 0,
+        subjects: data.data?.subjects ?? [],
+      };
+
+      setSuccessResult(result);
+
+      // Toast notification with explicit details
+      toast.success(
+        `Imported SRM Profile: ${result.program || "Coursework"} (${result.subjectCount} subjects${result.cgpa ? ` · ${result.cgpa.toFixed(2)} CGPA` : ""})`,
+        {
+          id: loadingId,
+          description: "Your academic details are synced with your account.",
+          action: onViewDetails
+            ? {
+                label: "View Summary",
+                onClick: () => {
+                  onOpenChange(false);
+                  onViewDetails();
+                },
+              }
+            : undefined,
+        }
+      );
+
+      onSuccess?.(result);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Import failed";
       toast.error(message, { id: loadingId });
@@ -120,108 +174,197 @@ export const ImportSrmPortalDialog = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Import your academic profile</DialogTitle>
-          <DialogDescription>
-            We'll sign in to your SRM student portal once, read your program,
-            subjects and CGPA, then fill in your profile. Your portal password
-            is never stored — it's used once, in memory, and discarded.
-          </DialogDescription>
-        </DialogHeader>
-
-        {fetchingCaptcha && (
-          <div className="flex items-center justify-center gap-2 py-8 text-sm text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin" /> Fetching a captcha from the portal...
-          </div>
-        )}
-
-        {!fetchingCaptcha && captchaData && (
-          <div className="space-y-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="srm-register-number">Application / Register Number</Label>
-              <Input
-                id="srm-register-number"
-                placeholder="AP23111260062"
-                value={registerNumber}
-                onChange={(e) => setRegisterNumber(e.target.value)}
-                autoComplete="off"
-              />
+        {successResult ? (
+          <div className="space-y-5 py-2">
+            <div className="flex flex-col items-center text-center space-y-2">
+              <div className="h-12 w-12 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-500 animate-in zoom-in-95">
+                <CheckCircle2 className="h-6 w-6" />
+              </div>
+              <DialogTitle className="text-xl font-bold">Academic Profile Imported!</DialogTitle>
+              <DialogDescription className="text-xs text-muted-foreground max-w-xs">
+                We successfully signed in to SRM portal and synced your current coursework and academic standings.
+              </DialogDescription>
             </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="srm-password">Portal Password</Label>
-              <Input
-                id="srm-password"
-                type="password"
-                placeholder="DDMMYYYY (your date of birth)"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                autoComplete="off"
-              />
-              <p className="text-[11px] text-muted-foreground">
-                Same password you use to sign in at student.srmap.edu.in
-              </p>
+            {/* Imported Metrics Card */}
+            <div className="rounded-lg border border-border bg-card p-4 space-y-3">
+              <div className="flex items-center justify-between pb-2 border-b border-border">
+                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Summary of Imported Data
+                </span>
+                <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 text-[10px] gap-1 font-normal">
+                  <ShieldCheck className="h-3 w-3" /> Verified SRM AP
+                </Badge>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 text-xs">
+                <div>
+                  <p className="text-muted-foreground text-[11px]">Program</p>
+                  <p className="font-semibold text-foreground truncate" title={successResult.program || "N/A"}>
+                    {successResult.program || "N/A"}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-muted-foreground text-[11px]">Current Semester</p>
+                  <p className="font-semibold text-foreground">
+                    {successResult.currentSemester ? `Semester ${successResult.currentSemester}` : "N/A"}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-muted-foreground text-[11px]">CGPA</p>
+                  <p className="font-semibold text-foreground">
+                    {successResult.cgpa != null ? `${successResult.cgpa.toFixed(2)} / 10.0` : "N/A"}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-muted-foreground text-[11px]">Coursework</p>
+                  <p className="font-semibold text-foreground">
+                    {successResult.subjectCount} Subjects Loaded
+                  </p>
+                </div>
+              </div>
             </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="srm-captcha">Captcha</Label>
-              <img
-                src={captchaData.imageDataUrl}
-                alt="SRM portal captcha"
-                className="h-10 rounded border border-border bg-secondary px-2"
-              />
-              <Input
-                id="srm-captcha"
-                placeholder="Enter the captcha text"
-                value={captchaText}
-                onChange={(e) => setCaptchaText(e.target.value)}
-                autoComplete="off"
-              />
-            </div>
-
-            <p className="text-[11px] text-muted-foreground">
-              Independent student project — not affiliated with or endorsed by SRM University AP.
-            </p>
-
-            <div className="flex gap-2 pt-1">
-              <Button variant="outline" className="flex-1" onClick={() => onOpenChange(false)}>
-                Cancel
-              </Button>
+            <div className="flex flex-col sm:flex-row gap-2 pt-1">
+              {onViewDetails && (
+                <Button
+                  variant="outline"
+                  className="flex-1 text-xs"
+                  onClick={() => {
+                    onOpenChange(false);
+                    onViewDetails();
+                  }}
+                >
+                  <Eye className="mr-1.5 h-3.5 w-3.5" /> View Course List
+                </Button>
+              )}
               <Button
-                className="flex-1"
-                disabled={submitting || !registerNumber.trim() || !password.trim() || !captchaText.trim()}
-                onClick={handleSubmit}
+                className="flex-1 text-xs"
+                onClick={() => onOpenChange(false)}
               >
-                {submitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                Continue
+                Done
               </Button>
             </div>
           </div>
+        ) : (
+          <>
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <GraduationCap className="h-5 w-5 text-primary" />
+                Import your academic profile
+              </DialogTitle>
+              <DialogDescription>
+                We'll sign in to your SRM student portal once, read your program,
+                subjects and CGPA, then fill in your profile. Your portal password
+                is never stored — it's used once, in memory, and discarded.
+              </DialogDescription>
+            </DialogHeader>
+
+            {fetchingCaptcha && (
+              <div className="flex items-center justify-center gap-2 py-8 text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" /> Fetching a captcha from the portal...
+              </div>
+            )}
+
+            {!fetchingCaptcha && captchaData && (
+              <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="srm-register-number">Application / Register Number</Label>
+                  <Input
+                    id="srm-register-number"
+                    placeholder="AP23111260062"
+                    value={registerNumber}
+                    onChange={(e) => setRegisterNumber(e.target.value)}
+                    autoComplete="off"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="srm-password">Portal Password</Label>
+                  <Input
+                    id="srm-password"
+                    type="password"
+                    placeholder="DDMMYYYY (your date of birth)"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    autoComplete="off"
+                  />
+                  <p className="text-[11px] text-muted-foreground">
+                    Same password you use to sign in at student.srmap.edu.in
+                  </p>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="srm-captcha">Captcha</Label>
+                  <img
+                    src={captchaData.imageDataUrl}
+                    alt="SRM portal captcha"
+                    className="h-10 rounded border border-border bg-secondary px-2"
+                  />
+                  <Input
+                    id="srm-captcha"
+                    placeholder="Enter the captcha text"
+                    value={captchaText}
+                    onChange={(e) => setCaptchaText(e.target.value)}
+                    autoComplete="off"
+                  />
+                </div>
+
+                <p className="text-[11px] text-muted-foreground">
+                  Independent student project — not affiliated with or endorsed by SRM University AP.
+                </p>
+
+                <div className="flex gap-2 pt-1">
+                  <Button variant="outline" className="flex-1" onClick={() => onOpenChange(false)}>
+                    Cancel
+                  </Button>
+                  <Button
+                    className="flex-1"
+                    disabled={submitting || !registerNumber.trim() || !password.trim() || !captchaText.trim()}
+                    onClick={handleSubmit}
+                  >
+                    {submitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    Continue
+                  </Button>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </DialogContent>
     </Dialog>
   );
 };
 
+interface ImportSrmPortalProps {
+  onProfileUpdate?: () => void;
+}
+
 /**
- * Banner widget placed on the Profile page that displays current import status
- * and triggers the import dialog.
+ * Banner widget placed on the Profile page that displays current import status,
+ * triggers the import dialog, and lets users inspect imported academic courses.
  */
-const ImportSrmPortal = () => {
+const ImportSrmPortal = ({ onProfileUpdate }: ImportSrmPortalProps) => {
   const { user } = useAuth();
   const [record, setRecord] = useState<AcademicImport | null>(null);
   const [loadingRecord, setLoadingRecord] = useState(true);
-  const [open, setOpen] = useState(false);
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
+  const [applyingToProfile, setApplyingToProfile] = useState(false);
 
   const loadRecord = async () => {
     if (!user) return;
     setLoadingRecord(true);
     const { data } = await supabase
       .from("academic_imports")
-      .select("program, current_semester, cgpa, subjects, sync_status, last_synced_at")
+      .select("program, current_semester, cgpa, subjects, sync_status, last_synced_at, register_number")
       .eq("user_id", user.id)
       .maybeSingle();
-    setRecord((data as AcademicImport | null) ?? null);
+    
+    setRecord((data as unknown as AcademicImport | null) ?? null);
     setLoadingRecord(false);
   };
 
@@ -230,66 +373,177 @@ const ImportSrmPortal = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
+  const handleApplyToProfile = async () => {
+    if (!user || !record) return;
+    setApplyingToProfile(true);
+
+    try {
+      const updates: { department?: string } = {};
+      if (record.program) {
+        updates.department = record.program;
+      }
+
+      // Update users table
+      if (Object.keys(updates).length > 0) {
+        const { error } = await supabase
+          .from("users")
+          .update(updates)
+          .eq("id", user.id);
+        if (error) throw error;
+      }
+
+      // Also update mentors table if user is a mentor
+      if (record.cgpa != null || record.program) {
+        const mentorUpdates: { cgpa?: number | null; department?: string } = {};
+        if (record.cgpa != null) mentorUpdates.cgpa = record.cgpa;
+        if (record.program) mentorUpdates.department = record.program;
+
+        await supabase
+          .from("mentors")
+          .update(mentorUpdates)
+          .eq("id", user.id);
+      }
+
+      toast.success("Profile updated with imported SRM department & CGPA!");
+      onProfileUpdate?.();
+    } catch (err: unknown) {
+      console.error("Error applying imported data to profile:", err);
+      toast.error("Failed to update profile values");
+    } finally {
+      setApplyingToProfile(false);
+    }
+  };
+
   return (
     <>
-      <div className="rounded-lg border border-dashed border-primary/40 bg-primary/5 p-4">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div className="flex items-start gap-3">
-            <div className="rounded-md bg-primary/10 p-2">
-              <GraduationCap className="h-5 w-5 text-primary" />
+      <div className="rounded-xl border border-primary/20 bg-gradient-to-r from-primary/5 via-primary/10 to-background p-4 sm:p-5 shadow-sm transition-all">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div className="flex items-start gap-3.5">
+            <div className="rounded-xl bg-primary/15 p-2.5 text-primary shrink-0 border border-primary/20">
+              <GraduationCap className="h-6 w-6" />
             </div>
             <div>
-              <p className="font-medium text-sm">Import from SRM Portal</p>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="font-semibold text-sm sm:text-base text-foreground">
+                  SRM Portal Academic Import
+                </h3>
+                {record?.sync_status === "success" && (
+                  <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 text-[10px] gap-1 font-normal">
+                    <CheckCircle2 className="h-3 w-3" /> Synced
+                  </Badge>
+                )}
+              </div>
+
               {loadingRecord ? (
-                <p className="text-xs text-muted-foreground mt-0.5">Checking your profile...</p>
+                <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1.5">
+                  <Loader2 className="h-3 w-3 animate-spin" /> Checking academic records...
+                </p>
               ) : record?.sync_status === "success" ? (
-                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-0.5">
-                  <span className="text-xs text-muted-foreground">
-                    {record.program ?? "Program"} · Semester {record.current_semester ?? "?"}
-                    {record.subjects?.length ? ` · ${record.subjects.length} subjects` : ""}
-                  </span>
-                  {record.cgpa != null && (
-                    <Badge variant="secondary" className="text-[10px] gap-1">
-                      <ShieldCheck className="h-3 w-3" /> {record.cgpa.toFixed(2)} CGPA
-                    </Badge>
+                <div className="space-y-1 mt-1">
+                  <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
+                    <span className="text-xs font-medium text-foreground">
+                      {record.program ?? "Program"}
+                    </span>
+                    <span className="text-xs text-muted-foreground">·</span>
+                    <span className="text-xs text-muted-foreground">
+                      Sem {record.current_semester ?? "?"}
+                    </span>
+                    <span className="text-xs text-muted-foreground">·</span>
+                    <span className="text-xs text-muted-foreground">
+                      {record.subjects?.length ? `${record.subjects.length} subjects` : "0 subjects"}
+                    </span>
+                    {record.cgpa != null && (
+                      <Badge variant="secondary" className="text-[10px] gap-1 font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20">
+                        <ShieldCheck className="h-3 w-3" /> {record.cgpa.toFixed(2)} CGPA
+                      </Badge>
+                    )}
+                  </div>
+                  {record.last_synced_at && (
+                    <p className="text-[11px] text-muted-foreground">
+                      Last updated {formatRelativeTime(record.last_synced_at)}
+                    </p>
                   )}
                 </div>
               ) : (
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Fill in your program, subjects and CGPA automatically from student.srmap.edu.in.
+                <p className="text-xs text-muted-foreground mt-1 max-w-lg">
+                  Automatically import your verified coursework, branch, current semester, and CGPA directly from student.srmap.edu.in.
                 </p>
               )}
             </div>
           </div>
 
-          <Button
-            type="button"
-            variant={record?.sync_status === "success" ? "outline" : "default"}
-            size="sm"
-            onClick={() => setOpen(true)}
-            className="shrink-0"
-          >
-            {record?.sync_status === "success" ? (
+          <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-border/50">
+            {record?.sync_status === "success" && (
               <>
-                <RefreshCw className="mr-2 h-4 w-4" /> Refresh
-              </>
-            ) : (
-              <>
-                <GraduationCap className="mr-2 h-4 w-4" /> Import
+                <Button
+                  type="button"
+                  variant="default"
+                  size="sm"
+                  onClick={() => setDetailsDialogOpen(true)}
+                  className="text-xs gap-1.5 flex-1 sm:flex-initial"
+                >
+                  <Eye className="h-3.5 w-3.5" /> View Courses
+                </Button>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleApplyToProfile}
+                  disabled={applyingToProfile}
+                  title="Apply imported department & CGPA to your profile"
+                  className="text-xs gap-1.5 flex-1 sm:flex-initial"
+                >
+                  {applyingToProfile ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <UserCheck className="h-3.5 w-3.5" />
+                  )}
+                  Apply to Profile
+                </Button>
               </>
             )}
-          </Button>
+
+            <Button
+              type="button"
+              variant={record?.sync_status === "success" ? "secondary" : "default"}
+              size="sm"
+              onClick={() => setImportDialogOpen(true)}
+              className="text-xs gap-1.5 flex-1 sm:flex-initial"
+            >
+              {record?.sync_status === "success" ? (
+                <>
+                  <RefreshCw className="h-3.5 w-3.5" /> Re-sync
+                </>
+              ) : (
+                <>
+                  <GraduationCap className="h-3.5 w-3.5" /> Connect SRM Portal
+                </>
+              )}
+            </Button>
+          </div>
         </div>
       </div>
 
+      {/* Import Authentication Dialog */}
       <ImportSrmPortalDialog
-        open={open}
-        onOpenChange={setOpen}
+        open={importDialogOpen}
+        onOpenChange={setImportDialogOpen}
         onSuccess={loadRecord}
+        onViewDetails={() => setDetailsDialogOpen(true)}
+      />
+
+      {/* Course Details Inspector Dialog */}
+      <AcademicDetailsDialog
+        open={detailsDialogOpen}
+        onOpenChange={setDetailsDialogOpen}
+        record={record}
+        onReSync={() => setImportDialogOpen(true)}
+        onApplyToProfile={handleApplyToProfile}
+        isApplyingToProfile={applyingToProfile}
       />
     </>
   );
 };
 
 export default ImportSrmPortal;
-

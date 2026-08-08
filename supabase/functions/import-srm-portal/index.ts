@@ -624,6 +624,7 @@ Deno.serve(async (req) => {
           currentSemester,
           cgpa,
           subjectCount: subjects.length,
+          subjects,
         },
       });
     }

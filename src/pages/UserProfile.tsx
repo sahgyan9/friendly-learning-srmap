@@ -546,7 +546,7 @@ const UserProfile = () => {
               </TabsList>
 
               <TabsContent value="profile" className="space-y-6">
-                <ImportSrmPortal />
+                <ImportSrmPortal onProfileUpdate={fetchProfile} />
                 <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
                   {/* Profile Information */}
                   <Card>
