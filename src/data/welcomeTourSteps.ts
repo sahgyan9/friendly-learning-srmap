@@ -65,10 +65,10 @@ export const WELCOME_TOUR_STEPS: WelcomeTourStep[] = [
   {
     icon: UsersRound,
     accent: "amber",
-    title: "Join or start a group",
+    title: "Join or create a workspace",
     description:
-      "Find your people — department groups, interest communities, or start your own.",
-    cta: { label: "Browse groups", url: "/communities" },
+      "Find your people — department groups, interest communities, or create or start a workspace.",
+    cta: { label: "Browse workspaces", url: "/communities" },
   },
   {
     icon: Calendar,
