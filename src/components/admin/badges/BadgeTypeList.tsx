@@ -72,7 +72,7 @@ const BadgeTypeList = ({ badgeTypes, loading, onRefetch }: BadgeTypeListProps) =
 
   if (loading) {
     return (
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         {Array.from({ length: 6 }).map((_, i) => (
           <Card key={i} className="animate-pulse">
             <CardHeader>
@@ -92,19 +92,23 @@ const BadgeTypeList = ({ badgeTypes, loading, onRefetch }: BadgeTypeListProps) =
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      {/* Stacks below `sm` — the button's label is long enough on its own to
+          not fit beside the heading at 360px (same idiom as the contact
+          messages and mentor verification admin screens). */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-xl font-semibold">Badge Types ({badgeTypes.length})</h2>
-        <Button 
+        <Button
           onClick={handleAutoAward}
           disabled={autoAwarding}
           variant="outline"
+          className="w-full sm:w-auto"
         >
           <Award className="h-4 w-4 mr-2" />
           {autoAwarding ? "Auto-Awarding..." : "Auto-Award Performance Badges"}
         </Button>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         {badgeTypes.map((badge) => (
           <Card key={badge.id} className="hover:shadow-md transition-shadow">
             <CardHeader className="pb-3">

@@ -26,7 +26,12 @@ const AdminCard = ({ title, description, children, footer, className }: AdminCar
       transition={{ duration: 0.5 }}
       whileHover={{ y: -4, transition: { duration: 0.2 } }}
     >
-      <Card className={`${className} bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border-slate-200 dark:border-slate-700 shadow-xl hover:shadow-2xl transition-all duration-300 relative overflow-hidden group`}>
+      {/* min-w-0: without it, a wide child (the admin-users table, sized by
+          its own nowrap "Remove Admin" button) sets this card's min-content
+          width, and a CSS grid track sizes to that instead of the column's
+          share of the row — which is what pushed AdminSettings' two-card
+          grid past a 360px viewport. */}
+      <Card className={`${className} min-w-0 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border-slate-200 dark:border-slate-700 shadow-xl hover:shadow-2xl transition-all duration-300 relative overflow-hidden group`}>
         {/* Animated gradient border effect */}
         <div className="absolute inset-0 bg-gradient-to-r from-purple-500 via-pink-500 to-blue-500 opacity-0 group-hover:opacity-100 blur-xl transition-opacity duration-500" />
         <div className="absolute inset-[1px] bg-white dark:bg-slate-900 rounded-lg" />

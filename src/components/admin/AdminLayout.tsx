@@ -25,7 +25,15 @@ interface AdminLayoutProps {
 
 const AdminLayout = ({ children }: AdminLayoutProps) => {
   const location = useLocation();
-  const [collapsed, setCollapsed] = useState(false);
+  // Starting expanded is fine at desktop widths, but the full 280px sidebar
+  // plus its text labels ("Contact Messages", "Mentor Verification") does not
+  // fit next to any content on a 360px phone — it forced the whole page to
+  // scroll sideways. Collapsing to the icon-only rail by default below `lg`
+  // (this component's own breakpoint elsewhere) reuses the collapse this
+  // sidebar already had for desktop rather than adding a second nav pattern.
+  const [collapsed, setCollapsed] = useState(
+    () => typeof window !== "undefined" && window.innerWidth < 1024,
+  );
 
   const navigationItems = [
     {
@@ -256,8 +264,11 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
           </div>
         </motion.div>
 
-        {/* Main content */}
-        <div className="flex-1 p-8 relative z-0">
+        {/* Main content. min-w-0 lets this flex child shrink below its
+            content's intrinsic width — without it, a wide card or table
+            inside pushes the whole row wider than the viewport instead of
+            wrapping or scrolling internally. */}
+        <div className="min-w-0 flex-1 p-4 relative z-0 sm:p-6 lg:p-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

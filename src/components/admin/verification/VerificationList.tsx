@@ -57,7 +57,10 @@ const VerificationList = ({
   return (
     <div className="space-y-6">
       <Tabs value={selectedStatus} onValueChange={onStatusChange}>
-        <TabsList>
+        {/* Four nowrap triggers don't fit a 360px admin column; scrolling the
+            strip itself (like Table's own overflow-auto) keeps every tab
+            reachable without forcing the page wider. */}
+        <TabsList className="w-full justify-start overflow-x-auto">
           <TabsTrigger value="flagged" className="gap-1.5">
             Needs review
             {flaggedCount > 0 && (

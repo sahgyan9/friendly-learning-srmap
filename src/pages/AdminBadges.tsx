@@ -39,7 +39,11 @@ const AdminBadges = () => {
         title="Badge Management"
         description="Create, manage, and award badges to users"
         action={
-          <div className="flex gap-2">
+          // w-full + flex-wrap: two nowrap buttons side by side don't fit a
+          // 360px admin column. flex-wrap alone does not force a wrap here —
+          // as a shrink-to-fit box this div sizes to its unwrapped content
+          // unless given a definite width to wrap within.
+          <div className="flex w-full flex-wrap gap-2 sm:w-auto">
             <Button onClick={() => setShowAwardModal(true)}>
               Award Badge
             </Button>

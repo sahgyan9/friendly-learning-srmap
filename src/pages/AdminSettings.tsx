@@ -16,7 +16,11 @@ const AdminSettings = () => {
         description="Manage admin users and system settings"
       />
 
-      <div className="grid gap-6 md:grid-cols-2">
+      {/* grid-cols-1 explicitly, not just implied by omission: Tailwind's grid
+          utility alone leaves columns auto-sized (content width, unbounded),
+          so at the base breakpoint the wide admin-users table was setting the
+          track's width instead of the track constraining the table. */}
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         {/* Current Admin Users */}
         <AdminCard
           title="Current Admin Users"

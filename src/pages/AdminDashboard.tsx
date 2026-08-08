@@ -100,7 +100,7 @@ const AdminDashboard = () => {
       />
 
       <motion.div
-        className="grid gap-6 md:grid-cols-2 lg:grid-cols-3"
+        className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
@@ -108,6 +108,7 @@ const AdminDashboard = () => {
         {adminModules.map((module, index) => (
           <motion.div
             key={module.title}
+            className="min-w-0"
             variants={itemVariants}
             whileHover={{ scale: 1.03, y: -5 }}
             whileTap={{ scale: 0.98 }}
@@ -163,12 +164,16 @@ const AdminDashboard = () => {
                 <Button
                   asChild
                   variant="default"
-                  className={`w-full bg-gradient-to-r ${module.gradient} hover:opacity-90 text-white shadow-md hover:shadow-lg transition-all duration-300 group/btn`}
+                  // h-auto + whitespace-normal let the label wrap instead of
+                  // forcing this card (and its 360px grid column) wider than
+                  // the viewport — "Access Mentor Verification" does not fit
+                  // on one line at 360px with h-10's fixed nowrap default.
+                  className={`h-auto w-full whitespace-normal py-2.5 text-center leading-snug bg-gradient-to-r ${module.gradient} hover:opacity-90 text-white shadow-md hover:shadow-lg transition-all duration-300 group/btn`}
                   disabled={module.disabled}
                 >
                   <Link to={module.path}>
                     <span>Access {module.title}</span>
-                    <ArrowRight className="ml-2 h-4 w-4 group-hover/btn:translate-x-1 transition-transform" />
+                    <ArrowRight className="ml-2 h-4 w-4 shrink-0 group-hover/btn:translate-x-1 transition-transform" />
                   </Link>
                 </Button>
               </CardFooter>

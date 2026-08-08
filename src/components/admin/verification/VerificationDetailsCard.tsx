@@ -116,7 +116,9 @@ const VerificationDetailsCard = ({
     return (
         <Card className="hover:shadow-lg transition-shadow">
             <CardHeader>
-                <div className="flex items-start justify-between">
+                {/* Stacks below `sm` — the avatar/name block plus the status
+                    badge don't both fit on one row in a 360px admin column. */}
+                <div className="flex flex-col items-start gap-3 sm:flex-row sm:justify-between">
                     <div className="flex items-center space-x-4">
                         <Avatar className="h-16 w-16">
                             <AvatarImage src={applicationData.profile_image || verification.user?.profile_image} />
@@ -254,8 +256,10 @@ const VerificationDetailsCard = ({
 
                 <Separator />
 
-                {/* Submission Info */}
-                <div className="flex items-center justify-between text-sm text-muted-foreground">
+                {/* Submission Info. Stacks below `sm` — "Submitted x ago" next
+                    to the "View Full Details" button is a few px too wide for
+                    a 360px admin column. */}
+                <div className="flex flex-col gap-2 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-center space-x-2">
                         <Clock className="h-4 w-4" />
                         <span>
@@ -408,7 +412,7 @@ const VerificationDetailsCard = ({
                     is saved, and this way it stays reachable if you close the
                     tab before sending, or want to send it again later. */}
                 {verification.status === 'approved' && (
-                    <div className="flex items-center justify-between gap-3 pt-4 border-t">
+                    <div className="flex flex-col items-start gap-3 pt-4 border-t sm:flex-row sm:items-center sm:justify-between">
                         <p className="text-sm text-muted-foreground">
                             {welcome?.welcomed
                                 ? `Welcomed on ${new Date(welcome.sentAt as string).toLocaleDateString()}.`
@@ -430,9 +434,13 @@ const VerificationDetailsCard = ({
                     </div>
                 )}
 
-                {/* Action Buttons */}
+                {/* Action Buttons. flex-col below sm: two flex-1 buttons each
+                    have an implicit min-width equal to their own (nowrap)
+                    label, and "Approve Application" + "Reject Application"
+                    together don't fit a 360px admin column — stacking keeps
+                    both labels whole instead of clipping them. */}
                 {verification.status === 'pending' && (
-                    <div className="flex gap-3 pt-4 border-t">
+                    <div className="flex flex-col gap-3 pt-4 border-t sm:flex-row">
                         <Button
                             onClick={() => handleStatusUpdate('approved')}
                             disabled={updating === verification.id}
