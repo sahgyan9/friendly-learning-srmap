@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { createBadgeType } from "@/integrations/supabase/services/badges";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 
 interface BadgeCreationFormProps {
   onCancel: () => void;
@@ -23,16 +23,13 @@ const BadgeCreationForm = ({ onCancel, onSuccess }: BadgeCreationFormProps) => {
     category: "performance" as "performance" | "expertise" | "contribution" | "special"
   });
   const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.name.trim()) {
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "Badge name is required",
-        variant: "destructive",
       });
       return;
     }
@@ -54,10 +51,8 @@ const BadgeCreationForm = ({ onCancel, onSuccess }: BadgeCreationFormProps) => {
       
       onSuccess();
     } catch (error: any) {
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: error.message || "Failed to create badge type",
-        variant: "destructive",
       });
     } finally {
       setIsLoading(false);

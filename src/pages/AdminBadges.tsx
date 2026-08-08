@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import AdminLayout from "@/components/admin/AdminLayout";
@@ -14,21 +14,18 @@ const AdminBadges = () => {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [showAwardModal, setShowAwardModal] = useState(false);
   const { badgeTypes, loading, refetch } = useBadges();
-  const { toast } = useToast();
 
   const handleBadgeCreated = () => {
     setShowCreateForm(false);
     refetch();
-    toast({
-      title: "Success",
+    toast.success("Success", {
       description: "Badge type created successfully",
     });
   };
 
   const handleBadgeAwarded = () => {
     setShowAwardModal(false);
-    toast({
-      title: "Success",
+    toast.success("Success", {
       description: "Badge awarded successfully",
     });
   };

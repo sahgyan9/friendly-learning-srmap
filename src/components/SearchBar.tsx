@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { searchMentors } from "@/integrations/supabase/services/mentors";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -17,8 +17,7 @@ const SearchBar = ({ onSearch, onGeminiSearch }: SearchBarProps) => {
   const [query, setQuery] = useState("");
   const [isGeminiSearching, setIsGeminiSearching] = useState(false);
   const [isAiSearchEnabled, setIsAiSearchEnabled] = useState(false);
-  const { toast } = useToast();
-  
+
   // Use debounced value for search to avoid excessive API calls
   const debouncedQuery = useDebounce(query, 300);
 
@@ -67,10 +66,8 @@ const SearchBar = ({ onSearch, onGeminiSearch }: SearchBarProps) => {
 
   const handleGeminiSearch = async () => {
     if (!query.trim()) {
-      toast({
-        title: "Empty search",
+      toast.error("Empty search", {
         description: "Please enter a search query first",
-        variant: "destructive",
       });
       return;
     }
@@ -83,20 +80,16 @@ const SearchBar = ({ onSearch, onGeminiSearch }: SearchBarProps) => {
 
       if (error) {
         console.error("Gemini search error:", error);
-        toast({
-          title: "Search failed",
+        toast.error("Search failed", {
           description: "Couldn't connect to Gemini AI. Please try again.",
-          variant: "destructive",
         });
         return;
       }
 
       if (data.error) {
         console.error("Gemini API error:", data.error);
-        toast({
-          title: "AI search error",
+        toast.error("AI search error", {
           description: data.error,
-          variant: "destructive",
         });
         return;
       }
@@ -104,23 +97,19 @@ const SearchBar = ({ onSearch, onGeminiSearch }: SearchBarProps) => {
       if (data.mentors && data.mentors.length > 0) {
         console.log("AI Search returned mentors:", data.mentors);
         onGeminiSearch(data.mentors);
-        toast({
-          title: "AI Search Results",
+        toast.success("AI Search Results", {
           description: `Found ${data.mentors.length} mentors that match your query`,
         });
       } else {
-        toast({
-          title: "No results found",
+        toast("No results found", {
           description: "Try a different search term or browse all mentors",
         });
         onGeminiSearch([]); // Pass empty array to clear results
       }
     } catch (err) {
       console.error("Error during Gemini search:", err);
-      toast({
-        title: "Search error",
+      toast.error("Search error", {
         description: "An unexpected error occurred. Please try again.",
-        variant: "destructive",
       });
     } finally {
       setIsGeminiSearching(false);

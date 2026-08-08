@@ -22,7 +22,7 @@ import {
   deleteMarketplacePost,
   MarketplacePost 
 } from '@/integrations/supabase/services/marketplace';
-import { useToast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 import { Edit, Trash2, Plus, Loader2, Eye } from 'lucide-react';
 import MarketplacePostForm from '@/components/marketplace/MarketplacePostForm';
 import AdminLayout from '@/components/admin/AdminLayout';
@@ -31,8 +31,7 @@ import AdminHeader from '@/components/admin/AdminHeader';
 const MarketplaceAdmin = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { toast } = useToast();
-  
+
   const [posts, setPosts] = useState<MarketplacePost[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -56,10 +55,8 @@ const MarketplaceAdmin = () => {
       setPosts(data);
     } catch (error) {
       console.error('Error loading posts:', error);
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Failed to load marketplace posts',
-        variant: 'destructive',
       });
     } finally {
       setLoading(false);
@@ -81,16 +78,13 @@ const MarketplaceAdmin = () => {
       setIsDeleting(id);
       await deleteMarketplacePost(id);
       setPosts(posts.filter(post => post.id !== id));
-      toast({
-        title: 'Success',
+      toast.success('Success', {
         description: 'Post deleted successfully',
       });
     } catch (error) {
       console.error('Error deleting post:', error);
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Failed to delete post',
-        variant: 'destructive',
       });
     } finally {
       setIsDeleting(null);

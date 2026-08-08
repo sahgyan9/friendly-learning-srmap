@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Loader2, Upload, X } from "lucide-react";
 import { 
@@ -42,7 +42,6 @@ const TeamMemberForm = ({ member, onComplete }: TeamMemberFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(member?.image_url || null);
-  const { toast } = useToast();
 
   const defaultValues = {
     name: member?.name || "",
@@ -89,10 +88,8 @@ const TeamMemberForm = ({ member, onComplete }: TeamMemberFormProps) => {
         const { data: uploadData, error: uploadError } = await uploadTeamMemberImage(file);
         
         if (uploadError) {
-          toast({
-            title: "Error uploading image",
+          toast.error("Error uploading image", {
             description: uploadError.message,
-            variant: "destructive",
           });
           return;
         }
@@ -111,8 +108,7 @@ const TeamMemberForm = ({ member, onComplete }: TeamMemberFormProps) => {
 
         if (error) throw error;
 
-        toast({
-          title: "Success",
+        toast.success("Success", {
           description: "Team member updated successfully!",
         });
       } else {
@@ -129,8 +125,7 @@ const TeamMemberForm = ({ member, onComplete }: TeamMemberFormProps) => {
 
         if (error) throw error;
 
-        toast({
-          title: "Success",
+        toast.success("Success", {
           description: "Team member created successfully!",
         });
       }
@@ -138,10 +133,8 @@ const TeamMemberForm = ({ member, onComplete }: TeamMemberFormProps) => {
       onComplete();
     } catch (error) {
       console.error("Error saving team member:", error);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "Failed to save team member. Please try again.",
-        variant: "destructive",
       });
     } finally {
       setIsSubmitting(false);

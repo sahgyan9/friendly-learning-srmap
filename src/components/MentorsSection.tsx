@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, GraduationCap, UserPlus } from "lucide-react";
 
 import { getMentors } from "@/integrations/supabase/services/mentors";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Mentor } from "@/types/mentor";
 import { sampleMentors } from "@/data/mentors";
@@ -45,7 +45,6 @@ const MentorsSection = () => {
   const [mentors, setMentors] = useState<Mentor[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showBenefits, setShowBenefits] = useState(false);
-  const { toast } = useToast();
 
   useEffect(() => {
     const fetchMentors = async () => {
@@ -55,10 +54,8 @@ const MentorsSection = () => {
 
         if (error) {
           console.error("Error fetching mentors:", error);
-          toast({
-            title: "Error",
+          toast.error("Error", {
             description: "Failed to load mentors. Using sample data instead.",
-            variant: "destructive",
           });
           setMentors(sampleMentors.slice(0, 8));
           return;
@@ -69,18 +66,15 @@ const MentorsSection = () => {
           setMentors(data.slice(0, 8));
         } else {
           setMentors(sampleMentors.slice(0, 8));
-          toast({
-            title: "Using sample data",
+          toast("Using sample data", {
             description: "No mentors found in database. Using sample data instead.",
           });
         }
       } catch (err) {
         console.error("Exception fetching mentors:", err);
         setMentors(sampleMentors.slice(0, 8));
-        toast({
-          title: "Error",
+        toast.error("Error", {
           description: "An unexpected error occurred. Using sample data instead.",
-          variant: "destructive",
         });
       } finally {
         setIsLoading(false);
@@ -88,7 +82,7 @@ const MentorsSection = () => {
     };
 
     fetchMentors();
-  }, [toast]);
+  }, []);
 
   /**
    * "Set up your profile" only earns a slot when there is something left to set

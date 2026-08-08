@@ -12,7 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { setUserAsAdmin } from "@/integrations/supabase/services/admin";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -33,7 +33,6 @@ const UserSearchForm = ({ onUserAdded }: UserSearchFormProps) => {
   const [searchResults, setSearchResults] = useState<User[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [processingUser, setProcessingUser] = useState<string | null>(null);
-  const { toast } = useToast();
 
   const handleSearch = async () => {
     if (!searchEmail.trim()) return;
@@ -46,10 +45,8 @@ const UserSearchForm = ({ onUserAdded }: UserSearchFormProps) => {
       setSearchResults(users);
     } catch (error) {
       console.error("Error searching for users:", error);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "Failed to search for users",
-        variant: "destructive",
       });
     } finally {
       setIsSearching(false);
@@ -60,8 +57,7 @@ const UserSearchForm = ({ onUserAdded }: UserSearchFormProps) => {
     try {
       setProcessingUser(userId);
       await setUserAsAdmin(userId);
-      toast({
-        title: "Success",
+      toast.success("Success", {
         description: "User has been granted admin privileges",
       });
       onUserAdded();
@@ -69,10 +65,8 @@ const UserSearchForm = ({ onUserAdded }: UserSearchFormProps) => {
       setSearchEmail("");
     } catch (error) {
       console.error("Error setting user as admin:", error);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "Failed to grant admin privileges",
-        variant: "destructive",
       });
     } finally {
       setProcessingUser(null);

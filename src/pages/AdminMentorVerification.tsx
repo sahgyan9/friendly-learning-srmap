@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useMemo } from "react";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import AdminLayout from "@/components/admin/AdminLayout";
 import AdminHeader from "@/components/admin/AdminHeader";
 import VerificationList from "@/components/admin/verification/VerificationList";
@@ -34,7 +34,6 @@ const AdminMentorVerification = () => {
     cgpaRange: '',
     yearOfStudies: ''
   });
-  const { toast } = useToast();
 
   // Filter and process verifications
   const filteredVerifications = useMemo(() => {
@@ -135,10 +134,8 @@ const AdminMentorVerification = () => {
 
       setWelcomeStatus(welcome.byId);
     } catch (error) {
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: `Failed to load verification data: ${error.message || 'Unknown error'}`,
-        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -151,8 +148,7 @@ const AdminMentorVerification = () => {
 
   const handleStatusUpdate = () => {
     fetchData();
-    toast({
-      title: "Success",
+    toast.success("Success", {
       description: "Verification status updated successfully",
     });
   };

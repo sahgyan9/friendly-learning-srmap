@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Trash2, Edit, Award } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { deleteBadgeType, autoAwardPerformanceBadges } from "@/integrations/supabase/services/badges";
 import {
   AlertDialog,
@@ -27,23 +27,19 @@ interface BadgeTypeListProps {
 const BadgeTypeList = ({ badgeTypes, loading, onRefetch }: BadgeTypeListProps) => {
   const [deleting, setDeleting] = useState<string | null>(null);
   const [autoAwarding, setAutoAwarding] = useState(false);
-  const { toast } = useToast();
 
   const handleDelete = async (badgeId: string) => {
     try {
       setDeleting(badgeId);
       await deleteBadgeType(badgeId);
       onRefetch();
-      toast({
-        title: "Success",
+      toast.success("Success", {
         description: "Badge type deleted successfully",
       });
     } catch (error) {
       console.error('Error deleting badge:', error);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "Failed to delete badge type",
-        variant: "destructive",
       });
     } finally {
       setDeleting(null);
@@ -54,16 +50,13 @@ const BadgeTypeList = ({ badgeTypes, loading, onRefetch }: BadgeTypeListProps) =
     try {
       setAutoAwarding(true);
       await autoAwardPerformanceBadges();
-      toast({
-        title: "Success",
+      toast.success("Success", {
         description: "Performance badges have been automatically awarded",
       });
     } catch (error) {
       console.error('Error auto-awarding badges:', error);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "Failed to auto-award badges",
-        variant: "destructive",
       });
     } finally {
       setAutoAwarding(false);

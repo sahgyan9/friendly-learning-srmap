@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getTeamMembers, TeamMember } from '@/integrations/supabase/services/team-members';
-import { useToast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Card, CardContent } from '@/components/ui/card';
 import { Mail } from 'lucide-react';
@@ -16,7 +16,6 @@ interface TeamMembersProps {
 const TeamMembers = ({ teamMembers, isAdmin, onEdit, onMembersUpdated }: TeamMembersProps) => {
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { toast } = useToast();
 
   useEffect(() => {
     // If teamMembers are provided as props, use those
@@ -36,18 +35,16 @@ const TeamMembers = ({ teamMembers, isAdmin, onEdit, onMembersUpdated }: TeamMem
         setMembers(data || []);
       } catch (err) {
         console.error('Error loading team members:', err);
-        toast({
-          title: 'Error',
+        toast.error('Error', {
           description: 'Failed to load team members.',
-          variant: 'destructive',
         });
       } finally {
         setIsLoading(false);
       }
     };
-    
+
     loadTeamMembers();
-  }, [toast, teamMembers]);
+  }, [teamMembers]);
 
   // Animation variants
   const containerVariants = {

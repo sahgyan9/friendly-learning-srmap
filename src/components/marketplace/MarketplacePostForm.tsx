@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/select";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { Loader2, Upload, X } from "lucide-react";
 import { 
   createMarketplacePost, 
@@ -52,7 +52,6 @@ const MarketplacePostForm = ({ post, onComplete }: MarketplacePostFormProps) => 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(post?.image_url || null);
-  const { toast } = useToast();
 
   const defaultValues = {
     title: post?.title || "",
@@ -120,16 +119,14 @@ const MarketplacePostForm = ({ post, onComplete }: MarketplacePostFormProps) => 
         // Update existing post
         await updateMarketplacePost(post.id, postData);
 
-        toast({
-          title: "Success",
+        toast.success("Success", {
           description: "Post updated successfully!",
         });
       } else {
         // Create new post
         await createMarketplacePost(postData);
 
-        toast({
-          title: "Success",
+        toast.success("Success", {
           description: "Post created successfully!",
         });
       }
@@ -137,10 +134,8 @@ const MarketplacePostForm = ({ post, onComplete }: MarketplacePostFormProps) => 
       onComplete();
     } catch (error) {
       console.error("Error saving post:", error);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "Failed to save post. Please try again.",
-        variant: "destructive",
       });
     } finally {
       setIsSubmitting(false);

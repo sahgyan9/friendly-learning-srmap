@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Plus, Loader2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
@@ -23,8 +23,7 @@ import AdminCard from "@/components/admin/AdminCard";
 const TeamMembersAdmin = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { toast } = useToast();
-  
+
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -47,10 +46,8 @@ const TeamMembersAdmin = () => {
         
         if (!adminStatus) {
           navigate('/unauthorized');
-          toast({
-            title: "Access Denied",
+          toast.error("Access Denied", {
             description: "You don't have permission to access this page.",
-            variant: "destructive",
           });
           return;
         }
@@ -66,18 +63,16 @@ const TeamMembersAdmin = () => {
         }
       } catch (error) {
         console.error("Error loading admin data:", error);
-        toast({
-          title: "Error",
+        toast.error("Error", {
           description: "Failed to load team members data.",
-          variant: "destructive",
         });
       } finally {
         setIsLoading(false);
       }
     };
-    
+
     checkAdminAndLoadData();
-  }, [user, navigate, toast]);
+  }, [user, navigate]);
   
   const handleAddMember = () => {
     setEditingMember(null);
@@ -108,10 +103,8 @@ const TeamMembersAdmin = () => {
         }
       } catch (error) {
         console.error("Error reloading team members:", error);
-        toast({
-          title: "Error",
+        toast.error("Error", {
           description: "Failed to reload team members.",
-          variant: "destructive",
         });
       }
     };

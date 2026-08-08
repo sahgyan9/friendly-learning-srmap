@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { removeAdminPrivilege } from "@/integrations/supabase/services/admin";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -30,23 +30,19 @@ interface AdminUsersListProps {
 
 const AdminUsersList = ({ adminUsers, isLoading, onUserRemoved }: AdminUsersListProps) => {
   const [processingUser, setProcessingUser] = useState<string | null>(null);
-  const { toast } = useToast();
 
   const handleRemoveAdmin = async (userId: string) => {
     try {
       setProcessingUser(userId);
       await removeAdminPrivilege(userId);
-      toast({
-        title: "Success",
+      toast.success("Success", {
         description: "Admin privileges have been revoked",
       });
       onUserRemoved();
     } catch (error) {
       console.error("Error removing admin privileges:", error);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "Failed to revoke admin privileges",
-        variant: "destructive",
       });
     } finally {
       setProcessingUser(null);
