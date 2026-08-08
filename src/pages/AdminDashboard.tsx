@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import AdminPageWrapper from "@/components/admin/AdminPageWrapper";
 import AdminHeader from "@/components/admin/AdminHeader";
+import PlatformHealthPanel from "@/components/admin/PlatformHealthPanel";
 import { motion } from "framer-motion";
 
 const AdminDashboard = () => {
@@ -98,6 +99,8 @@ const AdminDashboard = () => {
         title="Admin Dashboard"
         description="Welcome to the admin area. Manage your site content and settings from here."
       />
+
+      <PlatformHealthPanel />
 
       <motion.div
         className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3"

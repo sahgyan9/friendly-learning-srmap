@@ -2344,6 +2344,10 @@ export type Database = {
       }
     }
     Functions: {
+      admin_health_metrics: {
+        Args: never
+        Returns: Json
+      }
       admin_list_mentor_welcome_status: {
         Args: never
         Returns: {
