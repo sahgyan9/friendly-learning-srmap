@@ -444,11 +444,11 @@ for (const file of [
 console.log('');
 
 // =====================================================================
-// SKIPPED (59 of the 87 files in supabase/migrations/, not executed above).
+// SKIPPED (60 of the 88 files in supabase/migrations/, not executed above).
 // Every migration in the repo falls into exactly one of these five groups.
 // None of them are silently missing -- each is listed below with why.
 //
-// 1. PGVECTOR (1 file) -- genuinely cannot run in PGlite.
+// 1. PGVECTOR (2 files) -- genuinely cannot run in PGlite.
 //    20260806160000_knowledge_chunks.sql
 //    Creates `extensions.vector(768)`. The installed @electric-sql/pglite
 //    (0.5.4, currently latest) ships no pgvector build at all, in any
@@ -458,6 +458,16 @@ console.log('');
 //    can still be exercised for real. HNSW / cosine-similarity behaviour is
 //    verified separately against the live Supabase Postgres with
 //    BEGIN/ROLLBACK, which does have pgvector.
+//
+//    20260809120000_student_interest_chunks.sql
+//    The rebuild_student_chunks() projector upserts into knowledge_chunks
+//    and its ON CONFLICT clause reads/writes the `embedding` vector column,
+//    so it needs the real pgvector table. Verified against production
+//    2026-08-09 with a full BEGIN/ROLLBACK rehearsal before apply: the
+//    per-row trigger projected a chunk on opt-in, deleted it on opt-out,
+//    the body carried the interests text, and no student chunk existed
+//    with visibility other than 'signed_in'. All assertions raised on
+//    failure; the batch completed clean, then rolled back.
 //
 // 2. HTTP EXTENSION (1 file) -- genuinely cannot run in PGlite.
 //    20250830093916_929b871a-3813-4027-b579-bc3b114062c6.sql
