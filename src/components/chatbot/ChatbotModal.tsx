@@ -491,8 +491,9 @@ const ChatbotModal = ({ isOpen, onClose }: ChatbotModalProps) => {
                     </div>
                   )}
                 </motion.div>
-              ));
-            })()}
+              );
+            });
+          })()}
 
               {/* AI typing indicator */}
               {isLoading && (
