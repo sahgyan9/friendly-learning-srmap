@@ -36,7 +36,6 @@ export function CommunityRow({ community, onMembershipChange }: CommunityRowProp
       >
         {/* Hero icon avatar */}
         <CommunityAvatar
-          slug={community.slug}
           kind={community.kind}
           name={community.name}
           coverImage={community.cover_image}

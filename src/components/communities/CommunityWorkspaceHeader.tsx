@@ -92,7 +92,6 @@ export function CommunityWorkspaceHeader({
         {/* Identity & stats */}
         <div className="flex items-start gap-4 min-w-0 flex-1">
           <CommunityAvatar
-            slug={community.slug}
             kind={community.kind}
             name={community.name}
             coverImage={community.cover_image}

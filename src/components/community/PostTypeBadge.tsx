@@ -44,9 +44,8 @@ export function PostTypeBadge({ type, className }: { type: string; className?: s
   return (
     <Badge
       variant="secondary"
-      className={cn("gap-1 border-0 font-medium", TYPE_STYLES[type] ?? TYPE_STYLES.general, className)}
+      className={cn("border-0 font-medium", TYPE_STYLES[type] ?? TYPE_STYLES.general, className)}
     >
-      <meta.icon className="h-3 w-3" aria-hidden />
       {meta.label}
     </Badge>
   );
