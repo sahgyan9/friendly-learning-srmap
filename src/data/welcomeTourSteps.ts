@@ -1,10 +1,10 @@
 import {
   Calendar,
-  GraduationCap,
   HelpCircle,
   Rocket,
   Sparkles,
   Star,
+  UserCircle,
   UsersRound,
   Users,
   type LucideIcon,
@@ -88,11 +88,11 @@ export const WELCOME_TOUR_STEPS: WelcomeTourStep[] = [
     cta: { label: "View events", url: "/marketplace" },
   },
   {
-    icon: GraduationCap,
+    icon: UserCircle,
     accent: "teal",
-    title: "Become a mentor yourself",
+    title: "Set up your profile",
     description:
-      "Once you've settled in, become a mentor so other freshers can find and learn from you.",
-    cta: { label: "Become a mentor", url: "/become-mentor" },
+      "Add a photo, a short bio, and your skills so mentors and other students actually recognize you.",
+    cta: { label: "Complete your profile", url: "/profile" },
   },
 ];

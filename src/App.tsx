@@ -8,6 +8,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/context/AuthContext";
 import { WelcomeTourProvider } from "@/components/onboarding/WelcomeTourContext";
 import WelcomeTour from "@/components/onboarding/WelcomeTour";
+import SignInNudge from "@/components/onboarding/SignInNudge";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import RouteRobots from "@/components/RouteRobots";
 import ScrollToTop from "@/components/ScrollToTop";
@@ -103,6 +104,7 @@ const ResetPassword = lazyWithRetry("ResetPassword", () => import("./pages/Reset
 const UserProfile = lazyWithRetry("UserProfile", () => import("./pages/UserProfile"));
 const Mentors = lazyWithRetry("Mentors", () => import("./pages/Mentors"));
 const BecomeMentor = lazyWithRetry("BecomeMentor", () => import("./pages/BecomeMentor"));
+const BecomeMentorSuccess = lazyWithRetry("BecomeMentorSuccess", () => import("./pages/BecomeMentorSuccess"));
 const MentorProfile = lazyWithRetry("MentorProfile", () => import("./pages/MentorProfile"));
 const Messages = lazyWithRetry("Messages", () => import("./pages/Messages"));
 const Contact = lazyWithRetry("Contact", () => import("./pages/Contact"));
@@ -183,6 +185,7 @@ function App() {
             <RouteRobots />
             <ScrollToTop />
             <WelcomeTour />
+            <SignInNudge />
 
             {/* One header for the whole app. Pages used to render their own
                 <Navbar /> underneath a separately-mounted floating nav, which
@@ -244,6 +247,14 @@ function App() {
                   element={
                     <ProtectedRoute>
                       <BecomeMentor />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/become-mentor/success"
+                  element={
+                    <ProtectedRoute>
+                      <BecomeMentorSuccess />
                     </ProtectedRoute>
                   }
                 />
