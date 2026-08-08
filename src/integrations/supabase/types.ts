@@ -14,6 +14,72 @@ export type Database = {
   }
   public: {
     Tables: {
+      academic_imports: {
+        Row: {
+          attempt_count: number
+          cgpa: number | null
+          created_at: string
+          current_semester: number | null
+          id: string
+          last_attempt_at: string | null
+          last_error: string | null
+          last_synced_at: string | null
+          program: string | null
+          register_number: string
+          subjects: Json
+          sync_status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          attempt_count?: number
+          cgpa?: number | null
+          created_at?: string
+          current_semester?: number | null
+          id?: string
+          last_attempt_at?: string | null
+          last_error?: string | null
+          last_synced_at?: string | null
+          program?: string | null
+          register_number: string
+          subjects?: Json
+          sync_status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          attempt_count?: number
+          cgpa?: number | null
+          created_at?: string
+          current_semester?: number | null
+          id?: string
+          last_attempt_at?: string | null
+          last_error?: string | null
+          last_synced_at?: string | null
+          program?: string | null
+          register_number?: string
+          subjects?: Json
+          sync_status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academic_imports_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "academic_imports_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "users_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       admin_audit_log: {
         Row: {
           action: string

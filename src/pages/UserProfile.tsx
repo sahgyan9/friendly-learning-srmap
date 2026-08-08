@@ -18,6 +18,7 @@ import AvailabilityControl from "@/components/mentors/AvailabilityControl";
 import ReviewsList from "@/components/rating/ReviewsList";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AvatarCropDialog from "@/components/profile/AvatarCropDialog";
+import ImportSrmPortal from "@/components/profile/ImportSrmPortal";
 import { downscaleImage } from "@/lib/image/downscale";
 import { storagePathFromPublicUrl } from "@/lib/image/storage-path";
 
@@ -545,6 +546,7 @@ const UserProfile = () => {
               </TabsList>
 
               <TabsContent value="profile" className="space-y-6">
+                <ImportSrmPortal />
                 <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
                   {/* Profile Information */}
                   <Card>

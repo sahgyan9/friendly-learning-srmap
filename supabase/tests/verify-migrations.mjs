@@ -48,7 +48,44 @@ await db.exec(`
   CREATE TABLE public.mentors (
     id uuid PRIMARY KEY REFERENCES public.users(id),
     name text,
-    department text
+    department text,
+    year_of_studies text,
+    skills text[],
+    bio text,
+    hobbies text,
+    is_alumni boolean DEFAULT false,
+    job_title text,
+    company text,
+    profile_image text,
+    rating numeric,
+    review_count integer
+  );
+
+  -- Trimmed stand-in for public.knowledge_chunks (20260806160000). The real
+  -- table's \`embedding\` column is \`extensions.vector(768)\`, but the installed
+  -- @electric-sql/pglite (0.5.4, currently the latest release) ships no vector
+  -- extension at all -- confirmed by listing its dist/*.tar.gz contrib bundles,
+  -- pgvector is not among them, in any version. So this stub uses jsonb as a
+  -- placeholder for a column this test never does vector math against; it
+  -- exists only so rebuild_mentor_chunks()'s CASE...THEN NULL ELSE embedding
+  -- expression type-checks. Real HNSW/cosine-similarity behaviour is only
+  -- verified against the live Supabase Postgres, which does have pgvector.
+  CREATE TABLE public.knowledge_chunks (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    entity_type TEXT NOT NULL,
+    entity_id UUID NOT NULL,
+    title TEXT NOT NULL,
+    subtitle TEXT,
+    body TEXT NOT NULL,
+    metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+    visibility TEXT NOT NULL DEFAULT 'public',
+    source_path TEXT,
+    content_hash TEXT NOT NULL,
+    embedding JSONB,
+    embedded_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE (entity_type, entity_id)
   );
   CREATE FUNCTION public.is_admin_user(user_id uuid DEFAULT auth.uid())
     RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER AS
@@ -164,6 +201,7 @@ for (const file of [
   '20260806100000_faculty_research_interests.sql',
   '20260807140000_community_channels.sql',
   '20260808150000_mentor_projects_experience.sql',
+  '20260808160000_academic_imports.sql',
 ]) {
   const sql = fs.readFileSync(path.join(MIGRATIONS, file), 'utf8');
   try {
@@ -599,6 +637,100 @@ check(
   mentorGrants.length === 2,
   mentorGrants.map((g) => g.column_name).join(',') || '(none)',
 );
+
+// ---------------------------------------------------------------- academic imports
+console.log('\nacademic imports:');
+
+// GRANT for `authenticated` on academic_imports already comes from the
+// migration itself (it runs as superuser above); no extra grant needed here.
+
+// Import starts pending — a mentor applying with no portal data yet.
+await q(
+  `INSERT INTO public.academic_imports (user_id, register_number, program, sync_status)
+   VALUES ($1, 'AP23111260062', 'B.Sc. Physics', 'pending')`,
+  [OTHER_UID],
+);
+const { rows: [pendingChunk] } = await q(
+  `SELECT body, metadata FROM public.knowledge_chunks WHERE entity_type='mentor' AND entity_id=$1`,
+  [OTHER_UID],
+);
+check(
+  'reproject trigger fires on INSERT (chunk exists)',
+  !!pendingChunk,
+  pendingChunk ? 'found' : 'missing',
+);
+check(
+  'a pending (not yet successful) import contributes no coursework',
+  !pendingChunk?.body?.includes('Coursework:'),
+  pendingChunk?.body ?? '',
+);
+
+// Now the import succeeds with real subjects + a portal-computed CGPA.
+const subjects = JSON.stringify([
+  { semester: 6, code: 'PHY 305', name: 'NUCLEAR AND PARTICLE PHYSICS', credit: 4 },
+  { semester: 6, code: 'PHY 307', name: 'SOLID-STATE PHYSICS', credit: 4 },
+]);
+await q(
+  `UPDATE public.academic_imports
+   SET sync_status='success', subjects=$1::jsonb, cgpa=9.67, last_synced_at=now()
+   WHERE user_id=$2`,
+  [subjects, OTHER_UID],
+);
+const { rows: [successChunk] } = await q(
+  `SELECT body, metadata FROM public.knowledge_chunks WHERE entity_type='mentor' AND entity_id=$1`,
+  [OTHER_UID],
+);
+check(
+  'reproject trigger fires on UPDATE (coursework appears)',
+  successChunk?.body?.includes('SOLID-STATE PHYSICS'),
+  successChunk?.body ?? '',
+);
+check(
+  'CGPA number is never folded into the indexed body text',
+  !successChunk?.body?.includes('9.67'),
+  successChunk?.body ?? '',
+);
+check(
+  'cgpa/program land in metadata for display, not body',
+  Number(successChunk?.metadata?.verified_cgpa) === 9.67 && successChunk?.metadata?.verified_program === 'B.Sc. Physics',
+  JSON.stringify(successChunk?.metadata),
+);
+
+// RLS: owner can read their own row; a different signed-in student cannot.
+await db.exec(`GRANT SELECT ON auth._session TO authenticated`);
+await actAs(OTHER_UID);
+const ownImport = await asAuthenticated(() =>
+  q(`SELECT id FROM public.academic_imports WHERE user_id=$1`, [OTHER_UID]));
+check('RLS admits the owner reading their own academic import', ownImport.rows.length === 1, `${ownImport.rows.length} rows`);
+
+await actAs(CURRENT_UID);
+const foreignImport = await asAuthenticated(() =>
+  q(`SELECT id FROM public.academic_imports WHERE user_id=$1`, [OTHER_UID]));
+check('RLS blocks a different student from reading it', foreignImport.rows.length === 0, `${foreignImport.rows.length} rows`);
+
+// Rate limit trigger: defense in depth behind the edge function's own check.
+await q(`UPDATE public.academic_imports SET attempt_count=5, last_attempt_at=now() WHERE user_id=$1`, [OTHER_UID]);
+let sixthRejected = false;
+try {
+  await q(`UPDATE public.academic_imports SET attempt_count=6, last_attempt_at=now() WHERE user_id=$1`, [OTHER_UID]);
+} catch (error) {
+  sixthRejected = error.message.includes('Too many import attempts');
+}
+check('a 6th attempt within 15 minutes is rejected by the DB trigger', sixthRejected);
+
+// Supabase's default privileges hand every new table ALL to anon and
+// authenticated; this table must keep anon out entirely and authenticated to
+// SELECT-only (all writes go through the service-role edge function).
+const { rows: importAcl } = await q(
+  `SELECT grantee, string_agg(DISTINCT privilege_type, ',' ORDER BY privilege_type) AS privs
+     FROM information_schema.table_privileges
+    WHERE table_schema='public' AND table_name='academic_imports' AND grantee IN ('anon','authenticated')
+    GROUP BY grantee`,
+);
+const importAnon = importAcl.find((r) => r.grantee === 'anon');
+const importAuth = importAcl.find((r) => r.grantee === 'authenticated');
+check('academic_imports grants nothing to anon', !importAnon, importAnon?.privs ?? 'none');
+check('academic_imports grants SELECT only to authenticated', importAuth?.privs === 'SELECT', importAuth?.privs ?? 'none');
 
 console.log(failures === 0
   ? '\nAll migration checks passed against real Postgres.'
