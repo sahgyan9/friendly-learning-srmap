@@ -1,17 +1,14 @@
-import {
-  Calendar,
-  HelpCircle,
-  MessageSquarePlus,
-  Rocket,
-  Sparkles,
-  Star,
-  UserCircle,
-  UsersRound,
-  type LucideIcon,
-} from "lucide-react";
+import type { ComponentType, SVGProps } from "react";
+import { Rocket, Sparkles, UserCircle } from "lucide-react";
+
+import { EventsIcon } from "@/components/icons/EventsIcon";
+import { FacultyIcon } from "@/components/icons/FacultyIcon";
+import { GroupsIcon } from "@/components/icons/GroupsIcon";
+import { MentorIcon } from "@/components/icons/MentorIcon";
+import { PostIcon } from "@/components/icons/PostIcon";
 
 export interface WelcomeTourStep {
-  icon: LucideIcon;
+  icon: ComponentType<SVGProps<SVGSVGElement>>;
   title: string;
   description: string;
   /**
@@ -49,7 +46,7 @@ export const WELCOME_TOUR_STEPS: WelcomeTourStep[] = [
     cta: { label: "Complete your profile", url: "/profile" },
   },
   {
-    icon: MessageSquarePlus,
+    icon: PostIcon,
     accent: "emerald",
     title: "Share what's happening on campus",
     description:
@@ -57,7 +54,7 @@ export const WELCOME_TOUR_STEPS: WelcomeTourStep[] = [
     cta: { label: "Browse campus posts", url: "/community-posts" },
   },
   {
-    icon: UsersRound,
+    icon: GroupsIcon,
     accent: "amber",
     title: "Your own workspace to collaborate & work",
     description:
@@ -65,7 +62,7 @@ export const WELCOME_TOUR_STEPS: WelcomeTourStep[] = [
     cta: { label: "Explore workspaces", url: "/communities" },
   },
   {
-    icon: Star,
+    icon: FacultyIcon,
     accent: "rose",
     title: "Rate your faculty",
     description:
@@ -80,7 +77,7 @@ export const WELCOME_TOUR_STEPS: WelcomeTourStep[] = [
     cta: { label: "Find hackathon partners", url: "/opportunities" },
   },
   {
-    icon: Calendar,
+    icon: EventsIcon,
     accent: "sky",
     title: "See what's happening",
     description:
@@ -88,7 +85,7 @@ export const WELCOME_TOUR_STEPS: WelcomeTourStep[] = [
     cta: { label: "View events", url: "/marketplace" },
   },
   {
-    icon: HelpCircle,
+    icon: MentorIcon,
     accent: "blue",
     title: "Ask a mentor any doubt",
     description:
