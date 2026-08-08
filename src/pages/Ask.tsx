@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
-import { Search, Sparkles, UserRound, GraduationCap, Loader2 } from "lucide-react";
+import { Search, Sparkles, UserRound, GraduationCap, Users, Loader2 } from "lucide-react";
 
 import Footer from "@/components/Footer";
 import SEOHead from "@/components/SEOHead";
@@ -30,10 +30,15 @@ const EXAMPLES = [
 ];
 
 function ResultCard({ result }: { result: AskResult }) {
-  const isFaculty = result.entity_type === "faculty";
-  // Faculty list research interests; mentors list skills. Same visual role.
-  const tags = isFaculty ? metaList(result, "interests") : metaList(result, "skills");
+  // Faculty and students list interests; mentors list skills. Same visual role.
+  const tags =
+    result.entity_type === "faculty" || result.entity_type === "student"
+      ? metaList(result, "interests")
+      : metaList(result, "skills");
   const image = metaString(result, "image_url") ?? metaString(result, "profile_image");
+  // Plain students have no public profile route the way mentors do — nothing
+  // to link to, so the title renders as text rather than a link.
+  const linkable = result.entity_type !== "student" && Boolean(result.source_path);
 
   return (
     <Card className="flex gap-3 p-3 transition-colors hover:border-primary/30">
@@ -56,9 +61,13 @@ function ResultCard({ result }: { result: AskResult }) {
       </div>
 
       <div className="min-w-0 flex-1">
-        <Link to={result.source_path} className="font-semibold leading-tight hover:underline">
-          {result.title}
-        </Link>
+        {linkable ? (
+          <Link to={result.source_path} className="font-semibold leading-tight hover:underline">
+            {result.title}
+          </Link>
+        ) : (
+          <p className="font-semibold leading-tight">{result.title}</p>
+        )}
         {result.subtitle && (
           <p className="line-clamp-1 text-xs text-muted-foreground">{result.subtitle}</p>
         )}
@@ -221,6 +230,22 @@ const Ask = () => {
                   </h2>
                   <div className="grid gap-2 sm:grid-cols-2">
                     {results.mentors.map((result) => (
+                      <ResultCard key={result.entity_id} result={result} />
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {/* Absent (undefined) or empty renders nothing — no header, no
+                  empty state — same rule as every other group here. */}
+              {results.students && results.students.length > 0 && (
+                <section>
+                  <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                    <Users className="h-4 w-4" />
+                    Students into this
+                  </h2>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {results.students.map((result) => (
                       <ResultCard key={result.entity_id} result={result} />
                     ))}
                   </div>

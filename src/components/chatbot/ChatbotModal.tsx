@@ -124,6 +124,19 @@ interface FacultySuggestion {
   path: string;
 }
 
+/**
+ * Optional — the `ai-chatbot` function has no `suggestedStudents` field yet.
+ * Plain students also have no public profile route the way mentors do
+ * (`/mentor/:id`), so unlike `FacultySuggestion` there is deliberately no
+ * `path` here: the card renders name + interests only, never a link.
+ */
+interface StudentSuggestion {
+  id: string;
+  name: string;
+  image_url: string | null;
+  interests: string[];
+}
+
 type RichContent = "certificate-preview" | "mentor-benefits";
 
 interface Message {
@@ -132,6 +145,7 @@ interface Message {
   content: string;
   mentorSuggestions?: any[];
   facultySuggestions?: FacultySuggestion[];
+  studentSuggestions?: StudentSuggestion[];
   richContent?: RichContent | null;
   timestamp: Date;
 }
@@ -270,6 +284,9 @@ const ChatbotModal = ({ isOpen, onClose }: ChatbotModalProps) => {
         content: data.aiResponse,
         mentorSuggestions: data.suggestedMentors || [],
         facultySuggestions: data.suggestedFaculty || [],
+        // Absent on any deployed function that predates this field — `|| []`
+        // keeps that "no students" rather than a crash.
+        studentSuggestions: data.suggestedStudents || [],
         richContent: data.richContent ?? null,
         timestamp: new Date(),
       };
@@ -480,6 +497,34 @@ const ChatbotModal = ({ isOpen, onClose }: ChatbotModalProps) => {
                               </span>
                             </span>
                           </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Student cards — no navigation, no public profile route
+                        for a plain student to link to. */}
+                    {message.studentSuggestions && message.studentSuggestions.length > 0 && (
+                      <div className="space-y-1.5">
+                        <p className="text-xs text-muted-foreground">Students into this too:</p>
+                        {message.studentSuggestions.map((student) => (
+                          <div
+                            key={student.id}
+                            className="flex items-start gap-2.5 rounded-lg border border-border bg-card p-2.5"
+                          >
+                            {student.image_url ? (
+                              <img src={student.image_url} alt="" loading="lazy" className="h-9 w-9 shrink-0 rounded-full object-cover" />
+                            ) : (
+                              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-medium">
+                                {student.name.slice(0, 2)}
+                              </span>
+                            )}
+                            <span className="min-w-0">
+                              <span className="block truncate text-sm font-medium">{student.name}</span>
+                              <span className="block truncate text-xs text-muted-foreground">
+                                {student.interests.length > 0 ? student.interests.slice(0, 3).join(" · ") : "Student"}
+                              </span>
+                            </span>
+                          </div>
                         ))}
                       </div>
                     )}

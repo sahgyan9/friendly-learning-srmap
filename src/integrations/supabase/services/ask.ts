@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
  * shape that fits none of them.
  */
 export type AskResult = {
-  entity_type: "faculty" | "mentor" | "opportunity" | "community" | "post";
+  entity_type: "faculty" | "mentor" | "student" | "opportunity" | "community" | "post";
   entity_id: string;
   title: string;
   subtitle: string | null;
@@ -24,6 +24,13 @@ export type AskResponse = {
   total: number;
   faculty: AskResult[];
   mentors: AskResult[];
+  /**
+   * Optional until the backend ships it. Same row shape as `mentors`, with
+   * `entity_type: "student"`. Absent (not an empty array) on any deployed
+   * function that predates this field — every reader must treat `undefined`
+   * as "no students group" rather than crash on it.
+   */
+  students?: AskResult[];
   opportunities: AskResult[];
   communities: AskResult[];
   posts: AskResult[];
@@ -45,6 +52,7 @@ export function allResults(data: AskResponse): AskResult[] {
   return [
     ...data.faculty,
     ...data.mentors,
+    ...(data.students ?? []),
     ...data.opportunities,
     ...(data.communities ?? []),
     ...(data.posts ?? []),

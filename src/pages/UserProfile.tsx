@@ -19,6 +19,7 @@ import ReviewsList from "@/components/rating/ReviewsList";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AvatarCropDialog from "@/components/profile/AvatarCropDialog";
 import ImportSrmPortal from "@/components/profile/ImportSrmPortal";
+import InterestsEditor from "@/components/profile/InterestsEditor";
 import { downscaleImage } from "@/lib/image/downscale";
 import { storagePathFromPublicUrl } from "@/lib/image/storage-path";
 
@@ -36,6 +37,8 @@ interface UserProfile {
   verification_status: string;
   email_notifications: boolean;
   email_frequency: string;
+  interests: string[];
+  interests_discoverable: boolean;
 }
 
 interface MentorProfile {
@@ -75,6 +78,8 @@ const UserProfile = () => {
     verification_status: "pending",
     email_notifications: true,
     email_frequency: "instant",
+    interests: [],
+    interests_discoverable: false,
   });
   const [mentorProfile, setMentorProfile] = useState<MentorProfile>({
     cgpa: null,
@@ -133,6 +138,8 @@ const UserProfile = () => {
           verification_status: data.verification_status || "pending",
           email_notifications: data.email_notifications ?? true,
           email_frequency: data.email_frequency || "instant",
+          interests: data.interests || [],
+          interests_discoverable: data.interests_discoverable ?? false,
         });
 
         // Fetch mentor-specific data if user is a mentor
@@ -308,6 +315,8 @@ const UserProfile = () => {
           linkedin_url: profile.linkedin_url,
           department: profile.department,
           skills: profile.skills,
+          interests: profile.interests,
+          interests_discoverable: profile.interests_discoverable,
           // `is_available` is deliberately not written here. The directory
           // reads public.mentors, so this column was never the switch anyone
           // thought it was — AvailabilityControl owns the real one now.
@@ -595,6 +604,15 @@ const UserProfile = () => {
                             placeholder="Enter your mobile number"
                           />
                         </div>
+
+                        <InterestsEditor
+                          interests={profile.interests}
+                          onInterestsChange={(next) => setProfile({ ...profile, interests: next })}
+                          discoverable={profile.interests_discoverable}
+                          onDiscoverableChange={(next) =>
+                            setProfile({ ...profile, interests_discoverable: next })
+                          }
+                        />
 
                         {(profile.role === 'mentor' || isMentor) && (
                           <>

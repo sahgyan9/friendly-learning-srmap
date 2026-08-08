@@ -18,7 +18,14 @@ import { BLOG_POSTS } from "@/data/blog-posts";
 import { normalise } from "@/lib/search/rank";
 
 /** What a row actually is — drives which icon and type tag it renders with. */
-export type SearchHitKind = "mentor" | "faculty" | "community" | "post" | "article" | "opportunity";
+export type SearchHitKind =
+  | "mentor"
+  | "faculty"
+  | "student"
+  | "community"
+  | "post"
+  | "article"
+  | "opportunity";
 
 export interface SearchHit {
   id: string;
@@ -88,6 +95,11 @@ function relatedSubtitle(result: AskResult): string {
   if (result.entity_type === "mentor") {
     const skills = metaList(result, "skills");
     if (skills.length) return skills.slice(0, 3).join(", ");
+  }
+
+  if (result.entity_type === "student") {
+    const interests = metaList(result, "interests");
+    if (interests.length) return interests.slice(0, 3).join(", ");
   }
 
   if (result.entity_type === "community") {

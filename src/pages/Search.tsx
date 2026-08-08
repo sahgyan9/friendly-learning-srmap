@@ -121,6 +121,34 @@ function PersonCard({ item, to }: { item: SearchResultItem; to: string }) {
 
 
 
+/**
+ * Name + interests only, no navigation.
+ *
+ * Plain students have no public profile route the way mentors do
+ * (`/mentor/:id`) — there is nothing to link to, so unlike `PersonCard` this
+ * renders as a static card rather than a button.
+ */
+function StudentCard({ item }: { item: SearchResultItem }) {
+  const interests = Array.isArray(item.meta?.interests)
+    ? (item.meta!.interests as unknown[]).filter((v): v is string => typeof v === "string")
+    : [];
+
+  return (
+    <div className="flex items-start gap-3 w-full rounded-xl border border-border/50 bg-card/60 p-3">
+      <Avatar className="h-10 w-10 shrink-0 border border-border/50">
+        <AvatarImage src={item.image ?? undefined} alt="" />
+        <AvatarFallback className="text-xs font-medium">{getInitials(item.title)}</AvatarFallback>
+      </Avatar>
+      <div className="min-w-0 flex-1">
+        <p className="truncate font-semibold text-sm text-foreground/90">{item.title}</p>
+        <p className="truncate text-xs text-muted-foreground mt-0.5">
+          {interests.length > 0 ? interests.slice(0, 3).join(", ") : "Student"}
+        </p>
+      </div>
+    </div>
+  );
+}
+
 /** Icon + title + subtitle card used for communities, posts, blog. */
 function ContentCard({
   item,
@@ -292,6 +320,7 @@ export default function SearchPage() {
   const totalAcrossAll =
     results.counts.mentors +
     results.counts.faculty +
+    results.students.length +
     results.counts.communities +
     results.counts.posts +
     results.counts.blog;
@@ -446,6 +475,27 @@ export default function SearchPage() {
               count={results.counts.mentors}
               onSeeAll={() => setTab("mentors")}
             />
+            {/* Semantic-only, no tab of its own — renders nothing when the
+                `students` group is absent or empty (no header, no empty state,
+                same rule as every other category here). */}
+            {results.students.length > 0 && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Users2 className="h-4 w-4 text-indigo-500" />
+                  <h2 className="text-sm font-semibold text-foreground/80 uppercase tracking-wide">
+                    Students
+                  </h2>
+                  <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                    {results.students.length}
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                  {results.students.map((item) => (
+                    <StudentCard key={item.id} item={item} />
+                  ))}
+                </div>
+              </div>
+            )}
             <CategorySection
               title="Faculty"
               tab="faculty"

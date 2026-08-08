@@ -2201,6 +2201,8 @@ export type Database = {
           graduation_year: number | null
           has_seen_welcome_tour: boolean
           id: string
+          interests: string[]
+          interests_discoverable: boolean
           is_admin: boolean
           is_available: boolean | null
           job_title: string | null
@@ -2227,6 +2229,8 @@ export type Database = {
           graduation_year?: number | null
           has_seen_welcome_tour?: boolean
           id?: string
+          interests?: string[]
+          interests_discoverable?: boolean
           is_admin?: boolean
           is_available?: boolean | null
           job_title?: string | null
@@ -2253,6 +2257,8 @@ export type Database = {
           graduation_year?: number | null
           has_seen_welcome_tour?: boolean
           id?: string
+          interests?: string[]
+          interests_discoverable?: boolean
           is_admin?: boolean
           is_available?: boolean | null
           job_title?: string | null

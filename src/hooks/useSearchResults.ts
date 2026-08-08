@@ -34,6 +34,13 @@ export interface SearchResultItem {
 export interface SearchResultsState {
   mentors: SearchResultItem[];
   faculty: SearchResultItem[];
+  /**
+   * Semantic-only — there is no literal `students` table search, so this is
+   * populated purely from the `semantic-search` edge function's `students`
+   * group. Empty (never populated) until that group is deployed; nothing else
+   * needs to change when it lands.
+   */
+  students: SearchResultItem[];
   communities: SearchResultItem[];
   posts: SearchResultItem[];
   blog: SearchResultItem[];
@@ -48,6 +55,7 @@ export interface SearchResultsState {
 const EMPTY: SearchResultsState = {
   mentors: [],
   faculty: [],
+  students: [],
   communities: [],
   posts: [],
   blog: [],
@@ -156,6 +164,7 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
 
       const mentorMap = new Map<string, SearchResultItem>();
       const facultyMap = new Map<string, SearchResultItem>();
+      const studentMap = new Map<string, SearchResultItem>();
       const postMap = new Map<string, SearchResultItem>();
       const communityMap = new Map<string, SearchResultItem>();
 
@@ -225,6 +234,15 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
               image: typeof hit.metadata?.image_url === "string" ? hit.metadata.image_url : null,
               meta: hit.metadata,
             });
+          } else if (hit.entity_type === "student" && !studentMap.has(hit.entity_id)) {
+            studentMap.set(hit.entity_id, {
+              id: hit.entity_id,
+              title: hit.title,
+              subtitle: hit.subtitle ?? "Student",
+              to: hit.source_path,
+              image: typeof hit.metadata?.profile_image === "string" ? hit.metadata.profile_image : null,
+              meta: hit.metadata,
+            });
           } else if (hit.entity_type === "community" && !communityMap.has(hit.entity_id)) {
             communityMap.set(hit.entity_id, {
               id: hit.entity_id,
@@ -247,6 +265,7 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
 
       const allMentorsList = Array.from(mentorMap.values());
       const allFacultyList = Array.from(facultyMap.values());
+      const allStudentsList = Array.from(studentMap.values());
       const allPostsList = Array.from(postMap.values());
       const allCommunitiesList = Array.from(communityMap.values());
 
@@ -257,6 +276,9 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
       const pagedFaculty = tab === "faculty"
         ? allFacultyList.slice(offset, offset + PAGE_SIZE)
         : allFacultyList.slice(0, ALL_PREVIEW);
+
+      // No dedicated tab (semantic-only group), so always the preview slice.
+      const pagedStudents = allStudentsList.slice(0, ALL_PREVIEW);
 
       const pagedPosts = tab === "posts"
         ? allPostsList.slice(offset, offset + PAGE_SIZE)
@@ -302,6 +324,7 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
       setState({
         mentors: pagedMentors,
         faculty: pagedFaculty,
+        students: pagedStudents,
         communities: pagedCommunities,
         posts: pagedPosts,
         blog,
