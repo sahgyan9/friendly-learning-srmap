@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation, useNavigationType, useSearchParams } from "react-router-dom";
+import { useIsomorphicLayoutEffect } from "@/hooks/useIsomorphicLayoutEffect";
 import { BookOpen, EyeOff, Search, SlidersHorizontal, ArrowUpDown, Star, X } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -105,7 +106,7 @@ const Faculty = () => {
   const cardsRef = useRef<HTMLDivElement>(null);
 
   // Scroll to cards before paint so hero is not visible on load, and re-run when loading finishes.
-  useLayoutEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     if (!isBackNav) {
       const scrollToCards = () => {
         if (cardsRef.current) {

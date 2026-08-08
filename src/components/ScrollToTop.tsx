@@ -1,11 +1,8 @@
-import { useEffect, useLayoutEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { useLocation, useNavigationType } from "react-router-dom";
+import { useIsomorphicLayoutEffect } from "@/hooks/useIsomorphicLayoutEffect";
 
 const STORAGE_PREFIX = "scrollpos:";
-
-// useLayoutEffect is unavailable during SSR (prerender build); fall back to
-// useEffect there since this component never runs meaningfully server-side.
-const useIsomorphicLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
 /**
  * Disable the browser's own scroll restoration. The browser fires it before

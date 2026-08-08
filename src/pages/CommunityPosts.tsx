@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { useIsomorphicLayoutEffect } from "@/hooks/useIsomorphicLayoutEffect";
 import { toast } from "sonner";
 import { ChevronDown, FileText, Search } from "lucide-react";
 import { motion } from "framer-motion";
@@ -132,7 +133,7 @@ const CommunityPosts = () => {
   }, [loading, targetPostId, posts.length]);
 
   // Scroll to cards before paint so hero is not visible on load, and re-run when loading finishes.
-  useLayoutEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     if (!targetPostId) {
       const scrollToCards = () => {
         if (cardsRef.current) {

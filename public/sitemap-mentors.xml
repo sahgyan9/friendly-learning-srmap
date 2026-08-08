@@ -6,7 +6,7 @@
                             http://www.google.com/schemas/sitemap-image/1.1 http://www.google.com/schemas/sitemap-image/1.1/sitemap-image.xsd">
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/mentors</loc>
-    <lastmod>2026-08-07T16:13:03.066Z</lastmod>
+    <lastmod>2026-08-08T12:00:20.998Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
@@ -54,6 +54,16 @@
     <image:image>
       <image:loc>https://ruapdkrgcbqrhvsayvpf.supabase.co/storage/v1/object/public/profiles/profile-images/bdb12eee-6e79-496f-a173-2a335cb615e2-1785661151280.jpg</image:loc>
       <image:title>ankush adhikari - Friendly Learning SRMAP Mentor</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://friendly-learning-srmap.vercel.app/mentor/a979a027-9221-4473-8d7a-9fbc39d996a9</loc>
+    <lastmod>2026-08-08T06:22:03.87598+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <image:image>
+      <image:loc>https://lh3.googleusercontent.com/a/ACg8ocJP4t8GKfC76JqHU44UeWx8zVhHO3cyWYK4MC4b98vyUPqEx-ei=s96-c</image:loc>
+      <image:title>Bhupendra Yadav - Friendly Learning SRMAP Mentor</image:title>
     </image:image>
   </url>
 </urlset>

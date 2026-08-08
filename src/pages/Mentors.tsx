@@ -1,6 +1,7 @@
 import { PRIMARY_DOMAIN } from "@/lib/constants";
 
-import { useState, useEffect, useLayoutEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useIsomorphicLayoutEffect } from "@/hooks/useIsomorphicLayoutEffect";
 import { toast } from "sonner";
 import { GraduationCap, Sparkles, Code, Cpu, Palette, Star, Users, CheckCircle2, Atom, Binary } from "lucide-react";
 import { motion } from "framer-motion";
@@ -46,7 +47,7 @@ const Mentors = () => {
   }, [markMentorsNavSeen]);
 
   // Scroll to cards before paint so hero is not visible on load, and re-run when isLoading finishes.
-  useLayoutEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     const scrollToCards = () => {
       if (cardsRef.current) {
         const navbarHeight = 64; // matches fixed navbar height
