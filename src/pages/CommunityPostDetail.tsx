@@ -32,7 +32,7 @@ const POST_TYPE_GRADIENT: Record<string, string> = {
   project: "violet",
   research: "emerald",
   "problem-solving": "rose",
-  achievement: "emerald",
+  achievement: "gold",
   announcement: "orange",
   general: "muted",
 };

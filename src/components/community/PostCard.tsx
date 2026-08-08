@@ -43,15 +43,84 @@ interface PostCardProps {
  * Maps each post type to its CardAccentBorder gradient key.
  * Keeps the visual language consistent with PostTypeBadge's TYPE_ACCENTS.
  */
-const POST_TYPE_GRADIENT: Record<string, string> = {
-  hackathon:        "amber",
-  "study-help":     "sky",
-  project:          "violet",
-  research:         "emerald",
-  "problem-solving":"rose",
-  achievement:      "emerald",
-  announcement:     "orange",
-  general:          "muted",
+type PostTypeTheme = {
+  accent: string;
+  hoverBorder: string;
+  hoverGlow: string;
+  titleHover: string;
+  readMoreBtn: string;
+  tagBadge: string;
+};
+
+/**
+ * Single source of truth for post type themes.
+ * Each type gets a cohesive accent color, hover glow, border, and badge highlight.
+ */
+const POST_TYPE_THEMES: Record<string, PostTypeTheme> = {
+  hackathon: {
+    accent: "amber",
+    hoverBorder: "hover:border-amber-500/40 dark:hover:border-amber-400/40",
+    hoverGlow: "from-amber-500/5",
+    titleHover: "group-hover:text-amber-600 dark:group-hover:text-amber-400",
+    readMoreBtn: "text-amber-600 dark:text-amber-400 bg-amber-500/10 hover:bg-amber-500/20",
+    tagBadge: "bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/20 hover:bg-amber-500/20",
+  },
+  "study-help": {
+    accent: "sky",
+    hoverBorder: "hover:border-sky-500/40 dark:hover:border-sky-400/40",
+    hoverGlow: "from-sky-500/5",
+    titleHover: "group-hover:text-sky-600 dark:group-hover:text-sky-400",
+    readMoreBtn: "text-sky-600 dark:text-sky-400 bg-sky-500/10 hover:bg-sky-500/20",
+    tagBadge: "bg-sky-500/10 text-sky-700 dark:text-sky-300 border-sky-500/20 hover:bg-sky-500/20",
+  },
+  project: {
+    accent: "violet",
+    hoverBorder: "hover:border-violet-500/40 dark:hover:border-violet-400/40",
+    hoverGlow: "from-violet-500/5",
+    titleHover: "group-hover:text-violet-600 dark:group-hover:text-violet-400",
+    readMoreBtn: "text-violet-600 dark:text-violet-400 bg-violet-500/10 hover:bg-violet-500/20",
+    tagBadge: "bg-violet-500/10 text-violet-700 dark:text-violet-300 border-violet-500/20 hover:bg-violet-500/20",
+  },
+  research: {
+    accent: "emerald",
+    hoverBorder: "hover:border-emerald-500/40 dark:hover:border-emerald-400/40",
+    hoverGlow: "from-emerald-500/5",
+    titleHover: "group-hover:text-emerald-600 dark:group-hover:text-emerald-400",
+    readMoreBtn: "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20",
+    tagBadge: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/20 hover:bg-emerald-500/20",
+  },
+  "problem-solving": {
+    accent: "rose",
+    hoverBorder: "hover:border-rose-500/40 dark:hover:border-rose-400/40",
+    hoverGlow: "from-rose-500/5",
+    titleHover: "group-hover:text-rose-600 dark:group-hover:text-rose-400",
+    readMoreBtn: "text-rose-600 dark:text-rose-400 bg-rose-500/10 hover:bg-rose-500/20",
+    tagBadge: "bg-rose-500/10 text-rose-700 dark:text-rose-300 border-rose-500/20 hover:bg-rose-500/20",
+  },
+  achievement: {
+    accent: "gold",
+    hoverBorder: "hover:border-amber-500/40 dark:hover:border-amber-400/40",
+    hoverGlow: "from-amber-500/5",
+    titleHover: "group-hover:text-amber-600 dark:group-hover:text-amber-400",
+    readMoreBtn: "text-amber-600 dark:text-amber-400 bg-amber-500/10 hover:bg-amber-500/20",
+    tagBadge: "bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/20 hover:bg-amber-500/20",
+  },
+  announcement: {
+    accent: "orange",
+    hoverBorder: "hover:border-orange-500/40 dark:hover:border-orange-400/40",
+    hoverGlow: "from-orange-500/5",
+    titleHover: "group-hover:text-orange-600 dark:group-hover:text-orange-400",
+    readMoreBtn: "text-orange-600 dark:text-orange-400 bg-orange-500/10 hover:bg-orange-500/20",
+    tagBadge: "bg-orange-500/10 text-orange-700 dark:text-orange-300 border-orange-500/20 hover:bg-orange-500/20",
+  },
+  general: {
+    accent: "muted",
+    hoverBorder: "hover:border-primary/40 dark:hover:border-primary/40",
+    hoverGlow: "from-primary/5",
+    titleHover: "group-hover:text-primary",
+    readMoreBtn: "text-primary bg-primary/10 hover:bg-primary/20",
+    tagBadge: "bg-primary/10 text-primary border-primary/20 hover:bg-primary/20",
+  },
 };
 
 /**
@@ -78,7 +147,7 @@ export function PostCard({
   const [isExpanded, setIsExpanded] = useState(false);
   const isCompact = variant === "compact";
   const postedAt = formatRelativeTime(post.created_at);
-  const accentGradient = POST_TYPE_GRADIENT[post.post_type] ?? "muted";
+  const theme = POST_TYPE_THEMES[post.post_type] ?? POST_TYPE_THEMES.general;
 
   const handleAuthorClick = (event: React.MouseEvent) => {
     event.stopPropagation();
@@ -121,16 +190,16 @@ export function PostCard({
     <Card
       className={cn(
         "group relative flex flex-col overflow-hidden transition-all duration-300 select-text",
-        (isCompact || isLongText) && "cursor-pointer hover:-translate-y-0.5 hover:shadow-lg hover:border-emerald-500/30",
+        (isCompact || isLongText) && cn("cursor-pointer hover:-translate-y-0.5 hover:shadow-lg", theme.hoverBorder),
         className,
       )}
       onClick={handleCardClick}
     >
       {/* Solid full-width top accent border — colour tracks the post type */}
-      <CardAccentBorder gradient={accentGradient} />
+      <CardAccentBorder gradient={theme.accent as any} />
 
-      {/* Hover glow — Posts brand colour (emerald) */}
-      <div className="pointer-events-none absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-emerald-500/4 to-transparent" />
+      {/* Hover glow — matches post type accent */}
+      <div className={cn("pointer-events-none absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br to-transparent", theme.hoverGlow)} />
 
       {/* ── Body ── */}
       <div className={cn("relative flex flex-1 flex-col gap-3 px-4", isCompact ? "py-4" : "py-5")}>
@@ -140,11 +209,11 @@ export function PostCard({
           {/* Author avatar & info */}
           <div className="flex min-w-0 items-center gap-2.5">
             <Avatar
-              className="h-9 w-9 shrink-0 ring-1 ring-border/80 transition-all duration-200 cursor-pointer hover:ring-2 hover:ring-emerald-500/60 hover:scale-105"
+              className="h-9 w-9 shrink-0 ring-1 ring-border/80 transition-all duration-200 cursor-pointer hover:ring-2 hover:ring-primary/60 hover:scale-105"
               onClick={handleAuthorClick}
             >
               <AvatarImage src={post.author.profile_image ?? undefined} alt={post.author.name} />
-              <AvatarFallback className="bg-emerald-500/10 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+              <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
                 {getInitials(post.author.name)}
               </AvatarFallback>
             </Avatar>
@@ -152,14 +221,14 @@ export function PostCard({
             <div className="min-w-0 leading-tight text-left">
               <div className="flex items-center gap-1">
                 <span
-                  className="truncate text-xs font-semibold text-foreground text-left cursor-pointer hover:text-emerald-600 dark:hover:text-emerald-400 hover:underline transition-colors"
+                  className="truncate text-xs font-semibold text-foreground text-left cursor-pointer hover:text-primary hover:underline transition-colors"
                   onClick={handleAuthorClick}
                 >
                   {post.author.name}
                 </span>
                 {post.author.is_mentor && (
                   <BadgeCheck
-                    className="h-3.5 w-3.5 shrink-0 text-emerald-600 dark:text-emerald-400 cursor-pointer"
+                    className="h-3.5 w-3.5 shrink-0 text-primary cursor-pointer"
                     aria-label="Verified mentor"
                     onClick={handleAuthorClick}
                   />
@@ -222,9 +291,9 @@ export function PostCard({
         <div className={cn("space-y-1.5 text-left", isCompactTextOnly && "flex-1")}>
           <h3
             className={cn(
-              "font-semibold leading-snug tracking-tight text-left text-foreground",
+              "font-semibold leading-snug tracking-tight text-left text-foreground transition-colors duration-200",
               isCompact ? "line-clamp-2 text-base" : "text-xl",
-              "group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-200",
+              theme.titleHover,
             )}
           >
             {post.title}
@@ -256,7 +325,7 @@ export function PostCard({
                   setIsExpanded((prev) => !prev);
                 }
               }}
-              className="mt-1 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 transition-all duration-200 focus:outline-none"
+              className={cn("mt-1 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold transition-all duration-200 focus:outline-none", theme.readMoreBtn)}
             >
               <span>{isCompact ? "📖 Read full post" : isExpanded ? "📖 Show less" : "📖 Read full post"}</span>
               {isCompact ? (
@@ -280,14 +349,14 @@ export function PostCard({
           }}
         />
 
-        {/* Tags — emerald accent matching Posts brand colour */}
+        {/* Tags — themed per post type */}
         {post.tags && post.tags.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
             {post.tags.slice(0, isCompact ? 2 : 6).map((tag) => (
               <Badge
                 key={tag}
                 variant="outline"
-                className="text-xs font-normal bg-emerald-500/8 text-emerald-700 dark:text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/15 transition-colors"
+                className={cn("text-xs font-normal transition-colors", theme.tagBadge)}
               >
                 #{tag}
               </Badge>
@@ -328,7 +397,7 @@ export function PostCard({
             <Button
               variant="ghost"
               size="sm"
-              className="h-8 gap-1.5 px-3 text-xs font-medium text-muted-foreground hover:text-emerald-600 dark:hover:text-emerald-400 transition-all duration-200 hover:scale-105"
+              className="h-8 gap-1.5 px-3 text-xs font-medium text-muted-foreground hover:text-primary transition-all duration-200 hover:scale-105"
               onClick={(event) => {
                 event.stopPropagation();
                 onComment?.(post.id, event);
