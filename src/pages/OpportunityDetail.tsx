@@ -3,9 +3,11 @@ import { Link, useParams } from "react-router-dom";
 import {
   ArrowLeft,
   CalendarClock,
+  Check,
   ExternalLink,
   Globe,
   Hand,
+  Link2,
   MapPin,
   MessageCircle,
   Plus,
@@ -42,6 +44,21 @@ import {
   type OpportunityTeam,
 } from "@/integrations/supabase/services/opportunities";
 
+/**
+ * Lucide has no brand icon for WhatsApp, and pulling in a whole icon-pack
+ * dependency for one glyph is not worth it — this is the whole reason the
+ * task called for no new dependencies. A small inline SVG is markup, not a
+ * package, and keeps the share row recognisable at a glance.
+ */
+function WhatsAppIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
+      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
+      <path d="M12.031 21.785h-.005a9.706 9.706 0 0 1-4.949-1.355l-.355-.21-3.68.966.982-3.586-.231-.368a9.716 9.716 0 0 1-1.489-5.185c.003-5.372 4.37-9.741 9.735-9.741 2.6.001 5.045 1.015 6.881 2.854a9.673 9.673 0 0 1 2.848 6.892c-.002 5.371-4.37 9.733-9.737 9.733zm8.318-18.061A11.65 11.65 0 0 0 12.03 0C5.503 0 .19 5.311.187 11.836a11.82 11.82 0 0 0 1.583 5.945L0 24l6.363-1.669a11.849 11.849 0 0 0 5.663 1.443h.005c6.527 0 11.84-5.312 11.843-11.837a11.767 11.767 0 0 0-3.525-8.213z" />
+    </svg>
+  );
+}
+
 const OpportunityDetail = () => {
   const { slug } = useParams<{ slug: string }>();
   const { user } = useAuth();
@@ -51,6 +68,7 @@ const OpportunityDetail = () => {
   const [interested, setInterested] = useState(false);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
 
   const [showTeamDialog, setShowTeamDialog] = useState(false);
   const [teamName, setTeamName] = useState("");
@@ -79,6 +97,12 @@ const OpportunityDetail = () => {
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    if (!linkCopied) return;
+    const timer = setTimeout(() => setLinkCopied(false), 2000);
+    return () => clearTimeout(timer);
+  }, [linkCopied]);
 
   const toggleInterest = async () => {
     if (!opportunity) return;
@@ -135,6 +159,16 @@ const OpportunityDetail = () => {
     await load();
   };
 
+  const copyLink = async (url: string) => {
+    try {
+      await navigator.clipboard.writeText(url);
+      setLinkCopied(true);
+      toast.success("Copied", { description: "Link copied to your clipboard." });
+    } catch {
+      toast.error("Could not copy the link", { description: url });
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
@@ -164,6 +198,19 @@ const OpportunityDetail = () => {
   const days = daysLeft(opportunity.register_by);
   const openTeams = teams.filter((team) => team.is_open);
 
+  // Absolute URL always, same PRIMARY_DOMAIN pattern SEOHead's canonical uses
+  // below — a wa.me link or a copied link that resolves to localhost or a
+  // preview deployment is useless to whoever it's sent to.
+  const shareUrl = `${PRIMARY_DOMAIN}/opportunities/${opportunity.slug}`;
+  const shareText = [
+    opportunity.title,
+    opportunity.register_by ? `Register by ${new Date(opportunity.register_by).toLocaleDateString()}` : null,
+    shareUrl,
+  ]
+    .filter(Boolean)
+    .join(" — ");
+  const whatsappHref = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
+
   return (
     <>
       <SEOHead
@@ -172,7 +219,7 @@ const OpportunityDetail = () => {
           opportunity.description?.slice(0, 155) ??
           `${opportunity.title} — see who from SRM University-AP is entering, and form a team.`
         }
-        canonical={`${PRIMARY_DOMAIN}/opportunities/${opportunity.slug}`}
+        canonical={shareUrl}
       />
 
       <div className="min-h-screen bg-background">
@@ -261,6 +308,24 @@ const OpportunityDetail = () => {
               {opportunity.interest_count === 1 ? "person is" : "people are"} interested. Showing
               interest is not registration — it just makes you findable to people forming teams.
             </p>
+
+            <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-border pt-4">
+              <span className="text-xs font-medium text-muted-foreground">Share:</span>
+              <Button asChild size="sm" variant="outline">
+                <a href={whatsappHref} target="_blank" rel="noopener noreferrer" aria-label="Share on WhatsApp">
+                  <WhatsAppIcon className="mr-1.5 h-4 w-4 text-[#25D366]" />
+                  WhatsApp
+                </a>
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => copyLink(shareUrl)}>
+                {linkCopied ? (
+                  <Check className="mr-1.5 h-4 w-4 text-green-600 dark:text-green-500" />
+                ) : (
+                  <Link2 className="mr-1.5 h-4 w-4" />
+                )}
+                {linkCopied ? "Copied" : "Copy link"}
+              </Button>
+            </div>
           </Card>
 
           <section className="mt-8">

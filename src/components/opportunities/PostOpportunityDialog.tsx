@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Loader2, Plus } from "lucide-react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -22,7 +23,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
 import {
   OPPORTUNITY_KINDS,
   createOpportunity,
@@ -53,7 +53,6 @@ const BLANK: NewOpportunity = {
  * for being *found* — deadline and topics — are the two the copy nudges toward.
  */
 const PostOpportunityDialog = ({ onPosted }: { onPosted: () => void }) => {
-  const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState<NewOpportunity>(BLANK);
@@ -76,17 +75,14 @@ const PostOpportunityDialog = ({ onPosted }: { onPosted: () => void }) => {
     setSaving(false);
 
     if (error || !data) {
-      toast({
-        title: "Could not post it",
+      toast.error("Could not post it", {
         description: error?.message ?? "Please try again.",
-        variant: "destructive",
       });
       return;
     }
 
-    toast({
-      title: "Posted",
-      description: `“${data.title}” is live. It becomes searchable within a few minutes.`,
+    toast.success("Posted", {
+      description: `"${data.title}" is live. It becomes searchable within a few minutes.`,
     });
     setForm(BLANK);
     setTagText("");
