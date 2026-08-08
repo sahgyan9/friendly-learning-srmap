@@ -165,12 +165,27 @@ const ChatbotModal = ({ isOpen, onClose }: ChatbotModalProps) => {
     }
   }, [isOpen, user]);
 
-  // Scroll to bottom when new messages arrive
+  const isInitialLoadRef = useRef(true);
+  const lastUserMsgRef = useRef<HTMLDivElement>(null);
+
+  // Reset initial load flag when modal opens
   useEffect(() => {
-    if (hasMessages) {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (isOpen) {
+      isInitialLoadRef.current = true;
     }
-  }, [messages]);
+  }, [isOpen]);
+
+  // Scroll to user's question when sending/receiving, or to bottom on initial history load
+  useEffect(() => {
+    if (!hasMessages) return;
+
+    if (isInitialLoadRef.current) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "instant" });
+      isInitialLoadRef.current = false;
+    } else if (lastUserMsgRef.current) {
+      lastUserMsgRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [messages, hasMessages]);
 
   const loadConversationHistory = async () => {
     if (!user) return;
@@ -377,20 +392,23 @@ const ChatbotModal = ({ isOpen, onClose }: ChatbotModalProps) => {
           {/* Conversation messages */}
           {hasMessages && (
             <div className="flex flex-col gap-4 px-5 py-4">
-              {messages.map((message) => (
-                <motion.div
-                  key={message.id}
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className={`flex gap-2.5 ${message.type === "user" ? "justify-end" : "justify-start"}`}
-                >
-                  {message.type === "ai" && (
-                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white">
-                      <Bot className="h-3.5 w-3.5" />
-                    </div>
-                  )}
+              {(() => {
+                const lastUserMsgIndex = messages.reduce((acc, m, idx) => (m.type === "user" ? idx : acc), -1);
+                return messages.map((message, index) => (
+                  <motion.div
+                    key={message.id}
+                    ref={index === lastUserMsgIndex ? lastUserMsgRef : null}
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className={`flex gap-2.5 ${message.type === "user" ? "justify-end" : "justify-start"}`}
+                  >
+                    {message.type === "ai" && (
+                      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white">
+                        <Bot className="h-3.5 w-3.5" />
+                      </div>
+                    )}
 
-                  <div className={`max-w-[78%] space-y-2 ${message.type === "user" ? "order-2" : ""}`}>
+                    <div className={`max-w-[78%] space-y-2 ${message.type === "user" ? "order-2" : ""}`}>
                     <div
                       className={`rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${
                         message.type === "user"
@@ -464,7 +482,8 @@ const ChatbotModal = ({ isOpen, onClose }: ChatbotModalProps) => {
                     </div>
                   )}
                 </motion.div>
-              ))}
+              ));
+            })()}
 
               {/* AI typing indicator */}
               {isLoading && (
