@@ -25,6 +25,7 @@ import { useAuth } from "@/context/AuthContext";
 import MentorSuggestionCard from "./MentorSuggestionCard";
 import CertificatePreview from "@/components/certificate/CertificatePreview";
 import { BecomeMentorLinkPreview } from "@/components/common/BecomeMentorLinkPreview";
+import { isEmojiOnly, getEmojiCount, getEmojiFontSizeClass } from "@/utils/emoji-utils";
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
@@ -394,36 +395,44 @@ const ChatbotModal = ({ isOpen, onClose }: ChatbotModalProps) => {
             <div className="flex flex-col gap-4 px-5 py-4">
               {(() => {
                 const lastUserMsgIndex = messages.reduce((acc, m, idx) => (m.type === "user" ? idx : acc), -1);
-                return messages.map((message, index) => (
-                  <motion.div
-                    key={message.id}
-                    ref={index === lastUserMsgIndex ? lastUserMsgRef : null}
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className={`flex gap-2.5 ${message.type === "user" ? "justify-end" : "justify-start"}`}
-                  >
-                    {message.type === "ai" && (
-                      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white">
-                        <Bot className="h-3.5 w-3.5" />
-                      </div>
-                    )}
+                return messages.map((message, index) => {
+                  const isEmoji = message.type === "user" && isEmojiOnly(message.content);
+                  const emojiCount = isEmoji ? getEmojiCount(message.content) : 0;
 
-                    <div className={`max-w-[78%] space-y-2 ${message.type === "user" ? "order-2" : ""}`}>
-                    <div
-                      className={`rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${
-                        message.type === "user"
-                          ? "rounded-tr-sm bg-blue-600 text-white"
-                          : "rounded-tl-sm bg-muted text-foreground"
-                      }`}
+                  return (
+                    <motion.div
+                      key={message.id}
+                      ref={index === lastUserMsgIndex ? lastUserMsgRef : null}
+                      initial={{ opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className={`flex gap-2.5 ${message.type === "user" ? "justify-end" : "justify-start"}`}
                     >
-                      {message.type === "ai" ? (
-                        <div className="prose prose-sm dark:prose-invert max-w-none prose-p:my-1 prose-ul:my-1 prose-li:my-0">
-                          <ReactMarkdown>{message.content}</ReactMarkdown>
+                      {message.type === "ai" && (
+                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white">
+                          <Bot className="h-3.5 w-3.5" />
                         </div>
-                      ) : (
-                        message.content
                       )}
-                    </div>
+
+                      <div className={`max-w-[78%] space-y-2 ${message.type === "user" ? "order-2" : ""}`}>
+                        <div
+                          className={
+                            isEmoji
+                              ? `p-1 bg-transparent border-none shadow-none ${getEmojiFontSizeClass(emojiCount)}`
+                              : `rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${
+                                  message.type === "user"
+                                    ? "rounded-tr-sm bg-blue-600 text-white"
+                                    : "rounded-tl-sm bg-muted text-foreground"
+                                }`
+                          }
+                        >
+                          {message.type === "ai" ? (
+                            <div className="prose prose-sm dark:prose-invert max-w-none prose-p:my-1 prose-ul:my-1 prose-li:my-0">
+                              <ReactMarkdown>{message.content}</ReactMarkdown>
+                            </div>
+                          ) : (
+                            message.content
+                          )}
+                        </div>
 
                     {/* Rich content blocks */}
                     {message.richContent === "mentor-benefits" && (

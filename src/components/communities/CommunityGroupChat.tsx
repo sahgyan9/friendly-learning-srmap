@@ -27,6 +27,7 @@ import {
   type GroupChatMessage,
 } from "@/integrations/supabase/services/community-group-chat";
 import type { CommunityPost } from "@/integrations/supabase/services/community-posts";
+import { isEmojiOnly, getEmojiCount, getEmojiFontSizeClass } from "@/utils/emoji-utils";
 
 interface CommunityGroupChatProps {
   communityId: string;
@@ -428,9 +429,21 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
                     </div>
                   )}
 
-                  <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
-                    {item.message.content}
-                  </p>
+                  {(() => {
+                    const isEmoji = isEmojiOnly(item.message.content);
+                    const emojiCount = isEmoji ? getEmojiCount(item.message.content) : 0;
+                    return (
+                      <p
+                        className={
+                          isEmoji
+                            ? `whitespace-pre-wrap select-none ${getEmojiFontSizeClass(emojiCount)}`
+                            : "whitespace-pre-wrap text-sm leading-relaxed text-foreground"
+                        }
+                      >
+                        {item.message.content}
+                      </p>
+                    );
+                  })()}
 
                   <div className="mt-1.5 flex flex-wrap items-center gap-1">
                     {Object.entries(item.message.reactions).map(([emoji, count]) => {

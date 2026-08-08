@@ -9,6 +9,7 @@ import { getInitials } from "@/utils/user-utils";
 import { useTypingIndicator } from "@/hooks/useTypingIndicator";
 import TypingIndicator from "./TypingIndicator";
 import MessageStatus from "./MessageStatus";
+import { isEmojiOnly, getEmojiCount, getEmojiFontSizeClass } from "@/utils/emoji-utils";
 
 interface MessageListProps {
   messages: Message[];
@@ -162,6 +163,8 @@ const MessageList = ({
         {rows.map(({ message, startsDay, isFirstInGroup, isLastInGroup }) => {
           const isMine = message.sender_id === currentUserId;
           const senderName = isMine ? "You" : getSenderName?.(message.sender_id) ?? "User";
+          const emojiOnly = isEmojiOnly(message.content);
+          const emojiCount = emojiOnly ? getEmojiCount(message.content) : 0;
 
           return (
             <React.Fragment key={message.id}>
@@ -199,23 +202,25 @@ const MessageList = ({
                 <div className={cn("flex max-w-[75%] flex-col sm:max-w-[65%]", isMine && "items-end")}>
                   <div
                     className={cn(
-                      "whitespace-pre-wrap break-words px-4 py-2.5 text-sm leading-relaxed shadow-sm",
-                      // SENT bubble — gradient primary
-                      isMine
-                        ? "bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-primary/20"
-                        : // RECEIVED bubble — glass
-                          "border border-white/10 bg-white/6 text-foreground backdrop-blur-sm",
-                      // Corner rounding logic
-                      isMine
-                        ? cn(
-                            "rounded-2xl",
-                            isFirstInGroup ? "rounded-br-sm" : "rounded-tr-sm rounded-br-sm",
-                            isLastInGroup && "rounded-br-2xl",
-                          )
+                      "whitespace-pre-wrap break-words",
+                      emojiOnly
+                        ? cn("p-1 bg-transparent border-none shadow-none", getEmojiFontSizeClass(emojiCount))
                         : cn(
-                            "rounded-2xl",
-                            isFirstInGroup ? "rounded-bl-sm" : "rounded-tl-sm rounded-bl-sm",
-                            isLastInGroup && "rounded-bl-2xl",
+                            "px-4 py-2.5 text-sm leading-relaxed shadow-sm",
+                            isMine
+                              ? "bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-primary/20"
+                              : "border border-white/10 bg-white/6 text-foreground backdrop-blur-sm",
+                            isMine
+                              ? cn(
+                                  "rounded-2xl",
+                                  isFirstInGroup ? "rounded-br-sm" : "rounded-tr-sm rounded-br-sm",
+                                  isLastInGroup && "rounded-br-2xl",
+                                )
+                              : cn(
+                                  "rounded-2xl",
+                                  isFirstInGroup ? "rounded-bl-sm" : "rounded-tl-sm rounded-bl-sm",
+                                  isLastInGroup && "rounded-bl-2xl",
+                                ),
                           ),
                     )}
                   >
