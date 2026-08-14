@@ -1,7 +1,10 @@
 import type { ComponentType, SVGProps } from "react";
 import {
+  BookOpen,
   Calendar,
+  HelpCircle,
   Home,
+  Info,
   Mail,
   MessageSquare,
   Users,
@@ -56,11 +59,11 @@ export const PRIMARY_NAV: NavItem[] = [
 ];
 
 /** Rendered under a rule in the rail and the sheet. Reachable from search anywhere. */
-export const SECONDARY_NAV = [
-  { name: "How it works", url: "/how-it-works" },
-  { name: "Blog", url: "/blog" },
-  { name: "About", url: "/about" },
-  { name: "Contact", url: "/contact" },
+export const SECONDARY_NAV: NavItem[] = [
+  { name: "How it works", url: "/how-it-works", icon: HelpCircle },
+  { name: "Blog", url: "/blog", icon: BookOpen },
+  { name: "About", url: "/about", icon: Info },
+  { name: "Contact", url: "/contact", icon: Mail },
 ];
 
 /**

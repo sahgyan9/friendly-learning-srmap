@@ -1,4 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
+import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 
 import Logo from "@/components/Logo";
 import DarkModeToggle from "@/components/DarkModeToggle";
@@ -9,6 +10,7 @@ import SiteSearch from "@/components/search/SiteSearch";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useAuth } from "@/context/AuthContext";
+import { useSiteSidebar } from "@/context/SidebarContext";
 import {
   useHasSeenFacultyRatings,
   useHasVisitedEventsNav,
@@ -21,6 +23,7 @@ import {
   ROUTE_ACCENT,
   accentFor,
   isActivePath,
+  pathShowsRail,
 } from "./nav-config";
 
 /**
@@ -42,6 +45,8 @@ import {
 export function SiteHeader() {
   const { user, profile } = useAuth();
   const location = useLocation();
+  const showRail = pathShowsRail(location.pathname);
+  const { isCollapsed, toggleSidebar } = useSiteSidebar();
   const accent = accentFor(location.pathname);
   const { hasSeen: hasSeenFaculty } = useHasSeenFacultyRatings();
   const { hasSeen: hasVisitedGroups } = useHasVisitedGroupsNav();
@@ -95,6 +100,28 @@ export function SiteHeader() {
               take it out of them is what used to scroll a 360px phone
               sideways. */}
           <div className="flex min-w-0 flex-1 items-center gap-2">
+            {showRail && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={toggleSidebar}
+                    aria-label={isCollapsed ? "Expand sidebar (Ctrl+B)" : "Collapse sidebar (Ctrl+B)"}
+                    className="hidden xl:inline-flex h-9 w-9 shrink-0 text-muted-foreground hover:text-foreground"
+                  >
+                    {isCollapsed ? (
+                      <PanelLeftOpen className="h-5 w-5" />
+                    ) : (
+                      <PanelLeftClose className="h-5 w-5" />
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  {isCollapsed ? "Expand sidebar (Ctrl+B)" : "Collapse sidebar (Ctrl+B)"}
+                </TooltipContent>
+              </Tooltip>
+            )}
             <Link
               to="/"
               className="shrink-0 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
