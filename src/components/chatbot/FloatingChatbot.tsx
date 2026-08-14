@@ -10,7 +10,7 @@ const FloatingChatbot = () => {
   return (
     <>
       <motion.div
-        className="fixed bottom-6 right-6 z-50"
+        className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom,0px))] right-4 lg:bottom-6 lg:right-6 z-50"
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         transition={{ duration: 0.3, delay: 0.5 }}

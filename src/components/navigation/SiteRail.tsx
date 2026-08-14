@@ -12,6 +12,7 @@ import {
   useHasVisitedMentorsNav,
 } from "@/hooks/useFeatureAnnouncement";
 import { cn } from "@/lib/utils";
+import { MobileNavDock } from "./MobileNavDock";
 import {
   PRIMARY_NAV,
   ROUTE_ACCENT,
@@ -44,7 +45,12 @@ export function MainWithRail({ children }: { children: ReactNode }) {
   return (
     <>
       {showRail && <SiteRail />}
-      <main id="main-content" data-rail={showRail ? "" : undefined}>
+      {showRail && <MobileNavDock />}
+      <main
+        id="main-content"
+        data-rail={showRail ? "" : undefined}
+        className={showRail ? "pb-20 lg:pb-0" : undefined}
+      >
         {children}
       </main>
     </>
