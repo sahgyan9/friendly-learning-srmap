@@ -60,8 +60,8 @@ export const HomeIntro = () => {
     },
     {
       value: stats?.groups,
-      label: "Groups",
-      href: "/communities",
+      label: "Workspace Groups",
+      href: "/workspace-groups",
       color: "text-amber-500",
       floor: 0,
     },
@@ -74,8 +74,8 @@ export const HomeIntro = () => {
     },
     {
       value: stats?.posts,
-      label: "Community posts",
-      href: "/community-posts",
+      label: "Posts",
+      href: "/posts",
       color: "text-emerald-500",
       floor: 5,
     },
@@ -154,7 +154,7 @@ export const HomeIntro = () => {
                   near-white in dark mode, which both erases white label text
                   and makes this look identical to the header's Sign up pill. */}
               <Link
-                to="/community-posts"
+                to="/posts"
                 className="inline-flex w-full sm:w-auto items-center justify-center gap-2 px-6 py-3 rounded-xl
                            text-sm font-semibold text-white bg-[#3963C6] shadow-sm
                            hover:bg-[#31569F] transition-colors"
@@ -163,7 +163,7 @@ export const HomeIntro = () => {
                 Browse Posts
               </Link>
               <Link
-                to="/communities"
+                to="/workspace-groups"
                 className="inline-flex w-full sm:w-auto items-center justify-center gap-2 px-6 py-3 rounded-xl
                            text-sm font-semibold text-foreground bg-transparent border border-border
                            hover:bg-muted/60 transition-colors"

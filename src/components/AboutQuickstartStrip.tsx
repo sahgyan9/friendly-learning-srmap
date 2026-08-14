@@ -35,7 +35,7 @@ export function AboutQuickstartStrip() {
       id: "events",
       icon: <CalendarDays className="w-4 h-4" />,
       label: "University Events",
-      href: "/marketplace",
+      href: "/events",
       accent:
         "border-violet-500/30 text-violet-700 dark:text-violet-400 hover:bg-violet-500/8 hover:border-violet-500/50",
     },
@@ -43,7 +43,7 @@ export function AboutQuickstartStrip() {
       id: "group",
       icon: <Users className="w-4 h-4" />,
       label: "Make a Group",
-      href: "/communities",
+      href: "/workspace-groups",
       accent:
         "border-amber-500/30 text-amber-700 dark:text-amber-400 hover:bg-amber-500/8 hover:border-amber-500/50",
     },

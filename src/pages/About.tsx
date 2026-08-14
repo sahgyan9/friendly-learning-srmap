@@ -177,7 +177,7 @@ const About = () => {
                     <Link to="/ask">Search with CampusMind</Link>
                   </Button>
                   <Button variant="outline" size="lg" asChild>
-                    <Link to="/community-posts">Browse Community Posts</Link>
+                    <Link to="/posts">Browse Posts</Link>
                   </Button>
                   <Button variant="outline" size="lg" asChild>
                     <Link to="/mentors">Find a Mentor</Link>

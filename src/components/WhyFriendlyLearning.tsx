@@ -127,16 +127,16 @@ const WhyFriendlyLearning = () => {
 
           <FeatureCard
             icon={<UsersRound className="w-6 h-6 text-primary" strokeWidth={2} />}
-            title="Study Groups"
-            description="Join subject and interest groups to learn and collaborate with peers across SRM AP."
-            href="/communities"
+            title="Workspace Groups"
+            description="Join subject and interest workspace groups to collaborate with peers across SRM AP."
+            href="/workspace-groups"
           />
 
           <FeatureCard
             icon={<Calendar className="w-6 h-6 text-primary" strokeWidth={2} />}
-            title="Campus Events"
+            title="University Events"
             description="Stay on top of workshops, hackathons, and meetups happening around campus."
-            href="/marketplace"
+            href="/events"
           />
 
           <FeatureCard

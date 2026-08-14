@@ -55,7 +55,7 @@ const features: Feature[] = [
     description:
       "Workshops, hackathons, career fairs — all in one place. Never miss what's happening on campus again.",
     cta: "Explore events",
-    href: "/marketplace",
+    href: "/events",
     badge: "Live",
   },
   {
@@ -77,11 +77,11 @@ const features: Feature[] = [
     accent: "text-amber-600 dark:text-amber-400",
     accentBg: "bg-amber-500/10 dark:bg-amber-500/20",
     label: "04 — Groups",
-    title: "Study Communities",
+    title: "Workspace Groups",
     description:
-      "Create or join subject-specific groups. Collaborate on assignments, find study partners for exams, and build your academic circle.",
-    cta: "Join a group",
-    href: "/communities",
+      "Create or join dedicated workspace groups. Collaborate on assignments, hackathons, and projects with your peers.",
+    cta: "Explore groups",
+    href: "/workspace-groups",
     badge: "Live",
   },
   {
@@ -90,11 +90,11 @@ const features: Feature[] = [
     accent: "text-emerald-600 dark:text-emerald-400",
     accentBg: "bg-emerald-500/10 dark:bg-emerald-500/20",
     label: "05 — Posts",
-    title: "Community Posts",
+    title: "Posts",
     description:
       "Share knowledge, ask questions, post resources. A student-run knowledge feed built for SRM AP — not the whole internet.",
     cta: "See posts",
-    href: "/community-posts",
+    href: "/posts",
     badge: "Live",
   },
   {

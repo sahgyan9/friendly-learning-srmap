@@ -25,8 +25,8 @@ const Index = () => {
     "@context": "https://schema.org",
     "@type": "WebPage",
     "url": `${PRIMARY_DOMAIN}/`,
-    "name": "Friendly Learning SRMAP - SRM AP Student Mentorship Platform",
-    "description": "Friendly Learning SRMAP connects SRM AP university students with experienced peer mentors for academic guidance, project collaboration, and study partnerships.",
+    "name": "Friendly Learning SRMAP - All-in-One Campus Platform for SRM AP Students",
+    "description": "Post ideas, find teammates, search with CampusMind, rate faculty, join groups, and get mentored by seniors — the all-in-one campus platform for SRM AP students.",
     "isPartOf": {
       "@type": "WebSite",
       "name": "Friendly Learning SRMAP",
@@ -47,7 +47,7 @@ const Index = () => {
         "name": "SRM University AP"
       }
     },
-    "specialty": "Student academic mentorship",
+    "specialty": "Campus collaboration and discovery",
     "audience": {
       "@type": "Audience",
       "audienceType": "University students"
@@ -60,8 +60,8 @@ const Index = () => {
         title={ROUTE_META["/"].title}
         description={ROUTE_META["/"].description}
         canonical={`${PRIMARY_DOMAIN}/`}
-        ogTitle="Friendly Learning SRMAP - Connect with SRM AP Student Mentors"
-        ogDescription="Find academic guidance, study partners, project collaborators, and hackathon teams through the official SRM AP student mentorship platform."
+        ogTitle="Friendly Learning SRMAP - Your Campus, One Feed | SRM AP"
+        ogDescription="Post ideas, find teammates, search with CampusMind, rate faculty, and get mentored by seniors — the all-in-one campus platform for SRM AP students."
       />
 
       {/* Add structured data for SEO */}

@@ -44,7 +44,7 @@ const CallToAction = () => {
               </Button>
             )}
             <Button size="lg" variant="outline" asChild>
-              <Link to="/community-posts">Explore the platform</Link>
+              <Link to="/posts">Explore the platform</Link>
             </Button>
           </motion.div>
         </div>

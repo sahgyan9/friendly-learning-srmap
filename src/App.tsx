@@ -1,5 +1,5 @@
 import { Suspense, lazy, ComponentType } from "react";
-import { Route, Routes, useLocation } from "react-router-dom";
+import { Route, Routes, useLocation, Navigate, useParams } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 
@@ -161,6 +161,12 @@ function RouteFallback() {
   );
 }
 
+function RedirectWithParam({ toPrefix }: { toPrefix: string }) {
+  const { id, slug } = useParams();
+  const param = id || slug || "";
+  return <Navigate to={param ? `${toPrefix}/${param}` : toPrefix} replace />;
+}
+
 /**
  * Hidden on auth screens (nothing useful to ask before signing in, and it
  * would float over the form) and on every /admin page (a staff tool, not a
@@ -218,14 +224,14 @@ function App() {
                       <Route path="/about" element={<About />} />
                       <Route path="/how-verification-works" element={<HowVerificationWorks />} />
                       <Route path="/your-data" element={<YourData />} />
-                      <Route path="/community-posts" element={<CommunityPosts />} />
-                      <Route path="/community-posts/:id" element={<CommunityPostDetail />} />
+
+                      {/* Canonical Routes */}
+                      <Route path="/posts" element={<CommunityPosts />} />
+                      <Route path="/posts/:id" element={<CommunityPostDetail />} />
                       {/* Public on purpose. Membership decides who can post in a
                         group, not who can read it — see the communities migration. */}
-                      <Route path="/communities" element={<Communities />} />
-                      <Route path="/communities/:slug" element={<CommunityDetail />} />
-                      <Route path="/marketplace" element={<MarketPlace />} />
-                      <Route path="/marketplace/:id" element={<EventDetail />} />
+                      <Route path="/workspace-groups" element={<Communities />} />
+                      <Route path="/workspace-groups/:slug" element={<CommunityDetail />} />
                       <Route path="/events" element={<MarketPlace />} />
                       <Route path="/events/:id" element={<EventDetail />} />
                       <Route path="/how-it-works" element={<HowItWorks />} />
@@ -233,6 +239,15 @@ function App() {
                       <Route path="/hackathon-partners" element={<HackathonPartners />} />
                       <Route path="/blog" element={<Blog />} />
                       <Route path="/blog/:slug" element={<BlogPost />} />
+
+                      {/* Backward Compatibility SPA Redirects */}
+                      <Route path="/community-posts" element={<Navigate to="/posts" replace />} />
+                      <Route path="/community-posts/:id" element={<RedirectWithParam toPrefix="/posts" />} />
+                      <Route path="/communities" element={<Navigate to="/workspace-groups" replace />} />
+                      <Route path="/communities/:slug" element={<RedirectWithParam toPrefix="/workspace-groups" />} />
+                      <Route path="/marketplace" element={<Navigate to="/events" replace />} />
+                      <Route path="/marketplace/:id" element={<RedirectWithParam toPrefix="/events" />} />
+
                       {/* Public on purpose: a certificate nobody can check without an
                         account is worth no more than the image itself. */}
                       <Route path="/verify/:id" element={<VerifyCertificate />} />
