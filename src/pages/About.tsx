@@ -6,6 +6,7 @@ import Footer from "@/components/Footer";
 import SEOHead from "@/components/SEOHead";
 import { ROUTE_META } from "@/lib/seo/route-meta";
 import TeamMembers from "@/components/about/TeamMembers";
+import { FutureVision } from "@/components/FutureVision";
 import StructuredData from "@/components/StructuredData";
 import { getOrganizationSchema } from "@/lib/structured-data";
 import { getTeamMembers, TeamMember } from "@/integrations/supabase/services/team-members";
@@ -165,6 +166,11 @@ const About = () => {
                   </div>
                 </div>
               </section>
+
+              {/* ── Future Vision & Roadmap ── */}
+              <div className="-mx-4 md:-mx-6 mb-12">
+                <FutureVision />
+              </div>
 
               {/* ── CTA ── */}
               <section className="text-center mb-8">

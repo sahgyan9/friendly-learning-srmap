@@ -247,6 +247,7 @@ function App() {
                       <Route path="/communities/:slug" element={<RedirectWithParam toPrefix="/workspace-groups" />} />
                       <Route path="/marketplace" element={<Navigate to="/events" replace />} />
                       <Route path="/marketplace/:id" element={<RedirectWithParam toPrefix="/events" />} />
+                      <Route path="/mentors/:id" element={<RedirectWithParam toPrefix="/mentor" />} />
 
                       {/* Public on purpose: a certificate nobody can check without an
                         account is worth no more than the image itself. */}
