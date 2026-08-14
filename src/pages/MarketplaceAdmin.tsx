@@ -97,7 +97,7 @@ const MarketplaceAdmin = () => {
   };
 
   const handleView = (id: string) => {
-    navigate(`/marketplace?post=${id}`);
+    navigate(`/events?post=${id}`);
   };
 
   const getCategoryDisplay = (category: string) => {

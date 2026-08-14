@@ -395,7 +395,7 @@ const OpportunityDetail = () => {
                       </span>
                       {team.community?.slug && (
                         <Button asChild size="sm" variant="ghost" className="h-7 text-xs">
-                          <Link to={`/communities/${team.community.slug}`}>
+                          <Link to={`/workspace-groups/${team.community.slug}`}>
                             <MessageCircle className="mr-1 h-3 w-3" />
                             Open chat
                           </Link>

@@ -52,15 +52,15 @@ const MarketPlace = () => {
     return (
         <>
             <SEOHead
-                title={ROUTE_META["/marketplace"].title}
-                description={ROUTE_META["/marketplace"].description}
-                keywords="university events, campus news, student advertisements, course materials, university announcements, student hub, campus activities, educational resources"
-                canonical={`${PRIMARY_DOMAIN}/marketplace`}
+                title={ROUTE_META["/events"].title}
+                description={ROUTE_META["/events"].description}
+                keywords="university events srmap, srm ap events, events in srmap, srm university ap events, campus events, workshops, hackathons, guest lectures, student activities"
+                canonical={`${PRIMARY_DOMAIN}/events`}
             />
 
             <StructuredData data={getBreadcrumbSchema([
                 { name: "Home", url: `${PRIMARY_DOMAIN}/` },
-                { name: "Events & News", url: `${PRIMARY_DOMAIN}/marketplace` }
+                { name: "University Events", url: `${PRIMARY_DOMAIN}/events` }
             ])} />
 
             <div className="min-h-screen bg-background">

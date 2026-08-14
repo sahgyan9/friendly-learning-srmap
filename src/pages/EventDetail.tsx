@@ -213,7 +213,7 @@ const EventDetail = () => {
           <p className="text-sm text-muted-foreground mb-6">
             The event you are looking for may have concluded or is no longer listed on the campus calendar.
           </p>
-          <Link to="/marketplace">
+          <Link to="/events">
             <Button variant="outline" className="gap-2">
               <ArrowLeft className="h-4 w-4" />
               Back to University Events
@@ -268,7 +268,7 @@ const EventDetail = () => {
     organizer: {
       "@type": "Organization",
       name: event.organizer || event.department || "SRM University-AP",
-      url: `${PRIMARY_DOMAIN}/marketplace`,
+      url: `${PRIMARY_DOMAIN}/events`,
     },
   };
 
@@ -468,7 +468,7 @@ const EventDetail = () => {
       <StructuredData
         data={getBreadcrumbSchema([
           { name: "Home", url: `${PRIMARY_DOMAIN}/` },
-          { name: "University Events", url: `${PRIMARY_DOMAIN}/marketplace` },
+          { name: "University Events", url: `${PRIMARY_DOMAIN}/events` },
           { name: event.title, url: `${PRIMARY_DOMAIN}/events/${event.id}` },
         ])}
       />
@@ -482,7 +482,7 @@ const EventDetail = () => {
                 Home
               </Link>
               <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground/50" />
-              <Link to="/marketplace" className="hover:text-foreground transition-colors">
+              <Link to="/events" className="hover:text-foreground transition-colors">
                 University Events
               </Link>
               <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground/50" />
@@ -493,97 +493,187 @@ const EventDetail = () => {
           </div>
         </div>
 
-        {/* Hero Banner Section */}
-        <div className="relative overflow-hidden border-b border-border/60 bg-gradient-to-br from-violet-500/5 via-background to-background">
-          <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-violet-500/10 blur-3xl" />
-          <div className="pointer-events-none absolute -left-20 bottom-0 h-56 w-56 rounded-full bg-purple-500/10 blur-3xl" />
-
-          <div className="container mx-auto px-4 py-8 sm:py-12">
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4 }}
-              className="space-y-4"
+        {/* Main Content Area */}
+        <div className="container mx-auto px-4 pt-6 pb-8 space-y-8">
+          {/* Back link */}
+          <div>
+            <Link
+              to="/events"
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
             >
-              {/* Back link */}
-              <div>
-                <Link
-                  to="/marketplace"
-                  className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <ArrowLeft className="h-3.5 w-3.5" />
-                  All Events
-                </Link>
-              </div>
+              <ArrowLeft className="h-3.5 w-3.5" />
+              Back to University Events
+            </Link>
+          </div>
 
-              {/* Status / Category Badges */}
-              <div className="flex flex-wrap items-center gap-2 pt-0.5">
-                {isLive && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-600 px-3 py-1 text-xs font-semibold text-white shadow-md">
-                    <span className="relative flex h-2 w-2">
-                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75" />
-                      <span className="relative inline-flex h-2 w-2 rounded-full bg-white" />
+          {/* Elevated Raised Hero Card (Matches Mentor/Faculty Profile Rectangle Design) */}
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35 }}
+            className="relative overflow-hidden rounded-2xl border border-border/80 bg-card p-6 md:p-8 shadow-md"
+          >
+            {/* Ambient Ambient Glow Accents */}
+            <div className="pointer-events-none absolute -top-24 -right-24 h-64 w-64 rounded-full bg-gradient-to-br from-violet-500/15 via-purple-500/10 to-transparent blur-3xl" />
+            <div className="pointer-events-none absolute -bottom-24 -left-24 h-64 w-64 rounded-full bg-gradient-to-tr from-violet-500/10 via-background to-transparent blur-3xl" />
+
+            <div className="relative space-y-6">
+              {/* Top Row: Badges & Direct Register CTA Button */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                {/* Status / Category Badges */}
+                <div className="flex flex-wrap items-center gap-2">
+                  {isLive && (
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-600 px-3 py-1 text-xs font-semibold text-white shadow-md">
+                      <span className="relative flex h-2 w-2">
+                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75" />
+                        <span className="relative inline-flex h-2 w-2 rounded-full bg-white" />
+                      </span>
+                      Live Now
                     </span>
-                    Live Now
-                  </span>
-                )}
-                {isUpcoming && timeRemaining && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-violet-500/30 bg-violet-500/10 px-3 py-1 text-xs font-semibold text-violet-600 dark:text-violet-400">
-                    <Clock className="h-3.5 w-3.5" />
-                    {timeRemaining}
-                  </span>
-                )}
-                {hasEnded && (
-                  <span className="inline-flex items-center rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
-                    Event Concluded
-                  </span>
-                )}
+                  )}
+                  {isUpcoming && timeRemaining && (
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-violet-500/30 bg-violet-500/10 px-3 py-1 text-xs font-semibold text-violet-600 dark:text-violet-400">
+                      <Clock className="h-3.5 w-3.5" />
+                      {timeRemaining}
+                    </span>
+                  )}
+                  {hasEnded && (
+                    <span className="inline-flex items-center rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
+                      Event Concluded
+                    </span>
+                  )}
 
-                {event.department && (
-                  <Badge
-                    variant="outline"
-                    className="border-violet-500/20 bg-violet-500/5 text-violet-600 dark:text-violet-400 text-xs"
-                  >
-                    {event.department}
-                  </Badge>
-                )}
+                  {event.department && (
+                    <Badge
+                      variant="outline"
+                      className="border-violet-500/20 bg-violet-500/5 text-violet-600 dark:text-violet-400 text-xs"
+                    >
+                      {event.department}
+                    </Badge>
+                  )}
 
-                {event.eventType && (
-                  <Badge variant="secondary" className="text-xs">
-                    {event.eventType}
-                  </Badge>
+                  {event.eventType && (
+                    <Badge variant="secondary" className="text-xs">
+                      {event.eventType}
+                    </Badge>
+                  )}
+                </div>
+
+                {/* Direct Register Action on Hero for desktop */}
+                {event.registrationUrl && !hasEnded && (
+                  <div className="hidden sm:block">
+                    <a
+                      href={event.registrationUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <Button
+                        size="sm"
+                        className="gap-2 bg-violet-600 hover:bg-violet-700 text-white shadow-sm font-medium px-5"
+                      >
+                        <Sparkles className="h-3.5 w-3.5" />
+                        Register
+                        <ExternalLink className="h-3.5 w-3.5 opacity-80" />
+                      </Button>
+                    </a>
+                  </div>
                 )}
               </div>
 
-              {/* Speaker Photo & Event Title Row */}
-              <div className="flex flex-col sm:flex-row sm:items-start gap-4 sm:gap-5 pt-1">
+              {/* Main Content Row: Speaker Avatar / Image + Event Heading */}
+              <div className="flex flex-col sm:flex-row gap-5 items-start">
+                {/* Speaker Photo / Featured Avatar */}
                 {hasDistinctSpeakerImage && speakerImageSrc && (
-                  <div className="relative shrink-0 sm:pt-1">
-                    <img
-                      src={speakerImageSrc}
-                      alt="Event Speaker / Featured"
-                      className="h-20 w-20 sm:h-24 sm:w-24 rounded-2xl object-cover border-2 border-border/80 shadow-md bg-muted"
-                      onError={() => setSpeakerImageFailed(true)}
-                    />
+                  <div className="relative shrink-0 mx-auto sm:mx-0">
+                    <div className="h-24 w-24 sm:h-28 sm:w-28 rounded-2xl overflow-hidden border-2 border-border bg-muted/60 shadow-inner flex items-center justify-center">
+                      <img
+                        src={speakerImageSrc}
+                        alt="Event Speaker / Featured"
+                        className="h-full w-full object-cover object-top"
+                        onError={() => setSpeakerImageFailed(true)}
+                      />
+                    </div>
+                    <div className="absolute -bottom-2 -right-2 rounded-full border-2 border-background bg-card p-1.5 shadow-xs">
+                      <GraduationCap className="h-3.5 w-3.5 text-violet-600 dark:text-violet-400" />
+                    </div>
                   </div>
                 )}
 
-                {/* Event Title */}
-                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-foreground max-w-4xl leading-tight flex-1">
-                  {event.title}
-                </h1>
-              </div>
-            </motion.div>
-          </div>
-        </div>
+                {/* Details & Title */}
+                <div className="flex-1 space-y-2 text-left">
+                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-foreground leading-tight">
+                    {event.title}
+                  </h1>
 
-        {/* Main Content Layout */}
-        <div className="container mx-auto px-4 py-8">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
+                    <span className="flex items-center gap-1 font-medium text-foreground/90">
+                      <Building2 className="h-3.5 w-3.5 text-violet-600 dark:text-violet-400" />
+                      {event.organizer || event.department || "SRM University-AP"}
+                    </span>
+                    {event.venue && (
+                      <>
+                        <span className="text-muted-foreground/40">•</span>
+                        <span className="flex items-center gap-1">
+                          <MapPin className="h-3.5 w-3.5 text-violet-500/70" />
+                          {event.venue}
+                        </span>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Raised Quick Stats & Timing Strip (Matching Mentor / Faculty Cards) */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-border/60">
+                <div className="flex items-center gap-3 rounded-xl border border-border/60 bg-muted/30 p-3 shadow-xs">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-500/10 text-violet-600 dark:text-violet-400">
+                    <Calendar className="h-4 w-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                      Date & Time
+                    </p>
+                    <p className="text-xs font-semibold text-foreground truncate">{formattedDate}</p>
+                    <p className="text-[11px] text-muted-foreground truncate">{formattedTime}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 rounded-xl border border-border/60 bg-muted/30 p-3 shadow-xs">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-500/10 text-violet-600 dark:text-violet-400">
+                    <MapPin className="h-4 w-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                      Location / Venue
+                    </p>
+                    <p className="text-xs font-semibold text-foreground truncate">
+                      {event.venue || "SRM University-AP Campus"}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 rounded-xl border border-border/60 bg-muted/30 p-3 shadow-xs">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-500/10 text-violet-600 dark:text-violet-400">
+                    <Building2 className="h-4 w-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                      Organized By
+                    </p>
+                    <p className="text-xs font-semibold text-foreground truncate">
+                      {event.organizer || event.department || "SRM University-AP"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Content Layout: Left 2 Cols (Poster + About) & Right 1 Col (Sidebar) */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pt-2">
             {/* Left 2 Cols on Desktop, Main Content */}
             <div className="lg:col-span-2 space-y-6">
-
-              {/* MOBILE ONLY: Event Information Card placed directly below header/speaker */}
+              {/* MOBILE ONLY: Event Information Card placed directly below header */}
               <div className="block lg:hidden">
                 <EventInformationCard />
               </div>
@@ -721,7 +811,7 @@ const EventDetail = () => {
                     Explore upcoming seminars, bootcamps, and workshops
                   </p>
                 </div>
-                <Link to="/marketplace">
+                <Link to="/events">
                   <Button variant="ghost" size="sm" className="gap-1 text-xs text-violet-600 dark:text-violet-400">
                     View all events
                     <ChevronRight className="h-3.5 w-3.5" />

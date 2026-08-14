@@ -71,7 +71,7 @@ const FindStudyPartners = () => {
                                     <li>Add your courses, subjects, and study preferences</li>
                                     <li>Search for students by course, major, or study topics</li>
                                     <li>Connect and arrange study sessions or join groups</li>
-                                    <li>Post in community if you need specific help</li>
+                                    <li>Post on the board if you need specific help</li>
                                 </ol>
                             </div>
 
@@ -83,7 +83,7 @@ const FindStudyPartners = () => {
                                         <Link to="/signup">Find Study Partners Now</Link>
                                     </Button>
                                     <Button variant="outline" size="lg" asChild>
-                                        <Link to="/community-posts">Browse Study Groups</Link>
+                                        <Link to="/workspace-groups">Browse Workspace Groups</Link>
                                     </Button>
                                 </div>
                             </div>

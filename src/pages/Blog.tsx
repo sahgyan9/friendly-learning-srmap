@@ -100,7 +100,7 @@ const Blog = () => {
                                     Ask it on Posts — every SRM AP student can post and reply.
                                 </p>
                                 <Button asChild size="lg">
-                                    <Link to="/community-posts">Go to Posts</Link>
+                                    <Link to="/posts">Go to Posts</Link>
                                 </Button>
                             </div>
                         </div>
