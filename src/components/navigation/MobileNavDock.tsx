@@ -35,9 +35,9 @@ import {
 // 4 core quick-access destinations in the floating dock
 const DOCK_PRIMARY_ITEMS = [
   { name: "Home", url: "/", icon: PRIMARY_NAV[0].icon },
-  { name: "Groups", url: "/communities", icon: GroupsIcon },
+  { name: "Groups", url: "/workspace-groups", icon: GroupsIcon },
   { name: "Faculty", url: "/faculty", icon: FacultyIcon },
-  { name: "Events", url: "/marketplace", icon: EventsIcon },
+  { name: "Events", url: "/events", icon: EventsIcon },
 ];
 
 export function MobileNavDock() {
@@ -53,8 +53,8 @@ export function MobileNavDock() {
   // Highlight dots for new or unvisited features
   const tourCompleted = profile?.has_seen_welcome_tour === true;
   const navHighlights: Record<string, boolean> = {
-    "/communities": tourCompleted && !hasVisitedGroups,
-    "/marketplace": tourCompleted && !hasVisitedEvents,
+    "/workspace-groups": tourCompleted && !hasVisitedGroups,
+    "/events": tourCompleted && !hasVisitedEvents,
     "/mentors": tourCompleted && !hasVisitedMentors,
     "/faculty": !hasSeenFaculty,
   };

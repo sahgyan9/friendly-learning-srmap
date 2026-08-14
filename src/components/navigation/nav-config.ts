@@ -50,9 +50,9 @@ export interface NavItem {
  */
 export const PRIMARY_NAV: NavItem[] = [
   { name: "Home", url: "/", icon: Home },
-  { name: "Groups", url: "/communities", icon: GroupsIcon },
-  { name: "Posts", url: "/community-posts", icon: PostIcon },
-  { name: "Events", url: "/marketplace", icon: EventsIcon },
+  { name: "Groups", url: "/workspace-groups", icon: GroupsIcon },
+  { name: "Posts", url: "/posts", icon: PostIcon },
+  { name: "Events", url: "/events", icon: EventsIcon },
   { name: "Messages", url: "/messages", icon: Mail, requiresAuth: true },
   { name: "Faculty", url: "/faculty", icon: FacultyIcon },
   { name: "Mentors", url: "/mentors", icon: MentorIcon },
@@ -87,19 +87,19 @@ export const ROUTE_ACCENT: Record<string, {
     dot: "bg-blue-500",
     border: "border-blue-500/40",
   },
-  "/communities": {
+  "/workspace-groups": {
     pill: "bg-amber-500/10",
     text: "text-amber-600 dark:text-amber-400",
     dot: "bg-amber-500",
     border: "border-amber-500/40",
   },
-  "/community-posts": {
+  "/posts": {
     pill: "bg-emerald-500/10",
     text: "text-emerald-600 dark:text-emerald-400",
     dot: "bg-emerald-500",
     border: "border-emerald-500/40",
   },
-  "/marketplace": {
+  "/events": {
     pill: "bg-violet-500/10",
     text: "text-violet-600 dark:text-violet-400",
     dot: "bg-violet-500",
