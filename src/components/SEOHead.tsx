@@ -16,7 +16,7 @@ interface SEOHeadProps {
 }
 
 const SEOHead = ({
-  title = `${APP_NAME} - Student Mentorship Platform | SRM AP Academic Mentors`,
+  title = `${APP_NAME} - Campus Platform for SRM AP Students | Posts, Mentors, Faculty & Groups`,
   description = APP_DESCRIPTION,
   keywords = APP_KEYWORDS,
   canonical,
@@ -71,11 +71,21 @@ const SEOHead = ({
     updateMetaTag('apple-mobile-web-app-status-bar-style', 'default');
     updateMetaTag('format-detection', 'telephone=no');
 
+    const resolvedCanonical = canonical || (() => {
+      const url = new URL(window.location.href);
+      url.hostname = SITE_HOST;
+      url.protocol = 'https:';
+      url.port = '';
+      url.search = '';
+      url.hash = '';
+      return url.toString();
+    })();
+
     // Update Open Graph tags
     updateMetaTag('og:title', ogTitle || title, true);
     updateMetaTag('og:description', ogDescription || description, true);
     updateMetaTag('og:image', `${PRIMARY_DOMAIN}${ogImage}`, true);
-    updateMetaTag('og:url', window.location.href, true);
+    updateMetaTag('og:url', resolvedCanonical, true);
     updateMetaTag('og:type', ogType, true);
     updateMetaTag('og:site_name', APP_NAME, true);
     updateMetaTag('og:locale', 'en_IN', true);
@@ -99,19 +109,7 @@ const SEOHead = ({
       canonicalLink.rel = 'canonical';
       document.head.appendChild(canonicalLink);
     }
-
-    if (canonical) {
-      canonicalLink.href = canonical;
-    } else {
-      // Canonical always points at SITE_HOST, whatever host actually served the
-      // page — so preview deployments and any parked domain still credit the
-      // canonical origin rather than competing with it.
-      const url = new URL(window.location.href);
-      url.hostname = SITE_HOST;
-      url.protocol = 'https:';
-      url.port = '';
-      canonicalLink.href = url.toString();
-    }
+    canonicalLink.href = resolvedCanonical;
 
     // Add DNS prefetch for performance
     const dnsPrefetchLinks = [
@@ -182,7 +180,7 @@ const SEOHead = ({
       "name": "Friendly Learning SRMAP",
       "url": PRIMARY_DOMAIN,
       "logo": `${PRIMARY_DOMAIN}/og-image.png`,
-      "description": "University student collaboration platform connecting students for mentoring, study partnerships, and project collaborations",
+      "description": "All-in-one campus platform for SRM AP students \u2014 community posts, CampusMind search, peer mentors, faculty directory with ratings, groups, and opportunities.",
       "contactPoint": {
         "@type": "ContactPoint",
         "contactType": "customer service",

@@ -150,7 +150,7 @@ export const getArticleSchema = (post) => {
             "@type": "WebPage",
             "@id": post.slug
                 ? `${baseUrl}/blog/${post.slug}`
-                : `${baseUrl}/community-posts/${post.id}`
+                : `${baseUrl}/posts/${post.id}`
         }
     };
 };

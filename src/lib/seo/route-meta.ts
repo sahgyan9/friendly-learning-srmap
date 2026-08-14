@@ -33,11 +33,11 @@ export interface RouteMeta {
  */
 export const ROUTE_META: Record<string, RouteMeta> = {
   "/": {
-    title: `${APP_NAME} - Student Mentorship Platform | SRM AP Academic Mentors`,
+    title: `${APP_NAME} - Campus Platform for SRM AP Students | Posts, Mentors, Faculty & Groups`,
     // Deliberately not APP_DESCRIPTION, which is a shorter blurb used elsewhere.
     // This is the wording index.html already served to crawlers.
     description:
-      "Friendly Learning SRMAP connects SRM AP university students with experienced peer mentors for academic guidance, project collaboration, and study partnerships. Get personalized help from verified mentors in your department.",
+      "Friendly Learning SRMAP is the all-in-one campus platform for SRM AP students \u2014 post ideas, find hackathon teammates, search with CampusMind, rate faculty, join groups, and get mentored by seniors who've taken your course.",
   },
   "/about": {
     title:
@@ -53,44 +53,44 @@ export const ROUTE_META: Record<string, RouteMeta> = {
     description:
       "Discover experienced student mentors at Friendly Learning SRM AP University in Amaravati. Browse profiles, skills, and reviews to find the perfect mentor for your academic journey. Connect with verified peer mentors from SRMAP today!",
   },
-  "/community-posts": {
-    title: "Posts | Find Hackathon Partners & Study Help at SRM AP",
+  "/posts": {
+    title: "Posts | Campus Discussions & Peer Help at SRM AP | Friendly Learning SRMAP",
     description:
-      "Post and browse requests from SRM AP students — hackathon teammates, study help, project collaborators, research partners and campus announcements.",
+      "Browse and share student posts at SRM University-AP. Ask for academic help, find study partners, form hackathon teams, and post campus discussions.",
   },
   "/contact": {
     title: "Contact Friendly Learning - Get Support for SRM AP Mentorship Platform",
     description:
       "Have questions about Friendly Learning? Contact our support team for help with mentor connections, platform features, or technical support. We're here to help SRM AP students succeed!",
   },
-  "/marketplace": {
-    title:
-      "Events & News | Friendly Learning SRMAP University Student Hub | Find University Events, News & Advertisements",
-    description:
-      "Discover university events, news, advertisements, and course materials at Friendly Learning SRMAP. Stay updated with campus activities, announcements, and educational resources for university students.",
-  },
   "/events": {
     title:
-      "University Events & News | Friendly Learning SRMAP | Campus Activities & Workshops",
+      "University Events & Workshops at SRM AP | Friendly Learning SRMAP | Campus Activities",
     description:
-      "Discover university events, news, workshops, guest lectures, and competitions at SRM University-AP. Stay updated and register directly.",
+      "Discover upcoming university events, workshops, guest lectures, hackathons, and campus activities at SRM University-AP. Stay updated and register directly.",
+  },
+  "/workspace-groups": {
+    title:
+      "Workspace Groups | SRM AP Student Collaboration & Projects | Friendly Learning SRMAP",
+    description:
+      "Join student workspace groups and project teams at SRM University-AP. Collaborate on course projects, hackathons, and research with peers.",
   },
   "/how-it-works": {
     title: "How Friendly Learning SRMAP Works | University Student Collaboration Guide",
     description:
-      "Learn how Friendly Learning SRMAP connects university students worldwide for mentoring, study partnerships, hackathon teams, and academic collaboration. Simple 3-step process to start collaborating.",
+      "Learn how Friendly Learning SRMAP helps SRM AP students find mentors, rate faculty, form hackathon teams, join groups, and collaborate \u2014 all from one campus platform. Simple 3-step process to start.",
   },
   "/find-study-partners": {
     title:
-      "Find Study Partners at Your University | Friendly Learning SRMAP Student Collaboration Platform",
+      "Find Study Partners at SRM AP | Friendly Learning SRMAP Campus Platform",
     description:
-      "Connect with study partners at your university through Friendly Learning SRMAP. Find students in your courses, form study groups, and improve academic performance together. University student networking made easy.",
+      "Connect with study partners at SRM University-AP through Friendly Learning SRMAP. Find students in your courses, form study groups, and improve academic performance together.",
   },
   "/hackathon-partners": {
     title:
-      "Find Hackathon Partners & Build Winning Teams | Friendly Learning SRMAP University Platform",
+      "Find Hackathon Partners & Build Winning Teams at SRM AP | Friendly Learning SRMAP",
     description:
-      "Connect with skilled developers, designers, and business minds for hackathon teams through Friendly Learning SRMAP. Build winning teams with complementary skills at your university. Perfect team formation for coding competitions.",
+      "Connect with skilled developers, designers, and business minds for hackathon teams at SRM University-AP through Friendly Learning SRMAP. Build winning teams with complementary skills for coding competitions and innovation challenges.",
   },
   "/opportunities": {
     title: "Hackathons & Opportunities at SRM AP | Find a Team",

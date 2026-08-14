@@ -105,6 +105,35 @@ Deeper authorities it defers to: [FACULTY_AI_ROADMAP.md](FACULTY_AI_ROADMAP.md)
 - **Interests are messy free text on purpose** — the embedding layer collapses
   synonyms. Do not build a curated taxonomy.
 
+## Messaging & SEO consistency
+
+The platform **evolved from a mentorship directory into a full campus
+ecosystem** (posts, groups, CampusMind search, faculty ratings, opportunities,
+mentors). The About page and HomeIntro already reflect this — but several SEO
+surfaces still say "Student Mentorship Platform." When editing copy in any of
+the files below, align to the ecosystem framing, not the old mentorship-only
+framing.
+
+**Canonical one-liner (use as the reference pitch):**
+> Friendly Learning SRMAP is the all-in-one campus platform for SRM AP
+> students — post ideas, find teammates, search with CampusMind, rate faculty,
+> and get mentored by seniors who've already taken your course.
+
+**Known drift (as of Aug 2026):**
+- `index.html` `<title>`, meta description, OG/Twitter tags — say "mentorship
+  platform" and the OG description says **"official"**, violating the
+  non-affiliation red line above.
+- `src/lib/constants.ts` `APP_DESCRIPTION` — generic mentorship blurb, no
+  mention of posts, groups, faculty, or search.
+- `src/lib/seo/route-meta.ts` homepage entry — mirrors the stale index.html
+  description. Also `/how-it-works` says "worldwide" (it's SRM AP only) and
+  `/find-study-partners` + `/hackathon-partners` say "at your university"
+  instead of naming SRM AP.
+- `index.html` Schema.org block — `@type: "EducationalOrganization"` is wrong;
+  the platform is not an educational organisation.
+
+If you touch any of these files, fix the drift in the same commit.
+
 ## Note on tooling differences
 
 Recent database and edge-function changes were applied through Claude Code's

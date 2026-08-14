@@ -58,9 +58,9 @@
       }
     })();
   </script>
-  <title>Friendly Learning SRMAP - Student Mentorship Platform | SRM AP Academic Mentors</title>
+  <title>Friendly Learning SRMAP - Campus Platform for SRM AP Students | Posts, Mentors, Faculty & Groups</title>
   <meta name="description"
-    content="Friendly Learning SRMAP connects SRM AP university students with experienced peer mentors for academic guidance, project collaboration, and study partnerships. Get personalized help from verified mentors in your department." />
+    content="Friendly Learning SRMAP is the all-in-one campus platform for SRM AP students — post ideas, find hackathon teammates, search with CampusMind, rate faculty, join groups, and get mentored by seniors who've taken your course." />
   <meta name="keywords"
     content="friendly learning srmap, fl srmap, srm ap mentorship, srmap student mentors, academic guidance srm, university mentors srmap, find study partners srm, verified mentors srmap, peer learning srm ap, student collaboration srmap, academic support srm, srm university mentors, hackathon partners srm, project collaboration srmap" />
   <meta name="author" content="Friendly Learning SRMAP" />
@@ -76,9 +76,9 @@
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://friendly-learning-srmap.vercel.app/" />
-  <meta property="og:title" content="Friendly Learning SRMAP - Connect with SRM AP Student Mentors" />
+  <meta property="og:title" content="Friendly Learning SRMAP - Your Campus, One Feed | SRM AP" />
   <meta property="og:description"
-    content="Find academic guidance, study partners, project collaborators, and hackathon teams through the official SRM AP student mentorship platform." />
+    content="Post ideas, find teammates, search with CampusMind, rate faculty, and get mentored by seniors — the all-in-one campus platform for SRM AP students." />
   <meta property="og:image" content="https://friendly-learning-srmap.vercel.app/og-image.png" />
   <meta property="og:site_name" content="Friendly Learning SRMAP" />
   <meta property="og:locale" content="en_IN" />
@@ -87,75 +87,42 @@
   <!-- Twitter -->
   <meta property="twitter:card" content="summary_large_image" />
   <meta property="twitter:url" content="https://friendly-learning-srmap.vercel.app/" />
-  <meta property="twitter:title" content="Friendly Learning SRMAP - Connect with SRM AP Student Mentors" />
+  <meta property="twitter:title" content="Friendly Learning SRMAP - Your Campus, One Feed | SRM AP" />
   <meta property="twitter:description"
-    content="Find academic guidance, study partners, project collaborators, and hackathon teams through the official SRM AP student mentorship platform." />
+    content="Post ideas, find teammates, search with CampusMind, rate faculty, and get mentored by seniors — the all-in-one campus platform for SRM AP students." />
   <meta property="twitter:image" content="https://friendly-learning-srmap.vercel.app/og-image.png" />
 
   <!-- Schema.org structured data -->
   <script type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": "EducationalOrganization",
+      "@type": "WebApplication",
       "name": "Friendly Learning SRMAP",
-      "alternateName": ["Friendly Learning SRMAP", "FL SRMAP", "SRM AP Mentorship Platform", "SRMAP Student Mentors"],
-      "description": "Friendly Learning SRMAP is the official SRM AP university student mentorship platform connecting students with experienced peer mentors for academic guidance, project collaboration, and study partnerships within the SRM AP community.",
-  "url": "https://friendly-learning-srmap.vercel.app/",
-  "logo": "https://friendly-learning-srmap.vercel.app/og-image.png",
-  "image": "https://friendly-learning-srmap.vercel.app/og-image.png",
+      "alternateName": ["FL SRMAP", "SRM AP Campus Platform"],
+      "description": "All-in-one campus platform for SRM AP students — community posts, CampusMind natural-language search, peer mentors, faculty directory with ratings, private and public groups, and hackathon/internship opportunities.",
+      "url": "https://friendly-learning-srmap.vercel.app/",
+      "logo": "https://friendly-learning-srmap.vercel.app/og-image.png",
+      "image": "https://friendly-learning-srmap.vercel.app/og-image.png",
+      "applicationCategory": "EducationalApplication",
+      "operatingSystem": "Web",
 
       "contactPoint": {
         "@type": "ContactPoint",
         "contactType": "Customer Service",
-  "url": "https://friendly-learning-srmap.vercel.app/contact",
+        "url": "https://friendly-learning-srmap.vercel.app/contact",
         "availableLanguage": ["English", "Hindi"]
       },
       "areaServed": {
         "@type": "Place",
-        "name": "SRM AP University"
+        "name": "SRM University-AP, Amaravati"
       },
-      "serviceType": "University Student Mentorship and Academic Guidance Services",
-      "knowsAbout": ["Student Mentorship", "Academic Guidance", "Peer Learning", "Study Partnerships", "Project Collaboration", "SRM AP University", "University Community Building"],
-      "keywords": "friendly learning srmap, srm ap mentorship, student mentorship platform, srmap student mentors, university mentorship, peer learning, academic guidance"
+      "featureList": ["Community Posts", "CampusMind Natural-Language Search", "Peer Mentorship & Certificates", "Faculty Directory & Ratings", "Private and Public Groups", "Hackathon & Internship Opportunities"],
+      "keywords": "friendly learning srmap, campus platform srm ap, CampusMind search, faculty ratings, peer mentors, hackathon partners, student groups, community posts"
     }
     </script>
 </head>
 
 <body>
-  <script>
-    // Lightweight client-side canonicalization (use server-side 301 where possible)
-    (function () {
-      var host = window.location.hostname;
-      var isLocal = host === 'localhost' || host === '127.0.0.1';
-
-      // Only redirect if we have a custom domain configured and we're not on it
-      // For now, we'll let the current domain be the canonical one
-      if (!isLocal) {
-        // Update canonical link to current domain
-        var canonicalLink = document.querySelector('link[rel="canonical"]');
-        if (canonicalLink) {
-          canonicalLink.href = window.location.origin + window.location.pathname;
-        }
-
-        // Strip tracking params from URL
-        var params = new URLSearchParams(window.location.search);
-        var hasTrackingParams = false;
-        ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid', 'fbclid', 'source'].forEach(function (k) {
-          if (params.has(k)) {
-            params.delete(k);
-            hasTrackingParams = true;
-          }
-        });
-
-        if (hasTrackingParams) {
-          var cleanUrl = window.location.origin + window.location.pathname;
-          var qs = params.toString();
-          if (qs) cleanUrl += '?' + qs;
-          window.history.replaceState({}, '', cleanUrl);
-        }
-      }
-    })();
-  </script>
   <div id="root"><!--app-html--></div>
   <!-- IMPORTANT: DO NOT REMOVE THIS SCRIPT TAG OR THIS VERY COMMENT! -->
   <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
