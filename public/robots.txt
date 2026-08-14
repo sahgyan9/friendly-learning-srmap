@@ -12,6 +12,7 @@ Sitemap: https://friendly-learning-srmap.vercel.app/sitemap-index.xml
 Sitemap: https://friendly-learning-srmap.vercel.app/sitemap.xml
 Sitemap: https://friendly-learning-srmap.vercel.app/sitemap-blog.xml
 Sitemap: https://friendly-learning-srmap.vercel.app/sitemap-community.xml
+Sitemap: https://friendly-learning-srmap.vercel.app/sitemap-groups.xml
 Sitemap: https://friendly-learning-srmap.vercel.app/sitemap-mentors.xml
 Sitemap: https://friendly-learning-srmap.vercel.app/sitemap-faculty.xml
 
@@ -19,8 +20,11 @@ Sitemap: https://friendly-learning-srmap.vercel.app/sitemap-faculty.xml
 User-agent: Googlebot
 Allow: /
 Allow: /mentors
-Allow: /community-posts
-Allow: /marketplace
+Allow: /posts
+Allow: /workspace-groups
+Allow: /events
+Allow: /faculty
+Allow: /opportunities
 Allow: /about
 Allow: /contact
 Allow: /how-it-works

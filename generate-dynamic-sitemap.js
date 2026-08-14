@@ -68,12 +68,13 @@ const config = {
         '/': { changefreq: 'daily', priority: 1.0, images: [{ loc: '/og-image.png', title: 'Friendly Learning SRMAP - University Student Collaboration Platform', caption: 'Connect with university students for mentoring, study partnerships, and project collaborations' }] },
         '/about': { changefreq: 'monthly', priority: 0.8, images: [{ loc: '/about-team.png', title: 'About Friendly Learning SRMAP Team' }] },
         '/mentors': { changefreq: 'daily', priority: 0.9 },
-        '/community-posts': { changefreq: 'daily', priority: 0.9 },
+        '/posts': { changefreq: 'daily', priority: 0.9 },
         '/faculty': { changefreq: 'daily', priority: 0.9 },
         '/signup': { changefreq: 'monthly', priority: 0.7 },
         '/signin': { changefreq: 'monthly', priority: 0.6 },
         '/contact': { changefreq: 'monthly', priority: 0.5 },
-        '/marketplace': { changefreq: 'weekly', priority: 0.7 },
+        '/events': { changefreq: 'weekly', priority: 0.9 },
+        '/workspace-groups': { changefreq: 'weekly', priority: 0.8 },
         '/become-mentor': { changefreq: 'monthly', priority: 0.6 },
         '/how-it-works': { changefreq: 'monthly', priority: 0.8 },
         '/find-study-partners': { changefreq: 'weekly', priority: 0.9 },
@@ -290,7 +291,7 @@ async function generateCommunityPostsSitemap() {
         // Add main community posts page
         sitemap += `
   <url>
-    <loc>${config.siteUrl}/community-posts</loc>
+    <loc>${config.siteUrl}/posts</loc>
     <lastmod>${timestamp}</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
@@ -305,7 +306,7 @@ async function generateCommunityPostsSitemap() {
 
             sitemap += `
   <url>
-    <loc>${config.siteUrl}/community-posts/${post.id}</loc>
+    <loc>${config.siteUrl}/posts/${post.id}</loc>
     <lastmod>${lastmod}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>`;
@@ -326,10 +327,82 @@ async function generateCommunityPostsSitemap() {
 </urlset>`;
 
         fs.writeFileSync(path.join(config.publicDir, 'sitemap-community.xml'), sitemap);
-        console.log(`Community posts sitemap generated successfully with ${posts.length} posts`);
+        console.log(`Posts sitemap generated successfully with ${posts.length} posts`);
         return true;
     } catch (error) {
-        console.error('Error generating community posts sitemap:', error);
+        console.error('Error generating posts sitemap:', error);
+        return false;
+    }
+}
+
+/**
+ * Fetch workspace groups (communities) from Supabase and generate a sitemap
+ */
+async function generateWorkspaceGroupsSitemap() {
+    if (!supabase) return false;
+
+    console.log('Fetching workspace groups data from Supabase...');
+
+    try {
+        const { data: groups, error } = await supabase
+            .from('communities')
+            .select('slug, name, updated_at, created_at, cover_image')
+            .eq('is_archived', false)
+            .not('slug', 'is', null);
+
+        if (error || !groups) {
+            console.warn('Skipping workspace groups sitemap:', error?.message ?? 'no rows returned');
+            return false;
+        }
+
+        const timestamp = new Date().toISOString();
+
+        let sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" 
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+        xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd
+                            http://www.google.com/schemas/sitemap-image/1.1 http://www.google.com/schemas/sitemap-image/1.1/sitemap-image.xsd">`;
+
+        // Add main workspace groups page
+        sitemap += `
+  <url>
+    <loc>${config.siteUrl}/workspace-groups</loc>
+    <lastmod>${timestamp}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>`;
+
+        groups.forEach(group => {
+            const lastmod = group.updated_at || group.created_at || timestamp;
+
+            sitemap += `
+  <url>
+    <loc>${config.siteUrl}/workspace-groups/${encodeURIComponent(group.slug)}</loc>
+    <lastmod>${lastmod}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>`;
+
+            if (group.cover_image) {
+                sitemap += `
+    <image:image>
+      <image:loc>${xmlEscape(group.cover_image)}</image:loc>
+      <image:title>${xmlEscape(group.name)} - SRM AP Workspace Group</image:title>
+    </image:image>`;
+            }
+
+            sitemap += `
+  </url>`;
+        });
+
+        sitemap += `
+</urlset>`;
+
+        fs.writeFileSync(path.join(config.publicDir, 'sitemap-groups.xml'), sitemap);
+        console.log(`Workspace groups sitemap generated successfully with ${groups.length} groups`);
+        return true;
+    } catch (error) {
+        console.error('Error generating workspace groups sitemap:', error);
         return false;
     }
 }
@@ -628,6 +701,14 @@ async function generateSitemapIndex(availableSitemaps) {
   </sitemap>`;
     }
 
+    if (availableSitemaps.groups) {
+        sitemapIndex += `
+  <sitemap>
+    <loc>${config.siteUrl}/sitemap-groups.xml</loc>
+    <lastmod>${timestamp}</lastmod>
+  </sitemap>`;
+    }
+
     if (availableSitemaps.faculty) {
         sitemapIndex += `
   <sitemap>
@@ -658,6 +739,7 @@ async function generateSitemaps() {
             blog: false,
             mentors: false,
             community: false,
+            groups: false,
             faculty: false
         };
 
@@ -669,6 +751,9 @@ async function generateSitemaps() {
 
         // Generate community posts sitemap
         availableSitemaps.community = await generateCommunityPostsSitemap();
+
+        // Generate workspace groups sitemap
+        availableSitemaps.groups = await generateWorkspaceGroupsSitemap();
 
         // Generate faculty profiles sitemap
         availableSitemaps.faculty = await generateFacultySitemap();
@@ -683,6 +768,7 @@ async function generateSitemaps() {
             blog: 'sitemap-blog.xml',
             mentors: 'sitemap-mentors.xml',
             community: 'sitemap-community.xml',
+            groups: 'sitemap-groups.xml',
             faculty: 'sitemap-faculty.xml',
         };
 

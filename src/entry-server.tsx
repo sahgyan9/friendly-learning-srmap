@@ -16,16 +16,19 @@ const KNOWN_ROUTES = [
   '/',
   '/about',
   '/mentors',
-  '/community-posts',
+  '/posts',
+  '/workspace-groups',
+  '/events',
   '/signup',
   '/signin',
   '/contact',
-  '/marketplace',
   '/become-mentor',
   '/how-it-works',
   '/find-study-partners',
   '/hackathon-partners',
-  '/blog'
+  '/blog',
+  '/how-verification-works',
+  '/your-data'
 ];
 
 // Private routes that should redirect if not authenticated

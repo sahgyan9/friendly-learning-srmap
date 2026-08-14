@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" 
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+        xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd
+                            http://www.google.com/schemas/sitemap-image/1.1 http://www.google.com/schemas/sitemap-image/1.1/sitemap-image.xsd">
+  <url>
+    <loc>https://friendly-learning-srmap.vercel.app/workspace-groups</loc>
+    <lastmod>2026-08-14T13:19:04.062Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://friendly-learning-srmap.vercel.app/workspace-groups/battery-technology</loc>
+    <lastmod>2026-07-31T04:44:49.077437+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://friendly-learning-srmap.vercel.app/workspace-groups/hackthon-group</loc>
+    <lastmod>2026-07-31T13:54:17.727331+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://friendly-learning-srmap.vercel.app/workspace-groups/testing-private-group</loc>
+    <lastmod>2026-08-06T11:58:33.233654+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>data:image/svg+xml,%3Csvg%20xmlns%3D&apos;http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg&apos;%20width%3D&apos;128&apos;%20height%3D&apos;128&apos;%3E%3Cdefs%3E%3ClinearGradient%20id%3D&apos;g&apos;%20x1%3D&apos;0&apos;%20y1%3D&apos;0&apos;%20x2%3D&apos;1&apos;%20y2%3D&apos;1&apos;%3E%3Cstop%20offset%3D&apos;0&apos;%20stop-color%3D&apos;hsl(212%2062%25%2046%25)&apos;%2F%3E%3Cstop%20offset%3D&apos;1&apos;%20stop-color%3D&apos;hsl(236%2058%25%2038%25)&apos;%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D&apos;128&apos;%20height%3D&apos;128&apos;%20rx%3D&apos;28&apos;%20fill%3D&apos;url(%23g)&apos;%2F%3E%3Ctext%20x%3D&apos;64&apos;%20y%3D&apos;80&apos;%20font-size%3D&apos;60&apos;%20text-anchor%3D&apos;middle&apos;%3E%F0%9F%8C%B1%3C%2Ftext%3E%3C%2Fsvg%3E</image:loc>
+      <image:title>Testing Private Group - SRM AP Workspace Group</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://friendly-learning-srmap.vercel.app/workspace-groups/mediconnect-assistant</loc>
+    <lastmod>2026-08-08T06:27:10.893754+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>data:image/svg+xml,%3Csvg%20xmlns%3D&apos;http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg&apos;%20width%3D&apos;128&apos;%20height%3D&apos;128&apos;%3E%3Cdefs%3E%3ClinearGradient%20id%3D&apos;g&apos;%20x1%3D&apos;0&apos;%20y1%3D&apos;0&apos;%20x2%3D&apos;1&apos;%20y2%3D&apos;1&apos;%3E%3Cstop%20offset%3D&apos;0&apos;%20stop-color%3D&apos;hsl(140%2062%25%2046%25)&apos;%2F%3E%3Cstop%20offset%3D&apos;1&apos;%20stop-color%3D&apos;hsl(164%2058%25%2038%25)&apos;%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D&apos;128&apos;%20height%3D&apos;128&apos;%20rx%3D&apos;28&apos;%20fill%3D&apos;url(%23g)&apos;%2F%3E%3Csvg%20x%3D&apos;32&apos;%20y%3D&apos;32&apos;%20width%3D&apos;64&apos;%20height%3D&apos;64&apos;%20viewBox%3D&apos;0%200%2024%2024&apos;%20fill%3D&apos;none&apos;%20stroke%3D&apos;white&apos;%20stroke-width%3D&apos;2&apos;%20stroke-linecap%3D&apos;round&apos;%20stroke-linejoin%3D&apos;round&apos;%3E%3Cpath%20d%3D%22M4%2014a1%201%200%200%201-.78-1.63l9.9-10.2a.5.5%200%200%201%20.86.46l-1.92%206.02A1%201%200%200%200%2013%2010h7a1%201%200%200%201%20.78%201.63l-9.9%2010.2a.5.5%200%200%201-.86-.46l1.92-6.02A1%201%200%200%200%2011%2014z%22%2F%3E%3C%2Fsvg%3E%3C%2Fsvg%3E</image:loc>
+      <image:title>mediconnect assistant - SRM AP Workspace Group</image:title>
+    </image:image>
+  </url>
+</urlset>

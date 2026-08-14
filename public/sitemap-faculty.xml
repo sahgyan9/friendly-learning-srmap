@@ -6,7 +6,7 @@
                             http://www.google.com/schemas/sitemap-image/1.1 http://www.google.com/schemas/sitemap-image/1.1/sitemap-image.xsd">
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty</loc>
-    <lastmod>2026-08-14T09:46:04.525Z</lastmod>
+    <lastmod>2026-08-14T13:19:04.577Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
@@ -22,7 +22,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-satish-anamalamudi</loc>
-    <lastmod>2026-08-06T13:32:20.634073+00:00</lastmod>
+    <lastmod>2026-08-14T09:59:06.267168+00:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <image:image>
@@ -32,7 +32,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-susmi-jacob</loc>
-    <lastmod>2026-08-07T17:11:58.704786+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:12.493076+00:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <image:image>
@@ -42,7 +42,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-yasir-afaq</loc>
-    <lastmod>2026-08-07T17:14:52.783089+00:00</lastmod>
+    <lastmod>2026-08-14T09:59:06.267168+00:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <image:image>
@@ -52,7 +52,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-basabendu-barman</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <image:image>
@@ -62,7 +62,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-krishna-prasad-maity</loc>
-    <lastmod>2026-08-07T08:48:43.086838+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <image:image>
@@ -72,7 +72,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-mohammad-abdussami</loc>
-    <lastmod>2026-08-06T13:59:46.437251+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:17.943133+00:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <image:image>
@@ -82,7 +82,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-pranab-mandal</loc>
-    <lastmod>2026-08-13T01:45:14.685363+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <image:image>
@@ -92,7 +92,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-srinivas-arukonda</loc>
-    <lastmod>2026-08-06T13:59:58.153329+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:58.904932+00:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <image:image>
@@ -102,7 +102,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-suraj-singh-khurana</loc>
-    <lastmod>2026-08-06T13:32:50.288973+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:12.493076+00:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <image:image>
@@ -112,7 +112,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-swetamber-p-das</loc>
-    <lastmod>2026-08-12T05:33:38.17945+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <image:image>
@@ -122,13 +122,13 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/abhimanyu-bar</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/ajay-kumar-sahu</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -138,7 +138,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/amit-roy</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:00:11.251721+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -158,13 +158,13 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dilip-kumar-sahoo</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/abhaya-kumar-pradhan</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -174,7 +174,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-abhijit-dasgupta</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -194,7 +194,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/abir-sen</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:00:11.251721+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -204,7 +204,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-achala-shakya</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:00:11.251721+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -214,7 +214,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/aditya-kumar-sahu</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -224,7 +224,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-adusumilli-vijaya-bhaskar</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:09:41.78647+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -240,7 +240,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-aftab-alam</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -260,13 +260,13 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-ahmet-ilker-topuz</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:09:41.78647+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-ainal-hoque-gazi</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -276,7 +276,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-ajay-bhardwaj</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:09:41.78647+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -286,7 +286,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-ajay-dilip-kumar-marapatla</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -296,7 +296,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-akash-balakrishnan</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -311,14 +311,14 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://friendly-learning-srmap.vercel.app/faculty/akshaya-kumar-das</loc>
+    <loc>https://friendly-learning-srmap.vercel.app/faculty/vadlamudi-aadarsh</loc>
     <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://friendly-learning-srmap.vercel.app/faculty/vadlamudi-aadarsh</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <loc>https://friendly-learning-srmap.vercel.app/faculty/akshaya-kumar-das</loc>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
@@ -334,7 +334,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/a-k-v-vinod-sharma</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
@@ -350,13 +350,13 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/ali-jraisheh</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-amal-m-latif</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -376,13 +376,13 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-amit-kumar</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-amit-kumar-kar</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -418,7 +418,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/anil-kumar-rajapitamahuni</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -428,7 +428,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-animesh-bhandari</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -438,7 +438,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/anindita-sarkar</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -448,7 +448,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-anirban-bhar</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -458,7 +458,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-anirban-bose</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -468,7 +468,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-anirban-ghosh</loc>
-    <lastmod>2026-08-06T10:06:14.093148+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -478,7 +478,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-anirudd</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -488,7 +488,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-aniruddha-kundu</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -498,7 +498,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-aniruddha-nagaraj</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -508,7 +508,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/aniruddh-bahadur-yadav</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -524,7 +524,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-ankur-srivastava</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -540,7 +540,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-anshu-sahu</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -550,7 +550,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-anuj-deshpande</loc>
-    <lastmod>2026-08-06T10:06:14.093148+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -560,7 +560,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-anumol-joseph</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -570,7 +570,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/ms-anusha-nalajala</loc>
-    <lastmod>2026-08-06T10:06:14.093148+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:33.533151+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -580,7 +580,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/anushka-chaurasia</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -590,7 +590,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-aqsa-agha</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -600,7 +600,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-argha-basu</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -610,7 +610,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-arghajit-jana</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -620,7 +620,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-arghya-chakravarty</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -630,7 +630,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-arghya-dutta</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -640,7 +640,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-arijit-datta</loc>
-    <lastmod>2026-08-06T10:06:14.093148+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -650,7 +650,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-arkabrata-ghosh</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -660,7 +660,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-arkaprava-datta</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -680,7 +680,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-arun-krishnan-k-s</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -690,7 +690,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-arun-kumar</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -710,7 +710,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/arunkumar-p</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -720,7 +720,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/arup-sarkar</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -730,13 +730,13 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-arya-p-s</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-ashmita-das</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -746,7 +746,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/ashmita-dey</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -756,7 +756,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-ashok-kumar-pradhan</loc>
-    <lastmod>2026-08-06T10:06:14.093148+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -766,7 +766,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-ashu-abdul</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -786,7 +786,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-aswathy-gopi-2</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -796,7 +796,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-aurolipsa-das</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -806,7 +806,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/avinash-trivedi</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:41.138345+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -816,7 +816,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-a-v-s-kamesh</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -826,7 +826,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/mr-awadhesh-dixit</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:41.138345+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -836,7 +836,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-ayesha-parveen-haroon</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -846,7 +846,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-balaji-babu</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -856,7 +856,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-banee-bandana-das</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:41.138345+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -866,7 +866,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/barun-kumar-barman</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -876,7 +876,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-basina-deepakraj</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:54.365613+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -886,7 +886,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/b-bikram-kumar</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:54.365613+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -896,13 +896,13 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-bhagavatula-l-v-prasad</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:54.365613+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-bhagwat-ram</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:54.365613+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -922,7 +922,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-bhaskara-santhosh-egala</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:54.365613+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -932,7 +932,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-bidhan-barai</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:54.365613+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -942,7 +942,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-bidisha-pal</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:54.365613+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -952,7 +952,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-bikku-r</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -962,7 +962,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/biswajit-behera</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:54.365613+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -972,7 +972,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/biswajit-maity</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:54.365613+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -982,7 +982,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/mr-boddu-l-v-siva-rama-krishna</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:54.365613+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -992,7 +992,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/ms-boddu-srujana</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -1002,7 +1002,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-c-durga-rao</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -1012,7 +1012,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-chandana-deka</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:54.365613+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -1022,7 +1022,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-chandan-kumar</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -1032,7 +1032,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-ch-anil-carie-2</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:54.365613+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -1042,7 +1042,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-chebrolu-pulla-rao</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -1052,7 +1052,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-chillara-anilkumar</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:54.365613+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -1068,7 +1068,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/chinmoy-biswas</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:54.365613+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -1078,7 +1078,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-chinmoy-das</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -1088,7 +1088,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-chintalapudi-v-n-u-bharathi-murthy</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:54.365613+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -1098,7 +1098,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-chiranjeevi-korupalli</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -1108,7 +1108,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-choiti-bandyopadhyay</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -1118,7 +1118,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/mr-ch-sree-kumar</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:54.365613+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -1128,7 +1128,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-daigy-varghese</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -1138,7 +1138,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-dasari-kasi-viswanath</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:54.365613+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -1148,7 +1148,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-d-chandana-gowri</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:54.365613+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -1158,7 +1158,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-debabrata-pramanik</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -1168,7 +1168,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-debabrata-senapati</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:54.365613+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -1178,7 +1178,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-debajyoti-kundu</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:54.365613+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -1188,7 +1188,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-deblina-dutta</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:54.365613+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -1198,7 +1198,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-deep-raj</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:54.365613+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -1208,7 +1208,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/deeptajyoti-sen</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:54.365613+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -1218,7 +1218,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/mr-devdutt-tripathi</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:54.365613+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -1228,7 +1228,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/digjoy-paul</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -1250,7 +1250,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/mr-dilip-kumar-vallabhadas</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:54.365613+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -1272,7 +1272,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-dipankar-kundu</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -1292,7 +1292,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-diwakar-2</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:54.365613+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -1302,7 +1302,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-djeane-debora-onthoni</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -1318,7 +1318,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-durga-prakash-m</loc>
-    <lastmod>2026-08-06T10:06:14.093148+00:00</lastmod>
+    <lastmod>2026-08-14T10:12:04.426341+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -1328,7 +1328,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-edukondalu-chappidi</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:54.365613+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -1338,7 +1338,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-elakkiya-e</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:12:04.426341+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -1354,7 +1354,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/eshwar-kuncham</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
@@ -1366,7 +1366,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-firoj-gazi</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:12:04.426341+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -1376,7 +1376,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-fouzul-atik</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -1386,7 +1386,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-gaanutula-damodar-reddy</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -1396,13 +1396,13 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-gaddala-punnam-chander</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:12:04.426341+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-gangi-reddy-salla</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -1422,13 +1422,13 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-geeta-devi</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/gonna-somu-naidu</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -1438,7 +1438,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-goutam-rana</loc>
-    <lastmod>2026-08-06T10:06:14.093148+00:00</lastmod>
+    <lastmod>2026-08-14T10:12:04.426341+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -1448,7 +1448,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-g-santhosh-kumar</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -1458,7 +1458,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-guddu-kumar</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:12:04.426341+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -1468,7 +1468,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/gunda-mohanakrishna</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:12:04.426341+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -1478,7 +1478,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-gunturi-venkatesh</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:12:04.426341+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -1488,7 +1488,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-gurumurthy-kagita</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:12:04.426341+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -1498,7 +1498,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-gvp-bhagath-singh</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -1508,7 +1508,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-g-v-vidyalakshmi</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:12:04.426341+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -1518,7 +1518,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/gyanajyoti-routray</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:12:04.426341+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -1528,13 +1528,13 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/vadim-azhmyakov</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-hamid-hassan-khan</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:12:04.426341+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -1544,7 +1544,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-harish-puppala</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -1554,7 +1554,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-harvinder-kumar-negi</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -1564,7 +1564,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-hema-kumar-yarnagula</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:12:04.426341+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -1872,7 +1872,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-kanaparthi-suresh-kumar</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:04.330121+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -1882,13 +1882,13 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-kanaparthi-v-phani-kumar</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:04.330121+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-karna-vishnu-vardhana-reddy</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:04.330121+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -1904,7 +1904,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-karthik-rajendran</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:04.330121+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -1914,13 +1914,13 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-kartick-chandra-mondal</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:04.330121+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-k-a-sunitha</loc>
-    <lastmod>2026-08-06T10:06:14.093148+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:04.330121+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -1930,7 +1930,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-kaushik-saha</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -1950,7 +1950,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-keerthi-reddy-n</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -1960,7 +1960,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-khushbu-doulani</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:04.330121+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -1976,7 +1976,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-kiran-mangalampalli</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -1986,7 +1986,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-k-n-sasi-rekha</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:04.330121+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2006,7 +2006,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/ms-kousani-banerjee</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:04.330121+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2016,7 +2016,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-kousik-das</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:04.330121+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2026,7 +2026,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-koyel-chakravarty</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2036,7 +2036,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-koyel-mandal</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:04.330121+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2046,7 +2046,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/mr-krishan-takhar</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2056,7 +2056,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-krishanu-roy</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:04.330121+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2066,7 +2066,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-krishnadas-narayanan-nampoothiri</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:04.330121+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2076,7 +2076,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-krishna-manasvi-j</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2102,7 +2102,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-krovi-raja-sekhar</loc>
-    <lastmod>2026-08-06T10:06:14.093148+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:04.330121+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2122,7 +2122,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-kshira-sagar-sahoo</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:04.330121+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2132,7 +2132,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-k-sowjanya</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:04.330121+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2142,7 +2142,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-kumar-srinivasan</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2152,7 +2152,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/kunal-dey</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:04.330121+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2172,7 +2172,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-k-v-t-k-n-prashanth</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:04.330121+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2182,7 +2182,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-lakshmi-kantam-mannepalli</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:04.330121+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2192,7 +2192,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-lakshmi-sirisha-maganti</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:04.330121+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2202,7 +2202,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-lalita-mohan-mohapatra</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2212,7 +2212,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/lata-kumari-pandey</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:04.330121+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2242,7 +2242,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-lekshmi-chandran-c-p</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:04.330121+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2252,7 +2252,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-lipismita-panigrahi</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:04.330121+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2262,7 +2262,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-maanvender-singh</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2272,7 +2272,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-mahesh-kumar-ravva</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2288,7 +2288,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-mallavalli-sitharam</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:04.330121+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2298,7 +2298,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-mallikarjuna-rao-motapothula</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2308,7 +2308,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-manab-kundu</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2318,7 +2318,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-manasi-sinha</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2328,7 +2328,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-manaswini-sen</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2338,7 +2338,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-manikandan-v-m</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:04.330121+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2348,7 +2348,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-manish-kumar</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2358,7 +2358,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/manjeet-chhetri</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:04.330121+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2368,7 +2368,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-manjesh-kumar</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2378,7 +2378,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-manjula-r</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2400,7 +2400,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/manoj-kumar-yadav</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:04.330121+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2410,7 +2410,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/manoj-ny</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2420,7 +2420,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/ms-matta-krishna-kumari</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:17.943133+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2430,7 +2430,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-md-asadul-haque</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2440,7 +2440,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-md-asif-thanedar</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:17.943133+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2450,7 +2450,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-md-faiz-ahmad</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2460,7 +2460,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-m-dhamodharan</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2470,7 +2470,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/md-moneef-ahmad</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:04.330121+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2480,7 +2480,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-md-muzakkir-hussain</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:17.943133+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2490,7 +2490,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-md-najrul-islam</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2500,7 +2500,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-md-nasir</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:17.943133+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2510,7 +2510,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-medipelly-rampavan</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:04.330121+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2520,7 +2520,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-megha-yadav</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2530,7 +2530,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-m-i-nafeesathul-basariya</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2540,7 +2540,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-mitrabarun-ghosh</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2550,7 +2550,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-m-krishna-siva-prasad</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:17.943133+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2560,7 +2560,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-m-mahesh-kumar</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:17.943133+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2570,7 +2570,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-m-naveen-kumar</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:17.943133+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2580,7 +2580,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/mohammed-nazibul-hasan</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:17.943133+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2590,7 +2590,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-mohan-venkatesh-palani</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:17.943133+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2600,7 +2600,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/juned-mohd</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:17.943133+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2610,13 +2610,13 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-mohit-aggarwal</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-moirangthem-rabindra-singh</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:17.943133+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2626,7 +2626,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-m-radhakrishnan</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2636,7 +2636,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-m-ramakrishnan</loc>
-    <lastmod>2026-08-06T10:06:14.093148+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:17.943133+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2646,7 +2646,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-mrutyunjaya-mangaraj</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:17.943133+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2656,7 +2656,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-mrutyunjaya-sahoo</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2666,7 +2666,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-m-thiripalraju</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:17.943133+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2676,7 +2676,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-mudassir-rafi</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:17.943133+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2686,7 +2686,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/mudavath-ravi</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:17.943133+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2696,7 +2696,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-mukaddar-sk</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2706,7 +2706,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-murali-krishna-enduri</loc>
-    <lastmod>2026-08-06T10:06:14.093148+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2716,13 +2716,13 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/m-venkateswara-rao</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:17.943133+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-naga-bhushana-rao-karampudi</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2732,7 +2732,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-naganaboina-venkata-ramesh</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:17.943133+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2742,13 +2742,13 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-nagaraju-mallpeogu</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:17.943133+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/ms-naga-sravanthi-puppala</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:17.943133+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2758,7 +2758,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-narayanamoorthy-bhuvanendran</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:17.943133+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2784,7 +2784,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/mr-naresh-nial</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2794,7 +2794,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-neelakantam-gone</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:17.943133+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2804,7 +2804,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-neeraj-kumar-sharma</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:17.943133+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2814,7 +2814,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/neha-shri</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:17.943133+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2824,7 +2824,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-nelatoori-kiran-babu</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:17.943133+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2834,7 +2834,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-nihar-ranjan-pradhan</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:17.943133+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2844,7 +2844,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-nilakantha-meher</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2860,7 +2860,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-niravkumar-p-raval</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:17.943133+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2870,7 +2870,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-nirmalendu-sekhar-mishra</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:17.943133+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2880,7 +2880,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-nirmal-singh</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2890,7 +2890,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-nishanth-k-s</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:17.943133+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2900,7 +2900,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-nityananda-roy</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2916,7 +2916,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-n-satya-krishna</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:33.533151+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2926,7 +2926,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/nupur-patanker</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:33.533151+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2936,7 +2936,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-pankaj-bhalla</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2946,13 +2946,13 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-pankaj-kumar-raghuwanshi</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-pankaj-pathak</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:17.943133+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2972,7 +2972,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/parakrant-sarkar</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2982,7 +2982,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/paramita-das</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:33.533151+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -2992,7 +2992,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-paramita-ray</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3002,7 +3002,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-pardha-saradhi-maram</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3012,7 +3012,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-partha-bhattacharjee</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:33.533151+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3022,7 +3022,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-p-arun</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:33.533151+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3032,7 +3032,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/ms-parvathy-n</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:33.533151+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3042,7 +3042,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/mr-parvez-ahmad</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3052,7 +3052,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-patta-supraja</loc>
-    <lastmod>2026-08-06T10:06:14.093148+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:33.533151+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3062,7 +3062,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-pavithra-m-r</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3072,7 +3072,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-pintu-bhunia</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:33.533151+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3082,7 +3082,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-pitchaiah-cherukuri</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3092,7 +3092,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/p-n-v-syamala-rao-m</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:33.533151+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3102,7 +3102,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-pothuganti-sanjeeva-kumar</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3112,7 +3112,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-pothuri-surendra-varma</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:33.533151+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3122,7 +3122,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-prabakaran-g</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:33.533151+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3132,7 +3132,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/prabhujit-mohapatra</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3142,7 +3142,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-pradyut-kumar-sanki</loc>
-    <lastmod>2026-08-06T10:06:14.093148+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:33.533151+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3158,7 +3158,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/prakash-babu-yandrapati</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:33.533151+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3178,7 +3178,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/prakash-chandra-sharma</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:33.533151+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3188,7 +3188,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-prakash-kumar-shukla</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:33.533151+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3198,7 +3198,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-pranav-r-t-peddinti</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3208,13 +3208,13 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/praneetha-surapaneni-2</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:33.533151+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/prasad-teja-dakey</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:33.533151+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3224,7 +3224,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-prasanthi-boyapati</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:33.533151+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3234,7 +3234,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-prasun-dutta</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:33.533151+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3244,7 +3244,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-prasun-goswami</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:33.533151+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3254,7 +3254,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-prateek-gupta</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3270,7 +3270,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-pratik-roy</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:33.533151+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3280,7 +3280,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/pratim-bhattacharyya</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:33.533151+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3290,7 +3290,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/pravin-kumar</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:45.791042+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3300,7 +3300,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-preeti-kumari</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:33.533151+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3320,7 +3320,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-priya-k-v</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:45.791042+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3330,7 +3330,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-priyanka</loc>
-    <lastmod>2026-08-06T10:06:14.093148+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:45.791042+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3352,7 +3352,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-p-s-biswa-bhusan-sahoo</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3362,7 +3362,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-pudi-dhilleswararao</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:33.533151+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3372,7 +3372,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-pulak-kar</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3382,7 +3382,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-punyashlok-dash</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3392,13 +3392,13 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/puspendu-pradhan</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:33.533151+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-puviarasu-m</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:45.791042+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3418,13 +3418,13 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-rahul-singh</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:45.791042+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-rajbir-samal</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:45.791042+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3434,7 +3434,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-rajeev-shorey</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:45.791042+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3454,7 +3454,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/mr-rajesh-yelchuri</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:45.791042+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3464,7 +3464,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-rajiv-senapati</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:45.791042+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3474,7 +3474,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-rajkumar-elagiri-ramalingam</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:45.791042+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3484,7 +3484,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-rajni</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:45.791042+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3494,7 +3494,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-rajoshree-chatterjee</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:45.791042+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3504,7 +3504,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/rakesh-kumar</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:45.791042+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3514,7 +3514,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/ramanjaneya-reddy-u</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:45.791042+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3524,7 +3524,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-rama-ranjan-panda</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:45.791042+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3534,7 +3534,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-ram-baran-verma</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3544,7 +3544,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-ramesh-kumar</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:45.791042+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3554,7 +3554,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-randhir-kumar</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:45.791042+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3564,7 +3564,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-rangabhashiyam-selvasembian</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:45.791042+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3574,7 +3574,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-rangachary-kommanduri</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3584,7 +3584,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-ranjana-mehta</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3594,7 +3594,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/raushan-singh</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:45.791042+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3604,7 +3604,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-ravi-kant-kumar</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:45.791042+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3614,7 +3614,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-ravi-kumar</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3624,7 +3624,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-raviteja-kvns</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3640,7 +3640,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-reshmi</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:45.791042+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3650,7 +3650,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-rishabh-mittal</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:45.791042+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
@@ -3662,13 +3662,13 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-rizwan-patan</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-robert-rahman-raman</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3678,7 +3678,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-rohit-milind-babar</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:45.791042+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3688,7 +3688,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-rohit-k-abhimalla</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3698,7 +3698,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-sabyasachi-chakrabortty</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3708,7 +3708,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-sabyasachi-mukhopadhyay</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3728,13 +3728,13 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/saduri-das</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:45.791042+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-sahadeb-shit</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:45.791042+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3744,7 +3744,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-saikat-sinha-ray</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:45.791042+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3754,7 +3754,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-saleti-sumalatha</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:45.791042+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3764,7 +3764,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-sambit-kumar-mishra</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:45.791042+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3774,7 +3774,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-sandeep-kumar-verma</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3784,7 +3784,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-sandip-kumar-mondal</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3794,7 +3794,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-sandra-roshni-monteiro</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:45.791042+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3804,7 +3804,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/sangeeta-saha</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:45.791042+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3814,7 +3814,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-sanjay-kumar</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3844,7 +3844,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-santanu-mandal</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:58.904932+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3854,7 +3854,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/santosh-kumar-sahu</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:45.791042+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3874,7 +3874,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-saranya-antony-a</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3884,7 +3884,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-sarvani-anandarao</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:45.791042+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3894,7 +3894,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-saswat-kumar-ram</loc>
-    <lastmod>2026-08-06T10:06:14.093148+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:45.791042+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3904,7 +3904,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-satchidananda-tripathy</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3914,7 +3914,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-satheesh-ellipilli</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3940,7 +3940,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-sawan-rai</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:58.904932+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3956,7 +3956,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-sayantan-thakur</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:45.791042+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3966,7 +3966,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-sazzad-ali-biswas</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3976,7 +3976,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-sebanti-chatterjee</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3986,7 +3986,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-seema-rani</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -3996,7 +3996,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-shadab-ahmad</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:58.904932+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4006,7 +4006,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-shaiju-panchikkil</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:58.904932+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4016,7 +4016,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-shaik-john-saida</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:58.904932+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4026,7 +4026,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-shaik-rafi</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:58.904932+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4036,7 +4036,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-shatrughna-kumar</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:58.904932+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4046,7 +4046,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-sheetal-yadav</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:58.904932+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4056,7 +4056,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/sheikh-basharul-islam</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:58.904932+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4076,7 +4076,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/sheshadri-shekhar-rauth</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:58.904932+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4086,7 +4086,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-shivanshu-benjwal</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:58.904932+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4096,7 +4096,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/shiva-saketh-reddy</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:58.904932+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4106,7 +4106,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-shoji-d-thottathil</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:58.904932+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4116,7 +4116,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-shuvendu-rana</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:58.904932+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4126,7 +4126,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-sibendu-samanta</loc>
-    <lastmod>2026-08-06T10:06:14.093148+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:58.904932+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4142,7 +4142,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-siddhartha-ghosh</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4152,7 +4152,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/sk-shahid-nadim</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:58.904932+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4162,7 +4162,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-s-mannathan</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4182,7 +4182,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-somesh-vinayak-tewari</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:58.904932+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4192,7 +4192,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-sonali-mondal</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4202,7 +4202,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-sonali-mondal-2</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:58.904932+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4222,13 +4222,13 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-sooraj-shiby</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-soumyajyoti-biswas</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4238,7 +4238,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/soumyakanti-bose</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:58.904932+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4248,7 +4248,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/sourav-kumar-purohit</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:58.904932+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4258,7 +4258,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-sourav-sen</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4268,7 +4268,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-sowkuntla-pandu</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:58.904932+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4278,7 +4278,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-srabani-basu</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:58.904932+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4294,7 +4294,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-sreenivasulu-tupakula</loc>
-    <lastmod>2026-08-06T10:06:14.093148+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:58.904932+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4304,7 +4304,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/srikanta-pradhan</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:58.904932+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4314,7 +4314,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-sriramulu-bojjagani</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:58.904932+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4324,7 +4324,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-sri-sourya-sri-harsha-rongala</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4334,7 +4334,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/sr-ngamwal-anal</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:58.904932+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4360,7 +4360,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/subhajit-sahu</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:58.904932+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4376,7 +4376,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/subha-sreekumar</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:10:58.904932+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4386,7 +4386,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/sudeb-majee</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:12.493076+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4396,7 +4396,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-sudeshna-saha</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4406,7 +4406,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-sudhakar-tummala</loc>
-    <lastmod>2026-08-06T10:06:14.093148+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:12.493076+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4416,7 +4416,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/sudheer-babu-punuri</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4426,7 +4426,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-sujit-das</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:12.493076+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4436,7 +4436,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-sujith-kalluri</loc>
-    <lastmod>2026-08-06T10:06:14.093148+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:12.493076+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4446,7 +4446,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-sukanya-samanta</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:12.493076+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4456,25 +4456,25 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/suman-nandi</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:12.493076+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/sumanta-kumar-nanda</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:12.493076+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/sumita-majhi</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:12.493076+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-sumit-kumar-mehta</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:12.493076+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4484,7 +4484,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-sunil-chinnadurai</loc>
-    <lastmod>2026-08-06T10:06:14.093148+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:12.493076+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4494,13 +4494,13 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-sunil-kumar</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:12.493076+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-supen-kumar-sah</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:12.493076+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4510,7 +4510,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-supravat-dey</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4520,7 +4520,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-suraj-kumar-bhagat</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:12.493076+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4530,7 +4530,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-surfarazhussain-s-halkarni</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:12.493076+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4540,7 +4540,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-surinder-kaur</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4550,7 +4550,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-surjit-sahoo</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4560,7 +4560,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-surla-vishnu-kanchana-naresh</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:12.493076+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4570,7 +4570,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-surochita-pal</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:12.493076+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4580,7 +4580,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-suryakanta-nayak</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4596,7 +4596,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/sutharsan-govindarajan</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4612,7 +4612,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-swagata-samanta</loc>
-    <lastmod>2026-08-06T10:06:14.093148+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:12.493076+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4622,7 +4622,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-syed-sameen-ahmad-rizvi</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:12.493076+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4632,7 +4632,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-syed-tajammul-ahmad</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:12.493076+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4642,7 +4642,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/tabiya-manzoor-beigh</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4652,13 +4652,13 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/tamizharasan-kanagamani</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:12.493076+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-tapan-kumar-hota</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4678,7 +4678,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-tarkeshwar-mahto</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:12.493076+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4688,7 +4688,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/teja-krishna-mamidi</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:12.493076+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4698,7 +4698,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-thirukovela-nikhilesh</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:12.493076+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4708,7 +4708,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/mr-tirlingi-madhava-rao</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4718,7 +4718,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-tirthankar-sengupta</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:12.493076+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4728,7 +4728,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-t-jaya-lakshmi</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:12.493076+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4738,13 +4738,13 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-toluchuri-shalini-shanker-rao</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:12.493076+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-tousif-khan-n</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:12.493076+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4754,7 +4754,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/trilochan-rout</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:12.493076+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4764,7 +4764,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-ubaid-mushtaq</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4774,7 +4774,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-ugen-bhutia</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4784,7 +4784,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-uma-choppali</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:25.54737+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4794,7 +4794,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/uma-maheswar-arepalli</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:25.54737+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4804,7 +4804,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-uma-sankararao-varri</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:25.54737+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4820,7 +4820,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-uttiya-dey</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:25.54737+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4840,7 +4840,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/aadarsh</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:25.54737+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4850,7 +4850,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-vaibhav-kathavate</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:25.54737+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4860,7 +4860,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-varsha-sambhaje</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:12.493076+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4880,7 +4880,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-veerakumar-chinnasamy</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4890,7 +4890,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/venkata-praveen-kumar-madhavarapu</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:25.54737+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4900,7 +4900,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/venkatramaiah-nutalapati</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:25.54737+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4910,7 +4910,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-ventrapati-pavan-kumar</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4920,7 +4920,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-vigneswaran-v-s</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:25.54737+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4930,7 +4930,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-vijayakrishna-rowthu</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4940,7 +4940,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/vikram-mahamiya</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:25.54737+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4950,7 +4950,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-vimal-babu</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4972,7 +4972,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-vinodkumar-etacheri</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4982,7 +4982,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-vipin-kumar</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:25.54737+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -4992,7 +4992,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-vishnu-chandrabanshi</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:25.54737+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5002,7 +5002,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/vishnu-ravindran</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:25.54737+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5012,7 +5012,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-vitalram-rayankula</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:25.54737+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5050,7 +5050,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-v-sateeshkrishna-dhuli</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:25.54737+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5060,7 +5060,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-v-udaya-sankar</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:25.54737+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5070,7 +5070,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-v-veera-babu</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:25.54737+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
@@ -5082,7 +5082,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/writoban-basu-ball</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5092,7 +5092,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/mr-yara-srinivas</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:25.54737+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5102,7 +5102,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-yenuganti-vengala-rao</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5112,7 +5112,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/hsin-yi-huang</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:25.54737+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5128,7 +5128,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/advaitha-vetagiri</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:25.54737+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5138,7 +5138,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/mr-amlan-baisya</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:25.54737+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5148,7 +5148,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/mr-arun-kumar-sivapuram</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:25.54737+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5174,7 +5174,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/mr-balvinder-singh-bondili</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:25.54737+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5184,7 +5184,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/banovoth-raja-sekhar</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:25.54737+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5204,7 +5204,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/mr-dharma-theja-t</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:25.54737+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5214,7 +5214,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/mr-gavaskar-s</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:25.54737+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5224,7 +5224,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/mr-junaid-alam</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:25.54737+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5234,7 +5234,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/kounteya-sarkar</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5244,7 +5244,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/mr-l-srikanth</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:25.54737+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5254,7 +5254,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/mr-m-adalf</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:25.54737+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5264,7 +5264,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/madhusudan-naik</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:25.54737+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5274,7 +5274,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/ms-mathukumalli-v-r-k-kanaka-durga-devi</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:25.54737+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5284,7 +5284,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/mr-mohammed-rashid-ul-ansar</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:25.54737+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5300,13 +5300,13 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-m-sreenivasan</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:25.54737+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/nikhil-nigam</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:25.54737+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5316,7 +5316,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/nilin-prabhaker</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:25.54737+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5326,7 +5326,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/palthiya-anantharao</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:41.138345+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5336,7 +5336,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/piyush-kumar</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:41.138345+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5346,7 +5346,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/mr-prasant-kumar-mohanty</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:25.54737+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5356,7 +5356,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/mr-p-udayaraju</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:41.138345+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5366,7 +5366,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/mr-ravindran-kesavan</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:25.54737+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5376,7 +5376,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/mr-ravi-prakash-s</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:41.138345+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5386,7 +5386,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/rijvan-beg</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:25.54737+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5396,7 +5396,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/mr-satyanarayana-duvvuri</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:41.138345+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5406,7 +5406,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/mr-shaik-johny-basha</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:25.54737+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5428,7 +5428,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/mr-sugyan-kumar-mishra</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:25.54737+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5438,7 +5438,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/mr-sushovan-khatua</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5448,7 +5448,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/mr-vamshi-vijay-krishna-jeripotul</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:25.54737+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5464,7 +5464,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/mr-venkata-sreekanth-balijabudda</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:41.138345+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5480,7 +5480,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/vishnu-prasad-verma</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:41.138345+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5490,7 +5490,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/mr-vrps-sastry-yadavilli</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:41.138345+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5500,7 +5500,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/ms-anitha-rani</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:41.138345+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5510,7 +5510,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/archana</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:41.138345+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5520,7 +5520,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/ms-bijeta-mishra</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5530,7 +5530,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/debasmita-manna</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:41.138345+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5540,7 +5540,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/gudapati-maneesha</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:41.138345+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5550,7 +5550,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/ms-madhu-lata</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5560,7 +5560,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/ms-roopa-tirumalasetti</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:41.138345+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5570,7 +5570,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/ms-sasmita-rout</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:41.138345+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5580,7 +5580,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/sikhinam-nagamani</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:41.138345+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5590,7 +5590,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/ms-thangellamudi-anitha-kumari-2</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:41.138345+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5600,7 +5600,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/tonmoya-sarmah</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:41.138345+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5610,7 +5610,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/n-srinivas-mudiraj</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:41.138345+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5620,7 +5620,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/anil-k-suresh</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5640,7 +5640,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/prof-c-v-tomy</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:41.138345+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5650,7 +5650,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/prof-g-s-vinodkumar</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:41.138345+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5660,7 +5660,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/prof-g-venkata-chalam</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:41.138345+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5670,7 +5670,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/prof-haribabu-ejnavarzala</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:41.138345+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5680,7 +5680,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-jatindra-kumar-dash</loc>
-    <lastmod>2026-08-06T10:06:14.093148+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:41.138345+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5690,7 +5690,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/prof-kalyan-chakraborty</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:32:00.743212+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5700,7 +5700,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/prof-k-narayana-chandran</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:41.138345+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5710,7 +5710,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/prof-kota-sitaramanjaneyulu</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:41.138345+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5726,7 +5726,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/prof-niraj-upadhayaya</loc>
-    <lastmod>2026-08-06T10:06:14.093148+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:41.138345+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5736,7 +5736,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/parag-jayant-waknis</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:41.138345+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5746,7 +5746,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/prof-prakash-jadhav</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:41.138345+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5762,7 +5762,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/prof-dr-rama-rao-t</loc>
-    <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:54.365613+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5772,7 +5772,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/prof-ranjit-thapa</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5782,7 +5782,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/prof-rathinasamy-maria-saleth</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:54.365613+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5802,7 +5802,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/prof-rupesh-kumar</loc>
-    <lastmod>2026-08-06T10:06:14.093148+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:41.138345+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5812,7 +5812,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/saseendran-pallikadavath</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5822,7 +5822,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/prof-sheela-singh</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:41.138345+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5832,7 +5832,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/prof-s-irudaya-rajan</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:54.365613+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5842,13 +5842,13 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/prof-sreenath-subrahmanyam</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:41.138345+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/prof-vandana-swami</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:54.365613+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5858,7 +5858,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/prof-vishnupad</loc>
-    <lastmod>2026-08-06T10:06:14.021052+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:54.365613+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5868,7 +5868,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/yoshiyuki-kawazoe</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:54.365613+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5878,13 +5878,13 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/shaik-reshma</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:54.365613+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/thahir-jamal-k-m</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:54.365613+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5894,7 +5894,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/tushar-bag</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:54.365613+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
@@ -5904,7 +5904,7 @@
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/venkatesh-akula</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <lastmod>2026-08-14T10:11:54.365613+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <image:image>
