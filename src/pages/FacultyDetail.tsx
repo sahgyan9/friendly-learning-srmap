@@ -1,36 +1,31 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, EyeOff, ExternalLink, Star, UserRound } from "lucide-react";
+import { useNavigate, useParams } from "react-router-dom";
+import { ArrowLeft, EyeOff } from "lucide-react";
+import { motion } from "framer-motion";
 
 import Footer from "@/components/Footer";
 import SEOHead from "@/components/SEOHead";
 import StructuredData from "@/components/StructuredData";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { CardAccentBorder } from "@/components/ui/CardAccentBorder";
-import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FacultyRatingModal } from "@/components/faculty/FacultyRatingModal";
 import { FacultyReviewsList } from "@/components/faculty/FacultyReviewsList";
-import { StarRating } from "@/components/faculty/StarRating";
+import FacultyHeroHeader from "@/components/faculty-profile/FacultyHeroHeader";
+import FacultyQuickStatsStrip from "@/components/faculty-profile/FacultyQuickStatsStrip";
+import FacultyResearchShowcase from "@/components/faculty-profile/FacultyResearchShowcase";
+import FacultyStudentSentimentCard from "@/components/faculty-profile/FacultyStudentSentimentCard";
+import FacultyCoursesSection from "@/components/faculty-profile/FacultyCoursesSection";
+import SimilarFacultySection from "@/components/faculty-profile/SimilarFacultySection";
+
 import { getBreadcrumbSchema } from "@/lib/structured-data";
 import { PRIMARY_DOMAIN } from "@/lib/constants";
 import {
-  RATING_CRITERIA,
   getFacultyBySlug,
   getFacultyReviews,
   getFacultyTagCounts,
   type Faculty,
   type FacultyReview,
 } from "@/integrations/supabase/services/faculty";
-
-/** Maps each rating criterion to its denormalised average on the faculty row. */
-const CRITERION_AVERAGES: Record<string, (faculty: Faculty) => number> = {
-  teaching: (faculty) => faculty.avg_teaching,
-  grading: (faculty) => faculty.avg_grading,
-  helpfulness: (faculty) => faculty.avg_helpfulness,
-};
 
 const FacultyDetail = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -74,50 +69,51 @@ const FacultyDetail = () => {
   if (loading || !faculty) {
     return (
       <div className="min-h-screen bg-background">
-        <div className="container mx-auto space-y-4 px-4 py-8 pt-24">
-          <Skeleton className="h-8 w-32" />
-          <Card>
-            <CardContent className="flex gap-6 pt-6">
-              <Skeleton className="h-32 w-32 rounded-lg" />
-              <div className="flex-1 space-y-3">
-                <Skeleton className="h-7 w-64" />
-                <Skeleton className="h-4 w-40" />
-                <Skeleton className="h-10 w-32" />
-              </div>
-            </CardContent>
-          </Card>
+        <div className="container mx-auto max-w-5xl space-y-6 px-4 py-8 pt-24">
+          <Skeleton className="h-8 w-28" />
+          <Skeleton className="h-56 w-full rounded-2xl" />
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Skeleton className="h-20 w-full rounded-xl" />
+            <Skeleton className="h-20 w-full rounded-xl" />
+            <Skeleton className="h-20 w-full rounded-xl" />
+            <Skeleton className="h-20 w-full rounded-xl" />
+          </div>
+          <Skeleton className="h-40 w-full rounded-2xl" />
         </div>
       </div>
     );
   }
 
   const hasRatings = faculty.rating_count > 0;
-  // research_areas is a sparser second taxonomy (74 of 629 profiles); it reads
-  // as the same kind of thing to a student, so both render as one list.
   const interests = [...(faculty.interests ?? []), ...(faculty.research_areas ?? [])];
   const canonical = `${PRIMARY_DOMAIN}/faculty/${faculty.slug}`;
-  const ownReview = reviews.find((review) => review.is_own);
+  const ownReview = Boolean(reviews.find((review) => review.is_own));
 
-  // Distribution of overall scores, bucketed to whole stars.
+  // Distribution of overall scores, bucketed to whole stars
   const distribution = [5, 4, 3, 2, 1].map((star) => ({
     star,
     count: reviews.filter((review) => Math.round(Number(review.overall)) === star).length,
   }));
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        duration: 0.3,
+        staggerChildren: 0.08,
+      },
+    },
+  };
+
   return (
     <>
       <SEOHead
-        // Shaped like the query people actually type ("Dr X rating"), with
-        // SRM AP kept as the disambiguator — three names already collide inside
-        // this one directory, and names like "Dr Arun Kumar" are common enough
-        // nationally that the bare name would not identify the right person.
-        // The brand is deliberately absent: it costs ~19 characters, and it is
-        // already carried by og:site_name and the visible URL.
-        title={`${faculty.name} Rating & Reviews — SRM AP`}
+        title={`${faculty.name} Profile, Ratings & Research — SRM AP`}
         description={
           hasRatings
             ? `${faculty.name} (${faculty.department}) is rated ${Number(faculty.avg_overall).toFixed(1)}/5 by ${faculty.rating_count} SRM AP students on teaching, grading fairness and helpfulness.`
-            : `Read and write anonymous student reviews for ${faculty.name}, ${faculty.department} at SRM University-AP.`
+            : `Explore research specializations, email, and anonymous student reviews for ${faculty.name}, ${faculty.department} at SRM University-AP.`
         }
         canonical={canonical}
       />
@@ -130,12 +126,12 @@ const FacultyDetail = () => {
       />
 
       <div className="min-h-screen bg-background">
-
-        <div className="container mx-auto max-w-4xl px-4 py-8 pt-24">
+        <div className="container mx-auto max-w-5xl px-4 py-8 pt-24 pb-16">
+          {/* Back Button */}
           <Button
             variant="ghost"
             size="sm"
-            className="-ml-2 mb-4 gap-1.5"
+            className="-ml-2 mb-6 gap-1.5 text-muted-foreground hover:text-foreground"
             onClick={() => {
               if (window.history.state && window.history.state.idx > 0) {
                 navigate(-1);
@@ -145,172 +141,80 @@ const FacultyDetail = () => {
             }}
           >
             <ArrowLeft className="h-4 w-4" />
-            All faculty
+            All faculty directory
           </Button>
 
-          <Card className="relative mb-6 overflow-hidden">
-            <CardAccentBorder gradient="rose" />
-            <CardContent className="pt-6">
-              <div className="flex flex-col gap-6 sm:flex-row">
-                <div className="mx-auto h-32 w-32 shrink-0 overflow-hidden rounded-lg bg-muted sm:mx-0">
-                  {faculty.image_url ? (
-                    <img
-                      src={faculty.image_url}
-                      alt={faculty.name}
-                      className="h-full w-full object-cover object-top"
-                    />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center">
-                      <UserRound className="h-12 w-12 text-muted-foreground/50" />
-                    </div>
+          <motion.div
+            className="space-y-6"
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+          >
+            {/* 1. HERO HEADER */}
+            <FacultyHeroHeader
+              faculty={faculty}
+              ownReview={ownReview}
+              onRateClick={() => setShowRatingModal(true)}
+            />
+
+            {/* 2. AT-A-GLANCE STATS STRIP */}
+            <FacultyQuickStatsStrip
+              faculty={faculty}
+              interestsCount={interests.length}
+            />
+
+            {/* 3. RESEARCH DOMAINS & SPECIALIZATIONS */}
+            <FacultyResearchShowcase
+              interests={interests}
+              researchDetails={faculty.research_details}
+              department={faculty.department}
+            />
+
+            {/* 4. COURSES & SUBJECTS TAUGHT */}
+            <FacultyCoursesSection
+              reviews={reviews}
+              department={faculty.department}
+            />
+
+            {/* 5. STUDENT SENTIMENT & CRITERIA RADAR */}
+            <FacultyStudentSentimentCard
+              faculty={faculty}
+              tagCounts={tagCounts}
+              distribution={distribution}
+            />
+
+            {/* 6. ANONYMOUS REVIEWS SECTION */}
+            <section className="space-y-3 pt-2">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+                <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+                  Student Reviews
+                  {reviews.length > 0 && (
+                    <span className="rounded-full bg-rose-500/10 px-2.5 py-0.5 text-xs font-semibold text-rose-600 dark:text-rose-400">
+                      {reviews.length}
+                    </span>
                   )}
-                </div>
-
-                <div className="flex-1 space-y-3 text-center sm:text-left">
-                  <div>
-                    <h1 className="text-2xl font-bold">{faculty.name}</h1>
-                    <p className="text-sm text-muted-foreground">
-                      {[faculty.designation, faculty.department].filter(Boolean).join(" · ")}
-                    </p>
-                    {faculty.school && (
-                      <p className="text-xs text-muted-foreground">{faculty.school}</p>
-                    )}
-                  </div>
-
-                  {hasRatings ? (
-                    <div className="flex flex-col items-center gap-2 sm:flex-row sm:items-baseline sm:gap-3">
-                      <span className="text-4xl font-bold tabular-nums">
-                        {Number(faculty.avg_overall).toFixed(1)}
-                      </span>
-                      <div>
-                        <StarRating value={Number(faculty.avg_overall)} />
-                        <p className="text-xs text-muted-foreground">
-                          {faculty.rating_count} anonymous{" "}
-                          {faculty.rating_count === 1 ? "rating" : "ratings"}
-                        </p>
-                      </div>
-                    </div>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">
-                      No ratings yet — yours would be the first.
-                    </p>
-                  )}
-
-                  {interests.length > 0 && (
-                    <div className="space-y-1.5">
-                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                        Works on
-                      </p>
-                      <div className="flex flex-wrap justify-center gap-1.5 sm:justify-start">
-                        {interests.map((interest) => (
-                          <Link
-                            key={interest}
-                            to={`/faculty?interest=${encodeURIComponent(interest)}`}
-                            className="rounded-full border border-rose-500/25 bg-rose-500/5 px-2.5 py-1 text-xs text-rose-700 transition-colors hover:bg-rose-500/10 dark:text-rose-300"
-                          >
-                            {interest}
-                          </Link>
-                        ))}
-                      </div>
-                      <p className="text-[11px] text-muted-foreground">
-                        Listed on the university directory. Tap one to see who else works on it.
-                      </p>
-                    </div>
-                  )}
-
-                  <div className="flex flex-wrap justify-center gap-2 sm:justify-start">
-                    <Button onClick={() => setShowRatingModal(true)}>
-                      <Star className="mr-1.5 h-4 w-4" />
-                      {ownReview ? "Edit your rating" : "Rate this faculty"}
-                    </Button>
-
-                    {faculty.profile_url && (
-                      <Button asChild variant="outline">
-                        <a href={faculty.profile_url} target="_blank" rel="noopener noreferrer">
-                          <ExternalLink className="mr-1.5 h-4 w-4" />
-                          Official profile
-                        </a>
-                      </Button>
-                    )}
-                  </div>
-                </div>
+                </h2>
+                <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <EyeOff className="h-3.5 w-3.5 text-muted-foreground/70" />
+                  All reviews are strictly anonymous
+                </span>
               </div>
-            </CardContent>
-          </Card>
 
-          {hasRatings && (
-            <div className="mb-6 grid gap-4 sm:grid-cols-2">
-              <Card className="relative overflow-hidden">
-                <CardAccentBorder gradient="rose" />
-                <CardContent className="space-y-3 pt-6">
-                  <h2 className="text-sm font-semibold">Rated on</h2>
-                  {RATING_CRITERIA.map((criterion) => {
-                    const value = Number(CRITERION_AVERAGES[criterion.key](faculty));
-                    return (
-                      <div key={criterion.key} className="space-y-1">
-                        <div className="flex items-center justify-between text-sm">
-                          <span>{criterion.label}</span>
-                          <span className="font-semibold tabular-nums">{value.toFixed(1)}</span>
-                        </div>
-                        <Progress value={(value / 5) * 100} className="h-1.5" />
-                      </div>
-                    );
-                  })}
-                </CardContent>
-              </Card>
+              <FacultyReviewsList reviews={reviews} loading={loadingReviews} />
+            </section>
 
-              <Card className="relative overflow-hidden">
-                <CardAccentBorder gradient="rose" />
-                <CardContent className="space-y-2 pt-6">
-                  <h2 className="text-sm font-semibold">Score distribution</h2>
-                  {distribution.map(({ star, count }) => (
-                    <div key={star} className="flex items-center gap-2 text-sm">
-                      <span className="w-3 tabular-nums text-muted-foreground">{star}</span>
-                      <Star className="h-3 w-3 shrink-0 fill-amber-400 text-amber-400" />
-                      <Progress
-                        value={reviews.length ? (count / reviews.length) * 100 : 0}
-                        className="h-1.5 flex-1"
-                      />
-                      <span className="w-6 text-right tabular-nums text-muted-foreground">{count}</span>
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-            </div>
-          )}
-
-          {tagCounts.length > 0 && (
-            <Card className="mb-6">
-              <CardContent className="pt-6">
-                <h2 className="mb-3 text-sm font-semibold">What students say most</h2>
-                <div className="flex flex-wrap gap-2">
-                  {tagCounts.map(({ tag, count }) => (
-                    <Badge key={tag} variant="secondary" className="gap-1.5">
-                      {tag}
-                      <span className="tabular-nums opacity-60">{count}</span>
-                    </Badge>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-lg font-semibold">
-              Reviews {reviews.length > 0 && `(${reviews.length})`}
-            </h2>
-            <span className="flex items-center gap-1 text-xs text-muted-foreground">
-              <EyeOff className="h-3.5 w-3.5" />
-              All reviews are anonymous
-            </span>
-          </div>
-
-          <FacultyReviewsList reviews={reviews} loading={loadingReviews} />
+            {/* 7. SIMILAR FACULTY DISCOVERY */}
+            <SimilarFacultySection
+              currentFacultyId={faculty.id}
+              department={faculty.department}
+            />
+          </motion.div>
         </div>
 
         <Footer />
       </div>
 
+      {/* Review / Rating Modal */}
       <FacultyRatingModal
         faculty={faculty}
         open={showRatingModal}

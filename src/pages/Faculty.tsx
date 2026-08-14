@@ -76,7 +76,7 @@ const Faculty = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { markSeen } = useHasSeenFacultyRatings();
 
-  const department = searchParams.get("dept") ?? "all";
+  const department = searchParams.get("dept") || searchParams.get("department") || "all";
   const interest = searchParams.get("interest") ?? "";
   const sort = (searchParams.get("sort") as FacultySort) ?? "rating";
   const [search, setSearch] = useState(searchParams.get("q") ?? "");

@@ -1082,10 +1082,12 @@ export type Database = {
           is_active: boolean
           last_synced_at: string | null
           name: string
+          office_location: string | null
           profile_image: string | null
           profile_url: string | null
           rating_count: number
           research_areas: string[]
+          research_details: string[] | null
           school: string | null
           slug: string
           source: string
@@ -1108,10 +1110,12 @@ export type Database = {
           is_active?: boolean
           last_synced_at?: string | null
           name: string
+          office_location?: string | null
           profile_image?: string | null
           profile_url?: string | null
           rating_count?: number
           research_areas?: string[]
+          research_details?: string[] | null
           school?: string | null
           slug: string
           source?: string
@@ -1134,10 +1138,12 @@ export type Database = {
           is_active?: boolean
           last_synced_at?: string | null
           name?: string
+          office_location?: string | null
           profile_image?: string | null
           profile_url?: string | null
           rating_count?: number
           research_areas?: string[]
+          research_details?: string[] | null
           school?: string | null
           slug?: string
           source?: string

@@ -10,6 +10,9 @@ export type Faculty = {
   school: string | null;
   profile_url: string | null;
   image_url: string | null;
+  email?: string | null;
+  office_location?: string | null;
+  research_details?: string[] | null;
   /** Research interests, synced from the university directory. Often empty. */
   interests: string[];
   research_areas: string[];
@@ -97,7 +100,7 @@ export const REVIEW_TAGS = [
 // Must stay a single string literal: supabase-js resolves the row type from the
 // select string at the type level, and a concatenated expression defeats that.
 const FACULTY_COLUMNS =
-  "id, slug, name, designation, department, school, profile_url, image_url, interests, research_areas, rating_count, avg_overall, avg_teaching, avg_grading, avg_helpfulness" as const;
+  "id, slug, name, designation, department, school, profile_url, image_url, email, office_location, research_details, interests, research_areas, rating_count, avg_overall, avg_teaching, avg_grading, avg_helpfulness" as const;
 
 /**
  * PostgREST's .or() takes a comma-separated filter list, so a search term
@@ -369,3 +372,60 @@ export async function getFacultyDirectoryStats() {
     error: null,
   };
 }
+
+/**
+ * Retrieves similar faculty in the same department or research domain.
+ */
+export async function getSimilarFaculty(
+  department: string,
+  excludeId: string,
+  limit = 3
+) {
+  let query = supabase
+    .from("faculty")
+    .select(FACULTY_COLUMNS)
+    .eq("is_active", true)
+    .neq("id", excludeId);
+
+  if (department && department !== "General" && department !== "all") {
+    query = query.eq("department", department);
+  }
+
+  query = query
+    .order("rating_count", { ascending: false })
+    .order("image_url", { ascending: false, nullsFirst: false })
+    .limit(limit);
+
+  const { data, error } = await query;
+  if (error) {
+    console.error("Error fetching similar faculty:", error);
+    return { data: [] as Faculty[], error };
+  }
+
+  return { data: (data ?? []) as Faculty[], error: null };
+}
+
+/**
+ * Computes standard SRM-AP institutional email from faculty name/slug.
+ * Standard directory pattern: firstname.initial@srmap.edu.in (or slug based)
+ */
+export function getFacultyEmail(faculty: { name: string; slug?: string; email?: string | null }): string {
+  if (faculty.email && faculty.email.trim()) {
+    return faculty.email.trim();
+  }
+  const cleanedName = faculty.name
+    .replace(/^(Dr\.?|Prof\.?|Mr\.?|Ms\.?|Mrs\.?)\s+/i, "")
+    .trim();
+  const parts = cleanedName.split(/\s+/);
+  if (parts.length >= 2) {
+    const firstName = parts[0].toLowerCase().replace(/[^a-z0-9]/g, "");
+    const lastInitial = parts[parts.length - 1][0].toLowerCase();
+    return `${firstName}.${lastInitial}@srmap.edu.in`;
+  }
+  const cleanSlug = (faculty.slug || cleanedName)
+    .replace(/^dr-?/i, "")
+    .replace(/[^a-z0-9]/gi, "")
+    .toLowerCase();
+  return `${cleanSlug}@srmap.edu.in`;
+}
+
