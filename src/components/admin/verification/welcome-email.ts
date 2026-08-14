@@ -59,10 +59,10 @@ One more thing worth knowing: help 3 students — meaning they actually reply, n
 Three ways to start:
 
 1. Answer a question that's already waiting
-   ${PRIMARY_DOMAIN}/community-posts
+   ${PRIMARY_DOMAIN}/posts
 
 2. Join or start a group
-   ${PRIMARY_DOMAIN}/communities
+   ${PRIMARY_DOMAIN}/workspace-groups
 
 3. Set your pace
    Exams or placements coming up? Toggle "Taking a break" on your profile any time — your existing chats stay open, you just come off the directory.
@@ -162,7 +162,7 @@ ${PRIMARY_DOMAIN}`;
                           <p style="margin:4px 0 12px 0; font-size:13px; color:#64748b; line-height:1.4;">
                             Juniors are already waiting on advice about electives, projects, and careers. Each real reply counts toward your certificate.
                           </p>
-                          <a href="${PRIMARY_DOMAIN}/community-posts" style="display:inline-block; background-color:#3963c6; color:#ffffff; text-decoration:none; font-size:13px; font-weight:600; padding:8px 16px; border-radius:6px;">
+                          <a href="${PRIMARY_DOMAIN}/posts" style="display:inline-block; background-color:#3963c6; color:#ffffff; text-decoration:none; font-size:13px; font-weight:600; padding:8px 16px; border-radius:6px;">
                             Browse Questions →
                           </a>
                         </td>
@@ -184,7 +184,7 @@ ${PRIMARY_DOMAIN}`;
                           <p style="margin:4px 0 12px 0; font-size:13px; color:#64748b; line-height:1.4;">
                             Hackathon teams, study circles, subject clubs — with fellow students, not just people you're mentoring.
                           </p>
-                          <a href="${PRIMARY_DOMAIN}/communities" style="display:inline-block; background-color:#3963c6; color:#ffffff; text-decoration:none; font-size:13px; font-weight:600; padding:8px 16px; border-radius:6px;">
+                          <a href="${PRIMARY_DOMAIN}/workspace-groups" style="display:inline-block; background-color:#3963c6; color:#ffffff; text-decoration:none; font-size:13px; font-weight:600; padding:8px 16px; border-radius:6px;">
                             Explore Groups →
                           </a>
                         </td>

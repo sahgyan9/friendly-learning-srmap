@@ -208,7 +208,7 @@ export function useSiteSearch(query: string, enabled: boolean) {
         subtitle: `${post.author.name} · ${post.comments_count} ${
           post.comments_count === 1 ? "reply" : "replies"
         }`,
-        to: `/community-posts/${post.id}`,
+        to: `/posts/${post.id}`,
         kind: "post",
       }));
 
@@ -218,7 +218,7 @@ export function useSiteSearch(query: string, enabled: boolean) {
         subtitle: `${getCommunityKindMeta(community.kind).label} · ${community.member_count} ${
           community.member_count === 1 ? "member" : "members"
         }`,
-        to: `/communities/${community.slug}`,
+        to: `/workspace-groups/${community.slug}`,
         kind: "community",
       }));
 

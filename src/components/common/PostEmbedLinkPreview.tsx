@@ -11,12 +11,12 @@ interface PostEmbedLinkPreviewProps {
  */
 export function PostEmbedLinkPreview({ url }: PostEmbedLinkPreviewProps) {
   // Check if there is a hash or query pointing to a specific post
-  let destination = "/community-posts";
+  let destination = "/posts";
   try {
     const parsed = new URL(url.startsWith("http") ? url : `https://${url}`);
     destination = parsed.pathname + parsed.search + parsed.hash;
   } catch {
-    destination = "/community-posts";
+    destination = "/posts";
   }
 
   return (

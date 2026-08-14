@@ -57,7 +57,7 @@ export const WELCOME_TOUR_STEPS: WelcomeTourStep[] = [
     title: "Share what's happening on campus",
     description:
       "Got news, study wins, or campus moments to celebrate? Share your joy, ask questions, and connect with everyone on campus.",
-    cta: { label: "Browse campus posts", url: "/community-posts" },
+    cta: { label: "Browse campus posts", url: "/posts" },
   },
   {
     icon: GroupsIcon,
@@ -65,7 +65,7 @@ export const WELCOME_TOUR_STEPS: WelcomeTourStep[] = [
     title: "Your own workspace to collaborate & work",
     description:
       "Create or join dedicated workspace channels — your personal hub to chat, share resources, work on projects, and build together with your team.",
-    cta: { label: "Explore workspaces", url: "/communities" },
+    cta: { label: "Explore workspaces", url: "/workspace-groups" },
   },
   {
     icon: FacultyIcon,
@@ -88,7 +88,7 @@ export const WELCOME_TOUR_STEPS: WelcomeTourStep[] = [
     title: "See what's happening",
     description:
       "Browse fests, workshops, and events happening across university so you never miss out.",
-    cta: { label: "View events", url: "/marketplace" },
+    cta: { label: "View events", url: "/events" },
   },
   {
     icon: MentorIcon,

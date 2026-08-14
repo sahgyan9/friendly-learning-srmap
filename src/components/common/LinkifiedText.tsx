@@ -56,7 +56,7 @@ function communitySlugFromUrl(url: string): string | null {
     const parsed = new URL(withProtocol(url));
     if (!isAppHost(parsed)) return null;
 
-    const match = parsed.pathname.match(/^\/communities\/([^/?#]+)/);
+    const match = parsed.pathname.match(/^\/(?:communities|workspace-groups)\/([^/?#]+)/);
     return match ? decodeURIComponent(match[1]) : null;
   } catch {
     return null;
@@ -117,7 +117,7 @@ function isCommunityPostsUrl(url: string): boolean {
   try {
     const parsed = new URL(withProtocol(url));
     if (!isAppHost(parsed)) return false;
-    return /^\/community-posts/i.test(parsed.pathname);
+    return /^\/(?:community-posts|posts)/i.test(parsed.pathname);
   } catch {
     return false;
   }

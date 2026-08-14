@@ -134,24 +134,24 @@ export const DESTINATIONS: SearchDestination[] = [
       "post", "posts", "community post", "board", "forum", "feed",
       "discussion", "notice board", "share", "announcement", "ask everyone",
     ],
-    to: "/community-posts",
+    to: "/posts",
   },
   {
     id: "communities",
-    label: "Groups",
+    label: "Workspace Groups",
     hint: "Hackathon teams, clubs and study circles you can join",
     icon: GroupsIcon,
     group: "Go to",
     keywords: [
-      "group", "groups", "community", "communities", "team", "teams", "club",
+      "workspace", "workspaces", "workspace groups", "group", "groups", "community", "communities", "team", "teams", "club",
       "clubs", "society", "societies", "circle", "join a group", "start a group",
       "create a group", "my groups", "chapter",
     ],
-    to: "/communities",
+    to: "/workspace-groups",
   },
   {
     id: "events",
-    label: "Events",
+    label: "University Events",
     hint: "Workshops, fests, competitions and club activities",
     icon: EventsIcon,
     group: "Go to",
@@ -159,10 +159,10 @@ export const DESTINATIONS: SearchDestination[] = [
       // "club" belongs to Groups — a club is a group you join, not a one-off
       // event. Leaving it on both made an exact-keyword tie that Events won on
       // nothing more meaningful than coming first alphabetically.
-      "event", "events", "workshop", "fest", "seminar", "competition", "contest",
+      "event", "events", "srmap events", "university events", "workshop", "fest", "seminar", "competition", "contest",
       "activity", "activities", "whats on", "marketplace", "calendar",
     ],
-    to: "/marketplace",
+    to: "/events",
   },
   {
     id: "hackathon-partners",

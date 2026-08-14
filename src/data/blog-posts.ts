@@ -180,7 +180,7 @@ export const BLOG_POSTS: BlogPost[] = [
         ],
       },
     ],
-    cta: { label: "Post on the community board", to: "/community-posts" },
+    cta: { label: "Post on the campus board", to: "/posts" },
   },
   {
     slug: "asking-for-academic-help",

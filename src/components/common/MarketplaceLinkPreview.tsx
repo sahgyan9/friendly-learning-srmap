@@ -45,7 +45,7 @@ export function MarketplaceLinkPreview({ label }: MarketplaceLinkPreviewProps) {
         {/* Right Action Button */}
         <div className="flex items-center justify-end shrink-0 pt-1 sm:pt-0 border-t sm:border-t-0 border-sky-500/15">
           <Link
-            to="/marketplace"
+            to="/events"
             className="inline-flex items-center justify-center gap-1.5 h-8 px-4 text-xs font-semibold text-white bg-sky-600 hover:bg-sky-700 dark:bg-sky-600 dark:hover:bg-sky-500 rounded-lg shadow-sm transition-transform active:scale-95 w-full sm:w-auto"
           >
             <span>Explore Events</span>

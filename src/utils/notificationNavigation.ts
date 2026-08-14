@@ -29,9 +29,9 @@ export const getNotificationNavigationUrl = (notification: Notification): string
         data.type === "community_join_request"
     ) {
         if (data.community_slug) {
-            return `${baseUrl}/communities/${data.community_slug}?tab=requests`;
+            return `${baseUrl}/workspace-groups/${data.community_slug}?tab=requests`;
         }
-        return `${baseUrl}/communities`;
+        return `${baseUrl}/workspace-groups`;
     }
 
     // Community invites or decision notifications (e.g. "You are in 🎉" or "Request not accepted" or "invited to join")
@@ -43,19 +43,19 @@ export const getNotificationNavigationUrl = (notification: Notification): string
         notification.content?.includes("request to join")
     ) {
         if (data.community_slug) {
-            return `${baseUrl}/communities/${data.community_slug}`;
+            return `${baseUrl}/workspace-groups/${data.community_slug}`;
         }
-        return `${baseUrl}/communities`;
+        return `${baseUrl}/workspace-groups`;
     }
 
     // Direct post reference
     if (data.post_id) {
-        return `${baseUrl}/community-posts/${data.post_id}`;
+        return `${baseUrl}/posts/${data.post_id}`;
     }
 
     // Direct community reference
     if (data.community_slug) {
-        return `${baseUrl}/communities/${data.community_slug}`;
+        return `${baseUrl}/workspace-groups/${data.community_slug}`;
     }
 
     // The "you're a mentor" notification sent on a first successful signup.

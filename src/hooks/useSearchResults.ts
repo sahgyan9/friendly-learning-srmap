@@ -196,7 +196,7 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
           id: p.id,
           title: p.title,
           subtitle: `${p.author.name} · ${p.comments_count} ${p.comments_count === 1 ? "reply" : "replies"}`,
-          to: `/community-posts/${p.id}`,
+          to: `/posts/${p.id}`,
           meta: { post_type: p.post_type, community: p.community, likes_count: p.likes_count },
         });
       });
@@ -206,7 +206,7 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
           id: c.id,
           title: c.name,
           subtitle: `${getCommunityKindMeta(c.kind).label} · ${c.member_count} ${c.member_count === 1 ? "member" : "members"}`,
-          to: `/communities/${c.slug}`,
+          to: `/workspace-groups/${c.slug}`,
           image: c.cover_image,
           meta: { kind: c.kind, member_count: c.member_count },
         });
@@ -244,19 +244,21 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
               meta: hit.metadata,
             });
           } else if (hit.entity_type === "community" && !communityMap.has(hit.entity_id)) {
+            const path = hit.source_path?.replace("/communities/", "/workspace-groups/") || `/workspace-groups/${hit.entity_id}`;
             communityMap.set(hit.entity_id, {
               id: hit.entity_id,
               title: hit.title,
               subtitle: hit.subtitle ?? "Group",
-              to: hit.source_path || `/communities/${hit.entity_id}`,
+              to: path,
               meta: hit.metadata,
             });
           } else if (hit.entity_type === "post" && !postMap.has(hit.entity_id)) {
+            const path = hit.source_path?.replace("/community-posts/", "/posts/") || `/posts/${hit.entity_id}`;
             postMap.set(hit.entity_id, {
               id: hit.entity_id,
               title: hit.title,
-              subtitle: hit.subtitle ?? "Community post",
-              to: hit.source_path || `/community-posts/${hit.entity_id}`,
+              subtitle: hit.subtitle ?? "Post",
+              to: path,
               meta: hit.metadata,
             });
           }
