@@ -69,6 +69,12 @@ export const ROUTE_META: Record<string, RouteMeta> = {
     description:
       "Discover university events, news, advertisements, and course materials at Friendly Learning SRMAP. Stay updated with campus activities, announcements, and educational resources for university students.",
   },
+  "/events": {
+    title:
+      "University Events & News | Friendly Learning SRMAP | Campus Activities & Workshops",
+    description:
+      "Discover university events, news, workshops, guest lectures, and competitions at SRM University-AP. Stay updated and register directly.",
+  },
   "/how-it-works": {
     title: "How Friendly Learning SRMAP Works | University Student Collaboration Guide",
     description:

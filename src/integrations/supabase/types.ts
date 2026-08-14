@@ -2007,6 +2007,7 @@ export type Database = {
       }
       srmap_events_cache: {
         Row: {
+          content: string
           department: string
           end_date: string
           event_type: string
@@ -2015,10 +2016,15 @@ export type Database = {
           image_url: string | null
           last_synced_at: string
           link: string
+          organizer: string | null
+          registration_label: string | null
+          registration_url: string | null
           start_date: string
           title: string
+          venue: string | null
         }
         Insert: {
+          content?: string
           department?: string
           end_date: string
           event_type?: string
@@ -2027,10 +2033,15 @@ export type Database = {
           image_url?: string | null
           last_synced_at?: string
           link: string
+          organizer?: string | null
+          registration_label?: string | null
+          registration_url?: string | null
           start_date: string
           title: string
+          venue?: string | null
         }
         Update: {
+          content?: string
           department?: string
           end_date?: string
           event_type?: string
@@ -2039,8 +2050,12 @@ export type Database = {
           image_url?: string | null
           last_synced_at?: string
           link?: string
+          organizer?: string | null
+          registration_label?: string | null
+          registration_url?: string | null
           start_date?: string
           title?: string
+          venue?: string | null
         }
         Relationships: []
       }

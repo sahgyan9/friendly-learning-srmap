@@ -117,12 +117,58 @@ function extractImage(embedded: Record<string, unknown>): string | null {
   }
 }
 
+function isValidRegistrationLink(url: string, currentEventUrl: string): boolean {
+  if (!url || url.startsWith("#") || url.startsWith("javascript:")) return false;
+  if (url === currentEventUrl || url === currentEventUrl + "/") return false;
+  if (url.includes("events.srmap.edu.in/feed") || url.includes("events.srmap.edu.in/comments") || url.includes("events.srmap.edu.in/events/")) return false;
+  if (url.includes("wp-content") || url.includes("wp-includes") || url.includes("wp-json") || url.includes("xmlrpc.php")) return false;
+  if (url.endsWith(".css") || url.endsWith(".js") || url.endsWith(".png") || url.endsWith(".jpg") || url.endsWith(".jpeg") || url.endsWith(".webp")) return false;
+  return true;
+}
+
+function extractRegistrationLink(html: string, currentEventUrl: string): { url: string; label?: string } | null {
+  if (!html) return null;
+
+  // 1. Look for zoom_link / webinar_links / elementor button
+  const zoomLinkMatch = html.match(/class=["'][^"']*(?:zoom_link|webinar_links|elementor-button)[^"']*["'][^>]*href=["']([^"']+)["']/i)
+    || html.match(/href=["']([^"']+)["'][^>]*class=["'][^"']*(?:zoom_link|webinar_links|elementor-button)[^"']*["']/i);
+
+  if (zoomLinkMatch && isValidRegistrationLink(zoomLinkMatch[1], currentEventUrl)) {
+    return { url: zoomLinkMatch[1], label: "Register Now" };
+  }
+
+  // 2. Look for explicit forms / registration platforms in hrefs
+  const formPatterns = [
+    /href=["'](https?:\/\/(?:forms\.gle|docs\.google\.com\/forms|forms\.office\.com|unstop\.com|devfolio\.co|lu\.ma|eventbrite\.com)[^"']*)["']/i,
+    /href=["'](https?:\/\/[^"']*(?:register|registration|forms)[^"']*)["']/i
+  ];
+
+  for (const pattern of formPatterns) {
+    const match = html.match(pattern);
+    if (match && isValidRegistrationLink(match[1], currentEventUrl)) {
+      return { url: match[1], label: "Register on Campus Portal" };
+    }
+  }
+
+  // 3. Look for anchor tags with "Register", "RSVP", "Join", "Apply" text
+  const anchorRegex = /<a\s+[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi;
+  let m;
+  while ((m = anchorRegex.exec(html)) !== null) {
+    const href = m[1];
+    const text = m[2].replace(/<[^>]+>/g, "").trim().toLowerCase();
+    if (
+      (text === "register" || text === "register now" || text === "rsvp" || text === "sign up" || text === "apply now" || text.includes("registration link")) &&
+      isValidRegistrationLink(href, currentEventUrl)
+    ) {
+      return { url: href, label: m[2].replace(/<[^>]+>/g, "").trim() };
+    }
+  }
+
+  return null;
+}
+
 /**
  * Fetches every available page, but only the ones that exist.
- *
- * WordPress reports the real count in `X-WP-TotalPages`. If a proxy strips
- * that header, fall back to "a full page probably means there is another
- * one" rather than requesting pages that don't exist.
  */
 async function fetchAllPages(): Promise<Record<string, unknown>[]> {
   const first = await fetch(`${SRMAP_API_BASE}&page=1`);
@@ -148,6 +194,47 @@ async function fetchAllPages(): Promise<Record<string, unknown>[]> {
   );
 
   return [firstPage, ...parsed].flat();
+}
+
+/**
+ * Fetches the single event web page to enrich venue, organizer and registration details.
+ */
+async function scrapeSingleEvent(link: string): Promise<{
+  registrationUrl: string | null;
+  registrationLabel: string | null;
+  venue: string | null;
+  organizer: string | null;
+}> {
+  try {
+    const res = await fetch(link);
+    if (!res.ok) return { registrationUrl: null, registrationLabel: null, venue: null, organizer: null };
+    const html = await res.text();
+
+    const reg = extractRegistrationLink(html, link);
+
+    // Venue parsing from HTML
+    let venue: string | null = null;
+    const venueMatch = html.match(/class=["'][^"']*(?:tribe-events-venue-details|event_venue|tribe-venue)[^"']*["'][^>]*>([\s\S]*?)<\/(?:div|span|p|dd)>/i);
+    if (venueMatch) {
+      venue = stripHtml(venueMatch[1]);
+    }
+
+    // Organizer parsing from HTML
+    let organizer: string | null = null;
+    const organizerMatch = html.match(/class=["'][^"']*(?:tribe-events-organizer|event_organizer|tribe-organizer)[^"']*["'][^>]*>([\s\S]*?)<\/(?:div|span|p|dd)>/i);
+    if (organizerMatch) {
+      organizer = stripHtml(organizerMatch[1]);
+    }
+
+    return {
+      registrationUrl: reg?.url ?? null,
+      registrationLabel: reg?.label ?? null,
+      venue,
+      organizer,
+    };
+  } catch {
+    return { registrationUrl: null, registrationLabel: null, venue: null, organizer: null };
+  }
 }
 
 async function isAuthorised(req: Request): Promise<boolean> {
@@ -191,50 +278,71 @@ serve(async (req) => {
     const data = await fetchAllPages();
     const now = Date.now();
 
-    const rows = data
-      .map((item) => {
-        const startDate = (item.event_start_date as string) || (item.date as string);
-        const endDate = (item.event_end_date as string) || startDate;
-        const embedded = item._embedded as Record<string, unknown> | undefined;
+    const currentItems = data.filter((item) => {
+      const startDate = (item.event_start_date as string) || (item.date as string);
+      const endDate = (item.event_end_date as string) || startDate;
+      return parseSRMAPDate(endDate) >= now - 7 * 24 * 60 * 60 * 1000;
+    });
 
-        return {
-          id: item.id as number,
-          title: stripHtml((item.title as { rendered: string }).rendered),
-          excerpt: stripHtml((item.excerpt as { rendered: string }).rendered),
-          start_date: startDate,
-          end_date: endDate,
-          link: item.link as string,
-          image_url: embedded ? extractImage(embedded) : null,
-          department: embedded ? extractDepartment(embedded) : "SRMAP",
-          event_type: embedded ? extractEventType(embedded) : "",
-          last_synced_at: syncStartedAt,
-        };
-      })
-      // Same 7-day grace window the frontend used to apply itself, so a
-      // just-ended event doesn't disappear from the cache mid-scroll.
-      .filter((row) => parseSRMAPDate(row.end_date) >= now - 7 * 24 * 60 * 60 * 1000);
-
-    if (rows.length === 0) {
+    if (currentItems.length === 0) {
       return json({ error: "SRMAP feed returned no current events; refusing to wipe cache" }, 502);
     }
 
+    // Scrape rich fields concurrently with small batching
+    const enrichedRows = [];
+    const BATCH_SIZE = 5;
+
+    for (let i = 0; i < currentItems.length; i += BATCH_SIZE) {
+      const chunk = currentItems.slice(i, i + BATCH_SIZE);
+      const enrichedChunk = await Promise.all(
+        chunk.map(async (item) => {
+          const startDate = (item.event_start_date as string) || (item.date as string);
+          const endDate = (item.event_end_date as string) || startDate;
+          const embedded = item._embedded as Record<string, unknown> | undefined;
+          const link = item.link as string;
+          const department = embedded ? extractDepartment(embedded) : "SRMAP";
+
+          const rawContent = (item.content as { rendered: string })?.rendered ?? "";
+          const scraped = await scrapeSingleEvent(link);
+
+          return {
+            id: item.id as number,
+            title: stripHtml((item.title as { rendered: string }).rendered),
+            excerpt: stripHtml((item.excerpt as { rendered: string }).rendered),
+            content: rawContent,
+            venue: scraped.venue,
+            organizer: scraped.organizer || department,
+            registration_url: scraped.registrationUrl,
+            registration_label: scraped.registrationLabel,
+            start_date: startDate,
+            end_date: endDate,
+            link,
+            image_url: embedded ? extractImage(embedded) : null,
+            department,
+            event_type: embedded ? extractEventType(embedded) : "",
+            last_synced_at: syncStartedAt,
+          };
+        }),
+      );
+      enrichedRows.push(...enrichedChunk);
+    }
+
     const CHUNK = 200;
-    for (let i = 0; i < rows.length; i += CHUNK) {
+    for (let i = 0; i < enrichedRows.length; i += CHUNK) {
       const { error } = await supabaseAdmin
         .from("srmap_events_cache")
-        .upsert(rows.slice(i, i + CHUNK), { onConflict: "id" });
+        .upsert(enrichedRows.slice(i, i + CHUNK), { onConflict: "id" });
       if (error) throw error;
     }
 
-    // Anything not touched by this run is either gone from the feed or aged
-    // past the 7-day cutoff applied above -- either way, stale.
+    // Prune stale records
     const { error: pruneError, count: pruned } = await supabaseAdmin
       .from("srmap_events_cache")
       .delete({ count: "exact" })
       .lt("last_synced_at", syncStartedAt);
     if (pruneError) throw pruneError;
 
-    return json({ synced: rows.length, pruned: pruned ?? 0 });
+    return json({ synced: enrichedRows.length, pruned: pruned ?? 0 });
   } catch (error) {
     return json({ error: error instanceof Error ? error.message : String(error) }, 500);
   }

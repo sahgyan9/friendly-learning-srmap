@@ -5,6 +5,11 @@ export interface SRMAPEvent {
   id: number;
   title: string;
   excerpt: string;
+  content?: string;
+  venue?: string | null;
+  organizer?: string | null;
+  registrationUrl?: string | null;
+  registrationLabel?: string | null;
   date: string;
   startDate: string;
   endDate: string;
@@ -18,6 +23,11 @@ interface CachedEventRow {
   id: number;
   title: string;
   excerpt: string;
+  content?: string | null;
+  venue?: string | null;
+  organizer?: string | null;
+  registration_url?: string | null;
+  registration_label?: string | null;
   start_date: string;
   end_date: string;
   link: string;
@@ -66,17 +76,29 @@ function sortEvents(events: SRMAPEvent[]): SRMAPEvent[] {
   });
 }
 
+function mapRowToEvent(row: CachedEventRow): SRMAPEvent {
+  return {
+    id: row.id,
+    title: row.title,
+    excerpt: row.excerpt,
+    content: row.content || "",
+    venue: row.venue || null,
+    organizer: row.organizer || null,
+    registrationUrl: row.registration_url || null,
+    registrationLabel: row.registration_label || null,
+    date: row.start_date,
+    startDate: row.start_date,
+    endDate: row.end_date,
+    link: row.link,
+    imageUrl: row.image_url,
+    department: row.department,
+    eventType: row.event_type,
+  };
+}
+
 /**
  * Reads SRMAP's events feed from public.srmap_events_cache instead of
  * calling events.srmap.edu.in directly from the browser.
- *
- * That WordPress site used to be hit live on every page load, which meant a
- * first-time visitor paid for a cold DNS+TLS handshake and an uncached REST
- * call before anything rendered -- worse than a returning visitor whose
- * browser already had a warm connection to that external host. The
- * sync-srmap-events edge function refreshes this table daily (see its pg_cron
- * schedule), so every visitor now reads this project's own Postgres and sees
- * the same, already-warm data.
  */
 export function useSRMAPEvents() {
   const [events, setEvents] = useState<SRMAPEvent[]>([]);
@@ -93,25 +115,14 @@ export function useSRMAPEvents() {
 
         const { data, error: queryError } = await supabase
           .from("srmap_events_cache")
-          .select("id, title, excerpt, start_date, end_date, link, image_url, department, event_type")
+          .select("id, title, excerpt, content, venue, organizer, registration_url, registration_label, start_date, end_date, link, image_url, department, event_type")
           .returns<CachedEventRow[]>();
 
         if (queryError) throw queryError;
 
         if (!cancelled) {
           const mapped: SRMAPEvent[] = sortEvents(
-            (data ?? []).map((row) => ({
-              id: row.id,
-              title: row.title,
-              excerpt: row.excerpt,
-              date: row.start_date,
-              startDate: row.start_date,
-              endDate: row.end_date,
-              link: row.link,
-              imageUrl: row.image_url,
-              department: row.department,
-              eventType: row.event_type,
-            })),
+            (data ?? []).map(mapRowToEvent),
           );
 
           setEvents(mapped);
@@ -126,9 +137,6 @@ export function useSRMAPEvents() {
     }
 
     fetchEvents();
-    // The cache itself only changes once a day (see sync-srmap-events-daily),
-    // so there is nothing to gain from polling more often than this -- it
-    // just re-reads the same row a manual re-sync might have touched.
     const refreshTimer = window.setInterval(() => fetchEvents({ isRefresh: true }), 30 * 60 * 1000);
     return () => {
       window.clearInterval(refreshTimer);
@@ -137,4 +145,60 @@ export function useSRMAPEvents() {
   }, []);
 
   return { events, loading, error };
+}
+
+/**
+ * Fetches a single event by its ID from the local cache.
+ */
+export function useSRMAPEvent(id: string | number | undefined) {
+  const [event, setEvent] = useState<SRMAPEvent | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!id) {
+      setLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    const numericId = Number(id);
+
+    async function fetchEvent() {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const { data, error: queryError } = await supabase
+          .from("srmap_events_cache")
+          .select("id, title, excerpt, content, venue, organizer, registration_url, registration_label, start_date, end_date, link, image_url, department, event_type")
+          .eq("id", numericId)
+          .maybeSingle();
+
+        if (queryError) throw queryError;
+
+        if (!cancelled) {
+          if (data) {
+            setEvent(mapRowToEvent(data as CachedEventRow));
+          } else {
+            setEvent(null);
+          }
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError("Failed to load event details.");
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    fetchEvent();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
+
+  return { event, loading, error };
 }
