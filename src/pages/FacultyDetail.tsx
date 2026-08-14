@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, EyeOff } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { motion } from "framer-motion";
 
 import Footer from "@/components/Footer";
@@ -9,7 +9,6 @@ import StructuredData from "@/components/StructuredData";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FacultyRatingModal } from "@/components/faculty/FacultyRatingModal";
-import { FacultyReviewsList } from "@/components/faculty/FacultyReviewsList";
 import FacultyHeroHeader from "@/components/faculty-profile/FacultyHeroHeader";
 import FacultyQuickStatsStrip from "@/components/faculty-profile/FacultyQuickStatsStrip";
 import FacultyResearchShowcase from "@/components/faculty-profile/FacultyResearchShowcase";
@@ -182,26 +181,6 @@ const FacultyDetail = () => {
               tagCounts={tagCounts}
               distribution={distribution}
             />
-
-            {/* 6. ANONYMOUS REVIEWS SECTION */}
-            <section className="space-y-3 pt-2">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
-                <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
-                  Student Reviews
-                  {reviews.length > 0 && (
-                    <span className="rounded-full bg-rose-500/10 px-2.5 py-0.5 text-xs font-semibold text-rose-600 dark:text-rose-400">
-                      {reviews.length}
-                    </span>
-                  )}
-                </h2>
-                <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <EyeOff className="h-3.5 w-3.5 text-muted-foreground/70" />
-                  All reviews are strictly anonymous
-                </span>
-              </div>
-
-              <FacultyReviewsList reviews={reviews} loading={loadingReviews} />
-            </section>
 
             {/* 7. SIMILAR FACULTY DISCOVERY */}
             <SimilarFacultySection
