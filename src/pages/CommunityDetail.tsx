@@ -19,6 +19,7 @@ import {
   Users,
 } from "lucide-react";
 
+import { PRIMARY_DOMAIN } from "@/lib/constants";
 import SEOHead from "@/components/SEOHead";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -258,7 +259,7 @@ const CommunityDetail = () => {
     }
 
     toast.success(`${community.name} has been deleted`);
-    navigate("/communities");
+    navigate("/workspace-groups");
   };
 
   const handleLike = async (postId: string, event: React.MouseEvent) => {
@@ -305,7 +306,7 @@ const CommunityDetail = () => {
             It may have been removed, or the link may be wrong.
           </p>
           <Button asChild>
-            <Link to="/communities">See all groups</Link>
+            <Link to="/workspace-groups">See all groups</Link>
           </Button>
         </div>
       </div>
@@ -348,8 +349,9 @@ const CommunityDetail = () => {
   return (
     <div className="min-h-screen bg-background">
       <SEOHead
-        title={`${community.name} Workspace | Friendly Learning`}
+        title={`${community.name} Workspace Group | Friendly Learning SRMAP`}
         description={community.description.slice(0, 155)}
+        canonical={`${PRIMARY_DOMAIN}/workspace-groups/${community.slug}`}
       />
 
       <div className="container mx-auto max-w-6xl px-4 pt-6 pb-36 md:pt-8 md:pb-48">
@@ -426,7 +428,7 @@ const CommunityDetail = () => {
                   isMember={Boolean(community.viewer_is_member)}
                   isOwner={Boolean(community.viewer_is_owner)}
                   posts={posts}
-                  onOpenPost={(postId) => navigate(`/community-posts/${postId}`)}
+                  onOpenPost={(postId) => navigate(`/posts/${postId}`)}
                   onCreatePost={community.viewer_can_post ? () => setCreateOpen(true) : undefined}
                   channel={activeTab.startsWith("channel:") ? activeTab.replace("channel:", "") : undefined}
                   channelTopic={
@@ -457,7 +459,7 @@ const CommunityDetail = () => {
                       <PostCard
                         key={post.id}
                         post={post}
-                        onOpen={(postId) => navigate(`/community-posts/${postId}`)}
+                        onOpen={(postId) => navigate(`/posts/${postId}`)}
                         onLike={handleLike}
                       />
                     ))

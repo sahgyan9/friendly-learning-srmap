@@ -171,7 +171,7 @@ export function PostCard({
    */
   const images = getPostImageUrls(post.image_url);
   const isCompactTextOnly = isCompact && images.length === 0;
-  const hasGroupLink = /\/communities\/[^\s<]+/i.test(post.content);
+  const hasGroupLink = /\/(communities|workspace-groups)\/[^\s<]+/i.test(post.content);
   const isLongText = post.content.length > 180 || (post.content.match(/\n/g) || []).length >= 3;
 
   const handleCardClick = () => {
@@ -179,7 +179,7 @@ export function PostCard({
       if (onOpen) {
         onOpen(post.id);
       } else {
-        navigate(`/community-posts#post-${post.id}`);
+        navigate(`/posts#post-${post.id}`);
       }
     } else if (isLongText && !hasGroupLink) {
       setIsExpanded((prev) => !prev);
@@ -319,7 +319,7 @@ export function PostCard({
                   if (onOpen) {
                     onOpen(post.id);
                   } else {
-                    navigate(`/community-posts#post-${post.id}`);
+                    navigate(`/posts#post-${post.id}`);
                   }
                 } else {
                   setIsExpanded((prev) => !prev);

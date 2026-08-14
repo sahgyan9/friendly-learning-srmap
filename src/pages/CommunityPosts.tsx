@@ -255,7 +255,7 @@ const CommunityPosts = () => {
 
   const handleShare = async (post: CommunityPost, event: React.MouseEvent) => {
     event.stopPropagation();
-    const url = `${window.location.origin}/community-posts#post-${post.id}`;
+    const url = `${window.location.origin}/posts#post-${post.id}`;
 
     if (navigator.share) {
       try {
@@ -298,14 +298,14 @@ const CommunityPosts = () => {
     });
   };
 
-  const canonical = `${PRIMARY_DOMAIN}/community-posts`;
+  const canonical = `${PRIMARY_DOMAIN}/posts`;
 
   return (
     <>
       <SEOHead
-        title={ROUTE_META["/community-posts"].title}
-        description={ROUTE_META["/community-posts"].description}
-        keywords="find hackathon partners srm ap, study help srmap, student project collaboration, srm ap posts"
+        title={ROUTE_META["/posts"].title}
+        description={ROUTE_META["/posts"].description}
+        keywords="srmap posts, srm ap student questions, study help srmap, hackathon partners srm ap, campus discussions"
         canonical={canonical}
       />
       <StructuredData

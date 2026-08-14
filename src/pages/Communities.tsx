@@ -24,6 +24,11 @@ import {
   type Community,
 } from "@/integrations/supabase/services/communities";
 
+import { PRIMARY_DOMAIN } from "@/lib/constants";
+import { ROUTE_META } from "@/lib/seo/route-meta";
+import StructuredData from "@/components/StructuredData";
+import { getBreadcrumbSchema } from "@/lib/structured-data";
+
 const Communities = () => {
   const { user } = useAuth();
   const { markSeen: markGroupsNavSeen } = useHasVisitedGroupsNav();
@@ -94,9 +99,16 @@ const Communities = () => {
   return (
     <div className="min-h-screen bg-background">
       <SEOHead
-        title="Groups & Workspaces | Friendly Learning"
-        description="Hackathon teams, project groups, research labs and study circles run by students at SRM AP."
+        title={ROUTE_META["/workspace-groups"].title}
+        description={ROUTE_META["/workspace-groups"].description}
+        keywords="srmap workspace groups, srm ap student groups, study groups srm ap, hackathon teams srmap, project collaboration srm university ap, campus student groups"
+        canonical={`${PRIMARY_DOMAIN}/workspace-groups`}
       />
+
+      <StructuredData data={getBreadcrumbSchema([
+        { name: "Home", url: `${PRIMARY_DOMAIN}/` },
+        { name: "Workspace Groups", url: `${PRIMARY_DOMAIN}/workspace-groups` }
+      ])} />
 
       {/* Hero header — same design language as FeaturesShowcase cards */}
       <div className="relative overflow-hidden border-b border-border/60 bg-gradient-to-br from-amber-500/5 via-background to-background">

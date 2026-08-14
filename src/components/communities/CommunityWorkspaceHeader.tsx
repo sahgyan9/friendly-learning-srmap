@@ -82,7 +82,7 @@ export function CommunityWorkspaceHeader({
 
       {/* Back button */}
       <Button asChild variant="ghost" size="sm" className="mb-4 -ml-2 text-muted-foreground hover:text-foreground">
-        <Link to="/communities">
+        <Link to="/workspace-groups">
           <ArrowLeft className="mr-2 h-4 w-4" />
           All workspaces
         </Link>

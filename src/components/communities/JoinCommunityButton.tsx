@@ -82,7 +82,7 @@ export function JoinCommunityButton({
   if (community.viewer_has_invite) {
     return (
       <Button asChild size={size} className={className}>
-        <Link to={`/communities/${community.slug}`}>Accept invite</Link>
+        <Link to={`/workspace-groups/${community.slug}`}>Accept invite</Link>
       </Button>
     );
   }

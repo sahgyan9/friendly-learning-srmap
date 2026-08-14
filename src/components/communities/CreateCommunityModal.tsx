@@ -144,7 +144,7 @@ export const CreateCommunityModal = ({ open, onOpenChange }: CreateCommunityModa
     });
     reset();
     onOpenChange(false);
-    navigate(`/communities/${data.slug}`);
+    navigate(`/workspace-groups/${data.slug}`);
   };
 
   return (

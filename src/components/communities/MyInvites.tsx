@@ -57,7 +57,7 @@ const MyInvites = () => {
 
     if (accept) {
       toast.success(`You're in — welcome to ${invite.community_name}`);
-      navigate(`/communities/${invite.community_slug}`);
+      navigate(`/workspace-groups/${invite.community_slug}`);
       return;
     }
 

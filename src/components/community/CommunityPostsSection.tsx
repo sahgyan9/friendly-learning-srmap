@@ -134,7 +134,7 @@ export const CommunityPostsSection = () => {
 
   const handleShare = async (post: CommunityPost, event: React.MouseEvent) => {
     event.stopPropagation();
-    const url = `${window.location.origin}/community-posts#post-${post.id}`;
+    const url = `${window.location.origin}/posts#post-${post.id}`;
 
     if (navigator.share) {
       try {
@@ -231,12 +231,12 @@ export const CommunityPostsSection = () => {
                         post={post}
                         variant="compact"
                         className="w-full h-full"
-                        onOpen={(postId) => navigate(`/community-posts#post-${postId}`)}
+                        onOpen={(postId) => navigate(`/posts#post-${postId}`)}
                         onLike={handleLike}
                         onShare={handleShare}
                         onComment={(postId, event) => {
                           event.stopPropagation();
-                          navigate(`/community-posts#post-${postId}`);
+                          navigate(`/posts#post-${postId}`);
                         }}
                         onImageClick={(src, title, index, allImages) => {
                           const urls = allImages && allImages.length > 0 ? allImages : getPostImageUrls(post.image_url);
@@ -256,7 +256,7 @@ export const CommunityPostsSection = () => {
             <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <CreatePostButton onPostCreated={reload} />
               <Button asChild variant="outline" className="gap-2">
-                <Link to="/community-posts">
+                <Link to="/posts">
                   Browse posts
                   <ArrowRight className="h-4 w-4" />
                 </Link>

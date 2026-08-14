@@ -71,7 +71,7 @@ const CommunityPostDetail = () => {
 
     if (error || !data) {
       toast.error("This post is no longer available");
-      navigate("/community-posts", { replace: true });
+      navigate("/posts", { replace: true });
     } else {
       setPost(data);
     }
@@ -80,9 +80,9 @@ const CommunityPostDetail = () => {
 
   useEffect(() => {
     if (postId) {
-      navigate(`/community-posts#post-${postId}`, { replace: true });
+      navigate(`/posts#post-${postId}`, { replace: true });
     } else {
-      navigate("/community-posts", { replace: true });
+      navigate("/posts", { replace: true });
     }
   }, [postId, navigate]);
 
@@ -162,7 +162,7 @@ const CommunityPostDetail = () => {
     }
 
     toast.success("Post deleted");
-    navigate("/community-posts", { replace: true });
+    navigate("/posts", { replace: true });
   };
 
   if (loading) {
@@ -191,19 +191,19 @@ const CommunityPostDetail = () => {
 
   if (!post) return null;
 
-  const canonical = `${PRIMARY_DOMAIN}/community-posts/${post.id}`;
+  const canonical = `${PRIMARY_DOMAIN}/posts/${post.id}`;
 
   return (
     <>
       <SEOHead
-        title={`${post.title} | Community Posts`}
+        title={`${post.title} | Posts | Friendly Learning SRMAP`}
         description={post.content.slice(0, 160)}
         canonical={canonical}
       />
       <StructuredData
         data={getBreadcrumbSchema([
           { name: "Home", url: `${PRIMARY_DOMAIN}/` },
-          { name: "Posts", url: `${PRIMARY_DOMAIN}/community-posts` },
+          { name: "Posts", url: `${PRIMARY_DOMAIN}/posts` },
           { name: post.title, url: canonical },
         ])}
       />
@@ -218,7 +218,7 @@ const CommunityPostDetail = () => {
               if (window.history.state && window.history.state.idx > 0) {
                 navigate(-1);
               } else {
-                navigate("/community-posts");
+                navigate("/posts");
               }
             }}
           >

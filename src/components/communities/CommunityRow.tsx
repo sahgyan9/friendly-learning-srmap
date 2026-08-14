@@ -31,7 +31,7 @@ export function CommunityRow({ community, onMembershipChange }: CommunityRowProp
 
       {/* Main destination click area */}
       <Link
-        to={`/communities/${community.slug}`}
+        to={`/workspace-groups/${community.slug}`}
         className="flex flex-1 items-start gap-4 min-w-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg"
       >
         {/* Hero icon avatar */}
@@ -108,7 +108,7 @@ export function CommunityRow({ community, onMembershipChange }: CommunityRowProp
         <JoinCommunityButton community={community} onJoined={onMembershipChange} />
 
         <Link
-          to={`/communities/${community.slug}`}
+          to={`/workspace-groups/${community.slug}`}
           className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline group-hover:translate-x-0.5 transition-transform duration-200"
         >
           <span>Enter</span>

@@ -33,7 +33,7 @@ export function InviteLinkButton({ slug, name, variant = "outline" }: InviteLink
   }, [copied]);
 
   const share = async () => {
-    const url = `${window.location.origin}/communities/${slug}`;
+    const url = `${window.location.origin}/workspace-groups/${slug}`;
 
     // The native sheet on a phone is the whole point — it opens WhatsApp and
     // the group chats people are actually in. Desktop browsers mostly do not

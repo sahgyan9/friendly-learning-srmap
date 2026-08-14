@@ -35,7 +35,7 @@ export function CommunityCard({ community, onMembershipChange }: CommunityCardPr
 
       {/* Main destination click area */}
       <Link
-        to={`/communities/${community.slug}`}
+        to={`/workspace-groups/${community.slug}`}
         aria-label={`Open ${community.name}`}
         className="absolute inset-0 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring z-0"
       />
