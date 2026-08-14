@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import {
   Calendar,
   GraduationCap,
@@ -15,15 +16,18 @@ import {
   MessageCircle,
   Star,
   Zap,
+  Loader2,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import MentorAvatar from "@/components/mentors/MentorAvatar";
+import { useAuth } from "@/context/AuthContext";
 import { useSRMAPEvents, type SRMAPEvent } from "@/hooks/useSRMAPEvents";
 import { getMentors } from "@/integrations/supabase/services/mentors";
 import { listCommunities, type Community } from "@/integrations/supabase/services/communities";
+import { getOrCreateConversation } from "@/integrations/supabase/services/chat";
 import { sampleMentors } from "@/data/mentors";
 import type { Mentor } from "@/types/mentor";
 
@@ -54,10 +58,45 @@ const TOP_DEPARTMENTS = [
 ];
 
 export const CampusSidebarWidgets = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [connectingId, setConnectingId] = useState<string | null>(null);
   const { events, loading: eventsLoading } = useSRMAPEvents();
   const [mentors, setMentors] = useState<Mentor[]>([]);
   const [groups, setGroups] = useState<Community[]>([]);
   const [mentorsLoading, setMentorsLoading] = useState(true);
+
+  const handleConnect = async (mentor: Mentor, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!user) {
+      toast.error("Please sign in to message mentors");
+      navigate("/signin");
+      return;
+    }
+
+    if (mentor.id === user.id) {
+      toast.error("You cannot message yourself");
+      return;
+    }
+
+    setConnectingId(mentor.id);
+    try {
+      const { data: conversation, error } = await getOrCreateConversation(user.id, mentor.id);
+      if (error || !conversation) {
+        toast.error("Failed to start conversation with mentor");
+        navigate(`/mentor/${mentor.id}`);
+        return;
+      }
+      toast.success(`Connected with ${mentor.name}!`);
+      navigate(`/messages?chat=${conversation.id}`);
+    } catch {
+      navigate(`/mentor/${mentor.id}`);
+    } finally {
+      setConnectingId(null);
+    }
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -233,149 +272,176 @@ export const CampusSidebarWidgets = () => {
           </div>
         ) : (
           <div className="space-y-2.5">
-            {mentors.map((mentor) => (
-              <Tooltip key={mentor.id}>
-                <TooltipTrigger asChild>
-                  <div className="group flex items-center justify-between gap-3 p-2.5 rounded-xl border border-border/60 bg-muted/20 hover:bg-muted/50 hover:border-primary/30 transition-all cursor-pointer">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <MentorAvatar
-                        name={mentor.name}
-                        src={mentor.profile_image}
-                        seed={mentor.id}
-                        className="h-9 w-9 shrink-0 ring-1 ring-border text-xs"
-                      />
-                      <div className="min-w-0">
-                        <Link
-                          to={`/mentor/${mentor.id}`}
-                          className="text-xs font-semibold text-foreground hover:text-primary transition-colors truncate flex items-center gap-1"
-                        >
-                          <span className="truncate">{mentor.name}</span>
-                          <BadgeCheck className="h-3.5 w-3.5 text-blue-500 shrink-0" />
-                        </Link>
-                        <p className="text-[11px] text-muted-foreground truncate">
-                          {mentor.department || mentor.branch || "Senior Mentor"}
-                        </p>
-                      </div>
-                    </div>
-                    <Button
-                      asChild
-                      size="sm"
-                      variant="outline"
-                      className="h-7 text-xs px-2.5 shrink-0 bg-background hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all"
-                    >
-                      <Link to={`/mentor/${mentor.id}`}>Connect</Link>
-                    </Button>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent
-                  side="left"
-                  sideOffset={14}
-                  className="w-[460px] max-w-[90vw] rounded-2xl p-5 bg-white dark:bg-card text-foreground border border-border shadow-2xl ring-1 ring-black/10 dark:ring-white/10 z-50 animate-in fade-in-0 zoom-in-95 duration-150"
-                >
-                  <div className="space-y-4">
-                    {/* Top Row: Avatar + Details + Connect Button */}
-                    <div className="flex items-start gap-4">
-                      {/* Left: Avatar with [🟢 Active] Pill */}
-                      <div className="relative shrink-0">
+            {mentors.map((mentor) => {
+              const hasRating = Boolean(mentor.rating && mentor.rating > 0 && mentor.review_count && mentor.review_count > 0);
+              const isConnecting = connectingId === mentor.id;
+
+              return (
+                <Tooltip key={mentor.id}>
+                  <TooltipTrigger asChild>
+                    <div className="group flex items-center justify-between gap-3 p-2.5 rounded-xl border border-border/60 bg-muted/20 hover:bg-muted/50 hover:border-primary/30 transition-all cursor-pointer">
+                      <div className="flex items-center gap-2.5 min-w-0">
                         <MentorAvatar
                           name={mentor.name}
                           src={mentor.profile_image}
                           seed={mentor.id}
-                          className="h-16 w-16 rounded-2xl shadow-xs ring-2 ring-primary/20 object-cover"
-                          fallbackClassName="rounded-2xl text-xl font-bold"
+                          className="h-9 w-9 shrink-0 ring-1 ring-border text-xs"
                         />
-                        <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1 rounded-full border border-border bg-card px-2 py-0.5 shadow-2xs whitespace-nowrap">
-                          <span className="relative flex h-2 w-2">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                          </span>
-                          <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
-                            Active
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Middle: Details */}
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-1.5 min-w-0">
-                            <h4 className="font-extrabold text-base text-foreground tracking-tight truncate">
-                              {mentor.name}
-                            </h4>
-                            <CheckCircle2 className="h-4 w-4 text-blue-600 fill-blue-600/10 shrink-0" />
-                          </div>
-                          <Button asChild size="sm" className="shrink-0 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs px-3 h-7.5 gap-1.5 rounded-lg shadow-sm">
-                            <Link to={`/mentor/${mentor.id}`}>
-                              <MessageCircle className="h-3.5 w-3.5" />
-                              Connect with Mentor
-                            </Link>
-                          </Button>
-                        </div>
-
-                        <p className="text-xs font-medium text-muted-foreground mt-1">
-                          <span className="text-foreground/90 font-semibold">
-                            {(mentor.department || mentor.branch || "CSE")
-                              .replace(/\[.*?\]/g, "")
-                              .replace(/\(.*?\)/g, "")
-                              .trim()}{" "}
-                            Mentor
-                          </span>
-                          {" • "}
-                          <span className="text-primary font-medium">{mentor.university || "SRM University AP"}</span>
-                        </p>
-
-                        <p className="text-xs text-foreground/80 font-medium leading-relaxed italic pt-1.5 line-clamp-2">
-                          "{mentor.tagline || mentor.bio || `I help students with coursework, projects, and hackathons.`}"
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Bottom: Trust Metrics Grid Bar (3 spacious tiles, no truncation) */}
-                    <div className="pt-3 border-t border-border/60 grid grid-cols-3 gap-2.5">
-                      {/* Metric 1: Rating */}
-                      <div className="flex items-center gap-2.5 rounded-xl border border-border/50 bg-muted/20 p-2.5 shadow-2xs">
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-500/10 text-amber-500">
-                          <Star className="h-4 w-4 fill-amber-400" />
-                        </div>
                         <div className="min-w-0">
-                          <div className="text-xs font-bold text-foreground">
-                            {mentor.rating > 0 ? mentor.rating.toFixed(1) : "5.0"}
-                            <span className="text-[10px] text-muted-foreground font-normal ml-1">
-                              ({mentor.review_count || 1})
+                          <Link
+                            to={`/mentor/${mentor.id}`}
+                            className="text-xs font-semibold text-foreground hover:text-primary transition-colors truncate flex items-center gap-1"
+                          >
+                            <span className="truncate">{mentor.name}</span>
+                            <BadgeCheck className="h-3.5 w-3.5 text-blue-500 shrink-0" />
+                          </Link>
+                          <p className="text-[11px] text-muted-foreground truncate">
+                            {mentor.department || mentor.branch || "Senior Mentor"}
+                          </p>
+                        </div>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={isConnecting}
+                        onClick={(e) => handleConnect(mentor, e)}
+                        className="h-7 text-xs px-2.5 shrink-0 bg-background hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all"
+                      >
+                        {isConnecting ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          "Connect"
+                        )}
+                      </Button>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent
+                    side="left"
+                    sideOffset={14}
+                    className="w-[460px] max-w-[90vw] rounded-2xl p-5 bg-white dark:bg-card text-foreground border border-border shadow-2xl ring-1 ring-black/10 dark:ring-white/10 z-50 animate-in fade-in-0 zoom-in-95 duration-150"
+                  >
+                    <div className="space-y-4">
+                      {/* Top Row: Avatar + Details + Connect Button */}
+                      <div className="flex items-start gap-4">
+                        {/* Left: Avatar with [🟢 Active] Pill */}
+                        <div className="relative shrink-0">
+                          <MentorAvatar
+                            name={mentor.name}
+                            src={mentor.profile_image}
+                            seed={mentor.id}
+                            className="h-16 w-16 rounded-2xl shadow-xs ring-2 ring-primary/20 object-cover"
+                            fallbackClassName="rounded-2xl text-xl font-bold"
+                          />
+                          <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1 rounded-full border border-border bg-card px-2 py-0.5 shadow-2xs whitespace-nowrap">
+                            <span className="relative flex h-2 w-2">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                            </span>
+                            <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+                              Active
                             </span>
                           </div>
-                          <div className="text-[10px] text-muted-foreground font-medium">Rating Score</div>
                         </div>
-                      </div>
 
-                      {/* Metric 2: Mentees */}
-                      <div className="flex items-center gap-2.5 rounded-xl border border-border/50 bg-muted/20 p-2.5 shadow-2xs">
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 text-blue-500">
-                          <Users className="h-4 w-4" />
-                        </div>
-                        <div className="min-w-0">
-                          <div className="text-xs font-bold text-foreground">
-                            {(mentor.review_count || 1) * 6}+
+                        {/* Middle: Details */}
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              <h4 className="font-extrabold text-base text-foreground tracking-tight truncate">
+                                {mentor.name}
+                              </h4>
+                              <CheckCircle2 className="h-4 w-4 text-blue-600 fill-blue-600/10 shrink-0" />
+                            </div>
+                            <Button
+                              size="sm"
+                              disabled={isConnecting}
+                              onClick={(e) => handleConnect(mentor, e)}
+                              className="shrink-0 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs px-3 h-7.5 gap-1.5 rounded-lg shadow-sm"
+                            >
+                              {isConnecting ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              ) : (
+                                <MessageCircle className="h-3.5 w-3.5" />
+                              )}
+                              Connect with Mentor
+                            </Button>
                           </div>
-                          <div className="text-[10px] text-muted-foreground font-medium">Mentees Mentored</div>
+
+                          <p className="text-xs font-medium text-muted-foreground mt-1">
+                            <span className="text-foreground/90 font-semibold">
+                              {(mentor.department || mentor.branch || "CSE")
+                                .replace(/\[.*?\]/g, "")
+                                .replace(/\(.*?\)/g, "")
+                                .trim()}{" "}
+                              Mentor
+                            </span>
+                            {" • "}
+                            <span className="text-primary font-medium">{mentor.university || "SRM University AP"}</span>
+                          </p>
+
+                          <p className="text-xs text-foreground/80 font-medium leading-relaxed italic pt-1.5 line-clamp-2">
+                            "{mentor.tagline || mentor.bio || `I help students with coursework, projects, and hackathons.`}"
+                          </p>
                         </div>
                       </div>
 
-                      {/* Metric 3: Response Rate */}
-                      <div className="flex items-center gap-2.5 rounded-xl border border-border/50 bg-muted/20 p-2.5 shadow-2xs">
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-500">
-                          <Zap className="h-4 w-4" />
+                      {/* Bottom: Trust Metrics Grid Bar */}
+                      <div className="pt-3 border-t border-border/60 grid grid-cols-3 gap-2.5">
+                        {/* Metric 1: Rating */}
+                        <div className="flex items-center gap-2.5 rounded-xl border border-border/50 bg-muted/20 p-2.5 shadow-2xs">
+                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-500/10 text-amber-500">
+                            <Star className="h-4 w-4 fill-amber-400" />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="text-xs font-bold text-foreground">
+                              {hasRating ? (
+                                <>
+                                  {mentor.rating.toFixed(1)}
+                                  <span className="text-[10px] text-muted-foreground font-normal ml-1">
+                                    ({mentor.review_count})
+                                  </span>
+                                </>
+                              ) : (
+                                "New"
+                              )}
+                            </div>
+                            <div className="text-[10px] text-muted-foreground font-medium">
+                              {hasRating ? "Rating Score" : "No reviews yet"}
+                            </div>
+                          </div>
                         </div>
-                        <div className="min-w-0">
-                          <div className="text-xs font-bold text-foreground">95%</div>
-                          <div className="text-[10px] text-muted-foreground font-medium">Response Rate</div>
+
+                        {/* Metric 2: Mentees */}
+                        <div className="flex items-center gap-2.5 rounded-xl border border-border/50 bg-muted/20 p-2.5 shadow-2xs">
+                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 text-blue-500">
+                            <Users className="h-4 w-4" />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="text-xs font-bold text-foreground">
+                              {mentor.review_count && mentor.review_count > 0 ? `${mentor.review_count * 2}+` : "Available"}
+                            </div>
+                            <div className="text-[10px] text-muted-foreground font-medium">
+                              {mentor.review_count && mentor.review_count > 0 ? "Mentees Mentored" : "Accepting Mentees"}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Metric 3: Response Rate */}
+                        <div className="flex items-center gap-2.5 rounded-xl border border-border/50 bg-muted/20 p-2.5 shadow-2xs">
+                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-500">
+                            <Zap className="h-4 w-4" />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="text-xs font-bold text-foreground">Active</div>
+                            <div className="text-[10px] text-muted-foreground font-medium">Direct Messaging</div>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                </TooltipContent>
-              </Tooltip>
-            ))}
+                  </TooltipContent>
+                </Tooltip>
+              );
+            })}
           </div>
         )}
       </Card>
