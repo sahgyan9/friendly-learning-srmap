@@ -407,7 +407,7 @@ const SiteSearch = () => {
                 {isAiMode ? (
                   <CampusMindIcon className="mr-2.5 h-5 w-5 text-violet-500 dark:text-violet-400 shrink-0 pointer-events-none" />
                 ) : (
-                  <Search className="mr-2.5 h-4.5 w-4.5 text-muted-foreground/70 shrink-0 pointer-events-none" />
+                  <Search className="mr-2.5 h-4 w-4 text-muted-foreground/70 shrink-0 pointer-events-none" />
                 )}
                 <input
                   autoFocus
@@ -522,7 +522,7 @@ const SiteSearch = () => {
                         )}
                       >
                         <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-violet-500/25 bg-violet-500/10 text-violet-600 dark:text-violet-400 group-data-[selected=true]:scale-105 transition-transform">
-                          <CampusMindIcon className="h-4.5 w-4.5" />
+                          <CampusMindIcon className="h-4 w-4" />
                         </span>
                         <span className="min-w-0 flex-1">
                           <span className="block truncate font-medium text-sm text-foreground/90 group-data-[selected=true]:text-foreground">

@@ -22,9 +22,11 @@ export const CampusMindIcon: React.FC<CampusMindIconProps> = ({
   return (
     <svg
       viewBox="0 0 24 24"
+      width="24"
+      height="24"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
-      className={cn("overflow-visible select-none", className)}
+      className={cn("h-5 w-5 shrink-0 inline-block select-none", className)}
       {...props}
     >
       <defs>

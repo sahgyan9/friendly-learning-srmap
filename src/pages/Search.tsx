@@ -354,7 +354,7 @@ export default function SearchPage() {
             </button>
             <div className="relative flex-1 flex items-center">
               {isAiMode ? (
-                <CampusMindIcon className="absolute left-3 h-4.5 w-4.5 text-violet-500 dark:text-violet-400 shrink-0 pointer-events-none" />
+                <CampusMindIcon className="absolute left-3 h-4 w-4 text-violet-500 dark:text-violet-400 shrink-0 pointer-events-none" />
               ) : (
                 <Search className="absolute left-3 h-4 w-4 text-muted-foreground/60 shrink-0 pointer-events-none" />
               )}
