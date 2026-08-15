@@ -138,7 +138,7 @@ export function CommunityWorkspaceHeader({
                 title="Click to view members drawer"
               >
                 <Users className="h-3.5 w-3.5 text-primary" />
-                <span>{community.member_count} members</span>
+                <span>{community.member_count} {community.member_count === 1 ? "member" : "members"}</span>
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse ml-0.5" />
                 <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
                   Active {formatRelativeTime(community.last_activity_at)}

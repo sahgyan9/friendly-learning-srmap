@@ -150,9 +150,11 @@ export default function MentorHeroHeader({
             </p>
 
             {/* Headline / Value Statement Tagline */}
-            <p className="text-base md:text-lg font-medium text-foreground/90 leading-snug pt-1 max-w-2xl italic">
-              "{mentor.tagline}"
-            </p>
+            {(mentor.tagline) && (
+              <p className="text-base md:text-lg font-medium text-foreground/90 leading-snug pt-1 max-w-2xl italic">
+                &ldquo;{mentor.tagline}&rdquo;
+              </p>
+            )}
           </div>
         </div>
 

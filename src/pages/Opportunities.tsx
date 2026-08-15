@@ -102,19 +102,23 @@ const Opportunities = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
   const kind = searchParams.get("kind") ?? "all";
+  const [search, setSearch] = useState(searchParams.get("search") ?? "");
 
   const [items, setItems] = useState<Opportunity[]>([]);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
     setLoading(true);
-    const { data } = await getOpportunities({ kind });
+    const { data } = await getOpportunities({ kind, search });
     setItems(data);
     setLoading(false);
-  }, [kind]);
+  }, [kind, search]);
 
   useEffect(() => {
-    load();
+    const timer = setTimeout(() => {
+      load();
+    }, 200);
+    return () => clearTimeout(timer);
   }, [load]);
 
   const setKind = (value: string) => {
@@ -162,16 +166,11 @@ const Opportunities = () => {
                 </p>
               </div>
 
-              {/* Anyone signed in can post. The student who spots a hackathon
-                  first is never the one running this site, so a listing that
-                  waits on an admin is a listing that arrives after the
-                  deadline. */}
+              {/* Anyone signed in can post */}
               {user ? (
                 <PostOpportunityDialog onPosted={load} />
               ) : (
                 <Button asChild size="sm" variant="outline">
-                  {/* SignIn reads the return path from location.state.from, not
-                      a query param — see the note in SignIn.tsx. */}
                   <Link to="/signin" state={{ from: { pathname: "/opportunities" } }}>
                     Sign in to post one
                   </Link>
@@ -179,34 +178,47 @@ const Opportunities = () => {
               )}
             </div>
 
-            <div className="mt-5 flex flex-wrap gap-1.5">
-              <button
-                type="button"
-                onClick={() => setKind("all")}
-                className={cn(
-                  "rounded-full border px-3 py-1 text-xs transition-colors",
-                  kind === "all"
-                    ? "border-primary/30 bg-primary/10 font-medium text-primary"
-                    : "border-border bg-card hover:border-primary/30",
-                )}
-              >
-                All
-              </button>
-              {OPPORTUNITY_KINDS.map((option) => (
+            {/* Search and Filters */}
+            <div className="mt-6 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              <div className="relative flex-1">
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search hackathons by name, organiser, tags (e.g. AI, SIH, Web)…"
+                  className="w-full h-10 rounded-xl border border-border/60 bg-card/80 px-3.5 text-sm placeholder:text-muted-foreground/60 focus:outline-none focus:border-primary/50 transition-colors"
+                />
+              </div>
+
+              <div className="flex flex-wrap gap-1.5">
                 <button
-                  key={option.value}
                   type="button"
-                  onClick={() => setKind(option.value)}
+                  onClick={() => setKind("all")}
                   className={cn(
                     "rounded-full border px-3 py-1 text-xs transition-colors",
-                    kind === option.value
+                    kind === "all"
                       ? "border-primary/30 bg-primary/10 font-medium text-primary"
                       : "border-border bg-card hover:border-primary/30",
                   )}
                 >
-                  {option.label}
+                  All
                 </button>
-              ))}
+                {OPPORTUNITY_KINDS.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setKind(option.value)}
+                    className={cn(
+                      "rounded-full border px-3 py-1 text-xs transition-colors",
+                      kind === option.value
+                        ? "border-primary/30 bg-primary/10 font-medium text-primary"
+                        : "border-border bg-card hover:border-primary/30",
+                    )}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>

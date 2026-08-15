@@ -83,14 +83,17 @@ export const CampusHero = () => {
             ))}
           </div>
 
-          {/* Live Campus Momentum Pills */}
           <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 pt-2 text-xs sm:text-sm text-muted-foreground border-t border-border/40 max-w-3xl mx-auto">
             <Link
               to="/faculty"
               className="inline-flex items-center gap-1.5 hover:text-foreground transition-colors group"
             >
               <GraduationCap className="h-4 w-4 text-rose-500" />
-              <span className="font-semibold text-foreground">{stats?.faculty ?? "—"}</span> Faculty Rated
+              {stats ? (
+                <span className="font-semibold text-foreground">{stats.faculty}</span>
+              ) : (
+                <span className="inline-block h-4 w-6 animate-pulse rounded bg-muted/60 align-middle" />
+              )} Faculty Rated
             </Link>
             <span className="text-border">•</span>
             <Link
@@ -98,7 +101,11 @@ export const CampusHero = () => {
               className="inline-flex items-center gap-1.5 hover:text-foreground transition-colors group"
             >
               <Users className="h-4 w-4 text-amber-500" />
-              <span className="font-semibold text-foreground">{stats?.groups ?? "—"}</span> Active Groups
+              {stats ? (
+                <span className="font-semibold text-foreground">{stats.groups}</span>
+              ) : (
+                <span className="inline-block h-4 w-6 animate-pulse rounded bg-muted/60 align-middle" />
+              )} Active Groups
             </Link>
             <span className="text-border">•</span>
             <Link
@@ -106,7 +113,11 @@ export const CampusHero = () => {
               className="inline-flex items-center gap-1.5 hover:text-foreground transition-colors group"
             >
               <Building2 className="h-4 w-4 text-blue-500" />
-              <span className="font-semibold text-foreground">{stats?.mentors ?? "—"}</span> Student Mentors
+              {stats ? (
+                <span className="font-semibold text-foreground">{stats.mentors}</span>
+              ) : (
+                <span className="inline-block h-4 w-6 animate-pulse rounded bg-muted/60 align-middle" />
+              )} Student Mentors
             </Link>
             <span className="text-border">•</span>
             <Link
@@ -114,7 +125,11 @@ export const CampusHero = () => {
               className="inline-flex items-center gap-1.5 hover:text-foreground transition-colors group"
             >
               <MessageSquare className="h-4 w-4 text-emerald-500" />
-              <span className="font-semibold text-foreground">{stats?.posts ?? "—"}</span> Campus Posts
+              {stats ? (
+                <span className="font-semibold text-foreground">{stats.posts}</span>
+              ) : (
+                <span className="inline-block h-4 w-6 animate-pulse rounded bg-muted/60 align-middle" />
+              )} Campus Posts
             </Link>
           </div>
         </motion.div>

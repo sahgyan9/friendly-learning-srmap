@@ -92,7 +92,7 @@ export function CommunityRow({ community, onMembershipChange }: CommunityRowProp
             <span>•</span>
             <span className="inline-flex items-center gap-1">
               <Users className="h-3.5 w-3.5 text-muted-foreground" />
-              <strong className="text-foreground font-medium">{community.member_count}</strong> members
+              <strong className="text-foreground font-medium">{community.member_count}</strong> {community.member_count === 1 ? "member" : "members"}
             </span>
             <span>•</span>
             <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-medium">

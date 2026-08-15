@@ -16,10 +16,10 @@ import {
 } from "@/integrations/supabase/services/community-posts";
 
 const FILTER_TABS = [
-  { id: "all", label: "🔥 All Posts", icon: Flame },
-  { id: "hackathon", label: "🚀 Hackathons & Teams", icon: Users },
-  { id: "study", label: "📚 Study & Courses", icon: BookOpen },
-  { id: "general", label: "💬 Discussions", icon: MessageSquare },
+  { id: "all", label: "All Posts", icon: Flame },
+  { id: "hackathon", label: "Hackathons & Teams", icon: Users },
+  { id: "study", label: "Study & Courses", icon: BookOpen },
+  { id: "general", label: "Discussions", icon: MessageSquare },
 ] as const;
 
 type FilterTabId = (typeof FILTER_TABS)[number]["id"];
@@ -39,15 +39,8 @@ export const CampusFeedWidget = () => {
   }, []);
 
   useEffect(() => {
-    let cancelled = false;
-    getCommunityPosts({ limit: 12 }).then(({ data }) => {
-      if (cancelled) return;
-      if (data) setPosts(data);
-      setLoading(false);
-    });
-    return () => {
-      cancelled = true;
-    };
+    reload();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleLike = async (postId: string, event: React.MouseEvent) => {

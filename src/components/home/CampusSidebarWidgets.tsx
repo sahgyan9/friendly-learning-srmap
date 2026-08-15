@@ -323,7 +323,7 @@ export const CampusSidebarWidgets = () => {
                     <div className="space-y-4">
                       {/* Top Row: Avatar + Details + Connect Button */}
                       <div className="flex items-start gap-4">
-                        {/* Left: Avatar with [🟢 Active] Pill */}
+                        {/* Left: Avatar with Verified Badge */}
                         <div className="relative shrink-0">
                           <MentorAvatar
                             name={mentor.name}
@@ -333,12 +333,9 @@ export const CampusSidebarWidgets = () => {
                             fallbackClassName="rounded-2xl text-xl font-bold"
                           />
                           <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1 rounded-full border border-border bg-card px-2 py-0.5 shadow-2xs whitespace-nowrap">
-                            <span className="relative flex h-2 w-2">
-                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                            </span>
-                            <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
-                              Active
+                            <BadgeCheck className="h-3 w-3 text-blue-500" />
+                            <span className="text-[10px] font-semibold text-blue-600 dark:text-blue-400">
+                              Verified
                             </span>
                           </div>
                         </div>
@@ -379,9 +376,11 @@ export const CampusSidebarWidgets = () => {
                             <span className="text-primary font-medium">{mentor.university || "SRM University AP"}</span>
                           </p>
 
-                          <p className="text-xs text-foreground/80 font-medium leading-relaxed italic pt-1.5 line-clamp-2">
-                            "{mentor.tagline || mentor.bio || `I help students with coursework, projects, and hackathons.`}"
-                          </p>
+                          {(mentor.tagline || mentor.bio) && (
+                            <p className="text-xs text-foreground/80 font-medium leading-relaxed italic pt-1.5 line-clamp-2">
+                              &ldquo;{mentor.tagline || mentor.bio}&rdquo;
+                            </p>
+                          )}
                         </div>
                       </div>
 
@@ -411,17 +410,17 @@ export const CampusSidebarWidgets = () => {
                           </div>
                         </div>
 
-                        {/* Metric 2: Mentees */}
+                        {/* Metric 2: Reviews */}
                         <div className="flex items-center gap-2.5 rounded-xl border border-border/50 bg-muted/20 p-2.5 shadow-2xs">
                           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 text-blue-500">
                             <Users className="h-4 w-4" />
                           </div>
                           <div className="min-w-0">
                             <div className="text-xs font-bold text-foreground">
-                              {mentor.review_count && mentor.review_count > 0 ? `${mentor.review_count * 2}+` : "Available"}
+                              {mentor.review_count && mentor.review_count > 0 ? mentor.review_count : "New"}
                             </div>
                             <div className="text-[10px] text-muted-foreground font-medium">
-                              {mentor.review_count && mentor.review_count > 0 ? "Mentees Mentored" : "Accepting Mentees"}
+                              {mentor.review_count && mentor.review_count > 0 ? "Peer Reviews" : "No reviews yet"}
                             </div>
                           </div>
                         </div>
