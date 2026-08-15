@@ -6,11 +6,17 @@ import {
   Moon,
   Search,
   Sun,
+  Trophy,
   X,
-  type LucideIcon,
+  BookOpen,
+  Sparkles,
+  Loader2,
 } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { FacultyIcon } from "@/components/icons/FacultyIcon";
+import { GroupsIcon } from "@/components/icons/GroupsIcon";
+import { MentorIcon } from "@/components/icons/MentorIcon";
+import { PostIcon } from "@/components/icons/PostIcon";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import {
   Command,
@@ -18,6 +24,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/context/AuthContext";
 import {
   DEFAULT_SUGGESTION_IDS,
@@ -29,12 +36,12 @@ import { rankDestinations } from "@/lib/search/rank";
 import { getTheme, toggleTheme, type Theme } from "@/lib/theme";
 import { OPEN_NOTIFICATIONS_EVENT, OPEN_SEARCH_EVENT } from "@/lib/search/events";
 import { EXAMPLE_QUESTIONS } from "@/lib/search/brand";
+import { useSiteSearch, type SearchHit } from "@/hooks/useSiteSearch";
+import { getInitials } from "@/utils/user-utils";
 import { cn } from "@/lib/utils";
 
-
-
 /**
- * Color themes for suggestion destination icons to give a vibrant, premium look.
+ * Color themes for suggestion destination icons.
  */
 const DESTINATION_THEMES: Record<string, { bg: string; text: string; border: string }> = {
   mentors: {
@@ -46,6 +53,11 @@ const DESTINATION_THEMES: Record<string, { bg: string; text: string; border: str
     bg: "bg-rose-500/10 dark:bg-rose-500/20",
     text: "text-rose-600 dark:text-rose-400",
     border: "border-rose-500/20 dark:border-rose-500/30",
+  },
+  opportunities: {
+    bg: "bg-amber-500/10 dark:bg-amber-500/20",
+    text: "text-amber-600 dark:text-amber-400",
+    border: "border-amber-500/20 dark:border-amber-500/30",
   },
   posts: {
     bg: "bg-amber-500/10 dark:bg-amber-500/20",
@@ -113,6 +125,8 @@ const SiteSearch = () => {
   const [theme, setThemeState] = useState<Theme>("dark");
   const [isMac, setIsMac] = useState(false);
 
+  const { results: liveResults, loading: liveLoading } = useSiteSearch(query, open);
+
   useEffect(() => {
     setIsMac(/mac|iphone|ipad/i.test(navigator.userAgent));
   }, []);
@@ -150,7 +164,7 @@ const SiteSearch = () => {
   );
 
   const ranked = useMemo(
-    () => (query.trim() ? rankDestinations(available, query, 6) : []),
+    () => (query.trim() ? rankDestinations(available, query, 4) : []),
     [available, query],
   );
 
@@ -244,14 +258,82 @@ const SiteSearch = () => {
           <Icon className="h-4 w-4" />
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block truncate font-medium text-base text-foreground/90 group-data-[selected=true]:text-foreground group-data-[selected=true]:font-semibold">
+          <span className="block truncate font-medium text-sm text-foreground/90 group-data-[selected=true]:text-foreground group-data-[selected=true]:font-semibold">
             {labelFor(destination)}
           </span>
-          <span className="block truncate text-xs sm:text-sm text-muted-foreground/80 group-data-[selected=true]:text-muted-foreground">
+          <span className="block truncate text-xs text-muted-foreground/80 group-data-[selected=true]:text-muted-foreground">
             {destination.hint}
           </span>
         </span>
         <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/40 opacity-0 group-data-[selected=true]:opacity-100 group-data-[selected=true]:translate-x-0.5 transition-all duration-200" />
+      </CommandItem>
+    );
+  };
+
+  const renderHit = (hit: SearchHit) => {
+    const isPerson = hit.kind === "mentor" || hit.kind === "faculty" || hit.kind === "student";
+
+    const HitIcon =
+      hit.kind === "faculty"
+        ? FacultyIcon
+        : hit.kind === "mentor"
+        ? MentorIcon
+        : hit.kind === "opportunity"
+        ? Trophy
+        : hit.kind === "community"
+        ? GroupsIcon
+        : hit.kind === "post"
+        ? PostIcon
+        : BookOpen;
+
+    const iconStyle =
+      hit.kind === "faculty"
+        ? "border-rose-500/20 bg-rose-500/10 text-rose-600 dark:text-rose-400"
+        : hit.kind === "mentor"
+        ? "border-violet-500/20 bg-violet-500/10 text-violet-600 dark:text-violet-400"
+        : hit.kind === "opportunity"
+        ? "border-amber-500/20 bg-amber-500/10 text-amber-600 dark:text-amber-400"
+        : hit.kind === "community"
+        ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+        : hit.kind === "post"
+        ? "border-amber-500/20 bg-amber-500/10 text-amber-600 dark:text-amber-400"
+        : "border-slate-500/20 bg-slate-500/10 text-slate-600 dark:text-slate-400";
+
+    return (
+      <CommandItem
+        key={hit.id}
+        value={`${hit.kind}-${hit.id}-${hit.title}`}
+        onSelect={() => goTo(hit.to)}
+        className={cn(
+          "group flex items-center gap-3 rounded-xl px-3 py-2 my-0.5 transition-all duration-150 cursor-pointer",
+          "data-[selected=true]:bg-accent/80 data-[selected=true]:shadow-xs",
+        )}
+      >
+        {isPerson ? (
+          <Avatar className="h-8 w-8 shrink-0 border border-border/50">
+            <AvatarImage src={hit.image ?? undefined} alt="" />
+            <AvatarFallback className="text-xs font-medium">{getInitials(hit.title)}</AvatarFallback>
+          </Avatar>
+        ) : hit.image ? (
+          <img src={hit.image} alt="" className="h-8 w-8 shrink-0 rounded-lg object-cover border border-border/50" />
+        ) : (
+          <span className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border", iconStyle)}>
+            <HitIcon className="h-3.5 w-3.5" />
+          </span>
+        )}
+
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-1.5">
+            <span className="truncate font-medium text-sm text-foreground/90 group-data-[selected=true]:text-foreground">
+              {hit.title}
+            </span>
+            <span className="shrink-0 rounded bg-muted/60 px-1.5 py-0.2 text-[9px] font-semibold uppercase text-muted-foreground">
+              {hit.kind}
+            </span>
+          </div>
+          <p className="truncate text-xs text-muted-foreground">{hit.subtitle}</p>
+        </div>
+        <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/30 opacity-0 group-data-[selected=true]:opacity-100 group-data-[selected=true]:translate-x-0.5 transition-all duration-150" />
       </CommandItem>
     );
   };
@@ -287,7 +369,6 @@ const SiteSearch = () => {
         <DialogContent
           onOpenAutoFocus={(e) => {
             e.preventDefault();
-            // Automatically focus the search input so the user can start typing immediately
             setTimeout(() => {
               const input = document.querySelector<HTMLInputElement>("[cmdk-input]");
               input?.focus();
@@ -301,8 +382,7 @@ const SiteSearch = () => {
         >
           <DialogTitle className="sr-only">Search Friendly Learning</DialogTitle>
           <DialogDescription className="sr-only">
-            Search for pages, mentors, lecturers, groups, posts and settings, or
-            describe what you need in your own words.
+            Search for mentors, faculty, hackathons, groups, posts and pages.
           </DialogDescription>
 
           <Command shouldFilter={false} className="rounded-none bg-transparent">
@@ -313,7 +393,7 @@ const SiteSearch = () => {
                 autoFocus
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search mentors, faculty, groups, posts…"
+                placeholder="Search mentors, faculty, hackathons, groups…"
                 className="h-12 flex-1 min-w-0 bg-transparent text-base text-foreground placeholder:text-muted-foreground/50 border-none outline-none focus:outline-none focus:ring-0"
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
@@ -325,6 +405,7 @@ const SiteSearch = () => {
                   }
                 }}
               />
+              {liveLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin text-muted-foreground/60 shrink-0" />}
               {query && (
                 <button
                   onClick={() => setQuery("")}
@@ -352,15 +433,17 @@ const SiteSearch = () => {
               </div>
             )}
 
-            {/* CommandList with custom thin scrollbar */}
-            <CommandList className={cn(
-              "max-h-[min(65vh,28rem)] p-2",
-              "[&::-webkit-scrollbar]:w-1.5",
-              "[&::-webkit-scrollbar-track]:bg-transparent",
-              "[&::-webkit-scrollbar-thumb]:bg-muted-foreground/20",
-              "[&::-webkit-scrollbar-thumb]:rounded-full",
-              "hover:[&::-webkit-scrollbar-thumb]:bg-muted-foreground/40",
-            )}>
+            {/* CommandList with custom scrollbar */}
+            <CommandList
+              className={cn(
+                "max-h-[min(65vh,28rem)] p-2",
+                "[&::-webkit-scrollbar]:w-1.5",
+                "[&::-webkit-scrollbar-track]:bg-transparent",
+                "[&::-webkit-scrollbar-thumb]:bg-muted-foreground/20",
+                "[&::-webkit-scrollbar-thumb]:rounded-full",
+                "hover:[&::-webkit-scrollbar-thumb]:bg-muted-foreground/40",
+              )}
+            >
               {!searching && (
                 <CommandGroup heading="Suggestions">
                   {suggestions.map(renderDestination)}
@@ -368,7 +451,7 @@ const SiteSearch = () => {
               )}
 
               {searching && (
-                <CommandGroup heading="Search Platform">
+                <CommandGroup heading="Full Search">
                   <CommandItem
                     value="search-platform-all"
                     onSelect={goToSearch}
@@ -382,10 +465,10 @@ const SiteSearch = () => {
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="block font-semibold text-sm text-foreground leading-snug">
-                        Search for "<span className="text-primary break-all">{query.trim()}</span>"
+                        See all results for "<span className="text-primary break-all">{query.trim()}</span>"
                       </span>
                       <span className="block truncate text-xs text-muted-foreground">
-                        Search across mentors, faculty, groups, posts & blog
+                        Press Enter to view complete results across all categories
                       </span>
                     </span>
                     <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/40 opacity-0 group-data-[selected=true]:opacity-100 group-data-[selected=true]:translate-x-0.5 transition-all duration-200" />
@@ -393,8 +476,45 @@ const SiteSearch = () => {
                 </CommandGroup>
               )}
 
+              {/* Live matching rows */}
+              {searching && liveResults.mentors.length > 0 && (
+                <CommandGroup heading="Mentors">
+                  {liveResults.mentors.map(renderHit)}
+                </CommandGroup>
+              )}
+
+              {searching && liveResults.faculty.length > 0 && (
+                <CommandGroup heading="Faculty">
+                  {liveResults.faculty.map(renderHit)}
+                </CommandGroup>
+              )}
+
+              {searching && liveResults.opportunities.length > 0 && (
+                <CommandGroup heading="Hackathons & Contests">
+                  {liveResults.opportunities.map(renderHit)}
+                </CommandGroup>
+              )}
+
+              {searching && liveResults.communities.length > 0 && (
+                <CommandGroup heading="Groups">
+                  {liveResults.communities.map(renderHit)}
+                </CommandGroup>
+              )}
+
+              {searching && liveResults.posts.length > 0 && (
+                <CommandGroup heading="Posts">
+                  {liveResults.posts.map(renderHit)}
+                </CommandGroup>
+              )}
+
+              {searching && liveResults.related.length > 0 && (
+                <CommandGroup heading="Closest Matches (AI)">
+                  {liveResults.related.map(renderHit)}
+                </CommandGroup>
+              )}
+
               {searching && ranked.length > 0 && (
-                <CommandGroup heading="Quick Links & Pages">
+                <CommandGroup heading="Pages & Quick Links">
                   {ranked.map((entry) => renderDestination(entry.destination))}
                 </CommandGroup>
               )}

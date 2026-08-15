@@ -3,16 +3,14 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   ArrowLeft,
   BookOpen,
-  GraduationCap,
   Loader2,
-  MessageSquare,
   Search,
-  Users,
-  UserRound,
+  Trophy,
   X,
   ChevronRight,
   Star,
   Users2,
+  Sparkles,
 } from "lucide-react";
 
 import { FacultyIcon } from "@/components/icons/FacultyIcon";
@@ -32,6 +30,8 @@ import {
 import { useSearchResults, type SearchResultItem } from "@/hooks/useSearchResults";
 import { getInitials } from "@/utils/user-utils";
 import { getCommunityKindMeta } from "@/integrations/supabase/services/communities";
+import { CampusAIOverview } from "@/components/search/CampusAIOverview";
+import { parseQuery } from "@/lib/search/query-engine";
 
 // ─── Per-category metadata ──────────────────────────────────────────────────
 
@@ -42,7 +42,7 @@ const TAB_META: Record<
   all: {
     icon: Search,
     emptyLine1: "No results found",
-    emptyLine2: "Try different keywords",
+    emptyLine2: "Try different keywords or check spelling",
     color: "text-primary",
   },
   mentors: {
@@ -56,6 +56,12 @@ const TAB_META: Record<
     emptyLine1: "No faculty matched",
     emptyLine2: "Try a name, department or subject",
     color: "text-rose-500",
+  },
+  opportunities: {
+    icon: Trophy,
+    emptyLine1: "No opportunities matched",
+    emptyLine2: "Try hackathons, competitions or internships",
+    color: "text-amber-500",
   },
   communities: {
     icon: GroupsIcon,
@@ -119,15 +125,7 @@ function PersonCard({ item, to }: { item: SearchResultItem; to: string }) {
   );
 }
 
-
-
-/**
- * Name + interests only, no navigation.
- *
- * Plain students have no public profile route the way mentors do
- * (`/mentor/:id`) — there is nothing to link to, so unlike `PersonCard` this
- * renders as a static card rather than a button.
- */
+/** Name + interests only, no navigation. */
 function StudentCard({ item }: { item: SearchResultItem }) {
   const interests = Array.isArray(item.meta?.interests)
     ? (item.meta!.interests as unknown[]).filter((v): v is string => typeof v === "string")
@@ -149,7 +147,7 @@ function StudentCard({ item }: { item: SearchResultItem }) {
   );
 }
 
-/** Icon + title + subtitle card used for communities, posts, blog. */
+/** Icon + title + subtitle card used for communities, posts, opportunities, blog. */
 function ContentCard({
   item,
   to,
@@ -162,7 +160,7 @@ function ContentCard({
   iconClass: string;
 }) {
   const navigate = useNavigate();
-  const KindIcon = item.meta?.kind ? getCommunityKindMeta(item.meta.kind as string).icon : null;
+  const KindIcon = item.meta?.kind ? getCommunityKindMeta(item.meta.kind as string)?.icon : null;
   const Icon = KindIcon ?? FallbackIcon;
 
   return (
@@ -198,6 +196,16 @@ function ContentCard({
 function renderItem(item: SearchResultItem, tab: SearchTab) {
   if (tab === "mentors") return <PersonCard key={item.id} item={item} to={item.to} />;
   if (tab === "faculty") return <PersonCard key={item.id} item={item} to={item.to} />;
+  if (tab === "opportunities")
+    return (
+      <ContentCard
+        key={item.id}
+        item={item}
+        to={item.to}
+        icon={Trophy}
+        iconClass="border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400"
+      />
+    );
   if (tab === "communities")
     return (
       <ContentCard
@@ -289,7 +297,7 @@ export default function SearchPage() {
   const [offset, setOffset] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Keep local input in sync when URL changes (e.g. browser back/forward)
+  // Keep local input in sync when URL changes
   useEffect(() => {
     setLocalQ(q);
     setOffset(0);
@@ -321,14 +329,12 @@ export default function SearchPage() {
     results.counts.mentors +
     results.counts.faculty +
     results.students.length +
+    results.counts.opportunities +
     results.counts.communities +
     results.counts.posts +
     results.counts.blog;
 
-  const isEmpty =
-    !results.loading &&
-    q.trim() &&
-    totalAcrossAll === 0;
+  const isEmpty = !results.loading && q.trim() && totalAcrossAll === 0;
 
   return (
     <div className="min-h-screen bg-background">
@@ -355,7 +361,7 @@ export default function SearchPage() {
                   if (e.key === "Enter") submitSearch(localQ);
                   if (e.key === "Escape") inputRef.current?.blur();
                 }}
-                placeholder="Search mentors, faculty, groups, posts…"
+                placeholder="Search mentors, faculty, hackathons, groups, posts…"
                 className={cn(
                   "w-full h-10 rounded-xl border border-border/50 bg-card/60 pl-9 pr-10 text-sm",
                   "placeholder:text-muted-foreground/50 text-foreground",
@@ -378,11 +384,7 @@ export default function SearchPage() {
                 </button>
               )}
             </div>
-            <Button
-              onClick={() => submitSearch(localQ)}
-              size="sm"
-              className="shrink-0 h-10 px-4 rounded-xl"
-            >
+            <Button onClick={() => submitSearch(localQ)} size="sm" className="shrink-0 h-10 px-4 rounded-xl">
               Search
             </Button>
           </div>
@@ -435,7 +437,7 @@ export default function SearchPage() {
             </div>
             <h1 className="text-xl font-semibold text-foreground mb-2">Search Friendly Learning</h1>
             <p className="text-sm text-muted-foreground max-w-xs">
-              Find mentors, faculty, groups, posts and blog articles across the whole platform.
+              Find mentors, faculty, hackathons, groups, posts and articles across SRM-AP.
             </p>
           </div>
         )}
@@ -448,6 +450,28 @@ export default function SearchPage() {
           </div>
         )}
 
+        {/* Typo / Did You Mean Suggestion */}
+        {q && !results.loading && results.suggestedCorrection && results.suggestedCorrection.toLowerCase() !== q.toLowerCase() && (
+          <div className="mb-5 flex items-center gap-2 rounded-xl border border-primary/20 bg-primary/5 px-4 py-2.5 text-xs text-muted-foreground">
+            <Sparkles className="h-4 w-4 text-primary shrink-0" />
+            <span>
+              Did you mean:{" "}
+              <button
+                onClick={() => submitSearch(results.suggestedCorrection!)}
+                className="font-semibold text-primary underline hover:text-primary/80"
+              >
+                "{results.suggestedCorrection}"
+              </button>
+              ?
+            </span>
+          </div>
+        )}
+
+        {/* Campus AI Overview (AI Mode) */}
+        {q && !results.loading && !isEmpty && (
+          <CampusAIOverview query={q} results={results} className="mb-6" />
+        )}
+
         {/* Empty state */}
         {isEmpty && (
           <div className="flex flex-col items-center justify-center py-20 text-center">
@@ -455,77 +479,158 @@ export default function SearchPage() {
               <Search className="h-6 w-6 opacity-40" />
             </div>
             <p className="font-semibold text-foreground mb-1">Nothing matched "{q}"</p>
-            <p className="text-sm text-muted-foreground max-w-xs">
-              {TAB_META[tab].emptyLine2}
-            </p>
+            <p className="text-sm text-muted-foreground max-w-xs">{TAB_META[tab].emptyLine2}</p>
           </div>
         )}
 
         {/* Results — All tab: multi-column dashboard */}
-        {q && !results.loading && tab === "all" && !isEmpty && (
-          <div className="space-y-7">
-            <p className="text-xs text-muted-foreground">
-              Showing top results across all categories for{" "}
-              <strong className="text-foreground">"{q}"</strong>
-            </p>
+        {q && !results.loading && tab === "all" && !isEmpty && (() => {
+          const parsed = parseQuery(q);
+
+          const facultySection = (
             <CategorySection
-              title="Mentors"
-              tab="mentors"
-              items={results.mentors}
-              count={results.counts.mentors}
-              onSeeAll={() => setTab("mentors")}
-            />
-            {/* Semantic-only, no tab of its own — renders nothing when the
-                `students` group is absent or empty (no header, no empty state,
-                same rule as every other category here). */}
-            {results.students.length > 0 && (
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <Users2 className="h-4 w-4 text-indigo-500" />
-                  <h2 className="text-sm font-semibold text-foreground/80 uppercase tracking-wide">
-                    Students
-                  </h2>
-                  <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-                    {results.students.length}
-                  </span>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                  {results.students.map((item) => (
-                    <StudentCard key={item.id} item={item} />
-                  ))}
-                </div>
-              </div>
-            )}
-            <CategorySection
+              key="faculty"
               title="Faculty"
               tab="faculty"
               items={results.faculty}
               count={results.counts.faculty}
               onSeeAll={() => setTab("faculty")}
             />
+          );
+
+          const mentorsSection = (
             <CategorySection
+              key="mentors"
+              title="Mentors"
+              tab="mentors"
+              items={results.mentors}
+              count={results.counts.mentors}
+              onSeeAll={() => setTab("mentors")}
+            />
+          );
+
+          const oppSection = (
+            <CategorySection
+              key="opportunities"
+              title="Hackathons & Contests"
+              tab="opportunities"
+              items={results.opportunities}
+              count={results.counts.opportunities}
+              onSeeAll={() => setTab("opportunities")}
+            />
+          );
+
+          const communitySection = (
+            <CategorySection
+              key="communities"
               title="Groups"
               tab="communities"
               items={results.communities}
               count={results.counts.communities}
               onSeeAll={() => setTab("communities")}
             />
+          );
+
+          const postSection = (
             <CategorySection
+              key="posts"
               title="Posts"
               tab="posts"
               items={results.posts}
               count={results.counts.posts}
               onSeeAll={() => setTab("posts")}
             />
+          );
+
+          const blogSection = (
             <CategorySection
+              key="blog"
               title="Blog"
               tab="blog"
               items={results.blog}
               count={results.counts.blog}
               onSeeAll={() => setTab("blog")}
             />
-          </div>
-        )}
+          );
+
+          const studentsSection = results.students.length > 0 ? (
+            <div key="students" className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Users2 className="h-4 w-4 text-indigo-500" />
+                <h2 className="text-sm font-semibold text-foreground/80 uppercase tracking-wide">Students</h2>
+                <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                  {results.students.length}
+                </span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                {results.students.map((item) => (
+                  <StudentCard key={item.id} item={item} />
+                ))}
+              </div>
+            </div>
+          ) : null;
+
+          let orderedSections = [
+            mentorsSection,
+            studentsSection,
+            facultySection,
+            oppSection,
+            communitySection,
+            postSection,
+            blogSection,
+          ];
+
+          if (parsed.intent === "faculty") {
+            orderedSections = [
+              facultySection,
+              mentorsSection,
+              studentsSection,
+              communitySection,
+              oppSection,
+              postSection,
+              blogSection,
+            ];
+          } else if (parsed.intent === "opportunity") {
+            orderedSections = [
+              oppSection,
+              communitySection,
+              mentorsSection,
+              facultySection,
+              studentsSection,
+              postSection,
+              blogSection,
+            ];
+          } else if (parsed.intent === "community") {
+            orderedSections = [
+              communitySection,
+              postSection,
+              oppSection,
+              mentorsSection,
+              facultySection,
+              studentsSection,
+              blogSection,
+            ];
+          } else if (parsed.intent === "post") {
+            orderedSections = [
+              postSection,
+              communitySection,
+              mentorsSection,
+              facultySection,
+              studentsSection,
+              oppSection,
+              blogSection,
+            ];
+          }
+
+          return (
+            <div className="space-y-7">
+              <p className="text-xs text-muted-foreground">
+                Showing top results across all categories for <strong className="text-foreground">"{q}"</strong>
+              </p>
+              {orderedSections}
+            </div>
+          );
+        })()}
 
         {/* Results — Single-category tab: full grid */}
         {q && !results.loading && tab !== "all" && !isEmpty && (
@@ -550,6 +655,8 @@ export default function SearchPage() {
                 ? results.mentors
                 : tab === "faculty"
                 ? results.faculty
+                : tab === "opportunities"
+                ? results.opportunities
                 : tab === "communities"
                 ? results.communities
                 : tab === "posts"
@@ -560,11 +667,7 @@ export default function SearchPage() {
 
             {results.hasMore && (
               <div className="flex justify-center pt-4">
-                <Button
-                  variant="outline"
-                  onClick={() => setOffset((prev) => prev + 20)}
-                  className="rounded-xl"
-                >
+                <Button variant="outline" onClick={() => setOffset((prev) => prev + 20)} className="rounded-xl">
                   Load more
                 </Button>
               </div>

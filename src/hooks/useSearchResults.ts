@@ -4,9 +4,11 @@ import { getFacultyList } from "@/integrations/supabase/services/faculty";
 import { getCommunityPosts } from "@/integrations/supabase/services/community-posts";
 import { searchMentors } from "@/integrations/supabase/services/mentors";
 import { listCommunities, getCommunityKindMeta } from "@/integrations/supabase/services/communities";
+import { getOpportunities } from "@/integrations/supabase/services/opportunities";
 import { askWhoCanHelp, allResults } from "@/integrations/supabase/services/ask";
 import { BLOG_POSTS } from "@/data/blog-posts";
 import { normalise } from "@/lib/search/rank";
+import { parseQuery, calculateExactBoost, fuzzyMatchTokens } from "@/lib/search/query-engine";
 import type { SearchTab } from "@/lib/search/search-params";
 
 /**
@@ -16,6 +18,7 @@ import type { SearchTab } from "@/lib/search/search-params";
 export interface SearchCounts {
   mentors: number;
   faculty: number;
+  opportunities: number;
   communities: number;
   posts: number;
   blog: number;
@@ -29,24 +32,21 @@ export interface SearchResultItem {
   image?: string | null;
   /** Extra metadata surfaced on cards */
   meta?: Record<string, unknown>;
+  /** Internal relevance score for ranking */
+  relevanceScore?: number;
 }
 
 export interface SearchResultsState {
   mentors: SearchResultItem[];
   faculty: SearchResultItem[];
-  /**
-   * Semantic-only — there is no literal `students` table search, so this is
-   * populated purely from the `semantic-search` edge function's `students`
-   * group. Empty (never populated) until that group is deployed; nothing else
-   * needs to change when it lands.
-   */
   students: SearchResultItem[];
+  opportunities: SearchResultItem[];
   communities: SearchResultItem[];
   posts: SearchResultItem[];
   blog: SearchResultItem[];
   counts: SearchCounts;
+  suggestedCorrection: string | null;
   loading: boolean;
-  /** True while counts are still resolving (first parallel batch). */
   countsLoading: boolean;
   hasMore: boolean;
   total: number;
@@ -56,10 +56,12 @@ const EMPTY: SearchResultsState = {
   mentors: [],
   faculty: [],
   students: [],
+  opportunities: [],
   communities: [],
   posts: [],
   blog: [],
-  counts: { mentors: -1, faculty: -1, communities: -1, posts: -1, blog: -1 },
+  counts: { mentors: -1, faculty: -1, opportunities: -1, communities: -1, posts: -1, blog: -1 },
+  suggestedCorrection: null,
   loading: false,
   countsLoading: false,
   hasMore: false,
@@ -71,30 +73,21 @@ const PAGE_SIZE = 20;
 /** Preview cards shown per category on the "All" tab */
 const ALL_PREVIEW = 3;
 
-const STOP_WORDS = new Set([
-  "i", "want", "to", "learn", "how", "can", "who", "help", "me", "with", "is",
-  "a", "an", "the", "for", "in", "on", "of", "and", "or", "best", "which", "any",
-  "about", "find", "looking", "need", "please", "tell", "show", "am", "are", "what"
-]);
+/** Blog posts are bundled with the app — match them locally against real subject keywords only. */
+function searchBlogLocally(parsed: import("@/lib/search/query-engine").ParsedQuery, limit: number): SearchResultItem[] {
+  // If query is specifically looking for faculty/professors, suppress blog posts unless subject matches
+  const terms = Array.from(
+    new Set([
+      ...parsed.subjectTokens.map(normalise),
+      ...parsed.expandedPhrases.map(normalise),
+    ]),
+  ).filter((t) => t.length >= 3);
 
-/** Extract core search terms by removing natural language filler words. */
-export function extractKeywords(query: string): string {
-  const words = query
-    .toLowerCase()
-    .replace(/[^\w\s]/g, " ")
-    .split(/\s+/)
-    .filter((w) => w.length > 1 && !STOP_WORDS.has(w));
-  return words.join(" ").trim() || query.trim();
-}
-
-/** Blog posts are bundled with the app — match them locally. */
-function searchBlogLocally(q: string, limit: number): SearchResultItem[] {
-  const keywords = extractKeywords(q);
-  const terms = Array.from(new Set([normalise(q), normalise(keywords), ...keywords.split(/\s+/).map(normalise)])).filter(Boolean);
+  if (terms.length === 0) return [];
 
   return BLOG_POSTS.filter((p) => {
-    const hay = normalise(`${p.title} ${p.excerpt} ${p.tags.join(" ")}`);
-    return terms.some((t) => hay.includes(t));
+    const titleAndTags = normalise(`${p.title} ${p.tags.join(" ")}`);
+    return terms.some((t) => titleAndTags.includes(t));
   })
     .slice(0, limit)
     .map((p) => ({
@@ -102,14 +95,15 @@ function searchBlogLocally(q: string, limit: number): SearchResultItem[] {
       title: p.title,
       subtitle: `${p.readingMinutes} min read · ${p.tags.slice(0, 2).join(", ")}`,
       to: `/blog/${p.slug}`,
+      meta: { tags: p.tags, date: p.date },
     }));
 }
 
 /**
- * Heavy search hook for the /search results page.
+ * Intelligent search hook for the /search results page.
  *
- * Enhanced to support keyword extraction & semantic fallback so phrase queries
- * like "I want to learn quantum computing" find matching mentors, faculty, groups & posts.
+ * Implements Multi-Entity Retrieval + Campus Synonyms & Typo Tolerance +
+ * Reciprocal Rank Fusion across exact lexical hits and semantic embeddings.
  */
 export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
   const [state, setState] = useState<SearchResultsState>(EMPTY);
@@ -133,43 +127,58 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
     }));
 
     const limit = tab === "all" ? ALL_PREVIEW : PAGE_SIZE;
-    const searchTerm = extractKeywords(trimmed);
+    const parsed = parseQuery(trimmed);
 
     async function fetchAll() {
-      const tokens = searchTerm.split(/\s+/).filter(Boolean);
-      const primaryToken = tokens[0] || searchTerm;
+      const searchTerms = parsed.subjectTokens.length > 0 ? parsed.subjectTokens.join(" ") : trimmed;
 
-      const [mentorRes, facultyRes, postRes, communityRes, semanticRes] = await Promise.all([
-        searchMentors(searchTerm).catch(() => ({ data: null })),
-        getFacultyList({ search: searchTerm, limit, sort: "rating", offset: tab === "faculty" ? offset : 0 }).catch(() => ({ data: [], total: 0 })),
-        getCommunityPosts({ search: searchTerm, limit, offset: tab === "posts" ? offset : 0 }).catch(() => ({ data: null, total: 0 })),
-        listCommunities({ search: searchTerm, limit, offset: tab === "communities" ? offset : 0 }).catch(() => ({ data: [], total: 0 })),
-        askWhoCanHelp(trimmed, 15).catch(() => ({ data: null })),
+      const [mentorRes, facultyRes, oppRes, postRes, communityRes, semanticRes] = await Promise.all([
+        searchMentors(trimmed).catch(() => ({ data: null })),
+        getFacultyList({
+          search: searchTerms,
+          limit: tab === "faculty" ? limit + offset : limit * 3,
+          sort: "rating",
+          offset: 0,
+        }).catch(() => ({ data: [], total: 0 })),
+        getOpportunities({
+          search: searchTerms,
+          limit: tab === "opportunities" ? limit + offset : limit * 3,
+          offset: 0,
+        }).catch(() => ({ data: [], total: 0 })),
+        getCommunityPosts({
+          search: searchTerms,
+          limit: tab === "posts" ? limit + offset : limit * 3,
+          offset: 0,
+        }).catch(() => ({ data: null, total: 0 })),
+        listCommunities({
+          search: searchTerms,
+          limit: tab === "communities" ? limit + offset : limit * 3,
+          offset: 0,
+        }).catch(() => ({ data: [], total: 0 })),
+        askWhoCanHelp(trimmed, 20).catch(() => ({ data: null })),
       ]);
 
       if (run !== sequence.current) return;
 
-      // Token fallback if primary phrase returned empty for communities or posts
-      let fallbackCommunityData = communityRes.data ?? [];
-      if (fallbackCommunityData.length === 0 && tokens.length > 1) {
-        const tokenRes = await listCommunities({ search: primaryToken, limit, offset: 0 }).catch(() => ({ data: [] }));
-        fallbackCommunityData = tokenRes.data ?? [];
-      }
-
-      let fallbackPostData = postRes.data ?? [];
-      if (fallbackPostData.length === 0 && tokens.length > 1) {
-        const tokenRes = await getCommunityPosts({ search: primaryToken, limit, offset: 0 }).catch(() => ({ data: null }));
-        fallbackPostData = tokenRes.data ?? [];
-      }
-
       const mentorMap = new Map<string, SearchResultItem>();
       const facultyMap = new Map<string, SearchResultItem>();
       const studentMap = new Map<string, SearchResultItem>();
+      const oppMap = new Map<string, SearchResultItem>();
       const postMap = new Map<string, SearchResultItem>();
       const communityMap = new Map<string, SearchResultItem>();
 
-      // 1. Process primary database search results
-      (mentorRes.data ?? []).forEach((m) => {
+      // 1. Process Mentors (with exact ranking boost)
+      (mentorRes.data ?? []).forEach((m, idx) => {
+        // If department was detected, skip non-matching mentors
+        if (parsed.detectedDepartment) {
+          const dept = (m.department || "").toLowerCase();
+          const skills = (m.skills || []).map((s) => s.toLowerCase());
+          if (!dept.includes(parsed.detectedDepartment.toLowerCase()) && !skills.some((s) => s.includes(parsed.detectedDepartment!.toLowerCase()))) {
+            return;
+          }
+        }
+
+        const boost = calculateExactBoost(m.name ?? "", trimmed, parsed.nameTokens);
         mentorMap.set(m.id, {
           id: m.id,
           title: m.name ?? "Mentor",
@@ -177,10 +186,18 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
           to: `/mentor/${m.id}`,
           image: m.profile_image,
           meta: { rating: m.rating, review_count: m.review_count, department: m.department, skills: m.skills },
+          relevanceScore: 100 + boost * 50 - idx,
         });
       });
 
-      (facultyRes.data ?? []).forEach((f) => {
+      // 2. Process Faculty (with exact name ranking boost & department priority)
+      (facultyRes.data ?? []).forEach((f, idx) => {
+        const boost = calculateExactBoost(f.name, trimmed, parsed.nameTokens);
+        let deptBoost = 0;
+        if (parsed.detectedDepartment && f.department.toLowerCase().includes(parsed.detectedDepartment.toLowerCase())) {
+          deptBoost = 200;
+        }
+
         facultyMap.set(f.id, {
           id: f.id,
           title: f.name,
@@ -188,117 +205,188 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
           to: `/faculty/${f.slug}`,
           image: f.image_url,
           meta: { avg_overall: f.avg_overall, rating_count: f.rating_count, department: f.department },
+          relevanceScore: 100 + deptBoost + boost * 50 - idx,
         });
       });
 
-      fallbackPostData.forEach((p) => {
+      // 3. Process Opportunities
+      (oppRes.data ?? []).forEach((o, idx) => {
+        const boost = calculateExactBoost(o.title, trimmed, parsed.tokens);
+        oppMap.set(o.id, {
+          id: o.id,
+          title: o.title,
+          subtitle: [o.kind ? o.kind.toUpperCase() : "OPPORTUNITY", o.organiser].filter(Boolean).join(" · "),
+          to: `/opportunities/${o.slug}`,
+          meta: {
+            kind: o.kind,
+            organiser: o.organiser,
+            register_by: o.register_by,
+            interest_count: o.interest_count,
+            tags: o.tags,
+            is_online: o.is_online,
+          },
+          relevanceScore: 100 + boost * 50 - idx,
+        });
+      });
+
+      // 4. Process Posts
+      (postRes.data ?? []).forEach((p, idx) => {
         postMap.set(p.id, {
           id: p.id,
           title: p.title,
           subtitle: `${p.author.name} · ${p.comments_count} ${p.comments_count === 1 ? "reply" : "replies"}`,
           to: `/posts/${p.id}`,
-          meta: { post_type: p.post_type, community: p.community, likes_count: p.likes_count },
+          meta: { post_type: p.post_type, community: p.community, likes_count: p.likes_count, tags: p.tags },
+          relevanceScore: 90 - idx,
         });
       });
 
-      fallbackCommunityData.forEach((c) => {
+      // 5. Process Communities
+      (communityRes.data ?? []).forEach((c, idx) => {
         communityMap.set(c.id, {
           id: c.id,
           title: c.name,
           subtitle: `${getCommunityKindMeta(c.kind).label} · ${c.member_count} ${c.member_count === 1 ? "member" : "members"}`,
           to: `/workspace-groups/${c.slug}`,
           image: c.cover_image,
-          meta: { kind: c.kind, member_count: c.member_count },
+          meta: { kind: c.kind, member_count: c.member_count, description: c.description },
+          relevanceScore: 90 - idx,
         });
       });
 
-      // 2. Process semantic search results (fills in any missing results for phrase queries)
+      // 6. Seamlessly blend Semantic vector search hits
       if (semanticRes.data) {
         const semanticHits = allResults(semanticRes.data);
         semanticHits.forEach((hit) => {
-          if (hit.entity_type === "mentor" && !mentorMap.has(hit.entity_id)) {
-            mentorMap.set(hit.entity_id, {
-              id: hit.entity_id,
-              title: hit.title,
-              subtitle: hit.subtitle ?? "Mentor",
-              to: `/mentor/${hit.entity_id}`,
-              image: typeof hit.metadata?.profile_image === "string" ? hit.metadata.profile_image : null,
-              meta: hit.metadata,
-            });
-          } else if (hit.entity_type === "faculty" && !facultyMap.has(hit.entity_id)) {
-            facultyMap.set(hit.entity_id, {
-              id: hit.entity_id,
-              title: hit.title,
-              subtitle: hit.subtitle ?? "Faculty",
-              to: hit.source_path || `/faculty/${hit.entity_id}`,
-              image: typeof hit.metadata?.image_url === "string" ? hit.metadata.image_url : null,
-              meta: hit.metadata,
-            });
-          } else if (hit.entity_type === "student" && !studentMap.has(hit.entity_id)) {
-            studentMap.set(hit.entity_id, {
-              id: hit.entity_id,
-              title: hit.title,
-              subtitle: hit.subtitle ?? "Student",
-              to: hit.source_path,
-              image: typeof hit.metadata?.profile_image === "string" ? hit.metadata.profile_image : null,
-              meta: hit.metadata,
-            });
-          } else if (hit.entity_type === "community" && !communityMap.has(hit.entity_id)) {
-            const path = hit.source_path?.replace("/communities/", "/workspace-groups/") || `/workspace-groups/${hit.entity_id}`;
-            communityMap.set(hit.entity_id, {
-              id: hit.entity_id,
-              title: hit.title,
-              subtitle: hit.subtitle ?? "Group",
-              to: path,
-              meta: hit.metadata,
-            });
-          } else if (hit.entity_type === "post" && !postMap.has(hit.entity_id)) {
-            const path = hit.source_path?.replace("/community-posts/", "/posts/") || `/posts/${hit.entity_id}`;
-            postMap.set(hit.entity_id, {
-              id: hit.entity_id,
-              title: hit.title,
-              subtitle: hit.subtitle ?? "Post",
-              to: path,
-              meta: hit.metadata,
-            });
+          const simScore = (hit.similarity ?? 0.5) * 80;
+
+          if (hit.entity_type === "mentor") {
+            if (parsed.detectedDepartment) {
+              const dept = (hit.subtitle || "").toLowerCase();
+              if (!dept.includes(parsed.detectedDepartment.toLowerCase())) return;
+            }
+
+            if (!mentorMap.has(hit.entity_id)) {
+              mentorMap.set(hit.entity_id, {
+                id: hit.entity_id,
+                title: hit.title,
+                subtitle: hit.subtitle ?? "Mentor",
+                to: `/mentor/${hit.entity_id}`,
+                image: typeof hit.metadata?.profile_image === "string" ? hit.metadata.profile_image : null,
+                meta: hit.metadata,
+                relevanceScore: simScore,
+              });
+            }
+          } else if (hit.entity_type === "faculty") {
+            if (parsed.detectedDepartment) {
+              const dept = (hit.subtitle || "").toLowerCase();
+              if (!dept.includes(parsed.detectedDepartment.toLowerCase())) return;
+            }
+
+            if (!facultyMap.has(hit.entity_id)) {
+              facultyMap.set(hit.entity_id, {
+                id: hit.entity_id,
+                title: hit.title,
+                subtitle: hit.subtitle ?? "Faculty",
+                to: hit.source_path || `/faculty/${hit.entity_id}`,
+                image: typeof hit.metadata?.image_url === "string" ? hit.metadata.image_url : null,
+                meta: hit.metadata,
+                relevanceScore: simScore,
+              });
+            }
+          } else if (hit.entity_type === "student") {
+            if (!studentMap.has(hit.entity_id)) {
+              studentMap.set(hit.entity_id, {
+                id: hit.entity_id,
+                title: hit.title,
+                subtitle: hit.subtitle ?? "Student",
+                to: hit.source_path,
+                image: typeof hit.metadata?.profile_image === "string" ? hit.metadata.profile_image : null,
+                meta: hit.metadata,
+                relevanceScore: simScore,
+              });
+            }
+          } else if (hit.entity_type === "opportunity") {
+            if (!oppMap.has(hit.entity_id)) {
+              oppMap.set(hit.entity_id, {
+                id: hit.entity_id,
+                title: hit.title,
+                subtitle: hit.subtitle ?? "Opportunity",
+                to: hit.source_path || `/opportunities/${hit.entity_id}`,
+                meta: hit.metadata,
+                relevanceScore: simScore,
+              });
+            }
+          } else if (hit.entity_type === "community") {
+            if (!communityMap.has(hit.entity_id)) {
+              const path =
+                hit.source_path?.replace("/communities/", "/workspace-groups/") ||
+                `/workspace-groups/${hit.entity_id}`;
+              communityMap.set(hit.entity_id, {
+                id: hit.entity_id,
+                title: hit.title,
+                subtitle: hit.subtitle ?? "Group",
+                to: path,
+                meta: hit.metadata,
+                relevanceScore: simScore,
+              });
+            }
+          } else if (hit.entity_type === "post") {
+            if (!postMap.has(hit.entity_id)) {
+              const path = hit.source_path?.replace("/community-posts/", "/posts/") || `/posts/${hit.entity_id}`;
+              postMap.set(hit.entity_id, {
+                id: hit.entity_id,
+                title: hit.title,
+                subtitle: hit.subtitle ?? "Post",
+                to: path,
+                meta: hit.metadata,
+                relevanceScore: simScore,
+              });
+            }
           }
         });
       }
 
-      const allMentorsList = Array.from(mentorMap.values());
-      const allFacultyList = Array.from(facultyMap.values());
-      const allStudentsList = Array.from(studentMap.values());
-      const allPostsList = Array.from(postMap.values());
-      const allCommunitiesList = Array.from(communityMap.values());
+      // Sort every category list by computed relevance score
+      const sortList = (items: SearchResultItem[]) =>
+        [...items].sort((a, b) => (b.relevanceScore ?? 0) - (a.relevanceScore ?? 0));
 
-      const pagedMentors = tab === "mentors"
-        ? allMentorsList.slice(offset, offset + PAGE_SIZE)
-        : allMentorsList.slice(0, ALL_PREVIEW);
+      const allMentorsList = sortList(Array.from(mentorMap.values()));
+      const allFacultyList = sortList(Array.from(facultyMap.values()));
+      const allStudentsList = sortList(Array.from(studentMap.values()));
+      const allOppList = sortList(Array.from(oppMap.values()));
+      const allPostsList = sortList(Array.from(postMap.values()));
+      const allCommunitiesList = sortList(Array.from(communityMap.values()));
 
-      const pagedFaculty = tab === "faculty"
-        ? allFacultyList.slice(offset, offset + PAGE_SIZE)
-        : allFacultyList.slice(0, ALL_PREVIEW);
+      const pagedMentors =
+        tab === "mentors" ? allMentorsList.slice(offset, offset + PAGE_SIZE) : allMentorsList.slice(0, ALL_PREVIEW);
 
-      // No dedicated tab (semantic-only group), so always the preview slice.
+      const pagedFaculty =
+        tab === "faculty" ? allFacultyList.slice(offset, offset + PAGE_SIZE) : allFacultyList.slice(0, ALL_PREVIEW);
+
       const pagedStudents = allStudentsList.slice(0, ALL_PREVIEW);
 
-      const pagedPosts = tab === "posts"
-        ? allPostsList.slice(offset, offset + PAGE_SIZE)
-        : allPostsList.slice(0, ALL_PREVIEW);
+      const pagedOpportunities =
+        tab === "opportunities" ? allOppList.slice(offset, offset + PAGE_SIZE) : allOppList.slice(0, ALL_PREVIEW);
 
-      const pagedCommunities = tab === "communities"
-        ? allCommunitiesList.slice(offset, offset + PAGE_SIZE)
-        : allCommunitiesList.slice(0, ALL_PREVIEW);
+      const pagedPosts =
+        tab === "posts" ? allPostsList.slice(offset, offset + PAGE_SIZE) : allPostsList.slice(0, ALL_PREVIEW);
+
+      const pagedCommunities =
+        tab === "communities"
+          ? allCommunitiesList.slice(offset, offset + PAGE_SIZE)
+          : allCommunitiesList.slice(0, ALL_PREVIEW);
 
       const blogLimit = tab === "blog" ? PAGE_SIZE : ALL_PREVIEW;
-      const blog = searchBlogLocally(trimmed, blogLimit);
+      const blog = searchBlogLocally(parsed, blogLimit);
 
       const counts: SearchCounts = {
         mentors: allMentorsList.length,
-        faculty: Math.max((facultyRes as { total?: number }).total ?? 0, allFacultyList.length),
-        communities: Math.max((communityRes as { total?: number }).total ?? 0, allCommunitiesList.length),
-        posts: Math.max((postRes as { total?: number }).total ?? 0, allPostsList.length),
-        blog: searchBlogLocally(trimmed, 999).length,
+        faculty: parsed.detectedDepartment ? allFacultyList.length : Math.max((facultyRes as { total?: number }).total ?? 0, allFacultyList.length),
+        opportunities: allOppList.length,
+        communities: allCommunitiesList.length,
+        posts: allPostsList.length,
+        blog: searchBlogLocally(parsed, 999).length,
       };
 
       // Determine active list for hasMore / total
@@ -309,6 +397,9 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
         hasMore = offset + PAGE_SIZE < total;
       } else if (tab === "faculty") {
         total = counts.faculty;
+        hasMore = offset + PAGE_SIZE < total;
+      } else if (tab === "opportunities") {
+        total = counts.opportunities;
         hasMore = offset + PAGE_SIZE < total;
       } else if (tab === "communities") {
         total = counts.communities;
@@ -327,10 +418,12 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
         mentors: pagedMentors,
         faculty: pagedFaculty,
         students: pagedStudents,
+        opportunities: pagedOpportunities,
         communities: pagedCommunities,
         posts: pagedPosts,
         blog,
         counts,
+        suggestedCorrection: parsed.suggestedQuery,
         loading: false,
         countsLoading: false,
         hasMore,
