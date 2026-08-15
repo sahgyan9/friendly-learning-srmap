@@ -1,6 +1,7 @@
 /**
- * Intelligent Query Engine: Tokenization, Campus Synonyms, Department Extraction,
- * Typo Tolerance, and Cross-Field Relevance Scoring for Friendly Learning SRMAP.
+ * Intelligent Query Engine: Multi-Archetype Intent Classification,
+ * Tokenization, Campus Synonyms, Department Extraction, Typo Tolerance,
+ * and Cross-Field Relevance Scoring for Friendly Learning SRMAP.
  */
 
 // ─── 1. Campus Departments & Disciplines ─────────────────────────────────────
@@ -79,6 +80,11 @@ export const CAMPUS_SYNONYMS: Record<string, string[]> = {
   sih: ["smart india hackathon", "hackathon"],
   hackathon: ["hackathon", "smart india hackathon", "coding contest"],
   contest: ["competition", "hackathon", "contest"],
+
+  // Student Stages & Guides
+  fresher: ["first year", "freshers", "1st year", "orientation", "getting started"],
+  freshers: ["first year", "fresher", "1st year", "orientation", "getting started"],
+  "first year": ["freshers", "fresher", "1st year", "orientation"],
 };
 
 // Role & entity words that indicate intent but should not be treated as person names or content filters
@@ -90,10 +96,11 @@ export const ROLE_KEYWORDS = new Set([
 ]);
 
 export const STOP_WORDS = new Set([
-  "i", "want", "to", "learn", "how", "can", "who", "help", "me", "with", "is",
+  "i", "am", "want", "to", "learn", "how", "can", "who", "help", "me", "with", "is",
   "a", "an", "the", "for", "in", "on", "of", "and", "or", "best", "which", "any",
-  "about", "find", "looking", "need", "please", "tell", "show", "am", "are", "what",
-  "where", "do", "does", "someone", "anyone", "good", "great", "top", "as", "at"
+  "about", "find", "looking", "need", "please", "tell", "show", "are", "what",
+  "where", "do", "does", "someone", "anyone", "good", "great", "top", "as", "at",
+  "from", "by", "some", "my", "our", "you", "your", "give"
 ]);
 
 // Campus vocabulary for typo correction
@@ -104,7 +111,7 @@ export const CAMPUS_VOCABULARY = [
   "computer", "science", "engineering", "electronics", "mechanical", "physics", "chemistry",
   "mathematics", "biology", "economics", "management", "hackathon", "competition", "internship",
   "mentor", "faculty", "professor", "cybersecurity", "blockchain", "robotics", "algorithms",
-  "structures", "research", "project", "database", "cloud", "security"
+  "structures", "research", "project", "database", "cloud", "security", "freshers", "electives"
 ];
 
 // ─── 3. Levenshtein Distance for Typo Tolerance ─────────────────────────────
@@ -161,11 +168,20 @@ export function correctTypo(word: string): string | null {
 
 // ─── 4. Query Analysis & Tokenization ────────────────────────────────────────
 
+export type QueryIntent =
+  | "informational"    // Guides, How-To, Stage-based (e.g. "I am fresher need help", "how to choose electives")
+  | "entity_lookup"    // Exact person search (e.g. "Dr. Krishna Prasad", "Aarav Raj")
+  | "domain_subject"   // Subject/Skill search (e.g. "Physics", "Machine learning", "Quantum")
+  | "opportunity"      // Events & Competitions (e.g. "Hackathons", "SIH 2026")
+  | "community"        // Groups & Clubs (e.g. "Robotics club")
+  | "post"             // Discussion threads (e.g. "Campus posts")
+  | "general";         // Broad overview
+
 export interface ParsedQuery {
   raw: string;
   cleaned: string;
   tokens: string[];
-  /** Core subject/person tokens (excluding stop words AND role keywords like "faculty", "mentor") */
+  /** Core subject/person tokens (excluding stop words AND role keywords) */
   subjectTokens: string[];
   /** Name tokens for person exact matching (excludes honorifics) */
   nameTokens: string[];
@@ -178,7 +194,9 @@ export interface ParsedQuery {
   /** Clean human-readable topic summary for AI Overview */
   cleanTopic: string;
   /** Primary search intent */
-  intent: "general" | "people" | "faculty" | "mentor" | "opportunity" | "community" | "post";
+  intent: QueryIntent;
+  /** Sub-intent for informational guidance */
+  infoTopic?: "fresher_guide" | "academic_help" | "faculty_contact" | "electives" | "hackathon_prep" | "general_guide";
 }
 
 export function parseQuery(query: string): ParsedQuery {
@@ -195,25 +213,58 @@ export function parseQuery(query: string): ParsedQuery {
   const correctedWords: string[] = [];
   let hasCorrection = false;
 
-  // 1. Detect Intent
-  let intent: ParsedQuery["intent"] = "general";
-  if (rawWords.some((w) => ["prof", "professor", "dr", "faculty", "teacher", "lecturer"].includes(w))) {
-    intent = "faculty";
-  } else if (rawWords.some((w) => ["mentor", "senior", "buddy", "tutor", "mentorship"].includes(w))) {
-    intent = "mentor";
+  // 1. Check for Informational / Stage-based Intent
+  let intent: QueryIntent = "general";
+  let infoTopic: ParsedQuery["infoTopic"] = undefined;
+
+  const isFresherQuery = rawWords.some((w) =>
+    ["fresher", "freshers", "firstyear", "beginner", "newbie"].includes(w)
+  ) || normalized.includes("first year") || normalized.includes("1st year");
+
+  const isHowToQuery =
+    normalized.startsWith("how to") ||
+    normalized.startsWith("how do") ||
+    normalized.startsWith("how can") ||
+    normalized.startsWith("where do") ||
+    rawWords.includes("guide") ||
+    rawWords.includes("tips") ||
+    rawWords.includes("advice") ||
+    normalized.includes("help from") ||
+    normalized.includes("need help");
+
+  const isElectiveQuery = rawWords.some((w) => ["elective", "electives", "registration", "credits"].includes(w));
+  const isHackathonGuide = (rawWords.includes("hackathon") || rawWords.includes("sih")) && (isHowToQuery || rawWords.includes("teammates") || rawWords.includes("team"));
+
+  if (isFresherQuery) {
+    intent = "informational";
+    infoTopic = "fresher_guide";
+  } else if (isElectiveQuery) {
+    intent = "informational";
+    infoTopic = "electives";
+  } else if (isHackathonGuide) {
+    intent = "informational";
+    infoTopic = "hackathon_prep";
+  } else if (isHowToQuery) {
+    intent = "informational";
+    infoTopic = rawWords.some((w) => ["prof", "professor", "faculty"].includes(w))
+      ? "faculty_contact"
+      : "academic_help";
   } else if (rawWords.some((w) => ["hackathon", "contest", "competition", "sih", "internship"].includes(w))) {
     intent = "opportunity";
   } else if (rawWords.some((w) => ["group", "club", "society", "community"].includes(w))) {
     intent = "community";
   } else if (rawWords.some((w) => ["post", "thread", "discussion", "reply"].includes(w))) {
     intent = "post";
+  } else if (rawWords.some((w) => ["dr", "prof", "sir"].includes(w)) || (rawWords.length >= 2 && !rawWords.some(w => STOP_WORDS.has(w)))) {
+    intent = "entity_lookup";
+  } else if (rawWords.some((w) => ["faculty", "prof", "professor", "mentor"].includes(w))) {
+    intent = "domain_subject";
   }
 
   // 2. Detect Department from single words or multi-word phrases
   let detectedDepartment: string | null = null;
   const expandedPhrasesSet = new Set<string>();
 
-  // Check multi-word department phrases first (e.g. "computer science")
   for (const [key, deptName] of Object.entries(CAMPUS_DEPARTMENTS)) {
     if (normalized.includes(key)) {
       detectedDepartment = deptName;
@@ -228,7 +279,7 @@ export function parseQuery(query: string): ParsedQuery {
   for (const word of rawWords) {
     tokens.push(word);
 
-    // Expand synonyms / acronyms
+    // Expand synonyms
     if (CAMPUS_SYNONYMS[word]) {
       CAMPUS_SYNONYMS[word].forEach((syn) => expandedPhrasesSet.add(syn));
     }
@@ -245,7 +296,7 @@ export function parseQuery(query: string): ParsedQuery {
       correctedWords.push(word);
     }
 
-    // Name tokens (strip honorifics and stop words)
+    // Filter subject & name tokens
     if (!ROLE_KEYWORDS.has(word) && !STOP_WORDS.has(word)) {
       subjectTokens.push(word);
       nameTokens.push(word);
@@ -254,15 +305,28 @@ export function parseQuery(query: string): ParsedQuery {
 
   const suggestedQuery = hasCorrection ? correctedWords.join(" ") : null;
 
-  // Clean human-readable topic for AI Overview
-  let cleanTopic = subjectTokens.join(" ").trim();
-  if (detectedDepartment && !cleanTopic.toLowerCase().includes(detectedDepartment.toLowerCase())) {
-    cleanTopic = `${detectedDepartment} ${cleanTopic}`.trim();
+  // 3. Clean human-readable topic formulation
+  let cleanTopic = "";
+  if (intent === "informational") {
+    if (infoTopic === "fresher_guide") {
+      cleanTopic = "Fresher Onboarding & Faculty Guidance";
+    } else if (infoTopic === "faculty_contact") {
+      cleanTopic = "Approaching Faculty & Office Hours";
+    } else if (infoTopic === "electives") {
+      cleanTopic = "Choosing Electives & Course Selection";
+    } else if (infoTopic === "hackathon_prep") {
+      cleanTopic = "Hackathon Preparation & Team Building";
+    } else {
+      cleanTopic = "Academic Help & Mentorship";
+    }
+  } else {
+    cleanTopic = subjectTokens.join(" ").trim();
+    if (detectedDepartment && !cleanTopic.toLowerCase().includes(detectedDepartment.toLowerCase())) {
+      cleanTopic = `${detectedDepartment} ${cleanTopic}`.trim();
+    }
+    if (!cleanTopic) cleanTopic = normalized;
+    cleanTopic = cleanTopic.charAt(0).toUpperCase() + cleanTopic.slice(1);
   }
-  if (!cleanTopic) cleanTopic = normalized;
-
-  // Capitalize nicely
-  cleanTopic = cleanTopic.charAt(0).toUpperCase() + cleanTopic.slice(1);
 
   return {
     raw,
@@ -275,6 +339,7 @@ export function parseQuery(query: string): ParsedQuery {
     suggestedQuery,
     cleanTopic,
     intent,
+    infoTopic,
   };
 }
 
@@ -295,13 +360,8 @@ export function calculateExactBoost(title: string, query: string, nameTokens: st
   const titleLower = title.toLowerCase();
   const queryLower = query.toLowerCase().trim();
 
-  // Full exact match
   if (titleLower === queryLower) return 1.0;
-
-  // Title contains exact phrase
   if (titleLower.includes(queryLower)) return 0.9;
-
-  // Title contains all name tokens
   if (nameTokens.length > 0 && nameTokens.every((token) => titleLower.includes(token))) {
     return 0.8;
   }
