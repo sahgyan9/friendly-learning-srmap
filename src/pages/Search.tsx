@@ -580,14 +580,34 @@ export default function SearchPage() {
             blogSection,
           ];
 
-          if (parsed.intent === "faculty") {
+          if (parsed.intent === "informational") {
+            orderedSections = [
+              blogSection,
+              postSection,
+              mentorsSection,
+              facultySection,
+              communitySection,
+              oppSection,
+              studentsSection,
+            ];
+          } else if (parsed.intent === "domain_subject") {
+            orderedSections = [
+              facultySection,
+              mentorsSection,
+              oppSection,
+              communitySection,
+              postSection,
+              studentsSection,
+              blogSection,
+            ];
+          } else if (parsed.intent === "entity_lookup") {
             orderedSections = [
               facultySection,
               mentorsSection,
               studentsSection,
               communitySection,
-              oppSection,
               postSection,
+              oppSection,
               blogSection,
             ];
           } else if (parsed.intent === "opportunity") {

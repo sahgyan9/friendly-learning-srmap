@@ -73,9 +73,46 @@ const PAGE_SIZE = 20;
 /** Preview cards shown per category on the "All" tab */
 const ALL_PREVIEW = 3;
 
-/** Blog posts are bundled with the app — match them locally against real subject keywords only. */
+/** Blog posts are bundled with the app — match them locally against real subject keywords and informational guide intents. */
 function searchBlogLocally(parsed: import("@/lib/search/query-engine").ParsedQuery, limit: number): SearchResultItem[] {
-  // If query is specifically looking for faculty/professors, suppress blog posts unless subject matches
+  // If query is an informational/guide archetype, match high-value campus guides
+  if (parsed.intent === "informational") {
+    const scoredBlogs = BLOG_POSTS.map((p) => {
+      let score = 0;
+      if (parsed.infoTopic === "fresher_guide" || parsed.infoTopic === "faculty_contact") {
+        if (p.slug === "asking-for-academic-help") score += 100;
+        if (p.slug === "everything-you-can-do-on-friendly-learning") score += 90;
+        if (p.slug === "choosing-electives-srm-ap") score += 60;
+      } else if (parsed.infoTopic === "electives") {
+        if (p.slug === "choosing-electives-srm-ap") score += 100;
+      } else if (parsed.infoTopic === "hackathon_prep") {
+        if (p.slug === "finding-hackathon-teammates") score += 100;
+      } else if (parsed.infoTopic === "academic_help") {
+        if (p.slug === "asking-for-academic-help") score += 100;
+      }
+
+      // Keyword match in tags or title
+      const titleAndTags = normalise(`${p.title} ${p.tags.join(" ")}`);
+      parsed.subjectTokens.forEach((tok) => {
+        if (tok.length >= 3 && titleAndTags.includes(tok)) score += 30;
+      });
+
+      return { post: p, score };
+    })
+      .filter((item) => item.score > 0)
+      .sort((a, b) => b.score - a.score);
+
+    return scoredBlogs.slice(0, limit).map(({ post: p, score }) => ({
+      id: p.slug,
+      title: p.title,
+      subtitle: `${p.readingMinutes} min read · ${p.tags.slice(0, 2).join(", ")}`,
+      to: `/blog/${p.slug}`,
+      meta: { tags: p.tags, date: p.date },
+      relevanceScore: score,
+    }));
+  }
+
+  // General or domain search: match subject tokens
   const terms = Array.from(
     new Set([
       ...parsed.subjectTokens.map(normalise),
@@ -96,6 +133,7 @@ function searchBlogLocally(parsed: import("@/lib/search/query-engine").ParsedQue
       subtitle: `${p.readingMinutes} min read · ${p.tags.slice(0, 2).join(", ")}`,
       to: `/blog/${p.slug}`,
       meta: { tags: p.tags, date: p.date },
+      relevanceScore: 50,
     }));
 }
 
