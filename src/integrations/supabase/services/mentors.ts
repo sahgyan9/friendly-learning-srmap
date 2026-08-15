@@ -78,40 +78,84 @@ export async function searchMentors(query: string) {
     return getMentors();
   }
 
-  const lowerQuery = query.toLowerCase().trim();
+  const trimmed = query.trim();
+  const lowerQuery = trimmed.toLowerCase();
 
   try {
-    // Search in name, department, and bio with proper formatting, excluding General department
-    const { data, error } = (await listedOnly<any>(
-      supabase
-        .from('mentors')
-        .select<typeof MENTOR_PUBLIC_COLUMNS, Mentor>(MENTOR_PUBLIC_COLUMNS)
-        .neq('department', 'General')
-        .not('department', 'is', null)
-        .or(`name.ilike.%${lowerQuery}%,department.ilike.%${lowerQuery}%,bio.ilike.%${lowerQuery}%`),
-    ).order('rating', { ascending: false })) as { data: Mentor[] | null; error: unknown };
-
-    if (error) {
-      throw error;
+    // Fetch all active, listed mentors to ensure skills array and all metadata are searchable without SQL exclusion bugs
+    const { data, error } = await getMentors();
+    if (error || !data) {
+      throw error || new Error("Failed to fetch mentors");
     }
 
-    // For skills array, we need to filter in JS since it's complex in SQL
-    const mentorsWithMatchingSkills = data?.filter(mentor =>
-      mentor.skills && mentor.skills.some(skill =>
-        skill.toLowerCase().includes(lowerQuery)
-      )
-    ) || [];
+    const { parseQuery, fuzzyMatchTokens, calculateExactBoost } = await import("@/lib/search/query-engine");
+    const parsed = parseQuery(trimmed);
 
-    // Merge SQL results with JS filtered results for skills
-    const mergedResults = [...(data || []), ...mentorsWithMatchingSkills];
+    // Score and filter each mentor
+    const scoredMentors = data
+      .map((mentor) => {
+        const name = mentor.name ?? "";
+        const dept = mentor.department ?? "";
+        const skills = (mentor.skills ?? []).map((s) => s.toLowerCase());
+        const skillsText = skills.join(" ");
+        const bio = (mentor.bio ?? "").toLowerCase();
+        const hobbies = (mentor.hobbies ?? "").toLowerCase();
+        const combined = `${name.toLowerCase()} ${dept.toLowerCase()} ${skillsText} ${bio} ${hobbies}`;
 
-    // Remove duplicates based on id
-    const uniqueResults = Array.from(
-      new Map(mergedResults.map(item => [item.id, item])).values()
-    );
+        // If department was explicitly specified in query and mentor doesn't match department or skills, skip
+        if (parsed.detectedDepartment) {
+          const deptMatch = dept.toLowerCase().includes(parsed.detectedDepartment.toLowerCase());
+          const skillMatch = skills.some((s) => s.includes(parsed.detectedDepartment!.toLowerCase()));
+          if (!deptMatch && !skillMatch) {
+            return { mentor, score: 0 };
+          }
+        }
 
-    return { data: uniqueResults, error: null };
+        let score = 0;
+
+        // 1. Exact name boost
+        const exactBoost = calculateExactBoost(name, lowerQuery, parsed.nameTokens);
+        if (exactBoost > 0) score += exactBoost * 100;
+
+        // 2. Direct skill match on search subject tokens
+        const hasDirectSkill = skills.some((s) =>
+          parsed.subjectTokens.some((tok) => s.includes(tok) || tok.includes(s)),
+        );
+        if (hasDirectSkill) score += 80;
+
+        // 3. Department match
+        if (parsed.detectedDepartment && dept.toLowerCase().includes(parsed.detectedDepartment.toLowerCase())) {
+          score += 60;
+        }
+
+        // 4. Token match across subject tokens
+        const tokenMatches = parsed.subjectTokens.filter((token) => combined.includes(token));
+        score += tokenMatches.length * 30;
+
+        // 5. Expanded department phrases
+        if (parsed.expandedPhrases.some((phrase) => dept.toLowerCase().includes(phrase) || skillsText.includes(phrase))) {
+          score += 35;
+        }
+
+        // 6. Typo corrected query match
+        if (parsed.suggestedQuery) {
+          const correctedTokens = parsed.suggestedQuery.split(" ");
+          if (fuzzyMatchTokens(combined, correctedTokens)) {
+            score += 15;
+          }
+        }
+
+        return { mentor, score };
+      })
+      .filter((item) => item.score > 0)
+      .sort((a, b) => {
+        if (b.score !== a.score) return b.score - a.score;
+        return (b.mentor.rating ?? 0) - (a.mentor.rating ?? 0);
+      });
+
+    return { data: scoredMentors.map((item) => item.mentor), error: null };
   } catch (err) {
+    console.error("searchMentors error:", err);
     return { data: null, error: err };
   }
 }

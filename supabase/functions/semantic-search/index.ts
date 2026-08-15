@@ -169,7 +169,7 @@ serve(async (req) => {
 
     const { data: results, error } = await supabaseAdmin.rpc("search_knowledge", {
       p_embedding: JSON.stringify(embedding),
-      p_entity_types: payload.types ?? ["faculty", "mentor", "opportunity", "community", "post"],
+      p_entity_types: payload.types ?? ["faculty", "mentor", "student", "opportunity", "community", "post"],
       p_limit: Math.min(Math.max(payload.limit ?? 12, 1), 50),
       p_viewer: viewer,
     });
@@ -200,11 +200,12 @@ serve(async (req) => {
     const grouped = {
       faculty: rows.filter((r) => r.entity_type === "faculty"),
       mentors: rows.filter((r) => r.entity_type === "mentor"),
+      students: rows.filter((r) => r.entity_type === "student"),
       opportunities: rows.filter((r) => r.entity_type === "opportunity"),
       communities: rows.filter((r) => r.entity_type === "community"),
       posts: rows.filter((r) => r.entity_type === "post"),
     };
-    const claimed = new Set(["faculty", "mentor", "opportunity", "community", "post"]);
+    const claimed = new Set(["faculty", "mentor", "student", "opportunity", "community", "post"]);
 
     return json({
       query,

@@ -79,26 +79,56 @@ export function daysLeft(registerBy: string | null): number | null {
  * fresher has to read past. `register_by IS NULL` sorts last — undated things
  * are real but never urgent.
  */
-export async function getOpportunities(options: { kind?: string; includeClosed?: boolean } = {}) {
-  const { kind = "all", includeClosed = false } = options;
+export async function getOpportunities(
+  options: {
+    kind?: string;
+    includeClosed?: boolean;
+    search?: string;
+    limit?: number;
+    offset?: number;
+  } = {},
+) {
+  const { kind = "all", includeClosed = false, search = "", limit = 60, offset = 0 } = options;
 
-  let request = supabase.from("opportunities").select(COLUMNS).eq("is_published", true);
+  let request = supabase.from("opportunities").select(COLUMNS, { count: "exact" }).eq("is_published", true);
 
   if (kind !== "all") request = request.eq("kind", kind);
   if (!includeClosed) {
     request = request.or(`register_by.is.null,register_by.gte.${new Date().toISOString()}`);
   }
 
-  const { data, error } = await request
+  const rawSearch = search.trim();
+  if (rawSearch) {
+    const { parseQuery } = await import("@/lib/search/query-engine");
+    const parsed = parseQuery(rawSearch);
+    const escaped = `"%${rawSearch.replace(/"/g, '\\"')}%"`;
+
+    const filters = [
+      `title.ilike.${escaped}`,
+      `organiser.ilike.${escaped}`,
+      `description.ilike.${escaped}`,
+    ];
+
+    parsed.tokens.forEach((token) => {
+      if (token.length >= 2) {
+        const esc = `"%${token.replace(/"/g, '\\"')}%"`;
+        filters.push(`title.ilike.${esc}`, `tags.cs.{${token}}`);
+      }
+    });
+
+    request = request.or(filters.join(","));
+  }
+
+  const { data, error, count } = await request
     .order("register_by", { ascending: true, nullsFirst: false })
-    .limit(60);
+    .range(offset, offset + limit - 1);
 
   if (error) {
     console.error("Error fetching opportunities:", error);
-    return { data: [] as Opportunity[], error };
+    return { data: [] as Opportunity[], total: 0, error };
   }
 
-  return { data: (data ?? []) as Opportunity[], error: null };
+  return { data: (data ?? []) as Opportunity[], total: count ?? 0, error: null };
 }
 
 export async function getOpportunityBySlug(slug: string) {

@@ -15,6 +15,7 @@ export type Faculty = {
   research_details?: string[] | null;
   /** Research interests, synced from the university directory. Often empty. */
   interests: string[];
+  interests_text?: string | null;
   research_areas: string[];
   rating_count: number;
   avg_overall: number;
@@ -139,11 +140,42 @@ export async function getFacultyList(query: FacultyQuery = {}) {
     request = request.contains("interests", [interest.trim()]);
   }
 
-  if (search.trim()) {
-    const term = escapeOrValue(`%${search.trim()}%`);
-    request = request.or(
-      `name.ilike.${term},department.ilike.${term},designation.ilike.${term},interests_text.ilike.${term}`,
-    );
+  const rawSearch = search.trim();
+  if (rawSearch) {
+    const { parseQuery } = await import("@/lib/search/query-engine");
+    const parsed = parseQuery(rawSearch);
+
+    // If query specified a department (e.g. "physics", "cse"), narrow to that department
+    if (parsed.detectedDepartment && department === "all") {
+      request = request.ilike("department", `%${parsed.detectedDepartment}%`);
+    } else {
+      const searchTerms = parsed.subjectTokens.length > 0 ? parsed.subjectTokens : [rawSearch];
+      const conditions: string[] = [];
+
+      // 1. Direct full phrase match
+      const fullTerm = escapeOrValue(`%${rawSearch}%`);
+      conditions.push(`name.ilike.${fullTerm}`, `department.ilike.${fullTerm}`, `interests_text.ilike.${fullTerm}`);
+
+      // 2. Individual name/subject tokens
+      if (searchTerms.length > 0) {
+        searchTerms.forEach((token) => {
+          if (token.length >= 2) {
+            const t = escapeOrValue(`%${token}%`);
+            conditions.push(`name.ilike.${t}`, `interests_text.ilike.${t}`, `department.ilike.${t}`);
+          }
+        });
+      }
+
+      // 3. Expanded department phrases
+      parsed.expandedPhrases.forEach((phrase) => {
+        const p = escapeOrValue(`%${phrase}%`);
+        conditions.push(`department.ilike.${p}`, `interests_text.ilike.${p}`);
+      });
+
+      if (conditions.length > 0) {
+        request = request.or(conditions.join(","));
+      }
+    }
   }
 
   if (sort === "name") {
@@ -171,7 +203,42 @@ export async function getFacultyList(query: FacultyQuery = {}) {
     return { data: [] as Faculty[], total: 0, error };
   }
 
-  return { data: (data ?? []) as Faculty[], total: count ?? 0, error: null };
+  let facultyList = (data ?? []) as Faculty[];
+
+  // If search was performed, sort results by match relevance
+  if (rawSearch && facultyList.length > 0) {
+    const { parseQuery, calculateExactBoost, fuzzyMatchTokens } = await import("@/lib/search/query-engine");
+    const parsed = parseQuery(rawSearch);
+
+    facultyList = [...facultyList].sort((a, b) => {
+      // 1. Department match priority
+      if (parsed.detectedDepartment) {
+        const aDeptMatch = a.department.toLowerCase().includes(parsed.detectedDepartment.toLowerCase()) ? 1 : 0;
+        const bDeptMatch = b.department.toLowerCase().includes(parsed.detectedDepartment.toLowerCase()) ? 1 : 0;
+        if (bDeptMatch !== aDeptMatch) return bDeptMatch - aDeptMatch;
+      }
+
+      // 2. Exact name boost
+      const aBoost = calculateExactBoost(a.name, rawSearch, parsed.nameTokens);
+      const bBoost = calculateExactBoost(b.name, rawSearch, parsed.nameTokens);
+      if (bBoost !== aBoost) return bBoost - aBoost;
+
+      // 3. Subject token match across interests and name
+      const aInterests = (a.interests ?? []).join(" ");
+      const bInterests = (b.interests ?? []).join(" ");
+      const aCombined = `${a.name} ${a.department} ${aInterests}`.toLowerCase();
+      const bCombined = `${b.name} ${b.department} ${bInterests}`.toLowerCase();
+      const aMatch = fuzzyMatchTokens(aCombined, parsed.subjectTokens) ? 1 : 0;
+      const bMatch = fuzzyMatchTokens(bCombined, parsed.subjectTokens) ? 1 : 0;
+      if (bMatch !== aMatch) return bMatch - aMatch;
+
+      // 4. Rating count and rating score
+      if (b.rating_count !== a.rating_count) return b.rating_count - a.rating_count;
+      return (b.avg_overall ?? 0) - (a.avg_overall ?? 0);
+    });
+  }
+
+  return { data: facultyList, total: count ?? 0, error: null };
 }
 
 export async function getFacultyBySlug(slug: string) {
