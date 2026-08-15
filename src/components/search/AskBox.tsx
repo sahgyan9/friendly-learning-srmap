@@ -94,7 +94,13 @@ const AskBox = ({ className }: { className?: string }) => {
               </AnimatePresence>
             </span>
 
-            <kbd className="ml-auto hidden shrink-0 items-center gap-0.5 rounded border bg-muted px-1.5 py-0.5 font-mono text-[10px] font-medium text-muted-foreground sm:inline-flex">
+            {/* AI Mode badge on landing page */}
+            <span className="shrink-0 flex items-center gap-1.5 rounded-lg border border-violet-500/30 bg-violet-500/10 px-2.5 py-1 text-xs font-medium text-violet-600 dark:text-violet-300 shadow-xs">
+              <Sparkles className="h-3.5 w-3.5 text-violet-500 animate-pulse" />
+              <span>AI Mode</span>
+            </span>
+
+            <kbd className="ml-1 hidden shrink-0 items-center gap-0.5 rounded border border-border/60 bg-muted/80 px-1.5 py-0.5 font-mono text-[10px] font-medium text-muted-foreground sm:inline-flex">
               {isMac ? "⌘" : "Ctrl"} D
             </kbd>
           </button>

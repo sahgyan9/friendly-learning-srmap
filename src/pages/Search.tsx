@@ -294,6 +294,7 @@ export default function SearchPage() {
 
   const { q, tab } = parseSearchParams(searchParams);
   const [localQ, setLocalQ] = useState(q);
+  const [isAiMode, setIsAiMode] = useState(true);
   const [offset, setOffset] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -351,38 +352,69 @@ export default function SearchPage() {
               <ArrowLeft className="h-4 w-4" />
             </button>
             <div className="relative flex-1 flex items-center">
-              <Search className="absolute left-3 h-4 w-4 text-muted-foreground/60 shrink-0 pointer-events-none" />
+              {isAiMode ? (
+                <Sparkles className="absolute left-3 h-4 w-4 text-violet-500 dark:text-violet-400 shrink-0 pointer-events-none animate-pulse" />
+              ) : (
+                <Search className="absolute left-3 h-4 w-4 text-muted-foreground/60 shrink-0 pointer-events-none" />
+              )}
               <input
                 ref={inputRef}
                 type="text"
                 value={localQ}
                 onChange={(e) => setLocalQ(e.target.value)}
                 onKeyDown={(e) => {
+                  if (e.key === "Tab" && !e.shiftKey) {
+                    e.preventDefault();
+                    setIsAiMode((prev) => !prev);
+                  }
                   if (e.key === "Enter") submitSearch(localQ);
                   if (e.key === "Escape") inputRef.current?.blur();
                 }}
-                placeholder="Search mentors, faculty, hackathons, groups, posts…"
+                placeholder={
+                  isAiMode
+                    ? 'Ask CampusMind: "Which professor is best for DSA?" or "Find ML mentors..."'
+                    : "Search mentors, faculty, hackathons, groups, posts…"
+                }
                 className={cn(
-                  "w-full h-10 rounded-xl border border-border/50 bg-card/60 pl-9 pr-10 text-sm",
-                  "placeholder:text-muted-foreground/50 text-foreground",
-                  "focus:outline-none focus:border-primary/50 focus:bg-card transition-all",
+                  "w-full h-10 rounded-xl border pl-9 pr-28 text-sm transition-all shadow-2xs",
+                  isAiMode
+                    ? "border-violet-500/50 bg-gradient-to-r from-violet-500/[0.08] via-purple-500/[0.04] to-transparent ring-2 ring-violet-500/20 shadow-sm shadow-violet-500/10 focus:border-violet-500/70 focus:bg-card text-foreground"
+                    : "border-border/60 bg-card/60 focus:border-primary/50 focus:ring-2 focus:ring-primary/20 focus:bg-card text-foreground",
+                  "placeholder:text-muted-foreground/50",
+                  "focus:outline-none",
                   "[&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden",
                 )}
                 aria-label="Search query"
                 autoFocus={!q}
               />
-              {localQ && (
+              <div className="absolute right-2 flex items-center gap-1.5">
+                {localQ && (
+                  <button
+                    onClick={() => {
+                      setLocalQ("");
+                      inputRef.current?.focus();
+                    }}
+                    className="p-1 rounded-md text-muted-foreground/60 hover:text-foreground hover:bg-accent transition-colors"
+                    aria-label="Clear search"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                )}
                 <button
-                  onClick={() => {
-                    setLocalQ("");
-                    inputRef.current?.focus();
-                  }}
-                  className="absolute right-2.5 p-1 rounded-md text-muted-foreground/60 hover:text-foreground hover:bg-accent transition-colors"
-                  aria-label="Clear search"
+                  type="button"
+                  onClick={() => setIsAiMode((prev) => !prev)}
+                  className={cn(
+                    "flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium transition-all duration-200 cursor-pointer select-none",
+                    isAiMode
+                      ? "bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-xs ring-1 ring-violet-400/40"
+                      : "border border-border/60 bg-muted/40 text-muted-foreground hover:text-foreground hover:bg-accent",
+                  )}
+                  title="Toggle AI Mode (Press Tab)"
                 >
-                  <X className="h-3.5 w-3.5" />
+                  <Sparkles className={cn("h-3 w-3", isAiMode ? "text-violet-200" : "text-violet-500")} />
+                  <span className="hidden sm:inline text-[11px]">{isAiMode ? "AI Active" : "AI Mode"}</span>
                 </button>
-              )}
+              </div>
             </div>
             <Button onClick={() => submitSearch(localQ)} size="sm" className="shrink-0 h-10 px-4 rounded-xl">
               Search

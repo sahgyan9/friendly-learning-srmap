@@ -87,6 +87,17 @@ await db.exec(`
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     UNIQUE (entity_type, entity_id)
   );
+
+  CREATE TABLE public.search_query_cache (
+    query_hash text PRIMARY KEY,
+    query_text text NOT NULL,
+    embedding jsonb,
+    hit_count integer NOT NULL DEFAULT 1,
+    created_at timestamptz NOT NULL DEFAULT now(),
+    last_used_at timestamptz NOT NULL DEFAULT now()
+  );
+  ALTER TABLE public.search_query_cache ENABLE ROW LEVEL SECURITY;
+
   CREATE FUNCTION public.is_admin_user(user_id uuid DEFAULT auth.uid())
     RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER AS
     $$ SELECT COALESCE((SELECT is_admin FROM public.users WHERE id = user_id), false) $$;
@@ -420,6 +431,10 @@ for (const file of [
   '20260808150000_mentor_projects_experience.sql',
   '20260808160000_academic_imports.sql',
   '20260808170000_mentor_courses.sql',
+  '20260815200000_ai_overview_feedback.sql',
+  '20260815210000_ai_overview_feedback_status.sql',
+  '20260815220000_platform_settings.sql',
+  '20260815230000_ai_feedback_and_queries_admin_access.sql',
 ]) {
   if (file === '20260804132345_b843f814-46d5-4c25-bc80-32e5f6ebba59.sql') {
     // Production's `faculty` table still carries `profile_image`, a column
@@ -1449,6 +1464,27 @@ check('anon can read the public events cache', eventsAnon.length === 1, JSON.str
 await q(`RESET ROLE`).catch(() => {});
 const { rows: [eventsJob] } = await q(`SELECT schedule FROM cron.job WHERE jobname='sync-srmap-events-daily'`);
 check('events sync job scheduled daily at 20:30 UTC (02:00 IST)', eventsJob?.schedule === '30 20 * * *', eventsJob?.schedule);
+
+console.log('\nai overview feedback & search query cache admin access:');
+await actAs(CURRENT_UID);
+await q(`UPDATE public.users SET is_admin = false WHERE id = $1`, [CURRENT_UID]);
+await q(`INSERT INTO public.search_query_cache (query_hash, query_text) VALUES ('hash_test_1', 'DSA Faculty') ON CONFLICT (query_hash) DO NOTHING`);
+const { rows: studentQueries } = await asAuthenticated(() => q(`SELECT query_text FROM public.search_query_cache`));
+check('regular user cannot select search queries under RLS', studentQueries.length === 0, `got ${studentQueries.length}`);
+
+await q(`UPDATE public.users SET is_admin = true WHERE id = $1`, [CURRENT_UID]);
+const { rows: adminQueries } = await asAuthenticated(() => q(`SELECT query_text FROM public.search_query_cache WHERE query_hash = 'hash_test_1'`));
+check('admin can select search queries', adminQueries.length > 0 && adminQueries[0].query_text === 'DSA Faculty');
+
+await actAs(OTHER_UID);
+await q(`UPDATE public.users SET is_admin = false WHERE id = $1`, [OTHER_UID]);
+await asAuthenticated(() => q(`INSERT INTO public.ai_overview_feedback (query, response, is_helpful) VALUES ('DSA Faculty', '{"summary": "Prof. Smith"}'::jsonb, true)`));
+const { rows: nonAdminFeedback } = await asAuthenticated(() => q(`SELECT query FROM public.ai_overview_feedback`));
+check('non-admin cannot select feedback', nonAdminFeedback.length === 0, `got ${nonAdminFeedback.length}`);
+
+await actAs(CURRENT_UID);
+const { rows: adminFeedback } = await asAuthenticated(() => q(`SELECT query, is_helpful, status FROM public.ai_overview_feedback WHERE query = 'DSA Faculty'`));
+check('admin can select feedback', adminFeedback.length === 1 && adminFeedback[0].query === 'DSA Faculty');
 
 console.log(failures === 0
   ? '\nAll migration checks passed against real Postgres.'

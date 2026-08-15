@@ -116,12 +116,22 @@ const DESTINATION_THEMES: Record<string, { bg: string; text: string; border: str
   },
 };
 
+const CATEGORY_PILLS = [
+  { id: "all", label: "All", to: "/search", icon: Search },
+  { id: "mentors", label: "Mentors", to: "/mentors", icon: MentorIcon },
+  { id: "faculty", label: "Faculty", to: "/faculty", icon: FacultyIcon },
+  { id: "opportunities", label: "Hackathons", to: "/opportunities", icon: Trophy },
+  { id: "communities", label: "Groups", to: "/communities", icon: GroupsIcon },
+  { id: "posts", label: "Posts", to: "/posts", icon: PostIcon },
+] as const;
+
 const SiteSearch = () => {
   const navigate = useNavigate();
   const { user, isMentor, isAdmin } = useAuth();
 
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const [isAiMode, setIsAiMode] = useState(false);
   const [theme, setThemeState] = useState<Theme>("dark");
   const [isMac, setIsMac] = useState(false);
 
@@ -168,17 +178,10 @@ const SiteSearch = () => {
     [available, query],
   );
 
-  const suggestions = useMemo(
-    () =>
-      DEFAULT_SUGGESTION_IDS.map((id) => available.find((entry) => entry.id === id)).filter(
-        (entry): entry is SearchDestination => Boolean(entry),
-      ),
-    [available],
-  );
-
   const close = useCallback(() => {
     setOpen(false);
     setQuery("");
+    setIsAiMode(false);
   }, []);
 
   const runDestination = useCallback(
@@ -363,7 +366,10 @@ const SiteSearch = () => {
         open={open}
         onOpenChange={(next) => {
           setOpen(next);
-          if (!next) setQuery("");
+          if (!next) {
+            setQuery("");
+            setIsAiMode(false);
+          }
         }}
       >
         <DialogContent
@@ -382,54 +388,96 @@ const SiteSearch = () => {
         >
           <DialogTitle className="sr-only">Search Friendly Learning</DialogTitle>
           <DialogDescription className="sr-only">
-            Search for mentors, faculty, hackathons, groups, posts and pages.
+            Search for mentors, faculty, hackathons, groups, posts and pages with CampusMind AI.
           </DialogDescription>
 
           <Command shouldFilter={false} className="rounded-none bg-transparent">
-            {/* Input section with search icon and clear button */}
-            <div className="relative flex items-center border-b border-border/40 px-4 py-1" cmdk-input-wrapper="">
-              <Search className="mr-3 h-5 w-5 text-muted-foreground/70 shrink-0 pointer-events-none" />
-              <input
-                autoFocus
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search mentors, faculty, hackathons, groups…"
-                className="h-12 flex-1 min-w-0 bg-transparent text-base text-foreground placeholder:text-muted-foreground/50 border-none outline-none focus:outline-none focus:ring-0"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    const highlighted = document.querySelector("[cmdk-item][aria-selected='true']");
-                    if (!highlighted && query.trim()) {
-                      e.preventDefault();
-                      goToSearch();
-                    }
+            {/* Input section with rounded rectangle container & border glow */}
+            <div className="p-3 pr-11 sm:p-4 sm:pr-12 pb-3 border-b border-border/30 bg-muted/10">
+              <div
+                className={cn(
+                  "relative flex items-center rounded-xl px-3 py-1 transition-all duration-300",
+                  "border bg-background/80 dark:bg-[#111722]/80 backdrop-blur-md shadow-xs",
+                  isAiMode
+                    ? "border-violet-500/50 bg-gradient-to-r from-violet-500/[0.08] via-purple-500/[0.04] to-transparent ring-2 ring-violet-500/20 shadow-md shadow-violet-500/10"
+                    : "border-border/60 focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/20 focus-within:bg-background",
+                )}
+                cmdk-input-wrapper=""
+              >
+                {isAiMode ? (
+                  <Sparkles className="mr-2.5 h-4.5 w-4.5 text-violet-500 dark:text-violet-400 shrink-0 pointer-events-none animate-pulse" />
+                ) : (
+                  <Search className="mr-2.5 h-4.5 w-4.5 text-muted-foreground/70 shrink-0 pointer-events-none" />
+                )}
+                <input
+                  autoFocus
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder={
+                    isAiMode
+                      ? 'Ask CampusMind: "Who is best for DSA?" or "Find ML mentors..."'
+                      : "Search mentors, faculty, hackathons, groups…"
                   }
-                }}
-              />
-              {liveLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin text-muted-foreground/60 shrink-0" />}
-              {query && (
+                  className="h-10 sm:h-11 flex-1 min-w-0 bg-transparent text-sm sm:text-base text-foreground placeholder:text-muted-foreground/50 border-none outline-none focus:outline-none focus:ring-0"
+                  onKeyDown={(e) => {
+                    if (e.key === "Tab" && !e.shiftKey) {
+                      e.preventDefault();
+                      setIsAiMode((prev) => !prev);
+                    } else if (e.key === "Enter") {
+                      const highlighted = document.querySelector("[cmdk-item][aria-selected='true']");
+                      if (!highlighted && query.trim()) {
+                        e.preventDefault();
+                        goToSearch();
+                      }
+                    }
+                  }}
+                />
+                {liveLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin text-muted-foreground/60 shrink-0" />}
+                {query && (
+                  <button
+                    onClick={() => setQuery("")}
+                    className="shrink-0 p-1 mr-1 rounded-md text-muted-foreground/70 hover:text-foreground hover:bg-accent transition-colors"
+                    title="Clear query"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                )}
+
+                {/* In-box AI Mode Toggle Button */}
                 <button
-                  onClick={() => setQuery("")}
-                  className="shrink-0 p-1.5 rounded-lg text-muted-foreground/70 hover:text-foreground hover:bg-accent transition-colors"
-                  title="Clear query"
+                  type="button"
+                  onClick={() => setIsAiMode((prev) => !prev)}
+                  className={cn(
+                    "shrink-0 flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-all duration-200 cursor-pointer select-none",
+                    isAiMode
+                      ? "bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-sm shadow-violet-500/25 ring-1 ring-violet-400/40"
+                      : "border border-border/60 bg-muted/50 text-muted-foreground hover:text-foreground hover:bg-accent hover:border-border",
+                  )}
+                  title="Toggle AI Mode (Press Tab)"
                 >
-                  <X className="h-4 w-4" />
+                  <Sparkles className={cn("h-3.5 w-3.5", isAiMode ? "text-violet-200" : "text-violet-500")} />
+                  <span className="hidden sm:inline">{isAiMode ? "AI Active" : "AI Mode"}</span>
                 </button>
-              )}
+              </div>
             </div>
 
-            {/* Quick sample prompt chips when empty */}
+            {/* Quick Category Filter Bar */}
             {!searching && (
               <div className="flex items-center gap-1.5 px-4 py-2 border-b border-border/30 bg-muted/10 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-                <span className="text-[11px] font-medium text-muted-foreground shrink-0 mr-1">Try:</span>
-                {EXAMPLE_QUESTIONS.slice(0, 3).map((q, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => setQuery(q)}
-                    className="shrink-0 rounded-full border border-border/60 bg-background/60 hover:bg-accent px-2.5 py-0.5 text-[11px] text-muted-foreground hover:text-foreground transition-all duration-150 shadow-2xs"
-                  >
-                    "{q}"
-                  </button>
-                ))}
+                <span className="text-[11px] font-medium text-muted-foreground/70 shrink-0 mr-1">Jump to:</span>
+                {CATEGORY_PILLS.map((cat) => {
+                  const Icon = cat.icon;
+                  return (
+                    <button
+                      key={cat.id}
+                      onClick={() => goTo(cat.to)}
+                      className="flex shrink-0 items-center gap-1.5 rounded-lg border border-border/50 bg-background/60 hover:bg-accent hover:border-border px-2.5 py-1 text-xs text-muted-foreground hover:text-foreground transition-all duration-150 shadow-2xs"
+                    >
+                      <Icon className="h-3 w-3 text-muted-foreground" />
+                      <span>{cat.label}</span>
+                    </button>
+                  );
+                })}
               </div>
             )}
 
@@ -444,31 +492,107 @@ const SiteSearch = () => {
                 "hover:[&::-webkit-scrollbar-thumb]:bg-muted-foreground/40",
               )}
             >
+              {/* Streamlined Empty State with Ask CampusMind AI Prompts */}
               {!searching && (
-                <CommandGroup heading="Suggestions">
-                  {suggestions.map(renderDestination)}
-                </CommandGroup>
+                <div className="p-1 space-y-3">
+                  <CommandGroup
+                    heading={
+                      <div className="flex items-center justify-between">
+                        <span className="flex items-center gap-1.5 font-semibold text-xs text-foreground/90">
+                          <Sparkles className="h-3.5 w-3.5 text-violet-500" />
+                          Ask CampusMind AI
+                        </span>
+                        <span className="text-[10px] text-muted-foreground font-normal">Instant synthesis & matching</span>
+                      </div>
+                    }
+                  >
+                    {EXAMPLE_QUESTIONS.map((question, idx) => (
+                      <CommandItem
+                        key={idx}
+                        value={`ai-prompt-${idx}-${question}`}
+                        onSelect={() => {
+                          setQuery(question);
+                          setIsAiMode(true);
+                          close();
+                          navigate(buildSearchUrl(question, "all"));
+                        }}
+                        className={cn(
+                          "group flex items-center gap-3 rounded-xl px-3 py-2.5 my-1 transition-all duration-150 cursor-pointer",
+                          "data-[selected=true]:bg-accent/80 data-[selected=true]:shadow-xs hover:bg-accent/50",
+                        )}
+                      >
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-violet-500/25 bg-violet-500/10 text-violet-600 dark:text-violet-400 group-data-[selected=true]:scale-105 transition-transform">
+                          <Sparkles className="h-4 w-4" />
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate font-medium text-sm text-foreground/90 group-data-[selected=true]:text-foreground">
+                            "{question}"
+                          </span>
+                          <span className="block truncate text-xs text-muted-foreground/70">
+                            Get an AI overview with relevant faculty, seniors & opportunities
+                          </span>
+                        </span>
+                        <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/30 opacity-0 group-data-[selected=true]:opacity-100 group-data-[selected=true]:translate-x-0.5 transition-all" />
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+
+                  {/* Compact Quick Actions */}
+                  <CommandGroup heading="Quick Actions">
+                    <div className="grid grid-cols-2 gap-1.5 px-1 py-0.5">
+                      <CommandItem
+                        value="action-theme-toggle"
+                        onSelect={() => setThemeState(toggleTheme())}
+                        className="flex items-center gap-2.5 rounded-lg border border-border/40 bg-card/40 hover:bg-accent/60 p-2 text-xs text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
+                      >
+                        {theme === "dark" ? <Sun className="h-3.5 w-3.5 text-amber-500" /> : <Moon className="h-3.5 w-3.5 text-indigo-500" />}
+                        <span className="truncate">{theme === "dark" ? "Light Theme" : "Dark Theme"}</span>
+                      </CommandItem>
+                      <CommandItem
+                        value="action-how-it-works"
+                        onSelect={() => goTo("/how-it-works")}
+                        className="flex items-center gap-2.5 rounded-lg border border-border/40 bg-card/40 hover:bg-accent/60 p-2 text-xs text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
+                      >
+                        <BookOpen className="h-3.5 w-3.5 text-cyan-500" />
+                        <span className="truncate">How it Works</span>
+                      </CommandItem>
+                    </div>
+                  </CommandGroup>
+                </div>
               )}
 
+              {/* Active Search Top Result */}
               {searching && (
-                <CommandGroup heading="Full Search">
+                <CommandGroup heading={isAiMode ? "CampusMind AI Search" : "Full Search"}>
                   <CommandItem
-                    value="search-platform-all"
+                    value="search-platform-action"
                     onSelect={goToSearch}
                     className={cn(
-                      "group flex items-center gap-3 rounded-xl px-3 py-2.5 my-0.5 transition-all duration-200 cursor-pointer",
-                      "data-[selected=true]:bg-accent/80 data-[selected=true]:shadow-sm data-[selected=true]:scale-[1.008]",
+                      "group flex items-center gap-3 rounded-xl px-3 py-2.5 my-1 transition-all duration-200 cursor-pointer",
+                      isAiMode
+                        ? "border border-violet-500/30 bg-gradient-to-r from-violet-500/10 via-purple-500/5 to-transparent data-[selected=true]:bg-violet-500/20 data-[selected=true]:border-violet-500/50"
+                        : "data-[selected=true]:bg-accent/80 data-[selected=true]:shadow-sm data-[selected=true]:scale-[1.008]",
                     )}
                   >
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border bg-primary/10 text-primary border-primary/20">
-                      <Search className="h-4 w-4" />
+                    <span
+                      className={cn(
+                        "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border",
+                        isAiMode
+                          ? "border-violet-500/40 bg-violet-500/20 text-violet-500 dark:text-violet-300"
+                          : "bg-primary/10 text-primary border-primary/20",
+                      )}
+                    >
+                      {isAiMode ? <Sparkles className="h-4 w-4" /> : <Search className="h-4 w-4" />}
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="block font-semibold text-sm text-foreground leading-snug">
-                        See all results for "<span className="text-primary break-all">{query.trim()}</span>"
+                        {isAiMode ? "Ask CampusMind: " : "See all results for "}
+                        "<span className={isAiMode ? "text-violet-500 dark:text-violet-400 break-all font-bold" : "text-primary break-all"}>{query.trim()}</span>"
                       </span>
                       <span className="block truncate text-xs text-muted-foreground">
-                        Press Enter to view complete results across all categories
+                        {isAiMode
+                          ? "Press Enter to generate AI summary, ratings synthesis & match insights"
+                          : "Press Enter to view complete results across all categories"}
                       </span>
                     </span>
                     <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/40 opacity-0 group-data-[selected=true]:opacity-100 group-data-[selected=true]:translate-x-0.5 transition-all duration-200" />
@@ -532,6 +656,14 @@ const SiteSearch = () => {
                   <kbd className="rounded-sm bg-background px-1.5 py-0.5 font-mono text-[10px] font-medium border border-border/60 shadow-2xs">↵</kbd>
                   <span className="ml-0.5">Select</span>
                 </span>
+                <button
+                  type="button"
+                  onClick={() => setIsAiMode((prev) => !prev)}
+                  className="flex items-center gap-1 hover:text-foreground transition-colors cursor-pointer"
+                >
+                  <kbd className="rounded-sm bg-background px-1.5 py-0.5 font-mono text-[10px] font-medium border border-border/60 shadow-2xs">Tab</kbd>
+                  <span className="ml-0.5">{isAiMode ? "Standard" : "AI Mode"}</span>
+                </button>
                 <span className="flex items-center gap-1">
                   <kbd className="rounded-sm bg-background px-1.5 py-0.5 font-mono text-[10px] font-medium border border-border/60 shadow-2xs">Esc</kbd>
                   <span className="ml-0.5">Close</span>
@@ -546,8 +678,9 @@ const SiteSearch = () => {
                   <ChevronRight className="h-3 w-3 group-hover:translate-x-0.5 transition-transform" />
                 </button>
               ) : (
-                <div className="hidden sm:block text-[10px] text-muted-foreground/60">
-                  <span className="font-semibold text-primary/80">Friendly Learning</span> Search
+                <div className="hidden sm:flex items-center gap-1.5 text-[10px] text-muted-foreground/60">
+                  <Sparkles className="h-3 w-3 text-violet-500" />
+                  <span className="font-semibold text-foreground/80">CampusMind</span> AI
                 </div>
               )}
             </div>

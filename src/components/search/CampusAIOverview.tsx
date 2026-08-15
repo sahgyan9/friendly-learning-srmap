@@ -16,6 +16,7 @@ import {
 import { cn } from "@/lib/utils";
 import type { SearchResultsState } from "@/hooks/useSearchResults";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export interface AIEntityBadge {
   id: string;
@@ -170,7 +171,9 @@ export const CampusAIOverview: React.FC<CampusAIOverviewProps> = ({
     
     setIsVoting(true);
     try {
+      const { data: authData } = await supabase.auth.getUser();
       const { error } = await supabase.from('ai_overview_feedback' as any).insert({
+        user_id: authData?.user?.id ?? null,
         query: query.trim(),
         response: overview as any,
         is_helpful: vote === 'up'
@@ -178,11 +181,14 @@ export const CampusAIOverview: React.FC<CampusAIOverviewProps> = ({
       
       if (!error) {
         setHasVoted(vote);
+        toast.success("Thank you for your feedback!");
       } else {
         console.error("Failed to submit feedback:", error);
+        toast.error("Could not record feedback. Please try again.");
       }
     } catch (err) {
       console.error("Failed to submit feedback:", err);
+      toast.error("Could not record feedback.");
     } finally {
       setIsVoting(false);
     }
