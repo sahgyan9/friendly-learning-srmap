@@ -60,12 +60,13 @@ const EMPTY: SiteSearchResults = {
 };
 
 const MIN_QUERY_LENGTH = 2;
-const DEBOUNCE_MS = 200;
+const DEBOUNCE_MS = 450;
 const PER_GROUP = 4;
 
 function looksLikeAPhrase(query: string): boolean {
   const trimmed = query.trim();
-  return trimmed.length >= 12 || (/\s/.test(trimmed) && trimmed.length >= 6);
+  const words = trimmed.split(/\s+/).filter(Boolean);
+  return words.length >= 3 || (words.length >= 2 && trimmed.length >= 18);
 }
 
 function relatedSubtitle(result: AskResult): string {
