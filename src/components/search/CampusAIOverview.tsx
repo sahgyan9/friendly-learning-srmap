@@ -10,6 +10,8 @@ import {
   Users,
   UserCheck,
   Loader2,
+  ThumbsUp,
+  ThumbsDown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { SearchResultsState } from "@/hooks/useSearchResults";
@@ -25,9 +27,10 @@ export interface AIEntityBadge {
 
 export interface AIOverviewResult {
   summary: string;
-  keyInsights: string[];
-  badges: AIEntityBadge[];
-  actionRecommendation: string | null;
+  citations?: { id: number; text: string; url: string; }[];
+  keyInsights?: string[];
+  badges?: AIEntityBadge[];
+  actionRecommendation?: string | null;
 }
 
 interface CampusAIOverviewProps {
@@ -36,29 +39,103 @@ interface CampusAIOverviewProps {
   className?: string;
 }
 
+const OVERVIEW_CACHE = new Map<string, AIOverviewResult>();
+
+const getCachedOverview = (q: string): AIOverviewResult | null => {
+  const norm = q.trim().toLowerCase().replace(/\s+/g, " ");
+  if (OVERVIEW_CACHE.has(norm)) {
+    return OVERVIEW_CACHE.get(norm)!;
+  }
+  try {
+    const raw = sessionStorage.getItem(`ai_overview_${norm}`);
+    if (raw) {
+      const parsed = JSON.parse(raw) as AIOverviewResult;
+      OVERVIEW_CACHE.set(norm, parsed);
+      return parsed;
+    }
+  } catch {
+    // Ignore storage issues
+  }
+  return null;
+};
+
+const setCachedOverview = (q: string, data: AIOverviewResult) => {
+  const norm = q.trim().toLowerCase().replace(/\s+/g, " ");
+  OVERVIEW_CACHE.set(norm, data);
+  try {
+    sessionStorage.setItem(`ai_overview_${norm}`, JSON.stringify(data));
+  } catch {
+    // Ignore storage issues
+  }
+};
+
 export const CampusAIOverview: React.FC<CampusAIOverviewProps> = ({
   query,
   results, // Not used for the AI logic anymore, but kept for compatibility
   className,
 }) => {
   const [collapsed, setCollapsed] = useState(false);
-  const [overview, setOverview] = useState<AIOverviewResult | null>(null);
+  const [overview, setOverview] = useState<AIOverviewResult | null>(() => {
+    const trimmed = query.trim();
+    return trimmed.length >= 3 ? getCachedOverview(trimmed) : null;
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const [hasVoted, setHasVoted] = useState<'up' | 'down' | null>(null);
+  const [isVoting, setIsVoting] = useState(false);
+  const [isFeatureEnabled, setIsFeatureEnabled] = useState<boolean | null>(null);
+
+  const handleRetry = () => {
+    const norm = query.trim().toLowerCase().replace(/\s+/g, " ");
+    OVERVIEW_CACHE.delete(norm);
+    try {
+      sessionStorage.removeItem(`ai_overview_${norm}`);
+    } catch {
+      // Ignore storage errors
+    }
+    setRetryCount((prev) => prev + 1);
+  };
+
+  useEffect(() => {
+    supabase.from('platform_settings' as any)
+      .select('value')
+      .eq('id', 'ai_overview_enabled')
+      .single()
+      .then(({ data }) => {
+        if (data) {
+          const rawValue = (data as any).value;
+          setIsFeatureEnabled(rawValue === 'true' || rawValue === true);
+        } else {
+          setIsFeatureEnabled(true);
+        }
+      });
+  }, []);
 
   useEffect(() => {
     const trimmed = query.trim();
-    if (trimmed.length < 3) {
+    if (trimmed.length < 3 || isFeatureEnabled === false) {
       setOverview(null);
+      setLoading(false);
+      setError(false);
+      return;
+    }
+
+    // Check if we already have this query cached in memory or sessionStorage
+    const cached = getCachedOverview(trimmed);
+    if (cached) {
+      setOverview(cached);
+      setLoading(false);
+      setError(false);
       return;
     }
 
     let isMounted = true;
+    setLoading(true);
+    setError(false);
     
     // Debounce slightly to avoid spamming the edge function while typing
     const timeoutId = setTimeout(async () => {
-      setLoading(true);
-      setError(false);
       try {
         const { data, error } = await supabase.functions.invoke('generate-ai-overview', {
           body: { query: trimmed }
@@ -66,7 +143,8 @@ export const CampusAIOverview: React.FC<CampusAIOverviewProps> = ({
         
         if (error) throw error;
         
-        if (isMounted) {
+        if (isMounted && data) {
+          setCachedOverview(trimmed, data);
           setOverview(data);
         }
       } catch (err) {
@@ -79,21 +157,84 @@ export const CampusAIOverview: React.FC<CampusAIOverviewProps> = ({
           setLoading(false);
         }
       }
-    }, 600);
+    }, 400);
 
     return () => {
       isMounted = false;
       clearTimeout(timeoutId);
     };
-  }, [query]);
+  }, [query, retryCount, isFeatureEnabled]);
+
+  const handleFeedback = async (vote: 'up' | 'down') => {
+    if (hasVoted || isVoting || !overview) return;
+    
+    setIsVoting(true);
+    try {
+      const { error } = await supabase.from('ai_overview_feedback' as any).insert({
+        query: query.trim(),
+        response: overview as any,
+        is_helpful: vote === 'up'
+      });
+      
+      if (!error) {
+        setHasVoted(vote);
+      } else {
+        console.error("Failed to submit feedback:", error);
+      }
+    } catch (err) {
+      console.error("Failed to submit feedback:", err);
+    } finally {
+      setIsVoting(false);
+    }
+  };
+
+  if (isFeatureEnabled === false && query.trim().length >= 3) {
+    return (
+      <div
+        className={cn(
+          "relative overflow-hidden rounded-2xl border border-border/40 bg-card/40 p-4 backdrop-blur-xl transition-all duration-300",
+          className,
+        )}
+      >
+        <div className="flex items-center gap-3">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-primary/20 bg-primary/10 text-primary">
+            <Sparkles className="h-4 w-4 opacity-50" />
+          </div>
+          <div>
+            <h3 className="text-sm font-semibold text-foreground">AI Overview is taking a break</h3>
+            <p className="text-xs text-muted-foreground">This feature is temporarily disabled for maintenance. Check back soon!</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!loading && !overview && !error) {
     return null;
   }
 
-  // If there's an error, we fail gracefully and show nothing so we don't break the search page.
   if (error && !overview) {
-    return null;
+    return (
+      <div
+        className={cn(
+          "relative overflow-hidden rounded-2xl border border-border/40 bg-card/40 p-4 backdrop-blur-xl transition-all duration-300",
+          className,
+        )}
+      >
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Sparkles className="h-4 w-4 text-primary/60" />
+            <span>Campus AI Overview could not generate at this moment.</span>
+          </div>
+          <button
+            onClick={handleRetry}
+            className="rounded-lg border border-primary/20 bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary/20 transition-colors"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
   }
 
   const renderBadgeIcon = (type: AIEntityBadge["type"]) => {
@@ -112,9 +253,9 @@ export const CampusAIOverview: React.FC<CampusAIOverviewProps> = ({
   };
 
   // Helper to render bold markdown segments nicely
-  const renderFormattedText = (text: string) => {
+  const renderFormattedText = (text: string, citations?: { id: number; text: string; url: string; }[]) => {
     if (!text) return null;
-    const parts = text.split(/(\*\*.*?\*\*)/g);
+    const parts = text.split(/(\*\*.*?\*\*|\[\d+\])/g);
     return parts.map((part, index) => {
       if (part.startsWith("**") && part.endsWith("**")) {
         return (
@@ -122,6 +263,25 @@ export const CampusAIOverview: React.FC<CampusAIOverviewProps> = ({
             {part.slice(2, -2)}
           </strong>
         );
+      }
+      if (part.startsWith("[") && part.endsWith("]")) {
+        const idStr = part.slice(1, -1);
+        const id = parseInt(idStr, 10);
+        if (!isNaN(id) && citations) {
+          const citation = citations.find(c => c.id === id);
+          if (citation) {
+            return (
+              <Link
+                key={index}
+                to={citation.url}
+                title={citation.text}
+                className="inline-flex items-center justify-center min-w-[1.125rem] h-4 px-0.5 mx-0.5 rounded border border-primary/20 bg-primary/10 text-[9px] font-bold text-primary hover:bg-primary/20 hover:border-primary/40 transition-colors align-super"
+              >
+                {id}
+              </Link>
+            );
+          }
+        }
       }
       return <span key={index}>{part}</span>;
     });
@@ -174,7 +334,7 @@ export const CampusAIOverview: React.FC<CampusAIOverviewProps> = ({
             <>
               {/* Main summary paragraph */}
               <p className="text-sm leading-relaxed text-muted-foreground">
-                {renderFormattedText(overview.summary)}
+                {renderFormattedText(overview.summary, overview.citations)}
               </p>
 
               {/* Key Insights bullets if available */}
@@ -183,7 +343,7 @@ export const CampusAIOverview: React.FC<CampusAIOverviewProps> = ({
                   {overview.keyInsights.map((insight, idx) => (
                     <div key={idx} className="flex items-start gap-2 text-xs text-muted-foreground/90">
                       <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary/70" />
-                      <span>{renderFormattedText(insight)}</span>
+                      <span>{renderFormattedText(insight, overview.citations)}</span>
                     </div>
                   ))}
                 </div>
@@ -210,11 +370,35 @@ export const CampusAIOverview: React.FC<CampusAIOverviewProps> = ({
               )}
 
               {/* Action Recommendation Footer */}
-              {overview.actionRecommendation && (
-                <div className="flex items-center justify-between border-t border-border/40 pt-2.5 text-[11px] text-muted-foreground/80">
-                  <span>{overview.actionRecommendation}</span>
+              <div className="flex items-center justify-between border-t border-border/40 pt-2.5">
+                <span className="text-[11px] text-muted-foreground/80">
+                  {overview.actionRecommendation}
+                </span>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => handleFeedback('up')}
+                    disabled={isVoting || hasVoted !== null}
+                    className={cn(
+                      "p-1.5 rounded-md transition-colors",
+                      hasVoted === 'up' ? "bg-primary/20 text-primary" : "text-muted-foreground hover:bg-accent hover:text-foreground disabled:opacity-50"
+                    )}
+                    title="Good response"
+                  >
+                    <ThumbsUp className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    onClick={() => handleFeedback('down')}
+                    disabled={isVoting || hasVoted !== null}
+                    className={cn(
+                      "p-1.5 rounded-md transition-colors",
+                      hasVoted === 'down' ? "bg-destructive/20 text-destructive" : "text-muted-foreground hover:bg-accent hover:text-foreground disabled:opacity-50"
+                    )}
+                    title="Bad response"
+                  >
+                    <ThumbsDown className="h-3.5 w-3.5" />
+                  </button>
                 </div>
-              )}
+              </div>
             </>
           ) : null}
         </div>
