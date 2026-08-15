@@ -432,7 +432,7 @@ const SiteSearch = () => {
                     }
                   }}
                 />
-                {liveLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin text-muted-foreground/60 shrink-0" />}
+                {liveLoading && <CampusMindIcon className="mr-2 h-4 w-4 text-violet-500 dark:text-violet-400 shrink-0" />}
                 {query && (
                   <button
                     onClick={() => setQuery("")}

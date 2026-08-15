@@ -475,18 +475,21 @@ export default function SearchPage() {
           </div>
         )}
 
-        {/* Loading skeleton */}
+        {/* Loading state with animated CampusMind symbol */}
         {q && results.loading && (
-          <div className="flex items-center justify-center py-16 gap-2 text-muted-foreground">
-            <Loader2 className="h-5 w-5 animate-spin text-primary" />
-            <span className="text-sm">Searching…</span>
+          <div className="flex flex-col items-center justify-center py-16 gap-3 text-muted-foreground">
+            <div className="relative flex items-center justify-center">
+              <div className="absolute -inset-2 rounded-full bg-primary/20 blur-md animate-pulse" />
+              <CampusMindIcon className="relative h-8 w-8 text-primary" />
+            </div>
+            <span className="text-sm font-medium animate-pulse">Searching across SRM-AP with CampusMind…</span>
           </div>
         )}
 
         {/* Typo / Did You Mean Suggestion */}
         {q && !results.loading && results.suggestedCorrection && results.suggestedCorrection.toLowerCase() !== q.toLowerCase() && (
           <div className="mb-5 flex items-center gap-2 rounded-xl border border-primary/20 bg-primary/5 px-4 py-2.5 text-xs text-muted-foreground">
-            <Sparkles className="h-4 w-4 text-primary shrink-0" />
+            <CampusMindIcon className="h-4 w-4 text-primary shrink-0" />
             <span>
               Did you mean:{" "}
               <button

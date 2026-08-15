@@ -205,7 +205,7 @@ export const CampusAIOverview: React.FC<CampusAIOverviewProps> = ({
       >
         <div className="flex items-center gap-3">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-primary/20 bg-primary/10 text-primary">
-            <Sparkles className="h-4 w-4 opacity-50" />
+            <CampusMindIcon className="h-4 w-4 opacity-50" />
           </div>
           <div>
             <h3 className="text-sm font-semibold text-foreground">AI Overview is taking a break</h3>
@@ -230,7 +230,7 @@ export const CampusAIOverview: React.FC<CampusAIOverviewProps> = ({
       >
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Sparkles className="h-4 w-4 text-primary/60" />
+            <CampusMindIcon className="h-4 w-4 text-primary/60" />
             <span>Campus AI Overview could not generate at this moment.</span>
           </div>
           <button
@@ -255,7 +255,7 @@ export const CampusAIOverview: React.FC<CampusAIOverviewProps> = ({
       case "community":
         return <Users className="h-3.5 w-3.5 text-emerald-500" />;
       default:
-        return <Sparkles className="h-3.5 w-3.5 text-primary" />;
+        return <CampusMindIcon className="h-3.5 w-3.5 text-primary" />;
     }
   };
 
@@ -333,9 +333,14 @@ export const CampusAIOverview: React.FC<CampusAIOverviewProps> = ({
       {!collapsed && (
         <div className="mt-3.5 space-y-3.5 animate-in fade-in-50 duration-200">
           {loading && !overview ? (
-            <div className="flex flex-col items-center justify-center py-4 space-y-3 text-muted-foreground">
-              <Loader2 className="h-5 w-5 animate-spin text-primary/70" />
-              <p className="text-xs font-medium animate-pulse">Generating answer from campus resources...</p>
+            <div className="flex flex-col items-center justify-center py-6 space-y-3 text-muted-foreground">
+              <div className="relative flex items-center justify-center">
+                <div className="absolute -inset-2 rounded-full bg-primary/20 blur-md animate-pulse" />
+                <CampusMindIcon className="relative h-7 w-7 text-primary" />
+              </div>
+              <p className="text-xs font-medium text-muted-foreground/90 animate-pulse">
+                CampusMind is analyzing campus mentors, faculty & discussions…
+              </p>
             </div>
           ) : overview ? (
             <>
