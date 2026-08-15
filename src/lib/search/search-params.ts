@@ -11,6 +11,7 @@ export type SearchTab =
   | "all"
   | "mentors"
   | "faculty"
+  | "opportunities"
   | "communities"
   | "posts"
   | "blog";
@@ -19,6 +20,7 @@ export const SEARCH_TABS: SearchTab[] = [
   "all",
   "mentors",
   "faculty",
+  "opportunities",
   "communities",
   "posts",
   "blog",
@@ -28,6 +30,7 @@ export const TAB_LABELS: Record<SearchTab, string> = {
   all: "All",
   mentors: "Mentors",
   faculty: "Faculty",
+  opportunities: "Hackathons",
   communities: "Groups",
   posts: "Posts",
   blog: "Blog",
