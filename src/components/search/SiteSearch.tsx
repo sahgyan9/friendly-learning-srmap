@@ -9,10 +9,10 @@ import {
   Trophy,
   X,
   BookOpen,
-  Sparkles,
   Loader2,
 } from "lucide-react";
 
+import { CampusMindIcon } from "@/components/icons/CampusMindIcon";
 import { FacultyIcon } from "@/components/icons/FacultyIcon";
 import { GroupsIcon } from "@/components/icons/GroupsIcon";
 import { MentorIcon } from "@/components/icons/MentorIcon";
@@ -405,7 +405,7 @@ const SiteSearch = () => {
                 cmdk-input-wrapper=""
               >
                 {isAiMode ? (
-                  <Sparkles className="mr-2.5 h-4.5 w-4.5 text-violet-500 dark:text-violet-400 shrink-0 pointer-events-none animate-pulse" />
+                  <CampusMindIcon className="mr-2.5 h-5 w-5 text-violet-500 dark:text-violet-400 shrink-0 pointer-events-none" />
                 ) : (
                   <Search className="mr-2.5 h-4.5 w-4.5 text-muted-foreground/70 shrink-0 pointer-events-none" />
                 )}
@@ -455,7 +455,7 @@ const SiteSearch = () => {
                   )}
                   title="Toggle AI Mode (Press Tab)"
                 >
-                  <Sparkles className={cn("h-3.5 w-3.5", isAiMode ? "text-violet-200" : "text-violet-500")} />
+                  <CampusMindIcon className={cn("h-3.5 w-3.5", isAiMode ? "text-violet-200" : "text-violet-500")} />
                   <span className="hidden sm:inline">{isAiMode ? "AI Active" : "AI Mode"}</span>
                 </button>
               </div>
@@ -499,7 +499,7 @@ const SiteSearch = () => {
                     heading={
                       <div className="flex items-center justify-between">
                         <span className="flex items-center gap-1.5 font-semibold text-xs text-foreground/90">
-                          <Sparkles className="h-3.5 w-3.5 text-violet-500" />
+                          <CampusMindIcon className="h-4 w-4 text-violet-500" />
                           Ask CampusMind AI
                         </span>
                         <span className="text-[10px] text-muted-foreground font-normal">Instant synthesis & matching</span>
@@ -522,7 +522,7 @@ const SiteSearch = () => {
                         )}
                       >
                         <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-violet-500/25 bg-violet-500/10 text-violet-600 dark:text-violet-400 group-data-[selected=true]:scale-105 transition-transform">
-                          <Sparkles className="h-4 w-4" />
+                          <CampusMindIcon className="h-4.5 w-4.5" />
                         </span>
                         <span className="min-w-0 flex-1">
                           <span className="block truncate font-medium text-sm text-foreground/90 group-data-[selected=true]:text-foreground">
@@ -582,7 +582,7 @@ const SiteSearch = () => {
                           : "bg-primary/10 text-primary border-primary/20",
                       )}
                     >
-                      {isAiMode ? <Sparkles className="h-4 w-4" /> : <Search className="h-4 w-4" />}
+                      {isAiMode ? <CampusMindIcon className="h-5 w-5" /> : <Search className="h-4 w-4" />}
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="block font-semibold text-sm text-foreground leading-snug">
@@ -679,7 +679,7 @@ const SiteSearch = () => {
                 </button>
               ) : (
                 <div className="hidden sm:flex items-center gap-1.5 text-[10px] text-muted-foreground/60">
-                  <Sparkles className="h-3 w-3 text-violet-500" />
+                  <CampusMindIcon className="h-3.5 w-3.5 text-violet-500" />
                   <span className="font-semibold text-foreground/80">CampusMind</span> AI
                 </div>
               )}

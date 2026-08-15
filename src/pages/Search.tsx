@@ -17,6 +17,7 @@ import { FacultyIcon } from "@/components/icons/FacultyIcon";
 import { GroupsIcon } from "@/components/icons/GroupsIcon";
 import { MentorIcon } from "@/components/icons/MentorIcon";
 import { PostIcon } from "@/components/icons/PostIcon";
+import { CampusMindIcon } from "@/components/icons/CampusMindIcon";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -353,7 +354,7 @@ export default function SearchPage() {
             </button>
             <div className="relative flex-1 flex items-center">
               {isAiMode ? (
-                <Sparkles className="absolute left-3 h-4 w-4 text-violet-500 dark:text-violet-400 shrink-0 pointer-events-none animate-pulse" />
+                <CampusMindIcon className="absolute left-3 h-4.5 w-4.5 text-violet-500 dark:text-violet-400 shrink-0 pointer-events-none" />
               ) : (
                 <Search className="absolute left-3 h-4 w-4 text-muted-foreground/60 shrink-0 pointer-events-none" />
               )}
@@ -411,7 +412,7 @@ export default function SearchPage() {
                   )}
                   title="Toggle AI Mode (Press Tab)"
                 >
-                  <Sparkles className={cn("h-3 w-3", isAiMode ? "text-violet-200" : "text-violet-500")} />
+                  <CampusMindIcon className={cn("h-3.5 w-3.5", isAiMode ? "text-violet-200" : "text-violet-500")} />
                   <span className="hidden sm:inline text-[11px]">{isAiMode ? "AI Active" : "AI Mode"}</span>
                 </button>
               </div>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { CampusMindIcon } from "@/components/icons/CampusMindIcon";
 import {
   Sparkles,
   ChevronDown,
@@ -307,7 +308,7 @@ export const CampusAIOverview: React.FC<CampusAIOverviewProps> = ({
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <span className="flex h-7 w-7 items-center justify-center rounded-lg border border-primary/30 bg-primary/20 text-primary shadow-xs">
-            <Sparkles className="h-4 w-4" />
+            <CampusMindIcon className="h-4 w-4" />
           </span>
           <div className="flex items-center gap-2">
             <h2 className="text-xs font-bold uppercase tracking-wider text-primary">

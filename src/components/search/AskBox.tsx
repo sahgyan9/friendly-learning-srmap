@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { Sparkles } from "lucide-react";
+import { CampusMindIcon } from "@/components/icons/CampusMindIcon";
 
 import {
   EXAMPLE_QUESTIONS,
@@ -73,7 +73,7 @@ const AskBox = ({ className }: { className?: string }) => {
             className="flex w-full items-center gap-3 rounded-[calc(1rem-1px)] bg-background px-4 py-3.5 text-left transition-colors duration-300 hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background sm:gap-4 sm:px-5 sm:py-4"
           >
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#3963C6] to-violet-500 text-white shadow-md shadow-violet-500/25">
-              <Sparkles className="h-4 w-4" aria-hidden />
+              <CampusMindIcon className="h-5 w-5" aria-hidden />
             </span>
 
             {/* Fixed height and clipped: the questions differ in length, and
@@ -96,7 +96,7 @@ const AskBox = ({ className }: { className?: string }) => {
 
             {/* AI Mode badge on landing page */}
             <span className="shrink-0 flex items-center gap-1.5 rounded-lg border border-violet-500/30 bg-violet-500/10 px-2.5 py-1 text-xs font-medium text-violet-600 dark:text-violet-300 shadow-xs">
-              <Sparkles className="h-3.5 w-3.5 text-violet-500 animate-pulse" />
+              <CampusMindIcon className="h-3.5 w-3.5 text-violet-500" />
               <span>AI Mode</span>
             </span>
 
