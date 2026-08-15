@@ -143,6 +143,7 @@ const AdminSettings = lazyWithRetry("AdminSettings", () => import("./pages/Admin
 const AdminSecurity = lazyWithRetry("AdminSecurity", () => import("./pages/AdminSecurity"));
 const TeamMembersAdmin = lazyWithRetry("TeamMembersAdmin", () => import("./pages/TeamMembersAdmin"));
 const MarketplaceAdmin = lazyWithRetry("MarketplaceAdmin", () => import("./pages/MarketplaceAdmin"));
+const AdminAIFeedback = lazyWithRetry("AdminAIFeedback", () => import("./pages/AdminAIFeedback"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -341,6 +342,14 @@ function App() {
                         element={
                           <ProtectedRoute requiredRole="admin">
                             <AdminSettings />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/admin/ai-feedback"
+                        element={
+                          <ProtectedRoute requiredRole="admin">
+                            <AdminAIFeedback />
                           </ProtectedRoute>
                         }
                       />

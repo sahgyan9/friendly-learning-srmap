@@ -18,6 +18,7 @@ import {
   Award,
   UserCheck,
   ArrowRight,
+  MessageSquare,
 } from "lucide-react";
 import AdminPageWrapper from "@/components/admin/AdminPageWrapper";
 import AdminHeader from "@/components/admin/AdminHeader";
@@ -27,6 +28,13 @@ import { motion } from "framer-motion";
 const AdminDashboard = () => {
 
   const adminModules = [
+    {
+      title: "AI Feedback",
+      description: "Review and act on AI Campus Overview feedback.",
+      icon: MessageSquare,
+      path: "/admin/ai-feedback",
+      gradient: "from-blue-600 to-indigo-600",
+    },
     {
       title: "Badge Management",
       description: "Create, manage, and award badges to mentors.",
