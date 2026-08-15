@@ -7,7 +7,7 @@ const corsHeaders = {
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const GEMINI_KEY = Deno.env.get("Gemini_API_Key") ?? "";
-const MODEL = "gemini-1.5-flash";
+const MODEL = "gemini-flash-latest";
 
 type Retrieved = {
   entity_type: string;
@@ -91,40 +91,61 @@ Your response MUST be a valid JSON object matching this schema exactly:
 }`;
 }
 
+const GENERATION_MODELS = [
+  "gemini-flash-latest",
+  "gemini-2.0-flash",
+  "gemini-2.0-flash-001",
+];
+
+const RETRY_503_MS = 900;
+
 async function generateOverview(prompt: string) {
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${GEMINI_KEY}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature: 0.3,
-          maxOutputTokens: 1024,
-          responseMimeType: "application/json",
-        },
-      }),
+  const tried: string[] = [];
+
+  for (const model of GENERATION_MODELS) {
+    const call = () => fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: {
+            temperature: 0.3,
+            maxOutputTokens: 1024,
+            responseMimeType: "application/json",
+          },
+        }),
+      }
+    );
+
+    let response = await call();
+
+    if (response.status === 503) {
+      await new Promise((resolve) => setTimeout(resolve, RETRY_503_MS));
+      response = await call();
     }
-  );
 
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(`Gemini API failed (${response.status}): ${text.slice(0, 200)}`);
+    if (!response.ok) {
+      tried.push(`${model}=${response.status}:${(await response.text()).slice(0, 120)}`);
+      continue;
+    }
+
+    const body = await response.json();
+    const text = body.candidates?.[0]?.content?.parts?.[0]?.text;
+    
+    if (text) {
+      try {
+        return JSON.parse(text);
+      } catch (e) {
+        throw new Error(`Failed to parse JSON response: ${text.slice(0, 100)}`);
+      }
+    }
+
+    tried.push(`${model}=empty`);
   }
 
-  const body = await response.json();
-  const text = body.candidates?.[0]?.content?.parts?.[0]?.text;
-  
-  if (!text) {
-    throw new Error("Empty response from model");
-  }
-
-  try {
-    return JSON.parse(text);
-  } catch (e) {
-    throw new Error("Failed to parse JSON response");
-  }
+  throw new Error(`Gemini API failed to generate on all models: ${tried.join(" | ")}`);
 }
 
 serve(async (req) => {
@@ -147,9 +168,10 @@ serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
-    console.error("generate-ai-overview failed:", error);
+    const detail = error instanceof Error ? error.message : String(error);
+    console.error("generate-ai-overview failed:", detail);
     return new Response(
-      JSON.stringify({ error: "Failed to generate AI overview" }),
+      JSON.stringify({ error: "Failed to generate AI overview", detail }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
