@@ -50,13 +50,14 @@ async function retrieve(query: string): Promise<Retrieved[]> {
 }
 
 function buildPrompt(query: string, matches: Retrieved[]): string {
-  const context = matches.map((m) => {
+  const context = matches.map((m, index) => {
     let tags = "";
     const rawTags = m.metadata?.interests ?? m.metadata?.skills ?? m.metadata?.tags;
     if (Array.isArray(rawTags)) {
       tags = `\n  Tags: ${rawTags.filter((t) => typeof t === "string").join(", ")}`;
     }
-    return `- [${m.entity_type.toUpperCase()}] ${m.title} (${m.subtitle ?? ""}) (id: ${m.entity_id}, path: ${m.source_path})${tags}`;
+    // Note: We use index + 1 as the implicit citation ID for the model to reference
+    return `[${index + 1}] [${m.entity_type.toUpperCase()}] ${m.title} (${m.subtitle ?? ""}) (id: ${m.entity_id}, path: ${m.source_path})${tags}`;
   }).join("\n");
 
   return `You are the AI Campus Overview engine for Friendly Learning at SRM University-AP.
@@ -70,13 +71,17 @@ Based strictly on the provided resources, generate a short summary overview (1-2
 Rules:
 1. Synthesize the context in a natural, helpful, student-friendly tone. Do not just list the titles.
 2. Only mention people, events, or entities from the provided context. If no context is provided, say there are no direct matches yet and suggest broad advice.
-3. Suggest an action recommendation (e.g., "Tip: Check out this hackathon or contact Dr. X").
+3. INLINE CITATIONS: When you state a fact or mention an entity from the resources, you MUST include an inline citation bracket like [1] or [2] matching the resource number above.
 4. Extract 1-3 key insights as a list of short strings.
 5. Identify the top 1-4 specific entities to recommend as badges. Use the exact 'id', 'type', 'title' (for name), 'path' (for to), and 'subtitle' (for detail) from the context. Only use types: 'faculty', 'mentor', 'opportunity', 'community', or 'post'.
+6. CITATIONS MAP: Provide a 'citations' array mapping the numbers you used in the summary to the entity.
 
 Your response MUST be a valid JSON object matching this schema exactly:
 {
-  "summary": "Synthesized text using markdown formatting (like **bolding** key terms)...",
+  "summary": "Synthesized text using markdown formatting with inline citations like [1]...",
+  "citations": [
+    { "id": 1, "text": "Name of the person/resource", "url": "/path/to/resource" }
+  ],
   "keyInsights": ["Short insight 1...", "Short insight 2..."],
   "actionRecommendation": "Tip: ...",
   "badges": [
@@ -92,12 +97,23 @@ Your response MUST be a valid JSON object matching this schema exactly:
 }
 
 const GENERATION_MODELS = [
+  "gemini-2.5-flash",
+  "gemini-2.5-flash-lite",
   "gemini-flash-latest",
-  "gemini-2.0-flash",
-  "gemini-2.0-flash-001",
+  "gemini-flash-lite-latest",
 ];
 
 const RETRY_503_MS = 900;
+
+function cleanJsonText(raw: string): string {
+  let text = raw.trim();
+  if (text.startsWith("```json")) {
+    text = text.replace(/^```json\s*/, "").replace(/\s*```$/, "");
+  } else if (text.startsWith("```")) {
+    text = text.replace(/^```\s*/, "").replace(/\s*```$/, "");
+  }
+  return text.trim();
+}
 
 async function generateOverview(prompt: string) {
   const tried: string[] = [];
@@ -112,7 +128,7 @@ async function generateOverview(prompt: string) {
           contents: [{ parts: [{ text: prompt }] }],
           generationConfig: {
             temperature: 0.3,
-            maxOutputTokens: 1024,
+            maxOutputTokens: 3500,
             responseMimeType: "application/json",
           },
         }),
@@ -132,13 +148,21 @@ async function generateOverview(prompt: string) {
     }
 
     const body = await response.json();
-    const text = body.candidates?.[0]?.content?.parts?.[0]?.text;
+    const candidate = body.candidates?.[0];
+    const text = candidate?.content?.parts?.[0]?.text;
+
+    if (text && candidate?.finishReason === "MAX_TOKENS") {
+      tried.push(`${model}=truncated-at-${text.length}-chars`);
+      continue;
+    }
     
     if (text) {
+      const cleaned = cleanJsonText(text);
       try {
-        return JSON.parse(text);
+        return JSON.parse(cleaned);
       } catch (e) {
-        throw new Error(`Failed to parse JSON response: ${text.slice(0, 100)}`);
+        tried.push(`${model}=json-parse-error:${e instanceof Error ? e.message : String(e)}`);
+        continue;
       }
     }
 
@@ -152,7 +176,19 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { query } = await req.json();
+    const body = await req.json();
+    if (body.listModels) {
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${GEMINI_KEY}&pageSize=200`);
+      const data = await res.json();
+      const generationModels = (data.models ?? [])
+        .filter((m: any) => (m.supportedGenerationMethods ?? []).includes("generateContent"))
+        .map((m: any) => m.name);
+      return new Response(JSON.stringify({ generationModels }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const { query } = body;
     
     if (!query || query.trim().length < 3) {
       return new Response(JSON.stringify({ error: "Query too short" }), {
