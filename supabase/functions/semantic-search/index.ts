@@ -109,7 +109,7 @@ serve(async (req) => {
 
   if (!GEMINI_KEY) return json({ error: "Search is not configured" }, 503);
 
-  let payload: { query?: string; limit?: number; types?: string[] } = {};
+  let payload: { query?: string; limit?: number; types?: string[]; min_similarity?: number } = {};
   try {
     payload = await req.json();
   } catch {
@@ -172,6 +172,10 @@ serve(async (req) => {
       p_entity_types: payload.types ?? ["faculty", "mentor", "student", "opportunity", "community", "post"],
       p_limit: Math.min(Math.max(payload.limit ?? 12, 1), 50),
       p_viewer: viewer,
+      // 0.35 cuts the noisy tail of weak matches that appeared on broad queries
+      // (e.g. searching "machine learning" returning every CSE person at ≈0.31).
+      // Raised from 0.30 in migration 20260816090000_enrich_mentor_chunks.sql.
+      p_min_similarity: payload.min_similarity ?? 0.35,
     });
 
     if (error) throw error;
