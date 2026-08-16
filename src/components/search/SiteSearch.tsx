@@ -405,7 +405,7 @@ const SiteSearch = () => {
                 cmdk-input-wrapper=""
               >
                 {isAiMode ? (
-                  <CampusMindIcon className="mr-2.5 h-5 w-5 text-violet-500 dark:text-violet-400 shrink-0 pointer-events-none" />
+                  <CampusMindIcon speed={liveLoading ? "fast" : "normal"} className="mr-2.5 h-5 w-5 text-violet-500 dark:text-violet-400 shrink-0 pointer-events-none" />
                 ) : (
                   <Search className="mr-2.5 h-4 w-4 text-muted-foreground/70 shrink-0 pointer-events-none" />
                 )}
@@ -432,7 +432,7 @@ const SiteSearch = () => {
                     }
                   }}
                 />
-                {liveLoading && <CampusMindIcon className="mr-2 h-4 w-4 text-violet-500 dark:text-violet-400 shrink-0" />}
+                {liveLoading && <CampusMindIcon speed="fast" className="mr-2 h-4 w-4 text-violet-500 dark:text-violet-400 shrink-0" />}
                 {query && (
                   <button
                     onClick={() => setQuery("")}

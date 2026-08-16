@@ -11,14 +11,13 @@ interface CampusMindIconProps extends React.SVGProps<SVGSVGElement> {
  * Animated CampusMind Neural Orbit / Synapse Icon.
  *
  * Features:
- * - High-speed 360° circular rotation of the orbital arcs.
- * - Rigorous high-frequency in-and-out firing & pulse of the neural connection beams.
- * - Active intelligence heartbeat core pulse.
+ * - Ambient relaxed state by default (`speed="normal"`: 8s orbit, 2.6s gentle breath).
+ * - High-speed rigorous calculation state (`speed="fast"`: 2.0s rapid orbit, 0.85s snappy firing) when processing search queries or generating AI overviews.
  */
 export const CampusMindIcon: React.FC<CampusMindIconProps> = ({
   className = "h-5 w-5",
   animate = true,
-  speed = "fast",
+  speed = "normal",
   ...props
 }) => {
   const isFast = speed === "fast";
@@ -73,43 +72,43 @@ export const CampusMindIcon: React.FC<CampusMindIconProps> = ({
           }
           .cm-anim-spin-fast {
             transform-origin: 12px 12px;
-            animation: cm-spin-clockwise 2.6s linear infinite;
+            animation: cm-spin-clockwise 2.0s linear infinite;
           }
           .cm-anim-spin-normal {
             transform-origin: 12px 12px;
-            animation: cm-spin-clockwise 6s linear infinite;
+            animation: cm-spin-clockwise 8.0s linear infinite;
           }
           .cm-anim-spin-reverse-fast {
             transform-origin: 12px 12px;
-            animation: cm-spin-counter 4s linear infinite;
+            animation: cm-spin-counter 3.2s linear infinite;
           }
           .cm-anim-spin-reverse-normal {
             transform-origin: 12px 12px;
-            animation: cm-spin-counter 9s linear infinite;
+            animation: cm-spin-counter 12.0s linear infinite;
           }
           .cm-anim-synapse-fast {
             transform-origin: 12px 12px;
-            animation: cm-synapse-inout 1.1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+            animation: cm-synapse-inout 0.85s cubic-bezier(0.4, 0, 0.2, 1) infinite;
           }
           .cm-anim-synapse-normal {
             transform-origin: 12px 12px;
-            animation: cm-synapse-inout 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+            animation: cm-synapse-inout 2.6s ease-in-out infinite;
           }
           .cm-anim-core-fast {
             transform-origin: 12px 12px;
-            animation: cm-core-pulse 1.1s ease-in-out infinite;
+            animation: cm-core-pulse 0.85s ease-in-out infinite;
           }
           .cm-anim-core-normal {
             transform-origin: 12px 12px;
-            animation: cm-core-pulse 2.2s ease-in-out infinite;
+            animation: cm-core-pulse 2.6s ease-in-out infinite;
           }
           .cm-anim-beam-fast {
             stroke-dasharray: 4 2;
-            animation: cm-beam-flow 0.65s linear infinite;
+            animation: cm-beam-flow 0.5s linear infinite;
           }
           .cm-anim-beam-normal {
             stroke-dasharray: 4 2;
-            animation: cm-beam-flow 1.3s linear infinite;
+            animation: cm-beam-flow 1.8s linear infinite;
           }
         `}</style>
       </defs>

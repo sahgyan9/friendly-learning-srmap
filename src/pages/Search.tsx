@@ -354,7 +354,7 @@ export default function SearchPage() {
             </button>
             <div className="relative flex-1 flex items-center">
               {isAiMode ? (
-                <CampusMindIcon className="absolute left-3 h-4 w-4 text-violet-500 dark:text-violet-400 shrink-0 pointer-events-none" />
+                <CampusMindIcon speed={results.loading ? "fast" : "normal"} className="absolute left-3 h-4 w-4 text-violet-500 dark:text-violet-400 shrink-0 pointer-events-none" />
               ) : (
                 <Search className="absolute left-3 h-4 w-4 text-muted-foreground/60 shrink-0 pointer-events-none" />
               )}
@@ -480,7 +480,7 @@ export default function SearchPage() {
           <div className="flex flex-col items-center justify-center py-16 gap-3 text-muted-foreground">
             <div className="relative flex items-center justify-center">
               <div className="absolute -inset-2 rounded-full bg-primary/20 blur-md animate-pulse" />
-              <CampusMindIcon className="relative h-8 w-8 text-primary" />
+              <CampusMindIcon speed="fast" className="relative h-8 w-8 text-primary" />
             </div>
             <span className="text-sm font-medium animate-pulse">Searching across SRM-AP with CampusMind…</span>
           </div>

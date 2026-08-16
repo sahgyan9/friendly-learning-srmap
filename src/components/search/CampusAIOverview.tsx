@@ -336,7 +336,7 @@ export const CampusAIOverview: React.FC<CampusAIOverviewProps> = ({
             <div className="flex flex-col items-center justify-center py-6 space-y-3 text-muted-foreground">
               <div className="relative flex items-center justify-center">
                 <div className="absolute -inset-2 rounded-full bg-primary/20 blur-md animate-pulse" />
-                <CampusMindIcon className="relative h-7 w-7 text-primary" />
+                <CampusMindIcon speed="fast" className="relative h-7 w-7 text-primary" />
               </div>
               <p className="text-xs font-medium text-muted-foreground/90 animate-pulse">
                 CampusMind is analyzing campus mentors, faculty & discussions…
