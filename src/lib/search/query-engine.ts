@@ -96,12 +96,100 @@ export const ROLE_KEYWORDS = new Set([
 ]);
 
 export const STOP_WORDS = new Set([
-  "i", "am", "want", "to", "learn", "how", "can", "who", "help", "me", "with", "is",
-  "a", "an", "the", "for", "in", "on", "of", "and", "or", "best", "which", "any",
-  "about", "find", "looking", "need", "please", "tell", "show", "are", "what",
-  "where", "do", "does", "someone", "anyone", "good", "great", "top", "as", "at",
-  "from", "by", "some", "my", "our", "you", "your", "give"
+  // Pronouns & conversational subjects
+  "i", "me", "my", "myself", "we", "us", "our", "ours", "you", "your", "yours",
+  "he", "him", "his", "she", "her", "hers", "they", "them", "their", "theirs", "it", "its",
+  "anyone", "anybody", "anything", "someone", "somebody", "something", "everyone", "everybody", "everything",
+  "one", "ones", "person", "people", "guy", "guys", "folks", "any", "some", "none", "all", "each", "every",
+
+  // Inquiry & Question words
+  "who", "whom", "whose", "which", "what", "where", "when", "why", "how",
+
+  // Helping / Auxiliary / Action verbs in conversational questions
+  "can", "could", "would", "should", "will", "shall", "may", "might", "must",
+  "am", "is", "are", "was", "were", "be", "been", "being",
+  "have", "has", "had", "having",
+  "do", "does", "did", "doing",
+  "get", "gets", "got", "getting",
+  "take", "takes", "took", "taking",
+  "make", "makes", "made", "making",
+  "want", "wants", "wanted", "wanting",
+  "need", "needs", "needed", "needing",
+  "like", "likes", "liked", "liking",
+  "know", "knows", "knew", "knowing",
+  "find", "finds", "found", "finding",
+  "look", "looks", "looking", "looked",
+  "search", "searching", "searched",
+  "contact", "contacts", "contacting", "contacted",
+  "connect", "connects", "connecting", "connected",
+  "reach", "reaches", "reaching", "reached",
+  "talk", "talks", "talking", "talked",
+  "speak", "speaks", "speaking", "spoke",
+  "ask", "asks", "asking", "asked",
+  "tell", "tells", "telling", "told",
+  "show", "shows", "showing", "showed",
+  "give", "gives", "giving", "gave",
+  "learn", "learns", "learning", "learned",
+  "teach", "teaches", "teaching", "taught",
+  "study", "studies", "studying", "studied",
+  "guide", "guides", "guiding", "guided",
+  "help", "helps", "helping", "helped",
+
+  // Prepositions, Conjunctions & Articles
+  "a", "an", "the", "for", "in", "on", "of", "to", "at", "by", "from", "with", "about",
+  "into", "through", "during", "before", "after", "above", "below", "between", "under",
+  "and", "or", "but", "if", "so", "as", "than", "because", "while", "wherever", "whenever",
+  "please", "thanks", "thank", "good", "great", "best", "top", "better", "really", "very", "also", "just"
 ]);
+
+// Generic research modifier words that should not trigger isolated full-table matches
+export const GENERIC_RESEARCH_WORDS = new Set([
+  "development", "design", "systems", "system", "analysis", "engineering", "structures", "structure",
+  "studies", "study", "science", "technologies", "technology", "applications", "application",
+  "materials", "material", "methods", "method", "models", "model", "modeling", "computation",
+  "computational", "algorithms", "algorithm", "theory", "theoretical", "experimental", "experiments",
+  "experiment", "optimization", "processing", "framework", "frameworks", "approach", "approaches",
+  "solutions", "solution", "investigation", "advancement", "advancements"
+]);
+
+/**
+ * Checks if a search token matches inside text using whole word boundaries.
+ * Prevents subword false matches like 'to' inside 'protocol' or 'can' inside 'candidates'.
+ */
+export function matchesWordBoundary(text: string, token: string): boolean {
+  if (!text || !token) return false;
+  const cleanTok = token.trim().toLowerCase();
+  if (!cleanTok) return false;
+  const escaped = cleanTok.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const regex = new RegExp(`\\b${escaped}`, "i");
+  return regex.test(text);
+}
+
+/**
+ * Extracts meaningful subject and name tokens from a search query for SERP highlighting.
+ * Strictly excludes stop words, conversational verbs, and role keywords.
+ */
+export function extractMeaningfulTokens(query: string): string[] {
+  if (!query || !query.trim()) return [];
+  const parsed = parseQuery(query);
+  const rawTokens = [
+    ...parsed.subjectTokens,
+    ...parsed.nameTokens,
+    ...(parsed.detectedDepartment ? [parsed.detectedDepartment] : []),
+  ];
+  return Array.from(
+    new Set(
+      rawTokens
+        .map((t) => t.toLowerCase().trim())
+        .filter(
+          (t) =>
+            t.length >= 2 &&
+            !STOP_WORDS.has(t) &&
+            !ROLE_KEYWORDS.has(t),
+        ),
+    ),
+  );
+}
 
 // Campus vocabulary for typo correction
 export const CAMPUS_VOCABULARY = [
@@ -177,12 +265,18 @@ export type QueryIntent =
   | "post"             // Discussion threads (e.g. "Campus posts")
   | "general";         // Broad overview
 
+export type TargetCategory = "mentors" | "faculty" | "opportunities" | "communities" | "posts" | "blog";
+
 export interface ParsedQuery {
   raw: string;
   cleaned: string;
   tokens: string[];
   /** Core subject/person tokens (excluding stop words AND role keywords) */
   subjectTokens: string[];
+  /** Specific domain tokens (excluding generic modifier words like 'development', 'design', 'systems') */
+  specificTokens: string[];
+  /** Specific subject tokens excluding generic research noise (e.g. 'development', 'analysis') */
+  filteredFacultyTokens: string[];
   /** Name tokens for person exact matching (excludes honorifics) */
   nameTokens: string[];
   /** Explicitly detected department if any (e.g. "Physics", "Computer Science and Engineering") */
@@ -193,8 +287,12 @@ export interface ParsedQuery {
   suggestedQuery: string | null;
   /** Clean human-readable topic summary for AI Overview */
   cleanTopic: string;
+  /** Distilled semantic query for vector embedding search without conversational noise */
+  semanticQuery: string;
   /** Primary search intent */
   intent: QueryIntent;
+  /** Explicit targeted entity category (e.g. 'mentors', 'faculty', 'opportunities') */
+  targetCategory?: TargetCategory;
   /** Sub-intent for informational guidance */
   infoTopic?: "fresher_guide" | "academic_help" | "faculty_contact" | "electives" | "hackathon_prep" | "general_guide";
 }
@@ -213,9 +311,31 @@ export function parseQuery(query: string): ParsedQuery {
   const correctedWords: string[] = [];
   let hasCorrection = false;
 
-  // 1. Check for Informational / Stage-based Intent
+  // 1. Detect Target Category & Intent
   let intent: QueryIntent = "general";
+  let targetCategory: TargetCategory | undefined = undefined;
   let infoTopic: ParsedQuery["infoTopic"] = undefined;
+
+  const isMentorExplicit =
+    rawWords.some((w) => ["mentor", "mentors", "mentorship", "senior", "seniors", "tutor", "tutors"].includes(w)) ||
+    normalized.includes("senior mentor") ||
+    normalized.includes("student mentor") ||
+    normalized.includes("peer guide");
+
+  const isFacultyExplicit =
+    rawWords.some((w) => ["faculty", "faculties", "prof", "profs", "professor", "professors", "lecturer", "dr", "dr."].includes(w)) ||
+    normalized.includes("faculty member") ||
+    normalized.includes("assistant professor") ||
+    normalized.includes("associate professor");
+
+  const isOppExplicit =
+    rawWords.some((w) => ["hackathon", "hackathons", "sih", "contest", "contests", "competition", "competitions", "internship", "internships"].includes(w));
+
+  const isCommunityExplicit =
+    rawWords.some((w) => ["group", "groups", "club", "clubs", "society", "societies", "community", "communities", "workspace"].includes(w));
+
+  const isPostExplicit =
+    rawWords.some((w) => ["post", "posts", "thread", "threads", "discussion", "discussions", "reply"].includes(w));
 
   const isFresherQuery = rawWords.some((w) =>
     ["fresher", "freshers", "firstyear", "beginner", "newbie"].includes(w)
@@ -235,29 +355,48 @@ export function parseQuery(query: string): ParsedQuery {
   const isElectiveQuery = rawWords.some((w) => ["elective", "electives", "registration", "credits"].includes(w));
   const isHackathonGuide = (rawWords.includes("hackathon") || rawWords.includes("sih")) && (isHowToQuery || rawWords.includes("teammates") || rawWords.includes("team"));
 
+  if (isMentorExplicit) {
+    targetCategory = "mentors";
+  } else if (isFacultyExplicit) {
+    targetCategory = "faculty";
+  } else if (isOppExplicit) {
+    targetCategory = "opportunities";
+  } else if (isCommunityExplicit) {
+    targetCategory = "communities";
+  } else if (isPostExplicit) {
+    targetCategory = "posts";
+  }
+
   if (isFresherQuery) {
     intent = "informational";
     infoTopic = "fresher_guide";
+    targetCategory = targetCategory || "blog";
   } else if (isElectiveQuery) {
     intent = "informational";
     infoTopic = "electives";
+    targetCategory = targetCategory || "blog";
   } else if (isHackathonGuide) {
     intent = "informational";
     infoTopic = "hackathon_prep";
+    targetCategory = targetCategory || "opportunities";
   } else if (isHowToQuery) {
     intent = "informational";
     infoTopic = rawWords.some((w) => ["prof", "professor", "faculty"].includes(w))
       ? "faculty_contact"
       : "academic_help";
-  } else if (rawWords.some((w) => ["hackathon", "contest", "competition", "sih", "internship"].includes(w))) {
+    targetCategory = targetCategory || (infoTopic === "faculty_contact" ? "faculty" : "mentors");
+  } else if (isOppExplicit) {
     intent = "opportunity";
-  } else if (rawWords.some((w) => ["group", "club", "society", "community"].includes(w))) {
+  } else if (isCommunityExplicit) {
     intent = "community";
-  } else if (rawWords.some((w) => ["post", "thread", "discussion", "reply"].includes(w))) {
+  } else if (isPostExplicit) {
     intent = "post";
-  } else if (rawWords.some((w) => ["dr", "prof", "sir"].includes(w)) || (rawWords.length >= 2 && !rawWords.some(w => STOP_WORDS.has(w)))) {
+  } else if (
+    (rawWords.some((w) => ["dr", "dr.", "prof", "prof."].includes(w)) && rawWords.length >= 2) ||
+    (rawWords.length >= 2 && rawWords.length <= 4 && !rawWords.some((w) => STOP_WORDS.has(w) || ROLE_KEYWORDS.has(w)))
+  ) {
     intent = "entity_lookup";
-  } else if (rawWords.some((w) => ["faculty", "prof", "professor", "mentor"].includes(w))) {
+  } else if (isMentorExplicit || isFacultyExplicit || rawWords.length > 0) {
     intent = "domain_subject";
   }
 
@@ -303,9 +442,13 @@ export function parseQuery(query: string): ParsedQuery {
     }
   }
 
+  // Filter out generic research noise words if other specific tokens exist
+  const specificTokens = subjectTokens.filter((t) => !GENERIC_RESEARCH_WORDS.has(t));
+  const filteredFacultyTokens = specificTokens.length > 0 ? specificTokens : subjectTokens;
+
   const suggestedQuery = hasCorrection ? correctedWords.join(" ") : null;
 
-  // 3. Clean human-readable topic formulation
+  // 3. Clean human-readable topic summary & semantic vector query
   let cleanTopic = "";
   if (intent === "informational") {
     if (infoTopic === "fresher_guide") {
@@ -328,19 +471,72 @@ export function parseQuery(query: string): ParsedQuery {
     cleanTopic = cleanTopic.charAt(0).toUpperCase() + cleanTopic.slice(1);
   }
 
+  // Semantic query: concise domain topic for vector search
+  let semanticQuery = subjectTokens.join(" ").trim();
+  if (detectedDepartment && !semanticQuery.toLowerCase().includes(detectedDepartment.toLowerCase())) {
+    semanticQuery = `${detectedDepartment} ${semanticQuery}`.trim();
+  }
+  if (!semanticQuery) semanticQuery = normalized;
+
   return {
     raw,
     cleaned: normalized,
     tokens,
     subjectTokens: subjectTokens.length > 0 ? subjectTokens : tokens,
+    specificTokens,
+    filteredFacultyTokens,
     nameTokens: nameTokens.length > 0 ? nameTokens : tokens,
     detectedDepartment,
     expandedPhrases: Array.from(expandedPhrasesSet),
     suggestedQuery,
     cleanTopic,
+    semanticQuery,
     intent,
+    targetCategory,
     infoTopic,
   };
+}
+
+/**
+ * Determines whether candidate text satisfies the query's specific topical requirement.
+ * If query has specific non-generic tokens (e.g. 'qubit' in 'qubit design'),
+ * matching ONLY generic words (e.g. 'design') is rejected.
+ */
+export function hasTopicalMatch(
+  candidateText: string,
+  parsed: ParsedQuery,
+): boolean {
+  if (!candidateText) return false;
+  const text = candidateText.toLowerCase();
+
+  // If query is an entity lookup or name query, check name tokens
+  if (parsed.intent === "entity_lookup" && parsed.nameTokens.length > 0) {
+    return parsed.nameTokens.some((tok) => matchesWordBoundary(text, tok));
+  }
+
+  // If specific tokens exist (e.g. "qubit", "react", "python", "dsa"), candidate MUST match at least one specific token or synonym
+  if (parsed.specificTokens.length > 0) {
+    const matchesSpecific = parsed.specificTokens.some((tok) => matchesWordBoundary(text, tok));
+    if (matchesSpecific) return true;
+
+    // Check expanded synonyms
+    const matchesSynonym = parsed.expandedPhrases.some((phrase) => text.includes(phrase));
+    if (matchesSynonym) return true;
+
+    // Check department match if query explicitly requested a department
+    if (parsed.detectedDepartment && text.includes(parsed.detectedDepartment.toLowerCase())) {
+      return true;
+    }
+
+    return false;
+  }
+
+  // If no specific tokens exist (all tokens are generic, e.g. "system design" or "research studies"), match subject tokens
+  if (parsed.subjectTokens.length > 0) {
+    return parsed.subjectTokens.some((tok) => matchesWordBoundary(text, tok));
+  }
+
+  return true;
 }
 
 /**
@@ -354,16 +550,23 @@ export function fuzzyMatchTokens(target: string, tokens: string[]): boolean {
 
 /**
  * Computes exact match score boost (0 to 1).
+ * Requires exact or strong full-name token containment.
  */
 export function calculateExactBoost(title: string, query: string, nameTokens: string[]): number {
   if (!title || !query) return 0;
-  const titleLower = title.toLowerCase();
+  const titleLower = title.toLowerCase().trim();
   const queryLower = query.toLowerCase().trim();
 
-  if (titleLower === queryLower) return 1.0;
-  if (titleLower.includes(queryLower)) return 0.9;
-  if (nameTokens.length > 0 && nameTokens.every((token) => titleLower.includes(token))) {
-    return 0.8;
+  // Strip common titles from comparison
+  const cleanTitle = titleLower.replace(/^(dr\.?|prof\.?|mr\.?|ms\.?|mrs\.?)\s+/i, "").trim();
+  const cleanQuery = queryLower.replace(/^(dr\.?|prof\.?|mr\.?|ms\.?|mrs\.?)\s+/i, "").trim();
+
+  if (titleLower === queryLower || cleanTitle === cleanQuery) return 1.0;
+  if (titleLower.startsWith(queryLower) || cleanTitle.startsWith(cleanQuery)) return 0.9;
+
+  // Name tokens check: all name tokens must appear in title
+  if (nameTokens.length >= 2 && nameTokens.every((token) => titleLower.includes(token.toLowerCase()))) {
+    return 0.85;
   }
 
   return 0;

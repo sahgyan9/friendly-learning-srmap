@@ -15,26 +15,48 @@
 export const SEARCH_BRAND = "Friendly Learning";
 export const SEARCH_TAGLINE = "Search mentors, faculty, groups & posts";
 
-/**
- * The questions the hero cycles through, and the placeholder inside the dialog.
- *
- * Every one of these is a question a plain keyword box would answer badly and
- * this one answers well — they are all phrases, none of them is a name, and
- * each targets a different kind of row (mentor, faculty, group, opportunity,
- * post). That is the whole pitch, and showing it beats explaining it: "Ask
- * anything" tells you the box accepts a question but not that asking one is
- * worth your time.
- *
- * Keep them short. The hero truncates at one line, and a question that wraps
- * or clips mid-word reads as a bug rather than as an example.
- */
-export const EXAMPLE_QUESTIONS = [
-  "Who can help with my ML project?",
-  "Which professor is best for Data Structures?",
-  "Any groups working on robotics?",
-  "Seniors who've cracked an internship",
-  "What's worth entering this month?",
-] as const;
+export interface SearchSuggestion {
+  query: string;
+  category: "faculty" | "mentors" | "opportunities" | "communities" | "guides";
+  label: string;
+  subtitle: string;
+}
+
+export const SEARCH_SUGGESTIONS: SearchSuggestion[] = [
+  {
+    query: "Computer Science & Machine Learning faculty",
+    category: "faculty",
+    label: "Computer Science & Machine Learning faculty",
+    subtitle: "Explore 600+ professors, departments & research areas",
+  },
+  {
+    query: "Senior mentors for Web Development & DSA",
+    category: "mentors",
+    label: "Senior mentors for Web Development & DSA",
+    subtitle: "Connect with 3rd & 4th year seniors for project guidance",
+  },
+  {
+    query: "Smart India Hackathon & tech competitions",
+    category: "opportunities",
+    label: "Smart India Hackathon & tech competitions",
+    subtitle: "Browse active contests, team criteria & registration dates",
+  },
+  {
+    query: "Student project groups & tech communities",
+    category: "communities",
+    label: "Student project groups & tech communities",
+    subtitle: "Find peers for hackathons, research labs & club builds",
+  },
+  {
+    query: "Guides for electives & academic help",
+    category: "guides",
+    label: "Guides for electives & academic help",
+    subtitle: "Read campus tips on courses, credits & navigating SRM-AP",
+  },
+];
+
+export const EXAMPLE_QUESTIONS = SEARCH_SUGGESTIONS.map((s) => s.query);
 
 /** How long each example stays up, in ms. */
 export const EXAMPLE_ROTATION_MS = 3200;
+

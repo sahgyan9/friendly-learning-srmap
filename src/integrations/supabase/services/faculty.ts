@@ -142,35 +142,43 @@ export async function getFacultyList(query: FacultyQuery = {}) {
 
   const rawSearch = search.trim();
   if (rawSearch) {
-    const { parseQuery } = await import("@/lib/search/query-engine");
+    const { parseQuery, STOP_WORDS, matchesWordBoundary } = await import("@/lib/search/query-engine");
     const parsed = parseQuery(rawSearch);
 
     // If query specified a department (e.g. "physics", "cse"), narrow to that department
     if (parsed.detectedDepartment && department === "all") {
       request = request.ilike("department", `%${parsed.detectedDepartment}%`);
     } else {
-      const searchTerms = parsed.subjectTokens.length > 0 ? parsed.subjectTokens : [rawSearch];
+      const searchTerms = parsed.filteredFacultyTokens.filter((t) => t.length >= 3 && !STOP_WORDS.has(t));
       const conditions: string[] = [];
 
-      // 1. Direct full phrase match
-      const fullTerm = escapeOrValue(`%${rawSearch}%`);
-      conditions.push(`name.ilike.${fullTerm}`, `department.ilike.${fullTerm}`, `interests_text.ilike.${fullTerm}`);
+      // 1. Direct full phrase match (only if phrase is reasonably short)
+      if (rawSearch.length <= 40 && parsed.subjectTokens.length <= 3) {
+        const fullTerm = escapeOrValue(`%${rawSearch}%`);
+        conditions.push(`name.ilike.${fullTerm}`, `interests_text.ilike.${fullTerm}`);
+      }
 
-      // 2. Individual name/subject tokens
+      // If subjectTokens has multiple tokens (e.g. "qubit design"), also search for the combined phrase
+      if (parsed.subjectTokens.length >= 2) {
+        const subjectPhrase = escapeOrValue(`%${parsed.subjectTokens.join(" ")}%`);
+        conditions.push(`interests_text.ilike.${subjectPhrase}`, `name.ilike.${subjectPhrase}`);
+      }
+
+      // 2. Individual specific tokens (e.g. "qubit")
       if (searchTerms.length > 0) {
         searchTerms.forEach((token) => {
-          if (token.length >= 2) {
-            const t = escapeOrValue(`%${token}%`);
-            conditions.push(`name.ilike.${t}`, `interests_text.ilike.${t}`, `department.ilike.${t}`);
-          }
+          const t = escapeOrValue(`%${token}%`);
+          conditions.push(`name.ilike.${t}`, `interests_text.ilike.${t}`);
         });
       }
 
-      // 3. Expanded department phrases
-      parsed.expandedPhrases.forEach((phrase) => {
-        const p = escapeOrValue(`%${phrase}%`);
-        conditions.push(`department.ilike.${p}`, `interests_text.ilike.${p}`);
-      });
+      // 3. Expanded department phrases (only if explicit department found)
+      if (parsed.detectedDepartment) {
+        parsed.expandedPhrases.forEach((phrase) => {
+          const p = escapeOrValue(`%${phrase}%`);
+          conditions.push(`department.ilike.${p}`);
+        });
+      }
 
       if (conditions.length > 0) {
         request = request.or(conditions.join(","));
@@ -207,7 +215,7 @@ export async function getFacultyList(query: FacultyQuery = {}) {
 
   // If search was performed, sort results by match relevance
   if (rawSearch && facultyList.length > 0) {
-    const { parseQuery, calculateExactBoost, fuzzyMatchTokens } = await import("@/lib/search/query-engine");
+    const { parseQuery, calculateExactBoost, matchesWordBoundary } = await import("@/lib/search/query-engine");
     const parsed = parseQuery(rawSearch);
 
     facultyList = [...facultyList].sort((a, b) => {
@@ -223,14 +231,15 @@ export async function getFacultyList(query: FacultyQuery = {}) {
       const bBoost = calculateExactBoost(b.name, rawSearch, parsed.nameTokens);
       if (bBoost !== aBoost) return bBoost - aBoost;
 
-      // 3. Subject token match across interests and name
-      const aInterests = (a.interests ?? []).join(" ");
-      const bInterests = (b.interests ?? []).join(" ");
+      // 3. Specific token match count with word boundaries
+      const aInterests = [...(a.interests ?? []), ...(a.research_areas ?? [])].join(" ").toLowerCase();
+      const bInterests = [...(b.interests ?? []), ...(b.research_areas ?? [])].join(" ").toLowerCase();
       const aCombined = `${a.name} ${a.department} ${aInterests}`.toLowerCase();
       const bCombined = `${b.name} ${b.department} ${bInterests}`.toLowerCase();
-      const aMatch = fuzzyMatchTokens(aCombined, parsed.subjectTokens) ? 1 : 0;
-      const bMatch = fuzzyMatchTokens(bCombined, parsed.subjectTokens) ? 1 : 0;
-      if (bMatch !== aMatch) return bMatch - aMatch;
+
+      const aSpecificHits = parsed.filteredFacultyTokens.filter((tok) => matchesWordBoundary(aCombined, tok)).length;
+      const bSpecificHits = parsed.filteredFacultyTokens.filter((tok) => matchesWordBoundary(bCombined, tok)).length;
+      if (bSpecificHits !== aSpecificHits) return bSpecificHits - aSpecificHits;
 
       // 4. Rating count and rating score
       if (b.rating_count !== a.rating_count) return b.rating_count - a.rating_count;

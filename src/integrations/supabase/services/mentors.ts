@@ -88,7 +88,7 @@ export async function searchMentors(query: string) {
       throw error || new Error("Failed to fetch mentors");
     }
 
-    const { parseQuery, fuzzyMatchTokens, calculateExactBoost } = await import("@/lib/search/query-engine");
+    const { parseQuery, fuzzyMatchTokens, calculateExactBoost, matchesWordBoundary, hasTopicalMatch } = await import("@/lib/search/query-engine");
     const parsed = parseQuery(trimmed);
 
     // Score and filter each mentor
@@ -111,15 +111,21 @@ export async function searchMentors(query: string) {
           }
         }
 
+        // Topical match requirement: if query has specific domain tokens (e.g. "qubit"), mentor MUST satisfy topical match.
+        // Prevents matching only generic words like "design" in "API design" when query is "qubit design".
+        const exactBoost = calculateExactBoost(name, lowerQuery, parsed.nameTokens);
+        if (exactBoost === 0 && !hasTopicalMatch(combined, parsed)) {
+          return { mentor, score: 0 };
+        }
+
         let score = 0;
 
         // 1. Exact name boost
-        const exactBoost = calculateExactBoost(name, lowerQuery, parsed.nameTokens);
         if (exactBoost > 0) score += exactBoost * 100;
 
         // 2. Direct skill match on search subject tokens
         const hasDirectSkill = skills.some((s) =>
-          parsed.subjectTokens.some((tok) => s.includes(tok) || tok.includes(s)),
+          parsed.subjectTokens.some((tok) => matchesWordBoundary(s, tok)),
         );
         if (hasDirectSkill) score += 80;
 
@@ -129,7 +135,7 @@ export async function searchMentors(query: string) {
         }
 
         // 4. Token match across subject tokens
-        const tokenMatches = parsed.subjectTokens.filter((token) => combined.includes(token));
+        const tokenMatches = parsed.subjectTokens.filter((token) => matchesWordBoundary(combined, token));
         score += tokenMatches.length * 30;
 
         // 5. Expanded department phrases
