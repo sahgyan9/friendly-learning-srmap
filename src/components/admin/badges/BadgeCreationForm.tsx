@@ -76,7 +76,6 @@ const BadgeCreationForm = ({ onCancel, onSuccess }: BadgeCreationFormProps) => {
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               placeholder="Enter badge name"
-              required
             />
           </div>
 
