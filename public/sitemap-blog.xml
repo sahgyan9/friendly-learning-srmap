@@ -6,7 +6,7 @@
                             http://www.google.com/schemas/sitemap-image/1.1 http://www.google.com/schemas/sitemap-image/1.1/sitemap-image.xsd">
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/blog</loc>
-    <lastmod>2026-08-14T15:27:38.239Z</lastmod>
+    <lastmod>2026-08-16T03:54:42.168Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
