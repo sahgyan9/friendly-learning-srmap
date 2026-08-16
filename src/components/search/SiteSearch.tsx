@@ -10,6 +10,7 @@ import {
   X,
   BookOpen,
   Loader2,
+  Sparkles,
 } from "lucide-react";
 
 import { CampusMindIcon } from "@/components/icons/CampusMindIcon";
@@ -35,7 +36,7 @@ import {
 import { rankDestinations } from "@/lib/search/rank";
 import { getTheme, toggleTheme, type Theme } from "@/lib/theme";
 import { OPEN_NOTIFICATIONS_EVENT, OPEN_SEARCH_EVENT } from "@/lib/search/events";
-import { EXAMPLE_QUESTIONS } from "@/lib/search/brand";
+import { SEARCH_SUGGESTIONS } from "@/lib/search/brand";
 import { useSiteSearch, type SearchHit } from "@/hooks/useSiteSearch";
 import { getInitials } from "@/utils/user-utils";
 import { cn } from "@/lib/utils";
@@ -88,6 +89,11 @@ const DESTINATION_THEMES: Record<string, { bg: string; text: string; border: str
     bg: "bg-indigo-500/10 dark:bg-indigo-500/20",
     text: "text-indigo-600 dark:text-indigo-400",
     border: "border-indigo-500/20 dark:border-indigo-500/30",
+  },
+  guides: {
+    bg: "bg-cyan-500/10 dark:bg-cyan-500/20",
+    text: "text-cyan-600 dark:text-cyan-400",
+    border: "border-cyan-500/20 dark:border-cyan-500/30",
   },
   "how-it-works": {
     bg: "bg-cyan-500/10 dark:bg-cyan-500/20",
@@ -415,7 +421,7 @@ const SiteSearch = () => {
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder={
                     isAiMode
-                      ? 'Ask CampusMind: "Who is best for DSA?" or "Find ML mentors..."'
+                      ? 'Ask CampusMind: "Computer Science faculty" or "Web Dev mentors…"'
                       : "Search mentors, faculty, hackathons, groups…"
                   }
                   className="h-10 sm:h-11 flex-1 min-w-0 bg-transparent text-sm sm:text-base text-foreground placeholder:text-muted-foreground/50 border-none outline-none focus:outline-none focus:ring-0"
@@ -492,49 +498,80 @@ const SiteSearch = () => {
                 "hover:[&::-webkit-scrollbar-thumb]:bg-muted-foreground/40",
               )}
             >
-              {/* Streamlined Empty State with Ask CampusMind AI Prompts */}
+              {/* Streamlined Empty State with Suggested Searches */}
               {!searching && (
                 <div className="p-1 space-y-3">
                   <CommandGroup
                     heading={
                       <div className="flex items-center justify-between">
                         <span className="flex items-center gap-1.5 font-semibold text-xs text-foreground/90">
-                          <CampusMindIcon className="h-4 w-4 text-violet-500" />
-                          Ask CampusMind AI
+                          <Sparkles className="h-3.5 w-3.5 text-primary" />
+                          Suggested Searches
                         </span>
-                        <span className="text-[10px] text-muted-foreground font-normal">Instant synthesis & matching</span>
+                        <span className="text-[10px] text-muted-foreground font-normal">Popular across SRM-AP</span>
                       </div>
                     }
                   >
-                    {EXAMPLE_QUESTIONS.map((question, idx) => (
-                      <CommandItem
-                        key={idx}
-                        value={`ai-prompt-${idx}-${question}`}
-                        onSelect={() => {
-                          setQuery(question);
-                          setIsAiMode(true);
-                          close();
-                          navigate(buildSearchUrl(question, "all"));
-                        }}
-                        className={cn(
-                          "group flex items-center gap-3 rounded-xl px-3 py-2.5 my-1 transition-all duration-150 cursor-pointer",
-                          "data-[selected=true]:bg-accent/80 data-[selected=true]:shadow-xs hover:bg-accent/50",
-                        )}
-                      >
-                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-violet-500/25 bg-violet-500/10 text-violet-600 dark:text-violet-400 group-data-[selected=true]:scale-105 transition-transform">
-                          <CampusMindIcon className="h-4 w-4" />
-                        </span>
-                        <span className="min-w-0 flex-1">
-                          <span className="block truncate font-medium text-sm text-foreground/90 group-data-[selected=true]:text-foreground">
-                            "{question}"
+                    {SEARCH_SUGGESTIONS.map((item, idx) => {
+                      const Icon =
+                        item.category === "faculty"
+                          ? FacultyIcon
+                          : item.category === "mentors"
+                          ? MentorIcon
+                          : item.category === "opportunities"
+                          ? Trophy
+                          : item.category === "communities"
+                          ? GroupsIcon
+                          : BookOpen;
+
+                      const themeStyle =
+                        DESTINATION_THEMES[item.category] || {
+                          bg: "bg-primary/10",
+                          text: "text-primary",
+                          border: "border-primary/20",
+                        };
+
+                      return (
+                        <CommandItem
+                          key={idx}
+                          value={`suggested-search-${idx}-${item.query}`}
+                          onSelect={() => {
+                            setQuery(item.query);
+                            close();
+                            navigate(buildSearchUrl(item.query, "all"));
+                          }}
+                          className={cn(
+                            "group flex items-center gap-3 rounded-xl px-3 py-2.5 my-1 transition-all duration-150 cursor-pointer",
+                            "data-[selected=true]:bg-accent/80 data-[selected=true]:shadow-xs hover:bg-accent/50",
+                          )}
+                        >
+                          <span
+                            className={cn(
+                              "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border transition-all duration-200 group-data-[selected=true]:scale-105",
+                              themeStyle.bg,
+                              themeStyle.text,
+                              themeStyle.border,
+                            )}
+                          >
+                            <Icon className="h-4 w-4" />
                           </span>
-                          <span className="block truncate text-xs text-muted-foreground/70">
-                            Get an AI overview with relevant faculty, seniors & opportunities
+                          <span className="min-w-0 flex-1">
+                            <span className="flex items-center gap-2">
+                              <span className="block truncate font-medium text-sm text-foreground/90 group-data-[selected=true]:text-foreground">
+                                {item.label}
+                              </span>
+                              <span className="hidden sm:inline-block shrink-0 rounded bg-muted/60 px-1.5 py-0.2 text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">
+                                {item.category === "guides" ? "Guide" : item.category}
+                              </span>
+                            </span>
+                            <span className="block truncate text-xs text-muted-foreground/75 mt-0.5">
+                              {item.subtitle}
+                            </span>
                           </span>
-                        </span>
-                        <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/30 opacity-0 group-data-[selected=true]:opacity-100 group-data-[selected=true]:translate-x-0.5 transition-all" />
-                      </CommandItem>
-                    ))}
+                          <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/30 opacity-0 group-data-[selected=true]:opacity-100 group-data-[selected=true]:translate-x-0.5 transition-all" />
+                        </CommandItem>
+                      );
+                    })}
                   </CommandGroup>
 
                   {/* Compact Quick Actions */}

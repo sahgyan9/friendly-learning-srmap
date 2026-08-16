@@ -39,6 +39,7 @@ export interface AIOverviewResult {
 interface CampusAIOverviewProps {
   query: string;
   results: SearchResultsState;
+  onCitationsLoaded?: (citations: { id: number; text: string; url: string; }[]) => void;
   className?: string;
 }
 
@@ -74,10 +75,12 @@ const setCachedOverview = (q: string, data: AIOverviewResult) => {
 
 export const CampusAIOverview: React.FC<CampusAIOverviewProps> = ({
   query,
-  results, // Not used for the AI logic anymore, but kept for compatibility
+  results, // Kept for compatibility
+  onCitationsLoaded,
   className,
 }) => {
   const [collapsed, setCollapsed] = useState(false);
+  const [activeCitationId, setActiveCitationId] = useState<number | null>(null);
   const [overview, setOverview] = useState<AIOverviewResult | null>(() => {
     const trimmed = query.trim();
     return trimmed.length >= 3 ? getCachedOverview(trimmed) : null;
@@ -114,6 +117,12 @@ export const CampusAIOverview: React.FC<CampusAIOverviewProps> = ({
         }
       });
   }, []);
+
+  useEffect(() => {
+    if (overview?.citations && onCitationsLoaded) {
+      onCitationsLoaded(overview.citations);
+    }
+  }, [overview, onCitationsLoaded]);
 
   useEffect(() => {
     const trimmed = query.trim();
@@ -196,6 +205,136 @@ export const CampusAIOverview: React.FC<CampusAIOverviewProps> = ({
     }
   };
 
+  const renderBadgeIcon = (type: AIEntityBadge["type"]) => {
+    switch (type) {
+      case "faculty":
+        return <GraduationCap className="h-3.5 w-3.5 text-rose-500" />;
+      case "mentor":
+        return <UserCheck className="h-3.5 w-3.5 text-violet-500" />;
+      case "opportunity":
+        return <Trophy className="h-3.5 w-3.5 text-amber-500" />;
+      case "community":
+        return <Users className="h-3.5 w-3.5 text-emerald-500" />;
+      default:
+        return <CampusMindIcon className="h-3.5 w-3.5 text-primary" />;
+    }
+  };
+
+  const getEntityMeta = (url: string, defaultName?: string) => {
+    if (url.includes("/mentor/")) {
+      return {
+        type: "mentor" as const,
+        label: "Senior Mentor",
+        icon: <UserCheck className="h-3.5 w-3.5 text-violet-500" />,
+        badgeColor: "bg-violet-500/10 text-violet-700 dark:text-violet-300 border-violet-500/20",
+      };
+    }
+    if (url.includes("/faculty/")) {
+      return {
+        type: "faculty" as const,
+        label: "Faculty",
+        icon: <GraduationCap className="h-3.5 w-3.5 text-rose-500" />,
+        badgeColor: "bg-rose-500/10 text-rose-700 dark:text-rose-300 border-rose-500/20",
+      };
+    }
+    if (url.includes("/opportunities/")) {
+      return {
+        type: "opportunity" as const,
+        label: "Opportunity",
+        icon: <Trophy className="h-3.5 w-3.5 text-amber-500" />,
+        badgeColor: "bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/20",
+      };
+    }
+    if (url.includes("/workspace-groups/") || url.includes("/communities/")) {
+      return {
+        type: "community" as const,
+        label: "Student Group",
+        icon: <Users className="h-3.5 w-3.5 text-emerald-500" />,
+        badgeColor: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/20",
+      };
+    }
+    return {
+      type: "post" as const,
+      label: "Resource",
+      icon: <CampusMindIcon className="h-3.5 w-3.5 text-primary" />,
+      badgeColor: "bg-primary/10 text-primary border-primary/20",
+    };
+  };
+
+  // Helper to render bold markdown segments and interactive citations
+  const renderFormattedText = (text: string, citations?: { id: number; text: string; url: string; }[]) => {
+    if (!text) return null;
+    const parts = text.split(/(\*\*.*?\*\*|\[\d+\])/g);
+    return parts.map((part, index) => {
+      if (part.startsWith("**") && part.endsWith("**")) {
+        return (
+          <strong key={index} className="font-semibold text-foreground">
+            {part.slice(2, -2)}
+          </strong>
+        );
+      }
+      if (part.startsWith("[") && part.endsWith("]")) {
+        const idStr = part.slice(1, -1);
+        const id = parseInt(idStr, 10);
+        if (!isNaN(id) && citations) {
+          const citation = citations.find(c => c.id === id);
+          if (citation) {
+            const isActive = activeCitationId === id;
+            return (
+              <Link
+                key={index}
+                to={citation.url}
+                title={citation.text}
+                onMouseEnter={() => setActiveCitationId(id)}
+                onMouseLeave={() => setActiveCitationId(null)}
+                className={cn(
+                  "inline-flex items-center justify-center min-w-[1.25rem] h-4 px-1 mx-0.5 rounded border text-[9px] font-bold transition-all align-super",
+                  isActive
+                    ? "bg-primary text-primary-foreground border-primary shadow-xs scale-110"
+                    : "border-primary/30 bg-primary/10 text-primary hover:bg-primary/25 hover:border-primary/50"
+                )}
+              >
+                {id}
+              </Link>
+            );
+          }
+        }
+      }
+      return <span key={index}>{part}</span>;
+    });
+  };
+
+  // Process unique citation source cards (Hook called at top level before early returns)
+  const citedSources = React.useMemo(() => {
+    if (!overview?.citations || overview.citations.length === 0) return [];
+    
+    // Map badges for rich details if available
+    const badgeMap = new Map<string, AIEntityBadge>();
+    (overview.badges || []).forEach((b) => {
+      if (b.to) badgeMap.set(b.to.toLowerCase(), b);
+      if (b.name) badgeMap.set(b.name.toLowerCase(), b);
+    });
+
+    const seenUrls = new Set<string>();
+    return overview.citations
+      .filter((c) => {
+        if (!c.url || seenUrls.has(c.url)) return false;
+        seenUrls.add(c.url);
+        return true;
+      })
+      .map((c) => {
+        const badge = badgeMap.get(c.url.toLowerCase()) || badgeMap.get(c.text.toLowerCase());
+        const meta = getEntityMeta(c.url, c.text);
+        return {
+          id: c.id,
+          text: c.text,
+          url: c.url,
+          detail: badge?.detail || (meta.type === "mentor" ? "Senior Mentor · Available for 1-on-1 Help" : undefined),
+          ...meta,
+        };
+      });
+  }, [overview]);
+
   if (isFeatureEnabled === false && query.trim().length >= 3) {
     return (
       <div
@@ -245,56 +384,6 @@ export const CampusAIOverview: React.FC<CampusAIOverviewProps> = ({
     );
   }
 
-  const renderBadgeIcon = (type: AIEntityBadge["type"]) => {
-    switch (type) {
-      case "faculty":
-        return <GraduationCap className="h-3.5 w-3.5 text-rose-500" />;
-      case "mentor":
-        return <UserCheck className="h-3.5 w-3.5 text-violet-500" />;
-      case "opportunity":
-        return <Trophy className="h-3.5 w-3.5 text-amber-500" />;
-      case "community":
-        return <Users className="h-3.5 w-3.5 text-emerald-500" />;
-      default:
-        return <CampusMindIcon className="h-3.5 w-3.5 text-primary" />;
-    }
-  };
-
-  // Helper to render bold markdown segments nicely
-  const renderFormattedText = (text: string, citations?: { id: number; text: string; url: string; }[]) => {
-    if (!text) return null;
-    const parts = text.split(/(\*\*.*?\*\*|\[\d+\])/g);
-    return parts.map((part, index) => {
-      if (part.startsWith("**") && part.endsWith("**")) {
-        return (
-          <strong key={index} className="font-semibold text-foreground">
-            {part.slice(2, -2)}
-          </strong>
-        );
-      }
-      if (part.startsWith("[") && part.endsWith("]")) {
-        const idStr = part.slice(1, -1);
-        const id = parseInt(idStr, 10);
-        if (!isNaN(id) && citations) {
-          const citation = citations.find(c => c.id === id);
-          if (citation) {
-            return (
-              <Link
-                key={index}
-                to={citation.url}
-                title={citation.text}
-                className="inline-flex items-center justify-center min-w-[1.125rem] h-4 px-0.5 mx-0.5 rounded border border-primary/20 bg-primary/10 text-[9px] font-bold text-primary hover:bg-primary/20 hover:border-primary/40 transition-colors align-super"
-              >
-                {id}
-              </Link>
-            );
-          }
-        }
-      }
-      return <span key={index}>{part}</span>;
-    });
-  };
-
   return (
     <div
       className={cn(
@@ -332,7 +421,7 @@ export const CampusAIOverview: React.FC<CampusAIOverviewProps> = ({
 
       {/* Body content */}
       {!collapsed && (
-        <div className="mt-3.5 space-y-3.5 animate-in fade-in-50 duration-200">
+        <div className="mt-3.5 space-y-4 animate-in fade-in-50 duration-200">
           {loading && !overview ? (
             <CampusThinkingStatus
               className="py-6"
@@ -351,7 +440,7 @@ export const CampusAIOverview: React.FC<CampusAIOverviewProps> = ({
           ) : overview ? (
             <>
               {/* Main summary paragraph */}
-              <p className="text-sm leading-relaxed text-muted-foreground">
+              <p className="text-sm leading-relaxed text-foreground/90 dark:text-muted-foreground">
                 {renderFormattedText(overview.summary, overview.citations)}
               </p>
 
@@ -367,8 +456,76 @@ export const CampusAIOverview: React.FC<CampusAIOverviewProps> = ({
                 </div>
               )}
 
-              {/* Quick Action Badges */}
-              {overview.badges && overview.badges.length > 0 && (
+              {/* ── Cited Campus Sources (Google SGE Style) ── */}
+              {citedSources.length > 0 && (
+                <div className="space-y-2.5 pt-2 border-t border-border/40">
+                  <div className="flex items-center justify-between">
+                    <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-foreground/80">
+                      <Sparkles className="h-3.5 w-3.5 text-primary" />
+                      Cited Campus Sources ({citedSources.length})
+                    </span>
+                    <span className="text-[11px] text-muted-foreground hidden sm:inline">
+                      Directly referenced in AI synthesis
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+                    {citedSources.map((source) => {
+                      const isActive = activeCitationId === source.id;
+                      return (
+                        <Link
+                          key={source.id}
+                          to={source.url}
+                          onMouseEnter={() => setActiveCitationId(source.id)}
+                          onMouseLeave={() => setActiveCitationId(null)}
+                          className={cn(
+                            "group relative flex flex-col justify-between rounded-xl border p-3 backdrop-blur-md transition-all duration-200 text-left shadow-2xs",
+                            isActive
+                              ? "border-primary bg-primary/15 ring-2 ring-primary/20 shadow-sm"
+                              : "border-border/60 bg-card/80 hover:border-primary/50 hover:bg-accent/50"
+                          )}
+                        >
+                          <div>
+                            <div className="flex items-center justify-between gap-1.5 mb-2">
+                              <span className={cn(
+                                "inline-flex items-center justify-center h-5 px-1.5 rounded-md text-[10px] font-bold border transition-colors",
+                                isActive
+                                  ? "bg-primary text-primary-foreground border-primary"
+                                  : "bg-primary/10 text-primary border-primary/20"
+                              )}>
+                                [{source.id}]
+                              </span>
+                              <span className={cn("inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider", source.badgeColor)}>
+                                {source.icon}
+                                <span>{source.label}</span>
+                              </span>
+                            </div>
+
+                            <h4 className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-1">
+                              {source.text}
+                            </h4>
+                            {source.detail && (
+                              <p className="text-[11px] text-muted-foreground line-clamp-1 mt-0.5">
+                                {source.detail}
+                              </p>
+                            )}
+                          </div>
+
+                          <div className="flex items-center justify-between text-[10px] text-primary group-hover:text-primary font-medium mt-2 pt-1.5 border-t border-border/30">
+                            <span className="text-muted-foreground/70 group-hover:text-foreground/80 transition-colors">
+                              View Profile
+                            </span>
+                            <ArrowRight className="h-3 w-3 group-hover:translate-x-0.5 transition-transform" />
+                          </div>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Quick Action Badges (if different from citations) */}
+              {overview.badges && overview.badges.length > 0 && citedSources.length === 0 && (
                 <div className="flex flex-wrap items-center gap-2 pt-1">
                   <span className="text-[11px] font-medium text-muted-foreground shrink-0">
                     Top Suggestions:

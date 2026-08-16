@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   ArrowLeft,
@@ -11,6 +11,9 @@ import {
   Star,
   Users2,
   Sparkles,
+  SlidersHorizontal,
+  Compass,
+  Filter,
 } from "lucide-react";
 
 import { FacultyIcon } from "@/components/icons/FacultyIcon";
@@ -19,7 +22,10 @@ import { MentorIcon } from "@/components/icons/MentorIcon";
 import { PostIcon } from "@/components/icons/PostIcon";
 import { CampusMindIcon } from "@/components/icons/CampusMindIcon";
 import { CampusThinkingStatus } from "@/components/search/CampusThinkingStatus";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { GoogleResultCard } from "@/components/search/GoogleResultCard";
+import { FeaturedKnowledgeCard } from "@/components/search/FeaturedKnowledgeCard";
+import { RelatedSearches } from "@/components/search/RelatedSearches";
+import { CampusAIOverview } from "@/components/search/CampusAIOverview";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
@@ -30,10 +36,26 @@ import {
   type SearchTab,
 } from "@/lib/search/search-params";
 import { useSearchResults, type SearchResultItem } from "@/hooks/useSearchResults";
-import { getInitials } from "@/utils/user-utils";
-import { getCommunityKindMeta } from "@/integrations/supabase/services/communities";
-import { CampusAIOverview } from "@/components/search/CampusAIOverview";
-import { parseQuery } from "@/lib/search/query-engine";
+import { parseQuery, calculateExactBoost, CAMPUS_DEPARTMENTS } from "@/lib/search/query-engine";
+
+// ─── Relevance threshold for the "all" tab ──────────────────────────────────
+//
+// Faculty are fetched via a broad ilike keyword search sorted by rating.
+// That means a top-rated Mechanical Engineering professor can appear on a
+// "Web Development DSA" search because the word "Development" matched his
+// research text. We suppress those false positives by requiring the
+// relevanceScore to be strictly above the base value (100).
+//
+// Score anatomy for keyword-fetched faculty:
+//   base            = 100  (no match at all — filtered out in "all" tab)
+//   + interestBoost = 40 × # subject-token hits in interests/research_areas
+//   + deptBoost     = 200  (query's detectedDepartment matched this faculty)
+//   + boost × 50        (name token exact-match signal)
+//
+// Semantic-only faculty arrive with relevanceScore = similarity × 80 (<100),
+// so they are never caught by this filter and always shown when relevant.
+//
+const MIN_FACULTY_RELEVANCE_ALL = 30; // strict greater-than: >30 means at least one genuine match signal
 
 // ─── Per-category metadata ──────────────────────────────────────────────────
 
@@ -85,210 +107,15 @@ const TAB_META: Record<
   },
 };
 
-// ─── Subcomponents ───────────────────────────────────────────────────────────
-
-/** Avatar + title + subtitle card used for people (mentors, faculty). */
-function PersonCard({ item, to }: { item: SearchResultItem; to: string }) {
-  const navigate = useNavigate();
-  const rating = item.meta?.avg_overall ?? item.meta?.rating;
-  const ratingCount = item.meta?.rating_count ?? item.meta?.review_count;
-
-  return (
-    <button
-      onClick={() => navigate(to)}
-      className={cn(
-        "group flex items-start gap-3 w-full rounded-xl border border-border/50 bg-card/60 p-3",
-        "hover:border-primary/30 hover:bg-accent/40 hover:shadow-sm transition-all duration-200 text-left",
-      )}
-    >
-      <Avatar className="h-10 w-10 shrink-0 border border-border/50 group-hover:border-primary/30 transition-colors">
-        <AvatarImage src={item.image ?? undefined} alt="" />
-        <AvatarFallback className="text-xs font-medium">{getInitials(item.title)}</AvatarFallback>
-      </Avatar>
-      <div className="min-w-0 flex-1">
-        <p className="truncate font-semibold text-sm text-foreground/90 group-hover:text-foreground">
-          {item.title}
-        </p>
-        <p className="truncate text-xs text-muted-foreground mt-0.5">{item.subtitle}</p>
-        {typeof rating === "number" && rating > 0 && (
-          <div className="flex items-center gap-1 mt-1">
-            <Star className="h-3 w-3 text-amber-400 fill-amber-400" />
-            <span className="text-xs font-medium text-foreground/70">
-              {rating.toFixed(1)}
-              {typeof ratingCount === "number" && ratingCount > 0 && (
-                <span className="text-muted-foreground font-normal ml-1">({ratingCount})</span>
-              )}
-            </span>
-          </div>
-        )}
-      </div>
-      <ChevronRight className="h-4 w-4 text-muted-foreground/30 group-hover:text-muted-foreground/60 group-hover:translate-x-0.5 transition-all shrink-0 mt-1" />
-    </button>
-  );
-}
-
-/** Name + interests only, no navigation. */
-function StudentCard({ item }: { item: SearchResultItem }) {
-  const interests = Array.isArray(item.meta?.interests)
-    ? (item.meta!.interests as unknown[]).filter((v): v is string => typeof v === "string")
-    : [];
-
-  return (
-    <div className="flex items-start gap-3 w-full rounded-xl border border-border/50 bg-card/60 p-3">
-      <Avatar className="h-10 w-10 shrink-0 border border-border/50">
-        <AvatarImage src={item.image ?? undefined} alt="" />
-        <AvatarFallback className="text-xs font-medium">{getInitials(item.title)}</AvatarFallback>
-      </Avatar>
-      <div className="min-w-0 flex-1">
-        <p className="truncate font-semibold text-sm text-foreground/90">{item.title}</p>
-        <p className="truncate text-xs text-muted-foreground mt-0.5">
-          {interests.length > 0 ? interests.slice(0, 3).join(", ") : "Student"}
-        </p>
-      </div>
-    </div>
-  );
-}
-
-/** Icon + title + subtitle card used for communities, posts, opportunities, blog. */
-function ContentCard({
-  item,
-  to,
-  icon: FallbackIcon,
-  iconClass,
-}: {
-  item: SearchResultItem;
-  to: string;
-  icon: React.ElementType;
-  iconClass: string;
-}) {
-  const navigate = useNavigate();
-  const KindIcon = item.meta?.kind ? getCommunityKindMeta(item.meta.kind as string)?.icon : null;
-  const Icon = KindIcon ?? FallbackIcon;
-
-  return (
-    <button
-      onClick={() => navigate(to)}
-      className={cn(
-        "group flex items-start gap-3 w-full rounded-xl border border-border/50 bg-card/60 p-3",
-        "hover:border-primary/30 hover:bg-accent/40 hover:shadow-sm transition-all duration-200 text-left",
-      )}
-    >
-      {item.image ? (
-        <img
-          src={item.image}
-          alt=""
-          className="h-10 w-10 shrink-0 rounded-lg object-cover border border-border/50"
-        />
-      ) : (
-        <span className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border", iconClass)}>
-          <Icon className="h-4 w-4" />
-        </span>
-      )}
-      <div className="min-w-0 flex-1">
-        <p className="truncate font-semibold text-sm text-foreground/90 group-hover:text-foreground">
-          {item.title}
-        </p>
-        <p className="truncate text-xs text-muted-foreground mt-0.5">{item.subtitle}</p>
-      </div>
-      <ChevronRight className="h-4 w-4 text-muted-foreground/30 group-hover:text-muted-foreground/60 group-hover:translate-x-0.5 transition-all shrink-0 mt-1" />
-    </button>
-  );
-}
-
-function renderItem(item: SearchResultItem, tab: SearchTab) {
-  if (tab === "mentors") return <PersonCard key={item.id} item={item} to={item.to} />;
-  if (tab === "faculty") return <PersonCard key={item.id} item={item} to={item.to} />;
-  if (tab === "opportunities")
-    return (
-      <ContentCard
-        key={item.id}
-        item={item}
-        to={item.to}
-        icon={Trophy}
-        iconClass="border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400"
-      />
-    );
-  if (tab === "communities")
-    return (
-      <ContentCard
-        key={item.id}
-        item={item}
-        to={item.to}
-        icon={GroupsIcon}
-        iconClass="border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-      />
-    );
-  if (tab === "posts")
-    return (
-      <ContentCard
-        key={item.id}
-        item={item}
-        to={item.to}
-        icon={PostIcon}
-        iconClass="border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400"
-      />
-    );
-  if (tab === "blog")
-    return (
-      <ContentCard
-        key={item.id}
-        item={item}
-        to={item.to}
-        icon={BookOpen}
-        iconClass="border-slate-500/30 bg-slate-500/10 text-slate-600 dark:text-slate-400"
-      />
-    );
-  return null;
-}
-
-/** One horizontal category section in the "All" dashboard view. */
-function CategorySection({
-  title,
-  tab,
-  items,
-  count,
-  onSeeAll,
-}: {
-  title: string;
-  tab: Exclude<SearchTab, "all">;
-  items: SearchResultItem[];
-  count: number;
-  onSeeAll: () => void;
-}) {
-  if (items.length === 0) return null;
-  const meta = TAB_META[tab];
-  const Icon = meta.icon;
-
-  return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Icon className={cn("h-4 w-4", meta.color)} />
-          <h2 className="text-sm font-semibold text-foreground/80 uppercase tracking-wide">{title}</h2>
-          {count > 0 && (
-            <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-              {count}
-            </span>
-          )}
-        </div>
-        {count > items.length && (
-          <button
-            onClick={onSeeAll}
-            className="flex items-center gap-0.5 text-xs text-primary/70 hover:text-primary transition-colors group"
-          >
-            <span>See all {count}</span>
-            <ChevronRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
-          </button>
-        )}
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-        {items.map((item) => renderItem(item, tab))}
-      </div>
-    </div>
-  );
-}
-
-// ─── Main page ───────────────────────────────────────────────────────────────
+const POPULAR_DEPARTMENTS = [
+  { code: "cse", label: "Computer Science" },
+  { code: "ece", label: "Electronics (ECE)" },
+  { code: "me", label: "Mechanical" },
+  { code: "bio", label: "Biological Sciences" },
+  { code: "math", label: "Mathematics" },
+  { code: "phys", label: "Physics" },
+  { code: "mgmt", label: "Management" },
+];
 
 export default function SearchPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -298,12 +125,23 @@ export default function SearchPage() {
   const [localQ, setLocalQ] = useState(q);
   const [isAiMode, setIsAiMode] = useState(true);
   const [offset, setOffset] = useState(0);
+  const [departmentFilter, setDepartmentFilter] = useState<string | null>(null);
+  const [citedUrlsMap, setCitedUrlsMap] = useState<Map<string, number>>(new Map());
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleCitationsLoaded = useCallback((citations: { id: number; text: string; url: string }[]) => {
+    const map = new Map<string, number>();
+    citations.forEach((c) => {
+      if (c.url) map.set(c.url.toLowerCase(), c.id);
+    });
+    setCitedUrlsMap(map);
+  }, []);
 
   // Keep local input in sync when URL changes
   useEffect(() => {
     setLocalQ(q);
     setOffset(0);
+    setCitedUrlsMap(new Map());
   }, [q]);
 
   const results = useSearchResults(q, tab, offset);
@@ -324,6 +162,9 @@ export default function SearchPage() {
     if (!trimmed) return;
     const next = new URLSearchParams();
     next.set("q", trimmed);
+    if (tab !== "all") {
+      next.set("type", tab);
+    }
     setOffset(0);
     setSearchParams(next, { replace: false });
   };
@@ -339,25 +180,65 @@ export default function SearchPage() {
 
   const isEmpty = !results.loading && q.trim() && totalAcrossAll === 0;
 
+  // Determine if there is a top entity hit for Featured Knowledge Panel
+  // Only triggers for genuine exact person/entity lookups, NEVER on broad category queries
+  const topEntityHit = useMemo(() => {
+    if (!q || results.loading || isEmpty) return null;
+    const parsed = parseQuery(q);
+
+    // If query has specific name tokens or entity intent
+    if (parsed.intent === "entity_lookup") {
+      if (results.faculty.length > 0) {
+        const topFaculty = results.faculty[0];
+        const boost = calculateExactBoost(topFaculty.title, q, parsed.nameTokens);
+        if (boost >= 0.8) return topFaculty;
+      }
+      if (results.mentors.length > 0) {
+        const topMentor = results.mentors[0];
+        const boost = calculateExactBoost(topMentor.title, q, parsed.nameTokens);
+        if (boost >= 0.8) return topMentor;
+      }
+    }
+    return null;
+  }, [q, results, isEmpty]);
+
+  // Filtered single-category items if sub-filters active
+  const filteredCategoryItems = useMemo(() => {
+    let rawItems: SearchResultItem[] = [];
+    if (tab === "mentors") rawItems = results.mentors;
+    else if (tab === "faculty") rawItems = results.faculty;
+    else if (tab === "opportunities") rawItems = results.opportunities;
+    else if (tab === "communities") rawItems = results.communities;
+    else if (tab === "posts") rawItems = results.posts;
+    else if (tab === "blog") rawItems = results.blog;
+
+    if (!departmentFilter) return rawItems;
+
+    return rawItems.filter((item) => {
+      const dept = (item.meta?.department as string || item.subtitle || "").toLowerCase();
+      return dept.includes(departmentFilter.toLowerCase());
+    });
+  }, [tab, results, departmentFilter]);
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background text-foreground selection:bg-primary/20">
       {/* ── Header ── */}
       <div className="sticky top-0 z-20 border-b border-border/50 bg-background/95 backdrop-blur-xl">
-        <div className="container mx-auto max-w-5xl px-4 py-3">
+        <div className="container mx-auto max-w-6xl px-4 py-3">
           {/* Search bar row */}
           <div className="flex items-center gap-3">
             <button
               onClick={() => navigate(-1)}
-              className="shrink-0 flex items-center justify-center h-9 w-9 rounded-lg border border-border/50 bg-card/60 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+              className="shrink-0 flex items-center justify-center h-10 w-10 rounded-xl border border-border/50 bg-card/60 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
               aria-label="Go back"
             >
               <ArrowLeft className="h-4 w-4" />
             </button>
             <div className="relative flex-1 flex items-center">
               {isAiMode ? (
-                <CampusMindIcon speed={results.loading ? "fast" : "normal"} className="absolute left-3 h-4 w-4 text-violet-500 dark:text-violet-400 shrink-0 pointer-events-none" />
+                <CampusMindIcon speed={results.loading ? "fast" : "normal"} className="absolute left-3.5 h-4 w-4 text-violet-500 dark:text-violet-400 shrink-0 pointer-events-none" />
               ) : (
-                <Search className="absolute left-3 h-4 w-4 text-muted-foreground/60 shrink-0 pointer-events-none" />
+                <Search className="absolute left-3.5 h-4 w-4 text-muted-foreground/60 shrink-0 pointer-events-none" />
               )}
               <input
                 ref={inputRef}
@@ -374,11 +255,11 @@ export default function SearchPage() {
                 }}
                 placeholder={
                   isAiMode
-                    ? 'Ask CampusMind: "Which professor is best for DSA?" or "Find ML mentors..."'
+                    ? 'Ask CampusMind: "Computer Science faculty" or "Web Dev mentors…"'
                     : "Search mentors, faculty, hackathons, groups, posts…"
                 }
                 className={cn(
-                  "w-full h-10 rounded-xl border pl-9 pr-28 text-sm transition-all shadow-2xs",
+                  "w-full h-10 sm:h-11 rounded-xl border pl-10 pr-28 text-sm transition-all shadow-2xs",
                   isAiMode
                     ? "border-violet-500/50 bg-gradient-to-r from-violet-500/[0.08] via-purple-500/[0.04] to-transparent ring-2 ring-violet-500/20 shadow-sm shadow-violet-500/10 focus:border-violet-500/70 focus:bg-card text-foreground"
                     : "border-border/60 bg-card/60 focus:border-primary/50 focus:ring-2 focus:ring-primary/20 focus:bg-card text-foreground",
@@ -406,7 +287,7 @@ export default function SearchPage() {
                   type="button"
                   onClick={() => setIsAiMode((prev) => !prev)}
                   className={cn(
-                    "flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium transition-all duration-200 cursor-pointer select-none",
+                    "flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-medium transition-all duration-200 cursor-pointer select-none",
                     isAiMode
                       ? "bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-xs ring-1 ring-violet-400/40"
                       : "border border-border/60 bg-muted/40 text-muted-foreground hover:text-foreground hover:bg-accent",
@@ -418,14 +299,14 @@ export default function SearchPage() {
                 </button>
               </div>
             </div>
-            <Button onClick={() => submitSearch(localQ)} size="sm" className="shrink-0 h-10 px-4 rounded-xl">
+            <Button onClick={() => submitSearch(localQ)} size="sm" className="shrink-0 h-10 sm:h-11 px-5 rounded-xl font-medium">
               Search
             </Button>
           </div>
 
-          {/* Tab strip */}
+          {/* Google Tabs Strip */}
           {q && (
-            <div className="flex items-center gap-1 mt-3 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+            <div className="flex items-center gap-1.5 mt-3 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden pt-1">
               {SEARCH_TABS.map((t) => {
                 const count = t === "all" ? null : results.counts[t];
                 const active = tab === t;
@@ -434,10 +315,10 @@ export default function SearchPage() {
                     key={t}
                     onClick={() => setTab(t)}
                     className={cn(
-                      "flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-all duration-150",
+                      "flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs sm:text-sm font-medium transition-all duration-150",
                       active
-                        ? "bg-primary text-primary-foreground shadow-sm"
-                        : "text-muted-foreground hover:text-foreground hover:bg-accent",
+                        ? "bg-primary text-primary-foreground shadow-sm font-semibold"
+                        : "text-muted-foreground hover:text-foreground hover:bg-accent/60",
                     )}
                   >
                     {TAB_LABELS[t]}
@@ -461,18 +342,30 @@ export default function SearchPage() {
         </div>
       </div>
 
-      {/* ── Body ── */}
-      <div className="container mx-auto max-w-5xl px-4 py-6">
-        {/* No query yet — prompt */}
+      {/* ── SERP Body ── */}
+      <div className="container mx-auto max-w-6xl px-4 sm:px-6 py-6">
+        {/* No query yet — landing prompt */}
         {!q && (
           <div className="flex flex-col items-center justify-center py-24 text-center">
             <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted/50 text-muted-foreground mb-4 border border-border/50">
               <Search className="h-7 w-7 opacity-40" />
             </div>
             <h1 className="text-xl font-semibold text-foreground mb-2">Search Friendly Learning</h1>
-            <p className="text-sm text-muted-foreground max-w-xs">
-              Find mentors, faculty, hackathons, groups, posts and articles across SRM-AP.
+            <p className="text-sm text-muted-foreground max-w-sm leading-relaxed">
+              Find professors, senior mentors, project hackathons, student groups, and articles across SRM-AP with instant CampusMind search.
             </p>
+
+            <div className="mt-8 flex flex-wrap justify-center gap-2 max-w-md">
+              {["Machine Learning faculty", "Python mentors", "SIH Hackathon teams", "DSA questions", "Electives guide"].map((suggestion, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => submitSearch(suggestion)}
+                  className="rounded-xl border border-border/60 bg-card/60 px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:border-primary/40 hover:bg-accent transition-colors"
+                >
+                  {suggestion}
+                </button>
+              ))}
+            </div>
           </div>
         )}
 
@@ -509,11 +402,6 @@ export default function SearchPage() {
           </div>
         )}
 
-        {/* Campus AI Overview (AI Mode) */}
-        {q && !results.loading && !isEmpty && (
-          <CampusAIOverview query={q} results={results} className="mb-6" />
-        )}
-
         {/* Empty state */}
         {isEmpty && (
           <div className="flex flex-col items-center justify-center py-20 text-center">
@@ -525,215 +413,319 @@ export default function SearchPage() {
           </div>
         )}
 
-        {/* Results — All tab: multi-column dashboard */}
-        {q && !results.loading && tab === "all" && !isEmpty && (() => {
-          const parsed = parseQuery(q);
-
-          const facultySection = (
-            <CategorySection
-              key="faculty"
-              title="Faculty"
-              tab="faculty"
-              items={results.faculty}
-              count={results.counts.faculty}
-              onSeeAll={() => setTab("faculty")}
-            />
-          );
-
-          const mentorsSection = (
-            <CategorySection
-              key="mentors"
-              title="Mentors"
-              tab="mentors"
-              items={results.mentors}
-              count={results.counts.mentors}
-              onSeeAll={() => setTab("mentors")}
-            />
-          );
-
-          const oppSection = (
-            <CategorySection
-              key="opportunities"
-              title="Hackathons & Contests"
-              tab="opportunities"
-              items={results.opportunities}
-              count={results.counts.opportunities}
-              onSeeAll={() => setTab("opportunities")}
-            />
-          );
-
-          const communitySection = (
-            <CategorySection
-              key="communities"
-              title="Groups"
-              tab="communities"
-              items={results.communities}
-              count={results.counts.communities}
-              onSeeAll={() => setTab("communities")}
-            />
-          );
-
-          const postSection = (
-            <CategorySection
-              key="posts"
-              title="Posts"
-              tab="posts"
-              items={results.posts}
-              count={results.counts.posts}
-              onSeeAll={() => setTab("posts")}
-            />
-          );
-
-          const blogSection = (
-            <CategorySection
-              key="blog"
-              title="Blog"
-              tab="blog"
-              items={results.blog}
-              count={results.counts.blog}
-              onSeeAll={() => setTab("blog")}
-            />
-          );
-
-          const studentsSection = results.students.length > 0 ? (
-            <div key="students" className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Users2 className="h-4 w-4 text-indigo-500" />
-                <h2 className="text-sm font-semibold text-foreground/80 uppercase tracking-wide">Students</h2>
-                <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-                  {results.students.length}
-                </span>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                {results.students.map((item) => (
-                  <StudentCard key={item.id} item={item} />
-                ))}
-              </div>
-            </div>
-          ) : null;
-
-          let orderedSections = [
-            mentorsSection,
-            studentsSection,
-            facultySection,
-            oppSection,
-            communitySection,
-            postSection,
-            blogSection,
-          ];
-
-          if (parsed.intent === "informational") {
-            orderedSections = [
-              blogSection,
-              postSection,
-              mentorsSection,
-              facultySection,
-              communitySection,
-              oppSection,
-              studentsSection,
-            ];
-          } else if (parsed.intent === "domain_subject") {
-            orderedSections = [
-              facultySection,
-              mentorsSection,
-              oppSection,
-              communitySection,
-              postSection,
-              studentsSection,
-              blogSection,
-            ];
-          } else if (parsed.intent === "entity_lookup") {
-            orderedSections = [
-              facultySection,
-              mentorsSection,
-              studentsSection,
-              communitySection,
-              postSection,
-              oppSection,
-              blogSection,
-            ];
-          } else if (parsed.intent === "opportunity") {
-            orderedSections = [
-              oppSection,
-              communitySection,
-              mentorsSection,
-              facultySection,
-              studentsSection,
-              postSection,
-              blogSection,
-            ];
-          } else if (parsed.intent === "community") {
-            orderedSections = [
-              communitySection,
-              postSection,
-              oppSection,
-              mentorsSection,
-              facultySection,
-              studentsSection,
-              blogSection,
-            ];
-          } else if (parsed.intent === "post") {
-            orderedSections = [
-              postSection,
-              communitySection,
-              mentorsSection,
-              facultySection,
-              studentsSection,
-              oppSection,
-              blogSection,
-            ];
-          }
-
-          return (
-            <div className="space-y-7">
-              <p className="text-xs text-muted-foreground">
-                Showing top results across all categories for <strong className="text-foreground">"{q}"</strong>
+        {/* Results Main Content Stream */}
+        {q && !results.loading && !isEmpty && (
+          <div className="space-y-6">
+            {/* Top result info / count metadata */}
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <p>
+                About <strong className="text-foreground">{tab === "all" ? totalAcrossAll : results.total}</strong> results for{" "}
+                <strong className="text-foreground">"{q}"</strong>
               </p>
-              {orderedSections}
             </div>
-          );
-        })()}
 
-        {/* Results — Single-category tab: full grid */}
-        {q && !results.loading && tab !== "all" && !isEmpty && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <p className="text-xs text-muted-foreground">
-                {results.total > 0 ? (
-                  <>
-                    {results.total} result{results.total !== 1 ? "s" : ""} for{" "}
-                    <strong className="text-foreground">"{q}"</strong>
-                  </>
-                ) : (
-                  <>
-                    Results for <strong className="text-foreground">"{q}"</strong>
-                  </>
+            {/* Campus AI Overview (Google SGE Style) */}
+            {tab === "all" && isAiMode && (
+              <CampusAIOverview
+                query={q}
+                results={results}
+                onCitationsLoaded={handleCitationsLoaded}
+                className="mb-6"
+              />
+            )}
+
+            {/* Top Featured Knowledge Card if entity matched */}
+            {topEntityHit && tab === "all" && (
+              <FeaturedKnowledgeCard item={topEntityHit} className="mb-6" />
+            )}
+
+            {/* ── Tab === 'all': Ranked Google SERP Sections ── */}
+            {tab === "all" && (() => {
+              const parsed = parseQuery(q);
+
+              // Category section renderer
+              const renderSection = (
+                title: string,
+                categoryTab: Exclude<SearchTab, "all">,
+                items: SearchResultItem[],
+                count: number,
+              ) => {
+                if (items.length === 0) return null;
+                const meta = TAB_META[categoryTab];
+                const Icon = meta.icon;
+
+                return (
+                  <section key={categoryTab} className="space-y-3 pt-2">
+                    <div className="flex items-center justify-between border-b border-border/30 pb-2">
+                      <div className="flex items-center gap-2">
+                        <Icon className={cn("h-4 w-4", meta.color)} />
+                        <h2 className="text-xs font-bold uppercase tracking-wider text-foreground/80">
+                          {title}
+                        </h2>
+                        {count > 0 && (
+                          <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold text-muted-foreground tabular-nums">
+                            {count}
+                          </span>
+                        )}
+                      </div>
+                      {count > items.length && (
+                        <button
+                          onClick={() => setTab(categoryTab)}
+                          className="flex items-center gap-1 text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline group"
+                        >
+                          <span>See all {count} {title.toLowerCase()}</span>
+                          <ChevronRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="space-y-3">
+                      {items.map((item) => (
+                        <GoogleResultCard
+                          key={item.id}
+                          item={item}
+                          query={q}
+                          citationId={item.to ? citedUrlsMap.get(item.to.toLowerCase()) : undefined}
+                        />
+                      ))}
+                    </div>
+                  </section>
+                );
+              };
+
+              // Filter faculty for the "all" tab: only surface those with a genuine
+              // topical signal (score > base 30).
+              const relevantFacultyForAll = results.faculty.filter(
+                (item) => (item.relevanceScore ?? 0) > MIN_FACULTY_RELEVANCE_ALL,
+              );
+              const facultySection = renderSection(
+                "Faculty & Research",
+                "faculty",
+                relevantFacultyForAll,
+                results.counts.faculty,
+              );
+
+              const mentorsSection = renderSection(
+                "Senior Mentors",
+                "mentors",
+                results.mentors,
+                results.counts.mentors,
+              );
+
+              const oppSection = renderSection(
+                "Hackathons & Competitions",
+                "opportunities",
+                results.opportunities,
+                results.counts.opportunities,
+              );
+
+              const communitySection = renderSection(
+                "Student Groups",
+                "communities",
+                results.communities,
+                results.counts.communities,
+              );
+
+              const postSection = renderSection(
+                "Campus Posts & Discussions",
+                "posts",
+                results.posts,
+                results.counts.posts,
+              );
+
+              const blogSection = renderSection(
+                "Campus Guides",
+                "blog",
+                results.blog,
+                results.counts.blog,
+              );
+
+              const studentsSection = results.students.length > 0 ? (
+                <section key="students" className="space-y-3 pt-2">
+                  <div className="flex items-center justify-between border-b border-border/30 pb-2">
+                    <div className="flex items-center gap-2">
+                      <Users2 className="h-4 w-4 text-indigo-500" />
+                      <h2 className="text-xs font-bold uppercase tracking-wider text-foreground/80">
+                        Student Profiles
+                      </h2>
+                      <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold text-muted-foreground tabular-nums">
+                        {results.students.length}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    {results.students.map((item) => (
+                      <GoogleResultCard
+                        key={item.id}
+                        item={item}
+                        query={q}
+                        citationId={item.to ? citedUrlsMap.get(item.to.toLowerCase()) : undefined}
+                      />
+                    ))}
+                  </div>
+                </section>
+              ) : null;
+
+              // Order sections according to explicit targetCategory or intent
+              let orderedSections = [
+                mentorsSection,
+                facultySection,
+                oppSection,
+                communitySection,
+                postSection,
+                blogSection,
+                studentsSection,
+              ];
+
+              if (parsed.targetCategory === "mentors") {
+                orderedSections = [
+                  mentorsSection,
+                  studentsSection,
+                  communitySection,
+                  postSection,
+                  oppSection,
+                  facultySection,
+                  blogSection,
+                ];
+              } else if (parsed.targetCategory === "faculty") {
+                orderedSections = [
+                  facultySection,
+                  mentorsSection,
+                  oppSection,
+                  communitySection,
+                  postSection,
+                  studentsSection,
+                  blogSection,
+                ];
+              } else if (parsed.targetCategory === "opportunities" || parsed.intent === "opportunity") {
+                orderedSections = [
+                  oppSection,
+                  communitySection,
+                  mentorsSection,
+                  facultySection,
+                  studentsSection,
+                  postSection,
+                  blogSection,
+                ];
+              } else if (parsed.targetCategory === "communities" || parsed.intent === "community") {
+                orderedSections = [
+                  communitySection,
+                  postSection,
+                  oppSection,
+                  mentorsSection,
+                  facultySection,
+                  studentsSection,
+                  blogSection,
+                ];
+              } else if (parsed.targetCategory === "posts" || parsed.intent === "post") {
+                orderedSections = [
+                  postSection,
+                  communitySection,
+                  mentorsSection,
+                  facultySection,
+                  oppSection,
+                  studentsSection,
+                  blogSection,
+                ];
+              } else if (parsed.targetCategory === "blog" || parsed.intent === "informational") {
+                orderedSections = [
+                  blogSection,
+                  postSection,
+                  mentorsSection,
+                  facultySection,
+                  communitySection,
+                  oppSection,
+                  studentsSection,
+                ];
+              } else if (parsed.intent === "entity_lookup") {
+                orderedSections = [
+                  facultySection,
+                  mentorsSection,
+                  studentsSection,
+                  communitySection,
+                  postSection,
+                  oppSection,
+                  blogSection,
+                ];
+              } else if (parsed.intent === "domain_subject") {
+                // If coding/web/software domain, prioritize mentors and collaborative groups
+                const isTechDomain = parsed.tokens.some((t) =>
+                  ["web", "dsa", "react", "python", "javascript", "code", "dev", "frontend", "backend", "fullstack", "algorithm"].includes(t)
+                );
+                orderedSections = isTechDomain
+                  ? [mentorsSection, oppSection, communitySection, facultySection, postSection, studentsSection, blogSection]
+                  : [facultySection, mentorsSection, oppSection, communitySection, postSection, studentsSection, blogSection];
+              }
+
+              return (
+                <div className="space-y-6">
+                  {orderedSections}
+                </div>
+              );
+            })()}
+
+            {/* ── Single-Category Tab: Full Google SERP Listing ── */}
+            {tab !== "all" && (
+              <div className="space-y-4">
+                {/* Sub-filter chips (e.g. Department filter for faculty/mentors) */}
+                {(tab === "faculty" || tab === "mentors") && (
+                  <div className="flex items-center gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none]">
+                    <span className="text-xs font-medium text-muted-foreground shrink-0 mr-1 flex items-center gap-1">
+                      <Filter className="h-3 w-3" /> Filter:
+                    </span>
+                    <button
+                      onClick={() => setDepartmentFilter(null)}
+                      className={cn(
+                        "rounded-lg px-2.5 py-1 text-xs font-medium transition-colors shrink-0",
+                        !departmentFilter
+                          ? "bg-primary text-primary-foreground font-semibold"
+                          : "bg-muted/60 text-muted-foreground hover:bg-accent hover:text-foreground",
+                      )}
+                    >
+                      All Departments
+                    </button>
+                    {POPULAR_DEPARTMENTS.map((dept) => (
+                      <button
+                        key={dept.code}
+                        onClick={() => setDepartmentFilter(dept.label)}
+                        className={cn(
+                          "rounded-lg px-2.5 py-1 text-xs font-medium transition-colors shrink-0",
+                          departmentFilter === dept.label
+                            ? "bg-primary text-primary-foreground font-semibold"
+                            : "bg-muted/60 text-muted-foreground hover:bg-accent hover:text-foreground",
+                        )}
+                      >
+                        {dept.label}
+                      </button>
+                    ))}
+                  </div>
                 )}
-              </p>
-            </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
-              {(tab === "mentors"
-                ? results.mentors
-                : tab === "faculty"
-                ? results.faculty
-                : tab === "opportunities"
-                ? results.opportunities
-                : tab === "communities"
-                ? results.communities
-                : tab === "posts"
-                ? results.posts
-                : results.blog
-              ).map((item) => renderItem(item, tab))}
-            </div>
+                <div className="space-y-3">
+                  {filteredCategoryItems.map((item) => (
+                    <GoogleResultCard key={item.id} item={item} query={q} />
+                  ))}
+                </div>
 
-            {results.hasMore && (
-              <div className="flex justify-center pt-4">
-                <Button variant="outline" onClick={() => setOffset((prev) => prev + 20)} className="rounded-xl">
-                  Load more
-                </Button>
+                {results.hasMore && (
+                  <div className="flex justify-center pt-6">
+                    <Button
+                      variant="outline"
+                      onClick={() => setOffset((prev) => prev + 20)}
+                      className="rounded-xl px-6"
+                    >
+                      Load More Results
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
+
+            {/* Related Campus Searches at the bottom */}
+            <div className="pt-6">
+              <RelatedSearches query={q} onSelectQuery={submitSearch} />
+            </div>
           </div>
         )}
       </div>
