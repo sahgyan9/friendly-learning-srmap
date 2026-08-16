@@ -209,6 +209,7 @@ export function useSiteSearch(query: string, enabled: boolean) {
           community.member_count === 1 ? "member" : "members"
         }`,
         to: `/workspace-groups/${community.slug}`,
+        image: community.cover_image,
         kind: "community",
       }));
 
@@ -238,11 +239,13 @@ export function useSiteSearch(query: string, enabled: boolean) {
               subtitle: relatedSubtitle(result),
               to: result.source_path,
               image:
-                typeof result.metadata?.image_url === "string"
-                  ? result.metadata.image_url
-                  : typeof result.metadata?.profile_image === "string"
-                    ? result.metadata.profile_image
-                    : null,
+                typeof result.metadata?.cover_image === "string"
+                  ? result.metadata.cover_image
+                  : typeof result.metadata?.image_url === "string"
+                    ? result.metadata.image_url
+                    : typeof result.metadata?.profile_image === "string"
+                      ? result.metadata.profile_image
+                      : null,
               kind: result.entity_type,
             }))
         : [];
