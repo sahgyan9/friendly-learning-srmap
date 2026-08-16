@@ -61,15 +61,15 @@ const MentorProfileContent = ({
       {/* Unlisted / Paused Availability Banner */}
       {!isMentorListed(mentor) && (
         <AvailabilityBanner
-          mentor={mentor}
+          mentor={mentor as any}
           isOwnProfile={isOwnProfile}
-          onResumed={(patch) => onMentorUpdated({ ...mentor, ...patch })}
+          onResumed={(patch) => onMentorUpdated({ ...mentor, ...patch } as any)}
         />
       )}
 
       {/* SECTION 1: WHO I AM (Hero Header Card with Photo, Tagline, Trust Stats & Connect CTA) */}
       <MentorHeroHeader
-        mentor={mentor}
+        mentor={mentor as any}
         canRate={canRate}
         ratingLoading={ratingLoading}
         onShowRatingModal={onShowRatingModal}

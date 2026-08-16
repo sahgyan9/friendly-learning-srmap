@@ -218,7 +218,8 @@ export function useSiteSearch(query: string, enabled: boolean) {
       setLoading(false);
 
       // Semantic pass for questions & phrases
-      if (!looksLikeAPhrase(trimmed)) return;
+      // Always run semantic for queries >= 3 chars to catch short domain terms
+      if (trimmed.length < 3) return;
 
       setLoading(true);
       const { data } = await askWhoCanHelp(trimmed, 12).catch(() => ({ data: null }));

@@ -296,7 +296,7 @@ export const CampusSidebarWidgets = () => {
                             <BadgeCheck className="h-3.5 w-3.5 text-blue-500 shrink-0" />
                           </Link>
                           <p className="text-[11px] text-muted-foreground truncate">
-                            {mentor.department || mentor.branch || "Senior Mentor"}
+                            {mentor.department || "Senior Mentor"}
                           </p>
                         </div>
                       </div>
@@ -366,7 +366,7 @@ export const CampusSidebarWidgets = () => {
 
                           <p className="text-xs font-medium text-muted-foreground mt-1">
                             <span className="text-foreground/90 font-semibold">
-                              {(mentor.department || mentor.branch || "CSE")
+                              {(mentor.department || "Senior Mentor")
                                 .replace(/\[.*?\]/g, "")
                                 .replace(/\(.*?\)/g, "")
                                 .trim()}{" "}
@@ -513,7 +513,7 @@ export const CampusSidebarWidgets = () => {
                   </p>
                 </div>
                 <Badge variant="outline" className="text-[10px] shrink-0 font-normal border-border/80">
-                  {group.is_private ? "Private" : "Public"}
+                  {group.visibility === "private" ? "Private" : "Public"}
                 </Badge>
               </Link>
             ))}

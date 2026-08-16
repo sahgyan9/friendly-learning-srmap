@@ -65,9 +65,9 @@ export function CommunityLinkPreview({ slug, label }: CommunityLinkPreviewProps)
         {/* Group Info Header Row */}
         <div className="flex items-start gap-2.5 min-w-0">
           <div className="relative h-10 w-10 shrink-0 rounded-xl overflow-hidden border border-emerald-500/30 bg-emerald-500/15 flex items-center justify-center font-bold text-emerald-700 dark:text-emerald-300 shadow-inner">
-            {community?.image_url || community?.cover_image ? (
+            {community?.cover_image ? (
               <img
-                src={community.image_url || community.cover_image}
+                src={community.cover_image}
                 alt={community.name}
                 className="h-full w-full object-cover"
               />

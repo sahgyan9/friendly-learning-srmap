@@ -176,7 +176,7 @@ export const updateVerificationStatus = async (
         for (const notification of notifications) {
           await supabase
             .from('notifications')
-            .insert(notification);
+            .insert(notification as any);
         }
 
         console.log('Enhanced rejection notifications created for user:', verification.user_id);
@@ -304,7 +304,7 @@ export const updateMentorApplication = async (
     for (const notification of successNotifications) {
       await supabase
         .from('notifications')
-        .insert(notification);
+        .insert(notification as any);
     }
 
     console.log('Application updated and resubmitted successfully:', data);

@@ -44,12 +44,19 @@ function OpportunityCard({ opportunity }: { opportunity: Opportunity }) {
     <Card className="group flex flex-col gap-2 p-4 transition-colors hover:border-primary/30">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <Link
-            to={`/opportunities/${opportunity.slug}`}
-            className="font-semibold leading-tight hover:underline"
-          >
-            {opportunity.title}
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link
+              to={`/opportunities/${opportunity.slug}`}
+              className="font-semibold leading-tight hover:underline"
+            >
+              {opportunity.title}
+            </Link>
+            {opportunity.is_fresh && (
+              <span className="shrink-0 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider">
+                New
+              </span>
+            )}
+          </div>
           <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
             {opportunity.organiser && <span>{opportunity.organiser}</span>}
             <span className="inline-flex items-center gap-1">

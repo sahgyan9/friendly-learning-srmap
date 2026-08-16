@@ -1,6 +1,6 @@
 import { Mentor } from "@/types/mentor";
 
-export interface EnhancedMentor extends Mentor {
+export interface EnhancedMentor extends Omit<Mentor, "ask_me_anything"> {
   tagline: string;
   year_of_studies_text: string;
   outcomes: string[];

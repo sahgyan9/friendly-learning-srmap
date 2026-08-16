@@ -33,6 +33,7 @@ export type Opportunity = {
   team_count: number;
   posted_by: string | null;
   created_at: string;
+  is_fresh?: boolean;
 };
 
 /** A team, joined to the community that carries its members and chat. */
@@ -53,7 +54,7 @@ export type OpportunityTeam = {
 };
 
 const COLUMNS =
-  "id, slug, title, organiser, kind, description, tags, location, is_online, starts_at, ends_at, register_by, external_url, team_min, team_max, interest_count, team_count, posted_by, created_at" as const;
+  "id, slug, title, organiser, kind, description, tags, location, is_online, starts_at, ends_at, register_by, external_url, team_min, team_max, interest_count, team_count, posted_by, created_at, is_fresh" as const;
 
 export const OPPORTUNITY_KINDS: { value: OpportunityKind; label: string }[] = [
   { value: "hackathon", label: "Hackathon" },
@@ -120,6 +121,8 @@ export async function getOpportunities(
   }
 
   const { data, error, count } = await request
+    // @ts-expect-error PostgREST supports computed columns for ordering
+    .order("is_fresh", { ascending: false, nullsLast: true })
     .order("register_by", { ascending: true, nullsFirst: false })
     .range(offset, offset + limit - 1);
 
@@ -128,7 +131,7 @@ export async function getOpportunities(
     return { data: [] as Opportunity[], total: 0, error };
   }
 
-  return { data: (data ?? []) as Opportunity[], total: count ?? 0, error: null };
+  return { data: (data ?? []) as unknown as Opportunity[], total: count ?? 0, error: null };
 }
 
 export async function getOpportunityBySlug(slug: string) {
@@ -144,7 +147,7 @@ export async function getOpportunityBySlug(slug: string) {
     return { data: null, error };
   }
 
-  return { data: (data as Opportunity | null) ?? null, error: null };
+  return { data: (data as unknown as Opportunity | null) ?? null, error: null };
 }
 
 /**

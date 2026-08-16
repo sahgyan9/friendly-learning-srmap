@@ -6,6 +6,35 @@ import { searchMentors } from "@/integrations/supabase/services/mentors";
 import { listCommunities, getCommunityKindMeta } from "@/integrations/supabase/services/communities";
 import { getOpportunities } from "@/integrations/supabase/services/opportunities";
 import { askWhoCanHelp, allResults } from "@/integrations/supabase/services/ask";
+import { supabase } from "@/integrations/supabase/client";
+
+// Global cache for click-through rate boosts
+let qualityCache: Record<string, number> | null = null;
+let qualityPromise: Promise<void> | null = null;
+
+async function loadSearchQuality() {
+  if (qualityCache) return;
+  if (!qualityPromise) {
+    qualityPromise = (async () => {
+      try {
+        const { data, error } = await (supabase as any)
+          .from("search_result_quality")
+          .select("entity_id, click_count_30d");
+        
+        qualityCache = {};
+        if (data && !error) {
+          (data as any[]).forEach(row => {
+            qualityCache![row.entity_id] = row.click_count_30d;
+          });
+        }
+      } catch (e) {
+        console.error("Failed to load search quality:", e);
+        qualityCache = {};
+      }
+    })();
+  }
+  return qualityPromise;
+}
 import { BLOG_POSTS } from "@/data/blog-posts";
 import { normalise } from "@/lib/search/rank";
 import { parseQuery, calculateExactBoost, fuzzyMatchTokens, matchesWordBoundary, hasTopicalMatch } from "@/lib/search/query-engine";
@@ -208,7 +237,8 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
     async function fetchAll() {
       const searchTerms = parsed.subjectTokens.length > 0 ? parsed.subjectTokens.join(" ") : trimmed;
 
-      const [mentorRes, facultyRes, oppRes, postRes, communityRes, semanticRes] = await Promise.all([
+      const [_, mentorRes, facultyRes, oppRes, postRes, communityRes, semanticRes] = await Promise.all([
+        loadSearchQuality(),
         searchMentors(trimmed).catch(() => ({ data: null })),
         getFacultyList({
           search: searchTerms,
@@ -235,6 +265,11 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
       ]);
 
       if (run !== sequence.current) return;
+
+      const getCtrBoost = (entityId: string) => {
+        const clicks = qualityCache?.[entityId] || 0;
+        return clicks > 0 ? Math.log2(1 + clicks) * 10 : 0;
+      };
 
       const mentorMap = new Map<string, SearchResultItem>();
       const facultyMap = new Map<string, SearchResultItem>();
@@ -292,7 +327,7 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
             job_title: m.job_title,
             is_available: m.is_available,
           },
-          relevanceScore: 100 + boost * 50 + mentorCategoryBoost - idx,
+          relevanceScore: 100 + boost * 50 + mentorCategoryBoost + getCtrBoost(m.id),
         });
       });
 
@@ -333,6 +368,11 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
         const hasExactName = boost > 0;
         const hasDeptMatch = deptBoost > 0;
         const hasInterestMatch = interestMatchCount > 0;
+
+        if (!hasExactName && !hasDeptMatch && !hasInterestMatch) {
+          return;
+        }
+
         let baseFacultyScore = 20;
         if (hasExactName) {
           baseFacultyScore = 150 + boost * 100;
@@ -371,7 +411,7 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
           },
           // Score: name-exact-match > department match > per-interest token match > weak generic match.
           // Rating never contributes to ordering here — see FACULTY_AI_ROADMAP.md red lines.
-          relevanceScore: Math.max(10, baseFacultyScore + facultyCategoryPenalty),
+          relevanceScore: Math.max(10, baseFacultyScore + facultyCategoryPenalty) + getCtrBoost(f.id),
         });
       });
 
@@ -410,7 +450,7 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
             is_online: o.is_online,
             location: o.location,
           },
-          relevanceScore: 100 + boost * 50 - idx,
+          relevanceScore: 100 + boost * 50 + getCtrBoost(o.id),
         });
       });
 
@@ -422,6 +462,14 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
           { label: "Read Discussion", to: `/posts/${p.id}` },
           { label: `Replies (${p.comments_count || 0})`, to: `/posts/${p.id}#comments` },
         ];
+
+        const postText = `${p.title} ${p.content || ""}`;
+        const postTopicalScore = parsed.specificTokens.filter(tok => 
+          matchesWordBoundary(postText, tok)
+        ).length * 30;
+        const postEngagement = Math.log2(1 + (p.likes_count || 0) + (p.comments_count || 0) * 2) * 10;
+        const postAgeDays = (Date.now() - new Date(p.created_at).getTime()) / (1000 * 60 * 60 * 24);
+        const postFreshness = postAgeDays < 30 ? 20 : postAgeDays < 90 ? 10 : 0;
 
         postMap.set(p.id, {
           id: p.id,
@@ -445,7 +493,7 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
             author: p.author,
             created_at: p.created_at,
           },
-          relevanceScore: 90 - idx,
+          relevanceScore: postTopicalScore + postEngagement + postFreshness + getCtrBoost(p.id),
         });
       });
 
@@ -459,6 +507,14 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
           { label: "Discussions & Posts", to: `/workspace-groups/${c.slug}#discussions` },
           { label: "Group Chat", to: `/workspace-groups/${c.slug}#chat` },
         ];
+
+        const commText = `${c.name} ${c.description || ""}`;
+        const commTopicalScore = parsed.specificTokens.filter(tok =>
+          matchesWordBoundary(commText, tok)
+        ).length * 30;
+        const commPopularity = Math.log2(1 + (c.member_count || 0)) * 15;
+        const commAgeDays = c.last_activity_at ? (Date.now() - new Date(c.last_activity_at).getTime()) / (1000 * 60 * 60 * 24) : 999;
+        const commActivity = commAgeDays < 7 ? 20 : commAgeDays < 30 ? 10 : 0;
 
         communityMap.set(c.id, {
           id: c.id,
@@ -481,7 +537,7 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
             visibility: c.visibility,
             last_activity_at: c.last_activity_at,
           },
-          relevanceScore: 90 - idx,
+          relevanceScore: commTopicalScore + commPopularity + commActivity + getCtrBoost(c.id),
         });
       });
 
@@ -542,7 +598,7 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
                   { label: "Skills & Experience", to: `${mentorPath}#skills` },
                 ],
                 meta: hit.metadata,
-                relevanceScore: simScore + 60,
+                relevanceScore: simScore + 60 + getCtrBoost(hit.entity_id),
               });
             }
           } else if (hit.entity_type === "faculty") {
@@ -592,7 +648,7 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
                   { label: "Student Reviews", to: `${facultyPath}#reviews` },
                 ],
                 meta: hit.metadata,
-                relevanceScore: Math.max(10, simScore + catBonus),
+                relevanceScore: Math.max(10, simScore + catBonus) + getCtrBoost(hit.entity_id),
               });
             }
           } else if (hit.entity_type === "student") {
@@ -619,7 +675,7 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
                 snippet: interestsArr.length > 0 ? `Student interested in ${interestsArr.slice(0, 4).join(", ")}. Active in campus learning community.` : "Student profile on Friendly Learning SRMAP.",
                 matchReason: "Student with matching skills or interests",
                 meta: hit.metadata,
-                relevanceScore: simScore,
+                relevanceScore: simScore + getCtrBoost(hit.entity_id),
               });
             }
           } else if (hit.entity_type === "opportunity") {
@@ -650,7 +706,7 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
                   { label: "Find Teammates", to: `/opportunities/${oppSlug}#teams` },
                 ],
                 meta: hit.metadata,
-                relevanceScore: simScore,
+                relevanceScore: simScore + getCtrBoost(hit.entity_id),
               });
             }
           } else if (hit.entity_type === "community") {
@@ -684,7 +740,7 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
                   { label: "Discussions", to: `${path}#discussions` },
                 ],
                 meta: hit.metadata,
-                relevanceScore: simScore,
+                relevanceScore: simScore + getCtrBoost(hit.entity_id),
               });
             }
           } else if (hit.entity_type === "post") {
@@ -714,7 +770,7 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
                   { label: "Read Discussion", to: path },
                 ],
                 meta: hit.metadata,
-                relevanceScore: simScore,
+                relevanceScore: simScore + getCtrBoost(hit.entity_id),
               });
             }
           }

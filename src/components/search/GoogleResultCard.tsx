@@ -1,5 +1,6 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import {
   ExternalLink,
   Star,
@@ -138,9 +139,22 @@ export const GoogleResultCard: React.FC<GoogleResultCardProps> = ({
 
   const breadcrumbText = item.breadcrumb || `friendlylearning.in › ${entityType} › ${item.id.slice(0, 10)}`;
 
+  const logClick = () => {
+    if (query && query.trim().length >= 3) {
+      supabase.rpc("log_search_click" as any, {
+        p_query: query,
+        p_entity_type: entityType,
+        p_entity_id: item.id
+      }).then(({ error }) => { if (error) console.error(error); }); // fire and forget
+    }
+  };
+
   const handleCardClick = (e: React.MouseEvent) => {
     // If click was on a link or button, don't double navigate
     if ((e.target as HTMLElement).closest("a, button")) return;
+    
+    logClick();
+
     if (item.to && item.to !== "#") {
       navigate(item.to);
     }
@@ -199,7 +213,10 @@ export const GoogleResultCard: React.FC<GoogleResultCardProps> = ({
       <div className="mb-1.5">
         <Link
           to={item.to}
-          onClick={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation();
+            logClick();
+          }}
           className="text-base sm:text-lg font-medium text-blue-600 dark:text-blue-400 group-hover:text-blue-700 dark:group-hover:text-blue-300 group-hover:underline underline-offset-2 transition-colors inline-block leading-snug"
         >
           <HighlightedText text={item.title} query={query} />
@@ -308,7 +325,10 @@ export const GoogleResultCard: React.FC<GoogleResultCardProps> = ({
                   href={sitelink.to}
                   target="_blank"
                   rel="noopener noreferrer"
-                  onClick={(e) => e.stopPropagation()}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    logClick();
+                  }}
                   className="inline-flex items-center gap-1 rounded-lg border border-border/60 bg-muted/30 px-2.5 py-1 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-accent hover:border-border transition-colors"
                 >
                   <span>{sitelink.label}</span>
@@ -321,7 +341,10 @@ export const GoogleResultCard: React.FC<GoogleResultCardProps> = ({
               <Link
                 key={idx}
                 to={sitelink.to}
-                onClick={(e) => e.stopPropagation()}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  logClick();
+                }}
                 className="inline-flex items-center gap-1 rounded-lg border border-border/60 bg-muted/30 px-2.5 py-1 text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-500/10 hover:border-blue-500/30 transition-colors"
               >
                 <span>{sitelink.label}</span>

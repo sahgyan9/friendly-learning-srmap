@@ -379,7 +379,7 @@ export const updateCommunity = async (
     previousCoverImage = existing?.cover_image ?? null;
   }
 
-  const { error } = await supabase.from("communities").update(update).eq("id", communityId);
+  const { error } = await supabase.from("communities").update(update as any).eq("id", communityId);
 
   if (error) {
     console.error("Error updating community:", error);

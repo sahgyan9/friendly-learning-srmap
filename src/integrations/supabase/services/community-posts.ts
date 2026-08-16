@@ -380,7 +380,7 @@ export const updateCommunityPost = async (postId: string, updateData: UpdatePost
     previousImageUrl = existing?.image_url ?? null;
   }
 
-  const { error } = await supabase.from("community_posts").update(patch).eq("id", postId);
+  const { error } = await supabase.from("community_posts").update(patch as any).eq("id", postId);
 
   if (error) {
     console.error("Error updating community post:", error);

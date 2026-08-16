@@ -124,7 +124,7 @@ export default function MentorHeroHeader({
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-foreground flex items-center gap-2">
                 {mentor.name}
-                <CheckCircle2 className="h-5 w-5 text-primary fill-primary/10 flex-shrink-0" title="Verified Mentor" />
+                <span title="Verified Mentor"><CheckCircle2 className="h-5 w-5 text-primary fill-primary/10 flex-shrink-0" /></span>
               </h1>
 
               {mentor.is_alumni && (

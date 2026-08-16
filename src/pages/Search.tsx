@@ -567,100 +567,24 @@ export default function SearchPage() {
                 </section>
               ) : null;
 
-              // Order sections according to explicit targetCategory or intent
-              let orderedSections = [
-                mentorsSection,
-                facultySection,
-                oppSection,
-                communitySection,
-                postSection,
-                blogSection,
-                studentsSection,
-              ];
+              const getBestScore = (items: SearchResultItem[]) =>
+                items.length > 0 ? Math.max(...items.map((i) => i.relevanceScore ?? 0)) : 0;
 
-              if (parsed.targetCategory === "mentors") {
-                orderedSections = [
-                  mentorsSection,
-                  studentsSection,
-                  communitySection,
-                  postSection,
-                  oppSection,
-                  facultySection,
-                  blogSection,
-                ];
-              } else if (parsed.targetCategory === "faculty") {
-                orderedSections = [
-                  facultySection,
-                  mentorsSection,
-                  oppSection,
-                  communitySection,
-                  postSection,
-                  studentsSection,
-                  blogSection,
-                ];
-              } else if (parsed.targetCategory === "opportunities" || parsed.intent === "opportunity") {
-                orderedSections = [
-                  oppSection,
-                  communitySection,
-                  mentorsSection,
-                  facultySection,
-                  studentsSection,
-                  postSection,
-                  blogSection,
-                ];
-              } else if (parsed.targetCategory === "communities" || parsed.intent === "community") {
-                orderedSections = [
-                  communitySection,
-                  postSection,
-                  oppSection,
-                  mentorsSection,
-                  facultySection,
-                  studentsSection,
-                  blogSection,
-                ];
-              } else if (parsed.targetCategory === "posts" || parsed.intent === "post") {
-                orderedSections = [
-                  postSection,
-                  communitySection,
-                  mentorsSection,
-                  facultySection,
-                  oppSection,
-                  studentsSection,
-                  blogSection,
-                ];
-              } else if (parsed.targetCategory === "blog" || parsed.intent === "informational") {
-                orderedSections = [
-                  blogSection,
-                  postSection,
-                  mentorsSection,
-                  facultySection,
-                  communitySection,
-                  oppSection,
-                  studentsSection,
-                ];
-              } else if (parsed.intent === "entity_lookup") {
-                orderedSections = [
-                  facultySection,
-                  mentorsSection,
-                  studentsSection,
-                  communitySection,
-                  postSection,
-                  oppSection,
-                  blogSection,
-                ];
-              } else if (parsed.intent === "domain_subject") {
-                // If coding/web/software domain, prioritize mentors and collaborative groups
-                const isTechDomain = parsed.tokens.some((t) =>
-                  ["web", "dsa", "react", "python", "javascript", "code", "dev", "frontend", "backend", "fullstack", "algorithm"].includes(t)
-                );
-                orderedSections = isTechDomain
-                  ? [mentorsSection, oppSection, communitySection, facultySection, postSection, studentsSection, blogSection]
-                  : [facultySection, mentorsSection, oppSection, communitySection, postSection, studentsSection, blogSection];
-              }
+              const sectionsWithScores = [
+                { section: mentorsSection, score: getBestScore(results.mentors) },
+                { section: facultySection, score: getBestScore(relevantFacultyForAll) },
+                { section: oppSection, score: getBestScore(results.opportunities) },
+                { section: communitySection, score: getBestScore(results.communities) },
+                { section: postSection, score: getBestScore(results.posts) },
+                { section: blogSection, score: getBestScore(results.blog) },
+                { section: studentsSection, score: getBestScore(results.students) },
+              ].filter(s => s.section !== null);
+
+              sectionsWithScores.sort((a, b) => b.score - a.score);
 
               return (
                 <div className="space-y-6">
-                  {orderedSections}
+                  {sectionsWithScores.map(s => s.section)}
                 </div>
               );
             })()}

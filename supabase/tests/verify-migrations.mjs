@@ -435,6 +435,7 @@ for (const file of [
   '20260815210000_ai_overview_feedback_status.sql',
   '20260815220000_platform_settings.sql',
   '20260815230000_ai_feedback_and_queries_admin_access.sql',
+  '20260816100000_search_interactions.sql',
 ]) {
   if (file === '20260804132345_b843f814-46d5-4c25-bc80-32e5f6ebba59.sql') {
     // Production's `faculty` table still carries `profile_image`, a column
@@ -463,7 +464,19 @@ console.log('');
 // Every migration in the repo falls into exactly one of these five groups.
 // None of them are silently missing -- each is listed below with why.
 //
-// 1. PGVECTOR (3 files) -- genuinely cannot run in PGlite.
+// 1. PGVECTOR (5 files) -- genuinely cannot run in PGlite.
+//
+//    20260817100000_dynamic_related_searches.sql
+//    Computes vector similarity over the search_query_cache to generate
+//    dynamic related searches. Because it uses vector operators (`<=>`),
+//    it requires pgvector and cannot run against the PGlite jsonb stub.
+//    Verified manually via local apply and inspecting related searches.
+//
+//    20260817000000_multi_chunk_indexing.sql
+//    Redefines projectors and alters knowledge_chunks to support multi-chunk
+//    indexing. Because the projectors explicitly update the 'embedding' column,
+//    it requires pgvector and cannot run against the PGlite jsonb stub.
+//    Verified manually via local apply and inspecting chunk counts.
 //
 //    20260809150000_admin_health_metrics.sql
 //    Counts rows of the pgvector-backed knowledge_chunks and reads
@@ -1485,6 +1498,19 @@ check('non-admin cannot select feedback', nonAdminFeedback.length === 0, `got ${
 await actAs(CURRENT_UID);
 const { rows: adminFeedback } = await asAuthenticated(() => q(`SELECT query, is_helpful, status FROM public.ai_overview_feedback WHERE query = 'DSA Faculty'`));
 check('admin can select feedback', adminFeedback.length === 1 && adminFeedback[0].query === 'DSA Faculty');
+
+console.log('\nsearch interactions & quality feedback loop:');
+await actAs(CURRENT_UID);
+await q(`SELECT public.log_search_click(' Quantum Computing ', 'faculty', 'some-uuid-or-slug')`);
+const { rows: clicks } = await q(`SELECT query_hash, entity_type FROM public.search_interactions`);
+check('log_search_click normalizes query and records interaction', clicks.length === 1 && clicks[0].entity_type === 'faculty');
+
+await q(`SELECT public.aggregate_search_quality()`);
+const { rows: quality } = await q(`SELECT click_count_30d FROM public.search_result_quality WHERE entity_id = 'some-uuid-or-slug'`);
+check('aggregate_search_quality rolls up clicks into search_result_quality', quality.length === 1 && quality[0].click_count_30d === 1);
+
+const { rows: [qualityJob] } = await q(`SELECT schedule FROM cron.job WHERE jobname='aggregate-search-quality-nightly'`);
+check('search quality aggregation job scheduled nightly', qualityJob?.schedule === '0 2 * * *', qualityJob?.schedule);
 
 console.log(failures === 0
   ? '\nAll migration checks passed against real Postgres.'

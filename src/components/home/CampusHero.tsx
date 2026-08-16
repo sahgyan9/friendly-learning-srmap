@@ -65,7 +65,7 @@ export const CampusHero = () => {
 
           {/* Central CampusMind Search */}
           <div className="max-w-2xl mx-auto mb-4">
-            <AskBox placeholder="Ask CampusMind: 'ML mentor', 'DSA helper', 'Dr. ... ratings'..." />
+            <AskBox />
           </div>
 
           {/* Clickable Quick Prompts */}
