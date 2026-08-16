@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { CampusMindIcon } from "@/components/icons/CampusMindIcon";
+import { CampusThinkingStatus } from "@/components/search/CampusThinkingStatus";
 import {
   Sparkles,
   ChevronDown,
@@ -333,15 +334,20 @@ export const CampusAIOverview: React.FC<CampusAIOverviewProps> = ({
       {!collapsed && (
         <div className="mt-3.5 space-y-3.5 animate-in fade-in-50 duration-200">
           {loading && !overview ? (
-            <div className="flex flex-col items-center justify-center py-6 space-y-3 text-muted-foreground">
-              <div className="relative flex items-center justify-center">
-                <div className="absolute -inset-2 rounded-full bg-primary/20 blur-md animate-pulse" />
-                <CampusMindIcon speed="fast" className="relative h-7 w-7 text-primary" />
-              </div>
-              <p className="text-xs font-medium text-muted-foreground/90 animate-pulse">
-                CampusMind is analyzing campus mentors, faculty & discussions…
-              </p>
-            </div>
+            <CampusThinkingStatus
+              className="py-6"
+              iconSize="h-8 w-8"
+              textSize="text-sm"
+              phrases={[
+                "Synthesizing campus knowledge…",
+                "Connecting faculty & student mentors…",
+                "Crystallizing insights…",
+                "Picturing possibilities…",
+                "Analyzing course & skill discussions…",
+                "Structuring recommendations…",
+                "Refining summary…",
+              ]}
+            />
           ) : overview ? (
             <>
               {/* Main summary paragraph */}

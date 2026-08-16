@@ -18,6 +18,7 @@ import { GroupsIcon } from "@/components/icons/GroupsIcon";
 import { MentorIcon } from "@/components/icons/MentorIcon";
 import { PostIcon } from "@/components/icons/PostIcon";
 import { CampusMindIcon } from "@/components/icons/CampusMindIcon";
+import { CampusThinkingStatus } from "@/components/search/CampusThinkingStatus";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -475,15 +476,20 @@ export default function SearchPage() {
           </div>
         )}
 
-        {/* Loading state with animated CampusMind symbol */}
+        {/* Loading state with dynamic CampusMind thinking status */}
         {q && results.loading && (
-          <div className="flex flex-col items-center justify-center py-16 gap-3 text-muted-foreground">
-            <div className="relative flex items-center justify-center">
-              <div className="absolute -inset-2 rounded-full bg-primary/20 blur-md animate-pulse" />
-              <CampusMindIcon speed="fast" className="relative h-8 w-8 text-primary" />
-            </div>
-            <span className="text-sm font-medium animate-pulse">Searching across SRM-AP with CampusMind…</span>
-          </div>
+          <CampusThinkingStatus
+            className="py-16"
+            iconSize="h-9 w-9"
+            textSize="text-sm sm:text-base"
+            phrases={[
+              "Searching across SRM-AP with CampusMind…",
+              "Finding matched mentors, faculty & groups…",
+              "Analyzing relevant courses & research areas…",
+              "Connecting peer opportunities…",
+              "Synthesizing results…",
+            ]}
+          />
         )}
 
         {/* Typo / Did You Mean Suggestion */}
