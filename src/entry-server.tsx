@@ -28,7 +28,10 @@ const KNOWN_ROUTES = [
   '/hackathon-partners',
   '/blog',
   '/how-verification-works',
-  '/your-data'
+  '/your-data',
+  '/faculty',
+  '/mentor',
+  '/opportunities'
 ];
 
 // Private routes that should redirect if not authenticated
