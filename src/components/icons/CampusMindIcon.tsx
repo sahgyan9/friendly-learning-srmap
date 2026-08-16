@@ -4,21 +4,25 @@ import { cn } from "@/lib/utils";
 interface CampusMindIconProps extends React.SVGProps<SVGSVGElement> {
   className?: string;
   animate?: boolean;
+  speed?: "normal" | "fast";
 }
 
 /**
  * Animated CampusMind Neural Orbit / Synapse Icon.
  *
  * Features:
- * - Continuous smooth 360° circular rotation of the orbital arcs.
- * - Organic in-and-out breathing & pulse of the neural connection beams and satellite nodes.
- * - Rhythmic core intelligence heartbeat pulse.
+ * - High-speed 360° circular rotation of the orbital arcs.
+ * - Rigorous high-frequency in-and-out firing & pulse of the neural connection beams.
+ * - Active intelligence heartbeat core pulse.
  */
 export const CampusMindIcon: React.FC<CampusMindIconProps> = ({
   className = "h-5 w-5",
   animate = true,
+  speed = "fast",
   ...props
 }) => {
+  const isFast = speed === "fast";
+
   return (
     <svg
       viewBox="0 0 24 24"
@@ -41,22 +45,22 @@ export const CampusMindIcon: React.FC<CampusMindIconProps> = ({
           }
           @keyframes cm-synapse-inout {
             0%, 100% {
-              transform: scale(0.82);
-              opacity: 0.75;
+              transform: scale(0.78);
+              opacity: 0.7;
             }
             50% {
-              transform: scale(1.14);
+              transform: scale(1.18);
               opacity: 1;
             }
           }
           @keyframes cm-core-pulse {
             0%, 100% {
-              transform: scale(0.88);
+              transform: scale(0.85);
               filter: drop-shadow(0 0 1px currentColor);
             }
             50% {
-              transform: scale(1.16);
-              filter: drop-shadow(0 0 4px currentColor);
+              transform: scale(1.22);
+              filter: drop-shadow(0 0 5px currentColor);
             }
           }
           @keyframes cm-beam-flow {
@@ -67,31 +71,51 @@ export const CampusMindIcon: React.FC<CampusMindIconProps> = ({
               stroke-dashoffset: 0;
             }
           }
-          .cm-anim-spin {
+          .cm-anim-spin-fast {
             transform-origin: 12px 12px;
-            animation: cm-spin-clockwise 9s linear infinite;
+            animation: cm-spin-clockwise 2.6s linear infinite;
           }
-          .cm-anim-spin-reverse {
+          .cm-anim-spin-normal {
             transform-origin: 12px 12px;
-            animation: cm-spin-counter 14s linear infinite;
+            animation: cm-spin-clockwise 6s linear infinite;
           }
-          .cm-anim-synapse {
+          .cm-anim-spin-reverse-fast {
             transform-origin: 12px 12px;
-            animation: cm-synapse-inout 2.8s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+            animation: cm-spin-counter 4s linear infinite;
           }
-          .cm-anim-core {
+          .cm-anim-spin-reverse-normal {
             transform-origin: 12px 12px;
-            animation: cm-core-pulse 2.8s ease-in-out infinite;
+            animation: cm-spin-counter 9s linear infinite;
           }
-          .cm-anim-beam {
+          .cm-anim-synapse-fast {
+            transform-origin: 12px 12px;
+            animation: cm-synapse-inout 1.1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+          }
+          .cm-anim-synapse-normal {
+            transform-origin: 12px 12px;
+            animation: cm-synapse-inout 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+          }
+          .cm-anim-core-fast {
+            transform-origin: 12px 12px;
+            animation: cm-core-pulse 1.1s ease-in-out infinite;
+          }
+          .cm-anim-core-normal {
+            transform-origin: 12px 12px;
+            animation: cm-core-pulse 2.2s ease-in-out infinite;
+          }
+          .cm-anim-beam-fast {
             stroke-dasharray: 4 2;
-            animation: cm-beam-flow 1.8s linear infinite;
+            animation: cm-beam-flow 0.65s linear infinite;
+          }
+          .cm-anim-beam-normal {
+            stroke-dasharray: 4 2;
+            animation: cm-beam-flow 1.3s linear infinite;
           }
         `}</style>
       </defs>
 
       {/* ── Outer Rotating Orbital Arcs ── */}
-      <g className={animate ? "cm-anim-spin" : undefined}>
+      <g className={animate ? (isFast ? "cm-anim-spin-fast" : "cm-anim-spin-normal") : undefined}>
         {/* Arc 1 */}
         <path
           d="M 12 2.5 A 9.5 9.5 0 0 1 21.5 12"
@@ -108,13 +132,13 @@ export const CampusMindIcon: React.FC<CampusMindIconProps> = ({
           strokeLinecap="round"
           strokeOpacity="0.85"
         />
-        {/* Subtle decorative orbit dot */}
+        {/* Subtle decorative orbit dots */}
         <circle cx="21.5" cy="12" r="1" fill="currentColor" />
         <circle cx="2.5" cy="12" r="1" fill="currentColor" />
       </g>
 
       {/* ── Counter-rotating dashed guide ring ── */}
-      <g className={animate ? "cm-anim-spin-reverse" : undefined}>
+      <g className={animate ? (isFast ? "cm-anim-spin-reverse-fast" : "cm-anim-spin-reverse-normal") : undefined}>
         <circle
           cx="12"
           cy="12"
@@ -127,7 +151,7 @@ export const CampusMindIcon: React.FC<CampusMindIconProps> = ({
       </g>
 
       {/* ── Expanding & Contracting Neural Synapses (In-Out Movement) ── */}
-      <g className={animate ? "cm-anim-synapse" : undefined}>
+      <g className={animate ? (isFast ? "cm-anim-synapse-fast" : "cm-anim-synapse-normal") : undefined}>
         {/* Ray 1 (Top) */}
         <line
           x1="12"
@@ -137,7 +161,7 @@ export const CampusMindIcon: React.FC<CampusMindIconProps> = ({
           stroke="currentColor"
           strokeWidth="1.5"
           strokeLinecap="round"
-          className={animate ? "cm-anim-beam" : undefined}
+          className={animate ? (isFast ? "cm-anim-beam-fast" : "cm-anim-beam-normal") : undefined}
         />
         {/* Ray 2 (Bottom Right) */}
         <line
@@ -148,7 +172,7 @@ export const CampusMindIcon: React.FC<CampusMindIconProps> = ({
           stroke="currentColor"
           strokeWidth="1.5"
           strokeLinecap="round"
-          className={animate ? "cm-anim-beam" : undefined}
+          className={animate ? (isFast ? "cm-anim-beam-fast" : "cm-anim-beam-normal") : undefined}
         />
         {/* Ray 3 (Bottom Left) */}
         <line
@@ -159,7 +183,7 @@ export const CampusMindIcon: React.FC<CampusMindIconProps> = ({
           stroke="currentColor"
           strokeWidth="1.5"
           strokeLinecap="round"
-          className={animate ? "cm-anim-beam" : undefined}
+          className={animate ? (isFast ? "cm-anim-beam-fast" : "cm-anim-beam-normal") : undefined}
         />
 
         {/* Satellite Node 1 (Top) */}
@@ -176,7 +200,7 @@ export const CampusMindIcon: React.FC<CampusMindIconProps> = ({
       </g>
 
       {/* ── Central Intelligence Nucleus (Pulsing Heartbeat) ── */}
-      <g className={animate ? "cm-anim-core" : undefined}>
+      <g className={animate ? (isFast ? "cm-anim-core-fast" : "cm-anim-core-normal") : undefined}>
         {/* Soft aura */}
         <circle cx="12" cy="12" r="3.6" fill="currentColor" fillOpacity="0.25" />
         {/* Solid core */}
