@@ -4,7 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2, Upload } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { v4 as uuidv4 } from 'uuid';
 import AvatarCropDialog from "@/components/profile/AvatarCropDialog";
 import { downscaleImage } from "@/lib/image/downscale";
 
@@ -55,7 +54,7 @@ const MentorProfileImageUpload = ({
 
       // Generate a unique file name to avoid collisions
       const fileExt = file.name.split('.').pop();
-      const fileName = `profile-images/${userId}-${uuidv4()}.${fileExt}`;
+      const fileName = `profile-images/${userId}-${crypto.randomUUID()}.${fileExt}`;
 
       const { data, error } = await supabase.storage
         .from('profiles')

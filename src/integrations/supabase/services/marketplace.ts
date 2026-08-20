@@ -1,6 +1,5 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { v4 as uuidv4 } from "uuid";
 import { downscaleImage } from "@/lib/image/downscale";
 import { storagePathFromPublicUrl } from "@/lib/image/storage-path";
 
@@ -231,7 +230,7 @@ export async function uploadMarketplaceImage(original: File) {
     const file = await downscaleImage(original);
 
     const fileExt = file.name.split('.').pop();
-    const fileName = `${uuidv4()}.${fileExt}`;
+    const fileName = `${crypto.randomUUID()}.${fileExt}`;
     const filePath = `${fileName}`;
     
     const { data, error } = await supabase.storage
