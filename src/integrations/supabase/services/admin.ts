@@ -36,25 +36,10 @@ export async function isUserAdmin(userId?: string) {
 // Function to set a user as an admin (requires admin privileges)
 export async function setUserAsAdmin(userIdToPromote: string) {
   try {
-    // Check if current user is admin
-    const isAdmin = await isUserAdmin();
-    
-    if (!isAdmin) {
-      throw new Error("Only admins can promote other users to admin");
-    }
-    
-    // Log the admin action before making changes
-    await logAdminAction('promote_user_to_admin', userIdToPromote, {
-      action: 'User promoted to admin status',
-      target_user_id: userIdToPromote
+    const { data, error } = await supabase.rpc('set_user_admin_status' as any, {
+      p_target_user_id: userIdToPromote,
+      p_is_admin: true,
     });
-    
-    const { data, error } = await supabase
-      .from('users')
-      .update({ is_admin: true })
-      .eq('id', userIdToPromote)
-      .select()
-      .single();
     
     if (error) {
       console.error("Error updating user admin status:", error);
@@ -71,25 +56,10 @@ export async function setUserAsAdmin(userIdToPromote: string) {
 // Function to remove admin privileges from a user (requires admin privileges)
 export async function removeAdminPrivilege(userIdToRevoke: string) {
   try {
-    // Check if current user is admin
-    const isAdmin = await isUserAdmin();
-    
-    if (!isAdmin) {
-      throw new Error("Only admins can revoke admin privileges");
-    }
-    
-    // Log the admin action before making changes
-    await logAdminAction('revoke_admin_privileges', userIdToRevoke, {
-      action: 'Admin privileges revoked from user',
-      target_user_id: userIdToRevoke
+    const { data, error } = await supabase.rpc('set_user_admin_status' as any, {
+      p_target_user_id: userIdToRevoke,
+      p_is_admin: false,
     });
-    
-    const { data, error } = await supabase
-      .from('users')
-      .update({ is_admin: false })
-      .eq('id', userIdToRevoke)
-      .select()
-      .single();
     
     if (error) {
       console.error("Error updating user admin status:", error);

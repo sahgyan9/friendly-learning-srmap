@@ -436,6 +436,7 @@ for (const file of [
   '20260815220000_platform_settings.sql',
   '20260815230000_ai_feedback_and_queries_admin_access.sql',
   '20260816100000_search_interactions.sql',
+  '20260820120000_set_user_admin_status_rpc.sql',
 ]) {
   if (file === '20260804132345_b843f814-46d5-4c25-bc80-32e5f6ebba59.sql') {
     // Production's `faculty` table still carries `profile_image`, a column
@@ -1511,6 +1512,33 @@ check('aggregate_search_quality rolls up clicks into search_result_quality', qua
 
 const { rows: [qualityJob] } = await q(`SELECT schedule FROM cron.job WHERE jobname='aggregate-search-quality-nightly'`);
 check('search quality aggregation job scheduled nightly', qualityJob?.schedule === '0 2 * * *', qualityJob?.schedule);
+
+console.log('\nadmin role management rpc (set_user_admin_status):');
+await actAs(CURRENT_UID);
+await q(`UPDATE public.users SET is_admin = true WHERE id = $1`, [CURRENT_UID]);
+await q(`UPDATE public.users SET is_admin = false WHERE id = $1`, [OTHER_UID]);
+
+// 1. Admin promoting other user
+const { rows: [promotedAdminRes] } = await asAuthenticated(() => q(`SELECT public.set_user_admin_status($1::uuid, true) as res`, [OTHER_UID]));
+const promotedObj = typeof promotedAdminRes?.res === 'string' ? JSON.parse(promotedAdminRes.res) : promotedAdminRes?.res;
+check('admin can promote another user via set_user_admin_status', promotedObj?.is_admin === true);
+
+// 2. Non-admin attempting to promote/demote
+await actAs(OTHER_UID);
+await q(`UPDATE public.users SET is_admin = false WHERE id = $1`, [OTHER_UID]);
+let nonAdminBlocked = false;
+try {
+  await asAuthenticated(() => q(`SELECT public.set_user_admin_status($1::uuid, true)`, [OTHER_UID]));
+} catch (err) {
+  nonAdminBlocked = /Only administrators can modify admin status/i.test(err.message);
+}
+check('non-admin is blocked from calling set_user_admin_status', nonAdminBlocked);
+
+// 3. Admin revoking admin status
+await actAs(CURRENT_UID);
+const { rows: [revokedAdminRes] } = await asAuthenticated(() => q(`SELECT public.set_user_admin_status($1::uuid, false) as res`, [OTHER_UID]));
+const revokedObj = typeof revokedAdminRes?.res === 'string' ? JSON.parse(revokedAdminRes.res) : revokedAdminRes?.res;
+check('admin can revoke admin privileges via set_user_admin_status', revokedObj?.is_admin === false);
 
 console.log(failures === 0
   ? '\nAll migration checks passed against real Postgres.'

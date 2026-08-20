@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { getAdminUsers } from "@/integrations/supabase/services/admin";
 
 interface AdminUser {
@@ -13,7 +13,6 @@ interface AdminUser {
 export const useAdminUsers = () => {
   const [adminUsers, setAdminUsers] = useState<AdminUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { toast } = useToast();
 
   const fetchAdminUsers = async () => {
     try {
@@ -22,11 +21,7 @@ export const useAdminUsers = () => {
       setAdminUsers(data);
     } catch (error) {
       console.error("Error fetching admin users:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load admin users",
-        variant: "destructive",
-      });
+      toast.error("Failed to load admin users");
     } finally {
       setIsLoading(false);
     }
