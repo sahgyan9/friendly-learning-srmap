@@ -553,14 +553,15 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
           const similarity = hit.similarity ?? 0;
 
           if (hit.entity_type === "mentor") {
-            if (parsed.detectedDepartment) {
-              const dept = (hit.subtitle || "").toLowerCase();
-              if (!dept.includes(parsed.detectedDepartment.toLowerCase())) return;
-            }
+            const deptMatch = parsed.detectedDepartment
+              ? (hit.subtitle || "").toLowerCase().includes(parsed.detectedDepartment.toLowerCase())
+              : false;
+            const deptBoost = deptMatch ? 60 : 0;
+            const mentorCategoryBoost = parsed.targetCategory === "mentors" ? 70 : 0;
 
             if (mentorMap.has(hit.entity_id)) {
               const existing = mentorMap.get(hit.entity_id)!;
-              existing.relevanceScore = Math.max(existing.relevanceScore ?? 0, simScore + 80);
+              existing.relevanceScore = Math.max(existing.relevanceScore ?? 0, simScore + 80 + deptBoost + mentorCategoryBoost);
               existing.matchReason = "Matched via CampusMind AI semantic search";
             } else {
               // Mentor chunk metadata has: department, skills (array), profile_image, bio.
@@ -570,9 +571,8 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
               const mentorBio = typeof hit.metadata?.bio === "string" ? hit.metadata.bio : "";
               const mentorCandidateText = `${hit.title} ${hit.subtitle ?? ""} ${metaSkills.join(" ")} ${mentorBio}`;
 
-              // If query contains specific technical domain tokens, require topical match or high similarity (>= 0.58).
-              // Prevents false semantic matches where generic phrasing ('ready to help juniors') matches 'anyone I can contact'.
-              if (parsed.specificTokens.length > 0 && similarity < 0.58) {
+              // If query contains specific technical domain tokens and similarity is low, verify topical relevance
+              if (parsed.specificTokens.length > 0 && similarity < 0.45) {
                 if (!hasTopicalMatch(mentorCandidateText, parsed)) {
                   return;
                 }
@@ -602,19 +602,19 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
                   { label: "Skills & Experience", to: `${mentorPath}#skills` },
                 ],
                 meta: hit.metadata,
-                relevanceScore: simScore + 60 + getCtrBoost(hit.entity_id),
+                relevanceScore: simScore + 60 + deptBoost + mentorCategoryBoost + getCtrBoost(hit.entity_id),
               });
             }
           } else if (hit.entity_type === "faculty") {
-            if (parsed.detectedDepartment) {
-              const dept = (hit.subtitle || "").toLowerCase();
-              if (!dept.includes(parsed.detectedDepartment.toLowerCase())) return;
-            }
+            const deptMatch = parsed.detectedDepartment
+              ? (hit.subtitle || "").toLowerCase().includes(parsed.detectedDepartment.toLowerCase())
+              : false;
+            const deptBoost = deptMatch ? 60 : 0;
+            const facultyCategoryBonus = parsed.targetCategory === "faculty" ? 50 : (parsed.targetCategory === "mentors" ? -40 : 10);
 
             if (facultyMap.has(hit.entity_id)) {
               const existing = facultyMap.get(hit.entity_id)!;
-              const catBonus = parsed.targetCategory === "mentors" ? 0 : 50;
-              existing.relevanceScore = Math.max(existing.relevanceScore ?? 0, simScore + catBonus);
+              existing.relevanceScore = Math.max(existing.relevanceScore ?? 0, simScore + facultyCategoryBonus + deptBoost);
               existing.matchReason = "Matched via CampusMind AI semantic search";
             } else {
               const metaInterests = Array.isArray(hit.metadata?.interests)
@@ -623,7 +623,7 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
               const facultyBio = typeof hit.metadata?.research_details === "string" ? hit.metadata.research_details : "";
               const facultyCandidateText = `${hit.title} ${hit.subtitle ?? ""} ${metaInterests.join(" ")} ${facultyBio}`;
 
-              if (parsed.specificTokens.length > 0 && similarity < 0.58) {
+              if (parsed.specificTokens.length > 0 && similarity < 0.45) {
                 if (!hasTopicalMatch(facultyCandidateText, parsed)) {
                   return;
                 }
@@ -635,7 +635,6 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
                 ? `Research and subject expertise: ${metaInterests.slice(0, 5).join(", ")}.`
                 : `Faculty member at SRM University-AP. Teaching and research supervision.`;
 
-              const catBonus = parsed.targetCategory === "mentors" ? -30 : 20;
               facultyMap.set(hit.entity_id, {
                 id: hit.entity_id,
                 title: hit.title,
@@ -648,11 +647,11 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
                 snippet: facultySnippet,
                 matchReason: "Semantic match from CampusMind knowledge graph",
                 sitelinks: [
-                  { label: "Faculty Profile", to: facultyPath },
-                  { label: "Student Reviews", to: `${facultyPath}#reviews` },
+                  { label: "View Profile", to: facultyPath },
+                  { label: "Research Interests", to: `${facultyPath}#interests` },
                 ],
                 meta: hit.metadata,
-                relevanceScore: Math.max(10, simScore + catBonus) + getCtrBoost(hit.entity_id),
+                relevanceScore: Math.max(10, simScore + facultyCategoryBonus + deptBoost) + getCtrBoost(hit.entity_id),
               });
             }
           } else if (hit.entity_type === "student") {
@@ -852,9 +851,7 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
 
       const counts: SearchCounts = {
         mentors: allMentorsList.length,
-        faculty: parsed.subjectTokens.length > 0 || parsed.detectedDepartment
-          ? relevantFacultyList.length
-          : Math.max((facultyRes as { total?: number }).total ?? 0, allFacultyList.length),
+        faculty: trimmed.length > 0 ? relevantFacultyList.length : (facultyRes as { total?: number }).total ?? 0,
         opportunities: allOppList.length,
         communities: allCommunitiesList.length,
         posts: allPostsList.length,

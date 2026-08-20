@@ -139,7 +139,7 @@ export const STOP_WORDS = new Set([
   "a", "an", "the", "for", "in", "on", "of", "to", "at", "by", "from", "with", "about",
   "into", "through", "during", "before", "after", "above", "below", "between", "under",
   "and", "or", "but", "if", "so", "as", "than", "because", "while", "wherever", "whenever",
-  "please", "thanks", "thank", "good", "great", "best", "top", "better", "really", "very", "also", "just"
+  "please", "thanks", "thank", "good", "great", "best", "top", "better", "really", "very", "also", "just", "well"
 ]);
 
 // Generic research modifier words that should not trigger isolated full-table matches
@@ -301,8 +301,8 @@ export function parseQuery(query: string): ParsedQuery {
   const raw = query.trim();
   const lower = raw.toLowerCase();
 
-  // Normalize punctuation
-  const normalized = lower.replace(/[^\w\s\+\#\.\-]/g, " ").replace(/\s+/g, " ").trim();
+  // Normalize punctuation: split periods, commas, slashes into spaces so words aren't glued together
+  const normalized = lower.replace(/[^\w\s\+\#\-]/g, " ").replace(/\s+/g, " ").trim();
   const rawWords = normalized.split(" ").filter(Boolean);
 
   const tokens: string[] = [];
@@ -322,6 +322,16 @@ export function parseQuery(query: string): ParsedQuery {
     normalized.includes("student mentor") ||
     normalized.includes("peer guide");
 
+  const isMentorConversational =
+    normalized.includes("want someone") ||
+    normalized.includes("need someone") ||
+    normalized.includes("looking for someone") ||
+    normalized.includes("find someone") ||
+    normalized.includes("who can help") ||
+    normalized.includes("who can teach") ||
+    normalized.includes("who is good in") ||
+    normalized.includes("who knows");
+
   const isFacultyExplicit =
     rawWords.some((w) => ["faculty", "faculties", "prof", "profs", "professor", "professors", "lecturer", "dr", "dr."].includes(w)) ||
     normalized.includes("faculty member") ||
@@ -336,6 +346,13 @@ export function parseQuery(query: string): ParsedQuery {
 
   const isPostExplicit =
     rawWords.some((w) => ["post", "posts", "thread", "threads", "discussion", "discussions", "reply"].includes(w));
+
+  const isDocumentExplicit =
+    rawWords.some((w) => ["penalty", "penalties", "curfew", "misconduct", "disciplinary", "attendance", "calendar", "midterm", "midterms", "endterm", "endterms", "holiday", "holidays", "regulations"].includes(w)) ||
+    normalized.includes("code of conduct") ||
+    normalized.includes("academic calendar") ||
+    normalized.includes("what is the penalty") ||
+    normalized.includes("what are the rules");
 
   const isFresherQuery = rawWords.some((w) =>
     ["fresher", "freshers", "firstyear", "beginner", "newbie"].includes(w)
@@ -355,7 +372,7 @@ export function parseQuery(query: string): ParsedQuery {
   const isElectiveQuery = rawWords.some((w) => ["elective", "electives", "registration", "credits"].includes(w));
   const isHackathonGuide = (rawWords.includes("hackathon") || rawWords.includes("sih")) && (isHowToQuery || rawWords.includes("teammates") || rawWords.includes("team"));
 
-  if (isMentorExplicit) {
+  if (isMentorExplicit || isMentorConversational) {
     targetCategory = "mentors";
   } else if (isFacultyExplicit) {
     targetCategory = "faculty";
@@ -365,9 +382,11 @@ export function parseQuery(query: string): ParsedQuery {
     targetCategory = "communities";
   } else if (isPostExplicit) {
     targetCategory = "posts";
+  } else if (isDocumentExplicit) {
+    targetCategory = "documents" as any;
   }
 
-  if (isFresherQuery) {
+  if (isFresherQuery && !isMentorConversational) {
     intent = "informational";
     infoTopic = "fresher_guide";
     targetCategory = targetCategory || "blog";
@@ -396,16 +415,21 @@ export function parseQuery(query: string): ParsedQuery {
     (rawWords.length >= 2 && rawWords.length <= 4 && !rawWords.some((w) => STOP_WORDS.has(w) || ROLE_KEYWORDS.has(w)))
   ) {
     intent = "entity_lookup";
-  } else if (isMentorExplicit || isFacultyExplicit || rawWords.length > 0) {
+  } else if (isMentorExplicit || isMentorConversational || isFacultyExplicit || rawWords.length > 0) {
     intent = "domain_subject";
   }
 
-  // 2. Detect Department from single words or multi-word phrases
+  // 2. Detect Department using strict word boundaries (prevents 'someone' matching 'me' or 'guidance' matching 'ce')
   let detectedDepartment: string | null = null;
   const expandedPhrasesSet = new Set<string>();
 
   for (const [key, deptName] of Object.entries(CAMPUS_DEPARTMENTS)) {
-    if (normalized.includes(key)) {
+    const isMultiWord = key.includes(" ");
+    const isExactMatch = isMultiWord
+      ? normalized.includes(key)
+      : rawWords.includes(key) || new RegExp(`(^|\\s)${key}(\\s|$)`, "i").test(normalized);
+
+    if (isExactMatch) {
       detectedDepartment = deptName;
       expandedPhrasesSet.add(deptName.toLowerCase());
       if (CAMPUS_SYNONYMS[key]) {
