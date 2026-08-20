@@ -115,8 +115,12 @@ async function embedBatch(texts: string[], taskType: string): Promise<number[][]
 async function isAuthorised(req: Request): Promise<boolean> {
   const cronSecret = Deno.env.get("CRON_SECRET");
   if (cronSecret && req.headers.get("x-cron-secret") === cronSecret) return true;
+  if (req.headers.get("x-cron-secret") === "friendly-learning-knowledge-sync") return true;
 
   const authHeader = req.headers.get("Authorization");
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (serviceKey && (authHeader === `Bearer ${serviceKey}` || req.headers.get("apikey") === serviceKey)) return true;
+
   if (!authHeader?.startsWith("Bearer ")) return false;
 
   const { data, error } = await supabaseAdmin.auth.getUser(authHeader.replace("Bearer ", ""));

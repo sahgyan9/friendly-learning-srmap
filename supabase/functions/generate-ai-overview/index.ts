@@ -38,6 +38,7 @@ async function retrieve(query: string): Promise<Retrieved[]> {
       ...(body.opportunities ?? []),
       ...(body.communities ?? []),
       ...(body.posts ?? []),
+      ...(body.documents ?? []),
       ...(body.other ?? []),
     ] as Retrieved[];
 
@@ -63,7 +64,7 @@ function buildPrompt(query: string, matches: Retrieved[]): string {
   return `You are the AI Campus Overview engine for Friendly Learning at SRM University-AP.
 The user searched for: "${query}".
 
-Here are the most relevant campus resources we found (faculty, mentors, opportunities, groups, posts):
+Here are the most relevant campus resources we found (faculty, mentors, opportunities, groups, posts, official campus documents & policies):
 ${context ? context : "No matching campus resources found."}
 
 Based strictly on the provided resources, generate a short summary overview (1-2 paragraphs) to help the student.
@@ -73,7 +74,7 @@ Rules:
 2. Only mention people, events, or entities from the provided context. If no context is provided, say there are no direct matches yet and suggest broad advice.
 3. INLINE CITATIONS: When you state a fact or mention an entity from the resources, you MUST include an inline citation bracket like [1] or [2] matching the resource number above.
 4. Extract 1-3 key insights as a list of short strings.
-5. Identify the top 1-4 specific entities to recommend as badges. Use the exact 'id', 'type', 'title' (for name), 'path' (for to), and 'subtitle' (for detail) from the context. Only use types: 'faculty', 'mentor', 'opportunity', 'community', or 'post'.
+5. Identify the top 1-4 specific entities to recommend as badges. Use the exact 'id', 'type', 'title' (for name), 'path' (for to), and 'subtitle' (for detail) from the context. Only use types: 'faculty', 'mentor', 'opportunity', 'community', 'post', or 'document'.
 6. CITATIONS MAP: Provide a 'citations' array mapping the numbers you used in the summary to the entity.
 
 Your response MUST be a valid JSON object matching this schema exactly:
@@ -93,12 +94,14 @@ Your response MUST be a valid JSON object matching this schema exactly:
        "detail": "subtitle or short detail"
     }
   ]
-}`;
+}
+Note: For document badges, set type to "document".`;
 }
 
 const GENERATION_MODELS = [
-  "gemini-2.5-flash",
-  "gemini-2.5-flash-lite",
+  "gemini-3.7-flash",
+  "gemini-3.6-flash",
+  "gemini-3.5-flash",
   "gemini-flash-latest",
   "gemini-flash-lite-latest",
 ];

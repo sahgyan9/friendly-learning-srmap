@@ -169,7 +169,7 @@ serve(async (req) => {
 
     const { data: results, error } = await supabaseAdmin.rpc("search_knowledge", {
       p_embedding: JSON.stringify(embedding),
-      p_entity_types: payload.types ?? ["faculty", "mentor", "student", "opportunity", "community", "post"],
+      p_entity_types: payload.types ?? ["faculty", "mentor", "student", "opportunity", "community", "post", "document"],
       p_limit: Math.min(Math.max(payload.limit ?? 12, 1), 50),
       p_viewer: viewer,
       // 0.35 cuts the noisy tail of weak matches that appeared on broad queries
@@ -208,8 +208,9 @@ serve(async (req) => {
       opportunities: rows.filter((r) => r.entity_type === "opportunity"),
       communities: rows.filter((r) => r.entity_type === "community"),
       posts: rows.filter((r) => r.entity_type === "post"),
+      documents: rows.filter((r) => r.entity_type === "document"),
     };
-    const claimed = new Set(["faculty", "mentor", "student", "opportunity", "community", "post"]);
+    const claimed = new Set(["faculty", "mentor", "student", "opportunity", "community", "post", "document"]);
 
     return json({
       query,
