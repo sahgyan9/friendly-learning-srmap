@@ -438,6 +438,8 @@ for (const file of [
   '20260816100000_search_interactions.sql',
   '20260820120000_set_user_admin_status_rpc.sql',
   '20260820130000_drop_legacy_canvas_tables.sql',
+  '20260821090000_marketplace_posts_user_id_index.sql',
+  '20260821100000_fix_storage_list_policy_bucket_ids.sql',
 ]) {
   if (file === '20260804132345_b843f814-46d5-4c25-bc80-32e5f6ebba59.sql') {
     // Production's `faculty` table still carries `profile_image`, a column
@@ -1544,6 +1546,23 @@ check('admin can revoke admin privileges via set_user_admin_status', revokedObj?
 console.log('\ndrop legacy canvas tables:');
 const { rows: [canvasTables] } = await q(`SELECT count(*)::int AS n FROM information_schema.tables WHERE table_schema='public' AND table_name LIKE 'canvas_%'`);
 check('orphan canvas tables dropped cleanly', canvasTables?.n === 0, `found ${canvasTables?.n} canvas tables`);
+
+console.log('\nmarketplace_posts.user_id index:');
+const { rows: [mpIndex] } = await q(`SELECT indexdef FROM pg_indexes WHERE schemaname='public' AND tablename='marketplace_posts' AND indexname='idx_marketplace_posts_user_id'`);
+check('idx_marketplace_posts_user_id exists on (user_id)', !!mpIndex && /\(user_id\)/.test(mpIndex.indexdef), mpIndex?.indexdef ?? '(missing)');
+
+console.log('\nstorage list policies target bucket id, not display name:');
+const { rows: [listPolicy] } = await q(`SELECT qual FROM pg_policies WHERE schemaname='storage' AND tablename='objects' AND policyname='Authenticated can list community post images'`);
+check('community post images list policy targets the real bucket id', listPolicy?.qual === "(bucket_id = 'community-posts'::text)", listPolicy?.qual ?? '(missing)');
+const listAsAuthenticated = await asAuthenticated(() => attempt(
+  `SELECT 1 FROM storage.objects WHERE bucket_id = 'community-posts' LIMIT 1`));
+check('an authenticated user can list community-posts objects', listAsAuthenticated === null, listAsAuthenticated ?? '');
+
+const { rows: [profileListPolicy] } = await q(`SELECT qual FROM pg_policies WHERE schemaname='storage' AND tablename='objects' AND policyname='Authenticated can list profile-images'`);
+check('profile-images list policy targets the real bucket id (profiles)', profileListPolicy?.qual === "(bucket_id = 'profiles'::text)", profileListPolicy?.qual ?? '(missing)');
+const profileListAsAuthenticated = await asAuthenticated(() => attempt(
+  `SELECT 1 FROM storage.objects WHERE bucket_id = 'profiles' LIMIT 1`));
+check('an authenticated user can list profiles objects', profileListAsAuthenticated === null, profileListAsAuthenticated ?? '');
 
 console.log(failures === 0
   ? '\nAll migration checks passed against real Postgres.'

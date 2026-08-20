@@ -1,28 +1,26 @@
 -- This file is a reference map of storage.buckets, not a script that creates
--- them. Confirmed live via `supabase storage ls --experimental` on
--- 2026-08-21: the actual buckets are profile-images, team_members,
--- marketplace, and "Community Post Images" -- none of them were ever created
--- by a tracked migration, and the single INSERT this file used to contain
--- (id='profiles') does not correspond to any bucket that exists live. All
--- four predate migration history the same way public.users/mentors do; see
--- .claude/rules/supabase-changes.md.
+-- them. None of the four buckets below were ever created by a tracked
+-- migration -- they predate migration history the same way public.users/
+-- mentors do; see .claude/rules/supabase-changes.md.
 --
--- KNOWN ISSUE, needs a live check before trusting it either way:
--- supabase/migrations/20260804132345_...sql adds owner-must-match
--- INSERT/UPDATE/DELETE policies for bucket_id = 'community-posts' -- a string
--- that does not match the live bucket, whose id is "Community Post Images"
--- (with the space and capitals). If no other policy enforces ownership on
--- that literal bucket id, uploads to it may not actually be owner-scoped.
--- Run this in the Supabase SQL editor to check what's really there:
+-- storage.buckets has separate `id` and `name` columns, and RLS/the Storage
+-- API key off `id`, not `name`. `supabase storage ls --experimental` prints
+-- `name`, which caused a false-alarm "unprotected bucket" investigation on
+-- 2026-08-21 -- id and name differ for two of these four buckets. Confirmed
+-- live via `SELECT id, name FROM storage.buckets`:
 --
---   SELECT policyname, cmd, roles, qual, with_check
---   FROM pg_policies
---   WHERE schemaname = 'storage' AND tablename = 'objects'
---     AND (qual ILIKE '%Community Post Images%' OR qual ILIKE '%community-posts%'
---          OR with_check ILIKE '%Community Post Images%' OR with_check ILIKE '%community-posts%');
+--   id               | name
+--   -----------------+------------------------
+--   profiles         | profile-images
+--   team_members     | team_members
+--   marketplace      | marketplace
+--   community-posts  | Community Post Images
 --
--- If that returns only SELECT policies, community post image writes are not
--- ownership-scoped and need a policy against the real bucket id.
+-- Policies below are written against `id`, which is what actually matters.
+-- Two dashboard-created "Authenticated can list ..." SELECT policies got this
+-- backwards (profile-images, Community Post Images) -- see their sections
+-- below -- and 20260821100000_fix_storage_list_policy_bucket_ids.sql
+-- corrects both.
 
 -- ---------------------------------------------------------------------------
 -- profile-images -- public read, owner-scoped write
@@ -40,8 +38,10 @@
 --
 -- CREATE POLICY "Authenticated can list profile-images"
 -- ON storage.objects FOR SELECT TO authenticated
--- USING (bucket_id = 'profile-images');
--- (supabase/migrations/20260418025448_a4b8a106-6764-4bb8-a590-f6cb7d3efc85.sql)
+-- USING (bucket_id = 'profiles');
+-- Originally created against bucket_id = 'profile-images' (the display name)
+-- by 20260418025448_a4b8a106-6764-4bb8-a590-f6cb7d3efc85.sql -- a no-op ever
+-- since, fixed by 20260821100000_fix_storage_list_policy_bucket_ids.sql.
 
 -- ---------------------------------------------------------------------------
 -- team_members -- admin-only, gated by is_admin_user()
@@ -54,9 +54,12 @@
 -- (supabase/migrations/20260804132345_b843f814-46d5-4c25-bc80-32e5f6ebba59.sql)
 
 -- ---------------------------------------------------------------------------
--- "Community Post Images" -- see KNOWN ISSUE above
+-- community-posts (display name "Community Post Images") -- owner-must-match
+-- on write, public read
 -- ---------------------------------------------------------------------------
--- Only a public/authenticated-list SELECT policy is tracked against this
--- exact bucket id. The owner-scoped write policies in
--- 20260804132345_b843f814-46d5-4c25-bc80-32e5f6ebba59.sql target
--- bucket_id = 'community-posts' instead, which does not exist live.
+-- The owner-scoped INSERT/UPDATE/DELETE policies
+-- (20260804132345_b843f814-46d5-4c25-bc80-32e5f6ebba59.sql) always targeted
+-- the correct id, bucket_id = 'community-posts'; writes were never
+-- unprotected. The tracked "Authenticated can list community post images"
+-- SELECT policy targeted the display name instead and was a no-op --
+-- 20260821100000_fix_storage_list_policy_bucket_ids.sql corrects it.
