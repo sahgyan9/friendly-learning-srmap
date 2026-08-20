@@ -3,12 +3,12 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowRight, Plus, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { CommunityCard } from "@/components/communities/CommunityCard";
+import { CommunityCard } from "@/components/workspace-groups/CommunityCard";
 import {
   listCommunities,
   type Community,
 } from "@/integrations/supabase/services/communities";
-import { CreateCommunityModal } from "@/components/communities/CreateCommunityModal";
+import { CreateCommunityModal } from "@/components/workspace-groups/CreateCommunityModal";
 import { useAuth } from "@/context/AuthContext";
 
 const cardVariants = {

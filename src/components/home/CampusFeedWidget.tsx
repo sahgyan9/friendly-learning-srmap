@@ -3,10 +3,10 @@ import { Link, useNavigate } from "react-router-dom";
 import { ArrowRight, Flame, MessageSquare, PenLine, Sparkles, Users, BookOpen } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { PostCard } from "@/components/community/PostCard";
-import { PostComposerStrip } from "@/components/community/PostComposerStrip";
-import { CreatePostButton } from "@/components/community/CreatePostButton";
-import { ImageLightbox } from "@/components/community/ImageLightbox";
+import { PostCard } from "@/components/community-posts/PostCard";
+import { PostComposerStrip } from "@/components/community-posts/PostComposerStrip";
+import { CreatePostButton } from "@/components/community-posts/CreatePostButton";
+import { ImageLightbox } from "@/components/community-posts/ImageLightbox";
 import { useAuth } from "@/context/AuthContext";
 import {
   getCommunityPosts,

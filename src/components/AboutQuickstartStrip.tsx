@@ -7,7 +7,7 @@ import {
   BadgeCheck,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { CreatePostButton } from "@/components/community/CreatePostButton";
+import { CreatePostButton } from "@/components/community-posts/CreatePostButton";
 
 /**
  * Quickstart strip — placed between the Posts section and the Groups section.

@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import { GroupIconPicker } from "@/components/communities/GroupIconPicker";
+import { GroupIconPicker } from "@/components/workspace-groups/GroupIconPicker";
 import {
   COMMUNITY_KINDS,
   DESCRIPTION_MAX,

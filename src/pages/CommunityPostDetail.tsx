@@ -11,17 +11,17 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { EditPostModal } from "@/components/community/EditPostModal";
-import { ImageLightbox } from "@/components/community/ImageLightbox";
-import { InlineComments } from "@/components/community/InlineComments";
-import { PostImageGallery } from "@/components/community/PostImageGallery";
+import { EditPostModal } from "@/components/community-posts/EditPostModal";
+import { ImageLightbox } from "@/components/community-posts/ImageLightbox";
+import { InlineComments } from "@/components/community-posts/InlineComments";
+import { PostImageGallery } from "@/components/community-posts/PostImageGallery";
 import { LinkifiedText } from "@/components/common/LinkifiedText";
 import { CardAccentBorder } from "@/components/ui/CardAccentBorder";
 import {
   AwaitingReplyBadge,
   PostStatusBadge,
   PostTypeBadge,
-} from "@/components/community/PostTypeBadge";
+} from "@/components/community-posts/PostTypeBadge";
 import { useAuth } from "@/context/AuthContext";
 import { getBreadcrumbSchema } from "@/lib/structured-data";
 

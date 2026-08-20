@@ -6,7 +6,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { CommunityMemberList } from "@/components/communities/CommunityMemberList";
+import { CommunityMemberList } from "@/components/workspace-groups/CommunityMemberList";
 import { type CommunityVisibility } from "@/integrations/supabase/services/communities";
 
 interface CommunityMemberDrawerProps {

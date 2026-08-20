@@ -12,11 +12,11 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CreatePostButton } from "@/components/community/CreatePostButton";
-import { InlineComments } from "@/components/community/InlineComments";
-import { PostCard } from "@/components/community/PostCard";
-import { EditPostModal } from "@/components/community/EditPostModal";
-import { ImageLightbox } from "@/components/community/ImageLightbox";
+import { CreatePostButton } from "@/components/community-posts/CreatePostButton";
+import { InlineComments } from "@/components/community-posts/InlineComments";
+import { PostCard } from "@/components/community-posts/PostCard";
+import { EditPostModal } from "@/components/community-posts/EditPostModal";
+import { ImageLightbox } from "@/components/community-posts/ImageLightbox";
 import { HorizontalScroller } from "@/components/ui/HorizontalScroller";
 import {
   AlertDialog,

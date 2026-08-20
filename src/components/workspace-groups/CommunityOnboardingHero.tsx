@@ -2,7 +2,7 @@ import React, { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Compass, Plus, Sparkles, Users, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { CommunityCard } from "@/components/communities/CommunityCard";
+import { CommunityCard } from "@/components/workspace-groups/CommunityCard";
 import type { Community } from "@/integrations/supabase/services/communities";
 import { useAuth } from "@/context/AuthContext";
 import { cn } from "@/lib/utils";

@@ -4,7 +4,7 @@ import { Loader2, Lock, Users } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { getCommunityBySlug, type Community } from "@/integrations/supabase/services/communities";
-import { JoinCommunityButton } from "@/components/communities/JoinCommunityButton";
+import { JoinCommunityButton } from "@/components/workspace-groups/JoinCommunityButton";
 
 // Pasted invite links are the whole point of this feature, so the same slug
 // can show up in dozens of posts and comments on one page. One fetch per

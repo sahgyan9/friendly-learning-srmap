@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/context/AuthContext";
 import { getInitials } from "@/utils/user-utils";
 import { CreatePostModal } from "./CreatePostModal";
-import { CreateCommunityModal } from "@/components/communities/CreateCommunityModal";
+import { CreateCommunityModal } from "@/components/workspace-groups/CreateCommunityModal";
 
 interface PostComposerStripProps {
   onPostCreated: () => void;

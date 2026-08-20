@@ -18,8 +18,8 @@ import {
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CommunityAvatar } from "@/components/communities/CommunityAvatar";
-import { InviteLinkButton } from "@/components/communities/InviteLinkButton";
+import { CommunityAvatar } from "@/components/workspace-groups/CommunityAvatar";
+import { InviteLinkButton } from "@/components/workspace-groups/InviteLinkButton";
 import { formatRelativeTime } from "@/utils/date-utils";
 import {
   AlertDialog,

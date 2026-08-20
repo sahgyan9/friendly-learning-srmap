@@ -1,8 +1,8 @@
 import { Link } from "react-router-dom";
 import { ArrowRight, Lock } from "lucide-react";
 
-import { CommunityAvatar } from "@/components/communities/CommunityAvatar";
-import { JoinCommunityButton } from "@/components/communities/JoinCommunityButton";
+import { CommunityAvatar } from "@/components/workspace-groups/CommunityAvatar";
+import { JoinCommunityButton } from "@/components/workspace-groups/JoinCommunityButton";
 import { formatRelativeTime } from "@/utils/date-utils";
 import { getCommunityKindMeta, type Community } from "@/integrations/supabase/services/communities";
 

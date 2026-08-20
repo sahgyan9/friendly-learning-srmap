@@ -5,9 +5,9 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { HorizontalScroller } from "@/components/ui/HorizontalScroller";
-import { CreatePostButton } from "@/components/community/CreatePostButton";
-import { PostComposerStrip } from "@/components/community/PostComposerStrip";
-import { PostCard } from "@/components/community/PostCard";
+import { CreatePostButton } from "@/components/community-posts/CreatePostButton";
+import { PostComposerStrip } from "@/components/community-posts/PostComposerStrip";
+import { PostCard } from "@/components/community-posts/PostCard";
 import { useAuth } from "@/context/AuthContext";
 import {
   getCommunityPosts,
@@ -15,7 +15,7 @@ import {
   type CommunityPost,
 } from "@/integrations/supabase/services/community-posts";
 
-import { ImageLightbox } from "@/components/community/ImageLightbox";
+import { ImageLightbox } from "@/components/community-posts/ImageLightbox";
 import { getPostImageUrls } from "@/integrations/supabase/services/community-posts";
 
 /**

@@ -30,17 +30,17 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { PostCard } from "@/components/community/PostCard";
-import { CreatePostModal } from "@/components/community/CreatePostModal";
-import JoinRequestDialog from "@/components/communities/JoinRequestDialog";
-import JoinRequestsPanel from "@/components/communities/JoinRequestsPanel";
-import { CommunityGroupChat } from "@/components/communities/CommunityGroupChat";
-import { CommunityResourcesTab } from "@/components/communities/CommunityResourcesTab";
-import { EditCommunityModal } from "@/components/communities/EditCommunityModal";
-import { CommunityWorkspaceHeader } from "@/components/communities/CommunityWorkspaceHeader";
-import { CommunityWorkspaceSidebar, channelTabId } from "@/components/communities/CommunityWorkspaceSidebar";
-import { CommunityMemberDrawer } from "@/components/communities/CommunityMemberDrawer";
-import CreateChannelModal from "@/components/communities/CreateChannelModal";
+import { PostCard } from "@/components/community-posts/PostCard";
+import { CreatePostModal } from "@/components/community-posts/CreatePostModal";
+import JoinRequestDialog from "@/components/workspace-groups/JoinRequestDialog";
+import JoinRequestsPanel from "@/components/workspace-groups/JoinRequestsPanel";
+import { CommunityGroupChat } from "@/components/workspace-groups/CommunityGroupChat";
+import { CommunityResourcesTab } from "@/components/workspace-groups/CommunityResourcesTab";
+import { EditCommunityModal } from "@/components/workspace-groups/EditCommunityModal";
+import { CommunityWorkspaceHeader } from "@/components/workspace-groups/CommunityWorkspaceHeader";
+import { CommunityWorkspaceSidebar, channelTabId } from "@/components/workspace-groups/CommunityWorkspaceSidebar";
+import { CommunityMemberDrawer } from "@/components/workspace-groups/CommunityMemberDrawer";
+import CreateChannelModal from "@/components/workspace-groups/CreateChannelModal";
 import { useAuth } from "@/context/AuthContext";
 import { useRealtimeSubscription } from "@/hooks/useRealtime";
 import {

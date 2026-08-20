@@ -21,8 +21,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CommunityCard } from "@/components/communities/CommunityCard";
-import { CommunityRow } from "@/components/communities/CommunityRow";
+import { CommunityCard } from "@/components/workspace-groups/CommunityCard";
+import { CommunityRow } from "@/components/workspace-groups/CommunityRow";
 import { HorizontalScroller } from "@/components/ui/HorizontalScroller";
 import {
   COMMUNITY_KINDS,

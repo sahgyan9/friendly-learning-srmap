@@ -12,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { CommunityAvatar } from "@/components/communities/CommunityAvatar";
+import { CommunityAvatar } from "@/components/workspace-groups/CommunityAvatar";
 import { HorizontalScroller } from "@/components/ui/HorizontalScroller";
 import { formatRelativeTime } from "@/utils/date-utils";
 import { getCommunityKindMeta, type Community } from "@/integrations/supabase/services/communities";
