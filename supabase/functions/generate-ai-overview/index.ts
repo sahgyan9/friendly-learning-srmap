@@ -6,7 +6,11 @@ const corsHeaders = {
 };
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
-const GEMINI_KEY = Deno.env.get("Gemini_API_Key") ?? "";
+const GEMINI_KEYS = [
+  Deno.env.get("Gemini_API_Key"),
+  Deno.env.get("Gemini_API_Key_2"),
+  Deno.env.get("GEMINI_API_KEY"),
+].filter((k): k is string => Boolean(k && k.trim().length > 0));
 const MODEL = "gemini-flash-latest";
 
 type Retrieved = {
@@ -164,58 +168,68 @@ function cleanJsonText(raw: string): string {
 async function generateOverview(prompt: string) {
   const tried: string[] = [];
 
-  for (const model of GENERATION_MODELS) {
-    const call = () => fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_KEY}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
-            temperature: 0.2,
-            maxOutputTokens: 1500,
-            responseMimeType: "application/json",
-          },
-        }),
+  for (let keyIdx = 0; keyIdx < GEMINI_KEYS.length; keyIdx++) {
+    const key = GEMINI_KEYS[keyIdx];
+
+    for (const model of GENERATION_MODELS) {
+      const call = () => fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: {
+              temperature: 0.2,
+              maxOutputTokens: 1500,
+              responseMimeType: "application/json",
+            },
+          }),
+        }
+      );
+
+      let response = await call();
+
+      if (response.status === 503) {
+        await new Promise((resolve) => setTimeout(resolve, RETRY_503_MS));
+        response = await call();
       }
-    );
 
-    let response = await call();
+      // If rate-limited (429) on this key, failover immediately to next key in pool
+      if (response.status === 429) {
+        tried.push(`key_${keyIdx + 1}:${model}=429_rate_limit`);
+        break; // Switch to next key
+      }
 
-    if (response.status === 503) {
-      await new Promise((resolve) => setTimeout(resolve, RETRY_503_MS));
-      response = await call();
-    }
-
-    if (!response.ok) {
-      tried.push(`${model}=${response.status}:${(await response.text()).slice(0, 120)}`);
-      continue;
-    }
-
-    const body = await response.json();
-    const candidate = body.candidates?.[0];
-    const text = candidate?.content?.parts?.[0]?.text;
-
-    if (text && candidate?.finishReason === "MAX_TOKENS") {
-      tried.push(`${model}=truncated-at-${text.length}-chars`);
-      continue;
-    }
-    
-    if (text) {
-      const cleaned = cleanJsonText(text);
-      try {
-        return JSON.parse(cleaned);
-      } catch (e) {
-        tried.push(`${model}=json-parse-error:${e instanceof Error ? e.message : String(e)}`);
+      if (!response.ok) {
+        tried.push(`key_${keyIdx + 1}:${model}=${response.status}`);
         continue;
       }
-    }
 
-    tried.push(`${model}=empty`);
+      const body = await response.json();
+      const candidate = body.candidates?.[0];
+      const text = candidate?.content?.parts?.[0]?.text;
+
+      if (text && candidate?.finishReason === "MAX_TOKENS") {
+        tried.push(`key_${keyIdx + 1}:${model}=truncated`);
+        continue;
+      }
+      
+      if (text) {
+        const cleaned = cleanJsonText(text);
+        try {
+          return JSON.parse(cleaned);
+        } catch (e) {
+          tried.push(`key_${keyIdx + 1}:${model}=json-parse-error:${e instanceof Error ? e.message : String(e)}`);
+          continue;
+        }
+      }
+
+      tried.push(`key_${keyIdx + 1}:${model}=empty`);
+    }
   }
 
-  throw new Error(`Gemini API failed to generate on all models: ${tried.join(" | ")}`);
+  throw new Error(`Gemini API failed across all keys and models: ${tried.join(" | ")}`);
 }
 
 serve(async (req) => {

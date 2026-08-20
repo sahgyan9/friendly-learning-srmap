@@ -39,7 +39,11 @@ const corsHeaders = {
 };
 
 const MODEL = Deno.env.get("EMBEDDING_MODEL") ?? "gemini-embedding-001";
-const GEMINI_KEY = Deno.env.get("Gemini_API_Key") ?? "";
+const GEMINI_KEYS = [
+  Deno.env.get("Gemini_API_Key"),
+  Deno.env.get("Gemini_API_Key_2"),
+  Deno.env.get("GEMINI_API_KEY"),
+].filter((k): k is string => Boolean(k && k.trim().length > 0));
 const DIMENSIONS = 768;
 
 const MIN_QUERY = 3;
@@ -66,36 +70,50 @@ async function hashQuery(query: string): Promise<string> {
  * RETRIEVAL_DOCUMENT for the other side of this pair.
  */
 async function embedQuery(text: string): Promise<number[]> {
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:embedContent?key=${GEMINI_KEY}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: `models/${MODEL}`,
-        content: { parts: [{ text }] },
-        taskType: "RETRIEVAL_QUERY",
-        outputDimensionality: DIMENSIONS,
-      }),
-    },
-  );
+  const errors: string[] = [];
 
-  if (!response.ok) {
-    throw new Error(`Gemini ${MODEL} -> ${response.status}: ${(await response.text()).slice(0, 200)}`);
+  for (let i = 0; i < GEMINI_KEYS.length; i++) {
+    const key = GEMINI_KEYS[i];
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:embedContent?key=${key}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: `models/${MODEL}`,
+            content: { parts: [{ text }] },
+            taskType: "RETRIEVAL_QUERY",
+            outputDimensionality: DIMENSIONS,
+          }),
+        },
+      );
+
+      if (response.status === 429 || response.status >= 500) {
+        errors.push(`key_${i + 1}=${response.status}`);
+        continue; // Failover to next key in pool
+      }
+
+      if (!response.ok) {
+        errors.push(`key_${i + 1}=${response.status}:${(await response.text()).slice(0, 100)}`);
+        continue;
+      }
+
+      const body = await response.json();
+      const values: number[] = body.embedding?.values ?? [];
+
+      if (values.length !== DIMENSIONS) {
+        throw new Error(`expected ${DIMENSIONS} dimensions, got ${values.length}`);
+      }
+
+      const norm = Math.sqrt(values.reduce((sum, v) => sum + v * v, 0));
+      return norm > 0 ? values.map((v) => v / norm) : values;
+    } catch (err) {
+      errors.push(`key_${i + 1}=${err instanceof Error ? err.message : String(err)}`);
+    }
   }
 
-  const body = await response.json();
-  const values: number[] = body.embedding?.values ?? [];
-
-  if (values.length !== DIMENSIONS) {
-    throw new Error(`expected ${DIMENSIONS} dimensions, got ${values.length}`);
-  }
-
-  // Must match the normalisation embed-knowledge applies to documents, or the
-  // two sides of the comparison are on different scales and the 0.30 relevance
-  // floor stops meaning anything.
-  const norm = Math.sqrt(values.reduce((sum, v) => sum + v * v, 0));
-  return norm > 0 ? values.map((v) => v / norm) : values;
+  throw new Error(`Gemini embedding failed across all keys: ${errors.join(" | ")}`);
 }
 
 serve(async (req) => {
@@ -107,7 +125,7 @@ serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
 
-  if (!GEMINI_KEY) return json({ error: "Search is not configured" }, 503);
+  if (GEMINI_KEYS.length === 0) return json({ error: "Search is not configured" }, 503);
 
   let payload: { query?: string; limit?: number; types?: string[]; min_similarity?: number } = {};
   try {
