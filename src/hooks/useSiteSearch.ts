@@ -155,7 +155,7 @@ export function useSiteSearch(query: string, enabled: boolean) {
 
       const [mentorResult, facultyResult, oppResult, postResult, communityResult] = await Promise.all([
         searchMentors(trimmed).catch(() => ({ data: null, error: true })),
-        getFacultyList({ search: searchTerms, limit: PER_GROUP, sort: "rating" }).catch(() => ({
+        getFacultyList({ search: searchTerms, limit: PER_GROUP, sort: "name" }).catch(() => ({
           data: [],
         })),
         getOpportunities({ search: searchTerms, limit: PER_GROUP }).catch(() => ({

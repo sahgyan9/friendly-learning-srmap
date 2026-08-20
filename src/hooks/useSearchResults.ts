@@ -246,7 +246,7 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
         getFacultyList({
           search: searchTerms,
           limit: tab === "faculty" ? limit + offset : limit * 3,
-          sort: "rating",
+          sort: "name",
           offset: 0,
         }).catch(() => ({ data: [], total: 0 })),
         getOpportunities({

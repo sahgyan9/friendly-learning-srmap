@@ -37,9 +37,8 @@ import {
 const PAGE_SIZE = 24;
 
 const SORT_OPTIONS: { value: FacultySort; label: string }[] = [
-  { value: "rating", label: "Most rated" },
-  { value: "reviews", label: "Review count" },
   { value: "name", label: "Name (A–Z)" },
+  { value: "reviews", label: "Review count" },
 ];
 
 /**
@@ -78,7 +77,7 @@ const Faculty = () => {
 
   const department = searchParams.get("dept") || searchParams.get("department") || "all";
   const interest = searchParams.get("interest") ?? "";
-  const sort = (searchParams.get("sort") as FacultySort) ?? "rating";
+  const sort = (searchParams.get("sort") as FacultySort) ?? "name";
   const [search, setSearch] = useState(searchParams.get("q") ?? "");
   const debouncedSearch = useDebounce(search, 300);
 

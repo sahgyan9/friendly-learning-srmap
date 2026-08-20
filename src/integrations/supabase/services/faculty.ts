@@ -53,7 +53,7 @@ export type FacultyRatingInput = {
   tags?: string[];
 };
 
-export type FacultySort = "rating" | "reviews" | "name";
+export type FacultySort = "name" | "reviews";
 
 export type FacultyQuery = {
   search?: string;
@@ -119,7 +119,7 @@ export async function getFacultyList(query: FacultyQuery = {}) {
     search = "",
     department = "all",
     interest = "",
-    sort = "rating",
+    sort = "name",
     limit = 24,
     offset = 0,
   } = query;
@@ -186,20 +186,14 @@ export async function getFacultyList(query: FacultyQuery = {}) {
     }
   }
 
-  if (sort === "name") {
-    request = request
-      .order("image_url", { ascending: false, nullsFirst: false })
-      .order("name", { ascending: true });
-  } else if (sort === "reviews") {
+  if (sort === "reviews") {
     request = request
       .order("image_url", { ascending: false, nullsFirst: false })
       .order("rating_count", { ascending: false })
       .order("name", { ascending: true });
   } else {
-    // Default: highest rated first; unrated last; no-image last within each group.
+    // Default: alphabetical, profiles with images prioritized (never rank people by rating score)
     request = request
-      .order("rating_count", { ascending: false })
-      .order("avg_overall", { ascending: false })
       .order("image_url", { ascending: false, nullsFirst: false })
       .order("name", { ascending: true });
   }
