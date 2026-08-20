@@ -3,6 +3,7 @@ import path from 'node:path'
 import url from 'node:url'
 import { createClient } from '@supabase/supabase-js'
 import dotenv from 'dotenv'
+import { SITE_URL } from './site.config.js'
 
 dotenv.config()
 
@@ -29,7 +30,7 @@ const applyMeta = (html, route) => {
   const title = escapeAttr(meta.title)
   const description = escapeAttr(meta.description)
   // Fix for dynamic canonical URLs
-  const canonicalUrl = ROUTE_META[route] ? canonicalFor(route) : `https://friendlylearning.srmap.edu.in${route}`
+  const canonicalUrl = ROUTE_META[route] ? canonicalFor(route) : `${SITE_URL}${route}`
 
   const substitutions = [
     [/<title>[\s\S]*?<\/title>/, `<title>${title}</title>`],
@@ -67,6 +68,8 @@ const routesToPrerender = [
   '/about',
   '/mentors',
   '/posts',
+  '/faculty',
+  '/opportunities',
   '/signup',
   '/signin',
   '/contact',
@@ -79,6 +82,39 @@ const routesToPrerender = [
   '/how-verification-works',
   '/your-data',
 ]
+
+// 4 blog posts from src/data/blog-posts.ts
+const STATIC_BLOG_POSTS = [
+  {
+    slug: 'everything-you-can-do-on-friendly-learning',
+    title: "Everything You Can Do on Friendly Learning (It's More Than You Think)",
+    excerpt: "Most students use one or two features. Here's the full picture — from CampusMind search and community posts to groups, mentors, faculty, and opportunities.",
+  },
+  {
+    slug: 'choosing-electives-srm-ap',
+    title: 'How to Choose Your Electives at SRM AP Without Guessing',
+    excerpt: 'Course codes and credit counts tell you nothing about what a semester will actually feel like. Here is how to find out before you register.',
+  },
+  {
+    slug: 'finding-hackathon-teammates',
+    title: 'Finding Hackathon Teammates Who Actually Show Up',
+    excerpt: 'Most hackathon teams fall apart before the event starts. The fix is being specific about what you need, and asking early.',
+  },
+  {
+    slug: 'asking-for-academic-help',
+    title: 'Asking for Academic Help Without Feeling Awkward About It',
+    excerpt: "The students who do best are not the ones who need the least help — they're the ones who ask earliest. A practical guide to asking well.",
+  },
+]
+
+for (const post of STATIC_BLOG_POSTS) {
+  const route = `/blog/${post.slug}`
+  routesToPrerender.push(route)
+  DYNAMIC_META[route] = {
+    title: `${post.title} | Friendly Learning Blog`,
+    description: post.excerpt,
+  }
+}
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL
 const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY
@@ -101,22 +137,30 @@ const supabase = (() => {
     console.log('[prerender] Fetching dynamic routes from Supabase...');
     
     // 1. Faculty (top 100 rated)
-    const { data: faculty } = await supabase
+    const { data: faculty, error: facultyError } = await supabase
       .from('faculty')
-      .select('slug, name, department, rating_count, bio')
+      .select('slug, name, department, rating_count, designation, research_details')
       .eq('is_active', true)
       .not('slug', 'is', null)
       .order('rating_count', { ascending: false })
       .order('name', { ascending: true })
       .limit(100);
       
-    if (faculty) {
+    if (facultyError) {
+      console.warn('[prerender] Could not fetch faculty:', facultyError.message);
+    } else if (faculty) {
       for (const f of faculty) {
         const route = `/faculty/${f.slug}`;
         routesToPrerender.push(route);
+        let desc = `View ratings, courses, and reviews for ${f.name}${f.department ? ' in ' + f.department : ''} at SRM University-AP.`;
+        if (Array.isArray(f.research_details) && f.research_details.length > 0 && typeof f.research_details[0] === 'string') {
+          desc = f.research_details[0].slice(0, 155) + '...';
+        } else if (Array.isArray(f.interests) && f.interests.length > 0) {
+          desc = `Research areas include ${f.interests.slice(0, 3).join(', ')}. View ratings and reviews for ${f.name} at SRM University-AP.`;
+        }
         DYNAMIC_META[route] = {
           title: `${f.name}${f.department ? ' — ' + f.department : ''} | Faculty at SRM AP`,
-          description: f.bio ? f.bio.substring(0, 150) + '...' : `View ratings, courses, and reviews for ${f.name} at SRM University-AP.`
+          description: desc
         };
       }
     }
@@ -178,25 +222,6 @@ const supabase = (() => {
         };
       }
     }
-    
-    // 5. Blog posts
-    const { data: blogs } = await supabase
-      .from('blog_posts')
-      .select('slug, title, excerpt')
-      .limit(50);
-      
-    if (blogs) {
-      for (const b of blogs) {
-        const route = b.slug ? `/blog/${b.slug}` : `/blog`; // skipping if no slug
-        if (b.slug) {
-          routesToPrerender.push(route);
-          DYNAMIC_META[route] = {
-            title: `${b.title} | Friendly Learning Blog`,
-            description: b.excerpt ? b.excerpt : `Read ${b.title} on the Friendly Learning SRMAP blog.`
-          };
-        }
-      }
-    }
   }
 
   for (const url of routesToPrerender) {
@@ -256,7 +281,17 @@ const supabase = (() => {
     }
   }
 
-  const staticFiles = ['robots.txt', 'sitemap.xml', '.htaccess']
+  const staticFiles = [
+    'robots.txt',
+    'sitemap.xml',
+    'sitemap-index.xml',
+    'sitemap-blog.xml',
+    'sitemap-mentors.xml',
+    'sitemap-community.xml',
+    'sitemap-groups.xml',
+    'sitemap-faculty.xml',
+    '.htaccess'
+  ]
 
   for (const file of staticFiles) {
     const sourcePath = toAbsolute(`public/${file}`)

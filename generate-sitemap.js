@@ -29,12 +29,13 @@ const config = {
         '/about': { changefreq: 'monthly', priority: 0.8, images: [{ loc: '/about-team.png', title: 'About Friendly Learning SRMAP Team' }] },
         '/mentors': { changefreq: 'daily', priority: 0.9 },
         '/posts': { changefreq: 'daily', priority: 0.9 },
+        '/faculty': { changefreq: 'daily', priority: 0.9 },
+        '/opportunities': { changefreq: 'weekly', priority: 0.9 },
         '/signup': { changefreq: 'monthly', priority: 0.7 },
         '/signin': { changefreq: 'monthly', priority: 0.6 },
         '/contact': { changefreq: 'monthly', priority: 0.5 },
         '/events': { changefreq: 'weekly', priority: 0.9 },
         '/workspace-groups': { changefreq: 'weekly', priority: 0.8 },
-        '/become-mentor': { changefreq: 'monthly', priority: 0.6 },
         '/how-it-works': { changefreq: 'monthly', priority: 0.8 },
         '/find-study-partners': { changefreq: 'weekly', priority: 0.9 },
         '/hackathon-partners': { changefreq: 'weekly', priority: 0.9 },
@@ -115,16 +116,29 @@ function generateMainSitemap() {
     console.log('Main sitemap.xml generated successfully');
 }
 
+const STATIC_BLOG_POSTS = [
+    { slug: 'everything-you-can-do-on-friendly-learning', date: '2026-08-07' },
+    { slug: 'choosing-electives-srm-ap', date: '2026-07-20' },
+    { slug: 'finding-hackathon-teammates', date: '2026-07-12' },
+    { slug: 'asking-for-academic-help', date: '2026-07-04' }
+];
+
 /**
- * Generate a specialized blog sitemap (can be expanded in the future)
+ * Generate a specialized blog sitemap
  */
 function generateBlogSitemap() {
     console.log('Generating blog sitemap...');
 
     const timestamp = new Date().toISOString();
 
-    // In a production app, you would fetch actual blog posts from your database or CMS
-    // For now, we'll just include the main blog page
+    const postUrls = STATIC_BLOG_POSTS.map((post) => `
+  <url>
+    <loc>${config.siteUrl}/blog/${post.slug}</loc>
+    <lastmod>${post.date}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>`).join('');
+
     let sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" 
         xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"
@@ -137,7 +151,7 @@ function generateBlogSitemap() {
     <lastmod>${timestamp}</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
-  </url>
+  </url>${postUrls}
 </urlset>`;
 
     fs.writeFileSync(path.join(config.publicDir, 'sitemap-blog.xml'), sitemap);
@@ -152,16 +166,32 @@ function generateSitemapIndex() {
 
     const timestamp = new Date().toISOString();
 
-    const sitemapIndex = `<?xml version="1.0" encoding="UTF-8"?>
+    const otherSitemaps = [
+        'sitemap-blog.xml',
+        'sitemap-mentors.xml',
+        'sitemap-community.xml',
+        'sitemap-groups.xml',
+        'sitemap-faculty.xml'
+    ];
+
+    let sitemapIndex = `<?xml version="1.0" encoding="UTF-8"?>
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <sitemap>
     <loc>${config.siteUrl}/sitemap.xml</loc>
     <lastmod>${timestamp}</lastmod>
-  </sitemap>
+  </sitemap>`;
+
+    for (const file of otherSitemaps) {
+        if (fs.existsSync(path.join(config.publicDir, file))) {
+            sitemapIndex += `
   <sitemap>
-    <loc>${config.siteUrl}/sitemap-blog.xml</loc>
+    <loc>${config.siteUrl}/${file}</loc>
     <lastmod>${timestamp}</lastmod>
-  </sitemap>
+  </sitemap>`;
+        }
+    }
+
+    sitemapIndex += `
 </sitemapindex>`;
 
     fs.writeFileSync(path.join(config.publicDir, 'sitemap-index.xml'), sitemapIndex);

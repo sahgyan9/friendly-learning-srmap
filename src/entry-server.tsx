@@ -31,7 +31,11 @@ const KNOWN_ROUTES = [
   '/your-data',
   '/faculty',
   '/mentor',
-  '/opportunities'
+  '/opportunities',
+  '/ask',
+  '/certificate',
+  '/verify',
+  '/search'
 ];
 
 // Private routes that should redirect if not authenticated

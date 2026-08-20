@@ -58,6 +58,11 @@ export const ROUTE_META: Record<string, RouteMeta> = {
     description:
       "Browse and share student posts at SRM University-AP. Ask for academic help, find study partners, form hackathon teams, and post campus discussions.",
   },
+  "/faculty": {
+    title: "Faculty Directory & Ratings | SRM University-AP | Friendly Learning SRMAP",
+    description:
+      "Browse SRM AP faculty profiles, research areas, student ratings, and course reviews across all departments at SRM University-AP.",
+  },
   "/contact": {
     title: "Contact Friendly Learning - Get Support for SRM AP Mentorship Platform",
     description:

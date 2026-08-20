@@ -70,12 +70,12 @@ const config = {
         '/mentors': { changefreq: 'daily', priority: 0.9 },
         '/posts': { changefreq: 'daily', priority: 0.9 },
         '/faculty': { changefreq: 'daily', priority: 0.9 },
+        '/opportunities': { changefreq: 'weekly', priority: 0.9 },
         '/signup': { changefreq: 'monthly', priority: 0.7 },
         '/signin': { changefreq: 'monthly', priority: 0.6 },
         '/contact': { changefreq: 'monthly', priority: 0.5 },
         '/events': { changefreq: 'weekly', priority: 0.9 },
         '/workspace-groups': { changefreq: 'weekly', priority: 0.8 },
-        '/become-mentor': { changefreq: 'monthly', priority: 0.6 },
         '/how-it-works': { changefreq: 'monthly', priority: 0.8 },
         '/find-study-partners': { changefreq: 'weekly', priority: 0.9 },
         '/hackathon-partners': { changefreq: 'weekly', priority: 0.9 },
@@ -311,10 +311,18 @@ async function generateCommunityPostsSitemap() {
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>`;
 
-            if (post.image_url) {
+            let imageUrl = post.image_url;
+            if (imageUrl && typeof imageUrl === 'string' && imageUrl.startsWith('[')) {
+                try {
+                    const parsed = JSON.parse(imageUrl);
+                    imageUrl = Array.isArray(parsed) ? parsed[0] : imageUrl;
+                } catch {}
+            }
+
+            if (imageUrl && typeof imageUrl === 'string' && imageUrl.startsWith('http')) {
                 sitemap += `
     <image:image>
-      <image:loc>${xmlEscape(post.image_url)}</image:loc>
+      <image:loc>${xmlEscape(imageUrl)}</image:loc>
       <image:title>${xmlEscape(post.title)}</image:title>
     </image:image>`;
             }
@@ -522,6 +530,7 @@ async function generateBlogSitemap() {
  * module — add a post there, add its slug here.
  */
 const STATIC_BLOG_POSTS = [
+    { slug: 'everything-you-can-do-on-friendly-learning', date: '2026-08-07' },
     { slug: 'choosing-electives-srm-ap', date: '2026-07-20' },
     { slug: 'finding-hackathon-teammates', date: '2026-07-12' },
     { slug: 'asking-for-academic-help', date: '2026-07-04' }

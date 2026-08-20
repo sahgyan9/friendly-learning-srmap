@@ -83,7 +83,7 @@ const Faculty = () => {
   const debouncedSearch = useDebounce(search, 300);
 
   // On back navigation, restore the limit that was loaded before leaving
-  const savedLimit = Number(sessionStorage.getItem(`faculty_limit:${location.key}`));
+  const savedLimit = typeof sessionStorage !== "undefined" ? Number(sessionStorage.getItem(`faculty_limit:${location.key}`)) : 0;
   const initialLimit = savedLimit && savedLimit > PAGE_SIZE ? savedLimit : PAGE_SIZE;
 
   const cacheKey = makeCacheKey(debouncedSearch, department, interest, sort, initialLimit);
