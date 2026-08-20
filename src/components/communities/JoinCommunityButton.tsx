@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Check, Clock, Loader2, Lock, LogIn, UserPlus } from "lucide-react";
+import { Check, Clock, Loader2, Lock, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -21,16 +21,11 @@ interface JoinCommunityButtonProps {
 }
 
 /**
- * One button that knows all six states a viewer can be in relative to a group.
+ * JoinCommunityButton - Sleek, action-oriented button for community membership.
  *
- * Both the card and the group page need this and neither should be deciding it
- * for itself — the private/public split alone means "Join" and "Ask to join" are
- * different actions with different endpoints, and two copies of that logic is
- * two chances to offer someone a button that cannot work.
- *
- * It deliberately renders *something* in every state, including for signed-out
- * visitors, rather than disappearing. A card with no call to action reads as a
- * group you are not allowed into.
+ * Designed to feel light, welcoming, and decision-focused. Signed-out users
+ * see a crisp "Join" / "Request" action that routes to sign-in smoothly without
+ * visual clutter.
  */
 export function JoinCommunityButton({
   community,
@@ -43,18 +38,17 @@ export function JoinCommunityButton({
 
   const isPrivate = community.visibility === "private";
 
-  // Owners and members have nothing to press. Said plainly rather than left
-  // blank, so the state is legible at a glance on a grid of cards.
+  // Owners and members state
   if (community.viewer_is_owner || community.viewer_is_member) {
     return (
       <span
         className={cn(
-          "inline-flex items-center justify-center gap-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400 shadow-xs",
+          "inline-flex items-center justify-center gap-1 rounded-lg border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-400",
           className,
         )}
       >
-        <Check className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
-        {community.viewer_is_owner ? "Group Owner" : "Joined"}
+        <Check className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+        {community.viewer_is_owner ? "Owner" : "Joined"}
       </span>
     );
   }
@@ -65,32 +59,36 @@ export function JoinCommunityButton({
     );
   }
 
+  // Signed out users see a clean "Join" / "Request" button that routes to sign in
   if (!user) {
     return (
-      <Button asChild size={size} variant="outline" className={className}>
-        <Link to="/signin">
-          <LogIn className="mr-1.5 h-3.5 w-3.5" />
-          Sign in to join
+      <Button
+        asChild
+        size={size}
+        variant="outline"
+        className={cn("h-8 px-3 text-xs font-semibold rounded-lg hover:border-primary/50", className)}
+      >
+        <Link to={`/signin?next=/workspace-groups/${community.slug}`}>
+          {isPrivate ? "Request" : "Join"}
         </Link>
       </Button>
     );
   }
 
-  // An invite is already an answer to "can I join" — sending a request on top
-  // of it would be asking a question that has been answered. The invite is
-  // accepted from the group page or the invites panel, so this points there.
+  // Invited state
   if (community.viewer_has_invite) {
     return (
-      <Button asChild size={size} className={className}>
-        <Link to={`/workspace-groups/${community.slug}`}>Accept invite</Link>
+      <Button asChild size={size} className={cn("h-8 px-3 text-xs font-semibold rounded-lg", className)}>
+        <Link to={`/workspace-groups/${community.slug}`}>Accept</Link>
       </Button>
     );
   }
 
+  // Requested state
   if (community.viewer_has_requested) {
     return (
-      <Button size={size} variant="outline" disabled className={className}>
-        <Clock className="mr-1.5 h-3.5 w-3.5" />
+      <Button size={size} variant="outline" disabled className={cn("h-8 px-3 text-xs font-medium rounded-lg opacity-70", className)}>
+        <Clock className="mr-1 h-3 w-3" />
         Requested
       </Button>
     );
@@ -98,6 +96,7 @@ export function JoinCommunityButton({
 
   const handleJoin = async (e?: React.MouseEvent) => {
     e?.stopPropagation();
+    e?.preventDefault();
     setBusy(true);
 
     if (isPrivate) {
@@ -105,8 +104,6 @@ export function JoinCommunityButton({
       setBusy(false);
 
       if (error) {
-        // These come back as sentences written for a person — "You already have
-        // a request waiting on this group" — so they are shown as-is.
         toast.error(error.message || "Could not send the request");
         return;
       }
@@ -136,15 +133,20 @@ export function JoinCommunityButton({
   };
 
   return (
-    <Button size={size} onClick={handleJoin} disabled={busy} className={className}>
+    <Button
+      size={size}
+      onClick={handleJoin}
+      disabled={busy}
+      className={cn("h-8 px-3 text-xs font-semibold rounded-lg", className)}
+    >
       {busy ? (
-        <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+        <Loader2 className="mr-1 h-3 w-3 animate-spin" />
       ) : isPrivate ? (
-        <Lock className="mr-1.5 h-3.5 w-3.5" />
+        <Lock className="mr-1 h-3 w-3" />
       ) : (
-        <UserPlus className="mr-1.5 h-3.5 w-3.5" />
+        <UserPlus className="mr-1 h-3 w-3" />
       )}
-      {isPrivate ? "Request to Join" : "Join"}
+      {isPrivate ? "Request" : "Join"}
     </Button>
   );
 }
