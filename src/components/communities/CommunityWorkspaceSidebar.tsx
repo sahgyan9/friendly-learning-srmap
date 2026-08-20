@@ -1,5 +1,5 @@
 import React from "react";
-import { Hash, MessageSquare, Plus, ShieldCheck, Sparkles, Trash2, UserCheck, Users } from "lucide-react";
+import { FolderGit2, Hash, MessageSquare, Plus, ShieldCheck, Sparkles, Trash2, UserCheck, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { formatRelativeTime } from "@/utils/date-utils";
@@ -43,6 +43,12 @@ export function CommunityWorkspaceSidebar({
       icon: Hash,
       description: "Real-time group discussion",
       badge: "Live",
+    },
+    {
+      id: "resources",
+      label: "resources-hub",
+      icon: FolderGit2,
+      description: "Shared repos, Drive & notes",
     },
     {
       id: "posts",

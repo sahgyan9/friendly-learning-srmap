@@ -44,6 +44,7 @@ import { InviteLinkButton } from "@/components/communities/InviteLinkButton";
 import JoinRequestDialog from "@/components/communities/JoinRequestDialog";
 import JoinRequestsPanel from "@/components/communities/JoinRequestsPanel";
 import { CommunityGroupChat } from "@/components/communities/CommunityGroupChat";
+import { CommunityResourcesTab } from "@/components/communities/CommunityResourcesTab";
 import { EditCommunityModal } from "@/components/communities/EditCommunityModal";
 import { CommunityWorkspaceHeader } from "@/components/communities/CommunityWorkspaceHeader";
 import { CommunityWorkspaceSidebar, channelTabId } from "@/components/communities/CommunityWorkspaceSidebar";
@@ -485,6 +486,17 @@ const CommunityDetail = () => {
                     </Card>
                   )}
                 </div>
+              )}
+
+              {activeTab === "resources" && (
+                <CommunityResourcesTab
+                  communityId={community.id}
+                  communityName={community.name}
+                  communityKind={community.kind}
+                  isMember={Boolean(community.viewer_is_member)}
+                  isOwner={Boolean(community.viewer_is_owner)}
+                  viewerName={user?.user_metadata?.full_name || user?.email?.split("@")[0] || "A student"}
+                />
               )}
 
               {activeTab === "requests" && community.viewer_is_owner && community.visibility === "private" && (

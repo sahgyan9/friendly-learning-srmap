@@ -1,24 +1,21 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
-import { ChevronDown, LayoutGrid, List, Plus, Search, Users } from "lucide-react";
-import { motion } from "framer-motion";
+import { Link, useSearchParams } from "react-router-dom";
+import { Compass, LayoutGrid, List, Plus, Sparkles, Users, Zap } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 import SEOHead from "@/components/SEOHead";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
-import { CommunityCard } from "@/components/communities/CommunityCard";
-import { CommunityRow } from "@/components/communities/CommunityRow";
+import { Badge } from "@/components/ui/badge";
 import { CreateCommunityModal } from "@/components/communities/CreateCommunityModal";
 import MyInvites from "@/components/communities/MyInvites";
-import { HorizontalScroller } from "@/components/ui/HorizontalScroller";
+import { MyCommunitiesHub } from "@/components/communities/MyCommunitiesHub";
+import { CommunityDiscoveryView } from "@/components/communities/CommunityDiscoveryView";
+import { CommunityOnboardingHero } from "@/components/communities/CommunityOnboardingHero";
 import { useAuth } from "@/context/AuthContext";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useHasVisitedGroupsNav } from "@/hooks/useFeatureAnnouncement";
 import { cn } from "@/lib/utils";
 import {
-  COMMUNITY_KINDS,
   getCommunityKindCounts,
   listCommunities,
   type Community,
@@ -29,21 +26,29 @@ import { ROUTE_META } from "@/lib/seo/route-meta";
 import StructuredData from "@/components/StructuredData";
 import { getBreadcrumbSchema } from "@/lib/structured-data";
 
+export type WorkspaceViewMode = "my-communities" | "discover";
+
 const Communities = () => {
   const { user } = useAuth();
   const { markSeen: markGroupsNavSeen } = useHasVisitedGroupsNav();
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  const [communities, setCommunities] = useState<Community[]>([]);
+  // Tab State
+  const viewParam = searchParams.get("view") as WorkspaceViewMode | null;
+  const [activeView, setActiveView] = useState<WorkspaceViewMode>(
+    viewParam === "discover" ? "discover" : "my-communities",
+  );
+
+  // Data State
+  const [allCommunities, setAllCommunities] = useState<Community[]>([]);
   const [loading, setLoading] = useState(true);
   const [kind, setKind] = useState("all");
-  const [mine, setMine] = useState(false);
   const [search, setSearch] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
   const [kindCounts, setKindCounts] = useState<Record<string, number>>({});
-  const [showAllKinds, setShowAllKinds] = useState(false);
-  const [viewMode, setViewMode] = useState<"rows" | "grid">("rows");
+  const [viewLayout, setViewLayout] = useState<"rows" | "grid">("grid");
 
-  // Reaching this page is what clears the welcome tour's navbar dot.
+  // Reaching this page clears the welcome tour navbar dot
   useEffect(() => {
     markGroupsNavSeen();
   }, [markGroupsNavSeen]);
@@ -52,10 +57,15 @@ const Communities = () => {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const { data } = await listCommunities({ search: debouncedSearch, kind, mine });
-    setCommunities(data);
+    // Fetch all communities (the RPC handles search and kind filtering)
+    const { data } = await listCommunities({
+      search: debouncedSearch,
+      kind,
+      limit: 60,
+    });
+    setAllCommunities(data ?? []);
     setLoading(false);
-  }, [debouncedSearch, kind, mine]);
+  }, [debouncedSearch, kind]);
 
   useEffect(() => {
     load();
@@ -65,36 +75,56 @@ const Communities = () => {
     getCommunityKindCounts().then(setKindCounts);
   }, []);
 
-  const { visibleKinds, hiddenCount, hasMoreKinds } = useMemo(() => {
-    const known = Object.keys(kindCounts).length > 0;
-    const defaultVisible = COMMUNITY_KINDS.filter(
-      (option) => option.value === kind || (kindCounts[option.value] ?? 0) > 0,
+  // Filter joined communities for the current viewer
+  const myCommunities = useMemo(() => {
+    if (!user) return [];
+    return allCommunities.filter(
+      (c) => c.viewer_is_member || c.viewer_is_owner,
     );
-    const defaultHidden = COMMUNITY_KINDS.filter((option) => !defaultVisible.includes(option));
-    const hasMore = known && defaultHidden.length > 0;
+  }, [allCommunities, user]);
 
-    if (!known || showAllKinds) {
-      return {
-        visibleKinds: [...COMMUNITY_KINDS],
-        hiddenCount: defaultHidden.length,
-        hasMoreKinds: hasMore,
-      };
+  // Synchronize default view based on user membership
+  const [hasInitializedDefaultView, setHasInitializedDefaultView] = useState(false);
+  useEffect(() => {
+    if (loading || hasInitializedDefaultView) return;
+
+    if (!user) {
+      setActiveView("discover");
+    } else if (viewParam) {
+      setActiveView(viewParam);
+    } else if (myCommunities.length === 0) {
+      // First-time user with 0 communities lands on discovery with the onboarding guide
+      setActiveView("discover");
+    } else {
+      setActiveView("my-communities");
     }
 
-    return {
-      visibleKinds: defaultVisible,
-      hiddenCount: defaultHidden.length,
-      hasMoreKinds: hasMore,
-    };
-  }, [kindCounts, showAllKinds, kind]);
+    setHasInitializedDefaultView(true);
+  }, [loading, user, myCommunities.length, viewParam, hasInitializedDefaultView]);
+
+  const handleSwitchView = (nextView: WorkspaceViewMode) => {
+    setActiveView(nextView);
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (nextView === "discover") {
+          next.set("view", "discover");
+        } else {
+          next.delete("view");
+        }
+        return next;
+      },
+      { replace: true },
+    );
+  };
 
   const applyMembership = useCallback((id: string, patch: Partial<Community>) => {
-    setCommunities((current) =>
+    setAllCommunities((current) =>
       current.map((entry) => (entry.id === id ? { ...entry, ...patch } : entry)),
     );
   }, []);
 
-  const filtering = debouncedSearch.trim().length > 0 || kind !== "all" || mine;
+  const isFirstTimeUser = user && myCommunities.length === 0 && !loading;
 
   return (
     <div className="min-h-screen bg-background">
@@ -105,41 +135,46 @@ const Communities = () => {
         canonical={`${PRIMARY_DOMAIN}/workspace-groups`}
       />
 
-      <StructuredData data={getBreadcrumbSchema([
-        { name: "Home", url: `${PRIMARY_DOMAIN}/` },
-        { name: "Workspace Groups", url: `${PRIMARY_DOMAIN}/workspace-groups` }
-      ])} />
+      <StructuredData
+        data={getBreadcrumbSchema([
+          { name: "Home", url: `${PRIMARY_DOMAIN}/` },
+          { name: "Workspace Groups", url: `${PRIMARY_DOMAIN}/workspace-groups` },
+        ])}
+      />
 
-      {/* Hero header — same design language as FeaturesShowcase cards */}
-      <div className="relative overflow-hidden border-b border-border/60 bg-gradient-to-br from-amber-500/5 via-background to-background">
-        {/* Decorative blobs */}
-        <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-amber-500/8 blur-3xl" />
-        <div className="pointer-events-none absolute -left-16 bottom-0 h-48 w-48 rounded-full bg-amber-500/5 blur-2xl" />
+      {/* Hero Header with Brand Aesthetics */}
+      <div className="relative overflow-hidden border-b border-border/60 bg-gradient-to-br from-amber-500/8 via-background to-background">
+        <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-amber-500/10 blur-3xl" />
+        <div className="pointer-events-none absolute -left-16 bottom-0 h-48 w-48 rounded-full bg-amber-500/6 blur-2xl" />
 
-        <div className="container mx-auto max-w-6xl px-4 pb-8 pt-28">
+        <div className="container mx-auto max-w-6xl px-4 pb-6 pt-24 md:pt-28">
           <motion.div
-            initial={{ opacity: 0, y: 16 }}
+            initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
+            transition={{ duration: 0.4 }}
           >
-            {/* Pill label — matches FeaturesShowcase numbering */}
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-amber-500/20 bg-amber-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-amber-600 dark:text-amber-400">
+            {/* Pill label */}
+            <div className="mb-3.5 inline-flex items-center gap-2 rounded-full border border-amber-500/25 bg-amber-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-amber-700 dark:text-amber-400">
               <Users className="h-3.5 w-3.5" />
-              05 — Groups & Workspaces
+              05 — Campus Communities & Workspaces
             </div>
 
             <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
               <div>
-                <h1 className="text-3xl font-bold tracking-tight md:text-4xl">Workspaces & Groups</h1>
-                <p className="mt-2 max-w-2xl text-base text-muted-foreground">
-                  Step inside dedicated student communities—hackathon teams, project labs, clubs, and study rooms.
-                  Join a room to chat, post, and collaborate in real-time.
+                <h1 className="text-3xl font-bold tracking-tight text-foreground md:text-4xl">
+                  {activeView === "my-communities" && user
+                    ? "My Communities & Hub"
+                    : "Discover Campus Communities"}
+                </h1>
+                <p className="mt-2 max-w-2xl text-sm md:text-base text-muted-foreground leading-relaxed">
+                  Step inside dedicated student rooms—hackathon teams, project labs, clubs, and study circles.
+                  Chat in real time, share project resources, and collaborate with peers across SRM AP.
                 </p>
               </div>
 
               {user ? (
-                <Button onClick={() => setCreateOpen(true)} size="lg" className="shrink-0">
-                  <Plus className="mr-2 h-4 w-4" />
+                <Button onClick={() => setCreateOpen(true)} size="lg" className="shrink-0 gap-1.5 shadow-sm">
+                  <Plus className="h-4 w-4" />
                   Start a group
                 </Button>
               ) : (
@@ -148,208 +183,127 @@ const Communities = () => {
                 </Button>
               )}
             </div>
+
+            {/* Segmented Mode Navigation Bar */}
+            <div className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-border/60 pt-4">
+              <div className="inline-flex rounded-xl border border-border/80 bg-muted/40 p-1 backdrop-blur-xs">
+                {user && (
+                  <button
+                    type="button"
+                    onClick={() => handleSwitchView("my-communities")}
+                    className={cn(
+                      "flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-semibold transition-all duration-200",
+                      activeView === "my-communities"
+                        ? "bg-card text-foreground shadow-xs font-bold"
+                        : "text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    <Users className="h-3.5 w-3.5 text-primary" />
+                    <span>My Communities</span>
+                    <Badge
+                      variant="secondary"
+                      className={cn(
+                        "h-5 px-1.5 py-0 text-[10px] font-bold rounded-full",
+                        activeView === "my-communities"
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted text-muted-foreground",
+                      )}
+                    >
+                      {myCommunities.length}
+                    </Badge>
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => handleSwitchView("discover")}
+                  className={cn(
+                    "flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-semibold transition-all duration-200",
+                    activeView === "discover"
+                      ? "bg-card text-foreground shadow-xs font-bold"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  <Compass className="h-3.5 w-3.5 text-amber-500" />
+                  <span>Discover & Explore</span>
+                  <Badge
+                    variant="outline"
+                    className="h-5 px-1.5 py-0 text-[10px] text-muted-foreground rounded-full"
+                  >
+                    {allCommunities.length}
+                  </Badge>
+                </button>
+              </div>
+
+              {/* Status summary pill */}
+              <div className="hidden sm:flex items-center gap-2 text-xs text-muted-foreground">
+                <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span>Live Campus Spaces</span>
+              </div>
+            </div>
           </motion.div>
         </div>
       </div>
 
+      {/* Main Body Canvas */}
       <div className="container mx-auto max-w-6xl px-4 pt-6 pb-36 md:pb-48">
         <MyInvites />
 
-        <div className="mb-6 space-y-3">
-          <div className="flex gap-2 items-center">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search groups and workspaces..."
-                className="pl-9"
-                aria-label="Search groups"
-              />
-            </div>
-
-            {/* View Mode Toggle: Rows vs Grid */}
-            <div className="flex items-center rounded-lg border border-border bg-card p-1 shrink-0">
-              <button
-                type="button"
-                onClick={() => setViewMode("rows")}
-                title="Destination list view"
-                className={cn(
-                  "flex items-center justify-center rounded-md p-1.5 text-xs transition-colors",
-                  viewMode === "rows"
-                    ? "bg-primary text-primary-foreground font-semibold"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                <List className="h-4 w-4" />
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode("grid")}
-                title="Grid view"
-                className={cn(
-                  "flex items-center justify-center rounded-md p-1.5 text-xs transition-colors",
-                  viewMode === "grid"
-                    ? "bg-primary text-primary-foreground font-semibold"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                <LayoutGrid className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
-
-          <HorizontalScroller className="flex items-center gap-2 py-2 px-1" ariaLabel="Community category filters">
-            <button
-              type="button"
-              onClick={() => setKind("all")}
-              aria-pressed={kind === "all"}
-              className={cn(
-                "inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-medium transition-all duration-200 whitespace-nowrap shrink-0",
-                kind === "all"
-                  ? "border-primary bg-primary text-primary-foreground font-semibold shadow-xs"
-                  : "border-border bg-card text-muted-foreground hover:bg-accent hover:text-accent-foreground",
-              )}
-            >
-              All groups
-            </button>
-
-            {visibleKinds.map((option) => {
-              const count = kindCounts[option.value];
-
-              return (
-                <button
-                  key={option.value}
-                  type="button"
-                  onClick={() => setKind(option.value)}
-                  aria-pressed={kind === option.value}
-                  className={cn(
-                    "inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-medium transition-all duration-200 whitespace-nowrap shrink-0",
-                    kind === option.value
-                      ? "border-primary bg-primary text-primary-foreground font-semibold shadow-xs"
-                      : "border-border bg-card text-muted-foreground hover:bg-accent hover:text-accent-foreground",
-                  )}
-                >
-                  <option.icon className="h-3.5 w-3.5" aria-hidden />
-                  {option.label}
-                  {count > 0 && (
-                    <span
-                      className={cn(
-                        "tabular-nums text-[11px]",
-                        kind === option.value ? "text-primary-foreground/80" : "text-muted-foreground",
-                      )}
-                    >
-                      {count}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-
-            {hasMoreKinds && (
-              <button
-                type="button"
-                onClick={() => setShowAllKinds((value) => !value)}
-                aria-expanded={showAllKinds}
-                className="inline-flex items-center gap-1.5 rounded-full border border-dashed border-border bg-card px-3.5 py-1.5 text-xs font-medium text-muted-foreground transition-all duration-200 hover:bg-accent hover:text-accent-foreground whitespace-nowrap shrink-0"
-              >
-                {showAllKinds ? "Fewer" : `More (${hiddenCount})`}
-                <ChevronDown
-                  aria-hidden
-                  className={cn("h-3.5 w-3.5 transition-transform duration-200", showAllKinds && "rotate-180")}
-                />
-              </button>
-            )}
-
-            {user && (
-              <button
-                type="button"
-                onClick={() => setMine((value) => !value)}
-                aria-pressed={mine}
-                className={cn(
-                  "inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-medium transition-all duration-200 whitespace-nowrap shrink-0 ml-auto",
-                  mine
-                    ? "border-primary bg-primary text-primary-foreground font-semibold shadow-xs"
-                    : "border-border bg-card text-muted-foreground hover:bg-accent hover:text-accent-foreground",
-                )}
-              >
-                Only mine
-              </button>
-            )}
-          </HorizontalScroller>
-        </div>
-
-        {loading ? (
-          <div className={viewMode === "grid" ? "grid gap-4 sm:grid-cols-2 lg:grid-cols-3" : "space-y-3"}>
-            {Array.from({ length: 6 }).map((_, index) => (
-              <Skeleton key={index} className={viewMode === "grid" ? "h-52 w-full rounded-xl" : "h-24 w-full rounded-xl"} />
-            ))}
-          </div>
-        ) : communities.length > 0 ? (
-          viewMode === "rows" ? (
-            <div className="space-y-3 mb-8">
-              {communities.map((community) => (
-                <CommunityRow
-                  key={community.id}
-                  community={community}
-                  onMembershipChange={applyMembership}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-8">
-              {communities.map((community) => (
-                <CommunityCard
-                  key={community.id}
-                  community={community}
-                  onMembershipChange={applyMembership}
-                />
-              ))}
-            </div>
-          )
-        ) : (
-          <Card>
-            <CardContent className="flex flex-col items-center gap-4 py-14 text-center">
-              <span className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
-                <Users className="h-6 w-6" />
-              </span>
-
-              {filtering ? (
-                <>
-                  <p className="font-medium">No groups match that</p>
-                  <p className="max-w-md text-sm text-muted-foreground">
-                    Try a different kind, or clear the search.
-                  </p>
-                </>
-              ) : user ? (
-                <>
-                  <p className="font-medium">No groups yet — start the first one</p>
-                  <p className="max-w-md text-sm text-muted-foreground">
-                    A hackathon team, a club, a study circle. You'll own it, and other students can
-                    join from the link.
-                  </p>
-                  <Button onClick={() => setCreateOpen(true)}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Start a group
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <p className="font-medium">No groups yet</p>
-                  <p className="max-w-md text-sm text-muted-foreground">
-                    Sign in and you can start the first one — a hackathon team, a club, or a study
-                    circle.
-                  </p>
-                  <Button asChild variant="outline">
-                    <Link to="/signin">Sign in</Link>
-                  </Button>
-                </>
-              )}
-            </CardContent>
-          </Card>
+        {/* First-Time User Onboarding Guide (shown on top when user has 0 joined groups) */}
+        {isFirstTimeUser && (
+          <CommunityOnboardingHero
+            communities={allCommunities}
+            onMembershipChange={applyMembership}
+            onExploreAll={() => handleSwitchView("discover")}
+            onStartGroup={() => setCreateOpen(true)}
+          />
         )}
+
+        {/* View Routing */}
+        <AnimatePresence mode="wait">
+          {activeView === "my-communities" && user ? (
+            <motion.div
+              key="my-communities"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+            >
+              <MyCommunitiesHub
+                myCommunities={myCommunities}
+                onMembershipChange={applyMembership}
+                onExploreDiscovery={() => handleSwitchView("discover")}
+                onStartGroup={() => setCreateOpen(true)}
+              />
+            </motion.div>
+          ) : (
+            <motion.div
+              key="discover"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+            >
+              <CommunityDiscoveryView
+                communities={allCommunities}
+                loading={loading}
+                search={search}
+                onSearchChange={setSearch}
+                kind={kind}
+                onKindChange={setKind}
+                kindCounts={kindCounts}
+                viewMode={viewLayout}
+                onViewModeChange={setViewLayout}
+                onMembershipChange={applyMembership}
+                onStartGroup={() => setCreateOpen(true)}
+                isUserSignedIn={Boolean(user)}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
+      {/* Create Community Modal */}
       {user && <CreateCommunityModal open={createOpen} onOpenChange={setCreateOpen} />}
     </div>
   );
