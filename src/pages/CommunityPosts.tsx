@@ -397,7 +397,7 @@ const CommunityPosts = () => {
                     {type.value !== "all" && count > 0 && (
                       <span
                         className={cn(
-                          "tabular-nums text-[11px]",
+                          "tabular-nums text-2xs",
                           selectedType === type.value
                             ? "text-primary-foreground/80"
                             : "text-muted-foreground",

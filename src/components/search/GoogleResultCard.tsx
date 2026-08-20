@@ -182,7 +182,7 @@ export const GoogleResultCard: React.FC<GoogleResultCardProps> = ({
         {item.image ? (
           <Avatar className="h-6 w-6 shrink-0 rounded-md border border-border/50">
             <AvatarImage src={item.image} alt="" className="object-cover" />
-            <AvatarFallback className="text-[10px] font-semibold">{getInitials(item.title)}</AvatarFallback>
+            <AvatarFallback className="text-3xs font-semibold">{getInitials(item.title)}</AvatarFallback>
           </Avatar>
         ) : (
           <span className={cn("flex h-6 w-6 shrink-0 items-center justify-center rounded-md border", iconBg)}>
@@ -197,7 +197,7 @@ export const GoogleResultCard: React.FC<GoogleResultCardProps> = ({
         </div>
 
         {effectiveCitationId && (
-          <span className="shrink-0 inline-flex items-center gap-1 rounded-md border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">
+          <span className="shrink-0 inline-flex items-center gap-1 rounded-md border border-primary/30 bg-primary/10 px-2 py-0.5 text-3xs font-bold text-primary">
             [{effectiveCitationId}] Cited in Overview
           </span>
         )}
@@ -205,7 +205,7 @@ export const GoogleResultCard: React.FC<GoogleResultCardProps> = ({
         {item.badge && (
           <span
             className={cn(
-              "shrink-0 rounded-md border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider",
+              "shrink-0 rounded-md border px-2 py-0.5 text-3xs font-semibold uppercase tracking-wider",
               badgeColor,
             )}
           >
@@ -284,7 +284,7 @@ export const GoogleResultCard: React.FC<GoogleResultCardProps> = ({
       {(skills.length > 0 || interests.length > 0 || tags.length > 0 || item.matchReason) && (
         <div className="flex flex-wrap items-center gap-1.5 mb-3 pt-0.5">
           {item.matchReason && (
-            <span className="inline-flex items-center gap-1 rounded-md bg-primary/10 border border-primary/20 px-2 py-0.5 text-[11px] font-medium text-primary">
+            <span className="inline-flex items-center gap-1 rounded-md bg-primary/10 border border-primary/20 px-2 py-0.5 text-2xs font-medium text-primary">
               <Sparkles className="h-3 w-3" />
               {item.matchReason}
             </span>
@@ -293,7 +293,7 @@ export const GoogleResultCard: React.FC<GoogleResultCardProps> = ({
           {skills.slice(0, 3).map((skill, idx) => (
             <span
               key={idx}
-              className="inline-flex items-center rounded-md bg-muted/60 border border-border/50 px-2 py-0.5 text-[11px] text-muted-foreground"
+              className="inline-flex items-center rounded-md bg-muted/60 border border-border/50 px-2 py-0.5 text-2xs text-muted-foreground"
             >
               {skill}
             </span>
@@ -302,7 +302,7 @@ export const GoogleResultCard: React.FC<GoogleResultCardProps> = ({
           {interests.slice(0, 3).map((interest, idx) => (
             <span
               key={idx}
-              className="inline-flex items-center rounded-md bg-muted/60 border border-border/50 px-2 py-0.5 text-[11px] text-muted-foreground"
+              className="inline-flex items-center rounded-md bg-muted/60 border border-border/50 px-2 py-0.5 text-2xs text-muted-foreground"
             >
               {interest}
             </span>
@@ -311,7 +311,7 @@ export const GoogleResultCard: React.FC<GoogleResultCardProps> = ({
           {tags.slice(0, 3).map((tag, idx) => (
             <span
               key={idx}
-              className="inline-flex items-center rounded-md bg-muted/60 border border-border/50 px-2 py-0.5 text-[11px] text-muted-foreground"
+              className="inline-flex items-center rounded-md bg-muted/60 border border-border/50 px-2 py-0.5 text-2xs text-muted-foreground"
             >
               #{tag}
             </span>

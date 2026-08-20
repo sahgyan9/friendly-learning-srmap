@@ -78,13 +78,13 @@ function ResultCard({ result }: { result: AskResult }) {
               <span
                 key={tag}
                 title={tag}
-                className="max-w-[16rem] truncate rounded border border-border bg-muted/60 px-1.5 py-0.5 text-[10px] leading-tight"
+                className="max-w-[16rem] truncate rounded border border-border bg-muted/60 px-1.5 py-0.5 text-3xs leading-tight"
               >
                 {tag}
               </span>
             ))}
             {tags.length > 3 && (
-              <span className="text-[10px] text-muted-foreground">+{tags.length - 3}</span>
+              <span className="text-3xs text-muted-foreground">+{tags.length - 3}</span>
             )}
           </div>
         )}

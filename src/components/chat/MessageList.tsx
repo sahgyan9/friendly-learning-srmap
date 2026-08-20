@@ -174,7 +174,7 @@ const MessageList = ({
               {startsDay && (
                 <div className="my-5 flex items-center gap-3">
                   <span className="h-px flex-1 bg-white/8" />
-                  <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-medium text-muted-foreground/70 backdrop-blur-sm">
+                  <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-2xs font-medium text-muted-foreground/70 backdrop-blur-sm">
                     {formatDayLabel(message.sent_at)}
                   </span>
                   <span className="h-px flex-1 bg-white/8" />
@@ -197,7 +197,7 @@ const MessageList = ({
                   (isLastInGroup ? (
                     <Avatar className="h-7 w-7 shrink-0 ring-1 ring-white/10">
                       <AvatarImage src={message.sender?.profile_image} alt="" className="object-cover" />
-                      <AvatarFallback className="bg-white/8 text-[10px] font-semibold text-muted-foreground">
+                      <AvatarFallback className="bg-white/8 text-3xs font-semibold text-muted-foreground">
                         {getInitials(message.sender?.name || senderName)}
                       </AvatarFallback>
                     </Avatar>
@@ -237,7 +237,7 @@ const MessageList = ({
                   {isLastInGroup && (
                     <div
                       className={cn(
-                        "mt-1.5 flex items-center gap-1.5 px-1 text-[10px] text-muted-foreground/60",
+                        "mt-1.5 flex items-center gap-1.5 px-1 text-3xs text-muted-foreground/60",
                         isMine ? "justify-end" : "justify-start",
                       )}
                     >

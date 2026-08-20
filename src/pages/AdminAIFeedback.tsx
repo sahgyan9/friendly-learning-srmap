@@ -341,7 +341,7 @@ export default function AdminAIFeedback() {
                           <TableCell className="text-center">
                             <Badge 
                               variant={item.hit_count > 3 ? "default" : "secondary"}
-                              className="text-[11px] font-mono px-2 py-0.5"
+                              className="text-2xs font-mono px-2 py-0.5"
                             >
                               {item.hit_count} {item.hit_count === 1 ? 'hit' : 'hits'}
                             </Badge>
@@ -505,7 +505,7 @@ export default function AdminAIFeedback() {
                           <TableCell>
                             <Badge 
                               variant={item.status === 'new' ? 'secondary' : item.status === 'reviewed' ? 'outline' : 'default'}
-                              className="text-[10px] uppercase font-semibold"
+                              className="text-3xs uppercase font-semibold"
                             >
                               {item.status}
                             </Badge>

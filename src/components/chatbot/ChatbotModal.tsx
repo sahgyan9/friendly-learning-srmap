@@ -369,7 +369,7 @@ const ChatbotModal = ({ isOpen, onClose }: ChatbotModalProps) => {
                     {/* Category header */}
                     <div className="mb-2 flex items-center gap-2">
                       <div className={`h-2.5 w-2.5 rounded-full ${cat.accentClass}`} />
-                      <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+                      <span className="text-2xs font-semibold uppercase tracking-widest text-muted-foreground">
                         {cat.label}
                       </span>
                     </div>
@@ -580,7 +580,7 @@ const ChatbotModal = ({ isOpen, onClose }: ChatbotModalProps) => {
                       type="button"
                       onClick={() => handleSelectQuestion(chip.question)}
                       disabled={isLoading}
-                      className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-muted/50 px-2.5 py-1 text-[11px] font-medium text-muted-foreground transition-colors hover:border-blue-400/60 hover:bg-blue-50 hover:text-blue-600 disabled:opacity-40 dark:hover:bg-blue-950/30 dark:hover:text-blue-400"
+                      className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-muted/50 px-2.5 py-1 text-2xs font-medium text-muted-foreground transition-colors hover:border-blue-400/60 hover:bg-blue-50 hover:text-blue-600 disabled:opacity-40 dark:hover:bg-blue-950/30 dark:hover:text-blue-400"
                     >
                       <Icon className="h-3 w-3" />
                       {chip.label}

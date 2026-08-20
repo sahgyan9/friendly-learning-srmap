@@ -107,7 +107,7 @@ export default function SimilarFacultySection({
                       {fac.interests.slice(0, 2).map((item) => (
                         <span
                           key={item}
-                          className="inline-block rounded-md bg-muted/70 px-2 py-0.5 text-[10px] text-muted-foreground"
+                          className="inline-block rounded-md bg-muted/70 px-2 py-0.5 text-3xs text-muted-foreground"
                         >
                           {item}
                         </span>
@@ -121,14 +121,14 @@ export default function SimilarFacultySection({
                     <div className="flex items-center gap-1 text-foreground font-semibold">
                       <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
                       <span>{Number(fac.avg_overall).toFixed(1)}</span>
-                      <span className="text-[11px] text-muted-foreground font-normal">
+                      <span className="text-2xs text-muted-foreground font-normal">
                         ({fac.rating_count})
                       </span>
                     </div>
                   ) : (
-                    <span className="text-[11px]">Unrated</span>
+                    <span className="text-2xs">Unrated</span>
                   )}
-                  <span className="text-[11px] group-hover:translate-x-0.5 transition-transform text-primary font-medium inline-flex items-center gap-0.5">
+                  <span className="text-2xs group-hover:translate-x-0.5 transition-transform text-primary font-medium inline-flex items-center gap-0.5">
                     View profile →
                   </span>
                 </div>

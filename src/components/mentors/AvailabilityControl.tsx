@@ -146,7 +146,7 @@ const AvailabilityControl = ({
                 />
                 <p
                   className={cn(
-                    "text-right text-[11px]",
+                    "text-right text-2xs",
                     draftNote.length >= NOTE_MAX ? "text-foreground" : "text-muted-foreground",
                   )}
                 >

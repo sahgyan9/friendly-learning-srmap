@@ -69,7 +69,7 @@ export const HomeIntro = () => {
       value: stats?.mentors,
       label: "Student mentors",
       href: "/mentors",
-      color: "text-[#3963C6]",
+      color: "text-brand",
       floor: 10,
     },
     {
@@ -122,7 +122,7 @@ export const HomeIntro = () => {
             variants={item}
           >
             Your campus,{" "}
-            <span className="bg-gradient-to-r from-[#3963C6] via-violet-500 to-emerald-500 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-brand via-violet-500 to-emerald-500 bg-clip-text text-transparent">
               one feed.
             </span>
           </motion.h1>
@@ -156,7 +156,7 @@ export const HomeIntro = () => {
               <Link
                 to="/posts"
                 className="inline-flex w-full sm:w-auto items-center justify-center gap-2 px-6 py-3 rounded-xl
-                           text-sm font-semibold text-white bg-[#3963C6] shadow-sm
+                           text-sm font-semibold text-white bg-brand shadow-sm
                            hover:bg-[#31569F] transition-colors"
               >
                 <FileText className="w-4 h-4" />

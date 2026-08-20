@@ -89,7 +89,7 @@ export function MyCommunitiesHub({
               Quick Jump ({sortedCommunities.length})
             </span>
           </div>
-          <span className="text-[11px] text-muted-foreground">Tap to jump straight in</span>
+          <span className="text-2xs text-muted-foreground">Tap to jump straight in</span>
         </div>
 
         <HorizontalScroller className="flex items-center gap-2.5 py-1 px-0.5" ariaLabel="Quick jump communities">
@@ -128,7 +128,7 @@ export function MyCommunitiesHub({
                   <p className="truncate text-xs font-semibold text-foreground group-hover:text-primary transition-colors">
                     {community.name}
                   </p>
-                  <p className="truncate text-[11px] text-muted-foreground">
+                  <p className="truncate text-2xs text-muted-foreground">
                     {formatRelativeTime(community.last_activity_at)}
                   </p>
                 </div>

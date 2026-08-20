@@ -98,7 +98,7 @@ const EmojiPicker = ({ onEmojiSelect, disabled }: EmojiPickerProps) => {
 
         {/* Label */}
         <div className="px-3 pb-1 pt-2">
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">
+          <p className="text-3xs font-semibold uppercase tracking-widest text-muted-foreground/50">
             {EMOJI_GROUPS[activeGroup].label}
           </p>
         </div>

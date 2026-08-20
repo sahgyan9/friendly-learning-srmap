@@ -234,7 +234,7 @@ export function PostCard({
                   />
                 )}
               </div>
-              <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+              <div className="flex items-center gap-1.5 text-2xs text-muted-foreground">
                 {post.author.department && (
                   <>
                     <span className="truncate max-w-[120px]">{post.author.department}</span>

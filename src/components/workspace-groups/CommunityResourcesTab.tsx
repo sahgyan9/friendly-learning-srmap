@@ -208,13 +208,13 @@ export function CommunityResourcesTab({
                       <span className={cn("flex h-8 w-8 items-center justify-center rounded-lg border", meta.color)}>
                         <Icon className="h-4 w-4" />
                       </span>
-                      <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                      <span className="text-2xs font-semibold text-muted-foreground uppercase tracking-wider">
                         {meta.label}
                       </span>
                     </div>
 
                     {res.isPinned && (
-                      <Badge variant="outline" className="gap-1 text-[10px] font-medium border-amber-500/40 text-amber-600 dark:text-amber-400 bg-amber-500/5">
+                      <Badge variant="outline" className="gap-1 text-3xs font-medium border-amber-500/40 text-amber-600 dark:text-amber-400 bg-amber-500/5">
                         <Pin className="h-2.5 w-2.5 fill-current" />
                         Pinned
                       </Badge>
@@ -232,7 +232,7 @@ export function CommunityResourcesTab({
                   )}
                 </div>
 
-                <div className="flex items-center justify-between gap-2 pt-4 mt-2 border-t border-border/50 text-[11px] text-muted-foreground">
+                <div className="flex items-center justify-between gap-2 pt-4 mt-2 border-t border-border/50 text-2xs text-muted-foreground">
                   <span className="truncate">
                     Added by <strong className="font-medium text-foreground">{res.addedByName}</strong> · {formatRelativeTime(res.createdAt)}
                   </span>

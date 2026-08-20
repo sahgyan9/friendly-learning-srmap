@@ -52,7 +52,7 @@ function OpportunityCard({ opportunity }: { opportunity: Opportunity }) {
               {opportunity.title}
             </Link>
             {opportunity.is_fresh && (
-              <span className="shrink-0 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider">
+              <span className="shrink-0 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 px-1.5 py-0.5 text-4xs font-bold uppercase tracking-wider">
                 New
               </span>
             )}
@@ -65,7 +65,7 @@ function OpportunityCard({ opportunity }: { opportunity: Opportunity }) {
             </span>
           </p>
         </div>
-        <span className="shrink-0 rounded-full border border-border bg-muted/60 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide">
+        <span className="shrink-0 rounded-full border border-border bg-muted/60 px-2 py-0.5 text-3xs font-medium uppercase tracking-wide">
           {opportunity.kind}
         </span>
       </div>
@@ -75,13 +75,13 @@ function OpportunityCard({ opportunity }: { opportunity: Opportunity }) {
           {opportunity.tags.slice(0, 4).map((tag) => (
             <span
               key={tag}
-              className="max-w-[14rem] truncate rounded border border-border bg-muted/50 px-1.5 py-0.5 text-[10px]"
+              className="max-w-[14rem] truncate rounded border border-border bg-muted/50 px-1.5 py-0.5 text-3xs"
             >
               {tag}
             </span>
           ))}
           {opportunity.tags.length > 4 && (
-            <span className="text-[10px] text-muted-foreground">+{opportunity.tags.length - 4}</span>
+            <span className="text-3xs text-muted-foreground">+{opportunity.tags.length - 4}</span>
           )}
         </div>
       )}

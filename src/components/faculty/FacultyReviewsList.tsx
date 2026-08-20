@@ -145,7 +145,7 @@ export function FacultyReviewsList({ reviews, loading, onChanged }: FacultyRevie
               <div className="flex flex-col sm:flex-row sm:items-start gap-4 sm:gap-6">
                 {/* Left Side: Prominent Score Card Box */}
                 <div className="flex sm:flex-col items-center justify-between sm:justify-center shrink-0 gap-2 sm:gap-1.5 p-3.5 sm:w-28 rounded-xl bg-muted/40 border border-border/60 text-center">
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                  <div className="text-3xs font-bold uppercase tracking-wider text-muted-foreground">
                     Quality
                   </div>
                   <div
@@ -156,12 +156,12 @@ export function FacultyReviewsList({ reviews, loading, onChanged }: FacultyRevie
                   >
                     {overallScore.toFixed(1)}
                   </div>
-                  <div className="text-[11px] font-semibold text-muted-foreground/90">
+                  <div className="text-2xs font-semibold text-muted-foreground/90">
                     {ratingTheme.label}
                   </div>
 
                   {/* Micro sub-scores on mobile/desktop */}
-                  <div className="hidden sm:flex flex-col gap-1 w-full pt-2 mt-1 border-t border-border/50 text-[10px] text-muted-foreground">
+                  <div className="hidden sm:flex flex-col gap-1 w-full pt-2 mt-1 border-t border-border/50 text-3xs text-muted-foreground">
                     <div className="flex justify-between">
                       <span>Teaching</span>
                       <span className="font-semibold text-foreground">{review.teaching}/5</span>
@@ -204,7 +204,7 @@ export function FacultyReviewsList({ reviews, loading, onChanged }: FacultyRevie
                       {review.is_own && (
                         <Badge
                           variant="secondary"
-                          className="text-[10px] bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20"
+                          className="text-3xs bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20"
                         >
                           Your review
                         </Badge>
@@ -246,7 +246,7 @@ export function FacultyReviewsList({ reviews, loading, onChanged }: FacultyRevie
                   {/* Footer Bar: Mobile Sub-Scores + Helpful Button */}
                   <div className="flex items-center justify-between pt-2 border-t border-border/40 text-xs">
                     {/* Mobile subscore pills */}
-                    <div className="flex sm:hidden items-center gap-1.5 text-[10px] text-muted-foreground">
+                    <div className="flex sm:hidden items-center gap-1.5 text-3xs text-muted-foreground">
                       <span>T: {review.teaching}/5</span>
                       <span>•</span>
                       <span>G: {review.grading}/5</span>
@@ -269,7 +269,7 @@ export function FacultyReviewsList({ reviews, loading, onChanged }: FacultyRevie
                         <ThumbsUp className={cn("h-3.5 w-3.5", vote.voted && "fill-current")} />
                         <span>Helpful</span>
                         {vote.count > 0 && (
-                          <span className="text-[11px] font-semibold tabular-nums">({vote.count})</span>
+                          <span className="text-2xs font-semibold tabular-nums">({vote.count})</span>
                         )}
                       </Button>
                     </div>

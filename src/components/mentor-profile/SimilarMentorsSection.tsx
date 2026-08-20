@@ -95,7 +95,7 @@ export default function SimilarMentorsSection({
                 {formatDepartment(m.department)}
               </p>
               {m.rating > 0 && (
-                <div className="flex items-center gap-1 text-[11px] font-medium text-amber-500">
+                <div className="flex items-center gap-1 text-2xs font-medium text-amber-500">
                   <Star className="h-3 w-3 fill-amber-400" />
                   <span>{m.rating.toFixed(1)}</span>
                 </div>

@@ -69,10 +69,10 @@ export function FacultyCard({ faculty, onRate, className }: FacultyCardProps) {
           </h3>
 
           {faculty.designation && (
-            <p className="line-clamp-1 text-[11px] text-muted-foreground">{faculty.designation}</p>
+            <p className="line-clamp-1 text-2xs text-muted-foreground">{faculty.designation}</p>
           )}
 
-          <Badge variant="secondary" className="w-fit text-[10px] font-normal">
+          <Badge variant="secondary" className="w-fit text-3xs font-normal">
             {faculty.department}
           </Badge>
 
@@ -84,13 +84,13 @@ export function FacultyCard({ faculty, onRate, className }: FacultyCardProps) {
                 <span
                   key={interest}
                   title={interest}
-                  className="max-w-full truncate rounded border border-rose-500/20 bg-rose-500/5 px-1.5 py-0.5 text-[10px] leading-tight text-rose-700 dark:text-rose-300"
+                  className="max-w-full truncate rounded border border-rose-500/20 bg-rose-500/5 px-1.5 py-0.5 text-3xs leading-tight text-rose-700 dark:text-rose-300"
                 >
                   {interest}
                 </span>
               ))}
               {interests.length > 2 && (
-                <span className="text-[10px] text-muted-foreground">+{interests.length - 2}</span>
+                <span className="text-3xs text-muted-foreground">+{interests.length - 2}</span>
               )}
             </div>
           )}
@@ -99,12 +99,12 @@ export function FacultyCard({ faculty, onRate, className }: FacultyCardProps) {
             {hasRatings ? (
               <div className="flex items-center gap-1.5">
                 <StarRating value={Number(faculty.avg_overall)} size="sm" />
-                <span className="text-[11px] text-muted-foreground">
+                <span className="text-2xs text-muted-foreground">
                   ({faculty.rating_count})
                 </span>
               </div>
             ) : (
-              <span className="text-[11px] text-muted-foreground">No ratings yet</span>
+              <span className="text-2xs text-muted-foreground">No ratings yet</span>
             )}
           </div>
         </div>

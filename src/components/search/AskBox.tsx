@@ -94,7 +94,7 @@ const AskBox = ({ className }: { className?: string }) => {
               <span>AI Mode</span>
             </span>
 
-            <kbd className="ml-1 hidden shrink-0 items-center gap-0.5 rounded border border-border/60 bg-muted/80 px-1.5 py-0.5 font-mono text-[10px] font-medium text-muted-foreground sm:inline-flex">
+            <kbd className="ml-1 hidden shrink-0 items-center gap-0.5 rounded border border-border/60 bg-muted/80 px-1.5 py-0.5 font-mono text-3xs font-medium text-muted-foreground sm:inline-flex">
               {isMac ? "⌘" : "Ctrl"} D
             </kbd>
           </button>

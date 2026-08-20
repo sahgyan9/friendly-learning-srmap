@@ -71,11 +71,11 @@ export const FeaturedKnowledgeCard: React.FC<FeaturedKnowledgeCardProps> = ({
           <span className="flex h-6 w-6 items-center justify-center rounded-md bg-primary/20 text-primary">
             <Sparkles className="h-3.5 w-3.5" />
           </span>
-          <span className="text-[11px] font-bold uppercase tracking-wider text-primary">
+          <span className="text-2xs font-bold uppercase tracking-wider text-primary">
             {isFaculty ? "Campus Faculty Knowledge Panel" : isMentor ? "Top Mentor Profile" : "Featured Campus Entity"}
           </span>
         </div>
-        <span className="rounded-full bg-primary/10 border border-primary/20 px-2 py-0.5 text-[10px] font-semibold text-primary">
+        <span className="rounded-full bg-primary/10 border border-primary/20 px-2 py-0.5 text-3xs font-semibold text-primary">
           Top Match
         </span>
       </div>
@@ -153,7 +153,7 @@ export const FeaturedKnowledgeCard: React.FC<FeaturedKnowledgeCardProps> = ({
           {(interests.length > 0 ? interests : skills).slice(0, 5).map((t, idx) => (
             <span
               key={idx}
-              className="rounded-lg bg-background/80 border border-border/60 px-2 py-0.5 text-[11px] text-muted-foreground shadow-2xs"
+              className="rounded-lg bg-background/80 border border-border/60 px-2 py-0.5 text-2xs text-muted-foreground shadow-2xs"
             >
               {t}
             </span>

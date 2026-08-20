@@ -96,7 +96,7 @@ function PersonCard({ result }: { result: AskResult }) {
       </div>
 
       <div className="min-w-0 flex-1">
-        <div className="mb-0.5 flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground/80">
+        <div className="mb-0.5 flex items-center gap-1 text-3xs font-medium uppercase tracking-wide text-muted-foreground/80">
           <TypeIcon type={result.entity_type} />
           {typeLabel(result.entity_type)}
         </div>
@@ -117,7 +117,7 @@ function PersonCard({ result }: { result: AskResult }) {
               <span
                 key={tag}
                 title={tag}
-                className="max-w-[10rem] truncate rounded border border-border bg-muted/60 px-1.5 py-0.5 text-[10px] leading-tight"
+                className="max-w-[10rem] truncate rounded border border-border bg-muted/60 px-1.5 py-0.5 text-3xs leading-tight"
               >
                 {tag}
               </span>

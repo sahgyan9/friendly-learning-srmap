@@ -30,7 +30,7 @@ export function BecomeMentorLinkPreview({ label }: BecomeMentorLinkPreviewProps)
               </span>
               <Badge
                 variant="outline"
-                className="text-[10px] px-1.5 py-0 h-4 border-blue-500/30 bg-blue-500/10 text-blue-700 dark:text-blue-300 font-medium shrink-0"
+                className="text-3xs px-1.5 py-0 h-4 border-blue-500/30 bg-blue-500/10 text-blue-700 dark:text-blue-300 font-medium shrink-0"
               >
                 <Sparkles className="w-2.5 h-2.5 mr-1 inline text-blue-500" />
                 Verified Certificate

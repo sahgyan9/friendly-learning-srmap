@@ -35,8 +35,8 @@ const features: Feature[] = [
   {
     id: "mentor",
     icon: <GraduationCap className="w-7 h-7" />,
-    accent: "text-[#3963C6]",
-    accentBg: "bg-[#3963C6]/10 dark:bg-[#3963C6]/20",
+    accent: "text-brand",
+    accentBg: "bg-brand/10 dark:bg-brand/20",
     label: "01 — Mentors",
     title: "Peer Mentorship",
     description:
@@ -152,7 +152,7 @@ function FeatureCard({
 
         {/* Badge */}
         {feat.badge && (
-          <span className="absolute top-5 right-5 text-[10px] font-bold tracking-widest uppercase px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+          <span className="absolute top-5 right-5 text-3xs font-bold tracking-widest uppercase px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
             {feat.badge}
           </span>
         )}

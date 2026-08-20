@@ -23,6 +23,11 @@ export default {
 				sans: ['"Plus Jakarta Sans"', 'Inter', 'system-ui', '-apple-system', 'sans-serif'],
 				display: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
 			},
+			fontSize: {
+				'2xs': '11px',
+				'3xs': '10px',
+				'4xs': '9px',
+			},
 			colors: {
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
@@ -72,6 +77,7 @@ export default {
 					DEFAULT: '#5e7ce2',
 					dark: '#334e68',
 				},
+				brand: '#3963C6',
 			},
 			borderRadius: {
 				lg: 'var(--radius)',

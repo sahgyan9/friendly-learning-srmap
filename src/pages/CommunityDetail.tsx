@@ -124,7 +124,7 @@ function MobileChannelTabBar({
             <span># {label}</span>
             {count !== undefined && count > 0 && (
               <span className={cn(
-                "rounded-full px-1 text-[10px] font-semibold",
+                "rounded-full px-1 text-3xs font-semibold",
                 isActive ? "bg-primary-foreground/20 text-primary-foreground" : "bg-muted-foreground/20 text-muted-foreground"
               )}>
                 {count}

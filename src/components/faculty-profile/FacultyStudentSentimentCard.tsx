@@ -75,7 +75,7 @@ export default function FacultyStudentSentimentCard({
                     </span>
                   </div>
                   <Progress value={percentage} className="h-2" />
-                  <p className="text-[11px] text-muted-foreground">{criterion.hint}</p>
+                  <p className="text-2xs text-muted-foreground">{criterion.hint}</p>
                 </div>
               );
             })}
@@ -107,7 +107,7 @@ export default function FacultyStudentSentimentCard({
                     {star} ★
                   </span>
                   <Progress value={share} className="h-1.5 flex-1" />
-                  <span className="w-8 shrink-0 text-right tabular-nums text-muted-foreground text-[11px]">
+                  <span className="w-8 shrink-0 text-right tabular-nums text-muted-foreground text-2xs">
                     {count}
                   </span>
                 </div>
@@ -129,7 +129,7 @@ export default function FacultyStudentSentimentCard({
                     variant="secondary"
                     className="text-xs font-normal py-1 px-2.5 bg-muted/60"
                   >
-                    {tag} <span className="ml-1 text-muted-foreground text-[10px]">({count})</span>
+                    {tag} <span className="ml-1 text-muted-foreground text-3xs">({count})</span>
                   </Badge>
                 ))}
               </div>

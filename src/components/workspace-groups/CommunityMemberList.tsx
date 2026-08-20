@@ -176,7 +176,7 @@ export function CommunityMemberList({
                   </Avatar>
                   <span className="min-w-0 flex-1 truncate text-sm">{candidate.name}</span>
                   {candidate.is_mentor && (
-                    <Badge variant="secondary" className="shrink-0 text-[10px]">
+                    <Badge variant="secondary" className="shrink-0 text-3xs">
                       Mentor
                     </Badge>
                   )}
@@ -216,7 +216,7 @@ export function CommunityMemberList({
               </div>
 
               {member.role === "owner" && (
-                <Badge variant="outline" className="shrink-0 text-[10px]">
+                <Badge variant="outline" className="shrink-0 text-3xs">
                   Owner
                 </Badge>
               )}

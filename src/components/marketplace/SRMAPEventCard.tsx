@@ -78,7 +78,7 @@ export function SRMAPEventCard({ event }: SRMAPEventCardProps) {
 
         {/* Status badges on image */}
         {isLive && (
-          <span className="absolute right-2 top-2 inline-flex items-center gap-1.5 rounded-full bg-violet-600 px-2.5 py-1 text-[11px] font-semibold text-white shadow-md">
+          <span className="absolute right-2 top-2 inline-flex items-center gap-1.5 rounded-full bg-violet-600 px-2.5 py-1 text-2xs font-semibold text-white shadow-md">
             <span className="relative flex h-2 w-2">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75" />
               <span className="relative inline-flex h-2 w-2 rounded-full bg-white" />
@@ -87,14 +87,14 @@ export function SRMAPEventCard({ event }: SRMAPEventCardProps) {
           </span>
         )}
         {hasEnded && (
-          <span className="absolute right-2 top-2 rounded-full bg-background/90 px-2.5 py-1 text-[11px] font-medium text-muted-foreground shadow-sm backdrop-blur">
+          <span className="absolute right-2 top-2 rounded-full bg-background/90 px-2.5 py-1 text-2xs font-medium text-muted-foreground shadow-sm backdrop-blur">
             Ended
           </span>
         )}
 
         {/* Registration available badge */}
         {event.registrationUrl && !hasEnded && (
-          <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-violet-950/80 px-2 py-0.5 text-[10px] font-medium text-violet-200 backdrop-blur border border-violet-500/30">
+          <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-violet-950/80 px-2 py-0.5 text-3xs font-medium text-violet-200 backdrop-blur border border-violet-500/30">
             <Sparkles className="h-2.5 w-2.5" />
             Registration Open
           </span>
@@ -109,7 +109,7 @@ export function SRMAPEventCard({ event }: SRMAPEventCardProps) {
             {event.department && event.department !== "SRMAP" && (
               <Badge
                 variant="outline"
-                className="text-[11px] font-medium bg-violet-500/8 text-violet-600 dark:text-violet-400 border-violet-500/20"
+                className="text-2xs font-medium bg-violet-500/8 text-violet-600 dark:text-violet-400 border-violet-500/20"
               >
                 {event.department}
               </Badge>
@@ -117,7 +117,7 @@ export function SRMAPEventCard({ event }: SRMAPEventCardProps) {
             {event.eventType && (
               <Badge
                 variant="outline"
-                className="text-[11px] font-normal text-muted-foreground"
+                className="text-2xs font-normal text-muted-foreground"
               >
                 {event.eventType}
               </Badge>

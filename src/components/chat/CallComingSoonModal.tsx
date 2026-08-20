@@ -46,7 +46,7 @@ const CallComingSoonModal = ({
           </div>
 
           {/* Badge */}
-          <div className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-amber-500/25 bg-amber-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-widest text-amber-400">
+          <div className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-amber-500/25 bg-amber-500/10 px-3 py-1 text-2xs font-semibold uppercase tracking-widest text-amber-400">
             <Clock className="h-3 w-3" />
             Coming Soon
           </div>

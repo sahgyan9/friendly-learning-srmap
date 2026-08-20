@@ -432,7 +432,7 @@ const EventDetail = () => {
               href={event.link}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-[11px] text-muted-foreground hover:text-primary hover:underline inline-flex items-center gap-1"
+              className="text-2xs text-muted-foreground hover:text-primary hover:underline inline-flex items-center gap-1"
             >
               Official university notice
               <ExternalLink className="h-3 w-3" />
@@ -620,11 +620,11 @@ const EventDetail = () => {
                     <Calendar className="h-4 w-4" />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                    <p className="text-2xs font-semibold text-muted-foreground uppercase tracking-wider">
                       Date & Time
                     </p>
                     <p className="text-xs font-semibold text-foreground truncate">{formattedDate}</p>
-                    <p className="text-[11px] text-muted-foreground truncate">{formattedTime}</p>
+                    <p className="text-2xs text-muted-foreground truncate">{formattedTime}</p>
                   </div>
                 </div>
 
@@ -633,7 +633,7 @@ const EventDetail = () => {
                     <MapPin className="h-4 w-4" />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                    <p className="text-2xs font-semibold text-muted-foreground uppercase tracking-wider">
                       Location / Venue
                     </p>
                     <p className="text-xs font-semibold text-foreground truncate">
@@ -647,7 +647,7 @@ const EventDetail = () => {
                     <Building2 className="h-4 w-4" />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                    <p className="text-2xs font-semibold text-muted-foreground uppercase tracking-wider">
                       Organized By
                     </p>
                     <p className="text-xs font-semibold text-foreground truncate">
@@ -685,7 +685,7 @@ const EventDetail = () => {
                           <ImageIcon className="h-3.5 w-3.5 text-violet-600 dark:text-violet-400" />
                           Official Event Poster / Flyer
                         </span>
-                        <span className="text-[11px] text-muted-foreground">
+                        <span className="text-2xs text-muted-foreground">
                           Click poster to zoom
                         </span>
                       </div>

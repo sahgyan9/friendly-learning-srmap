@@ -369,7 +369,7 @@ export const CreatePostModal = ({
                   >
                     <X className="h-3.5 w-3.5" />
                   </button>
-                  <span className="absolute bottom-1 left-1 rounded bg-black/60 px-1 py-0.5 text-[10px] font-medium text-white">
+                  <span className="absolute bottom-1 left-1 rounded bg-black/60 px-1 py-0.5 text-3xs font-medium text-white">
                     {idx + 1}
                   </span>
                 </div>
@@ -383,7 +383,7 @@ export const CreatePostModal = ({
                   className="flex h-24 w-24 flex-col items-center justify-center gap-1.5 rounded-lg border-2 border-dashed border-border bg-muted/30 text-muted-foreground transition-colors hover:border-primary/50 hover:bg-muted/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <ImagePlus className="h-5 w-5" />
-                  <span className="text-[11px] font-medium">Add Image</span>
+                  <span className="text-2xs font-medium">Add Image</span>
                 </button>
               )}
             </div>

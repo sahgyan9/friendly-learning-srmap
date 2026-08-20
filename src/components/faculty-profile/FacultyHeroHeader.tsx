@@ -152,7 +152,7 @@ export default function FacultyHeroHeader({
                 </div>
                 <div className="text-left">
                   <StarRating value={Number(faculty.avg_overall)} />
-                  <p className="text-[11px] text-muted-foreground font-medium mt-0.5">
+                  <p className="text-2xs text-muted-foreground font-medium mt-0.5">
                     {faculty.rating_count} anonymous {faculty.rating_count === 1 ? "review" : "reviews"}
                   </p>
                 </div>

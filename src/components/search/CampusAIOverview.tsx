@@ -339,7 +339,7 @@ export const CampusAIOverview: React.FC<CampusAIOverviewProps> = ({
                 const linkContent = (
                   <span
                     className={cn(
-                      "inline-flex items-center justify-center min-w-[1.15rem] h-4 px-1 rounded border text-[10px] font-bold transition-all shadow-2xs cursor-pointer",
+                      "inline-flex items-center justify-center min-w-[1.15rem] h-4 px-1 rounded border text-3xs font-bold transition-all shadow-2xs cursor-pointer",
                       isActive
                         ? "bg-primary text-primary-foreground border-primary scale-110 shadow-xs ring-2 ring-primary/30"
                         : "border-primary/30 bg-primary/10 text-primary hover:bg-primary/20 hover:border-primary/50"
@@ -545,7 +545,7 @@ export const CampusAIOverview: React.FC<CampusAIOverviewProps> = ({
                       key={idx}
                       className="flex items-start gap-2.5 rounded-xl border border-border/60 bg-muted/30 dark:bg-card/60 p-3 text-xs sm:text-[13px] text-foreground/90 shadow-2xs hover:border-primary/30 transition-colors"
                     >
-                      <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary text-[10px] font-bold">
+                      <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary text-3xs font-bold">
                         ✓
                       </span>
                       <div className="flex-1 leading-relaxed">
@@ -564,7 +564,7 @@ export const CampusAIOverview: React.FC<CampusAIOverviewProps> = ({
                       <Sparkles className="h-3.5 w-3.5 text-primary" />
                       Cited Campus Sources ({citedSources.length})
                     </span>
-                    <span className="text-[11px] text-muted-foreground hidden sm:inline">
+                    <span className="text-2xs text-muted-foreground hidden sm:inline">
                       Directly referenced in AI synthesis
                     </span>
                   </div>
@@ -588,14 +588,14 @@ export const CampusAIOverview: React.FC<CampusAIOverviewProps> = ({
                           <div>
                             <div className="flex items-center justify-between gap-1.5 mb-2">
                               <span className={cn(
-                                "inline-flex items-center justify-center h-5 px-1.5 rounded-md text-[10px] font-bold border transition-colors",
+                                "inline-flex items-center justify-center h-5 px-1.5 rounded-md text-3xs font-bold border transition-colors",
                                 isActive
                                   ? "bg-primary text-primary-foreground border-primary"
                                   : "bg-primary/10 text-primary border-primary/20"
                               )}>
                                 [{source.id}]
                               </span>
-                              <span className={cn("inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider", source.badgeColor)}>
+                              <span className={cn("inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-4xs font-semibold uppercase tracking-wider", source.badgeColor)}>
                                 {source.icon}
                                 <span>{source.label}</span>
                               </span>
@@ -605,13 +605,13 @@ export const CampusAIOverview: React.FC<CampusAIOverviewProps> = ({
                               {source.text}
                             </h4>
                             {source.detail && (
-                              <p className="text-[11px] text-muted-foreground line-clamp-1 mt-0.5">
+                              <p className="text-2xs text-muted-foreground line-clamp-1 mt-0.5">
                                 {source.detail}
                               </p>
                             )}
                           </div>
 
-                          <div className="flex items-center justify-between text-[10px] text-primary group-hover:text-primary font-medium mt-2 pt-1.5 border-t border-border/30">
+                          <div className="flex items-center justify-between text-3xs text-primary group-hover:text-primary font-medium mt-2 pt-1.5 border-t border-border/30">
                             <span className="text-muted-foreground/70 group-hover:text-foreground/80 transition-colors">
                               {source.type === "document" ? "View Document" : "View Profile"}
                             </span>
@@ -627,7 +627,7 @@ export const CampusAIOverview: React.FC<CampusAIOverviewProps> = ({
               {/* Quick Action Badges (if different from citations) */}
               {overview.badges && overview.badges.length > 0 && citedSources.length === 0 && (
                 <div className="flex flex-wrap items-center gap-2 pt-1">
-                  <span className="text-[11px] font-medium text-muted-foreground shrink-0">
+                  <span className="text-2xs font-medium text-muted-foreground shrink-0">
                     Top Suggestions:
                   </span>
                   {overview.badges.map((badge, index) => (
@@ -645,7 +645,7 @@ export const CampusAIOverview: React.FC<CampusAIOverviewProps> = ({
               )}
 
               {/* Integrated Grounding & Action Footer Bar */}
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-t border-border/40 pt-3 text-[11px] text-muted-foreground">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-t border-border/40 pt-3 text-2xs text-muted-foreground">
                 <div className="flex items-center gap-2 flex-wrap">
                   {citedSources.some((s) => s.type === "document" || s.url?.includes("/documents/")) ? (
                     <span className="inline-flex items-center gap-1.5 font-medium text-blue-600 dark:text-blue-400">

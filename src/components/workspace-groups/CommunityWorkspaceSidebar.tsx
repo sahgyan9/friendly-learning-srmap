@@ -88,7 +88,7 @@ export function CommunityWorkspaceSidebar({
             <span>Discussions</span>
             <span className="font-semibold text-foreground">{community.post_count} posts</span>
           </div>
-          <div className="flex items-center gap-1.5 pt-1 text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
+          <div className="flex items-center gap-1.5 pt-1 text-2xs text-emerald-600 dark:text-emerald-400 font-medium">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
             <span>Active {formatRelativeTime(community.last_activity_at)}</span>
           </div>
@@ -99,7 +99,7 @@ export function CommunityWorkspaceSidebar({
       {/* Navigation Channels */}
       <div className="rounded-xl border border-border/60 bg-card p-3 space-y-1">
         <div className="flex items-center justify-between gap-2 px-3 py-1.5">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+          <span className="text-2xs font-bold uppercase tracking-wider text-muted-foreground">
             Workspace Channels
           </span>
 
@@ -148,7 +148,7 @@ export function CommunityWorkspaceSidebar({
                 <Badge
                   variant="secondary"
                   className={cn(
-                    "text-[10px] px-1.5 py-0 h-4 font-semibold",
+                    "text-3xs px-1.5 py-0 h-4 font-semibold",
                     isActive ? "bg-primary-foreground/20 text-primary-foreground" : "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
                   )}
                 >
@@ -158,7 +158,7 @@ export function CommunityWorkspaceSidebar({
                 <Badge
                   variant="secondary"
                   className={cn(
-                    "text-[10px] px-1.5 py-0 h-4",
+                    "text-3xs px-1.5 py-0 h-4",
                     isActive ? "bg-primary-foreground/20 text-primary-foreground" : "bg-muted text-muted-foreground"
                   )}
                 >
@@ -209,7 +209,7 @@ export function CommunityWorkspaceSidebar({
                       <Badge
                         variant="secondary"
                         className={cn(
-                          "h-4 px-1.5 py-0 text-[10px] transition-transform",
+                          "h-4 px-1.5 py-0 text-3xs transition-transform",
                           canManageChannels && "group-hover/channel:-translate-x-6",
                           isActive
                             ? "bg-primary-foreground/20 text-primary-foreground"
@@ -246,7 +246,7 @@ export function CommunityWorkspaceSidebar({
         {/* Said once, to the one person who can act on it, and only while the
             group has no channels of its own. */}
         {canManageChannels && channels.length === 0 && (
-          <p className="px-3 pb-1 pt-2 text-[11px] leading-relaxed text-muted-foreground">
+          <p className="px-3 pb-1 pt-2 text-2xs leading-relaxed text-muted-foreground">
             Add a channel when one topic keeps interrupting another — a room for
             resources, or one for announcements.
           </p>
@@ -263,7 +263,7 @@ export function CommunityWorkspaceSidebar({
               <Users className="h-3.5 w-3.5 text-primary" />
               <span className="font-medium text-foreground">{community.member_count} {community.member_count === 1 ? "member" : "members"}</span>
             </div>
-            <span className="text-primary font-semibold text-[11px]">Directory →</span>
+            <span className="text-primary font-semibold text-2xs">Directory →</span>
           </button>
         </div>
       </div>

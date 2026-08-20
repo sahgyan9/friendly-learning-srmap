@@ -57,7 +57,7 @@ export default function FacultyCoursesSection({
                 <Layers className="h-4 w-4 text-primary" />
                 <span className="text-sm font-bold text-foreground">{code}</span>
               </div>
-              <Badge variant="secondary" className="text-[10px] font-normal">
+              <Badge variant="secondary" className="text-3xs font-normal">
                 {count} {count === 1 ? "review" : "reviews"}
               </Badge>
             </div>

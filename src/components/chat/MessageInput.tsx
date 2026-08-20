@@ -164,7 +164,7 @@ const MessageInput = ({
         </Button>
       </div>
 
-      <p className="mt-1.5 px-2 text-[10px] text-muted-foreground/40">
+      <p className="mt-1.5 px-2 text-3xs text-muted-foreground/40">
         <kbd className="font-sans">Enter</kbd> to send ·{" "}
         <kbd className="font-sans">Shift + Enter</kbd> for new line
       </p>

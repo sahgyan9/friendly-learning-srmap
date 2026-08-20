@@ -392,7 +392,7 @@ const Faculty = () => {
                   <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                     Browse by research interest
                   </p>
-                  <span className="hidden text-[11px] text-muted-foreground/70 sm:inline-block">
+                  <span className="hidden text-2xs text-muted-foreground/70 sm:inline-block">
                     Swipe to explore ({facets.length})
                   </span>
                 </div>

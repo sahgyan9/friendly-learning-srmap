@@ -300,7 +300,7 @@ export default function SearchPage() {
                   title="Toggle AI Mode (Press Tab)"
                 >
                   <CampusMindIcon className={cn("h-3.5 w-3.5", isAiMode ? "text-violet-200" : "text-violet-500")} />
-                  <span className="hidden sm:inline text-[11px]">{isAiMode ? "AI Active" : "AI Mode"}</span>
+                  <span className="hidden sm:inline text-2xs">{isAiMode ? "AI Active" : "AI Mode"}</span>
                 </button>
               </div>
             </div>
@@ -330,7 +330,7 @@ export default function SearchPage() {
                     {typeof count === "number" && (
                       <span
                         className={cn(
-                          "ml-0.5 rounded-full px-1.5 py-0.2 text-[11px] font-semibold",
+                          "ml-0.5 rounded-full px-1.5 py-0.2 text-2xs font-semibold",
                           active
                             ? "bg-primary-foreground/20 text-primary-foreground"
                             : "bg-muted text-muted-foreground",
@@ -462,7 +462,7 @@ export default function SearchPage() {
                           {title}
                         </h2>
                         {count > 0 && (
-                          <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold text-muted-foreground tabular-nums">
+                          <span className="rounded-full bg-muted px-2 py-0.5 text-3xs font-semibold text-muted-foreground tabular-nums">
                             {count}
                           </span>
                         )}
@@ -554,7 +554,7 @@ export default function SearchPage() {
                       <h2 className="text-xs font-bold uppercase tracking-wider text-foreground/80">
                         Student Profiles
                       </h2>
-                      <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold text-muted-foreground tabular-nums">
+                      <span className="rounded-full bg-muted px-2 py-0.5 text-3xs font-semibold text-muted-foreground tabular-nums">
                         {results.students.length}
                       </span>
                     </div>

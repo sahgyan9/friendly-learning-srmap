@@ -144,7 +144,7 @@ export function CommunityWorkspaceHeader({
                 className={`h-7 w-7 shrink-0 rounded-lg ring-1 ring-border ${style.avatarRing}`}
                 iconClassName="h-3.5 w-3.5"
               />
-              <Badge variant="secondary" className={`gap-1 shrink-0 text-[10px] py-0 h-5 ${style.pill}`}>
+              <Badge variant="secondary" className={`gap-1 shrink-0 text-3xs py-0 h-5 ${style.pill}`}>
                 <kind.icon className="h-2.5 w-2.5" aria-hidden />
                 {kind.label}
               </Badge>
@@ -175,7 +175,7 @@ export function CommunityWorkspaceHeader({
               <p className="truncate text-xs text-muted-foreground leading-relaxed">
                 {community.description}
               </p>
-              <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
+              <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-2xs text-muted-foreground">
                 <button
                   type="button"
                   onClick={onOpenMembersDrawer}
@@ -269,7 +269,7 @@ export function CommunityWorkspaceHeader({
                 <ShieldCheck className="h-3.5 w-3.5 text-primary" />
                 Community guidelines
               </div>
-              <p className="text-[11px] text-muted-foreground leading-relaxed">
+              <p className="text-2xs text-muted-foreground leading-relaxed">
                 Be respectful, share constructive resources, and keep conversation productive for everyone in SRMAP.
               </p>
             </div>

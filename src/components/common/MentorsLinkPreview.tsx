@@ -29,7 +29,7 @@ export function MentorsLinkPreview({ label }: MentorsLinkPreviewProps) {
               </span>
               <Badge
                 variant="outline"
-                className="text-[10px] px-1.5 py-0 h-4 border-teal-500/30 bg-teal-500/10 text-teal-700 dark:text-teal-300 font-medium shrink-0"
+                className="text-3xs px-1.5 py-0 h-4 border-teal-500/30 bg-teal-500/10 text-teal-700 dark:text-teal-300 font-medium shrink-0"
               >
                 <UserCheck className="w-2.5 h-2.5 mr-1 inline text-teal-500" />
                 Verified Mentors

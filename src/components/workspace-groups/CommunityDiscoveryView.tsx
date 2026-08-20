@@ -203,7 +203,7 @@ export function CommunityDiscoveryView({
                 {count > 0 && (
                   <span
                     className={cn(
-                      "tabular-nums text-[11px] px-1 rounded-full",
+                      "tabular-nums text-2xs px-1 rounded-full",
                       active ? "bg-primary-foreground/20 text-primary-foreground" : "text-muted-foreground bg-muted",
                     )}
                   >

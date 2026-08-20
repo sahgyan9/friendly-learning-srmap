@@ -362,8 +362,8 @@ const OpportunityDetail = () => {
                       <span
                         className={
                           team.is_open
-                            ? "shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium text-emerald-700 dark:text-emerald-400"
-                            : "shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground"
+                            ? "shrink-0 rounded px-1.5 py-0.5 text-3xs font-medium text-emerald-700 dark:text-emerald-400"
+                            : "shrink-0 rounded px-1.5 py-0.5 text-3xs font-medium text-muted-foreground"
                         }
                       >
                         {team.is_open ? "Open" : "Full"}
@@ -376,11 +376,11 @@ const OpportunityDetail = () => {
 
                     {team.looking_for.length > 0 && team.is_open && (
                       <div className="flex flex-wrap gap-1">
-                        <span className="text-[10px] text-muted-foreground">Needs:</span>
+                        <span className="text-3xs text-muted-foreground">Needs:</span>
                         {team.looking_for.map((skill) => (
                           <span
                             key={skill}
-                            className="rounded border border-primary/20 bg-primary/5 px-1.5 py-0.5 text-[10px] text-primary"
+                            className="rounded border border-primary/20 bg-primary/5 px-1.5 py-0.5 text-3xs text-primary"
                           >
                             {skill}
                           </span>
@@ -389,7 +389,7 @@ const OpportunityDetail = () => {
                     )}
 
                     <div className="mt-auto flex items-center justify-between pt-1">
-                      <span className="text-[11px] tabular-nums text-muted-foreground">
+                      <span className="text-2xs tabular-nums text-muted-foreground">
                         {team.community?.member_count ?? 1} member
                         {(team.community?.member_count ?? 1) === 1 ? "" : "s"}
                       </span>

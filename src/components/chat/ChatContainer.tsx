@@ -153,7 +153,7 @@ const ChatContainer = ({
               <MessagesSquare className="h-4 w-4 text-primary" />
               <h2 className="text-sm font-semibold text-foreground/90">Messages</h2>
               {conversations.length > 0 && (
-                <span className="ml-auto rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-semibold text-primary">
+                <span className="ml-auto rounded-full bg-primary/15 px-2 py-0.5 text-3xs font-semibold text-primary">
                   {conversations.length}
                 </span>
               )}

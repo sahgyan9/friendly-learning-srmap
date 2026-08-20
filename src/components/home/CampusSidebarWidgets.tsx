@@ -168,7 +168,7 @@ export const CampusSidebarWidgets = () => {
                             : "bg-background border-border/80 text-foreground"
                         }`}
                       >
-                        <span className="text-[9px] font-bold tracking-wider text-muted-foreground uppercase">{month}</span>
+                        <span className="text-4xs font-bold tracking-wider text-muted-foreground uppercase">{month}</span>
                         <span className="text-base font-extrabold mt-0.5">{day}</span>
                       </div>
 
@@ -178,7 +178,7 @@ export const CampusSidebarWidgets = () => {
                           {event.title}
                         </h4>
 
-                        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-muted-foreground mt-1">
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-2xs text-muted-foreground mt-1">
                           {time && time !== "12:00 AM" && (
                             <span className="inline-flex items-center gap-1 shrink-0">
                               <Clock className="h-3 w-3 text-muted-foreground/70" />
@@ -202,11 +202,11 @@ export const CampusSidebarWidgets = () => {
                   >
                     <div className="space-y-2.5">
                       <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="bg-primary/10 text-primary border-primary/25 text-[10px] font-semibold px-2.5 py-0.5 rounded-full">
+                        <Badge variant="outline" className="bg-primary/10 text-primary border-primary/25 text-3xs font-semibold px-2.5 py-0.5 rounded-full">
                           Campus Event
                         </Badge>
                         {event.department && (
-                          <Badge variant="secondary" className="text-[10px] font-medium px-2 py-0.5 rounded-full">
+                          <Badge variant="secondary" className="text-3xs font-medium px-2 py-0.5 rounded-full">
                             {event.department.split(" ")[0]}
                           </Badge>
                         )}
@@ -218,7 +218,7 @@ export const CampusSidebarWidgets = () => {
 
                       <div className="pt-2 border-t border-border/60 space-y-1.5 text-xs text-muted-foreground">
                         <div className="flex items-center gap-2">
-                          <span className="inline-flex items-center justify-center h-5 w-5 rounded-md bg-rose-500/10 text-rose-600 text-[11px] shrink-0 font-semibold">
+                          <span className="inline-flex items-center justify-center h-5 w-5 rounded-md bg-rose-500/10 text-rose-600 text-2xs shrink-0 font-semibold">
                             📅
                           </span>
                           <span className="font-medium text-foreground">{month} {day}</span>
@@ -228,7 +228,7 @@ export const CampusSidebarWidgets = () => {
                         </div>
                         {event.venue && (
                           <div className="flex items-center gap-2">
-                            <span className="inline-flex items-center justify-center h-5 w-5 rounded-md bg-blue-500/10 text-blue-600 text-[11px] shrink-0 font-semibold">
+                            <span className="inline-flex items-center justify-center h-5 w-5 rounded-md bg-blue-500/10 text-blue-600 text-2xs shrink-0 font-semibold">
                               📍
                             </span>
                             <span className="text-muted-foreground font-normal line-clamp-1">{event.venue}</span>
@@ -295,7 +295,7 @@ export const CampusSidebarWidgets = () => {
                             <span className="truncate">{mentor.name}</span>
                             <BadgeCheck className="h-3.5 w-3.5 text-blue-500 shrink-0" />
                           </Link>
-                          <p className="text-[11px] text-muted-foreground truncate">
+                          <p className="text-2xs text-muted-foreground truncate">
                             {mentor.department || "Senior Mentor"}
                           </p>
                         </div>
@@ -334,7 +334,7 @@ export const CampusSidebarWidgets = () => {
                           />
                           <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1 rounded-full border border-border bg-card px-2 py-0.5 shadow-2xs whitespace-nowrap">
                             <BadgeCheck className="h-3 w-3 text-blue-500" />
-                            <span className="text-[10px] font-semibold text-blue-600 dark:text-blue-400">
+                            <span className="text-3xs font-semibold text-blue-600 dark:text-blue-400">
                               Verified
                             </span>
                           </div>
@@ -396,7 +396,7 @@ export const CampusSidebarWidgets = () => {
                               {hasRating ? (
                                 <>
                                   {mentor.rating.toFixed(1)}
-                                  <span className="text-[10px] text-muted-foreground font-normal ml-1">
+                                  <span className="text-3xs text-muted-foreground font-normal ml-1">
                                     ({mentor.review_count})
                                   </span>
                                 </>
@@ -404,7 +404,7 @@ export const CampusSidebarWidgets = () => {
                                 "New"
                               )}
                             </div>
-                            <div className="text-[10px] text-muted-foreground font-medium">
+                            <div className="text-3xs text-muted-foreground font-medium">
                               {hasRating ? "Rating Score" : "No reviews yet"}
                             </div>
                           </div>
@@ -419,7 +419,7 @@ export const CampusSidebarWidgets = () => {
                             <div className="text-xs font-bold text-foreground">
                               {mentor.review_count && mentor.review_count > 0 ? mentor.review_count : "New"}
                             </div>
-                            <div className="text-[10px] text-muted-foreground font-medium">
+                            <div className="text-3xs text-muted-foreground font-medium">
                               {mentor.review_count && mentor.review_count > 0 ? "Peer Reviews" : "No reviews yet"}
                             </div>
                           </div>
@@ -432,7 +432,7 @@ export const CampusSidebarWidgets = () => {
                           </div>
                           <div className="min-w-0">
                             <div className="text-xs font-bold text-foreground">Active</div>
-                            <div className="text-[10px] text-muted-foreground font-medium">Direct Messaging</div>
+                            <div className="text-3xs text-muted-foreground font-medium">Direct Messaging</div>
                           </div>
                         </div>
                       </div>
@@ -508,11 +508,11 @@ export const CampusSidebarWidgets = () => {
                   <h4 className="text-xs font-medium text-foreground group-hover:text-primary transition-colors truncate">
                     {group.name}
                   </h4>
-                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                  <p className="text-2xs text-muted-foreground mt-0.5">
                     {group.member_count} {group.member_count === 1 ? "member" : "members"}
                   </p>
                 </div>
-                <Badge variant="outline" className="text-[10px] shrink-0 font-normal border-border/80">
+                <Badge variant="outline" className="text-3xs shrink-0 font-normal border-border/80">
                   {group.visibility === "private" ? "Private" : "Public"}
                 </Badge>
               </Link>

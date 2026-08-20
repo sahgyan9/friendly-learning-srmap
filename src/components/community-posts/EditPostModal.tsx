@@ -353,7 +353,7 @@ export const EditPostModal = ({ post, open, onOpenChange, onPostUpdated }: EditP
                   className="flex h-24 w-24 flex-col items-center justify-center gap-1.5 rounded-lg border-2 border-dashed border-border bg-muted/30 text-muted-foreground transition-colors hover:border-primary/50 hover:bg-muted/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <ImagePlus className="h-5 w-5" />
-                  <span className="text-[11px] font-medium">Add Image</span>
+                  <span className="text-2xs font-medium">Add Image</span>
                 </button>
               )}
             </div>

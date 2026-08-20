@@ -124,7 +124,7 @@ export function FacultyDiscoveryCard() {
                     </div>
                     <div className="flex shrink-0 flex-col items-end">
                       <StarRating value={Number(member.avg_overall)} size="sm" />
-                      <span className="text-[10px] text-muted-foreground">
+                      <span className="text-3xs text-muted-foreground">
                         {Number(member.avg_overall).toFixed(1)} ({member.rating_count})
                       </span>
                     </div>

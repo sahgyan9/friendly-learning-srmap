@@ -124,7 +124,7 @@ export function MobileNavDock() {
                   />
                 )}
               </div>
-              <span className="text-[10px] font-medium tracking-tight mt-0.5">
+              <span className="text-3xs font-medium tracking-tight mt-0.5">
                 {item.name}
               </span>
             </Link>
@@ -160,7 +160,7 @@ export function MobileNavDock() {
                   />
                 )}
               </div>
-              <span className="text-[10px] font-medium tracking-tight mt-0.5">
+              <span className="text-3xs font-medium tracking-tight mt-0.5">
                 More
               </span>
             </button>

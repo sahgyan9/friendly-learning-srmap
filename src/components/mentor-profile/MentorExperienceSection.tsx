@@ -73,7 +73,7 @@ export default function MentorExperienceSection({
                   <p className="text-xs font-medium text-muted-foreground">{exp.organization}</p>
                 )}
                 {exp.period && (
-                  <p className="text-[11px] text-muted-foreground/80">{exp.period}</p>
+                  <p className="text-2xs text-muted-foreground/80">{exp.period}</p>
                 )}
               </div>
             </div>

@@ -336,7 +336,7 @@ const SiteSearch = () => {
             <span className="truncate font-medium text-sm text-foreground/90 group-data-[selected=true]:text-foreground">
               {hit.title}
             </span>
-            <span className="shrink-0 rounded bg-muted/60 px-1.5 py-0.2 text-[9px] font-semibold uppercase text-muted-foreground">
+            <span className="shrink-0 rounded bg-muted/60 px-1.5 py-0.2 text-4xs font-semibold uppercase text-muted-foreground">
               {hit.kind}
             </span>
           </div>
@@ -363,7 +363,7 @@ const SiteSearch = () => {
       >
         <Search className="h-3.5 w-3.5 shrink-0 text-muted-foreground/70 group-hover:text-foreground transition-colors" />
         <span className="hidden md:inline text-xs text-muted-foreground/70 group-hover:text-foreground">Search…</span>
-        <kbd className="ml-auto hidden items-center gap-0.5 rounded border border-border/40 bg-background/60 px-1.5 py-0.5 font-mono text-[10px] font-medium text-muted-foreground/60 md:inline-flex shrink-0">
+        <kbd className="ml-auto hidden items-center gap-0.5 rounded border border-border/40 bg-background/60 px-1.5 py-0.5 font-mono text-3xs font-medium text-muted-foreground/60 md:inline-flex shrink-0">
           {isMac ? "⌘" : "Ctrl"} D
         </kbd>
       </button>
@@ -470,7 +470,7 @@ const SiteSearch = () => {
             {/* Quick Category Filter Bar */}
             {!searching && (
               <div className="flex items-center gap-1.5 px-4 py-2 border-b border-border/30 bg-muted/10 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-                <span className="text-[11px] font-medium text-muted-foreground/70 shrink-0 mr-1">Jump to:</span>
+                <span className="text-2xs font-medium text-muted-foreground/70 shrink-0 mr-1">Jump to:</span>
                 {CATEGORY_PILLS.map((cat) => {
                   const Icon = cat.icon;
                   return (
@@ -508,7 +508,7 @@ const SiteSearch = () => {
                           <Sparkles className="h-3.5 w-3.5 text-primary" />
                           Suggested Searches
                         </span>
-                        <span className="text-[10px] text-muted-foreground font-normal">Popular across SRM-AP</span>
+                        <span className="text-3xs text-muted-foreground font-normal">Popular across SRM-AP</span>
                       </div>
                     }
                   >
@@ -560,7 +560,7 @@ const SiteSearch = () => {
                               <span className="block truncate font-medium text-sm text-foreground/90 group-data-[selected=true]:text-foreground">
                                 {item.label}
                               </span>
-                              <span className="hidden sm:inline-block shrink-0 rounded bg-muted/60 px-1.5 py-0.2 text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">
+                              <span className="hidden sm:inline-block shrink-0 rounded bg-muted/60 px-1.5 py-0.2 text-4xs font-semibold uppercase tracking-wider text-muted-foreground">
                                 {item.category === "guides" ? "Guide" : item.category}
                               </span>
                             </span>
@@ -682,15 +682,15 @@ const SiteSearch = () => {
             </CommandList>
 
             {/* Keyboard shortcut footer */}
-            <div className="flex items-center justify-between border-t border-border/40 bg-muted/20 px-4 py-2.5 text-[11px] text-muted-foreground/80">
+            <div className="flex items-center justify-between border-t border-border/40 bg-muted/20 px-4 py-2.5 text-2xs text-muted-foreground/80">
               <div className="flex items-center gap-3">
                 <span className="flex items-center gap-1">
-                  <kbd className="rounded-sm bg-background px-1.5 py-0.5 font-mono text-[10px] font-medium border border-border/60 shadow-2xs">↑</kbd>
-                  <kbd className="rounded-sm bg-background px-1.5 py-0.5 font-mono text-[10px] font-medium border border-border/60 shadow-2xs">↓</kbd>
+                  <kbd className="rounded-sm bg-background px-1.5 py-0.5 font-mono text-3xs font-medium border border-border/60 shadow-2xs">↑</kbd>
+                  <kbd className="rounded-sm bg-background px-1.5 py-0.5 font-mono text-3xs font-medium border border-border/60 shadow-2xs">↓</kbd>
                   <span className="ml-0.5">Navigate</span>
                 </span>
                 <span className="flex items-center gap-1">
-                  <kbd className="rounded-sm bg-background px-1.5 py-0.5 font-mono text-[10px] font-medium border border-border/60 shadow-2xs">↵</kbd>
+                  <kbd className="rounded-sm bg-background px-1.5 py-0.5 font-mono text-3xs font-medium border border-border/60 shadow-2xs">↵</kbd>
                   <span className="ml-0.5">Select</span>
                 </span>
                 <button
@@ -698,24 +698,24 @@ const SiteSearch = () => {
                   onClick={() => setIsAiMode((prev) => !prev)}
                   className="flex items-center gap-1 hover:text-foreground transition-colors cursor-pointer"
                 >
-                  <kbd className="rounded-sm bg-background px-1.5 py-0.5 font-mono text-[10px] font-medium border border-border/60 shadow-2xs">Tab</kbd>
+                  <kbd className="rounded-sm bg-background px-1.5 py-0.5 font-mono text-3xs font-medium border border-border/60 shadow-2xs">Tab</kbd>
                   <span className="ml-0.5">{isAiMode ? "Standard" : "AI Mode"}</span>
                 </button>
                 <span className="flex items-center gap-1">
-                  <kbd className="rounded-sm bg-background px-1.5 py-0.5 font-mono text-[10px] font-medium border border-border/60 shadow-2xs">Esc</kbd>
+                  <kbd className="rounded-sm bg-background px-1.5 py-0.5 font-mono text-3xs font-medium border border-border/60 shadow-2xs">Esc</kbd>
                   <span className="ml-0.5">Close</span>
                 </span>
               </div>
               {searching ? (
                 <button
                   onClick={goToSearch}
-                  className="hidden sm:flex items-center gap-1 text-[10px] text-primary/70 hover:text-primary transition-colors group"
+                  className="hidden sm:flex items-center gap-1 text-3xs text-primary/70 hover:text-primary transition-colors group"
                 >
                   <span>See all results</span>
                   <ChevronRight className="h-3 w-3 group-hover:translate-x-0.5 transition-transform" />
                 </button>
               ) : (
-                <div className="hidden sm:flex items-center gap-1.5 text-[10px] text-muted-foreground/60">
+                <div className="hidden sm:flex items-center gap-1.5 text-3xs text-muted-foreground/60">
                   <CampusMindIcon className="h-3.5 w-3.5 text-violet-500" />
                   <span className="font-semibold text-foreground/80">CampusMind</span> AI
                 </div>

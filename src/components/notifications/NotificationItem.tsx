@@ -95,7 +95,7 @@ const NotificationItem = ({ notification, onMarkAsRead, onNotificationClick }: N
               {notification.content}
             </p>
           )}
-          <p className="text-[11px] text-muted-foreground/80 font-medium">
+          <p className="text-2xs text-muted-foreground/80 font-medium">
             {formatDistanceToNow(new Date(notification.created_at!), { addSuffix: true })}
           </p>
         </div>

@@ -203,7 +203,7 @@ const Communities = () => {
                     <Badge
                       variant="secondary"
                       className={cn(
-                        "h-5 px-1.5 py-0 text-[10px] font-bold rounded-full",
+                        "h-5 px-1.5 py-0 text-3xs font-bold rounded-full",
                         activeView === "my-communities"
                           ? "bg-primary text-primary-foreground"
                           : "bg-muted text-muted-foreground",
@@ -228,7 +228,7 @@ const Communities = () => {
                   <span>Discover & Explore</span>
                   <Badge
                     variant="outline"
-                    className="h-5 px-1.5 py-0 text-[10px] text-muted-foreground rounded-full"
+                    className="h-5 px-1.5 py-0 text-3xs text-muted-foreground rounded-full"
                   >
                     {allCommunities.length}
                   </Badge>

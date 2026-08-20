@@ -58,7 +58,7 @@ export default function FacultyQuickStatsStrip({
           <div className="text-sm font-semibold text-foreground truncate" title={faculty.department}>
             {faculty.department}
           </div>
-          <div className="text-[11px] text-muted-foreground mt-0.5">
+          <div className="text-2xs text-muted-foreground mt-0.5">
             {interestsCount > 0 ? `${interestsCount} research domains` : faculty.school || "SRM AP Faculty"}
           </div>
         </div>
@@ -74,7 +74,7 @@ export default function FacultyQuickStatsStrip({
           <div className="text-sm font-semibold text-foreground truncate">
             {faculty.interests && faculty.interests[0] ? faculty.interests[0] : "Active Research"}
           </div>
-          <div className="text-[11px] text-muted-foreground mt-0.5">
+          <div className="text-2xs text-muted-foreground mt-0.5">
             {interestsCount > 1 ? `+${interestsCount - 1} more specializations` : "Research active"}
           </div>
         </div>
@@ -92,7 +92,7 @@ export default function FacultyQuickStatsStrip({
               {hasRatings ? `${teachingScore.toFixed(1)} / 5.0` : "New Profile"}
             </span>
           </div>
-          <div className="text-[11px] text-muted-foreground mt-0.5">
+          <div className="text-2xs text-muted-foreground mt-0.5">
             {getTeachingLabel(teachingScore)}
           </div>
         </div>
@@ -110,7 +110,7 @@ export default function FacultyQuickStatsStrip({
               {hasRatings ? `${helpfulnessScore.toFixed(1)} / 5.0` : "Faculty Office"}
             </span>
           </div>
-          <div className="text-[11px] text-muted-foreground mt-0.5">
+          <div className="text-2xs text-muted-foreground mt-0.5">
             {getHelpfulnessLabel(helpfulnessScore)}
           </div>
         </div>

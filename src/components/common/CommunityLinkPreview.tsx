@@ -88,14 +88,14 @@ export function CommunityLinkPreview({ slug, label }: CommunityLinkPreviewProps)
               {community?.visibility === "private" ? (
                 <Badge
                   variant="outline"
-                  className="text-[10px] px-1.5 py-0 h-4 border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300 font-medium shrink-0"
+                  className="text-3xs px-1.5 py-0 h-4 border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300 font-medium shrink-0"
                 >
                   <Lock className="w-2.5 h-2.5 mr-0.5 inline" /> Private
                 </Badge>
               ) : (
                 <Badge
                   variant="outline"
-                  className="text-[10px] px-1.5 py-0 h-4 border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 font-medium shrink-0"
+                  className="text-3xs px-1.5 py-0 h-4 border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 font-medium shrink-0"
                 >
                   Public
                 </Badge>

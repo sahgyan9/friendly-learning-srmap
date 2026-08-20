@@ -29,9 +29,9 @@ const phases: Phase[] = [
     id: "discover",
     step: "Phase 1",
     icon: <Search className="w-5 h-5" />,
-    color: "text-[#3963C6]",
-    colorBg: "bg-[#3963C6]/10",
-    colorBorder: "border-[#3963C6]/30",
+    color: "text-brand",
+    colorBg: "bg-brand/10",
+    colorBorder: "border-brand/30",
     title: "Discover",
     subtitle: "Find your path",
     items: [
@@ -153,7 +153,7 @@ function PhaseCard({ phase, index }: { phase: Phase; index: number }) {
             {phase.step}
           </span>
           <span
-            className={`text-[10px] font-bold tracking-widest uppercase px-2 py-0.5 rounded-full border ${sl.cls}`}
+            className={`text-3xs font-bold tracking-widest uppercase px-2 py-0.5 rounded-full border ${sl.cls}`}
           >
             {sl.text}
           </span>
@@ -373,7 +373,7 @@ export function FutureVision() {
               phases 3 &amp; 4 in active development. AI layer begins once
               student data reaches critical mass.
             </p>
-            <span className="shrink-0 text-[10px] font-bold tracking-widest uppercase px-3 py-1 rounded-full border border-primary/20 bg-primary/5 text-primary">
+            <span className="shrink-0 text-3xs font-bold tracking-widest uppercase px-3 py-1 rounded-full border border-primary/20 bg-primary/5 text-primary">
               Long-term vision
             </span>
           </div>

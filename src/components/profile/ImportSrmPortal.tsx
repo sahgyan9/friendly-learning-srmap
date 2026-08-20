@@ -271,35 +271,35 @@ export const ImportSrmPortalDialog = ({
                 <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                   Summary of Imported Data
                 </span>
-                <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 text-[10px] gap-1 font-normal">
+                <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 text-3xs gap-1 font-normal">
                   <ShieldCheck className="h-3 w-3" /> Verified SRM AP
                 </Badge>
               </div>
 
               <div className="grid grid-cols-2 gap-3 text-xs">
                 <div>
-                  <p className="text-muted-foreground text-[11px]">Program</p>
+                  <p className="text-muted-foreground text-2xs">Program</p>
                   <p className="font-semibold text-foreground truncate" title={successResult.program || "N/A"}>
                     {successResult.program || "N/A"}
                   </p>
                 </div>
 
                 <div>
-                  <p className="text-muted-foreground text-[11px]">Current Semester</p>
+                  <p className="text-muted-foreground text-2xs">Current Semester</p>
                   <p className="font-semibold text-foreground">
                     {successResult.currentSemester ? `Semester ${successResult.currentSemester}` : "N/A"}
                   </p>
                 </div>
 
                 <div>
-                  <p className="text-muted-foreground text-[11px]">CGPA</p>
+                  <p className="text-muted-foreground text-2xs">CGPA</p>
                   <p className="font-semibold text-foreground">
                     {successResult.cgpa != null ? `${successResult.cgpa.toFixed(2)} / 10.0` : "N/A"}
                   </p>
                 </div>
 
                 <div>
-                  <p className="text-muted-foreground text-[11px]">Coursework</p>
+                  <p className="text-muted-foreground text-2xs">Coursework</p>
                   <button
                     type="button"
                     onClick={() => setDetailsOpen(true)}
@@ -323,7 +323,7 @@ export const ImportSrmPortalDialog = ({
 
             {/* Explicit save action — separate from the auto-sync above */}
             <div className="rounded-lg border border-primary/20 bg-primary/5 p-3.5 space-y-2.5">
-              <p className="text-[11px] text-muted-foreground leading-relaxed">
+              <p className="text-2xs text-muted-foreground leading-relaxed">
                 Want your <span className="font-medium text-foreground">program and CGPA</span> to also
                 show up on your public FriendlyLearning profile (so mentors/search can see it)? Apply it below.
                 This step is optional.
@@ -396,7 +396,7 @@ export const ImportSrmPortalDialog = ({
                     onChange={(e) => setPassword(e.target.value)}
                     autoComplete="off"
                   />
-                  <p className="text-[11px] text-muted-foreground">
+                  <p className="text-2xs text-muted-foreground">
                     Same password you use to sign in at student.srmap.edu.in
                   </p>
                 </div>
@@ -417,7 +417,7 @@ export const ImportSrmPortalDialog = ({
                   />
                 </div>
 
-                <p className="text-[11px] text-muted-foreground">
+                <p className="text-2xs text-muted-foreground">
                   Independent student project — not affiliated with or endorsed by SRM University AP.
                 </p>
 
@@ -576,7 +576,7 @@ const ImportSrmPortal = ({ onProfileUpdate }: ImportSrmPortalProps) => {
                   SRM Portal Academic Import
                 </h3>
                 {record?.sync_status === "success" && (
-                  <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 text-[10px] gap-1 font-normal">
+                  <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 text-3xs gap-1 font-normal">
                     <CheckCircle2 className="h-3 w-3" /> Synced
                   </Badge>
                 )}
@@ -601,13 +601,13 @@ const ImportSrmPortal = ({ onProfileUpdate }: ImportSrmPortalProps) => {
                       {record.subjects?.length ? `${record.subjects.length} subjects` : "0 subjects"}
                     </span>
                     {record.cgpa != null && (
-                      <Badge variant="secondary" className="text-[10px] gap-1 font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20">
+                      <Badge variant="secondary" className="text-3xs gap-1 font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20">
                         <ShieldCheck className="h-3 w-3" /> {record.cgpa.toFixed(2)} CGPA
                       </Badge>
                     )}
                   </div>
                   {record.last_synced_at && (
-                    <p className="text-[11px] text-muted-foreground">
+                    <p className="text-2xs text-muted-foreground">
                       Last updated {formatRelativeTime(record.last_synced_at)}
                     </p>
                   )}

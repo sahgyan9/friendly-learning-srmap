@@ -140,7 +140,7 @@ const ConversationList = ({
                     {displayName}
                   </span>
                   <span className={cn(
-                    "shrink-0 text-[10px] tabular-nums transition-colors duration-200",
+                    "shrink-0 text-3xs tabular-nums transition-colors duration-200",
                     isActive ? "text-primary/80" : "text-muted-foreground/60"
                   )}>
                     {formatTime(conversation.last_updated)}
@@ -158,7 +158,7 @@ const ConversationList = ({
                   </p>
                   {hasUnread && (
                     <span
-                      className="ml-auto flex h-[18px] min-w-[18px] shrink-0 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold leading-none text-destructive-foreground"
+                      className="ml-auto flex h-[18px] min-w-[18px] shrink-0 items-center justify-center rounded-full bg-destructive px-1 text-3xs font-bold leading-none text-destructive-foreground"
                       aria-label={`${unreadCount} unread message${unreadCount === 1 ? "" : "s"}`}
                     >
                       {unreadCount > 99 ? "99+" : unreadCount}

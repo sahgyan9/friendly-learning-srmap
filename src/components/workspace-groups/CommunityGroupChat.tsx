@@ -370,16 +370,16 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
                 <div className="mb-1.5 flex items-center gap-2">
                   <Avatar className="h-6 w-6 shrink-0 border">
                     <AvatarImage src={item.post.author.profile_image ?? undefined} alt="" />
-                    <AvatarFallback className="text-[10px] font-bold">
+                    <AvatarFallback className="text-3xs font-bold">
                       {getInitials(item.post.author.name)}
                     </AvatarFallback>
                   </Avatar>
                   <span className="text-xs font-semibold">{item.post.author.name}</span>
-                  <span className="inline-flex items-center gap-1 text-[10px] font-medium text-primary">
+                  <span className="inline-flex items-center gap-1 text-3xs font-medium text-primary">
                     <FileText className="h-3 w-3" />
                     posted
                   </span>
-                  <span className="text-[10px] text-muted-foreground">
+                  <span className="text-3xs text-muted-foreground">
                     {new Date(item.post.created_at).toLocaleTimeString([], {
                       hour: "2-digit",
                       minute: "2-digit",
@@ -392,7 +392,7 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
                   {item.post.content}
                 </p>
 
-                <div className="mt-2 flex items-center gap-3 text-[10px] text-muted-foreground">
+                <div className="mt-2 flex items-center gap-3 text-3xs text-muted-foreground">
                   <span className="flex items-center gap-1">
                     <Heart className="h-3 w-3" />
                     {item.post.likes_count}
@@ -422,17 +422,17 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
                     <span className="flex items-center gap-1 text-xs font-semibold text-foreground">
                       {item.message.senderName}
                       {item.message.isOwner && (
-                        <Badge variant="outline" className="h-4 px-1 text-[9px]">
+                        <Badge variant="outline" className="h-4 px-1 text-4xs">
                           <Crown className="mr-0.5 inline h-2.5 w-2.5" /> Owner
                         </Badge>
                       )}
                       {item.message.isMentor && (
-                        <Badge variant="secondary" className="h-4 px-1 text-[9px]">
+                        <Badge variant="secondary" className="h-4 px-1 text-4xs">
                           <ShieldCheck className="mr-0.5 inline h-2.5 w-2.5" /> Mentor
                         </Badge>
                       )}
                     </span>
-                    <span className="text-[10px] text-muted-foreground">
+                    <span className="text-3xs text-muted-foreground">
                       {new Date(item.message.createdAt).toLocaleTimeString([], {
                         hour: "2-digit",
                         minute: "2-digit",
@@ -441,7 +441,7 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
                   </div>
 
                   {item.message.replyTo && (
-                    <div className="mb-1 flex items-center gap-1 rounded border-l-2 border-primary bg-muted/50 px-2 py-0.5 text-[11px] text-muted-foreground">
+                    <div className="mb-1 flex items-center gap-1 rounded border-l-2 border-primary bg-muted/50 px-2 py-0.5 text-2xs text-muted-foreground">
                       <CornerDownRight className="h-3 w-3" />
                       <span className="font-medium text-foreground">
                         {item.message.replyTo.senderName}:
@@ -473,7 +473,7 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
                         <button
                           key={emoji}
                           onClick={() => handleToggleReaction(item.message.id, emoji)}
-                          className={`inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] transition-colors ${
+                          className={`inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-3xs transition-colors ${
                             reacted
                               ? "border-primary/30 bg-primary/10 font-bold text-primary"
                               : "border-muted bg-muted/40 text-muted-foreground hover:bg-muted"
@@ -499,7 +499,7 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
                         ))}
                         <button
                           onClick={() => setReplyingTo(item.message)}
-                          className="px-1 text-[10px] font-medium text-muted-foreground hover:text-primary"
+                          className="px-1 text-3xs font-medium text-muted-foreground hover:text-primary"
                         >
                           Reply
                         </button>
@@ -519,7 +519,7 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
 
                 <div className="min-w-0 flex-1">
                   {item.message.replyTo && (
-                    <div className="mb-1 flex items-center gap-1 rounded border-l-2 border-primary bg-muted/50 px-2 py-0.5 text-[11px] text-muted-foreground">
+                    <div className="mb-1 flex items-center gap-1 rounded border-l-2 border-primary bg-muted/50 px-2 py-0.5 text-2xs text-muted-foreground">
                       <CornerDownRight className="h-3 w-3" />
                       <span className="font-medium text-foreground">
                         {item.message.replyTo.senderName}:
@@ -545,7 +545,7 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
                   })()}
 
                   {/* Timestamp revealed on hover (Discord-style) */}
-                  <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 select-none pointer-events-none">
+                  <span className="absolute left-2 top-1/2 -translate-y-1/2 text-3xs text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 select-none pointer-events-none">
                     {new Date(item.message.createdAt).toLocaleTimeString([], {
                       hour: "2-digit",
                       minute: "2-digit",
@@ -559,7 +559,7 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
                         <button
                           key={emoji}
                           onClick={() => handleToggleReaction(item.message.id, emoji)}
-                          className={`inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] transition-colors ${
+                          className={`inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-3xs transition-colors ${
                             reacted
                               ? "border-primary/30 bg-primary/10 font-bold text-primary"
                               : "border-muted bg-muted/40 text-muted-foreground hover:bg-muted"
@@ -585,7 +585,7 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
                         ))}
                         <button
                           onClick={() => setReplyingTo(item.message)}
-                          className="px-1 text-[10px] font-medium text-muted-foreground hover:text-primary"
+                          className="px-1 text-3xs font-medium text-muted-foreground hover:text-primary"
                         >
                           Reply
                         </button>

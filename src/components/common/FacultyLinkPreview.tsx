@@ -29,7 +29,7 @@ export function FacultyLinkPreview({ label }: FacultyLinkPreviewProps) {
               </span>
               <Badge
                 variant="outline"
-                className="text-[10px] px-1.5 py-0 h-4 border-purple-500/30 bg-purple-500/10 text-purple-700 dark:text-purple-300 font-medium shrink-0"
+                className="text-3xs px-1.5 py-0 h-4 border-purple-500/30 bg-purple-500/10 text-purple-700 dark:text-purple-300 font-medium shrink-0"
               >
                 <Star className="w-2.5 h-2.5 mr-1 inline text-purple-500 fill-purple-500/30" />
                 Student Reviews

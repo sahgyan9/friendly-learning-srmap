@@ -38,7 +38,7 @@ export function PostEmbedLinkPreview({ url }: PostEmbedLinkPreviewProps) {
               </span>
               <Badge
                 variant="outline"
-                className="text-[10px] px-1.5 py-0 h-4 border-indigo-500/30 bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 font-medium shrink-0"
+                className="text-3xs px-1.5 py-0 h-4 border-indigo-500/30 bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 font-medium shrink-0"
               >
                 Community Board
               </Badge>

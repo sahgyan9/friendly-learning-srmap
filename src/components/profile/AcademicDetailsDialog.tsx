@@ -129,7 +129,7 @@ export const AcademicDetailsDialog = ({
                   <GraduationCap className="h-4 w-4" />
                 </div>
                 <div className="overflow-hidden">
-                  <p className="text-[11px] text-muted-foreground font-medium truncate">Program</p>
+                  <p className="text-2xs text-muted-foreground font-medium truncate">Program</p>
                   <p className="text-xs font-semibold text-foreground truncate" title={record.program || "N/A"}>
                     {record.program || "N/A"}
                   </p>
@@ -143,7 +143,7 @@ export const AcademicDetailsDialog = ({
                   <Calendar className="h-4 w-4" />
                 </div>
                 <div>
-                  <p className="text-[11px] text-muted-foreground font-medium">Semester</p>
+                  <p className="text-2xs text-muted-foreground font-medium">Semester</p>
                   <p className="text-xs font-semibold text-foreground">
                     {record.current_semester ? `Sem ${record.current_semester}` : "N/A"}
                   </p>
@@ -157,7 +157,7 @@ export const AcademicDetailsDialog = ({
                   <Award className="h-4 w-4" />
                 </div>
                 <div>
-                  <p className="text-[11px] text-muted-foreground font-medium">CGPA</p>
+                  <p className="text-2xs text-muted-foreground font-medium">CGPA</p>
                   <p className="text-xs font-semibold text-foreground flex items-center gap-1">
                     <ShieldCheck className="h-3.5 w-3.5 text-amber-500" />
                     {record.cgpa != null ? record.cgpa.toFixed(2) : "N/A"}
@@ -172,7 +172,7 @@ export const AcademicDetailsDialog = ({
                   <BookOpen className="h-4 w-4" />
                 </div>
                 <div>
-                  <p className="text-[11px] text-muted-foreground font-medium">Courses</p>
+                  <p className="text-2xs text-muted-foreground font-medium">Courses</p>
                   <p className="text-xs font-semibold text-foreground">
                     {subjects.length} Subjects
                   </p>
@@ -182,11 +182,11 @@ export const AcademicDetailsDialog = ({
           </div>
 
           {record.last_synced_at && (
-            <p className="text-[11px] text-muted-foreground mt-3 flex items-center gap-1.5">
+            <p className="text-2xs text-muted-foreground mt-3 flex items-center gap-1.5">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 inline-block" />
               Last updated: <span className="font-medium text-foreground">{formatRelativeTime(record.last_synced_at)}</span>
               {record.register_number && (
-                <span className="text-muted-foreground">· Register No: <code className="bg-secondary px-1 py-0.5 rounded text-[10px] text-foreground">{record.register_number}</code></span>
+                <span className="text-muted-foreground">· Register No: <code className="bg-secondary px-1 py-0.5 rounded text-3xs text-foreground">{record.register_number}</code></span>
               )}
             </p>
           )}
@@ -251,7 +251,7 @@ export const AcademicDetailsDialog = ({
                 className="flex items-center justify-between p-3 rounded-lg border border-border bg-card hover:bg-accent/40 transition-colors gap-3"
               >
                 <div className="flex items-center gap-3 min-w-0">
-                  <Badge variant="outline" className="font-mono text-[11px] bg-secondary text-secondary-foreground shrink-0">
+                  <Badge variant="outline" className="font-mono text-2xs bg-secondary text-secondary-foreground shrink-0">
                     {subject.code}
                   </Badge>
                   <div className="min-w-0">
@@ -259,7 +259,7 @@ export const AcademicDetailsDialog = ({
                       {subject.name}
                     </p>
                     {subject.semester && (
-                      <p className="text-[10px] text-muted-foreground">
+                      <p className="text-3xs text-muted-foreground">
                         Semester {subject.semester}
                       </p>
                     )}
@@ -267,7 +267,7 @@ export const AcademicDetailsDialog = ({
                 </div>
 
                 {subject.credit != null && (
-                  <Badge variant="secondary" className="text-[10px] shrink-0">
+                  <Badge variant="secondary" className="text-3xs shrink-0">
                     {subject.credit} Credits
                   </Badge>
                 )}
@@ -283,7 +283,7 @@ export const AcademicDetailsDialog = ({
               <Label htmlFor="courses-on-profile" className="text-xs font-medium text-foreground cursor-pointer">
                 Show courses on public profile
               </Label>
-              <p className="text-[11px] text-muted-foreground">
+              <p className="text-2xs text-muted-foreground">
                 Course code & name only — no grades, credits, CGPA, or semester.
               </p>
             </div>
