@@ -24,3 +24,17 @@ verify_jwt = false
 # no user JWT at all.
 [functions.sync-srmap-events]
 verify_jwt = false
+
+# embed-knowledge authenticates callers itself (CRON_SECRET header, or an admin
+# JWT), same reasoning as sync-faculty: the scheduled embedding sweep carries
+# no user JWT. This function was already deployed with verify_jwt off but had
+# no entry here, so the next `functions deploy` without an explicit flag would
+# have silently reverted it to the platform default and broken the cron path.
+[functions.embed-knowledge]
+verify_jwt = false
+
+# semantic-search is the public search endpoint and must work for signed-out
+# students, so it cannot require a platform-level JWT. Same drift risk as
+# embed-knowledge above: deployed correctly, but undeclared here.
+[functions.semantic-search]
+verify_jwt = false
