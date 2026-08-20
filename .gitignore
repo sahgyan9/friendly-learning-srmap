@@ -26,6 +26,12 @@ dist
 dist-ssr
 *.local
 
+# This project standardizes on npm (package-lock.json is the committed
+# lockfile) -- bun's lockfiles are ignored so a local `bun install` can't
+# reintroduce the multi-lockfile drift removed in this commit.
+bun.lock
+bun.lockb
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
