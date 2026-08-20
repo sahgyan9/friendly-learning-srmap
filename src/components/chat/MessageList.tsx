@@ -10,6 +10,7 @@ import { useTypingIndicator } from "@/hooks/useTypingIndicator";
 import TypingIndicator from "./TypingIndicator";
 import MessageStatus from "./MessageStatus";
 import { isEmojiOnly, getEmojiCount, getEmojiFontSizeClass } from "@/utils/emoji-utils";
+import { isToday, isYesterday, isSameYear } from "date-fns";
 
 interface MessageListProps {
   messages: Message[];
@@ -26,19 +27,15 @@ const dayKey = (iso: string) => new Date(iso).toDateString();
 
 function formatDayLabel(iso: string): string {
   const date = new Date(iso);
-  const today = new Date();
-  const yesterday = new Date();
-  yesterday.setDate(today.getDate() - 1);
 
-  if (date.toDateString() === today.toDateString()) return "Today";
-  if (date.toDateString() === yesterday.toDateString()) return "Yesterday";
+  if (isToday(date)) return "Today";
+  if (isYesterday(date)) return "Yesterday";
 
-  const sameYear = date.getFullYear() === today.getFullYear();
   return date.toLocaleDateString("en-IN", {
     weekday: "short",
     day: "numeric",
     month: "short",
-    ...(sameYear ? {} : { year: "numeric" }),
+    ...(isSameYear(date, new Date()) ? {} : { year: "numeric" }),
   });
 }
 

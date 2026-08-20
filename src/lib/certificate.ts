@@ -1,3 +1,5 @@
+import { subMonths } from "date-fns";
+
 /**
  * Shared rules for the mentor certificate.
  *
@@ -57,8 +59,7 @@ export function certificateVerifyUrl(certificateId: string): string {
  * marketing image rather than something reachable in one semester.
  */
 export function sampleCertificate(name: string): CertificateData {
-  const since = new Date();
-  since.setMonth(since.getMonth() - 7);
+  const since = subMonths(new Date(), 7);
 
   return {
     name: name?.trim() || "Your name",
