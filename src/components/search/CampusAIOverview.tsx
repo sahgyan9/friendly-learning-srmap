@@ -14,6 +14,7 @@ import {
   Loader2,
   ThumbsUp,
   ThumbsDown,
+  FileText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { SearchResultsState } from "@/hooks/useSearchResults";
@@ -23,7 +24,7 @@ import { toast } from "sonner";
 export interface AIEntityBadge {
   id: string;
   name: string;
-  type: "faculty" | "mentor" | "opportunity" | "community" | "post";
+  type: "faculty" | "mentor" | "opportunity" | "community" | "post" | "document";
   to: string;
   detail: string;
 }
@@ -98,105 +99,116 @@ export const CampusAIOverview: React.FC<CampusAIOverviewProps> = ({
     try {
       sessionStorage.removeItem(`ai_overview_${norm}`);
     } catch {
-      // Ignore storage errors
+      // Ignore storage issues
     }
-    setRetryCount((prev) => prev + 1);
+    setRetryCount(c => c + 1);
   };
 
   useEffect(() => {
-    supabase.from('platform_settings' as any)
-      .select('value')
-      .eq('id', 'ai_overview_enabled')
-      .single()
-      .then(({ data }) => {
-        if (data) {
-          const rawValue = (data as any).value;
-          setIsFeatureEnabled(rawValue === 'true' || rawValue === true);
+    async function checkFeatureFlag() {
+      try {
+        const { data, error } = await (supabase as any)
+          .from('platform_settings')
+          .select('value')
+          .eq('key', 'enable_campus_ai_overview')
+          .single();
+        if (!error && data) {
+          setIsFeatureEnabled(data.value === true);
         } else {
           setIsFeatureEnabled(true);
         }
-      });
+      } catch (err) {
+        setIsFeatureEnabled(true);
+      }
+    }
+    checkFeatureFlag();
   }, []);
 
   useEffect(() => {
-    if (overview?.citations && onCitationsLoaded) {
-      onCitationsLoaded(overview.citations);
-    }
-  }, [overview, onCitationsLoaded]);
-
-  useEffect(() => {
+    if (isFeatureEnabled === false) return;
     const trimmed = query.trim();
-    if (trimmed.length < 3 || isFeatureEnabled === false) {
+    if (trimmed.length < 3) {
       setOverview(null);
       setLoading(false);
       setError(false);
       return;
     }
 
-    // Check if we already have this query cached in memory or sessionStorage
     const cached = getCachedOverview(trimmed);
     if (cached) {
       setOverview(cached);
       setLoading(false);
       setError(false);
+      if (onCitationsLoaded && cached.citations) {
+        onCitationsLoaded(cached.citations);
+      }
       return;
     }
 
     let isMounted = true;
-    setLoading(true);
-    setError(false);
-    
-    // Debounce slightly to avoid spamming the edge function while typing
-    const timeoutId = setTimeout(async () => {
+    const controller = new AbortController();
+
+    const fetchOverview = async () => {
+      setLoading(true);
+      setError(false);
+
       try {
-        const { data, error } = await supabase.functions.invoke('generate-ai-overview', {
-          body: { query: trimmed }
-        });
-        
-        if (error) throw error;
-        
+        const { data, error: funcError } = await supabase.functions.invoke<AIOverviewResult>(
+          "generate-ai-overview",
+          {
+            body: { query: trimmed },
+          }
+        );
+
+        if (funcError) throw funcError;
+
         if (isMounted && data) {
-          setCachedOverview(trimmed, data);
           setOverview(data);
+          setCachedOverview(trimmed, data);
+          if (onCitationsLoaded && data.citations) {
+            onCitationsLoaded(data.citations);
+          }
         }
-      } catch (err) {
-        console.error("AI Overview failed:", err);
+      } catch (err: any) {
         if (isMounted) {
-          setError(true);
+          if (err.name !== "AbortError") {
+            console.error("AI overview generation failed:", err);
+            setError(true);
+          }
         }
       } finally {
         if (isMounted) {
           setLoading(false);
         }
       }
-    }, 400);
+    };
+
+    const timer = setTimeout(() => {
+      fetchOverview();
+    }, 450);
 
     return () => {
       isMounted = false;
-      clearTimeout(timeoutId);
+      controller.abort();
+      clearTimeout(timer);
     };
   }, [query, retryCount, isFeatureEnabled]);
 
   const handleFeedback = async (vote: 'up' | 'down') => {
-    if (hasVoted || isVoting || !overview) return;
-    
+    if (!overview || hasVoted !== null || isVoting) return;
+
     setIsVoting(true);
     try {
-      const { data: authData } = await supabase.auth.getUser();
-      const { error } = await supabase.from('ai_overview_feedback' as any).insert({
-        user_id: authData?.user?.id ?? null,
-        query: query.trim(),
-        response: overview as any,
-        is_helpful: vote === 'up'
+      const { error } = await (supabase as any).from("ai_overview_feedback").insert({
+        query_text: query.trim(),
+        vote_type: vote,
+        summary_text: overview.summary,
       });
-      
-      if (!error) {
-        setHasVoted(vote);
-        toast.success("Thank you for your feedback!");
-      } else {
-        console.error("Failed to submit feedback:", error);
-        toast.error("Could not record feedback. Please try again.");
-      }
+
+      if (error) throw error;
+
+      setHasVoted(vote);
+      toast.success(vote === 'up' ? "Thank you for the feedback!" : "Feedback recorded. We will improve this.");
     } catch (err) {
       console.error("Failed to submit feedback:", err);
       toast.error("Could not record feedback.");
@@ -215,6 +227,8 @@ export const CampusAIOverview: React.FC<CampusAIOverviewProps> = ({
         return <Trophy className="h-3.5 w-3.5 text-amber-500" />;
       case "community":
         return <Users className="h-3.5 w-3.5 text-emerald-500" />;
+      case "document":
+        return <FileText className="h-3.5 w-3.5 text-blue-500" />;
       default:
         return <CampusMindIcon className="h-3.5 w-3.5 text-primary" />;
     }
@@ -251,6 +265,14 @@ export const CampusAIOverview: React.FC<CampusAIOverviewProps> = ({
         label: "Student Group",
         icon: <Users className="h-3.5 w-3.5 text-emerald-500" />,
         badgeColor: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/20",
+      };
+    }
+    if (url.includes("/documents/") || url.includes("academic-calendar") || url.includes("code-of-conduct")) {
+      return {
+        type: "document" as const,
+        label: "Campus Guideline",
+        icon: <FileText className="h-3.5 w-3.5 text-blue-500" />,
+        badgeColor: "bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/20",
       };
     }
     return {
@@ -444,6 +466,14 @@ export const CampusAIOverview: React.FC<CampusAIOverviewProps> = ({
                 {renderFormattedText(overview.summary, overview.citations)}
               </p>
 
+              {/* Document Grounding & Non-Affiliation Disclaimer */}
+              {citedSources.some((s) => s.type === "document" || s.url?.includes("/documents/")) && (
+                <div className="flex items-center gap-2 rounded-lg bg-blue-500/10 border border-blue-500/20 px-3 py-1.5 text-[11px] text-blue-700 dark:text-blue-300">
+                  <FileText className="h-3.5 w-3.5 shrink-0" />
+                  <span>Grounded in SRM AP AY 2026-27 documents. Always verify sudden administrative circulars with your department/ERP.</span>
+                </div>
+              )}
+
               {/* Key Insights bullets if available */}
               {overview.keyInsights && overview.keyInsights.length > 0 && (
                 <div className="space-y-1.5 pt-0.5">
@@ -513,7 +543,7 @@ export const CampusAIOverview: React.FC<CampusAIOverviewProps> = ({
 
                           <div className="flex items-center justify-between text-[10px] text-primary group-hover:text-primary font-medium mt-2 pt-1.5 border-t border-border/30">
                             <span className="text-muted-foreground/70 group-hover:text-foreground/80 transition-colors">
-                              View Profile
+                              {source.type === "document" ? "View Document" : "View Profile"}
                             </span>
                             <ArrowRight className="h-3 w-3 group-hover:translate-x-0.5 transition-transform" />
                           </div>
