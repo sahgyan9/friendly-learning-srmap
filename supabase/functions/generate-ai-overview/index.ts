@@ -47,8 +47,8 @@ async function retrieve(query: string): Promise<Retrieved[]> {
     const { todayText, tomorrowText, currentMonthYear } = getTemporalContext();
     let searchQuery = query;
 
-    // Temporal Query Expansion for relative time queries (e.g. today, tomorrow, holiday, day order)
-    const hasTemporalWords = /\b(today|tomorrow|yesterday|this week|next week|this month|next month|day order|holiday|holidays|working day)\b/i.test(query);
+    // Temporal Query Expansion for relative time queries (e.g. today, tomorrow, tommorow, holiday, day order)
+    const hasTemporalWords = /\b(today|toda+y|tomorrow|tomm?orr?ow?|yesterday|this week|next week|this month|next month|day order|holiday|holidays|working day)\b/i.test(query);
     if (hasTemporalWords) {
       searchQuery = `${query} (${todayText} / ${tomorrowText} Academic Calendar AY 2026-27 ${currentMonthYear} working days holidays)`;
     }

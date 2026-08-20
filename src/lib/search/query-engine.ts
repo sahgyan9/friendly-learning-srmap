@@ -199,7 +199,8 @@ export const CAMPUS_VOCABULARY = [
   "computer", "science", "engineering", "electronics", "mechanical", "physics", "chemistry",
   "mathematics", "biology", "economics", "management", "hackathon", "competition", "internship",
   "mentor", "faculty", "professor", "cybersecurity", "blockchain", "robotics", "algorithms",
-  "structures", "research", "project", "database", "cloud", "security", "freshers", "electives"
+  "structures", "research", "project", "database", "cloud", "security", "freshers", "electives",
+  "tomorrow", "today", "yesterday", "holiday", "holidays", "calendar", "midterm", "endterm", "curfew", "attendance"
 ];
 
 // ─── 3. Levenshtein Distance for Typo Tolerance ─────────────────────────────
