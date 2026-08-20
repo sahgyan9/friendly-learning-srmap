@@ -194,23 +194,6 @@ export async function getMentorsForBadges() {
   }
 }
 
-// Log admin actions using the secure database function
-async function logAdminAction(actionType: string, targetUserId?: string, actionDetails?: any) {
-  try {
-    const { error } = await supabase.rpc('log_admin_action', {
-      action_type: actionType,
-      target_id: targetUserId || null,
-      action_details: actionDetails || null
-    });
-    
-    if (error) {
-      console.error("Error logging admin action:", error);
-    }
-  } catch (error) {
-    console.error("Exception logging admin action:", error);
-  }
-}
-
 // Get admin audit logs with manual joins to handle missing foreign keys
 export async function getAdminAuditLogs(limit: number = 50) {
   try {

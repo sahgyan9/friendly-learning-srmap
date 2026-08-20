@@ -17,14 +17,14 @@ export const useUserPresenceRealtime = () => {
     'user_presence',
     useCallback((payload) => {
       if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
-        const presenceData = payload.new as UserPresence;
+        const presenceData = payload.new as unknown as UserPresence;
         
         setUserPresences(prev => ({
           ...prev,
           [presenceData.user_id]: presenceData
         }));
       } else if (payload.eventType === 'DELETE') {
-        const deletedData = payload.old as UserPresence;
+        const deletedData = payload.old as unknown as UserPresence;
         setUserPresences(prev => {
           const newPresences = { ...prev };
           delete newPresences[deletedData.user_id];

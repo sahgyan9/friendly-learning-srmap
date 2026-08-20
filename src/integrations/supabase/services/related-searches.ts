@@ -14,7 +14,7 @@ export async function getDynamicRelatedSearches(query: string, limit: number = 6
 
     if (!data) return [];
 
-    return data.map((row: any) => row.query_text);
+    return data.map((row) => row.query_text);
   } catch (err) {
     console.error("Exception fetching related searches:", err);
     return [];

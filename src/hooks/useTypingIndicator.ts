@@ -20,7 +20,7 @@ export const useTypingIndicator = (conversationId: string | null, userId: string
     'typing_indicators',
     useCallback((payload) => {
       if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
-        const typingData = payload.new as TypingUser;
+        const typingData = payload.new as unknown as TypingUser;
         
         setTypingUsers(prev => {
           const filtered = prev.filter(user => user.user_id !== typingData.user_id);
@@ -30,7 +30,7 @@ export const useTypingIndicator = (conversationId: string | null, userId: string
           return filtered;
         });
       } else if (payload.eventType === 'DELETE') {
-        const deletedData = payload.old as TypingUser;
+        const deletedData = payload.old as unknown as TypingUser;
         setTypingUsers(prev => prev.filter(user => user.user_id !== deletedData.user_id));
       }
     }, []),

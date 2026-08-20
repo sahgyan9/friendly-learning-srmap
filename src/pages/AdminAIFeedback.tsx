@@ -57,7 +57,7 @@ import { toast } from "sonner";
 type FeedbackRecord = {
   id: string;
   query: string;
-  response: any;
+  response: { summary?: unknown } | null;
   is_helpful: boolean;
   status: string;
   created_at: string;
@@ -488,7 +488,7 @@ export default function AdminAIFeedback() {
                           </TableCell>
                           <TableCell className="text-xs text-muted-foreground max-w-[340px]">
                             <p className="line-clamp-2">
-                              {item.response?.summary || "No summary available"}
+                              {item.response?.summary ? String(item.response.summary) : "No summary available"}
                             </p>
                           </TableCell>
                           <TableCell className="text-center">

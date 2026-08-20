@@ -22,7 +22,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
-import MentorSuggestionCard from "./MentorSuggestionCard";
+import MentorSuggestionCard, { type MentorSuggestion } from "./MentorSuggestionCard";
 import CertificatePreview from "@/components/certificate/CertificatePreview";
 import { BecomeMentorLinkPreview } from "@/components/common/BecomeMentorLinkPreview";
 import { isEmojiOnly, getEmojiCount, getEmojiFontSizeClass } from "@/utils/emoji-utils";
@@ -143,7 +143,7 @@ interface Message {
   id: string;
   type: "user" | "ai";
   content: string;
-  mentorSuggestions?: any[];
+  mentorSuggestions?: MentorSuggestion[];
   facultySuggestions?: FacultySuggestion[];
   studentSuggestions?: StudentSuggestion[];
   richContent?: RichContent | null;
@@ -224,9 +224,9 @@ const ChatbotModal = ({ isOpen, onClose }: ChatbotModalProps) => {
               timestamp: new Date(conv.created_at || Date.now()),
             });
           } else if (conv.message_type === "ai") {
-            let mentorSuggestions: any[] = [];
+            let mentorSuggestions: MentorSuggestion[] = [];
             if (conv.suggested_mentors && Array.isArray(conv.suggested_mentors)) {
-              mentorSuggestions = conv.suggested_mentors;
+              mentorSuggestions = conv.suggested_mentors as unknown as MentorSuggestion[];
             }
             conversationMessages.push({
               id: conv.id, type: "ai", content: conv.response, mentorSuggestions,
@@ -307,7 +307,7 @@ const ChatbotModal = ({ isOpen, onClose }: ChatbotModalProps) => {
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
   };
 
-  const handleMentorConnect = (mentor: any) => {
+  const handleMentorConnect = (mentor: MentorSuggestion) => {
     onClose();
     navigate(`/messages?mentor=${mentor.id}`);
   };

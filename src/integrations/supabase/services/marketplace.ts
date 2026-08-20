@@ -123,7 +123,9 @@ export async function createMarketplacePost(post: MarketplacePostInput) {
 export async function updateMarketplacePost(id: string, post: Partial<MarketplacePostInput>) {
   try {
     // Sanitize inputs if provided
-    const sanitizedUpdate: any = { updated_at: new Date().toISOString() };
+    const sanitizedUpdate: Partial<MarketplacePostInput> & { updated_at: string } = {
+      updated_at: new Date().toISOString(),
+    };
 
     if (post.title) sanitizedUpdate.title = sanitizeInput(post.title, 200);
     if (post.description) sanitizedUpdate.description = sanitizeInput(post.description, 2000);

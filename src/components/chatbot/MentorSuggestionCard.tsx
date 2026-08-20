@@ -9,17 +9,19 @@ import { getInitials } from "@/utils/user-utils";
 import { getMentorById } from "@/integrations/supabase/services/mentors";
 import { toast } from "sonner";
 
+export interface MentorSuggestion {
+  id: string;
+  name: string;
+  department: string;
+  skills: string[];
+  rating: number;
+  profile_image?: string;
+  bio?: string;
+  relevanceScore?: number;
+}
+
 interface MentorSuggestionCardProps {
-  mentor: {
-    id: string;
-    name: string;
-    department: string;
-    skills: string[];
-    rating: number;
-    profile_image?: string;
-    bio?: string;
-    relevanceScore?: number;
-  };
+  mentor: MentorSuggestion;
   onConnect: () => void;
 }
 

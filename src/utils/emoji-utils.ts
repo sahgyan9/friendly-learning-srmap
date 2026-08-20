@@ -32,9 +32,11 @@ export function getEmojiCount(text: string): number {
   // @ts-expect-error Segmenter is not typed in the default lib
   if (typeof Intl !== "undefined" && Intl.Segmenter) {
     // @ts-expect-error Segmenter is not typed in the default lib
-    const segmenter = new Intl.Segmenter(undefined, { granularity: "grapheme" });
+    const segmenter = new Intl.Segmenter(undefined, { granularity: "grapheme" }) as {
+      segment: (s: string) => Iterable<{ segment: string }>;
+    };
     const segments = Array.from(segmenter.segment(trimmed)).filter(
-      (s: any) => s.segment.trim().length > 0
+      (s) => s.segment.trim().length > 0
     );
     return segments.length;
   }

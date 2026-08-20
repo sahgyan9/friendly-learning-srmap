@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import { Mail, Calendar, User, MessageSquare, Send, History } from "lucide-react";
@@ -68,7 +69,7 @@ const ContactMessagesAdmin = () => {
   const updateMessageStatus = async (messageId: string, status: string, notes?: string) => {
     setUpdating(true);
     try {
-      const updateData: any = { status };
+      const updateData: Database['public']['Tables']['contact_messages']['Update'] = { status };
       if (notes !== undefined) {
         updateData.admin_notes = notes;
       }

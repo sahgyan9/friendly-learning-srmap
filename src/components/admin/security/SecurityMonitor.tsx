@@ -9,7 +9,7 @@ interface AuditLog {
   id: string;
   action: string;
   created_at: string;
-  details?: any;
+  details?: unknown;
   admin_user?: { name: string; email: string } | null;
   target_user?: { name: string; email: string } | null;
 }

@@ -1,6 +1,7 @@
 
 import { useEffect, useRef } from 'react';
 
+import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { updateUserPresence } from '@/integrations/supabase/services/realtime';
 
@@ -70,7 +71,7 @@ let channelCounter = 0;
 
 export const useRealtimeSubscription = (
   table: string,
-  callback: (payload: any) => void,
+  callback: (payload: RealtimePostgresChangesPayload<Record<string, unknown>>) => void,
   filter?: { column: string; value: string }
 ) => {
   // Read through a ref so a caller passing an inline arrow does not tear the

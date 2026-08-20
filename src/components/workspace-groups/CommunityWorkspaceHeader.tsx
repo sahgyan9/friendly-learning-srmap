@@ -1,5 +1,6 @@
 ﻿import React, { useState } from "react";
 import { Link } from "react-router-dom";
+import type { User } from "@supabase/supabase-js";
 import {
   ArrowLeft,
   Check,
@@ -44,7 +45,7 @@ import { getKindStyle } from "@/integrations/supabase/services/community-kind-st
 
 interface CommunityWorkspaceHeaderProps {
   community: Community;
-  user: any;
+  user: User | null;
   working: boolean;
   deleting: boolean;
   onJoin: () => void;
