@@ -1,6 +1,5 @@
 import { Suspense, lazy, ComponentType } from "react";
 import { Route, Routes, useLocation, Navigate, useParams } from "react-router-dom";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 
 import { Toaster } from "@/components/ui/sonner";
@@ -145,15 +144,6 @@ const TeamMembersAdmin = lazyWithRetry("TeamMembersAdmin", () => import("./pages
 const MarketplaceAdmin = lazyWithRetry("MarketplaceAdmin", () => import("./pages/MarketplaceAdmin"));
 const AdminAIFeedback = lazyWithRetry("AdminAIFeedback", () => import("./pages/AdminAIFeedback"));
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 60_000,
-      refetchOnWindowFocus: false,
-    },
-  },
-});
-
 function RouteFallback() {
   return (
     <div className="flex min-h-screen items-center justify-center">
@@ -188,207 +178,205 @@ function SiteChatbot() {
  */
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <TooltipProvider>
-          <SidebarProvider>
-            <WelcomeTourProvider>
-              <div className="min-h-screen">
-                <Toaster />
-                <RouteRobots />
-                <ScrollToTop />
-                <WelcomeTour />
-                <SignInNudge />
+    <AuthProvider>
+      <TooltipProvider>
+        <SidebarProvider>
+          <WelcomeTourProvider>
+            <div className="min-h-screen">
+              <Toaster />
+              <RouteRobots />
+              <ScrollToTop />
+              <WelcomeTour />
+              <SignInNudge />
 
-                {/* One header for the whole app. Pages used to render their own
-                    <Navbar /> underneath a separately-mounted floating nav, which
-                    is how the two ended up overlapping. */}
-                <SiteHeader />
+              {/* One header for the whole app. Pages used to render their own
+                  <Navbar /> underneath a separately-mounted floating nav, which
+                  is how the two ended up overlapping. */}
+              <SiteHeader />
 
-                <MainWithRail>
-                  <Suspense fallback={<RouteFallback />}>
-                    <Routes>
-                      {/* Public */}
-                      <Route path="/" element={<Index />} />
-                      <Route path="/signin" element={<SignIn />} />
-                      <Route path="/signup" element={<SignUp />} />
-                      <Route path="/forgot-password" element={<ForgotPassword />} />
-                      <Route path="/reset-password" element={<ResetPassword />} />
-                      <Route path="/mentors" element={<Mentors />} />
-                      <Route path="/mentor/:id" element={<MentorProfile />} />
-                      <Route path="/ask" element={<Ask />} />
-                      <Route path="/opportunities" element={<Opportunities />} />
-                      <Route path="/opportunities/:slug" element={<OpportunityDetail />} />
-                      <Route path="/faculty" element={<Faculty />} />
-                      <Route path="/faculty/:slug" element={<FacultyDetail />} />
-                      <Route path="/contact" element={<Contact />} />
-                      <Route path="/about" element={<About />} />
-                      <Route path="/how-verification-works" element={<HowVerificationWorks />} />
-                      <Route path="/your-data" element={<YourData />} />
+              <MainWithRail>
+                <Suspense fallback={<RouteFallback />}>
+                  <Routes>
+                    {/* Public */}
+                    <Route path="/" element={<Index />} />
+                    <Route path="/signin" element={<SignIn />} />
+                    <Route path="/signup" element={<SignUp />} />
+                    <Route path="/forgot-password" element={<ForgotPassword />} />
+                    <Route path="/reset-password" element={<ResetPassword />} />
+                    <Route path="/mentors" element={<Mentors />} />
+                    <Route path="/mentor/:id" element={<MentorProfile />} />
+                    <Route path="/ask" element={<Ask />} />
+                    <Route path="/opportunities" element={<Opportunities />} />
+                    <Route path="/opportunities/:slug" element={<OpportunityDetail />} />
+                    <Route path="/faculty" element={<Faculty />} />
+                    <Route path="/faculty/:slug" element={<FacultyDetail />} />
+                    <Route path="/contact" element={<Contact />} />
+                    <Route path="/about" element={<About />} />
+                    <Route path="/how-verification-works" element={<HowVerificationWorks />} />
+                    <Route path="/your-data" element={<YourData />} />
 
-                      {/* Canonical Routes */}
-                      <Route path="/posts" element={<CommunityPosts />} />
-                      <Route path="/posts/:id" element={<CommunityPostDetail />} />
-                      {/* Public on purpose. Membership decides who can post in a
-                        group, not who can read it — see the communities migration. */}
-                      <Route path="/workspace-groups" element={<Communities />} />
-                      <Route path="/workspace-groups/:slug" element={<CommunityDetail />} />
-                      <Route path="/events" element={<MarketPlace />} />
-                      <Route path="/events/:id" element={<EventDetail />} />
-                      <Route path="/how-it-works" element={<HowItWorks />} />
-                      <Route path="/find-study-partners" element={<FindStudyPartners />} />
-                      <Route path="/hackathon-partners" element={<HackathonPartners />} />
-                      <Route path="/blog" element={<Blog />} />
-                      <Route path="/blog/:slug" element={<BlogPost />} />
+                    {/* Canonical Routes */}
+                    <Route path="/posts" element={<CommunityPosts />} />
+                    <Route path="/posts/:id" element={<CommunityPostDetail />} />
+                    {/* Public on purpose. Membership decides who can post in a
+                      group, not who can read it — see the communities migration. */}
+                    <Route path="/workspace-groups" element={<Communities />} />
+                    <Route path="/workspace-groups/:slug" element={<CommunityDetail />} />
+                    <Route path="/events" element={<MarketPlace />} />
+                    <Route path="/events/:id" element={<EventDetail />} />
+                    <Route path="/how-it-works" element={<HowItWorks />} />
+                    <Route path="/find-study-partners" element={<FindStudyPartners />} />
+                    <Route path="/hackathon-partners" element={<HackathonPartners />} />
+                    <Route path="/blog" element={<Blog />} />
+                    <Route path="/blog/:slug" element={<BlogPost />} />
 
-                      {/* Backward Compatibility SPA Redirects */}
-                      <Route path="/community-posts" element={<Navigate to="/posts" replace />} />
-                      <Route path="/community-posts/:id" element={<RedirectWithParam toPrefix="/posts" />} />
-                      <Route path="/communities" element={<Navigate to="/workspace-groups" replace />} />
-                      <Route path="/communities/:slug" element={<RedirectWithParam toPrefix="/workspace-groups" />} />
-                      <Route path="/marketplace" element={<Navigate to="/events" replace />} />
-                      <Route path="/marketplace/:id" element={<RedirectWithParam toPrefix="/events" />} />
-                      <Route path="/mentors/:id" element={<RedirectWithParam toPrefix="/mentor" />} />
+                    {/* Backward Compatibility SPA Redirects */}
+                    <Route path="/community-posts" element={<Navigate to="/posts" replace />} />
+                    <Route path="/community-posts/:id" element={<RedirectWithParam toPrefix="/posts" />} />
+                    <Route path="/communities" element={<Navigate to="/workspace-groups" replace />} />
+                    <Route path="/communities/:slug" element={<RedirectWithParam toPrefix="/workspace-groups" />} />
+                    <Route path="/marketplace" element={<Navigate to="/events" replace />} />
+                    <Route path="/marketplace/:id" element={<RedirectWithParam toPrefix="/events" />} />
+                    <Route path="/mentors/:id" element={<RedirectWithParam toPrefix="/mentor" />} />
 
-                      {/* Public on purpose: a certificate nobody can check without an
-                        account is worth no more than the image itself. */}
-                      <Route path="/verify/:id" element={<VerifyCertificate />} />
-                      {/* Also public. It used to sit behind ProtectedRoute, which put
-                        a sign-in wall in front of the one homepage button whose job
-                        is to explain what the certificate is. The page shows the
-                        preview and how it's earned to anyone; only the download and
-                        the verification link need an account. */}
-                      <Route path="/certificate" element={<Certificate />} />
-                      <Route path="/search" element={<Search />} />
-                      <Route path="/unauthorized" element={<Unauthorized />} />
+                    {/* Public on purpose: a certificate nobody can check without an
+                      account is worth no more than the image itself. */}
+                    <Route path="/verify/:id" element={<VerifyCertificate />} />
+                    {/* Also public. It used to sit behind ProtectedRoute, which put
+                      a sign-in wall in front of the one homepage button whose job
+                      is to explain what the certificate is. The page shows the
+                      preview and how it's earned to anyone; only the download and
+                      the verification link need an account. */}
+                    <Route path="/certificate" element={<Certificate />} />
+                    <Route path="/search" element={<Search />} />
+                    <Route path="/unauthorized" element={<Unauthorized />} />
 
-                      {/* Authenticated */}
-                      <Route
-                        path="/profile"
-                        element={
-                          <ProtectedRoute>
-                            <UserProfile />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path="/become-mentor"
-                        element={
-                          <ProtectedRoute>
-                            <BecomeMentor />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path="/become-mentor/success"
-                        element={
-                          <ProtectedRoute>
-                            <BecomeMentorSuccess />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path="/messages"
-                        element={
-                          <ProtectedRoute>
-                            <Messages />
-                          </ProtectedRoute>
-                        }
-                      />
+                    {/* Authenticated */}
+                    <Route
+                      path="/profile"
+                      element={
+                        <ProtectedRoute>
+                          <UserProfile />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/become-mentor"
+                      element={
+                        <ProtectedRoute>
+                          <BecomeMentor />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/become-mentor/success"
+                      element={
+                        <ProtectedRoute>
+                          <BecomeMentorSuccess />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/messages"
+                      element={
+                        <ProtectedRoute>
+                          <Messages />
+                        </ProtectedRoute>
+                      }
+                    />
 
-                      {/* Admin */}
-                      <Route
-                        path="/admin"
-                        element={
-                          <ProtectedRoute requiredRole="admin">
-                            <AdminDashboard />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path="/admin/contact-messages"
-                        element={
-                          <ProtectedRoute requiredRole="admin">
-                            <AdminContactMessages />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path="/admin/mentor-verification"
-                        element={
-                          <ProtectedRoute requiredRole="admin">
-                            <AdminMentorVerification />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path="/admin/welcome-emails"
-                        element={
-                          <ProtectedRoute requiredRole="admin">
-                            <AdminWelcomeEmails />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path="/admin/badges"
-                        element={
-                          <ProtectedRoute requiredRole="admin">
-                            <AdminBadges />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path="/admin/settings"
-                        element={
-                          <ProtectedRoute requiredRole="admin">
-                            <AdminSettings />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path="/admin/ai-feedback"
-                        element={
-                          <ProtectedRoute requiredRole="admin">
-                            <AdminAIFeedback />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path="/admin/security"
-                        element={
-                          <ProtectedRoute requiredRole="admin">
-                            <AdminSecurity />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path="/admin/team-members"
-                        element={
-                          <ProtectedRoute requiredRole="admin">
-                            <TeamMembersAdmin />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path="/admin/events"
-                        element={
-                          <ProtectedRoute requiredRole="admin">
-                            <MarketplaceAdmin />
-                          </ProtectedRoute>
-                        }
-                      />
+                    {/* Admin */}
+                    <Route
+                      path="/admin"
+                      element={
+                        <ProtectedRoute requiredRole="admin">
+                          <AdminDashboard />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/admin/contact-messages"
+                      element={
+                        <ProtectedRoute requiredRole="admin">
+                          <AdminContactMessages />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/admin/mentor-verification"
+                      element={
+                        <ProtectedRoute requiredRole="admin">
+                          <AdminMentorVerification />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/admin/welcome-emails"
+                      element={
+                        <ProtectedRoute requiredRole="admin">
+                          <AdminWelcomeEmails />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/admin/badges"
+                      element={
+                        <ProtectedRoute requiredRole="admin">
+                          <AdminBadges />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/admin/settings"
+                      element={
+                        <ProtectedRoute requiredRole="admin">
+                          <AdminSettings />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/admin/ai-feedback"
+                      element={
+                        <ProtectedRoute requiredRole="admin">
+                          <AdminAIFeedback />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/admin/security"
+                      element={
+                        <ProtectedRoute requiredRole="admin">
+                          <AdminSecurity />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/admin/team-members"
+                      element={
+                        <ProtectedRoute requiredRole="admin">
+                          <TeamMembersAdmin />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/admin/events"
+                      element={
+                        <ProtectedRoute requiredRole="admin">
+                          <MarketplaceAdmin />
+                        </ProtectedRoute>
+                      }
+                    />
 
-                      <Route path="*" element={<NotFound />} />
-                    </Routes>
-                  </Suspense>
-                </MainWithRail>
-                <SiteChatbot />
-              </div>
-            </WelcomeTourProvider>
-          </SidebarProvider>
-        </TooltipProvider>
-      </AuthProvider>
-    </QueryClientProvider>
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </Suspense>
+              </MainWithRail>
+              <SiteChatbot />
+            </div>
+          </WelcomeTourProvider>
+        </SidebarProvider>
+      </TooltipProvider>
+    </AuthProvider>
   );
 }
 
