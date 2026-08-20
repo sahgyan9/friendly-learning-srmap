@@ -30,6 +30,7 @@ export interface AIEntityBadge {
 }
 
 export interface AIOverviewResult {
+  verdict?: string;
   summary: string;
   citations?: { id: number; text: string; url: string; }[];
   keyInsights?: string[];
@@ -52,7 +53,7 @@ const getCachedOverview = (q: string): AIOverviewResult | null => {
     return OVERVIEW_CACHE.get(norm)!;
   }
   try {
-    const raw = sessionStorage.getItem(`ai_overview_${norm}`);
+    const raw = sessionStorage.getItem(`ai_overview_v5_${norm}`);
     if (raw) {
       const parsed = JSON.parse(raw) as AIOverviewResult;
       OVERVIEW_CACHE.set(norm, parsed);
@@ -68,7 +69,7 @@ const setCachedOverview = (q: string, data: AIOverviewResult) => {
   const norm = q.trim().toLowerCase().replace(/\s+/g, " ");
   OVERVIEW_CACHE.set(norm, data);
   try {
-    sessionStorage.setItem(`ai_overview_${norm}`, JSON.stringify(data));
+    sessionStorage.setItem(`ai_overview_v5_${norm}`, JSON.stringify(data));
   } catch {
     // Ignore storage issues
   }
@@ -283,11 +284,31 @@ export const CampusAIOverview: React.FC<CampusAIOverviewProps> = ({
     };
   };
 
-  // Helper to render bold markdown segments and interactive citations
-  const renderFormattedText = (text: string, citations?: { id: number; text: string; url: string; }[]) => {
-    if (!text) return null;
-    const parts = text.split(/(\*\*.*?\*\*|\[\d+\])/g);
+  // Helper to sanitize model text, fixing detached punctuation and excess spaces
+  const sanitizeAIText = (text: string) => {
+    if (!text) return "";
+    return text
+      // Fix detached punctuation: e.g. "[1] ." -> "[1]." or "[1] ," -> "[1],"
+      .replace(/\[\s*(\d+(?:\s*,\s*\d+)*)\s*\]\s*([.,;:!?])/g, "[$1]$2")
+      // Fix double brackets/spaces
+      .replace(/\s+\[/g, " [")
+      .replace(/ {2,}/g, " ")
+      .trim();
+  };
+
+  // Helper to render bold, italic markdown segments and interactive citations
+  const renderFormattedText = (rawText: string, citations?: { id: number; text: string; url: string; }[]) => {
+    if (!rawText) return null;
+    const text = sanitizeAIText(rawText);
+
+    // Pattern to capture **bold**, *italic*, and [1] or [1, 2] style citations
+    const regex = /(\*\*.*?\*\*|\*[^*]+?\*|\[\s*\d+(?:\s*,\s*\d+)*\s*\])/g;
+    const parts = text.split(regex);
+
     return parts.map((part, index) => {
+      if (!part) return null;
+
+      // Bold text
       if (part.startsWith("**") && part.endsWith("**")) {
         return (
           <strong key={index} className="font-semibold text-foreground">
@@ -295,33 +316,67 @@ export const CampusAIOverview: React.FC<CampusAIOverviewProps> = ({
           </strong>
         );
       }
+
+      // Italic text
+      if (part.startsWith("*") && part.endsWith("*") && !part.startsWith("**")) {
+        return (
+          <em key={index} className="italic text-foreground/90">
+            {part.slice(1, -1)}
+          </em>
+        );
+      }
+
+      // Citation tags [1] or [1, 2]
       if (part.startsWith("[") && part.endsWith("]")) {
-        const idStr = part.slice(1, -1);
-        const id = parseInt(idStr, 10);
-        if (!isNaN(id) && citations) {
-          const citation = citations.find(c => c.id === id);
-          if (citation) {
-            const isActive = activeCitationId === id;
-            return (
-              <Link
-                key={index}
-                to={citation.url}
-                title={citation.text}
-                onMouseEnter={() => setActiveCitationId(id)}
-                onMouseLeave={() => setActiveCitationId(null)}
-                className={cn(
-                  "inline-flex items-center justify-center min-w-[1.25rem] h-4 px-1 mx-0.5 rounded border text-[9px] font-bold transition-all align-super",
-                  isActive
-                    ? "bg-primary text-primary-foreground border-primary shadow-xs scale-110"
-                    : "border-primary/30 bg-primary/10 text-primary hover:bg-primary/25 hover:border-primary/50"
-                )}
-              >
-                {id}
-              </Link>
-            );
-          }
+        const rawIds = part.slice(1, -1).split(",").map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n));
+        if (rawIds.length > 0) {
+          return (
+            <span key={index} className="inline-flex items-center gap-0.5 mx-0.5 align-baseline">
+              {rawIds.map((id) => {
+                const citation = citations?.find(c => c.id === id);
+                const isActive = activeCitationId === id;
+                const linkContent = (
+                  <span
+                    className={cn(
+                      "inline-flex items-center justify-center min-w-[1.15rem] h-4 px-1 rounded border text-[10px] font-bold transition-all shadow-2xs cursor-pointer",
+                      isActive
+                        ? "bg-primary text-primary-foreground border-primary scale-110 shadow-xs ring-2 ring-primary/30"
+                        : "border-primary/30 bg-primary/10 text-primary hover:bg-primary/20 hover:border-primary/50"
+                    )}
+                  >
+                    {id}
+                  </span>
+                );
+
+                if (citation?.url) {
+                  return (
+                    <Link
+                      key={id}
+                      to={citation.url}
+                      title={citation.text}
+                      onMouseEnter={() => setActiveCitationId(id)}
+                      onMouseLeave={() => setActiveCitationId(null)}
+                    >
+                      {linkContent}
+                    </Link>
+                  );
+                }
+
+                return (
+                  <span
+                    key={id}
+                    onMouseEnter={() => setActiveCitationId(id)}
+                    onMouseLeave={() => setActiveCitationId(null)}
+                  >
+                    {linkContent}
+                  </span>
+                );
+              })}
+            </span>
+          );
         }
       }
+
       return <span key={index}>{part}</span>;
     });
   };
@@ -355,6 +410,21 @@ export const CampusAIOverview: React.FC<CampusAIOverviewProps> = ({
           ...meta,
         };
       });
+  }, [overview]);
+
+  // Deduplicate key insights: only show bullet points that contain NEW information not already present in the summary
+  const distinctKeyInsights = React.useMemo(() => {
+    if (!overview?.keyInsights || overview.keyInsights.length === 0) return [];
+    if (!overview.summary) return overview.keyInsights;
+
+    const normSummary = overview.summary.toLowerCase().replace(/[^a-z0-9]/g, "");
+
+    return overview.keyInsights.filter((insight) => {
+      const normInsight = insight.toLowerCase().replace(/[^a-z0-9]/g, "");
+      if (normInsight.length < 15) return false;
+      const snippet = normInsight.slice(0, 30);
+      return !normSummary.includes(snippet);
+    });
   }, [overview]);
 
   if (isFeatureEnabled === false && query.trim().length >= 3) {
@@ -409,32 +479,27 @@ export const CampusAIOverview: React.FC<CampusAIOverviewProps> = ({
   return (
     <div
       className={cn(
-        "relative overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/10 via-card/90 to-background p-4 sm:p-5 backdrop-blur-xl shadow-xs transition-all duration-300",
+        "relative overflow-hidden rounded-2xl border border-primary/25 border-l-4 border-l-primary bg-card/95 p-5 sm:p-6 sm:px-7 backdrop-blur-xl shadow-xs transition-all duration-300 ring-1 ring-primary/5",
         className,
       )}
     >
-      {/* Decorative background glow */}
-      <div className="pointer-events-none absolute -right-12 -top-12 h-36 w-36 rounded-full bg-primary/15 blur-2xl" />
+      {/* Subtle top accent gradient */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-blue-600 via-indigo-500 to-violet-500 opacity-80" />
 
       {/* Header bar */}
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <span className="flex h-7 w-7 items-center justify-center rounded-lg border border-primary/30 bg-primary/20 text-primary shadow-xs">
-            <CampusMindIcon className="h-4 w-4" />
+      <div className="flex items-center justify-between gap-2 pb-3 border-b border-border/40">
+        <div className="flex items-center gap-2.5">
+          <span className="flex h-7 w-7 items-center justify-center rounded-lg border border-primary/30 bg-primary/15 text-primary shadow-2xs">
+            <Sparkles className="h-4 w-4" />
           </span>
-          <div className="flex items-center gap-2">
-            <h2 className="text-xs font-bold uppercase tracking-wider text-primary">
-              Campus AI Overview
-            </h2>
-            <span className="rounded-full bg-primary/10 border border-primary/20 px-2 py-0.2 text-[10px] font-medium text-primary/90">
-              AI Mode
-            </span>
-          </div>
+          <h2 className="text-xs font-bold uppercase tracking-wider text-foreground">
+            Campus AI Overview
+          </h2>
         </div>
 
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="flex h-7 w-7 items-center justify-center rounded-lg border border-border/50 bg-background/50 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+          className="flex h-7 w-7 items-center justify-center rounded-lg border border-border/50 bg-background/50 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors cursor-pointer"
           aria-label={collapsed ? "Expand AI Overview" : "Collapse AI Overview"}
         >
           {collapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
@@ -443,7 +508,7 @@ export const CampusAIOverview: React.FC<CampusAIOverviewProps> = ({
 
       {/* Body content */}
       {!collapsed && (
-        <div className="mt-3.5 space-y-4 animate-in fade-in-50 duration-200">
+        <div className="mt-4 space-y-4 animate-in fade-in-50 duration-200">
           {loading && !overview ? (
             <CampusThinkingStatus
               className="py-6"
@@ -453,42 +518,46 @@ export const CampusAIOverview: React.FC<CampusAIOverviewProps> = ({
                 "Synthesizing campus knowledge…",
                 "Connecting faculty & student mentors…",
                 "Crystallizing insights…",
-                "Picturing possibilities…",
-                "Analyzing course & skill discussions…",
                 "Structuring recommendations…",
-                "Refining summary…",
               ]}
             />
           ) : overview ? (
             <>
-              {/* Main summary paragraph */}
-              <p className="text-sm leading-relaxed text-foreground/90 dark:text-muted-foreground">
-                {renderFormattedText(overview.summary, overview.citations)}
-              </p>
-
-              {/* Document Grounding & Non-Affiliation Disclaimer */}
-              {citedSources.some((s) => s.type === "document" || s.url?.includes("/documents/")) && (
-                <div className="flex items-center gap-2 rounded-lg bg-blue-500/10 border border-blue-500/20 px-3 py-1.5 text-[11px] text-blue-700 dark:text-blue-300">
-                  <FileText className="h-3.5 w-3.5 shrink-0" />
-                  <span>Grounded in SRM AP AY 2026-27 documents. Always verify sudden administrative circulars with your department/ERP.</span>
+              {/* Hero Verdict Pill / Callout if available */}
+              {overview.verdict && (
+                <div className="inline-flex items-center gap-2.5 rounded-xl border border-primary/25 bg-gradient-to-r from-primary/15 via-primary/8 to-transparent px-4 py-2 text-xs sm:text-[13.5px] font-semibold text-foreground shadow-2xs">
+                  <span className="flex h-2 w-2 rounded-full bg-primary ring-4 ring-primary/20 animate-pulse shrink-0" />
+                  <span className="tracking-tight">{overview.verdict}</span>
                 </div>
               )}
 
-              {/* Key Insights bullets if available */}
-              {overview.keyInsights && overview.keyInsights.length > 0 && (
-                <div className="space-y-1.5 pt-0.5">
-                  {overview.keyInsights.map((insight, idx) => (
-                    <div key={idx} className="flex items-start gap-2 text-xs text-muted-foreground/90">
-                      <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary/70" />
-                      <span>{renderFormattedText(insight, overview.citations)}</span>
+              {/* Main summary text */}
+              <div className="text-[14.5px] sm:text-[15px] leading-[1.8] text-foreground font-normal max-w-4xl tracking-[-0.005em]">
+                {renderFormattedText(overview.summary, overview.citations)}
+              </div>
+
+              {/* Key Insights structured micro-cards */}
+              {distinctKeyInsights.length > 0 && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                  {distinctKeyInsights.map((insight, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-start gap-2.5 rounded-xl border border-border/60 bg-muted/30 dark:bg-card/60 p-3 text-xs sm:text-[13px] text-foreground/90 shadow-2xs hover:border-primary/30 transition-colors"
+                    >
+                      <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary text-[10px] font-bold">
+                        ✓
+                      </span>
+                      <div className="flex-1 leading-relaxed">
+                        {renderFormattedText(insight, overview.citations)}
+                      </div>
                     </div>
                   ))}
                 </div>
               )}
 
-              {/* ── Cited Campus Sources (Google SGE Style) ── */}
+              {/* ── Cited Campus Sources (Google SGE / Perplexity Style) ── */}
               {citedSources.length > 0 && (
-                <div className="space-y-2.5 pt-2 border-t border-border/40">
+                <div className="space-y-2.5 pt-3 border-t border-border/40">
                   <div className="flex items-center justify-between">
                     <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-foreground/80">
                       <Sparkles className="h-3.5 w-3.5 text-primary" />
@@ -574,12 +643,22 @@ export const CampusAIOverview: React.FC<CampusAIOverviewProps> = ({
                 </div>
               )}
 
-              {/* Action Recommendation Footer */}
-              <div className="flex items-center justify-between border-t border-border/40 pt-2.5">
-                <span className="text-[11px] text-muted-foreground/80">
-                  {overview.actionRecommendation}
-                </span>
-                <div className="flex items-center gap-1">
+              {/* Integrated Grounding & Action Footer Bar */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-t border-border/40 pt-3 text-[11px] text-muted-foreground">
+                <div className="flex items-center gap-2 flex-wrap">
+                  {citedSources.some((s) => s.type === "document" || s.url?.includes("/documents/")) ? (
+                    <span className="inline-flex items-center gap-1.5 font-medium text-blue-600 dark:text-blue-400">
+                      <FileText className="h-3 w-3" />
+                      Grounded in SRM AP AY 2026-27 Documents (Always verify circulars with ERP)
+                    </span>
+                  ) : overview.actionRecommendation ? (
+                    <span>{overview.actionRecommendation}</span>
+                  ) : (
+                    <span>Synthesized from SRM AP campus records</span>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-1 self-end sm:self-auto shrink-0">
                   <button
                     onClick={() => handleFeedback('up')}
                     disabled={isVoting || hasVoted !== null}

@@ -113,17 +113,19 @@ Rules:
 3. Synthesize the context in a natural, helpful, student-friendly tone. Do not just list the titles.
 4. Only mention people, events, facts, or entities from the provided context. If no context is provided, say there are no direct matches yet and suggest broad advice.
 5. INLINE CITATIONS: When you state a fact, date, or mention an entity from the resources, you MUST include an inline citation bracket like [1] or [2] matching the resource number above.
-6. Extract 1-3 key insights as a list of short strings.
-7. Identify the top 1-4 specific entities to recommend as badges. Use the exact 'id', 'type', 'title' (for name), 'path' (for to), and 'subtitle' (for detail) from the context. Only use types: 'faculty', 'mentor', 'opportunity', 'community', 'post', or 'document'.
-8. CITATIONS MAP: Provide a 'citations' array mapping the numbers you used in the summary to the entity.
+6. INSTANT VERDICT: In 'verdict', provide an ultra-short 3-8 word headline status verdict (e.g. "🏖️ Official Holiday — No Classes", "📅 Next Exams: 28 Sept – 1 Oct 2026", "👥 8 Fullstack Mentors Available", "🏛️ Hostels Curfew: 9:30 PM").
+7. KEY TAKEAWAYS: Extract 1-3 distinct, concise bullet takeaways in 'keyInsights' with bold emoji/category prefixes (e.g., "**📅 Exact Date:** ...", "**🏛️ Library Access:** ...", "**⚠️ Policy:** ..."). Do NOT simply repeat the exact same sentence as the summary; make them actionable, scannable bullet points.
+8. Identify the top 1-4 specific entities to recommend as badges. Use the exact 'id', 'type', 'title' (for name), 'path' (for to), and 'subtitle' (for detail) from the context. Only use types: 'faculty', 'mentor', 'opportunity', 'community', 'post', or 'document'.
+9. CITATIONS MAP: Provide a 'citations' array mapping the numbers you used in the summary to the entity.
 
 Your response MUST be a valid JSON object matching this schema exactly:
 {
+  "verdict": "🏖️ Official University Holiday (Odd Semester)",
   "summary": "Synthesized text using markdown formatting with inline citations like [1]...",
   "citations": [
     { "id": 1, "text": "Name of the person/resource", "url": "/path/to/resource" }
   ],
-  "keyInsights": ["Short insight 1...", "Short insight 2..."],
+  "keyInsights": ["**📅 Exact Date:** Friday, 21 August 2026...", "**🏛️ Library:** Day boarders can enter..."],
   "actionRecommendation": "Tip: ...",
   "badges": [
     {
@@ -139,14 +141,15 @@ Note: For document badges, set type to "document".`;
 }
 
 const GENERATION_MODELS = [
-  "gemini-3.7-flash",
-  "gemini-3.6-flash",
-  "gemini-3.5-flash",
-  "gemini-flash-latest",
+  "gemini-3.1-flash-lite",
+  "gemini-3-flash-preview",
   "gemini-flash-lite-latest",
+  "gemini-flash-latest",
+  "gemini-3.5-flash-lite",
+  "gemini-3.7-flash",
 ];
 
-const RETRY_503_MS = 900;
+const RETRY_503_MS = 600;
 
 function cleanJsonText(raw: string): string {
   let text = raw.trim();
@@ -170,8 +173,8 @@ async function generateOverview(prompt: string) {
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
           generationConfig: {
-            temperature: 0.3,
-            maxOutputTokens: 3500,
+            temperature: 0.2,
+            maxOutputTokens: 1500,
             responseMimeType: "application/json",
           },
         }),
@@ -242,6 +245,35 @@ serve(async (req) => {
 
     const matches = await retrieve(query);
     const overview = await generateOverview(buildPrompt(query, matches));
+
+    // Ensure all inline citations mentioned in summary (e.g. [1], [3]) are mapped in overview.citations
+    if (overview && overview.summary) {
+      const citedIds = Array.from(new Set(
+        (overview.summary.match(/\[(\d+)\]/g) || [])
+          .map((s: string) => parseInt(s.replace(/\D/g, ""), 10))
+          .filter((n: number) => !isNaN(n) && n >= 1 && n <= matches.length)
+      ));
+
+      const citationMap = new Map<number, { id: number; text: string; url: string }>();
+      (overview.citations || []).forEach((c: any) => {
+        if (c && c.id) citationMap.set(c.id, c);
+      });
+
+      citedIds.forEach((id: number) => {
+        if (!citationMap.has(id)) {
+          const match = matches[id - 1];
+          if (match) {
+            citationMap.set(id, {
+              id,
+              text: match.title,
+              url: match.source_path,
+            });
+          }
+        }
+      });
+
+      overview.citations = Array.from(citationMap.values()).sort((a, b) => a.id - b.id);
+    }
 
     return new Response(JSON.stringify(overview), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

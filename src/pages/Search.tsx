@@ -244,11 +244,7 @@ export default function SearchPage() {
               <ArrowLeft className="h-4 w-4" />
             </button>
             <div className="relative flex-1 flex items-center">
-              {isAiMode ? (
-                <CampusMindIcon speed={results.loading ? "fast" : "normal"} className="absolute left-3.5 h-4 w-4 text-violet-500 dark:text-violet-400 shrink-0 pointer-events-none" />
-              ) : (
-                <Search className="absolute left-3.5 h-4 w-4 text-muted-foreground/60 shrink-0 pointer-events-none" />
-              )}
+              <Search className="absolute left-3.5 h-4 w-4 text-muted-foreground/60 shrink-0 pointer-events-none" />
               <input
                 ref={inputRef}
                 type="text"
@@ -330,17 +326,17 @@ export default function SearchPage() {
                         : "text-muted-foreground hover:text-foreground hover:bg-accent/60",
                     )}
                   >
-                    {TAB_LABELS[t]}
-                    {count !== null && count > 0 && (
+                    <span>{TAB_LABELS[t]}</span>
+                    {typeof count === "number" && (
                       <span
                         className={cn(
-                          "rounded-full px-1.5 py-0.5 text-[10px] font-semibold leading-none tabular-nums",
+                          "ml-0.5 rounded-full px-1.5 py-0.2 text-[11px] font-semibold",
                           active
                             ? "bg-primary-foreground/20 text-primary-foreground"
                             : "bg-muted text-muted-foreground",
                         )}
                       >
-                        {count > 99 ? "99+" : count}
+                        {count}
                       </span>
                     )}
                   </button>
@@ -355,16 +351,11 @@ export default function SearchPage() {
       <div className="container mx-auto max-w-6xl px-4 sm:px-6 py-6">
         {/* No query yet — landing prompt */}
         {!q && (
-          <div className="flex flex-col items-center justify-center py-24 text-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted/50 text-muted-foreground mb-4 border border-border/50">
-              <Search className="h-7 w-7 opacity-40" />
-            </div>
-            <h1 className="text-xl font-semibold text-foreground mb-2">Search Friendly Learning</h1>
-            <p className="text-sm text-muted-foreground max-w-sm leading-relaxed">
-              Find professors, senior mentors, project hackathons, student groups, and articles across SRM-AP with instant CampusMind search.
+          <div className="mt-8">
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+              Popular searches
             </p>
-
-            <div className="mt-8 flex flex-wrap justify-center gap-2 max-w-md">
+            <div className="flex flex-wrap gap-2">
               {["Machine Learning faculty", "Python mentors", "SIH Hackathon teams", "DSA questions", "Electives guide"].map((suggestion, idx) => (
                 <button
                   key={idx}
@@ -396,13 +387,12 @@ export default function SearchPage() {
 
         {/* Typo / Did You Mean Suggestion */}
         {q && !results.loading && results.suggestedCorrection && results.suggestedCorrection.toLowerCase() !== q.toLowerCase() && (
-          <div className="mb-5 flex items-center gap-2 rounded-xl border border-primary/20 bg-primary/5 px-4 py-2.5 text-xs text-muted-foreground">
-            <CampusMindIcon className="h-4 w-4 text-primary shrink-0" />
+          <div className="mb-4 flex items-center gap-1.5 text-xs sm:text-sm text-muted-foreground">
             <span>
               Did you mean:{" "}
               <button
                 onClick={() => submitSearch(results.suggestedCorrection!)}
-                className="font-semibold text-primary underline hover:text-primary/80"
+                className="font-semibold text-primary hover:underline cursor-pointer"
               >
                 "{results.suggestedCorrection}"
               </button>
