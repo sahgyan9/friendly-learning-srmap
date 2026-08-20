@@ -324,7 +324,7 @@ const SiteSearch = () => {
             <AvatarFallback className="text-xs font-medium">{getInitials(hit.title)}</AvatarFallback>
           </Avatar>
         ) : hit.image ? (
-          <img src={hit.image} alt="" className="h-8 w-8 shrink-0 rounded-lg object-cover border border-border/50" />
+          <img src={hit.image} alt="" loading="lazy" decoding="async" className="h-8 w-8 shrink-0 rounded-lg object-cover border border-border/50" />
         ) : (
           <span className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border", iconStyle)}>
             <HitIcon className="h-3.5 w-3.5" />

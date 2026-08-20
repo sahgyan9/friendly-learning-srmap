@@ -30,6 +30,13 @@ const AvatarImage = React.forwardRef<
   // `object-cover` by hand; the ones that hadn't were quietly distorting.
   <AvatarPrimitive.Image
     ref={ref}
+    // Defaults, not overrides: 29 of the 30 call sites never set these, so
+    // avatars across every list/card/feed were loaded eagerly regardless of
+    // scroll position. A call site that needs eager loading (e.g. a lone
+    // above-the-fold profile photo) can still pass loading="eager" and win,
+    // since {...props} is spread after these.
+    loading="lazy"
+    decoding="async"
     className={cn("aspect-square h-full w-full object-cover", className)}
     {...props}
   />
