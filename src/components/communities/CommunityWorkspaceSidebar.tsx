@@ -1,5 +1,5 @@
 import React from "react";
-import { FolderGit2, Hash, MessageSquare, Plus, ShieldCheck, Sparkles, Trash2, UserCheck, Users } from "lucide-react";
+import { FolderGit2, Hash, MessageSquare, Plus, Sparkles, Trash2, UserCheck, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { formatRelativeTime } from "@/utils/date-utils";
@@ -251,39 +251,21 @@ export function CommunityWorkspaceSidebar({
             resources, or one for announcements.
           </p>
         )}
-      </div>
 
-      {/* Member Directory Drawer Trigger */}
-      <div className="rounded-xl border border-border/60 bg-card p-3 space-y-2">
-        <div className="flex items-center justify-between px-1">
-          <span className="text-xs font-semibold text-foreground">Workspace Members</span>
-          <Badge variant="outline" className="text-[10px]">
-            {community.member_count}
-          </Badge>
+        {/* Compact member row — inside the channel card */}
+        <div className="!mt-2 border-t border-border/50 pt-2">
+          <button
+            type="button"
+            onClick={onOpenMembersDrawer}
+            className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-xs text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <Users className="h-3.5 w-3.5 text-primary" />
+              <span className="font-medium text-foreground">{community.member_count} {community.member_count === 1 ? "member" : "members"}</span>
+            </div>
+            <span className="text-primary font-semibold text-[11px]">Directory →</span>
+          </button>
         </div>
-
-        <button
-          type="button"
-          onClick={onOpenMembersDrawer}
-          className="flex w-full items-center justify-between rounded-lg border border-border/70 bg-accent/30 p-2.5 text-xs text-muted-foreground hover:border-primary/40 hover:bg-accent transition-colors"
-        >
-          <div className="flex items-center gap-2">
-            <Users className="h-4 w-4 text-primary" />
-            <span>View directory & roles</span>
-          </div>
-          <span className="text-primary font-semibold">Open →</span>
-        </button>
-      </div>
-
-      {/* Guidelines info */}
-      <div className="rounded-xl border border-border/40 bg-muted/30 p-3 text-xs text-muted-foreground space-y-1">
-        <div className="flex items-center gap-1.5 font-medium text-foreground">
-          <ShieldCheck className="h-3.5 w-3.5 text-primary" />
-          <span>Student Community</span>
-        </div>
-        <p className="text-[11px] leading-relaxed">
-          Be respectful, share constructive resources, and keep conversation productive for everyone in SRMAP.
-        </p>
       </div>
     </div>
   );

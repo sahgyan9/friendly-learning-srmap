@@ -2,26 +2,20 @@ import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import {
-  ArrowLeft,
-  Check,
-  Globe,
+  FolderGit2,
   Hash,
   Loader2,
   Lock,
-  LogIn,
-  LogOut,
   MessageSquare,
-  MoreHorizontal,
-  Pencil,
   Plus,
-  Trash2,
+  UserCheck,
   UserPlus,
   Users,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 import { PRIMARY_DOMAIN } from "@/lib/constants";
 import SEOHead from "@/components/SEOHead";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -38,9 +32,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { PostCard } from "@/components/community/PostCard";
 import { CreatePostModal } from "@/components/community/CreatePostModal";
-import { CommunityMemberList } from "@/components/communities/CommunityMemberList";
-import { CommunityAvatar } from "@/components/communities/CommunityAvatar";
-import { InviteLinkButton } from "@/components/communities/InviteLinkButton";
 import JoinRequestDialog from "@/components/communities/JoinRequestDialog";
 import JoinRequestsPanel from "@/components/communities/JoinRequestsPanel";
 import { CommunityGroupChat } from "@/components/communities/CommunityGroupChat";
@@ -50,19 +41,11 @@ import { CommunityWorkspaceHeader } from "@/components/communities/CommunityWork
 import { CommunityWorkspaceSidebar, channelTabId } from "@/components/communities/CommunityWorkspaceSidebar";
 import { CommunityMemberDrawer } from "@/components/communities/CommunityMemberDrawer";
 import CreateChannelModal from "@/components/communities/CreateChannelModal";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/context/AuthContext";
 import { useRealtimeSubscription } from "@/hooks/useRealtime";
 import {
   deleteCommunity,
   getCommunityBySlug,
-  getCommunityKindMeta,
   joinCommunity,
   leaveCommunity,
   listMyInvites,
@@ -79,6 +62,91 @@ import {
   deleteCommunityChannel,
   type CommunityChannel,
 } from "@/integrations/supabase/services/community-channels";
+
+// ── Mobile channel tab bar ──────────────────────────────────────────────────
+// Shown only on mobile (md:hidden), directly below the compact workspace header.
+// Mirrors the sidebar's view list so the user can switch channels without the
+// sidebar consuming vertical space above the conversation.
+
+interface MobileChannelTabBarProps {
+  community: Community;
+  activeTab: string;
+  onSelectTab: (tab: string) => void;
+  channels: CommunityChannel[];
+  canManageChannels: boolean;
+  onCreateChannel: () => void;
+}
+
+function MobileChannelTabBar({
+  community,
+  activeTab,
+  onSelectTab,
+  channels,
+  canManageChannels,
+  onCreateChannel,
+}: MobileChannelTabBarProps) {
+  const views = [
+    { id: "chat", label: "General", icon: Hash },
+    { id: "resources", label: "Resources", icon: FolderGit2 },
+    { id: "posts", label: "Posts", icon: MessageSquare, count: community.post_count },
+    ...(community.viewer_is_owner && community.visibility === "private"
+      ? [{ id: "requests", label: "Requests", icon: UserCheck, count: community.pending_request_count ?? 0 }]
+      : []),
+  ];
+
+  const allTabs = [
+    ...views,
+    ...channels.map((ch) => ({
+      id: channelTabId(ch.slug),
+      label: ch.slug,
+      icon: Hash,
+      count: ch.messageCount > 0 ? ch.messageCount : undefined,
+    })),
+  ];
+
+  return (
+    <div className="md:hidden flex items-center gap-1 overflow-x-auto pb-1 px-1 no-scrollbar -mx-1">
+      {allTabs.map(({ id, label, icon: Icon, count }) => {
+        const isActive = activeTab === id;
+        return (
+          <button
+            key={id}
+            type="button"
+            onClick={() => onSelectTab(id)}
+            className={cn(
+              "flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-all",
+              isActive
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
+            )}
+          >
+            <Icon className="h-3.5 w-3.5" />
+            <span># {label}</span>
+            {count !== undefined && count > 0 && (
+              <span className={cn(
+                "rounded-full px-1 text-[10px] font-semibold",
+                isActive ? "bg-primary-foreground/20 text-primary-foreground" : "bg-muted-foreground/20 text-muted-foreground"
+              )}>
+                {count}
+              </span>
+            )}
+          </button>
+        );
+      })}
+
+      {canManageChannels && (
+        <button
+          type="button"
+          onClick={onCreateChannel}
+          aria-label="Add channel"
+          className="flex shrink-0 items-center justify-center h-7 w-7 rounded-full border border-dashed border-border text-muted-foreground hover:border-primary/40 hover:text-primary transition-colors"
+        >
+          <Plus className="h-3.5 w-3.5" />
+        </button>
+      )}
+    </div>
+  );
+}
 
 const CommunityDetail = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -345,7 +413,6 @@ const CommunityDetail = () => {
     if (community) loadChannels(community.id);
   };
 
-  const kind = getCommunityKindMeta(community.kind);
 
   return (
     <div className="min-h-screen bg-background">
@@ -355,7 +422,7 @@ const CommunityDetail = () => {
         canonical={`${PRIMARY_DOMAIN}/workspace-groups/${community.slug}`}
       />
 
-      <div className="container mx-auto max-w-6xl px-4 pt-6 pb-36 md:pt-8 md:pb-48">
+      <div className="container mx-auto max-w-6xl px-4 pt-6 pb-24 md:pt-8 md:pb-32">
         {/* Workspace Hero Header */}
         <CommunityWorkspaceHeader
           community={community}
@@ -404,23 +471,37 @@ const CommunityDetail = () => {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-6 md:grid-cols-[16rem_1fr] lg:grid-cols-[18rem_1fr]">
-            {/* Workspace Sidebar Channels */}
-            <aside>
-              <CommunityWorkspaceSidebar
+          <div>
+            {/* Mobile-only: channel tab strip directly below the header */}
+            <div className="mb-3">
+              <MobileChannelTabBar
                 community={community}
                 activeTab={activeTab}
                 onSelectTab={setActiveTab}
-                onOpenMembersDrawer={() => setMembersDrawerOpen(true)}
                 channels={channels}
                 canManageChannels={Boolean(community.viewer_is_owner)}
                 onCreateChannel={() => setCreateChannelOpen(true)}
-                onDeleteChannel={setChannelPendingDelete}
               />
-            </aside>
+            </div>
 
-            {/* Main Canvas Area */}
-            <main className="min-w-0 space-y-4">
+            {/* Desktop: 2-column sidebar + canvas. Mobile: full-width canvas only */}
+            <div className="md:grid md:gap-6 md:grid-cols-[16rem_1fr] lg:grid-cols-[18rem_1fr]">
+              {/* Sidebar — hidden on mobile, shown on md+ */}
+              <aside className="hidden md:block">
+                <CommunityWorkspaceSidebar
+                  community={community}
+                  activeTab={activeTab}
+                  onSelectTab={setActiveTab}
+                  onOpenMembersDrawer={() => setMembersDrawerOpen(true)}
+                  channels={channels}
+                  canManageChannels={Boolean(community.viewer_is_owner)}
+                  onCreateChannel={() => setCreateChannelOpen(true)}
+                  onDeleteChannel={setChannelPendingDelete}
+                />
+              </aside>
+
+              {/* Main Canvas Area — full width on mobile, right column on desktop */}
+              <main className="min-w-0 space-y-4">
               {(activeTab === "chat" || activeTab.startsWith("channel:")) && (
                 <CommunityGroupChat
                   communityId={community.id}
@@ -502,7 +583,8 @@ const CommunityDetail = () => {
               {activeTab === "requests" && community.viewer_is_owner && community.visibility === "private" && (
                 <JoinRequestsPanel communityId={community.id} onDecided={load} />
               )}
-            </main>
+              </main>
+            </div>
           </div>
         )}
       </div>

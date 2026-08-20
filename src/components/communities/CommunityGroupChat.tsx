@@ -260,10 +260,30 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
 
   const starters = STARTERS[communityKind] ?? STARTERS.general;
 
+  /** Five-minute window: messages from the same sender within this duration
+   *  collapse into a single burst — only the first shows the name/avatar header. */
+  const BURST_GAP_MS = 5 * 60 * 1000;
+
+  /**
+   * Tag each stream item with whether it opens a new burst. A burst break
+   * happens when the sender changes, or when more than BURST_GAP_MS has
+   * passed since the previous message from that sender.
+   */
+  const taggedItems = useMemo(() => {
+    return items.map((item, i) => {
+      if (item.kind === "post") return { item, isNewBurst: true };
+      const prev = items[i - 1];
+      if (!prev || prev.kind === "post") return { item, isNewBurst: true };
+      const sameSender = prev.message.senderId === item.message.senderId;
+      const closeInTime = item.at - prev.at < BURST_GAP_MS;
+      return { item, isNewBurst: !(sameSender && closeInTime) };
+    });
+  }, [items]);
+
   return (
     <div className="flex h-[min(72vh,720px)] min-h-[460px] flex-col overflow-hidden rounded-xl border bg-background">
       {/* Stream */}
-      <div ref={messagesContainerRef} className="flex-1 space-y-4 overflow-y-auto p-4">
+      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto px-2 py-3">
         {loading ? (
           <div className="flex h-full items-center justify-center text-muted-foreground">
             <Loader2 className="h-5 w-5 animate-spin" />
@@ -336,7 +356,7 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
             )}
           </div>
         ) : (
-          items.map((item) =>
+          taggedItems.map(({ item, isNewBurst }) =>
             item.kind === "post" ? (
               /* A post in the stream. Deliberately not the full PostCard from
                  the feed — at that size one post buries a day of conversation.
@@ -345,7 +365,7 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
                 key={`post-${item.post.id}`}
                 type="button"
                 onClick={() => onOpenPost(item.post.id)}
-                className="block w-full rounded-lg border border-primary/20 bg-primary/[0.03] p-3 text-left transition-colors hover:border-primary/40 hover:bg-primary/[0.06]"
+                className="mt-3 block w-full rounded-lg border border-primary/20 bg-primary/[0.03] p-3 text-left transition-colors hover:border-primary/40 hover:bg-primary/[0.06]"
               >
                 <div className="mb-1.5 flex items-center gap-2">
                   <Avatar className="h-6 w-6 shrink-0 border">
@@ -384,12 +404,13 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
                   <span className="font-medium text-primary">Open post →</span>
                 </div>
               </button>
-            ) : (
+            ) : isNewBurst ? (
+              /* ── Burst header: first message from this sender in this run ── */
               <div
                 key={item.message.id}
-                className="group relative flex gap-3 rounded-lg p-2 transition-colors hover:bg-muted/30"
+                className="group relative mt-3 flex gap-2.5 rounded-lg px-2 py-1 transition-colors hover:bg-muted/30"
               >
-                <Avatar className="h-9 w-9 shrink-0 border">
+                <Avatar className="mt-0.5 h-8 w-8 shrink-0 border">
                   <AvatarImage src={item.message.senderAvatar ?? undefined} />
                   <AvatarFallback className="text-xs font-bold">
                     {getInitials(item.message.senderName)}
@@ -445,7 +466,93 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
                     );
                   })()}
 
-                  <div className="mt-1.5 flex flex-wrap items-center gap-1">
+                  <div className="mt-1 flex flex-wrap items-center gap-1">
+                    {Object.entries(item.message.reactions).map(([emoji, count]) => {
+                      const reacted = item.message.viewerReactions.includes(emoji);
+                      return (
+                        <button
+                          key={emoji}
+                          onClick={() => handleToggleReaction(item.message.id, emoji)}
+                          className={`inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] transition-colors ${
+                            reacted
+                              ? "border-primary/30 bg-primary/10 font-bold text-primary"
+                              : "border-muted bg-muted/40 text-muted-foreground hover:bg-muted"
+                          }`}
+                        >
+                          <span>{emoji}</span>
+                          <span>{count}</span>
+                        </button>
+                      );
+                    })}
+
+                    {canPost && (
+                      <div className="ml-2 flex items-center gap-0.5 rounded-full border bg-background px-1 py-0.5 opacity-0 shadow-xs transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+                        {QUICK_EMOJIS.slice(0, 4).map((emoji) => (
+                          <button
+                            key={emoji}
+                            onClick={() => handleToggleReaction(item.message.id, emoji)}
+                            className="px-0.5 text-xs transition-transform hover:scale-125"
+                            title={`React with ${emoji}`}
+                          >
+                            {emoji}
+                          </button>
+                        ))}
+                        <button
+                          onClick={() => setReplyingTo(item.message)}
+                          className="px-1 text-[10px] font-medium text-muted-foreground hover:text-primary"
+                        >
+                          Reply
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              /* ── Burst continuation: same sender, within 5 min ── */
+              <div
+                key={item.message.id}
+                className="group relative flex gap-2.5 rounded-lg px-2 py-0.5 transition-colors hover:bg-muted/30"
+              >
+                {/* Spacer matching avatar width so message body aligns */}
+                <div className="w-8 shrink-0" aria-hidden />
+
+                <div className="min-w-0 flex-1">
+                  {item.message.replyTo && (
+                    <div className="mb-1 flex items-center gap-1 rounded border-l-2 border-primary bg-muted/50 px-2 py-0.5 text-[11px] text-muted-foreground">
+                      <CornerDownRight className="h-3 w-3" />
+                      <span className="font-medium text-foreground">
+                        {item.message.replyTo.senderName}:
+                      </span>
+                      <span className="max-w-[250px] truncate">{item.message.replyTo.content}</span>
+                    </div>
+                  )}
+
+                  {(() => {
+                    const isEmoji = isEmojiOnly(item.message.content);
+                    const emojiCount = isEmoji ? getEmojiCount(item.message.content) : 0;
+                    return (
+                      <p
+                        className={
+                          isEmoji
+                            ? `whitespace-pre-wrap select-none ${getEmojiFontSizeClass(emojiCount)}`
+                            : "whitespace-pre-wrap text-sm leading-relaxed text-foreground"
+                        }
+                      >
+                        {item.message.content}
+                      </p>
+                    );
+                  })()}
+
+                  {/* Timestamp revealed on hover (Discord-style) */}
+                  <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 select-none pointer-events-none">
+                    {new Date(item.message.createdAt).toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </span>
+
+                  <div className="mt-0.5 flex flex-wrap items-center gap-1">
                     {Object.entries(item.message.reactions).map(([emoji, count]) => {
                       const reacted = item.message.viewerReactions.includes(emoji);
                       return (

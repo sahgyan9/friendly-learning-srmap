@@ -256,3 +256,14 @@ a[href*="lovable.dev"],
     padding-left: 4.5rem;
   }
 }
+
+/* Hide scrollbar visually while preserving scroll (used by mobile tab strips) */
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
