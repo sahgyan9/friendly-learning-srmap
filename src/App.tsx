@@ -1,5 +1,5 @@
 import { Suspense, lazy, ComponentType } from "react";
-import { Route, Routes, useLocation, Navigate, useParams } from "react-router-dom";
+import { Route, Routes, Navigate, useParams } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 
 import { Toaster } from "@/components/ui/sonner";
@@ -14,7 +14,6 @@ import RouteRobots from "@/components/RouteRobots";
 import ScrollToTop from "@/components/ScrollToTop";
 import SiteHeader from "@/components/navigation/SiteHeader";
 import { MainWithRail } from "@/components/navigation/SiteRail";
-import FloatingChatbot from "@/components/chatbot/FloatingChatbot";
 
 // The landing page is the most common entry point, so it stays in the main
 // bundle. Everything else is split per route — the app previously shipped one
@@ -158,18 +157,6 @@ function RedirectWithParam({ toPrefix }: { toPrefix: string }) {
   return <Navigate to={param ? `${toPrefix}/${param}` : toPrefix} replace />;
 }
 
-/**
- * Hidden on auth screens (nothing useful to ask before signing in, and it
- * would float over the form) and on every /admin page (a staff tool, not a
- * student-facing surface).
- */
-const CHATBOT_HIDDEN_PATHS = ["/signin", "/signup", "/forgot-password", "/reset-password"];
-
-function SiteChatbot() {
-  const { pathname } = useLocation();
-  const hidden = CHATBOT_HIDDEN_PATHS.includes(pathname) || pathname.startsWith("/admin");
-  return hidden ? null : <FloatingChatbot />;
-}
 
 /**
  * Routes are grouped as: public, authenticated, and admin (authenticated +
@@ -371,7 +358,6 @@ function App() {
                   </Routes>
                 </Suspense>
               </MainWithRail>
-              <SiteChatbot />
             </div>
           </WelcomeTourProvider>
         </SidebarProvider>

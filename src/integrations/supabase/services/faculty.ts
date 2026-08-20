@@ -188,13 +188,11 @@ export async function getFacultyList(query: FacultyQuery = {}) {
 
   if (sort === "reviews") {
     request = request
-      .order("image_url", { ascending: false, nullsFirst: false })
       .order("rating_count", { ascending: false })
       .order("name", { ascending: true });
   } else {
-    // Default: alphabetical, profiles with images prioritized (never rank people by rating score)
+    // Default: alphabetical (never rank people by rating score)
     request = request
-      .order("image_url", { ascending: false, nullsFirst: false })
       .order("name", { ascending: true });
   }
 
@@ -463,7 +461,7 @@ export async function getSimilarFaculty(
 
   query = query
     .order("rating_count", { ascending: false })
-    .order("image_url", { ascending: false, nullsFirst: false })
+    .order("name", { ascending: true })
     .limit(limit);
 
   const { data, error } = await query;

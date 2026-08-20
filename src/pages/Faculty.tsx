@@ -38,7 +38,7 @@ const PAGE_SIZE = 24;
 
 const SORT_OPTIONS: { value: FacultySort; label: string }[] = [
   { value: "name", label: "Name (A–Z)" },
-  { value: "reviews", label: "Review count" },
+  { value: "reviews", label: "Most Reviewed" },
 ];
 
 /**
@@ -352,7 +352,7 @@ const Faculty = () => {
               </SelectContent>
             </Select>
 
-            <Select value={sort} onValueChange={(value) => updateParam("sort", value, "rating")}>
+            <Select value={sort} onValueChange={(value) => updateParam("sort", value, "name")}>
               <SelectTrigger className="w-full sm:w-[160px]">
                 <ArrowUpDown className="mr-2 h-4 w-4 shrink-0 text-muted-foreground" />
                 <SelectValue />
