@@ -1,31 +1,62 @@
+-- This file is a reference map of storage.buckets, not a script that creates
+-- them. Confirmed live via `supabase storage ls --experimental` on
+-- 2026-08-21: the actual buckets are profile-images, team_members,
+-- marketplace, and "Community Post Images" -- none of them were ever created
+-- by a tracked migration, and the single INSERT this file used to contain
+-- (id='profiles') does not correspond to any bucket that exists live. All
+-- four predate migration history the same way public.users/mentors do; see
+-- .claude/rules/supabase-changes.md.
+--
+-- KNOWN ISSUE, needs a live check before trusting it either way:
+-- supabase/migrations/20260804132345_...sql adds owner-must-match
+-- INSERT/UPDATE/DELETE policies for bucket_id = 'community-posts' -- a string
+-- that does not match the live bucket, whose id is "Community Post Images"
+-- (with the space and capitals). If no other policy enforces ownership on
+-- that literal bucket id, uploads to it may not actually be owner-scoped.
+-- Run this in the Supabase SQL editor to check what's really there:
+--
+--   SELECT policyname, cmd, roles, qual, with_check
+--   FROM pg_policies
+--   WHERE schemaname = 'storage' AND tablename = 'objects'
+--     AND (qual ILIKE '%Community Post Images%' OR qual ILIKE '%community-posts%'
+--          OR with_check ILIKE '%Community Post Images%' OR with_check ILIKE '%community-posts%');
+--
+-- If that returns only SELECT policies, community post image writes are not
+-- ownership-scoped and need a policy against the real bucket id.
 
--- Create a storage bucket for profile images
-INSERT INTO storage.buckets (id, name, public) VALUES ('profiles', 'Profile Images', true);
+-- ---------------------------------------------------------------------------
+-- profile-images -- public read, owner-scoped write
+-- ---------------------------------------------------------------------------
+-- Policy names/definitions below are as tracked in migrations; the bucket
+-- itself and its base policies were not.
 
--- Create RLS policy to allow authenticated users to upload their own profile images
-CREATE POLICY "Users can upload their own profile images" 
-ON storage.objects 
-FOR INSERT 
-TO authenticated 
-WITH CHECK (bucket_id = 'profiles' AND (auth.uid())::text = SUBSTRING(name FROM 'profile-images/([^-]+)-'));
+-- CREATE POLICY "Users can upload their own profile images"
+-- ON storage.objects FOR INSERT TO authenticated
+-- WITH CHECK (bucket_id = 'profile-images' AND (auth.uid())::text = SUBSTRING(name FROM 'profile-images/([^-]+)-'));
+--
+-- CREATE POLICY "Profile images are publicly accessible"
+-- ON storage.objects FOR SELECT TO public
+-- USING (bucket_id = 'profile-images');
+--
+-- CREATE POLICY "Authenticated can list profile-images"
+-- ON storage.objects FOR SELECT TO authenticated
+-- USING (bucket_id = 'profile-images');
+-- (supabase/migrations/20260418025448_a4b8a106-6764-4bb8-a590-f6cb7d3efc85.sql)
 
--- Create RLS policy to allow public access to profile images
-CREATE POLICY "Profile images are publicly accessible" 
-ON storage.objects 
-FOR SELECT 
-TO public 
-USING (bucket_id = 'profiles');
+-- ---------------------------------------------------------------------------
+-- team_members -- admin-only, gated by is_admin_user()
+-- ---------------------------------------------------------------------------
+-- (supabase/migrations/20260418025448_..., 20260804132345_...)
 
--- Create RLS policy to allow users to update their own profile images
-CREATE POLICY "Users can update their own profile images" 
-ON storage.objects 
-FOR UPDATE 
-TO authenticated 
-USING (bucket_id = 'profiles' AND (auth.uid())::text = SUBSTRING(name FROM 'profile-images/([^-]+)-'));
+-- ---------------------------------------------------------------------------
+-- marketplace -- owner-must-match on write
+-- ---------------------------------------------------------------------------
+-- (supabase/migrations/20260804132345_b843f814-46d5-4c25-bc80-32e5f6ebba59.sql)
 
--- Create RLS policy to allow users to delete their own profile images
-CREATE POLICY "Users can delete their own profile images" 
-ON storage.objects 
-FOR DELETE 
-TO authenticated 
-USING (bucket_id = 'profiles' AND (auth.uid())::text = SUBSTRING(name FROM 'profile-images/([^-]+)-'));
+-- ---------------------------------------------------------------------------
+-- "Community Post Images" -- see KNOWN ISSUE above
+-- ---------------------------------------------------------------------------
+-- Only a public/authenticated-list SELECT policy is tracked against this
+-- exact bucket id. The owner-scoped write policies in
+-- 20260804132345_b843f814-46d5-4c25-bc80-32e5f6ebba59.sql target
+-- bucket_id = 'community-posts' instead, which does not exist live.
