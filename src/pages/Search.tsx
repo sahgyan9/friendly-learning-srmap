@@ -14,6 +14,7 @@ import {
   SlidersHorizontal,
   Compass,
   Filter,
+  FileText,
 } from "lucide-react";
 
 import { FacultyIcon } from "@/components/icons/FacultyIcon";
@@ -99,6 +100,12 @@ const TAB_META: Record<
     emptyLine2: "Try a topic, keyword or author name",
     color: "text-amber-500",
   },
+  documents: {
+    icon: FileText,
+    emptyLine1: "No documents or policies matched",
+    emptyLine2: "Try keywords from Code of Conduct or Academic Calendar",
+    color: "text-sky-500",
+  },
   blog: {
     icon: BookOpen,
     emptyLine1: "No blog articles matched",
@@ -176,6 +183,7 @@ export default function SearchPage() {
     results.counts.opportunities +
     results.counts.communities +
     results.counts.posts +
+    results.counts.documents +
     results.counts.blog;
 
   const isEmpty = !results.loading && q.trim() && totalAcrossAll === 0;
@@ -210,6 +218,7 @@ export default function SearchPage() {
     else if (tab === "opportunities") rawItems = results.opportunities;
     else if (tab === "communities") rawItems = results.communities;
     else if (tab === "posts") rawItems = results.posts;
+    else if (tab === "documents") rawItems = results.documents;
     else if (tab === "blog") rawItems = results.blog;
 
     if (!departmentFilter) return rawItems;
@@ -533,6 +542,13 @@ export default function SearchPage() {
                 results.counts.posts,
               );
 
+              const documentsSection = renderSection(
+                "Campus Documents & Guidelines",
+                "documents",
+                results.documents,
+                results.counts.documents,
+              );
+
               const blogSection = renderSection(
                 "Campus Guides",
                 "blog",
@@ -571,6 +587,7 @@ export default function SearchPage() {
                 items.length > 0 ? Math.max(...items.map((i) => i.relevanceScore ?? 0)) : 0;
 
               const sectionsWithScores = [
+                { section: documentsSection, score: getBestScore(results.documents) },
                 { section: mentorsSection, score: getBestScore(results.mentors) },
                 { section: facultySection, score: getBestScore(relevantFacultyForAll) },
                 { section: oppSection, score: getBestScore(results.opportunities) },

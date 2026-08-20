@@ -12,6 +12,7 @@ export type AskResult = {
   entity_id: string;
   title: string;
   subtitle: string | null;
+  body?: string | null;
   metadata: Record<string, unknown>;
   source_path: string;
   /** Cosine similarity, 0-1. Below 0.30 is filtered out server-side. */

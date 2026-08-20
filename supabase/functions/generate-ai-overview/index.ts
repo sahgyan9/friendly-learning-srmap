@@ -14,6 +14,7 @@ type Retrieved = {
   entity_id: string;
   title: string;
   subtitle: string | null;
+  body?: string | null;
   metadata: Record<string, unknown>;
   source_path: string;
   similarity: number;
@@ -57,9 +58,10 @@ function buildPrompt(query: string, matches: Retrieved[]): string {
     if (Array.isArray(rawTags)) {
       tags = `\n  Tags: ${rawTags.filter((t) => typeof t === "string").join(", ")}`;
     }
+    const excerpt = m.body ? `\n  Content/Excerpt: ${m.body.slice(0, 1500)}` : "";
     // Note: We use index + 1 as the implicit citation ID for the model to reference
-    return `[${index + 1}] [${m.entity_type.toUpperCase()}] ${m.title} (${m.subtitle ?? ""}) (id: ${m.entity_id}, path: ${m.source_path})${tags}`;
-  }).join("\n");
+    return `[${index + 1}] [${m.entity_type.toUpperCase()}] ${m.title} (${m.subtitle ?? ""}) (id: ${m.entity_id}, path: ${m.source_path})${tags}${excerpt}`;
+  }).join("\n\n");
 
   return `You are the AI Campus Overview engine for Friendly Learning at SRM University-AP.
 The user searched for: "${query}".
@@ -70,12 +72,13 @@ ${context ? context : "No matching campus resources found."}
 Based strictly on the provided resources, generate a short summary overview (1-2 paragraphs) to help the student.
 
 Rules:
-1. Synthesize the context in a natural, helpful, student-friendly tone. Do not just list the titles.
-2. Only mention people, events, or entities from the provided context. If no context is provided, say there are no direct matches yet and suggest broad advice.
-3. INLINE CITATIONS: When you state a fact or mention an entity from the resources, you MUST include an inline citation bracket like [1] or [2] matching the resource number above.
-4. Extract 1-3 key insights as a list of short strings.
-5. Identify the top 1-4 specific entities to recommend as badges. Use the exact 'id', 'type', 'title' (for name), 'path' (for to), and 'subtitle' (for detail) from the context. Only use types: 'faculty', 'mentor', 'opportunity', 'community', 'post', or 'document'.
-6. CITATIONS MAP: Provide a 'citations' array mapping the numbers you used in the summary to the entity.
+1. Provide DIRECT, SPECIFIC, AND ACCURATE ANSWERS extracted from the content/excerpts. If the user asks for dates, exam timelines, specific penalties, rules, or contacts, STATE THE EXACT DATES AND DETAILS in the summary (with bold formatting) instead of just telling the student to check the document.
+2. Synthesize the context in a natural, helpful, student-friendly tone. Do not just list the titles.
+3. Only mention people, events, facts, or entities from the provided context. If no context is provided, say there are no direct matches yet and suggest broad advice.
+4. INLINE CITATIONS: When you state a fact, date, or mention an entity from the resources, you MUST include an inline citation bracket like [1] or [2] matching the resource number above.
+5. Extract 1-3 key insights as a list of short strings.
+6. Identify the top 1-4 specific entities to recommend as badges. Use the exact 'id', 'type', 'title' (for name), 'path' (for to), and 'subtitle' (for detail) from the context. Only use types: 'faculty', 'mentor', 'opportunity', 'community', 'post', or 'document'.
+7. CITATIONS MAP: Provide a 'citations' array mapping the numbers you used in the summary to the entity.
 
 Your response MUST be a valid JSON object matching this schema exactly:
 {

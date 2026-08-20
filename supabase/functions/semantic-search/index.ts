@@ -185,6 +185,7 @@ serve(async (req) => {
       entity_id: string;
       title: string;
       subtitle: string | null;
+      body: string | null;
       metadata: Record<string, unknown>;
       source_path: string;
       similarity: number;

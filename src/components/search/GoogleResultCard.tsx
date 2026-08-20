@@ -15,6 +15,7 @@ import {
   Clock,
   ThumbsUp,
   Award,
+  FileText,
 } from "lucide-react";
 import { FacultyIcon } from "@/components/icons/FacultyIcon";
 import { GroupsIcon } from "@/components/icons/GroupsIcon";
@@ -135,6 +136,10 @@ export const GoogleResultCard: React.FC<GoogleResultCardProps> = ({
     IconComponent = Users;
     iconBg = "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20";
     badgeColor = "bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border-indigo-500/20";
+  } else if (entityType === "document") {
+    IconComponent = FileText;
+    iconBg = "bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/20";
+    badgeColor = "bg-sky-500/10 text-sky-700 dark:text-sky-300 border-sky-500/20";
   }
 
   const breadcrumbText = item.breadcrumb || `friendlylearning.in › ${entityType} › ${item.id.slice(0, 10)}`;

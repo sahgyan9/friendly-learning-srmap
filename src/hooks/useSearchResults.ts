@@ -50,6 +50,7 @@ export interface SearchCounts {
   opportunities: number;
   communities: number;
   posts: number;
+  documents: number;
   blog: number;
 }
 
@@ -66,7 +67,7 @@ export interface SearchResultItem {
   to: string;
   image?: string | null;
   /** Entity category identifier */
-  entityType?: "faculty" | "mentor" | "student" | "opportunity" | "community" | "post" | "blog";
+  entityType?: "faculty" | "mentor" | "student" | "opportunity" | "community" | "post" | "document" | "blog";
   /** Human-readable entity badge text (e.g. 'FACULTY', 'SENIOR MENTOR', 'COMMUNITY GROUP') */
   badge?: string;
   /** Google-style URL breadcrumb path (e.g. 'friendlylearning.in › faculty › dr-avinash-trivedi') */
@@ -91,6 +92,7 @@ export interface SearchResultsState {
   opportunities: SearchResultItem[];
   communities: SearchResultItem[];
   posts: SearchResultItem[];
+  documents: SearchResultItem[];
   blog: SearchResultItem[];
   counts: SearchCounts;
   suggestedCorrection: string | null;
@@ -107,8 +109,9 @@ const EMPTY: SearchResultsState = {
   opportunities: [],
   communities: [],
   posts: [],
+  documents: [],
   blog: [],
-  counts: { mentors: -1, faculty: -1, opportunities: -1, communities: -1, posts: -1, blog: -1 },
+  counts: { mentors: -1, faculty: -1, opportunities: -1, communities: -1, posts: -1, documents: -1, blog: -1 },
   suggestedCorrection: null,
   loading: false,
   countsLoading: false,
@@ -277,6 +280,7 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
       const oppMap = new Map<string, SearchResultItem>();
       const postMap = new Map<string, SearchResultItem>();
       const communityMap = new Map<string, SearchResultItem>();
+      const documentMap = new Map<string, SearchResultItem>();
 
       // 1. Process Mentors (with exact ranking boost & rich snippets)
       (mentorRes.data ?? []).forEach((m, idx) => {
@@ -773,6 +777,34 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
                 relevanceScore: simScore + getCtrBoost(hit.entity_id),
               });
             }
+          } else if (hit.entity_type === "document") {
+            if (!documentMap.has(hit.entity_id)) {
+              const docCategory = typeof hit.metadata?.category === "string" ? hit.metadata.category : "Campus Policy";
+              const docPage = typeof hit.metadata?.page_number === "number" ? `Page ${hit.metadata.page_number}` : "";
+              const docSnippet = hit.body
+                ? (hit.body.length > 220 ? `${hit.body.slice(0, 220)}…` : hit.body)
+                : typeof hit.metadata?.section_heading === "string"
+                ? hit.metadata.section_heading
+                : "Official SRM-AP campus document / academic policy.";
+              const docSlug = typeof hit.metadata?.slug === "string" ? hit.metadata.slug : hit.entity_id;
+
+              documentMap.set(hit.entity_id, {
+                id: hit.entity_id,
+                title: hit.title,
+                subtitle: [docCategory, docPage].filter(Boolean).join(" · ") || hit.subtitle || "Official Document",
+                to: hit.source_path || `/documents/${docSlug}`,
+                entityType: "document",
+                badge: docCategory.toUpperCase(),
+                breadcrumb: `friendlylearning.in › documents › ${docSlug}`,
+                snippet: docSnippet,
+                matchReason: "Grounded in official SRM-AP campus documents",
+                sitelinks: [
+                  { label: "View Document", to: hit.source_path || `/documents/${docSlug}` },
+                ],
+                meta: hit.metadata,
+                relevanceScore: simScore + 100 + getCtrBoost(hit.entity_id),
+              });
+            }
           }
         });
       }
@@ -787,6 +819,7 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
       const allOppList = sortList(Array.from(oppMap.values()));
       const allPostsList = sortList(Array.from(postMap.values()));
       const allCommunitiesList = sortList(Array.from(communityMap.values()));
+      const allDocumentsList = sortList(Array.from(documentMap.values()));
 
       const pagedMentors =
         tab === "mentors" ? allMentorsList.slice(offset, offset + PAGE_SIZE) : allMentorsList.slice(0, ALL_PREVIEW);
@@ -807,6 +840,11 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
           ? allCommunitiesList.slice(offset, offset + PAGE_SIZE)
           : allCommunitiesList.slice(0, ALL_PREVIEW);
 
+      const pagedDocuments =
+        tab === "documents"
+          ? allDocumentsList.slice(offset, offset + PAGE_SIZE)
+          : allDocumentsList.slice(0, ALL_PREVIEW);
+
       const blogLimit = tab === "blog" ? PAGE_SIZE : ALL_PREVIEW;
       const blog = searchBlogLocally(parsed, blogLimit);
 
@@ -820,6 +858,7 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
         opportunities: allOppList.length,
         communities: allCommunitiesList.length,
         posts: allPostsList.length,
+        documents: allDocumentsList.length,
         blog: searchBlogLocally(parsed, 999).length,
       };
 
@@ -841,6 +880,9 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
       } else if (tab === "posts") {
         total = counts.posts;
         hasMore = offset + PAGE_SIZE < total;
+      } else if (tab === "documents") {
+        total = counts.documents;
+        hasMore = offset + PAGE_SIZE < total;
       } else if (tab === "blog") {
         total = counts.blog;
         hasMore = false;
@@ -855,6 +897,7 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
         opportunities: pagedOpportunities,
         communities: pagedCommunities,
         posts: pagedPosts,
+        documents: pagedDocuments,
         blog,
         counts,
         suggestedCorrection: parsed.suggestedQuery,
