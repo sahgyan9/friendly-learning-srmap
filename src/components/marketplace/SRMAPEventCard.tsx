@@ -5,25 +5,11 @@ import { Badge } from "@/components/ui/badge";
 import { Calendar, GraduationCap, ArrowRight, Sparkles, MapPin, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CardAccentBorder } from "@/components/ui/CardAccentBorder";
+import { getOptimizedImageUrl } from "@/lib/image/imageUrl";
 import type { SRMAPEvent } from "@/hooks/useSRMAPEvents";
 
 interface SRMAPEventCardProps {
   event: SRMAPEvent;
-}
-
-/**
- * Routes the image through wsrv.nl (images.weserv.nl) instead of hotlinking
- * events.srmap.edu.in directly.
- */
-function optimizedImageUrl(url: string): string {
-  const params = new URLSearchParams({
-    url,
-    w: "640",
-    q: "75",
-    output: "webp",
-    fit: "cover",
-  });
-  return `https://wsrv.nl/?${params.toString()}`;
 }
 
 export function SRMAPEventCard({ event }: SRMAPEventCardProps) {
@@ -38,7 +24,7 @@ export function SRMAPEventCard({ event }: SRMAPEventCardProps) {
   const imageSrc = event.imageUrl
     ? proxyFailed
       ? event.imageUrl
-      : optimizedImageUrl(event.imageUrl)
+      : getOptimizedImageUrl(event.imageUrl, { width: 640, quality: 75 })
     : null;
 
   const formattedStartDate = start.toLocaleDateString("en-IN", {

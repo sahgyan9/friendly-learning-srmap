@@ -48,17 +48,7 @@ import { getBreadcrumbSchema } from "@/lib/structured-data";
 import { PRIMARY_DOMAIN } from "@/lib/constants";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-
-function optimizedImageUrl(url: string, width = "1280"): string {
-  const params = new URLSearchParams({
-    url,
-    w: width,
-    q: "85",
-    output: "webp",
-    fit: "cover",
-  });
-  return `https://wsrv.nl/?${params.toString()}`;
-}
+import { getOptimizedImageUrl as optimizedImageUrl } from "@/lib/image/imageUrl";
 
 const EventDetail = () => {
   const { id } = useParams<{ id: string }>();
