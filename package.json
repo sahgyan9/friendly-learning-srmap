@@ -17,7 +17,16 @@
     "typecheck": "tsc -p tsconfig.app.json --noEmit",
     "preview": "vite preview",
     "generate:dynamic-sitemap": "node generate-dynamic-sitemap.js",
-    "test:migrations": "node supabase/tests/verify-migrations.mjs && node supabase/tests/verify-upgrade.mjs"
+    "test:migrations": "node supabase/tests/verify-migrations.mjs && node supabase/tests/verify-upgrade.mjs",
+    "qa:screenshot": "node qa-screenshot.mjs",
+    "qa:welcome-tour": "node qa-welcome-tour.mjs",
+    "qa:faculty-mock": "node qa-faculty-mock.mjs",
+    "qa:group-channels": "node qa-group-channels.mjs",
+    "qa:signed-in-sweep": "node qa-signed-in-sweep.mjs",
+    "qa:recommended-people": "node qa-recommended-people.mjs",
+    "qa:welcome-tour-interests": "node qa-welcome-tour-interests.mjs",
+    "qa:opportunities-loop": "node qa-opportunities-loop.mjs",
+    "qa:workspace-redesign": "node qa-workspace-redesign.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
