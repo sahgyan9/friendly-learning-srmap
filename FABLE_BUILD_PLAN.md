@@ -104,17 +104,19 @@ directory. See `.claude/rules/supabase-changes.md`.
 
 ### Follow-ups discovered while executing (not in the original plan)
 
-1. **Link previews are broken for every dynamic route.** Sharing
-   `/opportunities/:slug`, `/faculty/:slug`, `/blog/:slug`, `/mentor/:id` into
-   WhatsApp/LinkedIn/Slack shows the **homepage's** title, description and
-   image. `prerender.js` only rewrites head tags for the 13 fixed routes in
-   `ROUTE_META`; `vercel.json`'s catch-all serves `index.html` for everything
-   else, and `SEOHead` corrects it client-side, which crawlers never run.
-   `generate-dynamic-sitemap.js` is crawler *discovery* only — unrelated.
-   No mechanism exists for any dynamic route, so this needs a decision, not a
-   patch: either extend `prerender.js` to a bounded set of dynamic pages
-   (reusing its faculty cursor pattern) or add a crawler-user-agent-only edge
-   function. **Do not invent a third pipeline silently.**
+1. ~~**Link previews are broken for every dynamic route.**~~ **FIXED**
+   (`29800e3` "Dynamic Link Previews via prerender.js", `3865d65` "fix(seo):
+   update dynamic sitemap generation, prerendering, and 404 route handling").
+   `prerender.js` now fetches faculty/opportunities/mentors/communities from
+   Supabase at build time and writes real per-entity `<title>`/description/OG
+   HTML for the top 100 faculty, 50 opportunities, 50 mentors, and 100
+   communities, reusing the faculty cursor pattern this note originally
+   proposed; `vercel.json` has matching per-route-type rewrites instead of one
+   catch-all. Residual gap, narrower than before: anything beyond those
+   per-type caps still falls through to the generic `index.html` and ships
+   homepage metadata — worth a decision on raising the caps or an on-demand
+   path for the long tail, but not the open "no mechanism exists" problem this
+   entry originally described.
 2. **`BadgeCreationForm.tsx`'s "Badge name is required" toast is unreachable** —
    the `<Input required>` HTML5 attribute blocks submission before the JS check
    runs.
