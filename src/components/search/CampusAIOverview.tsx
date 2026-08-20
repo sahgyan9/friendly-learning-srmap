@@ -53,7 +53,7 @@ const getCachedOverview = (q: string): AIOverviewResult | null => {
     return OVERVIEW_CACHE.get(norm)!;
   }
   try {
-    const raw = sessionStorage.getItem(`ai_overview_v5_${norm}`);
+    const raw = sessionStorage.getItem(`ai_overview_v6_${norm}`);
     if (raw) {
       const parsed = JSON.parse(raw) as AIOverviewResult;
       OVERVIEW_CACHE.set(norm, parsed);
@@ -69,7 +69,7 @@ const setCachedOverview = (q: string, data: AIOverviewResult) => {
   const norm = q.trim().toLowerCase().replace(/\s+/g, " ");
   OVERVIEW_CACHE.set(norm, data);
   try {
-    sessionStorage.setItem(`ai_overview_v5_${norm}`, JSON.stringify(data));
+    sessionStorage.setItem(`ai_overview_v6_${norm}`, JSON.stringify(data));
   } catch {
     // Ignore storage issues
   }

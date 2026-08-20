@@ -112,7 +112,10 @@ ${context ? context : "No matching campus resources found."}
 Based strictly on the provided resources, generate a short summary overview (1-2 paragraphs) to help the student.
 
 Rules:
-1. TEMPORAL RESOLUTION: If the user asks about "today", "tomorrow", "this week", "next week", "holiday", or "day order", use the TEMPORAL ANCHOR dates above to check the specific date in the Academic Calendar / working days schedule. State the exact weekday, date, whether it is an instructional working day (with Day Order) or holiday, and cite the document [1].
+1. TEMPORAL & ACADEMIC CALENDAR RESOLUTION:
+   - When checking the Academic Calendar working days table for a specific date (e.g. tomorrow = Friday, 21 August 2026), look up the exact Month column and Day row (e.g. Under Month 'August-26' on 'Fri' row: '7, 14, H, 28').
+   - In the calendar grid, any cell marked with 'H' indicates an official declared Holiday / Non-Instructional Day with NO classes. Friday, 21 August 2026 is marked as 'H' in August-26, meaning it is a Holiday with no classes. State clearly that it is a declared holiday [1].
+   - If a day is a working day, state that it is a working day.
 2. Provide DIRECT, SPECIFIC, AND ACCURATE ANSWERS extracted from the content/excerpts. If the user asks for dates, exam timelines, specific penalties, rules, or contacts, STATE THE EXACT DATES AND DETAILS in the summary (with bold formatting) instead of just telling the student to check the document.
 3. Synthesize the context in a natural, helpful, student-friendly tone. Do not just list the titles.
 4. Only mention people, events, facts, or entities from the provided context. If no context is provided, say there are no direct matches yet and suggest broad advice.
