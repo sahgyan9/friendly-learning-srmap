@@ -29,13 +29,13 @@ import { formatDistanceToNow } from "date-fns";
 import WelcomeEmailButton from "./WelcomeEmailButton";
 import type { MentorWelcomeStatus } from "@/integrations/supabase/services/welcome-emails";
 import { toast } from "sonner";
-import { updateVerificationStatus } from "@/integrations/supabase/services/mentor-verification";
+import { updateVerificationStatus, type MentorVerificationWithUser } from "@/integrations/supabase/services/mentor-verification";
 import { useAuth } from "@/context/AuthContext";
 import VerificationFlags from "./VerificationFlags";
 import { enrollmentYear } from "@/lib/college-id";
 
 interface VerificationDetailsCardProps {
-    verification: any;
+    verification: MentorVerificationWithUser;
     onStatusUpdate: () => void;
     /** Email and welcome state for this mentor, from the admin-only RPC. */
     welcome?: MentorWelcomeStatus;

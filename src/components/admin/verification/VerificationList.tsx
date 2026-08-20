@@ -6,9 +6,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Mail, ShieldCheck, User } from "lucide-react";
 import VerificationDetailsCard from "./VerificationDetailsCard";
 import type { WelcomeStatusMap } from "@/integrations/supabase/services/welcome-emails";
+import type { MentorVerificationWithUser } from "@/integrations/supabase/services/mentor-verification";
 
 interface VerificationListProps {
-  verifications: any[];
+  verifications: MentorVerificationWithUser[];
   loading: boolean;
   selectedStatus: string;
   /** Drives the count on the review tab; applications approve themselves, so

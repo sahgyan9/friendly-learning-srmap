@@ -1,17 +1,20 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { 
-  getBadgeTypes, 
-  getUserBadges, 
-  BadgeType, 
-  UserBadge 
+import {
+  getBadgeTypes,
+  getUserBadges,
+  BadgeType,
+  UserBadge
 } from "@/integrations/supabase/services/badges";
+
+/** A user_badges row enriched with its badge_type join, or backfilled from badgeTypes locally. */
+export type EnrichedUserBadge = UserBadge & { badge_type?: BadgeType | null };
 
 export const useBadges = (userId?: string) => {
   const { user } = useAuth();
   const [badgeTypes, setBadgeTypes] = useState<BadgeType[]>([]);
-  const [userBadges, setUserBadges] = useState<any[]>([]);
+  const [userBadges, setUserBadges] = useState<EnrichedUserBadge[]>([]);
   const [loading, setLoading] = useState(false);
 
   const targetUserId = userId || user?.id;
@@ -33,7 +36,7 @@ export const useBadges = (userId?: string) => {
 
         if (userBadgesResult.data) {
           // Ensure each user badge has the badge_type populated
-          const enrichedUserBadges = userBadgesResult.data.map((userBadge: any) => ({
+          const enrichedUserBadges = userBadgesResult.data.map((userBadge): EnrichedUserBadge => ({
             ...userBadge,
             badge_type: userBadge.badge_type || badgeTypesResult.data?.find((bt: BadgeType) => bt.id === userBadge.badge_type_id)
           }));
@@ -92,7 +95,7 @@ export const useBadges = (userId?: string) => {
             }
 
             if (userBadgesResult.data) {
-              const enrichedUserBadges = userBadgesResult.data.map((userBadge: any) => ({
+              const enrichedUserBadges = userBadgesResult.data.map((userBadge): EnrichedUserBadge => ({
                 ...userBadge,
                 badge_type: userBadge.badge_type || badgeTypesResult.data?.find((bt: BadgeType) => bt.id === userBadge.badge_type_id)
               }));

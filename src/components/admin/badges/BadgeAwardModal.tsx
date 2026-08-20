@@ -16,7 +16,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { awardBadge } from "@/integrations/supabase/services/badges";
+import { awardBadge, BadgeType } from "@/integrations/supabase/services/badges";
 import { useAuth } from "@/context/AuthContext";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
 
@@ -39,7 +39,7 @@ interface SearchedUser {
 }
 
 interface BadgeAwardModalProps {
-  badgeTypes: any[];
+  badgeTypes: BadgeType[];
   onClose: () => void;
   onSuccess: () => void;
 }

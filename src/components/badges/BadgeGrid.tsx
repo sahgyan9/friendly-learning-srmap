@@ -1,8 +1,9 @@
 
 import { Badge } from "@/components/ui/badge";
+import type { EnrichedUserBadge } from "@/hooks/useBadges";
 
 interface BadgeGridProps {
-  badges: any[];
+  badges: EnrichedUserBadge[];
   maxDisplay?: number;
 }
 

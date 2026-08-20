@@ -134,7 +134,7 @@ export const getBadgeStatistics = async () => {
   }
 
   // Count badges by category
-  const categoryStats = badgesByCategory?.reduce((acc: Record<string, number>, badge: any) => {
+  const categoryStats = badgesByCategory?.reduce((acc: Record<string, number>, badge) => {
     const category = badge.badge_type?.category || 'unknown';
     acc[category] = (acc[category] || 0) + 1;
     return acc;

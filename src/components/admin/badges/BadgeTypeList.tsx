@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Trash2, Edit, Award } from "lucide-react";
 import { toast } from "sonner";
-import { deleteBadgeType, autoAwardPerformanceBadges } from "@/integrations/supabase/services/badges";
+import { deleteBadgeType, autoAwardPerformanceBadges, BadgeType } from "@/integrations/supabase/services/badges";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 interface BadgeTypeListProps {
-  badgeTypes: any[];
+  badgeTypes: BadgeType[];
   loading: boolean;
   onRefetch: () => void;
 }

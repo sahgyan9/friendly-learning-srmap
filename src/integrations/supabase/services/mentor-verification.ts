@@ -6,6 +6,26 @@ import { getErrorMessage } from "@/lib/errors";
 export type MentorVerification = Database['public']['Tables']['mentor_verifications']['Row'];
 export type CreateMentorVerification = Database['public']['Tables']['mentor_verifications']['Insert'];
 
+/** The mentor-application form data stashed in the jsonb application_data column. */
+export interface MentorApplicationData {
+  profile_image?: string;
+  name?: string;
+  department?: string;
+  mobile?: string;
+  bio?: string;
+  skills?: string;
+  linkedin_url?: string;
+}
+
+type PublicUser = Database['public']['Tables']['users']['Row'];
+
+/** A mentor_verifications row joined with the applicant and (if reviewed) the reviewer, as returned by getAllMentorVerifications. */
+export type MentorVerificationWithUser = MentorVerification & {
+  application_data: MentorApplicationData | null;
+  user: Pick<PublicUser, 'name' | 'email' | 'department' | 'profile_image'> | null;
+  reviewed_by_user: Pick<PublicUser, 'name' | 'email'> | null;
+};
+
 export const submitMentorApplication = async (application: CreateMentorVerification) => {
   // First check if user already has an application
   const { data: existingApp, error: checkError } = await supabase
@@ -88,7 +108,7 @@ export const getAllMentorVerifications = async (status?: string) => {
     .from('mentor_verifications')
     .select(`
       *,
-      user:users!mentor_verifications_user_id_fkey(name, email, department),
+      user:users!mentor_verifications_user_id_fkey(name, email, department, profile_image),
       reviewed_by_user:users!mentor_verifications_reviewed_by_fkey(name, email)
     `)
     .order('submitted_at', { ascending: false });
@@ -103,7 +123,7 @@ export const getAllMentorVerifications = async (status?: string) => {
     throw new Error(`Failed to fetch verifications: ${error.message}`);
   }
 
-  return { data, error: null };
+  return { data: data as unknown as MentorVerificationWithUser[], error: null };
 };
 
 export const updateVerificationStatus = async (

@@ -6,23 +6,15 @@ import AdminHeader from "@/components/admin/AdminHeader";
 import VerificationList from "@/components/admin/verification/VerificationList";
 import VerificationStats from "@/components/admin/verification/VerificationStats";
 import VerificationFilters, { VerificationFilters as FilterType } from "@/components/admin/verification/VerificationFilters";
-import { getAllMentorVerifications, getVerificationStatistics } from "@/integrations/supabase/services/mentor-verification";
+import {
+  getAllMentorVerifications,
+  getVerificationStatistics,
+  type MentorVerificationWithUser,
+} from "@/integrations/supabase/services/mentor-verification";
 import { listMentorWelcomeStatus, type WelcomeStatusMap } from "@/integrations/supabase/services/welcome-emails";
 
-/**
- * The fields this page filters and counts on. The rows carry more than this —
- * they are joined with the applicant's user record — but narrowing to what is
- * actually read here keeps the predicates typed without having to describe the
- * whole join.
- */
-type VerificationRow = {
-  status: string;
-  flags?: string[] | null;
-  [key: string]: unknown;
-};
-
 const AdminMentorVerification = () => {
-  const [allVerifications, setAllVerifications] = useState<VerificationRow[]>([]);
+  const [allVerifications, setAllVerifications] = useState<MentorVerificationWithUser[]>([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedStatus, setSelectedStatus] = useState("pending");
@@ -42,30 +34,30 @@ const AdminMentorVerification = () => {
     // this tab the flags would never be seen, since Pending is always empty.
     let filtered =
       selectedStatus === "flagged"
-        ? allVerifications.filter((verification: VerificationRow) => verification.flags?.length > 0)
-        : allVerifications.filter((verification: VerificationRow) => verification.status === selectedStatus);
+        ? allVerifications.filter((verification: MentorVerificationWithUser) => verification.flags?.length > 0)
+        : allVerifications.filter((verification: MentorVerificationWithUser) => verification.status === selectedStatus);
 
 
     // Apply search filter
     if (filters.search) {
       const searchTerm = filters.search.toLowerCase();
-      filtered = filtered.filter((verification: any) => {
-        const userData = verification.user || {};
-        const appData = verification.application_data || {};
+      filtered = filtered.filter((verification: MentorVerificationWithUser) => {
+        const userData = verification.user;
+        const appData = verification.application_data;
 
         return (
-          userData.name?.toLowerCase().includes(searchTerm) ||
-          userData.email?.toLowerCase().includes(searchTerm) ||
-          appData.name?.toLowerCase().includes(searchTerm) ||
-          appData.skills?.toLowerCase().includes(searchTerm) ||
-          appData.bio?.toLowerCase().includes(searchTerm)
+          userData?.name?.toLowerCase().includes(searchTerm) ||
+          userData?.email?.toLowerCase().includes(searchTerm) ||
+          appData?.name?.toLowerCase().includes(searchTerm) ||
+          appData?.skills?.toLowerCase().includes(searchTerm) ||
+          appData?.bio?.toLowerCase().includes(searchTerm)
         );
       });
     }
 
     // Apply department filter
     if (filters.department) {
-      filtered = filtered.filter((verification: any) => {
+      filtered = filtered.filter((verification: MentorVerificationWithUser) => {
         const department = verification.application_data?.department || verification.user?.department;
         return department === filters.department;
       });
@@ -74,16 +66,16 @@ const AdminMentorVerification = () => {
     // Apply university filter
     if (filters.university) {
       const universityTerm = filters.university.toLowerCase();
-      filtered = filtered.filter((verification: any) =>
+      filtered = filtered.filter((verification: MentorVerificationWithUser) =>
         verification.university?.toLowerCase().includes(universityTerm)
       );
     }
 
     // Apply CGPA range filter
     if (filters.cgpaRange) {
-      filtered = filtered.filter((verification: any) => {
-        const verificationCgpa = parseFloat(verification.cgpa);
-        if (isNaN(verificationCgpa)) return false;
+      filtered = filtered.filter((verification: MentorVerificationWithUser) => {
+        const verificationCgpa = verification.cgpa;
+        if (verificationCgpa === null || isNaN(verificationCgpa)) return false;
 
         switch (filters.cgpaRange) {
           case '9.0-10.0':
@@ -104,7 +96,7 @@ const AdminMentorVerification = () => {
 
     // Apply year of studies filter
     if (filters.yearOfStudies) {
-      filtered = filtered.filter((verification: any) =>
+      filtered = filtered.filter((verification: MentorVerificationWithUser) =>
         verification.year_of_studies === filters.yearOfStudies
       );
     }
@@ -159,13 +151,13 @@ const AdminMentorVerification = () => {
 
   const totalForStatus =
     selectedStatus === "flagged"
-      ? allVerifications.filter((v: VerificationRow) => v.flags?.length > 0).length
-      : allVerifications.filter((v: VerificationRow) => v.status === selectedStatus).length;
+      ? allVerifications.filter((v: MentorVerificationWithUser) => v.flags?.length > 0).length
+      : allVerifications.filter((v: MentorVerificationWithUser) => v.status === selectedStatus).length;
 
-  const flaggedCount = allVerifications.filter((v: VerificationRow) => v.flags?.length > 0).length;
+  const flaggedCount = allVerifications.filter((v: MentorVerificationWithUser) => v.flags?.length > 0).length;
 
   const unwelcomedCount = allVerifications.filter(
-    (v: VerificationRow) =>
+    (v: MentorVerificationWithUser) =>
       v.status === "approved" && !welcomeStatus.get(v.user_id as string)?.welcomed,
   ).length;
 
