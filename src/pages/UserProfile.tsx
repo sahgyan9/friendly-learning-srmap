@@ -1,70 +1,23 @@
-
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { toast } from "sonner";
-import { Loader2, User, Mail, Phone, LinkIcon, FileText, Calendar, Upload, Camera, Award, BookOpen, GraduationCap, Heart, Star, MessageSquare } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Award, Loader2, Star } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import BadgeDisplay from "@/components/badges/BadgeDisplay";
-import AlumniPromptBanner from "@/components/alumni/AlumniPromptBanner";
-import AvailabilityControl from "@/components/mentors/AvailabilityControl";
-import ReviewsList from "@/components/rating/ReviewsList";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import AvatarCropDialog from "@/components/profile/AvatarCropDialog";
+import { toast } from "sonner";
+import BadgeDisplay from "@/components/badges/BadgeDisplay";
+import ReviewsList from "@/components/rating/ReviewsList";
+import AlumniPromptBanner from "@/components/alumni/AlumniPromptBanner";
 import ImportSrmPortal from "@/components/profile/ImportSrmPortal";
-import InterestsEditor from "@/components/profile/InterestsEditor";
-import { downscaleImage } from "@/lib/image/downscale";
-import { storagePathFromPublicUrl } from "@/lib/image/storage-path";
-
-interface UserProfile {
-  name: string;
-  email: string;
-  mobile: string;
-  bio: string;
-  linkedin_url: string;
-  department: string;
-  profile_image: string;
-  role: string;
-  skills: string[];
-  is_available: boolean;
-  verification_status: string;
-  email_notifications: boolean;
-  email_frequency: string;
-  interests: string[];
-  interests_discoverable: boolean;
-}
-
-interface MentorProfile {
-  cgpa: number | null;
-  year_of_studies: string;
-  university: string;
-  hobbies: string;
-  rating: number;
-  review_count: number;
-  /** Directory listing state. Lives on `mentors`, and only the RPC may write it. */
-  is_available: boolean;
-  available_from: string | null;
-  availability_note: string | null;
-}
-
-interface UserStats {
-  totalConnections: number;
-  totalReviews: number;
-  totalBadges: number;
-  messagesSent: number;
-  mentoringSessions?: number;
-}
+import { ProfileAvatarUploader } from "@/components/profile/ProfileAvatarUploader";
+import { ProfileStatsSection, type UserStats } from "@/components/profile/ProfileStatsSection";
+import { MentorProfileCard, type MentorProfileData } from "@/components/profile/MentorProfileCard";
+import { ProfileInfoForm, type UserProfileData } from "@/components/profile/ProfileInfoForm";
 
 const UserProfile = () => {
-  const { user, profile: authProfile, isMentor } = useAuth();
-  const [profile, setProfile] = useState<UserProfile>({
+  const { user, isMentor } = useAuth();
+  const [profile, setProfile] = useState<UserProfileData>({
     name: "",
     email: "",
     mobile: "",
@@ -81,7 +34,7 @@ const UserProfile = () => {
     interests: [],
     interests_discoverable: false,
   });
-  const [mentorProfile, setMentorProfile] = useState<MentorProfile>({
+  const [mentorProfile, setMentorProfile] = useState<MentorProfileData>({
     cgpa: null,
     year_of_studies: "",
     university: "",
@@ -101,10 +54,6 @@ const UserProfile = () => {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [isUploadingImage, setIsUploadingImage] = useState(false);
-  /** Chosen but not yet positioned. Non-null means the cropper is open. */
-  const [pendingImage, setPendingImage] = useState<File | null>(null);
-  const [newSkill, setNewSkill] = useState("");
 
   useEffect(() => {
     if (user) {
@@ -126,7 +75,6 @@ const UserProfile = () => {
         setProfile({
           name: data.name || "",
           email: data.email || "",
-
           mobile: data.mobile || "",
           bio: data.bio || "",
           linkedin_url: data.linkedin_url || "",
@@ -143,7 +91,7 @@ const UserProfile = () => {
         });
 
         // Fetch mentor-specific data if user is a mentor
-        if (data.role === 'mentor' || isMentor) {
+        if (data.role === "mentor" || isMentor) {
           const { data: mentorData, error: mentorError } = await supabase
             .from("mentors")
             .select("*")
@@ -178,28 +126,24 @@ const UserProfile = () => {
 
   const fetchUserStats = async () => {
     try {
-      // Fetch badges count
-      const { data: badgesData, error: badgesError } = await supabase
-        .from('user_badges')
-        .select('id', { count: 'exact' })
-        .eq('user_id', user?.id);
+      const { data: badgesData } = await supabase
+        .from("user_badges")
+        .select("id", { count: "exact" })
+        .eq("user_id", user?.id);
 
-      // Fetch reviews count (if mentor)
-      const { data: reviewsData, error: reviewsError } = await supabase
-        .from('mentor_reviews')
-        .select('id', { count: 'exact' })
-        .eq('mentor_id', user?.id);
+      const { data: reviewsData } = await supabase
+        .from("mentor_reviews")
+        .select("id", { count: "exact" })
+        .eq("mentor_id", user?.id);
 
-      // Fetch messages sent count
-      const { data: messagesData, error: messagesError } = await supabase
-        .from('messages')
-        .select('id', { count: 'exact' })
-        .eq('sender_id', user?.id);
+      const { data: messagesData } = await supabase
+        .from("messages")
+        .select("id", { count: "exact" })
+        .eq("sender_id", user?.id);
 
-      // Fetch connections count (conversations)
-      const { data: connectionsData, error: connectionsError } = await supabase
-        .from('conversations')
-        .select('id', { count: 'exact' })
+      const { data: connectionsData } = await supabase
+        .from("conversations")
+        .select("id", { count: "exact" })
         .or(`user1_id.eq.${user?.id},user2_id.eq.${user?.id}`);
 
       setUserStats({
@@ -207,95 +151,10 @@ const UserProfile = () => {
         totalReviews: reviewsData?.length || 0,
         messagesSent: messagesData?.length || 0,
         totalConnections: connectionsData?.length || 0,
-        mentoringSessions: reviewsData?.length || 0, // Using reviews as proxy for sessions
+        mentoringSessions: reviewsData?.length || 0,
       });
     } catch (error) {
       console.error("Error fetching user stats:", error);
-    }
-  };
-
-  /**
-   * Choosing a file no longer uploads it. It opens the cropper, and the crop is
-   * what gets uploaded — see handleCropped.
-   */
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    // Cleared here so picking the same file twice still fires a change event,
-    // which it otherwise would not if the first attempt was cancelled.
-    e.target.value = "";
-    if (!file) return;
-
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      toast.error("Please upload an image file");
-      return;
-    }
-
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("Image must be less than 5MB");
-      return;
-    }
-
-    setPendingImage(file);
-  };
-
-  const handleCropped = async (cropped: File) => {
-    setIsUploadingImage(true);
-    const previousImageUrl = profile.profile_image;
-
-    try {
-      // Already a 512px square from the cropper, so this is nearly always a
-      // no-op. Kept because the cropper's output size is its own business to
-      // change, and this is the one place that guarantees what reaches storage.
-      const file = await downscaleImage(cropped);
-
-      // Create unique file name
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${user?.id}-${Date.now()}.${fileExt}`;
-      const filePath = `profile-images/${fileName}`;
-
-      // Upload to Supabase Storage
-      const { error: uploadError } = await supabase.storage
-        .from('profiles')
-        .upload(filePath, file, { upsert: true });
-
-      if (uploadError) throw uploadError;
-
-      // Get public URL
-      const { data: urlData } = supabase.storage
-        .from('profiles')
-        .getPublicUrl(filePath);
-
-      const imageUrl = urlData.publicUrl;
-
-      // Update profile with new image URL
-      const { error: updateError } = await supabase
-        .from("users")
-        .update({ profile_image: imageUrl })
-        .eq("id", user?.id);
-
-      if (updateError) throw updateError;
-
-      setProfile({ ...profile, profile_image: imageUrl });
-      setPendingImage(null);
-      toast.success("Profile picture updated successfully!");
-
-      // After the DB row points at the new image, not before — deleting first
-      // and having the update fail would strand the old avatar's URL pointing
-      // at nothing.
-      if (previousImageUrl) {
-        const oldPath = storagePathFromPublicUrl("profiles", previousImageUrl);
-        if (oldPath) {
-          const { error: removeError } = await supabase.storage.from("profiles").remove([oldPath]);
-          if (removeError) console.error("Error removing old profile image:", removeError);
-        }
-      }
-    } catch (error: any) {
-      console.error("Error uploading image:", error);
-      toast.error(error.message || "Failed to upload image");
-    } finally {
-      setIsUploadingImage(false);
     }
   };
 
@@ -304,12 +163,10 @@ const UserProfile = () => {
     setIsSaving(true);
 
     try {
-      // Update users table
       const { error: userError } = await supabase
         .from("users")
         .update({
           name: profile.name,
-
           mobile: profile.mobile,
           bio: profile.bio,
           linkedin_url: profile.linkedin_url,
@@ -317,16 +174,12 @@ const UserProfile = () => {
           skills: profile.skills,
           interests: profile.interests,
           interests_discoverable: profile.interests_discoverable,
-          // `is_available` is deliberately not written here. The directory
-          // reads public.mentors, so this column was never the switch anyone
-          // thought it was — AvailabilityControl owns the real one now.
         })
         .eq("id", user?.id);
 
       if (userError) throw userError;
 
-      // Update mentors table if user is a mentor
-      if (profile.role === 'mentor' || isMentor) {
+      if (profile.role === "mentor" || isMentor) {
         const { error: mentorError } = await supabase
           .from("mentors")
           .update({
@@ -345,7 +198,6 @@ const UserProfile = () => {
 
         if (mentorError) {
           console.error("Error updating mentor profile:", mentorError);
-          // Don't throw - user table was updated successfully
         }
       }
 
@@ -358,500 +210,131 @@ const UserProfile = () => {
     }
   };
 
-  const addSkill = () => {
-    if (newSkill.trim() && !profile.skills.includes(newSkill.trim())) {
-      setProfile({ ...profile, skills: [...profile.skills, newSkill.trim()] });
-      setNewSkill("");
-    }
-  };
-
-  const removeSkill = (skillToRemove: string) => {
-    setProfile({
-      ...profile,
-      skills: profile.skills.filter(skill => skill !== skillToRemove)
-    });
-  };
-
   if (isLoading) {
     return (
-      <>
-        <div className="min-h-screen bg-background">
-          <div className="container mx-auto px-4 py-8">
-            <div className="flex justify-center items-center min-h-[400px]">
-              <Loader2 className="h-8 w-8 animate-spin" />
-            </div>
-          </div>
-        </div>
-      </>
-    );
-  }
-
-  return (
-    <>
       <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-8">
-          <div className="max-w-4xl mx-auto space-y-8">
-            <div className="text-center space-y-2">
-              <h1 className="text-3xl font-bold">Profile Settings</h1>
-              <p className="text-muted-foreground">
-                Manage your account information and preferences
-              </p>
-              {(profile.role === 'mentor' || isMentor) && (
-                <Badge variant="default" className="mt-2">
-                  <Award className="h-3 w-3 mr-1" />
-                  Mentor Account
-                </Badge>
-              )}
-            </div>
-
-            {/* Renders itself only for a mentor whose graduation year has passed
-                and who has not answered yet. */}
-            <AlumniPromptBanner />
-
-            {/* Profile Picture Section */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Camera className="h-5 w-5" />
-                  Profile Picture
-                </CardTitle>
-                <CardDescription>
-                  Upload a profile picture to personalize your account
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-col items-center gap-4">
-                  <Avatar className="h-32 w-32 border-4 border-border">
-                    <AvatarImage
-                      src={profile.profile_image}
-                      alt={profile.name}
-                      className="object-cover"
-                    />
-                    <AvatarFallback className="text-3xl bg-primary/10 text-primary">
-                      {profile.name
-                        .split(' ')
-                        .map(n => n[0])
-                        .join('')
-                        .toUpperCase()
-                        .substring(0, 2) || 'U'}
-                    </AvatarFallback>
-                  </Avatar>
-
-                  <div className="flex flex-col items-center gap-2">
-                    <Label htmlFor="profile-image" className="cursor-pointer">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        disabled={isUploadingImage}
-                        onClick={() => document.getElementById('profile-image')?.click()}
-                      >
-                        {isUploadingImage ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Uploading...
-                          </>
-                        ) : (
-                          <>
-                            <Upload className="mr-2 h-4 w-4" />
-                            Upload Picture
-                          </>
-                        )}
-                      </Button>
-                    </Label>
-                    <Input
-                      id="profile-image"
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handleImageUpload}
-                      disabled={isUploadingImage}
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      JPG, PNG or GIF (max 5MB) — you'll get to position it
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <AvatarCropDialog
-              file={pendingImage}
-              saving={isUploadingImage}
-              onCancel={() => setPendingImage(null)}
-              onCropped={handleCropped}
-            />
-
-            {/* Statistics Overview */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Award className="h-5 w-5" />
-                  Profile Statistics
-                </CardTitle>
-                <CardDescription>
-                  Your activity and achievements overview
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="flex flex-col items-center p-4 bg-muted rounded-lg">
-                    <Award className="h-6 w-6 mb-2 text-primary" />
-                    <p className="text-2xl font-bold">{userStats.totalBadges}</p>
-                    <p className="text-xs text-muted-foreground">Badges</p>
-                  </div>
-
-                  <div className="flex flex-col items-center p-4 bg-muted rounded-lg">
-                    <MessageSquare className="h-6 w-6 mb-2 text-primary" />
-                    <p className="text-2xl font-bold">{userStats.totalConnections}</p>
-                    <p className="text-xs text-muted-foreground">Connections</p>
-                  </div>
-
-                  {(profile.role === 'mentor' || isMentor) && (
-                    <>
-                      <div className="flex flex-col items-center p-4 bg-muted rounded-lg">
-                        <Star className="h-6 w-6 mb-2 text-primary" />
-                        <p className="text-2xl font-bold">{mentorProfile.rating.toFixed(1)}</p>
-                        <p className="text-xs text-muted-foreground">Rating</p>
-                      </div>
-
-                      <div className="flex flex-col items-center p-4 bg-muted rounded-lg">
-                        <BookOpen className="h-6 w-6 mb-2 text-primary" />
-                        <p className="text-2xl font-bold">{userStats.totalReviews}</p>
-                        <p className="text-xs text-muted-foreground">Reviews</p>
-                      </div>
-                    </>
-                  )}
-
-                  {!(profile.role === 'mentor' || isMentor) && (
-                    <>
-                      <div className="flex flex-col items-center p-4 bg-muted rounded-lg">
-                        <Mail className="h-6 w-6 mb-2 text-primary" />
-                        <p className="text-2xl font-bold">{userStats.messagesSent}</p>
-                        <p className="text-xs text-muted-foreground">Messages</p>
-                      </div>
-
-                      <div className="flex flex-col items-center p-4 bg-muted rounded-lg">
-                        <GraduationCap className="h-6 w-6 mb-2 text-primary" />
-                        <p className="text-2xl font-bold">{userStats.mentoringSessions || 0}</p>
-                        <p className="text-xs text-muted-foreground">Sessions</p>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Tabs defaultValue="profile" className="w-full">
-              <TabsList className="grid w-full" style={{ gridTemplateColumns: (profile.role === 'mentor' || isMentor) ? '1fr 1fr 1fr' : '1fr 1fr' }}>
-                <TabsTrigger value="profile">Profile Info</TabsTrigger>
-                {(profile.role === 'mentor' || isMentor) ? (
-                  <>
-                    <TabsTrigger value="badges">Badges</TabsTrigger>
-                    <TabsTrigger value="reviews">Reviews</TabsTrigger>
-                  </>
-                ) : (
-                  <TabsTrigger value="badges">Badges</TabsTrigger>
-                )}
-              </TabsList>
-
-              <TabsContent value="profile" className="space-y-6">
-                <ImportSrmPortal onProfileUpdate={fetchProfile} />
-                <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
-                  {/* Profile Information */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <User className="h-5 w-5" />
-                        Personal Information
-                      </CardTitle>
-                      <CardDescription>
-                        Update your profile details and contact information
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <form onSubmit={handleSubmit} className="space-y-4">
-                        {/* Verification Status Badge */}
-                        <div className="p-3 bg-muted rounded-lg flex items-center justify-between">
-                          <span className="text-sm font-medium">Verification Status</span>
-                          <Badge variant={
-                            profile.verification_status === 'verified' ? 'default' :
-                              profile.verification_status === 'rejected' ? 'destructive' :
-                                'secondary'
-                          }>
-                            {profile.verification_status === 'verified' && '✓ '}
-                            {(profile.verification_status || 'pending').charAt(0).toUpperCase() + (profile.verification_status || 'pending').slice(1)}
-                          </Badge>
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="name">Full Name</Label>
-                          <Input
-                            id="name"
-                            value={profile.name}
-                            onChange={(e) => setProfile({ ...profile, name: e.target.value })}
-                            placeholder="Enter your full name"
-                            required
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="mobile">Mobile Number</Label>
-                          <Input
-                            id="mobile"
-                            type="tel"
-                            value={profile.mobile}
-                            onChange={(e) => setProfile({ ...profile, mobile: e.target.value })}
-                            placeholder="Enter your mobile number"
-                          />
-                        </div>
-
-                        <InterestsEditor
-                          interests={profile.interests}
-                          onInterestsChange={(next) => setProfile({ ...profile, interests: next })}
-                          discoverable={profile.interests_discoverable}
-                          onDiscoverableChange={(next) =>
-                            setProfile({ ...profile, interests_discoverable: next })
-                          }
-                        />
-
-                        {(profile.role === 'mentor' || isMentor) && (
-                          <>
-                            <div className="space-y-2">
-                              <Label htmlFor="department">Department</Label>
-                              <Input
-                                id="department"
-                                value={profile.department}
-                                onChange={(e) => setProfile({ ...profile, department: e.target.value })}
-                                placeholder="e.g., Computer Science, Mathematics"
-                              />
-                            </div>
-
-                            <div className="space-y-2">
-                              <Label htmlFor="linkedin_url">LinkedIn URL</Label>
-                              <Input
-                                id="linkedin_url"
-                                type="url"
-                                value={profile.linkedin_url}
-                                onChange={(e) => setProfile({ ...profile, linkedin_url: e.target.value })}
-                                placeholder="https://linkedin.com/in/yourprofile"
-                              />
-                            </div>
-
-                            <div className="space-y-2">
-                              <Label htmlFor="bio">Bio</Label>
-                              <Textarea
-                                id="bio"
-                                value={profile.bio}
-                                onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
-                                placeholder="Tell us about yourself..."
-                                rows={4}
-                              />
-                            </div>
-
-                            {/* Skills Section */}
-                            <div className="space-y-2">
-                              <Label>Skills</Label>
-                              <div className="flex gap-2">
-                                <Input
-                                  value={newSkill}
-                                  onChange={(e) => setNewSkill(e.target.value)}
-                                  placeholder="Add a skill"
-                                  onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addSkill())}
-                                />
-                                <Button type="button" onClick={addSkill} variant="outline">
-                                  Add
-                                </Button>
-                              </div>
-                              <div className="flex flex-wrap gap-2 mt-2">
-                                {profile.skills.map((skill, index) => (
-                                  <Badge key={index} variant="secondary" className="cursor-pointer">
-                                    {skill}
-                                    <button
-                                      onClick={() => removeSkill(skill)}
-                                      className="ml-2 hover:text-destructive"
-                                      type="button"
-                                    >
-                                      ×
-                                    </button>
-                                  </Badge>
-                                ))}
-                              </div>
-                            </div>
-
-                            {/* Saves itself through set_mentor_availability
-                                rather than joining this form's submit. The
-                                dropdown that used to be here wrote
-                                users.is_available, which nothing reads. */}
-                            <AvailabilityControl
-                              isAvailable={mentorProfile.is_available}
-                              availableFrom={mentorProfile.available_from}
-                              note={mentorProfile.availability_note}
-                              onChange={(next) =>
-                                setMentorProfile({ ...mentorProfile, ...next })
-                              }
-                            />
-                          </>
-                        )}
-
-                        {!(profile.role === 'mentor' || isMentor) && (
-                          <Button
-                            type="button"
-                            variant="outline"
-                            className="w-full"
-                            onClick={() => window.location.href = '/become-mentor'}
-                          >
-                            <GraduationCap className="mr-2 h-4 w-4" />
-                            Become a Mentor
-                          </Button>
-                        )}
-
-                        <Button type="submit" disabled={isSaving} className="w-full">
-                          {isSaving ? (
-                            <>
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                              Saving...
-                            </>
-                          ) : (
-                            "Save Changes"
-                          )}
-                        </Button>
-                      </form>
-                    </CardContent>
-                  </Card>
-
-                  {/* Mentor-specific fields */}
-                  {(profile.role === 'mentor' || isMentor) && (
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                          <GraduationCap className="h-5 w-5" />
-                          Mentor Information
-                        </CardTitle>
-                        <CardDescription>
-                          Additional information for mentor profile
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="university">University</Label>
-                          <Input
-                            id="university"
-                            value={mentorProfile.university}
-                            onChange={(e) => setMentorProfile({ ...mentorProfile, university: e.target.value })}
-                            placeholder="e.g., SRM AP University"
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="year_of_studies">Year of Studies</Label>
-                          <Select
-                            value={mentorProfile.year_of_studies}
-                            onValueChange={(value) => setMentorProfile({ ...mentorProfile, year_of_studies: value })}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select year" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="1st Year">1st Year</SelectItem>
-                              <SelectItem value="2nd Year">2nd Year</SelectItem>
-                              <SelectItem value="3rd Year">3rd Year</SelectItem>
-                              <SelectItem value="4th Year">4th Year</SelectItem>
-                              <SelectItem value="Graduate">Graduate</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="cgpa">CGPA</Label>
-                          <Input
-                            id="cgpa"
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            max="10"
-                            value={mentorProfile.cgpa || ""}
-                            onChange={(e) => setMentorProfile({ ...mentorProfile, cgpa: parseFloat(e.target.value) || null })}
-                            placeholder="e.g., 8.5"
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="hobbies">Hobbies & Interests</Label>
-                          <Textarea
-                            id="hobbies"
-                            value={mentorProfile.hobbies}
-                            onChange={(e) => setMentorProfile({ ...mentorProfile, hobbies: e.target.value })}
-                            placeholder="Tell us about your hobbies and interests..."
-                            rows={3}
-                          />
-                        </div>
-
-                        {/* Display rating and review count (read-only) */}
-                        <div className="space-y-2">
-                          <Label className="flex items-center gap-2">
-                            <Award className="h-4 w-4" />
-                            Mentor Rating
-                          </Label>
-                          <div className="flex items-center gap-4 p-3 bg-muted rounded-lg">
-                            <div>
-                              <p className="text-2xl font-bold">{(mentorProfile.rating || 0).toFixed(1)}</p>
-                              <p className="text-xs text-muted-foreground">⭐ Rating</p>
-                            </div>
-                            <div className="h-10 w-px bg-border" />
-                            <div>
-                              <p className="text-2xl font-bold">{mentorProfile.review_count}</p>
-                              <p className="text-xs text-muted-foreground">Reviews</p>
-                            </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-                </div>
-              </TabsContent>
-
-              {/* Badges Tab */}
-              <TabsContent value="badges" className="space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Award className="h-5 w-5" />
-                      My Badges
-                    </CardTitle>
-                    <CardDescription>
-                      Badges you've earned for your achievements and contributions
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <BadgeDisplay userId={user?.id || ""} showAll={true} />
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              {/* Reviews Tab - Only for Mentors */}
-              {(profile.role === 'mentor' || isMentor) && (
-                <TabsContent value="reviews" className="space-y-6">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <Star className="h-5 w-5" />
-                        Student Reviews
-                      </CardTitle>
-                      <CardDescription>
-                        Feedback from students you've mentored
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <ReviewsList mentorId={user?.id || ""} />
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-              )}
-            </Tabs>
+          <div className="flex justify-center items-center min-h-[400px]">
+            <Loader2 className="h-8 w-8 animate-spin" />
           </div>
         </div>
       </div>
-    </>
+    );
+  }
+
+  const isUserMentor = profile.role === "mentor" || isMentor;
+
+  return (
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto space-y-8">
+          <div className="text-center space-y-2">
+            <h1 className="text-3xl font-bold">Profile Settings</h1>
+            <p className="text-muted-foreground">
+              Manage your account information and preferences
+            </p>
+            {isUserMentor && (
+              <Badge variant="default" className="mt-2">
+                <Award className="h-3 w-3 mr-1" />
+                Mentor Account
+              </Badge>
+            )}
+          </div>
+
+          <AlumniPromptBanner />
+
+          <ProfileAvatarUploader
+            userId={user?.id || ""}
+            name={profile.name}
+            profileImage={profile.profile_image}
+            onImageUpdated={(url) => setProfile((p) => ({ ...p, profile_image: url }))}
+          />
+
+          <ProfileStatsSection
+            stats={userStats}
+            isMentor={isUserMentor}
+            mentorRating={mentorProfile.rating}
+          />
+
+          <Tabs defaultValue="profile" className="w-full">
+            <TabsList
+              className="grid w-full"
+              style={{
+                gridTemplateColumns: isUserMentor ? "1fr 1fr 1fr" : "1fr 1fr",
+              }}
+            >
+              <TabsTrigger value="profile">Profile Info</TabsTrigger>
+              {isUserMentor ? (
+                <>
+                  <TabsTrigger value="badges">Badges</TabsTrigger>
+                  <TabsTrigger value="reviews">Reviews</TabsTrigger>
+                </>
+              ) : (
+                <TabsTrigger value="badges">Badges</TabsTrigger>
+              )}
+            </TabsList>
+
+            <TabsContent value="profile" className="space-y-6">
+              <ImportSrmPortal onProfileUpdate={fetchProfile} />
+              <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
+                <ProfileInfoForm
+                  profile={profile}
+                  mentorProfile={mentorProfile}
+                  isMentor={isUserMentor}
+                  isSaving={isSaving}
+                  onProfileChange={setProfile}
+                  onMentorProfileChange={setMentorProfile}
+                  onSubmit={handleSubmit}
+                />
+
+                {isUserMentor && (
+                  <MentorProfileCard
+                    mentorProfile={mentorProfile}
+                    onChange={setMentorProfile}
+                  />
+                )}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="badges" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Award className="h-5 w-5" />
+                    My Badges
+                  </CardTitle>
+                  <CardDescription>
+                    Badges you've earned for your achievements and contributions
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <BadgeDisplay userId={user?.id || ""} showAll={true} />
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {isUserMentor && (
+              <TabsContent value="reviews" className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Star className="h-5 w-5" />
+                      Student Reviews
+                    </CardTitle>
+                    <CardDescription>
+                      Feedback from students you've mentored
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <ReviewsList mentorId={user?.id || ""} />
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            )}
+          </Tabs>
+        </div>
+      </div>
+    </div>
   );
 };
 
