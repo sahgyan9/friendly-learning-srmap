@@ -437,6 +437,7 @@ for (const file of [
   '20260815230000_ai_feedback_and_queries_admin_access.sql',
   '20260816100000_search_interactions.sql',
   '20260820120000_set_user_admin_status_rpc.sql',
+  '20260820130000_drop_legacy_canvas_tables.sql',
 ]) {
   if (file === '20260804132345_b843f814-46d5-4c25-bc80-32e5f6ebba59.sql') {
     // Production's `faculty` table still carries `profile_image`, a column
@@ -1539,6 +1540,10 @@ await actAs(CURRENT_UID);
 const { rows: [revokedAdminRes] } = await asAuthenticated(() => q(`SELECT public.set_user_admin_status($1::uuid, false) as res`, [OTHER_UID]));
 const revokedObj = typeof revokedAdminRes?.res === 'string' ? JSON.parse(revokedAdminRes.res) : revokedAdminRes?.res;
 check('admin can revoke admin privileges via set_user_admin_status', revokedObj?.is_admin === false);
+
+console.log('\ndrop legacy canvas tables:');
+const { rows: [canvasTables] } = await q(`SELECT count(*)::int AS n FROM information_schema.tables WHERE table_schema='public' AND table_name LIKE 'canvas_%'`);
+check('orphan canvas tables dropped cleanly', canvasTables?.n === 0, `found ${canvasTables?.n} canvas tables`);
 
 console.log(failures === 0
   ? '\nAll migration checks passed against real Postgres.'
