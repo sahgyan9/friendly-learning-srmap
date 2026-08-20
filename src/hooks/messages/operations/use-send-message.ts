@@ -45,13 +45,6 @@ export const useSendMessage = (userId: string) => {
           ? conversation.user2_id
           : conversation.user1_id;
 
-      console.log("Sending message:", {
-        conversationId,
-        senderId: userId,
-        receiverId,
-        contentLength: content.length
-      });
-
       const tempMessage: Message = {
         id: `temp-${Date.now()}`,
         conversation_id: conversationId,
@@ -82,7 +75,6 @@ export const useSendMessage = (userId: string) => {
       }
 
       if (data) {
-        console.log("Message sent successfully:", data.id);
         setMessages(prev =>
           prev.map(msg => (msg.id === tempMessage.id ? data : msg))
         );

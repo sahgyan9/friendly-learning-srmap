@@ -20,13 +20,11 @@ export const useConversationOperations = (userId: string) => {
 
     // Return early if no userId is provided
     if (!userId) {
-      console.log("No user ID provided, skipping conversation fetch");
       setIsLoadingConversations(false);
       return;
     }
 
     try {
-      console.log("Fetching conversations for user:", userId);
 
       const { data, error } = await getUserConversations(userId);
 
@@ -38,13 +36,11 @@ export const useConversationOperations = (userId: string) => {
       }
 
       if (data) {
-        console.log("Fetched conversations:", data);
         setConversations(data);
         if (data.length > 0) {
           setActiveChat(data[0].id);
         }
       } else {
-        console.log("No conversations data returned");
         setConversations([]);
       }
     } catch (err) {

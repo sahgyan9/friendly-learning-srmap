@@ -4,7 +4,6 @@ import { createNotification } from "./notifications";
 // Verify table exists and is accessible
 export const verifyContactResponsesTable = async () => {
     try {
-        console.log('Verifying contact_responses table...');
         const { data, error } = await supabase
             .from('contact_responses')
             .select('id')
@@ -15,7 +14,6 @@ export const verifyContactResponsesTable = async () => {
             return { exists: false, error: error.message };
         }
 
-        console.log('Table verification successful');
         return { exists: true, error: null };
     } catch (error: any) {
         console.error('Table verification error:', error);
@@ -46,7 +44,6 @@ export interface CreateAdminResponse {
 // Create admin response record and send notification
 export const sendAdminResponse = async (response: CreateAdminResponse) => {
     try {
-        console.log('Sending admin response:', response);
 
         // In a real application, you would integrate with an email service like:
         // - SendGrid
@@ -118,7 +115,6 @@ export const sendAdminResponse = async (response: CreateAdminResponse) => {
             // Don't throw error as response was already saved to database
         }
 
-        console.log('Admin response processed successfully:', responseData);
         return { data: responseData, error: null };
 
     } catch (error) {
@@ -130,7 +126,6 @@ export const sendAdminResponse = async (response: CreateAdminResponse) => {
 // Get all responses for a contact message
 export const getContactMessageResponses = async (contactMessageId: string) => {
     try {
-        console.log('Fetching responses for contact message:', contactMessageId);
 
         // First, let's try a simple query without foreign key joins to diagnose the issue
         const { data, error } = await supabase
@@ -162,12 +157,10 @@ export const getContactMessageResponses = async (contactMessageId: string) => {
                     };
                 });
 
-                console.log('Successfully fetched responses with admin data:', responsesWithAdmin.length);
                 return { data: responsesWithAdmin, error: null };
             }
         }
 
-        console.log('Successfully fetched responses:', data?.length || 0);
         return { data: data || [], error: null };
     } catch (error) {
         console.error('Error fetching contact responses:', error);
@@ -178,7 +171,6 @@ export const getContactMessageResponses = async (contactMessageId: string) => {
 // Get all admin responses (for admin dashboard)
 export const getAllAdminResponses = async (adminId?: string) => {
     try {
-        console.log('Fetching all admin responses', adminId ? `for admin: ${adminId}` : '');
 
         let query = supabase
             .from('contact_responses')
@@ -223,11 +215,9 @@ export const getAllAdminResponses = async (adminId?: string) => {
                 };
             });
 
-            console.log('Successfully fetched admin responses with related data:', responsesWithData.length);
             return { data: responsesWithData, error: null };
         }
 
-        console.log('Successfully fetched admin responses:', data?.length || 0);
         return { data: data || [], error: null };
     } catch (error) {
         console.error('Error fetching admin responses:', error);
@@ -243,7 +233,6 @@ export const mockEmailService = {
         html: string;
         from?: string;
     }) => {
-        console.log('Mock Email Service - Sending email:', emailData);
 
         // Simulate email sending delay
         await new Promise(resolve => setTimeout(resolve, 1000));

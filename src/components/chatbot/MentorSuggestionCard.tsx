@@ -39,7 +39,6 @@ const MentorSuggestionCard = ({ mentor, onConnect }: MentorSuggestionCardProps) 
     
     try {
       // Fetch mentor data first to ensure it's available
-      console.log('Fetching mentor data before connecting:', mentor.id);
       const { data: mentorData, error } = await getMentorById(mentor.id);
       
       if (error || !mentorData) {
@@ -48,7 +47,6 @@ const MentorSuggestionCard = ({ mentor, onConnect }: MentorSuggestionCardProps) 
         return;
       }
       
-      console.log('Mentor data fetched successfully:', mentorData.name);
       
       // Call the original onConnect function
       onConnect();

@@ -65,7 +65,6 @@ const MentorCard = ({ mentor }: MentorCardProps) => {
     setIsConnecting(true);
     
     try {
-      console.log('Starting connection process with mentor:', mentor.id);
       
       // Check if user is trying to message themselves
       if (mentor.id === user.id) {
@@ -82,7 +81,6 @@ const MentorCard = ({ mentor }: MentorCardProps) => {
         return;
       }
       
-      console.log('Mentor data verified:', mentorData.name);
       
       // Create or get the conversation
       const { data: conversation, error: conversationError } = await getOrCreateConversation(user.id, mentor.id);
@@ -93,7 +91,6 @@ const MentorCard = ({ mentor }: MentorCardProps) => {
         return;
       }
       
-      console.log('Conversation established:', conversation.id);
       
       // Show success message
       toast.success(`Connected with ${mentor.name}. Redirecting to messages...`);

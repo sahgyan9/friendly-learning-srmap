@@ -5,7 +5,6 @@ import { Message } from "@/types/chat";
 // Get messages for a conversation using RPC function
 export async function getConversationMessages(conversationId: string) {
   try {
-    console.log("Fetching messages for conversation:", conversationId);
     
     const { data, error } = await supabase.rpc('get_conversation_messages', {
       conversation_id: conversationId
@@ -44,7 +43,6 @@ export async function getConversationMessages(conversationId: string) {
       });
     }
 
-    console.log("Successfully fetched messages:", messagesWithSenders.length);
     return { data: messagesWithSenders, error: null };
   } catch (err) {
     console.error('Exception in getConversationMessages:', err);
@@ -60,12 +58,6 @@ export async function sendMessage(
   content: string
 ) {
   try {
-    console.log("Attempting to send message via RPC:", {
-      conversationId,
-      senderId,
-      receiverId,
-      contentLength: content.length
-    });
 
     const { data, error } = await supabase.rpc('send_message', {
       p_conversation_id: conversationId,
@@ -79,8 +71,6 @@ export async function sendMessage(
       return { data: null, error };
     }
 
-    console.log('Message sent successfully via RPC:', data);
-    console.log('Email notification will be triggered automatically via database trigger');
     
     return { data, error: null };
   } catch (err) {
@@ -92,7 +82,6 @@ export async function sendMessage(
 // Mark messages as read using RPC function
 export async function markMessagesAsRead(conversationId: string, userId: string) {
   try {
-    console.log("Marking messages as read:", { conversationId, userId });
     
     const { data, error } = await supabase.rpc('mark_messages_as_read', {
       conversation_id: conversationId,
@@ -104,7 +93,6 @@ export async function markMessagesAsRead(conversationId: string, userId: string)
       return { data: null, error };
     }
 
-    console.log("Messages marked as read successfully");
     return { data, error: null };
   } catch (err) {
     console.error('Exception in markMessagesAsRead:', err);

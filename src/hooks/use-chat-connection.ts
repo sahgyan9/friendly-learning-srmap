@@ -21,7 +21,6 @@ export const useChatConnection = (userId: string, setActiveChat: (id: string) =>
       chatProcessedRef.current = chatId;
       
       try {
-        console.log('Setting active chat to:', chatId);
         
         // Set the active chat immediately
         setActiveChat(chatId);
@@ -32,7 +31,6 @@ export const useChatConnection = (userId: string, setActiveChat: (id: string) =>
           return params;
         });
         
-        console.log('Chat connection completed successfully');
         
       } catch (err) {
         console.error('Exception during chat connection:', err);

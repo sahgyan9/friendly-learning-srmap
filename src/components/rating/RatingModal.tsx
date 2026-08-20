@@ -50,12 +50,6 @@ const RatingModal = ({
 
     setIsSubmitting(true);
     try {
-      console.log("Submitting review:", {
-        mentor_id: mentorId,
-        reviewer_id: user.id,
-        rating,
-        review_text: reviewText.trim() || null,
-      });
 
       const { error } = await supabase
         .from("mentor_reviews")

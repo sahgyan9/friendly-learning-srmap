@@ -55,11 +55,6 @@ const NavbarProfileMenu = () => {
           data.department !== 'General' && 
           data.department.trim() !== '';
         
-        console.log('Mentor status check:', {
-          userId: user.id,
-          department: data?.department,
-          isApprovedMentor
-        });
         
         setIsRealMentor(isApprovedMentor);
       }

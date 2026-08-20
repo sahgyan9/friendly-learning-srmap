@@ -18,7 +18,6 @@ export const useUserPresenceRealtime = () => {
     useCallback((payload) => {
       if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
         const presenceData = payload.new as UserPresence;
-        console.log('User presence updated:', presenceData);
         
         setUserPresences(prev => ({
           ...prev,

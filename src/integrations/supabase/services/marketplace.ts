@@ -84,7 +84,6 @@ export async function fetchMarketplacePost(id: string) {
 
 export async function createMarketplacePost(post: MarketplacePostInput) {
   try {
-    console.log("Creating marketplace post:", post);
     
     // Get current user
     const { data: { user } } = await supabase.auth.getUser();
@@ -114,7 +113,6 @@ export async function createMarketplacePost(post: MarketplacePostInput) {
       throw error;
     }
     
-    console.log("Post created successfully:", data);
     return data as MarketplacePost;
   } catch (error) {
     console.error("Exception in createMarketplacePost:", error);

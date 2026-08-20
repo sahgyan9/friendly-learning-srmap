@@ -17,7 +17,6 @@ export const useMessageRealtime = (
     useCallback((payload) => {
       if (payload.eventType === 'INSERT') {
         const newMessage = payload.new as Message;
-        console.log('New message received:', newMessage);
         
         onNewMessage(newMessage);
         
@@ -27,7 +26,6 @@ export const useMessageRealtime = (
         }
       } else if (payload.eventType === 'UPDATE') {
         const updatedMessage = payload.new as Message;
-        console.log('Message updated:', updatedMessage);
         onMessageUpdate(updatedMessage);
       }
     }, [activeChat, userId, onNewMessage, onMessageUpdate])
@@ -39,7 +37,6 @@ export const useMessageRealtime = (
     useCallback((payload) => {
       if (payload.eventType === 'UPDATE') {
         const updatedConversation = payload.new as Conversation;
-        console.log('Conversation updated:', updatedConversation);
         onConversationUpdate(updatedConversation);
       }
     }, [onConversationUpdate])

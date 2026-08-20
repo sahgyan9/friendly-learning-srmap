@@ -60,7 +60,6 @@ export const useMessages = (userId: string) => {
       // chat app. .map() alone preserves the old row order, which is why a
       // brand-new message could land at the bottom of the list, below chats
       // from days ago.
-      console.log('Updating conversation list with new message:', newMessage);
       setConversations(prev => {
         const updated = prev.map(conv =>
           conv.id === newMessage.conversation_id
@@ -118,7 +117,6 @@ export const useMessages = (userId: string) => {
           if (error) {
             console.error("Error fetching current user data:", error);
           } else if (data) {
-            console.log("Current user data prefetched:", data);
           }
         } catch (err) {
           console.error("Error prefetching user data:", err);

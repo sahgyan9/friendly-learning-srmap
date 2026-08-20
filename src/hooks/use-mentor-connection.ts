@@ -23,7 +23,6 @@ export const useMentorConnection = (userId: string, setActiveChat: (id: string) 
       mentorProcessedRef.current = mentorId;
       
       try {
-        console.log('Processing mentor connection for mentor ID:', mentorId);
         
         // First verify the mentor exists
         const { data: mentor, error: mentorError } = await getMentorById(mentorId);
@@ -50,7 +49,6 @@ export const useMentorConnection = (userId: string, setActiveChat: (id: string) 
           return;
         }
         
-        console.log('Found mentor:', mentor.name);
         
         // Get or create conversation with the mentor
         const { data: conversation, error: conversationError } = await getOrCreateConversation(userId, mentorId);
@@ -61,7 +59,6 @@ export const useMentorConnection = (userId: string, setActiveChat: (id: string) 
           return;
         }
         
-        console.log('Conversation ready:', conversation.id);
         
         // Set the active chat to this conversation
         setActiveChat(conversation.id);

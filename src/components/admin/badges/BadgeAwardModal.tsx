@@ -72,12 +72,10 @@ const BadgeAwardModal = ({ badgeTypes, onClose, onSuccess }: BadgeAwardModalProp
       setSearching(true);
       setErrorMessage("");
       
-      console.log("Searching for users with query:", query);
       
       const { getUserByEmail } = await import("@/integrations/supabase/services/admin");
       const users = await getUserByEmail(query.trim());
       
-      console.log("Search results:", users);
       
       if (users && users.length > 0) {
         // Filter to show mentors and users with both roles first
@@ -99,7 +97,6 @@ const BadgeAwardModal = ({ badgeTypes, onClose, onSuccess }: BadgeAwardModalProp
   };
 
   const handleUserSelect = (selectedUser: SearchedUser) => {
-    console.log("Selected user:", selectedUser);
     setSelectedUser(selectedUser);
     setSearchResults([]);
     setErrorMessage("");
@@ -116,12 +113,6 @@ const BadgeAwardModal = ({ badgeTypes, onClose, onSuccess }: BadgeAwardModalProp
       setErrorMessage("");
       setSuccessMessage("");
       
-      console.log("Awarding badge:", {
-        user_id: selectedUser.id,
-        badge_type_id: data.badgeTypeId,
-        awarded_by: user.id,
-        notes: data.notes || null,
-      });
 
       const result = await awardBadge({
         user_id: selectedUser.id,
@@ -130,7 +121,6 @@ const BadgeAwardModal = ({ badgeTypes, onClose, onSuccess }: BadgeAwardModalProp
         notes: data.notes || null,
       });
 
-      console.log("Badge awarded successfully:", result);
       
       const selectedBadge = badgeTypes.find(b => b.id === data.badgeTypeId);
       setSuccessMessage(`Successfully awarded "${selectedBadge?.name}" badge to ${selectedUser.name}!`);

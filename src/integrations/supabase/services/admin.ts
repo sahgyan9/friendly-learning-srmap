@@ -122,7 +122,6 @@ export async function getUserByEmail(query: string) {
       throw new Error("Too many search requests. Please wait before trying again.");
     }
     
-    console.log("Searching for users with query:", sanitizedQuery);
     
     // First try exact email match
     let { data: exactEmailMatch, error: emailError } = await supabase
@@ -137,7 +136,6 @@ export async function getUserByEmail(query: string) {
     
     // If exact email match found, return it
     if (exactEmailMatch && exactEmailMatch.length > 0) {
-      console.log("Found exact email match:", exactEmailMatch);
       return exactEmailMatch;
     }
     
@@ -153,7 +151,6 @@ export async function getUserByEmail(query: string) {
       throw searchError;
     }
     
-    console.log("Search results:", searchResults);
     return searchResults || [];
     
   } catch (error) {

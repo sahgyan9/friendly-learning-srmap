@@ -4,7 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 // Get user data by ID with improved error handling and fallbacks
 export async function getUserById(userId: string) {
   try {
-    console.log(`Fetching user data for ID: ${userId}`);
 
     if (!userId || typeof userId !== 'string') {
       console.error(`Invalid user ID provided: ${userId}`);
@@ -52,7 +51,6 @@ export async function getUserById(userId: string) {
         // Extract name from email as fallback
         const emailPrefix = userData.email.split('@')[0];
         finalName = emailPrefix.charAt(0).toUpperCase() + emailPrefix.slice(1);
-        console.log(`Using email prefix as fallback name for ${userId}: ${finalName}`);
       } else {
         finalName = 'User';
       }
@@ -65,7 +63,6 @@ export async function getUserById(userId: string) {
       role: userData.role
     };
 
-    console.log(`Processed user data for ${userId}:`, processedUserData);
     return { data: processedUserData, error: null };
 
   } catch (err) {

@@ -19,7 +19,6 @@ export const useMessageOperations = (userId: string) => {
     setMessages([]);
 
     try {
-      console.log("Fetching messages for conversation:", conversationId);
 
       const { data, error } = await getConversationMessages(conversationId);
 
@@ -30,7 +29,6 @@ export const useMessageOperations = (userId: string) => {
       }
 
       if (data) {
-        console.log(`Fetched ${data.length} messages`);
         setMessages(data);
 
         // Mark messages as read

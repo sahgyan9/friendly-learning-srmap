@@ -43,7 +43,6 @@ const ResponseHistory = ({ contactMessage }: ResponseHistoryProps) => {
     const fetchResponses = async () => {
         try {
             setLoading(true);
-            console.log('Fetching responses for contact message:', contactMessage.id);
 
             // First verify the table exists
             const tableCheck = await verifyContactResponsesTable();
@@ -63,10 +62,8 @@ const ResponseHistory = ({ contactMessage }: ResponseHistoryProps) => {
             }
 
             if (result.data) {
-                console.log('Successfully loaded responses:', result.data.length);
                 setResponses(result.data);
             } else {
-                console.log('No responses found');
                 setResponses([]);
             }
         } catch (error: any) {

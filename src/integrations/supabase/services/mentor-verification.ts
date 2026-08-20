@@ -179,11 +179,9 @@ export const updateVerificationStatus = async (
             .insert(notification as any);
         }
 
-        console.log('Enhanced rejection notifications created for user:', verification.user_id);
       }
     }
 
-    console.log('Verification status updated successfully:', data);
     return { data, error: null };
   } catch (error) {
     console.error('Exception updating verification status:', error);
@@ -192,7 +190,6 @@ export const updateVerificationStatus = async (
 };
 
 export const getVerificationStatistics = async () => {
-  console.log('Fetching verification statistics');
 
   const { data: stats, error } = await supabase
     .from('mentor_verifications')
@@ -215,7 +212,6 @@ export const getVerificationStatistics = async () => {
     rejected: statusCounts.rejected || 0
   };
 
-  console.log('Verification statistics:', result);
   return { data: result, error: null };
 };
 
@@ -224,7 +220,6 @@ export const updateMentorApplication = async (
   userId: string,
   applicationData: Partial<CreateMentorVerification>
 ) => {
-  console.log('Updating mentor application for user:', userId, applicationData);
 
   try {
     // First check if user has a rejected application using maybeSingle
@@ -256,8 +251,6 @@ export const updateMentorApplication = async (
       reviewed_by: null,
       rejection_reason: null
     };
-
-    console.log('Updating with data:', updateData);
 
     const { data, error } = await supabase
       .from('mentor_verifications')
@@ -307,7 +300,6 @@ export const updateMentorApplication = async (
         .insert(notification as any);
     }
 
-    console.log('Application updated and resubmitted successfully:', data);
     return { data, error: null };
   } catch (error) {
     console.error('Exception updating mentor application:', error);
