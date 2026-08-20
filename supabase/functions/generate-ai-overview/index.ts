@@ -241,7 +241,8 @@ serve(async (req) => {
   try {
     const body = await req.json();
     if (body.listModels) {
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${GEMINI_KEY}&pageSize=200`);
+      const activeKey = GEMINI_KEYS[0] || "";
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${activeKey}&pageSize=200`);
       const data = await res.json();
       const generationModels = (data.models ?? [])
         .filter((m: any) => (m.supportedGenerationMethods ?? []).includes("generateContent"))

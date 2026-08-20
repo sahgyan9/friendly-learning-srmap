@@ -74,40 +74,54 @@ const SearchBar = ({ onSearch, onGeminiSearch }: SearchBarProps) => {
 
     setIsGeminiSearching(true);
     try {
-      const { data, error } = await supabase.functions.invoke('gemini-search', {
-        body: { query: query.trim() }
+      const { data, error } = await supabase.functions.invoke('semantic-search', {
+        body: { query: query.trim(), types: ['mentor'], limit: 12 }
       });
 
       if (error) {
-        console.error("Gemini search error:", error);
+        console.error("Semantic search error:", error);
         toast.error("Search failed", {
-          description: "Couldn't connect to Gemini AI. Please try again.",
+          description: "Couldn't connect to AI search. Please try again.",
         });
         return;
       }
 
       if (data.error) {
-        console.error("Gemini API error:", data.error);
+        console.error("AI search error:", data.error);
         toast.error("AI search error", {
           description: data.error,
         });
         return;
       }
 
-      if (data.mentors && data.mentors.length > 0) {
-        console.log("AI Search returned mentors:", data.mentors);
-        onGeminiSearch(data.mentors);
-        toast.success("AI Search Results", {
-          description: `Found ${data.mentors.length} mentors that match your query`,
-        });
-      } else {
-        toast("No results found", {
-          description: "Try a different search term or browse all mentors",
-        });
-        onGeminiSearch([]); // Pass empty array to clear results
+      const mentorHits = (data.mentors || []) as Array<{ entity_id: string }>;
+      if (mentorHits.length > 0) {
+        const ids = mentorHits.map(m => m.entity_id);
+        const { data: mentorsData, error: mentorsError } = await supabase
+          .from('mentors')
+          .select('*')
+          .in('id', ids);
+
+        if (!mentorsError && mentorsData) {
+          // Preserve semantic similarity order
+          const idOrder = new Map(ids.map((id, index) => [id, index]));
+          const sortedMentors = (mentorsData as unknown as Mentor[]).sort(
+            (a, b) => (idOrder.get(a.id) ?? 999) - (idOrder.get(b.id) ?? 999)
+          );
+          onGeminiSearch(sortedMentors);
+          toast.success("AI Search Results", {
+            description: `Found ${sortedMentors.length} mentors matching your request`,
+          });
+          return;
+        }
       }
+
+      toast("No matching mentors found", {
+        description: "Try broader keywords or browse by department",
+      });
+      onGeminiSearch([]);
     } catch (err) {
-      console.error("Error during Gemini search:", err);
+      console.error("Error during AI search:", err);
       toast.error("Search error", {
         description: "An unexpected error occurred. Please try again.",
       });
