@@ -20,13 +20,43 @@ type Retrieved = {
   similarity: number;
 };
 
+function getTemporalContext(): { todayText: string; tomorrowText: string; currentMonthYear: string } {
+  const now = new Date();
+  const options: Intl.DateTimeFormatOptions = {
+    timeZone: "Asia/Kolkata",
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  };
+  const todayText = new Intl.DateTimeFormat("en-IN", options).format(now);
+  const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+  const tomorrowText = new Intl.DateTimeFormat("en-IN", options).format(tomorrow);
+  const monthYearOptions: Intl.DateTimeFormatOptions = {
+    timeZone: "Asia/Kolkata",
+    year: "numeric",
+    month: "long",
+  };
+  const currentMonthYear = new Intl.DateTimeFormat("en-IN", monthYearOptions).format(now);
+  return { todayText, tomorrowText, currentMonthYear };
+}
+
 // Reuse semantic-search to leverage the query cache and central embedding logic.
 async function retrieve(query: string): Promise<Retrieved[]> {
   try {
+    const { todayText, tomorrowText, currentMonthYear } = getTemporalContext();
+    let searchQuery = query;
+
+    // Temporal Query Expansion for relative time queries (e.g. today, tomorrow, holiday, day order)
+    const hasTemporalWords = /\b(today|tomorrow|yesterday|this week|next week|this month|next month|day order|holiday|holidays|working day)\b/i.test(query);
+    if (hasTemporalWords) {
+      searchQuery = `${query} (${todayText} / ${tomorrowText} Academic Calendar AY 2026-27 ${currentMonthYear} working days holidays)`;
+    }
+
     const response = await fetch(`${SUPABASE_URL}/functions/v1/semantic-search`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ query, limit: 10 }),
+      body: JSON.stringify({ query: searchQuery, limit: 12 }),
     });
 
     if (!response.ok) return [];
@@ -52,6 +82,7 @@ async function retrieve(query: string): Promise<Retrieved[]> {
 }
 
 function buildPrompt(query: string, matches: Retrieved[]): string {
+  const { todayText, tomorrowText } = getTemporalContext();
   const context = matches.map((m, index) => {
     let tags = "";
     const rawTags = m.metadata?.interests ?? m.metadata?.skills ?? m.metadata?.tags;
@@ -66,19 +97,25 @@ function buildPrompt(query: string, matches: Retrieved[]): string {
   return `You are the AI Campus Overview engine for Friendly Learning at SRM University-AP.
 The user searched for: "${query}".
 
+TEMPORAL ANCHOR (Indian Standard Time / Asia/Kolkata):
+- Today's Date: ${todayText}
+- Tomorrow's Date: ${tomorrowText}
+- Current Academic Year: 2026-27
+
 Here are the most relevant campus resources we found (faculty, mentors, opportunities, groups, posts, official campus documents & policies):
 ${context ? context : "No matching campus resources found."}
 
 Based strictly on the provided resources, generate a short summary overview (1-2 paragraphs) to help the student.
 
 Rules:
-1. Provide DIRECT, SPECIFIC, AND ACCURATE ANSWERS extracted from the content/excerpts. If the user asks for dates, exam timelines, specific penalties, rules, or contacts, STATE THE EXACT DATES AND DETAILS in the summary (with bold formatting) instead of just telling the student to check the document.
-2. Synthesize the context in a natural, helpful, student-friendly tone. Do not just list the titles.
-3. Only mention people, events, facts, or entities from the provided context. If no context is provided, say there are no direct matches yet and suggest broad advice.
-4. INLINE CITATIONS: When you state a fact, date, or mention an entity from the resources, you MUST include an inline citation bracket like [1] or [2] matching the resource number above.
-5. Extract 1-3 key insights as a list of short strings.
-6. Identify the top 1-4 specific entities to recommend as badges. Use the exact 'id', 'type', 'title' (for name), 'path' (for to), and 'subtitle' (for detail) from the context. Only use types: 'faculty', 'mentor', 'opportunity', 'community', 'post', or 'document'.
-7. CITATIONS MAP: Provide a 'citations' array mapping the numbers you used in the summary to the entity.
+1. TEMPORAL RESOLUTION: If the user asks about "today", "tomorrow", "this week", "next week", "holiday", or "day order", use the TEMPORAL ANCHOR dates above to check the specific date in the Academic Calendar / working days schedule. State the exact weekday, date, whether it is an instructional working day (with Day Order) or holiday, and cite the document [1].
+2. Provide DIRECT, SPECIFIC, AND ACCURATE ANSWERS extracted from the content/excerpts. If the user asks for dates, exam timelines, specific penalties, rules, or contacts, STATE THE EXACT DATES AND DETAILS in the summary (with bold formatting) instead of just telling the student to check the document.
+3. Synthesize the context in a natural, helpful, student-friendly tone. Do not just list the titles.
+4. Only mention people, events, facts, or entities from the provided context. If no context is provided, say there are no direct matches yet and suggest broad advice.
+5. INLINE CITATIONS: When you state a fact, date, or mention an entity from the resources, you MUST include an inline citation bracket like [1] or [2] matching the resource number above.
+6. Extract 1-3 key insights as a list of short strings.
+7. Identify the top 1-4 specific entities to recommend as badges. Use the exact 'id', 'type', 'title' (for name), 'path' (for to), and 'subtitle' (for detail) from the context. Only use types: 'faculty', 'mentor', 'opportunity', 'community', 'post', or 'document'.
+8. CITATIONS MAP: Provide a 'citations' array mapping the numbers you used in the summary to the entity.
 
 Your response MUST be a valid JSON object matching this schema exactly:
 {
