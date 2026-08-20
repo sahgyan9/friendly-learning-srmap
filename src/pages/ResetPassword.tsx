@@ -94,7 +94,7 @@ const ResetPassword = () => {
         toast.success("Password reset successful! Please sign in with your new password.");
         navigate("/signin");
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Password reset error:", error);
       toast.error("An unexpected error occurred. Please try again.");
     } finally {

@@ -1,6 +1,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/errors";
 import {
   submitMentorApplication,
   updateMentorApplication,
@@ -336,9 +337,9 @@ export const useMentorForm = (userId: string, initialData: MentorFormData, isEdi
       // A fresh approval gets its own moment with a next step; a resubmission
       // is back to waiting on review, so it lands on the status page instead.
       navigate(isEditMode ? '/become-mentor' : '/become-mentor/success');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error handling mentor application:", error);
-      toast.error(error.message || "Failed to process mentor application");
+      toast.error(getErrorMessage(error, "Failed to process mentor application"));
     } finally {
       setIsSubmitting(false);
     }

@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Star } from "lucide-react";
 import { toast } from "sonner";
+import { getErrorField, getErrorMessage } from "@/lib/errors";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/context/AuthContext";
@@ -72,12 +73,13 @@ const RatingModal = ({
       // Reset form
       setRating(0);
       setReviewText("");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error submitting review:", error);
-      if (error.code === '23505') {
+      const message = getErrorMessage(error, "");
+      if (getErrorField(error, 'code') === '23505') {
         toast.error("You have already reviewed this mentor");
-      } else if (error.message) {
-        toast.error(`Failed to submit review: ${error.message}`);
+      } else if (message) {
+        toast.error(`Failed to submit review: ${message}`);
       } else {
         toast.error("Failed to submit review. Please try again.");
       }

@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { getErrorMessage } from "@/lib/errors";
 import {
     CheckCircle,
     XCircle,
@@ -83,9 +84,9 @@ const VerificationDetailsCard = ({
                 setRejectDialogOpen(false);
                 setRejectionReason("");
             }
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Error updating verification status:', error);
-            toast.error(`Failed to ${status} mentor application: ${error.message || 'Unknown error'}`);
+            toast.error(`Failed to ${status} mentor application: ${getErrorMessage(error, 'Unknown error')}`);
         } finally {
             setUpdating(null);
         }

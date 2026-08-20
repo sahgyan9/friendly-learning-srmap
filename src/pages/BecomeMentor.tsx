@@ -70,7 +70,7 @@ const BecomeMentor = () => {
           toast.error("You can only edit rejected applications");
         }
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error checking application status:', error);
       toast.error('Failed to check application status');
     } finally {

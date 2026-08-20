@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { Database } from "@/integrations/supabase/types";
+import { getErrorMessage } from "@/lib/errors";
 
 export type MentorVerification = Database['public']['Tables']['mentor_verifications']['Row'];
 export type CreateMentorVerification = Database['public']['Tables']['mentor_verifications']['Insert'];
@@ -77,8 +78,8 @@ export const getMentorVerification = async (userId: string) => {
     }
 
     return { data, error: null };
-  } catch (error: any) {
-    return { data: null, error: { message: error.message || 'Failed to fetch verification' } };
+  } catch (error: unknown) {
+    return { data: null, error: { message: getErrorMessage(error, 'Failed to fetch verification') } };
   }
 };
 

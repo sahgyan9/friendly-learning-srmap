@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { getErrorMessage } from "@/lib/errors";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { motion } from "framer-motion";
@@ -85,8 +86,8 @@ const SignUp = () => {
       setShowRoleSelection(false);
       toast.success("Account setup completed!");
       navigate('/');
-    } catch (error: any) {
-      toast.error("Error setting up account: " + error.message);
+    } catch (error: unknown) {
+      toast.error("Error setting up account: " + getErrorMessage(error));
     }
   };
 
@@ -140,15 +141,14 @@ const SignUp = () => {
           navigate('/signin');
         }
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error during signup:', error);
-      
-      if (error.message.includes('User already registered')) {
-        toast.error("An account with this email already exists. Please sign in instead.");
-      } else if (error.message.includes('duplicate key')) {
+      const message = getErrorMessage(error, "Error creating account");
+
+      if (message.includes('User already registered') || message.includes('duplicate key')) {
         toast.error("An account with this email already exists. Please sign in instead.");
       } else {
-        toast.error(error.message || "Error creating account");
+        toast.error(message);
       }
     } finally {
       setIsLoading(false);

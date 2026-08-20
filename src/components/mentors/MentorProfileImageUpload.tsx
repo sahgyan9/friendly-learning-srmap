@@ -6,6 +6,7 @@ import { Loader2, Upload } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import AvatarCropDialog from "@/components/profile/AvatarCropDialog";
 import { downscaleImage } from "@/lib/image/downscale";
+import { getErrorMessage } from "@/lib/errors";
 
 interface MentorProfileImageUploadProps {
   profileImage: string;
@@ -79,9 +80,9 @@ const MentorProfileImageUpload = ({
         setPendingImage(null);
         toast.success("Profile image uploaded successfully");
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Unexpected error uploading image:", error);
-      toast.error(error.message || "Error uploading image");
+      toast.error(getErrorMessage(error, "Error uploading image"));
     } finally {
       setUploading(false);
     }

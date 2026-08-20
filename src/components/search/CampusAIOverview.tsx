@@ -17,6 +17,7 @@ import {
   FileText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getErrorField } from "@/lib/errors";
 import type { SearchResultsState } from "@/hooks/useSearchResults";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -170,9 +171,9 @@ export const CampusAIOverview: React.FC<CampusAIOverviewProps> = ({
             onCitationsLoaded(data.citations);
           }
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         if (isMounted) {
-          if (err.name !== "AbortError") {
+          if (getErrorField(err, "name") !== "AbortError") {
             console.error("AI overview generation failed:", err);
             setError(true);
           }

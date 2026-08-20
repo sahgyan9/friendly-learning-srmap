@@ -2,6 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { getAppUrl } from "@/lib/constants";
+import { getErrorMessage } from "@/lib/errors";
 
 interface GoogleAuthButtonProps {
   mode: "signin" | "signup";
@@ -21,8 +22,8 @@ const GoogleAuthButton = ({ mode, isLoading, setIsLoading }: GoogleAuthButtonPro
       });
 
       if (error) throw error;
-    } catch (error: any) {
-      toast.error(error.message || `Error ${mode === 'signin' ? 'signing in' : 'signing up'} with Google`);
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, `Error ${mode === 'signin' ? 'signing in' : 'signing up'} with Google`));
       setIsLoading(false);
     }
   };

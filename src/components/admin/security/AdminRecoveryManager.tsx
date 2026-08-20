@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AlertCircle, Key, Copy, UserPlus } from "lucide-react";
 import { toast } from "sonner";
-import { 
+import { getErrorMessage } from "@/lib/errors";
+import {
   createAdminRecoveryCode, 
   getMyRecoveryCodes, 
   promoteUserToAdmin,
@@ -47,8 +48,8 @@ const AdminRecoveryManager = () => {
         toast.success("Recovery code created successfully");
         await loadRecoveryCodes();
       }
-    } catch (error: any) {
-      toast.error(error.message || "Failed to create recovery code");
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, "Failed to create recovery code"));
     } finally {
       setCreating(false);
     }
@@ -91,8 +92,8 @@ const AdminRecoveryManager = () => {
       } else {
         toast.error("Invalid or expired recovery code");
       }
-    } catch (error: any) {
-      toast.error(error.message || "Failed to promote user");
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, "Failed to promote user"));
     } finally {
       setPromoting(false);
     }

@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { getErrorMessage } from "@/lib/errors";
 import { createNotification } from "./notifications";
 
 // Verify table exists and is accessible
@@ -15,9 +16,9 @@ export const verifyContactResponsesTable = async () => {
         }
 
         return { exists: true, error: null };
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Table verification error:', error);
-        return { exists: false, error: error.message };
+        return { exists: false, error: getErrorMessage(error) };
     }
 };
 

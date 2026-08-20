@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { getErrorMessage } from "@/lib/errors";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { motion } from "framer-motion";
@@ -85,8 +86,8 @@ const SignIn = () => {
       setShowRoleSelection(false);
       toast.success("Welcome to Friendly Learning!");
       navigate(destination, { replace: true });
-    } catch (error: any) {
-      toast.error("Error setting up account: " + error.message);
+    } catch (error: unknown) {
+      toast.error("Error setting up account: " + getErrorMessage(error));
     }
   };
 
@@ -112,7 +113,7 @@ const SignIn = () => {
         toast.success("Successfully signed in!");
         navigate(destination, { replace: true });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error during sign in:', error);
       toast.error("An unexpected error occurred. Please try again.");
     } finally {

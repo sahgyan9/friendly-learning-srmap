@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { createBadgeType } from "@/integrations/supabase/services/badges";
 import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/errors";
 
 interface BadgeCreationFormProps {
   onCancel: () => void;
@@ -50,9 +51,9 @@ const BadgeCreationForm = ({ onCancel, onSuccess }: BadgeCreationFormProps) => {
       }
       
       onSuccess();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error("Error", {
-        description: error.message || "Failed to create badge type",
+        description: getErrorMessage(error, "Failed to create badge type"),
       });
     } finally {
       setIsLoading(false);

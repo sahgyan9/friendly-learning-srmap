@@ -34,7 +34,7 @@ const ForgotPassword = () => {
         setEmailSent(true);
         toast.success("Password reset email sent! Check your inbox.");
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error("An unexpected error occurred");
     } finally {
       setIsLoading(false);

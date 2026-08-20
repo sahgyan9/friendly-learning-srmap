@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import AvatarCropDialog from "@/components/profile/AvatarCropDialog";
 import { downscaleImage } from "@/lib/image/downscale";
 import { storagePathFromPublicUrl } from "@/lib/image/storage-path";
+import { getErrorMessage } from "@/lib/errors";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -85,9 +86,9 @@ export function ProfileAvatarUploader({
           if (removeError) console.error("Error removing old profile image:", removeError);
         }
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error uploading image:", error);
-      toast.error(error.message || "Failed to upload image");
+      toast.error(getErrorMessage(error, "Failed to upload image"));
     } finally {
       setIsUploading(false);
     }

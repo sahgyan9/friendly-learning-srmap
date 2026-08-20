@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { getErrorMessage } from "@/lib/errors";
 import {
     History,
     Mail,
@@ -66,9 +67,9 @@ const ResponseHistory = ({ contactMessage }: ResponseHistoryProps) => {
             } else {
                 setResponses([]);
             }
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Error fetching responses:', error);
-            toast.error(`Failed to load response history: ${error.message || 'Unknown error'}`);
+            toast.error(`Failed to load response history: ${getErrorMessage(error, 'Unknown error')}`);
             setResponses([]);
         } finally {
             setLoading(false);

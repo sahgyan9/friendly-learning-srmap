@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { getErrorMessage } from "@/lib/errors";
 import {
     Send,
     Reply,
@@ -78,9 +79,9 @@ const AdminEmailResponse = ({ contactMessage, onResponseSent }: AdminEmailRespon
             setResponseMessage('');
             setResponseSubject(`Re: ${contactMessage.subject}`);
             onResponseSent();
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Error sending response:', error);
-            toast.error(error.message || 'Failed to send response');
+            toast.error(getErrorMessage(error, 'Failed to send response'));
         } finally {
             setSending(false);
         }
