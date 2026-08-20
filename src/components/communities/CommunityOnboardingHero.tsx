@@ -1,6 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
 import { ArrowRight, Compass, Plus, Sparkles, Users, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CommunityCard } from "@/components/communities/CommunityCard";
@@ -15,15 +14,64 @@ interface CommunityOnboardingHeroProps {
   onStartGroup: () => void;
 }
 
-const INTEREST_TAGS = [
-  { id: "all", label: "✨ All Recommendations", query: "" },
-  { id: "hackathon", label: "⚡ SIH & Hackathons", query: "hackathon" },
-  { id: "dsa", label: "💻 DSA & Placements", query: "dsa" },
-  { id: "ai", label: "🤖 AI & Machine Learning", query: "ai" },
-  { id: "web", label: "🌐 Web & Full Stack", query: "web" },
-  { id: "robotics", label: "🦾 Robotics & Hardware", query: "robotics" },
-  { id: "study", label: "📚 Study & Exams", query: "study" },
-  { id: "club", label: "🎭 Clubs & Culture", query: "club" },
+interface InterestFilter {
+  id: string;
+  label: string;
+  categoryName: string;
+  kinds?: string[];
+  keywords?: string[];
+}
+
+const INTEREST_TAGS: InterestFilter[] = [
+  {
+    id: "all",
+    label: "✨ All Recommendations",
+    categoryName: "Starter",
+  },
+  {
+    id: "hackathons",
+    label: "⚡ Hackathons & SIH",
+    categoryName: "Hackathon & SIH",
+    kinds: ["hackathon", "project"],
+    keywords: ["hackathon", "hackthon", "sih", "teammate", "team", "competition", "dev"],
+  },
+  {
+    id: "dev-tech",
+    label: "💻 Tech & Dev Projects",
+    categoryName: "Tech & Coding",
+    kinds: ["hackathon", "project", "research"],
+    keywords: [
+      "mern",
+      "react",
+      "ai/ml",
+      "ml",
+      "ai",
+      "dsa",
+      "code",
+      "coding",
+      "web",
+      "python",
+      "backend",
+      "frontend",
+      "fullstack",
+      "technology",
+      "software",
+    ],
+  },
+  {
+    id: "study-research",
+    label: "📚 Study & Research",
+    categoryName: "Study & Research",
+    kinds: ["study", "research"],
+    keywords: ["study", "research", "exam", "battery", "technology", "lab", "paper", "prep", "notes", "course"],
+  },
+  {
+    id: "clubs-culture",
+    label: "🎭 Clubs & Wellness",
+    categoryName: "Clubs & Wellness",
+    kinds: ["club", "general"],
+    keywords: ["club", "wellness", "health", "mindful", "culture", "music", "dance", "sports", "art", "society"],
+  },
 ];
 
 export function CommunityOnboardingHero({
@@ -35,23 +83,23 @@ export function CommunityOnboardingHero({
   const { user } = useAuth();
   const [selectedTag, setSelectedTag] = useState<string>("all");
 
-  const filteredCommunities = React.useMemo(() => {
+  const currentTag = useMemo(() => {
+    return INTEREST_TAGS.find((t) => t.id === selectedTag) || INTEREST_TAGS[0];
+  }, [selectedTag]);
+
+  const filteredCommunities = useMemo(() => {
     if (selectedTag === "all") {
       return communities.slice(0, 6);
     }
-    const tag = INTEREST_TAGS.find((t) => t.id === selectedTag);
-    if (!tag) return communities.slice(0, 6);
 
-    const q = tag.query.toLowerCase();
-    const matched = communities.filter(
-      (c) =>
-        c.kind.toLowerCase().includes(q) ||
-        c.name.toLowerCase().includes(q) ||
-        c.description.toLowerCase().includes(q),
-    );
-
-    return matched.length > 0 ? matched.slice(0, 6) : communities.slice(0, 6);
-  }, [communities, selectedTag]);
+    const tag = currentTag;
+    return communities.filter((c) => {
+      const kindMatch = tag.kinds?.includes(c.kind.toLowerCase());
+      const textToSearch = `${c.name} ${c.description || ""}`.toLowerCase();
+      const keywordMatch = tag.keywords?.some((kw) => textToSearch.includes(kw.toLowerCase()));
+      return Boolean(kindMatch || keywordMatch);
+    });
+  }, [communities, selectedTag, currentTag]);
 
   return (
     <div className="relative overflow-hidden rounded-3xl border border-amber-500/25 bg-gradient-to-br from-amber-500/10 via-background to-background p-6 md:p-10 shadow-sm mb-10">
@@ -70,14 +118,14 @@ export function CommunityOnboardingHero({
         </h2>
 
         <p className="text-base text-muted-foreground leading-relaxed max-w-2xl">
-          Whether you're gearing up for your first hackathon, preparing for DSA interviews,
-          joining a robotics lab, or starting a study room—discover student groups built for you.
+          Whether you're gearing up for your first hackathon, preparing for interviews,
+          joining a research lab, or starting a study room—discover student groups built for you.
         </p>
 
         {/* Quick Interest Tags */}
         <div className="pt-2">
           <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2.5">
-            Select what you are looking for:
+            Filter by your interest:
           </p>
           <div className="flex flex-wrap gap-2">
             {INTEREST_TAGS.map((tag) => {
@@ -108,7 +156,7 @@ export function CommunityOnboardingHero({
           <div className="flex items-center gap-2">
             <Users className="h-4 w-4 text-primary" />
             <span className="text-sm font-semibold text-foreground">
-              Recommended Starter Communities ({filteredCommunities.length})
+              {currentTag.categoryName} Communities ({filteredCommunities.length})
             </span>
           </div>
 
@@ -123,15 +171,35 @@ export function CommunityOnboardingHero({
           </Button>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {filteredCommunities.map((community) => (
-            <CommunityCard
-              key={community.id}
-              community={community}
-              onMembershipChange={onMembershipChange}
-            />
-          ))}
-        </div>
+        {filteredCommunities.length > 0 ? (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {filteredCommunities.map((community) => (
+              <CommunityCard
+                key={community.id}
+                community={community}
+                onMembershipChange={onMembershipChange}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-dashed border-border/80 bg-card/50 p-8 text-center space-y-3">
+            <p className="text-sm font-medium text-foreground">
+              No {currentTag.categoryName.toLowerCase()} communities found yet.
+            </p>
+            <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+              Be the first to start a group for your batch, hackathon team, or study circle!
+            </p>
+            <div className="flex items-center justify-center gap-2.5 pt-2">
+              <Button size="sm" onClick={onStartGroup} className="gap-1.5 font-semibold text-xs">
+                <Plus className="h-3.5 w-3.5" />
+                Start {currentTag.categoryName} group
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => setSelectedTag("all")} className="text-xs">
+                Show all communities
+              </Button>
+            </div>
+          </div>
+        )}
 
         {/* Footer CTAs */}
         <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4 rounded-2xl border border-border/60 bg-card/70 p-4 backdrop-blur-xs">
