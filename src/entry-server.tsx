@@ -21,6 +21,8 @@ const KNOWN_ROUTES = [
   '/events',
   '/signup',
   '/signin',
+  '/forgot-password',
+  '/reset-password',
   '/contact',
   '/become-mentor',
   '/how-it-works',
