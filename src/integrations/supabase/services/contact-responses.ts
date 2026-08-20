@@ -1,6 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
 import { createNotification } from "./notifications";
-import { sendEmail } from "@/integrations/email/resend";
 
 // Verify table exists and is accessible
 export const verifyContactResponsesTable = async () => {
@@ -100,40 +99,20 @@ export const sendAdminResponse = async (response: CreateAdminResponse) => {
             // Don't throw here as the response was already sent
         }
 
-        // 3. Send the actual email
+        // 3. Send the actual email via the send-contact-reply edge function.
+        // The function re-reads subject/message/recipient itself from the row
+        // we just inserted, using the service role -- this call only points at
+        // which row to send, it does not carry the email content.
         try {
-            console.log('Sending email to:', response.recipient_email);
-
-            const emailHtml = formatEmailTemplate(
-                response.message,
-                response.recipient_name,
-                'Friendly Learning Team' // You can get admin name from user profile
+            const { data: emailResult, error: emailError } = await supabase.functions.invoke(
+                'send-contact-reply',
+                { body: { contact_response_id: responseData.id } }
             );
 
-            const emailResult = await sendEmail({
-                to: response.recipient_email,
-                subject: response.subject,
-                html: emailHtml,
-                from: 'Friendly Learning <noreply@friendlylearning.com>'
-            });
-
-            if (emailResult.success) {
-                console.log('Email sent successfully:', emailResult.messageId);
-
-                // Update the response record with email status
-                await supabase
-                    .from('contact_responses')
-                    .update({
-                        sent_at: new Date().toISOString(),
-                        // You could add email_status field to track this
-                    })
-                    .eq('id', responseData.id);
-
-            } else {
-                console.warn('Email sending failed:', emailResult.message);
+            if (emailError || !emailResult?.success) {
+                console.warn('Email sending failed:', emailError?.message || emailResult?.error);
                 // Don't throw error as response was already saved
             }
-
         } catch (emailError) {
             console.error('Error sending email:', emailError);
             // Don't throw error as response was already saved to database
