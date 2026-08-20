@@ -2,15 +2,10 @@ import { cn } from "@/lib/utils";
 import { getCommunityKindMeta } from "@/integrations/supabase/services/communities";
 
 /**
- * A group's icon.
+ * CommunityAvatar - Scaled, contained avatar for groups and clubs.
  *
- * Falls back to a flat outline glyph for the group's kind — the same
- * monochrome, single-colour-icon language as the site nav — rather than a
- * colour hashed from the slug. That earlier per-group colour was meant as a
- * "spot yours in the list" cue, but it fought with every other colourful
- * badge on the page instead of reading as identity. `cover_image` wins when a
- * group has a real icon, which leaves room for uploads without changing
- * anything here.
+ * Guaranteed strict dimensional containment so uploaded cover images never
+ * expand beyond the allocated container.
  */
 
 interface CommunityAvatarProps {
@@ -35,21 +30,22 @@ export function CommunityAvatar({
     return (
       <img
         src={coverImage}
-        alt=""
-        className={cn("h-12 w-12 shrink-0 rounded-xl object-cover", className)}
+        alt={name}
+        className={cn(
+          "h-11 w-11 shrink-0 rounded-xl object-cover aspect-square ring-1 ring-border/80 bg-muted/60",
+          className,
+        )}
       />
     );
   }
 
   return (
     <span
-      // Decorative: the group's name is always next to it in the markup, and a
-      // screen reader announcing "hackathon icon" before it adds nothing.
       aria-hidden
       title={name}
       className={cn(
-        "flex h-12 w-12 shrink-0 items-center justify-center rounded-xl",
-        "bg-muted ring-1 ring-inset ring-border",
+        "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl",
+        "bg-muted/60 ring-1 ring-inset ring-border/80 aspect-square",
         className,
       )}
     >
