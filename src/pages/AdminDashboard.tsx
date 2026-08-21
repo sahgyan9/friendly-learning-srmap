@@ -19,6 +19,7 @@ import {
   UserCheck,
   ArrowRight,
   MessageSquare,
+  Megaphone,
 } from "lucide-react";
 import AdminPageWrapper from "@/components/admin/AdminPageWrapper";
 import AdminHeader from "@/components/admin/AdminHeader";
@@ -41,6 +42,13 @@ const AdminDashboard = () => {
       icon: Award,
       path: "/admin/badges",
       gradient: "from-yellow-500 to-orange-500",
+    },
+    {
+      title: "Notices",
+      description: "Publish circulars and notices — searchable in Ask AI.",
+      icon: Megaphone,
+      path: "/admin/notices",
+      gradient: "from-rose-500 to-orange-500",
     },
     {
       title: "Mentor Verification",

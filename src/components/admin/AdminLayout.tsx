@@ -13,7 +13,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Mail,
-  Sparkles
+  Sparkles,
+  Megaphone
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -53,6 +54,12 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
       href: "/admin/mentor-verification",
       icon: UserCheck,
       current: location.pathname === "/admin/mentor-verification",
+    },
+    {
+      name: "Notices",
+      href: "/admin/notices",
+      icon: Megaphone,
+      current: location.pathname === "/admin/notices",
     },
     {
       name: "Welcome Emails",
