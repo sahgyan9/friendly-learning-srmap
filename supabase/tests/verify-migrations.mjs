@@ -621,6 +621,9 @@ console.log('');
 //      20260806200000_community_notification_deep_links.sql
 //      20260807030000_search_groups_and_posts.sql
 //      20260807130000_community_last_activity.sql
+//      20260821200000_community_search_name_only.sql -- CREATE OR REPLACEs
+//        list_communities from the file above (name-only search, drops the
+//        description ilike clause); same reason as that file, not this pass.
 //
 // 6. OUT OF SCOPE FOR THIS PASS (9 files) -- self-contained, plausibly
 //    runnable features (mentor availability, profile-image mirroring, the
