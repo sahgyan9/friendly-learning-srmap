@@ -315,6 +315,37 @@ async function retrieve(query: string): Promise<RetrievalResult> {
   }
 }
 
+/**
+ * A knowledge_articles author can legitimately write a real URL into an
+ * article's body (e.g. "apply at https://cap.srmap.edu.in/") and the model
+ * quoting it back is correct, grounded behaviour — not a hallucination. What
+ * is never legitimate is a URL that appears in the model's answer but not
+ * anywhere in what was actually retrieved. Caught live 2026-08-21: an
+ * over-broad first version of this guard stripped a URL the model had
+ * correctly cited from a retrieved article, and the retry that followed
+ * produced a *vaguer* fabrication ("the university portal") instead of the
+ * real one — worse, not better. This version only blocks a URL that is
+ * genuinely absent from the retrieved reference bodies.
+ */
+const URL_PATTERN = /\bhttps?:\/\/\S+/gi;
+
+function extractUrls(text: string): string[] {
+  return [...text.matchAll(URL_PATTERN)].map((m) => m[0].replace(/[.,;:)\]]+$/, ""));
+}
+
+function unsourcedUrls(text: string, sourceUrls: Set<string>): string[] {
+  return extractUrls(text).filter((u) => !sourceUrls.has(u));
+}
+
+function stripUrls(text: string, urls: string[]): string {
+  let cleaned = text;
+  for (const url of urls) {
+    cleaned = cleaned.split(url).join("");
+  }
+  cleaned = cleaned.replace(/[ \t]{2,}/g, " ").replace(/[ \t]+([.,!?])/g, "$1");
+  return `${cleaned.trim()}\n\n_I don't have a verified link for this — please check with the relevant university office directly rather than following any link I might have mentioned._`;
+}
+
 async function generate(prompt: string): Promise<{ text: string; model: string }> {
   const tried: string[] = [];
 
@@ -423,8 +454,8 @@ Rules you must follow:
 2. Never invent a name. If nobody is listed above, say the directory has no match yet and give general advice instead.
 3. Do not rank people by how good they are. They are ordered by topical match only.
 4. Do not mention grades, ratings, or how easy a professor is.
-5. For administrative questions (who to contact, fees, penalties, IDs, WiFi/IT issues, hostel, exams, policies, any named office or role) answer **only** from the official notices/records listed above — never invent a name, phone number, email address, **website or URL**, office, location, or policy detail that isn't stated there, even if it sounds plausible for a university. If the retrieved record describes a process (e.g. "email these people" or "call your parents") and does not mention a web form or portal, say so — do not assume or guess that one exists. If nothing relevant was retrieved, say plainly that this isn't on file yet and suggest the student check with the relevant university office directly, without guessing which one.
-6. When you cite a notice that has a Link, include it as a markdown link, e.g. [the notice](/notices/abc-123). Never construct a link or URL yourself — only use one that is explicitly given to you as a Link above.
+5. For administrative questions (who to contact, fees, penalties, IDs, WiFi/IT issues, hostel, exams, policies, any named office or role) answer **only** from the official notices/records listed above — never invent a name, phone number, email address, website, URL, office, location, or policy detail that isn't stated there, even if it sounds plausible for a university. A URL is only real if it is written verbatim in the retrieved records above — you may repeat one exactly as given, but never construct, modify, guess, or complete one yourself. If the retrieved record does not mention any web form, portal, or URL for a process, say so — do not assume or guess that one exists. If nothing relevant was retrieved, say plainly that this isn't on file yet and suggest the student check with the relevant university office directly, without guessing which one.
+6. When you cite a notice that has a Link, include it as a markdown link, e.g. [the notice](/notices/abc-123).
 7. Be warm and brief — you are talking to a nervous first-year. 120 words or fewer.
 8. Do not repeat the retrieved lists verbatim; people are already shown to the student as cards beside your reply. Refer to them naturally.
 9. Format the reply in markdown: short paragraphs (1-3 sentences), **bold** on key terms or names, and a bullet list when you're enumerating more than two things. Never return one undifferentiated block of text.
@@ -550,9 +581,24 @@ serve(async (req) => {
       // More may be retrieved than shown, and the model happily named the
       // extra one — not a hallucination (it was retrieved) but the student
       // sees a name with no card beside it, which reads exactly like one.
-      const generated = await generate(
-        buildPrompt(message, shownFaculty, shownMentors, shownReferences, currentPath),
-      );
+      const prompt = buildPrompt(message, shownFaculty, shownMentors, shownReferences, currentPath);
+      const sourceUrls = new Set(shownReferences.flatMap((r) => extractUrls(r.body ?? "")));
+      let generated = await generate(prompt);
+
+      // See unsourcedUrls' comment: one retry with an explicit correction
+      // first, since a rephrase is a better answer than a stripped sentence —
+      // but only for a URL that's genuinely not in the retrieved data; a real
+      // one the model copied from a retrieved article is left alone.
+      let badUrls = unsourcedUrls(generated.text, sourceUrls);
+      if (badUrls.length) {
+        generated = await generate(
+          `${prompt}\n\nYour previous answer included a website link (${badUrls[0]}) that does not appear anywhere in the retrieved data above — it was fabricated. Answer again. Only mention a URL if it is written verbatim in the retrieved records above; never invent, modify, or guess one.`,
+        );
+        badUrls = unsourcedUrls(generated.text, sourceUrls);
+      }
+      if (badUrls.length) {
+        generated = { text: stripUrls(generated.text, badUrls), model: generated.model };
+      }
       usedModel = generated.model;
 
       // Whether the model's prose mentions CampusMind is up to Gemini and it
