@@ -272,22 +272,23 @@ type RetrievalResult = {
   mentors: Retrieved[];
   notices: Retrieved[];
   documents: Retrieved[];
+  articles: Retrieved[];
 };
 
-const EMPTY_RETRIEVAL: RetrievalResult = { faculty: [], mentors: [], notices: [], documents: [] };
+const EMPTY_RETRIEVAL: RetrievalResult = { faculty: [], mentors: [], notices: [], documents: [], articles: [] };
 
 /**
  * One retrieval definition for the whole platform, cache included.
  *
- * Until this fix, this function read only `body.faculty` and `body.mentors`
- * from semantic-search's response and threw the rest away. semantic-search
- * already retrieves `notice` and `document` chunks by default (it's in its
- * own p_entity_types default array) and campus_notices already has an
- * `administrative` category with a working admin page — so admin-authored
- * facts like "who to contact for a fee penalty" or "wifi issues -> ITKM Help
- * Desk" were being embedded and retrieved correctly and then discarded right
- * here, before the model ever saw them. That is the actual reason
- * administrative questions went unanswered, not missing data.
+ * Until an earlier fix, this function read only `body.faculty` and
+ * `body.mentors` from semantic-search's response and threw the rest away —
+ * see notices/documents below. The same class of bug recurred when
+ * `knowledge_articles` (admin-authored rich-text content, 2026-08-21) shipped:
+ * semantic-search's default `p_entity_types` didn't include `"article"` at
+ * all, so article chunks never even reached this function, regardless of this
+ * merge. Both are fixed now, but the lesson is the same — a new
+ * knowledge_chunks entity_type needs three things to actually surface: the
+ * projector, semantic-search's default types + grouping, and this merge.
  */
 async function retrieve(query: string): Promise<RetrievalResult> {
   try {
@@ -305,6 +306,7 @@ async function retrieve(query: string): Promise<RetrievalResult> {
       mentors: body.mentors ?? [],
       notices: body.notices ?? [],
       documents: body.documents ?? [],
+      articles: body.articles ?? [],
     };
   } catch (error) {
     // A retrieval failure degrades the answer; it must not fail the whole reply.
@@ -421,8 +423,8 @@ Rules you must follow:
 2. Never invent a name. If nobody is listed above, say the directory has no match yet and give general advice instead.
 3. Do not rank people by how good they are. They are ordered by topical match only.
 4. Do not mention grades, ratings, or how easy a professor is.
-5. For administrative questions (who to contact, fees, penalties, IDs, WiFi/IT issues, hostel, exams, policies, any named office or role) answer **only** from the official notices/records listed above — never invent a name, phone number, email, office, location, or policy detail that isn't stated there. If nothing relevant was retrieved, say plainly that this isn't on file yet and suggest the student check with the relevant university office directly, without guessing which one.
-6. When you cite a notice that has a Link, include it as a markdown link, e.g. [the notice](/notices/abc-123).
+5. For administrative questions (who to contact, fees, penalties, IDs, WiFi/IT issues, hostel, exams, policies, any named office or role) answer **only** from the official notices/records listed above — never invent a name, phone number, email address, **website or URL**, office, location, or policy detail that isn't stated there, even if it sounds plausible for a university. If the retrieved record describes a process (e.g. "email these people" or "call your parents") and does not mention a web form or portal, say so — do not assume or guess that one exists. If nothing relevant was retrieved, say plainly that this isn't on file yet and suggest the student check with the relevant university office directly, without guessing which one.
+6. When you cite a notice that has a Link, include it as a markdown link, e.g. [the notice](/notices/abc-123). Never construct a link or URL yourself — only use one that is explicitly given to you as a Link above.
 7. Be warm and brief — you are talking to a nervous first-year. 120 words or fewer.
 8. Do not repeat the retrieved lists verbatim; people are already shown to the student as cards beside your reply. Refer to them naturally.
 9. Format the reply in markdown: short paragraphs (1-3 sentences), **bold** on key terms or names, and a bullet list when you're enumerating more than two things. Never return one undifferentiated block of text.
@@ -489,13 +491,13 @@ serve(async (req) => {
       );
     }
 
-    const { faculty, mentors, notices, documents } = await retrieve(message);
+    const { faculty, mentors, notices, documents, articles } = await retrieve(message);
     const shownMentors = mentors.slice(0, MAX_MENTOR_SUGGESTIONS);
     const shownFaculty = faculty.slice(0, MAX_FACULTY_SUGGESTIONS);
-    // Merged rather than kept separate: both are "official record" to the
+    // Merged rather than kept separate: all three are "official record" to the
     // prompt, and semantic-search already ranks the merge by similarity since
     // each list is a filter over the same ordered result set.
-    const shownReferences = [...notices, ...documents]
+    const shownReferences = [...notices, ...documents, ...articles]
       .sort((a, b) => b.similarity - a.similarity)
       .slice(0, MAX_REFERENCE_ITEMS);
 

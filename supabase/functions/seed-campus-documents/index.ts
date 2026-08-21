@@ -52,16 +52,31 @@ serve(async (req) => {
     return json({ error: "Unauthorized" }, 401);
   }
 
-  let payload: { rows?: DocumentRow[] };
+  let payload: { rows?: DocumentRow[]; delete_slugs?: string[] };
   try {
     payload = await req.json();
   } catch {
     return json({ error: "Invalid JSON body" }, 400);
   }
 
+  // Pure deletion, no reinsert — for content that's been superseded (e.g. by
+  // an admin-authored knowledge_articles entry) rather than corrected.
+  if (payload.delete_slugs?.length) {
+    const { error: deleteError, count } = await supabaseAdmin
+      .from("campus_documents")
+      .delete({ count: "exact" })
+      .in("document_slug", payload.delete_slugs);
+    if (deleteError) return json({ error: `delete failed: ${deleteError.message}` }, 500);
+
+    const { error: rebuildError } = await supabaseAdmin.rpc("rebuild_document_chunks");
+    if (rebuildError) return json({ error: `delete ok but rebuild_document_chunks failed: ${rebuildError.message}` }, 500);
+
+    return json({ deleted_slugs: payload.delete_slugs, deleted: count ?? 0 });
+  }
+
   const rows = payload.rows ?? [];
   if (!Array.isArray(rows) || rows.length === 0) {
-    return json({ error: "rows: DocumentRow[] is required" }, 400);
+    return json({ error: "rows: DocumentRow[] is required (or delete_slugs to remove instead)" }, 400);
   }
   for (const r of rows) {
     if (!r.document_slug || !r.document_title || !r.category || !r.section_heading || !r.content) {
