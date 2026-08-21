@@ -19,6 +19,21 @@ export const getNotices = async () => {
   return { data, error: null };
 };
 
+export const getNoticeById = async (id: string) => {
+  const { data, error } = await supabase
+    .from('campus_notices')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle();
+
+  if (error) {
+    console.error('Error fetching notice by id:', error);
+    return { data: null, error };
+  }
+
+  return { data, error: null };
+};
+
 export const createNotice = async (notice: CreateCampusNotice) => {
   const { data, error } = await supabase
     .from('campus_notices')
