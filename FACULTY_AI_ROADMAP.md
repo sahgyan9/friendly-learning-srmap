@@ -165,6 +165,37 @@ named a fifth retrieved professor who had no card beside them — not a
 hallucination, but indistinguishable from one to a student. The prompt also
 forbids biography, quality judgements, ranking, and any mention of ratings.
 
+### `retrieve()` was discarding notices and documents — fixed 2026-08-21
+
+Reported as "the AI can't answer administrative questions (who's the director
+of student affairs, wifi issues, fee penalties) because we haven't scraped
+admin data." **That wasn't the actual cause.** `campus_notices` already ships
+with an `administrative` category and a working admin page at
+`/admin/notices` (`20260821110000_campus_notices.sql`), and `semantic-search`
+already retrieves `notice` and `document` chunks by default. But
+`ai-chatbot`'s `retrieve()` read only `body.faculty` and `body.mentors` off
+the semantic-search response and threw the rest away, and `buildPrompt()`
+never mentioned notices at all. Any admin-authored fact was being embedded and
+retrieved correctly, then silently discarded one hop before the model saw it.
+
+Fixed by reading `body.notices` / `body.documents` too, merging them into a
+`references` block in the prompt (capped at 4 items, 500 chars of body each),
+and adding a grounding rule specific to administrative questions: answer only
+from the retrieved references, cite a notice with a markdown link to
+`/notices/:id` when one is available (`campus_documents` has no detail route
+yet, so those are cited by title only), and say plainly when nothing was
+retrieved rather than guessing an office or a name.
+
+**No new table was needed.** `campus_notices` with `category = 'administrative'`
+already covers "who to contact for X" facts — the fix was entirely in
+`ai-chatbot/index.ts`. Populating it is manual and admin-driven by design (same
+call as Opportunities posting, just admin-only instead of open): add an entry
+at `/admin/notices`, title as the topic ("WiFi / Internet Connectivity
+Issues"), content as the answer ("Contact the ITKM Help Desk, XLab, 2nd
+Floor..."), category Administrative. The existing per-row reproject trigger
+means it's searchable within the hour without waiting on the cron rebuild, and
+`triggerEmbedding()` in the admin form best-effort speeds that up further.
+
 ---
 
 ## Phase 4 — original plan (kept for the reasoning)

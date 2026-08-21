@@ -64,6 +64,7 @@ type Retrieved = {
   entity_id: string;
   title: string;
   subtitle: string | null;
+  body: string | null;
   metadata: Record<string, unknown>;
   source_path: string;
   similarity: number;
@@ -77,6 +78,10 @@ function tagsOf(row: Retrieved): string[] {
 /** How many cards render below a reply. Kept low on purpose — a wall of cards in a chat bubble reads as a dump, not an answer. */
 const MAX_FACULTY_SUGGESTIONS = 3;
 const MAX_MENTOR_SUGGESTIONS = 3;
+/** Notices/documents aren't rendered as cards (no frontend for that yet) — this just caps how many go into the prompt. */
+const MAX_REFERENCE_ITEMS = 4;
+/** Keeps a full circular from eating the prompt budget when several are retrieved at once. */
+const REFERENCE_BODY_CHARS = 500;
 
 /**
  * Short, one-line descriptions of what a route is, used to tell Gemini what
@@ -262,8 +267,29 @@ function buildFindReply(kind: "faculty" | "mentor", hasMatches: boolean): string
   return `A few ${noun} match — see the cards below. Search this yourself any time with **CampusMind** at [/ask](/ask).`;
 }
 
-/** One retrieval definition for the whole platform, cache included. */
-async function retrieve(query: string): Promise<{ faculty: Retrieved[]; mentors: Retrieved[] }> {
+type RetrievalResult = {
+  faculty: Retrieved[];
+  mentors: Retrieved[];
+  notices: Retrieved[];
+  documents: Retrieved[];
+};
+
+const EMPTY_RETRIEVAL: RetrievalResult = { faculty: [], mentors: [], notices: [], documents: [] };
+
+/**
+ * One retrieval definition for the whole platform, cache included.
+ *
+ * Until this fix, this function read only `body.faculty` and `body.mentors`
+ * from semantic-search's response and threw the rest away. semantic-search
+ * already retrieves `notice` and `document` chunks by default (it's in its
+ * own p_entity_types default array) and campus_notices already has an
+ * `administrative` category with a working admin page — so admin-authored
+ * facts like "who to contact for a fee penalty" or "wifi issues -> ITKM Help
+ * Desk" were being embedded and retrieved correctly and then discarded right
+ * here, before the model ever saw them. That is the actual reason
+ * administrative questions went unanswered, not missing data.
+ */
+async function retrieve(query: string): Promise<RetrievalResult> {
   try {
     const response = await fetch(`${SUPABASE_URL}/functions/v1/semantic-search`, {
       method: "POST",
@@ -271,14 +297,19 @@ async function retrieve(query: string): Promise<{ faculty: Retrieved[]; mentors:
       body: JSON.stringify({ query, limit: 8 }),
     });
 
-    if (!response.ok) return { faculty: [], mentors: [] };
+    if (!response.ok) return EMPTY_RETRIEVAL;
 
     const body = await response.json();
-    return { faculty: body.faculty ?? [], mentors: body.mentors ?? [] };
+    return {
+      faculty: body.faculty ?? [],
+      mentors: body.mentors ?? [],
+      notices: body.notices ?? [],
+      documents: body.documents ?? [],
+    };
   } catch (error) {
     // A retrieval failure degrades the answer; it must not fail the whole reply.
     console.error("retrieval failed:", error);
-    return { faculty: [], mentors: [] };
+    return EMPTY_RETRIEVAL;
   }
 }
 
@@ -348,7 +379,13 @@ async function generate(prompt: string): Promise<{ text: string; model: string }
  * employees of a real university and named students; the model may summarise
  * what is on file and nothing else.
  */
-function buildPrompt(message: string, faculty: Retrieved[], mentors: Retrieved[], path: string | null): string {
+function buildPrompt(
+  message: string,
+  faculty: Retrieved[],
+  mentors: Retrieved[],
+  references: Retrieved[],
+  path: string | null,
+): string {
   const describe = (row: Retrieved, kind: string) => {
     const tags = tagsOf(row);
     return `- ${row.title} (${kind}${row.subtitle ? `, ${row.subtitle}` : ""})` +
@@ -360,7 +397,16 @@ function buildPrompt(message: string, faculty: Retrieved[], mentors: Retrieved[]
     ...mentors.map((m) => describe(m, "senior student")),
   ].join("\n");
 
-  return `You are the assistant for Friendly Learning, a student-built campus ecosystem at SRM University-AP. The platform lets students: post ideas and calls for teammates on the community board; use CampusMind (the smart natural-language search at /ask) to find matching students and faculty in one query; connect with senior student mentors for course help and career advice; browse the full SRM AP faculty directory by research interest; form private or public group workspaces after finding the right people; discover hackathons, internships and research opportunities; and earn a verified certificate by genuinely helping 3 students as a mentor.
+  // Notices carry a real page to link to (/notices/:id); campus_documents has
+  // no detail route yet, so it's cited by title only rather than a dead link.
+  const describeReference = (row: Retrieved) => {
+    const body = (row.body ?? "").slice(0, REFERENCE_BODY_CHARS);
+    const link = row.source_path?.startsWith("/notices/") ? `\n  Link: ${row.source_path}` : "";
+    return `- ${row.title}${row.subtitle ? ` (${row.subtitle})` : ""}: ${body}${link}`;
+  };
+  const referenceText = references.map(describeReference).join("\n");
+
+  return `You are the assistant for Friendly Learning, a student-built campus ecosystem at SRM University-AP. The platform lets students: post ideas and calls for teammates on the community board; use CampusMind (the smart natural-language search at /ask) to find matching students and faculty in one query; connect with senior student mentors for course help and career advice; browse the full SRM AP faculty directory by research interest; form private or public group workspaces after finding the right people; discover hackathons, internships and research opportunities; earn a verified certificate by genuinely helping 3 students as a mentor; and look up official campus notices, circulars and administrative info (who to contact for what, help desks, policies) that admins have published.
 
 The student is currently looking at: ${describePage(path)}.
 
@@ -368,15 +414,19 @@ A student asked: "${message}"
 
 ${people ? `These people were retrieved from the platform's database as topical matches:\n${people}` : "No people in the database matched this question."}
 
+${referenceText ? `These official notices/circulars/administrative records were retrieved as topical matches:\n${referenceText}` : "No official notice or record in the database matched this question."}
+
 Rules you must follow:
 1. Only describe a person using the interests or skills listed above. Do not add biography, opinions, achievements, seniority, or quality judgements — you do not know them.
 2. Never invent a name. If nobody is listed above, say the directory has no match yet and give general advice instead.
 3. Do not rank people by how good they are. They are ordered by topical match only.
 4. Do not mention grades, ratings, or how easy a professor is.
-5. Be warm and brief — you are talking to a nervous first-year. 120 words or fewer.
-6. Do not repeat the list verbatim; it is already shown to the student as cards beside your reply. Refer to it naturally.
-7. Format the reply in markdown: short paragraphs (1-3 sentences), **bold** on key terms or names, and a bullet list when you're enumerating more than two things. Never return one undifferentiated block of text.
-8. If the question is about the page they're currently on, answer with that page in mind rather than generically.
+5. For administrative questions (who to contact, fees, penalties, IDs, WiFi/IT issues, hostel, exams, policies, any named office or role) answer **only** from the official notices/records listed above — never invent a name, phone number, email, office, location, or policy detail that isn't stated there. If nothing relevant was retrieved, say plainly that this isn't on file yet and suggest the student check with the relevant university office directly, without guessing which one.
+6. When you cite a notice that has a Link, include it as a markdown link, e.g. [the notice](/notices/abc-123).
+7. Be warm and brief — you are talking to a nervous first-year. 120 words or fewer.
+8. Do not repeat the retrieved lists verbatim; people are already shown to the student as cards beside your reply. Refer to them naturally.
+9. Format the reply in markdown: short paragraphs (1-3 sentences), **bold** on key terms or names, and a bullet list when you're enumerating more than two things. Never return one undifferentiated block of text.
+10. If the question is about the page they're currently on, answer with that page in mind rather than generically.
 
 Answer the student's question directly.`;
 }
@@ -439,9 +489,15 @@ serve(async (req) => {
       );
     }
 
-    const { faculty, mentors } = await retrieve(message);
+    const { faculty, mentors, notices, documents } = await retrieve(message);
     const shownMentors = mentors.slice(0, MAX_MENTOR_SUGGESTIONS);
     const shownFaculty = faculty.slice(0, MAX_FACULTY_SUGGESTIONS);
+    // Merged rather than kept separate: both are "official record" to the
+    // prompt, and semantic-search already ranks the merge by similarity since
+    // each list is a filter over the same ordered result set.
+    const shownReferences = [...notices, ...documents]
+      .sort((a, b) => b.similarity - a.similarity)
+      .slice(0, MAX_REFERENCE_ITEMS);
 
     // The suggestion cards read full mentor rows (skills.slice, rating.toFixed),
     // so the retrieved IDs are rehydrated rather than passed through as chunks.
@@ -492,7 +548,9 @@ serve(async (req) => {
       // More may be retrieved than shown, and the model happily named the
       // extra one — not a hallucination (it was retrieved) but the student
       // sees a name with no card beside it, which reads exactly like one.
-      const generated = await generate(buildPrompt(message, shownFaculty, shownMentors, currentPath));
+      const generated = await generate(
+        buildPrompt(message, shownFaculty, shownMentors, shownReferences, currentPath),
+      );
       usedModel = generated.model;
 
       // Whether the model's prose mentions CampusMind is up to Gemini and it
