@@ -34,7 +34,7 @@ type Retrieved = {
   similarity: number;
 };
 
-function getTemporalContext(): { todayText: string; tomorrowText: string; currentMonthYear: string } {
+function getTemporalContext(): { todayText: string; tomorrowText: string; currentMonthYear: string; currentTimeText: string } {
   const now = new Date();
   const options: Intl.DateTimeFormatOptions = {
     timeZone: "Asia/Kolkata",
@@ -52,7 +52,14 @@ function getTemporalContext(): { todayText: string; tomorrowText: string; curren
     month: "long",
   };
   const currentMonthYear = new Intl.DateTimeFormat("en-IN", monthYearOptions).format(now);
-  return { todayText, tomorrowText, currentMonthYear };
+  const timeOptions: Intl.DateTimeFormatOptions = {
+    timeZone: "Asia/Kolkata",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  };
+  const currentTimeText = new Intl.DateTimeFormat("en-IN", timeOptions).format(now);
+  return { todayText, tomorrowText, currentMonthYear, currentTimeText };
 }
 
 /** YYYY-MM-DD in Asia/Kolkata, `offsetDays` from now — en-CA formats as ISO directly. */
@@ -71,7 +78,14 @@ function resolveCalendarDates(query: string): { label: string; iso: string }[] {
   const q = query.toLowerCase();
   const dates: { label: string; iso: string }[] = [];
   if (/\byesterday\b/.test(q)) dates.push({ label: "Yesterday", iso: isoDate(-1) });
-  if (/\btoday\b|\btoda+y\b/.test(q)) dates.push({ label: "Today", iso: isoDate(0) });
+  // "now"/"currently"/"right now" ask about the present day just as much as the
+  // word "today" does (e.g. "can i get outpass now") -- without this, queries
+  // phrased that way skip RESOLVED_FACTS entirely and fall back to the model
+  // reading the working-days grid itself, the exact failure mode this
+  // resolver exists to eliminate.
+  if (/\btoday\b|\btoda+y\b|\bnow\b|\bcurrently\b|\bright now\b|\bat the moment\b/.test(q)) {
+    dates.push({ label: "Today", iso: isoDate(0) });
+  }
   if (/\btomorrow\b|\btomm?orr?ow?\b/.test(q)) dates.push({ label: "Tomorrow", iso: isoDate(1) });
   return dates;
 }
@@ -128,7 +142,7 @@ async function retrieve(query: string): Promise<Retrieved[]> {
     let searchQuery = query;
 
     // Temporal Query Expansion for relative time queries (e.g. today, tomorrow, tommorow, holiday, day order)
-    const hasTemporalWords = /\b(today|toda+y|tomorrow|tomm?orr?ow?|yesterday|this week|next week|this month|next month|day order|holiday|holidays|working day)\b/i.test(query);
+    const hasTemporalWords = /\b(today|toda+y|tomorrow|tomm?orr?ow?|yesterday|now|currently|right now|at the moment|this week|next week|this month|next month|day order|holiday|holidays|working day)\b/i.test(query);
     if (hasTemporalWords) {
       searchQuery = `${query} (${todayText} / ${tomorrowText} Academic Calendar AY 2026-27 ${currentMonthYear} working days holidays)`;
     }
@@ -163,7 +177,7 @@ async function retrieve(query: string): Promise<Retrieved[]> {
 }
 
 function buildPrompt(query: string, matches: Retrieved[], calendarFacts: CalendarFact[]): string {
-  const { todayText, tomorrowText } = getTemporalContext();
+  const { todayText, tomorrowText, currentTimeText } = getTemporalContext();
 
   const resolvedFactsBlock = calendarFacts.length > 0
     ? "\n\nRESOLVED_FACTS (computed directly from the official calendar database — this is ground truth, more authoritative than anything in the resources below; do not re-derive or second-guess it by reading a working-days grid yourself):\n"
@@ -199,6 +213,7 @@ The user searched for: "${query}".
 
 TEMPORAL ANCHOR (Indian Standard Time / Asia/Kolkata):
 - Today's Date: ${todayText}
+- Current Time Right Now: ${currentTimeText} IST
 - Tomorrow's Date: ${tomorrowText}
 - Current Academic Year: 2026-27${resolvedFactsBlock}
 
@@ -212,14 +227,15 @@ Rules:
    - If a RESOLVED_FACTS block is present above, that answer is ground truth — use it directly and do not re-derive or contradict it. It already tells you whether the date is a holiday and, if so, why.
    - If no RESOLVED_FACTS block is present, resolve the date(s) the student is asking about relative to the TEMPORAL ANCHOR above (e.g. "today" = Today's Date, "tomorrow" = Tomorrow's Date), then check the Academic Calendar working days table: find the row/column matching that resolved date's month and weekday. Any cell marked 'H' indicates an official declared Holiday / Non-Instructional Day with NO classes.
    - State clearly whether the resolved date is a Holiday or a working day, citing the source [1]. Never assume or invent which date is "today" or "tomorrow" — always use the TEMPORAL ANCHOR values above.
-2. Provide DIRECT, SPECIFIC, AND ACCURATE ANSWERS extracted from the content/excerpts. If the user asks for dates, exam timelines, specific penalties, rules, or contacts, STATE THE EXACT DATES AND DETAILS in the summary (with bold formatting) instead of just telling the student to check the document.
-3. Synthesize the context in a natural, helpful, student-friendly tone. Do not just list the titles.
-4. Only mention people, events, facts, or entities from the provided context. If no context is provided, say there are no direct matches yet and suggest broad advice.
-5. INLINE CITATIONS: When you state a fact, date, or mention an entity from the resources, you MUST include an inline citation bracket like [1] or [2] matching the resource number above.
-6. INSTANT VERDICT: In 'verdict', provide an ultra-short 3-8 word headline status verdict (e.g. "🏖️ Official Holiday — No Classes", "📅 Next Exams: 28 Sept – 1 Oct 2026", "👥 8 Fullstack Mentors Available", "🏛️ Hostels Curfew: 9:30 PM").
-7. KEY TAKEAWAYS: Extract 1-3 distinct, concise bullet takeaways in 'keyInsights' with bold emoji/category prefixes (e.g., "**📅 Exact Date:** ...", "**🏛️ Library Access:** ...", "**⚠️ Policy:** ..."). Do NOT simply repeat the exact same sentence as the summary; make them actionable, scannable bullet points.
-8. Identify the top 1-4 specific entities to recommend as badges. Use the exact 'id', 'type', 'title' (for name), 'path' (for to), and 'subtitle' (for detail) from the context. Only use types: 'faculty', 'mentor', 'opportunity', 'community', 'post', or 'document'.
-9. CITATIONS MAP: Provide a 'citations' array mapping the numbers you used in the summary to the entity.
+2. TIME-OF-DAY WINDOWS: If a resource states a rule that only applies within a specific clock-time window (e.g. "General Outpass: 8:00 AM – 12:00 PM"), compare that window against "Current Time Right Now" in the TEMPORAL ANCHOR before answering whether the student can act on it now. A holiday being in effect does not by itself mean a time-gated action is currently available — check both the date condition AND the time condition, and state plainly if the window has already closed or hasn't opened yet today.
+3. Provide DIRECT, SPECIFIC, AND ACCURATE ANSWERS extracted from the content/excerpts. If the user asks for dates, exam timelines, specific penalties, rules, or contacts, STATE THE EXACT DATES AND DETAILS in the summary (with bold formatting) instead of just telling the student to check the document.
+4. Synthesize the context in a natural, helpful, student-friendly tone. Do not just list the titles.
+5. Only mention people, events, facts, or entities from the provided context. If no context is provided, say there are no direct matches yet and suggest broad advice.
+6. INLINE CITATIONS: When you state a fact, date, or mention an entity from the resources, you MUST include an inline citation bracket like [1] or [2] matching the resource number above.
+7. INSTANT VERDICT: In 'verdict', provide an ultra-short 3-8 word headline status verdict (e.g. "🏖️ Official Holiday — No Classes", "📅 Next Exams: 28 Sept – 1 Oct 2026", "👥 8 Fullstack Mentors Available", "🏛️ Hostels Curfew: 9:30 PM").
+8. KEY TAKEAWAYS: Extract 1-3 distinct, concise bullet takeaways in 'keyInsights' with bold emoji/category prefixes (e.g., "**📅 Exact Date:** ...", "**🏛️ Library Access:** ...", "**⚠️ Policy:** ..."). Do NOT simply repeat the exact same sentence as the summary; make them actionable, scannable bullet points.
+9. Identify the top 1-4 specific entities to recommend as badges. Use the exact 'id', 'type', 'title' (for name), 'path' (for to), and 'subtitle' (for detail) from the context. Only use types: 'faculty', 'mentor', 'opportunity', 'community', 'post', or 'document'.
+10. CITATIONS MAP: Provide a 'citations' array mapping the numbers you used in the summary to the entity.
 
 Your response MUST be a valid JSON object matching this schema exactly:
 {
