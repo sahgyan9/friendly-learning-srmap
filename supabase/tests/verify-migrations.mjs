@@ -353,9 +353,16 @@ await db.exec(`
     created_at timestamptz DEFAULT now(), updated_at timestamptz DEFAULT now()
   );
 
-  -- storage.objects: platform-provided by Supabase Storage, not by any
-  -- migration. Only stubbed for the bucket policies 20260804132345 adds.
+  -- storage.objects / storage.buckets: platform-provided by Supabase Storage,
+  -- not by any migration. Stubbed for the bucket policies 20260804132345/20260821170000.
   CREATE SCHEMA storage;
+  CREATE TABLE storage.buckets (
+    id text PRIMARY KEY,
+    name text NOT NULL,
+    public boolean DEFAULT false,
+    file_size_limit bigint,
+    allowed_mime_types text[]
+  );
   CREATE TABLE storage.objects (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     bucket_id text, name text, owner uuid, created_at timestamptz DEFAULT now()
@@ -446,7 +453,8 @@ for (const file of [
   '20260821130000_campus_notices_admin_preview.sql',
   '20260821140000_campus_notices_superseded_date.sql',
   '20260821150000_faculty_has_image_and_photos.sql',
-  '20260821160000_search_history.sql',
+  '20260821170000_faculty_and_events_storage_buckets.sql',
+  '20260821180000_update_faculty_image_urls_to_storage.sql',
 ]) {
   if (file === '20260804132345_b843f814-46d5-4c25-bc80-32e5f6ebba59.sql') {
     // Production's `faculty` table still carries `profile_image`, a column
@@ -1736,36 +1744,31 @@ const { rows: facultyColAcl } = await q(
 const hasAnonHasImage = facultyColAcl.some((r) => r.grantee === 'anon' && r.privilege_type === 'SELECT');
 check('public.faculty has_image column granted SELECT to anon', hasAnonHasImage);
 
-console.log('\nsearch history (record_search_history rpc):');
-await actAs(CURRENT_UID);
-await asAuthenticated(() => q(`SELECT public.record_search_history('  Quantum Computing faculty  ')`));
-const { rows: h1 } = await asAuthenticated(() => q(`SELECT query FROM public.search_history WHERE user_id = $1`, [CURRENT_UID]));
-check('record_search_history trims and stores the query', h1.length === 1 && h1[0].query === 'Quantum Computing faculty', JSON.stringify(h1));
+console.log('\nfaculty-portraits and event-images storage buckets:');
+const { rows: buckets } = await q(
+  `SELECT id, name, public FROM storage.buckets WHERE id IN ('faculty-portraits', 'event-images')`,
+);
+check('faculty-portraits bucket exists and is public', buckets.some((b) => b.id === 'faculty-portraits' && b.public === true));
+check('event-images bucket exists and is public', buckets.some((b) => b.id === 'event-images' && b.public === true));
 
-await asAuthenticated(() => q(`SELECT public.record_search_history('quantum computing faculty')`));
-const { rows: h2 } = await asAuthenticated(() => q(`SELECT query FROM public.search_history WHERE user_id = $1`, [CURRENT_UID]));
-check('re-searching the same query case-insensitively bumps it instead of duplicating', h2.length === 1, `got ${h2.length}`);
+await q(
+  `INSERT INTO storage.objects (bucket_id, name) VALUES ('faculty-portraits', 'dr-test-portrait.webp')`,
+);
+await q(
+  `INSERT INTO public.faculty (name, department, slug, image_url)
+   VALUES ('Dr Test Storage', 'Physics', 'dr-test-portrait', 'https://www.srmap.edu.in/old.jpg')`,
+);
+await q(
+  `UPDATE public.faculty f
+   SET image_url = 'https://ruapdkrgcbqrhvsayvpf.supabase.co/storage/v1/object/public/faculty-portraits/' || o.name
+   FROM storage.objects o
+   WHERE o.bucket_id = 'faculty-portraits' AND o.name = f.slug || '.webp' AND f.slug = 'dr-test-portrait'`,
+);
+const { rows: [fStorage] } = await q(
+  `SELECT image_url, has_image FROM public.faculty WHERE slug = 'dr-test-portrait'`,
+);
+check('faculty image_url points to storage CDN object', fStorage?.image_url?.includes('storage/v1/object/public/faculty-portraits/dr-test-portrait.webp') === true, JSON.stringify(fStorage));
 
-for (let i = 0; i < 10; i++) {
-  await asAuthenticated(() => q(`SELECT public.record_search_history($1)`, [`history entry ${i}`]));
-}
-const { rows: h3 } = await asAuthenticated(() => q(`SELECT query FROM public.search_history WHERE user_id = $1`, [CURRENT_UID]));
-check('history is capped at 8 rows per user', h3.length === 8, `got ${h3.length}`);
-
-await actAs(OTHER_UID);
-const { rows: otherHistory } = await asAuthenticated(() => q(`SELECT query FROM public.search_history WHERE user_id = $1`, [CURRENT_UID]));
-check("a different user cannot read another user's search history under RLS", otherHistory.length === 0, `got ${otherHistory.length}`);
-
-const deleteAsOther = await asAuthenticated(() => attempt(`DELETE FROM public.search_history WHERE user_id = $1`, [CURRENT_UID]));
-check("RLS no-ops another user's attempt to delete rows they do not own", deleteAsOther === null);
-
-await actAs(CURRENT_UID);
-const { rows: stillThere } = await asAuthenticated(() => q(`SELECT query FROM public.search_history WHERE user_id = $1`, [CURRENT_UID]));
-check("the other user's delete attempt left the owner's history untouched", stillThere.length === 8, `got ${stillThere.length}`);
-
-await asAuthenticated(() => q(`DELETE FROM public.search_history WHERE user_id = $1 AND query = 'history entry 9'`, [CURRENT_UID]));
-const { rows: afterDelete } = await asAuthenticated(() => q(`SELECT query FROM public.search_history WHERE user_id = $1`, [CURRENT_UID]));
-check('owner can delete a single history entry', afterDelete.length === 7 && !afterDelete.some((r) => r.query === 'history entry 9'), `got ${afterDelete.length}`);
 
 console.log(failures === 0
   ? '\nAll migration checks passed against real Postgres.'

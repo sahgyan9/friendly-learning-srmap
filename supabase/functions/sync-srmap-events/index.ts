@@ -302,14 +302,25 @@ serve(async (req) => {
           const link = item.link as string;
           const department = embedded ? extractDepartment(embedded) : "SRMAP";
 
-          const rawContent = (item.content as { rendered: string })?.rendered ?? "";
-          const scraped = await scrapeSingleEvent(link);
+          let imageUrl = embedded ? extractImage(embedded) : null;
+          if (imageUrl) {
+            imageUrl = (await mirrorEventImage(imageUrl, `event_${item.id}_thumb.webp`)) || imageUrl;
+          }
+
+          let content = rawContent;
+          const imgMatch = content.match(/<img[^>]+src=["']([^"']+)["'][^>]*>/i);
+          if (imgMatch && imgMatch[1]) {
+            const mirroredPoster = await mirrorEventImage(imgMatch[1], `event_${item.id}_poster.webp`);
+            if (mirroredPoster) {
+              content = content.replace(imgMatch[1], mirroredPoster);
+            }
+          }
 
           return {
             id: item.id as number,
             title: stripHtml((item.title as { rendered: string }).rendered),
             excerpt: stripHtml((item.excerpt as { rendered: string }).rendered),
-            content: rawContent,
+            content,
             venue: scraped.venue,
             organizer: scraped.organizer || department,
             registration_url: scraped.registrationUrl,
@@ -317,7 +328,7 @@ serve(async (req) => {
             start_date: startDate,
             end_date: endDate,
             link,
-            image_url: embedded ? extractImage(embedded) : null,
+            image_url: imageUrl,
             department,
             event_type: embedded ? extractEventType(embedded) : "",
             last_synced_at: syncStartedAt,
@@ -335,7 +346,20 @@ serve(async (req) => {
       if (error) throw error;
     }
 
-    // Prune stale records
+    // Prune stale records and delete their mirrored storage images
+    const { data: staleEvents } = await supabaseAdmin
+      .from("srmap_events_cache")
+      .select("id")
+      .lt("last_synced_at", syncStartedAt);
+
+    if (staleEvents && staleEvents.length > 0) {
+      const filesToRemove = staleEvents.flatMap((e: { id: number }) => [
+        `event_${e.id}_thumb.webp`,
+        `event_${e.id}_poster.webp`,
+      ]);
+      await supabaseAdmin.storage.from("event-images").remove(filesToRemove);
+    }
+
     const { error: pruneError, count: pruned } = await supabaseAdmin
       .from("srmap_events_cache")
       .delete({ count: "exact" })
@@ -347,3 +371,29 @@ serve(async (req) => {
     return json({ error: error instanceof Error ? error.message : String(error) }, 500);
   }
 });
+
+async function mirrorEventImage(imageUrl: string | null, filename: string): Promise<string | null> {
+  if (!imageUrl || !imageUrl.startsWith("http")) return imageUrl;
+  try {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+    const res = await fetch(imageUrl, {
+      headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" },
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!res.ok) return imageUrl;
+    const arrayBuffer = await res.arrayBuffer();
+    const contentType = res.headers.get("content-type") || "image/webp";
+
+    const { error } = await supabaseAdmin.storage
+      .from("event-images")
+      .upload(filename, arrayBuffer, {
+        contentType,
+        upsert: true,
+        cacheControl: "604800",
+      });
+    if (error) return imageUrl;
+    return `${supabaseUrl}/storage/v1/object/public/event-images/${filename}`;
+  } catch {
+    return imageUrl;
+  }
+}

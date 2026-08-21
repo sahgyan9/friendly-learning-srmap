@@ -15,8 +15,13 @@ export function getOptimizedImageUrl(
 ): string {
   if (!url) return "";
 
-  // Return base64, blob, or relative paths as-is
-  if (url.startsWith("data:") || url.startsWith("blob:") || url.startsWith("/")) {
+  // Return base64, blob, relative paths, or already-optimized Supabase Storage WebP assets as-is
+  if (
+    url.startsWith("data:") ||
+    url.startsWith("blob:") ||
+    url.startsWith("/") ||
+    (url.includes("supabase.co/storage/") && url.endsWith(".webp"))
+  ) {
     return url;
   }
 
