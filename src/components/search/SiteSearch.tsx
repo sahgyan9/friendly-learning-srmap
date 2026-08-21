@@ -43,6 +43,7 @@ import {
   getSearchHistory,
   recordSearchHistory,
   removeSearchHistoryEntry,
+  type SearchHistoryEntry,
 } from "@/lib/search/history";
 import { useSiteSearch, type SearchHit } from "@/hooks/useSiteSearch";
 import { getInitials } from "@/utils/user-utils";
@@ -147,7 +148,7 @@ const SiteSearch = () => {
   const [isAiMode, setIsAiMode] = useState(false);
   const [theme, setThemeState] = useState<Theme>("dark");
   const [isMac, setIsMac] = useState(false);
-  const [history, setHistory] = useState<string[]>([]);
+  const [history, setHistory] = useState<SearchHistoryEntry[]>([]);
 
   const { results: liveResults, loading: liveLoading } = useSiteSearch(query, open);
 
@@ -211,7 +212,7 @@ const SiteSearch = () => {
       const trimmed = query.trim();
 
       if (destination.to) {
-        if (user && trimmed) recordSearchHistory(trimmed);
+        if (user && trimmed) recordSearchHistory(trimmed, destination.to);
         close();
         navigate(destination.to);
         return;
@@ -250,19 +251,19 @@ const SiteSearch = () => {
   }, [query, close, navigate, user]);
 
   const runHistoryEntry = useCallback(
-    (entry: string) => {
-      if (user) recordSearchHistory(entry);
+    (entry: SearchHistoryEntry) => {
+      if (user) recordSearchHistory(entry.query, entry.resultUrl);
       close();
-      navigate(buildSearchUrl(entry, "all"));
+      navigate(entry.resultUrl || buildSearchUrl(entry.query, "all"));
     },
     [close, navigate, user],
   );
 
-  const removeHistoryEntry = useCallback((entry: string, event: MouseEvent) => {
+  const removeHistoryEntry = useCallback((query: string, event: MouseEvent) => {
     event.preventDefault();
     event.stopPropagation();
-    setHistory((prev) => prev.filter((item) => item !== entry));
-    removeSearchHistoryEntry(entry);
+    setHistory((prev) => prev.filter((item) => item.query !== query));
+    removeSearchHistoryEntry(query);
   }, []);
 
   const clearHistory = useCallback(() => {
@@ -355,7 +356,7 @@ const SiteSearch = () => {
         key={hit.id}
         value={`${hit.kind}-${hit.id}-${hit.title}`}
         onSelect={() => {
-          if (user && query.trim()) recordSearchHistory(query.trim());
+          if (user && query.trim()) recordSearchHistory(query.trim(), hit.to);
           goTo(hit.to);
         }}
         className={cn(
@@ -566,8 +567,8 @@ const SiteSearch = () => {
                     >
                       {history.map((entry) => (
                         <CommandItem
-                          key={`history-${entry}`}
-                          value={`history-${entry}`}
+                          key={`history-${entry.query}`}
+                          value={`history-${entry.query}`}
                           onSelect={() => runHistoryEntry(entry)}
                           className={cn(
                             "group flex items-center gap-3 rounded-xl px-3 py-2 my-0.5 transition-all duration-150 cursor-pointer",
@@ -578,11 +579,11 @@ const SiteSearch = () => {
                             <HistoryIcon className="h-3.5 w-3.5" />
                           </span>
                           <span className="min-w-0 flex-1 truncate text-sm text-foreground/90 group-data-[selected=true]:text-foreground">
-                            {entry}
+                            {entry.query}
                           </span>
                           <button
                             type="button"
-                            onClick={(e) => removeHistoryEntry(entry, e)}
+                            onClick={(e) => removeHistoryEntry(entry.query, e)}
                             className="shrink-0 rounded-md p-1 text-muted-foreground/50 opacity-0 group-hover:opacity-100 hover:text-foreground hover:bg-accent transition-all"
                             title="Remove from history"
                           >

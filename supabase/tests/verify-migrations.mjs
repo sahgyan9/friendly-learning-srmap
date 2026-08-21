@@ -453,8 +453,10 @@ for (const file of [
   '20260821130000_campus_notices_admin_preview.sql',
   '20260821140000_campus_notices_superseded_date.sql',
   '20260821150000_faculty_has_image_and_photos.sql',
+  '20260821160000_search_history.sql',
   '20260821170000_faculty_and_events_storage_buckets.sql',
   '20260821180000_update_faculty_image_urls_to_storage.sql',
+  '20260821190000_search_history_result_url.sql',
 ]) {
   if (file === '20260804132345_b843f814-46d5-4c25-bc80-32e5f6ebba59.sql') {
     // Production's `faculty` table still carries `profile_image`, a column
@@ -1769,6 +1771,40 @@ const { rows: [fStorage] } = await q(
 );
 check('faculty image_url points to storage CDN object', fStorage?.image_url?.includes('storage/v1/object/public/faculty-portraits/dr-test-portrait.webp') === true, JSON.stringify(fStorage));
 
+console.log('\nsearch history (record_search_history rpc, with result_url):');
+await actAs(CURRENT_UID);
+await asAuthenticated(() => q(`SELECT public.record_search_history('  Quantum Computing faculty  ')`));
+const { rows: h1 } = await asAuthenticated(() => q(`SELECT query, result_url FROM public.search_history WHERE user_id = $1`, [CURRENT_UID]));
+check('record_search_history trims the query and defaults result_url to null', h1.length === 1 && h1[0].query === 'Quantum Computing faculty' && h1[0].result_url === null, JSON.stringify(h1));
+
+await asAuthenticated(() => q(`SELECT public.record_search_history('quantum computing faculty')`));
+const { rows: h2 } = await asAuthenticated(() => q(`SELECT query FROM public.search_history WHERE user_id = $1`, [CURRENT_UID]));
+check('re-searching the same query case-insensitively bumps it instead of duplicating', h2.length === 1, `got ${h2.length}`);
+
+await asAuthenticated(() => q(`SELECT public.record_search_history('admin', '/admin')`));
+const { rows: h3 } = await asAuthenticated(() => q(`SELECT query, result_url FROM public.search_history WHERE user_id = $1 AND query = 'admin'`, [CURRENT_UID]));
+check('record_search_history stores the resolved destination url', h3.length === 1 && h3[0].result_url === '/admin', JSON.stringify(h3));
+
+for (let i = 0; i < 10; i++) {
+  await asAuthenticated(() => q(`SELECT public.record_search_history($1)`, [`history entry ${i}`]));
+}
+const { rows: h4 } = await asAuthenticated(() => q(`SELECT query FROM public.search_history WHERE user_id = $1`, [CURRENT_UID]));
+check('history is capped at 8 rows per user', h4.length === 8, `got ${h4.length}`);
+
+await actAs(OTHER_UID);
+const { rows: otherHistory } = await asAuthenticated(() => q(`SELECT query FROM public.search_history WHERE user_id = $1`, [CURRENT_UID]));
+check("a different user cannot read another user's search history under RLS", otherHistory.length === 0, `got ${otherHistory.length}`);
+
+const deleteAsOther = await asAuthenticated(() => attempt(`DELETE FROM public.search_history WHERE user_id = $1`, [CURRENT_UID]));
+check("RLS no-ops another user's attempt to delete rows they do not own", deleteAsOther === null);
+
+await actAs(CURRENT_UID);
+const { rows: stillThere } = await asAuthenticated(() => q(`SELECT query FROM public.search_history WHERE user_id = $1`, [CURRENT_UID]));
+check("the other user's delete attempt left the owner's history untouched", stillThere.length === 8, `got ${stillThere.length}`);
+
+await asAuthenticated(() => q(`DELETE FROM public.search_history WHERE user_id = $1 AND query = 'history entry 9'`, [CURRENT_UID]));
+const { rows: afterDelete } = await asAuthenticated(() => q(`SELECT query FROM public.search_history WHERE user_id = $1`, [CURRENT_UID]));
+check('owner can delete a single history entry', afterDelete.length === 7 && !afterDelete.some((r) => r.query === 'history entry 9'), `got ${afterDelete.length}`);
 
 console.log(failures === 0
   ? '\nAll migration checks passed against real Postgres.'
