@@ -31,6 +31,53 @@ export interface BlogPost {
 
 export const BLOG_POSTS: BlogPost[] = [
   {
+    slug: "infinitus-srm-ap-guide",
+    title: "Infinitus at SRM AP: What It Is, and How It's Grown Since 2023",
+    excerpt:
+      "SRM University-AP's biggest fest has gone from a 3,000-person cultural weekend to a 6,000-strong techno-cultural takeover with hackathons, pro-shows, and a car expo. Here's the full history — and how to actually make the most of it.",
+    date: "2026-08-21",
+    readingMinutes: 6,
+    tags: ["Campus Life", "Infinitus", "Events"],
+    standfirst:
+      "If you've heard seniors talk about 'Infinitus' like it's a whole season rather than an event, they're not exaggerating. Here's what it actually is, how it got here, and how to spend it well instead of just showing up.",
+    sections: [
+      {
+        heading: "What Infinitus actually is",
+        body: [
+          "Infinitus is SRM University-AP's flagship fest, organised by the Directorate of Student Affairs together with the Student Council. What started as a cultural fest has, since 2024, become a techno-cultural one — pro-show musical headliners and DJ nights running alongside dozens of student competitions in music, dance, theatre, fine arts, gaming and quizzing, plus hackathons, robotics and coding challenges on the technical side.",
+          "It usually runs three to four days, pulls in students from other universities as well as SRM AP's own campus, and closes with a headline concert that's become the thing people plan their whole week around.",
+        ],
+      },
+      {
+        heading: "How it's grown, year by year",
+        body: [
+          "The fest has scaled fast enough that each edition looks different from the last:",
+        ],
+        list: [
+          "2023 — The first edition, and the university's first cultural fest in four years. A three-day weekend (April 22–24) inaugurated with a balloon release by Vice Chancellor Prof. Manoj K Arora, headlined by Armaan Malik, Lost Stories, the band Akshar, and DJ Kim, with a Sunburn Campus EDM night. 3,000+ attendees, including students from five-plus neighbouring universities, across 50+ competitions.",
+          "2024 — Expanded to four days and rebranded techno-cultural, drawing 6,000+ attendees. Neeti Mohan, Moksha Band, Haricharan, DJ Notorious and stand-up comic Mouli headlined, alongside 30+ food stalls and a luxury automobile expo.",
+          "2025 (Feb 5–8) — Salim-Sulaiman, stand-up from Hoody, singer Ram Miryala and DJ Akram on the pro-show side. The technical centrepiece was the HACK SRM Challenge: 22 hours straight, six tracks, a ₹1 lakh prize pool. Chief guest was Mr Kishan Sreenath, VP PowerTrain at Volvo Group.",
+          "2026 (Feb 25–28) — The biggest yet: 6,000+ participants, playback singers Karthik and Jonita Gandhi headlining, DJs Gowtham and Ali, 25+ technical competitions spanning hackathons, robotics, coding and VR, 10+ non-technical events, and a car expo alongside it.",
+        ],
+      },
+      {
+        heading: "The tech side isn't an afterthought anymore",
+        body: [
+          "If you only know Infinitus as a concert, the 2025–2026 editions are worth a second look. HACK SRM ran as a genuine 22-hour hackathon with real prize money, and 2026 added drone simulators, VR experiences and expert-led workshops on top of the usual coding and robotics contests. Registration for competitions runs through Unstop, where the 2026 edition alone logged over a thousand sign-ups and close to five lakh impressions across its sub-events — this is no longer a side track to the concerts.",
+        ],
+      },
+      {
+        heading: "How to actually make the most of it",
+        body: [
+          "Pick your technical events early. Slots for things like HACK SRM-style hackathons fill fast, and a strong team beats a solo entry almost every time — this is exactly the kind of thing worth posting about on the community board weeks in advance, not the night before.",
+          "Don't skip the smaller stages for the headliner. The quieter competitions — quizzing, fine arts, theatre — are where you're actually competing against people you know, and they're a much easier way to meet people outside your department than the concert crowd.",
+          "If you're new to campus: this is the single best weekend of the year to just show up to things. Nobody at Infinitus is checking whether you're 'supposed' to be there.",
+        ],
+      },
+    ],
+    cta: { label: "Find your Infinitus team on the community board", to: "/posts" },
+  },
+  {
     slug: "everything-you-can-do-on-friendly-learning",
     title: "Everything You Can Do on Friendly Learning (It's More Than You Think)",
     excerpt:
