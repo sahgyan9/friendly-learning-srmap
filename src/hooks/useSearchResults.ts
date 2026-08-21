@@ -571,8 +571,10 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
               const mentorBio = typeof hit.metadata?.bio === "string" ? hit.metadata.bio : "";
               const mentorCandidateText = `${hit.title} ${hit.subtitle ?? ""} ${metaSkills.join(" ")} ${mentorBio}`;
 
-              // If query contains specific technical domain tokens and similarity is low, verify topical relevance
-              if (parsed.specificTokens.length > 0 && similarity < 0.45) {
+              // If query contains specific technical domain tokens and similarity is low, verify topical relevance.
+              // 0.58 matches the bar used below for students/opportunities/communities/posts — mentors were
+              // left at a looser 0.45, which let generic-bio profiles bypass the check on vague, off-topic queries.
+              if (parsed.specificTokens.length > 0 && similarity < 0.58) {
                 if (!hasTopicalMatch(mentorCandidateText, parsed)) {
                   return;
                 }
@@ -623,7 +625,10 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
               const facultyBio = typeof hit.metadata?.research_details === "string" ? hit.metadata.research_details : "";
               const facultyCandidateText = `${hit.title} ${hit.subtitle ?? ""} ${metaInterests.join(" ")} ${facultyBio}`;
 
-              if (parsed.specificTokens.length > 0 && similarity < 0.45) {
+              // Same 0.58 bar as mentors above — a faculty profile with no interests on file (just
+              // "Name, Designation. Department: X.") produces a generic embedding that can land at
+              // moderate similarity against almost any vague query, so it needs the keyword check too.
+              if (parsed.specificTokens.length > 0 && similarity < 0.58) {
                 if (!hasTopicalMatch(facultyCandidateText, parsed)) {
                   return;
                 }
