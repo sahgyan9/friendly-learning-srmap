@@ -11,17 +11,69 @@ export const getInitials = (name?: string | null): string => {
 
 export const formatDepartment = (department?: string | null): string => {
   if (!department) return "";
-  const trimmed = department.trim();
-  if (/^computer\s+science/i.test(trimmed)) {
-    return "CSE";
+  const raw = department.trim();
+
+  let degreePrefix = "";
+  if (/^b\.?sc\.?\s*[-–—]?\s*/i.test(raw)) {
+    degreePrefix = "BSc ";
+  } else if (/^b\.?tech\.?\s*[-–—]?\s*/i.test(raw)) {
+    degreePrefix = "BTech ";
+  } else if (/^m\.?tech\.?\s*[-–—]?\s*/i.test(raw)) {
+    degreePrefix = "MTech ";
+  } else if (/^m\.?sc\.?\s*[-–—]?\s*/i.test(raw)) {
+    degreePrefix = "MSc ";
+  } else if (/^ph\.?d\.?\s*[-–—]?\s*/i.test(raw)) {
+    degreePrefix = "PhD ";
+  } else if (/^bba\s*[-–—]?\s*/i.test(raw)) {
+    degreePrefix = "BBA ";
+  } else if (/^mba\s*[-–—]?\s*/i.test(raw)) {
+    degreePrefix = "MBA ";
+  } else if (/^b\.?com\.?\s*[-–—]?\s*/i.test(raw)) {
+    degreePrefix = "BCom ";
   }
-  if (/^electronics\s+and\s+communication/i.test(trimmed)) {
-    return "ECE";
+
+  const clean = raw
+    .replace(/^b\.?sc\.?\s*[-–—]?\s*/i, "")
+    .replace(/^b\.?tech\.?\s*[-–—]?\s*/i, "")
+    .replace(/^m\.?tech\.?\s*[-–—]?\s*/i, "")
+    .replace(/^m\.?sc\.?\s*[-–—]?\s*/i, "")
+    .replace(/^ph\.?d\.?\s*[-–—]?\s*/i, "")
+    .replace(/^bba\s*[-–—]?\s*/i, "")
+    .replace(/^mba\s*[-–—]?\s*/i, "")
+    .replace(/^b\.?com\.?\s*[-–—]?\s*/i, "")
+    .replace(/\s*\[.*?\]/g, "")
+    .replace(/\s*\(.*?\)/g, "")
+    .trim();
+
+  let branch = clean;
+  if (/^computer\s+science/i.test(clean) || /^cse$/i.test(clean)) {
+    branch = "CSE";
+  } else if (/^electronics\s+and\s+communication/i.test(clean) || /^ece$/i.test(clean)) {
+    branch = "ECE";
+  } else if (/^electrical\s+and\s+electronics/i.test(clean) || /^eee$/i.test(clean)) {
+    branch = "EEE";
+  } else if (/^mechanical/i.test(clean) || /^mech$/i.test(clean)) {
+    branch = "Mechanical";
+  } else if (/^civil/i.test(clean)) {
+    branch = "Civil";
+  } else if (/^physics/i.test(clean) || /^phys$/i.test(clean)) {
+    branch = "Physics";
+  } else if (/^chemistry/i.test(clean) || /^chem$/i.test(clean)) {
+    branch = "Chemistry";
+  } else if (/^mathematics|^maths?/i.test(clean)) {
+    branch = "Mathematics";
+  } else if (/^biological|^biology|^biotech/i.test(clean)) {
+    branch = "Biological Sciences";
+  } else if (/^economics/i.test(clean) || /^econ$/i.test(clean)) {
+    branch = "Economics";
+  } else if (/^management|^business/i.test(clean)) {
+    branch = "Management";
   }
-  if (/^electrical\s+and\s+electronics/i.test(trimmed)) {
-    return "EEE";
+
+  if (degreePrefix && branch) {
+    return `${degreePrefix}${branch}`.trim();
   }
-  return trimmed;
+  return branch || raw;
 };
 
 export const matchFacultyDepartment = (
