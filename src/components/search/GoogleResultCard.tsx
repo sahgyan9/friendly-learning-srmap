@@ -25,6 +25,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getInitials } from "@/utils/user-utils";
 import { cn } from "@/lib/utils";
 import { extractMeaningfulTokens } from "@/lib/search/query-engine";
+import { slugify } from "@/lib/utils";
 import type { SearchResultItem } from "@/hooks/useSearchResults";
 
 interface GoogleResultCardProps {
@@ -142,7 +143,7 @@ export const GoogleResultCard: React.FC<GoogleResultCardProps> = ({
     badgeColor = "bg-sky-500/10 text-sky-700 dark:text-sky-300 border-sky-500/20";
   }
 
-  const breadcrumbText = item.breadcrumb || `friendlylearning.in › ${entityType} › ${item.id.slice(0, 10)}`;
+  const breadcrumbText = item.breadcrumb || `friendlylearning.in › ${entityType} › ${slugify(item.title)}`;
 
   const logClick = () => {
     if (query && query.trim().length >= 3) {

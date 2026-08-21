@@ -37,6 +37,7 @@ async function loadSearchQuality() {
 }
 import { BLOG_POSTS } from "@/data/blog-posts";
 import { normalise } from "@/lib/search/rank";
+import { slugify } from "@/lib/utils";
 import { parseQuery, calculateExactBoost, fuzzyMatchTokens, matchesWordBoundary, hasTopicalMatch } from "@/lib/search/query-engine";
 import type { SearchTab } from "@/lib/search/search-params";
 
@@ -315,7 +316,7 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
           image: m.profile_image,
           entityType: "mentor",
           badge: m.is_alumni ? "Alumni Mentor" : "Senior Mentor",
-          breadcrumb: `friendlylearning.in › mentors › ${m.id.slice(0, 8)}`,
+          breadcrumb: `friendlylearning.in › mentors › ${slugify(m.name ?? "mentor")}`,
           snippet: bioSnippet,
           matchReason: skillsList.some(s => s.toLowerCase().includes(trimmed.toLowerCase())) ? `Matched skill: ${skillsList.filter(s => s.toLowerCase().includes(trimmed.toLowerCase())).join(", ")}` : (m.department ? `${m.department} · Available for Mentoring` : undefined),
           matchedTokens: parsed.tokens,
@@ -483,7 +484,7 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
           image: p.image_url,
           entityType: "post",
           badge: p.post_type ? p.post_type.toUpperCase() : "CAMPUS POST",
-          breadcrumb: `friendlylearning.in › posts › ${p.id.slice(0, 8)}`,
+          breadcrumb: `friendlylearning.in › posts › ${slugify(p.title)}`,
           snippet: postSnippet,
           matchReason: `Posted by ${p.author.name} · ${p.likes_count || 0} likes · ${p.comments_count || 0} replies`,
           matchedTokens: parsed.tokens,
@@ -596,7 +597,7 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
                 image: typeof hit.metadata?.profile_image === "string" ? hit.metadata.profile_image : null,
                 entityType: "mentor",
                 badge: "Senior Mentor",
-                breadcrumb: `friendlylearning.in › mentors › ${hit.entity_id.slice(0, 8)}`,
+                breadcrumb: `friendlylearning.in › mentors › ${slugify(hit.title)}`,
                 snippet: mentorSnippet,
                 matchReason: "Semantic match from CampusMind knowledge graph",
                 sitelinks: [
@@ -679,7 +680,7 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
                 image: typeof hit.metadata?.profile_image === "string" ? hit.metadata.profile_image : null,
                 entityType: "student",
                 badge: "Student",
-                breadcrumb: `friendlylearning.in › students › ${hit.entity_id.slice(0, 8)}`,
+                breadcrumb: `friendlylearning.in › students › ${slugify(hit.title)}`,
                 snippet: interestsArr.length > 0 ? `Student interested in ${interestsArr.slice(0, 4).join(", ")}. Active in campus learning community.` : "Student profile on Friendly Learning SRMAP.",
                 matchReason: "Student with matching skills or interests",
                 meta: hit.metadata,
@@ -771,7 +772,7 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
                 image: typeof hit.metadata?.image_url === "string" ? hit.metadata.image_url : null,
                 entityType: "post",
                 badge: "Campus Post",
-                breadcrumb: `friendlylearning.in › posts › ${hit.entity_id.slice(0, 8)}`,
+                breadcrumb: `friendlylearning.in › posts › ${slugify(hit.title)}`,
                 snippet: postContent || "Campus discussion post on Friendly Learning.",
                 matchReason: "Relevant thread in community discussions",
                 sitelinks: [
