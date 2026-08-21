@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type MouseEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { buildSearchUrl } from "@/lib/search/search-params";
 import {
@@ -11,6 +11,7 @@ import {
   BookOpen,
   Loader2,
   Sparkles,
+  History as HistoryIcon,
 } from "lucide-react";
 
 import { CampusMindIcon } from "@/components/icons/CampusMindIcon";
@@ -37,6 +38,12 @@ import { rankDestinations } from "@/lib/search/rank";
 import { getTheme, toggleTheme, type Theme } from "@/lib/theme";
 import { OPEN_NOTIFICATIONS_EVENT, OPEN_SEARCH_EVENT } from "@/lib/search/events";
 import { SEARCH_SUGGESTIONS } from "@/lib/search/brand";
+import {
+  clearSearchHistory,
+  getSearchHistory,
+  recordSearchHistory,
+  removeSearchHistoryEntry,
+} from "@/lib/search/history";
 import { useSiteSearch, type SearchHit } from "@/hooks/useSiteSearch";
 import { getInitials } from "@/utils/user-utils";
 import { cn } from "@/lib/utils";
@@ -140,6 +147,7 @@ const SiteSearch = () => {
   const [isAiMode, setIsAiMode] = useState(false);
   const [theme, setThemeState] = useState<Theme>("dark");
   const [isMac, setIsMac] = useState(false);
+  const [history, setHistory] = useState<string[]>([]);
 
   const { results: liveResults, loading: liveLoading } = useSiteSearch(query, open);
 
@@ -150,6 +158,14 @@ const SiteSearch = () => {
   useEffect(() => {
     if (open) setThemeState(getTheme());
   }, [open]);
+
+  useEffect(() => {
+    if (open && user) {
+      getSearchHistory().then(setHistory);
+    } else if (!user) {
+      setHistory([]);
+    }
+  }, [open, user]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -224,9 +240,31 @@ const SiteSearch = () => {
   const goToSearch = useCallback(() => {
     const trimmed = query.trim();
     if (!trimmed) return;
+    if (user) recordSearchHistory(trimmed);
     close();
     navigate(buildSearchUrl(trimmed, "all"));
-  }, [query, close, navigate]);
+  }, [query, close, navigate, user]);
+
+  const runHistoryEntry = useCallback(
+    (entry: string) => {
+      if (user) recordSearchHistory(entry);
+      close();
+      navigate(buildSearchUrl(entry, "all"));
+    },
+    [close, navigate, user],
+  );
+
+  const removeHistoryEntry = useCallback((entry: string, event: MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setHistory((prev) => prev.filter((item) => item !== entry));
+    removeSearchHistoryEntry(entry);
+  }, []);
+
+  const clearHistory = useCallback(() => {
+    setHistory([]);
+    clearSearchHistory();
+  }, []);
 
   const labelFor = (destination: SearchDestination) =>
     destination.action === "toggle-theme"
@@ -312,7 +350,10 @@ const SiteSearch = () => {
       <CommandItem
         key={hit.id}
         value={`${hit.kind}-${hit.id}-${hit.title}`}
-        onSelect={() => goTo(hit.to)}
+        onSelect={() => {
+          if (user && query.trim()) recordSearchHistory(query.trim());
+          goTo(hit.to);
+        }}
         className={cn(
           "group flex items-center gap-3 rounded-xl px-3 py-2 my-0.5 transition-all duration-150 cursor-pointer",
           "data-[selected=true]:bg-accent/80 data-[selected=true]:shadow-xs",
@@ -501,6 +542,53 @@ const SiteSearch = () => {
               {/* Streamlined Empty State with Suggested Searches */}
               {!searching && (
                 <div className="p-1 space-y-3">
+                  {history.length > 0 && (
+                    <CommandGroup
+                      heading={
+                        <div className="flex items-center justify-between">
+                          <span className="flex items-center gap-1.5 font-semibold text-xs text-foreground/90">
+                            <HistoryIcon className="h-3.5 w-3.5 text-primary" />
+                            Recent Searches
+                          </span>
+                          <button
+                            type="button"
+                            onClick={clearHistory}
+                            className="text-3xs text-muted-foreground font-normal hover:text-foreground transition-colors cursor-pointer"
+                          >
+                            Clear
+                          </button>
+                        </div>
+                      }
+                    >
+                      {history.map((entry) => (
+                        <CommandItem
+                          key={`history-${entry}`}
+                          value={`history-${entry}`}
+                          onSelect={() => runHistoryEntry(entry)}
+                          className={cn(
+                            "group flex items-center gap-3 rounded-xl px-3 py-2 my-0.5 transition-all duration-150 cursor-pointer",
+                            "data-[selected=true]:bg-accent/80 data-[selected=true]:shadow-xs hover:bg-accent/50",
+                          )}
+                        >
+                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border/50 bg-muted/40 text-muted-foreground">
+                            <HistoryIcon className="h-3.5 w-3.5" />
+                          </span>
+                          <span className="min-w-0 flex-1 truncate text-sm text-foreground/90 group-data-[selected=true]:text-foreground">
+                            {entry}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={(e) => removeHistoryEntry(entry, e)}
+                            className="shrink-0 rounded-md p-1 text-muted-foreground/50 opacity-0 group-hover:opacity-100 hover:text-foreground hover:bg-accent transition-all"
+                            title="Remove from history"
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </button>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  )}
+
                   <CommandGroup
                     heading={
                       <div className="flex items-center justify-between">
@@ -537,6 +625,7 @@ const SiteSearch = () => {
                           value={`suggested-search-${idx}-${item.query}`}
                           onSelect={() => {
                             setQuery(item.query);
+                            if (user) recordSearchHistory(item.query);
                             close();
                             navigate(buildSearchUrl(item.query, "all"));
                           }}
