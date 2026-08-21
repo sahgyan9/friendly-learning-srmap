@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { Search } from "lucide-react";
 import { CampusMindIcon } from "@/components/icons/CampusMindIcon";
 
 import {
@@ -69,7 +70,7 @@ const AskBox = ({ className }: { className?: string }) => {
             className="flex w-full items-center gap-3 rounded-[calc(1rem-1px)] bg-background px-4 py-3.5 text-left transition-colors duration-300 hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background sm:gap-4 sm:px-5 sm:py-4 shadow-sm"
           >
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-md shadow-indigo-500/20">
-              <CampusMindIcon className="h-5 w-5" aria-hidden />
+              <Search className="h-4.5 w-4.5" aria-hidden />
             </span>
 
             {/* Fixed height and clipped: the questions differ in length */}
