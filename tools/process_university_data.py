@@ -64,7 +64,7 @@ def parse_academic_calendar():
         "academic_year": "2026-27",
         "category": "academic_calendar",
         "section_heading": "Odd Semester Key Academic Dates & Timelines",
-        "content": doc[0].get_text().strip(),
+        "content": doc[0].get_text(sort=True).strip(),
         "page_number": 1,
         "source_filename": "Academic Calendar AY2026-27.pdf"
     })
@@ -76,7 +76,7 @@ def parse_academic_calendar():
         "academic_year": "2026-27",
         "category": "academic_calendar",
         "section_heading": "Even Semester Key Academic Dates & Timelines",
-        "content": doc[1].get_text().strip(),
+        "content": doc[1].get_text(sort=True).strip(),
         "page_number": 2,
         "source_filename": "Academic Calendar AY2026-27.pdf"
     })
@@ -88,7 +88,14 @@ def parse_academic_calendar():
         "academic_year": "2026-27",
         "category": "academic_calendar",
         "section_heading": "Odd Semester Working Days, Day Orders & Holidays",
-        "content": doc[2].get_text().strip(),
+        # sort=True: page 2 lays out two side-by-side tables (the Occasion/
+        # Festival list and a second "Festivals on Saturday & Sunday" list to
+        # its right). Default get_text() follows the PDF's internal draw
+        # order, which interleaved the two tables and silently dropped the
+        # first row (Varalakshmi Vratam, 21.08.2026) -- the exact fact behind
+        # the "why is today a holiday" bug. sort=True orders spans by
+        # position (top-to-bottom, left-to-right) instead.
+        "content": doc[2].get_text(sort=True).strip(),
         "page_number": 3,
         "source_filename": "Academic Calendar AY2026-27.pdf"
     })
@@ -100,7 +107,7 @@ def parse_academic_calendar():
         "academic_year": "2026-27",
         "category": "academic_calendar",
         "section_heading": "Even Semester Working Days, Day Orders & Holidays",
-        "content": doc[3].get_text().strip(),
+        "content": doc[3].get_text(sort=True).strip(),
         "page_number": 4,
         "source_filename": "Academic Calendar AY2026-27.pdf"
     })

@@ -438,9 +438,11 @@ for (const file of [
   '20260816100000_search_interactions.sql',
   '20260820120000_set_user_admin_status_rpc.sql',
   '20260820130000_drop_legacy_canvas_tables.sql',
+  '20260820100000_campus_documents.sql',
   '20260821090000_marketplace_posts_user_id_index.sql',
   '20260821100000_fix_storage_list_policy_bucket_ids.sql',
   '20260821110000_campus_notices.sql',
+  '20260821120000_academic_calendar_resolver.sql',
 ]) {
   if (file === '20260804132345_b843f814-46d5-4c25-bc80-32e5f6ebba59.sql') {
     // Production's `faculty` table still carries `profile_image`, a column
@@ -1622,6 +1624,68 @@ const { rows: noticeAcl } = await q(
 );
 const noticeAnon = noticeAcl.find((r) => r.grantee === 'anon');
 check('campus_notices grants SELECT only to anon', noticeAnon?.privs === 'SELECT', noticeAnon?.privs ?? 'none');
+
+console.log('\ncampus documents (handbooks/calendars, service_role-only writes):');
+// campus_documents itself has no seed data in migrations (the real content
+// is loaded once by tools/process_university_data.py's generated SQL, run
+// by hand) -- exercise the shape and RLS posture instead.
+const { rows: [doc] } = await q(
+  `INSERT INTO public.campus_documents (document_slug, document_title, category, section_heading, content)
+   VALUES ('test-doc', 'Test Document', 'test', 'Section A', 'Body text for section A.')
+   RETURNING id`,
+);
+// No per-row trigger on campus_documents (unlike campus_notices) -- the
+// hourly rebuild_knowledge_chunks() cron is what picks up new documents.
+await q(`SELECT public.rebuild_document_chunks()`);
+const { rows: [docChunkAfterRebuild] } = await q(
+  `SELECT body FROM public.knowledge_chunks WHERE entity_type='document' AND entity_id=$1`,
+  [doc.id],
+);
+check('rebuild_document_chunks() projects the document into knowledge_chunks', docChunkAfterRebuild?.body?.includes('Body text for section A.'), docChunkAfterRebuild?.body ?? '(missing)');
+
+const { rows: docAcl } = await q(
+  `SELECT grantee, string_agg(DISTINCT privilege_type, ',' ORDER BY privilege_type) AS privs
+     FROM information_schema.table_privileges
+    WHERE table_schema='public' AND table_name='campus_documents' AND grantee IN ('anon','authenticated')
+    GROUP BY grantee`,
+);
+const docAnon = docAcl.find((r) => r.grantee === 'anon');
+check('campus_documents grants SELECT only to anon', docAnon?.privs === 'SELECT', docAnon?.privs ?? 'none');
+
+console.log('\nacademic calendar resolver (deterministic holiday lookup):');
+const { rows: calendarRows } = await q(`SELECT calendar_date, occasion_name FROM public.academic_calendar_days`);
+check('seed data carries all 24 verified holiday/occasion rows', calendarRows.length === 24, `${calendarRows.length} rows`);
+
+const { rows: [varalakshmi] } = await q(`SELECT * FROM public.get_calendar_day('2026-08-21'::date)`);
+check('get_calendar_day resolves the Varalakshmi Vratam fact (the original bug)', varalakshmi?.is_holiday === true && varalakshmi?.occasion_name === 'Varalakshmi Vratam' && varalakshmi?.source === 'calendar', JSON.stringify(varalakshmi));
+
+const { rows: [nonHoliday] } = await q(`SELECT * FROM public.get_calendar_day('2026-08-20'::date)`);
+check('get_calendar_day returns no row for an ordinary working day (honest about scope, not a false negative)', !nonHoliday, JSON.stringify(nonHoliday ?? null));
+
+// A published holiday_change notice for the same date overrides the static
+// table -- an admin reschedule takes effect without editing this migration.
+await q(
+  `INSERT INTO public.campus_notices (title, category, issued_date, effective_date, summary, content, is_published, created_by)
+   VALUES ('Milad-un-Nabi holiday moved to 26th August', 'holiday_change', '2026-08-20', '2026-08-26', 'Holiday rescheduled to 26th August.', 'Full circular body.', true, $1)`,
+  [CURRENT_UID],
+);
+const { rows: [overridden] } = await q(`SELECT * FROM public.get_calendar_day('2026-08-26'::date)`);
+check('a published holiday_change notice overrides the static calendar', overridden?.source === 'notice_override' && overridden?.notice_title?.includes('moved to 26th August'), JSON.stringify(overridden));
+
+const { rows: calendarAcl } = await q(
+  `SELECT grantee, string_agg(DISTINCT privilege_type, ',' ORDER BY privilege_type) AS privs
+     FROM information_schema.table_privileges
+    WHERE table_schema='public' AND table_name='academic_calendar_days' AND grantee IN ('anon','authenticated')
+    GROUP BY grantee`,
+);
+const calendarAnon = calendarAcl.find((r) => r.grantee === 'anon');
+check('academic_calendar_days grants SELECT only to anon', calendarAnon?.privs === 'SELECT', calendarAnon?.privs ?? 'none');
+
+const { rows: fnAcl } = await q(
+  `SELECT grantee FROM information_schema.role_routine_grants
+    WHERE routine_schema='public' AND routine_name='get_calendar_day' AND grantee IN ('anon','authenticated')`,
+);
+check('get_calendar_day is not directly callable by anon/authenticated (service_role only, called from the edge function)', fnAcl.length === 0, `${fnAcl.length} grants`);
 
 console.log(failures === 0
   ? '\nAll migration checks passed against real Postgres.'
