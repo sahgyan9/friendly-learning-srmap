@@ -74,6 +74,7 @@ async function retrieve(query: string): Promise<Retrieved[]> {
       ...(body.communities ?? []),
       ...(body.posts ?? []),
       ...(body.documents ?? []),
+      ...(body.notices ?? []),
       ...(body.other ?? []),
     ] as Retrieved[];
 

@@ -15,6 +15,7 @@ import {
   ThumbsUp,
   ThumbsDown,
   FileText,
+  Megaphone,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getErrorField } from "@/lib/errors";
@@ -25,7 +26,7 @@ import { toast } from "sonner";
 export interface AIEntityBadge {
   id: string;
   name: string;
-  type: "faculty" | "mentor" | "opportunity" | "community" | "post" | "document";
+  type: "faculty" | "mentor" | "opportunity" | "community" | "post" | "document" | "notice";
   to: string;
   detail: string;
 }
@@ -231,6 +232,8 @@ export const CampusAIOverview: React.FC<CampusAIOverviewProps> = ({
         return <Users className="h-3.5 w-3.5 text-emerald-500" />;
       case "document":
         return <FileText className="h-3.5 w-3.5 text-blue-500" />;
+      case "notice":
+        return <Megaphone className="h-3.5 w-3.5 text-orange-500" />;
       default:
         return <CampusMindIcon className="h-3.5 w-3.5 text-primary" />;
     }
@@ -275,6 +278,14 @@ export const CampusAIOverview: React.FC<CampusAIOverviewProps> = ({
         label: "Campus Guideline",
         icon: <FileText className="h-3.5 w-3.5 text-blue-500" />,
         badgeColor: "bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/20",
+      };
+    }
+    if (url.includes("/notices/")) {
+      return {
+        type: "notice" as const,
+        label: "Official Notice",
+        icon: <Megaphone className="h-3.5 w-3.5 text-orange-500" />,
+        badgeColor: "bg-orange-500/10 text-orange-700 dark:text-orange-300 border-orange-500/20",
       };
     }
     return {
@@ -613,7 +624,11 @@ export const CampusAIOverview: React.FC<CampusAIOverviewProps> = ({
 
                           <div className="flex items-center justify-between text-3xs text-primary group-hover:text-primary font-medium mt-2 pt-1.5 border-t border-border/30">
                             <span className="text-muted-foreground/70 group-hover:text-foreground/80 transition-colors">
-                              {source.type === "document" ? "View Document" : "View Profile"}
+                              {source.type === "document"
+                                ? "View Document"
+                                : source.type === "notice"
+                                  ? "View Notice"
+                                  : "View Profile"}
                             </span>
                             <ArrowRight className="h-3 w-3 group-hover:translate-x-0.5 transition-transform" />
                           </div>
@@ -647,7 +662,7 @@ export const CampusAIOverview: React.FC<CampusAIOverviewProps> = ({
               {/* Integrated Grounding & Action Footer Bar */}
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-t border-border/40 pt-3 text-2xs text-muted-foreground">
                 <div className="flex items-center gap-2 flex-wrap">
-                  {citedSources.some((s) => s.type === "document" || s.url?.includes("/documents/")) ? (
+                  {citedSources.some((s) => s.type === "document" || s.type === "notice" || s.url?.includes("/documents/") || s.url?.includes("/notices/")) ? (
                     <span className="inline-flex items-center gap-1.5 font-medium text-blue-600 dark:text-blue-400">
                       <FileText className="h-3 w-3" />
                       Grounded in SRM AP AY 2026-27 Documents (Always verify circulars with ERP)

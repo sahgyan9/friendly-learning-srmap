@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
  * shape that fits none of them.
  */
 export type AskResult = {
-  entity_type: "faculty" | "mentor" | "student" | "opportunity" | "community" | "post" | "document";
+  entity_type: "faculty" | "mentor" | "student" | "opportunity" | "community" | "post" | "document" | "notice";
   entity_id: string;
   title: string;
   subtitle: string | null;
@@ -36,6 +36,8 @@ export type AskResponse = {
   communities: AskResult[];
   posts: AskResult[];
   documents?: AskResult[];
+  /** Same optionality reasoning as `documents` — absent, not empty, predates this field. */
+  notices?: AskResult[];
   /** Entity types the server has no group for yet. Never silently dropped. */
   other: AskResult[];
 };
@@ -59,6 +61,7 @@ export function allResults(data: AskResponse): AskResult[] {
     ...(data.communities ?? []),
     ...(data.posts ?? []),
     ...(data.documents ?? []),
+    ...(data.notices ?? []),
     ...(data.other ?? []),
   ].sort((a, b) => b.similarity - a.similarity);
 }

@@ -28,7 +28,8 @@ export type SearchHitKind =
   | "post"
   | "article"
   | "opportunity"
-  | "document";
+  | "document"
+  | "notice";
 
 export interface SearchHit {
   id: string;
