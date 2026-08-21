@@ -208,7 +208,10 @@ const SiteSearch = () => {
 
   const runDestination = useCallback(
     (destination: SearchDestination) => {
+      const trimmed = query.trim();
+
       if (destination.to) {
+        if (user && trimmed) recordSearchHistory(trimmed);
         close();
         navigate(destination.to);
         return;
@@ -219,6 +222,7 @@ const SiteSearch = () => {
           setThemeState(toggleTheme());
           return;
         case "open-notifications":
+          if (user && trimmed) recordSearchHistory(trimmed);
           close();
           window.dispatchEvent(new CustomEvent(OPEN_NOTIFICATIONS_EVENT));
           return;
@@ -226,7 +230,7 @@ const SiteSearch = () => {
           close();
       }
     },
-    [close, navigate],
+    [close, navigate, query, user],
   );
 
   const goTo = useCallback(
