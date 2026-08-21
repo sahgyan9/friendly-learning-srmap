@@ -29,7 +29,20 @@ const corsHeaders = {
 };
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
-const GEMINI_KEY = Deno.env.get("Gemini_API_Key") ?? "";
+
+/**
+ * Two keys, tried in order — a second free-tier project's quota, not a
+ * different account's data. Primary absorbs all traffic until it starts
+ * hitting 429s; the second only gets used as overflow once the first is
+ * genuinely exhausted, rather than splitting requests 50/50 up front, which
+ * would waste headroom on whichever key isn't actually under pressure yet.
+ * Embeddings deliberately keep using only the primary key — embed-knowledge
+ * and semantic-search's embedQuery are unaffected by this list.
+ */
+const GEMINI_KEYS = [
+  Deno.env.get("Gemini_API_Key"),
+  Deno.env.get("Gemini_API_Key_2"),
+].filter((k): k is string => !!k);
 
 /**
  * Tried in order until one answers. Not defensive programming for its own sake:
@@ -349,62 +362,72 @@ function stripUrls(text: string, urls: string[]): string {
 async function generate(prompt: string): Promise<{ text: string; model: string }> {
   const tried: string[] = [];
 
-  for (const model of GENERATION_MODELS) {
-    // Reasoning models bill thinking tokens against maxOutputTokens, which cut
-    // an early reply off mid-sentence at ~40 words. The obvious fix —
-    // thinkingConfig: { thinkingBudget: 0 } — is a trap: `gemini-flash-latest`
-    // rejects it with 400 INVALID_ARGUMENT on v1beta, so it broke the one model
-    // still answering. A generous ceiling plus the MAX_TOKENS guard below
-    // handles it without depending on a parameter a model may not accept.
-    const call = () =>
-      fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_KEY}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { temperature: 0.4, maxOutputTokens: 3000, topP: 0.9 },
-          }),
-        },
-      );
+  // Outer loop over keys, inner loop over models — a key is only moved past
+  // once every model has been tried against it. In practice a model failure
+  // has so far always been 429 (see GENERATION_MODELS' comment), so this only
+  // costs extra latency in the worst case where both keys are genuinely
+  // exhausted, which already ends in the same "busy, try in a minute" reply
+  // as today.
+  for (let keyIndex = 0; keyIndex < GEMINI_KEYS.length; keyIndex++) {
+    const key = GEMINI_KEYS[keyIndex];
 
-    let response = await call();
+    for (const model of GENERATION_MODELS) {
+      // Reasoning models bill thinking tokens against maxOutputTokens, which cut
+      // an early reply off mid-sentence at ~40 words. The obvious fix —
+      // thinkingConfig: { thinkingBudget: 0 } — is a trap: `gemini-flash-latest`
+      // rejects it with 400 INVALID_ARGUMENT on v1beta, so it broke the one model
+      // still answering. A generous ceiling plus the MAX_TOKENS guard below
+      // handles it without depending on a parameter a model may not accept.
+      const call = () =>
+        fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: prompt }] }],
+              generationConfig: { temperature: 0.4, maxOutputTokens: 3000, topP: 0.9 },
+            }),
+          },
+        );
 
-    // 503 means Gemini is busy, not that the key is over quota — it clears in
-    // seconds. One retry, only for that status; a 429 is retried by the student
-    // a minute later, not by us.
-    if (response.status === 503) {
-      await new Promise((resolve) => setTimeout(resolve, RETRY_503_MS));
-      response = await call();
+      let response = await call();
+
+      // 503 means Gemini is busy, not that the key is over quota — it clears in
+      // seconds. One retry, only for that status; a 429 is retried by the student
+      // a minute later, not by us.
+      if (response.status === 503) {
+        await new Promise((resolve) => setTimeout(resolve, RETRY_503_MS));
+        response = await call();
+      }
+
+      // Any failure falls through to the next candidate rather than throwing.
+      // Throwing on the first non-404 made a transient 429 on one model take the
+      // whole assistant down even though a later model would have answered.
+      if (!response.ok) {
+        tried.push(`${model}@key${keyIndex + 1}=${response.status}:${(await response.text()).slice(0, 120)}`);
+        continue;
+      }
+
+      const body = await response.json();
+      const candidate = body.candidates?.[0];
+      const text = candidate?.content?.parts?.[0]?.text;
+
+      // A MAX_TOKENS finish means the student would see half a sentence. Better to
+      // fall through to another model than to ship a truncated reply.
+      if (text && candidate?.finishReason === "MAX_TOKENS") {
+        tried.push(`${model}@key${keyIndex + 1}=truncated-at-${text.length}-chars`);
+        continue;
+      }
+      if (text) return { text: text.trim(), model };
+
+      // An empty candidate means a safety block or an exhausted token budget;
+      // both are worth naming in the debug trail rather than looking like a 404.
+      tried.push(`${model}@key${keyIndex + 1}=empty:${JSON.stringify(body).slice(0, 150)}`);
     }
-
-    // Any failure falls through to the next candidate rather than throwing.
-    // Throwing on the first non-404 made a transient 429 on one model take the
-    // whole assistant down even though a later model would have answered.
-    if (!response.ok) {
-      tried.push(`${model}=${response.status}:${(await response.text()).slice(0, 120)}`);
-      continue;
-    }
-
-    const body = await response.json();
-    const candidate = body.candidates?.[0];
-    const text = candidate?.content?.parts?.[0]?.text;
-
-    // A MAX_TOKENS finish means the student would see half a sentence. Better to
-    // fall through to another model than to ship a truncated reply.
-    if (text && candidate?.finishReason === "MAX_TOKENS") {
-      tried.push(`${model}=truncated-at-${text.length}-chars`);
-      continue;
-    }
-    if (text) return { text: text.trim(), model };
-
-    // An empty candidate means a safety block or an exhausted token budget;
-    // both are worth naming in the debug trail rather than looking like a 404.
-    tried.push(`${model}=empty:${JSON.stringify(body).slice(0, 150)}`);
   }
 
-  throw new Error(`no usable generation model. ${tried.join(" | ")}`);
+  throw new Error(`no usable generation model across ${GEMINI_KEYS.length} key(s). ${tried.join(" | ")}`);
 }
 
 /**
