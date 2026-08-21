@@ -172,23 +172,29 @@ export async function getFacultyList(query: FacultyQuery = {}) {
       const searchTerms = parsed.filteredFacultyTokens.filter((t) => t.length >= 3 && !STOP_WORDS.has(t));
       const conditions: string[] = [];
 
+      // Literal search matches name only — people recall faculty by name, not
+      // by what's written in their interests list. Finding faculty by research
+      // topic (e.g. "someone who knows machine learning") is handled by the
+      // separate "interest" chip filter above and by semantic search, not by
+      // free-text substring matching against interests_text.
+
       // 1. Direct full phrase match (only if phrase is reasonably short)
       if (rawSearch.length <= 40 && parsed.subjectTokens.length <= 3) {
         const fullTerm = escapeOrValue(`%${rawSearch}%`);
-        conditions.push(`name.ilike.${fullTerm}`, `interests_text.ilike.${fullTerm}`);
+        conditions.push(`name.ilike.${fullTerm}`);
       }
 
       // If subjectTokens has multiple tokens (e.g. "qubit design"), also search for the combined phrase
       if (parsed.subjectTokens.length >= 2) {
         const subjectPhrase = escapeOrValue(`%${parsed.subjectTokens.join(" ")}%`);
-        conditions.push(`interests_text.ilike.${subjectPhrase}`, `name.ilike.${subjectPhrase}`);
+        conditions.push(`name.ilike.${subjectPhrase}`);
       }
 
       // 2. Individual specific tokens (e.g. "qubit")
       if (searchTerms.length > 0) {
         searchTerms.forEach((token) => {
           const t = escapeOrValue(`%${token}%`);
-          conditions.push(`name.ilike.${t}`, `interests_text.ilike.${t}`);
+          conditions.push(`name.ilike.${t}`);
         });
       }
 
