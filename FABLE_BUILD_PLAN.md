@@ -117,17 +117,18 @@ directory. See `.claude/rules/supabase-changes.md`.
    homepage metadata — worth a decision on raising the caps or an on-demand
    path for the long tail, but not the open "no mechanism exists" problem this
    entry originally described.
-2. **`BadgeCreationForm.tsx`'s "Badge name is required" toast is unreachable** —
-   the `<Input required>` HTML5 attribute blocks submission before the JS check
-   runs.
-3. **`CommunityWorkspaceHeader` renders "1 members."** Shared component, used
-   well beyond opportunities; fix with the same `count === 1 ? "" : "s"`
-   convention now used in `Mentors.tsx`.
-4. **13 pre-existing typecheck errors** in `CommunityLinkPreview.tsx`,
-   `MentorHeroHeader.tsx`, `MentorProfileContent.tsx`, `communities.ts`,
-   `community-posts.ts`, `mentor-verification.ts`, `emoji-utils.ts`,
-   `mentor-enhancements.ts`. Untouched all session and used as the baseline —
-   "13" is the pass mark, not zero. Worth a dedicated cleanup.
+2. ~~**`BadgeCreationForm.tsx`'s "Badge name is required" toast is unreachable.**~~
+   **FIXED** — verified 2026-08-22: the `<Input required>` attribute is gone
+   from the name field (removed incidentally when the form was rewritten off
+   react-hook-form/zod onto plain `useState`), so the JS check and its toast
+   are reachable again.
+3. ~~**`CommunityWorkspaceHeader` renders "1 members."**~~ **FIXED** —
+   verified 2026-08-22: line already reads
+   `{community.member_count === 1 ? "member" : "members"}`.
+4. ~~**13 pre-existing typecheck errors.**~~ **FIXED** — verified 2026-08-22:
+   `npm run typecheck` exits 0 with no output. Superseded by later refactor
+   commits (`refactor(types): remove the remaining : any occurrences` and
+   others) that were never credited against this line item.
 
 ---
 

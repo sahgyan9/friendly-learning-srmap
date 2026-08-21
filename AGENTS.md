@@ -36,11 +36,9 @@ Deeper authorities it defers to: [FACULTY_AI_ROADMAP.md](FACULTY_AI_ROADMAP.md)
 - `npm run test:migrations` — PGlite migration harness.
 - `npm run build` — sitemap + client + SSR + prerender.
 - **ESLint is broken repo-wide.** Skip it; do not fix it as a side quest.
-- **The typecheck baseline is 13 pre-existing errors, not zero.** Adding a
-  fourteenth is a regression. They live in `CommunityLinkPreview.tsx`,
-  `MentorHeroHeader.tsx`, `MentorProfileContent.tsx`, `communities.ts`,
-  `community-posts.ts`, `mentor-verification.ts`, `emoji-utils.ts`,
-  `mentor-enhancements.ts`.
+- **The typecheck baseline is 0 errors** (verified 2026-08-22; an earlier
+  version of this note said 13 — those were fixed by later refactor commits
+  and never credited). Adding any is a regression.
 
 ## Rules that will cost you a day if you skip them
 
