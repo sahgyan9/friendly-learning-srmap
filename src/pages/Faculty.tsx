@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigationType, useSearchParams } from "react-router-dom";
 import { useIsomorphicLayoutEffect } from "@/hooks/useIsomorphicLayoutEffect";
-import { BookOpen, EyeOff, Search, SlidersHorizontal, ArrowUpDown, Star, X } from "lucide-react";
+import { BookOpen, EyeOff, GraduationCap, Search, SlidersHorizontal, ArrowUpDown, Star, X } from "lucide-react";
 import { motion } from "framer-motion";
 
 import Footer from "@/components/Footer";
@@ -20,11 +20,13 @@ import {
 } from "@/components/ui/select";
 import { FacultyCard } from "@/components/faculty/FacultyCard";
 import { FacultyRatingModal } from "@/components/faculty/FacultyRatingModal";
+import { useAuth } from "@/context/AuthContext";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useHasSeenFacultyRatings } from "@/hooks/useFeatureAnnouncement";
 import { getBreadcrumbSchema } from "@/lib/structured-data";
 import { PRIMARY_DOMAIN } from "@/lib/constants";
 import { cn } from "@/lib/utils";
+import { matchFacultyDepartment } from "@/utils/user-utils";
 import {
   getFacultyDepartments,
   getFacultyDirectoryStats,
@@ -74,8 +76,25 @@ const Faculty = () => {
   const navigationType = useNavigationType();
   const [searchParams, setSearchParams] = useSearchParams();
   const { markSeen } = useHasSeenFacultyRatings();
+  const { profile } = useAuth();
 
-  const department = searchParams.get("dept") || searchParams.get("department") || "all";
+  const [departments, setDepartments] = useState<string[]>(() => {
+    // Check if cached departments exist
+    for (const entry of PAGE_CACHE.values()) {
+      if (entry.departments?.length > 0) return entry.departments;
+    }
+    return [];
+  });
+
+  const rawDeptParam = searchParams.get("dept") || searchParams.get("department");
+  const userMatchedDept = useMemo(() => {
+    return matchFacultyDepartment(profile?.department, departments);
+  }, [profile?.department, departments]);
+
+  const department = rawDeptParam !== null
+    ? rawDeptParam
+    : (userMatchedDept || "all");
+
   const interest = searchParams.get("interest") ?? "";
   const sort = (searchParams.get("sort") as FacultySort) ?? "name";
   const [search, setSearch] = useState(searchParams.get("q") ?? "");
@@ -90,7 +109,6 @@ const Faculty = () => {
   const isFresh = cached && Date.now() - cached.fetchedAt < CACHE_TTL_MS;
 
   const [faculty, setFaculty] = useState<FacultyMember[]>(isFresh ? cached.faculty : []);
-  const [departments, setDepartments] = useState<string[]>(isFresh ? cached.departments : []);
   const [facets, setFacets] = useState<{ interest: string; count: number }[]>(isFresh ? cached.facets : []);
   const [stats, setStats] = useState(isFresh ? cached.stats : { faculty_count: 0, rating_count: 0, department_count: 0 });
   const [total, setTotal] = useState(isFresh ? cached.total : 0);
@@ -337,8 +355,8 @@ const Faculty = () => {
               )}
             </div>
 
-            <Select value={department} onValueChange={(value) => updateParam("dept", value, "all")}>
-              <SelectTrigger className="w-full sm:w-[240px]">
+            <Select value={department} onValueChange={(value) => updateParam("dept", value, "")}>
+              <SelectTrigger className="w-full sm:w-[260px]">
                 <SlidersHorizontal className="mr-2 h-4 w-4 shrink-0" />
                 <SelectValue />
               </SelectTrigger>
@@ -347,6 +365,7 @@ const Faculty = () => {
                 {departments.map((item) => (
                   <SelectItem key={item} value={item}>
                     {item}
+                    {userMatchedDept && item === userMatchedDept ? " ⭐ (Your Dept)" : ""}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -366,6 +385,41 @@ const Faculty = () => {
               </SelectContent>
             </Select>
           </div>
+
+          {/* Department smart default notification / quick switch banner */}
+          {userMatchedDept && department === userMatchedDept && (
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-2.5 rounded-lg border border-rose-500/20 bg-rose-500/5 px-4 py-2.5 text-sm">
+              <div className="flex items-center gap-2 text-foreground">
+                <GraduationCap className="h-4 w-4 text-rose-600 dark:text-rose-400 shrink-0" />
+                <span>
+                  Showing <strong>{department}</strong> faculty (your department)
+                </span>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 text-xs border-border bg-background hover:bg-muted"
+                onClick={() => updateParam("dept", "all", "")}
+              >
+                View all departments {stats.faculty_count > 0 ? `(${stats.faculty_count})` : ""}
+              </Button>
+            </div>
+          )}
+
+          {userMatchedDept && department === "all" && (
+            <div className="mb-4 flex items-center justify-between gap-2 rounded-lg border border-border bg-card px-4 py-2 text-xs text-muted-foreground shadow-sm">
+              <span>Viewing all departments</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 gap-1 px-2 text-xs font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-500/10"
+                onClick={() => updateParam("dept", userMatchedDept, "")}
+              >
+                <GraduationCap className="h-3.5 w-3.5" />
+                Switch to {userMatchedDept} (My Dept)
+              </Button>
+            </div>
+          )}
 
           {/* Browse by research interest.
               Hidden once a filter is active — the active chip below replaces it,
