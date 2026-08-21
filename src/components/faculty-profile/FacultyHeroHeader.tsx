@@ -11,11 +11,12 @@ import {
   UserRound,
   ShieldCheck,
   MapPin,
+  ExternalLink,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { StarRating } from "@/components/faculty/StarRating";
-import { Faculty, getFacultyEmail } from "@/integrations/supabase/services/faculty";
+import { Faculty, getFacultyEmail, getFacultyProfileUrl } from "@/integrations/supabase/services/faculty";
 import { toast } from "sonner";
 
 interface FacultyHeroHeaderProps {
@@ -31,6 +32,7 @@ export default function FacultyHeroHeader({
 }: FacultyHeroHeaderProps) {
   const [copiedEmail, setCopiedEmail] = useState(false);
   const email = getFacultyEmail(faculty);
+  const officialProfileUrl = getFacultyProfileUrl(faculty);
   const hasRatings = faculty.rating_count > 0;
 
   const handleCopyEmail = (e: React.MouseEvent) => {
@@ -165,29 +167,46 @@ export default function FacultyHeroHeader({
             )}
           </div>
 
-          {/* Action CTAs */}
-          <div className="flex flex-wrap items-center justify-center md:justify-end gap-2 w-full">
-            <Button
-              onClick={onRateClick}
-              size="sm"
-              className="gap-1.5 bg-rose-600 hover:bg-rose-700 text-white shadow-xs"
-            >
-              <Star className="h-4 w-4 fill-current" />
-              {ownReview ? "Edit Your Rating" : "Rate Faculty"}
-            </Button>
+          {/* Action CTAs & Official Link */}
+          <div className="flex flex-col items-center md:items-end gap-1.5 w-full">
+            <div className="flex flex-wrap items-center justify-center md:justify-end gap-2 w-full">
+              <Button
+                onClick={onRateClick}
+                size="sm"
+                className="gap-1.5 bg-rose-600 hover:bg-rose-700 text-white shadow-xs"
+              >
+                <Star className="h-4 w-4 fill-current" />
+                {ownReview ? "Edit Your Rating" : "Rate Faculty"}
+              </Button>
 
-            {email && (
-              <Button asChild variant="outline" size="sm" className="gap-1.5 border-border/80 hover:bg-muted font-medium">
+              {email && (
+                <Button asChild variant="outline" size="sm" className="gap-1.5 border-border/80 hover:bg-muted font-medium">
+                  <a
+                    href={`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(email)}&su=${encodeURIComponent(`Academic Guidance / Inquiry - ${faculty.name}`)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title="Compose in Gmail"
+                  >
+                    <Mail className="h-3.5 w-3.5 text-rose-600 dark:text-rose-400" />
+                    Connect
+                  </a>
+                </Button>
+              )}
+            </div>
+
+            {/* Official source link */}
+            {officialProfileUrl && (
+              <div className="pt-1 text-center md:text-right">
                 <a
-                  href={`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(email)}&su=${encodeURIComponent(`Academic Guidance / Inquiry - ${faculty.name}`)}`}
+                  href={officialProfileUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  title="Compose in Gmail"
+                  className="text-2xs text-muted-foreground hover:text-primary hover:underline inline-flex items-center gap-1"
                 >
-                  <Mail className="h-3.5 w-3.5 text-rose-600 dark:text-rose-400" />
-                  Connect
+                  official Profile
+                  <ExternalLink className="h-3 w-3" />
                 </a>
-              </Button>
+              </div>
             )}
           </div>
         </div>

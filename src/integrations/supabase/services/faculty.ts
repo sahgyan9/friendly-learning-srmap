@@ -497,3 +497,16 @@ export function getFacultyEmail(faculty: { name: string; slug?: string; email?: 
   return `${cleanSlug}@srmap.edu.in`;
 }
 
+/**
+ * Resolves the official university directory profile URL on srmap.edu.in.
+ */
+export function getFacultyProfileUrl(faculty: { slug?: string; profile_url?: string | null }): string | null {
+  if (faculty.profile_url && faculty.profile_url.trim()) {
+    return faculty.profile_url.trim();
+  }
+  if (faculty.slug && faculty.slug.trim()) {
+    return `https://www.srmap.edu.in/faculty/${faculty.slug.trim().replace(/^\/+|\/+$/g, "")}/`;
+  }
+  return null;
+}
+
