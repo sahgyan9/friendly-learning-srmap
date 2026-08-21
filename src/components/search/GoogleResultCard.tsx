@@ -25,7 +25,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getInitials } from "@/utils/user-utils";
 import { cn } from "@/lib/utils";
 import { extractMeaningfulTokens } from "@/lib/search/query-engine";
-import { slugify } from "@/lib/utils";
 import type { SearchResultItem } from "@/hooks/useSearchResults";
 
 interface GoogleResultCardProps {
@@ -143,8 +142,6 @@ export const GoogleResultCard: React.FC<GoogleResultCardProps> = ({
     badgeColor = "bg-sky-500/10 text-sky-700 dark:text-sky-300 border-sky-500/20";
   }
 
-  const breadcrumbText = item.breadcrumb || `friendlylearning.in › ${entityType} › ${slugify(item.title)}`;
-
   const logClick = () => {
     if (query && query.trim().length >= 3) {
       supabase.rpc("log_search_click" as any, {
@@ -178,7 +175,7 @@ export const GoogleResultCard: React.FC<GoogleResultCardProps> = ({
         className,
       )}
     >
-      {/* ── 1. Google SERP Breadcrumb / URL Hierarchy Line ── */}
+      {/* ── 1. Avatar + Clickable Headline (Google Blue / Primary Link) ── */}
       <div className="flex items-center gap-2 mb-1.5 min-w-0">
         {item.image ? (
           <Avatar className="h-6 w-6 shrink-0 rounded-md border border-border/50">
@@ -191,10 +188,17 @@ export const GoogleResultCard: React.FC<GoogleResultCardProps> = ({
           </span>
         )}
 
-        <div className="flex items-center gap-1.5 min-w-0 flex-1 overflow-hidden">
-          <span className="truncate text-xs font-mono text-muted-foreground/80 dark:text-muted-foreground/70">
-            {breadcrumbText}
-          </span>
+        <div className="min-w-0 flex-1 overflow-hidden">
+          <Link
+            to={item.to}
+            onClick={(e) => {
+              e.stopPropagation();
+              logClick();
+            }}
+            className="block truncate text-base sm:text-lg font-medium text-blue-600 dark:text-blue-400 group-hover:text-blue-700 dark:group-hover:text-blue-300 group-hover:underline underline-offset-2 transition-colors leading-snug"
+          >
+            <HighlightedText text={item.title} query={query} />
+          </Link>
         </div>
 
         {effectiveCitationId && (
@@ -213,20 +217,6 @@ export const GoogleResultCard: React.FC<GoogleResultCardProps> = ({
             {item.badge}
           </span>
         )}
-      </div>
-
-      {/* ── 2. Clickable Search Headline (Google Blue / Primary Link) ── */}
-      <div className="mb-1.5">
-        <Link
-          to={item.to}
-          onClick={(e) => {
-            e.stopPropagation();
-            logClick();
-          }}
-          className="text-base sm:text-lg font-medium text-blue-600 dark:text-blue-400 group-hover:text-blue-700 dark:group-hover:text-blue-300 group-hover:underline underline-offset-2 transition-colors inline-block leading-snug"
-        >
-          <HighlightedText text={item.title} query={query} />
-        </Link>
       </div>
 
       {/* ── 3. Rich Snippet Meta Row (Stars, Reviews, Dept, Member Count, Dates) ── */}
