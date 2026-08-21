@@ -235,16 +235,23 @@ export default function SearchPage() {
       <div className="sticky top-0 z-20 border-b border-border/50 bg-background/95 backdrop-blur-xl">
         <div className="container mx-auto max-w-6xl px-4 py-3">
           {/* Search bar row */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <button
               onClick={() => navigate(-1)}
-              className="shrink-0 flex items-center justify-center h-10 w-10 rounded-xl border border-border/50 bg-card/60 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+              className="shrink-0 flex items-center justify-center h-10 w-10 sm:h-11 sm:w-11 rounded-xl border border-border/50 bg-card/60 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
               aria-label="Go back"
             >
               <ArrowLeft className="h-4 w-4" />
             </button>
-            <div className="relative flex-1 flex items-center">
-              <Search className="absolute left-3.5 h-4 w-4 text-muted-foreground/60 shrink-0 pointer-events-none" />
+            <div
+              className={cn(
+                "relative flex-1 flex items-center rounded-xl border px-3 transition-all shadow-2xs",
+                isAiMode
+                  ? "border-violet-500/50 bg-gradient-to-r from-violet-500/[0.08] via-purple-500/[0.04] to-transparent ring-2 ring-violet-500/20 shadow-sm shadow-violet-500/10 focus-within:border-violet-500/70 focus-within:bg-card text-foreground"
+                  : "border-border/60 bg-card/60 focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/20 focus-within:bg-card text-foreground",
+              )}
+            >
+              <Search className="h-4 w-4 text-muted-foreground/60 shrink-0 pointer-events-none mr-2 sm:mr-2.5" />
               <input
                 ref={inputRef}
                 type="text"
@@ -263,19 +270,11 @@ export default function SearchPage() {
                     ? 'Ask CampusMind: "Computer Science faculty" or "Web Dev mentors…"'
                     : "Search mentors, faculty, hackathons, groups, posts…"
                 }
-                className={cn(
-                  "w-full h-10 sm:h-11 rounded-xl border pl-10 pr-28 text-sm transition-all shadow-2xs",
-                  isAiMode
-                    ? "border-violet-500/50 bg-gradient-to-r from-violet-500/[0.08] via-purple-500/[0.04] to-transparent ring-2 ring-violet-500/20 shadow-sm shadow-violet-500/10 focus:border-violet-500/70 focus:bg-card text-foreground"
-                    : "border-border/60 bg-card/60 focus:border-primary/50 focus:ring-2 focus:ring-primary/20 focus:bg-card text-foreground",
-                  "placeholder:text-muted-foreground/50",
-                  "focus:outline-none",
-                  "[&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden",
-                )}
+                className="w-full h-10 sm:h-11 flex-1 min-w-0 bg-transparent text-sm text-foreground placeholder:text-muted-foreground/50 border-none outline-none focus:outline-none focus:ring-0 p-0 [&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden"
                 aria-label="Search query"
                 autoFocus={!q}
               />
-              <div className="absolute right-2 flex items-center gap-1.5">
+              <div className="flex items-center gap-1 sm:gap-1.5 shrink-0 ml-1.5">
                 {localQ && (
                   <button
                     onClick={() => {
@@ -292,7 +291,7 @@ export default function SearchPage() {
                   type="button"
                   onClick={() => setIsAiMode((prev) => !prev)}
                   className={cn(
-                    "flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-medium transition-all duration-200 cursor-pointer select-none",
+                    "flex items-center gap-1 rounded-lg px-2 sm:px-2.5 py-1 text-xs font-medium transition-all duration-200 cursor-pointer select-none",
                     isAiMode
                       ? "bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-xs ring-1 ring-violet-400/40"
                       : "border border-border/60 bg-muted/40 text-muted-foreground hover:text-foreground hover:bg-accent",
@@ -304,7 +303,7 @@ export default function SearchPage() {
                 </button>
               </div>
             </div>
-            <Button onClick={() => submitSearch(localQ)} size="sm" className="shrink-0 h-10 sm:h-11 px-5 rounded-xl font-medium">
+            <Button onClick={() => submitSearch(localQ)} size="sm" className="shrink-0 h-10 sm:h-11 px-3.5 sm:px-5 rounded-xl font-medium text-xs sm:text-sm">
               Search
             </Button>
           </div>
