@@ -24,6 +24,14 @@
 -- Part 2 (20260821240000) covers the tables this harness cannot construct
 -- from scratch (dashboard-origin, predating migration tracking) — see that
 -- file and its SKIPPED-section entry in verify-migrations.mjs.
+--
+-- mentor_reviews and mentor_verifications were missing from the first draft
+-- of this audit's candidate list (a transcription slip, not a deliberate
+-- exclusion) and were caught afterward by re-querying
+-- information_schema.table_privileges for leftover TRUNCATE/REFERENCES/
+-- TRIGGER grants post-fix. Their policies live only in the database (dashboard
+-- -origin, like part 2's tables) but the tables themselves are reconstructible
+-- here, so they're fixed in this file, not part 2.
 -- =============================================================================
 
 -- -----------------------------------------------------------------------------
@@ -57,6 +65,18 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON public.faculty_ratings TO authenticated;
 
 REVOKE ALL ON public.faculty_review_votes FROM anon, authenticated;
 GRANT SELECT, INSERT, DELETE ON public.faculty_review_votes TO authenticated;
+
+-- mentor_reviews: "Anyone can view mentor reviews" is qual(true) -- a genuine
+-- public SELECT policy, unlike the auth.uid()-keyed write policies below it.
+REVOKE ALL ON public.mentor_reviews FROM anon, authenticated;
+GRANT SELECT ON public.mentor_reviews TO anon, authenticated;
+GRANT INSERT, UPDATE, DELETE ON public.mentor_reviews TO authenticated;
+
+-- mentor_verifications: every policy is keyed on auth.uid() or is_admin, so
+-- anon never has a legitimate use for it -- verified via pg_policies live,
+-- since this table predates migration tracking.
+REVOKE ALL ON public.mentor_verifications FROM anon, authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.mentor_verifications TO authenticated;
 
 -- -----------------------------------------------------------------------------
 -- mentors / marketplace_posts: already correctly column-restricted for anon
