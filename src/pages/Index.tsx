@@ -74,16 +74,7 @@ const Index = () => {
       {/* ── 1. Hero with CampusMind AI Search & Momentum Metrics ── */}
       <CampusHero />
 
-      {/* ── 2. Signed-in Personalized Recommendations (Lazy, non-blocking) ── */}
-      {user && (
-        <div className="border-b border-border/40 bg-muted/20 py-4">
-          <div className="container mx-auto px-4 max-w-6xl">
-            <RecommendedPeople />
-          </div>
-        </div>
-      )}
-
-      {/* ── 3. Main Campus Hub: 2-Column Responsive Feed & Discovery ── */}
+      {/* ── 2. Main Campus Hub: 2-Column Responsive Feed & Discovery ── */}
       <main className="py-8 md:py-10">
         <div className="container mx-auto px-4 max-w-6xl">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
@@ -105,6 +96,15 @@ const Index = () => {
           </div>
         </div>
       </main>
+
+      {/* ── 3. Signed-in Personalized Recommendations (Lazy, non-blocking) ── */}
+      {user && (
+        <div className="border-t border-border/40 bg-muted/20 py-8">
+          <div className="container mx-auto px-4 max-w-6xl">
+            <RecommendedPeople />
+          </div>
+        </div>
+      )}
 
       {/* ── 4. Ecosystem Bento (The 3 Core Pillars) ── */}
       <EcosystemBento />
