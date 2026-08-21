@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -388,9 +389,8 @@ export const ImportSrmPortalDialog = ({
 
                 <div className="space-y-1.5">
                   <Label htmlFor="srm-password">Portal Password</Label>
-                  <Input
+                  <PasswordInput
                     id="srm-password"
-                    type="password"
                     placeholder="DDMMYYYY (your date of birth)"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
