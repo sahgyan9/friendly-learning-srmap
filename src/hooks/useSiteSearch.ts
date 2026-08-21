@@ -17,7 +17,7 @@ import {
 } from "@/integrations/supabase/services/ask";
 import { BLOG_POSTS } from "@/data/blog-posts";
 import { normalise } from "@/lib/search/rank";
-import { parseQuery } from "@/lib/search/query-engine";
+import { parseQuery, hasTopicalMatch } from "@/lib/search/query-engine";
 
 /** What a row actually is — drives which icon and type tag it renders with. */
 export type SearchHitKind =
@@ -107,6 +107,21 @@ function relatedSubtitle(result: AskResult): string {
   }
 
   return result.subtitle ?? "";
+}
+
+/** Flattens a semantic hit's title/subtitle/body/metadata into one string for keyword-relevance checks. */
+function candidateTextFor(result: AskResult): string {
+  const metaParts: string[] = [];
+  for (const value of Object.values(result.metadata ?? {})) {
+    if (typeof value === "string") {
+      metaParts.push(value);
+    } else if (Array.isArray(value)) {
+      for (const item of value) {
+        if (typeof item === "string") metaParts.push(item);
+      }
+    }
+  }
+  return [result.title, result.subtitle ?? "", result.body ?? "", ...metaParts].join(" ");
 }
 
 function searchArticles(query: string): SearchHit[] {
@@ -235,6 +250,14 @@ export function useSiteSearch(query: string, enabled: boolean) {
       const related: SearchHit[] = data
         ? allResults(data)
             .filter((result) => !alreadyShown.has(result.entity_id))
+            // Mirrors the 0.58 topical-relevance bar used on the full /search results
+            // page (useSearchResults.ts): without it, a generic query with low-similarity
+            // neighbors above the server's raw 0.35 floor surfaces coincidental matches
+            // under the "AI" label with no keyword relevance to back them up.
+            .filter((result) => {
+              if (parsed.specificTokens.length === 0 || result.similarity >= 0.58) return true;
+              return hasTopicalMatch(candidateTextFor(result), parsed);
+            })
             .slice(0, 4)
             .map((result) => ({
               id: `semantic-${result.entity_id}`,
