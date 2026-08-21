@@ -144,6 +144,7 @@ const TeamMembersAdmin = lazyWithRetry("TeamMembersAdmin", () => import("./pages
 const MarketplaceAdmin = lazyWithRetry("MarketplaceAdmin", () => import("./pages/MarketplaceAdmin"));
 const AdminAIFeedback = lazyWithRetry("AdminAIFeedback", () => import("./pages/AdminAIFeedback"));
 const AdminNotices = lazyWithRetry("AdminNotices", () => import("./pages/AdminNotices"));
+const AdminArticles = lazyWithRetry("AdminArticles", () => import("./pages/AdminArticles"));
 
 function RouteFallback() {
   return (
@@ -361,6 +362,14 @@ function App() {
                       element={
                         <ProtectedRoute requiredRole="admin">
                           <AdminNotices />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/admin/articles"
+                      element={
+                        <ProtectedRoute requiredRole="admin">
+                          <AdminArticles />
                         </ProtectedRoute>
                       }
                     />

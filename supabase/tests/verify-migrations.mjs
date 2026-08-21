@@ -457,6 +457,7 @@ for (const file of [
   '20260821170000_faculty_and_events_storage_buckets.sql',
   '20260821180000_update_faculty_image_urls_to_storage.sql',
   '20260821190000_search_history_result_url.sql',
+  '20260821210000_knowledge_articles.sql',
 ]) {
   if (file === '20260804132345_b843f814-46d5-4c25-bc80-32e5f6ebba59.sql') {
     // Production's `faculty` table still carries `profile_image`, a column
@@ -1658,6 +1659,91 @@ const { rows: adminPreview } = await asAuthenticated(() =>
 check('an admin can preview an unpublished notice', adminPreview.length === 1, `${adminPreview.length} rows`);
 
 await q(`UPDATE public.campus_notices SET is_published = true WHERE id = $1`, [notice.id]);
+
+console.log('\nknowledge articles (admin-authored rich-text reference content):');
+await actAs(CURRENT_UID);
+
+const { rows: [article] } = await q(
+  `INSERT INTO public.knowledge_articles (slug, title, category, content_html, content_text, created_by)
+   VALUES ('outpass-policy', 'Student Outpass Policy', 'hostel_policy', '<h2>General Outpass</h2><p>Issued <strong>only</strong> on holidays.</p>', 'General Outpass. Issued only on holidays.', $1)
+   RETURNING id`,
+  [CURRENT_UID],
+);
+const { rows: [articleChunk] } = await q(
+  `SELECT body, subtitle, metadata FROM public.knowledge_chunks WHERE entity_type='article' AND entity_id=$1`,
+  [article.id],
+);
+check('reproject trigger fires on INSERT (chunk exists)', !!articleChunk, articleChunk ? 'found' : 'missing');
+check('chunk body carries the plain-text extraction, not HTML', articleChunk?.body?.includes('Issued only on holidays.') && !articleChunk.body.includes('<strong>'), articleChunk?.body ?? '');
+check('chunk metadata carries the slug', articleChunk?.metadata?.slug === 'outpass-policy', JSON.stringify(articleChunk?.metadata));
+
+// Editing content changes content_hash, which nulls embedding/embedded_at so
+// embed-knowledge re-embeds it (this is what makes "edit any time" actually
+// keep search results current).
+await q(`UPDATE public.knowledge_chunks SET embedding = '[]', embedded_at = now() WHERE entity_type='article' AND entity_id=$1`, [article.id]);
+await q(
+  `UPDATE public.knowledge_articles SET content_html = $1, content_text = $2 WHERE id = $3`,
+  ['<h2>General Outpass</h2><p>Issued <strong>only</strong> on holidays, 8am-12pm.</p>', 'General Outpass. Issued only on holidays, 8am-12pm.', article.id],
+);
+const { rows: [articleChunkAfterEdit] } = await q(
+  `SELECT body, embedding, embedded_at FROM public.knowledge_chunks WHERE entity_type='article' AND entity_id=$1`,
+  [article.id],
+);
+check('editing an article updates the chunk body', articleChunkAfterEdit?.body?.includes('8am-12pm'), articleChunkAfterEdit?.body ?? '');
+check('editing an article nulls embedding so it gets re-embedded', articleChunkAfterEdit?.embedding === null && articleChunkAfterEdit?.embedded_at === null, JSON.stringify(articleChunkAfterEdit));
+
+// Unpublishing removes the chunk (same idiom as campus_notices/campus_documents).
+await q(`UPDATE public.knowledge_articles SET is_published = false WHERE id = $1`, [article.id]);
+const { rows: articleAfterUnpublish } = await q(
+  `SELECT id FROM public.knowledge_chunks WHERE entity_type='article' AND entity_id=$1`,
+  [article.id],
+);
+check('unpublishing an article removes its chunk', articleAfterUnpublish.length === 0, `${articleAfterUnpublish.length} rows`);
+await q(`UPDATE public.knowledge_articles SET is_published = true WHERE id = $1`, [article.id]);
+
+// RLS: a non-admin cannot insert.
+await actAs(OTHER_UID);
+const nonAdminArticleInsert = await asAuthenticated(() => attempt(
+  `INSERT INTO public.knowledge_articles (slug, title, content_html, content_text) VALUES ('should-fail', 'should fail', '<p>x</p>', 'x')`));
+check('RLS blocks a non-admin from inserting an article', nonAdminArticleInsert !== null, nonAdminArticleInsert ?? 'INSERT SUCCEEDED');
+
+// RLS: an admin can insert directly from the client.
+await actAs(CURRENT_UID);
+const adminArticleInsert = await asAuthenticated(() => attempt(
+  `INSERT INTO public.knowledge_articles (slug, title, content_html, content_text) VALUES ('admin-written-article', 'admin-written article', '<p>x</p>', 'x')`));
+check('RLS admits an admin inserting an article', adminArticleInsert === null, adminArticleInsert ?? '');
+
+// Everyone (including signed-out) can read published articles.
+const { rows: anonArticles } = await asAuthenticated(() =>
+  q(`SELECT id FROM public.knowledge_articles WHERE is_published = true`));
+check('published articles are readable', anonArticles.length >= 2, `${anonArticles.length} rows`);
+
+// Supabase's default privileges hand every new table ALL to anon; this table
+// must keep anon to SELECT-only, matching campus_notices/campus_documents.
+const { rows: articleAcl } = await q(
+  `SELECT grantee, string_agg(DISTINCT privilege_type, ',' ORDER BY privilege_type) AS privs
+     FROM information_schema.table_privileges
+    WHERE table_schema='public' AND table_name='knowledge_articles' AND grantee IN ('anon','authenticated')
+    GROUP BY grantee`,
+);
+const articleAnon = articleAcl.find((r) => r.grantee === 'anon');
+check('knowledge_articles grants SELECT only to anon', articleAnon?.privs === 'SELECT', articleAnon?.privs ?? 'none');
+
+// An unpublished draft must stay invisible to everyone except an admin —
+// the admin articles list needs to show drafts before they're published.
+await q(`UPDATE public.knowledge_articles SET is_published = false WHERE id = $1`, [article.id]);
+
+await actAs(OTHER_UID);
+const { rows: nonAdminArticlePreview } = await asAuthenticated(() =>
+  q(`SELECT id FROM public.knowledge_articles WHERE id = $1`, [article.id]));
+check('a non-admin cannot preview an unpublished article', nonAdminArticlePreview.length === 0, `${nonAdminArticlePreview.length} rows`);
+
+await actAs(CURRENT_UID);
+const { rows: adminArticlePreview } = await asAuthenticated(() =>
+  q(`SELECT id FROM public.knowledge_articles WHERE id = $1`, [article.id]));
+check('an admin can preview an unpublished article', adminArticlePreview.length === 1, `${adminArticlePreview.length} rows`);
+
+await q(`UPDATE public.knowledge_articles SET is_published = true WHERE id = $1`, [article.id]);
 
 console.log('\ncampus documents (handbooks/calendars, service_role-only writes):');
 // campus_documents itself has no seed data in migrations (the real content

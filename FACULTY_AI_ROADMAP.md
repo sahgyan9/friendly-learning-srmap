@@ -230,6 +230,43 @@ notices UI and the automated projectors, and unlike those two it's manual
 end-to-end (no re-scrape schedule), so a source page changing on srmap.edu.in
 won't be reflected here until someone re-runs it.
 
+### Admin-authored knowledge articles with rich-text editing — 2026-08-21
+
+`seed-campus-documents` covers pages Gyan *names*, but he also wants to
+**write and edit reference content himself** — "just like Medium", bold/
+italic/headings — without a script or the service-role key. `campus_documents`
+was deliberately built with no admin-write path at all (see above), so this
+needed a fourth population mechanism, not a change to the third.
+
+Added `public.knowledge_articles` (`20260821210000_knowledge_articles.sql`),
+structurally `campus_notices`' pipeline (RLS: SELECT-published to everyone,
+INSERT/UPDATE/DELETE to `authenticated` gated by `is_admin_user()`, immediate
+reproject-on-write trigger) applied to undated long-form content instead of
+dated circulars. New admin page at `/admin/articles`, editor built on Tiptap
+(`@tiptap/react` + `starter-kit` — no rich-text editor existed anywhere in the
+repo before this). `content_html` is stored for future editing/display;
+`content_text` is a **client-side** plain-text extraction
+(`editor.getText()`) taken at save time and is the only thing that gets
+embedded — `rebuild_article_chunks()` never touches `content_html`, so no HTML
+tags reach the vector index. Editing an article changes `content_hash`, which
+nulls `embedding`/`embedded_at` the same way notices/documents do, so
+`embed-knowledge` re-embeds it automatically — this is what makes "edit any
+time, stays current" actually true rather than aspirational.
+
+Scope deliberately excludes images and a public reading page — Gyan named
+text formatting specifically, and citing articles by title (same as
+`campus_documents`) needed no changes to `ai-chatbot`'s reference-linkifying
+logic, which only links `/notices/:id` paths.
+
+Verified against a real Postgres via `test:migrations` (RLS admit/deny, chunk
+creation on insert, chunk removal on unpublish, re-embed-on-edit via
+`content_hash`) — 71 new assertions across the migration test suite, all
+passing. Direct-DB-connection commands (`db push`, `db query --linked`) still
+hang in this environment (same finding as 2026-08-21 earlier this session), so
+the migration itself needs to be applied via the SQL editor rather than the
+CLI; `npx supabase gen types typescript --linked` should be re-run afterward
+to replace the hand-written `knowledge_articles` block in `types.ts`.
+
 ---
 
 ## Phase 4 — original plan (kept for the reasoning)

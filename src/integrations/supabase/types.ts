@@ -1312,6 +1312,45 @@ export type Database = {
           },
         ]
       }
+      knowledge_articles: {
+        Row: {
+          category: string
+          content_html: string
+          content_text: string
+          created_at: string
+          created_by: string | null
+          id: string
+          is_published: boolean
+          slug: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          content_html: string
+          content_text: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_published?: boolean
+          slug: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          content_html?: string
+          content_text?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_published?: boolean
+          slug?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       knowledge_chunks: {
         Row: {
           body: string
