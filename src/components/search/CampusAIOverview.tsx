@@ -203,9 +203,9 @@ export const CampusAIOverview: React.FC<CampusAIOverviewProps> = ({
     setIsVoting(true);
     try {
       const { error } = await (supabase as any).from("ai_overview_feedback").insert({
-        query_text: query.trim(),
-        vote_type: vote,
-        summary_text: overview.summary,
+        query: query.trim(),
+        response: overview,
+        is_helpful: vote === 'up',
       });
 
       if (error) throw error;
