@@ -38,3 +38,11 @@ verify_jwt = false
 # embed-knowledge above: deployed correctly, but undeclared here.
 [functions.semantic-search]
 verify_jwt = false
+
+# seed-campus-documents authenticates itself via a dedicated x-ingest-secret
+# header (INGEST_SECRET, not the platform JWT and not CRON_SECRET), because
+# it's a developer-run ingestion tool invoked from a terminal, not from the
+# app. See the file header comment for why campus_documents needs a
+# service-role writer at all.
+[functions.seed-campus-documents]
+verify_jwt = false

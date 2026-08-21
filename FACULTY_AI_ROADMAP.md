@@ -196,6 +196,40 @@ Floor..."), category Administrative. The existing per-row reproject trigger
 means it's searchable within the hour without waiting on the cron rebuild, and
 `triggerEmbedding()` in the admin form best-effort speeds that up further.
 
+### Administrative content ingested from srmap.edu.in — 2026-08-21
+
+`campus_documents` has no INSERT policy for anon/authenticated (service-role
+only, by design — it's the "developer-run script" table, `campus_notices` is
+the admin-browser one). To seed it without ever handling the service-role key
+directly, `supabase/functions/seed-campus-documents/index.ts` was added: a
+small deployed function, gated by its own `INGEST_SECRET` (not `CRON_SECRET`,
+not the service role key — generated and set for this one purpose), that
+upserts rows and calls `rebuild_document_chunks()`. Idempotent per
+`document_slug`, so re-running to fix content is safe. Invoke with
+`x-ingest-secret: <the secret>` and a JSON body of `{ rows: [...] }` matching
+`campus_documents` columns — see the file for the exact shape.
+
+Used it to ingest 12 chunks across 8 slugs: the two policy PDFs Gyan dropped in
+`University_Data/` (`student-attendance-policy`, `student-on-duty-policy` —
+the 75% minimum / 25%+15% condonation numbers, and who authorises On-Duty
+leave per category), plus five srmap.edu.in leadership/service pages he named
+directly (`leadership-cfao`, `leadership-itkm`, `wellness-centre`,
+`quantum-research-centre`, `ai-technology-institute`,
+`international-relations-higher-studies`). Content was rewritten in our own
+words with the facts (names, titles, emails, phones) kept exact — not scraped
+markdown pasted in — both for copyright and because a leadership bio page is
+mostly prose the assistant doesn't need. Verified end to end: `semantic-search`
+returns the CFAO chunk at 0.74 similarity for a fee-penalty query and the ITKM
+chunk at 0.62 for a wifi query, and `ai-chatbot` answered "who do I contact for
+a fee penalty" correctly from the CFAO record alone.
+
+**More administrative pages will come the same way** — Gyan names a URL, it
+gets scraped, condensed, and pushed through `seed-campus-documents`. This is
+now the third population mechanism for `knowledge_chunks` alongside the admin
+notices UI and the automated projectors, and unlike those two it's manual
+end-to-end (no re-scrape schedule), so a source page changing on srmap.edu.in
+won't be reflected here until someone re-runs it.
+
 ---
 
 ## Phase 4 — original plan (kept for the reasoning)
