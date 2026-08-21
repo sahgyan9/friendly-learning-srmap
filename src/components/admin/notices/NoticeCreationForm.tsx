@@ -56,6 +56,7 @@ const NoticeCreationForm = ({ onCancel, onSuccess }: NoticeCreationFormProps) =>
     reference_no: "",
     issued_date: todayIso(),
     effective_date: "",
+    superseded_date: "",
     summary: "",
     content: "",
   });
@@ -69,6 +70,7 @@ const NoticeCreationForm = ({ onCancel, onSuccess }: NoticeCreationFormProps) =>
       reference_no: parsed.reference_no || "",
       issued_date: parsed.issued_date || todayIso(),
       effective_date: parsed.effective_date || "",
+      superseded_date: parsed.superseded_date || "",
       summary: parsed.summary || "",
       content: parsed.content || "",
     });
@@ -133,6 +135,7 @@ const NoticeCreationForm = ({ onCancel, onSuccess }: NoticeCreationFormProps) =>
         reference_no: formData.reference_no.trim() || null,
         issued_date: formData.issued_date,
         effective_date: formData.effective_date || null,
+        superseded_date: formData.superseded_date || null,
         summary: formData.summary.trim() || null,
         content: formData.content.trim(),
       });
@@ -250,7 +253,9 @@ const NoticeCreationForm = ({ onCancel, onSuccess }: NoticeCreationFormProps) =>
               </div>
 
               <div>
-                <Label htmlFor="effective_date">Effective Date (optional)</Label>
+                <Label htmlFor="effective_date">
+                  {formData.category === "holiday_change" ? "New Holiday Date (effective)" : "Effective Date (optional)"}
+                </Label>
                 <Input
                   id="effective_date"
                   type="date"
@@ -258,6 +263,21 @@ const NoticeCreationForm = ({ onCancel, onSuccess }: NoticeCreationFormProps) =>
                   onChange={(e) => setFormData({ ...formData, effective_date: e.target.value })}
                 />
               </div>
+
+              {formData.category === "holiday_change" && (
+                <div className="sm:col-span-2">
+                  <Label htmlFor="superseded_date">Original Date (if this moved/rescheduled a holiday)</Label>
+                  <Input
+                    id="superseded_date"
+                    type="date"
+                    value={formData.superseded_date}
+                    onChange={(e) => setFormData({ ...formData, superseded_date: e.target.value })}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    The deterministic calendar will un-mark this original date as a holiday and treat it as a regular working day.
+                  </p>
+                </div>
+              )}
             </div>
 
             <div>

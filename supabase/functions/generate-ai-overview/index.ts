@@ -168,7 +168,12 @@ function buildPrompt(query: string, matches: Retrieved[], calendarFacts: Calenda
   const resolvedFactsBlock = calendarFacts.length > 0
     ? "\n\nRESOLVED_FACTS (computed directly from the official calendar database — this is ground truth, more authoritative than anything in the resources below; do not re-derive or second-guess it by reading a working-days grid yourself):\n"
       + calendarFacts.map((f) => {
-        if (!f.is_holiday) return `- ${f.dateLabel}: working day (no declared holiday on record).`;
+        if (!f.is_holiday) {
+          const why = f.source === "notice_override"
+            ? ` (holiday rescheduled / declared working day per official notice — "${f.notice_title}"${f.notice_summary ? `: ${f.notice_summary}` : ""})`
+            : " (no declared holiday on record)";
+          return `- ${f.dateLabel}: working day${why}.`;
+        }
         const why = f.source === "notice_override"
           ? `per an official notice — "${f.notice_title}"${f.notice_summary ? `: ${f.notice_summary}` : ""}`
           : f.occasion_name

@@ -233,6 +233,7 @@ export type Database = {
           issued_date: string
           reference_no: string | null
           summary: string | null
+          superseded_date: string | null
           title: string
           updated_at: string
         }
@@ -247,6 +248,7 @@ export type Database = {
           issued_date: string
           reference_no?: string | null
           summary?: string | null
+          superseded_date?: string | null
           title: string
           updated_at?: string
         }
@@ -261,6 +263,7 @@ export type Database = {
           issued_date?: string
           reference_no?: string | null
           summary?: string | null
+          superseded_date?: string | null
           title?: string
           updated_at?: string
         }

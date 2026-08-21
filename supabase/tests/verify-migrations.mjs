@@ -443,6 +443,8 @@ for (const file of [
   '20260821100000_fix_storage_list_policy_bucket_ids.sql',
   '20260821110000_campus_notices.sql',
   '20260821120000_academic_calendar_resolver.sql',
+  '20260821130000_campus_notices_admin_preview.sql',
+  '20260821140000_campus_notices_superseded_date.sql',
 ]) {
   if (file === '20260804132345_b843f814-46d5-4c25-bc80-32e5f6ebba59.sql') {
     // Production's `faculty` table still carries `profile_image`, a column
@@ -1625,6 +1627,23 @@ const { rows: noticeAcl } = await q(
 const noticeAnon = noticeAcl.find((r) => r.grantee === 'anon');
 check('campus_notices grants SELECT only to anon', noticeAnon?.privs === 'SELECT', noticeAnon?.privs ?? 'none');
 
+// An unpublished notice must stay invisible to everyone except an admin —
+// the /notices/:id page's "Unpublished Draft (Admin View)" state relies on
+// an admin being able to preview a draft before it's published.
+await q(`UPDATE public.campus_notices SET is_published = false WHERE id = $1`, [notice.id]);
+
+await actAs(OTHER_UID);
+const { rows: nonAdminPreview } = await asAuthenticated(() =>
+  q(`SELECT id FROM public.campus_notices WHERE id = $1`, [notice.id]));
+check('a non-admin cannot preview an unpublished notice', nonAdminPreview.length === 0, `${nonAdminPreview.length} rows`);
+
+await actAs(CURRENT_UID);
+const { rows: adminPreview } = await asAuthenticated(() =>
+  q(`SELECT id FROM public.campus_notices WHERE id = $1`, [notice.id]));
+check('an admin can preview an unpublished notice', adminPreview.length === 1, `${adminPreview.length} rows`);
+
+await q(`UPDATE public.campus_notices SET is_published = true WHERE id = $1`, [notice.id]);
+
 console.log('\ncampus documents (handbooks/calendars, service_role-only writes):');
 // campus_documents itself has no seed data in migrations (the real content
 // is loaded once by tools/process_university_data.py's generated SQL, run
@@ -1662,15 +1681,20 @@ check('get_calendar_day resolves the Varalakshmi Vratam fact (the original bug)'
 const { rows: [nonHoliday] } = await q(`SELECT * FROM public.get_calendar_day('2026-08-20'::date)`);
 check('get_calendar_day returns no row for an ordinary working day (honest about scope, not a false negative)', !nonHoliday, JSON.stringify(nonHoliday ?? null));
 
-// A published holiday_change notice for the same date overrides the static
-// table -- an admin reschedule takes effect without editing this migration.
+// A published holiday_change notice with both effective_date and superseded_date
+// overrides the static table on BOTH dates:
+// 1. the new date (2026-08-26) becomes is_holiday = true (source = 'notice_override')
+// 2. the vacated date (2026-08-25) becomes is_holiday = false (source = 'notice_override')
 await q(
-  `INSERT INTO public.campus_notices (title, category, issued_date, effective_date, summary, content, is_published, created_by)
-   VALUES ('Milad-un-Nabi holiday moved to 26th August', 'holiday_change', '2026-08-20', '2026-08-26', 'Holiday rescheduled to 26th August.', 'Full circular body.', true, $1)`,
+  `INSERT INTO public.campus_notices (title, category, issued_date, effective_date, superseded_date, summary, content, is_published, created_by)
+   VALUES ('Milad-un-Nabi holiday moved to 26th August', 'holiday_change', '2026-08-20', '2026-08-26', '2026-08-25', 'Holiday rescheduled from 25th to 26th August 2026.', 'Full circular body.', true, $1)`,
   [CURRENT_UID],
 );
-const { rows: [overridden] } = await q(`SELECT * FROM public.get_calendar_day('2026-08-26'::date)`);
-check('a published holiday_change notice overrides the static calendar', overridden?.source === 'notice_override' && overridden?.notice_title?.includes('moved to 26th August'), JSON.stringify(overridden));
+const { rows: [overriddenNewDate] } = await q(`SELECT * FROM public.get_calendar_day('2026-08-26'::date)`);
+check('a published holiday_change notice marks effective_date as holiday override', overriddenNewDate?.is_holiday === true && overriddenNewDate?.source === 'notice_override' && overriddenNewDate?.notice_title?.includes('moved to 26th August'), JSON.stringify(overriddenNewDate));
+
+const { rows: [overriddenVacatedDate] } = await q(`SELECT * FROM public.get_calendar_day('2026-08-25'::date)`);
+check('a published holiday_change notice un-marks superseded_date as is_holiday = false override', overriddenVacatedDate?.is_holiday === false && overriddenVacatedDate?.source === 'notice_override' && overriddenVacatedDate?.occasion_name === 'Eid Milad-Un-Nabi', JSON.stringify(overriddenVacatedDate));
 
 const { rows: calendarAcl } = await q(
   `SELECT grantee, string_agg(DISTINCT privilege_type, ',' ORDER BY privilege_type) AS privs

@@ -91,6 +91,7 @@ export interface ParsedNotice {
   reference_no: string;
   issued_date: string;
   effective_date: string;
+  superseded_date?: string;
   summary: string;
   content: string;
 }

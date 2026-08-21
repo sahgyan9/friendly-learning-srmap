@@ -49,7 +49,8 @@ const RESPONSE_SCHEMA = {
     category: { type: "STRING", enum: NOTICE_CATEGORIES },
     reference_no: { type: "STRING", description: "Circular/reference number, or empty string if none" },
     issued_date: { type: "STRING", description: "Date the circular was issued, as YYYY-MM-DD" },
-    effective_date: { type: "STRING", description: "Date the notice takes effect (e.g. the holiday date), as YYYY-MM-DD, or empty string if not applicable" },
+    effective_date: { type: "STRING", description: "Date the notice takes effect (e.g. the new holiday date), as YYYY-MM-DD, or empty string if not applicable" },
+    superseded_date: { type: "STRING", description: "Original date the holiday/event moved away from (if rescheduled), as YYYY-MM-DD, or empty string if not applicable" },
     summary: { type: "STRING", description: "One-sentence plain-English summary" },
     content: { type: "STRING", description: "The full body of the notice, cleaned up, as plain text or simple Markdown" },
   },
@@ -63,7 +64,8 @@ Extract these fields as JSON matching the provided schema:
 - category: pick the closest match from ${NOTICE_CATEGORIES.join(", ")} — default to "general" if unsure
 - reference_no: the circular/reference number exactly as written (e.g. "SRMAP/Reg. Off/Circular/02/2026-27"), or "" if none is present
 - issued_date: the date the circular was issued/signed, normalized to YYYY-MM-DD. Convert ordinal dates like "20th August 2026" to "2026-08-20".
-- effective_date: the single most relevant date the notice is ABOUT (e.g. the actual holiday date, the rescheduled date), normalized to YYYY-MM-DD, or "" if the notice has no specific effective date
+- effective_date: the single most relevant date the notice is ABOUT (e.g. the actual holiday date, the rescheduled date it moved TO), normalized to YYYY-MM-DD, or "" if the notice has no specific effective date
+- superseded_date: if this circular reschedules or moves a holiday from a prior date, extract that original date it moved FROM, normalized to YYYY-MM-DD (e.g. "moved from 25th August 2026" -> "2026-08-25"), or "" if not a reschedule
 - summary: one plain-English sentence a student would understand at a glance
 - content: the full body, cleaned of OCR artifacts, as plain text or simple Markdown. Preserve all dates, section references, and numbers exactly. Do not add commentary not present in the source.
 Return ONLY the JSON object.`;
@@ -168,6 +170,7 @@ serve(async (req) => {
           reference_no: parsed.reference_no ?? "",
           issued_date: parsed.issued_date ?? "",
           effective_date: parsed.effective_date ?? "",
+          superseded_date: parsed.superseded_date ?? "",
           summary: parsed.summary ?? "",
           content: parsed.content ?? "",
         });

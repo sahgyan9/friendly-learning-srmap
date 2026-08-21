@@ -248,6 +248,12 @@ const NoticeDetail = () => {
                   Effective {formatNoticeDate(notice.effective_date)}
                 </span>
               )}
+              {notice.superseded_date && (
+                <span className="inline-flex items-center gap-1.5">
+                  <Calendar className="h-4 w-4 text-muted-foreground/70" />
+                  Rescheduled from {formatNoticeDate(notice.superseded_date)}
+                </span>
+              )}
             </div>
 
             {notice.summary && (
