@@ -20,6 +20,11 @@ export const getNotices = async () => {
 };
 
 export const getNoticeById = async (id: string) => {
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+  if (!isUuid) {
+    return { data: null, error: null };
+  }
+
   const { data, error } = await supabase
     .from('campus_notices')
     .select('*')
