@@ -459,6 +459,7 @@ for (const file of [
   '20260821190000_search_history_result_url.sql',
   '20260821210000_knowledge_articles.sql',
   '20260821220000_knowledge_articles_grants_fix.sql',
+  '20260821230000_grant_audit_fix.sql',
 ]) {
   if (file === '20260804132345_b843f814-46d5-4c25-bc80-32e5f6ebba59.sql') {
     // Production's `faculty` table still carries `profile_image`, a column
@@ -645,6 +646,19 @@ console.log('');
 //      20260802091000_mirror_profile_image_to_mentors.sql
 //      20260804150000_student_welcome_email.sql
 //      20260806210000_mentor_application_notification_welcome_link.sql
+//
+// 7. GRANT-ONLY, DASHBOARD-ORIGIN TARGET TABLES (1 file) -- same reasoning as
+//    group 3: pure REVOKE/GRANT statements against admin_audit_log,
+//    admin_recovery, contact_messages, contact_responses, team_members,
+//    team_members_public, users_public, typing_indicators, user_presence,
+//    ai_conversations, canvas_drawings/participants/sessions,
+//    community_invites/join_requests/group_message_reactions -- tables this
+//    harness cannot construct from scratch, so the statements would fail on
+//    "relation does not exist" rather than prove anything about the grants.
+//    Verified against production directly: applied via the Supabase SQL
+//    editor, then information_schema.table_privileges re-queried to confirm
+//    each table holds exactly the grants the file specifies.
+//      20260821240000_grant_audit_fix_legacy_tables.sql
 // =====================================================================
 
 // ---------------------------------------------------------------- faculty
