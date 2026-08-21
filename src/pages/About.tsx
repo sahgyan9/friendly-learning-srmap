@@ -22,6 +22,45 @@ const About = () => {
     load();
   }, []);
 
+  const faqData = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "What is CampusMind?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "CampusMind is the AI search built into Friendly Learning SRMAP. Ask it a plain-English question — \"who's researching computer vision\" or \"I need a DSA mentor\" — and it searches peer mentors, faculty, groups, and posts together, instead of making you guess the right keyword.",
+        },
+      },
+      {
+        "@type": "Question",
+        "name": "How is CampusMind different from a regular search bar?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "A regular search bar matches keywords. CampusMind understands what you're actually asking, so a question like \"I'm stuck on my OS assignment\" surfaces the right peer mentors and study groups even if none of them used those exact words.",
+        },
+      },
+      {
+        "@type": "Question",
+        "name": "What can I ask CampusMind?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Anything about campus — faculty by research area, peer mentors for a subject, hackathon teammates, active groups, or general questions about SRM AP.",
+        },
+      },
+      {
+        "@type": "Question",
+        "name": "Is CampusMind free to use?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. It's built into Friendly Learning SRMAP for every SRM AP student — no separate sign-up or subscription.",
+        },
+      },
+    ],
+  };
+
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "AboutPage",
@@ -75,6 +114,7 @@ const About = () => {
 
       <StructuredData data={structuredData} />
       <StructuredData data={getOrganizationSchema()} />
+      <StructuredData data={faqData} />
 
       <div className="min-h-screen">
         <main className="pt-24 pb-16">
@@ -133,6 +173,37 @@ const About = () => {
                     <div className="text-3xl mb-3">🚀</div>
                     <h3 className="text-lg font-bold mb-2">Opportunities</h3>
                     <p className="text-muted-foreground text-sm">Hackathons, internships, and research calls — posted by students and faculty across campus. Filter by type, find what matches your skills, and form your team right on the platform.</p>
+                  </div>
+                </div>
+              </section>
+
+              {/* ── What is CampusMind ── */}
+              <section className="mb-8">
+                <h2 className="text-2xl font-bold mb-6">What is CampusMind?</h2>
+                <div className="space-y-5">
+                  <div>
+                    <h3 className="text-lg font-bold mb-1.5">What is CampusMind?</h3>
+                    <p className="text-muted-foreground text-sm">
+                      CampusMind is the AI search built into Friendly Learning SRMAP. Ask it a plain-English question — <em>"who's researching computer vision"</em> or <em>"I need a DSA mentor"</em> — and it searches peer mentors, faculty, groups, and posts together, instead of making you guess the right keyword.
+                    </p>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold mb-1.5">How is CampusMind different from a regular search bar?</h3>
+                    <p className="text-muted-foreground text-sm">
+                      A regular search bar matches keywords. CampusMind understands what you're actually asking, so a question like <em>"I'm stuck on my OS assignment"</em> surfaces the right peer mentors and study groups even if none of them used those exact words.
+                    </p>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold mb-1.5">What can I ask CampusMind?</h3>
+                    <p className="text-muted-foreground text-sm">
+                      Anything about campus — faculty by research area, peer mentors for a subject, hackathon teammates, active groups, or general questions about SRM AP.
+                    </p>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold mb-1.5">Is CampusMind free to use?</h3>
+                    <p className="text-muted-foreground text-sm">
+                      Yes. It's built into Friendly Learning SRMAP for every SRM AP student — no separate sign-up or subscription.
+                    </p>
                   </div>
                 </div>
               </section>

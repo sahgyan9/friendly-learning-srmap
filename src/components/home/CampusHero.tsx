@@ -53,14 +53,15 @@ export const CampusHero = () => {
 
           {/* Core Headline */}
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-5.5xl font-extrabold tracking-tight text-foreground mb-3.5 text-balance">
-            Your campus,{" "}
+            Ask{" "}
             <span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 dark:from-blue-400 dark:via-indigo-300 dark:to-violet-400 bg-clip-text text-transparent">
-              connected in one place.
-            </span>
+              CampusMind
+            </span>{" "}
+            anything about SRM AP.
           </h1>
 
           <p className="text-sm sm:text-base md:text-lg text-muted-foreground max-w-2xl mx-auto mb-7 text-balance font-normal leading-relaxed">
-            Post ideas, find hackathon teammates, search with CampusMind, rate faculty, and get mentored by seniors.
+            One search that actually gets it — find peer mentors, faculty, hackathon teammates, and groups by describing what you need.
           </p>
 
           {/* Central CampusMind Search */}
