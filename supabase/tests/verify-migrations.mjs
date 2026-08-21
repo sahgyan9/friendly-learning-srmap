@@ -458,6 +458,7 @@ for (const file of [
   '20260821180000_update_faculty_image_urls_to_storage.sql',
   '20260821190000_search_history_result_url.sql',
   '20260821210000_knowledge_articles.sql',
+  '20260821220000_knowledge_articles_grants_fix.sql',
 ]) {
   if (file === '20260804132345_b843f814-46d5-4c25-bc80-32e5f6ebba59.sql') {
     // Production's `faculty` table still carries `profile_image`, a column
