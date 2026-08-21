@@ -440,6 +440,7 @@ for (const file of [
   '20260820130000_drop_legacy_canvas_tables.sql',
   '20260821090000_marketplace_posts_user_id_index.sql',
   '20260821100000_fix_storage_list_policy_bucket_ids.sql',
+  '20260821110000_campus_notices.sql',
 ]) {
   if (file === '20260804132345_b843f814-46d5-4c25-bc80-32e5f6ebba59.sql') {
     // Production's `faculty` table still carries `profile_image`, a column
@@ -1563,6 +1564,64 @@ check('profile-images list policy targets the real bucket id (profiles)', profil
 const profileListAsAuthenticated = await asAuthenticated(() => attempt(
   `SELECT 1 FROM storage.objects WHERE bucket_id = 'profiles' LIMIT 1`));
 check('an authenticated user can list profiles objects', profileListAsAuthenticated === null, profileListAsAuthenticated ?? '');
+
+console.log('\ncampus notices (admin-authored circulars):');
+await actAs(CURRENT_UID);
+await q(`UPDATE public.users SET is_admin = true WHERE id = $1`, [CURRENT_UID]);
+await q(`UPDATE public.users SET is_admin = false WHERE id = $1`, [OTHER_UID]);
+
+// Owner insert (bypasses RLS) exercises the trigger + projector directly.
+const { rows: [notice] } = await q(
+  `INSERT INTO public.campus_notices (title, category, reference_no, issued_date, effective_date, summary, content, created_by)
+   VALUES ('EID-Milad-un-Nabi holiday moved to 26th August', 'holiday_change', 'SRMAP/Reg. Off/Circular/02/2026-27', '2026-08-20', '2026-08-26', 'Holiday rescheduled from 25th to 26th August 2026.', 'Full circular body text.', $1)
+   RETURNING id`,
+  [CURRENT_UID],
+);
+const { rows: [noticeChunk] } = await q(
+  `SELECT body, subtitle, metadata FROM public.knowledge_chunks WHERE entity_type='notice' AND entity_id=$1`,
+  [notice.id],
+);
+check('reproject trigger fires on INSERT (chunk exists)', !!noticeChunk, noticeChunk ? 'found' : 'missing');
+check('chunk body carries the notice content', noticeChunk?.body?.includes('Full circular body text.'), noticeChunk?.body ?? '');
+check('chunk metadata carries the effective_date', noticeChunk?.metadata?.effective_date === '2026-08-26', JSON.stringify(noticeChunk?.metadata));
+
+// Unpublishing removes the chunk (same idiom as campus_documents).
+await q(`UPDATE public.campus_notices SET is_published = false WHERE id = $1`, [notice.id]);
+const { rows: afterUnpublish } = await q(
+  `SELECT id FROM public.knowledge_chunks WHERE entity_type='notice' AND entity_id=$1`,
+  [notice.id],
+);
+check('unpublishing a notice removes its chunk', afterUnpublish.length === 0, `${afterUnpublish.length} rows`);
+await q(`UPDATE public.campus_notices SET is_published = true WHERE id = $1`, [notice.id]);
+
+// RLS: a non-admin cannot insert.
+await actAs(OTHER_UID);
+const nonAdminInsert = await asAuthenticated(() => attempt(
+  `INSERT INTO public.campus_notices (title, issued_date, content) VALUES ('should fail', '2026-08-20', 'x')`));
+check('RLS blocks a non-admin from inserting a notice', nonAdminInsert !== null, nonAdminInsert ?? 'INSERT SUCCEEDED');
+
+// RLS: an admin can insert directly from the client (the whole point of this
+// table vs. campus_documents, which only service_role can write).
+await actAs(CURRENT_UID);
+const adminInsert = await asAuthenticated(() => attempt(
+  `INSERT INTO public.campus_notices (title, issued_date, content) VALUES ('admin-written notice', '2026-08-21', 'x')`));
+check('RLS admits an admin inserting a notice', adminInsert === null, adminInsert ?? '');
+
+// Everyone (including signed-out) can read published notices.
+const { rows: anonNotices } = await asAuthenticated(() =>
+  q(`SELECT id FROM public.campus_notices WHERE is_published = true`));
+check('published notices are readable', anonNotices.length >= 2, `${anonNotices.length} rows`);
+
+// Supabase's default privileges hand every new table ALL to anon; this table
+// must keep anon to SELECT-only, matching campus_documents.
+const { rows: noticeAcl } = await q(
+  `SELECT grantee, string_agg(DISTINCT privilege_type, ',' ORDER BY privilege_type) AS privs
+     FROM information_schema.table_privileges
+    WHERE table_schema='public' AND table_name='campus_notices' AND grantee IN ('anon','authenticated')
+    GROUP BY grantee`,
+);
+const noticeAnon = noticeAcl.find((r) => r.grantee === 'anon');
+check('campus_notices grants SELECT only to anon', noticeAnon?.privs === 'SELECT', noticeAnon?.privs ?? 'none');
 
 console.log(failures === 0
   ? '\nAll migration checks passed against real Postgres.'

@@ -221,6 +221,51 @@ export type Database = {
         }
         Relationships: []
       }
+      campus_notices: {
+        Row: {
+          category: string
+          content: string
+          created_at: string
+          created_by: string | null
+          effective_date: string | null
+          id: string
+          is_published: boolean
+          issued_date: string
+          reference_no: string | null
+          summary: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          content: string
+          created_at?: string
+          created_by?: string | null
+          effective_date?: string | null
+          id?: string
+          is_published?: boolean
+          issued_date: string
+          reference_no?: string | null
+          summary?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          effective_date?: string | null
+          id?: string
+          is_published?: boolean
+          issued_date?: string
+          reference_no?: string | null
+          summary?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       canvas_drawings: {
         Row: {
           action_type: string
