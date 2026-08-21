@@ -63,7 +63,7 @@ const MentorProfileContent = ({
         <AvailabilityBanner
           mentor={mentor as any}
           isOwnProfile={isOwnProfile}
-          onResumed={(patch) => onMentorUpdated({ ...mentor, ...patch } as any)}
+          onResumed={(patch) => onMentorUpdated({ ...rawMentor, ...patch })}
         />
       )}
 

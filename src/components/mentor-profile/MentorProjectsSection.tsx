@@ -32,9 +32,13 @@ export default function MentorProjectsSection({
       return false;
     }
 
-    // EnhancedMentor's ask_me_anything is a display-only reshape of Mentor's — a
-    // pre-existing mismatch between the two types unrelated to this save.
-    onMentorUpdated({ ...mentor, projects: next } as unknown as Mentor);
+    onMentorUpdated({
+      ...mentor,
+      projects: next,
+      ask_me_anything: Array.isArray(mentor.ask_me_anything)
+        ? mentor.ask_me_anything.map((item) => (typeof item === "object" && item !== null ? (item as any).topic : item))
+        : mentor.ask_me_anything,
+    } as unknown as Mentor);
     toast.success("Projects updated");
     return true;
   };

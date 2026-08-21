@@ -141,10 +141,20 @@ export default function MentorHeroHeader({
             {/* Subtitle / Role & Dept */}
             <p className="text-sm md:text-base font-medium text-muted-foreground flex flex-wrap items-center gap-2">
               <span className="text-foreground/90 font-semibold">
-                {mentor.job_title || `${mentor.department || "CSE"} Mentor`}
+                {mentor.job_title || formatDepartment(mentor.department)}
               </span>
-              <span>•</span>
-              <span>{formatDepartment(mentor.department)}</span>
+              {mentor.job_title && mentor.department ? (
+                <>
+                  <span>•</span>
+                  <span>{formatDepartment(mentor.department)}</span>
+                </>
+              ) : null}
+              {mentor.year_of_studies ? (
+                <>
+                  <span>•</span>
+                  <span>{mentor.year_of_studies}</span>
+                </>
+              ) : null}
               <span>•</span>
               <span className="text-primary font-medium">{mentor.university || "SRM AP"}</span>
             </p>

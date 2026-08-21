@@ -1,4 +1,5 @@
 import { Mentor } from "@/types/mentor";
+import { formatDepartment } from "@/utils/user-utils";
 
 export interface EnhancedMentor extends Omit<Mentor, "ask_me_anything"> {
   tagline: string;
@@ -40,7 +41,7 @@ const SKILL_CATEGORIES: Record<string, string[]> = {
 
 export function getEnhancedMentorProfile(mentor: Mentor): EnhancedMentor {
   const skills = mentor.skills || [];
-  const dept = mentor.department || "CSE";
+  const dept = formatDepartment(mentor.department) || "CSE";
 
   // 1. Categorize Skills
   const categorized: Record<string, string[]> = {};
@@ -95,7 +96,19 @@ export function getEnhancedMentorProfile(mentor: Mentor): EnhancedMentor {
   }
 
   // 5. Ask me anything about
-  let askMe = mentor.ask_me_anything?.map((topic) => ({ topic, icon: getEmojiForTopic(topic) }));
+  let askMe: Array<{ topic: string; icon: string }> | undefined;
+  if (mentor.ask_me_anything && Array.isArray(mentor.ask_me_anything)) {
+    askMe = mentor.ask_me_anything.map((item: any) => {
+      if (item && typeof item === "object" && "topic" in item) {
+        return {
+          topic: String(item.topic || ""),
+          icon: item.icon || getEmojiForTopic(String(item.topic || "")),
+        };
+      }
+      const topicStr = String(item || "");
+      return { topic: topicStr, icon: getEmojiForTopic(topicStr) };
+    });
+  }
   if (!askMe || askMe.length === 0) {
     const defaultTopics = [
       skills[0] || "Python",
@@ -153,8 +166,16 @@ export function getEnhancedMentorProfile(mentor: Mentor): EnhancedMentor {
   };
 }
 
-function getEmojiForTopic(topic: string): string {
-  const t = topic.toLowerCase();
+function getEmojiForTopic(topic: string | any): string {
+  let str = "";
+  if (typeof topic === "string") {
+    str = topic;
+  } else if (topic && typeof topic === "object" && "topic" in topic) {
+    str = String(topic.topic || "");
+  } else {
+    str = String(topic || "");
+  }
+  const t = str.toLowerCase();
   if (t.includes("python")) return "🐍";
   if (t.includes("hackathon")) return "⚡";
   if (t.includes("backend")) return "💻";
