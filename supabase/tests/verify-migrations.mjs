@@ -445,6 +445,7 @@ for (const file of [
   '20260821120000_academic_calendar_resolver.sql',
   '20260821130000_campus_notices_admin_preview.sql',
   '20260821140000_campus_notices_superseded_date.sql',
+  '20260821150000_faculty_has_image_and_photos.sql',
 ]) {
   if (file === '20260804132345_b843f814-46d5-4c25-bc80-32e5f6ebba59.sql') {
     // Production's `faculty` table still carries `profile_image`, a column
@@ -1710,6 +1711,29 @@ const { rows: fnAcl } = await q(
     WHERE routine_schema='public' AND routine_name='get_calendar_day' AND grantee IN ('anon','authenticated')`,
 );
 check('get_calendar_day is not directly callable by anon/authenticated (service_role only, called from the edge function)', fnAcl.length === 0, `${fnAcl.length} grants`);
+
+console.log('\nfaculty has_image column and photo updates:');
+const { rows: [fWithImg] } = await q(
+  `INSERT INTO public.faculty (name, department, slug, image_url)
+   VALUES ('Dr Test With Image', 'Physics', 'dr-test-with-img', 'https://example.com/photo.jpg')
+   RETURNING has_image, image_url`,
+);
+check('has_image computes TRUE when image_url is present', fWithImg?.has_image === true, JSON.stringify(fWithImg));
+
+const { rows: [fNoImg] } = await q(
+  `INSERT INTO public.faculty (name, department, slug, image_url)
+   VALUES ('Dr Test No Image', 'Physics', 'dr-test-no-img', NULL)
+   RETURNING has_image, image_url`,
+);
+check('has_image computes FALSE when image_url is null', fNoImg?.has_image === false, JSON.stringify(fNoImg));
+
+const { rows: facultyColAcl } = await q(
+  `SELECT grantee, column_name, privilege_type
+     FROM information_schema.column_privileges
+    WHERE table_schema='public' AND table_name='faculty' AND column_name='has_image' AND grantee IN ('anon','authenticated')`,
+);
+const hasAnonHasImage = facultyColAcl.some((r) => r.grantee === 'anon' && r.privilege_type === 'SELECT');
+check('public.faculty has_image column granted SELECT to anon', hasAnonHasImage);
 
 console.log(failures === 0
   ? '\nAll migration checks passed against real Postgres.'

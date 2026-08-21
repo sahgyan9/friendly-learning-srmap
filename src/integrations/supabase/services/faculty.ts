@@ -10,6 +10,7 @@ export type Faculty = {
   school: string | null;
   profile_url: string | null;
   image_url: string | null;
+  has_image?: boolean | null;
   email?: string | null;
   office_location?: string | null;
   research_details?: string[] | null;
@@ -65,6 +66,25 @@ export type FacultyQuery = {
   offset?: number;
 };
 
+export type FacultyRatingAggregate = {
+  faculty_id: string;
+  rating_count: number;
+  avg_overall: number;
+  avg_teaching: number;
+  avg_grading: number;
+  avg_helpfulness: number;
+};
+
+export type FacultyDepartmentCount = {
+  department: string;
+  count: number;
+};
+
+export type FacultyInterestFacet = {
+  tag: string;
+  count: number;
+};
+
 /** The three things students actually argue about, in a fixed order. */
 export const RATING_CRITERIA = [
   {
@@ -101,7 +121,7 @@ export const REVIEW_TAGS = [
 // Must stay a single string literal: supabase-js resolves the row type from the
 // select string at the type level, and a concatenated expression defeats that.
 const FACULTY_COLUMNS =
-  "id, slug, name, designation, department, school, profile_url, image_url, email, office_location, research_details, interests, research_areas, rating_count, avg_overall, avg_teaching, avg_grading, avg_helpfulness" as const;
+  "id, slug, name, designation, department, school, profile_url, image_url, has_image, email, office_location, research_details, interests, research_areas, rating_count, avg_overall, avg_teaching, avg_grading, avg_helpfulness" as const;
 
 /**
  * PostgREST's .or() takes a comma-separated filter list, so a search term
@@ -188,11 +208,13 @@ export async function getFacultyList(query: FacultyQuery = {}) {
 
   if (sort === "reviews") {
     request = request
+      .order("has_image", { ascending: false })
       .order("rating_count", { ascending: false })
       .order("name", { ascending: true });
   } else {
-    // Default: alphabetical (never rank people by rating score)
+    // Default: faculty with images first, alphabetical (never rank people by rating score)
     request = request
+      .order("has_image", { ascending: false })
       .order("name", { ascending: true });
   }
 
@@ -235,7 +257,14 @@ export async function getFacultyList(query: FacultyQuery = {}) {
 
       // 4. Rating count and rating score
       if (b.rating_count !== a.rating_count) return b.rating_count - a.rating_count;
-      return (b.avg_overall ?? 0) - (a.avg_overall ?? 0);
+      if ((b.avg_overall ?? 0) !== (a.avg_overall ?? 0)) return (b.avg_overall ?? 0) - (a.avg_overall ?? 0);
+
+      // 5. Prefer faculty with images if relevance & ratings are tied
+      const aHasImg = (a.has_image ?? (!!a.image_url && a.image_url.trim() !== "")) ? 1 : 0;
+      const bHasImg = (b.has_image ?? (!!b.image_url && b.image_url.trim() !== "")) ? 1 : 0;
+      if (bHasImg !== aHasImg) return bHasImg - aHasImg;
+
+      return a.name.localeCompare(b.name);
     });
   }
 
@@ -460,6 +489,7 @@ export async function getSimilarFaculty(
   }
 
   query = query
+    .order("has_image", { ascending: false })
     .order("rating_count", { ascending: false })
     .order("name", { ascending: true })
     .limit(limit);

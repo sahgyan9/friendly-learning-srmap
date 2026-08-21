@@ -1123,6 +1123,7 @@ export type Database = {
           department: string
           designation: string | null
           email: string | null
+          has_image: boolean
           id: string
           image_url: string | null
           interests: string[]
@@ -1151,6 +1152,7 @@ export type Database = {
           department: string
           designation?: string | null
           email?: string | null
+          has_image?: boolean
           id?: string
           image_url?: string | null
           interests?: string[]
@@ -1179,6 +1181,7 @@ export type Database = {
           department?: string
           designation?: string | null
           email?: string | null
+          has_image?: boolean
           id?: string
           image_url?: string | null
           interests?: string[]
