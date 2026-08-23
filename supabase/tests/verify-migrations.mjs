@@ -473,6 +473,7 @@ for (const file of [
   '20260823150000_search_analytics.sql',
   '20260823170000_mentor_activity_stats.sql',
   '20260823190000_mentor_profile_summary.sql',
+  '20260823210000_user_badges_public_rpc.sql',
 ]) {
   if (file === '20260804132345_b843f814-46d5-4c25-bc80-32e5f6ebba59.sql') {
     // Production's `faculty` table still carries `profile_image`, a column
@@ -2485,6 +2486,140 @@ for (const sig of [
     );
     check(`${role} cannot EXECUTE ${sig.split('(')[0]}`, acl?.ok === false, JSON.stringify(acl));
   }
+}
+
+// --- 20260823210000_user_badges_public_rpc.sql --------------------------------
+// BadgeDisplay used to embed `awarder:users!user_badges_awarded_by_fkey(name)`,
+// and public.users is owner-only for SELECT, so every anonymous view of a
+// mentor profile 401'd with 42501 and rendered "No badges earned yet". The
+// checks below are written so that reverting to a direct users read fails them:
+// the RPC has to return the awarder's name *while running as a role that
+// cannot read public.users at all*.
+console.log('\n--- 20260823210000_user_badges_public_rpc.sql ---');
+
+const B_HOLDER = '44444444-0000-4000-8000-000000000001';
+const B_ADMIN  = '44444444-0000-4000-8000-000000000002';
+const B_EMPTY  = '44444444-0000-4000-8000-000000000003';
+
+await db.exec(`
+  INSERT INTO public.users (id, name, email, role, department, is_admin) VALUES
+    ('${B_HOLDER}', 'Badge Holder', 'holder@srmap.edu.in', 'mentor',  'CSE', false),
+    ('${B_ADMIN}',  'Admin Awarder','awarder@srmap.edu.in','student', 'CSE', true),
+    ('${B_EMPTY}',  'No Badges',    'none@srmap.edu.in',   'mentor',  'CSE', false);
+
+  INSERT INTO public.badge_types (name, description, icon, color, category)
+    VALUES ('Helpful Senior', 'Answered a lot of freshers', 'star', '#22C55E', 'contribution');
+
+  -- Two badges, awarded a day apart, so the ordering assertion has something
+  -- to bite on. Only the newer one has a human awarder; auto-awarded badges
+  -- leave awarded_by null, which must not blank out the row.
+  INSERT INTO public.user_badges (user_id, badge_type_id, awarded_by, awarded_at, notes)
+    SELECT '${B_HOLDER}', id, '${B_ADMIN}', now() - interval '1 day', 'hand-picked'
+      FROM public.badge_types WHERE name = 'Helpful Senior';
+  INSERT INTO public.user_badges (user_id, badge_type_id, awarded_by, awarded_at, notes)
+    SELECT '${B_HOLDER}', id, NULL, now() - interval '9 days', 'auto'
+      FROM public.badge_types WHERE name = 'Top Mentor';
+`);
+
+const { rows: pubBadges } = await q(
+  `SELECT * FROM public.user_badges_public('${B_HOLDER}')`,
+);
+check(
+  'returns every badge the user holds',
+  pubBadges.length === 2,
+  `${pubBadges.length} rows`,
+);
+check(
+  'newest badge first (BadgeDisplay renders in list order)',
+  pubBadges[0]?.notes === 'hand-picked' && pubBadges[1]?.notes === 'auto',
+  JSON.stringify(pubBadges.map((r) => r.notes)),
+);
+check(
+  'badge type is inlined, so the client needs no second join',
+  pubBadges[0]?.badge_name === 'Helpful Senior'
+    && pubBadges[0]?.badge_category === 'contribution'
+    && pubBadges[0]?.badge_icon === 'star'
+    && pubBadges[0]?.badge_color === '#22C55E',
+  JSON.stringify(pubBadges[0]),
+);
+check(
+  'an auto-awarded badge (awarded_by null) still comes back, with a null name',
+  pubBadges[1]?.badge_name === 'Top Mentor' && pubBadges[1]?.awarded_by_name === null,
+  JSON.stringify(pubBadges[1]),
+);
+const { rows: pubNone } = await q(
+  `SELECT * FROM public.user_badges_public('${B_EMPTY}')`,
+);
+check(
+  'a user with no badges gets an empty set, not an error',
+  pubNone.length === 0,
+  JSON.stringify(pubNone),
+);
+
+// Nothing above proves much yet -- it all ran as the owner, which can read
+// public.users anyway. This next part is the actual regression test.
+await db.exec(`GRANT USAGE ON SCHEMA public TO anon`);
+await q(`SET ROLE anon`);
+let anonDirectRead = null;
+try {
+  await q(`SELECT name FROM public.users WHERE id = '${B_ADMIN}'`);
+} catch (error) {
+  anonDirectRead = error.message;
+}
+let anonRpcRows = [];
+let anonRpcError = null;
+try {
+  ({ rows: anonRpcRows } = await q(`SELECT * FROM public.user_badges_public('${B_HOLDER}')`));
+} catch (error) {
+  anonRpcError = error.message;
+}
+await q(`RESET ROLE`).catch(() => {});
+
+check(
+  'anon still cannot SELECT from public.users -- the table stays owner-only',
+  /permission denied/i.test(anonDirectRead ?? ''),
+  anonDirectRead ?? 'the read SUCCEEDED, which means users was opened up',
+);
+check(
+  'anon can call the RPC (this is the 401 on every public mentor profile)',
+  anonRpcError === null && anonRpcRows.length === 2,
+  anonRpcError ?? `${anonRpcRows.length} rows`,
+);
+check(
+  'and gets the awarder name it could not read directly -- SECURITY DEFINER works',
+  anonRpcRows[0]?.awarded_by_name === 'Admin Awarder',
+  JSON.stringify(anonRpcRows[0]),
+);
+
+// The display name is the only thing from public.users this may expose. If
+// someone widens the SELECT list later, this fails.
+check(
+  'no email, mobile, college_id or cgpa leaks through the return type',
+  anonRpcRows.length > 0 && Object.keys(anonRpcRows[0]).every(
+    (col) => !['email', 'mobile', 'college_id', 'cgpa'].includes(col),
+  ),
+  JSON.stringify(Object.keys(anonRpcRows[0] ?? {})),
+);
+
+const { rows: [ubPath] } = await q(`
+  SELECT p.proconfig, p.prosecdef FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+  WHERE n.nspname = 'public' AND p.proname = 'user_badges_public'`);
+check(
+  'user_badges_public pins its search_path',
+  (ubPath?.proconfig ?? []).some((c) => c.startsWith('search_path=')),
+  JSON.stringify(ubPath?.proconfig),
+);
+check(
+  'user_badges_public is SECURITY DEFINER (without it the grant buys nothing)',
+  ubPath?.prosecdef === true,
+  JSON.stringify(ubPath),
+);
+
+for (const role of ['anon', 'authenticated']) {
+  const { rows: [ubAcl] } = await q(
+    `SELECT has_function_privilege('${role}', 'public.user_badges_public(uuid)', 'EXECUTE') AS ok`,
+  );
+  check(`${role} can EXECUTE user_badges_public`, ubAcl?.ok === true, JSON.stringify(ubAcl));
 }
 
 console.log(failures === 0
