@@ -37,8 +37,16 @@ const listedOnly = <T extends { or: (filter: string) => T }>(query: T): T =>
  *
  * Must stay one string literal so supabase-js can infer the row type.
  */
+// DEPLOY ORDER: the summary columns (tagline, outcomes, ideal_mentees,
+// ask_me_anything, profile_summary_*) are deliberately NOT listed yet.
+//
+// Vercel builds on push; migrations do not. Naming a column that production
+// does not have yet makes PostgREST reject the whole statement with 42703 --
+// not just that column -- which takes down the directory and every profile.
+// Add them back only once 20260823190000_mentor_profile_summary.sql has
+// actually been applied to the database.
 const MENTOR_PUBLIC_COLUMNS =
-  'id, name, department, skills, rating, profile_image, linkedin_url, bio, review_count, created_at, year_of_studies, university, hobbies, graduation_year, is_alumni, company, job_title, is_available, available_from, availability_note, projects, experiences, courses, tagline, outcomes, ideal_mentees, ask_me_anything, profile_summary_generated_at, profile_summary_edited_at' as const;
+  'id, name, department, skills, rating, profile_image, linkedin_url, bio, review_count, created_at, year_of_studies, university, hobbies, graduation_year, is_alumni, company, job_title, is_available, available_from, availability_note, projects, experiences, courses' as const;
 
 // Helper function to get typed data from Supabase tables
 export async function getMentors() {
