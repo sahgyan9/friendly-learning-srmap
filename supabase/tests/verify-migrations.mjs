@@ -507,11 +507,14 @@ for (const file of [
 console.log('');
 
 // =====================================================================
-// SKIPPED (61 of the 89 files in supabase/migrations/, not executed above).
-// Every migration in the repo falls into exactly one of these five groups.
-// None of them are silently missing -- each is listed below with why.
+// SKIPPED (73 of the 129 files in supabase/migrations/, not executed above).
+// Every migration in the repo falls into exactly one of these eight groups
+// -- with one exception (see the NOTE inside group 1), which names the file
+// and the reason it isn't bulleted, rather than silently dropping it. None
+// of them are silently missing -- each is listed below with why.
 //
-// 1. PGVECTOR (5 files) -- genuinely cannot run in PGlite.
+// 1. PGVECTOR (9 files -- 8 listed below, 1 flagged only in the NOTE) --
+//    genuinely cannot run in PGlite.
 //
 //    20260817100000_dynamic_related_searches.sql
 //    Computes vector similarity over the search_query_cache to generate
@@ -672,7 +675,7 @@ console.log('');
 //      20260418024940_a745043f-0b83-4660-a19d-342bf252ebc8.sql
 //      20260418025448_a4b8a106-6764-4bb8-a590-f6cb7d3efc85.sql
 //
-// 5. COMMUNITIES / PRIVATE-COMMUNITIES CLUSTER (12 files) -- the schema this
+// 5. COMMUNITIES / PRIVATE-COMMUNITIES CLUSTER (13 files) -- the schema this
 //    harness needs for 20260807140000_community_channels.sql (executed and
 //    exercised above) is hand-authored directly into the scaffolding
 //    (`CREATE TABLE public.communities`, `community_members`,
@@ -698,7 +701,7 @@ console.log('');
 //        list_communities from the file above (name-only search, drops the
 //        description ilike clause); same reason as that file, not this pass.
 //
-// 6. OUT OF SCOPE FOR THIS PASS (9 files) -- self-contained, plausibly
+// 6. OUT OF SCOPE FOR THIS PASS (11 files) -- self-contained, plausibly
 //    runnable features (mentor availability, profile-image mirroring, the
 //    welcome-email surface) that were not read/replayed here for real. Said
 //    plainly rather than assigned a reason that would overstate what was
@@ -716,6 +719,13 @@ console.log('');
 //      20260802091000_mirror_profile_image_to_mentors.sql
 //      20260804150000_student_welcome_email.sql
 //      20260806210000_mentor_application_notification_welcome_link.sql
+//      20260814180000_srmap_events_rich_details.sql -- ALTER TABLE +
+//        GRANT SELECT on srmap_events_cache, which 20260807120000 (RUN above)
+//        already creates; would plausibly run and assert cleanly today.
+//      20260817110000_freshness_ranking.sql -- adds a STABLE is_fresh()
+//        computed column over public.opportunities, which 20260806190000
+//        (RUN above) already creates; would plausibly run and assert cleanly
+//        today.
 //
 // 7. GRANT-ONLY, DASHBOARD-ORIGIN TARGET TABLES (1 file) -- same reasoning as
 //    group 3: pure REVOKE/GRANT statements against admin_audit_log,
@@ -729,6 +739,25 @@ console.log('');
 //    editor, then information_schema.table_privileges re-queried to confirm
 //    each table holds exactly the grants the file specifies.
 //      20260821240000_grant_audit_fix_legacy_tables.sql
+//
+// 8. ONE-TIME PRODUCTION DATA FIXES (2 files) -- narrow incident fixes keyed
+//    to one specific production user, not generic behaviour worth asserting
+//    against this harness's fixtures.
+//      20260823160000_preserve_name_across_logins.sql
+//      Redefines handle_new_user() (originally created by
+//      20260731100000_google_profile_image.sql, itself in group 6 and not
+//      replayed here) so a Google login can no longer overwrite an existing
+//      public.users.name, only fill it in when empty -- matching how
+//      profile_image already behaved. Also re-syncs one named mentor's row.
+//      Verified directly against production per the file's own comment,
+//      the same fallback the project rules call for when the harness can't
+//      reach a migration.
+//      20260823170000_fix_saksham_name_backfill.sql
+//      Follow-up to the file above: its backfill matched on a name string
+//      that turned out to be cased differently in the real row, so this
+//      corrects the same one user by hardcoded id instead. Nothing to
+//      assert generically -- the id it targets does not exist in this
+//      harness's fixtures.
 // =====================================================================
 
 // ---------------------------------------------------------------- faculty
