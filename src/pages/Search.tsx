@@ -36,6 +36,7 @@ import {
   TAB_LABELS,
   type SearchTab,
 } from "@/lib/search/search-params";
+import { useCollapseOnScroll } from "@/hooks/useCollapseOnScroll";
 import { useSearchResults, type SearchResultItem } from "@/hooks/useSearchResults";
 import { parseQuery, calculateExactBoost, CAMPUS_DEPARTMENTS } from "@/lib/search/query-engine";
 
@@ -136,6 +137,13 @@ export default function SearchPage() {
   const [citedUrlsMap, setCitedUrlsMap] = useState<Map<string, number>>(new Map());
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Same (threshold, collapsibleHeight) as SiteHeader's own call so this
+  // resolves in lockstep with it — both read the same window.scrollY on the
+  // same rAF tick, so they collapse and expand on the same frame without any
+  // cross-component wiring. When SiteHeader is gone this docks at the very
+  // top instead of leaving a blank 64px gap where it used to be.
+  const siteHeaderCollapsed = useCollapseOnScroll(96, 64);
+
   const handleCitationsLoaded = useCallback((citations: { id: number; text: string; url: string }[]) => {
     const map = new Map<string, number>();
     citations.forEach((c) => {
@@ -232,7 +240,18 @@ export default function SearchPage() {
   return (
     <div className="min-h-screen bg-background text-foreground selection:bg-primary/20">
       {/* ── Header ── */}
-      <div className="sticky top-0 z-20 border-b border-border/50 bg-background/95 backdrop-blur-xl">
+      {/* top-16 docks this below SiteHeader (h-16, sticky top-0 z-50) instead
+          of underneath it — same top-0 offset here used to let the global
+          header's higher z-index paint over the search input row while the
+          tabs strip below it stayed tall enough to peek out. Drops to top-0
+          once SiteHeader collapses away on scroll, so this docks flush at
+          the very top instead of leaving a blank 64px gap. */}
+      <div
+        className={cn(
+          "sticky z-20 border-b border-border/50 bg-background/95 backdrop-blur-xl transition-[top] duration-300 ease-in-out",
+          siteHeaderCollapsed ? "top-0" : "top-16",
+        )}
+      >
         <div className="container mx-auto max-w-6xl px-4 py-3">
           {/* Search bar row */}
           <div className="flex items-center gap-2 sm:gap-3">
