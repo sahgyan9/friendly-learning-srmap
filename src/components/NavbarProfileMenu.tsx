@@ -17,6 +17,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useWelcomeTour } from "@/components/onboarding/WelcomeTourContext";
 import { ImportSrmPortalDialog } from "@/components/profile/ImportSrmPortal";
+import { MentorCtaTooltip } from "@/components/mentors/MentorCtaTooltip";
 
 const NavbarProfileMenu = () => {
   const { user, profile, signOut, loading } = useAuth();
@@ -102,11 +103,13 @@ const NavbarProfileMenu = () => {
             </DropdownMenuItem>
           )}
           {!isRealMentor && (
-            <DropdownMenuItem asChild>
-              <Link to="/become-mentor" className="cursor-pointer w-full">
-                Become a Mentor
-              </Link>
-            </DropdownMenuItem>
+            <MentorCtaTooltip side="left">
+              <DropdownMenuItem asChild>
+                <Link to="/become-mentor" className="cursor-pointer w-full">
+                  Become a Mentor
+                </Link>
+              </DropdownMenuItem>
+            </MentorCtaTooltip>
           )}
           <DropdownMenuItem onClick={openTour} className="cursor-pointer">
             Take the tour

@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
+import { MentorCtaTooltip } from "@/components/mentors/MentorCtaTooltip";
 
 const CallToAction = () => {
   const { isMentor } = useAuth();
@@ -39,9 +40,11 @@ const CallToAction = () => {
             className="flex flex-col sm:flex-row gap-4 justify-center"
           >
             {!isMentor && (
-              <Button size="lg" asChild>
-                <Link to="/become-mentor">Set up your mentor profile</Link>
-              </Button>
+              <MentorCtaTooltip>
+                <Button size="lg" asChild>
+                  <Link to="/become-mentor">Set up your mentor profile</Link>
+                </Button>
+              </MentorCtaTooltip>
             )}
             <Button size="lg" variant="outline" asChild>
               <Link to="/posts">Explore the platform</Link>

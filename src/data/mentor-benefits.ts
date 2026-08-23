@@ -27,10 +27,9 @@ export interface MentorBenefit {
 /**
  * Why anyone would want to be a mentor here.
  *
- * Lives outside the /become-mentor page because the homepage now makes the same
- * case — the "See mentor benefits" toggle in MentorsSection expands these. One
- * copy, so a benefit that stops being true can never go stale in one place
- * while staying live in the other.
+ * Also read by the welcome email and the admin verification view — one copy,
+ * so a benefit that stops being true can never go stale in one place while
+ * staying live in the other.
  *
  * Deliberately only two. This list previously carried five (the directory
  * listing, the take-a-break pause, and the privacy note as well), and five
