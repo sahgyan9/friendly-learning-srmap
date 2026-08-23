@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import SEOHead from "@/components/SEOHead";
 import StructuredData from "@/components/StructuredData";
-import { getMentorById } from "@/integrations/supabase/services/mentors";
+import { getMentorById, logMentorProfileView } from "@/integrations/supabase/services/mentors";
 import { Mentor } from "@/types/mentor";
 import { useAuth } from "@/context/AuthContext";
 import { motion } from "framer-motion";
@@ -41,6 +41,10 @@ const MentorProfile = () => {
 
         if (data) {
           setMentor(data);
+          // Only after we know the profile actually loaded, so a 404 or a
+          // permission failure is never counted as someone viewing them. The
+          // RPC drops the mentor's own visits and deduplicates the rest.
+          logMentorProfileView(id);
         } else {
           toast.error("Mentor not found");
         }

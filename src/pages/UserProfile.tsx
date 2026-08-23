@@ -10,6 +10,7 @@ import BadgeDisplay from "@/components/badges/BadgeDisplay";
 import ReviewsList from "@/components/rating/ReviewsList";
 import AlumniPromptBanner from "@/components/alumni/AlumniPromptBanner";
 import ImportSrmPortal from "@/components/profile/ImportSrmPortal";
+import MentorDashboard from "@/components/profile/MentorDashboard";
 import { ProfileAvatarUploader } from "@/components/profile/ProfileAvatarUploader";
 import { ProfileStatsSection, type UserStats } from "@/components/profile/ProfileStatsSection";
 import { MentorProfileCard, type MentorProfileData } from "@/components/profile/MentorProfileCard";
@@ -275,6 +276,10 @@ const UserProfile = () => {
             </TabsList>
 
             <TabsContent value="profile" className="space-y-6">
+              {/* Top of the tab on purpose: a mentor opening their profile is
+                  usually asking "is any of this working?", and the answer
+                  should not be below the fold. */}
+              {isUserMentor && user?.id && <MentorDashboard mentorId={user.id} />}
               <ImportSrmPortal onProfileUpdate={fetchProfile} />
               <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
                 <ProfileInfoForm
