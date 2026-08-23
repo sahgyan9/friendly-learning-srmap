@@ -25,6 +25,7 @@ import {
 import AdminPageWrapper from "@/components/admin/AdminPageWrapper";
 import AdminHeader from "@/components/admin/AdminHeader";
 import PlatformHealthPanel from "@/components/admin/PlatformHealthPanel";
+import KpiPanel from "@/components/admin/KpiPanel";
 import { motion } from "framer-motion";
 
 const AdminDashboard = () => {
@@ -124,6 +125,7 @@ const AdminDashboard = () => {
         description="Welcome to the admin area. Manage your site content and settings from here."
       />
 
+      <KpiPanel />
       <PlatformHealthPanel />
 
       <motion.div

@@ -407,6 +407,91 @@ function renderWelcomeStudentEmail(opts: {
   return { subject, html, text };
 }
 
+/**
+ * Sent twice a year, on the days SRM AP publishes results, to students whose
+ * imported transcript is now a semester out of date.
+ *
+ * Deliberately much shorter than the welcome emails. Those introduce a product
+ * to someone who has just arrived; this one asks for a single 30-second action
+ * from someone who already knows what the site is. Every extra paragraph here
+ * is a reason to close the tab before doing it.
+ *
+ * It does not state the student's current CGPA or semester back to them. We
+ * hold that data, but repeating academic standing in an email -- which sits
+ * unencrypted in an inbox and on a phone lock screen -- is not worth the
+ * marginal persuasion.
+ */
+function renderAcademicRefreshEmail(opts: {
+  recipientName: string;
+  unsubscribeUrl: string;
+}): { subject: string; html: string; text: string } {
+  const { recipientName, unsubscribeUrl } = opts;
+
+  const firstName = recipientName.split("|")[0].trim().split(/\s+/)[0] || "there";
+  const safeName = escapeHtml(firstName);
+  const profileUrl = `${SITE_URL}/profile`;
+
+  const subject = `${firstName}, your results are out — refresh your profile in 30 seconds`;
+
+  const html = [
+    "<!DOCTYPE html>",
+    '<html lang="en"><head><meta charset="UTF-8">',
+    '<meta name="viewport" content="width=device-width, initial-scale=1.0">',
+    `<title>${escapeHtml(subject)}</title></head>`,
+    '<body style="margin:0;padding:0;background-color:#f4f6f8;font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,Helvetica,Arial,sans-serif;color:#1e293b;">',
+    '<table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color:#f4f6f8;padding:24px 12px;"><tr><td align="center">',
+    '<table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width:600px;background-color:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 10px 25px -5px rgba(0,0,0,0.05);">',
+
+    '<tr><td style="background:linear-gradient(135deg,#3b63c4 0%,#2c4c96 100%);padding:28px 28px;text-align:center;">',
+    '<table role="presentation" border="0" cellspacing="0" cellpadding="0" style="margin:0 auto 16px auto;background-color:#ffffff;border-radius:10px;box-shadow:0 4px 12px rgba(15,23,42,0.18);"><tr><td style="padding:9px 16px;">',
+    '<table role="presentation" border="0" cellspacing="0" cellpadding="0"><tr>',
+    `<td style="vertical-align:middle;padding-right:8px;"><img src="${SITE_URL}/lovable-uploads/df76e963-f250-4f25-8f7b-3917f857fe63.png" width="40" height="26" alt="Friendly Learning" style="display:block;border:0;"></td>`,
+    '<td style="vertical-align:middle;white-space:nowrap;font-size:15px;font-weight:700;letter-spacing:-0.2px;"><span style="color:#3963c6;">Friendly</span><span style="color:#0f172a;">Learning</span><span style="color:#3963c6;font-size:10px;font-weight:600;letter-spacing:0.3px;margin-left:4px;">SRMAP</span></td>',
+    "</tr></table></td></tr></table>",
+    '<h1 style="color:#ffffff;margin:0;font-size:22px;font-weight:700;line-height:1.3;">New semester, new results 📄</h1>',
+    "</td></tr>",
+
+    '<tr><td style="padding:28px 24px;">',
+    `<p style="font-size:15px;line-height:1.6;color:#334155;margin-top:0;">Hi <strong>${safeName}</strong>,</p>`,
+    '<p style="font-size:15px;line-height:1.6;color:#334155;">Results are out, which means the coursework on your profile is now a semester behind. Re-importing takes about 30 seconds and keeps you turning up when juniors search for the subjects you have actually taken.</p>',
+
+    '<div style="text-align:center;margin:24px 0;">',
+    `<a href="${profileUrl}" style="display:inline-block;background-color:#3963c6;color:#ffffff;text-decoration:none;font-size:15px;font-weight:600;padding:12px 28px;border-radius:8px;">Refresh my academics →</a>`,
+    "</div>",
+
+    '<div style="background-color:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:14px 18px;">',
+    "<p style=\"margin:0;font-size:13px;line-height:1.5;color:#64748b;\">You will sign in to the SRM portal yourself, exactly as you did the first time — we never store your portal password. Your CGPA stays private either way; only course names appear on your profile, and only if you switched that on.</p>",
+    "</div>",
+    "</td></tr>",
+
+    '<tr><td style="background-color:#f8fafc;border-top:1px solid #e2e8f0;padding:20px 24px;text-align:center;">',
+    '<p style="margin:0 0 4px 0;font-size:13px;font-weight:600;color:#475569;">Friendly Learning SRMAP</p>',
+    '<p style="margin:0;font-size:12px;color:#94a3b8;">You are getting this because you imported your academics before. Twice a year, when results come out.</p>',
+    `<p style="margin:8px 0 0 0;font-size:12px;"><a href="${unsubscribeUrl}" style="color:#3963c6;text-decoration:none;font-weight:500;">Unsubscribe from these emails</a></p>`,
+    "</td></tr>",
+
+    "</table></td></tr></table></body></html>",
+  ].join("");
+
+  const text = [
+    `Hi ${firstName},`,
+    "",
+    "Results are out, which means the coursework on your profile is now a semester behind.",
+    "",
+    "Re-importing takes about 30 seconds, and it keeps you turning up when juniors search for the subjects you have actually taken.",
+    "",
+    `Refresh your academics: ${profileUrl}`,
+    "",
+    "You will sign in to the SRM portal yourself, exactly as you did the first time — we never store your portal password. Your CGPA stays private either way; only course names appear on your profile, and only if you switched that on.",
+    "",
+    "You are getting this because you imported your academics before. It goes out twice a year, when results come out.",
+    "",
+    `Unsubscribe: ${unsubscribeUrl}`,
+  ].join("\n");
+
+  return { subject, html, text };
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -496,6 +581,11 @@ Deno.serve(async (req: Request) => {
         });
       } else if (kind === "welcome_student") {
         rendered = renderWelcomeStudentEmail({
+          recipientName: recipient.name ?? "there",
+          unsubscribeUrl,
+        });
+      } else if (kind === "academic_refresh") {
+        rendered = renderAcademicRefreshEmail({
           recipientName: recipient.name ?? "there",
           unsubscribeUrl,
         });

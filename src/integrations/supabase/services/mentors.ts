@@ -303,6 +303,53 @@ export async function updateMentorSummary(id: string, fields: EditableSummaryFie
   return { data, error: null, editedAt };
 }
 
+export interface MentorDashboardStats extends MentorActivity {
+  profile_views_30d: number;
+  profile_views_prev30: number;
+  search_clicks_30d: number;
+}
+
+/**
+ * The signed-in mentor's own stats for their dashboard.
+ *
+ * Takes no id: the RPC keys off auth.uid(), so there is no parameter a caller
+ * could point at somebody else's numbers.
+ */
+export async function getMentorDashboardStats() {
+  const { data, error } = await supabase.rpc('mentor_dashboard_stats' as never);
+  if (error) return { data: null, error };
+
+  const rows = (data ?? []) as MentorDashboardStats[];
+  return { data: rows[0] ?? null, error: null };
+}
+
+/**
+ * Record that someone looked at a mentor's profile.
+ *
+ * Fire-and-forget: a visitor must never see an error, or a slower page, because
+ * an analytics write failed. Signed-in repeat views are deduped per day by the
+ * database; anonymous ones are deduped here, per browser session, because there
+ * is no identity to key on server-side.
+ */
+export function logMentorProfileView(mentorId: string): void {
+  if (!mentorId) return;
+
+  const key = `mpv:${mentorId}`;
+  try {
+    if (sessionStorage.getItem(key)) return;
+    sessionStorage.setItem(key, '1');
+  } catch {
+    // Private mode or blocked storage. Fall through and log it — an occasional
+    // double-count is a better failure than losing the signal entirely.
+  }
+
+  void supabase
+    .rpc('log_mentor_profile_view' as never, { p_mentor_id: mentorId } as never)
+    .then(({ error }) => {
+      if (error) console.debug('profile view not recorded:', error.message);
+    });
+}
+
 /**
  * Real reply statistics for one mentor, from conversations that happened.
  *
