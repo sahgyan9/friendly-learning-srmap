@@ -227,6 +227,8 @@ function searchBlogLocally(parsed: import("@/lib/search/query-engine").ParsedQue
 export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
   const [state, setState] = useState<SearchResultsState>(EMPTY);
   const sequence = useRef(0);
+  /** Last query counted in search analytics, so one search is logged once. */
+  const loggedQuery = useRef<string | null>(null);
 
   useEffect(() => {
     const trimmed = q.trim();
@@ -988,6 +990,27 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
         hasMore,
         total,
       });
+
+      // Log the search itself, once per query.
+      //
+      // Gated on the "all" tab at offset 0 so switching tabs or paging does
+      // not re-count one search as several, and deduped by query within the
+      // session so React StrictMode's double-effect in development does not
+      // either. The count is every category combined, not the active tab's:
+      // "found nothing" has to mean the whole page was empty.
+      if (tab === "all" && offset === 0 && loggedQuery.current !== trimmed) {
+        loggedQuery.current = trimmed;
+        const foundAnything =
+          counts.mentors + counts.faculty + counts.opportunities + counts.communities
+          + counts.posts + counts.documents + counts.blog + allStudentsList.length;
+
+        // Fire and forget: analytics must never delay or break a search.
+        void supabase
+          .rpc("log_search_run" as never, { p_query: trimmed, p_result_count: foundAnything } as never)
+          .then(({ error }) => {
+            if (error) console.error("log_search_run", error);
+          });
+      }
     }
 
     fetchAll();

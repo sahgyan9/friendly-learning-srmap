@@ -463,6 +463,7 @@ for (const file of [
   '20260823090000_trending_searches.sql',
   '20260823100000_grant_faculty_office_and_research.sql',
   '20260823140000_search_click_tracking.sql',
+  '20260823150000_search_analytics.sql',
 ]) {
   if (file === '20260804132345_b843f814-46d5-4c25-bc80-32e5f6ebba59.sql') {
     // Production's `faculty` table still carries `profile_image`, a column
@@ -1687,6 +1688,103 @@ check(
   JSON.stringify(tableGrants),
 );
 
+await q(`DELETE FROM public.search_interactions`);
+await q(`DELETE FROM public.search_result_quality`);
+
+// --- 20260823150000_search_analytics.sql ------------------------------------
+console.log('\nsearch analytics (zero-result & no-click):');
+await q(`DELETE FROM public.search_analytics`);
+
+// A search that found nothing is counted as such.
+await q(`SELECT public.log_search_run('where do i return a library book', 0)`);
+const { rows: [emptySearch] } = await q(`
+  SELECT search_count, zero_result_count, click_count FROM public.search_analytics
+  WHERE query_text = 'where do i return a library book'`);
+check(
+  'log_search_run records a zero-result search',
+  emptySearch?.search_count === 1 && emptySearch?.zero_result_count === 1 && emptySearch?.click_count === 0,
+  JSON.stringify(emptySearch),
+);
+
+// Case and whitespace variants collapse to one row, so the admin list is not
+// three near-identical entries. The hash must match log_search_click's exactly.
+await q(`SELECT public.log_search_run('quantum computing', 4)`);
+await q(`SELECT public.log_search_run('  Quantum   Computing  ', 4)`);
+const { rows: normalisedQ } = await q(`
+  SELECT search_count, zero_result_count FROM public.search_analytics
+  WHERE query_hash = md5('quantum computing')`);
+check(
+  'case and whitespace variants collapse into one query row',
+  normalisedQ.length === 1 && normalisedQ[0].search_count === 2 && normalisedQ[0].zero_result_count === 0,
+  JSON.stringify(normalisedQ),
+);
+
+// The join that could not be built before: a click credits its search. This is
+// the whole reason both functions hash the same way -- search_query_cache uses
+// SHA-256 of the rewritten query and can never line up with either.
+await q(`SELECT public.log_search_click('Quantum  Computing', 'faculty', 'clicked-entity')`);
+const { rows: [credited] } = await q(`
+  SELECT click_count FROM public.search_analytics WHERE query_hash = md5('quantum computing')`);
+check('a click credits the search it came from', credited?.click_count === 1, JSON.stringify(credited));
+
+// The no-click list must not swallow zero-result searches -- a search that
+// found nothing had nothing to click, which is the other list's problem.
+const { rows: noClickList } = await q(`
+  SELECT query_text FROM public.search_analytics
+  WHERE click_count = 0 AND search_count >= 2 AND zero_result_count < search_count`);
+check(
+  'zero-result searches are excluded from the no-click list',
+  !noClickList.some((r) => r.query_text === 'where do i return a library book'),
+  JSON.stringify(noClickList),
+);
+
+// A too-short query is dropped at the entry point, same as log_search_click.
+await q(`SELECT public.log_search_run('ab', 0)`);
+const { rows: junkRun } = await q(`SELECT 1 FROM public.search_analytics WHERE query_text = 'ab'`);
+check('log_search_run ignores queries shorter than 3 chars', junkRun.length === 0);
+
+// No viewer column at all -- the privacy guarantee is structural, not a policy
+// that a later migration could quietly widen.
+const { rows: analyticsCols } = await q(`
+  SELECT column_name FROM information_schema.columns
+  WHERE table_schema = 'public' AND table_name = 'search_analytics'`);
+check(
+  'search_analytics stores no per-student column',
+  !analyticsCols.some((c) => /viewer|user_id|student|email/i.test(c.column_name)),
+  JSON.stringify(analyticsCols.map((c) => c.column_name)),
+);
+
+const { rows: analyticsGrants } = await q(`
+  SELECT grantee, privilege_type FROM information_schema.table_privileges
+  WHERE table_schema = 'public' AND table_name = 'search_analytics'
+    AND grantee IN ('anon', 'authenticated')`);
+check(
+  'search_analytics grants SELECT to authenticated only, no writes',
+  analyticsGrants.length === 1
+    && analyticsGrants[0].grantee === 'authenticated'
+    && analyticsGrants[0].privilege_type === 'SELECT',
+  JSON.stringify(analyticsGrants),
+);
+
+await q(`UPDATE public.users SET is_admin = false WHERE id = $1`, [OTHER_UID]);
+await actAs(OTHER_UID);
+const { rows: nonAdminAnalytics } = await asAuthenticated(() => q(`SELECT query_text FROM public.search_analytics`));
+check('non-admin cannot read search analytics', nonAdminAnalytics.length === 0, `got ${nonAdminAnalytics.length}`);
+
+await actAs(CURRENT_UID);
+await q(`UPDATE public.users SET is_admin = true WHERE id = $1`, [CURRENT_UID]);
+const { rows: adminAnalytics } = await asAuthenticated(() => q(`SELECT query_text FROM public.search_analytics`));
+check('admin can read search analytics', adminAnalytics.length > 0, `got ${adminAnalytics.length}`);
+
+// Retention: the nightly job prunes queries nobody has run in 180 days.
+await q(`UPDATE public.search_analytics SET last_searched_at = now() - interval '200 days'
+         WHERE query_text = 'where do i return a library book'`);
+await q(`SELECT public.aggregate_search_quality()`);
+const { rows: prunedAnalytics } = await q(`
+  SELECT 1 FROM public.search_analytics WHERE query_text = 'where do i return a library book'`);
+check('search analytics older than 180 days are pruned', prunedAnalytics.length === 0, `got ${prunedAnalytics.length} rows`);
+
+await q(`DELETE FROM public.search_analytics`);
 await q(`DELETE FROM public.search_interactions`);
 await q(`DELETE FROM public.search_result_quality`);
 

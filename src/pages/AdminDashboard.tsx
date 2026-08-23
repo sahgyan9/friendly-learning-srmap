@@ -20,6 +20,7 @@ import {
   ArrowRight,
   MessageSquare,
   Megaphone,
+  SearchX,
 } from "lucide-react";
 import AdminPageWrapper from "@/components/admin/AdminPageWrapper";
 import AdminHeader from "@/components/admin/AdminHeader";
@@ -35,6 +36,13 @@ const AdminDashboard = () => {
       icon: MessageSquare,
       path: "/admin/ai-feedback",
       gradient: "from-blue-600 to-indigo-600",
+    },
+    {
+      title: "Search Insights",
+      description: "See what students searched for — and what search missed.",
+      icon: SearchX,
+      path: "/admin/search-insights",
+      gradient: "from-sky-500 to-blue-600",
     },
     {
       title: "Badge Management",

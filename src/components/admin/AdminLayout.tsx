@@ -15,7 +15,8 @@ import {
   Mail,
   Sparkles,
   Megaphone,
-  BookOpen
+  BookOpen,
+  SearchX
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -43,6 +44,12 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
       href: "/admin",
       icon: BarChart3,
       current: location.pathname === "/admin",
+    },
+    {
+      name: "Search Insights",
+      href: "/admin/search-insights",
+      icon: SearchX,
+      current: location.pathname === "/admin/search-insights",
     },
     {
       name: "Contact Messages",
