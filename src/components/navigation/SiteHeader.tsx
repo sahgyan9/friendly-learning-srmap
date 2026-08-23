@@ -10,6 +10,7 @@ import SiteSearch from "@/components/search/SiteSearch";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useAuth } from "@/context/AuthContext";
+import { useCollapseOnScroll } from "@/hooks/useCollapseOnScroll";
 import { useOAuthReturnPulse } from "@/hooks/useOAuthReturnPulse";
 import {
   useHasSeenFacultyRatings,
@@ -52,6 +53,15 @@ export function SiteHeader() {
   const returnPulse = useOAuthReturnPulse();
   const reducedMotion = useReducedMotion();
 
+  // Reclaims the 64px bar for reading room on the search results feed. Scoped
+  // to /search rather than site-wide because everywhere else this is the only
+  // way back to the rest of the app — hiding it there would strand people.
+  // (96, 64): same threshold as the mobile dock, collapsibleHeight matched to
+  // this header's actual height so the hook's short-page guard is accurate.
+  const isSearchPage = location.pathname === "/search";
+  const scrolledPastThreshold = useCollapseOnScroll(96, 64);
+  const headerCollapsed = isSearchPage && scrolledPastThreshold;
+
   // Points at where a feature lives in the nav until someone's found it.
   const tourCompleted = profile?.has_seen_welcome_tour === true;
   const navHighlights: Record<string, boolean> = {
@@ -89,7 +99,8 @@ export function SiteHeader() {
 
       <header
         className={cn(
-          "sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/75 transition-colors duration-300",
+          "sticky top-0 z-50 overflow-hidden bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/75 transition-all duration-300 ease-in-out",
+          headerCollapsed ? "max-h-0" : "max-h-16 border-b",
           accent.border,
         )}
       >
