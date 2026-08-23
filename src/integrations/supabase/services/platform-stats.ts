@@ -29,7 +29,14 @@ export async function getPlatformStats(): Promise<PlatformStats> {
       .select("id", { count: "exact", head: true })
       .neq("department", "General")
       .not("department", "is", null),
-    supabase.from("faculty").select("id", { count: "exact", head: true }).eq("is_active", true),
+    // This feeds the "Faculty" capsule, which reports the size of the
+    // directory rather than how many have been rated — the label says
+    // "Faculty" and not "Faculty Rated" specifically so this plain is_active
+    // count can't overclaim.
+    supabase
+      .from("faculty")
+      .select("id", { count: "exact", head: true })
+      .eq("is_active", true),
     supabase.from("community_posts").select("*", { count: "exact", head: true }),
     // "Anyone can view communities" is a USING (true) policy for PUBLIC and anon
     // holds table-level SELECT, so this count is the same number a signed-out

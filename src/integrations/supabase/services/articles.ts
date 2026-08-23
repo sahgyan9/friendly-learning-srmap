@@ -19,6 +19,24 @@ export const getArticles = async () => {
   return { data, error: null };
 };
 
+/** Public reader lookup — used by the /articles/:slug page that AI Overview
+ * and search results citations link to. RLS restricts this to published rows
+ * for anonymous/non-admin viewers automatically. */
+export const getArticleBySlug = async (slug: string) => {
+  const { data, error } = await supabase
+    .from('knowledge_articles')
+    .select('*')
+    .eq('slug', slug)
+    .maybeSingle();
+
+  if (error) {
+    console.error('Error fetching article by slug:', error);
+    return { data: null, error };
+  }
+
+  return { data, error: null };
+};
+
 export const createArticle = async (article: CreateKnowledgeArticle) => {
   const { data, error } = await supabase
     .from('knowledge_articles')

@@ -117,6 +117,8 @@ const Ask = lazyWithRetry("Ask", () => import("./pages/Ask"));
 const Opportunities = lazyWithRetry("Opportunities", () => import("./pages/Opportunities"));
 const OpportunityDetail = lazyWithRetry("OpportunityDetail", () => import("./pages/OpportunityDetail"));
 const NoticeDetail = lazyWithRetry("NoticeDetail", () => import("./pages/NoticeDetail"));
+const DocumentDetail = lazyWithRetry("DocumentDetail", () => import("./pages/DocumentDetail"));
+const ArticleDetail = lazyWithRetry("ArticleDetail", () => import("./pages/ArticleDetail"));
 const FacultyDetail = lazyWithRetry("FacultyDetail", () => import("./pages/FacultyDetail"));
 const MarketPlace = lazyWithRetry("MarketPlace", () => import("./pages/MarketPlace"));
 const EventDetail = lazyWithRetry("EventDetail", () => import("./pages/EventDetail"));
@@ -199,6 +201,8 @@ function App() {
                     <Route path="/opportunities" element={<Opportunities />} />
                     <Route path="/opportunities/:slug" element={<OpportunityDetail />} />
                     <Route path="/notices/:id" element={<NoticeDetail />} />
+                    <Route path="/documents/:slug" element={<DocumentDetail />} />
+                    <Route path="/articles/:slug" element={<ArticleDetail />} />
                     <Route path="/faculty" element={<Faculty />} />
                     <Route path="/faculty/:slug" element={<FacultyDetail />} />
                     <Route path="/contact" element={<Contact />} />
