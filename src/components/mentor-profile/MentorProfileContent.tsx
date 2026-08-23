@@ -7,7 +7,6 @@ import MentorOutcomesSection from "./MentorOutcomesSection";
 import IdealMenteeSection from "./IdealMenteeSection";
 import CategorizedSkillsDisplay from "./CategorizedSkillsDisplay";
 import MentorCoursesSection from "./MentorCoursesSection";
-import MentorAvailabilityCard from "./MentorAvailabilityCard";
 import MentorExperienceSection from "./MentorExperienceSection";
 import MentorProjectsSection from "./MentorProjectsSection";
 import MentorReviewHighlights from "./MentorReviewHighlights";
@@ -90,8 +89,11 @@ const MentorProfileContent = ({
       {/* SECTION 5b: COURSES TAKEN (opt-in) */}
       <MentorCoursesSection mentor={mentor} />
 
-      {/* SECTION 6: AVAILABILITY & SCHEDULE */}
-      <MentorAvailabilityCard mentor={mentor} />
+      {/* No availability/schedule card. It displayed "Active Days: Mon Wed Fri"
+          and "Preferred Time Slot: Evening (6 PM - 10 PM)" for every mentor from
+          hardcoded defaults — nothing on the site ever collected either. Its one
+          real signal, whether the mentor is paused, is the AvailabilityBanner
+          above, and their reply figures are now measured in the hero header. */}
 
       {/* SECTION 7: WHY YOU SHOULD TRUST ME - EXPERIENCE & PROJECTS */}
       <MentorExperienceSection mentor={mentor} isOwnProfile={isOwnProfile} onMentorUpdated={onMentorUpdated} />

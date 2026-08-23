@@ -464,6 +464,7 @@ for (const file of [
   '20260823100000_grant_faculty_office_and_research.sql',
   '20260823140000_search_click_tracking.sql',
   '20260823150000_search_analytics.sql',
+  '20260823170000_mentor_activity_stats.sql',
 ]) {
   if (file === '20260804132345_b843f814-46d5-4c25-bc80-32e5f6ebba59.sql') {
     // Production's `faculty` table still carries `profile_image`, a column
@@ -538,6 +539,18 @@ console.log('');
 //    confirm the function's OUT columns now include `body`, and that
 //    `SELECT * FROM search_knowledge(...)` for a query known to match a
 //    seeded chunk returns that chunk's body text non-NULL.
+//
+//    20260823180000_search_knowledge_hides_paused_mentors.sql
+//    Redefines search_knowledge() again, adding a NOT EXISTS clause so a
+//    mentor who paused their listing stops being returned to AI mode,
+//    semantic search and AI Overview citations. Same `kc.embedding <=>
+//    p_embedding` pgvector dependency as the rest of this group.
+//    Verify against production with BEGIN/ROLLBACK before commit: pause a
+//    mentor known to match a query (UPDATE mentors SET is_available =
+//    false), re-run search_knowledge() for that query and confirm their
+//    row is gone while a listed mentor's row survives; then confirm a past
+//    available_from brings them back, since mentor_is_listed() treats an
+//    expired pause as over. Rolling back restores the availability row.
 //
 //    NOTE: 20260816090000_enrich_mentor_chunks.sql, which also redefines
 //    search_knowledge() (raising p_min_similarity's default 0.30 -> 0.35),
@@ -2163,6 +2176,128 @@ check('trending includes a qualifying warm query', trending.some((r) => r.query_
 
 const { rows: trendingLimited } = await q(`SELECT query_text FROM public.get_trending_searches(1)`);
 check('p_limit is respected', trendingLimited.length === 1, `got ${trendingLimited.length}`);
+
+// --- 20260823170000_mentor_activity_stats.sql --------------------------------
+// These replace the constants that used to be printed on every mentor profile
+// ("91% response rate", "12+ Mentees Mentored"). The point of each check below
+// is that the number moves with the data -- a fabricated value passes none of
+// them, which is exactly the regression worth catching.
+console.log('\nmentor activity (real reply stats):');
+
+// A mentor of its own, not OTHER_UID: earlier sections in this file already
+// give Ravi conversations, and inheriting them makes every count below a
+// moving target.
+const MENTOR_X = '88888888-8888-8888-8888-888888888888';
+const STU_A = '55555555-5555-5555-5555-555555555555';
+const STU_B = '66666666-6666-6666-6666-666666666666';
+const STU_C = '77777777-7777-7777-7777-777777777777';
+const CONV_A = 'aaaaaaaa-0000-4000-8000-00000000000a';
+const CONV_B = 'bbbbbbbb-0000-4000-8000-00000000000b';
+const CONV_C = 'cccccccc-0000-4000-8000-00000000000c';
+
+await db.exec(`
+  INSERT INTO public.users (id, name, email, role, department, is_admin)
+    VALUES ('${MENTOR_X}', 'Meera Mentor', 'meera@srmap.edu.in', 'mentor', 'CSE', false);
+  INSERT INTO public.mentors (id, name, department)
+    VALUES ('${MENTOR_X}', 'Meera Mentor', 'CSE');
+`);
+
+const noStats = await q(`SELECT * FROM public.mentor_activity('${MENTOR_X}')`);
+check(
+  'a mentor with no conversations reports zeroes, not a flattering default',
+  noStats.rows[0]?.students_helped === 0
+    && noStats.rows[0]?.requests_received === 0
+    && noStats.rows[0]?.median_reply_minutes === null,
+  JSON.stringify(noStats.rows[0]),
+);
+
+await db.exec(`
+  INSERT INTO public.users (id, name, email, role, department, is_admin) VALUES
+    ('${STU_A}', 'Student A', 'a@srmap.edu.in', 'student', 'CSE', false),
+    ('${STU_B}', 'Student B', 'b@srmap.edu.in', 'student', 'CSE', false),
+    ('${STU_C}', 'Student C', 'c@srmap.edu.in', 'student', 'CSE', false);
+  INSERT INTO public.conversations (id, user1_id, user2_id) VALUES
+    ('${CONV_A}', '${STU_A}', '${MENTOR_X}'),
+    ('${CONV_B}', '${STU_B}', '${MENTOR_X}'),
+    ('${CONV_C}', '${STU_C}', '${MENTOR_X}');
+
+  -- A: asked, answered 30 minutes later.
+  INSERT INTO public.messages (conversation_id, sender_id, receiver_id, content, sent_at) VALUES
+    ('${CONV_A}', '${STU_A}', '${MENTOR_X}', 'hi',    now() - interval '10 days'),
+    ('${CONV_A}', '${MENTOR_X}', '${STU_A}', 'hello', now() - interval '10 days' + interval '30 minutes'),
+  -- B: asked, answered 90 minutes later.
+    ('${CONV_B}', '${STU_B}', '${MENTOR_X}', 'hi',    now() - interval '5 days'),
+    ('${CONV_B}', '${MENTOR_X}', '${STU_B}', 'hello', now() - interval '5 days' + interval '90 minutes'),
+  -- C: asked twice, never answered. This is the one a fabricated rate hides.
+    ('${CONV_C}', '${STU_C}', '${MENTOR_X}', 'hello?', now() - interval '3 days'),
+    ('${CONV_C}', '${STU_C}', '${MENTOR_X}', 'anyone?', now() - interval '2 days');
+`);
+
+const { rows: [act] } = await q(`SELECT * FROM public.mentor_activity('${MENTOR_X}')`);
+
+check(
+  'requests_received counts every student who wrote, including the ignored one',
+  act?.requests_received === 3,
+  JSON.stringify(act),
+);
+check(
+  'requests_answered excludes the conversation that was never replied to',
+  act?.requests_answered === 2,
+  JSON.stringify(act),
+);
+check(
+  'students_helped matches the certificate definition (both sides spoke)',
+  act?.students_helped === 2,
+  JSON.stringify(act),
+);
+// 30 and 90 -> median 60. A mean would also give 60 here, so the unanswered
+// conversation staying out of the calculation is what this really pins down.
+check(
+  'median_reply_minutes measures real turnaround',
+  act?.median_reply_minutes === 60,
+  JSON.stringify(act),
+);
+check(
+  'last_message_at reflects the mentor\'s own latest message',
+  act?.last_message_at !== null,
+  JSON.stringify(act),
+);
+
+// An unanswered follow-up must not count as a second request -- otherwise a
+// student who nags three times drags the mentor's rate down three times.
+const { rows: [oneRequest] } = await q(`
+  SELECT requests_received FROM public.mentor_activity('${MENTOR_X}')`);
+check(
+  'two messages in one conversation are one request, not two',
+  oneRequest?.requests_received === 3,
+  JSON.stringify(oneRequest),
+);
+
+// The function bypasses RLS on messages, so it must not become a way to read
+// any user's activity by guessing UUIDs.
+const { rows: notMentor } = await q(`SELECT * FROM public.mentor_activity('${STU_A}')`);
+check(
+  'mentor_activity returns nothing for a non-mentor uuid',
+  notMentor.length === 0,
+  JSON.stringify(notMentor),
+);
+
+const { rows: [actPath] } = await q(`
+  SELECT p.proconfig FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+  WHERE n.nspname = 'public' AND p.proname = 'mentor_activity'`);
+check(
+  'mentor_activity pins its search_path',
+  (actPath?.proconfig ?? []).some((c) => c.startsWith('search_path=')),
+  JSON.stringify(actPath),
+);
+
+const { rows: [actAcl] } = await q(`
+  SELECT has_function_privilege('anon', 'public.mentor_activity(uuid)', 'EXECUTE') AS anon_exec`);
+check(
+  'mentor_activity is callable by anon (the profile it feeds is public)',
+  actAcl?.anon_exec === true,
+  JSON.stringify(actAcl),
+);
 
 console.log(failures === 0
   ? '\nAll migration checks passed against real Postgres.'

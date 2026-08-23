@@ -20,14 +20,6 @@ export interface EnhancedMentor extends Omit<Mentor, "ask_me_anything"> {
     description: string;
     link?: string;
   }>;
-  availability_schedule: {
-    status_text: string;
-    response_time: string;
-    response_rate: string;
-    mentees_count: number;
-    available_days: string[];
-    typical_time: string;
-  };
 }
 
 const SKILL_CATEGORIES: Record<string, string[]> = {
@@ -142,15 +134,20 @@ export function getEnhancedMentorProfile(mentor: Mentor): EnhancedMentor {
   // 8. Projects — same as experiences: real entries only.
   const projects = mentor.projects || [];
 
-  // 9. Availability Schedule
-  const availability_schedule = {
-    status_text: mentor.is_available === false ? "Currently paused" : "Usually replies today",
-    response_time: mentor.availability_schedule?.response_time || "Replies within 3 hours",
-    response_rate: mentor.availability_schedule?.response_rate || "91% response rate",
-    mentees_count: mentor.availability_schedule?.mentees_count || Math.max(12, Math.floor(mentor.review_count * 4 + 8)),
-    available_days: mentor.availability_schedule?.available_days || ["Mon", "Wed", "Fri"],
-    typical_time: mentor.availability_schedule?.typical_time || "Evening (6 PM - 10 PM)",
-  };
+  // 9. Availability — no schedule block any more.
+  //
+  // What used to be here invented six fields: "91% response rate", "Replies
+  // within 3 hours", "Mon/Wed/Fri", "Evening (6 PM - 10 PM)" and a mentee count
+  // of `max(12, review_count * 4 + 8)`. They read as measured facts and were
+  // shown on every profile, because they fell back off `mentor.availability_
+  // schedule` -- a field on the TypeScript interface that is not a column and
+  // never has been, so the fallback fired 100% of the time for 100% of mentors.
+  //
+  // Reply statistics now come from public.mentor_activity(), computed from
+  // conversations that actually happened; see src/lib/mentor-activity.ts. The
+  // stated schedule (which days, which hours) has no source at all, so it is
+  // simply gone rather than guessed -- same call this file already made for
+  // experiences and projects above.
 
   return {
     ...mentor,
@@ -162,7 +159,6 @@ export function getEnhancedMentorProfile(mentor: Mentor): EnhancedMentor {
     categorized_skills: categorized,
     experiences,
     projects,
-    availability_schedule,
   };
 }
 

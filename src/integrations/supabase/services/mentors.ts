@@ -1,6 +1,7 @@
 
 import { supabase } from '../client';
 import type { Mentor } from '@/types/mentor';
+import type { MentorActivity } from '@/lib/mentor-activity';
 
 /**
  * Mirrors public.mentor_is_listed. A pause whose deadline has passed is over.
@@ -260,4 +261,25 @@ export async function updateMentorFields(id: string, fields: EditableMentorField
   }
 
   return { data, error: null };
+}
+
+/**
+ * Real reply statistics for one mentor, from conversations that happened.
+ *
+ * Returns null rather than zeroes when the row is missing, so the caller can
+ * tell "this mentor has no track record" apart from "we could not load it" --
+ * they read very differently on a profile, and the old code could express
+ * neither because it invented the numbers.
+ */
+export async function getMentorActivity(mentorId: string) {
+  const { data, error } = await supabase
+    .rpc('mentor_activity' as never, { p_user_id: mentorId } as never);
+
+  if (error) return { data: null, error };
+
+  // Postgres set-returning function: supabase-js hands back an array. It is
+  // empty (not null) for a uuid that is not a mentor — mentor_activity's guard
+  // returns no row rather than a zeroed one.
+  const rows = (data ?? []) as MentorActivity[];
+  return { data: rows[0] ?? null, error: null };
 }
