@@ -1,4 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 
 import Logo from "@/components/Logo";
 import DarkModeToggle from "@/components/DarkModeToggle";
@@ -9,6 +10,7 @@ import SiteSearch from "@/components/search/SiteSearch";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useAuth } from "@/context/AuthContext";
+import { useOAuthReturnPulse } from "@/hooks/useOAuthReturnPulse";
 import {
   useHasSeenFacultyRatings,
   useHasVisitedEventsNav,
@@ -47,6 +49,8 @@ export function SiteHeader() {
   const { hasSeen: hasVisitedGroups } = useHasVisitedGroupsNav();
   const { hasSeen: hasVisitedEvents } = useHasVisitedEventsNav();
   const { hasSeen: hasVisitedMentors } = useHasVisitedMentorsNav();
+  const returnPulse = useOAuthReturnPulse();
+  const reducedMotion = useReducedMotion();
 
   // Points at where a feature lives in the nav until someone's found it.
   const tourCompleted = profile?.has_seen_welcome_tour === true;
@@ -194,7 +198,24 @@ export function SiteHeader() {
             ) : (
               <>
                 <DarkModeToggle />
-                <div className="hidden items-center gap-2 lg:flex">
+                <div className="relative flex items-center gap-2">
+                  {/* Shown after someone backs out of Google's sign-in screen
+                      without finishing it — a page reload with no completed
+                      session and no obvious next step. The ring draws the eye
+                      back to the one control that gets them back into it. */}
+                  <AnimatePresence>
+                    {returnPulse && !reducedMotion && (
+                      <motion.span
+                        className="pointer-events-none absolute -inset-2 -z-10 rounded-lg bg-primary/25"
+                        initial={{ opacity: 0, scale: 0.85 }}
+                        animate={{ opacity: [0, 0.6, 0], scale: [0.85, 1.15, 1] }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 1.2, times: [0, 0.45, 1] }}
+                        aria-hidden
+                      />
+                    )}
+                  </AnimatePresence>
+
                   {/* `state.from` returns the visitor to the page they were
                       on rather than dropping them on the homepage. Sign up is
                       folded into this same page: Google auth handles new and

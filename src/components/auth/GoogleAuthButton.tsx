@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { getAppUrl } from "@/lib/constants";
 import { getErrorMessage } from "@/lib/errors";
+import { markOAuthAttemptStarted } from "@/hooks/useOAuthReturnPulse";
 
 interface GoogleAuthButtonProps {
   mode: "signin" | "signup";
@@ -14,6 +15,7 @@ const GoogleAuthButton = ({ mode, isLoading, setIsLoading }: GoogleAuthButtonPro
   const handleGoogleAuth = async () => {
     try {
       setIsLoading(true);
+      markOAuthAttemptStarted();
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
