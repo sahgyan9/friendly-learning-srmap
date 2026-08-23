@@ -128,7 +128,15 @@ export const CampusAIOverview: React.FC<CampusAIOverviewProps> = ({
   }, []);
 
   useEffect(() => {
-    if (isFeatureEnabled === false) return;
+    // Wait for the feature flag to actually resolve before fetching anything.
+    // This effect also depends on isFeatureEnabled below (it needs to react to
+    // the flag turning off), so if it fired immediately while the flag check
+    // was still in flight (its initial null state), the flag resolving a
+    // moment later would re-run this whole effect: abort the just-started
+    // request, clear its timer, and restart the loading state from scratch —
+    // visible as the overview flashing in, vanishing, and starting over.
+    // Fetching only once the flag is confirmed removes that restart entirely.
+    if (isFeatureEnabled !== true) return;
     const trimmed = query.trim();
     if (trimmed.length < 3) {
       setOverview(null);
@@ -276,6 +284,14 @@ export const CampusAIOverview: React.FC<CampusAIOverviewProps> = ({
       return {
         type: "document" as const,
         label: "Campus Guideline",
+        icon: <FileText className="h-3.5 w-3.5 text-blue-500" />,
+        badgeColor: "bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/20",
+      };
+    }
+    if (url.includes("/articles/")) {
+      return {
+        type: "document" as const,
+        label: "Knowledge Article",
         icon: <FileText className="h-3.5 w-3.5 text-blue-500" />,
         badgeColor: "bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/20",
       };

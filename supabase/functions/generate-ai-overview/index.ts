@@ -157,14 +157,20 @@ async function retrieve(query: string): Promise<Retrieved[]> {
 
     const body = await response.json();
     // semantic-search returns grouped results. We flatten them back to a single list.
+    // Every entity_type search_knowledge can return needs a line here — "articles"
+    // (admin-authored knowledge_articles) and "students" were missing, so those
+    // chunks were retrieved and then silently dropped on the floor before ever
+    // reaching the prompt, regardless of how well they matched the query.
     const all = [
       ...(body.faculty ?? []),
       ...(body.mentors ?? []),
+      ...(body.students ?? []),
       ...(body.opportunities ?? []),
       ...(body.communities ?? []),
       ...(body.posts ?? []),
       ...(body.documents ?? []),
       ...(body.notices ?? []),
+      ...(body.articles ?? []),
       ...(body.other ?? []),
     ] as Retrieved[];
 
@@ -228,14 +234,15 @@ Rules:
    - If no RESOLVED_FACTS block is present, resolve the date(s) the student is asking about relative to the TEMPORAL ANCHOR above (e.g. "today" = Today's Date, "tomorrow" = Tomorrow's Date), then check the Academic Calendar working days table: find the row/column matching that resolved date's month and weekday. Any cell marked 'H' indicates an official declared Holiday / Non-Instructional Day with NO classes.
    - State clearly whether the resolved date is a Holiday or a working day, citing the source [1]. Never assume or invent which date is "today" or "tomorrow" — always use the TEMPORAL ANCHOR values above.
 2. TIME-OF-DAY WINDOWS: If a resource states a rule that only applies within a specific clock-time window (e.g. "General Outpass: 8:00 AM – 12:00 PM"), compare that window against "Current Time Right Now" in the TEMPORAL ANCHOR before answering whether the student can act on it now. A holiday being in effect does not by itself mean a time-gated action is currently available — check both the date condition AND the time condition, and state plainly if the window has already closed or hasn't opened yet today.
-3. Provide DIRECT, SPECIFIC, AND ACCURATE ANSWERS extracted from the content/excerpts. If the user asks for dates, exam timelines, specific penalties, rules, or contacts, STATE THE EXACT DATES AND DETAILS in the summary (with bold formatting) instead of just telling the student to check the document.
-4. Synthesize the context in a natural, helpful, student-friendly tone. Do not just list the titles.
-5. Only mention people, events, facts, or entities from the provided context. If no context is provided, say there are no direct matches yet and suggest broad advice.
-6. INLINE CITATIONS: When you state a fact, date, or mention an entity from the resources, you MUST include an inline citation bracket like [1] or [2] matching the resource number above.
-7. INSTANT VERDICT: In 'verdict', provide an ultra-short 3-8 word headline status verdict (e.g. "🏖️ Official Holiday — No Classes", "📅 Next Exams: 28 Sept – 1 Oct 2026", "👥 8 Fullstack Mentors Available", "🏛️ Hostels Curfew: 9:30 PM").
-8. KEY TAKEAWAYS: Extract 1-3 distinct, concise bullet takeaways in 'keyInsights' with bold emoji/category prefixes (e.g., "**📅 Exact Date:** ...", "**🏛️ Library Access:** ...", "**⚠️ Policy:** ..."). Do NOT simply repeat the exact same sentence as the summary; make them actionable, scannable bullet points.
-9. Identify the top 1-4 specific entities to recommend as badges. Use the exact 'id', 'type', 'title' (for name), 'path' (for to), and 'subtitle' (for detail) from the context. Only use types: 'faculty', 'mentor', 'opportunity', 'community', 'post', or 'document'.
-10. CITATIONS MAP: Provide a 'citations' array mapping the numbers you used in the summary to the entity.
+3. GENERAL / COMMON-KNOWLEDGE QUESTIONS: If the question is basic general knowledge, arithmetic, or small talk that has nothing specifically to do with SRM AP (e.g. "what is 2+2", "who is the prime minister of india", "hi", "thanks") — just answer it directly, correctly, and warmly, the way any helpful assistant would, and stop there. Retrieved resources below may include faculty or documents that matched on a loose keyword (e.g. "Mathematics" faculty matching a "2+2" query) — that is a coincidence, not a real answer to the question, so leave 'citations' and 'badges' as empty arrays for these unless the student is actually asking to be connected with a person or resource. An unrelated citation is worse than none; do not pad a correct one-line answer with a department recommendation nobody asked for.
+4. Provide DIRECT, SPECIFIC, AND ACCURATE ANSWERS extracted from the content/excerpts. If the user asks for dates, exam timelines, specific penalties, rules, or contacts, STATE THE EXACT DATES AND DETAILS in the summary (with bold formatting) instead of just telling the student to check the document.
+5. Synthesize the context in a natural, helpful, student-friendly tone. Do not just list the titles.
+6. For anything specific to SRM AP — people, policies, procedures, dates, fees, contacts — only state facts that are actually in the provided context; never invent one. If no campus context matches an SRM-AP-specific question, say there are no direct matches yet and suggest broad advice. (This grounding requirement does not apply to rule 3's general-knowledge questions — you already know those answers.)
+7. INLINE CITATIONS: When you state an SRM-AP-specific fact, date, or entity from the resources, include an inline citation bracket like [1] or [2] matching the resource number above.
+8. INSTANT VERDICT: In 'verdict', provide an ultra-short 3-8 word headline status verdict (e.g. "🏖️ Official Holiday — No Classes", "📅 Next Exams: 28 Sept – 1 Oct 2026", "👥 8 Fullstack Mentors Available", "🏛️ Hostels Curfew: 9:30 PM", "🧮 2 + 2 = 4").
+9. KEY TAKEAWAYS: Extract 1-3 distinct, concise bullet takeaways in 'keyInsights' with bold emoji/category prefixes (e.g., "**📅 Exact Date:** ...", "**🏛️ Library Access:** ...", "**⚠️ Policy:** ..."). Do NOT simply repeat the exact same sentence as the summary; make them actionable, scannable bullet points. For a rule-3 general-knowledge question this array may be empty or omitted.
+10. Identify the top 1-4 specific entities to recommend as badges — only ones that are genuinely relevant to the question. Use the exact 'id', 'type', 'title' (for name), 'path' (for to), and 'subtitle' (for detail) from the context. Only use types: 'faculty', 'mentor', 'opportunity', 'community', 'post', or 'document'.
+11. CITATIONS MAP: Provide a 'citations' array mapping the numbers you used in the summary to the entity.
 
 Your response MUST be a valid JSON object matching this schema exactly:
 {
