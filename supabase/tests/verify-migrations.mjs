@@ -461,6 +461,7 @@ for (const file of [
   '20260821220000_knowledge_articles_grants_fix.sql',
   '20260821230000_grant_audit_fix.sql',
   '20260823090000_trending_searches.sql',
+  '20260823100000_grant_faculty_office_and_research.sql',
 ]) {
   if (file === '20260804132345_b843f814-46d5-4c25-bc80-32e5f6ebba59.sql') {
     // Production's `faculty` table still carries `profile_image`, a column
@@ -785,6 +786,19 @@ check(
   'anon can SELECT the three new columns',
   grants.length === 3,
   grants.map((g) => g.column_name).join(',') || '(none)',
+);
+
+const { rows: officeResearchGrants } = await q(`
+  SELECT column_name FROM information_schema.column_privileges
+  WHERE table_schema='public' AND table_name='faculty'
+    AND grantee='anon' AND privilege_type='SELECT'
+    AND column_name IN ('office_location','research_details')
+  ORDER BY column_name
+`);
+check(
+  'anon can SELECT office_location and research_details',
+  officeResearchGrants.length === 2,
+  officeResearchGrants.map((g) => g.column_name).join(',') || '(none)',
 );
 
 // The real regression test: narrow anon the way production is, then confirm a

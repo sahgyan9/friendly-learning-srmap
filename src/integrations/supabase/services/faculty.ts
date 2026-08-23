@@ -121,7 +121,7 @@ export const REVIEW_TAGS = [
 // Must stay a single string literal: supabase-js resolves the row type from the
 // select string at the type level, and a concatenated expression defeats that.
 const FACULTY_COLUMNS =
-  "id, slug, name, designation, department, school, profile_url, image_url, has_image, email, office_location, research_details, interests, research_areas, rating_count, avg_overall, avg_teaching, avg_grading, avg_helpfulness" as const;
+  "id, slug, name, designation, department, school, profile_url, image_url, has_image, office_location, research_details, interests, research_areas, rating_count, avg_overall, avg_teaching, avg_grading, avg_helpfulness" as const;
 
 /**
  * PostgREST's .or() takes a comma-separated filter list, so a search term
