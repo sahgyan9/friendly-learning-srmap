@@ -25,11 +25,30 @@ export interface Mentor {
   graduation_year?: number | null;
   company?: string | null;
   job_title?: string | null;
-  tagline?: string;
   year_of_studies?: string | number;
+
+  // --- Profile summary -------------------------------------------------------
+  // These four were on this interface long before they were columns. Because
+  // nothing backed them, every read returned undefined and mentor-enhancements
+  // fell through to a template -- which is why every profile's "What I can help
+  // you achieve" read the same. They became real columns in
+  // 20260823190000_mentor_profile_summary.sql and are now drafted from the
+  // mentor's own bio/projects/coursework by the generate-mentor-summary edge
+  // function, or written by the mentor.
+  //
+  // Empty means empty. A consumer that finds nothing here must render nothing;
+  // do not reintroduce a default.
+  tagline?: string | null;
   outcomes?: string[];
-  ask_me_anything?: string[];
   ideal_mentees?: string[];
+  ask_me_anything?: Array<{ topic: string; icon?: string }>;
+  /** Set when a summary was drafted for this mentor. Drives the "summarised
+   *  from their profile" disclosure — visitors are told when words are not the
+   *  mentor's own. */
+  profile_summary_generated_at?: string | null;
+  /** Set once the mentor has edited the summary. Generation never overwrites
+   *  these rows, and the disclosure disappears because the words are theirs. */
+  profile_summary_edited_at?: string | null;
   experiences?: Array<{
     id: string;
     title: string;

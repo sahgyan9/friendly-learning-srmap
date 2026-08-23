@@ -6,7 +6,20 @@ interface MentorOutcomesSectionProps {
   mentor: EnhancedMentor;
 }
 
+/**
+ * Two cards, each of which disappears when there is nothing real to put in it.
+ *
+ * Both lists used to be templates in mentor-enhancements.ts that fired for every
+ * mentor, so these cards were always full and always said the same thing. They
+ * are now the mentor's own content, which means "empty" is a state that happens
+ * and must render as absence rather than as a plausible-looking default.
+ */
 export default function MentorOutcomesSection({ mentor }: MentorOutcomesSectionProps) {
+  const hasOutcomes = mentor.outcomes.length > 0;
+  const hasTopics = mentor.ask_me_anything.length > 0;
+
+  if (!hasOutcomes && !hasTopics) return null;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 15 }}
@@ -15,6 +28,7 @@ export default function MentorOutcomesSection({ mentor }: MentorOutcomesSectionP
       className="space-y-6"
     >
       {/* 1. What I Can Help You Achieve */}
+      {hasOutcomes && (
       <div className="rounded-2xl border border-border/80 bg-card p-6 shadow-sm">
         <div className="flex items-center gap-2 mb-4">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-500">
@@ -43,8 +57,10 @@ export default function MentorOutcomesSection({ mentor }: MentorOutcomesSectionP
           ))}
         </div>
       </div>
+      )}
 
       {/* 2. Ask Me Anything About */}
+      {hasTopics && (
       <div className="rounded-2xl border border-border/80 bg-card p-6 shadow-sm">
         <div className="flex items-center gap-2 mb-4">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
@@ -69,6 +85,7 @@ export default function MentorOutcomesSection({ mentor }: MentorOutcomesSectionP
           ))}
         </div>
       </div>
+      )}
     </motion.div>
   );
 }

@@ -46,3 +46,11 @@ verify_jwt = false
 # service-role writer at all.
 [functions.seed-campus-documents]
 verify_jwt = false
+
+# generate-mentor-summary authenticates callers itself (CRON_SECRET, the service
+# role, or an admin JWT), same reasoning as embed-knowledge: the scheduled sweep
+# that regenerates summaries after a mentor edits their profile carries no user
+# JWT. It writes to public.mentors with the service role, so the in-code check is
+# the only real gate -- do not rely on the platform one.
+[functions.generate-mentor-summary]
+verify_jwt = false

@@ -1,12 +1,21 @@
 import { motion } from "framer-motion";
-import { UserCheck, Sparkles } from "lucide-react";
+import { UserCheck } from "lucide-react";
 import { EnhancedMentor } from "@/utils/mentor-enhancements";
 
 interface IdealMenteeSectionProps {
   mentor: EnhancedMentor;
 }
 
+/**
+ * Hidden entirely when the mentor has no ideal-mentee list.
+ *
+ * The four criteria here used to come from a template keyed off skills[0], so
+ * every profile claimed to suit "a beginner looking to start with <skill>"
+ * whether or not the mentor had ever said so. Empty now means absent.
+ */
 export default function IdealMenteeSection({ mentor }: IdealMenteeSectionProps) {
+  if (mentor.ideal_mentees.length === 0) return null;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 15 }}

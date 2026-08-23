@@ -58,7 +58,14 @@ await db.exec(`
     company text,
     profile_image text,
     rating numeric,
-    review_count integer
+    review_count integer,
+    -- Mentor-entered JSONB lists. Needed by mentor_summary_source_hash() and
+    -- mentors_needing_summary() (20260823190000), which name them directly --
+    -- a \`LANGUAGE sql\` body is parsed at CREATE time, so a missing column here
+    -- fails the migration rather than the first call.
+    projects jsonb NOT NULL DEFAULT '[]'::jsonb,
+    experiences jsonb NOT NULL DEFAULT '[]'::jsonb,
+    courses jsonb NOT NULL DEFAULT '[]'::jsonb
   );
 
   -- Trimmed stand-in for public.knowledge_chunks (20260806160000). The real
@@ -465,6 +472,7 @@ for (const file of [
   '20260823140000_search_click_tracking.sql',
   '20260823150000_search_analytics.sql',
   '20260823170000_mentor_activity_stats.sql',
+  '20260823190000_mentor_profile_summary.sql',
 ]) {
   if (file === '20260804132345_b843f814-46d5-4c25-bc80-32e5f6ebba59.sql') {
     // Production's `faculty` table still carries `profile_image`, a column
@@ -2298,6 +2306,167 @@ check(
   actAcl?.anon_exec === true,
   JSON.stringify(actAcl),
 );
+
+// --- 20260823190000_mentor_profile_summary.sql --------------------------------
+// The four summary fields were read by the app long before they were columns,
+// so the fallback in mentor-enhancements.ts fired for every mentor and every
+// profile said the same thing. These checks cover the two things that make the
+// replacement safe: the anon grant (without it the whole public directory 401s)
+// and the material threshold (without it generation recreates the template).
+console.log('\n--- 20260823190000_mentor_profile_summary.sql ---');
+
+const M_RICH = '99999999-0000-0000-0000-000000000001';
+const M_THIN = '99999999-0000-0000-0000-000000000002';
+const M_PROJ = '99999999-0000-0000-0000-000000000003';
+const LONG_BIO =
+  'I build computer vision models and have shipped two apps that run inference on device.';
+
+await db.exec(`
+  INSERT INTO public.users (id, name, email, role, department, is_admin) VALUES
+    ('${M_RICH}', 'Rich Mentor', 'rich@srmap.edu.in', 'mentor', 'CSE', false),
+    ('${M_THIN}', 'Thin Mentor', 'thin@srmap.edu.in', 'mentor', 'CSE', false),
+    ('${M_PROJ}', 'Proj Mentor', 'proj@srmap.edu.in', 'mentor', 'CSE', false);
+  INSERT INTO public.mentors (id, name, department, bio, skills, projects) VALUES
+    ('${M_RICH}', 'Rich Mentor', 'CSE', '${LONG_BIO}', ARRAY['Python'], '[]'::jsonb),
+    ('${M_THIN}', 'Thin Mentor', 'CSE', 'Hi there.', ARRAY['Python','Go','Rust'], '[]'::jsonb),
+    ('${M_PROJ}', 'Proj Mentor', 'CSE', 'Short.', ARRAY['C'],
+     '[{"id":"1","title":"Rover","description":"Line follower"}]'::jsonb);
+`);
+
+// The load-bearing grant. public.mentors gives anon column-level SELECT, and
+// column grants do not extend to columns added later -- PostgREST rejects the
+// entire statement with 42501, not just the offending column, so one missing
+// grant here takes down the public mentor directory.
+for (const col of ['tagline', 'outcomes', 'ideal_mentees', 'ask_me_anything']) {
+  const { rows: [g] } = await q(
+    `SELECT has_column_privilege('anon', 'public.mentors', '${col}', 'SELECT') AS ok`,
+  );
+  check(`anon can SELECT mentors.${col} (directory 401s without this)`, g?.ok === true);
+}
+
+const { rows: [hashPriv] } = await q(
+  `SELECT has_column_privilege('anon', 'public.mentors', 'profile_summary_source_hash', 'SELECT') AS ok`,
+);
+check(
+  'anon cannot read profile_summary_source_hash (internal bookkeeping)',
+  hashPriv?.ok === false,
+  JSON.stringify(hashPriv),
+);
+
+// Shape guards: a bad generation degrades a list, it does not blow out layout.
+for (const [label, sql] of [
+  ['more than 6 outcomes', `outcomes = '["1","2","3","4","5","6","7"]'::jsonb`],
+  ['a non-array in outcomes', `outcomes = '{"a":1}'::jsonb`],
+  ['a tagline over 200 chars', `tagline = repeat('x', 201)`],
+]) {
+  let rejected = false;
+  try {
+    await q(`UPDATE public.mentors SET ${sql} WHERE id = '${M_RICH}'`);
+  } catch {
+    rejected = true;
+  }
+  check(`CHECK constraint rejects ${label}`, rejected);
+}
+
+// Source hash: same input same hash, and it moves when the bio does. This is
+// what stops the sweeper spending Gemini quota on unchanged profiles.
+const { rows: [srcHashA] } = await q(`
+  SELECT public.mentor_summary_source_hash(
+    'bio', ARRAY['a','b'], '[]'::jsonb, '[]'::jsonb, '[]'::jsonb,
+    NULL, 'CSE', '3rd Year', false, NULL, NULL) AS h`);
+const { rows: [srcHashB] } = await q(`
+  SELECT public.mentor_summary_source_hash(
+    'bio', ARRAY['a','b'], '[]'::jsonb, '[]'::jsonb, '[]'::jsonb,
+    NULL, 'CSE', '3rd Year', false, NULL, NULL) AS h`);
+const { rows: [srcHashC] } = await q(`
+  SELECT public.mentor_summary_source_hash(
+    'bio changed', ARRAY['a','b'], '[]'::jsonb, '[]'::jsonb, '[]'::jsonb,
+    NULL, 'CSE', '3rd Year', false, NULL, NULL) AS h`);
+check('source hash is stable for identical input', srcHashA?.h === srcHashB?.h);
+check('source hash changes when the bio changes', srcHashA?.h !== srcHashC?.h);
+
+const needing = async () => {
+  const { rows } = await q(`SELECT id FROM public.mentors_needing_summary(50)`);
+  return rows.map((r) => r.id);
+};
+
+let queue = await needing();
+check(
+  'a mentor with a real bio is queued for summarising',
+  queue.includes(M_RICH),
+  JSON.stringify(queue),
+);
+check(
+  'a mentor with a project but a thin bio is queued (a project is real material)',
+  queue.includes(M_PROJ),
+  JSON.stringify(queue),
+);
+// The threshold is the whole point. Three skills and one sentence give a model
+// nothing to summarise; generating anyway just recreates the old template.
+check(
+  'a mentor with only skills and a one-line bio is NOT queued',
+  !queue.includes(M_THIN),
+  JSON.stringify(queue),
+);
+
+// Simulate a successful generation, stamping the hash the way the edge function
+// does, and confirm the mentor drops out of the queue.
+await q(`
+  UPDATE public.mentors SET
+    outcomes = '["Ship an on-device model"]'::jsonb,
+    profile_summary_generated_at = now(),
+    profile_summary_source_hash = public.mentor_summary_source_hash(
+      bio, skills, projects, experiences, courses, hobbies, department,
+      year_of_studies, is_alumni, job_title, company)
+  WHERE id = '${M_RICH}'`);
+
+queue = await needing();
+check(
+  'a freshly summarised mentor is not re-queued (no wasted Gemini quota)',
+  !queue.includes(M_RICH),
+  JSON.stringify(queue),
+);
+
+await q(`UPDATE public.mentors SET bio = '${LONG_BIO} I also mentor for hackathons.'
+         WHERE id = '${M_RICH}'`);
+queue = await needing();
+check(
+  'editing the bio re-queues the mentor (a stale summary is a false one)',
+  queue.includes(M_RICH),
+  JSON.stringify(queue),
+);
+
+// A mentor's own wording outranks ours, permanently, until they clear it.
+await q(`UPDATE public.mentors SET profile_summary_edited_at = now() WHERE id = '${M_RICH}'`);
+queue = await needing();
+check(
+  'a hand-edited summary is never re-queued',
+  !queue.includes(M_RICH),
+  JSON.stringify(queue),
+);
+
+const { rows: [sumPath] } = await q(`
+  SELECT p.proconfig FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+  WHERE n.nspname = 'public' AND p.proname = 'mentors_needing_summary'`);
+check(
+  'mentors_needing_summary pins its search_path',
+  (sumPath?.proconfig ?? []).some((c) => c.startsWith('search_path=')),
+  JSON.stringify(sumPath),
+);
+
+// Neither is an API. Supabase grants EXECUTE to anon/authenticated by default
+// on new functions, so this asserts the REVOKE actually took.
+for (const sig of [
+  'public.mentors_needing_summary(integer)',
+  'public.mentor_summary_source_hash(text, text[], jsonb, jsonb, jsonb, text, text, text, boolean, text, text)',
+]) {
+  for (const role of ['anon', 'authenticated']) {
+    const { rows: [acl] } = await q(
+      `SELECT has_function_privilege('${role}', '${sig}', 'EXECUTE') AS ok`,
+    );
+    check(`${role} cannot EXECUTE ${sig.split('(')[0]}`, acl?.ok === false, JSON.stringify(acl));
+  }
+}
 
 console.log(failures === 0
   ? '\nAll migration checks passed against real Postgres.'

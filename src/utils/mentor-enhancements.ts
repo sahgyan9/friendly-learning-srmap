@@ -1,11 +1,15 @@
 import { Mentor } from "@/types/mentor";
 import { formatDepartment } from "@/utils/user-utils";
 
-export interface EnhancedMentor extends Omit<Mentor, "ask_me_anything"> {
-  tagline: string;
+export interface EnhancedMentor extends Omit<Mentor, "ask_me_anything" | "tagline"> {
+  /** Null when the mentor has no tagline. Render nothing — never a stand-in. */
+  tagline: string | null;
   year_of_studies_text: string;
+  /** May be empty. An empty list means the section does not appear. */
   outcomes: string[];
+  /** May be empty. The icon is a decorative lookup, the topic is the mentor's. */
   ask_me_anything: Array<{ topic: string; icon: string }>;
+  /** May be empty. An empty list means the section does not appear. */
   ideal_mentees: string[];
   categorized_skills: Record<string, string[]>;
   experiences: Array<{
@@ -58,74 +62,50 @@ export function getEnhancedMentorProfile(mentor: Mentor): EnhancedMentor {
     categorized["General Skills"] = skills;
   }
 
-  // 2. Tagline
-  let tagline = mentor.tagline;
-  if (!tagline) {
-    const topSkills = skills.slice(0, 3).join(", ");
-    if (topSkills) {
-      tagline = `I help students master ${topSkills} and excel in ${dept} projects & hackathons.`;
-    } else {
-      tagline = `Passionate mentor helping students excel in ${dept} and crack tech goals.`;
-    }
-  }
+  // 2. Tagline — the mentor's, or nothing.
+  //
+  // The template that used to live here ("I help students master X, Y, Z and
+  // excel in CSE projects & hackathons.") ran for every mentor, because tagline
+  // was not a column until 20260823190000_mentor_profile_summary.sql. It is one
+  // now, drafted by generate-mentor-summary from what the mentor actually
+  // wrote. An empty tagline renders as no tagline.
+  const tagline = mentor.tagline?.trim() || null;
 
   // 3. Year of studies text
   const yearText = mentor.is_alumni
     ? `Alumni ${mentor.graduation_year ? `'${String(mentor.graduation_year).slice(-2)}` : ""}`
     : `${mentor.university || "SRM AP"} • ${dept}`;
 
-  // 4. Outcomes ("What I can help you achieve")
-  let outcomes = mentor.outcomes;
-  if (!outcomes || outcomes.length === 0) {
-    const s1 = skills[0] || "Programming";
-    const s2 = skills[1] || "Backend development";
-    outcomes = [
-      `Build your first end-to-end ${s1} project`,
-      `Learn and master ${s2} step-by-step`,
-      `Crack hackathons & build winning portfolio projects`,
-      `Prepare for technical coding interviews & code reviews`,
-    ];
-  }
+  // 4. Outcomes ("What I can help you achieve") — real entries only.
+  //
+  // The four lines that used to be generated here were the same four lines on
+  // every profile, with skills[0] and skills[1] swapped in. A student comparing
+  // two mentors was reading one template twice. Now: whatever the mentor (or a
+  // summary drafted from their own material) actually says, and an empty list
+  // hides the section.
+  const outcomes = (mentor.outcomes ?? []).filter(
+    (o): o is string => typeof o === "string" && o.trim().length > 0,
+  );
 
-  // 5. Ask me anything about
-  let askMe: Array<{ topic: string; icon: string }> | undefined;
-  if (mentor.ask_me_anything && Array.isArray(mentor.ask_me_anything)) {
-    askMe = mentor.ask_me_anything.map((item: any) => {
-      if (item && typeof item === "object" && "topic" in item) {
-        return {
-          topic: String(item.topic || ""),
-          icon: item.icon || getEmojiForTopic(String(item.topic || "")),
-        };
-      }
-      const topicStr = String(item || "");
-      return { topic: topicStr, icon: getEmojiForTopic(topicStr) };
-    });
-  }
-  if (!askMe || askMe.length === 0) {
-    const defaultTopics = [
-      skills[0] || "Python",
-      skills[1] || "Backend",
-      "Hackathons",
-      skills[2] || "Docker",
-      "Interview Prep",
-    ];
-    askMe = defaultTopics.map((topic) => ({
-      topic,
-      icon: getEmojiForTopic(topic),
-    }));
-  }
+  // 5. Ask me anything about — the mentor's topics.
+  //
+  // The emoji is decoration chosen by a lookup table, not a claim, so deriving
+  // it here is fine. The topics themselves are never invented; the default list
+  // that used to sit here ("Python", "Backend", "Hackathons", "Docker",
+  // "Interview Prep") is gone.
+  const askMe = (mentor.ask_me_anything ?? [])
+    .map((item) => {
+      const topic = typeof item === "string" ? item : String(item?.topic ?? "");
+      const icon =
+        typeof item === "object" && item?.icon ? item.icon : getEmojiForTopic(topic);
+      return { topic: topic.trim(), icon };
+    })
+    .filter((t) => t.topic.length > 0);
 
-  // 6. Ideal Mentees ("Perfect if you are...")
-  let idealMentees = mentor.ideal_mentees;
-  if (!idealMentees || idealMentees.length === 0) {
-    const mainSkill = skills[0] || "coding";
-    idealMentees = [
-      `Beginner looking to start with ${mainSkill}`,
-      `Preparing for upcoming hackathons & competitions`,
-      `Building portfolio projects in ${dept}`,
-      `Wanting clear, step-by-step guidance & roadmaps`,
-    ];
-  }
+  // 6. Ideal Mentees ("Perfect if you are...") — same treatment as outcomes.
+  const idealMentees = (mentor.ideal_mentees ?? []).filter(
+    (m): m is string => typeof m === "string" && m.trim().length > 0,
+  );
 
   // 7. Experiences — mentor-entered, no fallback. An invented work history
   // read as real, so an empty list now just means the section is empty.

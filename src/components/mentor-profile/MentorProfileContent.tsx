@@ -5,6 +5,7 @@ import MentorHeroHeader from "./MentorHeroHeader";
 import SmartMatchBanner from "./SmartMatchBanner";
 import MentorOutcomesSection from "./MentorOutcomesSection";
 import IdealMenteeSection from "./IdealMenteeSection";
+import ProfileSummaryNote from "./ProfileSummaryNote";
 import CategorizedSkillsDisplay from "./CategorizedSkillsDisplay";
 import MentorCoursesSection from "./MentorCoursesSection";
 import MentorExperienceSection from "./MentorExperienceSection";
@@ -82,6 +83,11 @@ const MentorProfileContent = ({
 
       {/* SECTION 4: IDEAL MENTEES ("Perfect if you are...") */}
       <IdealMenteeSection mentor={mentor} />
+
+      {/* Discloses that sections 3 and 4 were summarised rather than written by
+          the mentor, or — on their own profile — explains why they are absent.
+          Renders nothing for a visitor looking at a sparse profile. */}
+      <ProfileSummaryNote mentor={mentor} isOwnProfile={isOwnProfile} />
 
       {/* SECTION 5: CATEGORIZED SKILLS */}
       <CategorizedSkillsDisplay mentor={mentor} />
