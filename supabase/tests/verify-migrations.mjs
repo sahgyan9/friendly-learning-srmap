@@ -460,6 +460,7 @@ for (const file of [
   '20260821210000_knowledge_articles.sql',
   '20260821220000_knowledge_articles_grants_fix.sql',
   '20260821230000_grant_audit_fix.sql',
+  '20260823100000_faculty_office_research_grants.sql',
 ]) {
   if (file === '20260804132345_b843f814-46d5-4c25-bc80-32e5f6ebba59.sql') {
     // Production's `faculty` table still carries `profile_image`, a column
@@ -469,6 +470,16 @@ for (const file of [
     await db.exec(`
       ALTER TABLE public.faculty ADD COLUMN IF NOT EXISTS profile_image text;
       ALTER TABLE public.faculty ADD COLUMN IF NOT EXISTS avg_rating numeric;
+    `);
+  }
+  if (file === '20260823100000_faculty_office_research_grants.sql') {
+    // Same dashboard-origin situation as profile_image above: office_location
+    // and research_details are live columns on production's faculty table
+    // that no migration in this repo ever created (see that migration's own
+    // comment), so an empty PGlite database has no way to reconstruct them.
+    await db.exec(`
+      ALTER TABLE public.faculty ADD COLUMN IF NOT EXISTS office_location text;
+      ALTER TABLE public.faculty ADD COLUMN IF NOT EXISTS research_details text[];
     `);
   }
   const sql = fs.readFileSync(path.join(MIGRATIONS, file), 'utf8');
@@ -793,6 +804,34 @@ const { rows: asAnon } = await q(
   `SELECT slug FROM public.faculty WHERE interests @> ARRAY['Blockchain']::text[]`,
 );
 check('anon can read interests without permission denied', asAnon.length === 1, `${asAnon.length} rows`);
+await q(`RESET ROLE`).catch(() => {});
+
+// office_location / research_details (20260823100000): same incident, two
+// different dashboard-origin columns FACULTY_COLUMNS in faculty.ts selects
+// on every read. Confirmed live on 2026-08-23 via the anon REST endpoint that
+// naming either column 42501s the whole statement before this grant existed.
+const { rows: officeResearchGrants } = await q(`
+  SELECT column_name FROM information_schema.column_privileges
+  WHERE table_schema='public' AND table_name='faculty'
+    AND grantee='anon' AND privilege_type='SELECT'
+    AND column_name IN ('office_location','research_details')
+  ORDER BY column_name
+`);
+check(
+  'anon can SELECT office_location and research_details',
+  officeResearchGrants.length === 2,
+  officeResearchGrants.map((g) => g.column_name).join(',') || '(none)',
+);
+
+await q(`SET LOCAL ROLE anon`).catch(() => {});
+const { rows: asAnonOfficeResearch } = await q(
+  `SELECT slug, office_location, research_details FROM public.faculty WHERE slug='dr-test-two'`,
+);
+check(
+  'anon can read office_location/research_details without permission denied',
+  asAnonOfficeResearch.length === 1,
+  `${asAnonOfficeResearch.length} rows`,
+);
 await q(`RESET ROLE`).catch(() => {});
 
 // GIN index path: exact-tag browse.

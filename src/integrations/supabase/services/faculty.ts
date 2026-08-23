@@ -120,8 +120,31 @@ export const REVIEW_TAGS = [
 
 // Must stay a single string literal: supabase-js resolves the row type from the
 // select string at the type level, and a concatenated expression defeats that.
-const FACULTY_COLUMNS =
+//
+// Two variants, not one: `anon` never has SELECT on `email` (deliberately --
+// see the faculty column-grant migrations), so a query naming it as an
+// unauthenticated caller gets `42501 permission denied for table faculty` for
+// the *entire* select, not just a null email back. Authenticated students are
+// meant to see the real synced address (also documented at the grant site),
+// so they get the column; anonymous visitors get the fallback computed by
+// getFacultyEmail() below instead.
+const FACULTY_COLUMNS_ANON =
+  "id, slug, name, designation, department, school, profile_url, image_url, has_image, office_location, research_details, interests, research_areas, rating_count, avg_overall, avg_teaching, avg_grading, avg_helpfulness" as const;
+
+const FACULTY_COLUMNS_AUTH =
   "id, slug, name, designation, department, school, profile_url, image_url, has_image, email, office_location, research_details, interests, research_areas, rating_count, avg_overall, avg_teaching, avg_grading, avg_helpfulness" as const;
+
+/**
+ * Picks the column list this caller is actually allowed to SELECT.
+ *
+ * Typed as plain `string`, not the literal union: supabase-js's select-string
+ * type-level parser only handles a literal, and every call site below already
+ * casts its result to `Faculty` explicitly, so nothing depends on it here.
+ */
+async function getFacultyColumns(): Promise<string> {
+  const { data } = await supabase.auth.getSession();
+  return data.session ? FACULTY_COLUMNS_AUTH : FACULTY_COLUMNS_ANON;
+}
 
 /**
  * PostgREST's .or() takes a comma-separated filter list, so a search term
@@ -144,9 +167,10 @@ export async function getFacultyList(query: FacultyQuery = {}) {
     offset = 0,
   } = query;
 
+  const columns = await getFacultyColumns();
   let request = supabase
     .from("faculty")
-    .select(FACULTY_COLUMNS, { count: "exact" })
+    .select(columns, { count: "exact" })
     .eq("is_active", true);
 
   if (department !== "all") {
@@ -231,7 +255,7 @@ export async function getFacultyList(query: FacultyQuery = {}) {
     return { data: [] as Faculty[], total: 0, error };
   }
 
-  let facultyList = (data ?? []) as Faculty[];
+  let facultyList = (data ?? []) as unknown as Faculty[];
 
   // If search was performed, sort results by match relevance
   if (rawSearch && facultyList.length > 0) {
@@ -278,9 +302,10 @@ export async function getFacultyList(query: FacultyQuery = {}) {
 }
 
 export async function getFacultyBySlug(slug: string) {
+  const columns = await getFacultyColumns();
   const { data, error } = await supabase
     .from("faculty")
-    .select(FACULTY_COLUMNS)
+    .select(columns)
     .eq("slug", slug)
     .eq("is_active", true)
     .maybeSingle();
@@ -290,7 +315,7 @@ export async function getFacultyBySlug(slug: string) {
     return { data: null, error };
   }
 
-  return { data: (data as Faculty | null) ?? null, error: null };
+  return { data: (data as unknown as Faculty | null) ?? null, error: null };
 }
 
 /** Distinct department list for the filter, derived from the synced directory. */
@@ -484,9 +509,10 @@ export async function getSimilarFaculty(
   excludeId: string,
   limit = 3
 ) {
+  const columns = await getFacultyColumns();
   let query = supabase
     .from("faculty")
-    .select(FACULTY_COLUMNS)
+    .select(columns)
     .eq("is_active", true)
     .neq("id", excludeId);
 
@@ -506,7 +532,7 @@ export async function getSimilarFaculty(
     return { data: [] as Faculty[], error };
   }
 
-  return { data: (data ?? []) as Faculty[], error: null };
+  return { data: (data ?? []) as unknown as Faculty[], error: null };
 }
 
 /**
