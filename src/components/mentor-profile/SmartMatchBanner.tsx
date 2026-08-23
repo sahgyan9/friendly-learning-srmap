@@ -20,7 +20,20 @@ interface SmartMatchBannerProps {
  * personalised claim are gone.
  */
 export default function SmartMatchBanner({ mentor }: SmartMatchBannerProps) {
-  const topSkills = mentor.skills.slice(0, 3);
+  // Prefer the curated ask-me-anything topics over raw skills[].
+  //
+  // Mentors list a lot of skills -- four of the first eight on this site listed
+  // 16 to 20 -- and slice(0, 3) returns whichever three they happened to type
+  // first, which is usually the generic ones. That put "Specializes in Python,
+  // C++, SQL" directly above an "Ask me anything about" card reading LLMs, RAG
+  // Pipelines, Fine-tuning: the same profile disagreeing with itself, with the
+  // less useful answer on top. The topics are the filtered set, so use them.
+  const topSkills = (
+    mentor.ask_me_anything.length > 0
+      ? mentor.ask_me_anything.map((t) => t.topic)
+      : mentor.skills
+  ).slice(0, 3);
+
   if (topSkills.length === 0) return null;
 
   return (

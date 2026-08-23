@@ -154,12 +154,32 @@ function getEmojiForTopic(topic: string | any): string {
   const t = str.toLowerCase();
   if (t.includes("python")) return "🐍";
   if (t.includes("hackathon")) return "⚡";
-  if (t.includes("backend")) return "💻";
-  if (t.includes("docker")) return "📦";
-  if (t.includes("interview") || t.includes("prep")) return "🧠";
-  if (t.includes("react") || t.includes("frontend") || t.includes("web")) return "🌐";
-  if (t.includes("ai") || t.includes("ml") || t.includes("data")) return "🤖";
+  if (t.includes("docker") || t.includes("kubernetes") || t.includes("deploy")) return "📦";
+  if (t.includes("interview") || t.includes("prep") || t.includes("placement")) return "🧠";
+  if (t.includes("react") || t.includes("frontend") || t.includes("web") || t.includes("full-stack") || t.includes("fullstack")) return "🌐";
   if (t.includes("database") || t.includes("sql") || t.includes("postgres")) return "🗄️";
-  if (t.includes("cpp") || t.includes("c++") || t.includes("dsa")) return "🚀";
+  if (t.includes("cpp") || t.includes("c++") || t.includes("dsa") || t.includes("competitive")) return "🚀";
+  if (t.includes("data structure") || t.includes("algorithm")) return "🧮";
+  // Topics are chosen by the model now rather than picked from a fixed list, so
+  // they are far more varied than the handful this map was built for -- one
+  // profile rendered five chips that all fell through to the default. These
+  // cover what a peer mentor at an engineering university actually offers.
+  // "rag" is matched with a word boundary on purpose: bare includes("rag")
+  // also fires on "storage".
+  if (t.includes("llm") || t.includes("gpt") || t.includes("transformer") || t.includes("fine-tun") || /\brag\b/.test(t) || t.includes("retrieval") || t.includes("prompt")) return "🧠";
+  if (t.includes("quantum") || t.includes("qiskit")) return "⚛️";
+  if (t.includes("physics") || t.includes("econophysics")) return "🔬";
+  if (t.includes("research") || t.includes("paper") || t.includes("thesis")) return "📄";
+  if (t.includes("finance") || t.includes("market") || t.includes("trading") || t.includes("crypto")) return "📈";
+  if (t.includes("cloud") || t.includes("aws") || t.includes("azure")) return "☁️";
+  if (t.includes("security") || t.includes("cyber")) return "🔐";
+  if (t.includes("design") || t.includes("ui") || t.includes("ux") || t.includes("figma")) return "🎨";
+  if (t.includes("mobile") || t.includes("android") || t.includes("flutter") || t.includes("ios")) return "📱";
+  if (t.includes("open-source") || t.includes("open source") || t.includes("git")) return "🌱";
+  if (t.includes("intern") || t.includes("career") || t.includes("resume")) return "💼";
+  if (t.includes("hardware") || t.includes("robot") || t.includes("iot") || t.includes("embedded") || t.includes("cad") || t.includes("fusion 360") || t.includes("solidworks") || t.includes("3d")) return "🔧";
+  if (t.includes("energy") || t.includes("hydrogen") || t.includes("sustain")) return "🔋";
+  if (t.includes("api") || t.includes("backend") || t.includes("server")) return "💻";
+  if (t.includes("ai") || t.includes("ml") || t.includes("data") || t.includes("nlp") || t.includes("vision")) return "🤖";
   return "✨";
 }
