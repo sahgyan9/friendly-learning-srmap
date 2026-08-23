@@ -16,6 +16,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { useAuth } from "@/context/AuthContext";
+import { useCollapseOnScroll } from "@/hooks/useCollapseOnScroll";
 import {
   useHasSeenFacultyRatings,
   useHasVisitedEventsNav,
@@ -64,6 +65,14 @@ export function MobileNavDock() {
     setSheetOpen(false);
   }, [location.pathname]);
 
+  // Slides the dock below the safe area on scroll-down, back up on scroll-up
+  // — same pattern as SiteHeader, but simpler: this dock is `fixed`, not
+  // `sticky`, so it never occupies flow space and hiding it needs no
+  // coordination with surrounding layout. collapsibleHeight is 0 (not the
+  // dock's own height) because hiding it doesn't shorten the document the
+  // way collapsing a sticky element does.
+  const dockHidden = useCollapseOnScroll(96, 0);
+
   // Only render on routes where the site navigation rail/dock belongs
   if (!pathShowsRail(location.pathname)) {
     return null;
@@ -80,7 +89,11 @@ export function MobileNavDock() {
 
   return (
     <div
-      className="fixed inset-x-0 bottom-0 z-40 flex justify-center pointer-events-none pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] px-4 lg:hidden"
+      className={cn(
+        "fixed inset-x-0 bottom-0 z-40 flex justify-center pointer-events-none pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] px-4 lg:hidden",
+        "transition-transform duration-300 ease-in-out",
+        dockHidden && !sheetOpen ? "translate-y-[150%]" : "translate-y-0",
+      )}
       aria-label="Mobile Navigation"
     >
       <nav
