@@ -4,30 +4,46 @@ import { motion } from "framer-motion";
 import { Sparkles, Users, GraduationCap, Building2, MessageSquare } from "lucide-react";
 import AskBox from "@/components/search/AskBox";
 import { getPlatformStats, type PlatformStats } from "@/integrations/supabase/services/platform-stats";
+import { getTrendingSearches, MIN_TRENDING_TO_SHOW } from "@/lib/search/trending";
 
 const QUICK_PROMPTS = [
   { label: "🤖 AI & ML Mentors", query: "Who knows AI and machine learning for a project?" },
   { label: "💻 DSA & Coding help", query: "Senior mentors for Data Structures and Algorithms" },
   { label: "🚀 Hackathon teammates", query: "Looking for teammates for hackathon web development" },
-  { label: "👨‍🏫 Rate or find faculty", query: "Faculty researching computer vision and deep learning" },
+  { label: "👨‍🏫 Find faculty for research", query: "Faculty researching computer vision and deep learning" },
 ];
 
 export const CampusHero = () => {
   const navigate = useNavigate();
   const [stats, setStats] = useState<PlatformStats | null>(null);
+  const [trending, setTrending] = useState<{ label: string; query: string }[] | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     getPlatformStats().then((result) => {
       if (!cancelled) setStats(result);
     });
+    getTrendingSearches(6).then((result) => {
+      if (cancelled) return;
+      setTrending(
+        result.length >= MIN_TRENDING_TO_SHOW
+          ? result.map((r) => ({ label: r.query, query: r.query }))
+          : [],
+      );
+    });
     return () => {
       cancelled = true;
     };
   }, []);
 
+  const isTrending = (trending?.length ?? 0) > 0;
+  const promptChips = isTrending ? trending! : QUICK_PROMPTS;
+
+  // Goes straight to the AI-mode results page with the query pre-filled and
+  // already running, as if the student had typed and searched it themselves —
+  // not the old plain-text /ask page, which has no AI Overview or citations.
   const handlePromptClick = (query: string) => {
-    navigate(`/ask?q=${encodeURIComponent(query)}`);
+    navigate(`/search?q=${encodeURIComponent(query)}`);
   };
 
   return (
@@ -69,17 +85,19 @@ export const CampusHero = () => {
             <AskBox />
           </div>
 
-          {/* Clickable Quick Prompts */}
+          {/* Clickable Quick Prompts — real trending queries once there are enough, curated examples until then */}
           <div className="flex flex-wrap items-center justify-center gap-2 max-w-3xl mx-auto mb-8">
-            <span className="text-xs text-muted-foreground/80 font-medium mr-1 hidden sm:inline">Try asking:</span>
-            {QUICK_PROMPTS.map((p) => (
+            <span className="text-xs text-muted-foreground/80 font-medium mr-1 hidden sm:inline">
+              {isTrending ? "🔥 Trending now:" : "Try asking:"}
+            </span>
+            {promptChips.map((p) => (
               <button
                 key={p.label}
                 type="button"
                 onClick={() => handlePromptClick(p.query)}
-                className="inline-flex items-center text-xs px-3 py-1.5 rounded-full bg-card hover:bg-primary/10 hover:text-primary hover:border-primary/40 border border-border/80 text-muted-foreground transition-all duration-200 cursor-pointer shadow-2xs font-medium"
+                className="inline-flex max-w-[15rem] items-center truncate text-xs px-3 py-1.5 rounded-full bg-card hover:bg-primary/10 hover:text-primary hover:border-primary/40 border border-border/80 text-muted-foreground transition-all duration-200 cursor-pointer shadow-2xs font-medium"
               >
-                {p.label}
+                <span className="truncate">{p.label}</span>
               </button>
             ))}
           </div>
@@ -94,7 +112,7 @@ export const CampusHero = () => {
               <span className="font-bold text-foreground">
                 {stats ? stats.faculty : <span className="inline-block h-3.5 w-6 animate-pulse rounded bg-muted/60 align-middle" />}
               </span>
-              <span className="text-[11.5px]">Faculty Rated</span>
+              <span className="text-[11.5px]">Faculty</span>
             </Link>
 
             <Link

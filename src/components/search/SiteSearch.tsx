@@ -12,6 +12,7 @@ import {
   Loader2,
   Sparkles,
   History as HistoryIcon,
+  Flame,
 } from "lucide-react";
 
 import { CampusMindIcon } from "@/components/icons/CampusMindIcon";
@@ -45,6 +46,7 @@ import {
   removeSearchHistoryEntry,
   type SearchHistoryEntry,
 } from "@/lib/search/history";
+import { getTrendingSearches, MIN_TRENDING_TO_SHOW, type TrendingSearch } from "@/lib/search/trending";
 import { useSiteSearch, type SearchHit } from "@/hooks/useSiteSearch";
 import { getInitials } from "@/utils/user-utils";
 import { cn } from "@/lib/utils";
@@ -149,6 +151,7 @@ const SiteSearch = () => {
   const [theme, setThemeState] = useState<Theme>("dark");
   const [isMac, setIsMac] = useState(false);
   const [history, setHistory] = useState<SearchHistoryEntry[]>([]);
+  const [trending, setTrending] = useState<TrendingSearch[]>([]);
 
   const { results: liveResults, loading: liveLoading } = useSiteSearch(query, open);
 
@@ -167,6 +170,13 @@ const SiteSearch = () => {
       setHistory([]);
     }
   }, [open, user]);
+
+  useEffect(() => {
+    if (!open) return;
+    getTrendingSearches(6).then((result) => {
+      setTrending(result.length >= MIN_TRENDING_TO_SHOW ? result : []);
+    });
+  }, [open]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -589,6 +599,40 @@ const SiteSearch = () => {
                           >
                             <X className="h-3.5 w-3.5" />
                           </button>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  )}
+
+                  {trending.length > 0 && (
+                    <CommandGroup
+                      heading={
+                        <span className="flex items-center gap-1.5 font-semibold text-xs text-foreground/90">
+                          <Flame className="h-3.5 w-3.5 text-orange-500" />
+                          Trending Now
+                        </span>
+                      }
+                    >
+                      {trending.map((entry) => (
+                        <CommandItem
+                          key={`trending-${entry.query}`}
+                          value={`trending-${entry.query}`}
+                          onSelect={() => {
+                            if (user) recordSearchHistory(entry.query);
+                            close();
+                            navigate(buildSearchUrl(entry.query, "all"));
+                          }}
+                          className={cn(
+                            "group flex items-center gap-3 rounded-xl px-3 py-2 my-0.5 transition-all duration-150 cursor-pointer",
+                            "data-[selected=true]:bg-accent/80 data-[selected=true]:shadow-xs hover:bg-accent/50",
+                          )}
+                        >
+                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-orange-500/20 bg-orange-500/10 text-orange-500">
+                            <Flame className="h-3.5 w-3.5" />
+                          </span>
+                          <span className="min-w-0 flex-1 truncate text-sm text-foreground/90 group-data-[selected=true]:text-foreground">
+                            {entry.query}
+                          </span>
                         </CommandItem>
                       ))}
                     </CommandGroup>
