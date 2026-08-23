@@ -462,6 +462,7 @@ for (const file of [
   '20260821230000_grant_audit_fix.sql',
   '20260823090000_trending_searches.sql',
   '20260823100000_grant_faculty_office_and_research.sql',
+  '20260823140000_search_click_tracking.sql',
 ]) {
   if (file === '20260804132345_b843f814-46d5-4c25-bc80-32e5f6ebba59.sql') {
     // Production's `faculty` table still carries `profile_image`, a column
@@ -1582,6 +1583,112 @@ check('aggregate_search_quality rolls up clicks into search_result_quality', qua
 
 const { rows: [qualityJob] } = await q(`SELECT schedule FROM cron.job WHERE jobname='aggregate-search-quality-nightly'`);
 check('search quality aggregation job scheduled nightly', qualityJob?.schedule === '0 2 * * *', qualityJob?.schedule);
+
+// --- 20260823140000_search_click_tracking.sql -------------------------------
+// The file above was in this list and passing since 2026-08-16 while the
+// tables did not exist in production at all. A green run here has never meant
+// the migration was deployed -- see DEPLOYMENT_GUIDE.md. What it can prove is
+// the behaviour the rewrite changed, which is what follows.
+
+await q(`DELETE FROM public.search_interactions`);
+await q(`DELETE FROM public.search_result_quality`);
+
+// One clicker, one vote: ten clicks from the same signed-in student on the
+// same result must count once, or a mentor can rank themselves up by hand.
+for (let i = 0; i < 10; i += 1) {
+  await q(`SELECT public.log_search_click('quantum computing', 'faculty', 'target-entity')`);
+}
+await q(`SELECT public.aggregate_search_quality()`);
+const { rows: [inflated] } = await q(`SELECT click_count_30d FROM public.search_result_quality WHERE entity_id = 'target-entity'`);
+check('repeat clicks from one viewer count once', inflated?.click_count_30d === 1, `got ${inflated?.click_count_30d}`);
+
+// A second distinct student does move the number.
+await actAs(OTHER_UID);
+await q(`SELECT public.log_search_click('quantum computing', 'faculty', 'target-entity')`);
+await actAs(CURRENT_UID);
+await q(`SELECT public.aggregate_search_quality()`);
+const { rows: [twoVoters] } = await q(`SELECT click_count_30d FROM public.search_result_quality WHERE entity_id = 'target-entity'`);
+check('a second distinct viewer increments the count', twoVoters?.click_count_30d === 2, `got ${twoVoters?.click_count_30d}`);
+
+// Too-short queries are dropped at the entry point, not recorded as noise.
+const { rows: beforeJunk } = await q(`SELECT count(*)::int AS n FROM public.search_interactions`);
+await q(`SELECT public.log_search_click('ab', 'faculty', 'target-entity')`);
+const { rows: afterJunk } = await q(`SELECT count(*)::int AS n FROM public.search_interactions`);
+check('log_search_click ignores queries shorter than 3 chars', beforeJunk[0].n === afterJunk[0].n);
+
+// Stale entities are deleted, not left as permanent zero rows: the client
+// reads this table unfiltered and PostgREST caps the response at 1000 rows.
+await q(`INSERT INTO public.search_interactions (query_hash, entity_type, entity_id, created_at)
+         VALUES (md5('old'), 'faculty', 'stale-entity', now() - interval '40 days')`);
+await q(`SELECT public.aggregate_search_quality()`);
+const { rows: stale } = await q(`SELECT entity_id FROM public.search_result_quality WHERE entity_id = 'stale-entity'`);
+check('entities with no click in 30 days are removed, not zeroed', stale.length === 0, `got ${stale.length} rows`);
+
+// Retention: raw interactions are pruned past 90 days.
+await q(`INSERT INTO public.search_interactions (query_hash, entity_type, entity_id, created_at)
+         VALUES (md5('ancient'), 'faculty', 'ancient-entity', now() - interval '100 days')`);
+await q(`SELECT public.aggregate_search_quality()`);
+const { rows: ancient } = await q(`SELECT id FROM public.search_interactions WHERE entity_id = 'ancient-entity'`);
+check('search_interactions older than 90 days are pruned', ancient.length === 0, `got ${ancient.length} rows`);
+
+// Both definer functions must pin search_path -- without it the caller
+// controls how their unqualified names resolve.
+const { rows: definerPaths } = await q(`
+  SELECT p.proname, p.proconfig
+  FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+  WHERE n.nspname = 'public' AND p.proname IN ('log_search_click', 'aggregate_search_quality')
+`);
+check(
+  'click-tracking definer functions pin search_path',
+  definerPaths.length === 2 && definerPaths.every((r) => String(r.proconfig ?? '').includes('search_path=')),
+  JSON.stringify(definerPaths.map((r) => [r.proname, r.proconfig])),
+);
+
+// aggregate_search_quality is a maintenance job, not an API. New functions are
+// exposed to PUBLIC by default, and a PUBLIC grant is the real ACL -- revoking
+// from anon alone would be a no-op.
+const { rows: [aggAcl] } = await q(`
+  SELECT COALESCE(array_to_string(p.proacl, ' '), '') AS acl
+  FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+  WHERE n.nspname = 'public' AND p.proname = 'aggregate_search_quality'
+`);
+check(
+  'aggregate_search_quality is not callable by anon, authenticated or PUBLIC',
+  !/(^|\s)=X\//.test(aggAcl.acl) && !/\banon=X\//.test(aggAcl.acl) && !/\bauthenticated=X\//.test(aggAcl.acl),
+  aggAcl.acl,
+);
+
+// log_search_click is deliberately anon-callable -- most search traffic is
+// signed out, and a loop that only hears from logged-in students learns wrong.
+const { rows: [logAcl] } = await q(`
+  SELECT COALESCE(array_to_string(p.proacl, ' '), '') AS acl
+  FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+  WHERE n.nspname = 'public' AND p.proname = 'log_search_click'
+`);
+check('log_search_click stays callable by anon', /\banon=X\//.test(logAcl.acl), logAcl.acl);
+
+// Supabase's default privileges grant ALL on new tables to anon and
+// authenticated; 20260821230000 had to undo that across ~30 tables.
+const { rows: tableGrants } = await q(`
+  SELECT table_name, grantee, privilege_type
+  FROM information_schema.table_privileges
+  WHERE table_schema = 'public'
+    AND table_name IN ('search_interactions', 'search_result_quality')
+    AND grantee IN ('anon', 'authenticated')
+  ORDER BY table_name, grantee, privilege_type
+`);
+const writeGrants = tableGrants.filter((r) => r.privilege_type !== 'SELECT');
+check('click-tracking tables grant no writes to anon or authenticated', writeGrants.length === 0, JSON.stringify(writeGrants));
+check(
+  'anon can read search_result_quality but not raw interactions',
+  tableGrants.some((r) => r.grantee === 'anon' && r.privilege_type === 'SELECT')
+    && !tableGrants.some((r) => r.grantee === 'anon' && r.privilege_type === 'SELECT'
+        && r.table_name === 'search_interactions'),
+  JSON.stringify(tableGrants),
+);
+
+await q(`DELETE FROM public.search_interactions`);
+await q(`DELETE FROM public.search_result_quality`);
 
 console.log('\nadmin role management rpc (set_user_admin_status):');
 await actAs(CURRENT_UID);
