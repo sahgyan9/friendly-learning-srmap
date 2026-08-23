@@ -472,16 +472,6 @@ for (const file of [
       ALTER TABLE public.faculty ADD COLUMN IF NOT EXISTS avg_rating numeric;
     `);
   }
-  if (file === '20260823100000_faculty_office_research_grants.sql') {
-    // Same dashboard-origin situation as profile_image above: office_location
-    // and research_details are live columns on production's faculty table
-    // that no migration in this repo ever created (see that migration's own
-    // comment), so an empty PGlite database has no way to reconstruct them.
-    await db.exec(`
-      ALTER TABLE public.faculty ADD COLUMN IF NOT EXISTS office_location text;
-      ALTER TABLE public.faculty ADD COLUMN IF NOT EXISTS research_details text[];
-    `);
-  }
   const sql = fs.readFileSync(path.join(MIGRATIONS, file), 'utf8');
   try {
     await db.exec(sql);

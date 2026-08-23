@@ -23,7 +23,17 @@
 -- `email` is a separate, unrelated 42501 on the same table (deliberately
 -- withheld from anon) -- fixed on the client side (faculty.ts), not here. Do
 -- not grant email to anon.
+--
+-- ADD COLUMN IF NOT EXISTS below is not defensive filler: these columns exist
+-- on the live database (verified via the REST API 2026-08-23) but were never
+-- created by any migration, so a fresh install replaying this file from an
+-- empty database would otherwise fail with "column does not exist" before
+-- ever reaching the GRANT. Same reasoning as `has_image`/`interests` in
+-- 20260821150000/20260806100000.
 -- =============================================================================
+
+ALTER TABLE public.faculty ADD COLUMN IF NOT EXISTS office_location TEXT;
+ALTER TABLE public.faculty ADD COLUMN IF NOT EXISTS research_details TEXT[];
 
 GRANT SELECT (office_location, research_details) ON public.faculty TO anon;
 
