@@ -560,6 +560,25 @@ console.log('');
 //    available_from brings them back, since mentor_is_listed() treats an
 //    expired pause as over. Rolling back restores the availability row.
 //
+//    20260823200000_mentor_course_chunks.sql
+//    Redefines rebuild_mentor_chunks() again, folding a "Completed
+//    coursework: ..." sentence (from public.mentors.courses) into the
+//    single per-mentor chunk body, so listed coursework becomes
+//    semantically searchable -- it previously wasn't embedded at all.
+//    Targets the schema actually live in production, NOT the "main" +
+//    "skill_N" multi-chunk split that 20260817000000_multi_chunk_indexing.sql
+//    describes -- that migration was confirmed 2026-08-23 (reading
+//    information_schema.columns and pg_get_functiondef against production)
+//    to have never been applied; the live table still has no chunk_index
+//    column and only the original (entity_type, entity_id) unique
+//    constraint. Same ON CONFLICT ... embedding column dependency as the
+//    rest of this group. Verify against production with BEGIN/ROLLBACK
+//    before commit: seed a mentor row with a courses entry containing a
+//    known course name, run rebuild_mentor_chunks(), confirm that mentor's
+//    chunk body contains "Completed coursework: ..." with that name and
+//    a NULL embedding (queued for the next embed-knowledge-topup run), and
+//    that a mentor with an empty courses array is unaffected.
+//
 //    NOTE: 20260816090000_enrich_mentor_chunks.sql, which also redefines
 //    search_knowledge() (raising p_min_similarity's default 0.30 -> 0.35),
 //    predates this comment and was never added to this list or the
