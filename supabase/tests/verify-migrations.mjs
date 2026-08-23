@@ -44,6 +44,8 @@ await db.exec(`
     profile_image text,
     department text,
     is_admin boolean DEFAULT false
+    -- No email_notifications here on purpose: an applied migration adds it with
+    -- a bare ADD COLUMN, so declaring it up front makes that migration fail.
   );
   CREATE TABLE public.mentors (
     id uuid PRIMARY KEY REFERENCES public.users(id),
@@ -220,11 +222,14 @@ await db.exec(`
 // instead of by hand -- see the SKIP list at the bottom of this file for the
 // migrations this still leaves unreplayed.
 await db.exec(`
-  -- auth.users: only needed as an FK target (email_queue.recipient_id).
-  CREATE TABLE auth.users (id uuid PRIMARY KEY, email text, raw_user_meta_data jsonb);
-  INSERT INTO auth.users (id, email) VALUES
-    ('${CURRENT_UID}', 'asha@srmap.edu.in'),
-    ('${OTHER_UID}', 'ravi@srmap.edu.in');
+  -- auth.users: FK target (email_queue.recipient_id) and, since
+  -- 20260823220000_admin_kpi_metrics.sql, the signup-count source for the
+  -- admin KPI panel. created_at is a real Supabase Auth column, present on
+  -- every project regardless of what public.users happens to carry.
+  CREATE TABLE auth.users (id uuid PRIMARY KEY, email text, raw_user_meta_data jsonb, created_at timestamptz NOT NULL DEFAULT now());
+  INSERT INTO auth.users (id, email, created_at) VALUES
+    ('${CURRENT_UID}', 'asha@srmap.edu.in', now() - interval '2 days'),
+    ('${OTHER_UID}', 'ravi@srmap.edu.in', now() - interval '90 days');
 
   ALTER TABLE public.users
     ADD COLUMN verification_status text,
@@ -473,6 +478,10 @@ for (const file of [
   '20260823150000_search_analytics.sql',
   '20260823170000_mentor_activity_stats.sql',
   '20260823190000_mentor_profile_summary.sql',
+  '20260823210000_academic_refresh_reminder.sql',
+  '20260823220000_academic_refresh_schedule.sql',
+  '20260823240000_mentor_dashboard_stats.sql',
+  '20260823230000_admin_kpi_metrics.sql',
 ]) {
   if (file === '20260804132345_b843f814-46d5-4c25-bc80-32e5f6ebba59.sql') {
     // Production's `faculty` table still carries `profile_image`, a column
@@ -2486,6 +2495,335 @@ for (const sig of [
     check(`${role} cannot EXECUTE ${sig.split('(')[0]}`, acl?.ok === false, JSON.stringify(acl));
   }
 }
+
+// --- 20260823210000_academic_refresh_reminder.sql -----------------------------
+// Every clause in the WHERE is a person who should NOT get an email, so each
+// one gets its own fixture. Queueing a reminder at a student who synced last
+// week, or at an alumnus whose coursework is finished, is the kind of mistake
+// that reads as spam rather than as a bug.
+console.log('\n--- 20260823210000_academic_refresh_reminder.sql ---');
+
+const A_STALE   = '77777777-0000-0000-0000-000000000001'; // should be queued
+const A_FRESH   = '77777777-0000-0000-0000-000000000002'; // synced days ago
+const A_ALUMNI  = '77777777-0000-0000-0000-000000000003'; // graduated
+const A_OPTOUT  = '77777777-0000-0000-0000-000000000004'; // notifications off
+const A_FAILED  = '77777777-0000-0000-0000-000000000005'; // import never succeeded
+
+await db.exec(`
+  INSERT INTO auth.users (id, email) VALUES
+    ('${A_STALE}',  'stale@srmap.edu.in'),
+    ('${A_FRESH}',  'fresh@srmap.edu.in'),
+    ('${A_ALUMNI}', 'alum@srmap.edu.in'),
+    ('${A_OPTOUT}', 'optout@srmap.edu.in'),
+    ('${A_FAILED}', 'failed@srmap.edu.in');
+
+  INSERT INTO public.users (id, name, email, role, department, email_notifications) VALUES
+    ('${A_STALE}',  'Stale Student',  'stale@srmap.edu.in',  'student', 'CSE', true),
+    ('${A_FRESH}',  'Fresh Student',  'fresh@srmap.edu.in',  'student', 'CSE', true),
+    ('${A_ALUMNI}', 'Alum Student',   'alum@srmap.edu.in',   'mentor',  'CSE', true),
+    ('${A_OPTOUT}', 'Optout Student', 'optout@srmap.edu.in', 'student', 'CSE', false),
+    ('${A_FAILED}', 'Failed Student', 'failed@srmap.edu.in', 'student', 'CSE', true);
+
+  INSERT INTO public.mentors (id, name, department, is_alumni) VALUES
+    ('${A_ALUMNI}', 'Alum Student', 'CSE', true);
+
+  INSERT INTO public.academic_imports
+    (user_id, register_number, sync_status, last_synced_at) VALUES
+    ('${A_STALE}',  'AP00000000001', 'success', now() - interval '200 days'),
+    ('${A_FRESH}',  'AP00000000002', 'success', now() - interval '5 days'),
+    ('${A_ALUMNI}', 'AP00000000003', 'success', now() - interval '200 days'),
+    ('${A_OPTOUT}', 'AP00000000004', 'success', now() - interval '200 days'),
+    ('${A_FAILED}', 'AP00000000005', 'failed',  now() - interval '200 days');
+`);
+
+const { rows: [queuedRun] } = await q(
+  `SELECT public.queue_academic_refresh_reminders() AS n`,
+);
+check(
+  'queues exactly the one student whose import is a semester old',
+  queuedRun?.n === 1,
+  `queued ${queuedRun?.n}`,
+);
+
+const queuedFor = async (id) => {
+  const { rows } = await q(`
+    SELECT 1 FROM public.email_queue
+    WHERE recipient_id = '${id}' AND kind = 'academic_refresh'`);
+  return rows.length > 0;
+};
+
+check('the stale student is queued', await queuedFor(A_STALE));
+check('a student who synced days ago is not nagged', !(await queuedFor(A_FRESH)));
+// An alumnus has no next semester; their transcript is final.
+check('an alumnus is not asked to refresh coursework', !(await queuedFor(A_ALUMNI)));
+check('someone who turned email off is not queued', !(await queuedFor(A_OPTOUT)));
+check('a student whose import never succeeded is not queued', !(await queuedFor(A_FAILED)));
+
+// The job is safe to run by hand, which matters because that is how it will be
+// tested in production -- nobody is waiting until January to find out.
+const { rows: [secondRun] } = await q(
+  `SELECT public.queue_academic_refresh_reminders() AS n`,
+);
+check(
+  'running it twice does not queue a second email',
+  secondRun?.n === 0,
+  `second run queued ${secondRun?.n}`,
+);
+
+// send-email-queue keys its grouping on kind, so this must be a kind the
+// function recognises or the rows sit unsent forever.
+const { rows: [kindRow] } = await q(`
+  SELECT kind, message_id, conversation_id FROM public.email_queue
+  WHERE recipient_id = '${A_STALE}' AND kind = 'academic_refresh'`);
+check(
+  'queued row carries kind=academic_refresh and no message reference',
+  kindRow?.kind === 'academic_refresh' && !kindRow?.message_id && !kindRow?.conversation_id,
+  JSON.stringify(kindRow),
+);
+
+const { rows: [remPath] } = await q(`
+  SELECT p.proconfig FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+  WHERE n.nspname = 'public' AND p.proname = 'queue_academic_refresh_reminders'`);
+check(
+  'queue_academic_refresh_reminders pins its search_path',
+  (remPath?.proconfig ?? []).some((c) => c.startsWith('search_path=')),
+  JSON.stringify(remPath),
+);
+
+for (const role of ['anon', 'authenticated']) {
+  const { rows: [acl] } = await q(`
+    SELECT has_function_privilege('${role}', 'public.queue_academic_refresh_reminders()', 'EXECUTE') AS ok`);
+  check(`${role} cannot EXECUTE queue_academic_refresh_reminders`, acl?.ok === false, JSON.stringify(acl));
+}
+
+// --- 20260823220000_academic_refresh_schedule.sql -----------------------------
+// Two jobs on the two days SRM AP publishes results. A wrong cron expression
+// here fails silently for six months, so assert the literal strings.
+const { rows: jobs } = await q(`
+  SELECT jobname, schedule, command FROM cron.job
+  WHERE jobname LIKE 'academic-refresh-reminder-%' ORDER BY jobname`);
+check('both results-day jobs are scheduled', jobs.length === 2, JSON.stringify(jobs));
+check(
+  'January job runs on the 15th (30 4 15 1 *)',
+  jobs.find((j) => j.jobname.endsWith('-jan'))?.schedule === '30 4 15 1 *',
+  JSON.stringify(jobs),
+);
+check(
+  'June job runs on the 20th (30 4 20 6 *)',
+  jobs.find((j) => j.jobname.endsWith('-jun'))?.schedule === '30 4 20 6 *',
+  JSON.stringify(jobs),
+);
+check(
+  'both jobs call the queueing function',
+  jobs.every((j) => j.command.includes('queue_academic_refresh_reminders')),
+  JSON.stringify(jobs.map((j) => j.command)),
+);
+
+// --- 20260823230000_admin_kpi_metrics.sql --------------------------------
+// The launch KPI panel's whole job is counting correctly, so start every
+// counted table from a known state rather than asserting against however
+// much prior sections happened to leave behind. This also removes the five
+// auth.users rows the academic-refresh-reminder block above inserted with no
+// explicit created_at (they default to now() and would otherwise inflate
+// signups_7d/30d here).
+console.log('\n--- 20260823230000_admin_kpi_metrics.sql ---');
+
+await q(`DELETE FROM auth.users WHERE id IN ($1,$2,$3,$4,$5)`,
+  [A_STALE, A_FRESH, A_ALUMNI, A_OPTOUT, A_FAILED]);
+await q(`DELETE FROM public.conversations`);
+await q(`DELETE FROM public.community_members`);
+await q(`DELETE FROM public.communities`);
+await q(`DELETE FROM public.community_posts`);
+await q(`DELETE FROM public.search_analytics`);
+await q(`DELETE FROM public.campus_notices`);
+
+await actAs(CURRENT_UID);
+await q(`UPDATE public.users SET is_admin = true WHERE id = $1`, [CURRENT_UID]);
+await q(`UPDATE public.users SET is_admin = false WHERE id = $1`, [OTHER_UID]);
+
+// A recent mentor contact (within the 7-day window) and an older one with a
+// second mentor (M_RICH, seeded by the mentor-profile-summary section above).
+await q(`INSERT INTO public.conversations (user1_id, user2_id, created_at)
+         VALUES ($1, $2, now())`, [CURRENT_UID, OTHER_UID]);
+await q(`INSERT INTO public.conversations (user1_id, user2_id, created_at)
+         VALUES ($1, $2, now() - interval '20 days')`, [CURRENT_UID, M_RICH]);
+
+const { rows: [kpiComm] } = await q(`
+  INSERT INTO public.communities (slug, name, description, owner_id)
+  VALUES ('kpi-test-group', 'KPI Test Group', 'test group', $1)
+  RETURNING id`, [CURRENT_UID]);
+await q(`INSERT INTO public.community_members (community_id, user_id, role, joined_at) VALUES
+           ($1, $2, 'owner', now()),
+           ($1, $3, 'member', now() - interval '20 days')`,
+  [kpiComm.id, CURRENT_UID, OTHER_UID]);
+
+await q(`INSERT INTO public.community_posts (author_id, title, content, created_at)
+         VALUES ($1, 'KPI test post', 'body', now())`, [OTHER_UID]);
+
+await q(`SELECT public.log_search_run('kpi test query', 3)`);
+
+await q(`INSERT INTO public.campus_notices
+           (title, category, issued_date, content, is_published, created_by)
+         VALUES ('KPI test notice', 'general', current_date, 'content', true, $1)`, [CURRENT_UID]);
+
+await actAs(OTHER_UID);
+let kpiBlocked = false;
+try {
+  await asAuthenticated(() => q(`SELECT public.admin_kpi_metrics()`));
+} catch (err) {
+  kpiBlocked = /admin only/i.test(err.message);
+}
+check('non-admin is blocked from admin_kpi_metrics', kpiBlocked);
+
+await actAs(CURRENT_UID);
+const { rows: [kpiRow] } = await asAuthenticated(() => q(`SELECT public.admin_kpi_metrics() AS m`));
+const kpi = typeof kpiRow?.m === 'string' ? JSON.parse(kpiRow.m) : kpiRow?.m;
+
+check('signups_total counts every auth.users row', kpi?.signups_total === 2, JSON.stringify(kpi));
+check('signups_7d counts only the recent signup', kpi?.signups_7d === 1, JSON.stringify(kpi));
+check('searches_total reflects the logged run', kpi?.searches_total === 1, JSON.stringify(kpi));
+check('mentor_contacts_total counts both conversations', kpi?.mentor_contacts_total === 2, JSON.stringify(kpi));
+check('mentor_contacts_7d counts only the recent one', kpi?.mentor_contacts_7d === 1, JSON.stringify(kpi));
+check('distinct_mentors_contacted counts both mentors', kpi?.distinct_mentors_contacted === 2, JSON.stringify(kpi));
+check('group_joins_total counts both memberships', kpi?.group_joins_total === 2, JSON.stringify(kpi));
+check('group_joins_7d counts only the recent join', kpi?.group_joins_7d === 1, JSON.stringify(kpi));
+check('active_groups counts the non-archived group', kpi?.active_groups === 1, JSON.stringify(kpi));
+check('posts_total counts the test post', kpi?.posts_total === 1, JSON.stringify(kpi));
+check('posts_7d counts the recent post', kpi?.posts_7d === 1, JSON.stringify(kpi));
+check('notices_published_total counts the published notice', kpi?.notices_published_total === 1, JSON.stringify(kpi));
+
+for (const role of ['anon']) {
+  const { rows: [acl] } = await q(
+    `SELECT has_function_privilege('${role}', 'public.admin_kpi_metrics()', 'EXECUTE') AS ok`);
+  check(`${role} cannot EXECUTE admin_kpi_metrics`, acl?.ok === false, JSON.stringify(acl));
+}
+
+// --- 20260823240000_mentor_dashboard_stats.sql --------------------------------
+// Two things here are security-shaped rather than feature-shaped: the stats
+// function must be un-pointable at another mentor, and the raw view log must be
+// unreadable by anyone. Both are asserted, not assumed.
+console.log('\n--- 20260823240000_mentor_dashboard_stats.sql ---');
+
+// MENTOR_X already has a known history from the mentor_activity section above:
+// 3 requests, 2 answered, 2 students helped.
+await actAs(MENTOR_X);
+await q(`SELECT public.log_mentor_profile_view('${MENTOR_X}')`);
+const viewCount = async () => {
+  const { rows: [r] } = await q(
+    `SELECT count(*)::int AS n FROM public.mentor_profile_views WHERE mentor_id = '${MENTOR_X}'`,
+  );
+  return r.n;
+};
+// Mentors check their own page more than anyone. Counting it would make the
+// number useless to exactly the person reading it.
+check('a mentor viewing their own profile is not counted', (await viewCount()) === 0);
+
+await actAs(STU_A);
+await q(`SELECT public.log_mentor_profile_view('${MENTOR_X}')`);
+check('a visitor view is recorded', (await viewCount()) === 1);
+
+await q(`SELECT public.log_mentor_profile_view('${MENTOR_X}')`);
+check(
+  'the same person refreshing does not count twice in a day',
+  (await viewCount()) === 1,
+  `count is ${await viewCount()}`,
+);
+
+await actAs(STU_B);
+await q(`SELECT public.log_mentor_profile_view('${MENTOR_X}')`);
+check('a second person counts separately', (await viewCount()) === 2);
+
+// Called from page load, so it must swallow nonsense rather than surface an
+// error to a visitor who did nothing wrong.
+const badView = await attempt(
+  `SELECT public.log_mentor_profile_view('${STU_C}')`,
+);
+check('viewing a non-mentor id is ignored, not an error', badView === null, String(badView));
+
+// A fresh exchange so the comparison below is not two sets of zeroes agreeing
+// with each other. Earlier sections consume MENTOR_X's original fixtures, so by
+// this point their activity has drifted back to nothing.
+const CONV_D = '55555555-4444-4444-4444-444444444444';
+await db.exec(`
+  INSERT INTO public.conversations (id, user1_id, user2_id)
+  VALUES ('${CONV_D}', '${STU_A}', '${MENTOR_X}');
+  INSERT INTO public.messages (conversation_id, sender_id, receiver_id, content, sent_at) VALUES
+    ('${CONV_D}', '${STU_A}',   '${MENTOR_X}', 'can you help?', now() - interval '2 days'),
+    ('${CONV_D}', '${MENTOR_X}', '${STU_A}',   'sure',          now() - interval '2 days' + interval '45 minutes');
+`);
+
+await actAs(MENTOR_X);
+const { rows: [dash] } = await q(`SELECT * FROM public.mentor_dashboard_stats()`);
+check(
+  'dashboard picks up a real exchange',
+  dash?.requests_received === 1 && dash?.requests_answered === 1 && dash?.students_helped === 1,
+  JSON.stringify(dash),
+);
+check(
+  'dashboard reports the two profile views',
+  dash?.profile_views_30d === 2,
+  JSON.stringify(dash),
+);
+// Assert agreement, not magic numbers. The dashboard and the public profile
+// must never disagree about the same person -- a mentor told "you replied to
+// 60%" in settings while their profile shows 75% has no reason to trust either.
+// (Fixture counts drift as later sections consume the same rows, so comparing
+// to a literal here would be asserting the fixtures, not the invariant.)
+const { rows: [publicFigures] } = await q(`SELECT * FROM public.mentor_activity('${MENTOR_X}')`);
+check(
+  'dashboard reports exactly what the public profile reports',
+  dash?.requests_received === publicFigures?.requests_received &&
+    dash?.requests_answered === publicFigures?.requests_answered &&
+    dash?.students_helped === publicFigures?.students_helped &&
+    dash?.median_reply_minutes === publicFigures?.median_reply_minutes,
+  `dashboard ${JSON.stringify(dash)} vs profile ${JSON.stringify(publicFigures)}`,
+);
+
+// The structural guarantee: no argument means no way to ask about someone else.
+const { rows: [argCount] } = await q(`
+  SELECT p.pronargs FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+  WHERE n.nspname = 'public' AND p.proname = 'mentor_dashboard_stats'`);
+check(
+  'mentor_dashboard_stats takes no argument, so it cannot be pointed at another mentor',
+  argCount?.pronargs === 0,
+  JSON.stringify(argCount),
+);
+
+await actAs(STU_A);
+const { rows: notAMentor } = await q(`SELECT * FROM public.mentor_dashboard_stats()`);
+check(
+  'a non-mentor gets no stats rather than a row of zeroes',
+  notAMentor.length === 0,
+  JSON.stringify(notAMentor),
+);
+
+await q(`UPDATE auth._session SET uid = NULL`);
+const { rows: anonStats } = await q(`SELECT * FROM public.mentor_dashboard_stats()`);
+check('a signed-out caller gets nothing', anonStats.length === 0, JSON.stringify(anonStats));
+
+for (const role of ['anon', 'authenticated']) {
+  const { rows: [tbl] } = await q(`
+    SELECT has_table_privilege('${role}', 'public.mentor_profile_views', 'SELECT') AS ok`);
+  check(`${role} cannot read the raw view log`, tbl?.ok === false, JSON.stringify(tbl));
+}
+
+const { rows: [viewLogAcl] } = await q(`
+  SELECT has_function_privilege('anon', 'public.log_mentor_profile_view(uuid)', 'EXECUTE') AS ok`);
+check(
+  'anon CAN log a view (most profile traffic is signed out)',
+  viewLogAcl?.ok === true,
+  JSON.stringify(viewLogAcl),
+);
+
+const { rows: [dashStatsAcl] } = await q(`
+  SELECT has_function_privilege('anon', 'public.mentor_dashboard_stats()', 'EXECUTE') AS ok`);
+check(
+  'anon cannot call mentor_dashboard_stats',
+  dashStatsAcl?.ok === false,
+  JSON.stringify(dashStatsAcl),
+);
+
+await actAs(CURRENT_UID);
 
 console.log(failures === 0
   ? '\nAll migration checks passed against real Postgres.'
