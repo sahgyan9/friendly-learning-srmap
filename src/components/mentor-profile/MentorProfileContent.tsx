@@ -73,16 +73,25 @@ const MentorProfileContent = ({
         canRate={canRate}
         ratingLoading={ratingLoading}
         onShowRatingModal={onShowRatingModal}
+        onMentorUpdated={onMentorUpdated}
       />
 
       {/* SECTION 2: SMART MATCH BANNER */}
       <SmartMatchBanner mentor={mentor} />
 
       {/* SECTION 3: HOW I CAN HELP YOU */}
-      <MentorOutcomesSection mentor={mentor} />
+      <MentorOutcomesSection
+        mentor={mentor}
+        isOwnProfile={isOwnProfile}
+        onMentorUpdated={onMentorUpdated}
+      />
 
       {/* SECTION 4: IDEAL MENTEES ("Perfect if you are...") */}
-      <IdealMenteeSection mentor={mentor} />
+      <IdealMenteeSection
+        mentor={mentor}
+        isOwnProfile={isOwnProfile}
+        onMentorUpdated={onMentorUpdated}
+      />
 
       {/* Discloses that sections 3 and 4 were summarised rather than written by
           the mentor, or — on their own profile — explains why they are absent.

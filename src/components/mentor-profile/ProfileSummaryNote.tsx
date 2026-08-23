@@ -40,7 +40,24 @@ export default function ProfileSummaryNote({ mentor, isOwnProfile }: ProfileSumm
         <Info className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" />
         <span>
           Summarised from {firstName}&rsquo;s own profile, not written by them.
-          {isOwnProfile && " You can edit any of it from your profile settings."}
+          {isOwnProfile &&
+            " Use the pencil on any section above to rewrite it in your own words."}
+        </span>
+      </p>
+    );
+  }
+
+  // Edited by the mentor: the words are theirs, so no disclosure is owed to a
+  // visitor. The owner still needs to know the consequence of having edited,
+  // because it is not reversible from the UI — we stopped regenerating this row
+  // the moment they saved.
+  if (hasSummary && wasEdited && isOwnProfile) {
+    return (
+      <p className="flex items-start gap-2 px-1 text-xs text-muted-foreground">
+        <Info className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" />
+        <span>
+          You&rsquo;ve edited these sections, so they&rsquo;re yours now — we won&rsquo;t
+          rewrite them when you update your bio.
         </span>
       </p>
     );

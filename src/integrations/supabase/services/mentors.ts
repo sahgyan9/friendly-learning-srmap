@@ -270,6 +270,39 @@ export async function updateMentorFields(id: string, fields: EditableMentorField
   return { data, error: null };
 }
 
+export type EditableSummaryFields = Partial<
+  Pick<Mentor, 'tagline' | 'outcomes' | 'ideal_mentees' | 'ask_me_anything'>
+>;
+
+/**
+ * Save a mentor's hand-edit of their profile summary.
+ *
+ * Separate from updateMentorFields for two reasons. These columns exist only on
+ * `mentors`, so there is no `users` mirror to keep in step. And every write here
+ * has to stamp profile_summary_edited_at, which is what tells
+ * generate-mentor-summary to leave this row alone from now on — without it the
+ * next sweep would quietly replace whatever the mentor just corrected, which is
+ * the one failure this whole feature cannot afford.
+ *
+ * Note the flag is row-level, not per-field: correcting only the tagline also
+ * freezes the lists. That is deliberate. Someone who has started fixing our
+ * wording should not find a different part of it rewritten underneath them, and
+ * the UI says as much once the flag is set.
+ */
+export async function updateMentorSummary(id: string, fields: EditableSummaryFields) {
+  const editedAt = new Date().toISOString();
+
+  const { data, error } = await supabase
+    .from('mentors')
+    .update({ ...fields, profile_summary_edited_at: editedAt } as never)
+    .eq('id', id)
+    .select(MENTOR_PUBLIC_COLUMNS)
+    .single();
+
+  if (error) return { data: null, error, editedAt };
+  return { data, error: null, editedAt };
+}
+
 /**
  * Real reply statistics for one mentor, from conversations that happened.
  *

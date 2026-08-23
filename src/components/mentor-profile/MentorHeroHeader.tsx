@@ -14,13 +14,21 @@ import {
   Camera,
   ShieldCheck,
   Loader2,
+  Pencil,
+  Check,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
 import MentorAvatar from "@/components/mentors/MentorAvatar";
 import { EnhancedMentor } from "@/utils/mentor-enhancements";
+import { Mentor } from "@/types/mentor";
 import { useAuth } from "@/context/AuthContext";
-import { isMentorListed, getMentorById } from "@/integrations/supabase/services/mentors";
+import {
+  isMentorListed,
+  getMentorById,
+  updateMentorSummary,
+} from "@/integrations/supabase/services/mentors";
 import { getOrCreateConversation } from "@/integrations/supabase/services/chat";
 import { toast } from "sonner";
 import { formatDepartment } from "@/utils/user-utils";
@@ -38,6 +46,7 @@ interface MentorHeroHeaderProps {
   canRate: boolean;
   ratingLoading: boolean;
   onShowRatingModal: () => void;
+  onMentorUpdated?: (mentor: Mentor) => void;
 }
 
 export default function MentorHeroHeader({
@@ -45,13 +54,43 @@ export default function MentorHeroHeader({
   canRate,
   ratingLoading,
   onShowRatingModal,
+  onMentorUpdated,
 }: MentorHeroHeaderProps) {
   const [isConnecting, setIsConnecting] = useState(false);
+  // The tagline is the most prominent line drafted for a mentor, so it is the
+  // one they are most likely to want to correct. Edited here rather than behind
+  // a pencil in some settings page, for the same reason the other sections are.
+  const [editingTagline, setEditingTagline] = useState(false);
+  const [taglineDraft, setTaglineDraft] = useState("");
+  const [savingTagline, setSavingTagline] = useState(false);
   const { user, isAdmin } = useAuth();
   const navigate = useNavigate();
   const { activity, loading: activityLoading } = useMentorActivity(mentor.id);
 
   const isOwnProfile = Boolean(user && mentor && user.id === mentor.id);
+  const canEditTagline = isOwnProfile && Boolean(onMentorUpdated);
+
+  const startEditingTagline = () => {
+    setTaglineDraft(mentor.tagline ?? "");
+    setEditingTagline(true);
+  };
+
+  const saveTagline = async () => {
+    setSavingTagline(true);
+    // An empty tagline is a valid choice, not a failed edit — it removes the
+    // line rather than leaving the drafted one in place.
+    const next = taglineDraft.trim();
+    const { data, error } = await updateMentorSummary(mentor.id, { tagline: next || null });
+    setSavingTagline(false);
+
+    if (error || !data) {
+      toast.error("Could not save your tagline. Please try again.");
+      return;
+    }
+    onMentorUpdated?.(data as unknown as Mentor);
+    setEditingTagline(false);
+    toast.success("Saved — your tagline is yours now and won't be regenerated.");
+  };
 
   const recency = activityRecency(activity?.last_message_at ?? null);
   const recencyText = activityLoading ? null : recencyLabel(recency);
@@ -197,11 +236,62 @@ export default function MentorHeroHeader({
             </p>
 
             {/* Headline / Value Statement Tagline */}
-            {(mentor.tagline) && (
-              <p className="text-base md:text-lg font-medium text-foreground/90 leading-snug pt-1 max-w-2xl italic">
-                &ldquo;{mentor.tagline}&rdquo;
+            {editingTagline ? (
+              <div className="max-w-2xl space-y-2 pt-1">
+                <Textarea
+                  value={taglineDraft}
+                  maxLength={200}
+                  rows={2}
+                  autoFocus
+                  placeholder="One line on what you actually help with."
+                  onChange={(e) => setTaglineDraft(e.target.value)}
+                />
+                <div className="flex items-center gap-2">
+                  <Button size="sm" onClick={saveTagline} disabled={savingTagline}>
+                    {savingTagline ? (
+                      <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Check className="mr-1 h-4 w-4" />
+                    )}
+                    Save
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setEditingTagline(false)}
+                    disabled={savingTagline}
+                  >
+                    Cancel
+                  </Button>
+                  <span className="text-2xs text-muted-foreground">
+                    {taglineDraft.length}/200
+                  </span>
+                </div>
+              </div>
+            ) : mentor.tagline ? (
+              <p className="group flex max-w-2xl items-start gap-2 pt-1 text-base font-medium italic leading-snug text-foreground/90 md:text-lg">
+                <span>&ldquo;{mentor.tagline}&rdquo;</span>
+                {canEditTagline && (
+                  <button
+                    type="button"
+                    onClick={startEditingTagline}
+                    aria-label="Edit tagline"
+                    className="mt-1 flex-shrink-0 text-muted-foreground opacity-0 transition-opacity hover:text-foreground focus:opacity-100 group-hover:opacity-100"
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </button>
+                )}
               </p>
-            )}
+            ) : canEditTagline ? (
+              <button
+                type="button"
+                onClick={startEditingTagline}
+                className="flex items-center gap-1.5 pt-1 text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
+              >
+                <Pencil className="h-3.5 w-3.5" />
+                Add a one-line tagline
+              </button>
+            ) : null}
           </div>
         </div>
 
