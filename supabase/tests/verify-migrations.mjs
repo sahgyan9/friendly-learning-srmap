@@ -460,6 +460,7 @@ for (const file of [
   '20260821210000_knowledge_articles.sql',
   '20260821220000_knowledge_articles_grants_fix.sql',
   '20260821230000_grant_audit_fix.sql',
+  '20260823090000_trending_searches.sql',
 ]) {
   if (file === '20260804132345_b843f814-46d5-4c25-bc80-32e5f6ebba59.sql') {
     // Production's `faculty` table still carries `profile_image`, a column
@@ -1909,6 +1910,24 @@ check("the other user's delete attempt left the owner's history untouched", stil
 await asAuthenticated(() => q(`DELETE FROM public.search_history WHERE user_id = $1 AND query = 'history entry 9'`, [CURRENT_UID]));
 const { rows: afterDelete } = await asAuthenticated(() => q(`SELECT query FROM public.search_history WHERE user_id = $1`, [CURRENT_UID]));
 check('owner can delete a single history entry', afterDelete.length === 7 && !afterDelete.some((r) => r.query === 'history entry 9'), `got ${afterDelete.length}`);
+
+console.log('\ntrending searches (get_trending_searches rpc):');
+await q(`INSERT INTO public.search_query_cache (query_hash, query_text, hit_count, last_used_at) VALUES
+  ('trend_hot', 'hostel outpass procedure', 12, now()),
+  ('trend_warm', 'hackathon teammates', 4, now() - interval '2 days'),
+  ('trend_single_hit', 'a rare one-off query', 1, now()),
+  ('trend_too_short', 'cs', 9, now()),
+  ('trend_stale', 'old exam schedule question', 20, now() - interval '30 days')
+`);
+const { rows: trending } = await q(`SELECT query_text, hit_count FROM public.get_trending_searches(6)`);
+check('trending excludes single-hit queries', !trending.some((r) => r.query_text === 'a rare one-off query'), JSON.stringify(trending));
+check('trending excludes queries below the length floor', !trending.some((r) => r.query_text === 'cs'), JSON.stringify(trending));
+check('trending excludes queries older than 14 days', !trending.some((r) => r.query_text === 'old exam schedule question'), JSON.stringify(trending));
+check('trending surfaces the highest hit_count first', trending[0]?.query_text === 'hostel outpass procedure', JSON.stringify(trending));
+check('trending includes a qualifying warm query', trending.some((r) => r.query_text === 'hackathon teammates'), JSON.stringify(trending));
+
+const { rows: trendingLimited } = await q(`SELECT query_text FROM public.get_trending_searches(1)`);
+check('p_limit is respected', trendingLimited.length === 1, `got ${trendingLimited.length}`);
 
 console.log(failures === 0
   ? '\nAll migration checks passed against real Postgres.'
