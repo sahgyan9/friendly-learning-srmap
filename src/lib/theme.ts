@@ -15,8 +15,8 @@ export type Theme = "dark" | "light";
 
 export const THEME_STORAGE_KEY = "theme";
 
-/** Dark is the default. Only an explicit stored "light" opts out. */
-export const DEFAULT_THEME: Theme = "dark";
+/** Light is the default. Only an explicit stored "dark" opts in. */
+export const DEFAULT_THEME: Theme = "light";
 
 // Set by AuthContext on sign-in/sign-out. Module-level rather than a param
 // threaded through every call site, matching setUserContext in lib/sentry.ts.

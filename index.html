@@ -1,7 +1,8 @@
 <!DOCTYPE html>
-<!-- Dark is the default theme, set here rather than by script so it holds even
-     with JavaScript disabled and there is no frame in which the page is light. -->
-<html lang="en" class="dark" style="color-scheme: dark;">
+<!-- Light is the default theme, set here rather than by script so it holds
+     even with JavaScript disabled and there is no frame in which the page is
+     dark. -->
+<html lang="en" style="color-scheme: light;">
 
 <head>
   <meta charset="UTF-8" />
@@ -43,15 +44,15 @@
   </script>
 
   <script>
-    // Runs before first paint, so a visitor who chose light mode never sees a
-    // dark flash first. Only an explicit "light" opts out — anything else,
-    // including no stored value at all, keeps the dark default above.
+    // Runs before first paint, so a visitor who chose dark mode never sees a
+    // light flash first. Only an explicit "dark" opts in — anything else,
+    // including no stored value at all, keeps the light default above.
     // Storage key and default must match src/lib/theme.ts.
     (function () {
       try {
-        if (localStorage.getItem('theme') === 'light') {
-          document.documentElement.classList.remove('dark');
-          document.documentElement.style.colorScheme = 'light';
+        if (localStorage.getItem('theme') === 'dark') {
+          document.documentElement.classList.add('dark');
+          document.documentElement.style.colorScheme = 'dark';
         }
       } catch (e) {
         // Private browsing or blocked storage — stay on the default.
