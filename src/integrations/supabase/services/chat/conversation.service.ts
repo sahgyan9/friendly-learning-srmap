@@ -55,9 +55,14 @@ async function fetchParticipantProfiles(userIds: string[]): Promise<Map<string, 
     const user = (users ?? []).find((u) => u.id === id);
     const mentor = mentorById.get(id);
 
+    // Mentors use their official mentor directory name first
+    const preferredName = (user?.role === "mentor" || mentor)
+      ? (mentor?.name ?? user?.name)
+      : (user?.name ?? mentor?.name);
+
     profiles.set(id, {
       id,
-      name: displayName(user?.name ?? mentor?.name, user?.role),
+      name: displayName(preferredName, user?.role),
       profile_image: mentor?.profile_image ?? user?.profile_image ?? null,
       role: user?.role ?? (mentor ? "mentor" : "student"),
     });
