@@ -192,12 +192,27 @@ async function retrieve(query: string): Promise<Retrieved[]> {
     // Cap chunks per entity (see MAX_CHUNKS_PER_ENTITY above), then cap the
     // total so the prompt and the citation list stay bounded regardless of
     // how many chunks search_knowledge returned.
-    const perEntityCount = new Map<string, number>();
+    //
+    // A multi-section document (Code of Conduct: 41 sections) does NOT share
+    // one entity_id across sections -- rebuild_document_chunks() gives each
+    // campus_documents row (one per section) its own entity_id, so grouping
+    // by entity_id alone is a no-op for documents, the exact case this cap
+    // exists for. Group document chunks by their parent document (metadata
+    // .slug) instead; every other entity_type still groups by entity_id.
+    const groupKey = (m: Retrieved): string => {
+      if (m.entity_type === "document") {
+        const slug = (m.metadata as { slug?: string } | undefined)?.slug;
+        return `document:${slug ?? m.entity_id}`;
+      }
+      return `${m.entity_type}:${m.entity_id}`;
+    };
+
+    const perGroupCount = new Map<string, number>();
     const deduped = bySimilarity.filter((m) => {
-      const key = `${m.entity_type}:${m.entity_id}`;
-      const count = perEntityCount.get(key) ?? 0;
+      const key = groupKey(m);
+      const count = perGroupCount.get(key) ?? 0;
       if (count >= MAX_CHUNKS_PER_ENTITY) return false;
-      perEntityCount.set(key, count + 1);
+      perGroupCount.set(key, count + 1);
       return true;
     });
 
