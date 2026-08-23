@@ -37,16 +37,15 @@ const listedOnly = <T extends { or: (filter: string) => T }>(query: T): T =>
  *
  * Must stay one string literal so supabase-js can infer the row type.
  */
-// DEPLOY ORDER: the summary columns (tagline, outcomes, ideal_mentees,
-// ask_me_anything, profile_summary_*) are deliberately NOT listed yet.
-//
-// Vercel builds on push; migrations do not. Naming a column that production
-// does not have yet makes PostgREST reject the whole statement with 42703 --
-// not just that column -- which takes down the directory and every profile.
-// Add them back only once 20260823190000_mentor_profile_summary.sql has
-// actually been applied to the database.
+// DEPLOY ORDER, if you are adding a column to this list: apply the migration
+// to the database FIRST, then push. Vercel builds on push but migrations do
+// not, so naming a column production does not have yet makes PostgREST reject
+// the whole statement with 42703 -- not just that column -- taking down the
+// directory and every mentor profile. That happened once (a0f6b2a, reverted in
+// 5bf976a); the summary columns below were only added back after
+// 20260823190000_mentor_profile_summary.sql was confirmed live.
 const MENTOR_PUBLIC_COLUMNS =
-  'id, name, department, skills, rating, profile_image, linkedin_url, bio, review_count, created_at, year_of_studies, university, hobbies, graduation_year, is_alumni, company, job_title, is_available, available_from, availability_note, projects, experiences, courses' as const;
+  'id, name, department, skills, rating, profile_image, linkedin_url, bio, review_count, created_at, year_of_studies, university, hobbies, graduation_year, is_alumni, company, job_title, is_available, available_from, availability_note, projects, experiences, courses, tagline, outcomes, ideal_mentees, ask_me_anything, profile_summary_generated_at, profile_summary_edited_at' as const;
 
 // Helper function to get typed data from Supabase tables
 export async function getMentors() {
