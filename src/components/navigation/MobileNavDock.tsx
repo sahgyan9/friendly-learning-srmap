@@ -287,16 +287,11 @@ export function MobileNavDock() {
                     <NavbarProfileMenu />
                   </div>
                 ) : (
-                  <div className="grid grid-cols-2 gap-2">
-                    <Button asChild variant="outline" className="w-full">
-                      <Link to="/signin" state={{ from: location }}>
-                        Sign in
-                      </Link>
-                    </Button>
-                    <Button asChild className="w-full">
-                      <Link to="/signup">Sign up</Link>
-                    </Button>
-                  </div>
+                  <Button asChild className="w-full">
+                    <Link to="/signin" state={{ from: location }}>
+                      Sign in
+                    </Link>
+                  </Button>
                 )}
               </div>
             </div>

@@ -196,14 +196,14 @@ export function SiteHeader() {
                 <DarkModeToggle />
                 <div className="hidden items-center gap-2 lg:flex">
                   {/* `state.from` returns the visitor to the page they were
-                      on rather than dropping them on the homepage. */}
+                      on rather than dropping them on the homepage. Sign up is
+                      folded into this same page: Google auth handles new and
+                      returning accounts alike, and the "create a new account"
+                      link there covers email/password signup for anyone who
+                      wants it — so a separate Sign up button was a second door
+                      to the same room. */}
                   <Link to="/signin" state={{ from: location }}>
-                    <Button variant="ghost" size="sm">
-                      Sign in
-                    </Button>
-                  </Link>
-                  <Link to="/signup">
-                    <Button size="sm">Sign up</Button>
+                    <Button size="sm">Sign in</Button>
                   </Link>
                 </div>
               </>

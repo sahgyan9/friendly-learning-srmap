@@ -25,7 +25,10 @@ const SignInNudge = () => {
   }
 
   return (
-    <div className="fixed bottom-4 right-4 z-40 w-[calc(100vw-2rem)] max-w-sm rounded-2xl border border-border/80 bg-card p-4 shadow-lg sm:bottom-6 sm:right-6">
+    <div className="fixed bottom-24 right-4 z-40 w-[calc(100vw-2rem)] max-w-sm rounded-2xl border border-border/80 bg-card p-4 shadow-lg sm:right-6 lg:bottom-6">
+      {/* bottom-24 clears the MobileNavDock, which sits fixed at the bottom
+          up through the `lg` breakpoint; past `lg` the dock is gone (lg:hidden)
+          so this drops back to a plain corner offset. */}
       <div className="flex items-start gap-3">
         <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
           <LogIn className="h-4 w-4" />
