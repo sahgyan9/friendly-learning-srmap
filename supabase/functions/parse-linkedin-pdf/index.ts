@@ -59,7 +59,7 @@ serve(async (req) => {
 
     const finalMime = mimeType || "application/pdf";
 
-    const prompt = `You are an expert resume parser for a university mentorship platform. Extract structured information from this student's LinkedIn profile PDF.
+    const prompt = `You are an expert resume parser for a university mentorship platform. Extract structured information from this student's PDF, which may be a LinkedIn profile export or a regular resume/CV.
 Return a JSON object with these exact keys:
 - "name": string (full student name)
 - "department": string (field of study or major, e.g. "Computer Science and Engineering")

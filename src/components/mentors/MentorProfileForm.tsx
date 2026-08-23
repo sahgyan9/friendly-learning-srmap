@@ -15,7 +15,7 @@ import MentorBioField from "./form/MentorBioField";
 import MentorLinkedInField from "./form/MentorLinkedInField";
 import MentorFormActions from "./form/MentorFormActions";
 import MentorFormCancel from "./form/MentorFormCancel";
-import LinkedInPdfImport from "./form/LinkedInPdfImport";
+import ResumePdfImport from "./form/ResumePdfImport";
 
 interface MentorProfileFormProps {
   userId: string;
@@ -168,7 +168,7 @@ const MentorProfileForm = ({ userId, initialData, isEditMode = false }: MentorPr
 
       {showSection(0) && (
         <>
-          <LinkedInPdfImport onImported={applyImportedData} />
+          <ResumePdfImport onImported={applyImportedData} />
 
           <Section
             icon={<UserRound className="h-4 w-4" />}

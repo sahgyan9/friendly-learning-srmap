@@ -1,11 +1,11 @@
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Linkedin, Loader2, Upload } from "lucide-react";
+import { FileText, Loader2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { MentorFormData } from "@/hooks/useMentorForm";
 
-interface LinkedInPdfImportProps {
+interface ResumePdfImportProps {
   onImported: (data: Partial<MentorFormData>) => void;
 }
 
@@ -24,7 +24,7 @@ const fileToBase64 = (file: File): Promise<string> =>
     reader.readAsDataURL(file);
   });
 
-const LinkedInPdfImport = ({ onImported }: LinkedInPdfImportProps) => {
+const ResumePdfImport = ({ onImported }: ResumePdfImportProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -43,7 +43,7 @@ const LinkedInPdfImport = ({ onImported }: LinkedInPdfImportProps) => {
     }
 
     setIsLoading(true);
-    const loadingId = toast.loading("Parsing your LinkedIn profile...");
+    const loadingId = toast.loading("Reading your PDF...");
 
     try {
       const pdfBase64 = await fileToBase64(file);
@@ -73,7 +73,7 @@ const LinkedInPdfImport = ({ onImported }: LinkedInPdfImportProps) => {
         id: loadingId,
       });
     } catch (err: unknown) {
-      console.error("LinkedIn import failed:", err);
+      console.error("Resume import failed:", err);
       const msg = err instanceof Error ? err.message : "Failed to parse PDF";
       toast.error(msg, { id: loadingId });
     } finally {
@@ -86,15 +86,15 @@ const LinkedInPdfImport = ({ onImported }: LinkedInPdfImportProps) => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div className="flex items-start gap-3">
           <div className="rounded-md bg-primary/10 p-2">
-            <Linkedin className="h-5 w-5 text-primary" />
+            <FileText className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <p className="font-medium text-sm">Import from LinkedIn</p>
+            <p className="font-medium text-sm">Import from your resume or LinkedIn PDF</p>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Upload your LinkedIn profile PDF and we'll auto-fill the form.
+              Upload whichever PDF you already have and we'll auto-fill the form.
               <br />
               <span className="opacity-80">
-                LinkedIn → Your Profile → More → Save to PDF
+                No LinkedIn PDF? LinkedIn → Your Profile → More → Save to PDF
               </span>
             </p>
           </div>
@@ -133,4 +133,4 @@ const LinkedInPdfImport = ({ onImported }: LinkedInPdfImportProps) => {
   );
 };
 
-export default LinkedInPdfImport;
+export default ResumePdfImport;
