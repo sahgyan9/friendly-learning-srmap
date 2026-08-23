@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { CampusMindIcon } from "@/components/icons/CampusMindIcon";
 import { CampusThinkingStatus } from "@/components/search/CampusThinkingStatus";
+import { HorizontalScroller } from "@/components/ui/HorizontalScroller";
 import {
   Sparkles,
   ChevronDown,
@@ -596,7 +597,11 @@ export const CampusAIOverview: React.FC<CampusAIOverviewProps> = ({
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+                  <HorizontalScroller
+                    className="flex items-stretch gap-2 pb-0.5"
+                    ariaLabel="Cited campus sources"
+                    fadeFrom="from-card"
+                  >
                     {citedSources.map((source) => {
                       const isActive = activeCitationId === source.id;
                       return (
@@ -606,7 +611,7 @@ export const CampusAIOverview: React.FC<CampusAIOverviewProps> = ({
                           onMouseEnter={() => setActiveCitationId(source.id)}
                           onMouseLeave={() => setActiveCitationId(null)}
                           className={cn(
-                            "group relative flex items-start gap-1.5 rounded-xl border p-2 backdrop-blur-md transition-all duration-200 text-left shadow-2xs",
+                            "group relative flex w-[230px] shrink-0 items-start gap-1.5 rounded-xl border p-2 backdrop-blur-md transition-all duration-200 text-left shadow-2xs",
                             isActive
                               ? "border-primary bg-primary/15 ring-2 ring-primary/20 shadow-sm"
                               : "border-border/60 bg-card/80 hover:border-primary/50 hover:bg-accent/50"
@@ -634,7 +639,7 @@ export const CampusAIOverview: React.FC<CampusAIOverviewProps> = ({
                         </Link>
                       );
                     })}
-                  </div>
+                  </HorizontalScroller>
                 </div>
               )}
 

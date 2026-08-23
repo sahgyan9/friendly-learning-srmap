@@ -282,6 +282,15 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
       const postMap = new Map<string, SearchResultItem>();
       const communityMap = new Map<string, SearchResultItem>();
       const documentMap = new Map<string, SearchResultItem>();
+      // Every other entity_type below caps how many chunks of the SAME
+      // underlying thing can surface (documentMap itself is keyed by
+      // entity_id, but rebuild_document_chunks() gives each SECTION of a
+      // document its own entity_id, so that dedup never applied across a
+      // document's own sections). A 41-section document like the Code of
+      // Conduct could otherwise fill this whole list by chunk-count alone,
+      // regardless of topical fit. Cap sections per document by slug.
+      const documentSlugCounts = new Map<string, number>();
+      const MAX_SECTIONS_PER_DOCUMENT = 2;
 
       // 1. Process Mentors (with exact ranking boost & rich snippets)
       (mentorRes.data ?? []).forEach((m, idx) => {
@@ -784,6 +793,24 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
             }
           } else if (hit.entity_type === "document") {
             if (!documentMap.has(hit.entity_id)) {
+              const docSlug = typeof hit.metadata?.slug === "string" ? hit.metadata.slug : hit.entity_id;
+              const docCandidateText = `${hit.title} ${hit.subtitle ?? ""} ${hit.body ?? ""}`;
+
+              // Same 0.58 bar every other entity type above already applies —
+              // documents were the one type with no topical gate at all, so a
+              // generic-language section of a large policy document could
+              // surface for a query it has nothing to do with as long as it
+              // cleared search_knowledge's 0.35 floor.
+              if (parsed.specificTokens.length > 0 && similarity < 0.58) {
+                if (!hasTopicalMatch(docCandidateText, parsed)) {
+                  return;
+                }
+              }
+
+              const sectionsFromThisDoc = documentSlugCounts.get(docSlug) ?? 0;
+              if (sectionsFromThisDoc >= MAX_SECTIONS_PER_DOCUMENT) return;
+              documentSlugCounts.set(docSlug, sectionsFromThisDoc + 1);
+
               const docCategory = typeof hit.metadata?.category === "string" ? hit.metadata.category : "Campus Policy";
               const docPage = typeof hit.metadata?.page_number === "number" ? `Page ${hit.metadata.page_number}` : "";
               const docSnippet = hit.body
@@ -791,7 +818,6 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
                 : typeof hit.metadata?.section_heading === "string"
                 ? hit.metadata.section_heading
                 : "Official SRM-AP campus document / academic policy.";
-              const docSlug = typeof hit.metadata?.slug === "string" ? hit.metadata.slug : hit.entity_id;
 
               documentMap.set(hit.entity_id, {
                 id: hit.entity_id,
