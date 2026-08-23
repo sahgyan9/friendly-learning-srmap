@@ -2459,6 +2459,10 @@ export type Database = {
         Args: never
         Returns: Json
       }
+      admin_kpi_metrics: {
+        Args: never
+        Returns: Json
+      }
       admin_list_mentor_welcome_status: {
         Args: never
         Returns: {

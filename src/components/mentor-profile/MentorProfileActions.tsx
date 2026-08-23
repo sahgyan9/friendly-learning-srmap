@@ -10,6 +10,7 @@ import { getMentorById, isMentorListed } from "@/integrations/supabase/services/
 import { getOrCreateConversation } from "@/integrations/supabase/services/chat";
 import { useNavigate } from "react-router-dom";
 import { Mentor } from "@/types/mentor";
+import { trackEvent } from "@/lib/posthog";
 
 interface MentorProfileActionsProps {
   mentor: Mentor;
@@ -64,6 +65,8 @@ const MentorProfileActions = ({
       }
       
       
+      trackEvent("mentor_contacted", { mentor_id: mentor.id });
+
       // Show success message
       toast.success(`Connected with ${mentor.name}. Redirecting to messages...`);
       
