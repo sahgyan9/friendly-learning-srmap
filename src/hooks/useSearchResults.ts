@@ -39,6 +39,7 @@ import { BLOG_POSTS } from "@/data/blog-posts";
 import { normalise } from "@/lib/search/rank";
 import { slugify } from "@/lib/utils";
 import { parseQuery, calculateExactBoost, fuzzyMatchTokens, matchesWordBoundary, hasTopicalMatch } from "@/lib/search/query-engine";
+import { scoreResult, normaliseClicks, clamp01, MIN_FACULTY_RELEVANCE } from "@/lib/search/relevance";
 import type { SearchTab } from "@/lib/search/search-params";
 
 /**
@@ -127,6 +128,8 @@ const ALL_PREVIEW = 3;
 
 /** Blog posts are bundled with the app — match them locally against real subject keywords and informational guide intents. */
 function searchBlogLocally(parsed: import("@/lib/search/query-engine").ParsedQuery, limit: number): SearchResultItem[] {
+  /** Highest raw score searchBlogLocally can award, used to normalise onto the shared 0–1 lexical scale. */
+  const MAX_BLOG_RAW = 130;
   // If query is an informational/guide archetype, match high-value campus guides
   if (parsed.intent === "informational") {
     const scoredBlogs = BLOG_POSTS.map((p) => {
@@ -169,7 +172,11 @@ function searchBlogLocally(parsed: import("@/lib/search/query-engine").ParsedQue
         { label: "All Guides", to: "/blog" },
       ],
       meta: { tags: p.tags, date: p.date, readingMinutes: p.readingMinutes },
-      relevanceScore: score,
+      relevanceScore: scoreResult(
+        "blog",
+        { lexical: clamp01(score / MAX_BLOG_RAW) },
+        parsed.targetCategory,
+      ),
     }));
   }
 
@@ -203,7 +210,10 @@ function searchBlogLocally(parsed: import("@/lib/search/query-engine").ParsedQue
         { label: "All Guides", to: "/blog" },
       ],
       meta: { tags: p.tags, date: p.date, readingMinutes: p.readingMinutes },
-      relevanceScore: 50,
+      // A tag or title term matched, which is real but weak evidence — guides
+      // are broad by nature, so one keyword hit should not outrank a person
+      // whose whole profile is about the subject.
+      relevanceScore: scoreResult("blog", { lexical: 0.4 }, parsed.targetCategory),
     }));
 }
 
@@ -270,10 +280,18 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
 
       if (run !== sequence.current) return;
 
-      const getCtrBoost = (entityId: string) => {
-        const clicks = qualityCache?.[entityId] || 0;
-        return clicks > 0 ? Math.log2(1 + clicks) * 10 : 0;
-      };
+      /** Behavioural quality for one entity, as a 0–1 signal. */
+      const ctrQuality = (entityId: string) => normaliseClicks(qualityCache?.[entityId] || 0);
+
+      /**
+       * Every category below scores through this one function, so the numbers
+       * it returns are comparable across categories — which is what lets
+       * Search.tsx order the sections themselves by their best result.
+       */
+      const score = (
+        entityType: Parameters<typeof scoreResult>[0],
+        signals: Parameters<typeof scoreResult>[1],
+      ) => scoreResult(entityType, signals, parsed.targetCategory);
 
       const mentorMap = new Map<string, SearchResultItem>();
       const facultyMap = new Map<string, SearchResultItem>();
@@ -316,7 +334,10 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
           sitelinks.push({ label: "LinkedIn", to: m.linkedin_url, isExternal: true });
         }
 
-        const mentorCategoryBoost = parsed.targetCategory === "mentors" ? 80 : 0;
+        // Reaching this loop already means the mentor matched searchMentors'
+        // text query across name, skills and bio, so there is real lexical
+        // evidence here even without an exact name hit.
+        const mentorLexical = clamp01(0.45 + boost * 0.5);
         mentorMap.set(m.id, {
           id: m.id,
           title: m.name ?? "Mentor",
@@ -341,7 +362,7 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
             job_title: m.job_title,
             is_available: m.is_available,
           },
-          relevanceScore: 100 + boost * 50 + mentorCategoryBoost + getCtrBoost(m.id),
+          relevanceScore: score("mentor", { lexical: mentorLexical, quality: ctrQuality(m.id) }),
         });
       });
 
@@ -363,7 +384,6 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
         const interestMatchCount = parsed.filteredFacultyTokens.filter(
           (tok) => tok.length >= 3 && matchesWordBoundary(interestText, tok),
         ).length;
-        const interestBoost = interestMatchCount * 40;
 
         const researchSnippet = f.research_details?.join(". ") || (interestsList.length > 0 ? `Research and subject expertise: ${interestsList.slice(0, 5).join(", ")}. Approaches in teaching and laboratory projects.` : `${f.designation || "Faculty Member"} in the Department of ${f.department} at SRM University-AP.`);
 
@@ -387,16 +407,17 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
           return;
         }
 
-        let baseFacultyScore = 20;
+        // Ordered by how much the signal proves: an exact name is a certainty,
+        // a department match narrows the field, matched research interests are
+        // the topical signal that actually answers "who works on X".
+        let facultyLexical = 0.2;
         if (hasExactName) {
-          baseFacultyScore = 150 + boost * 100;
+          facultyLexical = clamp01(0.85 + boost * 0.15);
         } else if (hasDeptMatch) {
-          baseFacultyScore = 100 + deptBoost + interestBoost;
+          facultyLexical = clamp01(0.55 + interestMatchCount * 0.12);
         } else if (hasInterestMatch) {
-          baseFacultyScore = 70 + interestBoost;
+          facultyLexical = clamp01(0.45 + interestMatchCount * 0.15);
         }
-
-        const facultyCategoryPenalty = parsed.targetCategory === "mentors" ? -60 : (parsed.targetCategory === "faculty" ? 80 : 0);
 
         facultyMap.set(f.id, {
           id: f.id,
@@ -425,7 +446,7 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
           },
           // Score: name-exact-match > department match > per-interest token match > weak generic match.
           // Rating never contributes to ordering here — see FACULTY_AI_ROADMAP.md red lines.
-          relevanceScore: Math.max(10, baseFacultyScore + facultyCategoryPenalty) + getCtrBoost(f.id),
+          relevanceScore: score("faculty", { lexical: facultyLexical, quality: ctrQuality(f.id) }),
         });
       });
 
@@ -464,7 +485,10 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
             is_online: o.is_online,
             location: o.location,
           },
-          relevanceScore: 100 + boost * 50 + getCtrBoost(o.id),
+          relevanceScore: score("opportunity", {
+            lexical: clamp01(0.45 + boost * 0.5),
+            quality: ctrQuality(o.id),
+          }),
         });
       });
 
@@ -478,12 +502,15 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
         ];
 
         const postText = `${p.title} ${p.content || ""}`;
-        const postTopicalScore = parsed.specificTokens.filter(tok => 
+        const postMatchCount = parsed.specificTokens.filter(tok =>
           matchesWordBoundary(postText, tok)
-        ).length * 30;
-        const postEngagement = Math.log2(1 + (p.likes_count || 0) + (p.comments_count || 0) * 2) * 10;
+        ).length;
+        // A thread matching the query's distinctive words is on topic; matching
+        // three of them is barely more certain than matching two, hence the cap.
+        const postLexical = clamp01(postMatchCount * 0.35);
+        const postEngagement = clamp01(Math.log2(1 + (p.likes_count || 0) + (p.comments_count || 0) * 2) / 6);
         const postAgeDays = (Date.now() - new Date(p.created_at).getTime()) / (1000 * 60 * 60 * 24);
-        const postFreshness = postAgeDays < 30 ? 20 : postAgeDays < 90 ? 10 : 0;
+        const postFreshness = postAgeDays < 30 ? 0.3 : postAgeDays < 90 ? 0.15 : 0;
 
         postMap.set(p.id, {
           id: p.id,
@@ -507,7 +534,10 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
             author: p.author,
             created_at: p.created_at,
           },
-          relevanceScore: postTopicalScore + postEngagement + postFreshness + getCtrBoost(p.id),
+          relevanceScore: score("post", {
+            lexical: postLexical,
+            quality: clamp01(postEngagement + postFreshness + ctrQuality(p.id)),
+          }),
         });
       });
 
@@ -523,12 +553,13 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
         ];
 
         const commText = `${c.name} ${c.description || ""}`;
-        const commTopicalScore = parsed.specificTokens.filter(tok =>
+        const commMatchCount = parsed.specificTokens.filter(tok =>
           matchesWordBoundary(commText, tok)
-        ).length * 30;
-        const commPopularity = Math.log2(1 + (c.member_count || 0)) * 15;
+        ).length;
+        const commLexical = clamp01(commMatchCount * 0.35);
+        const commPopularity = clamp01(Math.log2(1 + (c.member_count || 0)) / 7);
         const commAgeDays = c.last_activity_at ? (Date.now() - new Date(c.last_activity_at).getTime()) / (1000 * 60 * 60 * 24) : 999;
-        const commActivity = commAgeDays < 7 ? 20 : commAgeDays < 30 ? 10 : 0;
+        const commActivity = commAgeDays < 7 ? 0.3 : commAgeDays < 30 ? 0.15 : 0;
 
         communityMap.set(c.id, {
           id: c.id,
@@ -551,7 +582,10 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
             visibility: c.visibility,
             last_activity_at: c.last_activity_at,
           },
-          relevanceScore: commTopicalScore + commPopularity + commActivity + getCtrBoost(c.id),
+          relevanceScore: score("community", {
+            lexical: commLexical,
+            quality: clamp01(commPopularity + commActivity + ctrQuality(c.id)),
+          }),
         });
       });
 
@@ -559,19 +593,24 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
       if (semanticRes.data) {
         const semanticHits = allResults(semanticRes.data);
         semanticHits.forEach((hit) => {
-          const simScore = (hit.similarity ?? 0.5) * 160;
           const similarity = hit.similarity ?? 0;
 
           if (hit.entity_type === "mentor") {
             const deptMatch = parsed.detectedDepartment
               ? (hit.subtitle || "").toLowerCase().includes(parsed.detectedDepartment.toLowerCase())
               : false;
-            const deptBoost = deptMatch ? 60 : 0;
-            const mentorCategoryBoost = parsed.targetCategory === "mentors" ? 70 : 0;
+            // A department named in the query and present on the profile is
+            // literal agreement, so it belongs in the lexical signal.
+            const mentorSemLexical = deptMatch ? 0.5 : 0;
 
             if (mentorMap.has(hit.entity_id)) {
               const existing = mentorMap.get(hit.entity_id)!;
-              existing.relevanceScore = Math.max(existing.relevanceScore ?? 0, simScore + 80 + deptBoost + mentorCategoryBoost);
+              // Found both lexically and semantically — keep whichever route
+              // produced more evidence rather than summing two views of one match.
+              existing.relevanceScore = Math.max(
+                existing.relevanceScore ?? 0,
+                score("mentor", { lexical: mentorSemLexical, similarity, quality: ctrQuality(hit.entity_id) }),
+              );
               existing.matchReason = "Matched via CampusMind AI semantic search";
             } else {
               // Mentor chunk metadata has: department, skills (array), profile_image, bio.
@@ -614,19 +653,25 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
                   { label: "Skills & Experience", to: `${mentorPath}#skills` },
                 ],
                 meta: hit.metadata,
-                relevanceScore: simScore + 60 + deptBoost + mentorCategoryBoost + getCtrBoost(hit.entity_id),
+                relevanceScore: score("mentor", {
+                  lexical: mentorSemLexical,
+                  similarity,
+                  quality: ctrQuality(hit.entity_id),
+                }),
               });
             }
           } else if (hit.entity_type === "faculty") {
             const deptMatch = parsed.detectedDepartment
               ? (hit.subtitle || "").toLowerCase().includes(parsed.detectedDepartment.toLowerCase())
               : false;
-            const deptBoost = deptMatch ? 60 : 0;
-            const facultyCategoryBonus = parsed.targetCategory === "faculty" ? 50 : (parsed.targetCategory === "mentors" ? -40 : 10);
+            const facultySemLexical = deptMatch ? 0.5 : 0;
 
             if (facultyMap.has(hit.entity_id)) {
               const existing = facultyMap.get(hit.entity_id)!;
-              existing.relevanceScore = Math.max(existing.relevanceScore ?? 0, simScore + facultyCategoryBonus + deptBoost);
+              existing.relevanceScore = Math.max(
+                existing.relevanceScore ?? 0,
+                score("faculty", { lexical: facultySemLexical, similarity, quality: ctrQuality(hit.entity_id) }),
+              );
               existing.matchReason = "Matched via CampusMind AI semantic search";
             } else {
               const metaInterests = Array.isArray(hit.metadata?.interests)
@@ -666,7 +711,11 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
                   { label: "Research Interests", to: `${facultyPath}#interests` },
                 ],
                 meta: hit.metadata,
-                relevanceScore: Math.max(10, simScore + facultyCategoryBonus + deptBoost) + getCtrBoost(hit.entity_id),
+                relevanceScore: score("faculty", {
+                  lexical: facultySemLexical,
+                  similarity,
+                  quality: ctrQuality(hit.entity_id),
+                }),
               });
             }
           } else if (hit.entity_type === "student") {
@@ -693,7 +742,7 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
                 snippet: interestsArr.length > 0 ? `Student interested in ${interestsArr.slice(0, 4).join(", ")}. Active in campus learning community.` : "Student profile on Friendly Learning SRMAP.",
                 matchReason: "Student with matching skills or interests",
                 meta: hit.metadata,
-                relevanceScore: simScore + getCtrBoost(hit.entity_id),
+                relevanceScore: score("student", { similarity, quality: ctrQuality(hit.entity_id) }),
               });
             }
           } else if (hit.entity_type === "opportunity") {
@@ -724,7 +773,7 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
                   { label: "Find Teammates", to: `/opportunities/${oppSlug}#teams` },
                 ],
                 meta: hit.metadata,
-                relevanceScore: simScore + getCtrBoost(hit.entity_id),
+                relevanceScore: score("opportunity", { similarity, quality: ctrQuality(hit.entity_id) }),
               });
             }
           } else if (hit.entity_type === "community") {
@@ -758,7 +807,7 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
                   { label: "Discussions", to: `${path}#discussions` },
                 ],
                 meta: hit.metadata,
-                relevanceScore: simScore + getCtrBoost(hit.entity_id),
+                relevanceScore: score("community", { similarity, quality: ctrQuality(hit.entity_id) }),
               });
             }
           } else if (hit.entity_type === "post") {
@@ -788,7 +837,7 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
                   { label: "Read Discussion", to: path },
                 ],
                 meta: hit.metadata,
-                relevanceScore: simScore + getCtrBoost(hit.entity_id),
+                relevanceScore: score("post", { similarity, quality: ctrQuality(hit.entity_id) }),
               });
             }
           } else if (hit.entity_type === "document") {
@@ -833,7 +882,11 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
                   { label: "View Document", to: hit.source_path || `/documents/${docSlug}` },
                 ],
                 meta: hit.metadata,
-                relevanceScore: simScore + 100 + getCtrBoost(hit.entity_id),
+                // No flat authority bonus any more. Documents used to carry a
+                // hardcoded +100 that put policy PDFs above every person on
+                // the page regardless of topic; intent handles that now, and
+                // a genuine policy question raises targetCategory="documents".
+                relevanceScore: score("document", { similarity, quality: ctrQuality(hit.entity_id) }),
               });
             }
           }
@@ -879,7 +932,7 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
       const blogLimit = tab === "blog" ? PAGE_SIZE : ALL_PREVIEW;
       const blog = searchBlogLocally(parsed, blogLimit);
 
-      const relevantFacultyList = allFacultyList.filter((f) => (f.relevanceScore ?? 0) > 30);
+      const relevantFacultyList = allFacultyList.filter((f) => (f.relevanceScore ?? 0) > MIN_FACULTY_RELEVANCE);
 
       const counts: SearchCounts = {
         mentors: allMentorsList.length,

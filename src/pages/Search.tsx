@@ -39,6 +39,7 @@ import {
 import { useCollapseOnScroll } from "@/hooks/useCollapseOnScroll";
 import { useSearchResults, type SearchResultItem } from "@/hooks/useSearchResults";
 import { parseQuery, calculateExactBoost, CAMPUS_DEPARTMENTS } from "@/lib/search/query-engine";
+import { MIN_FACULTY_RELEVANCE } from "@/lib/search/relevance";
 
 // ─── Relevance threshold for the "all" tab ──────────────────────────────────
 //
@@ -57,7 +58,8 @@ import { parseQuery, calculateExactBoost, CAMPUS_DEPARTMENTS } from "@/lib/searc
 // Semantic-only faculty arrive with relevanceScore = similarity × 80 (<100),
 // so they are never caught by this filter and always shown when relevant.
 //
-const MIN_FACULTY_RELEVANCE_ALL = 30; // strict greater-than: >30 means at least one genuine match signal
+// Threshold lives with the scale it is expressed in — see relevance.ts.
+const MIN_FACULTY_RELEVANCE_ALL = MIN_FACULTY_RELEVANCE;
 
 // ─── Per-category metadata ──────────────────────────────────────────────────
 

@@ -142,6 +142,58 @@ export const STOP_WORDS = new Set([
   "please", "thanks", "thank", "good", "great", "best", "top", "better", "really", "very", "also", "just", "well"
 ]);
 
+/**
+ * Multi-word technical terms whose other half is an ordinary English word.
+ *
+ * "learning" is a stop word for good reason — "help me learning python" — and
+ * "systems", "science" and "processing" are generic research noise on their
+ * own. But dropping them mid-phrase destroys the term: "machine learning
+ * faculty" was distilling to "machine", which embeds toward *mechanical*
+ * engineering, and the search returned metallurgy professors for the most
+ * common technical query on this campus.
+ *
+ * A word listed here survives filtering only when the query actually contains
+ * the whole phrase, so "learning" is still dropped from "want help learning
+ * python" — the stop word is right in isolation and wrong inside a term.
+ */
+export const TECHNICAL_PHRASES = [
+  "machine learning",
+  "deep learning",
+  "reinforcement learning",
+  "transfer learning",
+  "federated learning",
+  "supervised learning",
+  "unsupervised learning",
+  "statistical learning",
+  "representation learning",
+  "data structures",
+  "data science",
+  "computer science",
+  "computer vision",
+  "natural language processing",
+  "signal processing",
+  "image processing",
+  "quantum computing",
+  "high performance computing",
+  "distributed systems",
+  "embedded systems",
+  "operating systems",
+  "control systems",
+  "software engineering",
+  "materials science",
+];
+
+/** Words that must survive filtering because the query used them inside a technical phrase. */
+export function protectedPhraseWords(normalized: string): Set<string> {
+  const protectedWords = new Set<string>();
+  for (const phrase of TECHNICAL_PHRASES) {
+    if (normalized.includes(phrase)) {
+      phrase.split(" ").forEach((word) => protectedWords.add(word));
+    }
+  }
+  return protectedWords;
+}
+
 // Generic research modifier words that should not trigger isolated full-table matches
 export const GENERIC_RESEARCH_WORDS = new Set([
   "development", "design", "systems", "system", "analysis", "engineering", "structures", "structure",
@@ -266,7 +318,21 @@ export type QueryIntent =
   | "post"             // Discussion threads (e.g. "Campus posts")
   | "general";         // Broad overview
 
-export type TargetCategory = "mentors" | "faculty" | "opportunities" | "communities" | "posts" | "blog";
+export type TargetCategory = "mentors" | "faculty" | "opportunities" | "communities" | "posts" | "blog" | "documents";
+
+/**
+ * Words re-added to the embedded query when the reader named a category.
+ *
+ * Only the two people types are listed. Faculty and mentor chunks are near
+ * neighbours in embedding space — both are "a person at SRM-AP who knows
+ * about X" — so the role noun is what separates them, and it is exactly the
+ * word the distiller strips. The other categories are already well separated
+ * by their own content and gain nothing from keyword stuffing.
+ */
+const ROLE_TERMS: Partial<Record<TargetCategory, string[]>> = {
+  faculty: ["faculty", "professor"],
+  mentors: ["senior", "student", "mentor"],
+};
 
 export interface ParsedQuery {
   raw: string;
@@ -373,18 +439,24 @@ export function parseQuery(query: string): ParsedQuery {
   const isElectiveQuery = rawWords.some((w) => ["elective", "electives", "registration", "credits"].includes(w));
   const isHackathonGuide = (rawWords.includes("hackathon") || rawWords.includes("sih")) && (isHowToQuery || rawWords.includes("teammates") || rawWords.includes("team"));
 
+  // Container nouns before topic nouns. "group", "club" and "discussion"
+  // describe *where* an answer lives and are almost never the subject; words
+  // like "hackathon" and "internship" are usually the subject and only
+  // sometimes the category. Checking opportunities first made "discussion
+  // about internship experience" an opportunity query, which pushed the
+  // matching threads below unrelated groups.
   if (isMentorExplicit || isMentorConversational) {
     targetCategory = "mentors";
   } else if (isFacultyExplicit) {
     targetCategory = "faculty";
-  } else if (isOppExplicit) {
-    targetCategory = "opportunities";
   } else if (isCommunityExplicit) {
     targetCategory = "communities";
   } else if (isPostExplicit) {
     targetCategory = "posts";
+  } else if (isOppExplicit) {
+    targetCategory = "opportunities";
   } else if (isDocumentExplicit) {
-    targetCategory = "documents" as any;
+    targetCategory = "documents";
   }
 
   if (isFresherQuery && !isMentorConversational) {
@@ -425,6 +497,15 @@ export function parseQuery(query: string): ParsedQuery {
   const expandedPhrasesSet = new Set<string>();
 
   for (const [key, deptName] of Object.entries(CAMPUS_DEPARTMENTS)) {
+    // "me" is the department code for Mechanical Engineering and also the
+    // commonest word in a conversational query. "who can help me with a
+    // machine learning project" was being read as a Mechanical Engineering
+    // search, which prepended "Mechanical Engineering" to the embedded query
+    // and narrowed the faculty lookup to that one department. Anyone actually
+    // looking for the department types "mech" or "mechanical", both of which
+    // still work.
+    if (!key.includes(" ") && STOP_WORDS.has(key)) continue;
+
     const isMultiWord = key.includes(" ");
     const isExactMatch = isMultiWord
       ? normalized.includes(key)
@@ -440,11 +521,14 @@ export function parseQuery(query: string): ParsedQuery {
     }
   }
 
+  const protectedWords = protectedPhraseWords(normalized);
+
   for (const word of rawWords) {
     tokens.push(word);
 
-    // Expand synonyms
-    if (CAMPUS_SYNONYMS[word]) {
+    // Expand synonyms — same stop-word guard as the department scan above,
+    // or "help me" quietly expands into mechanical-engineering phrases.
+    if (CAMPUS_SYNONYMS[word] && !STOP_WORDS.has(word)) {
       CAMPUS_SYNONYMS[word].forEach((syn) => expandedPhrasesSet.add(syn));
     }
 
@@ -461,14 +545,14 @@ export function parseQuery(query: string): ParsedQuery {
     }
 
     // Filter subject & name tokens
-    if (!ROLE_KEYWORDS.has(word) && !STOP_WORDS.has(word)) {
+    if (protectedWords.has(word) || (!ROLE_KEYWORDS.has(word) && !STOP_WORDS.has(word))) {
       subjectTokens.push(word);
       nameTokens.push(word);
     }
   }
 
   // Filter out generic research noise words if other specific tokens exist
-  const specificTokens = subjectTokens.filter((t) => !GENERIC_RESEARCH_WORDS.has(t));
+  const specificTokens = subjectTokens.filter((t) => protectedWords.has(t) || !GENERIC_RESEARCH_WORDS.has(t));
   const filteredFacultyTokens = specificTokens.length > 0 ? specificTokens : subjectTokens;
 
   const suggestedQuery = hasCorrection ? correctedWords.join(" ") : null;
@@ -502,6 +586,21 @@ export function parseQuery(query: string): ParsedQuery {
     semanticQuery = `${detectedDepartment} ${semanticQuery}`.trim();
   }
   if (!semanticQuery) semanticQuery = normalized;
+
+  // Keep the role word the reader actually used.
+  //
+  // Chunk text in the knowledge index literally reads "Faculty member at SRM
+  // University-AP. Department of X" or "Senior student mentor…", so the role
+  // noun is the single strongest discriminator the corpus offers. Stripping it
+  // as a "category word" while simultaneously using it to set targetCategory
+  // told the retriever the opposite of what the parser had just concluded:
+  // "i am a fresher and want help from faculty" distilled to "fresher help",
+  // which came back as mentors exclusively, with no faculty in the results at
+  // all — no amount of re-ranking can recover a row that was never retrieved.
+  const roleTerm = targetCategory ? ROLE_TERMS[targetCategory] : undefined;
+  if (roleTerm && !roleTerm.some((word) => semanticQuery.includes(word))) {
+    semanticQuery = `${semanticQuery} ${roleTerm.join(" ")}`.trim();
+  }
 
   return {
     raw,

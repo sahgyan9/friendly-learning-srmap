@@ -18,5 +18,8 @@ export default defineConfig({
     globals: true,
     setupFiles: ["./src/test/setup.ts"],
     css: false,
+    // *.eval.test.ts files hit production and spend Gemini embedding quota, so
+    // they are never part of `npm test`. Run them on purpose: `npm run eval:search`.
+    exclude: ["**/node_modules/**", "**/dist/**", "**/*.eval.test.ts"],
   },
 });

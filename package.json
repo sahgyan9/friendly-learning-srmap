@@ -28,7 +28,8 @@
     "qa:recommended-people": "node qa-recommended-people.mjs",
     "qa:welcome-tour-interests": "node qa-welcome-tour-interests.mjs",
     "qa:opportunities-loop": "node qa-opportunities-loop.mjs",
-    "qa:workspace-redesign": "node qa-workspace-redesign.mjs"
+    "qa:workspace-redesign": "node qa-workspace-redesign.mjs",
+    "eval:search": "vitest run --config vitest.eval.config.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
