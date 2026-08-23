@@ -3185,6 +3185,7 @@ export type Database = {
           p_viewer?: string
         }
         Returns: {
+          body: string | null
           entity_id: string
           entity_type: string
           metadata: Json

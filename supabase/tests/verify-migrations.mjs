@@ -529,6 +529,22 @@ console.log('');
 //    with visibility other than 'signed_in'. All assertions raised on
 //    failure; the batch completed clean, then rolled back.
 //
+//    20260823110000_search_knowledge_returns_body.sql
+//    Redefines search_knowledge(), whose body reads `kc.embedding <=>
+//    p_embedding` -- same pgvector dependency as every other file in this
+//    group. Verify against production with BEGIN/ROLLBACK before commit:
+//    confirm the function's OUT columns now include `body`, and that
+//    `SELECT * FROM search_knowledge(...)` for a query known to match a
+//    seeded chunk returns that chunk's body text non-NULL.
+//
+//    NOTE: 20260816090000_enrich_mentor_chunks.sql, which also redefines
+//    search_knowledge() (raising p_min_similarity's default 0.30 -> 0.35),
+//    predates this comment and was never added to this list or the
+//    executed-migrations array above -- a pre-existing gap in this harness,
+//    not something this pass silently swept in. Flagged here rather than
+//    fixed, since fixing it means writing the same kind of production
+//    verification retroactively for a migration that already shipped.
+//
 // 2. HTTP EXTENSION (1 file) -- genuinely cannot run in PGlite.
 //    20250830093916_929b871a-3813-4027-b579-bc3b114062c6.sql
 //    `CREATE EXTENSION IF NOT EXISTS http;` -- PGlite ships no `http`

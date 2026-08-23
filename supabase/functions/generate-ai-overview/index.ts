@@ -14,6 +14,18 @@ const GEMINI_KEYS = [
 ].filter((k): k is string => Boolean(k && k.trim().length > 0));
 const MODEL = "gemini-flash-latest";
 
+// A single entity can back several indexed chunks (a multi-section document
+// like the Code of Conduct, or a faculty member's separate interest/skill
+// chunks post-20260817000000_multi_chunk_indexing.sql). Ranking is
+// similarity-only with no per-entity weighting, so an entity with many
+// chunks gets many independent chances to clear the similarity floor on any
+// loosely related query -- 41 Code of Conduct sections vs. 6 academic
+// calendar sections meant Code of Conduct dominated results regardless of
+// topical fit. Capping chunks per entity fixes that at the source, and
+// capping total matches keeps the prompt and the citation list bounded.
+const MAX_CHUNKS_PER_ENTITY = 2;
+const MAX_MATCHES = 8;
+
 type CalendarFact = {
   dateLabel: string; // e.g. "Today (Friday, 21 August 2026)"
   is_holiday: boolean;
@@ -175,7 +187,21 @@ async function retrieve(query: string): Promise<Retrieved[]> {
     ] as Retrieved[];
 
     // Re-sort by similarity since flattening mixes the groups
-    return all.sort((a, b) => b.similarity - a.similarity);
+    const bySimilarity = all.sort((a, b) => b.similarity - a.similarity);
+
+    // Cap chunks per entity (see MAX_CHUNKS_PER_ENTITY above), then cap the
+    // total so the prompt and the citation list stay bounded regardless of
+    // how many chunks search_knowledge returned.
+    const perEntityCount = new Map<string, number>();
+    const deduped = bySimilarity.filter((m) => {
+      const key = `${m.entity_type}:${m.entity_id}`;
+      const count = perEntityCount.get(key) ?? 0;
+      if (count >= MAX_CHUNKS_PER_ENTITY) return false;
+      perEntityCount.set(key, count + 1);
+      return true;
+    });
+
+    return deduped.slice(0, MAX_MATCHES);
   } catch (error) {
     console.error("retrieval failed:", error);
     return [];

@@ -596,7 +596,7 @@ export const CampusAIOverview: React.FC<CampusAIOverviewProps> = ({
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
                     {citedSources.map((source) => {
                       const isActive = activeCitationId === source.id;
                       return (
@@ -606,48 +606,31 @@ export const CampusAIOverview: React.FC<CampusAIOverviewProps> = ({
                           onMouseEnter={() => setActiveCitationId(source.id)}
                           onMouseLeave={() => setActiveCitationId(null)}
                           className={cn(
-                            "group relative flex flex-col justify-between rounded-xl border p-3 backdrop-blur-md transition-all duration-200 text-left shadow-2xs",
+                            "group relative flex items-start gap-1.5 rounded-xl border p-2 backdrop-blur-md transition-all duration-200 text-left shadow-2xs",
                             isActive
                               ? "border-primary bg-primary/15 ring-2 ring-primary/20 shadow-sm"
                               : "border-border/60 bg-card/80 hover:border-primary/50 hover:bg-accent/50"
                           )}
                         >
-                          <div>
-                            <div className="flex items-center justify-between gap-1.5 mb-2">
-                              <span className={cn(
-                                "inline-flex items-center justify-center h-5 px-1.5 rounded-md text-3xs font-bold border transition-colors",
-                                isActive
-                                  ? "bg-primary text-primary-foreground border-primary"
-                                  : "bg-primary/10 text-primary border-primary/20"
-                              )}>
-                                [{source.id}]
-                              </span>
-                              <span className={cn("inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-4xs font-semibold uppercase tracking-wider", source.badgeColor)}>
-                                {source.icon}
-                                <span>{source.label}</span>
-                              </span>
-                            </div>
+                          <span className={cn(
+                            "inline-flex shrink-0 items-center justify-center h-5 px-1.5 rounded-md text-3xs font-bold border transition-colors",
+                            isActive
+                              ? "bg-primary text-primary-foreground border-primary"
+                              : "bg-primary/10 text-primary border-primary/20"
+                          )}>
+                            [{source.id}]
+                          </span>
 
+                          <div className="min-w-0 flex-1">
                             <h4 className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-1">
                               {source.text}
                             </h4>
-                            {source.detail && (
-                              <p className="text-2xs text-muted-foreground line-clamp-1 mt-0.5">
-                                {source.detail}
-                              </p>
-                            )}
+                            <p className="text-2xs text-muted-foreground/80 line-clamp-1">
+                              {source.label}{source.detail ? ` · ${source.detail}` : ""}
+                            </p>
                           </div>
 
-                          <div className="flex items-center justify-between text-3xs text-primary group-hover:text-primary font-medium mt-2 pt-1.5 border-t border-border/30">
-                            <span className="text-muted-foreground/70 group-hover:text-foreground/80 transition-colors">
-                              {source.type === "document"
-                                ? "View Document"
-                                : source.type === "notice"
-                                  ? "View Notice"
-                                  : "View Profile"}
-                            </span>
-                            <ArrowRight className="h-3 w-3 group-hover:translate-x-0.5 transition-transform" />
-                          </div>
+                          <ArrowRight className="mt-0.5 h-3 w-3 shrink-0 text-muted-foreground/50 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
                         </Link>
                       );
                     })}
