@@ -24,6 +24,7 @@ export type Database = {
           last_attempt_at: string | null
           last_error: string | null
           last_synced_at: string | null
+          mobile_number: string | null
           program: string | null
           register_number: string
           subjects: Json
@@ -40,6 +41,7 @@ export type Database = {
           last_attempt_at?: string | null
           last_error?: string | null
           last_synced_at?: string | null
+          mobile_number?: string | null
           program?: string | null
           register_number: string
           subjects?: Json
@@ -56,6 +58,7 @@ export type Database = {
           last_attempt_at?: string | null
           last_error?: string | null
           last_synced_at?: string | null
+          mobile_number?: string | null
           program?: string | null
           register_number?: string
           subjects?: Json
@@ -2298,6 +2301,59 @@ export type Database = {
         }
         Relationships: []
       }
+      srm_portal_credentials: {
+        Row: {
+          consecutive_failures: number
+          created_at: string
+          dob_ciphertext: string
+          dob_iv: string
+          encryption_version: number
+          id: string
+          last_attempt_at: string | null
+          last_error: string | null
+          last_success_at: string | null
+          register_number: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          consecutive_failures?: number
+          created_at?: string
+          dob_ciphertext: string
+          dob_iv: string
+          encryption_version?: number
+          id?: string
+          last_attempt_at?: string | null
+          last_error?: string | null
+          last_success_at?: string | null
+          register_number: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          consecutive_failures?: number
+          created_at?: string
+          dob_ciphertext?: string
+          dob_iv?: string
+          encryption_version?: number
+          id?: string
+          last_attempt_at?: string | null
+          last_error?: string | null
+          last_success_at?: string | null
+          register_number?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "srm_portal_credentials_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       users: {
         Row: {
           alumni_confirmed_at: string | null
@@ -2305,6 +2361,7 @@ export type Database = {
           college_id: string | null
           company: string | null
           created_at: string | null
+          date_of_birth_linked: boolean
           department: string | null
           email: string
           email_frequency: string | null
@@ -2333,6 +2390,7 @@ export type Database = {
           college_id?: string | null
           company?: string | null
           created_at?: string | null
+          date_of_birth_linked?: boolean
           department?: string | null
           email: string
           email_frequency?: string | null
@@ -2361,6 +2419,7 @@ export type Database = {
           college_id?: string | null
           company?: string | null
           created_at?: string | null
+          date_of_birth_linked?: boolean
           department?: string | null
           email?: string
           email_frequency?: string | null

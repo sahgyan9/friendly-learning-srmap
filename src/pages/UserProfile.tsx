@@ -280,7 +280,7 @@ const UserProfile = () => {
                   usually asking "is any of this working?", and the answer
                   should not be below the fold. */}
               {isUserMentor && user?.id && <MentorDashboard mentorId={user.id} />}
-              <ImportSrmPortal onProfileUpdate={fetchProfile} />
+              {isUserMentor && <ImportSrmPortal onProfileUpdate={fetchProfile} />}
               <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
                 <ProfileInfoForm
                   profile={profile}

@@ -65,20 +65,27 @@ interface ImportSrmPortalDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: (result?: ImportSuccessResult) => void;
+  /** Pre-fills the register number field — used when the caller (e.g. the
+   * mentor sign-up form) already has it, e.g. from college_id. */
+  defaultRegisterNumber?: string;
 }
 
 /**
- * Standalone dialog for authenticating with student.srmap.edu.in and importing
- * academic details. Can be rendered from anywhere (profile page, navbar, etc.).
- * Fully self-contained: the success step includes its own course list viewer
- * and "Apply to Profile" action, so every entry point behaves the same way.
+ * Standalone dialog for linking student.srmap.edu.in — always sends
+ * step:"link", so a successful login also persists an encrypted DOB and flips
+ * users.date_of_birth_linked, letting sync-srm-portal refresh this account
+ * automatically afterward (see that function's header comment). Can be
+ * rendered from anywhere (profile page, mentor sign-up form). Fully
+ * self-contained: the success step includes its own course list viewer and
+ * "Apply to Profile" action, so every entry point behaves the same way.
  */
 export const ImportSrmPortalDialog = ({
   open,
   onOpenChange,
   onSuccess,
+  defaultRegisterNumber,
 }: ImportSrmPortalDialogProps) => {
-  const { user } = useAuth();
+  const { user, refreshProfile } = useAuth();
   const [captchaData, setCaptchaData] = useState<CaptchaStepData | null>(null);
   const [fetchingCaptcha, setFetchingCaptcha] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -118,23 +125,27 @@ export const ImportSrmPortalDialog = ({
   useEffect(() => {
     if (open) {
       setSuccessResult(null);
-      setRegisterNumber("");
+      setRegisterNumber(defaultRegisterNumber ?? "");
       setPassword("");
       setAppliedToProfile(false);
       fetchCaptcha();
 
       // Prefill the register number from a prior successful sync, if any —
       // it's not sensitive (unlike the portal password, which is never
-      // stored), so there's no reason to make the student retype it.
+      // stored in plaintext), so there's no reason to make the student
+      // retype it. Only overrides the field if the caller didn't already
+      // supply one via defaultRegisterNumber.
       if (user) {
-        supabase
-          .from("academic_imports")
-          .select("register_number")
-          .eq("user_id", user.id)
-          .maybeSingle()
-          .then(({ data }) => {
-            if (data?.register_number) setRegisterNumber(data.register_number);
-          });
+        if (!defaultRegisterNumber) {
+          supabase
+            .from("academic_imports")
+            .select("register_number")
+            .eq("user_id", user.id)
+            .maybeSingle()
+            .then(({ data }) => {
+              if (data?.register_number) setRegisterNumber(data.register_number);
+            });
+        }
 
         supabase
           .from("mentors")
@@ -206,11 +217,11 @@ export const ImportSrmPortalDialog = ({
     if (!captchaData || !registerNumber.trim() || !password.trim() || !captchaText.trim()) return;
 
     setSubmitting(true);
-    const loadingId = toast.loading("Signing in and importing your academic profile...");
+    const loadingId = toast.loading("Signing in and linking your SRM portal...");
     try {
       const { data, error } = await supabase.functions.invoke("import-srm-portal", {
         body: {
-          step: "login",
+          step: "link",
           sessionToken: captchaData.sessionToken,
           registerNumber: registerNumber.trim().toUpperCase(),
           dobPassword: password,
@@ -229,19 +240,19 @@ export const ImportSrmPortalDialog = ({
       };
 
       setSuccessResult(result);
+      void refreshProfile();
 
-      // Toast notification with explicit details
       toast.success(
-        `Imported SRM Profile: ${result.program || "Coursework"} (${result.subjectCount} subjects${result.cgpa ? ` · ${result.cgpa.toFixed(2)} CGPA` : ""})`,
+        `Linked SRM Portal: ${result.program || "Coursework"} (${result.subjectCount} subjects${result.cgpa ? ` · ${result.cgpa.toFixed(2)} CGPA` : ""})`,
         {
           id: loadingId,
-          description: "Your academic details are synced with your account.",
+          description: "We'll keep this current automatically from now on.",
         }
       );
 
       onSuccess?.(result);
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Import failed";
+      const message = err instanceof Error ? err.message : "Linking failed";
       toast.error(message, { id: loadingId });
       fetchCaptcha();
     } finally {
@@ -259,10 +270,10 @@ export const ImportSrmPortalDialog = ({
               <div className="h-12 w-12 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-500 animate-in zoom-in-95">
                 <CheckCircle2 className="h-6 w-6" />
               </div>
-              <DialogTitle className="text-xl font-bold">Academic Profile Imported!</DialogTitle>
+              <DialogTitle className="text-xl font-bold">SRM Portal Linked!</DialogTitle>
               <DialogDescription className="text-xs text-muted-foreground max-w-xs">
                 We signed in to the SRM portal and read your coursework and academic standing below.
-                This raw data is already saved to your account — nothing to do there.
+                This is already saved to your account, and we'll refresh it automatically going forward.
               </DialogDescription>
             </div>
 
@@ -359,12 +370,13 @@ export const ImportSrmPortalDialog = ({
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <GraduationCap className="h-5 w-5 text-primary" />
-                Import your academic profile
+                Link your SRM portal
               </DialogTitle>
               <DialogDescription>
-                We'll sign in to your SRM student portal once, read your program,
-                subjects and CGPA, then fill in your profile. Your portal password
-                is never stored — it's used once, in memory, and discarded.
+                Used to securely link your SRM portal — enables automatic syncing of your
+                CGPA, semester and coursework. Stored encrypted, never shown to anyone.
+                We'll sign in once now to confirm it works, then keep it current in the
+                background from then on.
               </DialogDescription>
             </DialogHeader>
 
@@ -388,7 +400,7 @@ export const ImportSrmPortalDialog = ({
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label htmlFor="srm-password">Portal Password</Label>
+                  <Label htmlFor="srm-password">Date of birth (portal password)</Label>
                   <PasswordInput
                     id="srm-password"
                     placeholder="DDMMYYYY (your date of birth)"
@@ -397,7 +409,7 @@ export const ImportSrmPortalDialog = ({
                     autoComplete="off"
                   />
                   <p className="text-2xs text-muted-foreground">
-                    Same password you use to sign in at student.srmap.edu.in
+                    Same password you use to sign in at student.srmap.edu.in — stored encrypted, used only to keep your academic info current.
                   </p>
                 </div>
 
@@ -469,11 +481,13 @@ interface ImportSrmPortalProps {
 }
 
 /**
- * Banner widget placed on the Profile page that displays current import status,
- * triggers the import dialog, and lets users inspect imported academic courses.
+ * Card placed on the Profile page (mentors only) that shows the current link
+ * status, lets a mentor link their SRM portal for automatic background sync,
+ * and offers a human-present "Sync now" as a fallback alongside the
+ * automatic refresh (see sync-srm-portal for how that runs).
  */
 const ImportSrmPortal = ({ onProfileUpdate }: ImportSrmPortalProps) => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [record, setRecord] = useState<AcademicImport | null>(null);
   const [loadingRecord, setLoadingRecord] = useState(true);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
@@ -481,6 +495,8 @@ const ImportSrmPortal = ({ onProfileUpdate }: ImportSrmPortalProps) => {
   const [applyingToProfile, setApplyingToProfile] = useState(false);
   const [coursesOnProfile, setCoursesOnProfile] = useState(false);
   const [togglingCourses, setTogglingCourses] = useState(false);
+
+  const isLinked = Boolean(profile?.date_of_birth_linked);
 
   const loadRecord = async () => {
     if (!user) return;
@@ -573,11 +589,11 @@ const ImportSrmPortal = ({ onProfileUpdate }: ImportSrmPortalProps) => {
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <h3 className="font-semibold text-sm sm:text-base text-foreground">
-                  SRM Portal Academic Import
+                  SRM Portal Sync
                 </h3>
-                {record?.sync_status === "success" && (
+                {isLinked && record?.sync_status === "success" && (
                   <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 text-3xs gap-1 font-normal">
-                    <CheckCircle2 className="h-3 w-3" /> Synced
+                    <CheckCircle2 className="h-3 w-3" /> Linked
                   </Badge>
                 )}
               </div>
@@ -586,7 +602,7 @@ const ImportSrmPortal = ({ onProfileUpdate }: ImportSrmPortalProps) => {
                 <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1.5">
                   <Loader2 className="h-3 w-3 animate-spin" /> Checking academic records...
                 </p>
-              ) : record?.sync_status === "success" ? (
+              ) : isLinked && record?.sync_status === "success" ? (
                 <div className="space-y-1 mt-1">
                   <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
                     <span className="text-xs font-medium text-foreground">
@@ -608,20 +624,21 @@ const ImportSrmPortal = ({ onProfileUpdate }: ImportSrmPortalProps) => {
                   </div>
                   {record.last_synced_at && (
                     <p className="text-2xs text-muted-foreground">
-                      Last updated {formatRelativeTime(record.last_synced_at)}
+                      This updates automatically — last refreshed {formatRelativeTime(record.last_synced_at)}
                     </p>
                   )}
                 </div>
               ) : (
                 <p className="text-xs text-muted-foreground mt-1 max-w-lg">
-                  Automatically import your verified coursework, branch, current semester, and CGPA directly from student.srmap.edu.in.
+                  Link your SRM portal once and we'll keep your verified coursework, branch, current
+                  semester, and CGPA current automatically from student.srmap.edu.in — no more manual re-imports.
                 </p>
               )}
             </div>
           </div>
 
           <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-border/50">
-            {record?.sync_status === "success" && (
+            {isLinked && record?.sync_status === "success" && (
               <>
                 <Button
                   type="button"
@@ -654,18 +671,19 @@ const ImportSrmPortal = ({ onProfileUpdate }: ImportSrmPortalProps) => {
 
             <Button
               type="button"
-              variant={record?.sync_status === "success" ? "secondary" : "default"}
+              variant={isLinked && record?.sync_status === "success" ? "secondary" : "default"}
               size="sm"
               onClick={() => setImportDialogOpen(true)}
+              title={isLinked ? "This updates automatically, but you can refresh manually here" : undefined}
               className="text-xs gap-1.5 flex-1 sm:flex-initial"
             >
-              {record?.sync_status === "success" ? (
+              {isLinked ? (
                 <>
-                  <RefreshCw className="h-3.5 w-3.5" /> Re-sync
+                  <RefreshCw className="h-3.5 w-3.5" /> Sync now
                 </>
               ) : (
                 <>
-                  <GraduationCap className="h-3.5 w-3.5" /> Connect SRM Portal
+                  <GraduationCap className="h-3.5 w-3.5" /> Link SRM Portal
                 </>
               )}
             </Button>
@@ -673,7 +691,7 @@ const ImportSrmPortal = ({ onProfileUpdate }: ImportSrmPortalProps) => {
         </div>
       </div>
 
-      {/* Import Authentication Dialog */}
+      {/* Link/sync dialog */}
       <ImportSrmPortalDialog
         open={importDialogOpen}
         onOpenChange={setImportDialogOpen}

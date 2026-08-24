@@ -1,13 +1,16 @@
 
-import { useMemo } from "react";
-import { Loader2 } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Loader2, ShieldCheck, GraduationCap } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { MentorFormData } from "@/hooks/useMentorForm";
 import { FormField, describedBy, invalidControlClass } from "./FormField";
 import type { MentorFormErrors } from "@/lib/mentor-form-validation";
-import { enrollmentYear, graduationYearOptions } from "@/lib/college-id";
+import { enrollmentYear, graduationYearOptions, COLLEGE_ID_PATTERN, normaliseCollegeId } from "@/lib/college-id";
+import { useAuth } from "@/context/AuthContext";
+import { ImportSrmPortalDialog } from "@/components/profile/ImportSrmPortal";
 
 interface MentorAcademicInfoProps {
   formData: MentorFormData;
@@ -29,6 +32,11 @@ const MentorAcademicInfo = ({
   handleBlur,
   markTouched,
 }: MentorAcademicInfoProps) => {
+  const { profile } = useAuth();
+  const [linkDialogOpen, setLinkDialogOpen] = useState(false);
+  const isDobLinked = Boolean(profile?.date_of_birth_linked);
+  const collegeIdValid = COLLEGE_ID_PATTERN.test(normaliseCollegeId(formData.college_id ?? ""));
+
   const selectField = (field: keyof MentorFormData) => (value: string) => {
     // Radix fires onValueChange with "" when its item list changes underneath
     // it, which the graduation-year list does the moment the College ID becomes
@@ -213,6 +221,44 @@ const MentorAcademicInfo = ({
           />
         </FormField>
       </div>
+
+      <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 space-y-2.5">
+        <div className="flex items-center gap-2">
+          <GraduationCap className="h-4 w-4 text-primary shrink-0" />
+          <p className="text-sm font-medium text-foreground">Link your SRM portal</p>
+          {isDobLinked && (
+            <span className="inline-flex items-center gap-1 text-2xs font-medium text-emerald-600 dark:text-emerald-400">
+              <ShieldCheck className="h-3.5 w-3.5" /> Linked
+            </span>
+          )}
+        </div>
+        <p className="text-2xs text-muted-foreground leading-relaxed">
+          Used to securely link your SRM portal — enables automatic syncing of your CGPA,
+          semester and coursework. Stored encrypted, never shown to anyone. Optional — you
+          can also do this later from your profile page.
+        </p>
+        {!isDobLinked && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="text-xs"
+            disabled={!collegeIdValid}
+            onClick={() => setLinkDialogOpen(true)}
+          >
+            <GraduationCap className="mr-1.5 h-3.5 w-3.5" /> Link SRM Portal
+          </Button>
+        )}
+        {!collegeIdValid && !isDobLinked && (
+          <p className="text-3xs text-muted-foreground">Fill in a valid College ID above first.</p>
+        )}
+      </div>
+
+      <ImportSrmPortalDialog
+        open={linkDialogOpen}
+        onOpenChange={setLinkDialogOpen}
+        defaultRegisterNumber={collegeIdValid ? normaliseCollegeId(formData.college_id) : undefined}
+      />
     </div>
   );
 };

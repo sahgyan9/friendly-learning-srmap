@@ -1,7 +1,7 @@
 
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { LogOut, GraduationCap } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -16,7 +16,6 @@ import { getInitials } from "@/utils/user-utils";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useWelcomeTour } from "@/components/onboarding/WelcomeTourContext";
-import { ImportSrmPortalDialog } from "@/components/profile/ImportSrmPortal";
 import { MentorCtaTooltip } from "@/components/mentors/MentorCtaTooltip";
 
 const NavbarProfileMenu = () => {
@@ -24,7 +23,6 @@ const NavbarProfileMenu = () => {
   const { openTour } = useWelcomeTour();
   const [isRealMentor, setIsRealMentor] = useState(false);
   const [checkingMentorStatus, setCheckingMentorStatus] = useState(true);
-  const [srmImportOpen, setSrmImportOpen] = useState(false);
 
   useEffect(() => {
     checkMentorStatus();
@@ -71,7 +69,6 @@ const NavbarProfileMenu = () => {
   if (!user) return null;
 
   return (
-    <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="sm" className="rounded-full p-0 h-10 w-10">
@@ -90,10 +87,6 @@ const NavbarProfileMenu = () => {
             <Link to="/profile" className="cursor-pointer w-full">
               Profile
             </Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setSrmImportOpen(true)} className="cursor-pointer">
-            <GraduationCap className="h-4 w-4 mr-2" />
-            Import from SRM portal
           </DropdownMenuItem>
           {isRealMentor && (
             <DropdownMenuItem asChild>
@@ -121,12 +114,6 @@ const NavbarProfileMenu = () => {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-
-      <ImportSrmPortalDialog
-        open={srmImportOpen}
-        onOpenChange={setSrmImportOpen}
-      />
-    </>
   );
 };
 

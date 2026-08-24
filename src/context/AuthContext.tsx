@@ -21,6 +21,7 @@ interface UserProfile {
   is_available?: boolean;
   theme?: string | null;
   has_seen_welcome_tour?: boolean;
+  date_of_birth_linked?: boolean;
 }
 
 interface AuthContextType {
@@ -57,7 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const PROFILE_COLUMNS =
-    "id,name,email,role,profile_image,verification_status,is_admin,mobile,department,skills,linkedin_url,bio,is_available,theme,has_seen_welcome_tour" as const;
+    "id,name,email,role,profile_image,verification_status,is_admin,mobile,department,skills,linkedin_url,bio,is_available,theme,has_seen_welcome_tour,date_of_birth_linked" as const;
 
   const applyProfile = (
     resolvedProfile: UserProfile,

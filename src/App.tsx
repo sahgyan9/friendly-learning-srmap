@@ -8,6 +8,8 @@ import { AuthProvider } from "@/context/AuthContext";
 import { SidebarProvider } from "@/context/SidebarContext";
 import { WelcomeTourProvider } from "@/components/onboarding/WelcomeTourContext";
 import WelcomeTour from "@/components/onboarding/WelcomeTour";
+import { SrmDobNagProvider } from "@/components/onboarding/SrmDobNagContext";
+import SrmDobNag from "@/components/onboarding/SrmDobNag";
 import SignInNudge from "@/components/onboarding/SignInNudge";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import RouteRobots from "@/components/RouteRobots";
@@ -175,11 +177,13 @@ function App() {
       <TooltipProvider>
         <SidebarProvider>
           <WelcomeTourProvider>
+          <SrmDobNagProvider>
             <div className="min-h-screen">
               <Toaster />
               <RouteRobots />
               <ScrollToTop />
               <WelcomeTour />
+              <SrmDobNag />
               <SignInNudge />
 
               {/* One header for the whole app. Pages used to render their own
@@ -392,6 +396,7 @@ function App() {
                 </Suspense>
               </MainWithRail>
             </div>
+          </SrmDobNagProvider>
           </WelcomeTourProvider>
         </SidebarProvider>
       </TooltipProvider>
