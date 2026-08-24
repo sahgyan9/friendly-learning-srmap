@@ -1,3 +1,4 @@
+import { motion } from "framer-motion";
 import { FolderGit2, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 
@@ -61,36 +62,45 @@ export default function MentorProjectsSection({
           Add your first project — it's the first thing students look at.
         </p>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
-          {projects.map((proj) => (
-            <div
-              key={proj.id}
-              className="flex flex-col justify-between rounded-xl border border-border/60 bg-background/60 p-4 hover:border-blue-500/40 hover:shadow-md transition-all group"
-            >
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-bold text-foreground group-hover:text-primary transition-colors flex items-center gap-1.5">
-                    {proj.title}
-                  </h3>
-                  {proj.link && (
-                    <a
-                      href={proj.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-muted-foreground hover:text-primary transition-colors"
-                    >
-                      <ExternalLink className="h-3.5 w-3.5" />
-                    </a>
-                  )}
-                </div>
+        <>
+          <p className="mb-3 text-xs text-muted-foreground">
+            Work worth showing off, picked by the mentor
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
+            {projects.map((proj, idx) => (
+              <motion.div
+                key={proj.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.2, delay: idx * 0.05 }}
+                whileHover={{ y: -2 }}
+                className="flex flex-col justify-between rounded-xl border border-border/50 bg-background/50 p-4 transition-all duration-200 hover:border-blue-500/40 hover:bg-blue-500/5 hover:shadow-md group"
+              >
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <h3 className="text-sm font-bold text-foreground group-hover:text-primary transition-colors truncate">
+                      {proj.title}
+                    </h3>
+                    {proj.link && (
+                      <a
+                        href={proj.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-shrink-0 text-muted-foreground hover:text-primary transition-colors"
+                      >
+                        <ExternalLink className="h-3.5 w-3.5" />
+                      </a>
+                    )}
+                  </div>
 
-                <p className="text-xs text-muted-foreground leading-relaxed line-clamp-3">
-                  {proj.description}
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
+                  <p className="text-xs text-muted-foreground leading-relaxed line-clamp-3">
+                    {proj.description}
+                  </p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </>
       )}
     </EditableSection>
   );

@@ -77,7 +77,7 @@ const MentorProfileContent = ({
       />
 
       {/* SECTION 2: SMART MATCH BANNER */}
-      <SmartMatchBanner mentor={mentor} />
+      <SmartMatchBanner mentor={mentor} isOwnProfile={isOwnProfile} onMentorUpdated={onMentorUpdated} />
 
       {/* SECTION 3: HOW I CAN HELP YOU */}
       <MentorOutcomesSection
