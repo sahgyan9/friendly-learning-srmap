@@ -408,6 +408,61 @@ function renderWelcomeStudentEmail(opts: {
 }
 
 /**
+ * Sent when sync-srm-portal has failed to log a mentor's linked SRM portal
+ * in FAILURE_THRESHOLD consecutive unattended attempts and has unlinked
+ * them (deleted their srm_portal_credentials row, flipped
+ * users.date_of_birth_linked back to false). Explains the automatic refresh
+ * stopped and points back to the profile page, where the nag will also
+ * re-appear on next sign-in — this email and that nag are two surfaces for
+ * the same condition, not two separate things to keep in sync.
+ */
+function renderSrmRelinkNeededEmail(opts: {
+  recipientName: string;
+  unsubscribeUrl: string;
+}): { subject: string; html: string; text: string } {
+  const { recipientName, unsubscribeUrl } = opts;
+
+  const firstName = recipientName.split("|")[0].trim().split(/\s+/)[0] || "there";
+  const safeName = escapeHtml(firstName);
+  const profileUrl = `${SITE_URL}/profile`;
+
+  const subject = `${firstName}, we couldn't refresh your SRM academic info — please re-link`;
+
+  const html = [
+    "<!DOCTYPE html>",
+    '<html lang="en"><head><meta charset="UTF-8">',
+    '<meta name="viewport" content="width=device-width, initial-scale=1.0">',
+    `<title>${escapeHtml(subject)}</title></head>`,
+    '<body style="margin:0;padding:20px;font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;line-height:1.6;color:#1f2937;background:#f9fafb;">',
+    '<div style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:10px;overflow:hidden;border:1px solid #e5e7eb;">',
+    '<div style="background:#2563eb;padding:24px;text-align:center;">',
+    '<h1 style="color:#ffffff;margin:0;font-size:20px;">Friendly Learning</h1></div>',
+    '<div style="padding:28px;">',
+    `<p style="margin:0 0 16px;font-size:16px;">Hi ${safeName},</p>`,
+    '<p style="margin:0 0 20px;font-size:16px;">Your SRM portal was linked to keep your CGPA, semester and coursework current automatically, but the last few attempts failed — likely a changed password or a portal hiccup — so we\'ve stopped trying and unlinked it.</p>',
+    '<p style="text-align:center;margin:0 0 20px;">',
+    `<a href="${profileUrl}" style="background:#2563eb;color:#ffffff;padding:12px 28px;text-decoration:none;border-radius:6px;font-weight:600;display:inline-block;">Re-link my SRM portal</a>`,
+    "</p></div>",
+    '<div style="padding:16px 28px;border-top:1px solid #e5e7eb;background:#f9fafb;">',
+    '<p style="margin:0;font-size:12px;color:#6b7280;text-align:center;">',
+    `<a href="${unsubscribeUrl}" style="color:#6b7280;">Unsubscribe from these emails</a>`,
+    "</p></div></div></body></html>",
+  ].join("");
+
+  const text = [
+    `Hi ${firstName},`,
+    "",
+    "Your SRM portal was linked to keep your CGPA, semester and coursework current automatically, but the last few attempts failed, so we've stopped trying and unlinked it.",
+    "",
+    `Re-link: ${profileUrl}`,
+    "",
+    `Unsubscribe: ${unsubscribeUrl}`,
+  ].join("\n");
+
+  return { subject, html, text };
+}
+
+/**
  * Sent twice a year, on the days SRM AP publishes results, to students whose
  * imported transcript is now a semester out of date.
  *
@@ -586,6 +641,11 @@ Deno.serve(async (req: Request) => {
         });
       } else if (kind === "academic_refresh") {
         rendered = renderAcademicRefreshEmail({
+          recipientName: recipient.name ?? "there",
+          unsubscribeUrl,
+        });
+      } else if (kind === "srm_relink_needed") {
+        rendered = renderSrmRelinkNeededEmail({
           recipientName: recipient.name ?? "there",
           unsubscribeUrl,
         });
