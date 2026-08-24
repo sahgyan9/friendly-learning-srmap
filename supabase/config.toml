@@ -54,3 +54,15 @@ verify_jwt = false
 # the only real gate -- do not rely on the platform one.
 [functions.generate-mentor-summary]
 verify_jwt = false
+
+# sync-srm-portal authenticates callers itself (CRON_SECRET header, or an
+# admin JWT), same reasoning as sync-faculty: the scheduled daily unattended
+# sync carries no user JWT at all.
+[functions.sync-srm-portal]
+verify_jwt = false
+
+# import-srm-portal authenticates callers itself (via supabaseAdmin.auth.getUser
+# in code against the Bearer header).
+[functions.import-srm-portal]
+verify_jwt = false
+

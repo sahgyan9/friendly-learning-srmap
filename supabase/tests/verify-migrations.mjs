@@ -381,7 +381,7 @@ await db.exec(`
   );
 
   -- cron / net: pg_cron and pg_net are pre-installed on every Supabase
-  -- project but PGlite ships neither. Stubbed so the four "schedule this on
+  -- project but PGlite ships neither. Stubbed so the "schedule this on
   -- cron" migrations run for real and their intent (job name + cadence) is
   -- assertable, without ever actually firing the scheduled SQL.
   CREATE SCHEMA cron;
@@ -483,6 +483,11 @@ for (const file of [
   '20260823240000_mentor_dashboard_stats.sql',
   '20260823230000_admin_kpi_metrics.sql',
   '20260823250000_user_badges_public_rpc.sql',
+  '20260824100000_srm_portal_credentials.sql',
+  '20260824110000_date_of_birth_linked_flag.sql',
+  '20260824120000_academic_imports_mobile_number.sql',
+  '20260824130000_srm_portal_sync_schedule.sql',
+  '20260824140000_fix_is_admin_self_elevation.sql',
 ]) {
   if (file === '20260804132345_b843f814-46d5-4c25-bc80-32e5f6ebba59.sql') {
     // Production's `faculty` table still carries `profile_image`, a column
@@ -2988,6 +2993,136 @@ for (const role of ['anon', 'authenticated']) {
   );
   check(`${role} can EXECUTE user_badges_public`, ubAcl?.ok === true, JSON.stringify(ubAcl));
 }
+
+// --- 20260824100000_srm_portal_credentials.sql --------------------------------
+// Stricter than academic_imports on purpose: no SELECT policy at all, not even
+// for the owning user -- a credential table has no legitimate client read path.
+console.log('\n--- 20260824100000_srm_portal_credentials.sql ---');
+
+await q(
+  `INSERT INTO public.srm_portal_credentials (user_id, register_number, dob_ciphertext, dob_iv)
+   VALUES ($1, 'AP23111260062', 'ciphertext-not-a-real-dob', 'fake-iv-base64')`,
+  [OTHER_UID],
+);
+
+await actAs(OTHER_UID);
+let ownerBlocked = false;
+try {
+  const { rows } = await asAuthenticated(() =>
+    q(`SELECT id FROM public.srm_portal_credentials WHERE user_id=$1`, [OTHER_UID]));
+  ownerBlocked = rows.length === 0;
+} catch (error) {
+  ownerBlocked = /permission denied/i.test(error.message);
+}
+check('RLS blocks even the owner from reading srm_portal_credentials', ownerBlocked);
+
+const { rows: credAcl } = await q(
+  `SELECT grantee, string_agg(DISTINCT privilege_type, ',' ORDER BY privilege_type) AS privs
+     FROM information_schema.table_privileges
+    WHERE table_schema='public' AND table_name='srm_portal_credentials' AND grantee IN ('anon','authenticated')
+    GROUP BY grantee`,
+);
+check('srm_portal_credentials grants nothing to anon or authenticated', credAcl.length === 0, JSON.stringify(credAcl));
+
+// --- 20260824110000_date_of_birth_linked_flag.sql -----------------------------
+console.log('\n--- 20260824110000_date_of_birth_linked_flag.sql ---');
+
+const { rows: [dobDefault] } = await q(`SELECT date_of_birth_linked FROM public.users WHERE id=$1`, [OTHER_UID]);
+check('date_of_birth_linked defaults to false', dobDefault.date_of_birth_linked === false, JSON.stringify(dobDefault));
+
+await actAs(OTHER_UID);
+let selfElevationBlocked = false;
+let selfElevationErr = '';
+try {
+  await asAuthenticated(() => q(`UPDATE public.users SET date_of_birth_linked = true WHERE id = $1`, [OTHER_UID]));
+} catch (error) {
+  selfElevationErr = error.message;
+  selfElevationBlocked = /insufficient_privilege|can only be changed/i.test(error.message);
+}
+check('a signed-in user cannot flip their own date_of_birth_linked to true', selfElevationBlocked, selfElevationErr || 'UPDATE SUCCEEDED (no error)');
+
+// Even a raw superuser/table-owner session (which bypasses RLS entirely) is
+// still stopped by the trigger -- only the literal service_role role name
+// (what edge functions using the service-role key execute SQL as) is exempt.
+let ownerAlsoBlocked = false;
+try {
+  await q(`UPDATE public.users SET date_of_birth_linked = true WHERE id = $1`, [OTHER_UID]);
+} catch (error) {
+  ownerAlsoBlocked = /insufficient_privilege|can only be changed/i.test(error.message);
+}
+check('the trigger guard is not bypassed by RLS-bypassing roles either, only service_role', ownerAlsoBlocked);
+
+// The actual service-role write path the edge functions use. Real Supabase
+// projects grant service_role full table access by platform default; this
+// stub only declared the role with BYPASSRLS (see the scaffolding at the top
+// of this file), so grant the two privileges this assertion needs -- SELECT
+// too, since the WHERE clause reads the id column independently of the SET
+// target.
+await q(`GRANT SELECT, UPDATE ON public.users TO service_role`);
+await q(`SET ROLE service_role`);
+await q(`UPDATE public.users SET date_of_birth_linked = true WHERE id = $1`, [OTHER_UID]);
+await q(`RESET ROLE`);
+const { rows: [dobAfter] } = await q(`SELECT date_of_birth_linked FROM public.users WHERE id=$1`, [OTHER_UID]);
+check('a service_role write can still set date_of_birth_linked', dobAfter.date_of_birth_linked === true, JSON.stringify(dobAfter));
+
+// --- 20260824120000_academic_imports_mobile_number.sql ------------------------
+console.log('\n--- 20260824120000_academic_imports_mobile_number.sql ---');
+
+// A fresh row (INSERT, not UPDATE) for a different user -- OTHER_UID's
+// academic_imports row was deliberately poisoned into the rate-limit trigger's
+// blocked state above (attempt_count=6, recent last_attempt_at), and that
+// trigger fires on every UPDATE to the row regardless of which columns
+// change, so reusing it here would fail for an unrelated reason.
+await q(
+  `INSERT INTO public.academic_imports (user_id, register_number, program, sync_status, mobile_number)
+   VALUES ($1, 'AP23111260099', 'B.Tech CSE', 'success', '9876543210')`,
+  [CURRENT_UID],
+);
+const { rows: [mobileRow] } = await q(`SELECT mobile_number FROM public.academic_imports WHERE user_id=$1`, [CURRENT_UID]);
+check('mobile_number column stores the portal-reported number', mobileRow?.mobile_number === '9876543210', JSON.stringify(mobileRow));
+
+// --- 20260824130000_srm_portal_sync_schedule.sql ------------------------------
+console.log('\n--- 20260824130000_srm_portal_sync_schedule.sql ---');
+
+const { rows: [syncJob] } = await q(`SELECT schedule, active FROM cron.job WHERE jobname='srm-portal-sync'`);
+check('srm-portal-sync job scheduled daily at 21:30 UTC (03:00 IST)', syncJob?.schedule === '30 21 * * *', syncJob?.schedule);
+check('srm-portal-sync job is created inactive (function not deployed yet)', syncJob?.active === false, JSON.stringify(syncJob));
+
+// --- 20260824140000_fix_is_admin_self_elevation.sql ---------------------------
+// The pre-existing "excluding admin status" WITH CHECK never actually blocked
+// this (verified above for date_of_birth_linked, and it uses the identical
+// self-referential-subquery shape for is_admin) -- this trigger is the real
+// fix. The set_user_admin_status RPC test earlier in this file (search
+// "admin role management rpc") already exercises the legitimate path with
+// this migration applied, since every migration in the array runs before any
+// assertion below does; it passing is itself evidence the trigger does not
+// break that SECURITY DEFINER path.
+console.log('\n--- 20260824140000_fix_is_admin_self_elevation.sql ---');
+
+await q(`UPDATE public.users SET is_admin = false WHERE id = $1`, [OTHER_UID]);
+await actAs(OTHER_UID);
+let adminSelfElevationBlocked = false;
+let adminSelfElevationErr = '';
+try {
+  await asAuthenticated(() => q(`UPDATE public.users SET is_admin = true WHERE id = $1`, [OTHER_UID]));
+} catch (error) {
+  adminSelfElevationErr = error.message;
+  adminSelfElevationBlocked = /insufficient_privilege|cannot be changed directly/i.test(error.message);
+}
+check(
+  'a signed-in user can no longer self-elevate is_admin to true',
+  adminSelfElevationBlocked,
+  adminSelfElevationErr || 'UPDATE SUCCEEDED (no error) -- the bug this migration fixes',
+);
+const { rows: [isAdminAfter] } = await q(`SELECT is_admin FROM public.users WHERE id=$1`, [OTHER_UID]);
+check('is_admin is still false after the blocked attempt', isAdminAfter.is_admin === false, JSON.stringify(isAdminAfter));
+
+// Unrelated columns on the same row remain freely editable -- the trigger
+// only inspects is_admin, not every column.
+await actAs(OTHER_UID);
+const unrelatedUpdate = await asAuthenticated(() => attempt(
+  `UPDATE public.users SET bio = 'still editable' WHERE id = $1`, [OTHER_UID]));
+check('unrelated own-profile fields are unaffected by the guard', unrelatedUpdate === null, unrelatedUpdate ?? '');
 
 console.log(failures === 0
   ? '\nAll migration checks passed against real Postgres.'
