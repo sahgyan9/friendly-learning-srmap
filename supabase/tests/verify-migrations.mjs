@@ -482,6 +482,7 @@ for (const file of [
   '20260823220000_academic_refresh_schedule.sql',
   '20260823240000_mentor_dashboard_stats.sql',
   '20260823230000_admin_kpi_metrics.sql',
+  '20260823250000_user_badges_public_rpc.sql',
 ]) {
   if (file === '20260804132345_b843f814-46d5-4c25-bc80-32e5f6ebba59.sql') {
     // Production's `faculty` table still carries `profile_image`, a column
@@ -506,11 +507,14 @@ for (const file of [
 console.log('');
 
 // =====================================================================
-// SKIPPED (61 of the 89 files in supabase/migrations/, not executed above).
-// Every migration in the repo falls into exactly one of these five groups.
-// None of them are silently missing -- each is listed below with why.
+// SKIPPED (73 of the 129 files in supabase/migrations/, not executed above).
+// Every migration in the repo falls into exactly one of these eight groups
+// -- with one exception (see the NOTE inside group 1), which names the file
+// and the reason it isn't bulleted, rather than silently dropping it. None
+// of them are silently missing -- each is listed below with why.
 //
-// 1. PGVECTOR (5 files) -- genuinely cannot run in PGlite.
+// 1. PGVECTOR (9 files -- 8 listed below, 1 flagged only in the NOTE) --
+//    genuinely cannot run in PGlite.
 //
 //    20260817100000_dynamic_related_searches.sql
 //    Computes vector similarity over the search_query_cache to generate
@@ -671,7 +675,7 @@ console.log('');
 //      20260418024940_a745043f-0b83-4660-a19d-342bf252ebc8.sql
 //      20260418025448_a4b8a106-6764-4bb8-a590-f6cb7d3efc85.sql
 //
-// 5. COMMUNITIES / PRIVATE-COMMUNITIES CLUSTER (12 files) -- the schema this
+// 5. COMMUNITIES / PRIVATE-COMMUNITIES CLUSTER (13 files) -- the schema this
 //    harness needs for 20260807140000_community_channels.sql (executed and
 //    exercised above) is hand-authored directly into the scaffolding
 //    (`CREATE TABLE public.communities`, `community_members`,
@@ -697,7 +701,7 @@ console.log('');
 //        list_communities from the file above (name-only search, drops the
 //        description ilike clause); same reason as that file, not this pass.
 //
-// 6. OUT OF SCOPE FOR THIS PASS (9 files) -- self-contained, plausibly
+// 6. OUT OF SCOPE FOR THIS PASS (11 files) -- self-contained, plausibly
 //    runnable features (mentor availability, profile-image mirroring, the
 //    welcome-email surface) that were not read/replayed here for real. Said
 //    plainly rather than assigned a reason that would overstate what was
@@ -715,6 +719,13 @@ console.log('');
 //      20260802091000_mirror_profile_image_to_mentors.sql
 //      20260804150000_student_welcome_email.sql
 //      20260806210000_mentor_application_notification_welcome_link.sql
+//      20260814180000_srmap_events_rich_details.sql -- ALTER TABLE +
+//        GRANT SELECT on srmap_events_cache, which 20260807120000 (RUN above)
+//        already creates; would plausibly run and assert cleanly today.
+//      20260817110000_freshness_ranking.sql -- adds a STABLE is_fresh()
+//        computed column over public.opportunities, which 20260806190000
+//        (RUN above) already creates; would plausibly run and assert cleanly
+//        today.
 //
 // 7. GRANT-ONLY, DASHBOARD-ORIGIN TARGET TABLES (1 file) -- same reasoning as
 //    group 3: pure REVOKE/GRANT statements against admin_audit_log,
@@ -728,6 +739,25 @@ console.log('');
 //    editor, then information_schema.table_privileges re-queried to confirm
 //    each table holds exactly the grants the file specifies.
 //      20260821240000_grant_audit_fix_legacy_tables.sql
+//
+// 8. ONE-TIME PRODUCTION DATA FIXES (2 files) -- narrow incident fixes keyed
+//    to one specific production user, not generic behaviour worth asserting
+//    against this harness's fixtures.
+//      20260823160000_preserve_name_across_logins.sql
+//      Redefines handle_new_user() (originally created by
+//      20260731100000_google_profile_image.sql, itself in group 6 and not
+//      replayed here) so a Google login can no longer overwrite an existing
+//      public.users.name, only fill it in when empty -- matching how
+//      profile_image already behaved. Also re-syncs one named mentor's row.
+//      Verified directly against production per the file's own comment,
+//      the same fallback the project rules call for when the harness can't
+//      reach a migration.
+//      20260823170000_fix_saksham_name_backfill.sql
+//      Follow-up to the file above: its backfill matched on a name string
+//      that turned out to be cased differently in the real row, so this
+//      corrects the same one user by hardcoded id instead. Nothing to
+//      assert generically -- the id it targets does not exist in this
+//      harness's fixtures.
 // =====================================================================
 
 // ---------------------------------------------------------------- faculty
@@ -2824,6 +2854,140 @@ check(
 );
 
 await actAs(CURRENT_UID);
+
+// --- 20260823250000_user_badges_public_rpc.sql --------------------------------
+// BadgeDisplay used to embed `awarder:users!user_badges_awarded_by_fkey(name)`,
+// and public.users is owner-only for SELECT, so every anonymous view of a
+// mentor profile 401'd with 42501 and rendered "No badges earned yet". The
+// checks below are written so that reverting to a direct users read fails them:
+// the RPC has to return the awarder's name *while running as a role that
+// cannot read public.users at all*.
+console.log('\n--- 20260823250000_user_badges_public_rpc.sql ---');
+
+const B_HOLDER = '44444444-0000-4000-8000-000000000001';
+const B_ADMIN  = '44444444-0000-4000-8000-000000000002';
+const B_EMPTY  = '44444444-0000-4000-8000-000000000003';
+
+await db.exec(`
+  INSERT INTO public.users (id, name, email, role, department, is_admin) VALUES
+    ('${B_HOLDER}', 'Badge Holder', 'holder@srmap.edu.in', 'mentor',  'CSE', false),
+    ('${B_ADMIN}',  'Admin Awarder','awarder@srmap.edu.in','student', 'CSE', true),
+    ('${B_EMPTY}',  'No Badges',    'none@srmap.edu.in',   'mentor',  'CSE', false);
+
+  INSERT INTO public.badge_types (name, description, icon, color, category)
+    VALUES ('Helpful Senior', 'Answered a lot of freshers', 'star', '#22C55E', 'contribution');
+
+  -- Two badges, awarded a day apart, so the ordering assertion has something
+  -- to bite on. Only the newer one has a human awarder; auto-awarded badges
+  -- leave awarded_by null, which must not blank out the row.
+  INSERT INTO public.user_badges (user_id, badge_type_id, awarded_by, awarded_at, notes)
+    SELECT '${B_HOLDER}', id, '${B_ADMIN}', now() - interval '1 day', 'hand-picked'
+      FROM public.badge_types WHERE name = 'Helpful Senior';
+  INSERT INTO public.user_badges (user_id, badge_type_id, awarded_by, awarded_at, notes)
+    SELECT '${B_HOLDER}', id, NULL, now() - interval '9 days', 'auto'
+      FROM public.badge_types WHERE name = 'Top Mentor';
+`);
+
+const { rows: pubBadges } = await q(
+  `SELECT * FROM public.user_badges_public('${B_HOLDER}')`,
+);
+check(
+  'returns every badge the user holds',
+  pubBadges.length === 2,
+  `${pubBadges.length} rows`,
+);
+check(
+  'newest badge first (BadgeDisplay renders in list order)',
+  pubBadges[0]?.notes === 'hand-picked' && pubBadges[1]?.notes === 'auto',
+  JSON.stringify(pubBadges.map((r) => r.notes)),
+);
+check(
+  'badge type is inlined, so the client needs no second join',
+  pubBadges[0]?.badge_name === 'Helpful Senior'
+    && pubBadges[0]?.badge_category === 'contribution'
+    && pubBadges[0]?.badge_icon === 'star'
+    && pubBadges[0]?.badge_color === '#22C55E',
+  JSON.stringify(pubBadges[0]),
+);
+check(
+  'an auto-awarded badge (awarded_by null) still comes back, with a null name',
+  pubBadges[1]?.badge_name === 'Top Mentor' && pubBadges[1]?.awarded_by_name === null,
+  JSON.stringify(pubBadges[1]),
+);
+const { rows: pubNone } = await q(
+  `SELECT * FROM public.user_badges_public('${B_EMPTY}')`,
+);
+check(
+  'a user with no badges gets an empty set, not an error',
+  pubNone.length === 0,
+  JSON.stringify(pubNone),
+);
+
+// Nothing above proves much yet -- it all ran as the owner, which can read
+// public.users anyway. This next part is the actual regression test.
+await db.exec(`GRANT USAGE ON SCHEMA public TO anon`);
+await q(`SET ROLE anon`);
+let anonDirectRead = null;
+try {
+  await q(`SELECT name FROM public.users WHERE id = '${B_ADMIN}'`);
+} catch (error) {
+  anonDirectRead = error.message;
+}
+let anonRpcRows = [];
+let anonRpcError = null;
+try {
+  ({ rows: anonRpcRows } = await q(`SELECT * FROM public.user_badges_public('${B_HOLDER}')`));
+} catch (error) {
+  anonRpcError = error.message;
+}
+await q(`RESET ROLE`).catch(() => {});
+
+check(
+  'anon still cannot SELECT from public.users -- the table stays owner-only',
+  /permission denied/i.test(anonDirectRead ?? ''),
+  anonDirectRead ?? 'the read SUCCEEDED, which means users was opened up',
+);
+check(
+  'anon can call the RPC (this is the 401 on every public mentor profile)',
+  anonRpcError === null && anonRpcRows.length === 2,
+  anonRpcError ?? `${anonRpcRows.length} rows`,
+);
+check(
+  'and gets the awarder name it could not read directly -- SECURITY DEFINER works',
+  anonRpcRows[0]?.awarded_by_name === 'Admin Awarder',
+  JSON.stringify(anonRpcRows[0]),
+);
+
+// The display name is the only thing from public.users this may expose. If
+// someone widens the SELECT list later, this fails.
+check(
+  'no email, mobile, college_id or cgpa leaks through the return type',
+  anonRpcRows.length > 0 && Object.keys(anonRpcRows[0]).every(
+    (col) => !['email', 'mobile', 'college_id', 'cgpa'].includes(col),
+  ),
+  JSON.stringify(Object.keys(anonRpcRows[0] ?? {})),
+);
+
+const { rows: [ubPath] } = await q(`
+  SELECT p.proconfig, p.prosecdef FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+  WHERE n.nspname = 'public' AND p.proname = 'user_badges_public'`);
+check(
+  'user_badges_public pins its search_path',
+  (ubPath?.proconfig ?? []).some((c) => c.startsWith('search_path=')),
+  JSON.stringify(ubPath?.proconfig),
+);
+check(
+  'user_badges_public is SECURITY DEFINER (without it the grant buys nothing)',
+  ubPath?.prosecdef === true,
+  JSON.stringify(ubPath),
+);
+
+for (const role of ['anon', 'authenticated']) {
+  const { rows: [ubAcl] } = await q(
+    `SELECT has_function_privilege('${role}', 'public.user_badges_public(uuid)', 'EXECUTE') AS ok`,
+  );
+  check(`${role} can EXECUTE user_badges_public`, ubAcl?.ok === true, JSON.stringify(ubAcl));
+}
 
 console.log(failures === 0
   ? '\nAll migration checks passed against real Postgres.'
