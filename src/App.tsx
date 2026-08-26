@@ -175,7 +175,7 @@ function RedirectWithParam({ toPrefix }: { toPrefix: string }) {
 function App() {
   return (
     <AuthProvider>
-      <TooltipProvider>
+      <TooltipProvider delayDuration={150}>
         <SidebarProvider>
           <WelcomeTourProvider>
           <SrmDobNagProvider>
