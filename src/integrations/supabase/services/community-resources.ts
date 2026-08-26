@@ -28,27 +28,26 @@ export function detectResourceKind(url: string): ResourceKind {
 }
 
 /**
- * Reads resources for a community. Stored client-side in localStorage with
- * automatic extraction of shared links from posts as initial fallback.
+ * Reads resources for a community. Stored client-side in localStorage.
  */
 export async function getCommunityResources(
   communityId: string,
-  communityName: string,
-  communityKind: string,
+  _communityName?: string,
+  _communityKind?: string,
 ): Promise<CommunityResource[]> {
   try {
     const key = `${STORAGE_PREFIX}${communityId}`;
     const stored = localStorage.getItem(key);
     if (stored) {
-      return JSON.parse(stored) as CommunityResource[];
+      const items = JSON.parse(stored) as CommunityResource[];
+      // Filter out any legacy dummy seeds that may have been saved in localStorage
+      return items.filter((item) => !item.id.startsWith("res_seed_"));
     }
   } catch {
-    // continue to default seed
+    // continue to empty
   }
 
-  // Curated initial resource seeds tailored to community kind
-  const defaultResources = getDefaultResources(communityId, communityName, communityKind);
-  return defaultResources;
+  return [];
 }
 
 export async function addCommunityResource(
@@ -66,7 +65,9 @@ export async function addCommunityResource(
     const key = `${STORAGE_PREFIX}${communityId}`;
     const existingStr = localStorage.getItem(key);
     const existing: CommunityResource[] = existingStr ? JSON.parse(existingStr) : [];
-    const updated = [newResource, ...existing];
+    // Ensure legacy seeds are removed when saving new state
+    const filtered = existing.filter((item) => !item.id.startsWith("res_seed_"));
+    const updated = [newResource, ...filtered];
     localStorage.setItem(key, JSON.stringify(updated));
   } catch (error) {
     console.error("Error saving resource to localStorage:", error);
@@ -81,7 +82,7 @@ export async function deleteCommunityResource(communityId: string, resourceId: s
     const existingStr = localStorage.getItem(key);
     if (!existingStr) return true;
     const existing: CommunityResource[] = JSON.parse(existingStr);
-    const updated = existing.filter((r) => r.id !== resourceId);
+    const updated = existing.filter((r) => r.id !== resourceId && !r.id.startsWith("res_seed_"));
     localStorage.setItem(key, JSON.stringify(updated));
     return true;
   } catch (error) {
@@ -90,89 +91,3 @@ export async function deleteCommunityResource(communityId: string, resourceId: s
   }
 }
 
-function getDefaultResources(communityId: string, name: string, kind: string): CommunityResource[] {
-  const now = new Date().toISOString();
-  if (kind === "hackathon") {
-    return [
-      {
-        id: `res_seed_1_${communityId}`,
-        communityId,
-        title: "Hackathon Project Repository & Boilerplate",
-        url: "https://github.com",
-        kind: "github",
-        description: "Shared codebase template and starter architecture for the team.",
-        addedByName: "Team Lead",
-        isPinned: true,
-        createdAt: now,
-      },
-      {
-        id: `res_seed_2_${communityId}`,
-        communityId,
-        title: "Problem Statements & Submission Deck",
-        url: "https://drive.google.com",
-        kind: "drive",
-        description: "Evaluation rubrics, PPT guidelines, and team ideas list.",
-        addedByName: "Team Lead",
-        isPinned: true,
-        createdAt: now,
-      },
-    ];
-  }
-
-  if (kind === "study") {
-    return [
-      {
-        id: `res_seed_1_${communityId}`,
-        communityId,
-        title: "Subject Syllabus & Previous Year Question Papers",
-        url: "https://drive.google.com",
-        kind: "document",
-        description: "Curated end-sem and mid-sem question sets with solutions.",
-        addedByName: "Study Lead",
-        isPinned: true,
-        createdAt: now,
-      },
-      {
-        id: `res_seed_2_${communityId}`,
-        communityId,
-        title: "Curated Roadmaps & Notes Repo",
-        url: "https://github.com",
-        kind: "notes",
-        description: "Summary cheat sheets and quick reference formula sheets.",
-        addedByName: "Study Lead",
-        isPinned: true,
-        createdAt: now,
-      },
-    ];
-  }
-
-  if (kind === "research") {
-    return [
-      {
-        id: `res_seed_1_${communityId}`,
-        communityId,
-        title: "Reading List & Papers Archive",
-        url: "https://drive.google.com",
-        kind: "document",
-        description: "Foundational papers, state-of-the-art benchmarks, and survey links.",
-        addedByName: "Research Lead",
-        isPinned: true,
-        createdAt: now,
-      },
-    ];
-  }
-
-  return [
-    {
-      id: `res_seed_1_${communityId}`,
-      communityId,
-      title: `${name} — Community Guidelines & Shared Drive`,
-      url: "https://drive.google.com",
-      kind: "drive",
-      description: "Official documents, event photos, and useful campus links.",
-      addedByName: "Group Coordinator",
-      isPinned: true,
-      createdAt: now,
-    },
-  ];
-}
