@@ -170,6 +170,7 @@ await db.exec(`
     name TEXT NOT NULL,
     description TEXT NOT NULL,
     kind TEXT NOT NULL DEFAULT 'general',
+    cover_image TEXT,
     owner_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
     visibility TEXT NOT NULL DEFAULT 'public',
     member_count INT NOT NULL DEFAULT 0,
@@ -3250,6 +3251,82 @@ check(
   'mentor with 0 DMs but active user_presence reports non-null last_message_at',
   multiAct2?.last_message_at !== null && multiAct2?.requests_received === 0,
   JSON.stringify(multiAct2),
+);
+
+// --- 20260826120000_grant_community_members_select_and_rpc.sql ---------------
+console.log('\n--- 20260826120000_grant_community_members_select_and_rpc.sql ---');
+
+await db.exec(`
+  GRANT SELECT ON public.community_members TO anon, authenticated;
+
+  CREATE OR REPLACE FUNCTION public.get_user_joined_communities(p_user_id uuid)
+  RETURNS TABLE (
+    community_id uuid,
+    community_name text,
+    community_slug text,
+    community_kind text,
+    community_cover_image text,
+    community_member_count integer,
+    role text,
+    joined_at timestamptz
+  )
+  LANGUAGE sql
+  STABLE
+  SECURITY DEFINER
+  SET search_path = public, pg_temp
+  AS $$
+    SELECT 
+      c.id AS community_id,
+      c.name AS community_name,
+      c.slug AS community_slug,
+      c.kind AS community_kind,
+      c.cover_image AS community_cover_image,
+      c.member_count AS community_member_count,
+      m.role,
+      m.joined_at
+    FROM public.community_members m
+    JOIN public.communities c ON c.id = m.community_id
+    WHERE m.user_id = p_user_id
+      AND (
+        c.visibility = 'public'
+        OR (
+          auth.uid() IS NOT NULL
+          AND (
+            c.owner_id = auth.uid()
+            OR EXISTS (
+              SELECT 1 FROM public.community_members cm
+              WHERE cm.community_id = c.id AND cm.user_id = auth.uid()
+            )
+            OR public.is_admin_user(auth.uid())
+          )
+        )
+      )
+    ORDER BY m.joined_at ASC;
+  $$;
+
+  REVOKE ALL ON FUNCTION public.get_user_joined_communities(uuid) FROM PUBLIC, anon, authenticated;
+  GRANT EXECUTE ON FUNCTION public.get_user_joined_communities(uuid) TO anon, authenticated;
+`);
+
+const COMM_UID = crypto.randomUUID();
+await q(`
+  INSERT INTO public.communities (id, name, slug, description, kind, visibility, owner_id)
+  VALUES ($1, 'Robotics Club', 'robotics-club', 'Robotics and automation club', 'club', 'public', $2);
+`, [COMM_UID, TEST_MENTOR_UID_1]);
+
+await q(`
+  INSERT INTO public.community_members (community_id, user_id, role)
+  VALUES ($1, $2, 'owner');
+`, [COMM_UID, TEST_MENTOR_UID_1]);
+
+const { rows: joinedRows } = await q(`
+  SELECT * FROM public.get_user_joined_communities($1::uuid)
+`, [TEST_MENTOR_UID_1]);
+
+check(
+  'get_user_joined_communities returns joined public communities for user',
+  joinedRows?.length === 1 && joinedRows[0]?.community_name === 'Robotics Club' && joinedRows[0]?.role === 'owner',
+  JSON.stringify(joinedRows),
 );
 
 console.log(failures === 0

@@ -622,8 +622,29 @@ export type UserJoinedCommunity = {
  * Returns the communities/clubs a student belongs to, with kind and role.
  * Useful for showing club badges on mentor and peer profile cards.
  */
-export const getUserJoinedCommunities = async (userId: string) => {
+export const getUserJoinedCommunities = async (userId: string): Promise<UserJoinedCommunity[]> => {
   try {
+    // 1. Try dedicated RPC with security definer visibility enforcement
+    const { data: rpcData, error: rpcError } = await (supabase.rpc as any)("get_user_joined_communities", {
+      p_user_id: userId,
+    });
+
+    if (!rpcError && Array.isArray(rpcData)) {
+      return rpcData.map((row: any) => ({
+        role: row.role,
+        joined_at: row.joined_at,
+        community: {
+          id: row.community_id,
+          name: row.community_name,
+          slug: row.community_slug,
+          kind: row.community_kind,
+          cover_image: row.community_cover_image,
+          member_count: row.community_member_count,
+        },
+      }));
+    }
+
+    // 2. Fallback to direct table query
     const { data, error } = await supabase
       .from("community_members")
       .select("role, joined_at, communities(id, name, slug, kind, cover_image, member_count)")
@@ -631,7 +652,7 @@ export const getUserJoinedCommunities = async (userId: string) => {
 
     if (error) {
       console.error("Error fetching user communities:", error);
-      return [] as UserJoinedCommunity[];
+      return [];
     }
 
     return (data ?? [])
@@ -643,7 +664,7 @@ export const getUserJoinedCommunities = async (userId: string) => {
       .filter((item) => item.community != null && item.community.name) as UserJoinedCommunity[];
   } catch (err) {
     console.error("Exception fetching user communities:", err);
-    return [] as UserJoinedCommunity[];
+    return [];
   }
 };
 
