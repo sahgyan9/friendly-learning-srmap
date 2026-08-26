@@ -534,6 +534,7 @@ for (const file of [
   '20260826130000_direct_messages_reply_to.sql',
   '20260826140000_edit_delete_messages_30min.sql',
   '20260826150000_push_notifications.sql',
+  '20260826160000_srm_attendance_and_holidays.sql',
 ]) {
   if (file === '20260804132345_b843f814-46d5-4c25-bc80-32e5f6ebba59.sql') {
     // Production's `faculty` table still carries `profile_image`, a column
@@ -3474,6 +3475,43 @@ const { rows: subRows } = await q(`
   SELECT * FROM public.push_subscriptions WHERE user_id = $1;
 `, [CURRENT_UID]);
 check('push_subscriptions insert & retrieval works', subRows.length === 1 && subRows[0].endpoint === TEST_ENDPOINT, JSON.stringify(subRows[0]));
+
+// --- 20260826160000_srm_attendance_and_holidays.sql ---
+console.log('\n--- 20260826160000_srm_attendance_and_holidays.sql ---');
+const { rows: attTableRows } = await q(`
+  SELECT table_name FROM information_schema.tables
+  WHERE table_schema = 'public' AND table_name = 'student_attendance';
+`);
+check('student_attendance table exists', attTableRows.length === 1);
+
+const { rows: holTableRows } = await q(`
+  SELECT table_name FROM information_schema.tables
+  WHERE table_schema = 'public' AND table_name = 'academic_holidays';
+`);
+check('academic_holidays table exists', holTableRows.length === 1);
+
+await q(`
+  INSERT INTO public.student_attendance (
+    user_id, register_number, course_code, course_name, slot, conducted_hours, attended_hours, absent_hours, attendance_percentage, classes_needed, safe_bunks
+  ) VALUES (
+    $1, 'AP23111260062', 'PHY 301', 'STATISTICAL PHYSICS', 'A1', 40, 28, 12, 70.00, 8, 0
+  ) ON CONFLICT (user_id, course_code) DO UPDATE SET attendance_percentage = EXCLUDED.attendance_percentage;
+`, [CURRENT_UID]);
+
+const { rows: myAttendance } = await q(`
+  SELECT * FROM public.student_attendance WHERE user_id = $1 AND course_code = 'PHY 301';
+`, [CURRENT_UID]);
+check('student_attendance records insert and compute margins', myAttendance.length === 1 && Number(myAttendance[0].classes_needed) === 8, JSON.stringify(myAttendance[0]));
+
+const { rows: isSundayHoliday } = await q(`
+  SELECT public.is_non_instructional_day('2026-08-30'::date) as is_holiday; -- Sunday
+`);
+check('is_non_instructional_day identifies weekend correctly', isSundayHoliday[0]?.is_holiday === true);
+
+const { rows: isIndependenceDay } = await q(`
+  SELECT public.is_non_instructional_day('2026-08-15'::date) as is_holiday; -- Independence Day
+`);
+check('is_non_instructional_day identifies university holidays', isIndependenceDay[0]?.is_holiday === true);
 
 console.log(failures === 0
   ? '\nAll migration checks passed against real Postgres.'

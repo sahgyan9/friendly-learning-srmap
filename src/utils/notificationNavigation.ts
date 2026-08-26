@@ -116,6 +116,11 @@ export const getNotificationNavigationUrl = (notification: Notification): string
         return `${baseUrl}/profile`;
     }
 
+    // Handle attendance alert notifications
+    if (notification.type === 'attendance_alert' || notification.title?.includes('Attendance')) {
+        return `${baseUrl}/profile`;
+    }
+
     return null;
 };
 

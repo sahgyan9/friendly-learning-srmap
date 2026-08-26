@@ -21,6 +21,7 @@ import {
   doLogin,
   fetchAcademicSections,
   fetchLoginPageAndCaptcha,
+  parseAttendance,
   parseProfile,
   parseTranscript,
   recognizeCaptcha,
@@ -107,13 +108,33 @@ Deno.serve(async (req) => {
     return json({ error: "Unauthorized" }, 401);
   }
 
+  const body = await req.json().catch(() => ({}));
+  const isForced = body.force === true;
+
+  // Check if today is a non-instructional day (weekend or university holiday)
+  if (!isForced) {
+    const { data: isHolidayOrWeekend } = await admin.rpc("is_non_instructional_day");
+    if (isHolidayOrWeekend) {
+      console.log("Skipping sync-srm-portal: Non-instructional day (weekend or university holiday).");
+      return json({ skipped: true, reason: "Non-instructional day (weekend or university holiday)" });
+    }
+  }
+
   const cutoff = new Date(Date.now() - MIN_REATTEMPT_INTERVAL_MS).toISOString();
 
-  const { data: batch, error: batchError } = await admin
+  // If specific userId is requested (for testing/manual run), target that user directly
+  let query = admin
     .from("srm_portal_credentials")
     .select("user_id, register_number, dob_ciphertext, dob_iv, consecutive_failures, users!inner(date_of_birth_linked)")
-    .eq("users.date_of_birth_linked", true)
-    .or(`last_attempt_at.is.null,last_attempt_at.lt.${cutoff}`)
+    .eq("users.date_of_birth_linked", true);
+
+  if (body.user_id) {
+    query = query.eq("user_id", body.user_id);
+  } else if (!isForced) {
+    query = query.or(`last_attempt_at.is.null,last_attempt_at.lt.${cutoff}`);
+  }
+
+  const { data: batch, error: batchError } = await query
     .order("last_attempt_at", { ascending: true, nullsFirst: true })
     .limit(BATCH_SIZE);
 
@@ -181,10 +202,12 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      const { profileHtml, transcriptHtml } = await fetchAcademicSections(loginResult.jar);
+      const { profileHtml, transcriptHtml, attendanceHtml } = await fetchAcademicSections(loginResult.jar);
       const { program, currentSemester, mobileNumber } = parseProfile(profileHtml);
       const { cgpa, subjects } = parseTranscript(transcriptHtml);
+      const attendanceCourses = parseAttendance(attendanceHtml);
 
+      // 1. Upsert academic transcript & profile summary
       await admin.from("academic_imports").upsert({
         user_id: row.user_id,
         register_number: row.register_number,
@@ -198,6 +221,79 @@ Deno.serve(async (req) => {
         last_synced_at: nowIso,
         last_attempt_at: nowIso,
       }, { onConflict: "user_id" });
+
+      // 2. Upsert subject-wise attendance and check for low attendance alerts
+      for (const course of attendanceCourses) {
+        await admin.from("student_attendance").upsert({
+          user_id: row.user_id,
+          register_number: row.register_number,
+          course_code: course.courseCode,
+          course_name: course.courseName,
+          slot: course.slot || null,
+          faculty_name: course.facultyName || null,
+          conducted_hours: course.conductedHours,
+          attended_hours: course.attendedHours,
+          absent_hours: course.absentHours,
+          attendance_percentage: course.attendancePercentage,
+          classes_needed: course.classesNeeded,
+          safe_bunks: course.safeBunks,
+          last_synced_at: nowIso,
+        }, { onConflict: "user_id,course_code" });
+
+        // Trigger Alert if < 75%
+        if (course.attendancePercentage < 75.0 && course.conductedHours > 0) {
+          // Check for existing alert in the past 5 days to avoid spamming the bell
+          const fiveDaysAgo = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString();
+          const { data: recentAlerts } = await admin
+            .from("notifications")
+            .select("id, created_at, data")
+            .eq("user_id", row.user_id)
+            .eq("type", "attendance_alert")
+            .gte("created_at", fiveDaysAgo);
+
+          const alreadyAlerted = (recentAlerts || []).some(
+            (a: { data?: { course_code?: string } }) => a.data?.course_code === course.courseCode,
+          );
+
+          if (!alreadyAlerted) {
+            const alertTitle = `⚠️ Attendance Alert: ${course.courseCode} (${course.attendancePercentage}%)`;
+            const alertMessage = `Your attendance in ${course.courseName} is ${course.attendancePercentage}%. You need to attend the next ${course.classesNeeded} consecutive class(es) to reach 75%.`;
+
+            // Insert into public.notifications for real-time Bell Icon update
+            await admin.from("notifications").insert({
+              user_id: row.user_id,
+              type: "attendance_alert",
+              title: alertTitle,
+              content: alertMessage,
+              data: {
+                course_code: course.courseCode,
+                course_name: course.courseName,
+                attendance_percentage: course.attendancePercentage,
+                classes_needed: course.classesNeeded,
+                conducted_hours: course.conductedHours,
+                attended_hours: course.attendedHours,
+                url: "/profile",
+              },
+              read: false,
+            });
+
+            // Dispatch Web Push notification to mobile / desktop devices
+            try {
+              await admin.functions.invoke("send-push", {
+                body: {
+                  userId: row.user_id,
+                  title: alertTitle,
+                  body: alertMessage,
+                  url: "/profile",
+                  tag: `attendance-${course.courseCode}`,
+                },
+              });
+            } catch (pushErr) {
+              console.error("Push dispatch non-fatal error:", pushErr);
+            }
+          }
+        }
+      }
 
       await admin.from("srm_portal_credentials").update({
         consecutive_failures: 0,
@@ -227,3 +323,4 @@ Deno.serve(async (req) => {
 
   return json({ processed: (batch ?? []).length, succeeded, failed, unlinked });
 });
+

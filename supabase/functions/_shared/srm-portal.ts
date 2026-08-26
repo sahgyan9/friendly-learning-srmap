@@ -437,6 +437,116 @@ export function parseTranscript(html: string): { cgpa: number | null; subjects: 
   return { cgpa, subjects };
 }
 
+export interface AttendanceCourse {
+  courseCode: string;
+  courseName: string;
+  slot?: string;
+  facultyName?: string;
+  conductedHours: number;
+  attendedHours: number;
+  absentHours: number;
+  attendancePercentage: number;
+  classesNeeded: number;
+  safeBunks: number;
+}
+
+export function calculateAttendanceMetrics(conducted: number, attended: number) {
+  const percentage = conducted > 0 ? Number(((attended / conducted) * 100).toFixed(2)) : 100.0;
+  // To reach 75%: (attended + x) / (conducted + x) >= 0.75 => x >= 3 * conducted - 4 * attended
+  const classesNeeded = percentage < 75.0 ? Math.max(0, Math.ceil(3 * conducted - 4 * attended)) : 0;
+  // To stay above 75%: (attended) / (conducted + y) >= 0.75 => y <= (4 * attended - 3 * conducted) / 3
+  const safeBunks = percentage >= 75.0 ? Math.max(0, Math.floor((4 * attended - 3 * conducted) / 3)) : 0;
+
+  return { percentage, classesNeeded, safeBunks };
+}
+
+export function parseAttendance(html: string): AttendanceCourse[] {
+  const courses: AttendanceCourse[] = [];
+  
+  for (const trMatch of html.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/gi)) {
+    const rowContent = trMatch[1];
+    const cells = [...rowContent.matchAll(/<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi)].map((m) => stripTags(m[1]).trim());
+    
+    if (cells.length < 5) continue;
+
+    // Search for numerical conducted & attended hours and course code
+    // Common SRM formats:
+    // Format 1: [SlNo, Course Code, Course Title, Category, Faculty, Slot, Conducted, Attended, Absent, %]
+    // Format 2: [Course Code, Course Name, Slot, Faculty, Conducted, Attended, %]
+    let code = "";
+    let name = "";
+    let slot = "";
+    let faculty = "";
+    let conducted = -1;
+    let attended = -1;
+
+    for (let i = 0; i < cells.length; i++) {
+      const cell = cells[i];
+      if (!code && /^[A-Z]{2,4}\s*\d{3}[A-Z0-9]*$/i.test(cell)) {
+        code = cell.toUpperCase();
+        if (i + 1 < cells.length && isNaN(Number(cells[i + 1]))) {
+          name = cells[i + 1];
+        }
+      }
+    }
+
+    // If we didn't match standard regex, check if cell 1 or 2 is a course code
+    if (!code) {
+      if (/^[A-Z0-9\s-]{4,12}$/i.test(cells[1]) && isNaN(Number(cells[1])) && cells[1].length >= 5) {
+        code = cells[1];
+        name = cells[2] || "";
+      } else if (/^[A-Z0-9\s-]{4,12}$/i.test(cells[0]) && isNaN(Number(cells[0])) && cells[0].length >= 5) {
+        code = cells[0];
+        name = cells[1] || "";
+      }
+    }
+
+    if (!code) continue;
+
+    // Look for numbers representing conducted and attended hours
+    const numbers: number[] = [];
+    for (let i = 0; i < cells.length; i++) {
+      const val = parseFloat(cells[i]);
+      if (!isNaN(val) && /^\d+(\.\d+)?%?$/.test(cells[i].replace("%", "").trim())) {
+        numbers.push(val);
+      }
+    }
+
+    // In most attendance tables, the last 2-4 numbers are conducted, attended, absent, percentage
+    if (numbers.length >= 2) {
+      // Find conducted and attended
+      // If numbers are [conducted, attended, absent, pct] or [conducted, attended, pct]
+      if (numbers.length >= 3 && numbers[numbers.length - 1] <= 100) {
+        // Last number is likely percentage
+        attended = numbers[numbers.length - 2];
+        conducted = numbers[numbers.length - 3];
+      } else {
+        conducted = numbers[0];
+        attended = numbers[1];
+      }
+    }
+
+    if (conducted >= 0 && attended >= 0) {
+      const absent = Math.max(0, conducted - attended);
+      const metrics = calculateAttendanceMetrics(conducted, attended);
+      courses.push({
+        courseCode: code,
+        courseName: name || code,
+        slot,
+        facultyName: faculty,
+        conductedHours: conducted,
+        attendedHours: attended,
+        absentHours: absent,
+        attendancePercentage: metrics.percentage,
+        classesNeeded: metrics.classesNeeded,
+        safeBunks: metrics.safeBunks,
+      });
+    }
+  }
+
+  return courses;
+}
+
 // --- login + section fetch, shared by the human-supervised and unattended paths ---
 
 export interface LoginResult {
@@ -479,15 +589,17 @@ export async function doLogin(
     return { loggedIn: true, jar: mergeSetCookies(jar, loginRes) };
   }
 
-  let errorMessage = "Couldn't sign in — check your register number, DOB password, and try again.";
+  let errorMessage = "Couldn't sign in — check your register number, portal password, and try again.";
   const text = await loginRes.text();
   if (text.includes("Captcha Invalid")) errorMessage = "That captcha didn't match — try again.";
-  else if (text.includes("Invalid User ID or Password")) errorMessage = "Register number or password (DOB: DDMMYYYY) is incorrect.";
+  else if (text.includes("Invalid User ID or Password")) errorMessage = "Register number or portal password (default DOB DDMMYYYY or custom password) is incorrect.";
 
   return { loggedIn: false, jar, errorMessage };
 }
 
-export async function fetchAcademicSections(jar: Jar): Promise<{ profileHtml: string; transcriptHtml: string }> {
+export async function fetchAcademicSections(
+  jar: Jar,
+): Promise<{ profileHtml: string; transcriptHtml: string; attendanceHtml: string }> {
   const fetchSection = (id: number) =>
     fetch(`${PORTAL_BASE}/students/report/studentreportresources.jsp`, {
       method: "POST",
@@ -499,8 +611,12 @@ export async function fetchAcademicSections(jar: Jar): Promise<{ profileHtml: st
       body: `ids=${id}`,
     }).then((r) => r.text());
 
-  const [profileHtml, transcriptHtml] = await Promise.all([fetchSection(1), fetchSection(6)]);
-  return { profileHtml, transcriptHtml };
+  const [profileHtml, transcriptHtml, attendanceHtml] = await Promise.all([
+    fetchSection(1),
+    fetchSection(6),
+    fetchSection(3),
+  ]);
+  return { profileHtml, transcriptHtml, attendanceHtml };
 }
 
 export async function fetchLoginPageAndCaptcha(): Promise<{ jar: Jar; imageBytes: Uint8Array; contentType: string }> {
@@ -519,3 +635,4 @@ export async function fetchLoginPageAndCaptcha(): Promise<{ jar: Jar; imageBytes
   const contentType = captchaRes.headers.get("content-type") || "image/png";
   return { jar, imageBytes, contentType };
 }
+

@@ -36,6 +36,7 @@ import {
   encodeSessionToken,
   fetchAcademicSections,
   fetchLoginPageAndCaptcha,
+  parseAttendance,
   parseProfile,
   parseTranscript,
   recognizeCaptcha,
@@ -165,9 +166,10 @@ Deno.serve(async (req) => {
 
       jar = loginResult.jar;
 
-      const { profileHtml, transcriptHtml } = await fetchAcademicSections(jar);
+      const { profileHtml, transcriptHtml, attendanceHtml } = await fetchAcademicSections(jar);
       const { program, currentSemester, mobileNumber } = parseProfile(profileHtml);
       const { cgpa, subjects } = parseTranscript(transcriptHtml);
+      const attendanceCourses = parseAttendance(attendanceHtml);
 
       await supabaseAdmin.from("academic_imports").upsert({
         user_id: userId,
@@ -183,6 +185,24 @@ Deno.serve(async (req) => {
         attempt_count: 1, // resets on success — only a *consecutive* run of failures throttles
         last_attempt_at: nowIso,
       }, { onConflict: "user_id" });
+
+      for (const course of attendanceCourses) {
+        await supabaseAdmin.from("student_attendance").upsert({
+          user_id: userId,
+          register_number: registerNumber,
+          course_code: course.courseCode,
+          course_name: course.courseName,
+          slot: course.slot || null,
+          faculty_name: course.facultyName || null,
+          conducted_hours: course.conductedHours,
+          attended_hours: course.attendedHours,
+          absent_hours: course.absentHours,
+          attendance_percentage: course.attendancePercentage,
+          classes_needed: course.classesNeeded,
+          safe_bunks: course.safeBunks,
+          last_synced_at: nowIso,
+        }, { onConflict: "user_id,course_code" });
+      }
 
       // Best-effort claim. A successful portal login is proof of ownership of
       // this register number, so this should not normally conflict; if it
