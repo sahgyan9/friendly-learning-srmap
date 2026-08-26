@@ -140,6 +140,11 @@ export const ROUTE_META: Record<string, RouteMeta> = {
     description:
       "What Friendly Learning SRMAP stores, what's public versus private, and how to ask for your data to be removed.",
   },
+  "/attendance": {
+    title: "SRM AP Attendance & Bunk Predictor | Friendly Learning SRMAP",
+    description:
+      "Track live course attendance from the SRM AP student portal, calculate safe bunks, get 75% shortage danger alerts, and simulate what-if scenarios.",
+  },
 };
 
 /** Absolute URL for a pre-rendered route, used for canonical and og:url. */

@@ -118,7 +118,7 @@ export const getNotificationNavigationUrl = (notification: Notification): string
 
     // Handle attendance alert notifications
     if (notification.type === 'attendance_alert' || notification.title?.includes('Attendance')) {
-        return `${baseUrl}/profile`;
+        return `${baseUrl}/attendance`;
     }
 
     return null;

@@ -138,6 +138,7 @@ const YourData = lazyWithRetry("YourData", () => import("./pages/YourData"));
 const NotFound = lazyWithRetry("NotFound", () => import("./pages/NotFound"));
 const Unauthorized = lazyWithRetry("Unauthorized", () => import("./pages/Unauthorized"));
 const Search = lazyWithRetry("Search", () => import("./pages/Search"));
+const Attendance = lazyWithRetry("Attendance", () => import("./pages/Attendance"));
 
 const AdminDashboard = lazyWithRetry("AdminDashboard", () => import("./pages/AdminDashboard"));
 const AdminContactMessages = lazyWithRetry("AdminContactMessages", () => import("./pages/AdminContactMessages"));
@@ -269,6 +270,14 @@ function App() {
                       element={
                         <ProtectedRoute>
                           <UserProfile />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/attendance"
+                      element={
+                        <ProtectedRoute>
+                          <Attendance />
                         </ProtectedRoute>
                       }
                     />

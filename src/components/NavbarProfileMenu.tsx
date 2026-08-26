@@ -16,7 +16,7 @@ import { getInitials } from "@/utils/user-utils";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useWelcomeTour } from "@/components/onboarding/WelcomeTourContext";
-import { Sparkles, User, Award } from "lucide-react";
+import { Sparkles, User, Award, GraduationCap } from "lucide-react";
 
 const NavbarProfileMenu = () => {
   const { user, profile, signOut, loading } = useAuth();
@@ -111,6 +111,13 @@ const NavbarProfileMenu = () => {
               </Link>
             </DropdownMenuItem>
           )}
+
+          <DropdownMenuItem asChild>
+            <Link to="/attendance" className="cursor-pointer w-full flex items-center gap-2">
+              <GraduationCap className="h-4 w-4 text-primary" />
+              Attendance & Bunk Predictor
+            </Link>
+          </DropdownMenuItem>
 
           <DropdownMenuItem asChild>
             <Link to="/profile" className="cursor-pointer w-full">
