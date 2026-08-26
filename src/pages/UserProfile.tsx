@@ -86,6 +86,7 @@ const UserProfile = () => {
           is_available: data.is_available ?? true,
           verification_status: data.verification_status || "pending",
           email_notifications: data.email_notifications ?? true,
+          push_notifications_enabled: (data as any).push_notifications_enabled ?? true,
           email_frequency: data.email_frequency || "instant",
           interests: data.interests || [],
           interests_discoverable: data.interests_discoverable ?? false,
@@ -175,6 +176,8 @@ const UserProfile = () => {
           skills: profile.skills,
           interests: profile.interests,
           interests_discoverable: profile.interests_discoverable,
+          email_notifications: profile.email_notifications,
+          push_notifications_enabled: profile.push_notifications_enabled,
         })
         .eq("id", user?.id);
 

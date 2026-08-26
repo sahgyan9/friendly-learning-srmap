@@ -113,6 +113,21 @@ export async function sendMessage(
       return { data: null, error };
     }
 
+    // Dispatch instant background push notification to recipient
+    try {
+      import("@/lib/push/pushService").then(({ dispatchPushNotification }) => {
+        dispatchPushNotification({
+          userIds: [receiverId],
+          title: "New Message",
+          body: content.length > 80 ? content.slice(0, 77) + "..." : content,
+          url: `/chat?conversation=${conversationId}`,
+          tag: `chat-${conversationId}`,
+        }).catch(() => {});
+      });
+    } catch {
+      // Fire-and-forget
+    }
+
     return { data, error: null };
   } catch (err) {
     console.error('Exception in sendMessage:', err);

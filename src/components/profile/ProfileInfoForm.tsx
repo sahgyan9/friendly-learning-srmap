@@ -1,14 +1,16 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { GraduationCap, Loader2, User, Sparkles } from "lucide-react";
+import { GraduationCap, Loader2, User, Sparkles, Bell, BellRing, Smartphone, Send, CheckCircle2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import AvailabilityControl from "@/components/mentors/AvailabilityControl";
 import InterestsEditor from "@/components/profile/InterestsEditor";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 import type { MentorProfileData } from "./MentorProfileCard";
 
 export interface UserProfileData {
@@ -24,6 +26,7 @@ export interface UserProfileData {
   is_available: boolean;
   verification_status: string;
   email_notifications: boolean;
+  push_notifications_enabled?: boolean;
   email_frequency: string;
   interests: string[];
   interests_discoverable: boolean;
@@ -48,6 +51,14 @@ export function ProfileInfoForm({
   onMentorProfileChange,
   onSubmit,
 }: ProfileInfoFormProps) {
+  const {
+    isSupported: pushSupported,
+    isSubscribed: pushSubscribed,
+    isLoading: pushLoading,
+    enablePush,
+    disablePush,
+    sendTestNotification,
+  } = usePushNotifications();
   const [newSkill, setNewSkill] = useState("");
 
   const addSkill = () => {
@@ -246,19 +257,82 @@ export function ProfileInfoForm({
             </>
           )}
 
-          {!showMentorFields && (
-            <Button
-              asChild
-              type="button"
-              variant="outline"
-              className="w-full gap-2 border-primary/30 text-primary hover:bg-primary/5"
-            >
-              <Link to="/profile/setup">
-                <Sparkles className="h-4 w-4" />
-                Help Others Find You (Auto-Fill Profile in 10s)
-              </Link>
-            </Button>
-          )}
+          {/* Notification Preferences */}
+          <div className="rounded-lg border border-border/70 bg-card p-4 space-y-4 shadow-sm">
+            <div className="flex items-center gap-2 pb-2 border-b border-border/50">
+              <Bell className="h-4 w-4 text-primary" />
+              <h4 className="text-sm font-semibold text-foreground">Notification Preferences</h4>
+            </div>
+
+            {/* Browser Push Notifications */}
+            <div className="flex items-start justify-between gap-3">
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="push_notifications" className="text-sm font-medium cursor-pointer">
+                    Browser Push Notifications
+                  </Label>
+                  {pushSubscribed ? (
+                    <Badge variant="outline" className="text-2xs bg-emerald-500/10 text-emerald-600 border-emerald-500/30 gap-1 py-0 h-5">
+                      <CheckCircle2 className="h-3 w-3" />
+                      Active on this device
+                    </Badge>
+                  ) : (
+                    <Badge variant="secondary" className="text-2xs py-0 h-5">
+                      Off
+                    </Badge>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Get instant alerts for messages & mentor requests on this phone or PC even when the tab is closed.
+                </p>
+                {pushSubscribed && (
+                  <div className="pt-1.5">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 px-2 text-2xs text-primary gap-1 hover:bg-primary/10"
+                      onClick={sendTestNotification}
+                    >
+                      <Send className="h-3 w-3" />
+                      Send Test Notification
+                    </Button>
+                  </div>
+                )}
+              </div>
+              <Switch
+                id="push_notifications"
+                checked={pushSubscribed}
+                disabled={pushLoading || !pushSupported}
+                onCheckedChange={(checked) => {
+                  if (checked) {
+                    enablePush();
+                  } else {
+                    disablePush();
+                  }
+                }}
+              />
+            </div>
+
+            {/* Email Notifications */}
+            <div className="flex items-start justify-between gap-3 pt-2 border-t border-border/40">
+              <div className="space-y-0.5">
+                <Label htmlFor="email_notifications" className="text-sm font-medium cursor-pointer">
+                  Email Notifications
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  Receive email digests and crucial account updates to {profile.email || "your registered email"}.
+                </p>
+              </div>
+              <Switch
+                id="email_notifications"
+                checked={profile.email_notifications}
+                onCheckedChange={(checked) =>
+                  onProfileChange({ ...profile, email_notifications: checked })
+                }
+              />
+            </div>
+          </div>
 
           <Button type="submit" disabled={isSaving} className="w-full">
             {isSaving ? (

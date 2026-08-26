@@ -1,6 +1,6 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Bell } from "lucide-react";
+import { Bell, BellRing } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuth } from "@/context/AuthContext";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 import {
   getUserNotifications,
   getUnreadNotificationsCount,
@@ -26,6 +27,7 @@ const SETTLE_MS = 250;
 
 const NotificationBell = () => {
   const { user } = useAuth();
+  const { isSupported, isSubscribed, isLoading: pushLoading, enablePush } = usePushNotifications();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
@@ -177,6 +179,25 @@ const NotificationBell = () => {
             )}
           </div>
         </div>
+        {!isSubscribed && isSupported && (
+          <div className="bg-primary/10 border-b border-primary/20 px-3.5 py-2 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <BellRing className="h-4 w-4 text-primary shrink-0 animate-pulse" />
+              <span className="text-xs text-foreground/90 font-medium truncate">
+                Get browser push alerts
+              </span>
+            </div>
+            <Button
+              size="sm"
+              variant="default"
+              className="h-6 px-2.5 text-2xs font-semibold shrink-0"
+              disabled={pushLoading}
+              onClick={enablePush}
+            >
+              {pushLoading ? "Enabling..." : "Enable"}
+            </Button>
+          </div>
+        )}
         <ScrollArea className="h-[400px]">
           {loading ? (
             <div className="p-6 text-center text-xs text-muted-foreground">

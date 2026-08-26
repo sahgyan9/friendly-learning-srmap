@@ -533,6 +533,7 @@ for (const file of [
   '20260826110000_mentor_multisignal_activity.sql',
   '20260826130000_direct_messages_reply_to.sql',
   '20260826140000_edit_delete_messages_30min.sql',
+  '20260826150000_push_notifications.sql',
 ]) {
   if (file === '20260804132345_b843f814-46d5-4c25-bc80-32e5f6ebba59.sql') {
     // Production's `faculty` table still carries `profile_image`, a column
@@ -3445,6 +3446,34 @@ const { rows: listGroupMsgsAfterDel } = await q(`
   SELECT * FROM public.list_group_messages($1::uuid, 'general'::text);
 `, [TEST_GROUP_COMM_ID]);
 check('list_group_messages returns 0 messages after deletion', listGroupMsgsAfterDel.length === 0, JSON.stringify(listGroupMsgsAfterDel));
+
+// --- 20260826150000_push_notifications.sql ---
+console.log('\n--- 20260826150000_push_notifications.sql ---');
+const { rows: pushColRows } = await q(`
+  SELECT column_name, data_type, column_default
+  FROM information_schema.columns
+  WHERE table_schema = 'public' AND table_name = 'users' AND column_name = 'push_notifications_enabled';
+`);
+check('push_notifications_enabled column exists on public.users', pushColRows.length === 1, JSON.stringify(pushColRows[0]));
+
+const { rows: pushSubTableRows } = await q(`
+  SELECT table_name
+  FROM information_schema.tables
+  WHERE table_schema = 'public' AND table_name = 'push_subscriptions';
+`);
+check('push_subscriptions table exists', pushSubTableRows.length === 1);
+
+const TEST_ENDPOINT = 'https://fcm.googleapis.com/fcm/send/test-token-123';
+await q(`
+  INSERT INTO public.push_subscriptions (user_id, endpoint, p256dh, auth, user_agent)
+  VALUES ($1, $2, 'test-p256dh-key', 'test-auth-key', 'TestBrowser/1.0')
+  ON CONFLICT (user_id, endpoint) DO UPDATE SET updated_at = now();
+`, [CURRENT_UID, TEST_ENDPOINT]);
+
+const { rows: subRows } = await q(`
+  SELECT * FROM public.push_subscriptions WHERE user_id = $1;
+`, [CURRENT_UID]);
+check('push_subscriptions insert & retrieval works', subRows.length === 1 && subRows[0].endpoint === TEST_ENDPOINT, JSON.stringify(subRows[0]));
 
 console.log(failures === 0
   ? '\nAll migration checks passed against real Postgres.'

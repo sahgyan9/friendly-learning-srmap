@@ -2074,6 +2074,47 @@ export type Database = {
           },
         ]
       }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string
+          endpoint: string
+          id: string
+          p256dh: string
+          updated_at: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          auth: string
+          created_at?: string
+          endpoint: string
+          id?: string
+          p256dh: string
+          updated_at?: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          auth?: string
+          created_at?: string
+          endpoint?: string
+          id?: string
+          p256dh?: string
+          updated_at?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "push_subscriptions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       search_query_cache: {
         Row: {
           created_at: string
@@ -2381,6 +2422,7 @@ export type Database = {
           mobile: string | null
           name: string
           profile_image: string | null
+          push_notifications_enabled: boolean | null
           role: string
           skills: string[] | null
           theme: string | null
@@ -2410,6 +2452,7 @@ export type Database = {
           mobile?: string | null
           name: string
           profile_image?: string | null
+          push_notifications_enabled?: boolean | null
           role: string
           skills?: string[] | null
           theme?: string | null
@@ -2439,6 +2482,7 @@ export type Database = {
           mobile?: string | null
           name?: string
           profile_image?: string | null
+          push_notifications_enabled?: boolean | null
           role?: string
           skills?: string[] | null
           theme?: string | null

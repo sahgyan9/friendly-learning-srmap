@@ -79,6 +79,25 @@ export const createNotification = async (notification: CreateNotification) => {
     throw error;
   }
 
+  // Dispatch instant background push notification
+  if (data?.user_id) {
+    try {
+      import("@/lib/push/pushService").then(({ dispatchPushNotification }) => {
+        const rawData = notification.data as any;
+        const navUrl = rawData?.url || '/';
+        dispatchPushNotification({
+          userIds: [data.user_id],
+          title: notification.title || "Friendly Learning SRMAP",
+          body: notification.content || "You have a new notification.",
+          url: typeof navUrl === 'string' ? navUrl : '/',
+          tag: `notif-${data.id}`,
+        }).catch(() => {});
+      });
+    } catch {
+      // Fire-and-forget
+    }
+  }
+
   return { data, error: null };
 };
 
