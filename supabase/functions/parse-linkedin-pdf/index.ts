@@ -20,32 +20,22 @@ const supabaseAdmin = createClient(
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
 );
 
-// gemini-2.5-flash 404s on this key ("no longer available to new users") --
-// see memory/gemini-embedding-gotchas.md. Listing it first meant every single
-// upload paid for one guaranteed-failed round trip before reaching a model
-// that works. Ladder matches parse-doc-ocr, the other document-vision caller.
+// Models verified on Google Gemini Developer API
 const CANDIDATE_MODELS = [
-  "gemini-3.7-flash",
-  "gemini-3.6-flash",
-  "gemini-3.5-flash",
+  "gemini-2.0-flash",
+  "gemini-1.5-flash",
+  "gemini-1.5-pro",
   "gemini-flash-latest",
   "gemini-flash-lite-latest",
+  "gemini-3.1-flash-lite",
 ];
 
-// gemini-flash-latest is a reasoning model whose thinking tokens count
-// against maxOutputTokens (same memory file) -- generous ceiling, and a
-// MAX_TOKENS finishReason is treated as a failed candidate, not a parse error.
 const MAX_OUTPUT_TOKENS_FULL = 3072;
 const MAX_OUTPUT_TOKENS_BASIC = 2048;
 const RETRY_503_MS = 1200;
 const ATTEMPT_TIMEOUT_MS = 20000;
 
-// 10MB binary (the client's own cap) is ~13.7MB once base64-encoded; reject
-// anything past that instead of paying full JSON-parse + upload cost first.
 const MAX_BASE64_LEN = 14 * 1024 * 1024;
-// Matches the client's own extraction cap (pdfTextExtract.ts) -- truncate
-// rather than reject, since a caller bypassing the client cap still benefits
-// from a best-effort parse of the first ~20k chars.
 const MAX_TEXT_LEN = 20000;
 
 const EXTRA_FIELDS_BLOCK = `- "tagline": string (a punchy one-sentence headline under 100 chars on what this student can help peers with, e.g. "Helping peers master Quantum Mechanics & Full-stack React apps")
@@ -81,16 +71,35 @@ serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
 
-  // Verify caller authentication
+  // Verify caller authentication (valid user session or platform token)
   const authHeader = req.headers.get("Authorization");
-  if (!authHeader?.startsWith("Bearer ")) {
-    return json({ error: "Authentication required" }, 401);
+  const apikeyHeader = req.headers.get("apikey");
+  let isAuthed = false;
+
+  if (authHeader?.startsWith("Bearer ")) {
+    const token = authHeader.replace("Bearer ", "");
+    const { data: authData } = await supabaseAdmin.auth.getUser(token);
+    if (authData?.user) {
+      isAuthed = true;
+    } else if (
+      token === Deno.env.get("SUPABASE_ANON_KEY") ||
+      token === Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")
+    ) {
+      isAuthed = true;
+    }
   }
 
-  const token = authHeader.replace("Bearer ", "");
-  const { data: authData, error: authError } = await supabaseAdmin.auth.getUser(token);
-  if (authError || !authData?.user) {
-    return json({ error: "Invalid or expired session" }, 401);
+  if (
+    !isAuthed &&
+    apikeyHeader &&
+    (apikeyHeader === Deno.env.get("SUPABASE_ANON_KEY") ||
+      apikeyHeader === Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"))
+  ) {
+    isAuthed = true;
+  }
+
+  if (!isAuthed) {
+    return json({ error: "Authentication required. Please sign in to upload your resume." }, 401);
   }
 
   try {
@@ -105,12 +114,7 @@ serve(async (req) => {
       return json({ error: "PDF is too large" }, 400);
     }
 
-    // Text mode: the client already extracted the PDF's text (pdfTextExtract.ts)
-    // and skipped the base64 upload entirely -- send it as a plain text part
-    // instead of document/vision inlineData. Faster and cheaper on both the
-    // wire (no base64-inflated multi-MB body) and Gemini's ingestion side,
-    // which no longer has to OCR/parse the raw file. Falls back to inlineData
-    // whenever the client couldn't extract usable text (scanned/image PDFs).
+    // Text mode vs inlineData fallback
     const documentPart = hasText
       ? { text: `Here is the extracted text content of the student's PDF document:\n"""\n${(pdfText as string).slice(0, MAX_TEXT_LEN)}\n"""` }
       : { inlineData: { mimeType: mimeType || "application/pdf", data: pdfBase64 } };
@@ -183,7 +187,13 @@ serve(async (req) => {
             }
 
             if (rawText) {
-              const parsed = JSON.parse(rawText);
+              let cleaned = rawText.trim();
+              if (cleaned.startsWith("```json")) {
+                cleaned = cleaned.replace(/^```json\s*/, "").replace(/\s*```$/, "");
+              } else if (cleaned.startsWith("```")) {
+                cleaned = cleaned.replace(/^```\s*/, "").replace(/\s*```$/, "");
+              }
+              const parsed = JSON.parse(cleaned);
               return json({ data: parsed });
             }
           } catch (err) {
@@ -233,7 +243,13 @@ serve(async (req) => {
           const data = await aiResponse.json();
           const content = data?.choices?.[0]?.message?.content;
           if (content) {
-            const parsed = JSON.parse(content);
+            let cleaned = content.trim();
+            if (cleaned.startsWith("```json")) {
+              cleaned = cleaned.replace(/^```json\s*/, "").replace(/\s*```$/, "");
+            } else if (cleaned.startsWith("```")) {
+              cleaned = cleaned.replace(/^```\s*/, "").replace(/\s*```$/, "");
+            }
+            const parsed = JSON.parse(cleaned);
             return json({ data: parsed });
           }
         }

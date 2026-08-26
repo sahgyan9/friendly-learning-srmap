@@ -67,12 +67,21 @@ const ResumePdfImport = ({ onImported, fields = "full" }: ResumePdfImportProps) 
 
       const { data, error } = await supabase.functions.invoke(
         "parse-linkedin-pdf",
-        { body, timeout: REQUEST_TIMEOUT_MS },
+        { body },
       );
 
-      if (error) throw error;
+      if (error) {
+        let msg = error.message;
+        try {
+          if ("context" in error && typeof (error as any).context?.json === "function") {
+            const errJson = await (error as any).context.json();
+            if (errJson?.error) msg = errJson.error;
+          }
+        } catch {}
+        throw new Error(msg);
+      }
       if (data?.error) throw new Error(data.error);
-      if (!data?.data) throw new Error("No data returned");
+      if (!data?.data) throw new Error("No data returned from parser");
 
       const extracted = data.data as Record<string, any>;
 
