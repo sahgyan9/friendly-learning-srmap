@@ -19,7 +19,6 @@ import { cn } from "@/lib/utils";
 
 interface MentorCardProps {
   mentor: Mentor;
-  index?: number;
 }
 
 const getSkillBadgeStyle = (skill: string) => {
@@ -47,7 +46,7 @@ const getSkillBadgeStyle = (skill: string) => {
 
 const clubsCache = new Map<string, string[]>();
 
-export const MentorCard = ({ mentor, index = 0 }: MentorCardProps) => {
+export const MentorCard = ({ mentor }: MentorCardProps) => {
   const { getUserBadges } = useBadges();
   const userBadges = getUserBadges(mentor.id);
   const { user } = useAuth();
