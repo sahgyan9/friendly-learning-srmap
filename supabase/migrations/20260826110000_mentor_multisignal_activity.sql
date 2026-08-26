@@ -98,4 +98,4 @@ comment on function public.mentor_activity(uuid) is
   'Aggregate reply counts, turnaround, and latest platform activity timestamp across messages, community discussions, and presence. Public because the mentor profile that displays it is public.';
 
 revoke all on function public.mentor_activity(uuid) from public, anon, authenticated;
-grant execute on function public.mentor_activity(uuid) to anon, authenticated;
+grant execute on function public.mentor_activity(uuid) to anon, authenticated, service_role;
