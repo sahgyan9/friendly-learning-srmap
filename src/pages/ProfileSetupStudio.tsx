@@ -742,7 +742,9 @@ export default function ProfileSetupStudio() {
                         : "bg-muted text-muted-foreground border-border"
                     }`}
                   >
-                    {completeness.score}% Complete
+                    {canPublish
+                      ? `${completeness.score}% · Ready to publish`
+                      : `${completeness.score}% · ${missingRequirements.length} required left`}
                   </Badge>
                 )}
               </div>
