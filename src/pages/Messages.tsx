@@ -4,7 +4,6 @@ import { Link, useSearchParams } from "react-router-dom";
 import { MessageSquare } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
-import { useSiteSidebar } from "@/context/SidebarContext";
 import MessagesLayout from "@/components/messages/MessagesLayout";
 import { getOrCreateConversation } from "@/integrations/supabase/services/chat/conversation.service";
 import { toast } from "sonner";
@@ -12,16 +11,9 @@ import { Button } from "@/components/ui/button";
 
 const Messages = () => {
   const { user } = useAuth();
-  const { setCollapsed } = useSiteSidebar();
   const [searchParams, setSearchParams] = useSearchParams();
   const mentorId = searchParams.get('mentorId');
   const [isInitializingConversation, setIsInitializingConversation] = useState(false);
-
-  // Auto-collapse rail on Messages so the conversation list has ample space,
-  // while keeping the icon rail and expand toggle accessible.
-  useEffect(() => {
-    setCollapsed(true);
-  }, [setCollapsed]);
 
   useEffect(() => {
     if (mentorId && user) {
