@@ -479,10 +479,10 @@ export async function doLogin(
     return { loggedIn: true, jar: mergeSetCookies(jar, loginRes) };
   }
 
-  let errorMessage = "Couldn't sign in — check your register number, password, and try again.";
+  let errorMessage = "Couldn't sign in — check your register number, DOB password, and try again.";
   const text = await loginRes.text();
   if (text.includes("Captcha Invalid")) errorMessage = "That captcha didn't match — try again.";
-  else if (text.includes("Invalid User ID or Password")) errorMessage = "Register number or password is incorrect.";
+  else if (text.includes("Invalid User ID or Password")) errorMessage = "Register number or password (DOB: DDMMYYYY) is incorrect.";
 
   return { loggedIn: false, jar, errorMessage };
 }

@@ -51,6 +51,28 @@ interface ImportSuccessResult {
 }
 
 /**
+ * Extracts error details from Supabase FunctionsHttpError context if present,
+ * preventing generic "Edge Function returned a non-2xx status code" masking.
+ */
+async function extractFunctionError(error: unknown, fallback: string): Promise<string> {
+  if (!error) return fallback;
+  if (typeof error === "object" && error !== null && "context" in error) {
+    try {
+      const body = await (error as { context: Response }).context.json();
+      if (body?.error && typeof body.error === "string") {
+        return body.error;
+      }
+    } catch {
+      // Body may not be JSON or already consumed
+    }
+  }
+  if (error instanceof Error && error.message && !error.message.includes("non-2xx")) {
+    return error.message;
+  }
+  return fallback;
+}
+
+/**
  * Strips a transcript down to what's safe to show on a public profile:
  * course code + name only, deduped (a retaken course appears once), never
  * grades, credits, semester, or CGPA.
@@ -109,7 +131,10 @@ export const ImportSrmPortalDialog = ({
       const { data, error } = await supabase.functions.invoke("import-srm-portal", {
         body: { step: "captcha" },
       });
-      if (error) throw error;
+      if (error) {
+        const message = await extractFunctionError(error, "Couldn't reach the SRM portal");
+        throw new Error(message);
+      }
       if (data?.error) throw new Error(data.error);
       const step: CaptchaStepData = data.data;
       setCaptchaData(step);
@@ -254,7 +279,10 @@ export const ImportSrmPortalDialog = ({
           captcha: captchaText.trim(),
         },
       });
-      if (error) throw error;
+      if (error) {
+        const message = await extractFunctionError(error, "Couldn't sign in — check your register number and portal password.");
+        throw new Error(message);
+      }
       if (data?.error) throw new Error(data.error);
 
       const result: ImportSuccessResult = {
