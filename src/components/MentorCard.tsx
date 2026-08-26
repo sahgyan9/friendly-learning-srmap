@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 
 interface MentorCardProps {
   mentor: Mentor;
+  index?: number;
 }
 
 const getSkillBadgeStyle = (skill: string) => {
@@ -44,13 +45,15 @@ const getSkillBadgeStyle = (skill: string) => {
   return "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20";
 };
 
-const MentorCard = ({ mentor }: MentorCardProps) => {
+const clubsCache = new Map<string, string[]>();
+
+export const MentorCard = ({ mentor, index = 0 }: MentorCardProps) => {
   const { getUserBadges } = useBadges();
   const userBadges = getUserBadges(mentor.id);
   const { user } = useAuth();
   const [isNavigating, setIsNavigating] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
-  const [userClubs, setUserClubs] = useState<string[]>([]);
+  const [userClubs, setUserClubs] = useState<string[]>(() => clubsCache.get(mentor.id) || []);
   const navigate = useNavigate();
 
   // Paused mentors are filtered out of the directory query, so this only shows
@@ -59,10 +62,19 @@ const MentorCard = ({ mentor }: MentorCardProps) => {
   const listed = isMentorListed(mentor);
 
   useEffect(() => {
+    if (clubsCache.has(mentor.id)) {
+      setUserClubs(clubsCache.get(mentor.id)!);
+      return;
+    }
+
     let cancelled = false;
     getUserJoinedCommunities(mentor.id).then((res) => {
       if (!cancelled) {
-        setUserClubs(res.filter(c => c.community.kind === "club").map(c => c.community.name));
+        const clubNames = res
+          .filter((c) => c.community.kind === "club")
+          .map((c) => c.community.name);
+        clubsCache.set(mentor.id, clubNames);
+        setUserClubs(clubNames);
       }
     });
     return () => {

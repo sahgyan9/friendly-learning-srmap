@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { Sparkles, FileText, GraduationCap, Drama, CheckCircle2, ArrowRight } from "lucide-react";
 import ResumePdfImport from "@/components/mentors/form/ResumePdfImport";
 import { ImportSrmPortalDialog } from "@/components/profile/ImportSrmPortal";
@@ -33,6 +34,7 @@ export function ProfileKickstartModal({
   const [activeTab, setActiveTab] = useState<string>(defaultTab);
   const [portalDialogOpen, setPortalDialogOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isDiscoverable, setIsDiscoverable] = useState(true);
   const [importedPreview, setImportedPreview] = useState<{
     name?: string;
     department?: string;
@@ -76,7 +78,7 @@ export function ProfileKickstartModal({
     setIsSaving(true);
 
     try {
-      // 1. Update users table
+      // 1. Update users table with explicit discoverable choice
       const userUpdatePayload: Record<string, any> = {
         name: importedPreview.name || undefined,
         department: importedPreview.department || undefined,
@@ -84,7 +86,7 @@ export function ProfileKickstartModal({
         bio: importedPreview.bio || undefined,
         linkedin_url: importedPreview.linkedin_url || undefined,
         mobile: importedPreview.mobile || undefined,
-        interests_discoverable: true,
+        interests_discoverable: isDiscoverable,
       };
 
       // Clean undefined keys
@@ -230,6 +232,20 @@ export function ProfileKickstartModal({
                     </div>
                   )}
 
+                  {/* Explicit AI Search Discovery Consent */}
+                  <div className="flex items-center justify-between p-2.5 rounded-lg bg-muted/40 border border-border/60 mt-2">
+                    <div className="space-y-0.5 pr-2">
+                      <span className="text-xs font-medium text-foreground block">CampusMind AI Search Discovery</span>
+                      <span className="text-[11px] text-muted-foreground block leading-tight">
+                        Allow peers to find you when asking about your skills or coursework
+                      </span>
+                    </div>
+                    <Switch
+                      checked={isDiscoverable}
+                      onCheckedChange={setIsDiscoverable}
+                    />
+                  </div>
+
                   <Button
                     onClick={handleSaveImportedData}
                     disabled={isSaving}
@@ -238,7 +254,7 @@ export function ProfileKickstartModal({
                     {isSaving ? "Saving..." : "Save to My Profile 🎉"}
                   </Button>
                   <p className="text-[11px] text-center text-muted-foreground mt-1">
-                    ✓ Instantly activates your card & makes your skills searchable to peers in CampusMind AI.
+                    ✓ Instantly activates your card on the campus directory.
                   </p>
                 </div>
               )}

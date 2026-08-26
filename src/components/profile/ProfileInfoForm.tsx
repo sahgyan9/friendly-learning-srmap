@@ -99,13 +99,29 @@ export function ProfileInfoForm({
             {/* Account Standing Badge */}
             <div className="p-3 bg-muted/60 rounded-lg flex items-center justify-between">
               <span className="text-sm font-medium text-foreground">Campus Standing</span>
-              <div className="flex items-center gap-1.5">
-                <Badge
-                  variant="outline"
-                  className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30 font-medium text-xs px-2.5 py-0.5"
-                >
-                  ✓ Verified SRM AP Student
-                </Badge>
+              <div className="flex items-center gap-1.5 flex-wrap justify-end">
+                {profile.verification_status === "rejected" ? (
+                  <Badge
+                    variant="outline"
+                    className="bg-destructive/10 text-destructive border-destructive/30 font-medium text-xs px-2.5 py-0.5"
+                  >
+                    Action Required
+                  </Badge>
+                ) : profile.email?.toLowerCase().endsWith("@srmap.edu.in") || profile.verification_status === "verified" ? (
+                  <Badge
+                    variant="outline"
+                    className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30 font-medium text-xs px-2.5 py-0.5"
+                  >
+                    ✓ SRM AP Student
+                  </Badge>
+                ) : (
+                  <Badge
+                    variant="outline"
+                    className="bg-muted text-muted-foreground font-medium text-xs px-2.5 py-0.5"
+                  >
+                    Guest Account
+                  </Badge>
+                )}
                 {showMentorFields && (
                   <Badge
                     variant="outline"

@@ -1,8 +1,8 @@
 import React from "react";
 
 /**
- * Bold & filled 3-student team composition (center leader with left & right members),
- * matching the solid silhouette visual weight of Mentors, Faculty, and Events icons in the navbar.
+ * Bold & filled 3-student team silhouette with crisp separation gaps
+ * and mathematically mirrored symmetry along the central axis (x=12).
  */
 export const GroupsIcon: React.FC<React.SVGProps<SVGSVGElement>> = ({
   className = "h-5 w-5",
@@ -15,17 +15,17 @@ export const GroupsIcon: React.FC<React.SVGProps<SVGSVGElement>> = ({
       className={className}
       {...props}
     >
-      {/* Center Member / Leader */}
+      {/* Center Member / Leader (x: 7.5 to 16.5) */}
       <circle cx="12" cy="6" r="3.2" />
-      <path d="M12 11c-2.8 0-5 1.8-5 4.2V21h10v-5.8c0-2.4-2.2-4.2-5-4.2z" />
+      <path d="M7.5 21v-4.5c0-2.5 2-4.5 4.5-4.5s4.5 2 4.5 4.5V21h-9z" />
 
-      {/* Left Member */}
+      {/* Left Member (x: 1 to 6.2 — 1.3px separation gap to center) */}
       <circle cx="4.5" cy="8.5" r="2.4" />
-      <path d="M4.5 12.5c-2 0-3.5 1.3-3.5 3V21h4.2v-3.5c0-.9.3-1.7.8-2.4-.5-.4-1-.6-1.5-.6z" />
+      <path d="M1 21v-4.2c0-2 1.6-3.8 3.5-3.8h1.7v8H1z" />
 
-      {/* Right Member */}
+      {/* Right Member (x: 17.8 to 23 — 1.3px separation gap to center, exact 24-x mirror) */}
       <circle cx="19.5" cy="8.5" r="2.4" />
-      <path d="M19.5 12.5c-.5 0-1 .2-1.5.6.5.7.8 1.5.8 2.4V21h4.2v-5.5c0-1.7-1.5-3-3.5-3z" />
+      <path d="M23 21v-4.2c0-2-1.6-3.8-3.5-3.8h-1.7v8H23z" />
     </svg>
   );
 };

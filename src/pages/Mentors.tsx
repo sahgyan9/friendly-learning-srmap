@@ -148,8 +148,8 @@ const Mentors = () => {
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "ItemList",
-    "name": "SRM AP Student Mentors",
-    "description": "Browse verified student mentors at SRM University AP offering academic guidance and career support",
+    "name": "SRM AP Mentors and Peers",
+    "description": "Browse active student mentors and peers at SRM AP offering course guidance, project help, and collaboration",
     "numberOfItems": mentorCount,
     "itemListElement": filteredMentors.slice(0, 10).map((mentor, index) => ({
       "@type": "Person",

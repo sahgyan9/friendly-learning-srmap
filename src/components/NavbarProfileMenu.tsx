@@ -16,7 +16,6 @@ import { getInitials } from "@/utils/user-utils";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useWelcomeTour } from "@/components/onboarding/WelcomeTourContext";
-import { MentorCtaTooltip } from "@/components/mentors/MentorCtaTooltip";
 import { ProfileKickstartModal } from "@/components/profile/ProfileKickstartModal";
 import { Sparkles, User, Award } from "lucide-react";
 

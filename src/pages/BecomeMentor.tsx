@@ -193,17 +193,14 @@ const BecomeMentor = () => {
                   <div className="space-y-4">
                     <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border">
                       <p className="text-sm text-gray-700 dark:text-gray-300">
-                        Your campus profile is live and active. Students and peers can find you in search and the directory.
+                        Your application was submitted on {new Date(existingApplication.submitted_at).toLocaleDateString()}. 
+                        Our team is reviewing your submission. You can check your account settings anytime.
                       </p>
                     </div>
                     <div className="flex justify-center space-x-4">
-                      <Button onClick={() => navigate(`/mentor/${user.id}`)}>
+                      <Button onClick={() => navigate('/profile')} variant="outline">
                         <FileText className="h-4 w-4 mr-2" />
-                        View My Public Profile
-                      </Button>
-                      <Button onClick={() => setEditMode(true)} variant="outline">
-                        <Edit className="h-4 w-4 mr-2" />
-                        Edit Details
+                        View Account Settings
                       </Button>
                     </div>
                   </div>
@@ -213,17 +210,16 @@ const BecomeMentor = () => {
                   <div className="space-y-4">
                     <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border">
                       <p className="text-sm text-gray-700 dark:text-gray-300">
-                        Nothing else to do — students browsing for help can see you already. You can
-                        edit your profile whenever you like.
+                        Your campus profile is live. Students and peers can find you in search, browse your skills, and message you.
                       </p>
                     </div>
                     <div className="flex justify-center space-x-4">
-                      <Button onClick={() => navigate('/profile')}>
+                      <Button onClick={() => navigate(`/mentor/${user.id}`)}>
                         <FileText className="h-4 w-4 mr-2" />
-                        View Mentor Profile
+                        View Public Profile
                       </Button>
-                      <Button onClick={() => navigate('/mentors')} variant="outline">
-                        Browse Mentors
+                      <Button onClick={() => navigate('/profile')} variant="outline">
+                        Edit Settings
                       </Button>
                     </div>
                   </div>
