@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { CardAccentBorder } from "@/components/ui/CardAccentBorder";
 import { cn } from "@/lib/utils";
+import { getOptimizedImageUrl } from "@/lib/image/imageUrl";
 import type { Faculty } from "@/integrations/supabase/services/faculty";
 import { StarRating } from "./StarRating";
 
@@ -37,9 +38,10 @@ export function FacultyCard({ faculty, onRate, className }: FacultyCardProps) {
         <div className="relative aspect-[4/3] overflow-hidden bg-muted/50">
           {faculty.image_url ? (
             <img
-              src={faculty.image_url}
+              src={getOptimizedImageUrl(faculty.image_url, { width: 400, quality: 75 })}
               alt={faculty.name}
               loading="lazy"
+              decoding="async"
               className="h-full w-full object-cover object-top transition-transform duration-500 group-hover:scale-105"
               onError={(event) => {
                 // Hide broken images; the fallback below is already rendered

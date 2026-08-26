@@ -21,6 +21,7 @@ export function SRMAPEventCard({ event }: SRMAPEventCardProps) {
   const hasEnded = now > end;
 
   const [proxyFailed, setProxyFailed] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
   const imageSrc = event.imageUrl
     ? proxyFailed
       ? event.imageUrl
@@ -60,14 +61,23 @@ export function SRMAPEventCard({ event }: SRMAPEventCardProps) {
       {/* Cover image (links to event detail) */}
       <Link to={`/events/${event.id}`} className="relative block aspect-video w-full overflow-hidden bg-muted">
         {imageSrc ? (
-          <img
-            src={imageSrc}
-            alt=""
-            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-            loading="lazy"
-            decoding="async"
-            onError={() => setProxyFailed(true)}
-          />
+          <>
+            <img
+              src={imageSrc}
+              alt=""
+              className={cn(
+                "h-full w-full object-cover transition-all duration-500 group-hover:scale-105",
+                imageLoaded ? "opacity-100" : "opacity-0",
+              )}
+              loading="lazy"
+              decoding="async"
+              onLoad={() => setImageLoaded(true)}
+              onError={() => setProxyFailed(true)}
+            />
+            {!imageLoaded && (
+              <div className="absolute inset-0 animate-pulse bg-muted-foreground/10" />
+            )}
+          </>
         ) : (
           <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-violet-500/10 to-violet-500/5">
             <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-500/10">

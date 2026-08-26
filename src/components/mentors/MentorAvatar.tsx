@@ -1,6 +1,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getInitials } from "@/utils/user-utils";
 import { cn } from "@/lib/utils";
+import { getOptimizedImageUrl } from "@/lib/image/imageUrl";
 
 /**
  * A mentor's picture, or their initials when there isn't one.
@@ -43,16 +44,20 @@ interface MentorAvatarProps {
   fallbackClassName?: string;
 }
 
-const MentorAvatar = ({ name, src, seed, className, fallbackClassName }: MentorAvatarProps) => (
-  <Avatar className={cn("h-16 w-16", className)}>
-    {/* Radix only swaps in the fallback once the image errors or is absent, so
-        an empty string has to be normalised to undefined — "" would otherwise
-        resolve against the current URL and load the HTML document. */}
-    <AvatarImage src={src || undefined} alt={name} loading="lazy" />
-    <AvatarFallback className={cn("font-semibold", tintFor(seed || name), fallbackClassName)}>
-      {getInitials(name)}
-    </AvatarFallback>
-  </Avatar>
-);
+const MentorAvatar = ({ name, src, seed, className, fallbackClassName }: MentorAvatarProps) => {
+  const optimizedSrc = src ? getOptimizedImageUrl(src, { width: 160, quality: 80 }) : undefined;
+
+  return (
+    <Avatar className={cn("h-16 w-16", className)}>
+      {/* Radix only swaps in the fallback once the image errors or is absent, so
+          an empty string has to be normalised to undefined — "" would otherwise
+          resolve against the current URL and load the HTML document. */}
+      <AvatarImage src={optimizedSrc || undefined} alt={name} loading="lazy" />
+      <AvatarFallback className={cn("font-semibold", tintFor(seed || name), fallbackClassName)}>
+        {getInitials(name)}
+      </AvatarFallback>
+    </Avatar>
+  );
+};
 
 export default MentorAvatar;

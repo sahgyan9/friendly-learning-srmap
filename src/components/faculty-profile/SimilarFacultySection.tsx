@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { CardAccentBorder } from "@/components/ui/CardAccentBorder";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { getOptimizedImageUrl } from "@/lib/image/imageUrl";
 import {
   Faculty,
   getSimilarFaculty,
@@ -83,8 +84,10 @@ export default function SimilarFacultySection({
                     <div className="h-12 w-12 shrink-0 rounded-xl overflow-hidden bg-muted border border-border flex items-center justify-center">
                       {fac.image_url ? (
                         <img
-                          src={fac.image_url}
+                          src={getOptimizedImageUrl(fac.image_url, { width: 120, quality: 75 })}
                           alt={fac.name}
+                          loading="lazy"
+                          decoding="async"
                           className="h-full w-full object-cover object-top"
                         />
                       ) : (

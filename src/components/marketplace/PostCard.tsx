@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar, User, ArrowRight, Newspaper, Megaphone, BookOpen, CalendarDays } from "lucide-react";
 import { CardAccentBorder } from "@/components/ui/CardAccentBorder";
 import { cn } from "@/lib/utils";
+import { getOptimizedImageUrl } from "@/lib/image/imageUrl";
 
 export interface PostCardProps {
   id: string;
@@ -18,7 +19,7 @@ export interface PostCardProps {
 
 /** Per-category colour + icon — mirrors the Events brand accent (violet). */
 const CATEGORY_META: Record<string, {
-  gradient: string;
+  gradient: "sky" | "violet" | "amber" | "emerald";
   badge: string;
   icon: React.ElementType;
   label: string;
@@ -28,7 +29,7 @@ const CATEGORY_META: Record<string, {
   ads:     { gradient: "amber",   badge: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",   icon: Megaphone,    label: "Ad" },
   courses: { gradient: "emerald", badge: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20", icon: BookOpen,     label: "Course" },
 };
-const DEFAULT_META = { gradient: "primary", badge: "bg-primary/10 text-primary border-primary/20", icon: CalendarDays, label: "Post" };
+const DEFAULT_META = { gradient: "violet" as const, badge: "bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-500/20", icon: CalendarDays, label: "Post" };
 
 export function PostCard({
   title,
@@ -59,9 +60,10 @@ export function PostCard({
       {image && (
         <div className="relative aspect-video w-full overflow-hidden bg-muted">
           <img
-            src={image}
+            src={getOptimizedImageUrl(image, { width: 640, quality: 75 })}
             alt={title}
             loading="lazy"
+            decoding="async"
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
         </div>

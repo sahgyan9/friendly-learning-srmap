@@ -5,6 +5,7 @@ import { GraduationCap, Sparkles, UserRound, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useAuth } from "@/context/AuthContext";
+import { getOptimizedImageUrl } from "@/lib/image/imageUrl";
 import { supabase } from "@/integrations/supabase/client";
 import {
   allResults,
@@ -80,9 +81,10 @@ function PersonCard({ result }: { result: AskResult }) {
       <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-muted">
         {image ? (
           <img
-            src={image}
+            src={getOptimizedImageUrl(image, { width: 120, quality: 75 })}
             alt=""
             loading="lazy"
+            decoding="async"
             className="h-full w-full object-cover object-top"
             onError={(event) => {
               event.currentTarget.style.display = "none";

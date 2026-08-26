@@ -5,10 +5,13 @@ import { ArrowRight, EyeOff, Star } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { CardAccentBorder } from "@/components/ui/CardAccentBorder";
+import { getOptimizedImageUrl } from "@/lib/image/imageUrl";
 import {
   getFacultyDirectoryStats,
   getTopRatedFaculty,
 } from "@/integrations/supabase/services/faculty";
+import type { Faculty } from "@/integrations/supabase/services/faculty";
 import { StarRating } from "./StarRating";
 
 type TopFaculty = {
@@ -110,9 +113,10 @@ export function FacultyDiscoveryCard() {
                   >
                     {member.image_url ? (
                       <img
-                        src={member.image_url}
+                        src={getOptimizedImageUrl(member.image_url, { width: 100, quality: 75 })}
                         alt=""
                         loading="lazy"
+                        decoding="async"
                         className="h-9 w-9 shrink-0 rounded-full object-cover object-top"
                       />
                     ) : (

@@ -16,6 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { StarRating } from "@/components/faculty/StarRating";
+import { getOptimizedImageUrl } from "@/lib/image/imageUrl";
 import { Faculty, getFacultyEmail, getFacultyProfileUrl } from "@/integrations/supabase/services/faculty";
 import { toast } from "sonner";
 
@@ -63,10 +64,11 @@ export default function FacultyHeroHeader({
             <div className="h-28 w-28 md:h-32 md:w-32 rounded-2xl overflow-hidden border-2 border-border bg-muted/60 shadow-inner flex items-center justify-center">
               {faculty.image_url ? (
                 <img
-                  src={faculty.image_url}
+                  src={getOptimizedImageUrl(faculty.image_url, { width: 300, quality: 80 })}
                   alt={faculty.name}
                   className="h-full w-full object-cover object-top"
                   loading="eager"
+                  decoding="async"
                 />
               ) : (
                 <UserRound className="h-14 w-14 text-muted-foreground/40" />
