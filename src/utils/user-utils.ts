@@ -113,6 +113,7 @@ export const matchFacultyDepartment = (
     economics: "Economics",
     econ: "Economics",
     management: "Management",
+    paari: "Management",
     mgmt: "Management",
     business: "Management",
     mba: "Management",

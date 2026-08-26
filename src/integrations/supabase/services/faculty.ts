@@ -150,7 +150,9 @@ export async function getFacultyList(query: FacultyQuery = {}) {
     .eq("is_active", true);
 
   if (department !== "all") {
-    request = request.eq("department", department);
+    const { matchFacultyDepartment } = await import("@/utils/user-utils");
+    const canonical = matchFacultyDepartment(department, []) || department;
+    request = request.eq("department", canonical);
   }
 
   // Exact tag match, served by the GIN index on interests. Kept separate from

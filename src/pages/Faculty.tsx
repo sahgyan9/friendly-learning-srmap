@@ -87,12 +87,17 @@ const Faculty = () => {
   });
 
   const rawDeptParam = searchParams.get("dept") || searchParams.get("department");
+  const matchedDeptParam = useMemo(() => {
+    if (!rawDeptParam || rawDeptParam === "all") return null;
+    return matchFacultyDepartment(rawDeptParam, departments) || rawDeptParam;
+  }, [rawDeptParam, departments]);
+
   const userMatchedDept = useMemo(() => {
     return matchFacultyDepartment(profile?.department, departments);
   }, [profile?.department, departments]);
 
   const department = rawDeptParam !== null
-    ? rawDeptParam
+    ? (rawDeptParam === "all" ? "all" : (matchedDeptParam || rawDeptParam))
     : (userMatchedDept || "all");
 
   const interest = searchParams.get("interest") ?? "";

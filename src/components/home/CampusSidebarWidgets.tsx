@@ -119,9 +119,9 @@ function parseEventDate(value: string | undefined): { month: string; day: string
 }
 
 const TOP_DEPARTMENTS = [
-  { name: "Computer Science", short: "CSE", color: "hover:border-blue-500/50 hover:bg-blue-500/5 text-blue-600 dark:text-blue-400" },
-  { name: "Electronics", short: "ECE", color: "hover:border-emerald-500/50 hover:bg-emerald-500/5 text-emerald-600 dark:text-emerald-400" },
-  { name: "Mechanical", short: "ME", color: "hover:border-amber-500/50 hover:bg-amber-500/5 text-amber-600 dark:text-amber-400" },
+  { name: "Computer Science and Engineering", short: "CSE", color: "hover:border-blue-500/50 hover:bg-blue-500/5 text-blue-600 dark:text-blue-400" },
+  { name: "Electronics and Communication Engineering", short: "ECE", color: "hover:border-emerald-500/50 hover:bg-emerald-500/5 text-emerald-600 dark:text-emerald-400" },
+  { name: "Mechanical Engineering", short: "ME", color: "hover:border-amber-500/50 hover:bg-amber-500/5 text-amber-600 dark:text-amber-400" },
   { name: "Management", short: "Paari", color: "hover:border-purple-500/50 hover:bg-purple-500/5 text-purple-600 dark:text-purple-400" },
 ];
 
