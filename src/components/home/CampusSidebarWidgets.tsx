@@ -17,6 +17,8 @@ import {
   Star,
   Zap,
   Loader2,
+  UserRound,
+  ShieldCheck,
 } from "lucide-react";
 import { EventsIcon } from "@/components/icons/EventsIcon";
 import { FacultyIcon } from "@/components/icons/FacultyIcon";
@@ -30,10 +32,72 @@ import MentorAvatar from "@/components/mentors/MentorAvatar";
 import { useAuth } from "@/context/AuthContext";
 import { useSRMAPEvents, type SRMAPEvent } from "@/hooks/useSRMAPEvents";
 import { getMentors } from "@/integrations/supabase/services/mentors";
+import { getFacultyList, type Faculty } from "@/integrations/supabase/services/faculty";
+import { getOptimizedImageUrl } from "@/lib/image/imageUrl";
 import { listCommunities, type Community } from "@/integrations/supabase/services/communities";
 import { getOrCreateConversation } from "@/integrations/supabase/services/chat";
 import { sampleMentors } from "@/data/mentors";
 import type { Mentor } from "@/types/mentor";
+
+const sampleFacultyFallback: Faculty[] = [
+  {
+    id: "f1",
+    slug: "dr-murali-krishna-enduri",
+    name: "Dr. Murali Krishna Enduri",
+    designation: "Associate Professor",
+    department: "Computer Science and Engineering",
+    school: "School of Engineering and Sciences",
+    profile_url: "https://www.srmap.edu.in/faculty/dr-murali-krishna-enduri/",
+    image_url: null,
+    has_image: false,
+    interests: ["Machine Learning", "Graph Theory", "Algorithms"],
+    research_areas: ["Artificial Intelligence"],
+    rating_count: 24,
+    avg_overall: 4.9,
+    avg_teaching: 4.9,
+    avg_grading: 4.8,
+    avg_helpfulness: 5.0,
+    office_location: "Admin Block, 3rd Floor",
+  },
+  {
+    id: "f2",
+    slug: "dr-priyanka-singh",
+    name: "Dr. Priyanka Singh",
+    designation: "Assistant Professor",
+    department: "Computer Science and Engineering",
+    school: "School of Engineering and Sciences",
+    profile_url: "https://www.srmap.edu.in/faculty/dr-priyanka-singh/",
+    image_url: null,
+    has_image: false,
+    interests: ["Deep Learning", "Computer Vision", "NLP"],
+    research_areas: ["Computer Vision"],
+    rating_count: 19,
+    avg_overall: 4.8,
+    avg_teaching: 4.8,
+    avg_grading: 4.7,
+    avg_helpfulness: 4.9,
+    office_location: "Academic Block, Room 402",
+  },
+  {
+    id: "f3",
+    slug: "dr-ranjit-thapa",
+    name: "Dr. Ranjit Thapa",
+    designation: "Professor & HoD",
+    department: "Physics",
+    school: "School of Engineering and Sciences",
+    profile_url: "https://www.srmap.edu.in/faculty/dr-ranjit-thapa/",
+    image_url: null,
+    has_image: false,
+    interests: ["Computational Materials", "Quantum Mechanics", "DFT"],
+    research_areas: ["Materials Science"],
+    rating_count: 31,
+    avg_overall: 4.9,
+    avg_teaching: 5.0,
+    avg_grading: 4.8,
+    avg_helpfulness: 4.9,
+    office_location: "Research Wing, 2nd Floor",
+  },
+];
 
 function parseEventDate(value: string | undefined): { month: string; day: string; time: string; isLive: boolean } {
   if (!value) return { month: "UPC", day: "--", time: "", isLive: false };
@@ -67,8 +131,10 @@ export const CampusSidebarWidgets = () => {
   const [connectingId, setConnectingId] = useState<string | null>(null);
   const { events, loading: eventsLoading } = useSRMAPEvents();
   const [mentors, setMentors] = useState<Mentor[]>([]);
+  const [faculty, setFaculty] = useState<Faculty[]>([]);
   const [groups, setGroups] = useState<Community[]>([]);
   const [mentorsLoading, setMentorsLoading] = useState(true);
+  const [facultyLoading, setFacultyLoading] = useState(true);
 
   const handleConnect = async (mentor: Mentor, e: React.MouseEvent) => {
     e.preventDefault();
@@ -113,6 +179,16 @@ export const CampusSidebarWidgets = () => {
         setMentors(sampleMentors.slice(0, 3));
       }
       setMentorsLoading(false);
+    });
+
+    getFacultyList({ sort: "reviews", limit: 3 }).then(({ data }) => {
+      if (cancelled) return;
+      if (data && data.length > 0) {
+        setFaculty(data.slice(0, 3));
+      } else {
+        setFaculty(sampleFacultyFallback);
+      }
+      setFacultyLoading(false);
     });
 
     listCommunities({ limit: 3 }).then(({ data }) => {
@@ -322,7 +398,7 @@ export const CampusSidebarWidgets = () => {
                   <TooltipContent
                     side="left"
                     sideOffset={14}
-                    className="w-[460px] max-w-[90vw] rounded-2xl p-5 bg-white dark:bg-card text-foreground border border-border shadow-2xl ring-1 ring-black/10 dark:ring-white/10 z-50 animate-in fade-in-0 zoom-in-95 duration-150"
+                    className="w-[480px] max-w-[90vw] rounded-2xl p-5 bg-white dark:bg-card text-foreground border border-border shadow-2xl ring-1 ring-black/10 dark:ring-white/10 z-50 animate-in fade-in-0 zoom-in-95 duration-150"
                   >
                     <div className="space-y-4">
                       {/* Top Row: Avatar + Details + Connect Button */}
@@ -346,7 +422,7 @@ export const CampusSidebarWidgets = () => {
 
                         {/* Middle: Details */}
                         <div className="min-w-0 flex-1">
-                          <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center justify-between gap-3">
                             <div className="flex items-center gap-1.5 min-w-0">
                               <h4 className="font-extrabold text-base text-foreground tracking-tight truncate">
                                 {mentor.name}
@@ -357,14 +433,14 @@ export const CampusSidebarWidgets = () => {
                               size="sm"
                               disabled={isConnecting}
                               onClick={(e) => handleConnect(mentor, e)}
-                              className="shrink-0 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs px-3 h-7.5 gap-1.5 rounded-lg shadow-sm"
+                              className="shrink-0 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs px-4 h-9 gap-1.5 rounded-xl shadow-xs transition-all hover:shadow-md active:scale-95"
                             >
                               {isConnecting ? (
                                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
                               ) : (
                                 <MessageCircle className="h-3.5 w-3.5" />
                               )}
-                              Connect with Mentor
+                              Connect
                             </Button>
                           </div>
 
@@ -451,7 +527,7 @@ export const CampusSidebarWidgets = () => {
 
       {/* ── Widget 3: Faculty Explorer Spotlight ── */}
       <Card className="p-4 border-border/80 bg-card shadow-xs">
-        <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center justify-between mb-3.5">
           <div className="flex items-center gap-2">
             <div className="p-1.5 rounded-md bg-rose-500/10 text-rose-600">
               <FacultyIcon className="h-4 w-4" />
@@ -462,24 +538,233 @@ export const CampusSidebarWidgets = () => {
             to="/faculty"
             className="text-xs text-primary hover:underline font-medium inline-flex items-center gap-0.5 group"
           >
-            Explore all
+            All faculty
             <ChevronRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
           </Link>
         </div>
-        <p className="text-xs text-muted-foreground mb-3">
-          Explore research specializations & anonymous reviews by department:
-        </p>
-        <div className="grid grid-cols-2 gap-2">
-          {TOP_DEPARTMENTS.map((dept) => (
-            <Link
-              key={dept.short}
-              to={`/faculty?dept=${encodeURIComponent(dept.name)}`}
-              className={`flex items-center justify-between p-2 rounded-lg border border-border/60 bg-muted/20 text-xs font-medium transition-all ${dept.color}`}
-            >
-              <span>{dept.short}</span>
-              <ArrowRight className="h-3 w-3 opacity-60" />
-            </Link>
-          ))}
+
+        {facultyLoading ? (
+          <div className="space-y-2.5">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="h-14 animate-pulse rounded-xl bg-muted/60" />
+            ))}
+          </div>
+        ) : (
+          <div className="space-y-2.5">
+            {faculty.map((member) => {
+              const hasRating = Boolean(member.rating_count && member.rating_count > 0 && member.avg_overall && member.avg_overall > 0);
+              const interests = member.interests ?? [];
+
+              return (
+                <Tooltip key={member.id}>
+                  <TooltipTrigger asChild>
+                    <div className="group flex items-center justify-between gap-3 p-2.5 rounded-xl border border-border/60 bg-muted/20 hover:bg-muted/50 hover:border-rose-500/30 transition-all cursor-pointer">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="relative h-9 w-9 shrink-0 rounded-full overflow-hidden bg-muted/70 ring-1 ring-border/80 flex items-center justify-center">
+                          {member.image_url ? (
+                            <img
+                              src={getOptimizedImageUrl(member.image_url, { width: 100, quality: 75 })}
+                              alt={member.name}
+                              loading="lazy"
+                              decoding="async"
+                              className="h-full w-full object-cover object-top"
+                              onError={(e) => {
+                                e.currentTarget.style.display = "none";
+                              }}
+                            />
+                          ) : (
+                            <UserRound className="h-4 w-4 text-muted-foreground/50" />
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <Link
+                            to={`/faculty/${member.slug}`}
+                            className="text-xs font-semibold text-foreground hover:text-rose-600 transition-colors truncate flex items-center gap-1"
+                          >
+                            <span className="truncate">{member.name}</span>
+                          </Link>
+                          <p className="text-2xs text-muted-foreground truncate">
+                            {member.designation ? `${member.designation} • ` : ""}{member.department}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        {hasRating && (
+                          <div className="hidden xs:flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 text-3xs font-bold">
+                            <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                            {Number(member.avg_overall).toFixed(1)}
+                          </div>
+                        )}
+                        <Button
+                          asChild
+                          size="sm"
+                          variant="outline"
+                          className="h-7 text-xs px-2.5 bg-background hover:bg-rose-600 hover:text-white hover:border-rose-600 transition-all"
+                        >
+                          <Link to={`/faculty/${member.slug}`}>
+                            {hasRating ? "Ratings" : "Rate"}
+                          </Link>
+                        </Button>
+                      </div>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent
+                    side="left"
+                    sideOffset={14}
+                    className="w-[480px] max-w-[90vw] rounded-2xl p-5 bg-white dark:bg-card text-foreground border border-border shadow-2xl ring-1 ring-black/10 dark:ring-white/10 z-50 animate-in fade-in-0 zoom-in-95 duration-150"
+                  >
+                    <div className="space-y-4">
+                      {/* Top Row: Photo + Details + View Profile Button */}
+                      <div className="flex items-start gap-4">
+                        {/* Left: Faculty Photo with Rose Badge */}
+                        <div className="relative shrink-0">
+                          <div className="h-16 w-16 rounded-2xl overflow-hidden shadow-xs ring-2 ring-rose-500/20 bg-muted/60 flex items-center justify-center">
+                            {member.image_url ? (
+                              <img
+                                src={getOptimizedImageUrl(member.image_url, { width: 200, quality: 80 })}
+                                alt={member.name}
+                                className="h-full w-full object-cover object-top"
+                                onError={(e) => {
+                                  e.currentTarget.style.display = "none";
+                                }}
+                              />
+                            ) : (
+                              <UserRound className="h-8 w-8 text-muted-foreground/40" />
+                            )}
+                          </div>
+                          <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1 rounded-full border border-border bg-card px-2 py-0.5 shadow-2xs whitespace-nowrap">
+                            <GraduationCap className="h-3 w-3 text-rose-500" />
+                            <span className="text-3xs font-semibold text-rose-600 dark:text-rose-400">
+                              Faculty
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Middle: Details */}
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between gap-3">
+                            <h4 className="font-extrabold text-base text-foreground tracking-tight truncate">
+                              {member.name}
+                            </h4>
+                            <Button
+                              asChild
+                              size="sm"
+                              className="shrink-0 bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs px-4 h-9 gap-1.5 rounded-xl shadow-xs transition-all hover:shadow-md active:scale-95"
+                            >
+                              <Link to={`/faculty/${member.slug}`}>
+                                <Star className="h-3.5 w-3.5 fill-white" />
+                                {hasRating ? "Reviews" : "Rate"}
+                              </Link>
+                            </Button>
+                          </div>
+
+                          <p className="text-xs font-medium text-muted-foreground mt-1">
+                            <span className="text-foreground/90 font-semibold">
+                              {member.designation || "Professor"}
+                            </span>
+                            {" • "}
+                            <span className="text-rose-600 dark:text-rose-400 font-medium">
+                              {member.department}
+                            </span>
+                          </p>
+
+                          {interests.length > 0 && (
+                            <div className="flex flex-wrap items-center gap-1 mt-2">
+                              {interests.slice(0, 3).map((interest) => (
+                                <span
+                                  key={interest}
+                                  className="truncate max-w-[140px] rounded-md border border-rose-500/20 bg-rose-500/5 px-2 py-0.5 text-3xs font-medium text-rose-700 dark:text-rose-300"
+                                >
+                                  {interest}
+                                </span>
+                              ))}
+                              {interests.length > 3 && (
+                                <span className="text-3xs text-muted-foreground">+{interests.length - 3}</span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Bottom: Trust & Feedback Metrics Grid */}
+                      <div className="pt-3 border-t border-border/60 grid grid-cols-3 gap-2.5">
+                        {/* Metric 1: Overall Rating */}
+                        <div className="flex items-center gap-2.5 rounded-xl border border-border/50 bg-muted/20 p-2.5 shadow-2xs">
+                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-500/10 text-amber-500">
+                            <Star className="h-4 w-4 fill-amber-400" />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="text-xs font-bold text-foreground">
+                              {hasRating ? (
+                                <>
+                                  {Number(member.avg_overall).toFixed(1)}
+                                  <span className="text-3xs text-muted-foreground font-normal ml-1">
+                                    ({member.rating_count})
+                                  </span>
+                                </>
+                              ) : (
+                                "New"
+                              )}
+                            </div>
+                            <div className="text-3xs text-muted-foreground font-medium">
+                              {hasRating ? "Overall Rating" : "No reviews yet"}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Metric 2: Reviews */}
+                        <div className="flex items-center gap-2.5 rounded-xl border border-border/50 bg-muted/20 p-2.5 shadow-2xs">
+                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-rose-500/10 text-rose-500">
+                            <Users className="h-4 w-4" />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="text-xs font-bold text-foreground">
+                              {member.rating_count && member.rating_count > 0 ? member.rating_count : "New"}
+                            </div>
+                            <div className="text-3xs text-muted-foreground font-medium">
+                              {member.rating_count && member.rating_count > 0 ? "Student Ratings" : "No reviews yet"}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Metric 3: Anonymity Guarantee */}
+                        <div className="flex items-center gap-2.5 rounded-xl border border-border/50 bg-muted/20 p-2.5 shadow-2xs">
+                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-500">
+                            <ShieldCheck className="h-4 w-4" />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="text-xs font-bold text-foreground">100% Anonymous</div>
+                            <div className="text-3xs text-muted-foreground font-medium">Verified Privacy</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Quick Department Shortcuts Bar */}
+        <div className="pt-3 mt-3 border-t border-border/50">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-3xs font-semibold uppercase tracking-wider text-muted-foreground">
+              By Department
+            </span>
+          </div>
+          <div className="grid grid-cols-4 gap-1.5">
+            {TOP_DEPARTMENTS.map((dept) => (
+              <Link
+                key={dept.short}
+                to={`/faculty?dept=${encodeURIComponent(dept.name)}`}
+                className={`flex items-center justify-center py-1.5 px-2 rounded-lg border border-border/60 bg-muted/20 text-3xs font-medium transition-all text-center truncate ${dept.color}`}
+              >
+                <span className="truncate">{dept.short}</span>
+              </Link>
+            ))}
+          </div>
         </div>
       </Card>
 
