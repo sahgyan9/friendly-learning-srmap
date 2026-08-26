@@ -27,6 +27,8 @@ import {
   Radio,
   Clock,
   ArrowUpRight,
+  AlertCircle,
+  Upload,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -73,18 +75,29 @@ function generateSmartDrafts(
   bio?: string,
   year?: string
 ) {
-  const dept = department?.trim() || "Physics";
-  const primarySkills = skills.length > 0 ? skills.slice(0, 4) : [dept, "Coursework", "Problem Solving"];
-  const skill1 = primarySkills[0] || dept;
-  const skill2 = primarySkills[1] || "Core Concepts";
+  const dept = department?.trim() || "";
+  const validSkills = (skills || []).map((s) => s.trim()).filter(Boolean);
+
+  if (validSkills.length === 0 && !dept) {
+    return { tagline: "", outcomes: [], ask_me_anything: [], ideal_mentees: [] };
+  }
+
+  const primarySkills =
+    validSkills.length > 0
+      ? validSkills.slice(0, 4)
+      : [dept, "Coursework", "Problem Solving"].filter(Boolean);
+  const skill1 = primarySkills[0] || dept || "Coursework";
+  const skill2 = primarySkills[1] || (dept ? `${dept} Concepts` : "Problem Solving");
   const skill3 = primarySkills[2] || "Lab Work";
 
   // 1. Tagline: Punchy, actionable, max 120 chars
   let tagline = `Helping peers with ${skill1}`;
   if (primarySkills.length >= 2) {
     tagline += `, ${skill2} & coursework`;
+  } else if (dept) {
+    tagline += ` & ${dept} prep`;
   } else {
-    tagline += ` & ${dept} course prep`;
+    tagline += ` & coursework`;
   }
   if (tagline.length > 120) {
     tagline = `Helping peers with ${skill1} & ${skill2}`;
@@ -94,15 +107,25 @@ function generateSmartDrafts(
   const outcomes = [
     `Master problem sets, core theories, and practical intuition in ${skill1}`,
     `Get 1-on-1 guidance on ${skill2}, lab assignments, and project execution`,
-    `Prepare effectively for ${dept} midterms, finals, and assessments`,
+    dept
+      ? `Prepare effectively for ${dept} midterms, finals, and assessments`
+      : `Prepare effectively for course assessments, exams, and project reviews`,
   ];
 
   // 3. Ask Me Anything: 3-4 distinct topics
-  const askMeAnything = primarySkills.map((s) => ({ topic: s }));
+  const askMeAnything = (
+    validSkills.length > 0
+      ? validSkills.slice(0, 4)
+      : [dept || "Coursework", "Exam Prep", "Projects"]
+  )
+    .filter(Boolean)
+    .map((s) => ({ topic: s }));
 
   // 4. Ideal Mentees: Who benefits most
   const idealMentees = [
-    `1st or 2nd year students taking ${dept} core subjects`,
+    dept
+      ? `1st or 2nd year students taking ${dept} core subjects`
+      : `1st or 2nd year students looking for academic & course guidance`,
     `Peers working on ${skill1} projects or research papers`,
     `Classmates seeking practical study notes, lab tips, and exam strategies`,
   ];
@@ -132,7 +155,7 @@ export default function ProfileSetupStudio() {
   const [state, setState] = useState<StudioProfileState>({
     name: "",
     department: "",
-    year_of_studies: "3rd Year",
+    year_of_studies: "",
     university: "SRM University-AP",
     tagline: "",
     skills: [],
@@ -170,12 +193,19 @@ export default function ProfileSetupStudio() {
         // 2. Fetch mentor row
         const { data: mentorData } = await getMentorById(user.id);
 
-        const alreadyPublished = Boolean(mentorData?.id && (mentorData.skills?.length ?? 0) > 0);
-        setIsPublished(alreadyPublished);
+        const studentName = mentorData?.name || userData?.name || "";
+        const studentDept = mentorData?.department || userData?.department || "";
+        const studentYear = mentorData?.year_of_studies ? String(mentorData.year_of_studies) : "";
+        const coursesList = Array.isArray(mentorData?.courses) ? (mentorData.courses as any[]) : [];
 
         const mergedSkills = mentorData?.skills?.length
           ? mentorData.skills
           : userData?.skills || [];
+
+        const alreadyPublished = Boolean(
+          mentorData?.id && (mentorData.skills?.length ?? 0) > 0 && studentDept.trim().length > 0
+        );
+        setIsPublished(alreadyPublished);
 
         let currentTagline = mentorData?.tagline || "";
         let currentOutcomes = Array.isArray(mentorData?.outcomes) ? mentorData.outcomes : [];
@@ -188,12 +218,7 @@ export default function ProfileSetupStudio() {
           ? mentorData.ideal_mentees
           : [];
 
-        const studentName = mentorData?.name || userData?.name || "";
-        const studentDept = mentorData?.department || userData?.department || "Physics";
-        const studentYear = mentorData?.year_of_studies ? String(mentorData.year_of_studies) : "3rd Year";
-        const coursesList = Array.isArray(mentorData?.courses) ? (mentorData.courses as any[]) : [];
-
-        // If AI summary sections are empty, auto-generate high-quality smart drafts immediately
+        // If AI summary sections are empty and skills exist, auto-generate smart drafts
         if (
           !currentTagline &&
           currentOutcomes.length === 0 &&
@@ -258,6 +283,10 @@ export default function ProfileSetupStudio() {
 
   // One-click AI Auto-Draft for all sections
   const handleAutoDraftAll = () => {
+    if (state.skills.length === 0 && !state.department.trim()) {
+      toast.info("Please enter your department and at least 1-2 skills, or import your resume first so AI has context to generate suggestions.");
+      return;
+    }
     setIsGeneratingAi(true);
     setTimeout(() => {
       const drafts = generateSmartDrafts(
@@ -269,10 +298,10 @@ export default function ProfileSetupStudio() {
       );
       setState((prev) => ({
         ...prev,
-        tagline: drafts.tagline,
-        outcomes: drafts.outcomes,
-        ask_me_anything: drafts.ask_me_anything,
-        ideal_mentees: drafts.ideal_mentees,
+        tagline: drafts.tagline || prev.tagline,
+        outcomes: drafts.outcomes.length > 0 ? drafts.outcomes : prev.outcomes,
+        ask_me_anything: drafts.ask_me_anything.length > 0 ? drafts.ask_me_anything : prev.ask_me_anything,
+        ideal_mentees: drafts.ideal_mentees.length > 0 ? drafts.ideal_mentees : prev.ideal_mentees,
       }));
       setIsGeneratingAi(false);
       toast.success("✨ AI summary drafts generated for Tagline, Outcomes, AMA, and Target Students!");
@@ -281,27 +310,51 @@ export default function ProfileSetupStudio() {
 
   // Section-specific AI generators
   const handleSuggestTagline = () => {
+    if (state.skills.length === 0 && !state.department.trim()) {
+      toast.info("Please enter your department or at least 1 skill first so AI can craft a relevant tagline.");
+      return;
+    }
     const drafts = generateSmartDrafts(state.skills, state.department, state.name);
-    setState((prev) => ({ ...prev, tagline: drafts.tagline }));
-    toast.success("💡 Tagline generated!");
+    if (drafts.tagline) {
+      setState((prev) => ({ ...prev, tagline: drafts.tagline }));
+      toast.success("💡 Tagline generated based on your skills!");
+    }
   };
 
   const handleSuggestOutcomes = () => {
+    if (state.skills.length === 0 && !state.department.trim()) {
+      toast.info("Please enter your department or at least 1 skill first so AI can suggest outcomes.");
+      return;
+    }
     const drafts = generateSmartDrafts(state.skills, state.department, state.name);
-    setState((prev) => ({ ...prev, outcomes: drafts.outcomes }));
-    toast.success("💡 Outcomes suggested!");
+    if (drafts.outcomes.length > 0) {
+      setState((prev) => ({ ...prev, outcomes: drafts.outcomes }));
+      toast.success("💡 Outcomes suggested!");
+    }
   };
 
   const handleSuggestAma = () => {
+    if (state.skills.length === 0 && !state.department.trim()) {
+      toast.info("Please enter your department or at least 1 skill first so AI can suggest AMA topics.");
+      return;
+    }
     const drafts = generateSmartDrafts(state.skills, state.department, state.name);
-    setState((prev) => ({ ...prev, ask_me_anything: drafts.ask_me_anything }));
-    toast.success("💡 AMA topics suggested!");
+    if (drafts.ask_me_anything.length > 0) {
+      setState((prev) => ({ ...prev, ask_me_anything: drafts.ask_me_anything }));
+      toast.success("💡 AMA topics suggested!");
+    }
   };
 
   const handleSuggestIdealMentees = () => {
+    if (state.skills.length === 0 && !state.department.trim()) {
+      toast.info("Please enter your department or at least 1 skill first so AI can suggest target students.");
+      return;
+    }
     const drafts = generateSmartDrafts(state.skills, state.department, state.name);
-    setState((prev) => ({ ...prev, ideal_mentees: drafts.ideal_mentees }));
-    toast.success("💡 Target students suggested!");
+    if (drafts.ideal_mentees.length > 0) {
+      setState((prev) => ({ ...prev, ideal_mentees: drafts.ideal_mentees }));
+      toast.success("💡 Target students suggested!");
+    }
   };
 
   // Handle PDF import structured extraction
@@ -447,9 +500,9 @@ export default function ProfileSetupStudio() {
     return getEnhancedMentorProfile({
       id: user?.id || "preview-id",
       name: state.name || "Your Name",
-      department: state.department || "Physics",
+      department: state.department || "",
       university: state.university || "SRM University-AP",
-      year_of_studies: state.year_of_studies || "3rd Year",
+      year_of_studies: state.year_of_studies || "",
       tagline: state.tagline || null,
       skills: state.skills,
       bio: state.bio || "Passionate about peer learning and collaborating with classmates.",
@@ -467,12 +520,30 @@ export default function ProfileSetupStudio() {
     } as any);
   }, [state, user, profile]);
 
+  // Validation requirements for publishing
+  const hasName = Boolean(state.name.trim());
+  const hasDepartment = Boolean(state.department.trim());
+  const hasSkills = state.skills.length >= 2;
+  const canPublish = hasName && hasDepartment && hasSkills;
+
+  const missingRequirements = useMemo(() => {
+    const missing: string[] = [];
+    if (!hasName) missing.push("Full Name");
+    if (!hasDepartment) missing.push("Department / Major");
+    if (state.skills.length === 0) {
+      missing.push("At least 2 skills (0 added)");
+    } else if (state.skills.length < 2) {
+      missing.push("At least 2 skills (1 added)");
+    }
+    return missing;
+  }, [hasName, hasDepartment, state.skills]);
+
   // Calculate completeness (unified 6-point rubric)
   const completeness = useMemo(() => {
     const checks = [
       { label: "Photo / Avatar", done: Boolean(profile?.profile_image) },
       { label: "Tagline / Bio", done: Boolean(state.tagline?.trim() || state.bio?.trim()) },
-      { label: "Skills (3+)", done: state.skills.length >= 3 },
+      { label: "Skills (2+)", done: state.skills.length >= 2 },
       {
         label: "Outcomes / Topics",
         done: state.outcomes.length > 0 || state.ask_me_anything.length > 0,
@@ -499,12 +570,20 @@ export default function ProfileSetupStudio() {
     }
 
     if (!state.name.trim()) {
-      toast.error("Please enter your name");
+      toast.error("Please enter your full name");
+      document.getElementById("section-basic-info")?.scrollIntoView({ behavior: "smooth" });
       return;
     }
 
-    if (state.skills.length === 0) {
-      toast.error("Please add at least 2-3 skills so peers can find you");
+    if (!state.department.trim()) {
+      toast.error("Please enter your department / major");
+      document.getElementById("section-basic-info")?.scrollIntoView({ behavior: "smooth" });
+      return;
+    }
+
+    if (state.skills.length < 2) {
+      toast.error("Please add at least 2 skills (or import your resume) so classmates can find you");
+      document.getElementById("section-skills")?.scrollIntoView({ behavior: "smooth" });
       return;
     }
 
@@ -627,27 +706,37 @@ export default function ProfileSetupStudio() {
               <div className="flex items-center gap-2">
                 <h1 className="text-sm sm:text-base font-bold text-foreground flex items-center gap-2">
                   <Sparkles className="h-4 w-4 text-primary" />
-                  {isPublished ? "Profile Studio" : "Profile Review & Polish Studio"}
+                  {isPublished ? "Profile Studio" : "Profile Setup Studio"}
                 </h1>
-                {isPublished && (
+                {isPublished ? (
                   <Badge variant="outline" className="bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-300 text-3xs gap-1 font-semibold">
                     <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
                     Live on Campus
                   </Badge>
+                ) : (
+                  <Badge
+                    variant="outline"
+                    className={`text-3xs font-semibold ${
+                      canPublish
+                        ? "bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-950/60 dark:text-emerald-300"
+                        : "bg-muted text-muted-foreground border-border"
+                    }`}
+                  >
+                    {completeness.score}% Complete
+                  </Badge>
                 )}
               </div>
               <p className="text-2xs text-muted-foreground hidden sm:block">
-                Edit on the left, watch your live public card update on the right.
+                {isPublished
+                  ? "Edit on the left, watch your live public card update on the right."
+                  : canPublish
+                  ? "All required fields ready — you can publish your profile live."
+                  : `Required before publishing: ${missingRequirements.join(", ")}`}
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2.5">
-            {/* Hidden while the nudge banner below is already offering this
-                exact action — reappears once it's linked or dismissed. The
-                "Auto-Draft with AI" twin was dropped outright: it duplicated
-                "Auto-Draft All" in the AI Smart Extraction section with zero
-                differentiation, so there was no reason to show it twice. */}
             {!(nudgeReason && state.courses.length === 0) && (
               <Button
                 variant="outline"
@@ -662,16 +751,31 @@ export default function ProfileSetupStudio() {
 
             <Button
               onClick={handlePublish}
-              disabled={isSaving}
+              disabled={isSaving || (!isPublished && !canPublish)}
               size="sm"
-              className="gap-2 font-bold shadow-sm bg-primary hover:bg-primary/90 text-primary-foreground px-4"
+              className={`gap-2 font-bold shadow-sm px-4 ${
+                !isPublished && !canPublish
+                  ? "bg-muted text-muted-foreground hover:bg-muted cursor-not-allowed opacity-75"
+                  : "bg-primary hover:bg-primary/90 text-primary-foreground"
+              }`}
+              title={
+                !isPublished && !canPublish
+                  ? `Required to publish: ${missingRequirements.join(", ")}`
+                  : undefined
+              }
             >
               {isSaving ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
                 <Check className="h-4 w-4 stroke-[3]" />
               )}
-              <span>{isPublished ? "Save Changes" : "Publish Profile"}</span>
+              <span>
+                {isPublished
+                  ? "Save Changes"
+                  : canPublish
+                  ? "Publish Profile"
+                  : "Complete Info to Publish"}
+              </span>
             </Button>
           </div>
         </div>
@@ -709,46 +813,129 @@ export default function ProfileSetupStudio() {
 
       {/* Main Studio Container */}
       <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-6">
-        {/* Adaptive Banner: Onboarding vs Quick Management Toolbar */}
-        <section
-          className={`mb-6 rounded-2xl border p-4 sm:p-5 shadow-xs ${
-            isPublished
-              ? "border-border/80 bg-card/80 backdrop-blur-xs"
-              : "border-primary/20 bg-gradient-to-r from-primary/10 via-indigo-500/5 to-purple-500/10"
-          }`}
-        >
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="space-y-1">
+        {/* Onboarding Kickstart / Mode Selector for Incomplete Profiles vs Management Toolbar */}
+        {!isPublished && completeness.score < 60 ? (
+          <section className="mb-6 rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/10 via-background to-indigo-500/10 p-5 sm:p-6 shadow-xs">
+            <div className="max-w-3xl space-y-1.5 mb-5">
               <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/15 px-2.5 py-0.5 text-2xs font-bold text-primary uppercase tracking-wider">
-                {isPublished ? <CheckCircle2 className="h-3 w-3 text-emerald-500" /> : <Zap className="h-3 w-3" />}
-                {isPublished ? "Profile Management & Re-sync" : "AI Smart Extraction & Auto-Draft"}
+                <Sparkles className="h-3 w-3" />
+                Step 1: Choose How to Fill Your Details
               </div>
-              <h2 className="text-sm sm:text-base font-bold text-foreground">
-                {isPublished
-                  ? "Update skills, re-upload resume, or re-sync SRM Portal"
-                  : "Auto-fill your headline, outcomes, and topics with AI"}
+              <h2 className="text-base sm:text-lg font-extrabold text-foreground">
+                Fast-track with your resume or enter your details manually
               </h2>
-              <p className="text-xs text-muted-foreground">
-                {isPublished
-                  ? "Upload a new resume PDF to merge newly acquired skills or re-sync your latest semester grades from SRM AP."
-                  : "Upload your resume PDF or click Auto-Draft to generate tailored profile summaries based on your skills."}
+              <p className="text-xs sm:text-sm text-muted-foreground">
+                Import your resume or LinkedIn PDF to fill your skills, headline, outcomes, and bio automatically in ~5 seconds, or start filling manually below.
               </p>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2 shrink-0">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={handleAutoDraftAll}
-                className="gap-1.5 font-bold text-xs bg-background/80"
-              >
-                <Sparkles className="h-3.5 w-3.5 text-primary" />
-                {isPublished ? "Regenerate Summaries" : "Auto-Draft All"}
-              </Button>
-              <ResumePdfImport onImported={handlePdfImported} buttonLabel="Fill from Resume" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Option A: Fast Resume Import */}
+              <div className="rounded-xl border border-primary/40 bg-card p-4 sm:p-5 flex flex-col justify-between gap-3 shadow-xs hover:border-primary transition-all">
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="inline-flex items-center gap-1 text-3xs font-extrabold bg-primary text-primary-foreground px-2 py-0.5 rounded-md uppercase tracking-wider">
+                      ⚡ 5-Second Auto-Fill
+                    </span>
+                    <FileText className="h-4 w-4 text-primary" />
+                  </div>
+                  <h3 className="text-sm font-bold text-foreground">
+                    Import from Resume or LinkedIn PDF
+                  </h3>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Upload your PDF. Gemini AI extracts your department, skills, bio, tagline, and mentoring topics instantly.
+                  </p>
+                </div>
+
+                <div className="pt-2">
+                  <ResumePdfImport
+                    onImported={handlePdfImported}
+                    buttonLabel="Upload & Auto-fill from Resume"
+                  />
+                </div>
+              </div>
+
+              {/* Option B: Manual Entry */}
+              <div className="rounded-xl border border-border/80 bg-card p-4 sm:p-5 flex flex-col justify-between gap-3 shadow-xs">
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="inline-flex items-center gap-1 text-3xs font-bold bg-muted text-muted-foreground px-2 py-0.5 rounded-md uppercase tracking-wider">
+                      ✍️ Step-by-Step
+                    </span>
+                    <Edit3 className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                  <h3 className="text-sm font-bold text-foreground">
+                    Fill in Manually
+                  </h3>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Fill in your basic information and skills below. Use the &ldquo;AI Suggest&rdquo; buttons on each section whenever you want tailored draft ideas.
+                  </p>
+                </div>
+
+                <div className="pt-2 flex items-center justify-between">
+                  <span className="text-2xs text-muted-foreground">
+                    Start with Section 1 below ↓
+                  </span>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      document.getElementById("section-basic-info")?.scrollIntoView({ behavior: "smooth" });
+                    }}
+                    className="text-xs font-semibold gap-1"
+                  >
+                    Start Manually
+                  </Button>
+                </div>
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        ) : (
+          /* Toolbar for profiles already populated or published */
+          <section
+            className={`mb-6 rounded-2xl border p-4 sm:p-5 shadow-xs ${
+              isPublished
+                ? "border-border/80 bg-card/80 backdrop-blur-xs"
+                : "border-primary/20 bg-gradient-to-r from-primary/10 via-indigo-500/5 to-purple-500/10"
+            }`}
+          >
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="space-y-1">
+                <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/15 px-2.5 py-0.5 text-2xs font-bold text-primary uppercase tracking-wider">
+                  {isPublished ? <CheckCircle2 className="h-3 w-3 text-emerald-500" /> : <Zap className="h-3 w-3" />}
+                  {isPublished ? "Profile Management & Re-sync" : "AI Smart Extraction & Auto-Draft"}
+                </div>
+                <h2 className="text-sm sm:text-base font-bold text-foreground">
+                  {isPublished
+                    ? "Update skills, re-upload resume, or re-sync SRM Portal"
+                    : "Auto-fill your headline, outcomes, and topics with AI"}
+                </h2>
+                <p className="text-xs text-muted-foreground">
+                  {isPublished
+                    ? "Upload a new resume PDF to merge newly acquired skills or re-sync your latest semester grades from SRM AP."
+                    : "Upload your resume PDF or click Auto-Draft to generate tailored profile summaries based on your skills."}
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2 shrink-0">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleAutoDraftAll}
+                  className="gap-1.5 font-bold text-xs bg-background/80"
+                >
+                  <Sparkles className="h-3.5 w-3.5 text-primary" />
+                  {isPublished ? "Regenerate Summaries" : "Auto-Draft All"}
+                </Button>
+                <ResumePdfImport
+                  variant="button"
+                  onImported={handlePdfImported}
+                  buttonLabel={isPublished ? "Re-upload Resume" : "Fill from Resume"}
+                />
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* Portal nudge: only the SRM Portal can fill in verified coursework, so
             offer it either right after a resume import or once per visit if it's
@@ -810,7 +997,7 @@ export default function ProfileSetupStudio() {
             }`}
           >
             {/* 1. Basic Identity */}
-            <div className="rounded-2xl border border-border/80 bg-card p-5 sm:p-6 shadow-xs space-y-4">
+            <div id="section-basic-info" className="rounded-2xl border border-border/80 bg-card p-5 sm:p-6 shadow-xs space-y-4">
               <div className="flex items-center justify-between border-b border-border/60 pb-3">
                 <div className="flex items-center gap-2">
                   <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 text-primary font-bold text-xs">
@@ -836,20 +1023,26 @@ export default function ProfileSetupStudio() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                 <div className="space-y-1.5">
-                  <label className="font-semibold text-foreground">Full Name</label>
+                  <label className="font-semibold text-foreground flex items-center justify-between">
+                    <span>Full Name <span className="text-destructive">*</span></span>
+                    {!state.name.trim() && <span className="text-3xs text-destructive">Required</span>}
+                  </label>
                   <Input
                     value={state.name}
                     onChange={(e) => setState({ ...state, name: e.target.value })}
-                    placeholder="e.g. Gyan Kumar Sah"
+                    placeholder="e.g. Usha Shah"
                     className="text-sm"
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="font-semibold text-foreground">Department / Major</label>
+                  <label className="font-semibold text-foreground flex items-center justify-between">
+                    <span>Department / Major <span className="text-destructive">*</span></span>
+                    {!state.department.trim() && <span className="text-3xs text-destructive">Required</span>}
+                  </label>
                   <Input
                     value={state.department}
                     onChange={(e) => setState({ ...state, department: e.target.value })}
-                    placeholder="e.g. Physics or Computer Science"
+                    placeholder="e.g. Computer Science, Physics, Mechanical..."
                     className="text-sm"
                   />
                 </div>
@@ -860,6 +1053,7 @@ export default function ProfileSetupStudio() {
                     onChange={(e) => setState({ ...state, year_of_studies: e.target.value })}
                     className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus:outline-hidden focus:ring-2 focus:ring-ring"
                   >
+                    <option value="">Select Year of Study</option>
                     <option value="1st Year">1st Year</option>
                     <option value="2nd Year">2nd Year</option>
                     <option value="3rd Year">3rd Year</option>
@@ -913,7 +1107,7 @@ export default function ProfileSetupStudio() {
                   value={state.tagline}
                   maxLength={120}
                   onChange={(e) => setState({ ...state, tagline: e.target.value })}
-                  placeholder="e.g. Helping peers with Quantum Mechanics, Solid-State Physics & Python lab prep"
+                  placeholder={`e.g. Helping peers with ${state.skills[0] || state.department || "coursework"}, problem solving & lab prep`}
                   className="text-sm font-medium"
                 />
                 <div className="flex items-center justify-between text-2xs text-muted-foreground pt-0.5">
@@ -924,7 +1118,7 @@ export default function ProfileSetupStudio() {
                       onClick={() =>
                         setState((prev) => ({
                           ...prev,
-                          tagline: `Helping juniors master ${prev.skills[0] || "core subjects"} & lab work`,
+                          tagline: `Helping juniors master ${prev.skills[0] || prev.department || "core subjects"} & lab work`,
                         }))
                       }
                       className="underline hover:text-foreground"
@@ -951,19 +1145,24 @@ export default function ProfileSetupStudio() {
             </div>
 
             {/* 3. Skills & Expertise */}
-            <div className="rounded-2xl border border-border/80 bg-card p-5 sm:p-6 shadow-xs space-y-4">
+            <div id="section-skills" className="rounded-2xl border border-border/80 bg-card p-5 sm:p-6 shadow-xs space-y-4">
               <div className="flex items-center justify-between border-b border-border/60 pb-3">
                 <div className="flex items-center gap-2">
                   <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold text-xs">
                     3
                   </div>
                   <div>
-                    <h3 className="text-sm sm:text-base font-bold text-foreground">Skills & Expertise</h3>
-                    <p className="text-2xs text-muted-foreground">Classmates will discover you when searching these topics</p>
+                    <h3 className="text-sm sm:text-base font-bold text-foreground flex items-center gap-2">
+                      Skills & Expertise
+                      <span className="text-destructive text-xs">*</span>
+                    </h3>
+                    <p className="text-2xs text-muted-foreground">Classmates will discover you when searching these topics (min 2 needed)</p>
                   </div>
                 </div>
-                <span className="text-2xs font-semibold text-emerald-600 dark:text-emerald-400">
-                  {state.skills.length} added
+                <span className={`text-2xs font-semibold ${
+                  state.skills.length >= 2 ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"
+                }`}>
+                  {state.skills.length} added {state.skills.length < 2 && "(min 2 needed)"}
                 </span>
               </div>
 
@@ -971,7 +1170,7 @@ export default function ProfileSetupStudio() {
               <div className="flex flex-wrap gap-1.5 min-h-[42px] p-2 rounded-xl bg-muted/40 border border-border/60">
                 {state.skills.length === 0 ? (
                   <span className="text-xs text-muted-foreground italic py-1 px-2">
-                    No skills added yet. Add a few below or upload your resume PDF!
+                    No skills added yet. Add a few below or import your resume above!
                   </span>
                 ) : (
                   state.skills.map((skill) => (
@@ -1004,7 +1203,7 @@ export default function ProfileSetupStudio() {
                       handleAddSkill();
                     }
                   }}
-                  placeholder="Type a skill and press Enter (e.g. Quantum Mechanics, Solid-State Physics, Python)..."
+                  placeholder="Type a skill and press Enter (e.g. Python, React, Machine Learning, Physics)..."
                   className="text-sm"
                 />
                 <Button
@@ -1084,7 +1283,7 @@ export default function ProfileSetupStudio() {
                         handleAddOutcome();
                       }
                     }}
-                    placeholder="e.g. Master problem sets and lab experiments in quantum physics"
+                    placeholder="e.g. Master problem sets and lab experiments in my major"
                     className="text-xs"
                   />
                   <Button
@@ -1164,7 +1363,7 @@ export default function ProfileSetupStudio() {
                       handleAddAma();
                     }
                   }}
-                  placeholder="e.g. Quantum Algorithms, Cryptography, Research Papers..."
+                  placeholder="e.g. Core concepts, project ideas, exam strategy..."
                   className="text-xs"
                 />
                 <Button
@@ -1244,7 +1443,7 @@ export default function ProfileSetupStudio() {
                         handleAddIdealMentee();
                       }
                     }}
-                    placeholder="e.g. 1st or 2nd year students taking Physics or Calculus"
+                    placeholder="e.g. 1st or 2nd year students taking courses in my major"
                     className="text-xs"
                   />
                   <Button
@@ -1373,12 +1572,12 @@ export default function ProfileSetupStudio() {
                   />
                   <div className="space-y-1 min-w-0 flex-1">
                     <h4 className="text-base font-extrabold text-foreground truncate">
-                      {previewMentor.name}
+                      {previewMentor.name || "Your Name"}
                     </h4>
                     <p className="text-xs text-muted-foreground flex flex-wrap items-center gap-1">
-                      <span className="font-semibold text-foreground/90">{state.department || "Physics"}</span>
+                      <span className="font-semibold text-foreground/90">{state.department || "(Your Department)"}</span>
                       <span>•</span>
-                      <span>{state.year_of_studies}</span>
+                      <span>{state.year_of_studies || "(Select Year)"}</span>
                       <span>•</span>
                       <span className="text-primary font-medium">{state.university}</span>
                     </p>
@@ -1493,17 +1692,41 @@ export default function ProfileSetupStudio() {
 
               {/* Ready to publish callout */}
               <div className="pt-3 border-t border-border/60">
+                {!isPublished && !canPublish && (
+                  <div className="mb-3 rounded-xl bg-amber-500/10 border border-amber-500/30 p-3 text-xs text-amber-900 dark:text-amber-200 space-y-1.5">
+                    <div className="font-bold flex items-center gap-1.5">
+                      <AlertCircle className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
+                      Required before publishing:
+                    </div>
+                    <ul className="list-disc list-inside text-2xs space-y-0.5 text-muted-foreground pl-1">
+                      {!hasName && <li>Enter your full name</li>}
+                      {!hasDepartment && <li>Enter your department / major</li>}
+                      {state.skills.length < 2 && (
+                        <li>Add at least 2 skills (currently {state.skills.length}) or import resume</li>
+                      )}
+                    </ul>
+                  </div>
+                )}
+
                 <Button
                   onClick={handlePublish}
-                  disabled={isSaving}
-                  className="w-full gap-2 font-bold shadow-md bg-primary hover:bg-primary/90 text-primary-foreground py-5 text-sm"
+                  disabled={isSaving || (!isPublished && !canPublish)}
+                  className={`w-full gap-2 font-bold shadow-md py-5 text-sm ${
+                    !isPublished && !canPublish
+                      ? "bg-muted text-muted-foreground hover:bg-muted cursor-not-allowed opacity-80"
+                      : "bg-primary hover:bg-primary/90 text-primary-foreground"
+                  }`}
                 >
                   {isSaving ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
                     <Check className="h-4 w-4 stroke-[3]" />
                   )}
-                  {isPublished ? "Save & Update Profile" : "Publish Campus Profile"}
+                  {isPublished
+                    ? "Save & Update Profile"
+                    : canPublish
+                    ? "Publish Campus Profile"
+                    : "Complete Missing Details to Publish"}
                 </Button>
                 <p className="text-[11px] text-center text-muted-foreground mt-2">
                   {isPublished

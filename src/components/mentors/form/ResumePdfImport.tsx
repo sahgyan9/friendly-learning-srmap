@@ -14,6 +14,9 @@ interface ResumePdfImportProps {
   fields?: "basic" | "full";
   /** Overrides the button label (default "Upload PDF"). */
   buttonLabel?: string;
+  /** Layout mode: 'card' renders the full dashed box; 'button' renders just the trigger button. Default: 'card' */
+  variant?: "card" | "button";
+  className?: string;
 }
 
 const MAX_SIZE_MB = 10;
@@ -35,7 +38,13 @@ const fileToBase64 = (file: File): Promise<string> =>
     reader.readAsDataURL(file);
   });
 
-const ResumePdfImport = ({ onImported, fields = "full", buttonLabel = "Upload PDF" }: ResumePdfImportProps) => {
+const ResumePdfImport = ({
+  onImported,
+  fields = "full",
+  buttonLabel = "Upload PDF",
+  variant = "card",
+  className = "",
+}: ResumePdfImportProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -143,8 +152,42 @@ const ResumePdfImport = ({ onImported, fields = "full", buttonLabel = "Upload PD
     }
   };
 
+  if (variant === "button") {
+    return (
+      <>
+        <input
+          ref={inputRef}
+          type="file"
+          accept="application/pdf"
+          className="hidden"
+          onChange={handleFile}
+        />
+        <Button
+          type="button"
+          variant="default"
+          size="sm"
+          onClick={() => inputRef.current?.click()}
+          disabled={isLoading}
+          className={`shrink-0 gap-1.5 font-bold ${className}`}
+        >
+          {isLoading ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Parsing PDF...
+            </>
+          ) : (
+            <>
+              <Upload className="h-4 w-4" />
+              {buttonLabel}
+            </>
+          )}
+        </Button>
+      </>
+    );
+  }
+
   return (
-    <div className="rounded-lg border border-dashed border-primary/40 bg-primary/5 p-4">
+    <div className={`rounded-lg border border-dashed border-primary/40 bg-primary/5 p-4 ${className}`}>
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div className="flex items-start gap-3">
           <div className="rounded-md bg-primary/10 p-2">
@@ -176,16 +219,16 @@ const ResumePdfImport = ({ onImported, fields = "full", buttonLabel = "Upload PD
           size="sm"
           onClick={() => inputRef.current?.click()}
           disabled={isLoading}
-          className="shrink-0"
+          className="shrink-0 gap-1.5 font-bold"
         >
           {isLoading ? (
             <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <Loader2 className="h-4 w-4 animate-spin" />
               Parsing...
             </>
           ) : (
             <>
-              <Upload className="mr-2 h-4 w-4" />
+              <Upload className="h-4 w-4" />
               {buttonLabel}
             </>
           )}
