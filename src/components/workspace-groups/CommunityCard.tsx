@@ -34,8 +34,8 @@ export function CommunityCard({ community, onMembershipChange }: CommunityCardPr
         aria-label={`Open ${community.name}`}
         className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-xl"
       >
-        {/* Header: Avatar + Title & Type Subtitle */}
-        <div className="flex items-start gap-3">
+        {/* Header & Body: Avatar + Content Column (Title, Type, and Description aligned) */}
+        <div className="flex items-start gap-3.5">
           <CommunityAvatar
             kind={community.kind}
             name={community.name}
@@ -44,13 +44,13 @@ export function CommunityCard({ community, onMembershipChange }: CommunityCardPr
             iconClassName="h-5 w-5 text-muted-foreground"
           />
 
-          <div className="min-w-0 flex-1">
+          <div className="min-w-0 flex-1 space-y-1">
             <h3 className="truncate font-bold text-base leading-tight text-foreground transition-colors duration-200 group-hover:text-primary">
               {community.name}
             </h3>
 
             {/* Subtle secondary type & privacy metadata */}
-            <div className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground font-medium">
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium">
               <span>{kind.label}</span>
               <span aria-hidden className="text-border">·</span>
               {isPrivate ? (
@@ -62,13 +62,13 @@ export function CommunityCard({ community, onMembershipChange }: CommunityCardPr
                 <span className="text-muted-foreground">Open</span>
               )}
             </div>
+
+            {/* Concise 2-line Purpose Description - perfectly aligned with title & category */}
+            <p className="pt-0.5 line-clamp-2 text-xs leading-relaxed text-muted-foreground min-h-[2.5rem]">
+              {community.description || "Campus group for collaboration and discussions."}
+            </p>
           </div>
         </div>
-
-        {/* Concise 2-line Purpose Description */}
-        <p className="mt-3 line-clamp-2 text-xs leading-relaxed text-muted-foreground min-h-[2.5rem]">
-          {community.description || "Campus group for collaboration and discussions."}
-        </p>
       </Link>
 
       {/* Footer: Social Proof + Action CTA */}
