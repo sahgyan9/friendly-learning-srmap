@@ -11,15 +11,15 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90 active:scale-95 transition-all duration-200",
+        default: "bg-primary text-primary-foreground hover:bg-primary/90 active:scale-[0.98] transition-colors duration-150",
         destructive:
-          "bg-destructive text-destructive-foreground hover:bg-destructive/90 active:scale-95 transition-all duration-200",
+          "bg-destructive text-destructive-foreground hover:bg-destructive/90 active:scale-[0.98] transition-colors duration-150",
         outline:
-          "border border-input bg-background hover:bg-accent hover:text-accent-foreground active:scale-95 transition-all duration-200 dark:border-gray-700 dark:hover:bg-gray-800",
+          "border border-input bg-background hover:bg-accent hover:text-accent-foreground active:scale-[0.98] transition-colors duration-150 dark:border-gray-700 dark:hover:bg-gray-800",
         secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary/80 active:scale-95 transition-all duration-200",
-        ghost: "hover:bg-accent hover:text-accent-foreground active:scale-95 transition-all duration-200 dark:hover:bg-gray-800",
-        link: "text-primary underline-offset-4 hover:underline active:scale-95 transition-all duration-200",
+          "bg-secondary text-secondary-foreground hover:bg-secondary/80 active:scale-[0.98] transition-colors duration-150",
+        ghost: "hover:bg-accent hover:text-accent-foreground active:scale-[0.98] transition-colors duration-150 dark:hover:bg-gray-800",
+        link: "text-primary underline-offset-4 hover:underline active:scale-[0.98] transition-colors duration-150",
       },
       size: {
         default: "h-10 px-4 py-2",

@@ -1,4 +1,4 @@
-﻿import React, { useState } from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import type { User } from "@supabase/supabase-js";
 import {
@@ -198,9 +198,12 @@ export function CommunityWorkspaceHeader({
         </div>
       </div>
 
-      {/* â”€â”€ Workspace Info Sheet â”€â”€ */}
+      {/* ── Workspace Info Sheet ── */}
       <Sheet open={infoOpen} onOpenChange={setInfoOpen}>
-        <SheetContent side="bottom" className="rounded-t-3xl max-h-[85vh] overflow-y-auto p-0 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))]">
+        <SheetContent
+          side="bottom"
+          className="rounded-t-3xl max-h-[85vh] overflow-y-auto overscroll-contain p-0 pb-[calc(2.5rem+env(safe-area-inset-bottom,0px))] md:max-w-lg md:mx-auto md:bottom-6 md:rounded-2xl md:border md:shadow-2xl md:inset-x-auto md:left-1/2 md:-translate-x-1/2"
+        >
           {/* Drag handle */}
           <div className="flex flex-col items-center pt-3 pb-2">
             <div className="h-1.5 w-12 rounded-full bg-muted-foreground/25" />
@@ -224,7 +227,7 @@ export function CommunityWorkspaceHeader({
             </div>
           </SheetHeader>
 
-          <div className="px-5 space-y-4 pb-2">
+          <div className="px-5 space-y-4 pb-4">
             <Separator />
 
             {/* Full description */}
@@ -286,7 +289,7 @@ export function CommunityWorkspaceHeader({
                 <>
                   <Button
                     variant="outline"
-                    className="w-full justify-start gap-2"
+                    className="w-full justify-start gap-2 hover:bg-muted/80 transition-colors"
                     onClick={() => { setInfoOpen(false); onOpenEdit(); }}
                   >
                     <Pencil className="h-4 w-4" />
@@ -297,7 +300,7 @@ export function CommunityWorkspaceHeader({
                     <AlertDialogTrigger asChild>
                       <Button
                         variant="outline"
-                        className="w-full justify-start gap-2 text-destructive hover:text-destructive border-destructive/30 hover:border-destructive/60 hover:bg-destructive/5"
+                        className="w-full justify-start gap-2 text-destructive border-destructive/30 hover:border-destructive/60 hover:bg-destructive/10 hover:text-destructive active:bg-destructive/15 transition-colors"
                       >
                         <Trash2 className="h-4 w-4" />
                         Delete workspace
@@ -307,7 +310,7 @@ export function CommunityWorkspaceHeader({
                       <AlertDialogHeader>
                         <AlertDialogTitle>Delete {community.name}?</AlertDialogTitle>
                         <AlertDialogDescription>
-                          This permanently deletes the workspaceâ€”its posts, chat history and member
+                          This permanently deletes the workspace—its posts, chat history and member
                           list all go with it. This cannot be undone.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
@@ -331,7 +334,7 @@ export function CommunityWorkspaceHeader({
                   <AlertDialogTrigger asChild>
                     <Button
                       variant="outline"
-                      className="w-full justify-start gap-2 text-destructive hover:text-destructive border-destructive/30 hover:border-destructive/60 hover:bg-destructive/5"
+                      className="w-full justify-start gap-2 text-destructive border-destructive/30 hover:border-destructive/60 hover:bg-destructive/10 hover:text-destructive active:bg-destructive/15 transition-colors"
                       disabled={working}
                     >
                       <LogOut className="h-4 w-4" />
@@ -348,7 +351,13 @@ export function CommunityWorkspaceHeader({
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                       <AlertDialogCancel>Stay</AlertDialogCancel>
-                      <AlertDialogAction onClick={onLeave}>Leave</AlertDialogAction>
+                      <AlertDialogAction
+                        onClick={() => { setInfoOpen(false); onLeave(); }}
+                        disabled={working}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      >
+                        {working ? "Leaving..." : "Leave workspace"}
+                      </AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>
                 </AlertDialog>

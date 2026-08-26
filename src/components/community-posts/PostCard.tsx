@@ -274,7 +274,7 @@ export function PostCard({
                   )}
                   {onDelete && (
                     <DropdownMenuItem
-                      className="text-destructive focus:text-destructive"
+                      className="text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer"
                       onClick={() => onDelete(post)}
                     >
                       <Trash2 className="mr-2 h-3.5 w-3.5" />
