@@ -262,8 +262,9 @@ export const ImportSrmPortalDialog = ({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-md">
         {successResult ? (
           <div className="space-y-5 py-2">
             <div className="flex flex-col items-center text-center space-y-2">
@@ -451,29 +452,30 @@ export const ImportSrmPortalDialog = ({
           </>
         )}
       </DialogContent>
-
-      {successResult && (
-        <AcademicDetailsDialog
-          open={detailsOpen}
-          onOpenChange={setDetailsOpen}
-          record={{
-            program: successResult.program,
-            current_semester: successResult.currentSemester,
-            cgpa: successResult.cgpa,
-            subjects: successResult.subjects,
-            sync_status: "success",
-            last_synced_at: new Date().toISOString(),
-            register_number: registerNumber || null,
-          }}
-          onApplyToProfile={handleApplyToProfile}
-          isApplyingToProfile={applyingToProfile}
-          coursesOnProfile={coursesOnProfile}
-          onToggleCoursesOnProfile={handleToggleCoursesOnProfile}
-          isTogglingCourses={togglingCourses}
-        />
-      )}
     </Dialog>
-  );
+
+    {successResult && (
+      <AcademicDetailsDialog
+        open={detailsOpen}
+        onOpenChange={setDetailsOpen}
+        record={{
+          program: successResult.program,
+          current_semester: successResult.currentSemester,
+          cgpa: successResult.cgpa,
+          subjects: successResult.subjects,
+          sync_status: "success",
+          last_synced_at: new Date().toISOString(),
+          register_number: registerNumber || null,
+        }}
+        onApplyToProfile={handleApplyToProfile}
+        isApplyingToProfile={applyingToProfile}
+        coursesOnProfile={coursesOnProfile}
+        onToggleCoursesOnProfile={handleToggleCoursesOnProfile}
+        isTogglingCourses={togglingCourses}
+      />
+    )}
+  </>
+);
 };
 
 interface ImportSrmPortalProps {
