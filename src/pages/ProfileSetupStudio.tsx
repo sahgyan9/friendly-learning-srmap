@@ -387,22 +387,6 @@ export default function ProfileSetupStudio() {
     }));
   };
 
-  // Calculate completeness
-  const completeness = useMemo(() => {
-    const checks = [
-      { label: "Photo / Avatar", done: Boolean(profile?.profile_image) },
-      { label: "One-line Tagline", done: Boolean(state.tagline?.trim()) },
-      { label: "Skills (3+)", done: state.skills.length >= 3 },
-      { label: "Outcomes", done: state.outcomes.length > 0 },
-      { label: "AMA Topics", done: state.ask_me_anything.length > 0 },
-      { label: "Target Students", done: state.ideal_mentees.length > 0 },
-      { label: "Bio / LinkedIn", done: Boolean(state.bio?.trim() || state.linkedin_url?.trim()) },
-    ];
-    const doneCount = checks.filter((c) => c.done).length;
-    const score = Math.round((doneCount / checks.length) * 100);
-    return { score, checks };
-  }, [state, profile]);
-
   // Enhanced mentor mock for live preview
   const previewMentor = useMemo(() => {
     return getEnhancedMentorProfile({
@@ -426,6 +410,30 @@ export default function ProfileSetupStudio() {
       updated_at: new Date().toISOString(),
     } as any);
   }, [state, user, profile]);
+
+  // Calculate completeness
+  const completeness = useMemo(() => {
+    const checks = [
+      { label: "Photo / Avatar", done: Boolean(profile?.profile_image) },
+      { label: "Tagline / Bio", done: Boolean(state.tagline?.trim() || state.bio?.trim()) },
+      { label: "Skills (3+)", done: state.skills.length >= 3 },
+      {
+        label: "Outcomes / Topics",
+        done: state.outcomes.length > 0 || state.ask_me_anything.length > 0,
+      },
+      { label: "Target Students", done: state.ideal_mentees.length > 0 },
+      {
+        label: "Coursework / LinkedIn",
+        done: Boolean(
+          state.linkedin_url?.trim() ||
+            (previewMentor.courses?.length ?? 0) > 0
+        ),
+      },
+    ];
+    const doneCount = checks.filter((c) => c.done).length;
+    const score = Math.round((doneCount / checks.length) * 100);
+    return { score, checks };
+  }, [state, profile, previewMentor]);
 
   // Save and Publish Handler
   const handlePublish = async () => {
@@ -573,7 +581,7 @@ export default function ProfileSetupStudio() {
               className="hidden md:flex gap-1.5 text-xs font-medium"
             >
               <GraduationCap className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
-              Link Courses
+              Link SRM Portal
             </Button>
 
             <Button

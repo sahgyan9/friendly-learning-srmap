@@ -9,6 +9,8 @@ import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
 
+import { getMentorById } from "@/integrations/supabase/services/mentors";
+
 interface ProfileCompletenessBannerProps {
   mentor: EnhancedMentor;
   onMentorUpdated?: (mentor: any) => void;
@@ -23,13 +25,24 @@ export default function ProfileCompletenessBanner({
   const [portalDialogOpen, setPortalDialogOpen] = useState(false);
   const { refreshProfile } = useAuth();
 
-  // Compute profile completeness score (0 - 100)
+  // Compute unified profile completeness score (0 - 100)
   const checks = [
     { label: "Photo", done: Boolean(mentor.profile_image) },
-    { label: "Bio / Tagline", done: Boolean(mentor.bio || mentor.tagline) },
+    { label: "Tagline / Bio", done: Boolean(mentor.tagline || mentor.bio) },
     { label: "Skills (3+)", done: (mentor.skills?.length ?? 0) >= 3 },
-    { label: "Courses", done: (mentor.courses?.length ?? 0) > 0 },
-    { label: "LinkedIn / Projects", done: Boolean(mentor.linkedin_url || (mentor.projects?.length ?? 0) > 0) },
+    {
+      label: "Outcomes / Topics",
+      done: (mentor.outcomes?.length ?? 0) > 0 || (mentor.ask_me_anything?.length ?? 0) > 0,
+    },
+    { label: "Target Students", done: (mentor.ideal_mentees?.length ?? 0) > 0 },
+    {
+      label: "Coursework / LinkedIn",
+      done: Boolean(
+        (mentor.courses?.length ?? 0) > 0 ||
+          mentor.linkedin_url ||
+          (mentor.projects?.length ?? 0) > 0
+      ),
+    },
   ];
 
   const completedCount = checks.filter((c) => c.done).length;
@@ -83,7 +96,7 @@ export default function ProfileCompletenessBanner({
               className="gap-1.5 font-medium bg-background/80"
             >
               <GraduationCap className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-              Link Portal Courses
+              Link SRM Portal
             </Button>
           </div>
         </div>
@@ -117,18 +130,22 @@ export default function ProfileCompletenessBanner({
         open={kickstartOpen}
         onOpenChange={setKickstartOpen}
         defaultTab={kickstartTab}
-        onProfileUpdated={() => {
-          refreshProfile();
-          onMentorUpdated?.(mentor);
+        onProfileUpdated={async () => {
+          await refreshProfile();
+          const { data } = await getMentorById(mentor.id);
+          if (data) onMentorUpdated?.(data);
         }}
       />
 
       <ImportSrmPortalDialog
         open={portalDialogOpen}
         onOpenChange={setPortalDialogOpen}
-        onSuccess={() => {
-          refreshProfile();
-          onMentorUpdated?.(mentor);
+        onSuccess={async () => {
+          await refreshProfile();
+          const { data } = await getMentorById(mentor.id);
+          if (data) {
+            onMentorUpdated?.(data);
+          }
           toast.success("Courses linked to your public profile!");
         }}
       />

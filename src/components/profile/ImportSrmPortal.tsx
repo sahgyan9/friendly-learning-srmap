@@ -188,23 +188,49 @@ export const ImportSrmPortalDialog = ({
     if (!user || !successResult) return;
     setApplyingToProfile(true);
     try {
+      const courses = dedupeCourses(successResult.subjects);
+
+      // 1. Update users table with department
       const updates: { department?: string } = {};
       if (successResult.program) updates.department = successResult.program;
 
       if (Object.keys(updates).length > 0) {
-        const { error } = await supabase.from("users").update(updates).eq("id", user.id);
-        if (error) throw error;
+        const { error: userErr } = await supabase.from("users").update(updates).eq("id", user.id);
+        if (userErr) throw userErr;
       }
 
-      if (successResult.cgpa != null || successResult.program) {
-        const mentorUpdates: { cgpa?: number | null; department?: string } = {};
-        if (successResult.cgpa != null) mentorUpdates.cgpa = successResult.cgpa;
-        if (successResult.program) mentorUpdates.department = successResult.program;
-        await supabase.from("mentors").update(mentorUpdates).eq("id", user.id);
+      // 2. Update mentors table with courses, department, cgpa, and semester-derived year
+      const mentorUpdates: Record<string, any> = {
+        courses: courses,
+      };
+      if (successResult.cgpa != null) mentorUpdates.cgpa = successResult.cgpa;
+      if (successResult.program) mentorUpdates.department = successResult.program;
+      if (successResult.currentSemester) {
+        const sem = successResult.currentSemester;
+        const year =
+          sem <= 2
+            ? "1st Year"
+            : sem <= 4
+            ? "2nd Year"
+            : sem <= 6
+            ? "3rd Year"
+            : sem <= 8
+            ? "4th Year"
+            : "5th Year";
+        mentorUpdates.year_of_studies = year;
       }
+
+      const { error: mentorErr } = await supabase
+        .from("mentors")
+        .update(mentorUpdates as any)
+        .eq("id", user.id);
+      if (mentorErr) throw mentorErr;
 
       setAppliedToProfile(true);
-      toast.success("Profile updated with your imported department & CGPA!");
+      setCoursesOnProfile(true);
+      await refreshProfile();
+      onSuccess?.(successResult);
+      toast.success("Profile updated with your SRM coursework, department & CGPA!");
     } catch (err: unknown) {
       console.error("Error applying imported data to profile:", err);
       toast.error("Failed to update profile values");
