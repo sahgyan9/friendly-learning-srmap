@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 export interface SRMAPEvent {
@@ -104,51 +104,53 @@ export function useSRMAPEvents() {
   const [events, setEvents] = useState<SRMAPEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const isMountedRef = useRef(true);
+
+  const fetchEvents = useCallback(async ({ isRefresh = false } = {}) => {
+    try {
+      if (!isRefresh) setLoading(true);
+      setError(null);
+
+      // `content` (full event HTML) is intentionally omitted here — it is
+      // only needed on the EventDetail page and can be several KB per row.
+      // The single-event hook (useSRMAPEvent) fetches it separately.
+      const { data, error: queryError } = await supabase
+        .from("srmap_events_cache")
+        .select("id, title, excerpt, venue, organizer, registration_url, registration_label, start_date, end_date, link, image_url, department, event_type")
+        .limit(200)
+        .returns<CachedEventRow[]>();
+
+      if (queryError) throw queryError;
+
+      if (isMountedRef.current) {
+        const mapped: SRMAPEvent[] = sortEvents(
+          (data ?? []).map(mapRowToEvent),
+        );
+
+        setEvents(mapped);
+      }
+    } catch (err) {
+      if (isMountedRef.current) {
+        setError("Failed to load university events. Please try again later.");
+      }
+    } finally {
+      if (isMountedRef.current) setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    let cancelled = false;
-
-    async function fetchEvents({ isRefresh = false } = {}) {
-      try {
-        if (!isRefresh) setLoading(true);
-        setError(null);
-
-        // `content` (full event HTML) is intentionally omitted here — it is
-        // only needed on the EventDetail page and can be several KB per row.
-        // The single-event hook (useSRMAPEvent) fetches it separately.
-        const { data, error: queryError } = await supabase
-          .from("srmap_events_cache")
-          .select("id, title, excerpt, venue, organizer, registration_url, registration_label, start_date, end_date, link, image_url, department, event_type")
-          .limit(200)
-          .returns<CachedEventRow[]>();
-
-        if (queryError) throw queryError;
-
-        if (!cancelled) {
-          const mapped: SRMAPEvent[] = sortEvents(
-            (data ?? []).map(mapRowToEvent),
-          );
-
-          setEvents(mapped);
-        }
-      } catch (err) {
-        if (!cancelled) {
-          setError("Failed to load university events. Please try again later.");
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-
+    isMountedRef.current = true;
     fetchEvents();
     const refreshTimer = window.setInterval(() => fetchEvents({ isRefresh: true }), 30 * 60 * 1000);
     return () => {
+      isMountedRef.current = false;
       window.clearInterval(refreshTimer);
-      cancelled = true;
     };
-  }, []);
+  }, [fetchEvents]);
 
-  return { events, loading, error };
+  const refetch = useCallback(() => fetchEvents({ isRefresh: true }), [fetchEvents]);
+
+  return { events, loading, error, refetch };
 }
 
 /**

@@ -2,14 +2,16 @@ import { PRIMARY_DOMAIN } from "@/lib/constants";
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Input } from "@/components/ui/input";
-import { Search, Plus, Loader2, Sparkles } from "lucide-react";
+import { Search, Plus, Loader2, Sparkles, RefreshCw } from "lucide-react";
 import { motion } from "framer-motion";
 import { SRMAPEventCard } from "@/components/marketplace/SRMAPEventCard";
 import { useSRMAPEvents } from "@/hooks/useSRMAPEvents";
 import { Button } from "@/components/ui/button";
-import { isUserAdmin } from '@/integrations/supabase/services/marketplace';
+import { isUserAdmin, syncSRMAPEvents } from '@/integrations/supabase/services/marketplace';
 import { useAuth } from '@/context/AuthContext';
 import { useHasVisitedEventsNav } from "@/hooks/useFeatureAnnouncement";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import SEOHead from "@/components/SEOHead";
 import { ROUTE_META } from "@/lib/seo/route-meta";
 import StructuredData from "@/components/StructuredData";
@@ -18,8 +20,9 @@ import { getBreadcrumbSchema } from "@/lib/structured-data";
 const MarketPlace = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [isAdmin, setIsAdmin] = useState(false);
+    const [isSyncing, setIsSyncing] = useState(false);
     const { user } = useAuth();
-    const { events: srmapEvents, loading: srmapLoading, error: srmapError } = useSRMAPEvents();
+    const { events: srmapEvents, loading: srmapLoading, error: srmapError, refetch } = useSRMAPEvents();
     const { markSeen: markEventsNavSeen } = useHasVisitedEventsNav();
 
     // Reaching this page is what clears the welcome tour's navbar dot.
@@ -39,6 +42,24 @@ const MarketPlace = () => {
             setIsAdmin(adminStatus);
         } catch (error) {
             console.error("Error checking admin status:", error);
+        }
+    };
+
+    const handleSyncEvents = async () => {
+        try {
+            setIsSyncing(true);
+            const res = await syncSRMAPEvents();
+            toast.success('SRMAP Events Synced', {
+                description: `Successfully synced ${res.synced} events.`,
+            });
+            refetch();
+        } catch (error) {
+            console.error('Error syncing events:', error);
+            toast.error('Sync Failed', {
+                description: error instanceof Error ? error.message : 'Failed to sync events.',
+            });
+        } finally {
+            setIsSyncing(false);
         }
     };
 
@@ -110,12 +131,23 @@ const MarketPlace = () => {
                                 </div>
                             </div>
                             {isAdmin && (
-                                <Link to="/admin" className="w-full sm:w-auto">
-                                    <Button variant="outline" className="w-full sm:w-auto">
-                                        <Plus className="mr-2 h-4 w-4" />
-                                        Admin Panel
+                                <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                                    <Button
+                                        variant="outline"
+                                        onClick={handleSyncEvents}
+                                        disabled={isSyncing}
+                                        className="w-full sm:w-auto"
+                                    >
+                                        <RefreshCw className={cn("mr-2 h-4 w-4", isSyncing && "animate-spin")} />
+                                        {isSyncing ? "Syncing..." : "Sync Events"}
                                     </Button>
-                                </Link>
+                                    <Link to="/admin" className="w-full sm:w-auto">
+                                        <Button variant="outline" className="w-full sm:w-auto">
+                                            <Plus className="mr-2 h-4 w-4" />
+                                            Admin Panel
+                                        </Button>
+                                    </Link>
+                                </div>
                             )}
                         </div>
 

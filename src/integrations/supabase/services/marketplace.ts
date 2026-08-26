@@ -321,9 +321,34 @@ function sanitizeUrl(url: string): string {
     if (!['http:', 'https:'].includes(urlObj.protocol)) {
       throw new Error('Invalid URL protocol');
     }
-    return urlObj.toString();
   } catch {
     // If URL is invalid, return empty string
     return '';
+  }
+}
+
+// Trigger manual sync of SRMAP events via Edge Function
+export async function syncSRMAPEvents(): Promise<{ synced: number; pruned: number }> {
+  try {
+    const { data, error } = await supabase.functions.invoke<{ synced: number; pruned: number; error?: string }>(
+      'sync-srmap-events',
+    );
+
+    if (error) {
+      console.error('Error invoking sync-srmap-events:', error);
+      throw error;
+    }
+
+    if (data?.error) {
+      throw new Error(data.error);
+    }
+
+    return {
+      synced: data?.synced ?? 0,
+      pruned: data?.pruned ?? 0,
+    };
+  } catch (error) {
+    console.error('Exception in syncSRMAPEvents:', error);
+    throw error;
   }
 }

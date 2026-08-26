@@ -20,10 +20,12 @@ import {
 import { 
   fetchMarketplacePosts, 
   deleteMarketplacePost,
+  syncSRMAPEvents,
   MarketplacePost 
 } from '@/integrations/supabase/services/marketplace';
 import { toast } from 'sonner';
-import { Edit, Trash2, Plus, Loader2, Eye } from 'lucide-react';
+import { Edit, Trash2, Plus, Loader2, Eye, RefreshCw } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import MarketplacePostForm from '@/components/marketplace/MarketplacePostForm';
 import AdminLayout from '@/components/admin/AdminLayout';
 import AdminHeader from '@/components/admin/AdminHeader';
@@ -37,6 +39,7 @@ const MarketplaceAdmin = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedPost, setSelectedPost] = useState<MarketplacePost | undefined>(undefined);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const [isSyncingEvents, setIsSyncingEvents] = useState(false);
 
   useEffect(() => {
     // Force redirect if not authenticated
@@ -118,16 +121,43 @@ const MarketplaceAdmin = () => {
     });
   };
 
+  const handleSyncEvents = async () => {
+    try {
+      setIsSyncingEvents(true);
+      const res = await syncSRMAPEvents();
+      toast.success('SRMAP Events Synced', {
+        description: `Successfully synced ${res.synced} events from SRMAP portal.`,
+      });
+    } catch (error) {
+      console.error('Error syncing events:', error);
+      toast.error('Sync Failed', {
+        description: error instanceof Error ? error.message : 'Failed to sync events from SRMAP.',
+      });
+    } finally {
+      setIsSyncingEvents(false);
+    }
+  };
+
   return (
     <AdminLayout>
       <AdminHeader 
-        title="Marketplace Management"
-        description="Create and manage marketplace posts"
+        title="Marketplace & Events"
+        description="Manage marketplace posts and sync university events"
         action={
-          <Button onClick={handleAddNew}>
-            <Plus className="mr-2 h-4 w-4" />
-            Add New Post
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={handleSyncEvents}
+              disabled={isSyncingEvents}
+            >
+              <RefreshCw className={cn("mr-2 h-4 w-4", isSyncingEvents && "animate-spin")} />
+              {isSyncingEvents ? "Syncing..." : "Sync SRMAP Events"}
+            </Button>
+            <Button onClick={handleAddNew}>
+              <Plus className="mr-2 h-4 w-4" />
+              Add New Post
+            </Button>
+          </div>
         }
       />
 
