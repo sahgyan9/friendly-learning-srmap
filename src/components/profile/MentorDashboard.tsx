@@ -142,7 +142,7 @@ export default function MentorDashboard({ mentorId }: { mentorId: string }) {
           <p className="text-sm font-medium text-amber-600 dark:text-amber-500">
             {unanswered} {unanswered === 1 ? "student is" : "students are"} still waiting on a
             reply.{" "}
-            <Link to="/chat" className="underline underline-offset-2">
+            <Link to="/messages" className="underline underline-offset-2">
               Open messages
             </Link>
           </p>

@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { Message } from "@/types/chat";
+import { announceMessagesRead } from "@/lib/message-events";
 
 // Get messages for a conversation using RPC function
 export async function getConversationMessages(conversationId: string) {
@@ -120,7 +121,7 @@ export async function sendMessage(
           userIds: [receiverId],
           title: "New Message",
           body: content.length > 80 ? content.slice(0, 77) + "..." : content,
-          url: `/chat?conversation=${conversationId}`,
+          url: `/messages/${conversationId}`,
           tag: `chat-${conversationId}`,
         }).catch(() => {});
       });
@@ -187,6 +188,9 @@ export async function markMessagesAsRead(conversationId: string, userId: string)
       console.error('Error marking messages as read:', error);
       return { data: null, error };
     }
+
+    // Instantly notify local UI hooks (navbar badge, conversation unread count)
+    announceMessagesRead();
 
     return { data, error: null };
   } catch (err) {

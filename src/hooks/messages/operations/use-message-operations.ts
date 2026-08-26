@@ -12,14 +12,16 @@ export const useMessageOperations = (userId: string) => {
     conversationId: string,
     setMessages: React.Dispatch<React.SetStateAction<Message[]>>,
     setIsLoadingMessages: React.Dispatch<React.SetStateAction<boolean>>,
-    setError: React.Dispatch<React.SetStateAction<Error | null>>
+    setError: React.Dispatch<React.SetStateAction<Error | null>>,
+    silent = false
   ) => {
-    setIsLoadingMessages(true);
+    if (!silent) {
+      setIsLoadingMessages(true);
+      setMessages([]);
+    }
     setError(null);
-    setMessages([]);
 
     try {
-
       const { data, error } = await getConversationMessages(conversationId);
 
       if (error) {
@@ -38,7 +40,9 @@ export const useMessageOperations = (userId: string) => {
       console.error("Exception fetching messages:", err);
       setError(err as Error);
     } finally {
-      setIsLoadingMessages(false);
+      if (!silent) {
+        setIsLoadingMessages(false);
+      }
     }
   };
 

@@ -53,20 +53,10 @@ const MessagesLayout = () => {
 
   // Mark messages as read when viewing a conversation
   useEffect(() => {
+    if (!activeChat || !userId) return;
+
     const markAsRead = async () => {
-      if (!activeChat || !userId) return;
-
-      // Find unread messages in active conversation
-      const unreadMessages = messages.filter(
-        msg => msg.conversation_id === activeChat &&
-          msg.receiver_id === userId &&
-          !msg.is_read
-      );
-
-      if (unreadMessages.length === 0) return;
-
       try {
-        // Update messages as read
         const { error } = await supabase
           .from('messages')
           .update({ is_read: true, delivery_status: 'read' })
@@ -79,20 +69,18 @@ const MessagesLayout = () => {
           return;
         }
 
-        // Tell the navbar badge to re-count now. It also listens for the
-        // realtime UPDATE, but that arrives a moment later and, on a flaky
-        // connection, sometimes not at all — which is what left a "1" sitting
-        // over the message icon after the conversation had plainly been read.
+        // Tell the navbar badge and conversation list to re-count now
         announceMessagesRead();
       } catch (error) {
         console.error('Error in markAsRead:', error);
       }
     };
 
-    // Mark as read after a short delay (user has actually viewed the messages)
-    const timer = setTimeout(markAsRead, 1000);
+    // Mark as read immediately when viewing the conversation and debounce a follow-up
+    void markAsRead();
+    const timer = setTimeout(markAsRead, 1200);
     return () => clearTimeout(timer);
-  }, [activeChat, userId, messages]);
+  }, [activeChat, userId, messages.length]);
 
   useEffect(() => {
     if (error) {

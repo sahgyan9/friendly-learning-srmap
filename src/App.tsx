@@ -1,5 +1,5 @@
 import { Suspense, lazy, ComponentType } from "react";
-import { Route, Routes, Navigate, useParams } from "react-router-dom";
+import { Route, Routes, Navigate, useParams, useSearchParams } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 
 import { Toaster } from "@/components/ui/sonner";
@@ -167,6 +167,13 @@ function RedirectWithParam({ toPrefix }: { toPrefix: string }) {
   return <Navigate to={param ? `${toPrefix}/${param}` : toPrefix} replace />;
 }
 
+function ChatRedirect() {
+  const [searchParams] = useSearchParams();
+  const { conversationId } = useParams();
+  const targetId = conversationId || searchParams.get("conversation") || searchParams.get("chat");
+  return <Navigate to={targetId ? `/messages/${targetId}` : "/messages"} replace />;
+}
+
 
 /**
  * Routes are grouped as: public, authenticated, and admin (authenticated +
@@ -234,6 +241,8 @@ function App() {
                     <Route path="/blog/:slug" element={<BlogPost />} />
 
                     {/* Backward Compatibility SPA Redirects */}
+                    <Route path="/chat" element={<ChatRedirect />} />
+                    <Route path="/chat/:conversationId" element={<ChatRedirect />} />
                     <Route path="/community-posts" element={<Navigate to="/posts" replace />} />
                     <Route path="/community-posts/:id" element={<RedirectWithParam toPrefix="/posts" />} />
                     <Route path="/communities" element={<Navigate to="/workspace-groups" replace />} />

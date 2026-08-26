@@ -78,12 +78,24 @@ export const useMessages = (userId: string, activeChatId?: string | null) => {
 
           return [...prev, resolvedMessage];
         });
+
+        // Automatically mark as read if the recipient is currently viewing this chat
+        if (newMessage.receiver_id === userId) {
+          void markMessagesAsRead(activeChat, userId);
+        }
       }
 
       // Update conversations list to show latest message, and re-sort so the
       // conversation that just got a message jumps to the top — same as any
       // chat app.
       setConversations(prev => {
+        const exists = prev.some(conv => conv.id === newMessage.conversation_id);
+        if (!exists) {
+          // New conversation not yet in state: silently refresh to load full participant details
+          void fetchConversations(setConversations, setActiveChat, setIsLoadingConversations, setError, true);
+          return prev;
+        }
+
         const updated = prev.map(conv =>
           conv.id === newMessage.conversation_id
             ? {
@@ -126,13 +138,18 @@ export const useMessages = (userId: string, activeChatId?: string | null) => {
     },
     // On conversation update
     (updatedConversation: Conversation) => {
-      setConversations(prev => 
-        prev.map(conv => 
+      setConversations(prev => {
+        const exists = prev.some(conv => conv.id === updatedConversation.id);
+        if (!exists) {
+          void fetchConversations(setConversations, setActiveChat, setIsLoadingConversations, setError, true);
+          return prev;
+        }
+        return prev.map(conv => 
           conv.id === updatedConversation.id 
             ? { ...conv, ...updatedConversation }
             : conv
-        )
-      );
+        );
+      });
     },
     // On message delete
     (deletedMessageId: string) => {
@@ -152,6 +169,32 @@ export const useMessages = (userId: string, activeChatId?: string | null) => {
       );
     }
   );
+
+  // Re-sync conversations and active messages on window focus and tab visibility change
+  useEffect(() => {
+    if (!userId) return;
+
+    const handleSync = () => {
+      void fetchConversations(setConversations, setActiveChat, setIsLoadingConversations, setError, true);
+      if (activeChat) {
+        void fetchMessages(activeChat, setMessages, setIsLoadingMessages, setError, true);
+      }
+    };
+
+    const onVisible = () => {
+      if (document.visibilityState === "visible") {
+        handleSync();
+      }
+    };
+
+    window.addEventListener("focus", handleSync);
+    document.addEventListener("visibilitychange", onVisible);
+
+    return () => {
+      window.removeEventListener("focus", handleSync);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [userId, activeChat]);
 
   // Fetch conversations on initial load
   useEffect(() => {
