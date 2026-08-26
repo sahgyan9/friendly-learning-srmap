@@ -135,7 +135,7 @@ export const MentorCard = ({ mentor }: MentorCardProps) => {
     setIsNavigating(true);
     // Add a small delay to show loading state
     setTimeout(() => {
-      navigate(`/mentor/${mentor.id}`);
+      navigate(`/mentor/${mentor.slug || mentor.id}`);
     }, 100);
   };
 

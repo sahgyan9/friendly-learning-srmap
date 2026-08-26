@@ -1610,6 +1610,7 @@ export type Database = {
           rating: number
           review_count: number
           skills: string[]
+          slug: string | null
           university: string | null
           year_of_studies: string | null
         }
@@ -1637,6 +1638,7 @@ export type Database = {
           rating?: number
           review_count?: number
           skills: string[]
+          slug?: string | null
           university?: string | null
           year_of_studies?: string | null
         }
@@ -1664,6 +1666,7 @@ export type Database = {
           rating?: number
           review_count?: number
           skills?: string[]
+          slug?: string | null
           university?: string | null
           year_of_studies?: string | null
         }

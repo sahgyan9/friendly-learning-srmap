@@ -17,6 +17,7 @@ const escapeAttr = (value) =>
   value.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 
 const DYNAMIC_META = {}
+const DYNAMIC_SCHEMAS = {}
 
 const applyMeta = (html, route) => {
   const meta = ROUTE_META[route] || DYNAMIC_META[route]
@@ -58,6 +59,11 @@ const applyMeta = (html, route) => {
       `These head tags no longer match index.html, so ${route} would keep the ` +
         `homepage values:\n  ${unmatched.join('\n  ')}`,
     )
+  }
+
+  if (DYNAMIC_SCHEMAS[route]) {
+    const schemaTag = `<script type="application/ld+json">${JSON.stringify(DYNAMIC_SCHEMAS[route])}</script>\n`
+    out = out.replace('</head>', `${schemaTag}</head>`)
   }
 
   return out
@@ -184,23 +190,48 @@ const supabase = (() => {
       }
     }
     
-    // 3. Mentors (active, 50)
-    const { data: mentors } = await supabase
+    // 3. Mentors
+    const { data: mentors, error: mentorError } = await supabase
       .from('mentors')
-      .select('id, name, bio, department')
-      .neq('department', 'General')
-      .not('department', 'is', null)
-      .order('created_at', { ascending: false })
-      .limit(50);
+      .select('id, slug, name, bio, department, profile_image, skills, linkedin_url, university, job_title, company')
+      .order('created_at', { ascending: false });
       
-    if (mentors) {
+    if (mentorError) {
+      console.warn('[prerender] Could not fetch mentors:', mentorError.message);
+    } else if (mentors) {
       for (const m of mentors) {
-        const route = `/mentor/${m.id}`;
+        const mentorSlug = m.slug || m.id;
+        const route = `/mentor/${mentorSlug}`;
         routesToPrerender.push(route);
+        const metaTitle = `${m.name} - Friendly Learning SRMAP Mentor | ${m.department || 'Student Mentor'}`;
+        const metaDesc = m.bio
+          ? m.bio.substring(0, 150) + '...'
+          : `Connect with ${m.name}, a student mentor for ${m.department || 'academics'} at SRM University-AP.`;
+
         DYNAMIC_META[route] = {
-          title: `${m.name} | SRM AP Student Mentor`,
-          description: m.bio ? m.bio.substring(0, 150) + '...' : `Connect with ${m.name}, a student mentor for ${m.department} at SRM AP.`
+          title: metaTitle,
+          description: metaDesc
         };
+
+        const personSchema = {
+          "@context": "https://schema.org",
+          "@type": "Person",
+          "name": m.name,
+          "description": m.bio || metaDesc,
+          "image": m.profile_image || undefined,
+          "url": `${SITE_URL}/mentor/${mentorSlug}`,
+          "jobTitle": m.department ? `${m.department} Mentor` : "Mentor",
+          "worksFor": {
+            "@type": "Organization",
+            "name": "Friendly Learning SRMAP"
+          },
+          "knowsAbout": m.skills || [],
+          "alumniOf": m.university || "SRM University-AP"
+        };
+        if (m.linkedin_url) {
+          personSchema.sameAs = [m.linkedin_url];
+        }
+        DYNAMIC_SCHEMAS[route] = personSchema;
       }
     }
 

@@ -1,5 +1,6 @@
 export interface Mentor {
   id: string;
+  slug?: string;
   name: string;
   department: string;
   skills: string[];

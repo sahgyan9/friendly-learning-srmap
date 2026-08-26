@@ -44,7 +44,12 @@ const MentorProfile = () => {
           // Only after we know the profile actually loaded, so a 404 or a
           // permission failure is never counted as someone viewing them. The
           // RPC drops the mentor's own visits and deduplicates the rest.
-          logMentorProfileView(id);
+          logMentorProfileView(data.id);
+
+          // If accessed via UUID or non-canonical identifier, seamlessly upgrade the URL in history
+          if (id !== data.slug && data.slug) {
+            navigate(`/mentor/${data.slug}`, { replace: true });
+          }
         } else {
           toast.error("Mentor not found");
         }
@@ -121,6 +126,7 @@ const MentorProfile = () => {
     const mentorName = mentor.name || "Mentor";
     const mentorDescription = mentor.bio || `${mentorName} is a mentor on Friendly Learning SRMAP.`;
     const mentorSkills = mentor.skills ? mentor.skills.join(", ") : "";
+    const mentorSlug = mentor.slug || mentor.id;
     const metaTitle = `${mentorName} - Friendly Learning SRMAP Mentor | ${mentor.department || 'University Mentor'}`;
     const metaDescription = `Connect with ${mentorName}, a verified mentor at Friendly Learning SRMAP. ${mentorDescription.substring(0, 120)}${mentorDescription.length > 120 ? '...' : ''}`;
 
@@ -130,7 +136,7 @@ const MentorProfile = () => {
           title={metaTitle}
           description={metaDescription}
           keywords={`${mentorName}, Friendly Learning SRMAP mentor, university student mentor, ${mentorSkills}, academic mentor, peer learning`}
-          canonical={`${PRIMARY_DOMAIN}/mentor/${mentor.id}`}
+          canonical={`${PRIMARY_DOMAIN}/mentor/${mentorSlug}`}
           ogTitle={`Meet ${mentorName} - Friendly Learning SRMAP Mentor`}
           ogDescription={metaDescription}
           ogImage={mentor.profile_image || "/og-image.png"}
@@ -140,7 +146,7 @@ const MentorProfile = () => {
         <StructuredData data={getBreadcrumbSchema([
           { name: "Home", url: `${PRIMARY_DOMAIN}/` },
           { name: "Mentors", url: `${PRIMARY_DOMAIN}/mentors` },
-          { name: mentorName, url: `${PRIMARY_DOMAIN}/mentor/${mentor.id}` }
+          { name: mentorName, url: `${PRIMARY_DOMAIN}/mentor/${mentorSlug}` }
         ])} />
       </>
     );

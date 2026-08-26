@@ -326,11 +326,12 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
         const skillsList = m.skills ?? [];
         const bioSnippet = m.bio?.trim() || m.availability_note?.trim() || (skillsList.length > 0 ? `Experienced student mentor specializing in ${skillsList.slice(0, 4).join(", ")}. Available for 1-on-1 guidance, course preparation, and project reviews.` : "Senior student mentor at SRM-AP available for peer learning and academic guidance.");
 
+        const mentorSlug = m.slug || m.id;
         const sitelinks: SearchSitelink[] = [
-          { label: "View Profile", to: `/mentor/${m.id}` },
+          { label: "View Profile", to: `/mentor/${mentorSlug}` },
         ];
         if (skillsList.length > 0) {
-          sitelinks.push({ label: "Skills & Experience", to: `/mentor/${m.id}#skills` });
+          sitelinks.push({ label: "Skills & Experience", to: `/mentor/${mentorSlug}#skills` });
         }
         if (m.linkedin_url) {
           sitelinks.push({ label: "LinkedIn", to: m.linkedin_url, isExternal: true });
@@ -344,7 +345,7 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
           id: m.id,
           title: m.name ?? "Mentor",
           subtitle: [m.department, skillsList.slice(0, 3).join(", ")].filter(Boolean).join(" · "),
-          to: `/mentor/${m.id}`,
+          to: `/mentor/${mentorSlug}`,
           image: m.profile_image,
           entityType: "mentor",
           badge: m.is_alumni ? "Alumni Mentor" : "Senior Mentor",

@@ -26,6 +26,7 @@
         { "source": "/your-data", "destination": "/your-data.html" },
         { "source": "/faculty/:slug", "destination": "/faculty/:slug.html" },
         { "source": "/opportunities/:slug", "destination": "/opportunities/:slug.html" },
+        { "source": "/mentor/:slug", "destination": "/mentor/:slug.html" },
         { "source": "/mentor/:id", "destination": "/mentor/:id.html" },
         { "source": "/workspace-groups/:slug", "destination": "/workspace-groups/:slug.html" },
         { "source": "/blog/:slug", "destination": "/blog/:slug.html" },

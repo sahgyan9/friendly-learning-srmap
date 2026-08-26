@@ -186,15 +186,14 @@ async function generateMentorsSitemap() {
         // Fetch active mentors from the database
         const { data: mentors, error } = await supabase
             .from('mentors')
-            .select('id, name, profile_image, department, created_at')
-            .neq('department', 'General')
-            .not('department', 'is', null);
+            .select('id, slug, name, profile_image, department, created_at')
+            .order('created_at', { ascending: false });
 
         // `error` was destructured but never checked, so a failed query left
         // `mentors` null and the forEach below threw during every build.
         if (error || !mentors) {
             console.warn('Skipping mentors sitemap:', error?.message ?? 'no rows returned');
-            return;
+            return false;
         }
 
         const timestamp = new Date().toISOString();
@@ -220,13 +219,14 @@ async function generateMentorsSitemap() {
             // mentors has no updated_at column, so created_at is the best signal
             // available — still better than restamping every URL each build.
             const lastmod = mentor.created_at || timestamp;
+            const mentorSlug = mentor.slug || mentor.id;
 
             sitemap += `
   <url>
-    <loc>${config.siteUrl}/mentor/${mentor.id}</loc>
+    <loc>${config.siteUrl}/mentor/${encodeURIComponent(mentorSlug)}</loc>
     <lastmod>${lastmod}</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.7</priority>`;
+    <priority>0.8</priority>`;
 
             if (mentor.profile_image) {
                 sitemap += `

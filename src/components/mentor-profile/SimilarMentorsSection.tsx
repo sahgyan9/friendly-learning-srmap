@@ -76,7 +76,7 @@ export default function SimilarMentorsSection({
         {similarMentors.map((m) => (
           <Link
             key={m.id}
-            to={`/mentor/${m.id}`}
+            to={`/mentor/${m.slug || m.id}`}
             className="flex items-center gap-3 rounded-xl border border-border/60 bg-background/60 p-3.5 hover:border-primary/40 hover:shadow-md transition-all group"
           >
             <MentorAvatar

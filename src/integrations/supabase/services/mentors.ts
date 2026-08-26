@@ -45,7 +45,7 @@ const listedOnly = <T extends { or: (filter: string) => T }>(query: T): T =>
 // 5bf976a); the summary columns below were only added back after
 // 20260823190000_mentor_profile_summary.sql was confirmed live.
 const MENTOR_PUBLIC_COLUMNS =
-  'id, name, department, skills, rating, profile_image, linkedin_url, bio, review_count, created_at, year_of_studies, university, hobbies, graduation_year, is_alumni, company, job_title, is_available, available_from, availability_note, projects, experiences, courses, tagline, outcomes, ideal_mentees, ask_me_anything, profile_summary_generated_at, profile_summary_edited_at' as const;
+  'id, slug, name, department, skills, rating, profile_image, linkedin_url, bio, review_count, created_at, year_of_studies, university, hobbies, graduation_year, is_alumni, company, job_title, is_available, available_from, availability_note, projects, experiences, courses, tagline, outcomes, ideal_mentees, ask_me_anything, profile_summary_generated_at, profile_summary_edited_at' as const;
 
 // Helper function to get typed data from Supabase tables
 export async function getMentors() {
@@ -201,17 +201,24 @@ export async function setMentorAvailability(
   return { data, error };
 }
 
-// Get a single mentor by ID. Deliberately unfiltered: a paused mentor's own
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// Get a single mentor by ID or slug. Deliberately unfiltered: a paused mentor's own
 // profile, and every link anyone has already shared, must keep resolving.
-export async function getMentorById(id: string) {
-  const { data, error } = await supabase
+export async function getMentorById(idOrSlug: string) {
+  const isUuid = UUID_REGEX.test(idOrSlug);
+  const query = supabase
     .from('mentors')
-    .select<typeof MENTOR_PUBLIC_COLUMNS, Mentor>(MENTOR_PUBLIC_COLUMNS)
-    .eq('id', id)
-    .single();
+    .select<typeof MENTOR_PUBLIC_COLUMNS, Mentor>(MENTOR_PUBLIC_COLUMNS);
+
+  const { data, error } = isUuid
+    ? await query.eq('id', idOrSlug).maybeSingle()
+    : await query.eq('slug', idOrSlug).maybeSingle();
 
   return { data, error };
 }
+
+export const getMentorByIdOrSlug = getMentorById;
 
 /** The subset of a mentor that the profile page lets its owner edit in place. */
 export type EditableMentorFields = Partial<

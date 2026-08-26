@@ -86,13 +86,13 @@ export const CampusSidebarWidgets = () => {
       const { data: conversation, error } = await getOrCreateConversation(user.id, mentor.id);
       if (error || !conversation) {
         toast.error("Failed to start conversation with mentor");
-        navigate(`/mentor/${mentor.id}`);
+        navigate(`/mentor/${mentor.slug || mentor.id}`);
         return;
       }
       toast.success(`Connected with ${mentor.name}!`);
       navigate(`/messages?chat=${conversation.id}`);
     } catch {
-      navigate(`/mentor/${mentor.id}`);
+      navigate(`/mentor/${mentor.slug || mentor.id}`);
     } finally {
       setConnectingId(null);
     }
@@ -289,7 +289,7 @@ export const CampusSidebarWidgets = () => {
                         />
                         <div className="min-w-0">
                           <Link
-                            to={`/mentor/${mentor.id}`}
+                            to={`/mentor/${mentor.slug || mentor.id}`}
                             className="text-xs font-semibold text-foreground hover:text-primary transition-colors truncate flex items-center gap-1"
                           >
                             <span className="truncate">{mentor.name}</span>

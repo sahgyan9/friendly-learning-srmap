@@ -503,6 +503,7 @@ for (const file of [
   '20260824140000_fix_is_admin_self_elevation.sql',
   '20260826080000_srmap_events_sync_every_6h.sql',
   '20260826090000_cascade_user_deletions_and_cleanup_orphaned_users.sql',
+  '20260826100000_mentor_slugs.sql',
 ]) {
   if (file === '20260804132345_b843f814-46d5-4c25-bc80-32e5f6ebba59.sql') {
     // Production's `faculty` table still carries `profile_image`, a column
@@ -3166,6 +3167,45 @@ check('user inserted into public.users', Boolean(userBefore));
 await q(`DELETE FROM auth.users WHERE id=$1`, [TEST_CASCADE_UID]);
 const { rows: [userAfter] } = await q(`SELECT id FROM public.users WHERE id=$1`, [TEST_CASCADE_UID]);
 check('deleting from auth.users cascades to public.users', !userAfter, JSON.stringify(userAfter));
+
+// --- 20260826100000_mentor_slugs.sql -----------------------------------------
+console.log('\n--- 20260826100000_mentor_slugs.sql ---');
+
+// 1. Column exists on mentors
+const { rows: [slugCol] } = await q(`
+  SELECT column_name, data_type 
+  FROM information_schema.columns 
+  WHERE table_schema = 'public' AND table_name = 'mentors' AND column_name = 'slug'
+`);
+check('slug column exists on public.mentors', Boolean(slugCol), JSON.stringify(slugCol));
+
+// 2. Existing mentors received a backfilled slug
+const { rows: existingSlugs } = await q(`SELECT id, name, slug FROM public.mentors WHERE id = $1`, [OTHER_UID]);
+check('existing mentor row has backfilled slug', existingSlugs[0]?.slug === 'ravi-mentor', JSON.stringify(existingSlugs[0]));
+
+// 3. New mentor insert automatically generates a slug via trigger
+const TEST_MENTOR_UID_1 = crypto.randomUUID();
+const TEST_MENTOR_UID_2 = crypto.randomUUID();
+
+await q(`INSERT INTO auth.users (id, email) VALUES ($1, 'kavya1@srmap.edu.in')`, [TEST_MENTOR_UID_1]);
+await q(`INSERT INTO public.users (id, email, name, role) VALUES ($1, 'kavya1@srmap.edu.in', 'Kavya Sharma', 'student')`, [TEST_MENTOR_UID_1]);
+await q(`INSERT INTO public.mentors (id, name, department) VALUES ($1, 'Kavya Sharma', 'CSE')`, [TEST_MENTOR_UID_1]);
+
+const { rows: [mentor1] } = await q(`SELECT id, name, slug FROM public.mentors WHERE id = $1`, [TEST_MENTOR_UID_1]);
+check('new mentor insert auto-generates slug from name', mentor1?.slug === 'kavya-sharma', JSON.stringify(mentor1));
+
+// 4. Duplicate name collision gets disambiguated (-2)
+await q(`INSERT INTO auth.users (id, email) VALUES ($1, 'kavya2@srmap.edu.in')`, [TEST_MENTOR_UID_2]);
+await q(`INSERT INTO public.users (id, email, name, role) VALUES ($1, 'kavya2@srmap.edu.in', 'Kavya Sharma', 'student')`, [TEST_MENTOR_UID_2]);
+await q(`INSERT INTO public.mentors (id, name, department) VALUES ($1, 'Kavya Sharma', 'ECE')`, [TEST_MENTOR_UID_2]);
+
+const { rows: [mentor2] } = await q(`SELECT id, name, slug FROM public.mentors WHERE id = $1`, [TEST_MENTOR_UID_2]);
+check('duplicate mentor name collision gets disambiguated slug', mentor2?.slug === 'kavya-sharma-2', JSON.stringify(mentor2));
+
+// 5. Updating an unrelated field on mentor preserves the slug
+await q(`UPDATE public.mentors SET bio = 'Updated bio for Kavya' WHERE id = $1`, [TEST_MENTOR_UID_1]);
+const { rows: [mentor1AfterUpdate] } = await q(`SELECT id, bio, slug FROM public.mentors WHERE id = $1`, [TEST_MENTOR_UID_1]);
+check('unrelated update on mentor preserves slug', mentor1AfterUpdate?.slug === 'kavya-sharma' && mentor1AfterUpdate?.bio === 'Updated bio for Kavya', JSON.stringify(mentor1AfterUpdate));
 
 console.log(failures === 0
   ? '\nAll migration checks passed against real Postgres.'

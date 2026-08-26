@@ -187,7 +187,7 @@ export function useSiteSearch(query: string, enabled: boolean) {
         id: mentor.id,
         title: mentor.name ?? "Mentor",
         subtitle: [mentor.department, (mentor.skills ?? []).slice(0, 3).join(", ")].filter(Boolean).join(" · "),
-        to: `/mentor/${mentor.id}`,
+        to: `/mentor/${mentor.slug || mentor.id}`,
         image: mentor.profile_image,
         kind: "mentor",
       }));

@@ -6,84 +6,94 @@
                             http://www.google.com/schemas/sitemap-image/1.1 http://www.google.com/schemas/sitemap-image/1.1/sitemap-image.xsd">
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/mentors</loc>
-    <lastmod>2026-08-26T03:16:43.170Z</lastmod>
+    <lastmod>2026-08-26T03:39:25.135Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://friendly-learning-srmap.vercel.app/mentor/b6be809e-af24-4c9b-95b7-d44538925efe</loc>
-    <lastmod>2026-08-11T09:19:27.02341+00:00</lastmod>
+    <loc>https://friendly-learning-srmap.vercel.app/mentor/gyan-kumar-sah-2</loc>
+    <lastmod>2026-08-26T03:28:45.317296+00:00</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.8</priority>
     <image:image>
-      <image:loc>https://ruapdkrgcbqrhvsayvpf.supabase.co/storage/v1/object/public/profiles/profile-images/b6be809e-af24-4c9b-95b7-d44538925efe-1786440135018.jpg</image:loc>
-      <image:title>Mesa Sai Gagan - Friendly Learning SRMAP Mentor</image:title>
+      <image:loc>https://lh3.googleusercontent.com/a/ACg8ocL77Mbjre-sTM8wOwIq-ySpw0QXXYShdMOoQ8LFeLbomii3oP8=s96-c</image:loc>
+      <image:title>GYAN KUMAR SAH - Friendly Learning SRMAP Mentor</image:title>
     </image:image>
   </url>
   <url>
-    <loc>https://friendly-learning-srmap.vercel.app/mentor/3f5a2ffd-dce9-4854-8d2d-5ae5362d1ba1</loc>
-    <lastmod>2026-07-30T16:34:14.531944+00:00</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://friendly-learning-srmap.vercel.app/mentor/edbffd3e-1d31-4dd9-89c4-3cdfd995236a</loc>
-    <lastmod>2026-08-06T13:31:12.068492+00:00</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-    <image:image>
-      <image:loc>https://ruapdkrgcbqrhvsayvpf.supabase.co/storage/v1/object/public/profiles/profile-images/edbffd3e-1d31-4dd9-89c4-3cdfd995236a-1786023330629.jpg</image:loc>
-      <image:title>Ujjawal Pandey - Friendly Learning SRMAP Mentor</image:title>
-    </image:image>
-  </url>
-  <url>
-    <loc>https://friendly-learning-srmap.vercel.app/mentor/51b14b60-b24a-4030-a290-de2a8970bd5b</loc>
+    <loc>https://friendly-learning-srmap.vercel.app/mentor/pankaj-yadav</loc>
     <lastmod>2026-08-14T07:56:22.689894+00:00</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.8</priority>
     <image:image>
       <image:loc>https://ruapdkrgcbqrhvsayvpf.supabase.co/storage/v1/object/public/profiles/profile-images/51b14b60-b24a-4030-a290-de2a8970bd5b-1787479727841.jpg</image:loc>
       <image:title>Pankaj Yadav - Friendly Learning SRMAP Mentor</image:title>
     </image:image>
   </url>
   <url>
-    <loc>https://friendly-learning-srmap.vercel.app/mentor/54774a25-67a8-48da-abc7-3621f35fbb26</loc>
-    <lastmod>2025-07-07T00:08:41.878183+00:00</lastmod>
+    <loc>https://friendly-learning-srmap.vercel.app/mentor/mesa-sai-gagan</loc>
+    <lastmod>2026-08-11T09:19:27.02341+00:00</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.8</priority>
     <image:image>
-      <image:loc>https://ruapdkrgcbqrhvsayvpf.supabase.co/storage/v1/object/public/profiles/profile-images/54774a25-67a8-48da-abc7-3621f35fbb26-1785648944185.jpg</image:loc>
-      <image:title>Gyan Kumar Sah - Friendly Learning SRMAP Mentor</image:title>
+      <image:loc>https://ruapdkrgcbqrhvsayvpf.supabase.co/storage/v1/object/public/profiles/profile-images/b6be809e-af24-4c9b-95b7-d44538925efe-1786440135018.jpg</image:loc>
+      <image:title>Mesa Sai Gagan - Friendly Learning SRMAP Mentor</image:title>
     </image:image>
   </url>
   <url>
-    <loc>https://friendly-learning-srmap.vercel.app/mentor/d6bbb4f1-bba4-4817-b884-db17cc8492a9</loc>
-    <lastmod>2026-07-30T12:23:07.497088+00:00</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-    <image:image>
-      <image:loc>https://ruapdkrgcbqrhvsayvpf.supabase.co/storage/v1/object/public/profiles/profile-images/d6bbb4f1-bba4-4817-b884-db17cc8492a9-1785505271046.jpeg</image:loc>
-      <image:title>Aarav Raj Shrestha - Friendly Learning SRMAP Mentor</image:title>
-    </image:image>
-  </url>
-  <url>
-    <loc>https://friendly-learning-srmap.vercel.app/mentor/a979a027-9221-4473-8d7a-9fbc39d996a9</loc>
+    <loc>https://friendly-learning-srmap.vercel.app/mentor/bhupendra-yadav</loc>
     <lastmod>2026-08-08T06:22:03.87598+00:00</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.8</priority>
     <image:image>
       <image:loc>https://lh3.googleusercontent.com/a/ACg8ocJP4t8GKfC76JqHU44UeWx8zVhHO3cyWYK4MC4b98vyUPqEx-ei=s96-c</image:loc>
       <image:title>Bhupendra Yadav - Friendly Learning SRMAP Mentor</image:title>
     </image:image>
   </url>
   <url>
-    <loc>https://friendly-learning-srmap.vercel.app/mentor/bdb12eee-6e79-496f-a173-2a335cb615e2</loc>
+    <loc>https://friendly-learning-srmap.vercel.app/mentor/ujjawal-pandey</loc>
+    <lastmod>2026-08-06T13:31:12.068492+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://ruapdkrgcbqrhvsayvpf.supabase.co/storage/v1/object/public/profiles/profile-images/edbffd3e-1d31-4dd9-89c4-3cdfd995236a-1786023330629.jpg</image:loc>
+      <image:title>Ujjawal Pandey - Friendly Learning SRMAP Mentor</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://friendly-learning-srmap.vercel.app/mentor/ankush-adhikari</loc>
     <lastmod>2026-07-31T13:53:08.372783+00:00</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.8</priority>
     <image:image>
       <image:loc>https://ruapdkrgcbqrhvsayvpf.supabase.co/storage/v1/object/public/profiles/profile-images/bdb12eee-6e79-496f-a173-2a335cb615e2-1785661151280.jpg</image:loc>
       <image:title>ankush adhikari - Friendly Learning SRMAP Mentor</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://friendly-learning-srmap.vercel.app/mentor/saksham-kumar-sah</loc>
+    <lastmod>2026-07-30T16:34:14.531944+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://friendly-learning-srmap.vercel.app/mentor/aarav-raj-shrestha</loc>
+    <lastmod>2026-07-30T12:23:07.497088+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://ruapdkrgcbqrhvsayvpf.supabase.co/storage/v1/object/public/profiles/profile-images/d6bbb4f1-bba4-4817-b884-db17cc8492a9-1785505271046.jpeg</image:loc>
+      <image:title>Aarav Raj Shrestha - Friendly Learning SRMAP Mentor</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://friendly-learning-srmap.vercel.app/mentor/gyan-kumar-sah</loc>
+    <lastmod>2025-07-07T00:08:41.878183+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://ruapdkrgcbqrhvsayvpf.supabase.co/storage/v1/object/public/profiles/profile-images/54774a25-67a8-48da-abc7-3621f35fbb26-1785648944185.jpg</image:loc>
+      <image:title>Gyan Kumar Sah - Friendly Learning SRMAP Mentor</image:title>
     </image:image>
   </url>
 </urlset>

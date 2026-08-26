@@ -84,6 +84,7 @@ export const getBreadcrumbSchema = (items) => {
  */
 export const getCourseSchema = (mentor, courseTitle, courseDescription) => {
     const baseUrl = getBaseUrl();
+    const mentorUrl = `${baseUrl}/mentor/${mentor.slug || mentor.id}`;
     return {
         "@context": "https://schema.org",
         "@type": "Course",
@@ -92,7 +93,7 @@ export const getCourseSchema = (mentor, courseTitle, courseDescription) => {
         "provider": {
             "@type": "Person",
             "name": mentor.name,
-            "url": `${baseUrl}/mentor/${mentor.id}`
+            "url": mentorUrl
         }
     };
 };
@@ -103,21 +104,28 @@ export const getCourseSchema = (mentor, courseTitle, courseDescription) => {
  */
 export const getMentorSchema = (mentor) => {
     const baseUrl = getBaseUrl();
-    return {
+    const mentorUrl = `${baseUrl}/mentor/${mentor.slug || mentor.id}`;
+    const schema = {
         "@context": "https://schema.org",
         "@type": "Person",
         "name": mentor.name,
         "description": mentor.bio || `${mentor.name} is a mentor on Friendly Learning SRMAP.`,
-        "image": mentor.profile_image,
-        "url": `${baseUrl}/mentor/${mentor.id}`,
+        "image": mentor.profile_image || undefined,
+        "url": mentorUrl,
         "jobTitle": mentor.department ? `${mentor.department} Mentor` : "Mentor",
         "worksFor": {
             "@type": "Organization",
             "name": "Friendly Learning SRMAP"
         },
         "knowsAbout": mentor.skills || [],
-        "alumniOf": mentor.university || "University"
+        "alumniOf": mentor.university || "SRM University-AP"
     };
+
+    if (mentor.linkedin_url) {
+        schema.sameAs = [mentor.linkedin_url];
+    }
+
+    return schema;
 };
 
 /**
