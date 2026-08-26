@@ -161,6 +161,7 @@ export default function ProfileSetupStudio() {
   // way this is an inline dismissible banner, never a blocking popup.
   const [nudgeReason, setNudgeReason] = useState<"resume" | "visit" | null>(null);
   const initialNudgeCheckedRef = useRef(false);
+  const hasAutoDraftedRef = useRef(false);
   const portalNudgeDismissKey = user ? `portal-nudge-dismissed-${user.id}` : null;
 
   // Studio Form State
@@ -292,6 +293,54 @@ export default function ProfileSetupStudio() {
     if (portalNudgeDismissKey) sessionStorage.setItem(portalNudgeDismissKey, "1");
     setNudgeReason(null);
   };
+
+  // Auto-draft for users who enter skills and department manually or via SRM Portal
+  useEffect(() => {
+    if (loading || isPublished || hasAutoDraftedRef.current) return;
+
+    const hasMinSkills = state.skills.length >= 2;
+    const hasDept = state.department.trim().length > 0;
+    const allFourEmpty =
+      !state.tagline.trim() &&
+      state.outcomes.length === 0 &&
+      state.ask_me_anything.length === 0 &&
+      state.ideal_mentees.length === 0;
+
+    if (hasMinSkills && hasDept && allFourEmpty) {
+      hasAutoDraftedRef.current = true;
+      const drafts = generateSmartDrafts(
+        state.skills,
+        state.department,
+        state.name,
+        state.bio,
+        state.year_of_studies
+      );
+
+      setState((prev) => ({
+        ...prev,
+        tagline: prev.tagline.trim() ? prev.tagline : drafts.tagline,
+        outcomes: prev.outcomes.length > 0 ? prev.outcomes : drafts.outcomes,
+        ask_me_anything: prev.ask_me_anything.length > 0 ? prev.ask_me_anything : drafts.ask_me_anything,
+        ideal_mentees: prev.ideal_mentees.length > 0 ? prev.ideal_mentees : drafts.ideal_mentees,
+      }));
+
+      toast.success(
+        "We drafted a headline and topics from your skills — edit anything that doesn't sound like you."
+      );
+    }
+  }, [
+    loading,
+    isPublished,
+    state.skills,
+    state.department,
+    state.tagline,
+    state.outcomes,
+    state.ask_me_anything,
+    state.ideal_mentees,
+    state.name,
+    state.bio,
+    state.year_of_studies,
+  ]);
 
   // One-click AI Auto-Draft for all sections
   const handleAutoDraftAll = () => {
