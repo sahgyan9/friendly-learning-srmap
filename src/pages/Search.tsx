@@ -38,6 +38,7 @@ import {
 } from "@/lib/search/search-params";
 import { useCollapseOnScroll } from "@/hooks/useCollapseOnScroll";
 import { useSearchResults, type SearchResultItem } from "@/hooks/useSearchResults";
+import { useCampusAIOverview } from "@/hooks/useCampusAIOverview";
 import { parseQuery, calculateExactBoost, CAMPUS_DEPARTMENTS } from "@/lib/search/query-engine";
 import { MIN_FACULTY_RELEVANCE } from "@/lib/search/relevance";
 
@@ -163,6 +164,15 @@ export default function SearchPage() {
 
   const results = useSearchResults(q, tab, offset);
 
+  const aiOverview = useCampusAIOverview({
+    query: q,
+    enabled: isAiMode && tab === "all",
+    onCitationsLoaded: handleCitationsLoaded,
+  });
+
+  const isAiOverviewLoading = isAiMode && tab === "all" && q.trim().length >= 3 && aiOverview.isInitialLoading;
+  const isPageLoading = Boolean(q.trim()) && (results.loading || isAiOverviewLoading);
+
   const setTab = (newTab: SearchTab) => {
     const next = new URLSearchParams(searchParams);
     if (newTab === "all") {
@@ -196,12 +206,12 @@ export default function SearchPage() {
     results.counts.documents +
     results.counts.blog;
 
-  const isEmpty = !results.loading && q.trim() && totalAcrossAll === 0;
+  const isEmpty = !isPageLoading && Boolean(q.trim()) && totalAcrossAll === 0;
 
   // Determine if there is a top entity hit for Featured Knowledge Panel
   // Only triggers for genuine exact person/entity lookups, NEVER on broad category queries
   const topEntityHit = useMemo(() => {
-    if (!q || results.loading || isEmpty) return null;
+    if (!q || isPageLoading || isEmpty) return null;
     const parsed = parseQuery(q);
 
     // If query has specific name tokens or entity intent
@@ -218,7 +228,7 @@ export default function SearchPage() {
       }
     }
     return null;
-  }, [q, results, isEmpty]);
+  }, [q, results, isEmpty, isPageLoading]);
 
   // Filtered single-category items if sub-filters active
   const filteredCategoryItems = useMemo(() => {
@@ -347,7 +357,7 @@ export default function SearchPage() {
                     )}
                   >
                     <span>{TAB_LABELS[t]}</span>
-                    {typeof count === "number" && (
+                    {typeof count === "number" && count >= 0 && (
                       <span
                         className={cn(
                           "ml-0.5 rounded-full px-1.5 py-0.2 text-2xs font-semibold",
@@ -390,7 +400,7 @@ export default function SearchPage() {
         )}
 
         {/* Loading state with dynamic CampusMind thinking status */}
-        {q && results.loading && (
+        {q && isPageLoading && (
           <CampusThinkingStatus
             className="py-16"
             iconSize="h-9 w-9"
@@ -399,14 +409,15 @@ export default function SearchPage() {
               "Searching across SRM-AP with CampusMind…",
               "Finding matched mentors, faculty & groups…",
               "Analyzing relevant courses & research areas…",
+              "Synthesizing campus knowledge & insights…",
               "Connecting peer opportunities…",
-              "Synthesizing results…",
+              "Structuring recommendations…",
             ]}
           />
         )}
 
         {/* Typo / Did You Mean Suggestion */}
-        {q && !results.loading && results.suggestedCorrection && results.suggestedCorrection.toLowerCase() !== q.toLowerCase() && (
+        {q && !isPageLoading && results.suggestedCorrection && results.suggestedCorrection.toLowerCase() !== q.toLowerCase() && (
           <div className="mb-4 flex items-center gap-1.5 text-xs sm:text-sm text-muted-foreground">
             <span>
               Did you mean:{" "}
@@ -433,7 +444,7 @@ export default function SearchPage() {
         )}
 
         {/* Results Main Content Stream */}
-        {q && !results.loading && !isEmpty && (
+        {q && !isPageLoading && !isEmpty && (
           <div className="space-y-6">
             {/* Top result info / count metadata */}
             <div className="flex items-center justify-between text-xs text-muted-foreground">
@@ -448,6 +459,14 @@ export default function SearchPage() {
               <CampusAIOverview
                 query={q}
                 results={results}
+                overview={aiOverview.overview}
+                loading={aiOverview.loading}
+                error={aiOverview.error}
+                isFeatureEnabled={aiOverview.isFeatureEnabled}
+                onRetry={aiOverview.retry}
+                onFeedback={aiOverview.handleFeedback}
+                hasVoted={aiOverview.hasVoted}
+                isVoting={aiOverview.isVoting}
                 onCitationsLoaded={handleCitationsLoaded}
                 className="mb-6"
               />

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { CampusMindIcon } from "@/components/icons/CampusMindIcon";
 import { CampusThinkingStatus } from "@/components/search/CampusThinkingStatus";
@@ -12,222 +12,71 @@ import {
   GraduationCap,
   Users,
   UserCheck,
-  Loader2,
   ThumbsUp,
   ThumbsDown,
   FileText,
   Megaphone,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getErrorField } from "@/lib/errors";
 import type { SearchResultsState } from "@/hooks/useSearchResults";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import {
+  useCampusAIOverview,
+  getCachedOverview,
+  setCachedOverview,
+  type AIOverviewResult,
+  type AIEntityBadge,
+} from "@/hooks/useCampusAIOverview";
 
-export interface AIEntityBadge {
-  id: string;
-  name: string;
-  type: "faculty" | "mentor" | "opportunity" | "community" | "post" | "document" | "notice";
-  to: string;
-  detail: string;
-}
+export type { AIEntityBadge, AIOverviewResult };
+export { getCachedOverview, setCachedOverview };
 
-export interface AIOverviewResult {
-  verdict?: string;
-  summary: string;
-  citations?: { id: number; text: string; url: string; }[];
-  keyInsights?: string[];
-  badges?: AIEntityBadge[];
-  actionRecommendation?: string | null;
-}
-
-interface CampusAIOverviewProps {
+export interface CampusAIOverviewProps {
   query: string;
-  results: SearchResultsState;
+  results?: SearchResultsState;
+  overview?: AIOverviewResult | null;
+  loading?: boolean;
+  error?: boolean;
+  isFeatureEnabled?: boolean | null;
+  onRetry?: () => void;
+  onFeedback?: (vote: 'up' | 'down') => Promise<void>;
+  hasVoted?: 'up' | 'down' | null;
+  isVoting?: boolean;
   onCitationsLoaded?: (citations: { id: number; text: string; url: string; }[]) => void;
   className?: string;
 }
 
-const OVERVIEW_CACHE = new Map<string, AIOverviewResult>();
-
-const getCachedOverview = (q: string): AIOverviewResult | null => {
-  const norm = q.trim().toLowerCase().replace(/\s+/g, " ");
-  if (OVERVIEW_CACHE.has(norm)) {
-    return OVERVIEW_CACHE.get(norm)!;
-  }
-  try {
-    const raw = sessionStorage.getItem(`ai_overview_v6_${norm}`);
-    if (raw) {
-      const parsed = JSON.parse(raw) as AIOverviewResult;
-      OVERVIEW_CACHE.set(norm, parsed);
-      return parsed;
-    }
-  } catch {
-    // Ignore storage issues
-  }
-  return null;
-};
-
-const setCachedOverview = (q: string, data: AIOverviewResult) => {
-  const norm = q.trim().toLowerCase().replace(/\s+/g, " ");
-  OVERVIEW_CACHE.set(norm, data);
-  try {
-    sessionStorage.setItem(`ai_overview_v6_${norm}`, JSON.stringify(data));
-  } catch {
-    // Ignore storage issues
-  }
-};
-
 export const CampusAIOverview: React.FC<CampusAIOverviewProps> = ({
   query,
-  results, // Kept for compatibility
+  overview: propOverview,
+  loading: propLoading,
+  error: propError,
+  isFeatureEnabled: propIsFeatureEnabled,
+  onRetry: propOnRetry,
+  onFeedback: propOnFeedback,
+  hasVoted: propHasVoted,
+  isVoting: propIsVoting,
   onCitationsLoaded,
   className,
 }) => {
   const [collapsed, setCollapsed] = useState(false);
   const [activeCitationId, setActiveCitationId] = useState<number | null>(null);
-  const [overview, setOverview] = useState<AIOverviewResult | null>(() => {
-    const trimmed = query.trim();
-    return trimmed.length >= 3 ? getCachedOverview(trimmed) : null;
+
+  // If props are passed from parent (Search.tsx), use them; otherwise fallback to internal hook
+  const isControlled = propOverview !== undefined || propLoading !== undefined;
+  const internalHook = useCampusAIOverview({
+    query,
+    enabled: !isControlled,
+    onCitationsLoaded,
   });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(false);
-  const [retryCount, setRetryCount] = useState(0);
-  const [hasVoted, setHasVoted] = useState<'up' | 'down' | null>(null);
-  const [isVoting, setIsVoting] = useState(false);
-  const [isFeatureEnabled, setIsFeatureEnabled] = useState<boolean | null>(null);
 
-  const handleRetry = () => {
-    const norm = query.trim().toLowerCase().replace(/\s+/g, " ");
-    OVERVIEW_CACHE.delete(norm);
-    try {
-      sessionStorage.removeItem(`ai_overview_${norm}`);
-    } catch {
-      // Ignore storage issues
-    }
-    setRetryCount(c => c + 1);
-  };
-
-  useEffect(() => {
-    async function checkFeatureFlag() {
-      try {
-        const { data, error } = await (supabase as any)
-          .from('platform_settings')
-          .select('value')
-          .eq('key', 'enable_campus_ai_overview')
-          .single();
-        if (!error && data) {
-          setIsFeatureEnabled(data.value === true);
-        } else {
-          setIsFeatureEnabled(true);
-        }
-      } catch (err) {
-        setIsFeatureEnabled(true);
-      }
-    }
-    checkFeatureFlag();
-  }, []);
-
-  useEffect(() => {
-    // Wait for the feature flag to actually resolve before fetching anything.
-    // This effect also depends on isFeatureEnabled below (it needs to react to
-    // the flag turning off), so if it fired immediately while the flag check
-    // was still in flight (its initial null state), the flag resolving a
-    // moment later would re-run this whole effect: abort the just-started
-    // request, clear its timer, and restart the loading state from scratch —
-    // visible as the overview flashing in, vanishing, and starting over.
-    // Fetching only once the flag is confirmed removes that restart entirely.
-    if (isFeatureEnabled !== true) return;
-    const trimmed = query.trim();
-    if (trimmed.length < 3) {
-      setOverview(null);
-      setLoading(false);
-      setError(false);
-      return;
-    }
-
-    const cached = getCachedOverview(trimmed);
-    if (cached) {
-      setOverview(cached);
-      setLoading(false);
-      setError(false);
-      if (onCitationsLoaded && cached.citations) {
-        onCitationsLoaded(cached.citations);
-      }
-      return;
-    }
-
-    let isMounted = true;
-    const controller = new AbortController();
-
-    const fetchOverview = async () => {
-      setLoading(true);
-      setError(false);
-
-      try {
-        const { data, error: funcError } = await supabase.functions.invoke<AIOverviewResult>(
-          "generate-ai-overview",
-          {
-            body: { query: trimmed },
-          }
-        );
-
-        if (funcError) throw funcError;
-
-        if (isMounted && data) {
-          setOverview(data);
-          setCachedOverview(trimmed, data);
-          if (onCitationsLoaded && data.citations) {
-            onCitationsLoaded(data.citations);
-          }
-        }
-      } catch (err: unknown) {
-        if (isMounted) {
-          if (getErrorField(err, "name") !== "AbortError") {
-            console.error("AI overview generation failed:", err);
-            setError(true);
-          }
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
-    };
-
-    const timer = setTimeout(() => {
-      fetchOverview();
-    }, 450);
-
-    return () => {
-      isMounted = false;
-      controller.abort();
-      clearTimeout(timer);
-    };
-  }, [query, retryCount, isFeatureEnabled]);
-
-  const handleFeedback = async (vote: 'up' | 'down') => {
-    if (!overview || hasVoted !== null || isVoting) return;
-
-    setIsVoting(true);
-    try {
-      const { error } = await (supabase as any).from("ai_overview_feedback").insert({
-        query: query.trim(),
-        response: overview,
-        is_helpful: vote === 'up',
-      });
-
-      if (error) throw error;
-
-      setHasVoted(vote);
-      toast.success(vote === 'up' ? "Thank you for the feedback!" : "Feedback recorded. We will improve this.");
-    } catch (err) {
-      console.error("Failed to submit feedback:", err);
-      toast.error("Could not record feedback.");
-    } finally {
-      setIsVoting(false);
-    }
-  };
+  const overview = isControlled ? propOverview ?? null : internalHook.overview;
+  const loading = isControlled ? propLoading ?? false : internalHook.loading;
+  const error = isControlled ? propError ?? false : internalHook.error;
+  const isFeatureEnabled = isControlled ? propIsFeatureEnabled ?? true : internalHook.isFeatureEnabled;
+  const handleRetry = isControlled ? propOnRetry ?? (() => {}) : internalHook.retry;
+  const handleFeedback = isControlled ? propOnFeedback ?? (() => {}) : internalHook.handleFeedback;
+  const hasVoted = isControlled ? propHasVoted ?? null : internalHook.hasVoted;
+  const isVoting = isControlled ? propIsVoting ?? false : internalHook.isVoting;
 
   const renderBadgeIcon = (type: AIEntityBadge["type"]) => {
     switch (type) {
