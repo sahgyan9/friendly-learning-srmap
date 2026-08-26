@@ -30,7 +30,7 @@ export async function getConversationMessages(conversationId: string) {
             .from('users')
             .select('id, name, profile_image')
             .eq('id', message.sender_id)
-            .single();
+            .maybeSingle();
 
           if (!senderError && sender) {
             senderData = sender;

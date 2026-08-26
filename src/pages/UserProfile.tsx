@@ -63,12 +63,14 @@ const UserProfile = () => {
   }, [user]);
 
   const fetchProfile = async () => {
+    if (!user?.id) return;
+
     try {
       const { data, error } = await supabase
         .from("users")
         .select("*")
-        .eq("id", user?.id)
-        .single();
+        .eq("id", user.id)
+        .maybeSingle();
 
       if (error) throw error;
 
@@ -97,8 +99,8 @@ const UserProfile = () => {
           const { data: mentorData, error: mentorError } = await supabase
             .from("mentors")
             .select("*")
-            .eq("id", user?.id)
-            .single();
+            .eq("id", user.id)
+            .maybeSingle();
 
           if (!mentorError && mentorData) {
             setMentorProfile({

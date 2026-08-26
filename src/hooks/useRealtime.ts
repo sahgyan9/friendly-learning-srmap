@@ -9,28 +9,28 @@ export const useUserPresence = (userId: string) => {
   const intervalRef = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
-    if (!userId) return;
+    if (!userId || !userId.trim()) return;
 
     // Set user as online when component mounts
-    updateUserPresence(userId, true);
+    void updateUserPresence(userId, true);
 
     // Update presence every 30 seconds
     intervalRef.current = setInterval(() => {
-      updateUserPresence(userId, true);
+      void updateUserPresence(userId, true);
     }, 30000);
 
     // Handle page visibility change
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        updateUserPresence(userId, true);
+        void updateUserPresence(userId, true);
       } else {
-        updateUserPresence(userId, false);
+        void updateUserPresence(userId, false);
       }
     };
 
     // Handle beforeunload to set user offline
     const handleBeforeUnload = () => {
-      updateUserPresence(userId, false);
+      void updateUserPresence(userId, false);
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
@@ -44,7 +44,7 @@ export const useUserPresence = (userId: string) => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
       
       // Set user offline when component unmounts
-      updateUserPresence(userId, false);
+      void updateUserPresence(userId, false);
     };
   }, [userId]);
 };

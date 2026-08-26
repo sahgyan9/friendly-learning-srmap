@@ -20,11 +20,13 @@ export interface UserProfile {
 }
 
 export const getUserById = async (userId: string) => {
+  if (!userId) return null;
+
   const { data, error } = await supabase
     .from('users')
     .select('*')
     .eq('id', userId)
-    .single();
+    .maybeSingle();
 
   if (error) {
     console.error('Error fetching user:', error);

@@ -29,28 +29,40 @@ export async function updateTypingIndicator(
 // Update user presence
 export async function updateUserPresence(userId: string, isOnline: boolean) {
   try {
+    if (!userId || !userId.trim()) {
+      return { error: null };
+    }
+
     const { error } = await supabase.rpc('update_user_presence', {
       p_user_id: userId,
       p_is_online: isOnline
     });
 
     if (error) {
-      console.error(
-        'Error updating user presence:',
-        error.message,
-        error.code ? `(code: ${error.code})` : ''
-      );
+      // When a user logs out or has an expired session, the RPC fails with permission denied (42501).
+      // Suppress noisy logs for this expected unauthenticated/signout transition state.
+      const isAuthIssue = error.code === '42501' || error.message?.includes('permission denied') || error.code === 'PGRST301';
+      if (!isAuthIssue) {
+        console.error(
+          'Error updating user presence:',
+          error.message,
+          error.code ? `(code: ${error.code})` : ''
+        );
+      }
       return { error };
     }
 
     return { error: null };
   } catch (err) {
-    // Navigating away (e.g. leaving /messages) cancels the in-flight request
-    // out from under this call — the browser aborts the fetch, which is
-    // expected here (this runs from the presence-effect's unmount cleanup)
-    // and not worth logging as an error.
+    // Navigating away (e.g. leaving /messages) or signout cancels in-flight requests.
+    // In Safari/WebKit, fetch rejections report as "TypeError: Load failed".
     const isAbort = err instanceof DOMException && err.name === 'AbortError';
-    if (!isAbort) {
+    const isLoadFailed =
+      err instanceof TypeError &&
+      (err.message.includes('Load failed') ||
+       err.message.includes('Failed to fetch') ||
+       err.message.includes('NetworkError'));
+    if (!isAbort && !isLoadFailed) {
       console.error(
         'Exception updating user presence:',
         err instanceof Error ? err.message : err
