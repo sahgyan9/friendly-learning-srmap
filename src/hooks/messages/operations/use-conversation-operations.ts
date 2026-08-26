@@ -37,9 +37,6 @@ export const useConversationOperations = (userId: string) => {
 
       if (data) {
         setConversations(data);
-        if (data.length > 0) {
-          setActiveChat(data[0].id);
-        }
       } else {
         setConversations([]);
       }

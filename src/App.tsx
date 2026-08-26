@@ -11,6 +11,7 @@ import WelcomeTour from "@/components/onboarding/WelcomeTour";
 import { SrmDobNagProvider } from "@/components/onboarding/SrmDobNagContext";
 import SrmDobNag from "@/components/onboarding/SrmDobNag";
 import SignInNudge from "@/components/onboarding/SignInNudge";
+import PushNotificationFloatingPrompt from "@/components/notifications/PushNotificationFloatingPrompt";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import RouteRobots from "@/components/RouteRobots";
 import ScrollToTop from "@/components/ScrollToTop";
@@ -186,6 +187,7 @@ function App() {
               <WelcomeTour />
               <SrmDobNag />
               <SignInNudge />
+              <PushNotificationFloatingPrompt />
 
               {/* One header for the whole app. Pages used to render their own
                   <Navbar /> underneath a separately-mounted floating nav, which
@@ -295,6 +297,14 @@ function App() {
                     />
                     <Route
                       path="/messages"
+                      element={
+                        <ProtectedRoute>
+                          <Messages />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/messages/:conversationId"
                       element={
                         <ProtectedRoute>
                           <Messages />

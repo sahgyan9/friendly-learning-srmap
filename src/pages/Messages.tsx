@@ -1,6 +1,6 @@
 
-import { useState, useEffect } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import { Link, useSearchParams, useNavigate, useParams } from "react-router-dom";
 import { MessageCircleMore } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
@@ -11,32 +11,54 @@ import { Button } from "@/components/ui/button";
 
 const Messages = () => {
   const { user } = useAuth();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const mentorId = searchParams.get('mentorId');
-  const [isInitializingConversation, setIsInitializingConversation] = useState(false);
+  const { conversationId } = useParams<{ conversationId?: string }>();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
 
+  const chatId = searchParams.get('chat');
+  const mentorId = searchParams.get('mentor') || searchParams.get('mentorId');
+  const [isInitializingConversation, setIsInitializingConversation] = useState(false);
+  const processedMentorRef = useRef<string | null>(null);
+
+  // If ?chat=xxx is passed, redirect immediately to canonical /messages/:conversationId
   useEffect(() => {
-    if (mentorId && user) {
-      initializeConversation();
+    if (chatId) {
+      navigate(`/messages/${chatId}`, { replace: true });
+    }
+  }, [chatId, navigate]);
+
+  // If ?mentor=xxx is passed, resolve or create conversation and redirect to /messages/:conversationId
+  useEffect(() => {
+    if (mentorId && user && processedMentorRef.current !== mentorId) {
+      processedMentorRef.current = mentorId;
+      initializeConversation(mentorId);
     }
   }, [mentorId, user]);
 
-  const initializeConversation = async () => {
-    if (!mentorId || !user) return;
+  const initializeConversation = async (targetMentorId: string) => {
+    if (!user) return;
+
+    if (targetMentorId === user.id) {
+      toast.error("You cannot message yourself");
+      navigate("/messages", { replace: true });
+      return;
+    }
 
     try {
       setIsInitializingConversation(true);
-      const { data: conversation, error } = await getOrCreateConversation(user.id, mentorId);
-      if (error) {
+      const { data: conversation, error } = await getOrCreateConversation(user.id, targetMentorId);
+      if (error || !conversation) {
         console.error('Error creating/getting conversation:', error);
         toast.error('Failed to start conversation');
+        navigate('/messages', { replace: true });
       } else {
         toast.success('Conversation ready!');
+        navigate(`/messages/${conversation.id}`, { replace: true });
       }
-      setSearchParams({});
     } catch (error) {
       console.error('Error initializing conversation:', error);
       toast.error('Failed to start conversation');
+      navigate('/messages', { replace: true });
     } finally {
       setIsInitializingConversation(false);
     }

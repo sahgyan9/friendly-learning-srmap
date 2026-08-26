@@ -160,7 +160,7 @@ export const CampusSidebarWidgets = () => {
         return;
       }
       toast.success(`Connected with ${mentor.name}!`);
-      navigate(`/messages?chat=${conversation.id}`);
+      navigate(`/messages/${conversation.id}`);
     } catch {
       navigate(`/mentor/${mentor.slug || mentor.id}`);
     } finally {

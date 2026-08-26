@@ -100,7 +100,11 @@ const ChatContainer = ({
   const currentConversation = conversations.find((c) => c.id === activeChat);
 
   useEffect(() => {
-    if (activeChat && isMobile) setMobileView("chat");
+    if (activeChat && isMobile) {
+      setMobileView("chat");
+    } else if (!activeChat && isMobile) {
+      setMobileView("list");
+    }
   }, [activeChat, isMobile]);
 
   // Reset replying & editing state when changing conversations
@@ -199,7 +203,10 @@ const ChatContainer = ({
           <ChatHeader
             conversation={currentConversation}
             getOtherUser={getOtherUser}
-            onBack={isMobile ? () => setMobileView("list") : undefined}
+            onBack={isMobile ? () => {
+              setMobileView("list");
+              setActiveChat("");
+            } : undefined}
           />
 
           <div className="min-h-0 flex-1">

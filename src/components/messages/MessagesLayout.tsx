@@ -1,5 +1,6 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import ChatContainer from "@/components/chat/ChatContainer";
 import { useAuth } from "@/context/AuthContext";
@@ -16,9 +17,22 @@ import { useConversationUnreadCounts } from "@/hooks/useConversationUnreadCounts
 const MessagesLayout = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const { user } = useAuth();
+  const { conversationId } = useParams<{ conversationId?: string }>();
+  const navigate = useNavigate();
 
   // Use the real user ID from auth context instead of the sample user
   const userId = user?.id || "";
+
+  const handleSelectChat = useCallback(
+    (id: string) => {
+      if (id) {
+        navigate(`/messages/${id}`);
+      } else {
+        navigate("/messages");
+      }
+    },
+    [navigate]
+  );
 
   const {
     conversations,
@@ -28,14 +42,13 @@ const MessagesLayout = () => {
     isLoadingMessages,
     isSending,
     error,
-    setActiveChat,
     sendMessage,
     editMessage,
     deleteMessage,
-  } = useMessages(userId);
+  } = useMessages(userId, conversationId || null);
 
-  const { isProcessingMentor } = useMentorConnection(userId, setActiveChat);
-  const { isProcessingChat } = useChatConnection(userId, setActiveChat);
+  const { isProcessingMentor } = useMentorConnection(userId, handleSelectChat);
+  const { isProcessingChat } = useChatConnection(userId, handleSelectChat);
   const getUnreadCount = useConversationUnreadCounts(userId || null);
 
   // Mark messages as read when viewing a conversation
@@ -155,7 +168,7 @@ const MessagesLayout = () => {
         currentUserId={userId}
         formatTime={formatMessageTime}
         getOtherUser={getOtherUser}
-        setActiveChat={setActiveChat}
+        setActiveChat={handleSelectChat}
         getUnreadCount={getUnreadCount}
         handleSendMessage={sendMessage}
         handleEditMessage={editMessage}

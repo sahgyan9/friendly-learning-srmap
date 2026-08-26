@@ -11,7 +11,7 @@ import { Message, Conversation } from "@/types/chat";
 /**
  * Hook for managing conversations and messages with real-time updates
  */
-export const useMessages = (userId: string) => {
+export const useMessages = (userId: string, activeChatId?: string | null) => {
   const {
     conversations,
     messages,
@@ -28,6 +28,13 @@ export const useMessages = (userId: string) => {
     setIsSending,
     setError
   } = useMessagesState();
+
+  // Sync activeChat state with activeChatId from router if provided
+  useEffect(() => {
+    if (activeChatId !== undefined) {
+      setActiveChat(activeChatId);
+    }
+  }, [activeChatId, setActiveChat]);
 
   const {
     fetchConversations,
