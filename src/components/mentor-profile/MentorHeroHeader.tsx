@@ -163,12 +163,11 @@ export default function MentorHeroHeader({
               className="h-28 w-28 md:h-32 md:w-32 rounded-2xl shadow-lg ring-4 ring-background/80 object-cover"
               fallbackClassName="rounded-2xl text-4xl"
             />
-            {/* Status dot. Previously this was a hardcoded pulsing "Active"
-                badge rendered for every mentor unconditionally, including
-                someone who had not opened the site in months. It now reflects
-                when they last actually sent a message, and shows nothing at all
-                when that was over a month ago — the absence is the honest
-                signal, and a "Dormant" badge would just be a scarlet letter. */}
+            {/* Status dot. Reflects when the mentor was last active across the
+                platform (messages, community posts, group chats, or sign-in presence),
+                and shows nothing at all when that was over a month ago — the absence
+                is the honest signal, avoiding negative labels while rewarding real
+                presence. */}
             {recencyText && (
               <div className="absolute -bottom-1 -right-1 flex items-center gap-1.5 rounded-full border-2 border-background bg-card px-2 py-0.5 shadow-sm">
                 <span className="relative flex h-2.5 w-2.5">

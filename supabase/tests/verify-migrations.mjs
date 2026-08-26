@@ -155,6 +155,13 @@ await db.exec(`
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
   );
 
+  CREATE TABLE IF NOT EXISTS public.user_presence (
+    user_id UUID PRIMARY KEY REFERENCES public.users(id) ON DELETE CASCADE,
+    is_online BOOLEAN NOT NULL DEFAULT false,
+    last_seen TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
+  );
+
   -- Groups, as of 20260731090000 + 20260731130000, trimmed to the columns the
   -- channels migration actually touches.
   CREATE TABLE public.communities (
@@ -226,10 +233,16 @@ await db.exec(`
   -- 20260823220000_admin_kpi_metrics.sql, the signup-count source for the
   -- admin KPI panel. created_at is a real Supabase Auth column, present on
   -- every project regardless of what public.users happens to carry.
-  CREATE TABLE auth.users (id uuid PRIMARY KEY, email text, raw_user_meta_data jsonb, created_at timestamptz NOT NULL DEFAULT now());
-  INSERT INTO auth.users (id, email, created_at) VALUES
-    ('${CURRENT_UID}', 'asha@srmap.edu.in', now() - interval '2 days'),
-    ('${OTHER_UID}', 'ravi@srmap.edu.in', now() - interval '90 days');
+  CREATE TABLE auth.users (
+    id uuid PRIMARY KEY,
+    email text,
+    raw_user_meta_data jsonb,
+    created_at timestamptz NOT NULL DEFAULT now(),
+    last_sign_in_at timestamptz
+  );
+  INSERT INTO auth.users (id, email, created_at, last_sign_in_at) VALUES
+    ('${CURRENT_UID}', 'asha@srmap.edu.in', now() - interval '2 days', now() - interval '1 hour'),
+    ('${OTHER_UID}', 'ravi@srmap.edu.in', now() - interval '90 days', now() - interval '90 days');
 
   CREATE OR REPLACE FUNCTION auth.stub_ensure_auth_user()
   RETURNS trigger LANGUAGE plpgsql AS $$
@@ -504,6 +517,7 @@ for (const file of [
   '20260826080000_srmap_events_sync_every_6h.sql',
   '20260826090000_cascade_user_deletions_and_cleanup_orphaned_users.sql',
   '20260826100000_mentor_slugs.sql',
+  '20260826110000_mentor_multisignal_activity.sql',
 ]) {
   if (file === '20260804132345_b843f814-46d5-4c25-bc80-32e5f6ebba59.sql') {
     // Production's `faculty` table still carries `profile_image`, a column
@@ -3206,6 +3220,37 @@ check('duplicate mentor name collision gets disambiguated slug', mentor2?.slug =
 await q(`UPDATE public.mentors SET bio = 'Updated bio for Kavya' WHERE id = $1`, [TEST_MENTOR_UID_1]);
 const { rows: [mentor1AfterUpdate] } = await q(`SELECT id, bio, slug FROM public.mentors WHERE id = $1`, [TEST_MENTOR_UID_1]);
 check('unrelated update on mentor preserves slug', mentor1AfterUpdate?.slug === 'kavya-sharma' && mentor1AfterUpdate?.bio === 'Updated bio for Kavya', JSON.stringify(mentor1AfterUpdate));
+
+// --- 20260826110000_mentor_multisignal_activity.sql --------------------------
+console.log('\nmulti-signal mentor activity:');
+
+// Mentor with 0 1-on-1 messages, but with a community post:
+const POST_UID = crypto.randomUUID();
+await q(`
+  INSERT INTO public.community_posts (id, mentor_id, author_id, title, content, created_at)
+  VALUES ($1, $2, $2, 'Hackathon Tips', 'Here are some tips', now() - interval '2 days');
+`, [POST_UID, TEST_MENTOR_UID_1]);
+
+const { rows: [multiAct1] } = await q(`SELECT * FROM public.mentor_activity($1)`, [TEST_MENTOR_UID_1]);
+check(
+  'mentor with 0 DMs but recent community post reports non-null last_message_at',
+  multiAct1?.last_message_at !== null && multiAct1?.requests_received === 0 && multiAct1?.students_helped === 0,
+  JSON.stringify(multiAct1),
+);
+
+// Mentor with 0 DMs, 0 posts, but active user presence:
+await q(`
+  INSERT INTO public.user_presence (user_id, is_online, last_seen, updated_at)
+  VALUES ($1, true, now() - interval '1 hour', now() - interval '1 hour')
+  ON CONFLICT (user_id) DO UPDATE SET last_seen = EXCLUDED.last_seen;
+`, [TEST_MENTOR_UID_2]);
+
+const { rows: [multiAct2] } = await q(`SELECT * FROM public.mentor_activity($1)`, [TEST_MENTOR_UID_2]);
+check(
+  'mentor with 0 DMs but active user_presence reports non-null last_message_at',
+  multiAct2?.last_message_at !== null && multiAct2?.requests_received === 0,
+  JSON.stringify(multiAct2),
+);
 
 console.log(failures === 0
   ? '\nAll migration checks passed against real Postgres.'

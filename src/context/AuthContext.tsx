@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { Session, User } from "@supabase/supabase-js";
 
 import { supabase } from "@/integrations/supabase/client";
+import { useUserPresence } from "@/hooks/useRealtime";
 import { setUserContext } from "@/lib/sentry";
 import { setThemeUserId, syncLocalTheme, type Theme } from "@/lib/theme";
 
@@ -43,6 +44,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [isMentor, setIsMentor] = useState(false);
+
+  // Global presence heartbeat across all pages for logged-in users.
+  useUserPresence(user?.id ?? "");
 
   // Which user id we have already loaded a profile for. Guards against
   // re-fetching on every TOKEN_REFRESHED / tab-focus event, which fired a pair
