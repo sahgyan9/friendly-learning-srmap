@@ -59,7 +59,7 @@ const EmojiPicker = ({ onEmojiSelect, disabled }: EmojiPickerProps) => {
             "mb-0.5 h-8 w-8 shrink-0 rounded-xl transition-colors duration-200",
             open
               ? "bg-primary/15 text-primary"
-              : "text-muted-foreground/50 hover:bg-white/8 hover:text-muted-foreground",
+              : "text-muted-foreground hover:bg-muted hover:text-foreground",
           )}
           aria-label="Open emoji picker"
         >
@@ -73,11 +73,11 @@ const EmojiPicker = ({ onEmojiSelect, disabled }: EmojiPickerProps) => {
         sideOffset={8}
         className={cn(
           "w-80 p-0 overflow-hidden rounded-2xl",
-          "border border-white/10 bg-card/90 shadow-2xl shadow-black/40 backdrop-blur-xl",
+          "border border-border bg-popover/95 dark:border-white/15 dark:bg-card/95 shadow-2xl shadow-black/20 backdrop-blur-xl",
         )}
       >
         {/* Group tabs */}
-        <div className="flex gap-0.5 border-b border-white/8 p-2">
+        <div className="flex gap-0.5 border-b border-border/70 dark:border-white/8 p-2">
           {EMOJI_GROUPS.map((group, i) => (
             <button
               key={group.label}

@@ -106,14 +106,14 @@ const MessageInput = ({
   return (
     <form
       onSubmit={handleSubmit}
-      className="border-t border-white/8 bg-card/60 p-3 backdrop-blur-md"
+      className="border-t border-border/80 bg-background/95 dark:bg-card/75 p-3 backdrop-blur-md"
     >
       <div
         className={cn(
-          "flex items-end gap-2 rounded-2xl border px-1.5 py-1.5 transition-all duration-200",
+          "flex items-end gap-2 rounded-2xl border-2 px-2.5 py-1.5 transition-all duration-200 shadow-xs",
           isFocused
-            ? "border-primary/40 bg-background/80 shadow-[0_0_0_3px_hsl(var(--primary)/0.12)]"
-            : "border-white/10 bg-white/5",
+            ? "border-primary bg-background shadow-md shadow-primary/10 ring-4 ring-primary/15"
+            : "border-border/90 bg-background hover:border-primary/50 dark:border-white/20 dark:bg-muted/30",
         )}
       >
         {/* Emoji picker */}
@@ -138,7 +138,7 @@ const MessageInput = ({
           rows={1}
           className={cn(
             "min-h-0 flex-1 resize-none bg-transparent py-2 pr-1 text-sm leading-relaxed text-foreground",
-            "placeholder:text-muted-foreground/40",
+            "placeholder:text-muted-foreground/80 dark:placeholder:text-muted-foreground/50",
             "outline-none",
           )}
           style={{ maxHeight: `${MAX_ROWS_PX}px` }}
@@ -150,8 +150,8 @@ const MessageInput = ({
           className={cn(
             "mb-0.5 h-9 w-9 shrink-0 rounded-xl transition-all duration-200",
             canSend
-              ? "bg-gradient-to-br from-primary to-primary/80 shadow-md shadow-primary/30 hover:shadow-primary/50 hover:scale-105"
-              : "opacity-40",
+              ? "bg-primary text-primary-foreground shadow-md shadow-primary/30 hover:bg-primary/90 hover:scale-105"
+              : "bg-muted text-muted-foreground/50 dark:bg-white/10 dark:text-muted-foreground/40",
           )}
           disabled={!canSend}
           aria-label="Send message"
@@ -164,9 +164,9 @@ const MessageInput = ({
         </Button>
       </div>
 
-      <p className="mt-1.5 px-2 text-3xs text-muted-foreground/40">
-        <kbd className="font-sans">Enter</kbd> to send ·{" "}
-        <kbd className="font-sans">Shift + Enter</kbd> for new line
+      <p className="mt-2 px-2 text-3xs text-muted-foreground/75">
+        <kbd className="rounded border border-border/70 bg-muted/70 px-1.5 py-0.5 font-sans font-medium text-foreground/80 shadow-2xs">Enter</kbd> to send ·{" "}
+        <kbd className="rounded border border-border/70 bg-muted/70 px-1.5 py-0.5 font-sans font-medium text-foreground/80 shadow-2xs">Shift + Enter</kbd> for new line
       </p>
     </form>
   );

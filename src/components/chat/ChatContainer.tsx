@@ -133,7 +133,7 @@ const ChatContainer = ({
     /* Glassmorphic outer card */
     <div
       ref={heightRef}
-      className="relative flex min-h-[28rem] overflow-hidden rounded-2xl border border-white/10 bg-card/50 shadow-2xl shadow-black/40 backdrop-blur-xl"
+      className="relative flex min-h-[28rem] overflow-hidden rounded-2xl border border-border/80 bg-card/90 shadow-xl shadow-black/5 backdrop-blur-xl dark:border-white/10 dark:bg-card/50 dark:shadow-2xl dark:shadow-black/40"
       style={{ height: availableHeight != null ? `${availableHeight}px` : "calc(100dvh - 5rem)" }}
     >
       {/* Subtle radial glows behind the panel */}
@@ -143,12 +143,12 @@ const ChatContainer = ({
       {/* Sidebar */}
       {showList && (
         <aside
-          className={`relative flex flex-col border-r border-white/8 bg-background/40 backdrop-blur-md ${
+          className={`relative flex flex-col border-r border-border/70 bg-background/50 backdrop-blur-md dark:border-white/8 dark:bg-background/40 ${
             isMobile ? "w-full" : "w-80 shrink-0 lg:w-96"
           }`}
         >
           {/* Sidebar header */}
-          <div className="border-b border-white/8 p-3">
+          <div className="border-b border-border/70 p-3 dark:border-white/8">
             <div className="mb-2 flex items-center gap-2 px-1">
               <MessagesSquare className="h-4 w-4 text-primary" />
               <h2 className="text-sm font-semibold text-foreground/90">Messages</h2>
