@@ -44,6 +44,7 @@ import { supabase } from "@/integrations/supabase/client";
 import ResumePdfImport from "@/components/mentors/form/ResumePdfImport";
 import { ImportSrmPortalDialog } from "@/components/profile/ImportSrmPortal";
 import PostPublishPortalModal from "@/components/profile/PostPublishPortalModal";
+import { ProfileAvatarUploader } from "@/components/profile/ProfileAvatarUploader";
 import MentorAvatar from "@/components/mentors/MentorAvatar";
 import { getMentorById, updateMentorSummary } from "@/integrations/supabase/services/mentors";
 import { getEnhancedMentorProfile } from "@/utils/mentor-enhancements";
@@ -1023,6 +1024,14 @@ export default function ProfileSetupStudio() {
                   />
                 </div>
               </div>
+
+              <ProfileAvatarUploader
+                variant="inline"
+                userId={user?.id || ""}
+                name={state.name || profile?.name || ""}
+                profileImage={profile?.profile_image || ""}
+                onImageUpdated={() => refreshProfile()}
+              />
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                 <div className="space-y-1.5">

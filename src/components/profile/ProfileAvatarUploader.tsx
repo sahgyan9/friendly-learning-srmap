@@ -17,6 +17,7 @@ interface ProfileAvatarUploaderProps {
   name: string;
   profileImage: string;
   onImageUpdated: (newImageUrl: string) => void;
+  variant?: "card" | "inline";
 }
 
 export function ProfileAvatarUploader({
@@ -24,6 +25,7 @@ export function ProfileAvatarUploader({
   name,
   profileImage,
   onImageUpdated,
+  variant = "card",
 }: ProfileAvatarUploaderProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [pendingImage, setPendingImage] = useState<File | null>(null);
@@ -101,67 +103,119 @@ export function ProfileAvatarUploader({
     .toUpperCase()
     .substring(0, 2) || "U";
 
+  const inputId = variant === "inline" ? "profile-image-inline" : "profile-image";
+
   return (
     <>
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Camera className="h-5 w-5" />
-            Profile Picture
-          </CardTitle>
-          <CardDescription>
-            Upload a profile picture to personalize your account
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col items-center gap-4">
-            <Avatar className="h-32 w-32 border-4 border-border">
-              <AvatarImage
-                src={profileImage}
-                alt={name}
-                className="object-cover"
-              />
-              <AvatarFallback className="text-3xl bg-primary/10 text-primary">
-                {initials}
-              </AvatarFallback>
-            </Avatar>
+      {variant === "inline" ? (
+        <div className="flex items-center gap-4 py-1">
+          <Avatar className="h-16 w-16 border-2 border-border shrink-0">
+            <AvatarImage
+              src={profileImage}
+              alt={name}
+              className="object-cover"
+            />
+            <AvatarFallback className="text-lg bg-primary/10 text-primary font-semibold">
+              {initials}
+            </AvatarFallback>
+          </Avatar>
 
-            <div className="flex flex-col items-center gap-2">
-              <Label htmlFor="profile-image" className="cursor-pointer">
-                <Button
-                  type="button"
-                  variant="outline"
-                  disabled={isUploading}
-                  onClick={() => document.getElementById("profile-image")?.click()}
-                >
-                  {isUploading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Uploading...
-                    </>
-                  ) : (
-                    <>
-                      <Upload className="mr-2 h-4 w-4" />
-                      Upload Picture
-                    </>
-                  )}
-                </Button>
-              </Label>
-              <Input
-                id="profile-image"
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleImageUpload}
+          <div className="flex flex-col items-start gap-1.5">
+            <Label htmlFor={inputId} className="cursor-pointer">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
                 disabled={isUploading}
-              />
-              <p className="text-xs text-muted-foreground">
-                JPG, PNG or GIF (max 5MB) — you'll get to position it
-              </p>
-            </div>
+                onClick={() => document.getElementById(inputId)?.click()}
+              >
+                {isUploading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Uploading...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="mr-2 h-4 w-4" />
+                    Upload Picture
+                  </>
+                )}
+              </Button>
+            </Label>
+            <Input
+              id={inputId}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleImageUpload}
+              disabled={isUploading}
+            />
+            <p className="text-xs text-muted-foreground">
+              JPG, PNG or GIF (max 5MB) — you'll get to position it
+            </p>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      ) : (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Camera className="h-5 w-5" />
+              Profile Picture
+            </CardTitle>
+            <CardDescription>
+              Upload a profile picture to personalize your account
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col items-center gap-4">
+              <Avatar className="h-32 w-32 border-4 border-border">
+                <AvatarImage
+                  src={profileImage}
+                  alt={name}
+                  className="object-cover"
+                />
+                <AvatarFallback className="text-3xl bg-primary/10 text-primary">
+                  {initials}
+                </AvatarFallback>
+              </Avatar>
+
+              <div className="flex flex-col items-center gap-2">
+                <Label htmlFor="profile-image" className="cursor-pointer">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={isUploading}
+                    onClick={() => document.getElementById("profile-image")?.click()}
+                  >
+                    {isUploading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Uploading...
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="mr-2 h-4 w-4" />
+                        Upload Picture
+                      </>
+                    )}
+                  </Button>
+                </Label>
+                <Input
+                  id="profile-image"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleImageUpload}
+                  disabled={isUploading}
+                />
+                <p className="text-xs text-muted-foreground">
+                  JPG, PNG or GIF (max 5MB) — you'll get to position it
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <AvatarCropDialog
         file={pendingImage}
