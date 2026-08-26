@@ -13,6 +13,12 @@ export interface Message {
     name: string;
     profile_image: string;
   };
+  reply_to_id?: string | null;
+  reply_to?: {
+    id: string;
+    sender_name: string;
+    content: string;
+  } | null;
 }
 
 export interface Conversation {

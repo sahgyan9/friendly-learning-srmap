@@ -16,7 +16,8 @@ export const useSendMessage = (userId: string) => {
     conversations: Conversation[],
     setMessages: React.Dispatch<React.SetStateAction<Message[]>>,
     setIsSending: React.Dispatch<React.SetStateAction<boolean>>,
-    setError: React.Dispatch<React.SetStateAction<Error | null>>
+    setError: React.Dispatch<React.SetStateAction<Error | null>>,
+    replyTo?: Message | null
   ) => {
     if (!conversationId || !content.trim() || !userId) {
       console.error("Invalid sendMessage parameters", {
@@ -45,6 +46,14 @@ export const useSendMessage = (userId: string) => {
           ? conversation.user2_id
           : conversation.user1_id;
 
+      const replyToPayload = replyTo
+        ? {
+            id: replyTo.id,
+            sender_name: replyTo.sender?.name?.trim() || (replyTo.sender_id === userId ? 'You' : 'User'),
+            content: replyTo.content,
+          }
+        : null;
+
       const tempMessage: Message = {
         id: `temp-${Date.now()}`,
         conversation_id: conversationId,
@@ -53,7 +62,9 @@ export const useSendMessage = (userId: string) => {
         content: content,
         sent_at: new Date().toISOString(),
         is_read: false,
-        delivery_status: 'sent'
+        delivery_status: 'sent',
+        reply_to_id: replyTo?.id || null,
+        reply_to: replyToPayload,
       };
 
       setMessages(prev => [...prev, tempMessage]);
@@ -62,7 +73,8 @@ export const useSendMessage = (userId: string) => {
         conversationId,
         userId,
         receiverId,
-        content
+        content,
+        replyTo?.id || null
       );
 
       if (error) {
@@ -75,8 +87,12 @@ export const useSendMessage = (userId: string) => {
       }
 
       if (data) {
+        const enriched = {
+          ...data,
+          reply_to: replyToPayload,
+        };
         setMessages(prev =>
-          prev.map(msg => (msg.id === tempMessage.id ? data : msg))
+          prev.map(msg => (msg.id === tempMessage.id ? enriched : msg))
         );
       }
     } catch (err) {

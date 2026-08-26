@@ -67,7 +67,7 @@ interface ChatContainerProps {
   getOtherUser: (conversation: Conversation) => any;
   setActiveChat: (id: string) => void;
   getUnreadCount: (conversationId: string) => number;
-  handleSendMessage: (content: string) => Promise<void>;
+  handleSendMessage: (content: string, replyTo?: Message | null) => Promise<void>;
 }
 
 const ChatContainer = ({
@@ -89,6 +89,7 @@ const ChatContainer = ({
 }: ChatContainerProps) => {
   const isMobile = useIsMobile();
   const [mobileView, setMobileView] = useState<"list" | "chat">("list");
+  const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const { ref: heightRef, height: availableHeight } = useAvailableHeight<HTMLDivElement>();
 
   const currentConversation = conversations.find((c) => c.id === activeChat);
@@ -96,6 +97,11 @@ const ChatContainer = ({
   useEffect(() => {
     if (activeChat && isMobile) setMobileView("chat");
   }, [activeChat, isMobile]);
+
+  // Reset replying state when changing conversations
+  useEffect(() => {
+    setReplyingTo(null);
+  }, [activeChat]);
 
   const showList = !isMobile || mobileView === "list";
   const showChat = !isMobile ? Boolean(activeChat) : mobileView === "chat" && Boolean(activeChat);
@@ -197,6 +203,7 @@ const ChatContainer = ({
               currentUserId={currentUserId}
               conversationId={activeChat}
               getSenderName={getSenderName}
+              onReply={setReplyingTo}
             />
           </div>
 
@@ -206,6 +213,8 @@ const ChatContainer = ({
             sending={isSending}
             conversationId={activeChat}
             userId={currentUserId}
+            replyingTo={replyingTo}
+            onCancelReply={() => setReplyingTo(null)}
           />
         </section>
       ) : (

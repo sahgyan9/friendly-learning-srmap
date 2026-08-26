@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 import { getInitials } from "@/utils/user-utils";
 import {
   Send,
@@ -18,6 +19,9 @@ import {
   CornerDownRight,
   FileText,
   Pencil,
+  Copy,
+  Check,
+  Reply,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -134,6 +138,8 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
   const [inputText, setInputText] = useState("");
   const [sending, setSending] = useState(false);
   const [replyingTo, setReplyingTo] = useState<GroupChatMessage | null>(null);
+  const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
+  const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const canPost = isMember || isOwner;
@@ -249,6 +255,31 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
       return;
     }
     load();
+  };
+
+  const handleCopyMessage = async (content: string, id: string) => {
+    try {
+      await navigator.clipboard.writeText(content);
+      setCopiedMessageId(id);
+      toast.success("Message copied to clipboard");
+      setTimeout(() => {
+        setCopiedMessageId((cur) => (cur === id ? null : cur));
+      }, 1800);
+    } catch (err) {
+      console.error("Failed to copy message:", err);
+      toast.error("Failed to copy message");
+    }
+  };
+
+  const scrollToMessage = (targetId: string) => {
+    const target = document.getElementById(`group-msg-${targetId}`);
+    if (target) {
+      target.scrollIntoView({ behavior: "smooth", block: "center" });
+      setHighlightedMessageId(targetId);
+      setTimeout(() => {
+        setHighlightedMessageId((cur) => (cur === targetId ? null : cur));
+      }, 1600);
+    }
   };
 
   // Not named useStarter: a `use` prefix makes React's rules-of-hooks linting
@@ -408,7 +439,11 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
               /* ── Burst header: first message from this sender in this run ── */
               <div
                 key={item.message.id}
-                className="group relative mt-3 flex gap-2.5 rounded-lg px-2 py-1 transition-colors hover:bg-muted/30"
+                id={`group-msg-${item.message.id}`}
+                className={cn(
+                  "group relative mt-3 flex gap-2.5 rounded-lg px-2 py-1 transition-all duration-300 hover:bg-muted/30",
+                  highlightedMessageId === item.message.id && "ring-2 ring-primary ring-offset-2 ring-offset-background animate-pulse bg-primary/5",
+                )}
               >
                 <Avatar className="mt-0.5 h-8 w-8 shrink-0 border">
                   <AvatarImage src={item.message.senderAvatar ?? undefined} />
@@ -441,13 +476,18 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
                   </div>
 
                   {item.message.replyTo && (
-                    <div className="mb-1 flex items-center gap-1 rounded border-l-2 border-primary bg-muted/50 px-2 py-0.5 text-2xs text-muted-foreground">
-                      <CornerDownRight className="h-3 w-3" />
-                      <span className="font-medium text-foreground">
+                    <button
+                      type="button"
+                      onClick={() => scrollToMessage(item.message.replyTo!.id)}
+                      className="mb-1 flex max-w-full items-center gap-1.5 rounded-md border-l-3 border-primary bg-primary/10 px-2 py-1 text-left text-2xs text-muted-foreground transition-opacity hover:opacity-85 select-none"
+                      title="Click to jump to quoted message"
+                    >
+                      <CornerDownRight className="h-3 w-3 shrink-0 text-primary" />
+                      <span className="font-semibold text-primary">
                         {item.message.replyTo.senderName}:
                       </span>
                       <span className="max-w-[250px] truncate">{item.message.replyTo.content}</span>
-                    </div>
+                    </button>
                   )}
 
                   {(() => {
@@ -485,26 +525,40 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
                       );
                     })}
 
-                    {canPost && (
-                      <div className="ml-2 flex items-center gap-0.5 rounded-full border bg-background px-1 py-0.5 opacity-0 shadow-xs transition-opacity group-hover:opacity-100 focus-within:opacity-100">
-                        {QUICK_EMOJIS.slice(0, 4).map((emoji) => (
-                          <button
-                            key={emoji}
-                            onClick={() => handleToggleReaction(item.message.id, emoji)}
-                            className="px-0.5 text-xs transition-transform hover:scale-125"
-                            title={`React with ${emoji}`}
-                          >
-                            {emoji}
-                          </button>
-                        ))}
+                    <div className="ml-2 flex items-center gap-0.5 rounded-full border bg-background px-1 py-0.5 opacity-0 shadow-xs transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+                      {canPost && QUICK_EMOJIS.slice(0, 4).map((emoji) => (
+                        <button
+                          key={emoji}
+                          onClick={() => handleToggleReaction(item.message.id, emoji)}
+                          className="px-0.5 text-xs transition-transform hover:scale-125"
+                          title={`React with ${emoji}`}
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                      {canPost && (
                         <button
                           onClick={() => setReplyingTo(item.message)}
-                          className="px-1 text-3xs font-medium text-muted-foreground hover:text-primary"
+                          className="px-1 text-3xs font-medium text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-0.5"
+                          title="Reply"
                         >
-                          Reply
+                          <Reply className="h-3 w-3" />
+                          <span>Reply</span>
                         </button>
-                      </div>
-                    )}
+                      )}
+                      <button
+                        onClick={() => handleCopyMessage(item.message.content, item.message.id)}
+                        className="px-1 text-3xs font-medium text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-0.5"
+                        title={copiedMessageId === item.message.id ? "Copied!" : "Copy message"}
+                      >
+                        {copiedMessageId === item.message.id ? (
+                          <Check className="h-3 w-3 text-emerald-500" />
+                        ) : (
+                          <Copy className="h-3 w-3" />
+                        )}
+                        <span>{copiedMessageId === item.message.id ? "Copied" : "Copy"}</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -512,20 +566,29 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
               /* ── Burst continuation: same sender, within 5 min ── */
               <div
                 key={item.message.id}
-                className="group relative flex gap-2.5 rounded-lg px-2 py-0.5 transition-colors hover:bg-muted/30"
+                id={`group-msg-${item.message.id}`}
+                className={cn(
+                  "group relative flex gap-2.5 rounded-lg px-2 py-0.5 transition-all duration-300 hover:bg-muted/30",
+                  highlightedMessageId === item.message.id && "ring-2 ring-primary ring-offset-2 ring-offset-background animate-pulse bg-primary/5",
+                )}
               >
                 {/* Spacer matching avatar width so message body aligns */}
                 <div className="w-8 shrink-0" aria-hidden />
 
                 <div className="min-w-0 flex-1">
                   {item.message.replyTo && (
-                    <div className="mb-1 flex items-center gap-1 rounded border-l-2 border-primary bg-muted/50 px-2 py-0.5 text-2xs text-muted-foreground">
-                      <CornerDownRight className="h-3 w-3" />
-                      <span className="font-medium text-foreground">
+                    <button
+                      type="button"
+                      onClick={() => scrollToMessage(item.message.replyTo!.id)}
+                      className="mb-1 flex max-w-full items-center gap-1.5 rounded-md border-l-3 border-primary bg-primary/10 px-2 py-1 text-left text-2xs text-muted-foreground transition-opacity hover:opacity-85 select-none"
+                      title="Click to jump to quoted message"
+                    >
+                      <CornerDownRight className="h-3 w-3 shrink-0 text-primary" />
+                      <span className="font-semibold text-primary">
                         {item.message.replyTo.senderName}:
                       </span>
                       <span className="max-w-[250px] truncate">{item.message.replyTo.content}</span>
-                    </div>
+                    </button>
                   )}
 
                   {(() => {
@@ -571,26 +634,40 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
                       );
                     })}
 
-                    {canPost && (
-                      <div className="ml-2 flex items-center gap-0.5 rounded-full border bg-background px-1 py-0.5 opacity-0 shadow-xs transition-opacity group-hover:opacity-100 focus-within:opacity-100">
-                        {QUICK_EMOJIS.slice(0, 4).map((emoji) => (
-                          <button
-                            key={emoji}
-                            onClick={() => handleToggleReaction(item.message.id, emoji)}
-                            className="px-0.5 text-xs transition-transform hover:scale-125"
-                            title={`React with ${emoji}`}
-                          >
-                            {emoji}
-                          </button>
-                        ))}
+                    <div className="ml-2 flex items-center gap-0.5 rounded-full border bg-background px-1 py-0.5 opacity-0 shadow-xs transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+                      {canPost && QUICK_EMOJIS.slice(0, 4).map((emoji) => (
+                        <button
+                          key={emoji}
+                          onClick={() => handleToggleReaction(item.message.id, emoji)}
+                          className="px-0.5 text-xs transition-transform hover:scale-125"
+                          title={`React with ${emoji}`}
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                      {canPost && (
                         <button
                           onClick={() => setReplyingTo(item.message)}
-                          className="px-1 text-3xs font-medium text-muted-foreground hover:text-primary"
+                          className="px-1 text-3xs font-medium text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-0.5"
+                          title="Reply"
                         >
-                          Reply
+                          <Reply className="h-3 w-3" />
+                          <span>Reply</span>
                         </button>
-                      </div>
-                    )}
+                      )}
+                      <button
+                        onClick={() => handleCopyMessage(item.message.content, item.message.id)}
+                        className="px-1 text-3xs font-medium text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-0.5"
+                        title={copiedMessageId === item.message.id ? "Copied!" : "Copy message"}
+                      >
+                        {copiedMessageId === item.message.id ? (
+                          <Check className="h-3 w-3 text-emerald-500" />
+                        ) : (
+                          <Copy className="h-3 w-3" />
+                        )}
+                        <span>{copiedMessageId === item.message.id ? "Copied" : "Copy"}</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>

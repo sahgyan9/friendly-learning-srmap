@@ -519,6 +519,7 @@ for (const file of [
   '20260826090000_cascade_user_deletions_and_cleanup_orphaned_users.sql',
   '20260826100000_mentor_slugs.sql',
   '20260826110000_mentor_multisignal_activity.sql',
+  '20260826130000_direct_messages_reply_to.sql',
 ]) {
   if (file === '20260804132345_b843f814-46d5-4c25-bc80-32e5f6ebba59.sql') {
     // Production's `faculty` table still carries `profile_image`, a column
@@ -3329,8 +3330,45 @@ check(
   JSON.stringify(joinedRows),
 );
 
+console.log('\n--- 20260826130000_direct_messages_reply_to.sql ---');
+const { rows: colCheck } = await q(`
+  SELECT column_name, data_type FROM information_schema.columns
+  WHERE table_schema = 'public' AND table_name = 'messages' AND column_name = 'reply_to_id';
+`);
+check('reply_to_id column exists on public.messages', colCheck.length === 1 && colCheck[0].column_name === 'reply_to_id', JSON.stringify(colCheck[0]));
+
+// Test send_message without reply
+const TEST_CONV_ID = crypto.randomUUID();
+await q(`
+  INSERT INTO public.conversations (id, user1_id, user2_id)
+  VALUES ($1, $2, $3);
+`, [TEST_CONV_ID, CURRENT_UID, OTHER_UID]);
+
+const { rows: msg1Rows } = await q(`
+  SELECT * FROM public.send_message($1::uuid, $2::uuid, $3::uuid, 'Original message');
+`, [TEST_CONV_ID, CURRENT_UID, OTHER_UID]);
+
+check('send_message creates message without reply_to_id', msg1Rows.length === 1 && msg1Rows[0].reply_to_id === null, JSON.stringify(msg1Rows[0]));
+
+const origMsgId = msg1Rows[0].id;
+
+// Test send_message with reply_to_id
+const { rows: msg2Rows } = await q(`
+  SELECT * FROM public.send_message($1::uuid, $2::uuid, $3::uuid, 'This is a reply', $4::uuid);
+`, [TEST_CONV_ID, OTHER_UID, CURRENT_UID, origMsgId]);
+
+check('send_message creates message with reply_to_id', msg2Rows.length === 1 && msg2Rows[0].reply_to_id === origMsgId, JSON.stringify(msg2Rows[0]));
+
+// Test get_conversation_messages includes reply_to_id
+const { rows: convMessages } = await q(`
+  SELECT * FROM public.get_conversation_messages($1::uuid);
+`, [TEST_CONV_ID]);
+
+check('get_conversation_messages returns reply_to_id for replied message', convMessages.length === 2 && convMessages[1].reply_to_id === origMsgId, JSON.stringify(convMessages));
+
 console.log(failures === 0
   ? '\nAll migration checks passed against real Postgres.'
   : `\n${failures} check(s) FAILED.`);
 process.exit(failures === 0 ? 0 : 1);
+
 

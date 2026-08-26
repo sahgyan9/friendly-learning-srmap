@@ -51,7 +51,23 @@ export const useMessages = (userId: string) => {
           if (prev.some(msg => msg.id === newMessage.id)) {
             return prev;
           }
-          return [...prev, newMessage];
+
+          let resolvedMessage = newMessage;
+          if (newMessage.reply_to_id && !newMessage.reply_to) {
+            const original = prev.find(m => m.id === newMessage.reply_to_id);
+            if (original) {
+              resolvedMessage = {
+                ...newMessage,
+                reply_to: {
+                  id: original.id,
+                  sender_name: original.sender?.name?.trim() || (original.sender_id === userId ? 'You' : 'User'),
+                  content: original.content,
+                },
+              };
+            }
+          }
+
+          return [...prev, resolvedMessage];
         });
       }
 
@@ -149,14 +165,15 @@ export const useMessages = (userId: string) => {
   }, [activeChat, messages, userId]);
 
   // Wrapper for sending messages
-  const sendMessage = async (content: string) => {
+  const sendMessage = async (content: string, replyTo?: Message | null) => {
     await sendMessageOperation(
       activeChat,
       content,
       conversations,
       setMessages,
       setIsSending,
-      setError
+      setError,
+      replyTo
     );
     // No need to refetch conversations - real-time updates will handle this
   };

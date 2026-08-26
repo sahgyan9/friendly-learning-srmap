@@ -1,6 +1,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowDown, Loader2, MessageCircleMore } from "lucide-react";
+import { ArrowDown, Check, Copy, CornerDownRight, Loader2, MessageCircleMore, Reply } from "lucide-react";
+import { toast } from "sonner";
 import { Message } from "@/types/chat";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -18,6 +19,7 @@ interface MessageListProps {
   currentUserId: string;
   conversationId: string | null;
   getSenderName?: (senderId: string) => string;
+  onReply?: (message: Message) => void;
 }
 
 /** Messages from the same person within this window read as one utterance. */
@@ -51,11 +53,14 @@ const MessageList = ({
   currentUserId,
   conversationId,
   getSenderName,
+  onReply,
 }: MessageListProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const isFirstRender = useRef(true);
   const [isPinnedToBottom, setIsPinnedToBottom] = useState(true);
   const [unseenCount, setUnseenCount] = useState(0);
+  const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
+  const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
   const { typingUsers } = useTypingIndicator(conversationId, currentUserId);
 
   const scrollToBottom = useCallback((behavior: ScrollBehavior = "smooth") => {
@@ -96,6 +101,39 @@ const MessageList = ({
     setIsPinnedToBottom(atBottom);
     if (atBottom) setUnseenCount(0);
   };
+
+  const handleCopyMessage = async (content: string, id: string) => {
+    try {
+      await navigator.clipboard.writeText(content);
+      setCopiedMessageId(id);
+      toast.success("Message copied to clipboard");
+      setTimeout(() => {
+        setCopiedMessageId((curr) => (curr === id ? null : curr));
+      }, 1800);
+    } catch (err) {
+      console.error("Failed to copy message:", err);
+      toast.error("Failed to copy message");
+    }
+  };
+
+  const scrollToMessage = (targetId: string) => {
+    const el = document.getElementById(`chat-msg-${targetId}`);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      setHighlightedMessageId(targetId);
+      setTimeout(() => {
+        setHighlightedMessageId((curr) => (curr === targetId ? null : curr));
+      }, 1600);
+    }
+  };
+
+  const messageMap = useMemo(() => {
+    const map = new Map<string, Message>();
+    for (const msg of messages) {
+      map.set(msg.id, msg);
+    }
+    return map;
+  }, [messages]);
 
   const rows = useMemo(
     () =>
@@ -164,6 +202,16 @@ const MessageList = ({
           const emojiOnly = isEmojiOnly(message.content);
           const emojiCount = emojiOnly ? getEmojiCount(message.content) : 0;
           const prevEmojiOnly = previous ? isEmojiOnly(previous.content) : false;
+          const isCopied = copiedMessageId === message.id;
+          const isHighlighted = highlightedMessageId === message.id;
+
+          // Resolve replied message if any
+          const repliedMsg = message.reply_to_id ? messageMap.get(message.reply_to_id) : null;
+          const replyData = message.reply_to || (repliedMsg ? {
+            id: repliedMsg.id,
+            sender_name: repliedMsg.sender?.name?.trim() || (repliedMsg.sender_id === currentUserId ? "You" : getSenderName?.(repliedMsg.sender_id) ?? "User"),
+            content: repliedMsg.content,
+          } : null);
 
           return (
             <React.Fragment key={message.id}>
@@ -179,8 +227,9 @@ const MessageList = ({
               )}
 
               <div
+                id={`chat-msg-${message.id}`}
                 className={cn(
-                  "flex items-end gap-2",
+                  "group relative flex items-end gap-2 transition-all duration-300",
                   isMine ? "justify-end" : "justify-start",
                   isFirstInGroup
                     ? "mt-4"
@@ -202,10 +251,40 @@ const MessageList = ({
                     <span className="w-7 shrink-0" aria-hidden />
                   ))}
 
+                {/* WhatsApp-Style Hover Action Bar (For Sender's own messages: left of bubble) */}
+                {isMine && (
+                  <div className="mb-1 flex items-center gap-0.5 rounded-full border border-border/80 bg-background/95 px-1 py-0.5 opacity-0 shadow-sm backdrop-blur-md transition-opacity duration-200 group-hover:opacity-100 focus-within:opacity-100 dark:border-white/15 dark:bg-card/90">
+                    <button
+                      type="button"
+                      onClick={() => onReply?.(message)}
+                      className="rounded-full p-1 text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
+                      title="Reply"
+                      aria-label="Reply to message"
+                    >
+                      <Reply className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleCopyMessage(message.content, message.id)}
+                      className={cn(
+                        "rounded-full p-1 transition-colors",
+                        isCopied
+                          ? "text-emerald-500 hover:text-emerald-600"
+                          : "text-muted-foreground hover:bg-primary/10 hover:text-primary",
+                      )}
+                      title={isCopied ? "Copied!" : "Copy message"}
+                      aria-label="Copy message text"
+                    >
+                      {isCopied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                    </button>
+                  </div>
+                )}
+
                 <div className={cn("flex max-w-[75%] flex-col sm:max-w-[65%]", isMine && "items-end")}>
                   <div
                     className={cn(
-                      "whitespace-pre-wrap break-words",
+                      "relative whitespace-pre-wrap break-words transition-all duration-300",
+                      isHighlighted && "ring-2 ring-primary ring-offset-2 ring-offset-background animate-pulse",
                       emojiOnly
                         ? cn("px-1.5 py-1 bg-transparent border-none shadow-none", getEmojiFontSizeClass(emojiCount))
                         : cn(
@@ -227,6 +306,29 @@ const MessageList = ({
                           ),
                     )}
                   >
+                    {/* WhatsApp-Style Quoted Message Preview inside bubble */}
+                    {replyData && (
+                      <button
+                        type="button"
+                        onClick={() => scrollToMessage(replyData.id)}
+                        className={cn(
+                          "mb-2 block w-full rounded-lg p-2 text-left transition-all hover:opacity-85 select-none",
+                          isMine
+                            ? "border-l-3 border-primary-foreground/90 bg-black/20 text-primary-foreground"
+                            : "border-l-3 border-primary bg-primary/10 text-foreground",
+                        )}
+                        title="Click to jump to quoted message"
+                      >
+                        <div className="flex items-center gap-1 text-2xs font-bold">
+                          <CornerDownRight className="h-3 w-3 shrink-0 opacity-80" />
+                          <span className="truncate">{replyData.sender_name}</span>
+                        </div>
+                        <p className="mt-0.5 line-clamp-2 text-xs opacity-90">
+                          {replyData.content}
+                        </p>
+                      </button>
+                    )}
+
                     {message.content}
                   </div>
 
@@ -246,6 +348,35 @@ const MessageList = ({
                     </div>
                   )}
                 </div>
+
+                {/* WhatsApp-Style Hover Action Bar (For Received messages: right of bubble) */}
+                {!isMine && (
+                  <div className="mb-1 flex items-center gap-0.5 rounded-full border border-border/80 bg-background/95 px-1 py-0.5 opacity-0 shadow-sm backdrop-blur-md transition-opacity duration-200 group-hover:opacity-100 focus-within:opacity-100 dark:border-white/15 dark:bg-card/90">
+                    <button
+                      type="button"
+                      onClick={() => onReply?.(message)}
+                      className="rounded-full p-1 text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
+                      title="Reply"
+                      aria-label="Reply to message"
+                    >
+                      <Reply className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleCopyMessage(message.content, message.id)}
+                      className={cn(
+                        "rounded-full p-1 transition-colors",
+                        isCopied
+                          ? "text-emerald-500 hover:text-emerald-600"
+                          : "text-muted-foreground hover:bg-primary/10 hover:text-primary",
+                      )}
+                      title={isCopied ? "Copied!" : "Copy message"}
+                      aria-label="Copy message text"
+                    >
+                      {isCopied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                    </button>
+                  </div>
+                )}
               </div>
             </React.Fragment>
           );
@@ -277,3 +408,4 @@ const MessageList = ({
 };
 
 export default MessageList;
+

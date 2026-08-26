@@ -17,19 +17,25 @@ export async function getConversationMessages(conversationId: string) {
 
     // Fetch sender data for each message
     const messagesWithSenders: Message[] = [];
+    const senderCache = new Map<string, any>();
     
     for (const message of data || []) {
       let senderData = null;
       
       if (message.sender_id) {
-        const { data: sender, error: senderError } = await supabase
-          .from('users')
-          .select('id, name, profile_image')
-          .eq('id', message.sender_id)
-          .single();
+        if (senderCache.has(message.sender_id)) {
+          senderData = senderCache.get(message.sender_id);
+        } else {
+          const { data: sender, error: senderError } = await supabase
+            .from('users')
+            .select('id, name, profile_image')
+            .eq('id', message.sender_id)
+            .single();
 
-        if (!senderError && sender) {
-          senderData = sender;
+          if (!senderError && sender) {
+            senderData = sender;
+            senderCache.set(message.sender_id, sender);
+          }
         }
       }
 
@@ -39,8 +45,25 @@ export async function getConversationMessages(conversationId: string) {
       messagesWithSenders.push({
         ...message,
         delivery_status: deliveryStatus,
-        sender: senderData
+        sender: senderData,
+        reply_to_id: (message as any).reply_to_id || null,
+        reply_to: null,
       });
+    }
+
+    // Hydrate reply_to details from earlier/loaded messages in the conversation
+    const messageLookup = new Map<string, { id: string; sender_name: string; content: string }>();
+    for (const msg of messagesWithSenders) {
+      messageLookup.set(msg.id, {
+        id: msg.id,
+        sender_name: msg.sender?.name?.trim() || 'User',
+        content: msg.content,
+      });
+    }
+    for (const msg of messagesWithSenders) {
+      if (msg.reply_to_id && messageLookup.has(msg.reply_to_id)) {
+        msg.reply_to = messageLookup.get(msg.reply_to_id) ?? null;
+      }
     }
 
     return { data: messagesWithSenders, error: null };
@@ -55,23 +78,39 @@ export async function sendMessage(
   conversationId: string,
   senderId: string,
   receiverId: string,
-  content: string
+  content: string,
+  replyToId?: string | null
 ) {
   try {
-
-    const { data, error } = await supabase.rpc('send_message', {
+    const params: Record<string, any> = {
       p_conversation_id: conversationId,
       p_sender_id: senderId,
       p_receiver_id: receiverId,
-      p_content: content
-    });
+      p_content: content,
+    };
+    if (replyToId) {
+      params.p_reply_to_id = replyToId;
+    }
+
+    let { data, error } = await (supabase.rpc as any)('send_message', params);
+
+    // Fallback if remote DB hasn't yet deployed the 5-arg RPC
+    if (error && replyToId && (error.message?.includes('p_reply_to_id') || error.code === '42883')) {
+      const fallback = await (supabase.rpc as any)('send_message', {
+        p_conversation_id: conversationId,
+        p_sender_id: senderId,
+        p_receiver_id: receiverId,
+        p_content: content,
+      });
+      data = fallback.data;
+      error = fallback.error;
+    }
 
     if (error) {
       console.error('RPC send_message error:', error);
       return { data: null, error };
     }
 
-    
     return { data, error: null };
   } catch (err) {
     console.error('Exception in sendMessage:', err);
