@@ -84,10 +84,19 @@ Deeper authorities it defers to: [FACULTY_AI_ROADMAP.md](FACULTY_AI_ROADMAP.md)
   touched. Stage commits explicitly — never `git add -A` when parallel work may
   be in flight.
 - **Screenshot before claiming a UI change is done**, at 360px and desktop, in
-  both themes. Reusable Puppeteer harnesses already exist at the repo root
-  (`qa-signed-in-sweep.mjs` plants a fake session and stubs Supabase for all
-  protected/admin routes; see also `qa-welcome-tour-interests.mjs`,
-  `qa-recommended-people.mjs`, `qa-opportunities-loop.mjs`). Reuse them.
+  both themes. Reusable Puppeteer harnesses exist in `scripts/qa/` (e.g.
+  `scripts/qa/qa-signed-in-sweep.mjs` plants a fake session and stubs Supabase
+  for all protected/admin routes; see also `scripts/qa/qa-welcome-tour-interests.mjs`,
+  `scripts/qa/qa-recommended-people.mjs`, `scripts/qa/qa-opportunities-loop.mjs`, or
+  run via `npm run qa:*`). Reuse them.
+
+## Repository layout & documentation
+
+- `src/` — frontend application code (pages, components, hooks, Supabase services).
+- `supabase/` — database migrations (`supabase/migrations/`), edge functions (`supabase/functions/`), and tests.
+- `scripts/qa/` — visual QA and interaction test harnesses (`qa-*.mjs`, documented in [`scripts/qa/README.md`](scripts/qa/README.md)).
+- `docs/archive/` — historical bug fix summaries and legacy notes (archived to keep root clean, indexed in [`docs/archive/README.md`](docs/archive/README.md)).
+- Core root documentation: [`AGENTS.md`](AGENTS.md) (this file), [`FABLE_BUILD_PLAN.md`](FABLE_BUILD_PLAN.md) (plan of record), [`FACULTY_AI_ROADMAP.md`](FACULTY_AI_ROADMAP.md) (AI/search architecture), [`FRONTEND_BRIEF.md`](FRONTEND_BRIEF.md) (design specs), [`DEPLOYMENT_GUIDE.md`](DEPLOYMENT_GUIDE.md) (deployment targets), and [`SEARCH_GUIDE.md`](SEARCH_GUIDE.md).
 
 ## Product red lines — settled, do not re-litigate
 

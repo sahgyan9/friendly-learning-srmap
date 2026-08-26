@@ -1,8 +1,8 @@
 # Friendly Learning SRMAP
 
-**Friendly Learning SRMAP** (FL SRMAP) is a student mentorship platform for SRM
-AP university. It connects students with peer mentors for academic guidance,
-project collaboration, study partnerships, and hackathon teams.
+**Friendly Learning SRMAP** is the all-in-one campus platform for SRM AP
+students — post ideas, find teammates, search with CampusMind, rate faculty,
+and get mentored by seniors who've already taken your course.
 
 **Live site**: https://friendly-learning-srmap.vercel.app
 
@@ -42,17 +42,27 @@ needs (Supabase URL/anon key, app URL, optional Sentry DSN).
 | --- | --- |
 | `npm run dev` | Start the Vite dev server |
 | `npm run build` | Production build: sitemap generation, client + SSR bundles, prerendering |
-| `npm run lint` | Run ESLint |
 | `npm run typecheck` | Type-check with `tsc` |
 | `npm run preview` | Preview the production build locally |
-| `npm run test:migrations` | Verify Supabase migrations |
+| `npm run test:migrations` | Verify Supabase migrations with PGlite |
+| `npm run qa:signed-in-sweep` | Run automated Puppeteer visual QA sweep across all routes |
+| `npm run qa:screenshot` | Capture mobile and desktop route screenshots |
 
-## Project structure
+## Project structure & documentation
 
 - `src/` — application code (pages, components, hooks, Supabase integration)
 - `supabase/` — database migrations, edge functions, and storage bucket config
+- `scripts/qa/` — Puppeteer visual QA and interaction test harnesses (see [`scripts/qa/README.md`](scripts/qa/README.md))
+- `docs/archive/` — archived historical bug fix summaries & notes (see [`docs/archive/README.md`](docs/archive/README.md))
 - `public/` — static assets, robots.txt, sitemaps
 - `prerender.js` / `generate-dynamic-sitemap.js` — build-time SEO tooling
+- Core documentation in root:
+  - [`AGENTS.md`](AGENTS.md) — master reference & safety rules for AI coding assistants
+  - [`FABLE_BUILD_PLAN.md`](FABLE_BUILD_PLAN.md) — plan of record and roadmap status
+  - [`FACULTY_AI_ROADMAP.md`](FACULTY_AI_ROADMAP.md) — AI layer and search architecture
+  - [`FRONTEND_BRIEF.md`](FRONTEND_BRIEF.md) — frontend design specifications
+  - [`DEPLOYMENT_GUIDE.md`](DEPLOYMENT_GUIDE.md) — deployment targets and procedures
+  - [`SEARCH_GUIDE.md`](SEARCH_GUIDE.md) — semantic search guide
 
 ## Deployment and domain
 

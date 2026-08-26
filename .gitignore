@@ -42,6 +42,8 @@ bun.lockb
 *.njsproj
 *.sln
 *.sw?
+*.docx
+~$*
 
 # Local visual QA output. The harnesses (qa-*.mjs) are committed on purpose —
 # only their screenshot output is disposable, and each one picks its own

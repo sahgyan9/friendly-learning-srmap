@@ -166,9 +166,10 @@ What follows are the additions this session earned.
   in-flight edits. Multi-line commit messages: write to a temp file and use
   `git commit -F`; embedded quotes break PowerShell argument parsing.
 - **Screenshot before claiming done.** Both viewports, both themes. The repo's
-  harnesses — `qa-signed-in-sweep.mjs` (planted session, stubbed Supabase, all
-  protected/admin routes), `qa-welcome-tour-interests.mjs` (PATCH-body capture),
-  `qa-recommended-people.mjs`, `qa-opportunities-loop.mjs` — exist to be reused,
+  harnesses in `scripts/qa/` — `scripts/qa/qa-signed-in-sweep.mjs` (planted session,
+  stubbed Supabase, all protected/admin routes), `scripts/qa/qa-welcome-tour-interests.mjs`
+  (PATCH-body capture), `scripts/qa/qa-recommended-people.mjs`,
+  `scripts/qa/qa-opportunities-loop.mjs` (or `npm run qa:*`) — exist to be reused,
   not reinvented.
 
 ### Product red lines (settled; do not re-litigate)

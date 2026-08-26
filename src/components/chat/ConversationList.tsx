@@ -2,7 +2,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Loader2, MessagesSquare, SearchX } from "lucide-react";
+import { Loader2, MessageCircleMore, SearchX } from "lucide-react";
 import { Conversation } from "@/types/chat";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
@@ -58,7 +58,7 @@ const ConversationList = ({
           {searchQuery.trim() ? (
             <SearchX className="h-6 w-6 text-muted-foreground" aria-hidden />
           ) : (
-            <MessagesSquare className="h-6 w-6 text-muted-foreground" aria-hidden />
+            <MessageCircleMore className="h-6 w-6 text-muted-foreground" aria-hidden />
           )}
         </div>
 

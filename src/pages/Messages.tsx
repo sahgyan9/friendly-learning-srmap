@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { MessageSquare } from "lucide-react";
+import { MessageCircleMore } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
 import MessagesLayout from "@/components/messages/MessagesLayout";
@@ -52,7 +52,7 @@ const Messages = () => {
           className="text-center"
         >
           <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 ring-1 ring-primary/20">
-            <MessageSquare className="h-8 w-8 text-primary" />
+            <MessageCircleMore className="h-8 w-8 text-primary" />
           </div>
           <h1 className="text-2xl font-bold tracking-tight">Messages</h1>
           <p className="mt-2 text-muted-foreground">Sign in to view your conversations.</p>

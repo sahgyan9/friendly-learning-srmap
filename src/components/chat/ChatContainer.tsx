@@ -6,7 +6,7 @@ import MessageList from "./MessageList";
 import ChatHeader from "./ChatHeader";
 import MessageInput from "./MessageInput";
 import SearchInput from "./SearchInput";
-import { MessagesSquare, Sparkles } from "lucide-react";
+import { MessageCircleMore, Sparkles } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 /**
@@ -150,7 +150,7 @@ const ChatContainer = ({
           {/* Sidebar header */}
           <div className="border-b border-border/70 p-3 dark:border-white/8">
             <div className="mb-2 flex items-center gap-2 px-1">
-              <MessagesSquare className="h-4 w-4 text-primary" />
+              <MessageCircleMore className="h-4 w-4 text-primary" />
               <h2 className="text-sm font-semibold text-foreground/90">Messages</h2>
               {conversations.length > 0 && (
                 <span className="ml-auto rounded-full bg-primary/15 px-2 py-0.5 text-3xs font-semibold text-primary">

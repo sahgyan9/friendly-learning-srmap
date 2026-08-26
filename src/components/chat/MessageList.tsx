@@ -1,6 +1,6 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowDown, Loader2, MessagesSquare } from "lucide-react";
+import { ArrowDown, Loader2, MessageCircleMore } from "lucide-react";
 import { Message } from "@/types/chat";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -139,7 +139,7 @@ const MessageList = ({
     return (
       <div className="flex h-full flex-col items-center justify-center px-6 text-center">
         <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-white/5 ring-1 ring-white/10">
-          <MessagesSquare className="h-7 w-7 text-muted-foreground/60" aria-hidden />
+          <MessageCircleMore className="h-7 w-7 text-muted-foreground/60" aria-hidden />
         </div>
         <p className="font-semibold">No messages yet</p>
         <p className="mt-1.5 max-w-xs text-sm text-muted-foreground/70">

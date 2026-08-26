@@ -5,6 +5,7 @@ import {
   Home,
   Info,
   Mail,
+  MessageCircleMore,
 } from "lucide-react";
 
 import { EventsIcon } from "@/components/icons/EventsIcon";
@@ -49,7 +50,7 @@ export const PRIMARY_NAV: NavItem[] = [
   { name: "Groups", url: "/workspace-groups", icon: GroupsIcon },
   { name: "Posts", url: "/posts", icon: PostIcon },
   { name: "Events", url: "/events", icon: EventsIcon },
-  { name: "Messages", url: "/messages", icon: Mail, requiresAuth: true },
+  { name: "Messages", url: "/messages", icon: MessageCircleMore, requiresAuth: true },
   { name: "Faculty", url: "/faculty", icon: FacultyIcon },
   { name: "Mentors", url: "/mentors", icon: MentorIcon },
 ];
