@@ -48,7 +48,7 @@ await db.exec(`
     -- a bare ADD COLUMN, so declaring it up front makes that migration fail.
   );
   CREATE TABLE public.mentors (
-    id uuid PRIMARY KEY REFERENCES public.users(id),
+    id uuid PRIMARY KEY REFERENCES public.users(id) ON DELETE CASCADE,
     name text,
     department text,
     year_of_studies text,
@@ -230,6 +230,19 @@ await db.exec(`
   INSERT INTO auth.users (id, email, created_at) VALUES
     ('${CURRENT_UID}', 'asha@srmap.edu.in', now() - interval '2 days'),
     ('${OTHER_UID}', 'ravi@srmap.edu.in', now() - interval '90 days');
+
+  CREATE OR REPLACE FUNCTION auth.stub_ensure_auth_user()
+  RETURNS trigger LANGUAGE plpgsql AS $$
+  BEGIN
+    INSERT INTO auth.users (id, email, created_at)
+    VALUES (new.id, coalesce(new.email, 'stub@srmap.edu.in'), now() - interval '365 days')
+    ON CONFLICT (id) DO NOTHING;
+    RETURN new;
+  END;
+  $$;
+  CREATE TRIGGER trg_stub_ensure_auth_user
+    BEFORE INSERT ON public.users
+    FOR EACH ROW EXECUTE FUNCTION auth.stub_ensure_auth_user();
 
   ALTER TABLE public.users
     ADD COLUMN verification_status text,
@@ -489,6 +502,7 @@ for (const file of [
   '20260824130000_srm_portal_sync_schedule.sql',
   '20260824140000_fix_is_admin_self_elevation.sql',
   '20260826080000_srmap_events_sync_every_6h.sql',
+  '20260826090000_cascade_user_deletions_and_cleanup_orphaned_users.sql',
 ]) {
   if (file === '20260804132345_b843f814-46d5-4c25-bc80-32e5f6ebba59.sql') {
     // Production's `faculty` table still carries `profile_image`, a column
@@ -2715,7 +2729,8 @@ await actAs(CURRENT_UID);
 const { rows: [kpiRow] } = await asAuthenticated(() => q(`SELECT public.admin_kpi_metrics() AS m`));
 const kpi = typeof kpiRow?.m === 'string' ? JSON.parse(kpiRow.m) : kpiRow?.m;
 
-check('signups_total counts every auth.users row', kpi?.signups_total === 2, JSON.stringify(kpi));
+const { rows: [{ count: expectedTotalSignups }] } = await q(`SELECT count(*)::int as count FROM auth.users`);
+check('signups_total counts every auth.users row', kpi?.signups_total === expectedTotalSignups, JSON.stringify(kpi));
 check('signups_7d counts only the recent signup', kpi?.signups_7d === 1, JSON.stringify(kpi));
 check('searches_total reflects the logged run', kpi?.searches_total === 1, JSON.stringify(kpi));
 check('mentor_contacts_total counts both conversations', kpi?.mentor_contacts_total === 2, JSON.stringify(kpi));
@@ -3131,6 +3146,26 @@ const { rows: [eventsJob6h] } = await q(`SELECT schedule, active FROM cron.job W
 check('events sync job scheduled every 6 hours (08:00, 14:00, 20:00, 02:00 IST)', eventsJob6h?.schedule === '30 2,8,14,20 * * *' && eventsJob6h?.active === true, JSON.stringify(eventsJob6h));
 const { rows: [oldDailyEventsJob] } = await q(`SELECT schedule FROM cron.job WHERE jobname='sync-srmap-events-daily'`);
 check('old daily events sync job is removed', !oldDailyEventsJob, JSON.stringify(oldDailyEventsJob));
+
+// --- 20260826090000_cascade_user_deletions_and_cleanup_orphaned_users.sql ----
+console.log('\n--- 20260826090000_cascade_user_deletions_and_cleanup_orphaned_users.sql ---');
+const { rows: [fkRow] } = await q(`
+  SELECT constraint_name, table_name 
+  FROM information_schema.table_constraints 
+  WHERE constraint_name = 'users_id_fkey' AND table_name = 'users'
+`);
+check('users_id_fkey constraint exists on public.users', Boolean(fkRow), JSON.stringify(fkRow));
+
+// Verify cascade deletion
+const TEST_CASCADE_UID = '99999999-9999-9999-9999-999999999999';
+await q(`INSERT INTO auth.users (id, email) VALUES ($1, 'cascade_test@srmap.edu.in')`, [TEST_CASCADE_UID]);
+await q(`INSERT INTO public.users (id, email, name, role) VALUES ($1, 'cascade_test@srmap.edu.in', 'Cascade Test', 'student')`, [TEST_CASCADE_UID]);
+const { rows: [userBefore] } = await q(`SELECT id FROM public.users WHERE id=$1`, [TEST_CASCADE_UID]);
+check('user inserted into public.users', Boolean(userBefore));
+
+await q(`DELETE FROM auth.users WHERE id=$1`, [TEST_CASCADE_UID]);
+const { rows: [userAfter] } = await q(`SELECT id FROM public.users WHERE id=$1`, [TEST_CASCADE_UID]);
+check('deleting from auth.users cascades to public.users', !userAfter, JSON.stringify(userAfter));
 
 console.log(failures === 0
   ? '\nAll migration checks passed against real Postgres.'
