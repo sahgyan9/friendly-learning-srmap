@@ -488,6 +488,7 @@ for (const file of [
   '20260824120000_academic_imports_mobile_number.sql',
   '20260824130000_srm_portal_sync_schedule.sql',
   '20260824140000_fix_is_admin_self_elevation.sql',
+  '20260826080000_srmap_events_sync_every_6h.sql',
 ]) {
   if (file === '20260804132345_b843f814-46d5-4c25-bc80-32e5f6ebba59.sql') {
     // Production's `faculty` table still carries `profile_image`, a column
@@ -1632,8 +1633,8 @@ await q(`SET LOCAL ROLE anon`).catch(() => {});
 const { rows: eventsAnon } = await q(`SELECT title FROM public.srmap_events_cache`);
 check('anon can read the public events cache', eventsAnon.length === 1, JSON.stringify(eventsAnon));
 await q(`RESET ROLE`).catch(() => {});
-const { rows: [eventsJob] } = await q(`SELECT schedule FROM cron.job WHERE jobname='sync-srmap-events-daily'`);
-check('events sync job scheduled daily at 20:30 UTC (02:00 IST)', eventsJob?.schedule === '30 20 * * *', eventsJob?.schedule);
+const { rows: [eventsJob] } = await q(`SELECT schedule FROM cron.job WHERE jobname='sync-srmap-events-every-6h'`);
+check('events sync job scheduled every 6 hours (08:00, 14:00, 20:00, 02:00 IST)', eventsJob?.schedule === '30 2,8,14,20 * * *', eventsJob?.schedule);
 
 console.log('\nai overview feedback & search query cache admin access:');
 await actAs(CURRENT_UID);
@@ -3124,7 +3125,15 @@ const unrelatedUpdate = await asAuthenticated(() => attempt(
   `UPDATE public.users SET bio = 'still editable' WHERE id = $1`, [OTHER_UID]));
 check('unrelated own-profile fields are unaffected by the guard', unrelatedUpdate === null, unrelatedUpdate ?? '');
 
+// --- 20260826080000_srmap_events_sync_every_6h.sql ---------------------------
+console.log('\n--- 20260826080000_srmap_events_sync_every_6h.sql ---');
+const { rows: [eventsJob6h] } = await q(`SELECT schedule, active FROM cron.job WHERE jobname='sync-srmap-events-every-6h'`);
+check('events sync job scheduled every 6 hours (08:00, 14:00, 20:00, 02:00 IST)', eventsJob6h?.schedule === '30 2,8,14,20 * * *' && eventsJob6h?.active === true, JSON.stringify(eventsJob6h));
+const { rows: [oldDailyEventsJob] } = await q(`SELECT schedule FROM cron.job WHERE jobname='sync-srmap-events-daily'`);
+check('old daily events sync job is removed', !oldDailyEventsJob, JSON.stringify(oldDailyEventsJob));
+
 console.log(failures === 0
   ? '\nAll migration checks passed against real Postgres.'
   : `\n${failures} check(s) FAILED.`);
 process.exit(failures === 0 ? 0 : 1);
+
