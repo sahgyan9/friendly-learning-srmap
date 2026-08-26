@@ -48,6 +48,8 @@ export async function getConversationMessages(conversationId: string) {
         sender: senderData,
         reply_to_id: (message as any).reply_to_id || null,
         reply_to: null,
+        is_edited: Boolean((message as any).is_edited),
+        edited_at: (message as any).edited_at || null,
       });
     }
 
@@ -115,6 +117,45 @@ export async function sendMessage(
   } catch (err) {
     console.error('Exception in sendMessage:', err);
     return { data: null, error: err as Error };
+  }
+}
+
+// Edit a direct message within 30 minutes
+export async function editDirectMessage(messageId: string, content: string) {
+  try {
+    const { data, error } = await (supabase.rpc as any)('edit_direct_message', {
+      p_message_id: messageId,
+      p_content: content,
+    });
+
+    if (error) {
+      console.error('RPC edit_direct_message error:', error);
+      return { data: null, error };
+    }
+
+    return { data: data as Message, error: null };
+  } catch (err) {
+    console.error('Exception in editDirectMessage:', err);
+    return { data: null, error: err as Error };
+  }
+}
+
+// Delete a direct message within 30 minutes
+export async function deleteDirectMessage(messageId: string) {
+  try {
+    const { data, error } = await (supabase.rpc as any)('delete_direct_message', {
+      p_message_id: messageId,
+    });
+
+    if (error) {
+      console.error('RPC delete_direct_message error:', error);
+      return { data: null, error };
+    }
+
+    return { data: Boolean(data), error: null };
+  } catch (err) {
+    console.error('Exception in deleteDirectMessage:', err);
+    return { data: false, error: err as Error };
   }
 }
 

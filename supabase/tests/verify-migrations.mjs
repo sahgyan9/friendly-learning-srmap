@@ -196,6 +196,13 @@ await db.exec(`
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
   );
+  CREATE TABLE IF NOT EXISTS public.community_group_message_reactions (
+    message_id UUID NOT NULL REFERENCES public.community_group_messages(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+    emoji TEXT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    PRIMARY KEY (message_id, user_id, emoji)
+  );
 
   CREATE FUNCTION public.slugify(p_text text) RETURNS text LANGUAGE sql IMMUTABLE AS $$
     SELECT trim(both '-' FROM regexp_replace(
@@ -275,6 +282,11 @@ await db.exec(`
     ADD COLUMN is_available boolean NOT NULL DEFAULT true,
     ADD COLUMN available_from date,
     ADD COLUMN availability_note text;
+
+  CREATE FUNCTION public.is_active_mentor(p_user_id uuid)
+    RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER AS $$
+    SELECT EXISTS (SELECT 1 FROM public.mentors m WHERE m.id = p_user_id AND coalesce(m.is_available, true) = true)
+  $$;
 
   -- 1:1 chat. Dashboard-origin (see above); still live (mentor_certificates'
   -- mentor_impact() and chat_participant_profiles() both read it).
@@ -520,6 +532,7 @@ for (const file of [
   '20260826100000_mentor_slugs.sql',
   '20260826110000_mentor_multisignal_activity.sql',
   '20260826130000_direct_messages_reply_to.sql',
+  '20260826140000_edit_delete_messages_30min.sql',
 ]) {
   if (file === '20260804132345_b843f814-46d5-4c25-bc80-32e5f6ebba59.sql') {
     // Production's `faculty` table still carries `profile_image`, a column
@@ -3366,9 +3379,77 @@ const { rows: convMessages } = await q(`
 
 check('get_conversation_messages returns reply_to_id for replied message', convMessages.length === 2 && convMessages[1].reply_to_id === origMsgId, JSON.stringify(convMessages));
 
+console.log('\n--- 20260826140000_edit_delete_messages_30min.sql ---');
+await q('DELETE FROM auth._session;');
+await q('INSERT INTO auth._session (uid) VALUES ($1);', [CURRENT_UID]);
+
+const { rows: directMsgCols } = await q(`
+  SELECT column_name FROM information_schema.columns
+  WHERE table_schema = 'public' AND table_name = 'messages' AND column_name IN ('is_edited', 'edited_at');
+`);
+check('is_edited and edited_at exist on public.messages', directMsgCols.length === 2, JSON.stringify(directMsgCols));
+
+const { rows: groupMsgCols } = await q(`
+  SELECT column_name FROM information_schema.columns
+  WHERE table_schema = 'public' AND table_name = 'community_group_messages' AND column_name IN ('is_edited', 'edited_at');
+`);
+check('is_edited and edited_at exist on public.community_group_messages', groupMsgCols.length === 2, JSON.stringify(groupMsgCols));
+
+// Test edit_direct_message
+const { rows: editedMsgRows } = await q(`
+  SELECT * FROM public.edit_direct_message($1::uuid, 'Original message (edited)');
+`, [origMsgId]);
+check('edit_direct_message updates content and marks is_edited true', editedMsgRows.length === 1 && editedMsgRows[0].content === 'Original message (edited)' && editedMsgRows[0].is_edited === true, JSON.stringify(editedMsgRows[0]));
+
+// Test delete_direct_message
+const { rows: delResult } = await q(`
+  SELECT public.delete_direct_message($1::uuid) as ok;
+`, [origMsgId]);
+check('delete_direct_message succeeds for sender within 30m', delResult[0]?.ok === true, JSON.stringify(delResult[0]));
+
+const { rows: afterDelMsgs } = await q(`
+  SELECT * FROM public.get_conversation_messages($1::uuid);
+`, [TEST_CONV_ID]);
+check('get_conversation_messages no longer returns deleted message', afterDelMsgs.length === 1 && afterDelMsgs[0].id === msg2Rows[0].id, JSON.stringify(afterDelMsgs));
+
+// Test group message edit and delete
+const TEST_GROUP_COMM_ID = crypto.randomUUID();
+await q(`
+  INSERT INTO public.communities (id, name, slug, description, kind, visibility, owner_id)
+  VALUES ($1, 'Test Group Chat', 'test-group-chat', 'Testing group messages', 'study', 'public', $2);
+`, [TEST_GROUP_COMM_ID, CURRENT_UID]);
+
+const { rows: sendGroupMsgRows } = await q(`
+  INSERT INTO public.community_group_messages (community_id, sender_id, channel, content)
+  VALUES ($1, $2, 'general', 'Hello group message')
+  RETURNING id;
+`, [TEST_GROUP_COMM_ID, CURRENT_UID]);
+const testGroupMsgId = sendGroupMsgRows[0].id;
+
+const { rows: editGroupResult } = await q(`
+  SELECT public.edit_group_message($1::uuid, 'Hello group message (edited)'::text) as ok;
+`, [testGroupMsgId]);
+check('edit_group_message updates group message', editGroupResult[0]?.ok === true, JSON.stringify(editGroupResult[0]));
+
+const { rows: listGroupMsgs } = await q(`
+  SELECT * FROM public.list_group_messages($1::uuid, 'general'::text);
+`, [TEST_GROUP_COMM_ID]);
+check('list_group_messages returns edited group message with is_edited true', listGroupMsgs.length === 1 && listGroupMsgs[0].content === 'Hello group message (edited)' && listGroupMsgs[0].is_edited === true, JSON.stringify(listGroupMsgs[0]));
+
+const { rows: delGroupResult } = await q(`
+  SELECT public.delete_group_message($1::uuid) as ok;
+`, [testGroupMsgId]);
+check('delete_group_message deletes group message', delGroupResult[0]?.ok === true, JSON.stringify(delGroupResult[0]));
+
+const { rows: listGroupMsgsAfterDel } = await q(`
+  SELECT * FROM public.list_group_messages($1::uuid, 'general'::text);
+`, [TEST_GROUP_COMM_ID]);
+check('list_group_messages returns 0 messages after deletion', listGroupMsgsAfterDel.length === 0, JSON.stringify(listGroupMsgsAfterDel));
+
 console.log(failures === 0
   ? '\nAll migration checks passed against real Postgres.'
   : `\n${failures} check(s) FAILED.`);
 process.exit(failures === 0 ? 0 : 1);
+
 
 

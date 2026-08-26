@@ -22,14 +22,28 @@ import {
   Copy,
   Check,
   Reply,
+  Trash2,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
   listGroupMessages,
   sendGroupMessage,
+  editGroupMessage,
+  deleteGroupMessage,
   toggleGroupMessageReaction,
   type GroupChatMessage,
 } from "@/integrations/supabase/services/community-group-chat";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import type { CommunityPost } from "@/integrations/supabase/services/community-posts";
 import { isEmojiOnly, getEmojiCount, getEmojiFontSizeClass } from "@/utils/emoji-utils";
 
@@ -84,6 +98,7 @@ interface CommunityGroupChatProps {
  */
 
 const DEFAULT_CHANNEL = "general";
+const EDIT_DELETE_WINDOW_MS = 30 * 60 * 1000;
 
 const QUICK_EMOJIS = ["👍", "❤️", "🔥", "🚀", "💡", "👏"];
 
@@ -138,6 +153,9 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
   const [inputText, setInputText] = useState("");
   const [sending, setSending] = useState(false);
   const [replyingTo, setReplyingTo] = useState<GroupChatMessage | null>(null);
+  const [editingMessage, setEditingMessage] = useState<GroupChatMessage | null>(null);
+  const [messageToDelete, setMessageToDelete] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -156,12 +174,11 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
     load();
   }, [load]);
 
-  // Switching rooms drops a half-attached reply. Nothing server-side would stop
-  // it — reply_to_id is a plain foreign key to any message in the table, so a
-  // cross-channel reply saves fine and then renders a quoted line from a room
-  // the reader cannot see from here. Clearing it on the way out is the whole fix.
+  // Switching rooms drops a half-attached reply/edit.
   useEffect(() => {
     setReplyingTo(null);
+    setEditingMessage(null);
+    setInputText("");
   }, [channel]);
 
   // payload.old/new on this table only carries changed columns, not a joined
@@ -200,15 +217,40 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
     return merged.sort((a, b) => a.at - b.at);
   }, [messages, posts, isDefaultChannel]);
 
-  // Scrolls only the message pane itself, never the outer page. A plain
-  // scrollIntoView() walks every scrollable ancestor — including the window —
-  // so opening a group was yanking the whole page down past the header before
-  // anyone could see the join button or the open/invite-only badge.
+  // Scrolls only the message pane itself, never the outer page.
   useEffect(() => {
     const container = messagesContainerRef.current;
     if (!container) return;
     container.scrollTo({ top: container.scrollHeight, behavior: "smooth" });
   }, [items]);
+
+  const handleStartEdit = (message: GroupChatMessage) => {
+    setReplyingTo(null);
+    setEditingMessage(message);
+    setInputText(message.content);
+    inputRef.current?.focus();
+  };
+
+  const handleCancelEdit = () => {
+    setEditingMessage(null);
+    setInputText("");
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!messageToDelete) return;
+    setIsDeleting(true);
+    const { error } = await deleteGroupMessage(messageToDelete);
+    setIsDeleting(false);
+
+    if (error) {
+      toast.error(error.message || "Could not delete message. (30m limit)");
+      return;
+    }
+
+    toast.success("Message deleted");
+    setMessageToDelete(null);
+    load();
+  };
 
   const handleSendMessage = async () => {
     const content = inputText.trim();
@@ -224,6 +266,23 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
     }
 
     setSending(true);
+
+    if (editingMessage) {
+      const { error } = await editGroupMessage(editingMessage.id, content);
+      setSending(false);
+
+      if (error) {
+        toast.error(error.message || "Could not edit that message (only editable within 30m)");
+        return;
+      }
+
+      toast.success("Message edited");
+      setEditingMessage(null);
+      setInputText("");
+      load();
+      return;
+    }
+
     const { error } = await sendGroupMessage(communityId, channel, content, replyingTo?.id ?? null);
     setSending(false);
 
@@ -241,6 +300,14 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
+    } else if (e.key === "Escape") {
+      if (editingMessage) {
+        e.preventDefault();
+        handleCancelEdit();
+      } else if (replyingTo) {
+        e.preventDefault();
+        setReplyingTo(null);
+      }
     }
   };
 
@@ -437,247 +504,335 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
               </button>
             ) : isNewBurst ? (
               /* ── Burst header: first message from this sender in this run ── */
-              <div
-                key={item.message.id}
-                id={`group-msg-${item.message.id}`}
-                className={cn(
-                  "group relative mt-3 flex gap-2.5 rounded-lg px-2 py-1 transition-all duration-300 hover:bg-muted/30",
-                  highlightedMessageId === item.message.id && "ring-2 ring-primary ring-offset-2 ring-offset-background animate-pulse bg-primary/5",
-                )}
-              >
-                <Avatar className="mt-0.5 h-8 w-8 shrink-0 border">
-                  <AvatarImage src={item.message.senderAvatar ?? undefined} />
-                  <AvatarFallback className="text-xs font-bold">
-                    {getInitials(item.message.senderName)}
-                  </AvatarFallback>
-                </Avatar>
+              (() => {
+                const isMine = user?.id === item.message.senderId;
+                const isWithin30Min = (Date.now() - new Date(item.message.createdAt).getTime()) <= EDIT_DELETE_WINDOW_MS;
+                const isCopied = copiedMessageId === item.message.id;
 
-                <div className="min-w-0 flex-1">
-                  <div className="mb-0.5 flex items-center gap-2">
-                    <span className="flex items-center gap-1 text-xs font-semibold text-foreground">
-                      {item.message.senderName}
-                      {item.message.isOwner && (
-                        <Badge variant="outline" className="h-4 px-1 text-4xs">
-                          <Crown className="mr-0.5 inline h-2.5 w-2.5" /> Owner
-                        </Badge>
-                      )}
-                      {item.message.isMentor && (
-                        <Badge variant="secondary" className="h-4 px-1 text-4xs">
-                          <ShieldCheck className="mr-0.5 inline h-2.5 w-2.5" /> Mentor
-                        </Badge>
-                      )}
-                    </span>
-                    <span className="text-3xs text-muted-foreground">
-                      {new Date(item.message.createdAt).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </span>
-                  </div>
+                return (
+                  <div
+                    key={item.message.id}
+                    id={`group-msg-${item.message.id}`}
+                    className={cn(
+                      "group relative mt-3 flex gap-2.5 rounded-lg px-2 py-1 transition-all duration-300 hover:bg-muted/30",
+                      highlightedMessageId === item.message.id && "ring-2 ring-primary ring-offset-2 ring-offset-background animate-pulse bg-primary/5",
+                    )}
+                  >
+                    <Avatar className="mt-0.5 h-8 w-8 shrink-0 border">
+                      <AvatarImage src={item.message.senderAvatar ?? undefined} />
+                      <AvatarFallback className="text-xs font-bold">
+                        {getInitials(item.message.senderName)}
+                      </AvatarFallback>
+                    </Avatar>
 
-                  {item.message.replyTo && (
-                    <button
-                      type="button"
-                      onClick={() => scrollToMessage(item.message.replyTo!.id)}
-                      className="mb-1 flex max-w-full items-center gap-1.5 rounded-md border-l-3 border-primary bg-primary/10 px-2 py-1 text-left text-2xs text-muted-foreground transition-opacity hover:opacity-85 select-none"
-                      title="Click to jump to quoted message"
-                    >
-                      <CornerDownRight className="h-3 w-3 shrink-0 text-primary" />
-                      <span className="font-semibold text-primary">
-                        {item.message.replyTo.senderName}:
-                      </span>
-                      <span className="max-w-[250px] truncate">{item.message.replyTo.content}</span>
-                    </button>
-                  )}
+                    <div className="min-w-0 flex-1">
+                      <div className="mb-0.5 flex items-center gap-2">
+                        <span className="flex items-center gap-1 text-xs font-semibold text-foreground">
+                          {item.message.senderName}
+                          {item.message.isOwner && (
+                            <Badge variant="outline" className="h-4 px-1 text-4xs">
+                              <Crown className="mr-0.5 inline h-2.5 w-2.5" /> Owner
+                            </Badge>
+                          )}
+                          {item.message.isMentor && (
+                            <Badge variant="secondary" className="h-4 px-1 text-4xs">
+                              <ShieldCheck className="mr-0.5 inline h-2.5 w-2.5" /> Mentor
+                            </Badge>
+                          )}
+                        </span>
+                        <span className="text-3xs text-muted-foreground">
+                          {new Date(item.message.createdAt).toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </span>
+                      </div>
 
-                  {(() => {
-                    const isEmoji = isEmojiOnly(item.message.content);
-                    const emojiCount = isEmoji ? getEmojiCount(item.message.content) : 0;
-                    return (
-                      <p
-                        className={
-                          isEmoji
-                            ? `whitespace-pre-wrap select-none ${getEmojiFontSizeClass(emojiCount)}`
-                            : "whitespace-pre-wrap text-sm leading-relaxed text-foreground"
-                        }
-                      >
-                        {item.message.content}
-                      </p>
-                    );
-                  })()}
-
-                  <div className="mt-1 flex flex-wrap items-center gap-1">
-                    {Object.entries(item.message.reactions).map(([emoji, count]) => {
-                      const reacted = item.message.viewerReactions.includes(emoji);
-                      return (
+                      {item.message.replyTo && (
                         <button
-                          key={emoji}
-                          onClick={() => handleToggleReaction(item.message.id, emoji)}
-                          className={`inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-3xs transition-colors ${
-                            reacted
-                              ? "border-primary/30 bg-primary/10 font-bold text-primary"
-                              : "border-muted bg-muted/40 text-muted-foreground hover:bg-muted"
-                          }`}
+                          type="button"
+                          onClick={() => scrollToMessage(item.message.replyTo!.id)}
+                          className="mb-1 flex max-w-full items-center gap-1.5 rounded-md border-l-3 border-primary bg-primary/10 px-2 py-1 text-left text-2xs text-muted-foreground transition-opacity hover:opacity-85 select-none"
+                          title="Click to jump to quoted message"
                         >
-                          <span>{emoji}</span>
-                          <span>{count}</span>
-                        </button>
-                      );
-                    })}
-
-                    <div className="ml-2 flex items-center gap-0.5 rounded-full border bg-background px-1 py-0.5 opacity-0 shadow-xs transition-opacity group-hover:opacity-100 focus-within:opacity-100">
-                      {canPost && QUICK_EMOJIS.slice(0, 4).map((emoji) => (
-                        <button
-                          key={emoji}
-                          onClick={() => handleToggleReaction(item.message.id, emoji)}
-                          className="px-0.5 text-xs transition-transform hover:scale-125"
-                          title={`React with ${emoji}`}
-                        >
-                          {emoji}
-                        </button>
-                      ))}
-                      {canPost && (
-                        <button
-                          onClick={() => setReplyingTo(item.message)}
-                          className="px-1 text-3xs font-medium text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-0.5"
-                          title="Reply"
-                        >
-                          <Reply className="h-3 w-3" />
-                          <span>Reply</span>
+                          <CornerDownRight className="h-3 w-3 shrink-0 text-primary" />
+                          <span className="font-semibold text-primary">
+                            {item.message.replyTo.senderName}:
+                          </span>
+                          <span className="max-w-[250px] truncate">{item.message.replyTo.content}</span>
                         </button>
                       )}
-                      <button
-                        onClick={() => handleCopyMessage(item.message.content, item.message.id)}
-                        className="px-1 text-3xs font-medium text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-0.5"
-                        title={copiedMessageId === item.message.id ? "Copied!" : "Copy message"}
-                      >
-                        {copiedMessageId === item.message.id ? (
-                          <Check className="h-3 w-3 text-emerald-500" />
-                        ) : (
-                          <Copy className="h-3 w-3" />
-                        )}
-                        <span>{copiedMessageId === item.message.id ? "Copied" : "Copy"}</span>
-                      </button>
+
+                      {(() => {
+                        const isEmoji = isEmojiOnly(item.message.content);
+                        const emojiCount = isEmoji ? getEmojiCount(item.message.content) : 0;
+                        return (
+                          <p
+                            className={
+                              isEmoji
+                                ? `whitespace-pre-wrap select-none ${getEmojiFontSizeClass(emojiCount)}`
+                                : "whitespace-pre-wrap text-sm leading-relaxed text-foreground"
+                            }
+                          >
+                            {item.message.content}
+                            {item.message.isEdited && (
+                              <span className="ml-1.5 text-3xs italic text-muted-foreground/75 select-none font-normal">
+                                (edited)
+                              </span>
+                            )}
+                          </p>
+                        );
+                      })()}
+
+                      <div className="mt-1 flex flex-wrap items-center gap-1">
+                        {Object.entries(item.message.reactions).map(([emoji, count]) => {
+                          const reacted = item.message.viewerReactions.includes(emoji);
+                          return (
+                            <button
+                              key={emoji}
+                              onClick={() => handleToggleReaction(item.message.id, emoji)}
+                              className={`inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-3xs transition-colors ${
+                                reacted
+                                  ? "border-primary/30 bg-primary/10 font-bold text-primary"
+                                  : "border-muted bg-muted/40 text-muted-foreground hover:bg-muted"
+                              }`}
+                            >
+                              <span>{emoji}</span>
+                              <span>{count}</span>
+                            </button>
+                          );
+                        })}
+
+                        <div className="ml-2 flex items-center gap-0.5 rounded-full border bg-background px-1 py-0.5 opacity-0 shadow-xs transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+                          {canPost && QUICK_EMOJIS.slice(0, 4).map((emoji) => (
+                            <button
+                              key={emoji}
+                              onClick={() => handleToggleReaction(item.message.id, emoji)}
+                              className="px-0.5 text-xs transition-transform hover:scale-125"
+                              title={`React with ${emoji}`}
+                            >
+                              {emoji}
+                            </button>
+                          ))}
+                          {canPost && (
+                            <button
+                              onClick={() => {
+                                setEditingMessage(null);
+                                setReplyingTo(item.message);
+                              }}
+                              className="px-1 text-3xs font-medium text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-0.5"
+                              title="Reply"
+                            >
+                              <Reply className="h-3 w-3" />
+                              <span>Reply</span>
+                            </button>
+                          )}
+                          <button
+                            onClick={() => handleCopyMessage(item.message.content, item.message.id)}
+                            className="px-1 text-3xs font-medium text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-0.5"
+                            title={isCopied ? "Copied!" : "Copy message"}
+                          >
+                            {isCopied ? (
+                              <Check className="h-3 w-3 text-emerald-500" />
+                            ) : (
+                              <Copy className="h-3 w-3" />
+                            )}
+                            <span>{isCopied ? "Copied" : "Copy"}</span>
+                          </button>
+                          {isMine && isWithin30Min && (
+                            <>
+                              <button
+                                onClick={() => handleStartEdit(item.message)}
+                                className="px-1 text-3xs font-medium text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-0.5"
+                                title="Edit message (within 30m)"
+                              >
+                                <Pencil className="h-3 w-3" />
+                                <span>Edit</span>
+                              </button>
+                              <button
+                                onClick={() => setMessageToDelete(item.message.id)}
+                                className="px-1 text-3xs font-medium text-muted-foreground hover:text-destructive transition-colors inline-flex items-center gap-0.5"
+                                title="Delete message (within 30m)"
+                              >
+                                <Trash2 className="h-3 w-3" />
+                                <span>Delete</span>
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </div>
+                );
+              })()
             ) : (
               /* ── Burst continuation: same sender, within 5 min ── */
-              <div
-                key={item.message.id}
-                id={`group-msg-${item.message.id}`}
-                className={cn(
-                  "group relative flex gap-2.5 rounded-lg px-2 py-0.5 transition-all duration-300 hover:bg-muted/30",
-                  highlightedMessageId === item.message.id && "ring-2 ring-primary ring-offset-2 ring-offset-background animate-pulse bg-primary/5",
-                )}
-              >
-                {/* Spacer matching avatar width so message body aligns */}
-                <div className="w-8 shrink-0" aria-hidden />
+              (() => {
+                const isMine = user?.id === item.message.senderId;
+                const isWithin30Min = (Date.now() - new Date(item.message.createdAt).getTime()) <= EDIT_DELETE_WINDOW_MS;
+                const isCopied = copiedMessageId === item.message.id;
 
-                <div className="min-w-0 flex-1">
-                  {item.message.replyTo && (
-                    <button
-                      type="button"
-                      onClick={() => scrollToMessage(item.message.replyTo!.id)}
-                      className="mb-1 flex max-w-full items-center gap-1.5 rounded-md border-l-3 border-primary bg-primary/10 px-2 py-1 text-left text-2xs text-muted-foreground transition-opacity hover:opacity-85 select-none"
-                      title="Click to jump to quoted message"
-                    >
-                      <CornerDownRight className="h-3 w-3 shrink-0 text-primary" />
-                      <span className="font-semibold text-primary">
-                        {item.message.replyTo.senderName}:
-                      </span>
-                      <span className="max-w-[250px] truncate">{item.message.replyTo.content}</span>
-                    </button>
-                  )}
+                return (
+                  <div
+                    key={item.message.id}
+                    id={`group-msg-${item.message.id}`}
+                    className={cn(
+                      "group relative flex gap-2.5 rounded-lg px-2 py-0.5 transition-all duration-300 hover:bg-muted/30",
+                      highlightedMessageId === item.message.id && "ring-2 ring-primary ring-offset-2 ring-offset-background animate-pulse bg-primary/5",
+                    )}
+                  >
+                    {/* Spacer matching avatar width so message body aligns */}
+                    <div className="w-8 shrink-0" aria-hidden />
 
-                  {(() => {
-                    const isEmoji = isEmojiOnly(item.message.content);
-                    const emojiCount = isEmoji ? getEmojiCount(item.message.content) : 0;
-                    return (
-                      <p
-                        className={
-                          isEmoji
-                            ? `whitespace-pre-wrap select-none ${getEmojiFontSizeClass(emojiCount)}`
-                            : "whitespace-pre-wrap text-sm leading-relaxed text-foreground"
-                        }
-                      >
-                        {item.message.content}
-                      </p>
-                    );
-                  })()}
-
-                  {/* Timestamp revealed on hover (Discord-style) */}
-                  <span className="absolute left-2 top-1/2 -translate-y-1/2 text-3xs text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 select-none pointer-events-none">
-                    {new Date(item.message.createdAt).toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </span>
-
-                  <div className="mt-0.5 flex flex-wrap items-center gap-1">
-                    {Object.entries(item.message.reactions).map(([emoji, count]) => {
-                      const reacted = item.message.viewerReactions.includes(emoji);
-                      return (
+                    <div className="min-w-0 flex-1">
+                      {item.message.replyTo && (
                         <button
-                          key={emoji}
-                          onClick={() => handleToggleReaction(item.message.id, emoji)}
-                          className={`inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-3xs transition-colors ${
-                            reacted
-                              ? "border-primary/30 bg-primary/10 font-bold text-primary"
-                              : "border-muted bg-muted/40 text-muted-foreground hover:bg-muted"
-                          }`}
+                          type="button"
+                          onClick={() => scrollToMessage(item.message.replyTo!.id)}
+                          className="mb-1 flex max-w-full items-center gap-1.5 rounded-md border-l-3 border-primary bg-primary/10 px-2 py-1 text-left text-2xs text-muted-foreground transition-opacity hover:opacity-85 select-none"
+                          title="Click to jump to quoted message"
                         >
-                          <span>{emoji}</span>
-                          <span>{count}</span>
-                        </button>
-                      );
-                    })}
-
-                    <div className="ml-2 flex items-center gap-0.5 rounded-full border bg-background px-1 py-0.5 opacity-0 shadow-xs transition-opacity group-hover:opacity-100 focus-within:opacity-100">
-                      {canPost && QUICK_EMOJIS.slice(0, 4).map((emoji) => (
-                        <button
-                          key={emoji}
-                          onClick={() => handleToggleReaction(item.message.id, emoji)}
-                          className="px-0.5 text-xs transition-transform hover:scale-125"
-                          title={`React with ${emoji}`}
-                        >
-                          {emoji}
-                        </button>
-                      ))}
-                      {canPost && (
-                        <button
-                          onClick={() => setReplyingTo(item.message)}
-                          className="px-1 text-3xs font-medium text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-0.5"
-                          title="Reply"
-                        >
-                          <Reply className="h-3 w-3" />
-                          <span>Reply</span>
+                          <CornerDownRight className="h-3 w-3 shrink-0 text-primary" />
+                          <span className="font-semibold text-primary">
+                            {item.message.replyTo.senderName}:
+                          </span>
+                          <span className="max-w-[250px] truncate">{item.message.replyTo.content}</span>
                         </button>
                       )}
-                      <button
-                        onClick={() => handleCopyMessage(item.message.content, item.message.id)}
-                        className="px-1 text-3xs font-medium text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-0.5"
-                        title={copiedMessageId === item.message.id ? "Copied!" : "Copy message"}
-                      >
-                        {copiedMessageId === item.message.id ? (
-                          <Check className="h-3 w-3 text-emerald-500" />
-                        ) : (
-                          <Copy className="h-3 w-3" />
-                        )}
-                        <span>{copiedMessageId === item.message.id ? "Copied" : "Copy"}</span>
-                      </button>
+
+                      {(() => {
+                        const isEmoji = isEmojiOnly(item.message.content);
+                        const emojiCount = isEmoji ? getEmojiCount(item.message.content) : 0;
+                        return (
+                          <p
+                            className={
+                              isEmoji
+                                ? `whitespace-pre-wrap select-none ${getEmojiFontSizeClass(emojiCount)}`
+                                : "whitespace-pre-wrap text-sm leading-relaxed text-foreground"
+                            }
+                          >
+                            {item.message.content}
+                            {item.message.isEdited && (
+                              <span className="ml-1.5 text-3xs italic text-muted-foreground/75 select-none font-normal">
+                                (edited)
+                              </span>
+                            )}
+                          </p>
+                        );
+                      })()}
+
+                      {/* Timestamp revealed on hover (Discord-style) */}
+                      <span className="absolute left-2 top-1/2 -translate-y-1/2 text-3xs text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 select-none pointer-events-none">
+                        {new Date(item.message.createdAt).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </span>
+
+                      <div className="mt-0.5 flex flex-wrap items-center gap-1">
+                        {Object.entries(item.message.reactions).map(([emoji, count]) => {
+                          const reacted = item.message.viewerReactions.includes(emoji);
+                          return (
+                            <button
+                              key={emoji}
+                              onClick={() => handleToggleReaction(item.message.id, emoji)}
+                              className={`inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-3xs transition-colors ${
+                                reacted
+                                  ? "border-primary/30 bg-primary/10 font-bold text-primary"
+                                  : "border-muted bg-muted/40 text-muted-foreground hover:bg-muted"
+                              }`}
+                            >
+                              <span>{emoji}</span>
+                              <span>{count}</span>
+                            </button>
+                          );
+                        })}
+
+                        <div className="ml-2 flex items-center gap-0.5 rounded-full border bg-background px-1 py-0.5 opacity-0 shadow-xs transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+                          {canPost && QUICK_EMOJIS.slice(0, 4).map((emoji) => (
+                            <button
+                              key={emoji}
+                              onClick={() => handleToggleReaction(item.message.id, emoji)}
+                              className="px-0.5 text-xs transition-transform hover:scale-125"
+                              title={`React with ${emoji}`}
+                            >
+                              {emoji}
+                            </button>
+                          ))}
+                          {canPost && (
+                            <button
+                              onClick={() => {
+                                setEditingMessage(null);
+                                setReplyingTo(item.message);
+                              }}
+                              className="px-1 text-3xs font-medium text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-0.5"
+                              title="Reply"
+                            >
+                              <Reply className="h-3 w-3" />
+                              <span>Reply</span>
+                            </button>
+                          )}
+                          <button
+                            onClick={() => handleCopyMessage(item.message.content, item.message.id)}
+                            className="px-1 text-3xs font-medium text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-0.5"
+                            title={isCopied ? "Copied!" : "Copy message"}
+                          >
+                            {isCopied ? (
+                              <Check className="h-3 w-3 text-emerald-500" />
+                            ) : (
+                              <Copy className="h-3 w-3" />
+                            )}
+                            <span>{isCopied ? "Copied" : "Copy"}</span>
+                          </button>
+                          {isMine && isWithin30Min && (
+                            <>
+                              <button
+                                onClick={() => handleStartEdit(item.message)}
+                                className="px-1 text-3xs font-medium text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-0.5"
+                                title="Edit message (within 30m)"
+                              >
+                                <Pencil className="h-3 w-3" />
+                                <span>Edit</span>
+                              </button>
+                              <button
+                                onClick={() => setMessageToDelete(item.message.id)}
+                                className="px-1 text-3xs font-medium text-muted-foreground hover:text-destructive transition-colors inline-flex items-center gap-0.5"
+                                title="Delete message (within 30m)"
+                              >
+                                <Trash2 className="h-3 w-3" />
+                                <span>Delete</span>
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </div>
+                );
+              })()
             ),
           )
         )}
       </div>
 
+      {/* Editing banner */}
+      {editingMessage && (
+        <div className="flex items-center justify-between border-t border-amber-500/20 bg-amber-500/10 px-4 py-1.5 text-xs text-foreground">
+          <span className="flex items-center gap-1.5 truncate">
+            <Pencil className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+            <span className="font-semibold text-amber-500">Editing message:</span>
+            <span className="truncate text-muted-foreground/90">
+              "{editingMessage.content.slice(0, 40)}{editingMessage.content.length > 40 ? "…" : ""}"
+            </span>
+          </span>
+          <button onClick={handleCancelEdit} className="text-xs font-bold hover:underline">
+            Cancel
+          </button>
+        </div>
+      )}
+
       {/* Reply banner */}
-      {replyingTo && (
+      {!editingMessage && replyingTo && (
         <div className="flex items-center justify-between border-t border-primary/20 bg-primary/5 px-4 py-1.5 text-xs text-foreground">
           <span className="flex items-center gap-1.5 truncate">
             <CornerDownRight className="h-3.5 w-3.5" /> Replying to{" "}
@@ -714,18 +869,26 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder={isDefaultChannel ? "Write a message…" : `Message #${channel}…`}
+              placeholder={
+                editingMessage
+                  ? "Edit your message…"
+                  : isDefaultChannel
+                    ? "Write a message…"
+                    : `Message #${channel}…`
+              }
               className="h-10 bg-muted/30 font-sans text-sm"
               disabled={sending}
               aria-label={
-                isDefaultChannel
-                  ? "Write a message to this group"
-                  : `Write a message in #${channel}`
+                editingMessage
+                  ? "Edit message content"
+                  : isDefaultChannel
+                    ? "Write a message to this group"
+                    : `Write a message in #${channel}`
               }
             />
             {/* Posting is a group-level act and its result only shows in the
                 built-in room, so the shortcut is not offered from elsewhere. */}
-            {onCreatePost && isDefaultChannel && (
+            {!editingMessage && onCreatePost && isDefaultChannel && (
               <Button
                 type="button"
                 variant="ghost"
@@ -742,11 +905,14 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
               size="icon"
               onClick={handleSendMessage}
               disabled={!inputText.trim() || sending}
-              className="h-10 w-10 shrink-0"
-              aria-label="Send message"
+              className={cn("h-10 w-10 shrink-0", editingMessage && "bg-amber-500 hover:bg-amber-600 text-white")}
+              aria-label={editingMessage ? "Save edited message" : "Send message"}
+              title={editingMessage ? "Save changes (Enter)" : "Send message (Enter)"}
             >
               {sending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
+              ) : editingMessage ? (
+                <Check className="h-4 w-4" />
               ) : (
                 <Send className="h-4 w-4" />
               )}
@@ -754,6 +920,31 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={Boolean(messageToDelete)} onOpenChange={(open) => !open && setMessageToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete message?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this group message? It will be permanently removed for everyone in the group.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleConfirmDelete();
+              }}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Delete for everyone"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

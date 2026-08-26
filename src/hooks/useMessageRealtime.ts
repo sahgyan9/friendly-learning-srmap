@@ -9,9 +9,10 @@ export const useMessageRealtime = (
   userId: string,
   onNewMessage: (message: Message) => void,
   onMessageUpdate: (message: Message) => void,
-  onConversationUpdate: (conversation: Conversation) => void
+  onConversationUpdate: (conversation: Conversation) => void,
+  onMessageDelete?: (messageId: string) => void,
 ) => {
-  // Subscribe to new messages
+  // Subscribe to message events (insert, update, delete)
   useRealtimeSubscription(
     'messages',
     useCallback((payload) => {
@@ -27,8 +28,13 @@ export const useMessageRealtime = (
       } else if (payload.eventType === 'UPDATE') {
         const updatedMessage = payload.new as unknown as Message;
         onMessageUpdate(updatedMessage);
+      } else if (payload.eventType === 'DELETE') {
+        const deletedId = (payload.old as { id?: string })?.id;
+        if (deletedId) {
+          onMessageDelete?.(deletedId);
+        }
       }
-    }, [activeChat, userId, onNewMessage, onMessageUpdate])
+    }, [activeChat, userId, onNewMessage, onMessageUpdate, onMessageDelete])
   );
 
   // Subscribe to conversation updates

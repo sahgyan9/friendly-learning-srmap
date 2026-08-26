@@ -29,7 +29,9 @@ const MessagesLayout = () => {
     isSending,
     error,
     setActiveChat,
-    sendMessage
+    sendMessage,
+    editMessage,
+    deleteMessage,
   } = useMessages(userId);
 
   const { isProcessingMentor } = useMentorConnection(userId, setActiveChat);
@@ -156,6 +158,8 @@ const MessagesLayout = () => {
         setActiveChat={setActiveChat}
         getUnreadCount={getUnreadCount}
         handleSendMessage={sendMessage}
+        handleEditMessage={editMessage}
+        handleDeleteMessage={deleteMessage}
       />
     </>
   );

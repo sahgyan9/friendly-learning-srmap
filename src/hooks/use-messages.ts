@@ -32,7 +32,9 @@ export const useMessages = (userId: string) => {
   const {
     fetchConversations,
     fetchMessages,
-    sendMessage: sendMessageOperation
+    sendMessage: sendMessageOperation,
+    editMessage: editMessageOperation,
+    deleteMessage: deleteMessageOperation,
   } = useMessagesOperations(userId);
 
   // Enable user presence tracking
@@ -73,9 +75,7 @@ export const useMessages = (userId: string) => {
 
       // Update conversations list to show latest message, and re-sort so the
       // conversation that just got a message jumps to the top — same as any
-      // chat app. .map() alone preserves the old row order, which is why a
-      // brand-new message could land at the bottom of the list, below chats
-      // from days ago.
+      // chat app.
       setConversations(prev => {
         const updated = prev.map(conv =>
           conv.id === newMessage.conversation_id
@@ -96,17 +96,23 @@ export const useMessages = (userId: string) => {
     (updatedMessage: Message) => {
       setMessages(prev =>
         prev.map(msg =>
-          msg.id === updatedMessage.id ? updatedMessage : msg
+          msg.id === updatedMessage.id
+            ? {
+                ...msg,
+                ...updatedMessage,
+                sender: msg.sender,
+                reply_to: msg.reply_to,
+              }
+            : msg
         )
       );
 
       // The conversation list's unread dot reads conv.last_message.is_read,
-      // not the active chat's `messages` array — patch it too, or reading a
-      // conversation only clears the dot once you happen to reopen the page.
+      // not the active chat's `messages` array — patch it too
       setConversations(prev =>
         prev.map(conv =>
           conv.last_message?.id === updatedMessage.id
-            ? { ...conv, last_message: updatedMessage }
+            ? { ...conv, last_message: { ...conv.last_message, ...updatedMessage } }
             : conv
         )
       );
@@ -119,6 +125,23 @@ export const useMessages = (userId: string) => {
             ? { ...conv, ...updatedConversation }
             : conv
         )
+      );
+    },
+    // On message delete
+    (deletedMessageId: string) => {
+      setMessages(prev => prev.filter(msg => msg.id !== deletedMessageId));
+
+      setConversations(prev =>
+        prev.map(conv => {
+          if (conv.last_message?.id === deletedMessageId) {
+            return {
+              ...conv,
+              last_message: undefined,
+              last_message_id: "",
+            };
+          }
+          return conv;
+        })
       );
     }
   );
@@ -175,7 +198,27 @@ export const useMessages = (userId: string) => {
       setError,
       replyTo
     );
-    // No need to refetch conversations - real-time updates will handle this
+  };
+
+  // Wrapper for editing messages
+  const editMessage = async (messageId: string, content: string) => {
+    return await editMessageOperation(
+      messageId,
+      content,
+      setMessages,
+      setError
+    );
+  };
+
+  // Wrapper for deleting messages
+  const deleteMessage = async (messageId: string) => {
+    return await deleteMessageOperation(
+      messageId,
+      activeChat,
+      setMessages,
+      setConversations,
+      setError
+    );
   };
 
   return {
@@ -188,5 +231,7 @@ export const useMessages = (userId: string) => {
     error,
     setActiveChat,
     sendMessage,
+    editMessage,
+    deleteMessage,
   };
 };

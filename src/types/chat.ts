@@ -19,6 +19,8 @@ export interface Message {
     sender_name: string;
     content: string;
   } | null;
+  is_edited?: boolean;
+  edited_at?: string | null;
 }
 
 export interface Conversation {

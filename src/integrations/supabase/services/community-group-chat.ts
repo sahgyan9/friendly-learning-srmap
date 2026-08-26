@@ -30,6 +30,8 @@ export type GroupChatMessage = {
   reactions: Record<string, number>;
   viewerReactions: string[];
   createdAt: string;
+  isEdited: boolean;
+  editedAt: string | null;
 };
 
 type GroupMessageRow = {
@@ -47,6 +49,8 @@ type GroupMessageRow = {
   reactions: Record<string, number> | null;
   viewer_reactions: string[] | null;
   created_at: string;
+  is_edited?: boolean | null;
+  edited_at?: string | null;
 };
 
 const toMessage = (row: GroupMessageRow): GroupChatMessage => ({
@@ -69,6 +73,8 @@ const toMessage = (row: GroupMessageRow): GroupChatMessage => ({
   reactions: row.reactions ?? {},
   viewerReactions: row.viewer_reactions ?? [],
   createdAt: row.created_at,
+  isEdited: Boolean(row.is_edited),
+  editedAt: row.edited_at ?? null,
 });
 
 export const listGroupMessages = async (communityId: string, channel: string) => {
@@ -100,6 +106,25 @@ export const sendGroupMessage = async (
 
   if (error) console.error("Error sending group message:", error);
   return { data, error };
+};
+
+export const editGroupMessage = async (messageId: string, content: string) => {
+  const { data, error } = await callRpc<boolean>("edit_group_message", {
+    p_message_id: messageId,
+    p_content: sanitizeInput(content, 2000),
+  });
+
+  if (error) console.error("Error editing group message:", error);
+  return { data: Boolean(data), error };
+};
+
+export const deleteGroupMessage = async (messageId: string) => {
+  const { data, error } = await callRpc<boolean>("delete_group_message", {
+    p_message_id: messageId,
+  });
+
+  if (error) console.error("Error deleting group message:", error);
+  return { data: Boolean(data), error };
 };
 
 export const toggleGroupMessageReaction = async (messageId: string, emoji: string) => {

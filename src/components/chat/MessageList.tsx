@@ -1,10 +1,30 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowDown, Check, Copy, CornerDownRight, Loader2, MessageCircleMore, Reply } from "lucide-react";
+import {
+  ArrowDown,
+  Check,
+  Copy,
+  CornerDownRight,
+  Loader2,
+  MessageCircleMore,
+  Pencil,
+  Reply,
+  Trash2,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Message } from "@/types/chat";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import { getInitials } from "@/utils/user-utils";
 import { useTypingIndicator } from "@/hooks/useTypingIndicator";
@@ -20,10 +40,14 @@ interface MessageListProps {
   conversationId: string | null;
   getSenderName?: (senderId: string) => string;
   onReply?: (message: Message) => void;
+  onEdit?: (message: Message) => void;
+  onDelete?: (messageId: string) => Promise<void>;
 }
 
 /** Messages from the same person within this window read as one utterance. */
 const GROUP_WINDOW_MS = 5 * 60 * 1000;
+/** Message edit & delete maximum allowed window: 30 minutes */
+const EDIT_DELETE_WINDOW_MS = 30 * 60 * 1000;
 
 const dayKey = (iso: string) => new Date(iso).toDateString();
 
@@ -54,6 +78,8 @@ const MessageList = ({
   conversationId,
   getSenderName,
   onReply,
+  onEdit,
+  onDelete,
 }: MessageListProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const isFirstRender = useRef(true);
@@ -61,6 +87,8 @@ const MessageList = ({
   const [unseenCount, setUnseenCount] = useState(0);
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
+  const [messageToDelete, setMessageToDelete] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const { typingUsers } = useTypingIndicator(conversationId, currentUserId);
 
   const scrollToBottom = useCallback((behavior: ScrollBehavior = "smooth") => {
@@ -204,6 +232,7 @@ const MessageList = ({
           const prevEmojiOnly = previous ? isEmojiOnly(previous.content) : false;
           const isCopied = copiedMessageId === message.id;
           const isHighlighted = highlightedMessageId === message.id;
+          const isWithin30Min = (Date.now() - new Date(message.sent_at).getTime()) <= EDIT_DELETE_WINDOW_MS;
 
           // Resolve replied message if any
           const repliedMsg = message.reply_to_id ? messageMap.get(message.reply_to_id) : null;
@@ -277,6 +306,28 @@ const MessageList = ({
                     >
                       {isCopied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
                     </button>
+                    {isWithin30Min && onEdit && (
+                      <button
+                        type="button"
+                        onClick={() => onEdit(message)}
+                        className="rounded-full p-1 text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
+                        title="Edit message (within 30m)"
+                        aria-label="Edit message"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                    {isWithin30Min && onDelete && (
+                      <button
+                        type="button"
+                        onClick={() => setMessageToDelete(message.id)}
+                        className="rounded-full p-1 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                        title="Delete message (within 30m)"
+                        aria-label="Delete message"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    )}
                   </div>
                 )}
 
@@ -330,6 +381,16 @@ const MessageList = ({
                     )}
 
                     {message.content}
+                    {message.is_edited && (
+                      <span
+                        className={cn(
+                          "ml-1.5 inline-block text-3xs italic select-none font-normal",
+                          isMine ? "text-primary-foreground/80" : "text-muted-foreground/75"
+                        )}
+                      >
+                        (edited)
+                      </span>
+                    )}
                   </div>
 
                   {/* One timestamp per group */}
@@ -387,6 +448,40 @@ const MessageList = ({
           getUserName={(id) => getSenderName?.(id) ?? "Someone"}
         />
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={Boolean(messageToDelete)} onOpenChange={(open) => !open && setMessageToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete message?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this message? It will be permanently removed for both participants in this conversation.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async (e) => {
+                e.preventDefault();
+                if (!messageToDelete || !onDelete) return;
+                try {
+                  setIsDeleting(true);
+                  await onDelete(messageToDelete);
+                  setMessageToDelete(null);
+                } catch (err) {
+                  console.error("Failed to delete message:", err);
+                } finally {
+                  setIsDeleting(false);
+                }
+              }}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Jump-to-latest button */}
       {!isPinnedToBottom && (

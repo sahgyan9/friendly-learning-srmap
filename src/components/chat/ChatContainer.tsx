@@ -68,6 +68,8 @@ interface ChatContainerProps {
   setActiveChat: (id: string) => void;
   getUnreadCount: (conversationId: string) => number;
   handleSendMessage: (content: string, replyTo?: Message | null) => Promise<void>;
+  handleEditMessage?: (messageId: string, content: string) => Promise<any>;
+  handleDeleteMessage?: (messageId: string) => Promise<any>;
 }
 
 const ChatContainer = ({
@@ -85,11 +87,14 @@ const ChatContainer = ({
   getOtherUser,
   setActiveChat,
   getUnreadCount,
-  handleSendMessage
+  handleSendMessage,
+  handleEditMessage,
+  handleDeleteMessage,
 }: ChatContainerProps) => {
   const isMobile = useIsMobile();
   const [mobileView, setMobileView] = useState<"list" | "chat">("list");
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
+  const [editingMessage, setEditingMessage] = useState<Message | null>(null);
   const { ref: heightRef, height: availableHeight } = useAvailableHeight<HTMLDivElement>();
 
   const currentConversation = conversations.find((c) => c.id === activeChat);
@@ -98,9 +103,10 @@ const ChatContainer = ({
     if (activeChat && isMobile) setMobileView("chat");
   }, [activeChat, isMobile]);
 
-  // Reset replying state when changing conversations
+  // Reset replying & editing state when changing conversations
   useEffect(() => {
     setReplyingTo(null);
+    setEditingMessage(null);
   }, [activeChat]);
 
   const showList = !isMobile || mobileView === "list";
@@ -204,6 +210,8 @@ const ChatContainer = ({
               conversationId={activeChat}
               getSenderName={getSenderName}
               onReply={setReplyingTo}
+              onEdit={setEditingMessage}
+              onDelete={handleDeleteMessage}
             />
           </div>
 
@@ -215,6 +223,9 @@ const ChatContainer = ({
             userId={currentUserId}
             replyingTo={replyingTo}
             onCancelReply={() => setReplyingTo(null)}
+            editingMessage={editingMessage}
+            onCancelEdit={() => setEditingMessage(null)}
+            onSaveEdit={handleEditMessage}
           />
         </section>
       ) : (
