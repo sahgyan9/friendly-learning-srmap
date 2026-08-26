@@ -27,7 +27,7 @@ const SETTLE_MS = 250;
 
 const NotificationBell = () => {
   const { user } = useAuth();
-  const { isSupported, isSubscribed, isLoading: pushLoading, enablePush } = usePushNotifications();
+  const { isSupported, isSubscribed, isLoading: pushLoading, enablePush, permission } = usePushNotifications();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
@@ -135,6 +135,20 @@ const NotificationBell = () => {
 
   if (!user) return null;
 
+  const showPushDot = unreadCount === 0 && !isSubscribed && isSupported && permission !== "denied";
+
+  const bellAriaLabel = unreadCount > 0
+    ? `Notifications, ${unreadCount} unread`
+    : showPushDot
+    ? "Notifications (Push alerts disabled)"
+    : "Notifications";
+
+  const bellTitle = unreadCount > 0
+    ? `${unreadCount} unread notification${unreadCount > 1 ? "s" : ""}`
+    : showPushDot
+    ? "Notifications • Enable push alerts"
+    : "Notifications";
+
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
@@ -143,7 +157,8 @@ const NotificationBell = () => {
             badge uses a ring rather than a border under the header's blur. */}
         <button
           type="button"
-          aria-label={unreadCount > 0 ? `Notifications, ${unreadCount} unread` : "Notifications"}
+          aria-label={bellAriaLabel}
+          title={bellTitle}
           className={cn(
             "relative flex h-10 w-10 items-center justify-center rounded-full transition-colors",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
@@ -153,14 +168,19 @@ const NotificationBell = () => {
           )}
         >
           <Bell className="h-5 w-5" aria-hidden />
-          {unreadCount > 0 && (
+          {unreadCount > 0 ? (
             <span
               className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1 text-2xs font-semibold leading-none text-destructive-foreground ring-2 ring-background"
               aria-hidden
             >
               {unreadCount > 99 ? '99+' : unreadCount}
             </span>
-          )}
+          ) : showPushDot ? (
+            <span className="absolute top-1.5 right-1.5 flex h-2.5 w-2.5" aria-hidden>
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary ring-2 ring-background"></span>
+            </span>
+          ) : null}
         </button>
       </PopoverTrigger>
       <PopoverContent className="w-[360px] sm:w-[420px] max-w-[calc(100vw-2rem)] p-0 shadow-xl border-border/80" align="end">
