@@ -202,6 +202,43 @@ Deno.serve(async (req) => {
           safe_bunks: course.safeBunks,
           last_synced_at: nowIso,
         }, { onConflict: "user_id,course_code" });
+
+        // Trigger immediate Alert if < 75%
+        if (course.attendancePercentage < 75.0 && course.conductedHours > 0) {
+          const alertTitle = `⚠️ Attendance Alert: ${course.courseCode} (${course.attendancePercentage}%)`;
+          const alertMessage = `Your attendance in ${course.courseName} is ${course.attendancePercentage}%. You need to attend the next ${course.classesNeeded} consecutive class(es) to reach 75%.`;
+
+          await supabaseAdmin.from("notifications").insert({
+            user_id: userId,
+            type: "attendance_alert",
+            title: alertTitle,
+            content: alertMessage,
+            data: {
+              course_code: course.courseCode,
+              course_name: course.courseName,
+              attendance_percentage: course.attendancePercentage,
+              classes_needed: course.classesNeeded,
+              conducted_hours: course.conductedHours,
+              attended_hours: course.attendedHours,
+              url: "/profile",
+            },
+            read: false,
+          });
+
+          try {
+            await supabaseAdmin.functions.invoke("send-push", {
+              body: {
+                userId,
+                title: alertTitle,
+                body: alertMessage,
+                url: "/profile",
+                tag: `attendance-${course.courseCode}`,
+              },
+            });
+          } catch (pushErr) {
+            console.error("Push dispatch non-fatal error:", pushErr);
+          }
+        }
       }
 
       // Best-effort claim. A successful portal login is proof of ownership of
