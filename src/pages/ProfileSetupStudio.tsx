@@ -45,6 +45,7 @@ import { ImportSrmPortalDialog } from "@/components/profile/ImportSrmPortal";
 import MentorAvatar from "@/components/mentors/MentorAvatar";
 import { getMentorById, updateMentorSummary } from "@/integrations/supabase/services/mentors";
 import { getEnhancedMentorProfile } from "@/utils/mentor-enhancements";
+import { formatDepartment } from "@/utils/user-utils";
 import type { Mentor } from "@/types/mentor";
 import SEOHead from "@/components/SEOHead";
 
@@ -75,25 +76,24 @@ function generateSmartDrafts(
   bio?: string,
   year?: string
 ) {
-  const dept = department?.trim() || "";
+  // Clean raw academic strings like "B.Sc.-Physics (Honors with Research) [UG - Full Time]" -> "BSc Physics"
+  const cleanDept = formatDepartment(department) || department?.trim() || "";
   const validSkills = (skills || []).map((s) => s.trim()).filter(Boolean);
 
-  if (validSkills.length === 0 && !dept) {
+  if (validSkills.length === 0 && !cleanDept) {
     return { tagline: "", outcomes: [], ask_me_anything: [], ideal_mentees: [] };
   }
 
   const primarySkills =
     validSkills.length > 0
       ? validSkills.slice(0, 4)
-      : [dept, "Coursework", "Problem Solving"].filter(Boolean);
-  const skill1 = primarySkills[0] || dept || "Coursework";
-  const skill2 = primarySkills[1] || (dept ? `${dept} Concepts` : "Problem Solving");
+      : [cleanDept, "Coursework", "Problem Solving"].filter(Boolean);
+  const skill1 = primarySkills[0] || cleanDept || "Coursework";
+  const skill2 = primarySkills[1] || (cleanDept ? `${cleanDept} Concepts` : "Problem Solving");
   const skill3 = primarySkills[2] || "Lab Work";
 
-  // 1. Tagline: identity-first and natural — "CSE student helping with C++,
-  // data structures, and competitive programming." — reads like a real bio
-  // line, not a canned call-to-action. Max 120 chars.
-  const deptLabel = dept ? `${dept} student` : "Student";
+  // 1. Tagline: identity-first and clean — "BSc Physics student helping with Quantum Mechanics and Quantum Algorithms."
+  const deptLabel = cleanDept ? `${cleanDept} student` : "Student";
   let tagline: string;
   if (validSkills.length === 0) {
     tagline = `${deptLabel} ready to help fellow students with coursework and projects.`;
@@ -115,8 +115,8 @@ function generateSmartDrafts(
   const outcomes = [
     `Master problem sets, core theories, and practical intuition in ${skill1}`,
     `Get 1-on-1 guidance on ${skill2}, lab assignments, and project execution`,
-    dept
-      ? `Prepare effectively for ${dept} midterms, finals, and assessments`
+    cleanDept
+      ? `Prepare effectively for ${cleanDept} midterms, finals, and assessments`
       : `Prepare effectively for course assessments, exams, and project reviews`,
   ];
 
@@ -124,15 +124,15 @@ function generateSmartDrafts(
   const askMeAnything = (
     validSkills.length > 0
       ? validSkills.slice(0, 4)
-      : [dept || "Coursework", "Exam Prep", "Projects"]
+      : [cleanDept || "Coursework", "Exam Prep", "Projects"]
   )
     .filter(Boolean)
     .map((s) => ({ topic: s }));
 
   // 4. Ideal Mentees: Who benefits most
   const idealMentees = [
-    dept
-      ? `1st or 2nd year students taking ${dept} core subjects`
+    cleanDept
+      ? `1st or 2nd year students taking ${cleanDept} core subjects`
       : `1st or 2nd year students looking for academic & course guidance`,
     `Peers working on ${skill1} projects or research papers`,
     `Classmates seeking practical study notes, lab tips, and exam strategies`,
@@ -377,7 +377,8 @@ export default function ProfileSetupStudio() {
       // Merge skills so existing custom-added skills are preserved
       const mergedSkills = Array.from(new Set([...prev.skills, ...newSkills]));
 
-      const studentDept = data.department || prev.department;
+      const rawDept = data.department || prev.department;
+      const studentDept = formatDepartment(rawDept) || rawDept;
       const studentName = data.name || prev.name;
       const studentYear = data.year_of_studies || prev.year_of_studies;
 
@@ -1124,10 +1125,13 @@ export default function ProfileSetupStudio() {
                     <button
                       type="button"
                       onClick={() =>
-                        setState((prev) => ({
-                          ...prev,
-                          tagline: `${prev.department ? `${prev.department} student` : "Student"} helping juniors with ${prev.skills[0] || "core subjects"} and lab work.`,
-                        }))
+                        setState((prev) => {
+                          const clean = formatDepartment(prev.department) || prev.department;
+                          return {
+                            ...prev,
+                            tagline: `${clean ? `${clean} student` : "Student"} helping juniors with ${prev.skills[0] || "core subjects"} and lab work.`,
+                          };
+                        })
                       }
                       className="underline hover:text-foreground"
                     >
@@ -1137,10 +1141,13 @@ export default function ProfileSetupStudio() {
                     <button
                       type="button"
                       onClick={() =>
-                        setState((prev) => ({
-                          ...prev,
-                          tagline: `${prev.department ? `${prev.department} student` : "Student"} happy to review projects, coursework, and notes.`,
-                        }))
+                        setState((prev) => {
+                          const clean = formatDepartment(prev.department) || prev.department;
+                          return {
+                            ...prev,
+                            tagline: `${clean ? `${clean} student` : "Student"} happy to review projects, coursework, and notes.`,
+                          };
+                        })
                       }
                       className="underline hover:text-foreground"
                     >
@@ -1759,7 +1766,7 @@ export default function ProfileSetupStudio() {
               for (const s of result.subjects) if (!seen.has(s.code)) seen.set(s.code, s.name);
               return {
                 ...prev,
-                department: result.program || prev.department,
+                department: formatDepartment(result.program) || result.program || prev.department,
                 courses: Array.from(seen, ([code, name]) => ({ code, name })),
               };
             });
