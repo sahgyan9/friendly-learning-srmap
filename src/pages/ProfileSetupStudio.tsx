@@ -251,7 +251,7 @@ export default function ProfileSetupStudio() {
           outcomes: currentOutcomes,
           ask_me_anything: currentAma,
           ideal_mentees: currentIdealMentees,
-          isDiscoverable: userData?.interests_discoverable ?? true,
+          isDiscoverable: !alreadyPublished ? true : (userData?.interests_discoverable ?? true),
           isAvailable: mentorData?.is_available ?? true,
           courses: coursesList,
         });
