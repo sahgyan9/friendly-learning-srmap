@@ -220,37 +220,16 @@ export default function ProfileSetupStudio() {
         );
         setIsPublished(alreadyPublished);
 
-        let currentTagline = mentorData?.tagline || "";
-        let currentOutcomes = Array.isArray(mentorData?.outcomes) ? mentorData.outcomes : [];
-        let currentAma = Array.isArray(mentorData?.ask_me_anything)
+        const currentTagline = mentorData?.tagline || "";
+        const currentOutcomes = Array.isArray(mentorData?.outcomes) ? mentorData.outcomes : [];
+        const currentAma = Array.isArray(mentorData?.ask_me_anything)
           ? mentorData.ask_me_anything.map((item: any) =>
               typeof item === "string" ? { topic: item } : item
             )
           : [];
-        let currentIdealMentees = Array.isArray(mentorData?.ideal_mentees)
+        const currentIdealMentees = Array.isArray(mentorData?.ideal_mentees)
           ? mentorData.ideal_mentees
           : [];
-
-        // If AI summary sections are empty and skills exist, auto-generate smart drafts
-        if (
-          !currentTagline &&
-          currentOutcomes.length === 0 &&
-          currentAma.length === 0 &&
-          currentIdealMentees.length === 0 &&
-          mergedSkills.length > 0
-        ) {
-          const drafts = generateSmartDrafts(
-            mergedSkills,
-            studentDept,
-            studentName,
-            mentorData?.bio || userData?.bio || "",
-            studentYear
-          );
-          currentTagline = drafts.tagline;
-          currentOutcomes = drafts.outcomes;
-          currentAma = drafts.ask_me_anything;
-          currentIdealMentees = drafts.ideal_mentees;
-        }
 
         setState({
           name: studentName,
@@ -294,11 +273,20 @@ export default function ProfileSetupStudio() {
     setNudgeReason(null);
   };
 
-  // Auto-draft for users who enter skills and department manually or via SRM Portal
+  // The Studio's only auto-draft path. Fills the four AI summary sections when
+  // they are all empty, and never overwrites anything already there.
+  //
+  // Deliberately skipped once a profile is published: after that point, empty
+  // sections are a choice the student made, and silently refilling them on
+  // their next visit undoes that. Resume imports fill these fields themselves,
+  // so this stays out of their way too.
   useEffect(() => {
     if (loading || isPublished || hasAutoDraftedRef.current) return;
 
-    const hasMinSkills = state.skills.length >= 2;
+    // Students who arrive via the SRM Portal have coursework but no skills, so
+    // their course names stand in as topics — otherwise they'd get no draft.
+    const courseTopics = state.courses.map((c) => c.name).filter(Boolean);
+    const topics = state.skills.length > 0 ? state.skills : courseTopics;
     const hasDept = state.department.trim().length > 0;
     const allFourEmpty =
       !state.tagline.trim() &&
@@ -306,32 +294,33 @@ export default function ProfileSetupStudio() {
       state.ask_me_anything.length === 0 &&
       state.ideal_mentees.length === 0;
 
-    if (hasMinSkills && hasDept && allFourEmpty) {
-      hasAutoDraftedRef.current = true;
-      const drafts = generateSmartDrafts(
-        state.skills,
-        state.department,
-        state.name,
-        state.bio,
-        state.year_of_studies
-      );
+    if (!hasDept || topics.length === 0 || !allFourEmpty) return;
 
-      setState((prev) => ({
-        ...prev,
-        tagline: prev.tagline.trim() ? prev.tagline : drafts.tagline,
-        outcomes: prev.outcomes.length > 0 ? prev.outcomes : drafts.outcomes,
-        ask_me_anything: prev.ask_me_anything.length > 0 ? prev.ask_me_anything : drafts.ask_me_anything,
-        ideal_mentees: prev.ideal_mentees.length > 0 ? prev.ideal_mentees : drafts.ideal_mentees,
-      }));
+    hasAutoDraftedRef.current = true;
+    const drafts = generateSmartDrafts(
+      topics,
+      state.department,
+      state.name,
+      state.bio,
+      state.year_of_studies
+    );
 
-      toast.success(
-        "We drafted a headline and topics from your skills — edit anything that doesn't sound like you."
-      );
-    }
+    setState((prev) => ({
+      ...prev,
+      tagline: prev.tagline.trim() ? prev.tagline : drafts.tagline,
+      outcomes: prev.outcomes.length > 0 ? prev.outcomes : drafts.outcomes,
+      ask_me_anything: prev.ask_me_anything.length > 0 ? prev.ask_me_anything : drafts.ask_me_anything,
+      ideal_mentees: prev.ideal_mentees.length > 0 ? prev.ideal_mentees : drafts.ideal_mentees,
+    }));
+
+    toast.success(
+      "We drafted a headline and topics to get you started — edit anything that doesn't sound like you."
+    );
   }, [
     loading,
     isPublished,
     state.skills,
+    state.courses,
     state.department,
     state.tagline,
     state.outcomes,
