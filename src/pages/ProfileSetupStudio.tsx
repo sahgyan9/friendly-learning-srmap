@@ -42,6 +42,7 @@ import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import ResumePdfImport from "@/components/mentors/form/ResumePdfImport";
 import { ImportSrmPortalDialog } from "@/components/profile/ImportSrmPortal";
+import PostPublishPortalModal from "@/components/profile/PostPublishPortalModal";
 import MentorAvatar from "@/components/mentors/MentorAvatar";
 import { getMentorById, updateMentorSummary } from "@/integrations/supabase/services/mentors";
 import { getEnhancedMentorProfile } from "@/utils/mentor-enhancements";
@@ -152,6 +153,7 @@ export default function ProfileSetupStudio() {
   const [isPublished, setIsPublished] = useState(false);
   const [activeMobileTab, setActiveMobileTab] = useState<"edit" | "preview">("edit");
   const [portalDialogOpen, setPortalDialogOpen] = useState(false);
+  const [postPublishModalOpen, setPostPublishModalOpen] = useState(false);
   // "resume" = just imported a resume, so mention that; "visit" = landed on
   // the Studio with no portal linked yet, so use the generic prompt. Either
   // way this is an inline dismissible banner, never a blocking popup.
@@ -652,17 +654,24 @@ export default function ProfileSetupStudio() {
       await refreshProfile();
       setIsPublished(true);
 
+      const isPortalLinked = state.courses.length > 0 || Boolean(profile?.date_of_birth_linked);
+
       toast.success(
         isPublished
           ? "✓ Profile changes saved live!"
           : "🎉 Profile published live to Friendly Learning SRMAP!",
         { id: toastId }
       );
-      
-      // Navigate to public profile
-      setTimeout(() => {
-        navigate(`/mentor/${user.id}`);
-      }, 400);
+
+      if (!isPortalLinked) {
+        // Center popup reminding user to link SRM portal for verified coursework & badges
+        setPostPublishModalOpen(true);
+      } else {
+        // Already linked, navigate to public profile
+        setTimeout(() => {
+          navigate(`/mentor/${user.id}`);
+        }, 400);
+      }
     } catch (err: any) {
       console.error("Error publishing profile:", err);
       toast.error(err?.message || "Failed to save profile. Please try again.", { id: toastId });
@@ -1773,6 +1782,23 @@ export default function ProfileSetupStudio() {
           }
           setNudgeReason(null);
           toast.success("SRM Portal courses and academic details linked!");
+        }}
+      />
+
+      {/* Post-Publish Link SRM Portal Popup */}
+      <PostPublishPortalModal
+        open={postPublishModalOpen}
+        onOpenChange={setPostPublishModalOpen}
+        userName={state.name}
+        onLinkPortal={() => {
+          setPostPublishModalOpen(false);
+          setPortalDialogOpen(true);
+        }}
+        onViewProfile={() => {
+          setPostPublishModalOpen(false);
+          if (user?.id) {
+            navigate(`/mentor/${user.id}`);
+          }
         }}
       />
     </div>

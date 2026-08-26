@@ -1,10 +1,11 @@
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { FileText, Loader2, Upload } from "lucide-react";
+import { FileText, Loader2, Upload, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { MentorFormData } from "@/hooks/useMentorForm";
 import { extractPdfText } from "@/lib/pdfTextExtract";
+import PdfParsingModal, { type ParsingStage } from "./PdfParsingModal";
 
 interface ResumePdfImportProps {
   onImported: (data: Partial<MentorFormData>) => void;
@@ -20,7 +21,6 @@ interface ResumePdfImportProps {
 }
 
 const MAX_SIZE_MB = 10;
-const REQUEST_TIMEOUT_MS = 45000;
 // Below this, treat extraction as having failed (scanned/image-only PDF) and
 // fall back to uploading the raw file for Gemini's document-vision path.
 const MIN_TEXT_CHARS_FOR_TEXT_MODE = 120;
@@ -48,6 +48,13 @@ const ResumePdfImport = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Parsing Modal State
+  const [modalOpen, setModalOpen] = useState(false);
+  const [parsingStage, setParsingStage] = useState<ParsingStage>("idle");
+  const [fileName, setFileName] = useState("");
+  const [fileSizeBytes, setFileSizeBytes] = useState<number | undefined>(undefined);
+  const [errorMessage, setErrorMessage] = useState("");
+
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = ""; // reset so same file can be reselected
@@ -62,12 +69,19 @@ const ResumePdfImport = ({
       return;
     }
 
+    setFileName(file.name);
+    setFileSizeBytes(file.size);
+    setErrorMessage("");
+    setParsingStage("reading");
+    setModalOpen(true);
     setIsLoading(true);
-    const loadingId = toast.loading("Reading your PDF...");
 
     try {
+      // Step 1: Extract PDF text (client-side fast path)
       const extractedText = await extractPdfText(file);
       const useTextMode = extractedText.length >= MIN_TEXT_CHARS_FOR_TEXT_MODE;
+
+      setParsingStage("analyzing");
 
       // Text mode skips the base64 upload entirely -- most resumes are plain
       // text underneath, so this is both the fast path and the common one.
@@ -76,6 +90,7 @@ const ResumePdfImport = ({
         ? { pdfText: extractedText, mimeType: file.type, fields }
         : { pdfBase64: await fileToBase64(file), mimeType: file.type, fields };
 
+      // Step 2 & 3: Run Gemini AI parser on Edge Function
       const { data, error } = await supabase.functions.invoke(
         "parse-linkedin-pdf",
         { body },
@@ -93,6 +108,8 @@ const ResumePdfImport = ({
       }
       if (data?.error) throw new Error(data.error);
       if (!data?.data) throw new Error("No data returned from parser");
+
+      setParsingStage("synthesizing");
 
       const extracted = data.data as Record<string, any>;
 
@@ -126,6 +143,8 @@ const ResumePdfImport = ({
         extracted.skills = cleanedSkills.join(", ");
       }
 
+      setParsingStage("finalizing");
+
       // Only pass non-empty fields so we don't overwrite existing input with ""
       const filtered: Record<string, any> = {};
       Object.keys(extracted).forEach((key) => {
@@ -139,102 +158,122 @@ const ResumePdfImport = ({
         }
       });
 
-      onImported(filtered as Partial<MentorFormData>);
-      toast.success("Profile imported! Please review and complete missing fields.", {
-        id: loadingId,
-      });
+      // Show success stage on modal
+      setParsingStage("success");
+
+      // Wait a moment for celebratory animation to complete before applying
+      setTimeout(() => {
+        setModalOpen(false);
+        onImported(filtered as Partial<MentorFormData>);
+        toast.success("Profile parsed successfully! AI drafted your skills & bio.");
+      }, 750);
     } catch (err: unknown) {
       console.error("Resume import failed:", err);
       const msg = err instanceof Error ? err.message : "Failed to parse PDF";
-      toast.error(msg, { id: loadingId });
+      setErrorMessage(msg);
+      setParsingStage("error");
+      toast.error(msg);
     } finally {
       setIsLoading(false);
     }
   };
 
-  if (variant === "button") {
-    return (
-      <>
-        <input
-          ref={inputRef}
-          type="file"
-          accept="application/pdf"
-          className="hidden"
-          onChange={handleFile}
-        />
-        <Button
-          type="button"
-          variant="default"
-          size="sm"
-          onClick={() => inputRef.current?.click()}
-          disabled={isLoading}
-          className={`shrink-0 gap-1.5 font-bold ${className}`}
-        >
-          {isLoading ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Parsing PDF...
-            </>
-          ) : (
-            <>
-              <Upload className="h-4 w-4" />
-              {buttonLabel}
-            </>
-          )}
-        </Button>
-      </>
-    );
-  }
-
   return (
-    <div className={`rounded-lg border border-dashed border-primary/40 bg-primary/5 p-4 ${className}`}>
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div className="flex items-start gap-3">
-          <div className="rounded-md bg-primary/10 p-2">
-            <FileText className="h-5 w-5 text-primary" />
-          </div>
-          <div>
-            <p className="font-medium text-sm">Import from your resume or LinkedIn PDF</p>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Upload whichever PDF you already have and we'll auto-fill the form.
-              <br />
-              <span className="opacity-80">
-                No LinkedIn PDF? LinkedIn → Your Profile → More → Save to PDF
-              </span>
-            </p>
+    <>
+      <PdfParsingModal
+        open={modalOpen}
+        fileName={fileName}
+        fileSizeBytes={fileSizeBytes}
+        stage={parsingStage}
+        errorMessage={errorMessage}
+        onRetry={() => {
+          setModalOpen(false);
+          setTimeout(() => inputRef.current?.click(), 150);
+        }}
+        onClose={() => setModalOpen(false)}
+      />
+
+      {variant === "button" ? (
+        <>
+          <input
+            ref={inputRef}
+            type="file"
+            accept="application/pdf"
+            className="hidden"
+            onChange={handleFile}
+          />
+          <Button
+            type="button"
+            variant="default"
+            size="sm"
+            onClick={() => inputRef.current?.click()}
+            disabled={isLoading}
+            className={`shrink-0 gap-1.5 font-bold ${className}`}
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Parsing PDF...
+              </>
+            ) : (
+              <>
+                <Upload className="h-4 w-4" />
+                {buttonLabel}
+              </>
+            )}
+          </Button>
+        </>
+      ) : (
+        <div className={`rounded-lg border border-dashed border-primary/40 bg-primary/5 p-4 ${className}`}>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex items-start gap-3">
+              <div className="rounded-md bg-primary/10 p-2">
+                <FileText className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="font-medium text-sm">Import from your resume or LinkedIn PDF</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Upload whichever PDF you already have and we'll auto-fill the form.
+                  <br />
+                  <span className="opacity-80">
+                    No LinkedIn PDF? LinkedIn → Your Profile → More → Save to PDF
+                  </span>
+                </p>
+              </div>
+            </div>
+
+            <input
+              ref={inputRef}
+              type="file"
+              accept="application/pdf"
+              className="hidden"
+              onChange={handleFile}
+            />
+
+            <Button
+              type="button"
+              variant="default"
+              size="sm"
+              onClick={() => inputRef.current?.click()}
+              disabled={isLoading}
+              className="shrink-0 gap-1.5 font-bold"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Parsing...
+                </>
+              ) : (
+                <>
+                  <Upload className="h-4 w-4" />
+                  {buttonLabel}
+                </>
+              )}
+            </Button>
           </div>
         </div>
-
-        <input
-          ref={inputRef}
-          type="file"
-          accept="application/pdf"
-          className="hidden"
-          onChange={handleFile}
-        />
-
-        <Button
-          type="button"
-          variant="default"
-          size="sm"
-          onClick={() => inputRef.current?.click()}
-          disabled={isLoading}
-          className="shrink-0 gap-1.5 font-bold"
-        >
-          {isLoading ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Parsing...
-            </>
-          ) : (
-            <>
-              <Upload className="h-4 w-4" />
-              {buttonLabel}
-            </>
-          )}
-        </Button>
-      </div>
-    </div>
+      )}
+    </>
   );
 };
 
