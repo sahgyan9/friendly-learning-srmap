@@ -16,16 +16,14 @@ import { getInitials } from "@/utils/user-utils";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useWelcomeTour } from "@/components/onboarding/WelcomeTourContext";
-import { ProfileKickstartModal } from "@/components/profile/ProfileKickstartModal";
 import { Sparkles, User, Award } from "lucide-react";
 
 const NavbarProfileMenu = () => {
-  const { user, profile, signOut, loading, refreshProfile } = useAuth();
+  const { user, profile, signOut, loading } = useAuth();
   const { openTour } = useWelcomeTour();
   const [isRealMentor, setIsRealMentor] = useState(false);
   const [mentorSlug, setMentorSlug] = useState<string | null>(null);
   const [checkingMentorStatus, setCheckingMentorStatus] = useState(true);
-  const [kickstartOpen, setKickstartOpen] = useState(false);
 
   useEffect(() => {
     checkMentorStatus();
@@ -91,20 +89,7 @@ const NavbarProfileMenu = () => {
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
           
-          {/* 1-Click Fast Setup / PDF Modal */}
-          {!isRealMentor && (
-            <DropdownMenuItem
-              onClick={() => setKickstartOpen(true)}
-              className="cursor-pointer text-primary focus:text-primary font-medium flex items-center justify-between"
-            >
-              <span className="flex items-center gap-2">
-                <Sparkles className="h-4 w-4" />
-                Help Others Find You
-              </span>
-              <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-semibold">10s</span>
-            </DropdownMenuItem>
-          )}
-
+          {/* 1-Click Fast Setup — goes straight to the Profile Studio, no popup */}
           {isRealMentor ? (
             <DropdownMenuItem asChild>
               <Link to={`/mentor/${mentorSlug || user.id}`} className="cursor-pointer w-full flex items-center gap-2">
@@ -113,10 +98,16 @@ const NavbarProfileMenu = () => {
               </Link>
             </DropdownMenuItem>
           ) : (
-            <DropdownMenuItem asChild>
-              <Link to="/profile/setup" className="cursor-pointer w-full flex items-center gap-2">
-                <Sparkles className="h-4 w-4 text-primary" />
-                Set Up Public Profile
+            <DropdownMenuItem
+              asChild
+              className="cursor-pointer text-primary focus:text-primary font-medium flex items-center justify-between"
+            >
+              <Link to="/profile/setup" className="flex w-full items-center justify-between">
+                <span className="flex items-center gap-2">
+                  <Sparkles className="h-4 w-4" />
+                  Set Up Public Profile
+                </span>
+                <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-semibold">10s</span>
               </Link>
             </DropdownMenuItem>
           )}
@@ -146,15 +137,6 @@ const NavbarProfileMenu = () => {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-
-      <ProfileKickstartModal
-        open={kickstartOpen}
-        onOpenChange={setKickstartOpen}
-        onProfileUpdated={() => {
-          refreshProfile();
-          checkMentorStatus();
-        }}
-      />
     </>
   );
 };

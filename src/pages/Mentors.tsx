@@ -14,7 +14,6 @@ import { Mentor } from "@/types/mentor";
 import { getBreadcrumbSchema } from "@/lib/structured-data";
 import { useHasVisitedMentorsNav } from "@/hooks/useFeatureAnnouncement";
 import { useAuth } from "@/context/AuthContext";
-import { ProfileKickstartModal } from "@/components/profile/ProfileKickstartModal";
 import { Button } from "@/components/ui/button";
 
 // Import refactored components
@@ -43,7 +42,6 @@ const Mentors = () => {
   const [mentorCount, setMentorCount] = useState(0);
   const [isAiSearch, setIsAiSearch] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [kickstartOpen, setKickstartOpen] = useState(false);
   const { markSeen: markMentorsNavSeen } = useHasVisitedMentorsNav();
   const cardsRef = useRef<HTMLDivElement>(null);
 
@@ -260,12 +258,14 @@ const Mentors = () => {
                   </p>
                 </div>
                 <Button
+                  asChild
                   size="sm"
-                  onClick={() => setKickstartOpen(true)}
                   className="gap-1.5 shrink-0 text-xs font-medium"
                 >
-                  <FileText className="h-3.5 w-3.5" />
-                  Auto-Fill Profile in 10s
+                  <Link to="/profile/setup">
+                    <FileText className="h-3.5 w-3.5" />
+                    Auto-Fill Profile in 10s
+                  </Link>
                 </Button>
               </div>
             )
@@ -307,20 +307,6 @@ const Mentors = () => {
 
         <Footer />
       </div>
-
-      <ProfileKickstartModal
-        open={kickstartOpen}
-        onOpenChange={setKickstartOpen}
-        onProfileUpdated={() => {
-          getMentors().then(({ data }) => {
-            if (data) {
-              setAllMentors(data);
-              setFilteredMentors(data);
-              setMentorCount(data.length);
-            }
-          });
-        }}
-      />
     </>
   );
 };

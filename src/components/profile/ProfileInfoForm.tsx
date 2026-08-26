@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { GraduationCap, Loader2, User, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -8,7 +9,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import AvailabilityControl from "@/components/mentors/AvailabilityControl";
 import InterestsEditor from "@/components/profile/InterestsEditor";
-import { ProfileKickstartModal } from "@/components/profile/ProfileKickstartModal";
 import type { MentorProfileData } from "./MentorProfileCard";
 
 export interface UserProfileData {
@@ -49,7 +49,6 @@ export function ProfileInfoForm({
   onSubmit,
 }: ProfileInfoFormProps) {
   const [newSkill, setNewSkill] = useState("");
-  const [kickstartOpen, setKickstartOpen] = useState(false);
 
   const addSkill = () => {
     const trimmed = newSkill.trim();
@@ -83,14 +82,16 @@ export function ProfileInfoForm({
               </CardDescription>
             </div>
             <Button
+              asChild
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => setKickstartOpen(true)}
               className="gap-1.5 text-xs text-primary border-primary/30 bg-primary/5 hover:bg-primary/10"
             >
-              <Sparkles className="h-3.5 w-3.5" />
-              1-Click PDF & Portal Import
+              <Link to="/profile/setup">
+                <Sparkles className="h-3.5 w-3.5" />
+                1-Click PDF & Portal Import
+              </Link>
             </Button>
           </div>
         </CardHeader>
@@ -247,13 +248,15 @@ export function ProfileInfoForm({
 
           {!showMentorFields && (
             <Button
+              asChild
               type="button"
               variant="outline"
               className="w-full gap-2 border-primary/30 text-primary hover:bg-primary/5"
-              onClick={() => setKickstartOpen(true)}
             >
-              <Sparkles className="h-4 w-4" />
-              Help Others Find You (Auto-Fill Profile in 10s)
+              <Link to="/profile/setup">
+                <Sparkles className="h-4 w-4" />
+                Help Others Find You (Auto-Fill Profile in 10s)
+              </Link>
             </Button>
           )}
 
@@ -270,14 +273,6 @@ export function ProfileInfoForm({
         </form>
       </CardContent>
     </Card>
-
-    <ProfileKickstartModal
-      open={kickstartOpen}
-      onOpenChange={setKickstartOpen}
-      onProfileUpdated={() => {
-        window.location.reload();
-      }}
-    />
   </>
 );
 }

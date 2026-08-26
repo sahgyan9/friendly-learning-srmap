@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { EnhancedMentor } from "@/utils/mentor-enhancements";
-import { ProfileKickstartModal } from "@/components/profile/ProfileKickstartModal";
 import { ImportSrmPortalDialog } from "@/components/profile/ImportSrmPortal";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
@@ -21,8 +20,6 @@ export default function ProfileCompletenessBanner({
   mentor,
   onMentorUpdated,
 }: ProfileCompletenessBannerProps) {
-  const [kickstartOpen, setKickstartOpen] = useState(false);
-  const [kickstartTab, setKickstartTab] = useState<"pdf" | "portal" | "clubs">("pdf");
   const [portalDialogOpen, setPortalDialogOpen] = useState(false);
   const { refreshProfile } = useAuth();
 
@@ -57,15 +54,6 @@ export default function ProfileCompletenessBanner({
       toast.success("Profile link copied to clipboard! 📋");
     } else {
       toast.info(`Profile URL: ${url}`);
-    }
-  };
-
-  const openModalWithTab = (tab: "pdf" | "portal" | "clubs") => {
-    if (tab === "portal") {
-      setPortalDialogOpen(true);
-    } else {
-      setKickstartTab(tab);
-      setKickstartOpen(true);
     }
   };
 
@@ -138,7 +126,7 @@ export default function ProfileCompletenessBanner({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => openModalWithTab("portal")}
+              onClick={() => setPortalDialogOpen(true)}
               className="gap-1.5 font-medium bg-background/80"
             >
               <GraduationCap className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
@@ -171,17 +159,6 @@ export default function ProfileCompletenessBanner({
           </div>
         </div>
       </div>
-
-      <ProfileKickstartModal
-        open={kickstartOpen}
-        onOpenChange={setKickstartOpen}
-        defaultTab={kickstartTab}
-        onProfileUpdated={async () => {
-          await refreshProfile();
-          const { data } = await getMentorById(mentor.id);
-          if (data) onMentorUpdated?.(data);
-        }}
-      />
 
       <ImportSrmPortalDialog
         open={portalDialogOpen}
