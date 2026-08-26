@@ -121,6 +121,7 @@ export default function ProfileSetupStudio() {
   const [isPublished, setIsPublished] = useState(false);
   const [activeMobileTab, setActiveMobileTab] = useState<"edit" | "preview">("edit");
   const [portalDialogOpen, setPortalDialogOpen] = useState(false);
+  const [showPortalNudge, setShowPortalNudge] = useState(false);
 
   // Studio Form State
   const [state, setState] = useState<StudioProfileState>({
@@ -342,6 +343,10 @@ export default function ProfileSetupStudio() {
         ? "Resume updated! We merged new skills and refreshed your details."
         : "Resume parsed! AI has filled your skills, headline, outcomes, and topics."
     );
+
+    // Resume alone can't see coursework — nudge toward the other 10-second
+    // import so search can also match students by course code, not just skills.
+    setShowPortalNudge(true);
   };
 
   // Skill Handlers
@@ -721,10 +726,58 @@ export default function ProfileSetupStudio() {
                 <Sparkles className="h-3.5 w-3.5 text-primary" />
                 {isPublished ? "Regenerate Summaries" : "Auto-Draft All"}
               </Button>
-              <ResumePdfImport onImported={handlePdfImported} />
+              <ResumePdfImport onImported={handlePdfImported} buttonLabel="Fill from Resume" />
             </div>
           </div>
         </section>
+
+        {/* Post-resume nudge: only the SRM Portal can fill in verified coursework,
+            so offer it right after a resume import — dismissible, never blocking. */}
+        <AnimatePresence>
+          {showPortalNudge && state.courses.length === 0 && (
+            <motion.section
+              initial={{ opacity: 0, height: 0, marginBottom: 0 }}
+              animate={{ opacity: 1, height: "auto", marginBottom: 24 }}
+              exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+              transition={{ duration: 0.25 }}
+              className="overflow-hidden rounded-2xl border border-emerald-500/25 bg-emerald-500/5"
+            >
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 sm:p-5">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+                    <GraduationCap className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">
+                      Resume added! One more thing — link your SRM Portal?
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      We'll pull in your verified coursework so juniors can find you by course code too. Takes about 10 seconds, and your CGPA stays private.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setShowPortalNudge(false)}
+                    className="text-xs text-muted-foreground"
+                  >
+                    Skip for now
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => setPortalDialogOpen(true)}
+                    className="gap-1.5 text-xs font-semibold"
+                  >
+                    <GraduationCap className="h-3.5 w-3.5" />
+                    Link Portal
+                  </Button>
+                </div>
+              </div>
+            </motion.section>
+          )}
+        </AnimatePresence>
 
         {/* Studio Grid: Left (Editor) & Right (Sticky Live Preview) */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
@@ -1448,10 +1501,17 @@ export default function ProfileSetupStudio() {
         onSuccess={async (result) => {
           await refreshProfile();
           if (result) {
-            if (result.program) {
-              setState((prev) => ({ ...prev, department: result.program || prev.department }));
-            }
+            setState((prev) => {
+              const seen = new Map<string, string>();
+              for (const s of result.subjects) if (!seen.has(s.code)) seen.set(s.code, s.name);
+              return {
+                ...prev,
+                department: result.program || prev.department,
+                courses: Array.from(seen, ([code, name]) => ({ code, name })),
+              };
+            });
           }
+          setShowPortalNudge(false);
           toast.success("SRM Portal courses and academic details linked!");
         }}
       />

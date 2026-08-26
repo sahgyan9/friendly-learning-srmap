@@ -12,6 +12,8 @@ interface ResumePdfImportProps {
    * doesn't read, so Gemini generates less and returns faster. Defaults to
    * "full" for callers (like the profile setup studio) that use all of it. */
   fields?: "basic" | "full";
+  /** Overrides the button label (default "Upload PDF"). */
+  buttonLabel?: string;
 }
 
 const MAX_SIZE_MB = 10;
@@ -33,7 +35,7 @@ const fileToBase64 = (file: File): Promise<string> =>
     reader.readAsDataURL(file);
   });
 
-const ResumePdfImport = ({ onImported, fields = "full" }: ResumePdfImportProps) => {
+const ResumePdfImport = ({ onImported, fields = "full", buttonLabel = "Upload PDF" }: ResumePdfImportProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -184,7 +186,7 @@ const ResumePdfImport = ({ onImported, fields = "full" }: ResumePdfImportProps) 
           ) : (
             <>
               <Upload className="mr-2 h-4 w-4" />
-              Upload PDF
+              {buttonLabel}
             </>
           )}
         </Button>

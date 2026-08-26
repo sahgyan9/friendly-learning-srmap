@@ -77,6 +77,12 @@ as $$
     union all
     select max(pc.created_at) as ts from public.post_comments pc where pc.user_id = p_user_id
     union all
+    select max(sh.created_at) as ts from public.search_history sh where sh.user_id = p_user_id
+    union all
+    select max(si.created_at) as ts from public.search_interactions si where si.viewer_id = p_user_id
+    union all
+    select max(fr.created_at) as ts from public.faculty_ratings fr where fr.reviewer_id = p_user_id
+    union all
     select max(up.last_seen) as ts from public.user_presence up where up.user_id = p_user_id
     union all
     select max(u.last_sign_in_at) as ts from auth.users u where u.id = p_user_id
