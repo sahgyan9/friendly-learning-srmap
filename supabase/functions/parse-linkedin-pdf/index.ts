@@ -59,19 +59,23 @@ serve(async (req) => {
 
     const finalMime = mimeType || "application/pdf";
 
-    const prompt = `You are an expert resume parser for a university mentorship platform. Extract structured information from this student's PDF, which may be a LinkedIn profile export or a regular resume/CV.
-Return a JSON object with these exact keys:
+    const prompt = `You are an expert resume parser for a university peer learning & mentorship platform. Extract structured information from this student's PDF (which may be a LinkedIn profile export or a standard resume/CV).
+Return a valid JSON object with these exact keys:
 - "name": string (full student name)
-- "department": string (field of study or major, e.g. "Computer Science and Engineering")
+- "department": string (field of study or major, e.g. "Physics", "Computer Science and Engineering")
 - "university": string (e.g. "SRM University-AP")
 - "year_of_studies": string (must be one of: "1st Year", "2nd Year", "3rd Year", "4th Year", "5th Year", "Graduated", or "")
-- "skills": string (comma-separated string of distinct skills, max 15, e.g. "React, Node.js, Python, Machine Learning")
+- "skills": string (comma-separated list of max 15 distinct technical, scientific, or domain skills, e.g. "Python, Quantum Mechanics, React, MATLAB". CRITICAL CONSTRAINT: DO NOT include degrees, diplomas, program names, specializations, or academic titles like "B.S. IT", "B.Tech", "M.Sc.", "Specialising in...", "SRM University", "Student" in the skills list)
+- "tagline": string (a punchy one-sentence headline under 100 chars on what this student can help peers with, e.g. "Helping peers master Quantum Mechanics & Full-stack React apps")
+- "outcomes": array of 2 to 3 concise strings describing concrete things a junior/peer achieves with their help (e.g. ["Build and deploy fullstack React projects", "Master problem-solving in physics and calculus"])
+- "ask_me_anything": array of 3 to 4 distinct topic strings (e.g. ["Quantum Algorithms", "React Development", "Research Paper Writing", "Lab Reports"])
+- "ideal_mentees": array of 2 to 3 concise strings describing who gets the most value (e.g. ["1st or 2nd year students taking Physics courses", "Classmates looking for hackathon teammates"])
 - "bio": string (concise 2-3 sentence professional summary in first person)
 - "linkedin_url": string (full LinkedIn profile URL if visible, or empty)
 - "hobbies": string (hobbies or extra-curricular interests if present, or empty)
 - "mobile": string (contact number if present, or empty)
 
-If a field is not present in the document, set its value to empty string "".`;
+If any field cannot be derived from the document, provide an empty string "" or empty array [].`;
 
     let lastError = "";
 

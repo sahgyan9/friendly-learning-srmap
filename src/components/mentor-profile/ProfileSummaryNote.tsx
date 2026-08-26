@@ -75,8 +75,8 @@ export default function ProfileSummaryNote({ mentor, isOwnProfile }: ProfileSumm
             &ldquo;What I can help you achieve&rdquo; and &ldquo;Perfect if you are&hellip;&rdquo;
             are built from your bio, projects and experience. Write a few specific lines about
             what you actually work on and they will fill in.{" "}
-            <Link to="/profile" className="font-medium text-primary underline underline-offset-2">
-              Update your profile
+            <Link to="/profile/setup" className="font-semibold text-primary underline underline-offset-2">
+              Open Profile Studio to customize them
             </Link>
           </p>
         </div>

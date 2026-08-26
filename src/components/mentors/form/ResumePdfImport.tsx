@@ -57,18 +57,52 @@ const ResumePdfImport = ({ onImported }: ResumePdfImportProps) => {
       if (data?.error) throw new Error(data.error);
       if (!data?.data) throw new Error("No data returned");
 
-      const extracted = data.data as Partial<MentorFormData>;
+      const extracted = data.data as Record<string, any>;
+
+      // Clean skills to strip degree titles or institution names if any slipped through
+      if (extracted.skills) {
+        const rawSkills: string[] = Array.isArray(extracted.skills)
+          ? extracted.skills
+          : typeof extracted.skills === "string"
+            ? extracted.skills.split(",").map((s: string) => s.trim()).filter(Boolean)
+            : [];
+
+        const isDegreeOrInstitution = (s: string) => {
+          const lower = s.toLowerCase().trim();
+          return (
+            lower.startsWith("b.s") ||
+            lower.startsWith("b.tech") ||
+            lower.startsWith("m.tech") ||
+            lower.startsWith("m.sc") ||
+            lower.startsWith("bachelor") ||
+            lower.startsWith("master") ||
+            lower.startsWith("specialis") ||
+            lower.startsWith("specializ") ||
+            lower.includes("degree") ||
+            lower.includes("srm university") ||
+            lower.includes("srm ap") ||
+            lower === "student"
+          );
+        };
+
+        const cleanedSkills = rawSkills.filter((s) => !isDegreeOrInstitution(s));
+        extracted.skills = cleanedSkills.join(", ");
+      }
 
       // Only pass non-empty fields so we don't overwrite existing input with ""
-      const filtered: Partial<MentorFormData> = {};
-      (Object.keys(extracted) as (keyof MentorFormData)[]).forEach((key) => {
+      const filtered: Record<string, any> = {};
+      Object.keys(extracted).forEach((key) => {
         const val = extracted[key];
-        if (typeof val === "string" && val.trim()) {
-          (filtered as Record<string, string>)[key] = val.trim();
+        if (Array.isArray(val) && val.length > 0) {
+          filtered[key] = val;
+        } else if (typeof val === "string" && val.trim()) {
+          filtered[key] = val.trim();
+        } else if (val !== undefined && val !== null) {
+          filtered[key] = val;
         }
       });
 
-      onImported(filtered);
+      onImported(filtered as Partial<MentorFormData>);
       toast.success("Profile imported! Please review and complete missing fields.", {
         id: loadingId,
       });

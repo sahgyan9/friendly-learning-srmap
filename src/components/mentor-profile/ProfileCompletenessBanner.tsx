@@ -67,12 +67,14 @@ export default function ProfileCompletenessBanner({
 
           <div className="flex flex-wrap items-center gap-2 shrink-0">
             <Button
+              asChild
               size="sm"
-              onClick={() => openModalWithTab("pdf")}
-              className="gap-1.5 font-medium shadow-xs"
+              className="gap-1.5 font-bold shadow-xs bg-primary hover:bg-primary/90 text-primary-foreground"
             >
-              <FileText className="h-4 w-4" />
-              Auto-Fill from Resume PDF
+              <Link to="/profile/setup">
+                <Sparkles className="h-4 w-4" />
+                Launch Profile Studio
+              </Link>
             </Button>
             <Button
               variant="outline"

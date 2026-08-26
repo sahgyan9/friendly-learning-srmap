@@ -246,13 +246,25 @@ export function ProfileKickstartModal({
                     />
                   </div>
 
-                  <Button
-                    onClick={handleSaveImportedData}
-                    disabled={isSaving}
-                    className="w-full mt-2 font-medium"
-                  >
-                    {isSaving ? "Saving..." : "Save to My Profile 🎉"}
-                  </Button>
+                  <div className="pt-2 flex flex-col gap-2">
+                    <Button
+                      onClick={handleSaveImportedData}
+                      disabled={isSaving}
+                      className="w-full font-medium"
+                    >
+                      {isSaving ? "Saving..." : "Save to My Profile 🎉"}
+                    </Button>
+                    <Button
+                      asChild
+                      variant="outline"
+                      className="w-full font-medium gap-1.5"
+                    >
+                      <Link to="/profile/setup" onClick={() => onOpenChange(false)}>
+                        <Sparkles className="h-4 w-4 text-primary" />
+                        Open Studio to Edit & Preview Live
+                      </Link>
+                    </Button>
+                  </div>
                   <p className="text-[11px] text-center text-muted-foreground mt-1">
                     ✓ Instantly activates your card on the campus directory.
                   </p>

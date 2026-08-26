@@ -156,7 +156,7 @@ const MentorProfile = () => {
     <div className="min-h-screen">
       {mentor && generateSEO()}
 
-      <main className="pt-24 pb-16">
+      <main className="pt-24 pb-28 lg:pb-16">
         <div className="container px-4 md:px-6">
           <motion.div
             className="mb-8"

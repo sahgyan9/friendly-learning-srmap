@@ -27,12 +27,16 @@ export interface EnhancedMentor extends Omit<Mentor, "ask_me_anything" | "taglin
 }
 
 const SKILL_CATEGORIES: Record<string, string[]> = {
-  Programming: ["Python", "C++", "Java", "C", "JavaScript", "TypeScript", "Go", "Rust", "C#", "Kotlin", "Swift"],
-  "Backend & APIs": ["FastAPI", "Node.js", "Express", "Django", "Spring Boot", "REST", "REST APIs", "GraphQL", "Kafka", "Microservices"],
-  "Database & Storage": ["Postgres", "PostgreSQL", "MongoDB", "MySQL", "Redis", "Supabase", "Firebase", "SQL", "Database"],
-  "DevOps & Tools": ["Docker", "Kubernetes", "Git", "Linux", "AWS", "CI/CD", "GitHub", "Cloud"],
-  "Frontend & Web": ["React", "Next.js", "HTML", "CSS", "Tailwind", "TailwindCSS", "Vue", "Angular"],
-  "AI & Data": ["Machine Learning", "PyTorch", "TensorFlow", "Data Analysis", "Pandas", "NumPy", "AI", "NLP"],
+  Programming: ["Python", "C++", "Java", "C", "JavaScript", "TypeScript", "Go", "Rust", "C#", "Kotlin", "Swift", "R", "Scala", "Ruby", "PHP"],
+  "Backend & APIs": ["FastAPI", "Node.js", "Express", "Django", "Spring Boot", "REST", "REST APIs", "GraphQL", "Kafka", "Microservices", "Flask", "gRPC"],
+  "Database & Storage": ["Postgres", "PostgreSQL", "MongoDB", "MySQL", "Redis", "Supabase", "Firebase", "SQL", "Database", "Cassandra", "DynamoDB"],
+  "DevOps & Cloud": ["Docker", "Kubernetes", "Git", "Linux", "AWS", "CI/CD", "GitHub", "Cloud", "GCP", "Azure", "Terraform", "Nginx"],
+  "Frontend & UI": ["React", "Next.js", "HTML", "CSS", "Tailwind", "TailwindCSS", "Vue", "Angular", "Svelte", "Figma", "UI/UX"],
+  "AI & Data Science": ["Machine Learning", "PyTorch", "TensorFlow", "Data Analysis", "Pandas", "NumPy", "AI", "NLP", "Computer Vision", "Deep Learning", "Scikit-Learn", "Keras", "LLMs"],
+  "Sciences & Physics": ["Quantum Mechanics", "Quantum Algorithms", "Quantum Computing", "Solid-State Physics", "Particle Physics", "Optics", "Electromagnetism", "Thermodynamics", "Astrophysics", "Nanotechnology", "Materials Science", "Biophysics"],
+  "Engineering & Simulation": ["AutoCAD", "MATLAB", "SolidWorks", "Simulink", "LabVIEW", "Embedded Systems", "Arduino", "Raspberry Pi", "VLSI", "Circuit Design", "PCB Design", "ANSYS", "CATIA", "Robotics", "IoT"],
+  "Mathematics & Security": ["Cryptography", "Linear Algebra", "Calculus", "Probability", "Statistics", "Discrete Math", "Differential Equations", "Cybersecurity", "Network Security", "Ethical Hacking"],
+  "Academic & Communication": ["Technical Writing", "Research Writing", "Documentation", "Public Speaking", "Scientific Computing"],
 };
 
 export function getEnhancedMentorProfile(mentor: Mentor): EnhancedMentor {

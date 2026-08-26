@@ -106,6 +106,7 @@ const UserProfile = lazyWithRetry("UserProfile", () => import("./pages/UserProfi
 const Mentors = lazyWithRetry("Mentors", () => import("./pages/Mentors"));
 const BecomeMentor = lazyWithRetry("BecomeMentor", () => import("./pages/BecomeMentor"));
 const BecomeMentorSuccess = lazyWithRetry("BecomeMentorSuccess", () => import("./pages/BecomeMentorSuccess"));
+const ProfileSetupStudio = lazyWithRetry("ProfileSetupStudio", () => import("./pages/ProfileSetupStudio"));
 const MentorProfile = lazyWithRetry("MentorProfile", () => import("./pages/MentorProfile"));
 const Messages = lazyWithRetry("Messages", () => import("./pages/Messages"));
 const Contact = lazyWithRetry("Contact", () => import("./pages/Contact"));
@@ -257,6 +258,22 @@ function App() {
                       element={
                         <ProtectedRoute>
                           <UserProfile />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/profile/setup"
+                      element={
+                        <ProtectedRoute>
+                          <ProfileSetupStudio />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/profile/kickstart"
+                      element={
+                        <ProtectedRoute>
+                          <ProfileSetupStudio />
                         </ProtectedRoute>
                       }
                     />
