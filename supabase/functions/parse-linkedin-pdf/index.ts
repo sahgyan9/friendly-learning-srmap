@@ -38,7 +38,7 @@ const ATTEMPT_TIMEOUT_MS = 20000;
 const MAX_BASE64_LEN = 14 * 1024 * 1024;
 const MAX_TEXT_LEN = 20000;
 
-const EXTRA_FIELDS_BLOCK = `- "tagline": string (a punchy one-sentence headline under 100 chars on what this student can help peers with, e.g. "Helping peers master Quantum Mechanics & Full-stack React apps")
+const EXTRA_FIELDS_BLOCK = `- "tagline": string (a punchy, natural one-sentence headline under 100 chars describing their domain, skills, or focus, e.g. "CSE student helping with C++, data structures, and competitive programming." or "Physics student working on quantum computing and renewable energy." or "Full-stack developer with React and cloud infrastructure experience.")
 - "outcomes": array of 2 to 3 concise strings describing concrete things a junior/peer achieves with their help (e.g. ["Build and deploy fullstack React projects", "Master problem-solving in physics and calculus"])
 - "ask_me_anything": array of 3 to 4 distinct topic strings (e.g. ["Quantum Algorithms", "React Development", "Research Paper Writing", "Lab Reports"])
 - "ideal_mentees": array of 2 to 3 concise strings describing who gets the most value (e.g. ["1st or 2nd year students taking Physics courses", "Classmates looking for hackathon teammates"])

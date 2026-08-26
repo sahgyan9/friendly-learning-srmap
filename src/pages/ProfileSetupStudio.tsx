@@ -90,17 +90,25 @@ function generateSmartDrafts(
   const skill2 = primarySkills[1] || (dept ? `${dept} Concepts` : "Problem Solving");
   const skill3 = primarySkills[2] || "Lab Work";
 
-  // 1. Tagline: Punchy, actionable, max 120 chars
-  let tagline = `Helping peers with ${skill1}`;
-  if (primarySkills.length >= 2) {
-    tagline += `, ${skill2} & coursework`;
-  } else if (dept) {
-    tagline += ` & ${dept} prep`;
+  // 1. Tagline: identity-first and natural — "CSE student helping with C++,
+  // data structures, and competitive programming." — reads like a real bio
+  // line, not a canned call-to-action. Max 120 chars.
+  const deptLabel = dept ? `${dept} student` : "Student";
+  let tagline: string;
+  if (validSkills.length === 0) {
+    tagline = `${deptLabel} ready to help fellow students with coursework and projects.`;
   } else {
-    tagline += ` & coursework`;
+    const topics = validSkills.slice(0, 3);
+    const topicsPhrase =
+      topics.length >= 3
+        ? `${topics[0]}, ${topics[1]}, and ${topics[2]}`
+        : topics.length === 2
+        ? `${topics[0]} and ${topics[1]}`
+        : topics[0];
+    tagline = `${deptLabel} helping with ${topicsPhrase}.`;
   }
   if (tagline.length > 120) {
-    tagline = `Helping peers with ${skill1} & ${skill2}`;
+    tagline = `${deptLabel} helping with ${validSkills[0]}${validSkills[1] ? ` and ${validSkills[1]}` : ""}.`;
   }
 
   // 2. Outcomes: Concrete, student-centered results
@@ -1118,7 +1126,7 @@ export default function ProfileSetupStudio() {
                       onClick={() =>
                         setState((prev) => ({
                           ...prev,
-                          tagline: `Helping juniors master ${prev.skills[0] || prev.department || "core subjects"} & lab work`,
+                          tagline: `${prev.department ? `${prev.department} student` : "Student"} helping juniors with ${prev.skills[0] || "core subjects"} and lab work.`,
                         }))
                       }
                       className="underline hover:text-foreground"
@@ -1131,7 +1139,7 @@ export default function ProfileSetupStudio() {
                       onClick={() =>
                         setState((prev) => ({
                           ...prev,
-                          tagline: `Happy to review projects, coursework & notes in ${prev.department || "my major"}`,
+                          tagline: `${prev.department ? `${prev.department} student` : "Student"} happy to review projects, coursework, and notes.`,
                         }))
                       }
                       className="underline hover:text-foreground"
