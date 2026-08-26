@@ -100,19 +100,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         // If the row is missing this is almost always a brand-new OAuth user
         // whose public.users row is still being written by the
-        // handle_new_user trigger.  One short retry after a brief delay is
-        // sufficient for the trigger to commit on a typical Supabase instance.
+        // handle_new_user trigger. Retrying with a 2-step backoff allows the
+        // DB trigger to commit even under high latency or cold starts.
         if (profileError || !profileData) {
           if (!profileError) {
-            await new Promise((r) => setTimeout(r, 600));
-            const { data: retryData, error: retryError } = await supabase
-              .from("users")
-              .select(PROFILE_COLUMNS)
-              .eq("id", userId)
-              .maybeSingle();
-            if (!retryError && retryData) {
-              applyProfile(retryData, mentorData?.department, userId, authUser);
-              return;
+            for (const delay of [400, 800]) {
+              await new Promise((r) => setTimeout(r, delay));
+              const { data: retryData, error: retryError } = await supabase
+                .from("users")
+                .select(PROFILE_COLUMNS)
+                .eq("id", userId)
+                .maybeSingle();
+              if (!retryError && retryData) {
+                applyProfile(retryData, mentorData?.department, userId, authUser);
+                return;
+              }
             }
           }
           clearProfile();

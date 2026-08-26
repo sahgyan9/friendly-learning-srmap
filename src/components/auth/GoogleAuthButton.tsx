@@ -9,17 +9,19 @@ interface GoogleAuthButtonProps {
   mode: "signin" | "signup";
   isLoading: boolean;
   setIsLoading: (loading: boolean) => void;
+  destination?: string;
 }
 
-const GoogleAuthButton = ({ mode, isLoading, setIsLoading }: GoogleAuthButtonProps) => {
+const GoogleAuthButton = ({ mode, isLoading, setIsLoading, destination }: GoogleAuthButtonProps) => {
   const handleGoogleAuth = async () => {
     try {
       setIsLoading(true);
       markOAuthAttemptStarted();
+      const target = destination && destination.startsWith('/') ? destination : '/';
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${getAppUrl()}/`,
+          redirectTo: `${getAppUrl()}${target}`,
         },
       });
 

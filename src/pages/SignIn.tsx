@@ -157,6 +157,7 @@ const SignIn = () => {
                 mode="signin" 
                 isLoading={isLoading} 
                 setIsLoading={setIsLoading} 
+                destination={destination}
               />
 
               <div className="my-6 relative">
