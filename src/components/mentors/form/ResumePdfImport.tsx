@@ -1,10 +1,10 @@
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { FileText, Loader2, Upload, Sparkles } from "lucide-react";
+import { FileText, Loader2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { MentorFormData } from "@/hooks/useMentorForm";
-import { extractPdfText } from "@/lib/pdfTextExtract";
+import { extractDocumentText } from "@/lib/pdfTextExtract";
 import PdfParsingModal, { type ParsingStage } from "./PdfParsingModal";
 
 interface ResumePdfImportProps {
@@ -13,7 +13,7 @@ interface ResumePdfImportProps {
    * doesn't read, so Gemini generates less and returns faster. Defaults to
    * "full" for callers (like the profile setup studio) that use all of it. */
   fields?: "basic" | "full";
-  /** Overrides the button label (default "Upload PDF"). */
+  /** Overrides the button label (default "Upload Resume"). */
   buttonLabel?: string;
   /** Layout mode: 'card' renders the full dashed box; 'button' renders just the trigger button. Default: 'card' */
   variant?: "card" | "button";
@@ -38,10 +38,12 @@ const fileToBase64 = (file: File): Promise<string> =>
     reader.readAsDataURL(file);
   });
 
+const ACCEPTED_FILE_TYPES = ".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+
 const ResumePdfImport = ({
   onImported,
   fields = "full",
-  buttonLabel = "Upload PDF",
+  buttonLabel = "Upload Resume",
   variant = "card",
   className = "",
 }: ResumePdfImportProps) => {
@@ -60,12 +62,18 @@ const ResumePdfImport = ({
     e.target.value = ""; // reset so same file can be reselected
     if (!file) return;
 
-    if (file.type !== "application/pdf") {
-      toast.error("Please upload a PDF file");
+    const lowerName = file.name.toLowerCase();
+    const isPdf = file.type === "application/pdf" || lowerName.endsWith(".pdf");
+    const isDocx =
+      file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+      lowerName.endsWith(".docx");
+
+    if (!isPdf && !isDocx) {
+      toast.error("Please upload a PDF or Word (.docx) document");
       return;
     }
     if (file.size > MAX_SIZE_MB * 1024 * 1024) {
-      toast.error(`PDF must be smaller than ${MAX_SIZE_MB}MB`);
+      toast.error(`File must be smaller than ${MAX_SIZE_MB}MB`);
       return;
     }
 
@@ -77,18 +85,23 @@ const ResumePdfImport = ({
     setIsLoading(true);
 
     try {
-      // Step 1: Extract PDF text (client-side fast path)
-      const extractedText = await extractPdfText(file);
-      const useTextMode = extractedText.length >= MIN_TEXT_CHARS_FOR_TEXT_MODE;
+      // Step 1: Extract text from PDF or Word (.docx) document
+      const { text: extractedText, fileType } = await extractDocumentText(file);
 
       setParsingStage("analyzing");
 
-      // Text mode skips the base64 upload entirely -- most resumes are plain
-      // text underneath, so this is both the fast path and the common one.
-      // Only a scanned/image-only PDF needs the full-file fallback below.
-      const body = useTextMode
-        ? { pdfText: extractedText, mimeType: file.type, fields }
-        : { pdfBase64: await fileToBase64(file), mimeType: file.type, fields };
+      let body: Record<string, any>;
+      if (fileType === "docx") {
+        if (!extractedText || extractedText.length < 20) {
+          throw new Error("Could not extract readable text from this Word document. Please ensure it has text or export to PDF.");
+        }
+        body = { pdfText: extractedText, mimeType: "text/plain", fields };
+      } else {
+        const useTextMode = extractedText.length >= MIN_TEXT_CHARS_FOR_TEXT_MODE;
+        body = useTextMode
+          ? { pdfText: extractedText, mimeType: file.type, fields }
+          : { pdfBase64: await fileToBase64(file), mimeType: file.type, fields };
+      }
 
       // Step 2 & 3: Run Gemini AI parser on Edge Function
       const { data, error } = await supabase.functions.invoke(
@@ -165,11 +178,11 @@ const ResumePdfImport = ({
       setTimeout(() => {
         setModalOpen(false);
         onImported(filtered as Partial<MentorFormData>);
-        toast.success("Profile parsed successfully! AI drafted your skills & bio.");
+        toast.success("Resume parsed successfully! AI drafted your skills & bio.");
       }, 750);
     } catch (err: unknown) {
       console.error("Resume import failed:", err);
-      const msg = err instanceof Error ? err.message : "Failed to parse PDF";
+      const msg = err instanceof Error ? err.message : "Failed to parse document";
       setErrorMessage(msg);
       setParsingStage("error");
       toast.error(msg);
@@ -198,7 +211,7 @@ const ResumePdfImport = ({
           <input
             ref={inputRef}
             type="file"
-            accept="application/pdf"
+            accept={ACCEPTED_FILE_TYPES}
             className="hidden"
             onChange={handleFile}
           />
@@ -213,7 +226,7 @@ const ResumePdfImport = ({
             {isLoading ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Parsing PDF...
+                Parsing...
               </>
             ) : (
               <>
@@ -231,12 +244,12 @@ const ResumePdfImport = ({
                 <FileText className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <p className="font-medium text-sm">Import from your resume or LinkedIn PDF</p>
+                <p className="font-medium text-sm">Import from your resume (PDF or Word .docx)</p>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Upload whichever PDF you already have and we'll auto-fill the form.
+                  Upload your resume PDF or Word document and we'll auto-fill the form.
                   <br />
                   <span className="opacity-80">
-                    No LinkedIn PDF? LinkedIn → Your Profile → More → Save to PDF
+                    Supports LinkedIn PDF exports and standard .docx / .pdf resumes.
                   </span>
                 </p>
               </div>
@@ -245,7 +258,7 @@ const ResumePdfImport = ({
             <input
               ref={inputRef}
               type="file"
-              accept="application/pdf"
+              accept={ACCEPTED_FILE_TYPES}
               className="hidden"
               onChange={handleFile}
             />

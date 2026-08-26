@@ -188,7 +188,7 @@ export function ProfileKickstartModal({
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="pdf" className="text-xs sm:text-sm flex items-center gap-1.5">
                 <FileText className="h-4 w-4" />
-                Resume PDF
+                Resume File
               </TabsTrigger>
               <TabsTrigger value="portal" className="text-xs sm:text-sm flex items-center gap-1.5">
                 <GraduationCap className="h-4 w-4" />
@@ -200,10 +200,10 @@ export function ProfileKickstartModal({
               </TabsTrigger>
             </TabsList>
 
-            {/* TAB 1: RESUME / LINKEDIN PDF IMPORT */}
+            {/* TAB 1: RESUME / LINKEDIN PDF OR DOCX IMPORT */}
             <TabsContent value="pdf" className="space-y-4 pt-3">
               <p className="text-xs sm:text-sm text-muted-foreground">
-                Upload your resume or LinkedIn PDF export. Our AI will automatically extract your department, top skills, bio, and experience in seconds.
+                Upload your resume (PDF or Word .docx) or LinkedIn profile export. Our AI will automatically extract your department, top skills, bio, and experience in seconds.
               </p>
 
               <ResumePdfImport onImported={handlePdfImported} fields="full" />

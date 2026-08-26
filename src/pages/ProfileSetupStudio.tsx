@@ -29,6 +29,7 @@ import {
   ArrowUpRight,
   AlertCircle,
   Upload,
+  UserRound,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -858,65 +859,49 @@ export default function ProfileSetupStudio() {
                     <FileText className="h-4 w-4 text-primary" />
                   </div>
                   <h3 className="text-sm font-bold text-foreground">
-                    Import from Resume or LinkedIn PDF
+                    Import from Resume (PDF or Word .docx)
                   </h3>
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    Upload your PDF. Gemini AI extracts your department, skills, bio, tagline, and mentoring topics instantly.
+                    Upload your resume. Gemini AI extracts your department, skills, bio, tagline, and mentoring topics instantly.
                   </p>
                 </div>
-
-                <div className="pt-2">
-                  <ResumePdfImport
-                    onImported={handlePdfImported}
-                    buttonLabel="Upload & Auto-fill from Resume"
-                  />
-                </div>
+                <ResumePdfImport
+                  onImported={handlePdfImported}
+                  buttonLabel="Upload Resume"
+                />
               </div>
 
-              {/* Option B: Manual Entry */}
-              <div className="rounded-xl border border-border/80 bg-card p-4 sm:p-5 flex flex-col justify-between gap-3 shadow-xs">
+              {/* Option B: Fill Manually */}
+              <div className="rounded-xl border border-border/80 bg-card p-4 sm:p-5 flex flex-col justify-between gap-3 shadow-xs hover:border-border transition-all">
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
                     <span className="inline-flex items-center gap-1 text-3xs font-bold bg-muted text-muted-foreground px-2 py-0.5 rounded-md uppercase tracking-wider">
-                      ✍️ Step-by-Step
+                      ✍️ Custom Entry
                     </span>
-                    <Edit3 className="h-4 w-4 text-muted-foreground" />
+                    <UserRound className="h-4 w-4 text-muted-foreground" />
                   </div>
                   <h3 className="text-sm font-bold text-foreground">
-                    Fill in Manually
+                    Fill Details Step-by-Step
                   </h3>
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    Fill in your basic information and skills below. Use the &ldquo;AI Suggest&rdquo; buttons on each section whenever you want tailored draft ideas.
+                    Prefer entering details by hand? Scroll down to customize your bio, pick your skills, and craft your outcomes.
                   </p>
                 </div>
-
-                <div className="pt-2 flex items-center justify-between">
-                  <span className="text-2xs text-muted-foreground">
-                    Start with Section 1 below ↓
-                  </span>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      document.getElementById("section-basic-info")?.scrollIntoView({ behavior: "smooth" });
-                    }}
-                    className="text-xs font-semibold gap-1"
-                  >
-                    Start Manually
-                  </Button>
-                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    document.getElementById("section-basic-info")?.scrollIntoView({ behavior: "smooth" });
+                  }}
+                  className="font-bold text-xs"
+                >
+                  Start Custom Form
+                </Button>
               </div>
             </div>
           </section>
         ) : (
-          /* Toolbar for profiles already populated or published */
-          <section
-            className={`mb-6 rounded-2xl border p-4 sm:p-5 shadow-xs ${
-              isPublished
-                ? "border-border/80 bg-card/80 backdrop-blur-xs"
-                : "border-primary/20 bg-gradient-to-r from-primary/10 via-indigo-500/5 to-purple-500/10"
-            }`}
-          >
+          <section className="mb-6 rounded-2xl border border-primary/20 bg-gradient-to-r from-primary/5 via-background to-indigo-500/5 p-4 sm:p-5 shadow-xs">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div className="space-y-1">
                 <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/15 px-2.5 py-0.5 text-2xs font-bold text-primary uppercase tracking-wider">
@@ -930,8 +915,8 @@ export default function ProfileSetupStudio() {
                 </h2>
                 <p className="text-xs text-muted-foreground">
                   {isPublished
-                    ? "Upload a new resume PDF to merge newly acquired skills or re-sync your latest semester grades from SRM AP."
-                    : "Upload your resume PDF or click Auto-Draft to generate tailored profile summaries based on your skills."}
+                    ? "Upload a new resume (PDF or Word) to merge newly acquired skills or re-sync your latest semester grades from SRM AP."
+                    : "Upload your resume (PDF or Word) or click Auto-Draft to generate tailored profile summaries based on your skills."}
                 </p>
               </div>
 

@@ -59,6 +59,7 @@
     "date-fns": "^3.6.0",
     "framer-motion": "^12.6.3",
     "lucide-react": "^0.462.0",
+    "mammoth": "^1.12.1",
     "pdfjs-dist": "^6.2.108",
     "posthog-js": "^1.418.10",
     "react": "^18.3.1",
