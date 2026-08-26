@@ -20,6 +20,10 @@ import {
   Smile,
   RefreshCw,
   ExternalLink,
+  Target,
+  MessageSquareCode,
+  Users,
+  Lightbulb,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -54,6 +58,53 @@ interface StudioProfileState {
   isDiscoverable: boolean;
 }
 
+/**
+ * Generates natural, high-precision profile summary drafts from skills and department
+ */
+function generateSmartDrafts(
+  skills: string[],
+  department: string,
+  name: string,
+  bio?: string,
+  year?: string
+) {
+  const dept = department?.trim() || "Physics";
+  const primarySkills = skills.length > 0 ? skills.slice(0, 4) : [dept, "Coursework", "Problem Solving"];
+  const skill1 = primarySkills[0] || dept;
+  const skill2 = primarySkills[1] || "Core Concepts";
+  const skill3 = primarySkills[2] || "Lab Work";
+
+  // 1. Tagline: Punchy, actionable, max 120 chars
+  let tagline = `Helping peers with ${skill1}`;
+  if (primarySkills.length >= 2) {
+    tagline += `, ${skill2} & coursework`;
+  } else {
+    tagline += ` & ${dept} course prep`;
+  }
+  if (tagline.length > 120) {
+    tagline = `Helping peers with ${skill1} & ${skill2}`;
+  }
+
+  // 2. Outcomes: Concrete, student-centered results
+  const outcomes = [
+    `Master problem sets, core theories, and practical intuition in ${skill1}`,
+    `Get 1-on-1 guidance on ${skill2}, lab assignments, and project execution`,
+    `Prepare effectively for ${dept} midterms, finals, and assessments`,
+  ];
+
+  // 3. Ask Me Anything: 3-4 distinct topics
+  const askMeAnything = primarySkills.map((s) => ({ topic: s }));
+
+  // 4. Ideal Mentees: Who benefits most
+  const idealMentees = [
+    `1st or 2nd year students taking ${dept} core subjects`,
+    `Peers working on ${skill1} projects or research papers`,
+    `Classmates seeking practical study notes, lab tips, and exam strategies`,
+  ];
+
+  return { tagline, outcomes, ask_me_anything: askMeAnything, ideal_mentees: idealMentees };
+}
+
 export default function ProfileSetupStudio() {
   const { user, profile, refreshProfile } = useAuth();
   const navigate = useNavigate();
@@ -61,6 +112,7 @@ export default function ProfileSetupStudio() {
 
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isGeneratingAi, setIsGeneratingAi] = useState(false);
   const [activeMobileTab, setActiveMobileTab] = useState<"edit" | "preview">("edit");
   const [portalDialogOpen, setPortalDialogOpen] = useState(false);
 
@@ -108,32 +160,54 @@ export default function ProfileSetupStudio() {
           ? mentorData.skills
           : userData?.skills || [];
 
-        const defaultOutcomes = Array.isArray(mentorData?.outcomes)
-          ? mentorData.outcomes
-          : [];
-
-        const defaultAma = Array.isArray(mentorData?.ask_me_anything)
+        let currentTagline = mentorData?.tagline || "";
+        let currentOutcomes = Array.isArray(mentorData?.outcomes) ? mentorData.outcomes : [];
+        let currentAma = Array.isArray(mentorData?.ask_me_anything)
           ? mentorData.ask_me_anything.map((item: any) =>
               typeof item === "string" ? { topic: item } : item
             )
           : [];
-
-        const defaultIdealMentees = Array.isArray(mentorData?.ideal_mentees)
+        let currentIdealMentees = Array.isArray(mentorData?.ideal_mentees)
           ? mentorData.ideal_mentees
           : [];
 
+        const studentName = mentorData?.name || userData?.name || "";
+        const studentDept = mentorData?.department || userData?.department || "Physics";
+        const studentYear = mentorData?.year_of_studies ? String(mentorData.year_of_studies) : "3rd Year";
+
+        // If AI summary sections are empty, auto-generate high-quality smart drafts immediately
+        if (
+          !currentTagline &&
+          currentOutcomes.length === 0 &&
+          currentAma.length === 0 &&
+          currentIdealMentees.length === 0 &&
+          mergedSkills.length > 0
+        ) {
+          const drafts = generateSmartDrafts(
+            mergedSkills,
+            studentDept,
+            studentName,
+            mentorData?.bio || userData?.bio || "",
+            studentYear
+          );
+          currentTagline = drafts.tagline;
+          currentOutcomes = drafts.outcomes;
+          currentAma = drafts.ask_me_anything;
+          currentIdealMentees = drafts.ideal_mentees;
+        }
+
         setState({
-          name: mentorData?.name || userData?.name || "",
-          department: mentorData?.department || userData?.department || "Computer Science and Engineering",
-          year_of_studies: (mentorData?.year_of_studies ? String(mentorData.year_of_studies) : "3rd Year"),
+          name: studentName,
+          department: studentDept,
+          year_of_studies: studentYear,
           university: mentorData?.university || "SRM University-AP",
-          tagline: mentorData?.tagline || "",
+          tagline: currentTagline,
           skills: mergedSkills,
           bio: mentorData?.bio || userData?.bio || "",
           linkedin_url: mentorData?.linkedin_url || userData?.linkedin_url || "",
-          outcomes: defaultOutcomes,
-          ask_me_anything: defaultAma,
-          ideal_mentees: defaultIdealMentees,
+          outcomes: currentOutcomes,
+          ask_me_anything: currentAma,
+          ideal_mentees: currentIdealMentees,
           isDiscoverable: userData?.interests_discoverable ?? true,
         });
       } catch (err) {
@@ -146,6 +220,54 @@ export default function ProfileSetupStudio() {
     loadData();
   }, [user]);
 
+  // One-click AI Auto-Draft for all sections
+  const handleAutoDraftAll = () => {
+    setIsGeneratingAi(true);
+    setTimeout(() => {
+      const drafts = generateSmartDrafts(
+        state.skills,
+        state.department,
+        state.name,
+        state.bio,
+        state.year_of_studies
+      );
+      setState((prev) => ({
+        ...prev,
+        tagline: drafts.tagline,
+        outcomes: drafts.outcomes,
+        ask_me_anything: drafts.ask_me_anything,
+        ideal_mentees: drafts.ideal_mentees,
+      }));
+      setIsGeneratingAi(false);
+      toast.success("✨ AI drafts generated for Tagline, Outcomes, AMA, and Ideal Mentees!");
+    }, 300);
+  };
+
+  // Section-specific AI generators
+  const handleSuggestTagline = () => {
+    const drafts = generateSmartDrafts(state.skills, state.department, state.name);
+    setState((prev) => ({ ...prev, tagline: drafts.tagline }));
+    toast.success("💡 Tagline generated!");
+  };
+
+  const handleSuggestOutcomes = () => {
+    const drafts = generateSmartDrafts(state.skills, state.department, state.name);
+    setState((prev) => ({ ...prev, outcomes: drafts.outcomes }));
+    toast.success("💡 Outcomes suggested!");
+  };
+
+  const handleSuggestAma = () => {
+    const drafts = generateSmartDrafts(state.skills, state.department, state.name);
+    setState((prev) => ({ ...prev, ask_me_anything: drafts.ask_me_anything }));
+    toast.success("💡 AMA topics suggested!");
+  };
+
+  const handleSuggestIdealMentees = () => {
+    const drafts = generateSmartDrafts(state.skills, state.department, state.name);
+    setState((prev) => ({ ...prev, ideal_mentees: drafts.ideal_mentees }));
+    toast.success("💡 Target students suggested!");
+  };
+
   // Handle PDF import structured extraction
   const handlePdfImported = (data: Record<string, any>) => {
     setState((prev) => {
@@ -155,25 +277,34 @@ export default function ProfileSetupStudio() {
         ? data.skills.split(",").map((s: string) => s.trim()).filter(Boolean)
         : prev.skills;
 
+      const studentDept = data.department || prev.department;
+      const studentName = data.name || prev.name;
+      const studentYear = data.year_of_studies || prev.year_of_studies;
+
+      // Smart drafts if extracted fields are missing
+      const autoDrafts = generateSmartDrafts(skillsArray, studentDept, studentName);
+
       const outcomesArray = Array.isArray(data.outcomes) && data.outcomes.length > 0
         ? data.outcomes
-        : prev.outcomes;
+        : autoDrafts.outcomes;
 
       const amaArray = Array.isArray(data.ask_me_anything) && data.ask_me_anything.length > 0
         ? data.ask_me_anything.map((t: any) => (typeof t === "string" ? { topic: t } : t))
-        : prev.ask_me_anything;
+        : autoDrafts.ask_me_anything;
 
       const idealMenteesArray = Array.isArray(data.ideal_mentees) && data.ideal_mentees.length > 0
         ? data.ideal_mentees
-        : prev.ideal_mentees;
+        : autoDrafts.ideal_mentees;
+
+      const finalTagline = data.tagline || prev.tagline || autoDrafts.tagline;
 
       return {
         ...prev,
-        name: data.name || prev.name,
-        department: data.department || prev.department,
-        year_of_studies: data.year_of_studies || prev.year_of_studies,
+        name: studentName,
+        department: studentDept,
+        year_of_studies: studentYear,
         university: data.university || prev.university,
-        tagline: data.tagline || prev.tagline || (skillsArray.length > 0 ? `Helping peers with ${skillsArray.slice(0, 2).join(" & ")}` : ""),
+        tagline: finalTagline,
         skills: skillsArray,
         bio: data.bio || prev.bio,
         linkedin_url: data.linkedin_url || prev.linkedin_url,
@@ -183,7 +314,7 @@ export default function ProfileSetupStudio() {
       };
     });
 
-    toast.success("Resume parsed! Review AI suggestions on the left, check your live preview on the right.");
+    toast.success("Resume parsed! AI has filled your skills, headline, outcomes, and topics.");
   };
 
   // Skill Handlers
@@ -262,8 +393,10 @@ export default function ProfileSetupStudio() {
       { label: "Photo / Avatar", done: Boolean(profile?.profile_image) },
       { label: "One-line Tagline", done: Boolean(state.tagline?.trim()) },
       { label: "Skills (3+)", done: state.skills.length >= 3 },
-      { label: "What I Can Help With", done: state.outcomes.length > 0 || state.ask_me_anything.length > 0 },
-      { label: "Bio or LinkedIn", done: Boolean(state.bio?.trim() || state.linkedin_url?.trim()) },
+      { label: "Outcomes", done: state.outcomes.length > 0 },
+      { label: "AMA Topics", done: state.ask_me_anything.length > 0 },
+      { label: "Target Students", done: state.ideal_mentees.length > 0 },
+      { label: "Bio / LinkedIn", done: Boolean(state.bio?.trim() || state.linkedin_url?.trim()) },
     ];
     const doneCount = checks.filter((c) => c.done).length;
     const score = Math.round((doneCount / checks.length) * 100);
@@ -369,7 +502,7 @@ export default function ProfileSetupStudio() {
       // Navigate to the user's live public profile
       setTimeout(() => {
         navigate(`/mentor/${user.id}`);
-      }, 600);
+      }, 500);
     } catch (err: any) {
       console.error("Error publishing profile:", err);
       toast.error(err?.message || "Failed to publish profile. Please try again.", { id: toastId });
@@ -422,6 +555,17 @@ export default function ProfileSetupStudio() {
           </div>
 
           <div className="flex items-center gap-2.5">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleAutoDraftAll}
+              disabled={isGeneratingAi}
+              className="hidden sm:flex gap-1.5 text-xs font-semibold border-primary/30 text-primary hover:bg-primary/10"
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+              {isGeneratingAi ? "Generating..." : "Auto-Draft with AI"}
+            </Button>
+
             <Button
               variant="outline"
               size="sm"
@@ -480,23 +624,32 @@ export default function ProfileSetupStudio() {
       </div>
 
       {/* Main Studio Container */}
-      <main className="mx-auto max-w-7xl px-4 sm:px-6 pt-6">
+      <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-6">
         {/* Quick Ingest / Re-import Banner */}
         <section className="mb-6 rounded-2xl border border-primary/20 bg-gradient-to-r from-primary/10 via-indigo-500/5 to-purple-500/10 p-4 sm:p-5 shadow-xs">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="space-y-1">
               <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/15 px-2.5 py-0.5 text-2xs font-bold text-primary uppercase tracking-wider">
                 <Zap className="h-3 w-3" />
-                AI Smart Extraction
+                AI Smart Extraction & Auto-Draft
               </div>
               <h2 className="text-sm sm:text-base font-bold text-foreground">
-                Want to auto-fill everything in 10 seconds?
+                Auto-fill your headline, outcomes, and topics with AI
               </h2>
               <p className="text-xs text-muted-foreground">
-                Upload your resume or LinkedIn PDF export to instantly draft your skills, headline, outcomes, and topics.
+                Upload your resume PDF or click Auto-Draft to generate tailored profile summaries based on your skills.
               </p>
             </div>
-            <div className="shrink-0">
+            <div className="flex items-center gap-2 shrink-0">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleAutoDraftAll}
+                className="gap-1.5 font-bold text-xs bg-background/80"
+              >
+                <Sparkles className="h-3.5 w-3.5 text-primary" />
+                Auto-Draft All
+              </Button>
               <ResumePdfImport onImported={handlePdfImported} />
             </div>
           </div>
@@ -585,9 +738,15 @@ export default function ProfileSetupStudio() {
                     <p className="text-2xs text-muted-foreground">Appears below your name across CampusMind search results</p>
                   </div>
                 </div>
-                <span className="text-2xs text-muted-foreground tabular-nums">
-                  {state.tagline.length}/120
-                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleSuggestTagline}
+                  className="gap-1 text-2xs font-semibold text-primary hover:text-primary hover:bg-primary/10 h-7 px-2"
+                >
+                  <Sparkles className="h-3 w-3" />
+                  AI Suggest
+                </Button>
               </div>
 
               <div className="space-y-2">
@@ -595,36 +754,39 @@ export default function ProfileSetupStudio() {
                   value={state.tagline}
                   maxLength={120}
                   onChange={(e) => setState({ ...state, tagline: e.target.value })}
-                  placeholder="e.g. Helping peers with Quantum Mechanics, React development & lab prep"
+                  placeholder="e.g. Helping peers with Quantum Mechanics, Solid-State Physics & Python lab prep"
                   className="text-sm font-medium"
                 />
-                <div className="flex flex-wrap items-center gap-1.5 text-2xs text-muted-foreground">
-                  <span className="font-semibold">💡 Quick Ideas:</span>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setState((prev) => ({
-                        ...prev,
-                        tagline: `Helping juniors master ${prev.skills[0] || "core subjects"} & lab work`,
-                      }))
-                    }
-                    className="underline hover:text-foreground"
-                  >
-                    "Helping juniors master..."
-                  </button>
-                  <span>•</span>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setState((prev) => ({
-                        ...prev,
-                        tagline: `Happy to review projects, coursework & share notes on ${prev.skills[0] || "courses"}`,
-                      }))
-                    }
-                    className="underline hover:text-foreground"
-                  >
-                    "Happy to review projects..."
-                  </button>
+                <div className="flex items-center justify-between text-2xs text-muted-foreground pt-0.5">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="font-semibold">💡 Quick Ideas:</span>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setState((prev) => ({
+                          ...prev,
+                          tagline: `Helping juniors master ${prev.skills[0] || "core subjects"} & lab work`,
+                        }))
+                      }
+                      className="underline hover:text-foreground"
+                    >
+                      "Helping juniors master..."
+                    </button>
+                    <span>•</span>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setState((prev) => ({
+                          ...prev,
+                          tagline: `Happy to review projects, coursework & notes in ${prev.department || "my major"}`,
+                        }))
+                      }
+                      className="underline hover:text-foreground"
+                    >
+                      "Happy to review projects..."
+                    </button>
+                  </div>
+                  <span className="tabular-nums">{state.tagline.length}/120</span>
                 </div>
               </div>
             </div>
@@ -683,7 +845,7 @@ export default function ProfileSetupStudio() {
                       handleAddSkill();
                     }
                   }}
-                  placeholder="Type a skill and press Enter (e.g. Quantum Mechanics, React, MATLAB)..."
+                  placeholder="Type a skill and press Enter (e.g. Quantum Mechanics, Solid-State Physics, Python)..."
                   className="text-sm"
                 />
                 <Button
@@ -707,37 +869,50 @@ export default function ProfileSetupStudio() {
                     4
                   </div>
                   <div>
-                    <h3 className="text-sm sm:text-base font-bold text-foreground">
+                    <h3 className="text-sm sm:text-base font-bold text-foreground flex items-center gap-1.5">
+                      <Target className="h-4 w-4 text-teal-600 dark:text-teal-400" />
                       What I Can Help You Achieve
                     </h3>
-                    <p className="text-2xs text-muted-foreground">Concrete goals students walk away with after talking to you</p>
+                    <p className="text-2xs text-muted-foreground">Concrete results students walk away with after messaging you</p>
                   </div>
                 </div>
-                <span className="text-2xs font-semibold text-muted-foreground">
-                  {state.outcomes.length} items
-                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleSuggestOutcomes}
+                  className="gap-1 text-2xs font-semibold text-teal-600 hover:text-teal-700 hover:bg-teal-500/10 h-7 px-2"
+                >
+                  <Sparkles className="h-3 w-3" />
+                  AI Suggest
+                </Button>
               </div>
 
               {/* Outcomes List */}
               <div className="space-y-2">
-                {state.outcomes.map((outcome, idx) => (
-                  <div
-                    key={idx}
-                    className="flex items-center justify-between gap-3 p-2.5 rounded-xl border border-border/60 bg-muted/20 text-xs text-foreground"
-                  >
-                    <span className="flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
-                      {outcome}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveOutcome(idx)}
-                      className="text-muted-foreground hover:text-destructive transition-colors shrink-0"
+                {state.outcomes.length === 0 ? (
+                  <p className="text-xs text-muted-foreground italic py-1">
+                    No outcomes added yet. Click &ldquo;AI Suggest&rdquo; above to auto-generate!
+                  </p>
+                ) : (
+                  state.outcomes.map((outcome, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center justify-between gap-3 p-2.5 rounded-xl border border-border/60 bg-muted/20 text-xs text-foreground"
                     >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                ))}
+                      <span className="flex items-center gap-2">
+                        <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+                        {outcome}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveOutcome(idx)}
+                        className="text-muted-foreground hover:text-destructive transition-colors shrink-0"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ))
+                )}
 
                 {/* Add Outcome */}
                 <div className="flex items-center gap-2 pt-1">
@@ -750,7 +925,7 @@ export default function ProfileSetupStudio() {
                         handleAddOutcome();
                       }
                     }}
-                    placeholder="e.g. Build and deploy your first React project or solve physics problem sets"
+                    placeholder="e.g. Master problem sets and lab experiments in quantum physics"
                     className="text-xs"
                   />
                   <Button
@@ -775,35 +950,48 @@ export default function ProfileSetupStudio() {
                     5
                   </div>
                   <div>
-                    <h3 className="text-sm sm:text-base font-bold text-foreground">
+                    <h3 className="text-sm sm:text-base font-bold text-foreground flex items-center gap-1.5">
+                      <MessageSquareCode className="h-4 w-4 text-sky-600 dark:text-sky-400" />
                       Ask Me Anything Topics
                     </h3>
-                    <p className="text-2xs text-muted-foreground">Conversational prompts for peers reaching out</p>
+                    <p className="text-2xs text-muted-foreground">Conversational prompts for juniors reaching out</p>
                   </div>
                 </div>
-                <span className="text-2xs font-semibold text-muted-foreground">
-                  {state.ask_me_anything.length} topics
-                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleSuggestAma}
+                  className="gap-1 text-2xs font-semibold text-sky-600 hover:text-sky-700 hover:bg-sky-500/10 h-7 px-2"
+                >
+                  <Sparkles className="h-3 w-3" />
+                  AI Suggest
+                </Button>
               </div>
 
               {/* AMA Badges */}
               <div className="flex flex-wrap gap-2">
-                {state.ask_me_anything.map((item, idx) => (
-                  <span
-                    key={idx}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-sky-50 dark:bg-sky-950/60 text-sky-800 dark:text-sky-200 border border-sky-200/60 dark:border-sky-800/60"
-                  >
-                    <span>💬</span>
-                    {item.topic}
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveAma(idx)}
-                      className="text-sky-600 hover:text-destructive transition-colors ml-1"
+                {state.ask_me_anything.length === 0 ? (
+                  <p className="text-xs text-muted-foreground italic py-1">
+                    No AMA topics added yet. Click &ldquo;AI Suggest&rdquo; above!
+                  </p>
+                ) : (
+                  state.ask_me_anything.map((item, idx) => (
+                    <span
+                      key={idx}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-sky-50 dark:bg-sky-950/60 text-sky-800 dark:text-sky-200 border border-sky-200/60 dark:border-sky-800/60"
                     >
-                      <Trash2 className="h-3 w-3" />
-                    </button>
-                  </span>
-                ))}
+                      <span>💬</span>
+                      {item.topic}
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveAma(idx)}
+                        className="text-sky-600 hover:text-destructive transition-colors ml-1"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </button>
+                    </span>
+                  ))
+                )}
               </div>
 
               {/* Add AMA Topic */}
@@ -817,7 +1005,7 @@ export default function ProfileSetupStudio() {
                       handleAddAma();
                     }
                   }}
-                  placeholder="e.g. Quantum Algorithms, React Architecture, Research Paper Publishing..."
+                  placeholder="e.g. Quantum Algorithms, Cryptography, Research Papers..."
                   className="text-xs"
                 />
                 <Button
@@ -833,11 +1021,92 @@ export default function ProfileSetupStudio() {
               </div>
             </div>
 
-            {/* 6. Bio & Social Links */}
+            {/* 6. Perfect If You Are... (Ideal Mentees) */}
+            <div className="rounded-2xl border border-border/80 bg-card p-5 sm:p-6 shadow-xs space-y-4">
+              <div className="flex items-center justify-between border-b border-border/60 pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400 font-bold text-xs">
+                    6
+                  </div>
+                  <div>
+                    <h3 className="text-sm sm:text-base font-bold text-foreground flex items-center gap-1.5">
+                      <Users className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                      Perfect If You Are... (Target Students)
+                    </h3>
+                    <p className="text-2xs text-muted-foreground">Helps juniors know immediately if you are the right person to ask</p>
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleSuggestIdealMentees}
+                  className="gap-1 text-2xs font-semibold text-purple-600 hover:text-purple-700 hover:bg-purple-500/10 h-7 px-2"
+                >
+                  <Sparkles className="h-3 w-3" />
+                  AI Suggest
+                </Button>
+              </div>
+
+              {/* Ideal Mentees List */}
+              <div className="space-y-2">
+                {state.ideal_mentees.length === 0 ? (
+                  <p className="text-xs text-muted-foreground italic py-1">
+                    No target descriptions added yet. Click &ldquo;AI Suggest&rdquo; above!
+                  </p>
+                ) : (
+                  state.ideal_mentees.map((mentee, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center justify-between gap-3 p-2.5 rounded-xl border border-border/60 bg-muted/20 text-xs text-foreground"
+                    >
+                      <span className="flex items-center gap-2">
+                        <CheckCircle2 className="h-4 w-4 text-purple-500 shrink-0" />
+                        {mentee}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveIdealMentee(idx)}
+                        className="text-muted-foreground hover:text-destructive transition-colors shrink-0"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ))
+                )}
+
+                {/* Add Ideal Mentee */}
+                <div className="flex items-center gap-2 pt-1">
+                  <Input
+                    value={newIdealMenteeInput}
+                    onChange={(e) => setNewIdealMenteeInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleAddIdealMentee();
+                      }
+                    }}
+                    placeholder="e.g. 1st or 2nd year students taking Physics or Calculus"
+                    className="text-xs"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleAddIdealMentee}
+                    className="shrink-0 gap-1 text-xs"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    Add Description
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            {/* 7. Bio & Social Links */}
             <div className="rounded-2xl border border-border/80 bg-card p-5 sm:p-6 shadow-xs space-y-4">
               <div className="flex items-center gap-2 border-b border-border/60 pb-3">
                 <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold text-xs">
-                  6
+                  7
                 </div>
                 <div>
                   <h3 className="text-sm sm:text-base font-bold text-foreground">Bio & Social Profiles</h3>
@@ -868,7 +1137,7 @@ export default function ProfileSetupStudio() {
               </div>
             </div>
 
-            {/* 7. Privacy & CampusMind AI Discovery Consent */}
+            {/* 8. Privacy & CampusMind AI Discovery Consent */}
             <div className="rounded-2xl border border-primary/20 bg-primary/5 p-5 shadow-xs flex items-center justify-between gap-4">
               <div className="space-y-1">
                 <h4 className="text-xs sm:text-sm font-bold text-foreground flex items-center gap-1.5">
@@ -1006,7 +1275,10 @@ export default function ProfileSetupStudio() {
               {/* Simulated Outcomes Preview */}
               {state.outcomes.length > 0 && (
                 <div className="space-y-1.5 pt-1">
-                  <div className="text-xs font-bold text-foreground">What I can help you achieve</div>
+                  <div className="text-xs font-bold text-foreground flex items-center gap-1">
+                    <Target className="h-3.5 w-3.5 text-teal-600" />
+                    What I can help you achieve
+                  </div>
                   <div className="space-y-1">
                     {state.outcomes.map((o, idx) => (
                       <div key={idx} className="flex items-start gap-1.5 text-2xs text-foreground/90">
@@ -1021,7 +1293,10 @@ export default function ProfileSetupStudio() {
               {/* Simulated Ask Me Anything Preview */}
               {state.ask_me_anything.length > 0 && (
                 <div className="space-y-1.5 pt-1">
-                  <div className="text-xs font-bold text-foreground">Ask me anything about</div>
+                  <div className="text-xs font-bold text-foreground flex items-center gap-1">
+                    <MessageSquareCode className="h-3.5 w-3.5 text-sky-600" />
+                    Ask me anything about
+                  </div>
                   <div className="flex flex-wrap gap-1">
                     {state.ask_me_anything.map((a, idx) => (
                       <span
@@ -1030,6 +1305,24 @@ export default function ProfileSetupStudio() {
                       >
                         💬 {a.topic}
                       </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Simulated Perfect If You Are Preview */}
+              {state.ideal_mentees.length > 0 && (
+                <div className="space-y-1.5 pt-1">
+                  <div className="text-xs font-bold text-foreground flex items-center gap-1">
+                    <Users className="h-3.5 w-3.5 text-purple-600" />
+                    Perfect if you are...
+                  </div>
+                  <div className="space-y-1">
+                    {state.ideal_mentees.map((m, idx) => (
+                      <div key={idx} className="flex items-start gap-1.5 text-2xs text-foreground/90">
+                        <CheckCircle2 className="h-3.5 w-3.5 text-purple-500 shrink-0 mt-0.5" />
+                        <span>{m}</span>
+                      </div>
                     ))}
                   </div>
                 </div>
