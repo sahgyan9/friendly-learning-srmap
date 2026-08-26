@@ -643,26 +643,22 @@ export default function ProfileSetupStudio() {
           </div>
 
           <div className="flex items-center gap-2.5">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleAutoDraftAll}
-              disabled={isGeneratingAi}
-              className="hidden sm:flex gap-1.5 text-xs font-semibold border-primary/30 text-primary hover:bg-primary/10"
-            >
-              <Sparkles className="h-3.5 w-3.5" />
-              {isGeneratingAi ? "Generating..." : "Auto-Draft with AI"}
-            </Button>
-
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPortalDialogOpen(true)}
-              className="hidden md:flex gap-1.5 text-xs font-medium"
-            >
-              <GraduationCap className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
-              {state.courses.length > 0 ? `SRM Portal Linked (${state.courses.length})` : "Link SRM Portal"}
-            </Button>
+            {/* Hidden while the nudge banner below is already offering this
+                exact action — reappears once it's linked or dismissed. The
+                "Auto-Draft with AI" twin was dropped outright: it duplicated
+                "Auto-Draft All" in the AI Smart Extraction section with zero
+                differentiation, so there was no reason to show it twice. */}
+            {!(nudgeReason && state.courses.length === 0) && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPortalDialogOpen(true)}
+                className="hidden md:flex gap-1.5 text-xs font-medium"
+              >
+                <GraduationCap className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                {state.courses.length > 0 ? `SRM Portal Linked (${state.courses.length})` : "Link SRM Portal"}
+              </Button>
+            )}
 
             <Button
               onClick={handlePublish}
