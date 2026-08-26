@@ -210,10 +210,14 @@ const NotificationBell = () => {
             <Button
               size="sm"
               variant="default"
-              className="h-6 px-2.5 text-2xs font-semibold shrink-0"
+              className="relative h-6 px-2.5 text-2xs font-semibold shrink-0"
               disabled={pushLoading}
               onClick={enablePush}
             >
+              <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5" aria-hidden>
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary ring-2 ring-background"></span>
+              </span>
               {pushLoading ? "Enabling..." : "Enable"}
             </Button>
           </div>
