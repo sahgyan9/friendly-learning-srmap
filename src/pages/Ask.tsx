@@ -255,8 +255,8 @@ const Ask = () => {
               {results.mentors.length === 0 && results.faculty.length > 0 && (
                 <p className="text-sm text-muted-foreground">
                   No senior mentors match this yet.{" "}
-                  <Link to="/become-mentor" className="underline">
-                    Be the first
+                  <Link to="/become-mentor" className="underline font-medium text-foreground">
+                    Add your skills to help peers
                   </Link>
                   .
                 </p>

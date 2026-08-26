@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { GraduationCap, Loader2, User } from "lucide-react";
+import { GraduationCap, Loader2, User, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import AvailabilityControl from "@/components/mentors/AvailabilityControl";
 import InterestsEditor from "@/components/profile/InterestsEditor";
+import { ProfileKickstartModal } from "@/components/profile/ProfileKickstartModal";
 import type { MentorProfileData } from "./MentorProfileCard";
 
 export interface UserProfileData {
@@ -48,6 +49,7 @@ export function ProfileInfoForm({
   onSubmit,
 }: ProfileInfoFormProps) {
   const [newSkill, setNewSkill] = useState("");
+  const [kickstartOpen, setKickstartOpen] = useState(false);
 
   const addSkill = () => {
     const trimmed = newSkill.trim();
@@ -67,35 +69,53 @@ export function ProfileInfoForm({
   const showMentorFields = profile.role === "mentor" || isMentor;
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <User className="h-5 w-5" />
-          Personal Information
-        </CardTitle>
-        <CardDescription>
-          Update your profile details and contact information
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={onSubmit} className="space-y-4">
-          {/* Verification Status Badge */}
-          <div className="p-3 bg-muted rounded-lg flex items-center justify-between">
-            <span className="text-sm font-medium">Verification Status</span>
-            <Badge
-              variant={
-                profile.verification_status === "verified"
-                  ? "default"
-                  : profile.verification_status === "rejected"
-                    ? "destructive"
-                    : "secondary"
-              }
+    <>
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <User className="h-5 w-5" />
+                Personal Information
+              </CardTitle>
+              <CardDescription>
+                Update your profile details, skills and campus visibility
+              </CardDescription>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setKickstartOpen(true)}
+              className="gap-1.5 text-xs text-primary border-primary/30 bg-primary/5 hover:bg-primary/10"
             >
-              {profile.verification_status === "verified" && "✓ "}
-              {(profile.verification_status || "pending").charAt(0).toUpperCase() +
-                (profile.verification_status || "pending").slice(1)}
-            </Badge>
+              <Sparkles className="h-3.5 w-3.5" />
+              1-Click PDF & Portal Import
+            </Button>
           </div>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={onSubmit} className="space-y-4">
+            {/* Account Standing Badge */}
+            <div className="p-3 bg-muted/60 rounded-lg flex items-center justify-between">
+              <span className="text-sm font-medium text-foreground">Campus Standing</span>
+              <div className="flex items-center gap-1.5">
+                <Badge
+                  variant="outline"
+                  className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30 font-medium text-xs px-2.5 py-0.5"
+                >
+                  ✓ Verified SRM AP Student
+                </Badge>
+                {showMentorFields && (
+                  <Badge
+                    variant="outline"
+                    className="bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/30 font-medium text-xs px-2.5 py-0.5"
+                  >
+                    ⭐ Peer Mentor
+                  </Badge>
+                )}
+              </div>
+            </div>
 
           <div className="space-y-2">
             <Label htmlFor="name">Full Name</Label>
@@ -213,13 +233,11 @@ export function ProfileInfoForm({
             <Button
               type="button"
               variant="outline"
-              className="w-full"
-              onClick={() => {
-                window.location.href = "/become-mentor";
-              }}
+              className="w-full gap-2 border-primary/30 text-primary hover:bg-primary/5"
+              onClick={() => setKickstartOpen(true)}
             >
-              <GraduationCap className="mr-2 h-4 w-4" />
-              Become a Mentor
+              <Sparkles className="h-4 w-4" />
+              Help Others Find You (Auto-Fill Profile in 10s)
             </Button>
           )}
 
@@ -236,5 +254,14 @@ export function ProfileInfoForm({
         </form>
       </CardContent>
     </Card>
-  );
+
+    <ProfileKickstartModal
+      open={kickstartOpen}
+      onOpenChange={setKickstartOpen}
+      onProfileUpdated={() => {
+        window.location.reload();
+      }}
+    />
+  </>
+);
 }

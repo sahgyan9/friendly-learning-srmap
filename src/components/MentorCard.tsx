@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Star, MapPin, Users, MessageCircle, Linkedin, Loader2, GraduationCap, ArrowRight } from "lucide-react";
+import { Star, MapPin, Users, MessageCircle, Linkedin, Loader2, GraduationCap, ArrowRight, Drama } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Mentor } from "@/types/mentor";
@@ -12,6 +12,7 @@ import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import { getMentorById, isMentorListed } from "@/integrations/supabase/services/mentors";
 import { getOrCreateConversation } from "@/integrations/supabase/services/chat";
+import { getUserJoinedCommunities } from "@/integrations/supabase/services/communities";
 import { formatDepartment } from "@/utils/user-utils";
 import { CardAccentBorder } from "@/components/ui/CardAccentBorder";
 import { cn } from "@/lib/utils";
@@ -49,12 +50,25 @@ const MentorCard = ({ mentor }: MentorCardProps) => {
   const { user } = useAuth();
   const [isNavigating, setIsNavigating] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [userClubs, setUserClubs] = useState<string[]>([]);
   const navigate = useNavigate();
 
   // Paused mentors are filtered out of the directory query, so this only shows
   // in the places they still surface: their own view of themselves, and any
   // cached or directly linked list.
   const listed = isMentorListed(mentor);
+
+  useEffect(() => {
+    let cancelled = false;
+    getUserJoinedCommunities(mentor.id).then((res) => {
+      if (!cancelled) {
+        setUserClubs(res.filter(c => c.community.kind === "club").map(c => c.community.name));
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [mentor.id]);
 
   const handleConnect = async () => {
     if (!user) {
@@ -227,10 +241,31 @@ const MentorCard = ({ mentor }: MentorCardProps) => {
             </div>
           </div>
 
-          {/* Bio */}
+          {/* Joined Clubs */}
+          {userClubs.length > 0 && (
+            <div className="mb-3 flex flex-wrap items-center gap-1">
+              {userClubs.slice(0, 2).map((clubName, idx) => (
+                <Badge
+                  key={idx}
+                  variant="outline"
+                  className="text-[10px] bg-purple-500/10 text-purple-700 dark:text-purple-300 border-purple-500/20 font-medium px-2 py-0.5"
+                >
+                  <Drama className="h-3 w-3 mr-1 text-purple-500" />
+                  {clubName}
+                </Badge>
+              ))}
+              {userClubs.length > 2 && (
+                <span className="text-[10px] text-muted-foreground self-center">
+                  +{userClubs.length - 2} more
+                </span>
+              )}
+            </div>
+          )}
+
+          {/* Bio / Summary */}
           <div className="mb-4 flex-grow">
             <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
-              {mentor.bio}
+              {mentor.bio || mentor.tagline || "Active SRM AP student · Reach out for course guidance, project help, or campus chats."}
             </p>
           </div>
 

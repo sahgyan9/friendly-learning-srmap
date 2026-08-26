@@ -193,14 +193,17 @@ const BecomeMentor = () => {
                   <div className="space-y-4">
                     <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border">
                       <p className="text-sm text-gray-700 dark:text-gray-300">
-                        Your application was submitted on {new Date(existingApplication.submitted_at).toLocaleDateString()}. 
-                        Our team will review it carefully and get back to you soon.
+                        Your campus profile is live and active. Students and peers can find you in search and the directory.
                       </p>
                     </div>
-                    <div className="flex justify-center">
-                      <Button onClick={() => navigate('/profile')} variant="outline">
+                    <div className="flex justify-center space-x-4">
+                      <Button onClick={() => navigate(`/mentor/${user.id}`)}>
                         <FileText className="h-4 w-4 mr-2" />
-                        View Profile
+                        View My Public Profile
+                      </Button>
+                      <Button onClick={() => setEditMode(true)} variant="outline">
+                        <Edit className="h-4 w-4 mr-2" />
+                        Edit Details
                       </Button>
                     </div>
                   </div>

@@ -1,9 +1,10 @@
 import { PRIMARY_DOMAIN } from "@/lib/constants";
 
 import { useState, useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
 import { useIsomorphicLayoutEffect } from "@/hooks/useIsomorphicLayoutEffect";
 import { toast } from "sonner";
-import { GraduationCap, Sparkles, Code, Cpu, Palette, Star, Users, CheckCircle2, Atom, Binary } from "lucide-react";
+import { GraduationCap, Sparkles, Code, Cpu, Palette, Star, Users, CheckCircle2, Atom, Binary, FileText, PlusCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import SearchBar from "@/components/SearchBar";
 import SEOHead from "@/components/SEOHead";
@@ -12,6 +13,9 @@ import { getMentors } from "@/integrations/supabase/services/mentors";
 import { Mentor } from "@/types/mentor";
 import { getBreadcrumbSchema } from "@/lib/structured-data";
 import { useHasVisitedMentorsNav } from "@/hooks/useFeatureAnnouncement";
+import { useAuth } from "@/context/AuthContext";
+import { ProfileKickstartModal } from "@/components/profile/ProfileKickstartModal";
+import { Button } from "@/components/ui/button";
 
 // Import refactored components
 import MentorList from "@/components/mentors/MentorList";
@@ -20,7 +24,7 @@ import { HorizontalScroller } from "@/components/ui/HorizontalScroller";
 import { cn } from "@/lib/utils";
 
 const DOMAIN_FILTERS = [
-  { id: "all", label: "All Mentors", icon: Sparkles },
+  { id: "all", label: "All Mentors & Peers", icon: Sparkles },
   { id: "tech", label: "Web & Dev", icon: Code },
   { id: "ai", label: "AI & Data Science", icon: Cpu },
   { id: "dsa", label: "DSA & Core CS", icon: Binary },
@@ -31,6 +35,7 @@ const DOMAIN_FILTERS = [
 ];
 
 const Mentors = () => {
+  const { user, profile } = useAuth();
   const [allMentors, setAllMentors] = useState<Mentor[]>([]);
   const [filteredMentors, setFilteredMentors] = useState<Mentor[]>([]);
   const [activeFilter, setActiveFilter] = useState("all");
@@ -38,6 +43,7 @@ const Mentors = () => {
   const [mentorCount, setMentorCount] = useState(0);
   const [isAiSearch, setIsAiSearch] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [kickstartOpen, setKickstartOpen] = useState(false);
   const { markSeen: markMentorsNavSeen } = useHasVisitedMentorsNav();
   const cardsRef = useRef<HTMLDivElement>(null);
 
@@ -161,9 +167,9 @@ const Mentors = () => {
   return (
     <>
       <SEOHead
-        title={`Find Student Mentors at Friendly Learning SRM AP | Browse ${mentorCount} Verified SRMAP Mentor${mentorCount === 1 ? "" : "s"}`}
-        description="Discover experienced student mentors at Friendly Learning SRM AP University in Amaravati. Browse profiles, skills, and reviews to find the perfect mentor for your academic journey. Connect with verified peer mentors from SRMAP today!"
-        keywords="friendly learning srm ap, srmap mentorship platform, srmap friendly learning, SRM AP mentors directory, student mentors SRMAP, academic guidance amaravati, peer mentoring andhra pradesh, university mentorship srmap, SRM AP academic support, student tutoring amaravati"
+        title={`Find Mentors, Peers & Study Partners at SRM AP | Browse ${mentorCount} Active Mentors & Students`}
+        description="Connect with experienced student mentors, club teammates, and peer study partners at SRM AP. Browse skills, coursework, and projects to find collaborators today."
+        keywords="friendly learning srm ap, srmap mentorship platform, srmap peer directory, student mentors SRMAP, academic guidance amaravati, study partners srm ap, hackathon teams srm ap"
         canonical={`${PRIMARY_DOMAIN}/mentors`}
       />
 
@@ -190,14 +196,14 @@ const Mentors = () => {
               {/* Pill Label */}
               <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-blue-500/30 bg-blue-500/10 px-3.5 py-1 text-xs font-semibold uppercase tracking-widest text-blue-600 dark:text-blue-400 backdrop-blur-sm shadow-xs">
                 <GraduationCap className="h-4 w-4 text-blue-500" />
-                01 — Peer Mentors
+                01 — Mentors & Peers
               </div>
 
               <h1 className="text-2xl font-bold tracking-tight md:text-4xl bg-gradient-to-r from-foreground via-foreground to-foreground/80 bg-clip-text">
-                Find Your Perfect Mentor
+                Find Mentors, Peers & Study Partners
               </h1>
               <p className="mt-1.5 max-w-2xl text-sm md:text-base text-muted-foreground leading-relaxed">
-                Connect 1-on-1 with verified senior student & alumni mentors at SRM AP for course guidance, project help, and career advice.
+                Connect 1-on-1 with verified senior student mentors, club teammates, and peers across SRM AP for course guidance, hackathons, and project collaboration.
               </p>
 
               {/* Feature badges bar */}
@@ -205,7 +211,7 @@ const Mentors = () => {
                 {mentorCount > 0 && (
                   <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-foreground shadow-2xs">
                     <Users className="h-3.5 w-3.5 text-muted-foreground" />
-                    <strong>{mentorCount}</strong> Verified Mentor{mentorCount === 1 ? "" : "s"}
+                    <strong>{mentorCount}</strong> Active Peer{mentorCount === 1 ? "" : "s"} & Mentor{mentorCount === 1 ? "" : "s"}
                   </div>
                 )}
                 <div className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-foreground shadow-2xs">
@@ -223,6 +229,48 @@ const Mentors = () => {
 
         {/* Search + Quick Filter Chips + Grid */}
         <div ref={cardsRef} className="container mx-auto px-4 py-4">
+          {/* Recognition / Discoverability Banner for logged in users */}
+          {user && (
+            allMentors.some((m) => m.id === user.id) ? (
+              <div className="mb-4 rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-3.5 flex items-center justify-between gap-3 shadow-2xs">
+                <div className="flex items-center gap-2 text-xs text-foreground">
+                  <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="font-medium">You are live in the campus directory</span>
+                </div>
+                <Button
+                  asChild
+                  variant="ghost"
+                  size="sm"
+                  className="text-xs text-primary hover:text-primary gap-1 h-7 px-2.5 font-medium"
+                >
+                  <Link to={`/mentor/${user.id}`}>
+                    View My Public Card →
+                  </Link>
+                </Button>
+              </div>
+            ) : (
+              <div className="mb-4 rounded-xl border border-primary/25 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-1.5 text-xs font-semibold text-primary">
+                    <Sparkles className="h-3.5 w-3.5" />
+                    Make Yourself Discoverable
+                  </div>
+                  <p className="text-xs sm:text-sm text-foreground/90">
+                    Want classmates and juniors to find you for hackathons, study sessions & coursework?
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  onClick={() => setKickstartOpen(true)}
+                  className="gap-1.5 shrink-0 text-xs font-medium"
+                >
+                  <FileText className="h-3.5 w-3.5" />
+                  Auto-Fill Profile in 10s
+                </Button>
+              </div>
+            )
+          )}
+
           <SearchBar onSearch={handleSearch} onGeminiSearch={handleGeminiSearch} />
 
           {/* Clean Standard Domain Filter Pills — horizontally scrollable */}
@@ -259,6 +307,20 @@ const Mentors = () => {
 
         <Footer />
       </div>
+
+      <ProfileKickstartModal
+        open={kickstartOpen}
+        onOpenChange={setKickstartOpen}
+        onProfileUpdated={() => {
+          getMentors().then(({ data }) => {
+            if (data) {
+              setAllMentors(data);
+              setFilteredMentors(data);
+              setMentorCount(data.length);
+            }
+          });
+        }}
+      />
     </>
   );
 };
