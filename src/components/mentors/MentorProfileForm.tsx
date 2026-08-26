@@ -168,7 +168,7 @@ const MentorProfileForm = ({ userId, initialData, isEditMode = false }: MentorPr
 
       {showSection(0) && (
         <>
-          <ResumePdfImport onImported={applyImportedData} />
+          <ResumePdfImport onImported={applyImportedData} fields="basic" />
 
           <Section
             icon={<UserRound className="h-4 w-4" />}

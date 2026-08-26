@@ -66,3 +66,11 @@ verify_jwt = false
 [functions.import-srm-portal]
 verify_jwt = false
 
+# parse-linkedin-pdf authenticates callers itself (via supabaseAdmin.auth.getUser
+# in code against the Bearer header), same shape as import-srm-portal. It had no
+# entry here -- the exact drift risk the embed-knowledge comment above warns
+# about: a `functions deploy` with no explicit flag reverts to the platform
+# default instead of what's actually running.
+[functions.parse-linkedin-pdf]
+verify_jwt = false
+

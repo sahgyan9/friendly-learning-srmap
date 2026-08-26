@@ -4,12 +4,21 @@ import { FileText, Loader2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { MentorFormData } from "@/hooks/useMentorForm";
+import { extractPdfText } from "@/lib/pdfTextExtract";
 
 interface ResumePdfImportProps {
   onImported: (data: Partial<MentorFormData>) => void;
+  /** "basic" skips the tagline/outcomes/AMA/ideal-mentees fields this caller
+   * doesn't read, so Gemini generates less and returns faster. Defaults to
+   * "full" for callers (like the profile setup studio) that use all of it. */
+  fields?: "basic" | "full";
 }
 
 const MAX_SIZE_MB = 10;
+const REQUEST_TIMEOUT_MS = 45000;
+// Below this, treat extraction as having failed (scanned/image-only PDF) and
+// fall back to uploading the raw file for Gemini's document-vision path.
+const MIN_TEXT_CHARS_FOR_TEXT_MODE = 120;
 
 const fileToBase64 = (file: File): Promise<string> =>
   new Promise((resolve, reject) => {
@@ -24,7 +33,7 @@ const fileToBase64 = (file: File): Promise<string> =>
     reader.readAsDataURL(file);
   });
 
-const ResumePdfImport = ({ onImported }: ResumePdfImportProps) => {
+const ResumePdfImport = ({ onImported, fields = "full" }: ResumePdfImportProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -46,11 +55,19 @@ const ResumePdfImport = ({ onImported }: ResumePdfImportProps) => {
     const loadingId = toast.loading("Reading your PDF...");
 
     try {
-      const pdfBase64 = await fileToBase64(file);
+      const extractedText = await extractPdfText(file);
+      const useTextMode = extractedText.length >= MIN_TEXT_CHARS_FOR_TEXT_MODE;
+
+      // Text mode skips the base64 upload entirely -- most resumes are plain
+      // text underneath, so this is both the fast path and the common one.
+      // Only a scanned/image-only PDF needs the full-file fallback below.
+      const body = useTextMode
+        ? { pdfText: extractedText, mimeType: file.type, fields }
+        : { pdfBase64: await fileToBase64(file), mimeType: file.type, fields };
 
       const { data, error } = await supabase.functions.invoke(
         "parse-linkedin-pdf",
-        { body: { pdfBase64, mimeType: file.type } },
+        { body, timeout: REQUEST_TIMEOUT_MS },
       );
 
       if (error) throw error;

@@ -16,25 +16,28 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
+import { updateMentorSummary } from "@/integrations/supabase/services/mentors";
 
 interface ProfileKickstartModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  defaultTab?: "pdf" | "portal" | "clubs";
   onProfileUpdated?: () => void;
+  defaultTab?: "pdf" | "portal" | "clubs";
 }
 
 export function ProfileKickstartModal({
   open,
   onOpenChange,
-  defaultTab = "pdf",
   onProfileUpdated,
+  defaultTab = "pdf",
 }: ProfileKickstartModalProps) {
   const { user, profile, refreshProfile } = useAuth();
-  const [activeTab, setActiveTab] = useState<string>(defaultTab);
-  const [portalDialogOpen, setPortalDialogOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<"pdf" | "portal" | "clubs">(defaultTab);
   const [isSaving, setIsSaving] = useState(false);
   const [isDiscoverable, setIsDiscoverable] = useState(true);
+  const [portalDialogOpen, setPortalDialogOpen] = useState(false);
+
+  // Parsed data preview state
   const [importedPreview, setImportedPreview] = useState<{
     name?: string;
     department?: string;
@@ -44,6 +47,10 @@ export function ProfileKickstartModal({
     linkedin_url?: string;
     hobbies?: string;
     mobile?: string;
+    tagline?: string;
+    outcomes?: string[];
+    ask_me_anything?: any[];
+    ideal_mentees?: string[];
   } | null>(null);
 
   const handlePdfImported = async (data: Record<string, any>) => {
@@ -67,6 +74,10 @@ export function ProfileKickstartModal({
       linkedin_url: data.linkedin_url || profile?.linkedin_url || "",
       hobbies: data.hobbies || "",
       mobile: data.mobile || profile?.mobile || "",
+      tagline: data.tagline || "",
+      outcomes: Array.isArray(data.outcomes) ? data.outcomes : [],
+      ask_me_anything: Array.isArray(data.ask_me_anything) ? data.ask_me_anything : [],
+      ideal_mentees: Array.isArray(data.ideal_mentees) ? data.ideal_mentees : [],
     };
 
     setImportedPreview(preview);
@@ -123,6 +134,23 @@ export function ProfileKickstartModal({
         console.warn("Could not upsert mentor row:", mentorError);
       }
 
+      // 3. Save AI summary fields if present (tagline, outcomes, AMA, ideal mentees)
+      if (
+        importedPreview.tagline ||
+        (importedPreview.outcomes && importedPreview.outcomes.length > 0) ||
+        (importedPreview.ask_me_anything && importedPreview.ask_me_anything.length > 0) ||
+        (importedPreview.ideal_mentees && importedPreview.ideal_mentees.length > 0)
+      ) {
+        await updateMentorSummary(user.id, {
+          tagline: importedPreview.tagline || null,
+          outcomes: importedPreview.outcomes || [],
+          ask_me_anything: (importedPreview.ask_me_anything || []).map((t: any) =>
+            typeof t === "string" ? { topic: t } : t
+          ),
+          ideal_mentees: importedPreview.ideal_mentees || [],
+        });
+      }
+
       await refreshProfile();
       onProfileUpdated?.();
       toast.success("Profile saved successfully! Your public card is now active 🎉");
@@ -152,7 +180,11 @@ export function ProfileKickstartModal({
             </DialogDescription>
           </DialogHeader>
 
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-2 w-full">
+          <Tabs
+            value={activeTab}
+            onValueChange={(val) => setActiveTab(val as "pdf" | "portal" | "clubs")}
+            className="mt-2 w-full"
+          >
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="pdf" className="text-xs sm:text-sm flex items-center gap-1.5">
                 <FileText className="h-4 w-4" />
@@ -174,7 +206,7 @@ export function ProfileKickstartModal({
                 Upload your resume or LinkedIn PDF export. Our AI will automatically extract your department, top skills, bio, and experience in seconds.
               </p>
 
-              <ResumePdfImport onImported={handlePdfImported} />
+              <ResumePdfImport onImported={handlePdfImported} fields="full" />
 
               {importedPreview && (
                 <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-3">
