@@ -11,7 +11,7 @@ export const useMentorConnection = (userId: string, setActiveChat: (id: string) 
   const mentorProcessedRef = useRef<string | null>(null);
 
   useEffect(() => {
-    const mentorId = searchParams.get('mentor');
+    const mentorId = searchParams.get('mentor') || searchParams.get('mentorId');
     
     // Skip if no mentor ID, no user, or already processing this mentor
     if (!mentorId || !userId || isProcessingMentor || mentorProcessedRef.current === mentorId) {
@@ -33,6 +33,7 @@ export const useMentorConnection = (userId: string, setActiveChat: (id: string) 
           // Clear the mentor parameter from URL
           setSearchParams(params => {
             params.delete('mentor');
+            params.delete('mentorId');
             return params;
           });
           return;
@@ -44,6 +45,7 @@ export const useMentorConnection = (userId: string, setActiveChat: (id: string) 
           // Clear the mentor parameter from URL
           setSearchParams(params => {
             params.delete('mentor');
+            params.delete('mentorId');
             return params;
           });
           return;
@@ -69,6 +71,7 @@ export const useMentorConnection = (userId: string, setActiveChat: (id: string) 
         // Clear the mentor parameter from URL after successful connection
         setSearchParams(params => {
           params.delete('mentor');
+          params.delete('mentorId');
           return params;
         });
         

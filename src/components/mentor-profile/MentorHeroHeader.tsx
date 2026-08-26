@@ -132,7 +132,7 @@ export default function MentorHeroHeader({
       }
 
       toast.success(`Connected with ${mentor.name}. Redirecting to messages...`);
-      navigate(`/messages?chat=${conversation.id}`);
+      navigate(`/messages/${conversation.id}`);
     } catch (err) {
       toast.error("An unexpected error occurred while connecting to the mentor");
     } finally {

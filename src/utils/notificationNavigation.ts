@@ -101,7 +101,7 @@ export const getNotificationNavigationUrl = (notification: Notification): string
     // Handle message notifications 
     if (notification.type === 'message') {
         if ('conversation_id' in data) {
-            return `${baseUrl}/messages?chat=${data.conversation_id}`;
+            return `${baseUrl}/messages/${data.conversation_id}`;
         }
         return `${baseUrl}/messages`;
     }

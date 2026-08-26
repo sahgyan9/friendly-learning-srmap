@@ -71,7 +71,7 @@ const MentorProfileActions = ({
       toast.success(`Connected with ${mentor.name}. Redirecting to messages...`);
       
       // Navigate to messages page with the conversation ID
-      navigate(`/messages?chat=${conversation.id}`);
+      navigate(`/messages/${conversation.id}`);
       
     } catch (err) {
       console.error('Error during connection process:', err);

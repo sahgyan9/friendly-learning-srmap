@@ -136,7 +136,7 @@ const CommunityPostDetail = () => {
       return;
     }
 
-    navigate(`/messages?chat=${conversation.id}`);
+    navigate(`/messages/${conversation.id}`);
   };
 
   const handleStatusChange = async (status: string) => {
