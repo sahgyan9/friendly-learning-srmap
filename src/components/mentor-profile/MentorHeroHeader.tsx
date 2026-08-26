@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
-  CheckCircle2,
   Star,
   Users,
   Zap,
@@ -198,9 +197,8 @@ export default function MentorHeroHeader({
           {/* Details & Tagline */}
           <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-foreground flex items-center gap-2">
+              <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-foreground">
                 {mentor.name}
-                <span title="Verified Mentor"><CheckCircle2 className="h-5 w-5 text-primary fill-primary/10 flex-shrink-0" /></span>
               </h1>
 
               {mentor.is_alumni && (
