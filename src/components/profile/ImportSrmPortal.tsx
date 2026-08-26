@@ -427,16 +427,21 @@ export const ImportSrmPortalDialog = ({
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label htmlFor="srm-password">Date of birth (portal password)</Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="srm-password">Date of birth (portal password)</Label>
+                    <span className="text-2xs font-mono font-semibold text-muted-foreground">
+                      DDMMYYYY
+                    </span>
+                  </div>
                   <PasswordInput
                     id="srm-password"
-                    placeholder="DDMMYYYY (your date of birth)"
+                    placeholder="e.g. 15082005"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     autoComplete="off"
                   />
                   <p className="text-2xs text-muted-foreground">
-                    Same password you use to sign in at student.srmap.edu.in — stored encrypted, used only to keep your academic info current.
+                    Format: DDMMYYYY — same password you use to sign in at student.srmap.edu.in. Stored encrypted, used only to keep your academic info current.
                   </p>
                 </div>
 
