@@ -1,4 +1,5 @@
 
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,14 +22,36 @@ import {
   MessageSquare,
   Megaphone,
   SearchX,
+  RefreshCw,
 } from "lucide-react";
 import AdminPageWrapper from "@/components/admin/AdminPageWrapper";
 import AdminHeader from "@/components/admin/AdminHeader";
 import PlatformHealthPanel from "@/components/admin/PlatformHealthPanel";
 import KpiPanel from "@/components/admin/KpiPanel";
 import { motion } from "framer-motion";
+import { syncSRMAPEvents } from "@/integrations/supabase/services/marketplace";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 const AdminDashboard = () => {
+  const [isSyncingEvents, setIsSyncingEvents] = useState(false);
+
+  const handleSyncEvents = async () => {
+    try {
+      setIsSyncingEvents(true);
+      const res = await syncSRMAPEvents();
+      toast.success("SRMAP Events Synced", {
+        description: `Successfully synced ${res.synced} events from SRMAP portal.`,
+      });
+    } catch (error) {
+      console.error("Error syncing events:", error);
+      toast.error("Sync Failed", {
+        description: error instanceof Error ? error.message : "Failed to sync events from SRMAP.",
+      });
+    } finally {
+      setIsSyncingEvents(false);
+    }
+  };
 
   const adminModules = [
     {
@@ -123,6 +146,17 @@ const AdminDashboard = () => {
       <AdminHeader
         title="Admin Dashboard"
         description="Welcome to the admin area. Manage your site content and settings from here."
+        action={
+          <Button
+            variant="outline"
+            onClick={handleSyncEvents}
+            disabled={isSyncingEvents}
+            className="shadow-sm"
+          >
+            <RefreshCw className={cn("mr-2 h-4 w-4", isSyncingEvents && "animate-spin")} />
+            {isSyncingEvents ? "Syncing..." : "Sync SRMAP Events"}
+          </Button>
+        }
       />
 
       <KpiPanel />

@@ -375,6 +375,14 @@ function App() {
                       }
                     />
                     <Route
+                      path="/admin/marketplace"
+                      element={
+                        <ProtectedRoute requiredRole="admin">
+                          <MarketplaceAdmin />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
                       path="/admin/notices"
                       element={
                         <ProtectedRoute requiredRole="admin">
