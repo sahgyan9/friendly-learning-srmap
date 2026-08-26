@@ -23,6 +23,7 @@ const NavbarProfileMenu = () => {
   const { user, profile, signOut, loading, refreshProfile } = useAuth();
   const { openTour } = useWelcomeTour();
   const [isRealMentor, setIsRealMentor] = useState(false);
+  const [mentorSlug, setMentorSlug] = useState<string | null>(null);
   const [checkingMentorStatus, setCheckingMentorStatus] = useState(true);
   const [kickstartOpen, setKickstartOpen] = useState(false);
 
@@ -42,13 +43,14 @@ const NavbarProfileMenu = () => {
       // every page load — noise that buries real failures in the API log.
       const { data, error } = await supabase
         .from('mentors')
-        .select('department')
+        .select('department, slug')
         .eq('id', user.id)
         .maybeSingle();
 
       if (error) {
         console.error('Error checking mentor status:', error);
         setIsRealMentor(false);
+        setMentorSlug(null);
       } else {
         // Only consider as real mentor if not in General department and department exists
         const isApprovedMentor = data && 
@@ -57,10 +59,12 @@ const NavbarProfileMenu = () => {
           data.department.trim() !== '';
         
         setIsRealMentor(Boolean(isApprovedMentor));
+        setMentorSlug(data?.slug || null);
       }
     } catch (error) {
       console.error('Error checking mentor status:', error);
       setIsRealMentor(false);
+      setMentorSlug(null);
     } finally {
       setCheckingMentorStatus(false);
     }
@@ -88,23 +92,34 @@ const NavbarProfileMenu = () => {
           <DropdownMenuSeparator />
           
           {/* 1-Click Fast Setup / PDF Modal */}
-          <DropdownMenuItem
-            onClick={() => setKickstartOpen(true)}
-            className="cursor-pointer text-primary focus:text-primary font-medium flex items-center justify-between"
-          >
-            <span className="flex items-center gap-2">
-              <Sparkles className="h-4 w-4" />
-              Help Others Find You
-            </span>
-            <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-semibold">10s</span>
-          </DropdownMenuItem>
+          {!isRealMentor && (
+            <DropdownMenuItem
+              onClick={() => setKickstartOpen(true)}
+              className="cursor-pointer text-primary focus:text-primary font-medium flex items-center justify-between"
+            >
+              <span className="flex items-center gap-2">
+                <Sparkles className="h-4 w-4" />
+                Help Others Find You
+              </span>
+              <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-semibold">10s</span>
+            </DropdownMenuItem>
+          )}
 
-          <DropdownMenuItem asChild>
-            <Link to={`/mentor/${user.id}`} className="cursor-pointer w-full flex items-center gap-2">
-              <User className="h-4 w-4" />
-              My Public Profile
-            </Link>
-          </DropdownMenuItem>
+          {isRealMentor ? (
+            <DropdownMenuItem asChild>
+              <Link to={`/mentor/${mentorSlug || user.id}`} className="cursor-pointer w-full flex items-center gap-2">
+                <User className="h-4 w-4" />
+                My Public Profile
+              </Link>
+            </DropdownMenuItem>
+          ) : (
+            <DropdownMenuItem asChild>
+              <Link to="/profile/setup" className="cursor-pointer w-full flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-primary" />
+                Set Up Public Profile
+              </Link>
+            </DropdownMenuItem>
+          )}
 
           <DropdownMenuItem asChild>
             <Link to="/profile" className="cursor-pointer w-full">

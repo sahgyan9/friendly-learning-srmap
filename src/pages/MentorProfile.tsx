@@ -2,7 +2,7 @@ import { PRIMARY_DOMAIN } from "@/lib/constants";
 
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import SEOHead from "@/components/SEOHead";
@@ -51,7 +51,9 @@ const MentorProfile = () => {
             navigate(`/mentor/${data.slug}`, { replace: true });
           }
         } else {
-          toast.error("Mentor not found");
+          if (user?.id !== id) {
+            toast.error("Mentor not found");
+          }
         }
       } catch (err) {
         toast.error("An unexpected error occurred");
@@ -61,7 +63,7 @@ const MentorProfile = () => {
     };
 
     fetchMentor();
-  }, [id]);
+  }, [id, user?.id]);
 
   const handleRatingSubmitted = () => {
     refreshRatingStatus();
@@ -94,6 +96,7 @@ const MentorProfile = () => {
   }
 
   if (!mentor) {
+    const isCurrentUser = Boolean(user && id && user.id === id);
     return (
       <div className="min-h-screen">
         <motion.div
@@ -103,16 +106,39 @@ const MentorProfile = () => {
           transition={{ duration: 0.3 }}
         >
           <div className="max-w-3xl mx-auto text-center py-12">
-            <h1 className="text-3xl font-bold mb-4">Mentor Not Found</h1>
-            <p className="text-muted-foreground mb-8">
-              The mentor profile you're looking for doesn't exist or has been removed.
+            <h1 className="text-3xl font-bold mb-4">
+              {isCurrentUser ? "You Don't Have a Public Profile Yet" : "Mentor Not Found"}
+            </h1>
+            <p className="text-muted-foreground mb-8 max-w-md mx-auto">
+              {isCurrentUser
+                ? "You haven't set up or published your public mentor profile yet. Create one in seconds to help classmates and juniors find you for mentorship and projects."
+                : "The mentor profile you're looking for doesn't exist or has been removed."}
             </p>
-            <Button asChild>
-              <Link to="/mentors">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Mentors
-              </Link>
-            </Button>
+            <div className="flex items-center justify-center gap-3">
+              {isCurrentUser ? (
+                <>
+                  <Button asChild className="gap-2">
+                    <Link to="/profile/setup">
+                      <Sparkles className="h-4 w-4" />
+                      Set Up Public Profile
+                    </Link>
+                  </Button>
+                  <Button asChild variant="outline">
+                    <Link to="/mentors">
+                      <ArrowLeft className="mr-2 h-4 w-4" />
+                      Browse Mentors
+                    </Link>
+                  </Button>
+                </>
+              ) : (
+                <Button asChild>
+                  <Link to="/mentors">
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Back to Mentors
+                  </Link>
+                </Button>
+              )}
+            </div>
           </div>
         </motion.div>
       </div>
