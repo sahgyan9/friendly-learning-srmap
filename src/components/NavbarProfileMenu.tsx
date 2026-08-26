@@ -17,12 +17,15 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useWelcomeTour } from "@/components/onboarding/WelcomeTourContext";
 import { MentorCtaTooltip } from "@/components/mentors/MentorCtaTooltip";
+import { ProfileKickstartModal } from "@/components/profile/ProfileKickstartModal";
+import { Sparkles, User, Award } from "lucide-react";
 
 const NavbarProfileMenu = () => {
-  const { user, profile, signOut, loading } = useAuth();
+  const { user, profile, signOut, loading, refreshProfile } = useAuth();
   const { openTour } = useWelcomeTour();
   const [isRealMentor, setIsRealMentor] = useState(false);
   const [checkingMentorStatus, setCheckingMentorStatus] = useState(true);
+  const [kickstartOpen, setKickstartOpen] = useState(false);
 
   useEffect(() => {
     checkMentorStatus();
@@ -54,8 +57,7 @@ const NavbarProfileMenu = () => {
           data.department !== 'General' && 
           data.department.trim() !== '';
         
-        
-        setIsRealMentor(isApprovedMentor);
+        setIsRealMentor(Boolean(isApprovedMentor));
       }
     } catch (error) {
       console.error('Error checking mentor status:', error);
@@ -69,6 +71,7 @@ const NavbarProfileMenu = () => {
   if (!user) return null;
 
   return (
+    <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="sm" className="rounded-full p-0 h-10 w-10">
@@ -78,32 +81,47 @@ const NavbarProfileMenu = () => {
             </Avatar>
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuContent align="end" className="w-60">
           <DropdownMenuLabel>
-            {profile?.name || 'My Account'}
+            <div className="font-semibold text-sm truncate">{profile?.name || 'My Account'}</div>
+            <div className="text-[11px] text-muted-foreground font-normal truncate">{user.email}</div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
+          
+          {/* 1-Click Fast Setup / PDF Modal */}
+          <DropdownMenuItem
+            onClick={() => setKickstartOpen(true)}
+            className="cursor-pointer text-primary focus:text-primary font-medium flex items-center justify-between"
+          >
+            <span className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4" />
+              Help Others Find You
+            </span>
+            <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-semibold">10s</span>
+          </DropdownMenuItem>
+
           <DropdownMenuItem asChild>
-            <Link to="/profile" className="cursor-pointer w-full">
-              Profile
+            <Link to={`/mentor/${user.id}`} className="cursor-pointer w-full flex items-center gap-2">
+              <User className="h-4 w-4" />
+              My Public Profile
             </Link>
           </DropdownMenuItem>
+
+          <DropdownMenuItem asChild>
+            <Link to="/profile" className="cursor-pointer w-full">
+              Account Settings
+            </Link>
+          </DropdownMenuItem>
+
           {isRealMentor && (
             <DropdownMenuItem asChild>
-              <Link to="/certificate" className="cursor-pointer w-full">
-                My certificate
+              <Link to="/certificate" className="cursor-pointer w-full flex items-center gap-2">
+                <Award className="h-4 w-4 text-amber-500" />
+                My Certificate
               </Link>
             </DropdownMenuItem>
           )}
-          {!isRealMentor && (
-            <MentorCtaTooltip side="left">
-              <DropdownMenuItem asChild>
-                <Link to="/become-mentor" className="cursor-pointer w-full">
-                  Become a Mentor
-                </Link>
-              </DropdownMenuItem>
-            </MentorCtaTooltip>
-          )}
+
           <DropdownMenuItem onClick={openTour} className="cursor-pointer">
             Take the tour
           </DropdownMenuItem>
@@ -114,6 +132,16 @@ const NavbarProfileMenu = () => {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+
+      <ProfileKickstartModal
+        open={kickstartOpen}
+        onOpenChange={setKickstartOpen}
+        onProfileUpdated={() => {
+          refreshProfile();
+          checkMentorStatus();
+        }}
+      />
+    </>
   );
 };
 

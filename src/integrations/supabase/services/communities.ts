@@ -604,3 +604,46 @@ export const respondToInvite = async (inviteId: string, accept: boolean) => {
 
   return { data, error: null };
 };
+
+export type UserJoinedCommunity = {
+  role: string;
+  joined_at: string;
+  community: {
+    id: string;
+    name: string;
+    slug: string;
+    kind: string;
+    cover_image: string | null;
+    member_count: number;
+  };
+};
+
+/**
+ * Returns the communities/clubs a student belongs to, with kind and role.
+ * Useful for showing club badges on mentor and peer profile cards.
+ */
+export const getUserJoinedCommunities = async (userId: string) => {
+  try {
+    const { data, error } = await supabase
+      .from("community_members")
+      .select("role, joined_at, communities(id, name, slug, kind, cover_image, member_count)")
+      .eq("user_id", userId);
+
+    if (error) {
+      console.error("Error fetching user communities:", error);
+      return [] as UserJoinedCommunity[];
+    }
+
+    return (data ?? [])
+      .map((row: any) => ({
+        role: row.role,
+        joined_at: row.joined_at,
+        community: Array.isArray(row.communities) ? row.communities[0] : row.communities,
+      }))
+      .filter((item) => item.community != null && item.community.name) as UserJoinedCommunity[];
+  } catch (err) {
+    console.error("Exception fetching user communities:", err);
+    return [] as UserJoinedCommunity[];
+  }
+};
+

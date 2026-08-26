@@ -64,6 +64,7 @@ export interface Mentor {
   /** Opt-in course list (code + name only) written by the "Show courses on
    * public profile" toggle — not free-text edited like the other fields. */
   courses?: Array<{ code: string; name: string }>;
+  clubs?: string[];
   // No `availability_schedule` here. There was one, and it was never a column
   // on public.mentors -- so every read of it was undefined and every consumer
   // silently fell through to an invented default. Real reply figures come from

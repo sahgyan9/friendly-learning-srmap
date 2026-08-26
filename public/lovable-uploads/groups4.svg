@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="220" viewBox="0 0 300 220">
+
+  <rect width="300" height="220" fill="white"></rect>
+
+  <!-- LEFT PERSON -->
+  <circle cx="78" cy="47" r="21" fill="white" stroke="#111" stroke-width="7"></circle>
+
+  <path d="M31 157
+           L31 121
+           C31 98 48 81 70 81
+           L86 81
+           C108 81 125 98 125 121
+           L125 157 Z" fill="white" stroke="#111" stroke-width="7" stroke-linejoin="round"></path>
+
+  <path d="M51 157 L51 118" fill="none" stroke="#111" stroke-width="7" stroke-linecap="round"></path>
+
+
+  <!-- RIGHT PERSON -->
+  <circle cx="222" cy="47" r="21" fill="white" stroke="#111" stroke-width="7"></circle>
+
+  <path d="M175 157
+           L175 121
+           C175 98 192 81 214 81
+           L230 81
+           C252 81 269 98 269 121
+           L269 157 Z" fill="white" stroke="#111" stroke-width="7" stroke-linejoin="round"></path>
+
+  <path d="M249 157 L249 118" fill="none" stroke="#111" stroke-width="7" stroke-linecap="round"></path>
+
+
+  <!-- CENTER PERSON -->
+  <circle cx="150" cy="67" r="26" fill="white" stroke="#111" stroke-width="7"></circle>
+
+  <path d="M101 207
+           L101 139
+           C101 119 116 104 136 104
+           L164 104
+           C184 104 199 119 199 139
+           L199 207 Z" fill="white" stroke="#111" stroke-width="7" stroke-linejoin="round"></path>
+
+  <!-- V COLLAR -->
+  <path d="M139 105 L150 126 L161 105" fill="white" stroke="#111" stroke-width="6" stroke-linejoin="round"></path>
+
+  <!-- CENTER ARMS -->
+  <path d="M126 207 L126 153" fill="none" stroke="#111" stroke-width="7" stroke-linecap="round"></path>
+
+  <path d="M174 207 L174 153" fill="none" stroke="#111" stroke-width="7" stroke-linecap="round"></path>
+
+  <!-- BUTTONS -->
+  <circle cx="150" cy="163" r="4" fill="#111"></circle>
+  <circle cx="150" cy="177" r="4" fill="#111"></circle>
+  <circle cx="150" cy="191" r="4" fill="#111"></circle>
+
+</svg>

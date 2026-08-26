@@ -17,6 +17,9 @@ import { isMentorListed } from "@/integrations/supabase/services/mentors";
 import { Mentor } from "@/types/mentor";
 import { getEnhancedMentorProfile } from "@/utils/mentor-enhancements";
 
+import ProfileCompletenessBanner from "./ProfileCompletenessBanner";
+import MentorClubsSection from "./MentorClubsSection";
+
 interface MentorProfileContentProps {
   mentor: Mentor;
   canRate: boolean;
@@ -48,14 +51,12 @@ const MentorProfileContent = ({
       initial="hidden"
       animate="visible"
     >
-      {/* Profile view banner for mentor owner */}
+      {/* 1-Click Profile Kickstart / Completeness Banner for owner */}
       {isOwnProfile && (
-        <div className="flex items-center gap-2 rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 text-sm text-foreground shadow-xs">
-          <Eye className="h-4 w-4 flex-shrink-0 text-primary" />
-          <span>
-            This is your profile as students see it. Keep your skills and bio updated to help students find you!
-          </span>
-        </div>
+        <ProfileCompletenessBanner
+          mentor={mentor}
+          onMentorUpdated={onMentorUpdated}
+        />
       )}
 
       {/* Unlisted / Paused Availability Banner */}
@@ -103,6 +104,9 @@ const MentorProfileContent = ({
 
       {/* SECTION 5b: COURSES TAKEN (opt-in) */}
       <MentorCoursesSection mentor={mentor} />
+
+      {/* SECTION 5c: CLUBS & STUDENT CHAPTERS */}
+      <MentorClubsSection userId={mentor.id} isOwnProfile={isOwnProfile} />
 
       {/* No availability/schedule card. It displayed "Active Days: Mon Wed Fri"
           and "Preferred Time Slot: Evening (6 PM - 10 PM)" for every mentor from

@@ -1,14 +1,10 @@
 import type { ComponentType, SVGProps } from "react";
 import {
   BookOpen,
-  Calendar,
   HelpCircle,
   Home,
   Info,
   Mail,
-  MessageSquare,
-  Users,
-  UsersRound,
 } from "lucide-react";
 
 import { EventsIcon } from "@/components/icons/EventsIcon";
