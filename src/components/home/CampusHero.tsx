@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Sparkles, Users, GraduationCap, Building2, MessageSquare } from "lucide-react";
+import { FacultyIcon } from "@/components/icons/FacultyIcon";
+import { GroupsIcon } from "@/components/icons/GroupsIcon";
+import { MentorIcon } from "@/components/icons/MentorIcon";
+import { PostIcon } from "@/components/icons/PostIcon";
 import AskBox from "@/components/search/AskBox";
 import { getPlatformStats, type PlatformStats } from "@/integrations/supabase/services/platform-stats";
 import { getTrendingSearches, MIN_TRENDING_TO_SHOW } from "@/lib/search/trending";
@@ -62,15 +65,14 @@ export const CampusHero = () => {
           className="text-center"
         >
           {/* SRM-AP Campus Badge */}
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-primary/20 bg-primary/5 text-primary text-xs font-medium mb-4 shadow-2xs">
-            <Sparkles className="h-3.5 w-3.5" />
+          <div className="inline-flex items-center px-3.5 py-1.5 rounded-full border border-primary/20 bg-primary/5 text-primary text-xs font-medium mb-4 shadow-2xs">
             <span>The All-in-One Student Ecosystem for SRM AP</span>
           </div>
 
           {/* Core Headline */}
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-5.5xl font-extrabold tracking-tight text-foreground mb-3.5 text-balance">
             Ask{" "}
-            <span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 dark:from-blue-400 dark:via-indigo-300 dark:to-violet-400 bg-clip-text text-transparent">
+            <span className="text-primary">
               CampusMind
             </span>{" "}
             anything about SRM AP.
@@ -108,7 +110,7 @@ export const CampusHero = () => {
               to="/faculty"
               className="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl bg-card/80 border border-border/70 hover:border-rose-500/40 hover:bg-rose-500/5 transition-all text-xs text-muted-foreground hover:text-foreground shadow-2xs group"
             >
-              <GraduationCap className="h-4 w-4 text-rose-500 shrink-0" />
+              <FacultyIcon className="h-4 w-4 text-rose-500 shrink-0" />
               <span className="font-bold text-foreground">
                 {stats ? stats.faculty : <span className="inline-block h-3.5 w-6 animate-pulse rounded bg-muted/60 align-middle" />}
               </span>
@@ -119,7 +121,7 @@ export const CampusHero = () => {
               to="/workspace-groups"
               className="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl bg-card/80 border border-border/70 hover:border-amber-500/40 hover:bg-amber-500/5 transition-all text-xs text-muted-foreground hover:text-foreground shadow-2xs group"
             >
-              <Users className="h-4 w-4 text-amber-500 shrink-0" />
+              <GroupsIcon className="h-4 w-4 text-amber-500 shrink-0" />
               <span className="font-bold text-foreground">
                 {stats ? stats.groups : <span className="inline-block h-3.5 w-6 animate-pulse rounded bg-muted/60 align-middle" />}
               </span>
@@ -130,7 +132,7 @@ export const CampusHero = () => {
               to="/mentors"
               className="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl bg-card/80 border border-border/70 hover:border-blue-500/40 hover:bg-blue-500/5 transition-all text-xs text-muted-foreground hover:text-foreground shadow-2xs group"
             >
-              <Building2 className="h-4 w-4 text-blue-500 shrink-0" />
+              <MentorIcon className="h-4 w-4 text-blue-500 shrink-0" />
               <span className="font-bold text-foreground">
                 {stats ? stats.mentors : <span className="inline-block h-3.5 w-6 animate-pulse rounded bg-muted/60 align-middle" />}
               </span>
@@ -141,7 +143,7 @@ export const CampusHero = () => {
               to="/posts"
               className="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl bg-card/80 border border-border/70 hover:border-emerald-500/40 hover:bg-emerald-500/5 transition-all text-xs text-muted-foreground hover:text-foreground shadow-2xs group"
             >
-              <MessageSquare className="h-4 w-4 text-emerald-500 shrink-0" />
+              <PostIcon className="h-4 w-4 text-emerald-500 shrink-0" />
               <span className="font-bold text-foreground">
                 {stats ? stats.posts : <span className="inline-block h-3.5 w-6 animate-pulse rounded bg-muted/60 align-middle" />}
               </span>

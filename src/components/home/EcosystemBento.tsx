@@ -1,5 +1,8 @@
 import { Link } from "react-router-dom";
-import { GraduationCap, Building2, Users, ArrowRight, ShieldCheck, Search, MessageSquareCode } from "lucide-react";
+import { ArrowRight } from "lucide-react";
+import { FacultyIcon } from "@/components/icons/FacultyIcon";
+import { GroupsIcon } from "@/components/icons/GroupsIcon";
+import { MentorIcon } from "@/components/icons/MentorIcon";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
@@ -21,7 +24,7 @@ export const EcosystemBento = () => {
           <Card className="p-6 flex flex-col justify-between border-border/80 hover:border-blue-500/40 hover:shadow-md transition-all group bg-card">
             <div>
               <div className="h-10 w-10 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                <GraduationCap className="h-5 w-5" />
+                <MentorIcon className="h-5 w-5" />
               </div>
               <h3 className="text-lg font-semibold text-foreground mb-2">
                 Senior Mentorship
@@ -42,7 +45,7 @@ export const EcosystemBento = () => {
           <Card className="p-6 flex flex-col justify-between border-border/80 hover:border-rose-500/40 hover:shadow-md transition-all group bg-card">
             <div>
               <div className="h-10 w-10 rounded-xl bg-rose-500/10 text-rose-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                <Building2 className="h-5 w-5" />
+                <FacultyIcon className="h-5 w-5" />
               </div>
               <h3 className="text-lg font-semibold text-foreground mb-2">
                 Faculty Explorer & Ratings
@@ -63,7 +66,7 @@ export const EcosystemBento = () => {
           <Card className="p-6 flex flex-col justify-between border-border/80 hover:border-emerald-500/40 hover:shadow-md transition-all group bg-card">
             <div>
               <div className="h-10 w-10 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                <Users className="h-5 w-5" />
+                <GroupsIcon className="h-5 w-5" />
               </div>
               <h3 className="text-lg font-semibold text-foreground mb-2">
                 Teams & Campus Groups

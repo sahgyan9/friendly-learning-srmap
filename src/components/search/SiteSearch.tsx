@@ -407,22 +407,33 @@ const SiteSearch = () => {
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        aria-label="Search the site"
-        className={cn(
-          "group flex h-9 items-center gap-2 rounded-lg border border-border/60 bg-muted/30 px-2.5 text-xs font-normal text-muted-foreground transition-all duration-150",
-          "hover:border-border hover:bg-muted/60 hover:text-foreground",
-          "w-9 justify-center md:w-52 md:justify-start lg:w-60 xl:w-64",
-        )}
-      >
-        <Search className="h-3.5 w-3.5 shrink-0 text-muted-foreground/70 group-hover:text-foreground transition-colors" />
-        <span className="hidden md:inline text-xs text-muted-foreground/70 group-hover:text-foreground">Search…</span>
-        <kbd className="ml-auto hidden items-center gap-0.5 rounded border border-border/40 bg-background/60 px-1.5 py-0.5 font-mono text-3xs font-medium text-muted-foreground/60 md:inline-flex shrink-0">
-          {isMac ? "⌘" : "Ctrl"} D
-        </kbd>
-      </button>
+      <div className="group relative">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -inset-0.5 rounded-xl bg-primary/20 opacity-0 blur-xs transition-opacity duration-300 group-hover:opacity-75"
+        />
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          aria-label="Search CampusMind"
+          className={cn(
+            "relative flex h-9 items-center gap-2 rounded-xl border border-primary/25 bg-background text-xs font-normal text-muted-foreground transition-all duration-200 shadow-xs select-none",
+            "hover:border-primary/45 hover:bg-muted/30 hover:text-foreground",
+            "w-9 justify-center p-0 sm:w-44 sm:justify-start sm:px-2 md:w-48 lg:w-52",
+          )}
+        >
+          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground shadow-xs shadow-primary/25">
+            <Search className="h-3.5 w-3.5" aria-hidden />
+          </span>
+          <span className="hidden sm:inline truncate text-xs text-muted-foreground group-hover:text-foreground">
+            Ask CampusMind…
+          </span>
+          <span className="ml-auto hidden sm:flex shrink-0 items-center rounded-md border border-primary/25 bg-primary/10 px-1.5 py-0.5 text-3xs font-semibold text-primary shadow-2xs">
+            <span className="hidden md:inline">AI Mode</span>
+            <span className="md:hidden">AI</span>
+          </span>
+        </button>
+      </div>
 
       <Dialog
         open={open}

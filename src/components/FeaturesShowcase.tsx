@@ -7,12 +7,12 @@ import {
   useReducedMotion,
   type MotionValue,
 } from "framer-motion";
+import { FacultyIcon } from "@/components/icons/FacultyIcon";
+import { GroupsIcon } from "@/components/icons/GroupsIcon";
+import { MentorIcon } from "@/components/icons/MentorIcon";
+import { PostIcon } from "@/components/icons/PostIcon";
+import { EventsIcon } from "@/components/icons/EventsIcon";
 import {
-  GraduationCap,
-  CalendarDays,
-  Users,
-  FileText,
-  BookOpen,
   ArrowRight,
   Sparkles,
   BadgeCheck,
@@ -34,7 +34,7 @@ interface Feature {
 const features: Feature[] = [
   {
     id: "mentor",
-    icon: <GraduationCap className="w-7 h-7" />,
+    icon: <MentorIcon className="w-7 h-7" />,
     accent: "text-brand",
     accentBg: "bg-brand/10 dark:bg-brand/20",
     label: "01 — Mentors",
@@ -47,7 +47,7 @@ const features: Feature[] = [
   },
   {
     id: "events",
-    icon: <CalendarDays className="w-7 h-7" />,
+    icon: <EventsIcon className="w-7 h-7" />,
     accent: "text-violet-600 dark:text-violet-400",
     accentBg: "bg-violet-500/10 dark:bg-violet-500/20",
     label: "02 — Events",
@@ -60,7 +60,7 @@ const features: Feature[] = [
   },
   {
     id: "faculty",
-    icon: <BookOpen className="w-7 h-7" />,
+    icon: <FacultyIcon className="w-7 h-7" />,
     accent: "text-rose-600 dark:text-rose-400",
     accentBg: "bg-rose-500/10 dark:bg-rose-500/20",
     label: "03 — Faculty",
@@ -73,7 +73,7 @@ const features: Feature[] = [
   },
   {
     id: "groups",
-    icon: <Users className="w-7 h-7" />,
+    icon: <GroupsIcon className="w-7 h-7" />,
     accent: "text-amber-600 dark:text-amber-400",
     accentBg: "bg-amber-500/10 dark:bg-amber-500/20",
     label: "04 — Groups",
@@ -86,7 +86,7 @@ const features: Feature[] = [
   },
   {
     id: "posts",
-    icon: <FileText className="w-7 h-7" />,
+    icon: <PostIcon className="w-7 h-7" />,
     accent: "text-emerald-600 dark:text-emerald-400",
     accentBg: "bg-emerald-500/10 dark:bg-emerald-500/20",
     label: "05 — Posts",

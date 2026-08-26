@@ -3,15 +3,15 @@ import { Link } from "react-router-dom";
 import { CampusMindIcon } from "@/components/icons/CampusMindIcon";
 import { CampusThinkingStatus } from "@/components/search/CampusThinkingStatus";
 import { HorizontalScroller } from "@/components/ui/HorizontalScroller";
+import { FacultyIcon } from "@/components/icons/FacultyIcon";
+import { MentorIcon } from "@/components/icons/MentorIcon";
+import { GroupsIcon } from "@/components/icons/GroupsIcon";
 import {
   Sparkles,
   ChevronDown,
   ChevronUp,
   ArrowRight,
   Trophy,
-  GraduationCap,
-  Users,
-  UserCheck,
   ThumbsUp,
   ThumbsDown,
   FileText,
@@ -81,13 +81,13 @@ export const CampusAIOverview: React.FC<CampusAIOverviewProps> = ({
   const renderBadgeIcon = (type: AIEntityBadge["type"]) => {
     switch (type) {
       case "faculty":
-        return <GraduationCap className="h-3.5 w-3.5 text-rose-500" />;
+        return <FacultyIcon className="h-3.5 w-3.5 text-rose-500" />;
       case "mentor":
-        return <UserCheck className="h-3.5 w-3.5 text-violet-500" />;
+        return <MentorIcon className="h-3.5 w-3.5 text-violet-500" />;
       case "opportunity":
         return <Trophy className="h-3.5 w-3.5 text-amber-500" />;
       case "community":
-        return <Users className="h-3.5 w-3.5 text-emerald-500" />;
+        return <GroupsIcon className="h-3.5 w-3.5 text-emerald-500" />;
       case "document":
         return <FileText className="h-3.5 w-3.5 text-blue-500" />;
       case "notice":
@@ -102,7 +102,7 @@ export const CampusAIOverview: React.FC<CampusAIOverviewProps> = ({
       return {
         type: "mentor" as const,
         label: "Senior Mentor",
-        icon: <UserCheck className="h-3.5 w-3.5 text-violet-500" />,
+        icon: <MentorIcon className="h-3.5 w-3.5 text-violet-500" />,
         badgeColor: "bg-violet-500/10 text-violet-700 dark:text-violet-300 border-violet-500/20",
       };
     }
@@ -110,7 +110,7 @@ export const CampusAIOverview: React.FC<CampusAIOverviewProps> = ({
       return {
         type: "faculty" as const,
         label: "Faculty",
-        icon: <GraduationCap className="h-3.5 w-3.5 text-rose-500" />,
+        icon: <FacultyIcon className="h-3.5 w-3.5 text-rose-500" />,
         badgeColor: "bg-rose-500/10 text-rose-700 dark:text-rose-300 border-rose-500/20",
       };
     }
@@ -126,7 +126,7 @@ export const CampusAIOverview: React.FC<CampusAIOverviewProps> = ({
       return {
         type: "community" as const,
         label: "Student Group",
-        icon: <Users className="h-3.5 w-3.5 text-emerald-500" />,
+        icon: <GroupsIcon className="h-3.5 w-3.5 text-emerald-500" />,
         badgeColor: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/20",
       };
     }

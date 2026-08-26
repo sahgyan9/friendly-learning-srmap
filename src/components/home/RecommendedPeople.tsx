@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { GraduationCap, Sparkles, UserRound, Users } from "lucide-react";
+import { Sparkles, UserRound, Users } from "lucide-react";
+import { FacultyIcon } from "@/components/icons/FacultyIcon";
+import { MentorIcon } from "@/components/icons/MentorIcon";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -55,8 +57,8 @@ export function buildProfileQuery(
 }
 
 function TypeIcon({ type }: { type: AskResult["entity_type"] }) {
-  if (type === "faculty") return <GraduationCap className="h-3 w-3" />;
-  if (type === "mentor") return <UserRound className="h-3 w-3" />;
+  if (type === "faculty") return <FacultyIcon className="h-3 w-3" />;
+  if (type === "mentor") return <MentorIcon className="h-3 w-3" />;
   return <Users className="h-3 w-3" />;
 }
 

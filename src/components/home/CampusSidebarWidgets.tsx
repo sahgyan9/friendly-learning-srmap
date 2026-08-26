@@ -18,6 +18,10 @@ import {
   Zap,
   Loader2,
 } from "lucide-react";
+import { EventsIcon } from "@/components/icons/EventsIcon";
+import { FacultyIcon } from "@/components/icons/FacultyIcon";
+import { GroupsIcon } from "@/components/icons/GroupsIcon";
+import { MentorIcon } from "@/components/icons/MentorIcon";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -129,8 +133,8 @@ export const CampusSidebarWidgets = () => {
       <Card className="p-4 border-border/80 bg-card shadow-xs">
         <div className="flex items-center justify-between mb-3.5">
           <div className="flex items-center gap-2">
-            <div className="p-1.5 rounded-md bg-primary/10 text-primary">
-              <Calendar className="h-4 w-4" />
+            <div className="p-1.5 rounded-md bg-violet-500/10 text-violet-600">
+              <EventsIcon className="h-4 w-4" />
             </div>
             <h3 className="font-semibold text-sm text-foreground">Upcoming Events</h3>
           </div>
@@ -251,7 +255,7 @@ export const CampusSidebarWidgets = () => {
         <div className="flex items-center justify-between mb-3.5">
           <div className="flex items-center gap-2">
             <div className="p-1.5 rounded-md bg-blue-500/10 text-blue-600">
-              <GraduationCap className="h-4 w-4" />
+              <MentorIcon className="h-4 w-4" />
             </div>
             <h3 className="font-semibold text-sm text-foreground">Featured Mentors</h3>
           </div>
@@ -450,7 +454,7 @@ export const CampusSidebarWidgets = () => {
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <div className="p-1.5 rounded-md bg-rose-500/10 text-rose-600">
-              <Building2 className="h-4 w-4" />
+              <FacultyIcon className="h-4 w-4" />
             </div>
             <h3 className="font-semibold text-sm text-foreground">Faculty Explorer</h3>
           </div>
@@ -485,7 +489,7 @@ export const CampusSidebarWidgets = () => {
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <div className="p-1.5 rounded-md bg-amber-500/10 text-amber-600">
-                <Users className="h-4 w-4" />
+                <GroupsIcon className="h-4 w-4" />
               </div>
               <h3 className="font-semibold text-sm text-foreground">Campus Groups</h3>
             </div>
