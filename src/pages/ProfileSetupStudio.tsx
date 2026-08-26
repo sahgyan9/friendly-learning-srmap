@@ -729,14 +729,14 @@ export default function ProfileSetupStudio() {
                   {isPublished ? "Profile Studio" : "Profile Setup Studio"}
                 </h1>
                 {isPublished ? (
-                  <Badge variant="outline" className="bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-300 text-3xs gap-1 font-semibold">
+                  <Badge variant="outline" className="bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-300 text-2xs gap-1 font-semibold">
                     <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
                     Live on Campus
                   </Badge>
                 ) : (
                   <Badge
                     variant="outline"
-                    className={`text-3xs font-semibold ${
+                    className={`text-2xs font-semibold ${
                       canPublish
                         ? "bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-950/60 dark:text-emerald-300"
                         : "bg-muted text-muted-foreground border-border"
@@ -748,7 +748,7 @@ export default function ProfileSetupStudio() {
                   </Badge>
                 )}
               </div>
-              <p className="text-2xs text-muted-foreground hidden sm:block">
+              <p className="text-xs text-muted-foreground hidden sm:block">
                 {isPublished
                   ? "Edit on the left, watch your live public card update on the right."
                   : canPublish
@@ -856,7 +856,7 @@ export default function ProfileSetupStudio() {
               <div className="rounded-xl border border-primary/40 bg-card p-4 sm:p-5 flex flex-col justify-between gap-3 shadow-xs hover:border-primary transition-all">
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <span className="inline-flex items-center gap-1 text-3xs font-extrabold bg-primary text-primary-foreground px-2 py-0.5 rounded-md uppercase tracking-wider">
+                    <span className="inline-flex items-center gap-1 text-2xs font-extrabold bg-primary text-primary-foreground px-2 py-0.5 rounded-md uppercase tracking-wider">
                       ⚡ 5-Second Auto-Fill
                     </span>
                     <FileText className="h-4 w-4 text-primary" />
@@ -878,7 +878,7 @@ export default function ProfileSetupStudio() {
               <div className="rounded-xl border border-border/80 bg-card p-4 sm:p-5 flex flex-col justify-between gap-3 shadow-xs hover:border-border transition-all">
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <span className="inline-flex items-center gap-1 text-3xs font-bold bg-muted text-muted-foreground px-2 py-0.5 rounded-md uppercase tracking-wider">
+                    <span className="inline-flex items-center gap-1 text-2xs font-bold bg-muted text-muted-foreground px-2 py-0.5 rounded-md uppercase tracking-wider">
                       ✍️ Custom Entry
                     </span>
                     <UserRound className="h-4 w-4 text-muted-foreground" />
@@ -1011,7 +1011,7 @@ export default function ProfileSetupStudio() {
                   </div>
                   <div>
                     <h3 className="text-sm sm:text-base font-bold text-foreground">Basic Information</h3>
-                    <p className="text-2xs text-muted-foreground">How peers and professors identify you</p>
+                    <p className="text-xs text-muted-foreground">How peers and professors identify you</p>
                   </div>
                 </div>
 
@@ -1039,7 +1039,7 @@ export default function ProfileSetupStudio() {
                 <div className="space-y-1.5">
                   <label className="font-semibold text-foreground flex items-center justify-between">
                     <span>Full Name <span className="text-destructive">*</span></span>
-                    {!state.name.trim() && <span className="text-3xs text-destructive">Required</span>}
+                    {!state.name.trim() && <span className="text-xs text-destructive">Required</span>}
                   </label>
                   <Input
                     value={state.name}
@@ -1051,7 +1051,7 @@ export default function ProfileSetupStudio() {
                 <div className="space-y-1.5">
                   <label className="font-semibold text-foreground flex items-center justify-between">
                     <span>Department / Major <span className="text-destructive">*</span></span>
-                    {!state.department.trim() && <span className="text-3xs text-destructive">Required</span>}
+                    {!state.department.trim() && <span className="text-xs text-destructive">Required</span>}
                   </label>
                   <Input
                     value={state.department}
@@ -1102,7 +1102,7 @@ export default function ProfileSetupStudio() {
                         High Visibility
                       </Badge>
                     </h3>
-                    <p className="text-2xs text-muted-foreground">Appears below your name across CampusMind search results</p>
+                    <p className="text-xs text-muted-foreground">Appears below your name across CampusMind search results</p>
                   </div>
                 </div>
                 <Button
@@ -1176,7 +1176,7 @@ export default function ProfileSetupStudio() {
                       Skills & Expertise
                       <span className="text-destructive text-xs">*</span>
                     </h3>
-                    <p className="text-2xs text-muted-foreground">Classmates will discover you when searching these topics (min 2 needed)</p>
+                    <p className="text-xs text-muted-foreground">Classmates will discover you when searching these topics (min 2 needed)</p>
                   </div>
                 </div>
                 <span className={`text-2xs font-semibold ${
@@ -1251,7 +1251,7 @@ export default function ProfileSetupStudio() {
                       <Target className="h-4 w-4 text-teal-600 dark:text-teal-400" />
                       What I Can Help You Achieve
                     </h3>
-                    <p className="text-2xs text-muted-foreground">Concrete results students walk away with after messaging you</p>
+                    <p className="text-xs text-muted-foreground">Concrete results students walk away with after messaging you</p>
                   </div>
                 </div>
                 <Button
@@ -1332,7 +1332,7 @@ export default function ProfileSetupStudio() {
                       <MessageSquareCode className="h-4 w-4 text-sky-600 dark:text-sky-400" />
                       Ask Me Anything Topics
                     </h3>
-                    <p className="text-2xs text-muted-foreground">Conversational prompts for juniors reaching out</p>
+                    <p className="text-xs text-muted-foreground">Conversational prompts for juniors reaching out</p>
                   </div>
                 </div>
                 <Button
@@ -1411,7 +1411,7 @@ export default function ProfileSetupStudio() {
                       <Users className="h-4 w-4 text-purple-600 dark:text-purple-400" />
                       Perfect If You Are... (Target Students)
                     </h3>
-                    <p className="text-2xs text-muted-foreground">Helps juniors know immediately if you are the right person to ask</p>
+                    <p className="text-xs text-muted-foreground">Helps juniors know immediately if you are the right person to ask</p>
                   </div>
                 </div>
                 <Button
@@ -1488,7 +1488,7 @@ export default function ProfileSetupStudio() {
                 </div>
                 <div>
                   <h3 className="text-sm sm:text-base font-bold text-foreground">Bio & Social Profiles</h3>
-                  <p className="text-2xs text-muted-foreground">Share your background and connect links</p>
+                  <p className="text-xs text-muted-foreground">Share your background and connect links</p>
                 </div>
               </div>
 
@@ -1522,7 +1522,7 @@ export default function ProfileSetupStudio() {
                   <ShieldCheck className="h-4 w-4 text-primary" />
                   CampusMind AI Search Discovery
                 </h4>
-                <p className="text-2xs sm:text-xs text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                   Allow fellow SRM AP students to discover you when searching for your skills, department, or courses.
                 </p>
               </div>
