@@ -150,7 +150,6 @@ export function isActivePath(pathname: string, url: string) {
  *   They also render their own theme toggle, which the rail would duplicate.
  */
 const RAIL_EXCLUDED_PREFIXES = [
-  "/messages",
   "/admin",
   "/signin",
   "/signup",
@@ -162,4 +161,13 @@ const RAIL_EXCLUDED_PREFIXES = [
 
 export function pathShowsRail(pathname: string) {
   return !RAIL_EXCLUDED_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+}
+
+/**
+ * Routes that get the mobile bottom navigation dock.
+ * Excludes auth/admin routes and /messages (which has its own full-height chat input).
+ */
+export function pathShowsDock(pathname: string) {
+  if (pathname.startsWith("/messages")) return false;
+  return pathShowsRail(pathname);
 }

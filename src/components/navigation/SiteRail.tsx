@@ -24,6 +24,7 @@ import {
   ROUTE_ACCENT,
   SECONDARY_NAV,
   isActivePath,
+  pathShowsDock,
   pathShowsRail,
 } from "./nav-config";
 
@@ -33,16 +34,17 @@ import {
 export function MainWithRail({ children }: { children: ReactNode }) {
   const location = useLocation();
   const showRail = pathShowsRail(location.pathname);
+  const showDock = pathShowsDock(location.pathname);
   const { isCollapsed } = useSiteSidebar();
 
   return (
     <>
       {showRail && <SiteRail />}
-      {showRail && <MobileNavDock />}
+      {showDock && <MobileNavDock />}
       <main
         id="main-content"
         data-rail={showRail ? (isCollapsed ? "collapsed" : "expanded") : undefined}
-        className={showRail ? "pb-20 lg:pb-0" : undefined}
+        className={showDock ? "pb-20 lg:pb-0" : undefined}
       >
         {children}
       </main>

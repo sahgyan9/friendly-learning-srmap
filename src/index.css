@@ -242,7 +242,7 @@ a[href*="lovable.dev"],
  * clears the rail without also cannibalising width nothing is asking for.
  *
  * Safe to scope to `.container` because every route that renders the rail uses
- * it — the pages that do not (admin, messages, auth) are exactly the ones
+ * it — the pages that do not (admin, auth) are exactly the ones
  * RAIL_EXCLUDED_PREFIXES already opts out. A new rail page laid out without
  * `.container` would slide under the rail; give it one.
  */

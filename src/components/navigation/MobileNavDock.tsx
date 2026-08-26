@@ -30,7 +30,7 @@ import {
   ROUTE_ACCENT,
   SECONDARY_NAV,
   isActivePath,
-  pathShowsRail,
+  pathShowsDock,
 } from "./nav-config";
 
 // 4 core quick-access destinations in the floating dock
@@ -73,8 +73,8 @@ export function MobileNavDock() {
   // way collapsing a sticky element does.
   const dockHidden = useCollapseOnScroll(96, 0);
 
-  // Only render on routes where the site navigation rail/dock belongs
-  if (!pathShowsRail(location.pathname)) {
+  // Only render on routes where the mobile dock belongs
+  if (!pathShowsDock(location.pathname)) {
     return null;
   }
 
