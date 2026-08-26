@@ -113,9 +113,13 @@ export function useSRMAPEvents() {
         if (!isRefresh) setLoading(true);
         setError(null);
 
+        // `content` (full event HTML) is intentionally omitted here — it is
+        // only needed on the EventDetail page and can be several KB per row.
+        // The single-event hook (useSRMAPEvent) fetches it separately.
         const { data, error: queryError } = await supabase
           .from("srmap_events_cache")
-          .select("id, title, excerpt, content, venue, organizer, registration_url, registration_label, start_date, end_date, link, image_url, department, event_type")
+          .select("id, title, excerpt, venue, organizer, registration_url, registration_label, start_date, end_date, link, image_url, department, event_type")
+          .limit(200)
           .returns<CachedEventRow[]>();
 
         if (queryError) throw queryError;

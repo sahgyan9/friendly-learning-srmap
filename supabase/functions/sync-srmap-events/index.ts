@@ -307,6 +307,11 @@ serve(async (req) => {
             imageUrl = (await mirrorEventImage(imageUrl, `event_${item.id}_thumb.webp`)) || imageUrl;
           }
 
+          // Scrape full event page for venue, organizer, and registration details.
+          const scraped = await scrapeSingleEvent(link);
+
+          // Extract and mirror the poster image embedded in the WP content HTML.
+          const rawContent = ((item.content as { rendered?: string })?.rendered) ?? "";
           let content = rawContent;
           const imgMatch = content.match(/<img[^>]+src=["']([^"']+)["'][^>]*>/i);
           if (imgMatch && imgMatch[1]) {
