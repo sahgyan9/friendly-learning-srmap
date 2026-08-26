@@ -131,9 +131,9 @@ export const AttendanceOverviewCard = ({ onOpenPortalImport }: AttendanceOvervie
                 <GraduationCap className="h-5 w-5" />
               </div>
               <div>
-                <CardTitle className="text-base">SRM Portal Attendance & Bunk Predictor</CardTitle>
+                <CardTitle className="text-base">SRM Portal Attendance</CardTitle>
                 <CardDescription className="text-xs">
-                  Connect portal for live tracking, safe bunk calculator & 75% shortage alerts
+                  Connect portal for live tracking, attendance margin calculator & 75% eligibility alerts
                 </CardDescription>
               </div>
             </div>
@@ -183,7 +183,7 @@ export const AttendanceOverviewCard = ({ onOpenPortalImport }: AttendanceOvervie
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <CardTitle className="text-base font-bold text-foreground">
-                  SRM Portal Attendance & Bunk Predictor
+                  SRM Portal Attendance
                 </CardTitle>
                 <Badge
                   variant={isDanger ? "destructive" : "outline"}
@@ -224,7 +224,7 @@ export const AttendanceOverviewCard = ({ onOpenPortalImport }: AttendanceOvervie
             </Button>
             <Link to="/attendance">
               <Button size="sm" className="gap-1.5 text-xs h-8 font-semibold shadow-sm">
-                Open Full Calculator
+                Open Attendance
                 <ArrowRight className="h-3.5 w-3.5" />
               </Button>
             </Link>
@@ -254,19 +254,19 @@ export const AttendanceOverviewCard = ({ onOpenPortalImport }: AttendanceOvervie
           </div>
 
           <div className="p-2.5 rounded-lg bg-muted/40 border border-border/50">
-            <div className="text-2xs font-semibold text-muted-foreground uppercase">Safe Bunk Margin</div>
+            <div className="text-2xs font-semibold text-muted-foreground uppercase">Safe Leave Buffer</div>
             <div className="text-xl font-black mt-0.5 text-emerald-600 dark:text-emerald-400">
               {totalSafeBunks}
             </div>
-            <div className="text-2xs text-muted-foreground">Lectures available</div>
+            <div className="text-2xs text-muted-foreground">Class margin above 75%</div>
           </div>
 
           <div className="p-2.5 rounded-lg bg-muted/40 border border-border/50 flex flex-col justify-between">
-            <div className="text-2xs font-semibold text-muted-foreground uppercase">What-If Predictor</div>
+            <div className="text-2xs font-semibold text-muted-foreground uppercase">Attendance Planner</div>
             <Link to="/attendance" className="text-xs font-semibold text-primary hover:underline flex items-center gap-1 mt-1">
-              Test Bunks & Targets <ChevronRight className="h-3.5 w-3.5" />
+              Simulate Classes <ChevronRight className="h-3.5 w-3.5" />
             </Link>
-            <div className="text-2xs text-muted-foreground">Interactive Simulator</div>
+            <div className="text-2xs text-muted-foreground">Interactive Projection</div>
           </div>
         </div>
 

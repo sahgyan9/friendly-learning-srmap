@@ -141,9 +141,9 @@ export const ROUTE_META: Record<string, RouteMeta> = {
       "What Friendly Learning SRMAP stores, what's public versus private, and how to ask for your data to be removed.",
   },
   "/attendance": {
-    title: "SRM AP Attendance & Bunk Predictor | Friendly Learning SRMAP",
+    title: "Course Attendance Tracker | Friendly Learning SRMAP",
     description:
-      "Track live course attendance from the SRM AP student portal, calculate safe bunks, get 75% shortage danger alerts, and simulate what-if scenarios.",
+      "Track live course attendance from the SRM AP student portal, monitor 75% examination eligibility thresholds, and plan upcoming classes.",
   },
 };
 

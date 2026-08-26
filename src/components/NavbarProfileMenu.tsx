@@ -115,7 +115,7 @@ const NavbarProfileMenu = () => {
           <DropdownMenuItem asChild>
             <Link to="/attendance" className="cursor-pointer w-full flex items-center gap-2">
               <GraduationCap className="h-4 w-4 text-primary" />
-              Attendance & Bunk Predictor
+              Attendance
             </Link>
           </DropdownMenuItem>
 

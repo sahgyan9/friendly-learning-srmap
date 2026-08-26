@@ -59,7 +59,7 @@ export interface AttendanceRecord {
 const TARGET_PRESETS = [75, 80, 85, 90];
 
 export default function Attendance() {
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -134,9 +134,9 @@ export default function Attendance() {
       neededForTarget = Math.max(0, Math.ceil((targetPercentage * cond - 100 * att) / (100 - targetPercentage)));
     }
 
-    let safeBunksForTarget = 0;
+    let safeAllowanceForTarget = 0;
     if (pct >= targetPercentage && targetPercentage > 0) {
-      safeBunksForTarget = Math.max(0, Math.floor((100 * att - targetPercentage * cond) / targetPercentage));
+      safeAllowanceForTarget = Math.max(0, Math.floor((100 * att - targetPercentage * cond) / targetPercentage));
     }
 
     return {
@@ -144,7 +144,7 @@ export default function Attendance() {
       cond,
       att,
       neededForTarget,
-      safeBunksForTarget,
+      safeAllowanceForTarget,
       isSimulated: sim.deltaConducted !== 0,
       deltaAttended: sim.deltaAttended,
       deltaConducted: sim.deltaConducted,
@@ -182,16 +182,14 @@ export default function Attendance() {
   const warningCourses = records.filter((r) => r.attendance_percentage >= 75.0 && r.attendance_percentage < 80.0);
   const safeCourses = records.filter((r) => r.attendance_percentage >= 80.0);
   const lastSync = records[0]?.last_synced_at;
-  const totalSafeBunks = records.reduce((acc, r) => acc + (r.safe_bunks || 0), 0);
+  const totalSafeAllowance = records.reduce((acc, r) => acc + (r.safe_bunks || 0), 0);
 
   const filteredRecords = useMemo(() => {
     return records.filter((r) => {
-      // Filter by tab
       if (filterTab === "danger" && r.attendance_percentage >= 75.0) return false;
       if (filterTab === "warning" && (r.attendance_percentage < 75.0 || r.attendance_percentage >= 80.0)) return false;
       if (filterTab === "safe" && r.attendance_percentage < 80.0) return false;
 
-      // Filter by search
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim();
         const codeMatch = r.course_code.toLowerCase().includes(q);
@@ -208,8 +206,8 @@ export default function Attendance() {
   return (
     <>
       <SEOHead
-        title="SRM AP Attendance & Bunk Predictor | Friendly Learning"
-        description="Track live course attendance from the SRM AP student portal, calculate safe bunks, get 75% shortage danger alerts, and simulate what-if scenarios."
+        title="Attendance | Friendly Learning SRMAP"
+        description="Track live course attendance from the SRM AP student portal, monitor 75% examination eligibility thresholds, and plan upcoming classes."
       />
 
       <div className="min-h-screen bg-background pb-16 pt-6">
@@ -223,14 +221,14 @@ export default function Attendance() {
                 <ChevronRight className="h-3 w-3" />
                 <Link to="/profile" className="hover:text-foreground transition-colors">Profile</Link>
                 <ChevronRight className="h-3 w-3" />
-                <span className="text-foreground font-medium">Attendance & Bunk Predictor</span>
+                <span className="text-foreground font-medium">Attendance</span>
               </div>
               <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground flex items-center gap-2.5">
                 <GraduationCap className="h-7 w-7 text-primary shrink-0" />
-                Attendance & Bunk Predictor
+                Attendance
               </h1>
               <p className="text-sm text-muted-foreground mt-1">
-                Live SRM University-AP attendance tracker • 75% cutoff threshold alerts • What-If Bunk Simulator
+                Live SRM University-AP attendance tracker • 75% examination eligibility thresholds • Class projection planner
               </p>
             </div>
 
@@ -287,7 +285,7 @@ export default function Attendance() {
                 <div className="space-y-2">
                   <h2 className="text-xl font-bold text-foreground">No Attendance Data Linked Yet</h2>
                   <p className="text-sm text-muted-foreground leading-relaxed">
-                    Connect your SRM AP Student Portal in 1 click to get real-time subject attendance, calculate how many classes you can safely bunk, and receive instant alerts before you fall below 75%.
+                    Connect your SRM AP Student Portal in 1 click to get real-time subject attendance, calculate your safe leave margin above 75%, and receive instant alerts before you fall below the examination threshold.
                   </p>
                 </div>
 
@@ -311,15 +309,15 @@ export default function Attendance() {
                   </div>
                   <div className="p-3 rounded-lg bg-card border border-border/50">
                     <div className="text-xs font-semibold text-foreground flex items-center gap-1.5 mb-1">
-                      <AlertTriangle className="h-3.5 w-3.5 text-amber-500" /> 75% Cutoff Alerts
+                      <AlertTriangle className="h-3.5 w-3.5 text-amber-500" /> 75% Eligibility Alerts
                     </div>
                     <p className="text-2xs text-muted-foreground">Instant bell notifications when any course is at risk.</p>
                   </div>
                   <div className="p-3 rounded-lg bg-card border border-border/50">
                     <div className="text-xs font-semibold text-foreground flex items-center gap-1.5 mb-1">
-                      <Calculator className="h-3.5 w-3.5 text-primary" /> Bunk Simulator
+                      <Calculator className="h-3.5 w-3.5 text-primary" /> Attendance Planner
                     </div>
-                    <p className="text-2xs text-muted-foreground">Test what happens before skipping tomorrow's lecture.</p>
+                    <p className="text-2xs text-muted-foreground">Project future percentages before missing an upcoming lecture.</p>
                   </div>
                 </div>
               </CardContent>
@@ -421,31 +419,31 @@ export default function Attendance() {
                   <CardContent className="pt-0">
                     <p className="text-xs text-muted-foreground">
                       {criticalCourses.length === 0
-                        ? "Great job! All your courses are above 75%."
+                        ? "All registered courses meet the 75% minimum threshold."
                         : `${criticalCourses.map((c) => c.course_code).join(", ")} need immediate recovery.`}
                     </p>
                   </CardContent>
                 </Card>
 
-                {/* 3. Total Safe Bunks Available */}
+                {/* 3. Total Safe Leave Buffer Available */}
                 <Card className="border-border/60 shadow-sm bg-card">
                   <CardHeader className="pb-2">
                     <CardDescription className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center justify-between">
-                      <span>Safe Bunk Margin</span>
+                      <span>Safe Leave Buffer</span>
                       <Zap className="h-4 w-4 text-emerald-500" />
                     </CardDescription>
                     <div className="flex items-baseline justify-between mt-1">
                       <CardTitle className="text-3xl font-extrabold tracking-tight text-emerald-600 dark:text-emerald-400">
-                        {totalSafeBunks}
+                        {totalSafeAllowance}
                       </CardTitle>
                       <Badge variant="outline" className="text-2xs text-emerald-600 dark:text-emerald-400 border-emerald-500/30 bg-emerald-500/10">
-                        Bunks Available
+                        Classes in Reserve
                       </Badge>
                     </div>
                   </CardHeader>
                   <CardContent className="pt-0">
                     <p className="text-xs text-muted-foreground">
-                      Total lectures you can skip across safe courses while remaining &ge; 75%.
+                      Total classes you can afford to miss across safe courses while remaining &ge; 75%.
                     </p>
                   </CardContent>
                 </Card>
@@ -484,7 +482,7 @@ export default function Attendance() {
                       <span className="font-extrabold text-primary text-base">{globalTarget}%</span>
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      Select your desired threshold to calculate classes needed or safe bunks for that exact target.
+                      Select your desired threshold to calculate classes needed or safe margin for that exact target.
                     </p>
                   </div>
 
@@ -558,7 +556,7 @@ export default function Attendance() {
                     cond,
                     att,
                     neededForTarget,
-                    safeBunksForTarget,
+                    safeAllowanceForTarget,
                     isSimulated,
                     deltaAttended,
                     deltaConducted,
@@ -673,16 +671,16 @@ export default function Attendance() {
                               {neededForTarget > 0 ? (
                                 <>Need <strong>{neededForTarget}</strong> consecutive class{neededForTarget === 1 ? "" : "es"} for {globalTarget}%</>
                               ) : (
-                                <>Can safely bunk <strong>{safeBunksForTarget}</strong> class{safeBunksForTarget === 1 ? "" : "es"} at {globalTarget}%</>
+                                <>Safe margin: <strong>{safeAllowanceForTarget}</strong> class{safeAllowanceForTarget === 1 ? "" : "es"} above {globalTarget}%</>
                               )}
                             </span>
                           </div>
                         </div>
 
-                        {/* Interactive What-If Simulator Controls */}
+                        {/* Interactive Attendance Planner Controls */}
                         <div className="pt-2 border-t border-border/40 flex items-center justify-between gap-2">
                           <span className="text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
-                            What-If Simulator:
+                            Planner:
                           </span>
                           <div className="flex items-center gap-1.5">
                             <TooltipProvider>
@@ -695,7 +693,7 @@ export default function Attendance() {
                                     onClick={() => adjustSim(rec.course_code, true)}
                                     className="h-7 text-xs px-2.5 gap-1 bg-emerald-500/5 hover:bg-emerald-500/15 border-emerald-500/30 text-emerald-700 dark:text-emerald-300 font-medium"
                                   >
-                                    <Plus className="h-3 w-3" /> Attend +1
+                                    <Plus className="h-3 w-3" /> +1 Present
                                   </Button>
                                 </TooltipTrigger>
                                 <TooltipContent side="top">Simulate attending next class</TooltipContent>
@@ -712,10 +710,10 @@ export default function Attendance() {
                                     onClick={() => adjustSim(rec.course_code, false)}
                                     className="h-7 text-xs px-2.5 gap-1 bg-destructive/5 hover:bg-destructive/15 border-destructive/30 text-destructive font-medium"
                                   >
-                                    <Minus className="h-3 w-3" /> Miss +1
+                                    <Minus className="h-3 w-3" /> +1 Absent
                                   </Button>
                                 </TooltipTrigger>
-                                <TooltipContent side="top">Simulate skipping next class</TooltipContent>
+                                <TooltipContent side="top">Simulate missing next class</TooltipContent>
                               </Tooltip>
                             </TooltipProvider>
 
@@ -754,7 +752,7 @@ export default function Attendance() {
                 </div>
               )}
 
-              {/* FAQ & Policy Accordion */}
+              {/* FAQ & Policy Section */}
               <Card className="border-border/60 shadow-sm mt-8">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base flex items-center gap-2">
