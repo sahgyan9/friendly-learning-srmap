@@ -24,6 +24,9 @@ import {
   MessageSquareCode,
   Users,
   Lightbulb,
+  Radio,
+  Clock,
+  ArrowUpRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -56,6 +59,8 @@ interface StudioProfileState {
   ask_me_anything: Array<{ topic: string; icon?: string }>;
   ideal_mentees: string[];
   isDiscoverable: boolean;
+  isAvailable: boolean;
+  courses: Array<{ code: string; name: string }>;
 }
 
 /**
@@ -113,6 +118,7 @@ export default function ProfileSetupStudio() {
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isGeneratingAi, setIsGeneratingAi] = useState(false);
+  const [isPublished, setIsPublished] = useState(false);
   const [activeMobileTab, setActiveMobileTab] = useState<"edit" | "preview">("edit");
   const [portalDialogOpen, setPortalDialogOpen] = useState(false);
 
@@ -130,6 +136,8 @@ export default function ProfileSetupStudio() {
     ask_me_anything: [],
     ideal_mentees: [],
     isDiscoverable: true,
+    isAvailable: true,
+    courses: [],
   });
 
   const [newSkillInput, setNewSkillInput] = useState("");
@@ -156,6 +164,9 @@ export default function ProfileSetupStudio() {
         // 2. Fetch mentor row
         const { data: mentorData } = await getMentorById(user.id);
 
+        const alreadyPublished = Boolean(mentorData?.id && (mentorData.skills?.length ?? 0) > 0);
+        setIsPublished(alreadyPublished);
+
         const mergedSkills = mentorData?.skills?.length
           ? mentorData.skills
           : userData?.skills || [];
@@ -174,6 +185,7 @@ export default function ProfileSetupStudio() {
         const studentName = mentorData?.name || userData?.name || "";
         const studentDept = mentorData?.department || userData?.department || "Physics";
         const studentYear = mentorData?.year_of_studies ? String(mentorData.year_of_studies) : "3rd Year";
+        const coursesList = Array.isArray(mentorData?.courses) ? (mentorData.courses as any[]) : [];
 
         // If AI summary sections are empty, auto-generate high-quality smart drafts immediately
         if (
@@ -209,6 +221,8 @@ export default function ProfileSetupStudio() {
           ask_me_anything: currentAma,
           ideal_mentees: currentIdealMentees,
           isDiscoverable: userData?.interests_discoverable ?? true,
+          isAvailable: mentorData?.is_available ?? true,
+          courses: coursesList,
         });
       } catch (err) {
         console.error("Error loading profile studio data:", err);
@@ -239,7 +253,7 @@ export default function ProfileSetupStudio() {
         ideal_mentees: drafts.ideal_mentees,
       }));
       setIsGeneratingAi(false);
-      toast.success("✨ AI drafts generated for Tagline, Outcomes, AMA, and Ideal Mentees!");
+      toast.success("✨ AI summary drafts generated for Tagline, Outcomes, AMA, and Target Students!");
     }, 300);
   };
 
@@ -271,29 +285,38 @@ export default function ProfileSetupStudio() {
   // Handle PDF import structured extraction
   const handlePdfImported = (data: Record<string, any>) => {
     setState((prev) => {
-      const skillsArray = Array.isArray(data.skills)
+      const newSkills = Array.isArray(data.skills)
         ? data.skills
         : typeof data.skills === "string" && data.skills.trim()
         ? data.skills.split(",").map((s: string) => s.trim()).filter(Boolean)
-        : prev.skills;
+        : [];
+
+      // Merge skills so existing custom-added skills are preserved
+      const mergedSkills = Array.from(new Set([...prev.skills, ...newSkills]));
 
       const studentDept = data.department || prev.department;
       const studentName = data.name || prev.name;
       const studentYear = data.year_of_studies || prev.year_of_studies;
 
       // Smart drafts if extracted fields are missing
-      const autoDrafts = generateSmartDrafts(skillsArray, studentDept, studentName);
+      const autoDrafts = generateSmartDrafts(mergedSkills, studentDept, studentName);
 
       const outcomesArray = Array.isArray(data.outcomes) && data.outcomes.length > 0
         ? data.outcomes
+        : prev.outcomes.length > 0
+        ? prev.outcomes
         : autoDrafts.outcomes;
 
       const amaArray = Array.isArray(data.ask_me_anything) && data.ask_me_anything.length > 0
         ? data.ask_me_anything.map((t: any) => (typeof t === "string" ? { topic: t } : t))
+        : prev.ask_me_anything.length > 0
+        ? prev.ask_me_anything
         : autoDrafts.ask_me_anything;
 
       const idealMenteesArray = Array.isArray(data.ideal_mentees) && data.ideal_mentees.length > 0
         ? data.ideal_mentees
+        : prev.ideal_mentees.length > 0
+        ? prev.ideal_mentees
         : autoDrafts.ideal_mentees;
 
       const finalTagline = data.tagline || prev.tagline || autoDrafts.tagline;
@@ -305,7 +328,7 @@ export default function ProfileSetupStudio() {
         year_of_studies: studentYear,
         university: data.university || prev.university,
         tagline: finalTagline,
-        skills: skillsArray,
+        skills: mergedSkills,
         bio: data.bio || prev.bio,
         linkedin_url: data.linkedin_url || prev.linkedin_url,
         outcomes: outcomesArray,
@@ -314,7 +337,11 @@ export default function ProfileSetupStudio() {
       };
     });
 
-    toast.success("Resume parsed! AI has filled your skills, headline, outcomes, and topics.");
+    toast.success(
+      isPublished
+        ? "Resume updated! We merged new skills and refreshed your details."
+        : "Resume parsed! AI has filled your skills, headline, outcomes, and topics."
+    );
   };
 
   // Skill Handlers
@@ -405,13 +432,14 @@ export default function ProfileSetupStudio() {
       ideal_mentees: state.ideal_mentees,
       rating: 5.0,
       review_count: 0,
-      is_available: true,
+      is_available: state.isAvailable,
+      courses: state.courses,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     } as any);
   }, [state, user, profile]);
 
-  // Calculate completeness
+  // Calculate completeness (unified 6-point rubric)
   const completeness = useMemo(() => {
     const checks = [
       { label: "Photo / Avatar", done: Boolean(profile?.profile_image) },
@@ -453,7 +481,9 @@ export default function ProfileSetupStudio() {
     }
 
     setIsSaving(true);
-    const toastId = toast.loading("Publishing your campus profile...");
+    const toastId = toast.loading(
+      isPublished ? "Saving your profile changes..." : "Publishing your campus profile..."
+    );
 
     try {
       // 1. Update public.users
@@ -484,7 +514,7 @@ export default function ProfileSetupStudio() {
         bio: state.bio.trim() || undefined,
         linkedin_url: state.linkedin_url.trim() || undefined,
         profile_image: profile?.profile_image || undefined,
-        is_available: true,
+        is_available: state.isAvailable,
       };
 
       const { error: mentorErr } = await supabase
@@ -504,16 +534,22 @@ export default function ProfileSetupStudio() {
       });
 
       await refreshProfile();
+      setIsPublished(true);
 
-      toast.success("🎉 Profile published live to Friendly Learning SRMAP!", { id: toastId });
+      toast.success(
+        isPublished
+          ? "✓ Profile changes saved live!"
+          : "🎉 Profile published live to Friendly Learning SRMAP!",
+        { id: toastId }
+      );
       
-      // Navigate to the user's live public profile
+      // Navigate to public profile
       setTimeout(() => {
         navigate(`/mentor/${user.id}`);
-      }, 500);
+      }, 400);
     } catch (err: any) {
       console.error("Error publishing profile:", err);
-      toast.error(err?.message || "Failed to publish profile. Please try again.", { id: toastId });
+      toast.error(err?.message || "Failed to save profile. Please try again.", { id: toastId });
     } finally {
       setIsSaving(false);
     }
@@ -533,7 +569,7 @@ export default function ProfileSetupStudio() {
   return (
     <div className="min-h-screen bg-muted/20 pb-20 pt-20">
       <SEOHead
-        title="Profile Setup Studio | Friendly Learning SRMAP"
+        title={isPublished ? "Profile Studio | Friendly Learning SRMAP" : "Profile Setup Studio | Friendly Learning SRMAP"}
         description="Review, polish, and preview your campus profile before publishing."
       />
 
@@ -544,18 +580,34 @@ export default function ProfileSetupStudio() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => navigate(-1)}
+              onClick={() => {
+                if (user?.id) {
+                  navigate(`/mentor/${user.id}`);
+                } else {
+                  navigate(-1);
+                }
+              }}
               className="gap-1.5 text-muted-foreground hover:text-foreground"
             >
               <ArrowLeft className="h-4 w-4" />
-              <span className="hidden sm:inline">Exit Studio</span>
+              <span className="hidden sm:inline">
+                {isPublished ? "Back to Profile" : "Exit Studio"}
+              </span>
             </Button>
             <div className="h-4 w-px bg-border hidden sm:block" />
             <div>
-              <h1 className="text-sm sm:text-base font-bold text-foreground flex items-center gap-2">
-                <Sparkles className="h-4 w-4 text-primary" />
-                Profile Review & Polish Studio
-              </h1>
+              <div className="flex items-center gap-2">
+                <h1 className="text-sm sm:text-base font-bold text-foreground flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-primary" />
+                  {isPublished ? "Profile Studio" : "Profile Review & Polish Studio"}
+                </h1>
+                {isPublished && (
+                  <Badge variant="outline" className="bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-300 text-3xs gap-1 font-semibold">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    Live on Campus
+                  </Badge>
+                )}
+              </div>
               <p className="text-2xs text-muted-foreground hidden sm:block">
                 Edit on the left, watch your live public card update on the right.
               </p>
@@ -581,7 +633,7 @@ export default function ProfileSetupStudio() {
               className="hidden md:flex gap-1.5 text-xs font-medium"
             >
               <GraduationCap className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
-              Link SRM Portal
+              {state.courses.length > 0 ? `SRM Portal Linked (${state.courses.length})` : "Link SRM Portal"}
             </Button>
 
             <Button
@@ -595,7 +647,7 @@ export default function ProfileSetupStudio() {
               ) : (
                 <Check className="h-4 w-4 stroke-[3]" />
               )}
-              <span>Publish Profile</span>
+              <span>{isPublished ? "Save Changes" : "Publish Profile"}</span>
             </Button>
           </div>
         </div>
@@ -633,22 +685,33 @@ export default function ProfileSetupStudio() {
 
       {/* Main Studio Container */}
       <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-6">
-        {/* Quick Ingest / Re-import Banner */}
-        <section className="mb-6 rounded-2xl border border-primary/20 bg-gradient-to-r from-primary/10 via-indigo-500/5 to-purple-500/10 p-4 sm:p-5 shadow-xs">
+        {/* Adaptive Banner: Onboarding vs Quick Management Toolbar */}
+        <section
+          className={`mb-6 rounded-2xl border p-4 sm:p-5 shadow-xs ${
+            isPublished
+              ? "border-border/80 bg-card/80 backdrop-blur-xs"
+              : "border-primary/20 bg-gradient-to-r from-primary/10 via-indigo-500/5 to-purple-500/10"
+          }`}
+        >
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="space-y-1">
               <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/15 px-2.5 py-0.5 text-2xs font-bold text-primary uppercase tracking-wider">
-                <Zap className="h-3 w-3" />
-                AI Smart Extraction & Auto-Draft
+                {isPublished ? <CheckCircle2 className="h-3 w-3 text-emerald-500" /> : <Zap className="h-3 w-3" />}
+                {isPublished ? "Profile Management & Re-sync" : "AI Smart Extraction & Auto-Draft"}
               </div>
               <h2 className="text-sm sm:text-base font-bold text-foreground">
-                Auto-fill your headline, outcomes, and topics with AI
+                {isPublished
+                  ? "Update skills, re-upload resume, or re-sync SRM Portal"
+                  : "Auto-fill your headline, outcomes, and topics with AI"}
               </h2>
               <p className="text-xs text-muted-foreground">
-                Upload your resume PDF or click Auto-Draft to generate tailored profile summaries based on your skills.
+                {isPublished
+                  ? "Upload a new resume PDF to merge newly acquired skills or re-sync your latest semester grades from SRM AP."
+                  : "Upload your resume PDF or click Auto-Draft to generate tailored profile summaries based on your skills."}
               </p>
             </div>
-            <div className="flex items-center gap-2 shrink-0">
+
+            <div className="flex flex-wrap items-center gap-2 shrink-0">
               <Button
                 size="sm"
                 variant="outline"
@@ -656,7 +719,7 @@ export default function ProfileSetupStudio() {
                 className="gap-1.5 font-bold text-xs bg-background/80"
               >
                 <Sparkles className="h-3.5 w-3.5 text-primary" />
-                Auto-Draft All
+                {isPublished ? "Regenerate Summaries" : "Auto-Draft All"}
               </Button>
               <ResumePdfImport onImported={handlePdfImported} />
             </div>
@@ -673,13 +736,26 @@ export default function ProfileSetupStudio() {
           >
             {/* 1. Basic Identity */}
             <div className="rounded-2xl border border-border/80 bg-card p-5 sm:p-6 shadow-xs space-y-4">
-              <div className="flex items-center gap-2 border-b border-border/60 pb-3">
-                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 text-primary font-bold text-xs">
-                  1
+              <div className="flex items-center justify-between border-b border-border/60 pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 text-primary font-bold text-xs">
+                    1
+                  </div>
+                  <div>
+                    <h3 className="text-sm sm:text-base font-bold text-foreground">Basic Information</h3>
+                    <p className="text-2xs text-muted-foreground">How peers and professors identify you</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-sm sm:text-base font-bold text-foreground">Basic Information</h3>
-                  <p className="text-2xs text-muted-foreground">How peers and professors identify you</p>
+
+                {/* Availability Switch */}
+                <div className="flex items-center gap-2 bg-muted/40 px-3 py-1.5 rounded-xl border border-border/50">
+                  <span className="text-2xs font-semibold text-foreground">
+                    {state.isAvailable ? "🟢 Available" : "⏸️ Paused"}
+                  </span>
+                  <Switch
+                    checked={state.isAvailable}
+                    onCheckedChange={(checked) => setState({ ...state, isAvailable: checked })}
+                  />
                 </div>
               </div>
 
@@ -1243,11 +1319,15 @@ export default function ProfileSetupStudio() {
                   </div>
                 </div>
 
-                {/* Simulated Connect Button */}
+                {/* Simulated Connect Button & Availability */}
                 <div className="pt-2 border-t border-border/40 flex items-center justify-between gap-2">
                   <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <span className="flex h-2 w-2 rounded-full bg-emerald-500" />
-                    Available to help peers
+                    <span
+                      className={`flex h-2 w-2 rounded-full ${
+                        state.isAvailable ? "bg-emerald-500" : "bg-amber-500"
+                      }`}
+                    />
+                    {state.isAvailable ? "Available to help peers" : "Temporarily paused"}
                   </div>
                   <Button size="sm" className="h-8 text-xs font-semibold pointer-events-none opacity-90">
                     Connect
@@ -1348,10 +1428,12 @@ export default function ProfileSetupStudio() {
                   ) : (
                     <Check className="h-4 w-4 stroke-[3]" />
                   )}
-                  Publish Campus Profile
+                  {isPublished ? "Save & Update Profile" : "Publish Campus Profile"}
                 </Button>
                 <p className="text-[11px] text-center text-muted-foreground mt-2">
-                  You can edit these details anytime from your profile page.
+                  {isPublished
+                    ? "Your changes go live immediately across CampusMind search."
+                    : "You can edit these details anytime from your profile page."}
                 </p>
               </div>
             </div>
@@ -1363,9 +1445,14 @@ export default function ProfileSetupStudio() {
       <ImportSrmPortalDialog
         open={portalDialogOpen}
         onOpenChange={setPortalDialogOpen}
-        onSuccess={() => {
-          refreshProfile();
-          toast.success("Courses linked to your profile!");
+        onSuccess={async (result) => {
+          await refreshProfile();
+          if (result) {
+            if (result.program) {
+              setState((prev) => ({ ...prev, department: result.program || prev.department }));
+            }
+          }
+          toast.success("SRM Portal courses and academic details linked!");
         }}
       />
     </div>

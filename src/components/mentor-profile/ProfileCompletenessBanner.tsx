@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { Sparkles, FileText, GraduationCap, Drama, CheckCircle2, ChevronRight } from "lucide-react";
+import { Sparkles, FileText, GraduationCap, Drama, CheckCircle2, ChevronRight, Edit3, Share2, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
 import { EnhancedMentor } from "@/utils/mentor-enhancements";
 import { ProfileKickstartModal } from "@/components/profile/ProfileKickstartModal";
 import { ImportSrmPortalDialog } from "@/components/profile/ImportSrmPortal";
@@ -47,6 +48,17 @@ export default function ProfileCompletenessBanner({
 
   const completedCount = checks.filter((c) => c.done).length;
   const percentage = Math.round((completedCount / checks.length) * 100);
+  const isComplete = percentage === 100;
+
+  const handleShare = () => {
+    const url = window.location.href;
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(url);
+      toast.success("Profile link copied to clipboard! 📋");
+    } else {
+      toast.info(`Profile URL: ${url}`);
+    }
+  };
 
   const openModalWithTab = (tab: "pdf" | "portal" | "clubs") => {
     if (tab === "portal") {
@@ -59,21 +71,42 @@ export default function ProfileCompletenessBanner({
 
   return (
     <>
-      <div className="relative overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-r from-primary/10 via-indigo-500/5 to-purple-500/10 p-5 shadow-sm">
+      <div
+        className={`relative overflow-hidden rounded-2xl border p-5 shadow-sm transition-all ${
+          isComplete
+            ? "border-emerald-500/30 bg-gradient-to-r from-emerald-500/10 via-teal-500/5 to-emerald-500/10"
+            : "border-primary/20 bg-gradient-to-r from-primary/10 via-indigo-500/5 to-purple-500/10"
+        }`}
+      >
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1.5 min-w-0">
-            <div className="inline-flex items-center gap-2 rounded-full bg-primary/15 px-3 py-0.5 text-xs font-semibold text-primary">
-              <Sparkles className="h-3.5 w-3.5" />
-              Your Public Campus Profile
+            <div className="flex items-center gap-2">
+              <Badge
+                variant="outline"
+                className={`text-2xs font-semibold px-2.5 py-0.5 gap-1.5 ${
+                  isComplete
+                    ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30"
+                    : "bg-primary/15 text-primary border-primary/20"
+                }`}
+              >
+                <span
+                  className={`h-1.5 w-1.5 rounded-full ${
+                    isComplete ? "bg-emerald-500 animate-pulse" : "bg-primary"
+                  }`}
+                />
+                {isComplete ? "Live on CampusMind Search" : "Your Public Campus Profile"}
+              </Badge>
             </div>
+
             <h3 className="text-base sm:text-lg font-bold text-foreground">
-              {percentage === 100
-                ? "Your Profile is Complete & Live! 🎉"
+              {isComplete
+                ? "Your Profile is Live & 100% Complete 🎉"
                 : `Profile Strength: ${percentage}% — Help peers & juniors find you`}
             </h3>
+
             <p className="text-xs sm:text-sm text-muted-foreground max-w-xl">
-              {percentage === 100
-                ? "Students can discover your skills, coursework, and club memberships in CampusMind search."
+              {isComplete
+                ? "Classmates and juniors can discover your skills, coursework, and connect with you directly."
                 : "Auto-fill your missing skills, coursework, and clubs in 10 seconds using your resume or student portal."}
             </p>
           </div>
@@ -85,10 +118,23 @@ export default function ProfileCompletenessBanner({
               className="gap-1.5 font-bold shadow-xs bg-primary hover:bg-primary/90 text-primary-foreground"
             >
               <Link to="/profile/setup">
-                <Sparkles className="h-4 w-4" />
-                Launch Profile Studio
+                <Edit3 className="h-4 w-4" />
+                {isComplete ? "Edit in Studio" : "Launch Profile Studio"}
               </Link>
             </Button>
+
+            {isComplete ? (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleShare}
+                className="gap-1.5 font-medium bg-background/80"
+              >
+                <Share2 className="h-4 w-4 text-primary" />
+                Share Profile
+              </Button>
+            ) : null}
+
             <Button
               variant="outline"
               size="sm"
@@ -96,7 +142,7 @@ export default function ProfileCompletenessBanner({
               className="gap-1.5 font-medium bg-background/80"
             >
               <GraduationCap className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-              Link SRM Portal
+              {(mentor.courses?.length ?? 0) > 0 ? `SRM Portal Linked ✓` : "Link SRM Portal"}
             </Button>
           </div>
         </div>
