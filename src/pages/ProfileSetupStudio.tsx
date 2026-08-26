@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -121,7 +121,12 @@ export default function ProfileSetupStudio() {
   const [isPublished, setIsPublished] = useState(false);
   const [activeMobileTab, setActiveMobileTab] = useState<"edit" | "preview">("edit");
   const [portalDialogOpen, setPortalDialogOpen] = useState(false);
-  const [showPortalNudge, setShowPortalNudge] = useState(false);
+  // "resume" = just imported a resume, so mention that; "visit" = landed on
+  // the Studio with no portal linked yet, so use the generic prompt. Either
+  // way this is an inline dismissible banner, never a blocking popup.
+  const [nudgeReason, setNudgeReason] = useState<"resume" | "visit" | null>(null);
+  const initialNudgeCheckedRef = useRef(false);
+  const portalNudgeDismissKey = user ? `portal-nudge-dismissed-${user.id}` : null;
 
   // Studio Form State
   const [state, setState] = useState<StudioProfileState>({
@@ -235,6 +240,22 @@ export default function ProfileSetupStudio() {
     loadData();
   }, [user]);
 
+  // Prompt to link the SRM Portal once per visit if it isn't linked yet and
+  // the student hasn't snoozed it this session — never on a fresh resume
+  // import, since that path already shows its own reason below.
+  useEffect(() => {
+    if (loading || initialNudgeCheckedRef.current || !user) return;
+    initialNudgeCheckedRef.current = true;
+    if (state.courses.length > 0) return;
+    if (portalNudgeDismissKey && sessionStorage.getItem(portalNudgeDismissKey)) return;
+    setNudgeReason("visit");
+  }, [loading, state.courses, user, portalNudgeDismissKey]);
+
+  const handleDismissPortalNudge = () => {
+    if (portalNudgeDismissKey) sessionStorage.setItem(portalNudgeDismissKey, "1");
+    setNudgeReason(null);
+  };
+
   // One-click AI Auto-Draft for all sections
   const handleAutoDraftAll = () => {
     setIsGeneratingAi(true);
@@ -346,7 +367,9 @@ export default function ProfileSetupStudio() {
 
     // Resume alone can't see coursework — nudge toward the other 10-second
     // import so search can also match students by course code, not just skills.
-    setShowPortalNudge(true);
+    // Overrides any earlier "ask me later" snooze since this is a fresh,
+    // contextual trigger rather than a repeat nag.
+    setNudgeReason("resume");
   };
 
   // Skill Handlers
@@ -731,10 +754,11 @@ export default function ProfileSetupStudio() {
           </div>
         </section>
 
-        {/* Post-resume nudge: only the SRM Portal can fill in verified coursework,
-            so offer it right after a resume import — dismissible, never blocking. */}
+        {/* Portal nudge: only the SRM Portal can fill in verified coursework, so
+            offer it either right after a resume import or once per visit if it's
+            still unlinked — dismissible ("ask me later"), never a blocking popup. */}
         <AnimatePresence>
-          {showPortalNudge && state.courses.length === 0 && (
+          {nudgeReason && state.courses.length === 0 && (
             <motion.section
               initial={{ opacity: 0, height: 0, marginBottom: 0 }}
               animate={{ opacity: 1, height: "auto", marginBottom: 24 }}
@@ -749,10 +773,12 @@ export default function ProfileSetupStudio() {
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-foreground">
-                      Resume added! One more thing — link your SRM Portal?
+                      {nudgeReason === "resume"
+                        ? "Resume added! One more thing — link your SRM Portal?"
+                        : "Want your verified coursework on your profile too?"}
                     </p>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      We'll pull in your verified coursework so juniors can find you by course code too. Takes about 10 seconds, and your CGPA stays private.
+                      We'll pull in your coursework so juniors can find you by course code too. Takes about 10 seconds, and your CGPA stays private.
                     </p>
                   </div>
                 </div>
@@ -760,10 +786,10 @@ export default function ProfileSetupStudio() {
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={() => setShowPortalNudge(false)}
+                    onClick={handleDismissPortalNudge}
                     className="text-xs text-muted-foreground"
                   >
-                    Skip for now
+                    Ask me later
                   </Button>
                   <Button
                     size="sm"
@@ -1511,7 +1537,7 @@ export default function ProfileSetupStudio() {
               };
             });
           }
-          setShowPortalNudge(false);
+          setNudgeReason(null);
           toast.success("SRM Portal courses and academic details linked!");
         }}
       />
