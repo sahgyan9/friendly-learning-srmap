@@ -9,7 +9,8 @@ import { toast } from "sonner";
 import BadgeDisplay from "@/components/badges/BadgeDisplay";
 import ReviewsList from "@/components/rating/ReviewsList";
 import AlumniPromptBanner from "@/components/alumni/AlumniPromptBanner";
-import ImportSrmPortal from "@/components/profile/ImportSrmPortal";
+import ImportSrmPortal, { ImportSrmPortalDialog } from "@/components/profile/ImportSrmPortal";
+import AttendanceOverviewCard from "@/components/profile/AttendanceOverviewCard";
 import MentorDashboard from "@/components/profile/MentorDashboard";
 import { ProfileAvatarUploader } from "@/components/profile/ProfileAvatarUploader";
 import { ProfileStatsSection, type UserStats } from "@/components/profile/ProfileStatsSection";
@@ -55,6 +56,7 @@ const UserProfile = () => {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [portalImportOpen, setPortalImportOpen] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -285,6 +287,7 @@ const UserProfile = () => {
                   usually asking "is any of this working?", and the answer
                   should not be below the fold. */}
               {isUserMentor && user?.id && <MentorDashboard mentorId={user.id} />}
+              <AttendanceOverviewCard onOpenPortalImport={() => setPortalImportOpen(true)} />
               {isUserMentor && <ImportSrmPortal onProfileUpdate={fetchProfile} />}
               <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
                 <ProfileInfoForm
@@ -342,6 +345,14 @@ const UserProfile = () => {
               </TabsContent>
             )}
           </Tabs>
+
+          <ImportSrmPortalDialog
+            open={portalImportOpen}
+            onOpenChange={setPortalImportOpen}
+            onSuccess={() => {
+              fetchProfile();
+            }}
+          />
         </div>
       </div>
     </div>
