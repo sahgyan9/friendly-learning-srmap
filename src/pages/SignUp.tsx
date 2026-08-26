@@ -86,7 +86,7 @@ const SignUp = () => {
       
       setShowRoleSelection(false);
       toast.success("Account setup completed!");
-      navigate('/');
+      navigate('/profile/setup?new=1');
     } catch (error: unknown) {
       toast.error("Error setting up account: " + getErrorMessage(error));
     }
