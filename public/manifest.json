@@ -1,11 +1,11 @@
 {
-  "name": "Friendly Learning SRMAP - All-in-One Campus Platform",
+  "name": "Friendly Learning SRMAP",
   "short_name": "Friendly Learning",
   "description": "Friendly Learning SRMAP is the all-in-one campus platform for SRM AP students — post ideas, find teammates, search with CampusMind, rate faculty, and get mentored by seniors.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#6366f1",
+  "background_color": "#0f172a",
+  "theme_color": "#3963C6",
   "orientation": "portrait",
   "categories": [
     "education",

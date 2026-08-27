@@ -14,10 +14,11 @@ export const useUserPresence = (userId: string) => {
     // Set user as online when component mounts
     void updateUserPresence(userId, true);
 
-    // Update presence every 30 seconds
+    // Update presence every 2 minutes — reduces WAL write churn by 4× vs 30s.
+    // Online indicators still update within 2 min which is imperceptible to users.
     intervalRef.current = setInterval(() => {
       void updateUserPresence(userId, true);
-    }, 30000);
+    }, 120_000);
 
     // Handle page visibility change
     const handleVisibilityChange = () => {
