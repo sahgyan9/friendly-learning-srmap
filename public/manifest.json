@@ -1,6 +1,6 @@
 {
   "name": "Friendly Learning SRMAP",
-  "short_name": "Friendly Learning",
+  "short_name": "FL SRMAP",
   "description": "Friendly Learning SRMAP is the all-in-one campus platform for SRM AP students — post ideas, find teammates, search with CampusMind, rate faculty, and get mentored by seniors.",
   "start_url": "/?source=pwa",
   "display": "standalone",
@@ -28,7 +28,13 @@
       "src": "/pwa-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-maskable-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     },
     {
       "src": "/og-image.png",
