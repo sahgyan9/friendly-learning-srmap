@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
   DialogContent,
@@ -119,8 +120,8 @@ export const ImportSrmPortalDialog = ({
   const [successResult, setSuccessResult] = useState<ImportSuccessResult | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [applyingToProfile, setApplyingToProfile] = useState(false);
-  const [appliedToProfile, setAppliedToProfile] = useState(false);
-  const [coursesOnProfile, setCoursesOnProfile] = useState(false);
+  const [coursesOnProfile, setCoursesOnProfile] = useState(true);
+  const [publishCourses, setPublishCourses] = useState(true);
   const [togglingCourses, setTogglingCourses] = useState(false);
 
   const fetchCaptcha = async () => {
@@ -152,7 +153,7 @@ export const ImportSrmPortalDialog = ({
       setSuccessResult(null);
       setRegisterNumber(defaultRegisterNumber ?? "");
       setPassword("");
-      setAppliedToProfile(false);
+      setPublishCourses(true);
       fetchCaptcha();
 
       // Prefill the register number from a prior successful sync, if any —
@@ -178,7 +179,8 @@ export const ImportSrmPortalDialog = ({
           .eq("id", user.id)
           .maybeSingle()
           .then(({ data }) => {
-            setCoursesOnProfile(Array.isArray(data?.courses) && data.courses.length > 0);
+            const hasCourses = Array.isArray(data?.courses) && data.courses.length > 0;
+            setCoursesOnProfile(hasCourses);
           });
       }
     } else {
@@ -186,13 +188,13 @@ export const ImportSrmPortalDialog = ({
       setCaptchaData(null);
       setSuccessResult(null);
       setDetailsOpen(false);
-      setAppliedToProfile(false);
-      setCoursesOnProfile(false);
+      setPublishCourses(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   const handleToggleCoursesOnProfile = async (next: boolean) => {
+    setPublishCourses(next);
     if (!user || !successResult) return;
     setTogglingCourses(true);
     try {
@@ -209,11 +211,14 @@ export const ImportSrmPortalDialog = ({
     }
   };
 
-  const handleApplyToProfile = async () => {
-    if (!user || !successResult) return;
+  const handleConfirmAndClose = async (publishCoursesChoice: boolean) => {
+    if (!user || !successResult) {
+      onOpenChange(false);
+      return;
+    }
     setApplyingToProfile(true);
     try {
-      const courses = dedupeCourses(successResult.subjects);
+      const courses = publishCoursesChoice ? dedupeCourses(successResult.subjects) : [];
 
       // 1. Update users table with department
       const updates: { department?: string } = {};
@@ -224,38 +229,66 @@ export const ImportSrmPortalDialog = ({
         if (userErr) throw userErr;
       }
 
-      // 2. Update mentors table with courses, department, cgpa, and semester-derived year
-      const mentorUpdates: Record<string, any> = {
-        courses: courses,
-      };
-      if (successResult.cgpa != null) mentorUpdates.cgpa = successResult.cgpa;
-      if (successResult.program) mentorUpdates.department = successResult.program;
-      if (successResult.currentSemester) {
-        const sem = successResult.currentSemester;
-        const year =
-          sem <= 2
-            ? "1st Year"
-            : sem <= 4
-            ? "2nd Year"
-            : sem <= 6
-            ? "3rd Year"
-            : sem <= 8
-            ? "4th Year"
-            : "5th Year";
-        mentorUpdates.year_of_studies = year;
+      // 2. Update/upsert mentors table with courses, department, cgpa, and semester-derived year
+      const sem = successResult.currentSemester;
+      const year = sem
+        ? sem <= 2
+          ? "1st Year"
+          : sem <= 4
+          ? "2nd Year"
+          : sem <= 6
+          ? "3rd Year"
+          : sem <= 8
+          ? "4th Year"
+          : "5th Year"
+        : undefined;
+
+      const { data: existingMentor } = await supabase
+        .from("mentors")
+        .select("id")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (existingMentor) {
+        const mentorUpdates: Record<string, any> = {
+          courses: courses,
+        };
+        if (successResult.cgpa != null) mentorUpdates.cgpa = successResult.cgpa;
+        if (successResult.program) mentorUpdates.department = successResult.program;
+        if (year) mentorUpdates.year_of_studies = year;
+
+        const { error: mentorErr } = await supabase
+          .from("mentors")
+          .update(mentorUpdates as any)
+          .eq("id", user.id);
+        if (mentorErr) throw mentorErr;
+      } else {
+        const mentorPayload: Record<string, any> = {
+          id: user.id,
+          name: user.user_metadata?.name || user.email?.split("@")[0] || "Student",
+          department: successResult.program || "General",
+          courses: courses,
+          is_available: true,
+        };
+        if (successResult.cgpa != null) mentorPayload.cgpa = successResult.cgpa;
+        if (year) mentorPayload.year_of_studies = year;
+
+        const { error: mentorErr } = await supabase
+          .from("mentors")
+          .upsert(mentorPayload as any, { onConflict: "id" });
+        if (mentorErr) console.warn("Mentor upsert note:", mentorErr);
       }
 
-      const { error: mentorErr } = await supabase
-        .from("mentors")
-        .update(mentorUpdates as any)
-        .eq("id", user.id);
-      if (mentorErr) throw mentorErr;
-
-      setAppliedToProfile(true);
-      setCoursesOnProfile(true);
+      setCoursesOnProfile(publishCoursesChoice);
       await refreshProfile();
       onSuccess?.(successResult);
-      toast.success("Profile updated with your SRM coursework, department & CGPA!");
+      onOpenChange(false);
+
+      toast.success(
+        publishCoursesChoice
+          ? "SRM Portal linked & coursework published to profile!"
+          : "SRM Portal linked successfully!"
+      );
     } catch (err: unknown) {
       console.error("Error applying imported data to profile:", err);
       toast.error("Failed to update profile values");
@@ -294,6 +327,7 @@ export const ImportSrmPortalDialog = ({
       };
 
       setSuccessResult(result);
+      setPublishCourses(true);
       void refreshProfile();
 
       toast.success(
@@ -320,22 +354,22 @@ export const ImportSrmPortalDialog = ({
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-md">
         {successResult ? (
-          <div className="space-y-5 py-2">
-            <div className="flex flex-col items-center text-center space-y-2">
-              <div className="h-12 w-12 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-500 animate-in zoom-in-95">
-                <CheckCircle2 className="h-6 w-6" />
+          <div className="space-y-4 py-1">
+            <div className="flex flex-col items-center text-center space-y-1.5">
+              <div className="h-11 w-11 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-500 animate-in zoom-in-95">
+                <CheckCircle2 className="h-5 w-5" />
               </div>
-              <DialogTitle className="text-xl font-bold">SRM Portal Linked!</DialogTitle>
+              <DialogTitle className="text-lg sm:text-xl font-bold">SRM Portal Linked!</DialogTitle>
               <DialogDescription className="text-xs text-muted-foreground max-w-xs">
-                We signed in to the SRM portal and read your coursework and academic standing below.
-                This is already saved to your account, and we'll refresh it automatically going forward.
+                We verified your coursework and academic standing from student.srmap.edu.in.
+                We'll keep this refreshed automatically in the background.
               </DialogDescription>
             </div>
 
             {/* Imported Metrics Card */}
-            <div className="rounded-lg border border-border bg-card p-4 space-y-3">
+            <div className="rounded-xl border border-border bg-card/80 p-3.5 space-y-2.5 shadow-sm">
               <div className="flex items-center justify-between pb-2 border-b border-border">
-                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                <span className="text-2xs font-semibold text-muted-foreground uppercase tracking-wider">
                   Summary of Imported Data
                 </span>
                 <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 text-3xs gap-1 font-normal">
@@ -343,7 +377,7 @@ export const ImportSrmPortalDialog = ({
                 </Badge>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 text-xs">
+              <div className="grid grid-cols-2 gap-2.5 text-xs">
                 <div>
                   <p className="text-muted-foreground text-2xs">Program</p>
                   <p className="font-semibold text-foreground truncate" title={successResult.program || "N/A"}>
@@ -370,7 +404,7 @@ export const ImportSrmPortalDialog = ({
                   <button
                     type="button"
                     onClick={() => setDetailsOpen(true)}
-                    className="font-semibold text-primary hover:underline text-left"
+                    className="font-semibold text-primary hover:underline text-left text-xs"
                   >
                     {successResult.subjectCount} Subjects Loaded
                   </button>
@@ -381,43 +415,49 @@ export const ImportSrmPortalDialog = ({
                 type="button"
                 variant="outline"
                 size="sm"
-                className="w-full text-xs"
+                className="w-full text-xs h-8"
                 onClick={() => setDetailsOpen(true)}
               >
                 <Eye className="mr-1.5 h-3.5 w-3.5" /> View full course list
               </Button>
             </div>
 
-            {/* Explicit save action — separate from the auto-sync above */}
-            <div className="rounded-lg border border-primary/20 bg-primary/5 p-3.5 space-y-2.5">
-              <p className="text-2xs text-muted-foreground leading-relaxed">
-                Want your <span className="font-medium text-foreground">program and CGPA</span> to also
-                show up on your public FriendlyLearning profile (so mentors/search can see it)? Apply it below.
-                This step is optional.
-              </p>
-              <Button
-                type="button"
-                className="w-full text-xs"
-                onClick={handleApplyToProfile}
-                disabled={applyingToProfile || appliedToProfile}
-              >
-                {applyingToProfile ? (
-                  <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-                ) : appliedToProfile ? (
-                  <CheckCircle2 className="mr-1.5 h-3.5 w-3.5" />
-                ) : (
-                  <UserCheck className="mr-1.5 h-3.5 w-3.5" />
-                )}
-                {appliedToProfile ? "Applied to Profile" : "Apply to Profile"}
-              </Button>
+            {/* Slider Switch Card: Publish courses taken to profile (Selected by default) */}
+            <div className="rounded-xl border border-primary/20 bg-primary/5 p-3.5 space-y-2">
+              <div className="flex items-center justify-between gap-3">
+                <div className="space-y-0.5 min-w-0 flex-1">
+                  <Label
+                    htmlFor="publish-courses-switch"
+                    className="text-xs font-semibold text-foreground cursor-pointer flex items-center gap-1.5"
+                  >
+                    <GraduationCap className="h-3.5 w-3.5 text-primary" />
+                    Publish courses taken to profile
+                  </Label>
+                  <p className="text-2xs text-muted-foreground leading-tight">
+                    Shows verified course codes on your profile so peers & juniors can find you for subject guidance. (CGPA & grades remain private).
+                  </p>
+                </div>
+                <Switch
+                  id="publish-courses-switch"
+                  checked={publishCourses}
+                  onCheckedChange={setPublishCourses}
+                />
+              </div>
             </div>
 
+            {/* Single Primary Confirmation Action Button */}
             <Button
-              variant="ghost"
-              className="w-full text-xs"
-              onClick={() => onOpenChange(false)}
+              type="button"
+              className="w-full text-xs font-semibold gap-1.5 py-2.5 h-9"
+              onClick={() => handleConfirmAndClose(publishCourses)}
+              disabled={applyingToProfile}
             >
-              Done
+              {applyingToProfile ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <CheckCircle2 className="h-4 w-4" />
+              )}
+              Okay
             </Button>
           </div>
         ) : (
@@ -526,7 +566,7 @@ export const ImportSrmPortalDialog = ({
           last_synced_at: new Date().toISOString(),
           register_number: registerNumber || null,
         }}
-        onApplyToProfile={handleApplyToProfile}
+        onApplyToProfile={() => handleConfirmAndClose(publishCourses)}
         isApplyingToProfile={applyingToProfile}
         coursesOnProfile={coursesOnProfile}
         onToggleCoursesOnProfile={handleToggleCoursesOnProfile}

@@ -206,10 +206,30 @@ export default function ProfileSetupStudio() {
         // 2. Fetch mentor row
         const { data: mentorData } = await getMentorById(user.id);
 
-        const studentName = mentorData?.name || userData?.name || "";
-        const studentDept = mentorData?.department || userData?.department || "";
+        let studentName = mentorData?.name || userData?.name || "";
+        let studentDept = mentorData?.department || userData?.department || "";
         const studentYear = mentorData?.year_of_studies ? String(mentorData.year_of_studies) : "";
-        const coursesList = Array.isArray(mentorData?.courses) ? (mentorData.courses as any[]) : [];
+        let coursesList = Array.isArray(mentorData?.courses) ? (mentorData.courses as any[]) : [];
+
+        // If mentor courses is empty, check if academic_imports has synced courses
+        if (coursesList.length === 0) {
+          const { data: academicData } = await supabase
+            .from("academic_imports")
+            .select("subjects, program")
+            .eq("user_id", user.id)
+            .maybeSingle();
+
+          if (academicData?.subjects && Array.isArray(academicData.subjects)) {
+            const seen = new Map<string, string>();
+            for (const s of academicData.subjects as any[]) {
+              if (s?.code && !seen.has(s.code)) seen.set(s.code, s.name || s.code);
+            }
+            coursesList = Array.from(seen, ([code, name]) => ({ code, name }));
+            if (!studentDept && academicData.program) {
+              studentDept = formatDepartment(academicData.program) || academicData.program;
+            }
+          }
+        }
 
         const mergedSkills = mentorData?.skills?.length
           ? mentorData.skills
@@ -263,10 +283,10 @@ export default function ProfileSetupStudio() {
   useEffect(() => {
     if (loading || initialNudgeCheckedRef.current || !user) return;
     initialNudgeCheckedRef.current = true;
-    if (state.courses.length > 0) return;
+    if (state.courses.length > 0 || Boolean(profile?.date_of_birth_linked)) return;
     if (portalNudgeDismissKey && sessionStorage.getItem(portalNudgeDismissKey)) return;
     setNudgeReason("visit");
-  }, [loading, state.courses, user, portalNudgeDismissKey]);
+  }, [loading, state.courses, user, portalNudgeDismissKey, profile?.date_of_birth_linked]);
 
   const handleDismissPortalNudge = () => {
     if (portalNudgeDismissKey) sessionStorage.setItem(portalNudgeDismissKey, "1");
