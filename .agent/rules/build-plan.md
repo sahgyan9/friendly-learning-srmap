@@ -26,6 +26,9 @@ same commit that ships a task.
   its job — verify that the data actually changed.
 - **This repo lives in a OneDrive-synced folder.** Run `git diff` after every
   edit; files can be silently reverted, including ones you never touched.
+- **Commit in small, logical increments.** Break changes into clean, atomic
+  commits by concern (e.g. `docs(...)`, `feat(...)`, `fix(...)`, `test(...)`)
+  rather than a single omnibus commit. Stage files explicitly.
 
 Gyan is non-technical and delegates execution decisions, so prefer making a
 clear recommendation and proceeding over presenting options — but stop for
