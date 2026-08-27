@@ -186,7 +186,8 @@ export async function dispatchPushNotification(opts: {
         body: opts.body,
         url: opts.url || "/",
         tag: opts.tag || "campus-notification",
-        icon: opts.icon || "/favicon.ico",
+        icon: opts.icon || "/pwa-192x192.png",
+        badge: "/badge-96x96.png",
       },
     });
 

@@ -28,8 +28,8 @@ self.addEventListener('push', (event) => {
   const title = data.title || 'Friendly Learning SRMAP';
   const options = {
     body: data.body || 'You have a new notification on Friendly Learning SRMAP.',
-    icon: data.icon || '/favicon.ico',
-    badge: data.badge || '/favicon.ico',
+    icon: data.icon || '/pwa-192x192.png',
+    badge: data.badge || '/badge-96x96.png',
     tag: data.tag || 'general-notification',
     renotify: true,
     data: {

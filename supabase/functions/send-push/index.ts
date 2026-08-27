@@ -115,8 +115,8 @@ Deno.serve(async (req: Request) => {
     const pushContent = JSON.stringify({
       title: payload.title || "Friendly Learning SRMAP",
       body: payload.body,
-      icon: payload.icon || "/favicon.ico",
-      badge: payload.badge || "/favicon.ico",
+      icon: payload.icon || "/pwa-192x192.png",
+      badge: payload.badge || "/badge-96x96.png",
       tag: payload.tag || "general",
       url: payload.url || "/",
       data: payload.data || {},
