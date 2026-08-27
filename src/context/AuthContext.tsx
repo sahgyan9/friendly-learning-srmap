@@ -92,9 +92,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const fetchUserProfile = useCallback(
     async (userId: string, authUser?: User | null) => {
       try {
-        const [{ data: profileData, error: profileError }, { data: mentorData }] = await Promise.all([
+        const [
+          { data: profileData, error: profileError },
+          { data: mentorData },
+          adminRpcResult,
+        ] = await Promise.all([
           supabase.from("users").select(PROFILE_COLUMNS).eq("id", userId).maybeSingle(),
           supabase.from("mentors").select("department").eq("id", userId).maybeSingle(),
+          supabase.rpc("is_admin_user", { user_id: userId }).then(
+            (res) => res.data === true,
+            () => false,
+          ),
         ]);
 
         // If the row is missing this is almost always a brand-new OAuth user
@@ -111,6 +119,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 .eq("id", userId)
                 .maybeSingle();
               if (!retryError && retryData) {
+                if (adminRpcResult || retryData.role === "admin") {
+                  retryData.is_admin = true;
+                }
                 applyProfile(retryData, mentorData?.department, userId, authUser);
                 return;
               }
@@ -118,6 +129,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
           clearProfile();
           return;
+        }
+
+        if (adminRpcResult || profileData.role === "admin") {
+          profileData.is_admin = true;
         }
 
         applyProfile(profileData, mentorData?.department, userId, authUser);
@@ -186,7 +201,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signOut,
       loading,
       isMentor,
-      isAdmin: profile?.is_admin === true,
+      isAdmin: profile?.is_admin === true || profile?.role === "admin",
       refreshProfile,
     }),
     [session, user, profile, signOut, loading, isMentor, refreshProfile],

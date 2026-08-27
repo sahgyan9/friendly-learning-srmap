@@ -1,7 +1,16 @@
-
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { LogOut, Sparkles, User, Award, GraduationCap, Smartphone } from "lucide-react";
+import {
+  Award,
+  Compass,
+  LogOut,
+  Settings,
+  ShieldCheck,
+  Smartphone,
+  Sparkles,
+  User,
+} from "lucide-react";
+import { AttendanceIcon } from "@/components/icons/AttendanceIcon";
 import { useAuth } from "@/context/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -21,7 +30,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 const NavbarProfileMenu = () => {
-  const { user, profile, signOut, loading } = useAuth();
+  const { user, profile, signOut, loading, isAdmin } = useAuth();
   const { openTour } = useWelcomeTour();
   const { isInstalled, isIOS, promptInstall } = usePWAInstall();
   const [isRealMentor, setIsRealMentor] = useState(false);
@@ -142,7 +151,7 @@ const NavbarProfileMenu = () => {
             <DropdownMenuItem asChild>
               <Link to={`/mentor/${mentorSlug || user.id}`} className="cursor-pointer w-full flex items-center gap-2">
                 <User className="h-4 w-4" />
-                My Public Profile
+                <span>My Public Profile</span>
               </Link>
             </DropdownMenuItem>
           ) : (
@@ -153,7 +162,7 @@ const NavbarProfileMenu = () => {
               <Link to="/profile/setup" className="flex w-full items-center justify-between">
                 <span className="flex items-center gap-2">
                   <Sparkles className="h-4 w-4" />
-                  Set Up Public Profile
+                  <span>Set Up Public Profile</span>
                 </span>
                 <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-semibold">10s</span>
               </Link>
@@ -162,22 +171,32 @@ const NavbarProfileMenu = () => {
 
           <DropdownMenuItem asChild>
             <Link to="/attendance" className="cursor-pointer w-full flex items-center gap-2">
-              <GraduationCap className="h-4 w-4 text-primary" />
-              Attendance
+              <AttendanceIcon className="h-4 w-4 text-primary" />
+              <span>Attendance</span>
             </Link>
           </DropdownMenuItem>
 
           <DropdownMenuItem asChild>
-            <Link to="/profile" className="cursor-pointer w-full">
-              Account Settings
+            <Link to="/profile" className="cursor-pointer w-full flex items-center gap-2">
+              <Settings className="h-4 w-4" />
+              <span>Account Settings</span>
             </Link>
           </DropdownMenuItem>
+
+          {isAdmin && (
+            <DropdownMenuItem asChild>
+              <Link to="/admin" className="cursor-pointer w-full flex items-center gap-2 text-violet-600 dark:text-violet-400 focus:text-violet-600">
+                <ShieldCheck className="h-4 w-4" />
+                <span>Admin Dashboard</span>
+              </Link>
+            </DropdownMenuItem>
+          )}
 
           {isRealMentor && (
             <DropdownMenuItem asChild>
               <Link to="/certificate" className="cursor-pointer w-full flex items-center gap-2">
                 <Award className="h-4 w-4 text-amber-500" />
-                My Certificate
+                <span>My Certificate</span>
               </Link>
             </DropdownMenuItem>
           )}
@@ -206,7 +225,7 @@ const NavbarProfileMenu = () => {
             >
               <span className="flex items-center gap-2">
                 <Smartphone className="h-4 w-4" />
-                Install Friendly Learning
+                <span>Install Friendly Learning</span>
               </span>
               {isHighlightingInstall && (
                 <span className="text-[10px] bg-primary text-primary-foreground font-semibold px-1.5 py-0.5 rounded-full shadow-xs">
@@ -216,13 +235,14 @@ const NavbarProfileMenu = () => {
             </DropdownMenuItem>
           )}
 
-          <DropdownMenuItem onClick={openTour} className="cursor-pointer">
-            Take the tour
+          <DropdownMenuItem onClick={openTour} className="cursor-pointer flex items-center gap-2">
+            <Compass className="h-4 w-4" />
+            <span>Take the tour</span>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={signOut} className="cursor-pointer text-red-500 focus:text-red-500">
-            <LogOut className="h-4 w-4 mr-2" />
-            Sign out
+          <DropdownMenuItem onClick={signOut} className="cursor-pointer text-red-500 focus:text-red-500 flex items-center gap-2">
+            <LogOut className="h-4 w-4" />
+            <span>Sign out</span>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
