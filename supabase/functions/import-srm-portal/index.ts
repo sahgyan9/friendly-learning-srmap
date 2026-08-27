@@ -220,7 +220,7 @@ Deno.serve(async (req) => {
               classes_needed: course.classesNeeded,
               conducted_hours: course.conductedHours,
               attended_hours: course.attendedHours,
-              url: "/profile",
+              url: "/attendance",
             },
             read: false,
           });
@@ -231,7 +231,7 @@ Deno.serve(async (req) => {
                 userId,
                 title: alertTitle,
                 body: alertMessage,
-                url: "/profile",
+                url: "/attendance",
                 tag: `attendance-${course.courseCode}`,
               },
             });

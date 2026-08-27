@@ -9,6 +9,11 @@ export const getNotificationNavigationUrl = (notification: Notification): string
     const baseUrl = window.location.origin;
     const data = (notification.data && typeof notification.data === 'object') ? (notification.data as Record<string, any>) : {};
 
+    // Handle attendance alert notifications
+    if (notification.type === 'attendance_alert' || notification.title?.includes('Attendance') || data.type === 'attendance_alert') {
+        return `${baseUrl}/attendance`;
+    }
+
     // Direct URL in data payload
     if (data.url && typeof data.url === 'string') {
         return data.url.startsWith('http') ? data.url : `${baseUrl}${data.url.startsWith('/') ? '' : '/'}${data.url}`;
