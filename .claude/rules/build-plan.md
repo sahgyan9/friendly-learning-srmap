@@ -28,5 +28,9 @@ Codex, Cursor, Gemini CLI) with a matching pointer at `.agent/rules/`. If you
 change a rule that AGENTS.md repeats, change it there too — three copies drift
 fast.
 
+Break changes into clean, atomic commits by concern (e.g. `docs(...)`,
+`feat(...)`, `fix(...)`, `test(...)`) rather than a single omnibus commit.
+Stage files explicitly.
+
 Keep it current: when a remaining task ships, update its row in the status
 table and move its entry out of "What is left" in the same commit.
