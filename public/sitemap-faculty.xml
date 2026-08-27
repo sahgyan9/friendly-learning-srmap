@@ -6,7 +6,7 @@
                             http://www.google.com/schemas/sitemap-image/1.1 http://www.google.com/schemas/sitemap-image/1.1/sitemap-image.xsd">
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty</loc>
-    <lastmod>2026-08-26T04:59:58.795Z</lastmod>
+    <lastmod>2026-08-27T10:11:57.886Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
@@ -48,6 +48,26 @@
     <image:image>
       <image:loc>https://ruapdkrgcbqrhvsayvpf.supabase.co/storage/v1/object/public/faculty-portraits/dr-yasir-afaq.webp</image:loc>
       <image:title>Dr Yasir Afaq — Computer Science and Engineering, SRM University-AP</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://friendly-learning-srmap.vercel.app/faculty/ajay-kumar-sahu</loc>
+    <lastmod>2026-08-26T09:53:37.791628+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://ruapdkrgcbqrhvsayvpf.supabase.co/storage/v1/object/public/faculty-portraits/ajay-kumar-sahu.webp</image:loc>
+      <image:title>Ajay Kumar Sahu — Computer Science and Engineering, SRM University-AP</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-a-lakshmana-rao</loc>
+    <lastmod>2026-08-26T13:44:45.586292+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://ruapdkrgcbqrhvsayvpf.supabase.co/storage/v1/object/public/faculty-portraits/dr-a-lakshmana-rao.webp</image:loc>
+      <image:title>Dr A Lakshmana Rao — Commerce, SRM University-AP</image:title>
     </image:image>
   </url>
   <url>
@@ -128,16 +148,6 @@
     <image:image>
       <image:loc>https://ruapdkrgcbqrhvsayvpf.supabase.co/storage/v1/object/public/faculty-portraits/abhimanyu-bar.webp</image:loc>
       <image:title>Abhimanyu Bar — Computer Science and Engineering, SRM University-AP</image:title>
-    </image:image>
-  </url>
-  <url>
-    <loc>https://friendly-learning-srmap.vercel.app/faculty/ajay-kumar-sahu</loc>
-    <lastmod>2026-08-21T05:47:16.838561+00:00</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-    <image:image>
-      <image:loc>https://ruapdkrgcbqrhvsayvpf.supabase.co/storage/v1/object/public/faculty-portraits/ajay-kumar-sahu.webp</image:loc>
-      <image:title>Ajay Kumar Sahu — Computer Science and Engineering, SRM University-AP</image:title>
     </image:image>
   </url>
   <url>
@@ -349,16 +359,6 @@
     <lastmod>2026-08-14T10:31:31.306333+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-a-lakshmana-rao</loc>
-    <lastmod>2026-08-21T05:47:16.838561+00:00</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-    <image:image>
-      <image:loc>https://ruapdkrgcbqrhvsayvpf.supabase.co/storage/v1/object/public/faculty-portraits/dr-a-lakshmana-rao.webp</image:loc>
-      <image:title>Dr A Lakshmana Rao — Commerce, SRM University-AP</image:title>
-    </image:image>
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/ali-jraisheh</loc>
