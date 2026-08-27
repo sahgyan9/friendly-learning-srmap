@@ -141,18 +141,20 @@ const NavbarProfileMenu = () => {
             <DropdownMenuItem
               onClick={async () => {
                 if (isIOS) {
-                  toast.info("On iPhone/iPad: Tap Safari's Share button → 'Add to Home Screen'");
+                  toast.info("On iPhone/iPad: Tap Safari's Share button (⎋) → 'Add to Home Screen'");
                 } else {
                   const accepted = await promptInstall();
                   if (accepted) {
                     toast.success("App installed!");
+                  } else {
+                    toast.info("Look for the install icon (⊕) in your browser address bar or menu (⋮) → 'Install Friendly Learning'");
                   }
                 }
               }}
               className="cursor-pointer text-primary focus:text-primary font-medium flex items-center gap-2"
             >
               <Smartphone className="h-4 w-4" />
-              Install Campus App
+              Install Friendly Learning
             </DropdownMenuItem>
           )}
 

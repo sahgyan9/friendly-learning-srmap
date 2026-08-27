@@ -64,10 +64,14 @@ export function PWAInstallBanner() {
       return;
     }
 
-    const accepted = await promptInstall();
-    if (accepted) {
-      toast.success("Thank you for installing Friendly Learning SRMAP!");
-      markSeen();
+    if (isInstallable) {
+      const accepted = await promptInstall();
+      if (accepted) {
+        toast.success("Thank you for installing Friendly Learning SRMAP!");
+        markSeen();
+      }
+    } else {
+      toast.info("Look for the install icon (⊕) in your browser address bar or menu (⋮) → 'Install Friendly Learning'");
     }
   };
 
@@ -92,14 +96,14 @@ export function PWAInstallBanner() {
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5">
                 <p className="text-sm font-semibold text-foreground">
-                  Install Campus App
+                  Install Friendly Learning
                 </p>
                 <span className="rounded-full bg-primary/15 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
-                  PWA
+                  App
                 </span>
               </div>
               <p className="mt-0.5 text-xs text-muted-foreground leading-relaxed">
-                Add to your home screen for fast fullscreen access and offline performance.
+                Add to your home screen or desktop for fast fullscreen access & instant alerts.
               </p>
               <div className="mt-3 flex items-center gap-2">
                 <Button
