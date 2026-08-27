@@ -132,8 +132,12 @@ export default function Attendance() {
         body: { user_id: user.id, force: true },
       });
 
-      if (res.error) {
-        toast.error("Attendance sync failed. Please verify your portal link.");
+      if (res.error || res.data?.error) {
+        const errMsg = res.data?.error || res.error?.message || "Attendance sync failed. Please verify your portal link.";
+        toast.error(errMsg);
+        if (res.data?.error?.includes("Re-link") || res.data?.error?.includes("No linked")) {
+          setPortalDialogOpen(true);
+        }
       } else {
         toast.success("Attendance synced successfully from SRM Portal!");
         await fetchAttendance();
@@ -394,7 +398,7 @@ export default function Attendance() {
                     <div className="text-xs font-semibold text-foreground flex items-center gap-1.5 mb-1">
                       <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" /> Weekday Sync
                     </div>
-                    <p className="text-2xs text-muted-foreground">Auto-refreshes Mon–Fri at 5:00 PM IST.</p>
+                    <p className="text-2xs text-muted-foreground">Auto-refreshes Mon–Fri at 5:30 PM IST.</p>
                   </div>
                   <div className="p-3 rounded-lg bg-card border border-border/60">
                     <div className="text-xs font-semibold text-foreground flex items-center gap-1.5 mb-1">
@@ -529,9 +533,16 @@ export default function Attendance() {
                       <CheckCircle2 className="h-3 w-3" /> Live
                     </Badge>
                   </div>
-                  <p className="text-2xs text-muted-foreground mt-2 line-clamp-1">
-                    {lastSync ? `Updated ${formatRelativeTime(lastSync)}` : "Weekdays 5:00 PM auto-sync"}
-                  </p>
+                  <div className="mt-2 space-y-0.5 text-2xs text-muted-foreground">
+                    <div className="flex items-center justify-between gap-1">
+                      <span>Last sync:</span>
+                      <strong className="text-foreground font-medium truncate">{lastSync ? formatRelativeTime(lastSync) : "Never"}</strong>
+                    </div>
+                    <div className="flex items-center justify-between gap-1 text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
+                      <span>Auto-sync:</span>
+                      <span>Mon–Fri 5:30 PM IST</span>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -1062,7 +1073,7 @@ export default function Attendance() {
                     <ChevronRight className="h-3.5 w-3.5 text-muted-foreground transition-transform group-open:rotate-90 shrink-0" />
                   </summary>
                   <p className="mt-2 text-muted-foreground leading-relaxed">
-                    Our backend runs an automated background sync every <strong>Monday through Friday at 5:00 PM IST</strong>, skipping weekends and official university holidays. If any course drops below 75%, an instant warning notification is dispatched to your notification bell.
+                    Our backend runs an automated background sync every <strong>Monday through Friday at 5:30 PM IST</strong>, skipping weekends and official university holidays. If any course drops below 75%, an instant warning notification is dispatched to your notification bell.
                   </p>
                 </details>
 

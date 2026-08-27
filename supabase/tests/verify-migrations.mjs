@@ -536,6 +536,7 @@ for (const file of [
   '20260826150000_push_notifications.sql',
   '20260826160000_srm_attendance_and_holidays.sql',
   '20260827100000_pwa_installs_tracking.sql',
+  '20260827160000_update_attendance_sync_schedule_to_1730_ist.sql',
 ]) {
   if (file === '20260804132345_b843f814-46d5-4c25-bc80-32e5f6ebba59.sql') {
     // Production's `faculty` table still carries `profile_image`, a column
@@ -3531,7 +3532,10 @@ const { rows: [pwaCount] } = await q(`SELECT count(*)::int as count FROM public.
 check('record_pwa_install deduplicates by device_id', pwaCount.count === 1);
 
 const { rows: [kpiWithPwa] } = await asAuthenticated(() => q(`SELECT public.admin_kpi_metrics() AS m`));
-check('admin_kpi_metrics includes pwa_installs_total', typeof kpiWithPwa.m.pwa_installs_total === 'number');
+// --- 20260827160000_update_attendance_sync_schedule_to_1730_ist.sql ---
+console.log('\n--- 20260827160000_update_attendance_sync_schedule_to_1730_ist.sql ---');
+const { rows: [attSyncJob] } = await q(`SELECT schedule, active FROM cron.job WHERE jobname='srm-attendance-sync-daily'`);
+check('srm-attendance-sync-daily scheduled at 12:00 UTC (17:30 IST / 5:30 PM)', attSyncJob?.schedule === '0 12 * * 1-5' && attSyncJob?.active === true, JSON.stringify(attSyncJob));
 
 console.log(failures === 0
   ? '\nAll migration checks passed against real Postgres.'

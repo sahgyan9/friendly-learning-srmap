@@ -63,7 +63,7 @@ function json(body: unknown, status = 200) {
   });
 }
 
-async function isAuthorised(req: Request): Promise<boolean> {
+async function isAuthorised(req: Request, targetUserId?: string): Promise<boolean> {
   const secret = req.headers.get("x-cron-secret");
   if (CRON_SECRET && secret === CRON_SECRET) return true;
 
@@ -72,6 +72,9 @@ async function isAuthorised(req: Request): Promise<boolean> {
 
   const { data, error } = await admin.auth.getUser(authHeader.replace("Bearer ", ""));
   if (error || !data?.user) return false;
+
+  // Allow users to sync their own data
+  if (targetUserId && data.user.id === targetUserId) return true;
 
   const { data: profile } = await admin
     .from("users")
@@ -104,12 +107,12 @@ async function unlinkAndNotify(userId: string, reason: string) {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
-  if (!(await isAuthorised(req))) {
-    return json({ error: "Unauthorized" }, 401);
-  }
-
   const body = await req.json().catch(() => ({}));
   const isForced = body.force === true;
+
+  if (!(await isAuthorised(req, body.user_id))) {
+    return json({ error: "Unauthorized" }, 401);
+  }
 
   // Check if today is a non-instructional day (weekend or university holiday)
   if (!isForced) {
@@ -139,6 +142,12 @@ Deno.serve(async (req) => {
     .limit(BATCH_SIZE);
 
   if (batchError) return json({ error: batchError.message }, 500);
+
+  if (body.user_id && (!batch || batch.length === 0)) {
+    return json({
+      error: "No linked SRM portal credentials found for this account. Please click 'Re-link Portal' to save your login.",
+    }, 400);
+  }
 
   let succeeded = 0;
   let failed = 0;
@@ -321,6 +330,15 @@ Deno.serve(async (req) => {
     }
   }
 
-  return json({ processed: (batch ?? []).length, succeeded, failed, unlinked });
+  if (body.user_id && succeeded === 0 && failed > 0) {
+    return json({
+      error: "Could not sign in to the SRM portal. The captcha or portal credentials failed. Please click 'Re-link Portal' to refresh your credentials.",
+      processed: 1,
+      succeeded: 0,
+      failed: 1,
+    }, 400);
+  }
+
+  return json({ processed: (batch ?? []).length, succeeded, failed, unlinked, success: succeeded > 0 });
 });
 

@@ -101,8 +101,12 @@ export const AttendanceOverviewCard = ({ onOpenPortalImport }: AttendanceOvervie
         body: { user_id: user.id, force: true },
       });
 
-      if (res.error) {
-        toast.error("Attendance sync failed. Please verify your portal link.");
+      if (res.error || res.data?.error) {
+        const errMsg = res.data?.error || res.error?.message || "Attendance sync failed. Please verify your portal link.";
+        toast.error(errMsg);
+        if (res.data?.error?.includes("Re-link") || res.data?.error?.includes("No linked")) {
+          onOpenPortalImport?.();
+        }
       } else {
         toast.success("Attendance synced successfully from SRM Portal!");
         await fetchAttendance();
@@ -160,7 +164,7 @@ export const AttendanceOverviewCard = ({ onOpenPortalImport }: AttendanceOvervie
         </CardHeader>
         <CardContent className="px-4 sm:px-5 pb-4 pt-0">
           <p className="text-2xs text-muted-foreground">
-            Auto-syncs Monday–Friday at 5:00 PM IST (skips weekends & university holidays).
+            Auto-syncs Monday–Friday at 5:30 PM IST (skips weekends & university holidays).
           </p>
         </CardContent>
       </Card>
