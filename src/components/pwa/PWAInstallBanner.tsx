@@ -6,17 +6,23 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { useAuth } from "@/context/AuthContext";
 import { usePWAInstall } from "@/hooks/usePWAInstall";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useFeatureSeen } from "@/hooks/useFeatureAnnouncement";
 import { useWelcomeTour } from "@/components/onboarding/WelcomeTourContext";
 import { useSrmDobNag } from "@/components/onboarding/SrmDobNagContext";
 
 const HIDDEN_PATHS = ["/signin", "/signup", "/forgot-password", "/reset-password"];
 const PWA_BANNER_FEATURE = "pwa-install-banner-v1";
+const PUSH_PROMPT_FEATURE = "push-prompt-v1";
 
 export function PWAInstallBanner() {
+  const { user } = useAuth();
   const { isInstallable, isInstalled, isIOS, promptInstall } = usePWAInstall();
   const { hasSeen, markSeen } = useFeatureSeen(PWA_BANNER_FEATURE);
+  const { hasSeen: hasSeenPushPrompt } = useFeatureSeen(PUSH_PROMPT_FEATURE);
+  const { isSupported: pushSupported, isSubscribed: pushSubscribed, permission: pushPermission } = usePushNotifications();
   const { pathname } = useLocation();
 
   const welcomeTour = useWelcomeTour();
@@ -25,9 +31,14 @@ export function PWAInstallBanner() {
   const [delayedVisible, setDelayedVisible] = useState(false);
   const [showIOSDialog, setShowIOSDialog] = useState(false);
 
+  // If user is signed in and push prompt needs to be shown, prioritize push prompt first
+  const isPushPromptActive = Boolean(
+    user && pushSupported && !pushSubscribed && !hasSeenPushPrompt && pushPermission !== "denied" && pushPermission !== "granted"
+  );
+
   useEffect(() => {
     // If already installed or already dismissed, don't show
-    if (isInstalled || hasSeen) {
+    if (isInstalled || hasSeen || isPushPromptActive) {
       setDelayedVisible(false);
       return;
     }
@@ -45,12 +56,13 @@ export function PWAInstallBanner() {
     }, 6000);
 
     return () => clearTimeout(timer);
-  }, [isInstalled, hasSeen, isIOS, isInstallable]);
+  }, [isInstalled, hasSeen, isIOS, isInstallable, isPushPromptActive]);
 
   if (
     !delayedVisible ||
     isInstalled ||
     hasSeen ||
+    isPushPromptActive ||
     HIDDEN_PATHS.includes(pathname) ||
     welcomeTour?.open ||
     srmDobNag?.open
@@ -87,7 +99,7 @@ export function PWAInstallBanner() {
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 20, scale: 0.95 }}
           transition={{ duration: 0.25, ease: "easeOut" }}
-          className="fixed bottom-24 left-4 z-40 w-[calc(100vw-2rem)] max-w-sm rounded-2xl border border-primary/25 bg-card/95 backdrop-blur-md p-4 shadow-xl shadow-primary/5 sm:left-6 lg:bottom-6"
+          className="fixed bottom-24 right-4 z-40 w-[calc(100vw-2rem)] max-w-sm rounded-2xl border border-primary/25 bg-card/95 backdrop-blur-md p-4 shadow-xl shadow-primary/5 sm:right-6 lg:bottom-6"
         >
           <div className="flex items-start gap-3">
             <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/20">
