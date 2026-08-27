@@ -192,6 +192,21 @@ export default function Attendance() {
     });
   };
 
+  const simulateFullDayPresent = () => {
+    setSimulations((prev) => {
+      const next = { ...prev };
+      for (const rec of records) {
+        const curr = next[rec.course_code] || { deltaAttended: 0, deltaConducted: 0 };
+        next[rec.course_code] = {
+          deltaConducted: curr.deltaConducted + 1,
+          deltaAttended: curr.deltaAttended + 1,
+        };
+      }
+      return next;
+    });
+    toast.success("Simulated +1 attended class for all enrolled subjects");
+  };
+
   const resetAllSimulations = () => {
     setSimulations({});
     toast.info("Reset all attendance simulations");
@@ -234,19 +249,17 @@ export default function Attendance() {
     });
 
     list.sort((a, b) => {
-      const simA = getSimulatedMetrics(a, globalTarget);
-      const simB = getSimulatedMetrics(b, globalTarget);
-
       let comparison = 0;
       if (sortField === "attendance_percentage") {
-        comparison = simA.pct - simB.pct;
+        // Stable sort based on base recorded percentage (prevents rows from jumping under the cursor during simulation)
+        comparison = a.attendance_percentage - b.attendance_percentage;
       } else if (sortField === "course_code") {
         comparison = a.course_code.localeCompare(b.course_code);
       } else if (sortField === "conducted_hours") {
-        comparison = simA.cond - simB.cond;
+        comparison = a.conducted_hours - b.conducted_hours;
       } else if (sortField === "margin") {
-        const marginA = simA.safeAllowanceForTarget - simA.neededForTarget;
-        const marginB = simB.safeAllowanceForTarget - simB.neededForTarget;
+        const marginA = (a.safe_bunks || 0) - (a.classes_needed || 0);
+        const marginB = (b.safe_bunks || 0) - (b.classes_needed || 0);
         comparison = marginA - marginB;
       }
 
@@ -254,7 +267,7 @@ export default function Attendance() {
     });
 
     return list;
-  }, [records, filterTab, searchQuery, sortField, sortDirection, simulations, globalTarget]);
+  }, [records, filterTab, searchQuery, sortField, sortDirection]);
 
   const hasAnySimulation = Object.keys(simulations).length > 0;
 
@@ -526,7 +539,7 @@ export default function Attendance() {
               <div className="p-3.5 rounded-xl bg-card border border-border/70 shadow-xs space-y-3">
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
                   
-                  {/* Left: Target Goal Selector */}
+                  {/* Left: Target Goal Selector & Quick Simulations */}
                   <div className="flex items-center gap-2 flex-wrap">
                     <div className="flex items-center gap-1 text-xs font-semibold text-foreground shrink-0">
                       <Calculator className="h-3.5 w-3.5 text-primary" />
@@ -549,18 +562,32 @@ export default function Attendance() {
                       ))}
                     </div>
 
-                    {hasAnySimulation && (
+                    <div className="flex items-center gap-1.5 ml-1">
                       <Button
                         type="button"
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
-                        onClick={resetAllSimulations}
-                        className="h-7 text-xs gap-1 text-muted-foreground hover:text-foreground px-2"
+                        onClick={simulateFullDayPresent}
+                        className="h-7 text-xs gap-1 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10 px-2 font-medium"
+                        title="Simulate attending +1 lecture across all subjects"
                       >
-                        <RotateCcw className="h-3 w-3" />
-                        Reset Simulations
+                        <Plus className="h-3 w-3" />
+                        +1 All Subjects
                       </Button>
-                    )}
+
+                      {hasAnySimulation && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={resetAllSimulations}
+                          className="h-7 text-xs gap-1 text-muted-foreground hover:text-foreground px-2"
+                        >
+                          <RotateCcw className="h-3 w-3" />
+                          Reset All
+                        </Button>
+                      )}
+                    </div>
                   </div>
 
                   {/* Right: View Toggle & Search */}
@@ -679,7 +706,7 @@ export default function Attendance() {
                               <ArrowUpDown className="h-3 w-3 opacity-60" />
                             </button>
                           </TableHead>
-                          <TableHead className="min-w-[100px] text-xs font-semibold text-right pr-4 whitespace-nowrap">
+                          <TableHead className="min-w-[150px] text-xs font-semibold text-right pr-4 whitespace-nowrap">
                             Planner
                           </TableHead>
                         </TableRow>
@@ -719,8 +746,8 @@ export default function Attendance() {
                                       {rec.course_code}
                                     </span>
                                     {isSimulated && (
-                                      <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-bold bg-primary/10 text-primary border border-primary/20 animate-pulse whitespace-nowrap">
-                                        Simulated ({deltaConducted > 0 ? `+${deltaConducted}` : ""})
+                                      <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-bold bg-primary/10 text-primary border border-primary/20 whitespace-nowrap">
+                                        Simulated ({deltaAttended > 0 ? `+${deltaAttended}P` : ""}{deltaConducted - deltaAttended > 0 ? ` +${deltaConducted - deltaAttended}A` : ""})
                                       </span>
                                     )}
                                   </div>
@@ -742,9 +769,9 @@ export default function Attendance() {
                               </TableCell>
 
                               {/* 3. Hours (Attended / Conducted) */}
-                              <TableCell className="py-3 text-center align-middle text-xs whitespace-nowrap">
+                              <TableCell className="py-3 text-center align-middle text-xs whitespace-nowrap font-mono tabular-nums">
                                 <div className="font-semibold text-foreground">
-                                  {att} <span className="font-normal text-muted-foreground">/ {cond} hrs</span>
+                                  {att} <span className="font-normal text-muted-foreground font-sans">/ {cond} hrs</span>
                                 </div>
                                 <div className="text-[10px] text-muted-foreground whitespace-nowrap">
                                   {cond - att} absent
@@ -754,7 +781,7 @@ export default function Attendance() {
                               {/* 4. Percentage & Mini Progress Bar */}
                               <TableCell className="py-3 text-center align-middle whitespace-nowrap">
                                 <div className="flex flex-col items-center gap-1">
-                                  <div className="flex items-baseline gap-1.5">
+                                  <div className="flex items-baseline gap-1.5 tabular-nums">
                                     <span className={`text-sm font-black tracking-tight ${
                                       isDanger
                                         ? "text-destructive"
@@ -804,22 +831,23 @@ export default function Attendance() {
                                 )}
                               </TableCell>
 
-                              {/* 6. Quick Planner Action Buttons */}
+                              {/* 6. Quick Planner Action Buttons (Stable Layout) */}
                               <TableCell className="py-3 text-right align-middle pr-4 whitespace-nowrap">
-                                <div className="inline-flex items-center gap-1">
+                                <div className="inline-flex items-center justify-end gap-1">
                                   <TooltipProvider>
                                     <Tooltip>
                                       <TooltipTrigger asChild>
                                         <button
                                           type="button"
                                           onClick={() => adjustSim(rec.course_code, true)}
-                                          className="h-6 w-6 rounded flex items-center justify-center bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 transition-colors"
+                                          className="h-7 px-2 rounded-md inline-flex items-center gap-1 text-2xs font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 active:scale-95 transition-all"
                                           aria-label="Simulate attending next class"
                                         >
-                                          <Plus className="h-3.5 w-3.5" />
+                                          <Plus className="h-3 w-3" />
+                                          <span>Present</span>
                                         </button>
                                       </TooltipTrigger>
-                                      <TooltipContent side="top">Simulate +1 Present</TooltipContent>
+                                      <TooltipContent side="top">Simulate +1 Present (+1 attended hr)</TooltipContent>
                                     </Tooltip>
                                   </TooltipProvider>
 
@@ -829,33 +857,37 @@ export default function Attendance() {
                                         <button
                                           type="button"
                                           onClick={() => adjustSim(rec.course_code, false)}
-                                          className="h-6 w-6 rounded flex items-center justify-center bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors"
+                                          className="h-7 px-2 rounded-md inline-flex items-center gap-1 text-2xs font-semibold bg-destructive/10 text-destructive hover:bg-destructive/20 active:scale-95 transition-all"
                                           aria-label="Simulate missing next class"
                                         >
-                                          <Minus className="h-3.5 w-3.5" />
+                                          <Minus className="h-3 w-3" />
+                                          <span>Absent</span>
                                         </button>
                                       </TooltipTrigger>
-                                      <TooltipContent side="top">Simulate +1 Absent</TooltipContent>
+                                      <TooltipContent side="top">Simulate +1 Absent (+0 attended hr)</TooltipContent>
                                     </Tooltip>
                                   </TooltipProvider>
 
-                                  {isSimulated && (
-                                    <TooltipProvider>
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <button
-                                            type="button"
-                                            onClick={() => adjustSim(rec.course_code, false, true)}
-                                            className="h-6 w-6 rounded flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors"
-                                            aria-label="Reset simulation"
-                                          >
-                                            <RotateCcw className="h-3 w-3" />
-                                          </button>
-                                        </TooltipTrigger>
-                                        <TooltipContent side="top">Reset course simulation</TooltipContent>
-                                      </Tooltip>
-                                    </TooltipProvider>
-                                  )}
+                                  {/* Fixed-width reset container to eliminate layout shift */}
+                                  <div className="w-7 h-7 flex items-center justify-center shrink-0">
+                                    {isSimulated ? (
+                                      <TooltipProvider>
+                                        <Tooltip>
+                                          <TooltipTrigger asChild>
+                                            <button
+                                              type="button"
+                                              onClick={() => adjustSim(rec.course_code, false, true)}
+                                              className="h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted active:scale-95 transition-all"
+                                              aria-label="Reset simulation"
+                                            >
+                                              <RotateCcw className="h-3 w-3" />
+                                            </button>
+                                          </TooltipTrigger>
+                                          <TooltipContent side="top">Reset course simulation</TooltipContent>
+                                        </Tooltip>
+                                      </TooltipProvider>
+                                    ) : null}
+                                  </div>
                                 </div>
                               </TableCell>
                             </TableRow>
@@ -878,6 +910,7 @@ export default function Attendance() {
                       neededForTarget,
                       safeAllowanceForTarget,
                       isSimulated,
+                      deltaAttended,
                       deltaConducted,
                     } = getSimulatedMetrics(rec, globalTarget);
 
@@ -906,7 +939,7 @@ export default function Attendance() {
                               )}
                               {isSimulated && (
                                 <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-primary/10 text-primary border border-primary/20">
-                                  Simulated ({deltaConducted > 0 ? `+${deltaConducted}` : ""})
+                                  Simulated ({deltaAttended > 0 ? `+${deltaAttended}P` : ""}{deltaConducted - deltaAttended > 0 ? ` +${deltaConducted - deltaAttended}A` : ""})
                                 </span>
                               )}
                             </div>
@@ -934,7 +967,7 @@ export default function Attendance() {
                               isDanger ? "[&>div]:bg-destructive" : isWarning ? "[&>div]:bg-amber-500" : "[&>div]:bg-emerald-500"
                             }`}
                           />
-                          <div className="flex justify-between text-2xs text-muted-foreground">
+                          <div className="flex justify-between text-2xs text-muted-foreground font-mono tabular-nums">
                             <span>{att} / {cond} hrs attended</span>
                             <span>{cond - att} absent</span>
                           </div>
@@ -961,7 +994,7 @@ export default function Attendance() {
                               variant="outline"
                               size="sm"
                               onClick={() => adjustSim(rec.course_code, true)}
-                              className="h-6 text-2xs px-2 gap-1 bg-emerald-500/5 hover:bg-emerald-500/15 border-emerald-500/30 text-emerald-700 dark:text-emerald-300 font-medium"
+                              className="h-7 text-2xs px-2.5 gap-1 bg-emerald-500/5 hover:bg-emerald-500/15 border-emerald-500/30 text-emerald-700 dark:text-emerald-300 font-medium active:scale-95 transition-all"
                             >
                               <Plus className="h-3 w-3" /> Present
                             </Button>
@@ -970,21 +1003,24 @@ export default function Attendance() {
                               variant="outline"
                               size="sm"
                               onClick={() => adjustSim(rec.course_code, false)}
-                              className="h-6 text-2xs px-2 gap-1 bg-destructive/5 hover:bg-destructive/15 border-destructive/30 text-destructive font-medium"
+                              className="h-7 text-2xs px-2.5 gap-1 bg-destructive/5 hover:bg-destructive/15 border-destructive/30 text-destructive font-medium active:scale-95 transition-all"
                             >
                               <Minus className="h-3 w-3" /> Absent
                             </Button>
-                            {isSimulated && (
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => adjustSim(rec.course_code, false, true)}
-                                className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground"
-                              >
-                                <RotateCcw className="h-3 w-3" />
-                              </Button>
-                            )}
+                            <div className="w-7 h-7 flex items-center justify-center shrink-0">
+                              {isSimulated ? (
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => adjustSim(rec.course_code, false, true)}
+                                  className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground active:scale-95 transition-all"
+                                  title="Reset course simulation"
+                                >
+                                  <RotateCcw className="h-3 w-3" />
+                                </Button>
+                              ) : null}
+                            </div>
                           </div>
                         </div>
                       </div>
