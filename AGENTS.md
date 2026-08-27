@@ -83,6 +83,11 @@ Deeper authorities it defers to: [FACULTY_AI_ROADMAP.md](FACULTY_AI_ROADMAP.md)
   edit; files can be silently reverted or re-added, including ones you never
   touched. Stage commits explicitly — never `git add -A` when parallel work may
   be in flight.
+- **Atomic, concern-separated commits over monolithic commits.** Never commit
+  and push all changes in one large omnibus commit at the end of a task. Break
+  commits down by logical concern (e.g. `docs(...)`, `feat(...)`, `fix(...)`,
+  `test(...)`, `refactor(...)`) with explicit staging (`git add <files>`).
+  Never sweep unrelated working-tree modifications into a feature commit.
 - **Screenshot before claiming a UI change is done**, at 360px and desktop, in
   both themes. Reusable Puppeteer harnesses exist in `scripts/qa/` (e.g.
   `scripts/qa/qa-signed-in-sweep.mjs` plants a fake session and stubs Supabase
