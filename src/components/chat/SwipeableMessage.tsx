@@ -1,6 +1,7 @@
 import React, { useRef, useState, useCallback } from "react";
 import { Reply } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { triggerHaptic } from "@/lib/haptics";
 
 interface SwipeableMessageProps {
   children: React.ReactNode;
@@ -64,11 +65,7 @@ export const SwipeableMessage: React.FC<SwipeableMessageProps> = ({
 
         if (clamped >= SWIPE_THRESHOLD && !hasTriggeredHaptic) {
           setHasTriggeredHaptic(true);
-          if (typeof navigator !== "undefined" && "vibrate" in navigator) {
-            try {
-              navigator.vibrate(15);
-            } catch {}
-          }
+          triggerHaptic("light");
         } else if (clamped < SWIPE_THRESHOLD && hasTriggeredHaptic) {
           setHasTriggeredHaptic(false);
         }
