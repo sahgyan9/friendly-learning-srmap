@@ -36,6 +36,7 @@ export function MainWithRail({ children }: { children: ReactNode }) {
   const showRail = pathShowsRail(location.pathname);
   const showDock = pathShowsDock(location.pathname);
   const { isCollapsed } = useSiteSidebar();
+  const isMessagesPage = location.pathname.startsWith("/messages");
 
   return (
     <>
@@ -44,7 +45,7 @@ export function MainWithRail({ children }: { children: ReactNode }) {
       <main
         id="main-content"
         data-rail={showRail ? (isCollapsed ? "collapsed" : "expanded") : undefined}
-        className={showDock ? "pb-20 lg:pb-0" : undefined}
+        className={showDock && !isMessagesPage ? "pb-20 lg:pb-0" : undefined}
       >
         {children}
       </main>

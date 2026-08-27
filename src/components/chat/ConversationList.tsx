@@ -82,7 +82,7 @@ const ConversationList = ({
   }
 
   return (
-    <ul className="space-y-0.5 p-2">
+    <ul className="space-y-0.5 p-2 pb-24 lg:pb-2">
       {filteredConversations.map((conversation) => {
         const otherUser = getOtherUser(conversation);
         const unreadCount = getUnreadCount(conversation.id);

@@ -172,9 +172,12 @@ export function pathShowsRail(pathname: string) {
 
 /**
  * Routes that get the mobile bottom navigation dock.
- * Excludes auth/admin routes and /messages (which has its own full-height chat input).
+ * Excludes auth/admin routes and active chat conversation threads (which have their own full-height chat input).
+ * The /messages conversation list view keeps the dock for standard mobile navigation.
  */
 export function pathShowsDock(pathname: string) {
-  if (pathname.startsWith("/messages")) return false;
+  if (pathname.startsWith("/messages/") && pathname.length > "/messages/".length) {
+    return false;
+  }
   return pathShowsRail(pathname);
 }

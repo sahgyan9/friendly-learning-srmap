@@ -245,6 +245,7 @@ consistent with this pattern.
 | Posts | 06 | `FileText` | `emerald` |
 | Matching | 07 | `Lightbulb` | `orange` |
 | Certificates | 08 | `BadgeCheck` | `teal` |
+| Attendance | 09 | `GraduationCap` | `emerald` / `text-[#3963C6]` |
 
 ### Card hover glow (FeaturesShowcase-consistent)
 
