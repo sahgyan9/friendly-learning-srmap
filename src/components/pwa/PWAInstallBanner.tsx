@@ -70,6 +70,21 @@ export function PWAInstallBanner() {
     return null;
   }
 
+  const handleDismiss = () => {
+    markSeen();
+    if (user) {
+      window.dispatchEvent(new CustomEvent("fl:highlight-pwa-install"));
+      toast.info("You can always install Friendly Learning anytime from your Profile menu.", {
+        duration: 4500,
+      });
+    } else {
+      toast.info(
+        "You can install Friendly Learning anytime from the install icon (⊕) in your browser bar or menu (⋮).",
+        { duration: 5000 }
+      );
+    }
+  };
+
   const handleInstallClick = async () => {
     if (isIOS) {
       setShowIOSDialog(true);
@@ -81,14 +96,13 @@ export function PWAInstallBanner() {
       if (accepted) {
         toast.success("Thank you for installing Friendly Learning SRMAP!");
         markSeen();
+      } else {
+        handleDismiss();
       }
     } else {
       toast.info("Look for the install icon (⊕) in your browser address bar or menu (⋮) → 'Install Friendly Learning'");
+      handleDismiss();
     }
-  };
-
-  const handleDismiss = () => {
-    markSeen();
   };
 
   return (

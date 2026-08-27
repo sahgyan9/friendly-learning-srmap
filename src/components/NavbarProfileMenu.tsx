@@ -1,7 +1,7 @@
 
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { LogOut } from "lucide-react";
+import { LogOut, Sparkles, User, Award, GraduationCap, Smartphone } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -13,12 +13,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { getInitials } from "@/utils/user-utils";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useWelcomeTour } from "@/components/onboarding/WelcomeTourContext";
 import { usePWAInstall } from "@/hooks/usePWAInstall";
-import { Sparkles, User, Award, GraduationCap, Smartphone } from "lucide-react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 const NavbarProfileMenu = () => {
   const { user, profile, signOut, loading } = useAuth();
@@ -27,6 +27,33 @@ const NavbarProfileMenu = () => {
   const [isRealMentor, setIsRealMentor] = useState(false);
   const [mentorSlug, setMentorSlug] = useState<string | null>(null);
   const [checkingMentorStatus, setCheckingMentorStatus] = useState(true);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [isHighlightingInstall, setIsHighlightingInstall] = useState(false);
+  const autoCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    const handleHighlight = () => {
+      setMenuOpen(true);
+      setIsHighlightingInstall(true);
+
+      if (autoCloseTimerRef.current) {
+        clearTimeout(autoCloseTimerRef.current);
+      }
+
+      autoCloseTimerRef.current = setTimeout(() => {
+        setIsHighlightingInstall(false);
+        setMenuOpen(false);
+      }, 4500);
+    };
+
+    window.addEventListener("fl:highlight-pwa-install", handleHighlight);
+    return () => {
+      window.removeEventListener("fl:highlight-pwa-install", handleHighlight);
+      if (autoCloseTimerRef.current) {
+        clearTimeout(autoCloseTimerRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     checkMentorStatus();
@@ -76,9 +103,27 @@ const NavbarProfileMenu = () => {
 
   return (
     <>
-      <DropdownMenu>
+      <DropdownMenu
+        open={menuOpen}
+        onOpenChange={(next) => {
+          setMenuOpen(next);
+          if (!next) {
+            setIsHighlightingInstall(false);
+            if (autoCloseTimerRef.current) {
+              clearTimeout(autoCloseTimerRef.current);
+            }
+          }
+        }}
+      >
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="sm" className="rounded-full p-0 h-10 w-10">
+          <Button
+            variant="ghost"
+            size="sm"
+            className={cn(
+              "rounded-full p-0 h-10 w-10 transition-all duration-300",
+              isHighlightingInstall && "ring-2 ring-primary ring-offset-2 ring-offset-background animate-pulse"
+            )}
+          >
             <Avatar>
               <AvatarImage src={profile?.profile_image} />
               <AvatarFallback>{getInitials(profile?.name)}</AvatarFallback>
@@ -140,6 +185,8 @@ const NavbarProfileMenu = () => {
           {!isInstalled && (
             <DropdownMenuItem
               onClick={async () => {
+                setIsHighlightingInstall(false);
+                setMenuOpen(false);
                 if (isIOS) {
                   toast.info("On iPhone/iPad: Tap Safari's Share button (⎋) → 'Add to Home Screen'");
                 } else {
@@ -151,10 +198,21 @@ const NavbarProfileMenu = () => {
                   }
                 }
               }}
-              className="cursor-pointer text-primary focus:text-primary font-medium flex items-center gap-2"
+              className={cn(
+                "cursor-pointer text-primary focus:text-primary font-medium flex items-center justify-between transition-all duration-300",
+                isHighlightingInstall &&
+                  "bg-primary/15 ring-1 ring-primary/40 font-semibold rounded-md animate-pulse"
+              )}
             >
-              <Smartphone className="h-4 w-4" />
-              Install Friendly Learning
+              <span className="flex items-center gap-2">
+                <Smartphone className="h-4 w-4" />
+                Install Friendly Learning
+              </span>
+              {isHighlightingInstall && (
+                <span className="text-[10px] bg-primary text-primary-foreground font-semibold px-1.5 py-0.5 rounded-full shadow-xs">
+                  Here!
+                </span>
+              )}
             </DropdownMenuItem>
           )}
 
