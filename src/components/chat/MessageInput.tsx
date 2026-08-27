@@ -52,9 +52,16 @@ const MessageInput = ({
     el.style.height = `${Math.min(el.scrollHeight, MAX_ROWS_PX)}px`;
   }, [message]);
 
+  // Auto-focus input when a conversation is selected or opened
   useEffect(() => {
     setMessage("");
-  }, [conversationId]);
+    if (conversationId && !disabled) {
+      const timer = setTimeout(() => {
+        textareaRef.current?.focus();
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [conversationId, disabled]);
 
   // Auto-focus and populate input when editing starts
   useEffect(() => {
@@ -229,6 +236,7 @@ const MessageInput = ({
 
         <textarea
           ref={textareaRef}
+          autoFocus={Boolean(conversationId)}
           value={message}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
