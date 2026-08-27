@@ -18,6 +18,7 @@ import RouteRobots from "@/components/RouteRobots";
 import ScrollToTop from "@/components/ScrollToTop";
 import SiteHeader from "@/components/navigation/SiteHeader";
 import { MainWithRail } from "@/components/navigation/SiteRail";
+import GlobalPullToRefresh from "@/components/ui/PullToRefresh";
 
 // The landing page is the most common entry point, so it stays in the main
 // bundle. Everything else is split per route — the app previously shipped one
@@ -198,6 +199,7 @@ function App() {
               <SignInNudge />
               <PushNotificationFloatingPrompt />
               <PWAInstallBanner />
+              <GlobalPullToRefresh />
 
               {/* One header for the whole app. Pages used to render their own
                   <Navbar /> underneath a separately-mounted floating nav, which
