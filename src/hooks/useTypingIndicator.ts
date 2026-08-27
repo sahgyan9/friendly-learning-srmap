@@ -1,111 +1,54 @@
 
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { updateTypingIndicator } from '@/integrations/supabase/services/realtime';
-import { useRealtimeSubscription } from './useRealtime';
+import { useState, useRef, useCallback } from 'react';
+import { usePresence } from '@/context/PresenceContext';
 
-interface TypingUser {
-  user_id: string;
-  is_typing: boolean;
-  updated_at: string;
-}
-
+/**
+ * @migration complete
+ * Previously wrote to public.typing_indicators via update_typing_indicator RPC.
+ * Now uses Supabase Realtime Broadcast via PresenceContext.broadcastTyping().
+ * Zero DB queries, zero WAL, instant delivery over the shared WebSocket channel.
+ */
 export const useTypingIndicator = (conversationId: string | null, userId: string) => {
-  const [typingUsers, setTypingUsers] = useState<TypingUser[]>([]);
   const [isTyping, setIsTyping] = useState(false);
-  const typingTimeoutRef = useRef<NodeJS.Timeout>();
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const { broadcastTyping, useTypingBroadcast } = usePresence();
 
-  // Subscribe to typing indicator changes
-  useRealtimeSubscription(
-    'typing_indicators',
-    useCallback((payload) => {
-      if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
-        const typingData = payload.new as unknown as TypingUser;
-        
-        setTypingUsers(prev => {
-          const filtered = prev.filter(user => user.user_id !== typingData.user_id);
-          if (typingData.is_typing) {
-            return [...filtered, typingData];
-          }
-          return filtered;
-        });
-      } else if (payload.eventType === 'DELETE') {
-        const deletedData = payload.old as unknown as TypingUser;
-        setTypingUsers(prev => prev.filter(user => user.user_id !== deletedData.user_id));
-      }
-    }, []),
-    conversationId ? { column: 'conversation_id', value: conversationId } : undefined
-  );
+  // Receive typing events from other users in this conversation via Broadcast
+  const typingPayloads = useTypingBroadcast(conversationId);
+  const otherTypingUsers = typingPayloads.filter((p) => p.user_id !== userId);
 
-  // Clean up old typing indicators
-  useEffect(() => {
-    const cleanup = setInterval(() => {
-      setTypingUsers(prev => 
-        prev.filter(user => {
-          const updatedTime = new Date(user.updated_at).getTime();
-          const now = Date.now();
-          return now - updatedTime < 10000; // Remove indicators older than 10 seconds
-        })
-      );
-    }, 5000);
+  const startTyping = useCallback(() => {
+    if (!conversationId) return;
 
-    return () => clearInterval(cleanup);
-  }, []);
-
-  const startTyping = useCallback(async () => {
-    if (!conversationId || isTyping) return;
-
-    setIsTyping(true);
-    await updateTypingIndicator(conversationId, userId, true);
-
-    // Clear existing timeout
-    if (typingTimeoutRef.current) {
-      clearTimeout(typingTimeoutRef.current);
+    if (!isTyping) {
+      setIsTyping(true);
+      broadcastTyping(conversationId, true);
     }
 
-    // Set timeout to stop typing after 3 seconds of inactivity
+    // Reset the stop-typing timer on every keystroke
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
     typingTimeoutRef.current = setTimeout(() => {
       stopTyping();
     }, 3000);
-  }, [conversationId, userId, isTyping]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conversationId, isTyping, broadcastTyping]);
 
-  const stopTyping = useCallback(async () => {
+  const stopTyping = useCallback(() => {
     if (!conversationId || !isTyping) return;
-
     setIsTyping(false);
-    await updateTypingIndicator(conversationId, userId, false);
-
-    if (typingTimeoutRef.current) {
-      clearTimeout(typingTimeoutRef.current);
-    }
-  }, [conversationId, userId, isTyping]);
+    broadcastTyping(conversationId, false);
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+  }, [conversationId, isTyping, broadcastTyping]);
 
   const refreshTyping = useCallback(() => {
-    if (isTyping) {
-      startTyping();
-    }
+    if (isTyping) startTyping();
   }, [isTyping, startTyping]);
-
-  // Clean up on unmount
-  useEffect(() => {
-    return () => {
-      if (typingTimeoutRef.current) {
-        clearTimeout(typingTimeoutRef.current);
-      }
-      if (conversationId && isTyping) {
-        updateTypingIndicator(conversationId, userId, false);
-      }
-    };
-  }, [conversationId, userId, isTyping]);
-
-  // Filter out current user from typing users
-  const otherTypingUsers = typingUsers.filter(user => user.user_id !== userId);
 
   return {
     typingUsers: otherTypingUsers,
     isTyping,
     startTyping,
     stopTyping,
-    refreshTyping
+    refreshTyping,
   };
 };

@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { Session, User } from "@supabase/supabase-js";
 
 import { supabase } from "@/integrations/supabase/client";
-import { useUserPresence } from "@/hooks/useRealtime";
+import { PresenceProvider } from "@/context/PresenceContext";
 import { setUserContext } from "@/lib/sentry";
 import { setThemeUserId, syncLocalTheme, type Theme } from "@/lib/theme";
 
@@ -45,8 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [isMentor, setIsMentor] = useState(false);
 
-  // Global presence heartbeat across all pages for logged-in users.
-  useUserPresence(user?.id ?? "");
+  // Presence is handled by PresenceProvider below (WebSocket channel.track, zero DB writes).
 
   // Which user id we have already loaded a profile for. Guards against
   // re-fetching on every TOKEN_REFRESHED / tab-focus event, which fired a pair
@@ -193,7 +192,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [session, user, profile, signOut, loading, isMentor, refreshProfile],
   );
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {/* PresenceProvider sits inside AuthProvider so it can read user?.id
+          and manage a single shared WebSocket presence channel for the whole app. */}
+      <PresenceProvider userId={user?.id ?? null}>
+        {children}
+      </PresenceProvider>
+    </AuthContext.Provider>
+  );
 }
 
 export function useAuth() {

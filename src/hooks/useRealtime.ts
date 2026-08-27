@@ -3,51 +3,20 @@ import { useEffect, useRef } from 'react';
 
 import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { updateUserPresence } from '@/integrations/supabase/services/realtime';
 
-export const useUserPresence = (userId: string) => {
+/**
+ * @deprecated Use usePresence() from PresenceContext instead.
+ * Presence is now handled via Supabase Realtime WebSocket (zero DB writes).
+ * This stub exists only to avoid breaking imports during migration.
+ */
+export const useUserPresence = (_userId: string) => {
   const intervalRef = useRef<NodeJS.Timeout>();
 
+  // No-op: presence is now handled by PresenceProvider (WebSocket channel.track).
+  // This hook is kept as a stub so call sites compile without changes.
   useEffect(() => {
-    if (!userId || !userId.trim()) return;
-
-    // Set user as online when component mounts
-    void updateUserPresence(userId, true);
-
-    // Update presence every 2 minutes — reduces WAL write churn by 4× vs 30s.
-    // Online indicators still update within 2 min which is imperceptible to users.
-    intervalRef.current = setInterval(() => {
-      void updateUserPresence(userId, true);
-    }, 120_000);
-
-    // Handle page visibility change
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        void updateUserPresence(userId, true);
-      } else {
-        void updateUserPresence(userId, false);
-      }
-    };
-
-    // Handle beforeunload to set user offline
-    const handleBeforeUnload = () => {
-      void updateUserPresence(userId, false);
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('beforeunload', handleBeforeUnload);
-
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-      
-      // Set user offline when component unmounts
-      void updateUserPresence(userId, false);
-    };
-  }, [userId]);
+    // nothing
+  }, []);
 };
 
 /**
