@@ -114,6 +114,15 @@ const CommunityPosts = () => {
     [selectedType, debouncedSearch, mine, targetPostId],
   );
 
+  // Revalidate posts on mobile/tablet pull-to-refresh gesture
+  useEffect(() => {
+    const handlePullRefresh = () => {
+      loadPosts(0);
+    };
+    window.addEventListener("fl:refresh", handlePullRefresh);
+    return () => window.removeEventListener("fl:refresh", handlePullRefresh);
+  }, [loadPosts]);
+
   // Auto-scroll and highlight target post when specified via hash or query param
   useEffect(() => {
     if (!loading && targetPostId && posts.length > 0) {

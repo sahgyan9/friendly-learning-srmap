@@ -128,6 +128,15 @@ const Opportunities = () => {
     return () => clearTimeout(timer);
   }, [load]);
 
+  // Revalidate opportunities on mobile/tablet pull-to-refresh gesture
+  useEffect(() => {
+    const handlePullRefresh = () => {
+      load();
+    };
+    window.addEventListener("fl:refresh", handlePullRefresh);
+    return () => window.removeEventListener("fl:refresh", handlePullRefresh);
+  }, [load]);
+
   const setKind = (value: string) => {
     const next = new URLSearchParams(searchParams);
     if (value === "all") next.delete("kind");

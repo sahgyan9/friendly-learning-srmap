@@ -217,6 +217,15 @@ const Faculty = () => {
     [debouncedSearch, department, interest, sort, location.key],
   );
 
+  // Revalidate faculty on pull-to-refresh gesture
+  useEffect(() => {
+    const handlePullRefresh = () => {
+      loadFaculty(0, true);
+    };
+    window.addEventListener("fl:refresh", handlePullRefresh);
+    return () => window.removeEventListener("fl:refresh", handlePullRefresh);
+  }, [loadFaculty]);
+
   useEffect(() => {
     loadFaculty(0);
     didRestoreScroll.current = false;

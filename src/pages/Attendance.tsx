@@ -109,6 +109,15 @@ export default function Attendance() {
     fetchAttendance();
   }, [user]);
 
+  // Revalidate attendance on pull-to-refresh gesture
+  useEffect(() => {
+    const handlePullRefresh = () => {
+      fetchAttendance();
+    };
+    window.addEventListener("fl:refresh", handlePullRefresh);
+    return () => window.removeEventListener("fl:refresh", handlePullRefresh);
+  }, [user]);
+
   const handleManualSync = async () => {
     if (!user) return;
     setIsSyncing(true);
