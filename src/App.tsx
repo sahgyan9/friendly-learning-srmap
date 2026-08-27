@@ -12,6 +12,7 @@ import { SrmDobNagProvider } from "@/components/onboarding/SrmDobNagContext";
 import SrmDobNag from "@/components/onboarding/SrmDobNag";
 import SignInNudge from "@/components/onboarding/SignInNudge";
 import PushNotificationFloatingPrompt from "@/components/notifications/PushNotificationFloatingPrompt";
+import PWAInstallBanner from "@/components/pwa/PWAInstallBanner";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import RouteRobots from "@/components/RouteRobots";
 import ScrollToTop from "@/components/ScrollToTop";
@@ -196,6 +197,7 @@ function App() {
               <SrmDobNag />
               <SignInNudge />
               <PushNotificationFloatingPrompt />
+              <PWAInstallBanner />
 
               {/* One header for the whole app. Pages used to render their own
                   <Navbar /> underneath a separately-mounted floating nav, which

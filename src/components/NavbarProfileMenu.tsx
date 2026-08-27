@@ -16,11 +16,14 @@ import { getInitials } from "@/utils/user-utils";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useWelcomeTour } from "@/components/onboarding/WelcomeTourContext";
-import { Sparkles, User, Award, GraduationCap } from "lucide-react";
+import { usePWAInstall } from "@/hooks/usePWAInstall";
+import { Sparkles, User, Award, GraduationCap, Smartphone } from "lucide-react";
+import { toast } from "sonner";
 
 const NavbarProfileMenu = () => {
   const { user, profile, signOut, loading } = useAuth();
   const { openTour } = useWelcomeTour();
+  const { isInstalled, isIOS, promptInstall } = usePWAInstall();
   const [isRealMentor, setIsRealMentor] = useState(false);
   const [mentorSlug, setMentorSlug] = useState<string | null>(null);
   const [checkingMentorStatus, setCheckingMentorStatus] = useState(true);
@@ -131,6 +134,25 @@ const NavbarProfileMenu = () => {
                 <Award className="h-4 w-4 text-amber-500" />
                 My Certificate
               </Link>
+            </DropdownMenuItem>
+          )}
+
+          {!isInstalled && (
+            <DropdownMenuItem
+              onClick={async () => {
+                if (isIOS) {
+                  toast.info("On iPhone/iPad: Tap Safari's Share button → 'Add to Home Screen'");
+                } else {
+                  const accepted = await promptInstall();
+                  if (accepted) {
+                    toast.success("App installed!");
+                  }
+                }
+              }}
+              className="cursor-pointer text-primary focus:text-primary font-medium flex items-center gap-2"
+            >
+              <Smartphone className="h-4 w-4" />
+              Install Campus App
             </DropdownMenuItem>
           )}
 

@@ -1,7 +1,7 @@
 {
-  "name": "Friendly Learning SRMAP - Student Mentorship Platform",
-  "short_name": "Friendly Learning SRMAP",
-  "description": "Friendly Learning SRMAP connects SRM AP university students with experienced peer mentors for academic guidance, project collaboration, and study partnerships",
+  "name": "Friendly Learning SRMAP - All-in-One Campus Platform",
+  "short_name": "Friendly Learning",
+  "description": "Friendly Learning SRMAP is the all-in-one campus platform for SRM AP students — post ideas, find teammates, search with CampusMind, rate faculty, and get mentored by seniors.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
