@@ -1,13 +1,22 @@
-
 import { useCallback, useEffect, useState } from "react";
-import { UserPlus, Search, MessageCircle, UsersIcon, MessageSquare, Megaphone, RefreshCw, type LucideIcon } from "lucide-react";
+import {
+  UserPlus,
+  Search,
+  MessageCircle,
+  UsersIcon,
+  MessageSquare,
+  Megaphone,
+  Smartphone,
+  RefreshCw,
+  type LucideIcon,
+} from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
 // Shape of the jsonb returned by admin_kpi_metrics()
-// (supabase/migrations/20260823230000_admin_kpi_metrics.sql). The RPC is
+// (supabase/migrations/20260827100000_pwa_installs_tracking.sql). The RPC is
 // admin-gated (42501 for anyone else) — this panel only decides how to show
 // the numbers, same split as PlatformHealthPanel.
 interface KpiMetrics {
@@ -28,6 +37,9 @@ interface KpiMetrics {
   posts_7d: number;
   notices_published_total: number;
   notices_published_7d: number;
+  pwa_installs_total?: number;
+  pwa_installs_7d?: number;
+  pwa_active_7d?: number;
   generated_at: string;
 }
 
@@ -66,7 +78,7 @@ const KpiPanel = () => {
   const fetchMetrics = useCallback(async (isRefresh: boolean) => {
     if (isRefresh) setRefreshing(true);
     try {
-      const { data, error: rpcError } = await supabase.rpc("admin_kpi_metrics");
+      const { data, error: rpcError } = await (supabase.rpc as any)("admin_kpi_metrics");
       if (rpcError) throw rpcError;
       setMetrics((data ?? null) as unknown as KpiMetrics | null);
       setError(false);
@@ -91,9 +103,19 @@ const KpiPanel = () => {
           icon: UserPlus,
           title: "Signups",
           stats: [
-            { label: "Total", value: String(metrics.signups_total) },
-            { label: "Last 7 days", value: String(metrics.signups_7d) },
-            { label: "Last 30 days", value: String(metrics.signups_30d) },
+            { label: "Total", value: String(metrics.signups_total ?? 0) },
+            { label: "Last 7 days", value: String(metrics.signups_7d ?? 0) },
+            { label: "Last 30 days", value: String(metrics.signups_30d ?? 0) },
+          ],
+        },
+        {
+          key: "pwa_installs",
+          icon: Smartphone,
+          title: "App Installs",
+          stats: [
+            { label: "Total installed", value: String(metrics.pwa_installs_total ?? 0) },
+            { label: "Last 7 days", value: String(metrics.pwa_installs_7d ?? 0) },
+            { label: "Active app users (7d)", value: String(metrics.pwa_active_7d ?? 0) },
           ],
         },
         {
@@ -101,9 +123,9 @@ const KpiPanel = () => {
           icon: Search,
           title: "Search",
           stats: [
-            { label: "Total searches", value: String(metrics.searches_total) },
-            { label: "Active queries (7d)", value: String(metrics.queries_active_7d) },
-            { label: "Zero-result rate", value: `${metrics.zero_result_rate_pct}%` },
+            { label: "Total searches", value: String(metrics.searches_total ?? 0) },
+            { label: "Active queries (7d)", value: String(metrics.queries_active_7d ?? 0) },
+            { label: "Zero-result rate", value: `${metrics.zero_result_rate_pct ?? 0}%` },
           ],
         },
         {
@@ -111,9 +133,9 @@ const KpiPanel = () => {
           icon: MessageCircle,
           title: "Mentor contacts",
           stats: [
-            { label: "Total contacts", value: String(metrics.mentor_contacts_total) },
-            { label: "Last 7 days", value: String(metrics.mentor_contacts_7d) },
-            { label: "Distinct mentors reached", value: String(metrics.distinct_mentors_contacted) },
+            { label: "Total contacts", value: String(metrics.mentor_contacts_total ?? 0) },
+            { label: "Last 7 days", value: String(metrics.mentor_contacts_7d ?? 0) },
+            { label: "Distinct mentors reached", value: String(metrics.distinct_mentors_contacted ?? 0) },
           ],
         },
         {
@@ -121,9 +143,9 @@ const KpiPanel = () => {
           icon: UsersIcon,
           title: "Groups",
           stats: [
-            { label: "Active groups", value: String(metrics.active_groups) },
-            { label: "Total joins", value: String(metrics.group_joins_total) },
-            { label: "Joins (7d)", value: String(metrics.group_joins_7d) },
+            { label: "Active groups", value: String(metrics.active_groups ?? 0) },
+            { label: "Total joins", value: String(metrics.group_joins_total ?? 0) },
+            { label: "Joins (7d)", value: String(metrics.group_joins_7d ?? 0) },
           ],
         },
         {
@@ -131,8 +153,8 @@ const KpiPanel = () => {
           icon: MessageSquare,
           title: "Community posts",
           stats: [
-            { label: "Total posts", value: String(metrics.posts_total) },
-            { label: "Last 7 days", value: String(metrics.posts_7d) },
+            { label: "Total posts", value: String(metrics.posts_total ?? 0) },
+            { label: "Last 7 days", value: String(metrics.posts_7d ?? 0) },
           ],
         },
         {
@@ -140,8 +162,8 @@ const KpiPanel = () => {
           icon: Megaphone,
           title: "Notices",
           stats: [
-            { label: "Published", value: String(metrics.notices_published_total) },
-            { label: "Last 7 days", value: String(metrics.notices_published_7d) },
+            { label: "Published", value: String(metrics.notices_published_total ?? 0) },
+            { label: "Last 7 days", value: String(metrics.notices_published_7d ?? 0) },
           ],
         },
       ]
@@ -153,8 +175,7 @@ const KpiPanel = () => {
         <div>
           <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Launch KPIs</h2>
           <p className="text-xs text-muted-foreground">
-            Row counts from the database. For page views and return-visit
-            trends per page, see the PostHog dashboard.
+            Real-time database metrics across signups, app installs, search, and interactions.
           </p>
         </div>
         <Button
@@ -171,15 +192,15 @@ const KpiPanel = () => {
       </div>
 
       {loading ? (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {[0, 1, 2, 3, 4, 5].map((i) => (
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {[0, 1, 2, 3, 4, 5, 6].map((i) => (
             <Card key={i} className="h-28 animate-pulse" />
           ))}
         </div>
       ) : error || !metrics ? (
         <p className="text-sm text-muted-foreground">KPI data unavailable</p>
       ) : (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {tiles.map(({ key, ...tile }) => (
             <KpiTile key={key} {...tile} />
           ))}

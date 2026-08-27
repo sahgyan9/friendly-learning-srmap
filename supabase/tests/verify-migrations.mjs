@@ -535,6 +535,7 @@ for (const file of [
   '20260826140000_edit_delete_messages_30min.sql',
   '20260826150000_push_notifications.sql',
   '20260826160000_srm_attendance_and_holidays.sql',
+  '20260827100000_pwa_installs_tracking.sql',
 ]) {
   if (file === '20260804132345_b843f814-46d5-4c25-bc80-32e5f6ebba59.sql') {
     // Production's `faculty` table still carries `profile_image`, a column
@@ -3512,6 +3513,25 @@ const { rows: isIndependenceDay } = await q(`
   SELECT public.is_non_instructional_day('2026-08-15'::date) as is_holiday; -- Independence Day
 `);
 check('is_non_instructional_day identifies university holidays', isIndependenceDay[0]?.is_holiday === true);
+
+// --- 20260827100000_pwa_installs_tracking.sql ------------------------
+console.log('\n--- 20260827100000_pwa_installs_tracking.sql ---');
+const { rows: pwaTableRows } = await q(`
+  SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'pwa_installs';
+`);
+check('pwa_installs table exists', pwaTableRows.length === 1);
+
+await q(`SELECT public.record_pwa_install('test-device-harness-1', 'android', $1);`, [CURRENT_UID]);
+const { rows: pwaRows } = await q(`SELECT * FROM public.pwa_installs WHERE device_id = 'test-device-harness-1'`);
+check('record_pwa_install inserts record', pwaRows.length === 1 && pwaRows[0].platform === 'android', JSON.stringify(pwaRows[0]));
+
+// Calling record_pwa_install with same device updates last_seen_at
+await q(`SELECT public.record_pwa_install('test-device-harness-1', 'android', $1);`, [CURRENT_UID]);
+const { rows: [pwaCount] } = await q(`SELECT count(*)::int as count FROM public.pwa_installs WHERE device_id = 'test-device-harness-1'`);
+check('record_pwa_install deduplicates by device_id', pwaCount.count === 1);
+
+const { rows: [kpiWithPwa] } = await asAuthenticated(() => q(`SELECT public.admin_kpi_metrics() AS m`));
+check('admin_kpi_metrics includes pwa_installs_total', typeof kpiWithPwa.m.pwa_installs_total === 'number');
 
 console.log(failures === 0
   ? '\nAll migration checks passed against real Postgres.'
