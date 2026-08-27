@@ -179,33 +179,39 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      const { jar, imageBytes } = await fetchLoginPageAndCaptcha();
-      const { guess } = await recognizeCaptcha(imageBytes);
+      let loginResult: LoginResult | null = null;
+      const MAX_ATTEMPTS = 5;
 
-      if (!guess) {
-        // Unreadable captcha — not worth guessing blindly. Free to retry next
-        // run; does not count against the failure threshold since this isn't
-        // evidence the credential itself is broken.
-        await admin.from("srm_portal_credentials").update({
-          last_attempt_at: nowIso,
-          last_error: "Captcha image unreadable this run.",
-        }).eq("user_id", row.user_id);
-        continue;
+      for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+        if (attempt > 1) await sleep(500);
+        try {
+          const { jar, imageBytes } = await fetchLoginPageAndCaptcha();
+          const { guess } = await recognizeCaptcha(imageBytes);
+
+          if (!guess) continue;
+
+          loginResult = await doLogin(jar, row.register_number, dobPassword, guess);
+          if (loginResult.loggedIn) break;
+
+          // If portal rejects credentials (wrong password/DOB), do not waste retries
+          if (loginResult.errorMessage?.includes("Invalid User ID or Password")) break;
+        } catch (attemptErr) {
+          console.warn(`Login attempt ${attempt} error for ${row.user_id}:`, attemptErr);
+        }
       }
 
-      const loginResult = await doLogin(jar, row.register_number, dobPassword, guess);
-
-      if (!loginResult.loggedIn) {
+      if (!loginResult || !loginResult.loggedIn) {
         failed += 1;
         const failures = row.consecutive_failures + 1;
+        const errMsg = loginResult?.errorMessage ?? "Unattended login failed (captcha retry exhausted).";
         if (failures >= FAILURE_THRESHOLD) {
-          await unlinkAndNotify(row.user_id, loginResult.errorMessage ?? "login failed");
+          await unlinkAndNotify(row.user_id, errMsg);
           unlinked += 1;
         } else {
           await admin.from("srm_portal_credentials").update({
             consecutive_failures: failures,
             last_attempt_at: nowIso,
-            last_error: loginResult.errorMessage ?? "Unattended login failed.",
+            last_error: errMsg,
           }).eq("user_id", row.user_id);
         }
         continue;
