@@ -2726,9 +2726,9 @@ await q(`UPDATE public.users SET is_admin = false WHERE id = $1`, [OTHER_UID]);
 
 // A recent mentor contact (within the 7-day window) and an older one with a
 // second mentor (M_RICH, seeded by the mentor-profile-summary section above).
-await q(`INSERT INTO public.conversations (user1_id, user2_id, created_at)
+await q(`INSERT INTO public.conversations (user1_id, user2_id, last_updated)
          VALUES ($1, $2, now())`, [CURRENT_UID, OTHER_UID]);
-await q(`INSERT INTO public.conversations (user1_id, user2_id, created_at)
+await q(`INSERT INTO public.conversations (user1_id, user2_id, last_updated)
          VALUES ($1, $2, now() - interval '20 days')`, [CURRENT_UID, M_RICH]);
 
 const { rows: [kpiComm] } = await q(`

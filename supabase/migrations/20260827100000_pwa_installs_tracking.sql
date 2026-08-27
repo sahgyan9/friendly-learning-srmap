@@ -74,7 +74,7 @@ BEGIN
                                   WHERE EXISTS (SELECT 1 FROM public.mentors m
                                                 WHERE m.id IN (c.user1_id, c.user2_id))),
     'mentor_contacts_7d',       (SELECT count(*) FROM public.conversations c
-                                  WHERE c.created_at > now() - interval '7 days'
+                                  WHERE c.last_updated > now() - interval '7 days'
                                     AND EXISTS (SELECT 1 FROM public.mentors m
                                                 WHERE m.id IN (c.user1_id, c.user2_id))),
     'distinct_mentors_contacted', (SELECT count(DISTINCT m.id) FROM public.mentors m
