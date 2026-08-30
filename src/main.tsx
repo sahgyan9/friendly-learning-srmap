@@ -5,6 +5,7 @@ import App from './App.tsx'
 import ErrorBoundary from './components/ErrorBoundary.tsx'
 import { initSentry } from './lib/sentry.ts'
 import { initPostHog } from './lib/posthog.ts'
+import { installErrorReportAction } from './lib/errorReportToast.ts'
 import { registerAppServiceWorker } from './lib/pwa/registerServiceWorker.ts'
 import './index.css'
 
@@ -12,6 +13,8 @@ import './index.css'
 initSentry();
 // Initialize product analytics (page views, retention)
 initPostHog();
+// Add a one-click "Report" action to every error toast in the app
+installErrorReportAction();
 // Register Service Worker for offline PWA shell and asset caching
 if (typeof window !== 'undefined') {
   window.addEventListener('load', () => {
