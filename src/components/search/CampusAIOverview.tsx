@@ -530,23 +530,27 @@ export const CampusAIOverview: React.FC<CampusAIOverviewProps> = ({
                 <div className="flex items-center gap-1 self-end sm:self-auto shrink-0">
                   <button
                     onClick={() => handleFeedback('up')}
-                    disabled={isVoting || hasVoted !== null}
+                    disabled={isVoting}
                     className={cn(
                       "p-1.5 rounded-md transition-colors",
                       hasVoted === 'up' ? "bg-primary/20 text-primary" : "text-muted-foreground hover:bg-accent hover:text-foreground disabled:opacity-50"
                     )}
-                    title="Good response"
+                    title={hasVoted === 'up' ? "Undo positive rating" : "Good response"}
+                    aria-label={hasVoted === 'up' ? "Undo positive rating" : "Good response"}
+                    aria-pressed={hasVoted === 'up'}
                   >
                     <ThumbsUp className="h-3.5 w-3.5" />
                   </button>
                   <button
                     onClick={() => handleFeedback('down')}
-                    disabled={isVoting || hasVoted !== null}
+                    disabled={isVoting}
                     className={cn(
                       "p-1.5 rounded-md transition-colors",
                       hasVoted === 'down' ? "bg-destructive/20 text-destructive" : "text-muted-foreground hover:bg-accent hover:text-foreground disabled:opacity-50"
                     )}
-                    title="Bad response"
+                    title={hasVoted === 'down' ? "Undo negative rating" : "Bad response"}
+                    aria-label={hasVoted === 'down' ? "Undo negative rating" : "Bad response"}
+                    aria-pressed={hasVoted === 'down'}
                   >
                     <ThumbsDown className="h-3.5 w-3.5" />
                   </button>

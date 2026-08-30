@@ -50,6 +50,22 @@ export const setCachedOverview = (q: string, data: AIOverviewResult) => {
   }
 };
 
+export const getFeedbackSessionId = (): string => {
+  if (typeof window === "undefined") return "ssr-session";
+  try {
+    let id = localStorage.getItem("fl_ai_feedback_session_id");
+    if (!id) {
+      id = typeof crypto !== "undefined" && crypto.randomUUID
+        ? crypto.randomUUID()
+        : `sess_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+      localStorage.setItem("fl_ai_feedback_session_id", id);
+    }
+    return id;
+  } catch {
+    return "anon-session";
+  }
+};
+
 let featureFlagCache: boolean | null = null;
 let featureFlagPromise: Promise<boolean> | null = null;
 
@@ -226,20 +242,33 @@ export function useCampusAIOverview({
 
   const handleFeedback = useCallback(
     async (vote: 'up' | 'down') => {
-      if (!overview || hasVoted !== null || isVoting) return;
+      if (!overview || isVoting || !trimmed) return;
+
+      // Clicking the already-active thumb toggles it off (undo), clicking the other switches the vote
+      const nextVote: 'up' | 'down' | null = hasVoted === vote ? null : vote;
 
       setIsVoting(true);
       try {
-        const { error } = await (supabase as any).from("ai_overview_feedback").insert({
-          query: trimmed,
-          response: overview,
-          is_helpful: vote === 'up',
+        const sessionId = getFeedbackSessionId();
+        const isHelpful = nextVote === null ? null : nextVote === 'up';
+
+        const { error } = await (supabase.rpc as any)("submit_ai_overview_feedback", {
+          p_query: trimmed,
+          p_response: overview,
+          p_is_helpful: isHelpful,
+          p_session_id: sessionId,
         });
 
         if (error) throw error;
 
-        setHasVoted(vote);
-        toast.success(vote === 'up' ? "Thank you for the feedback!" : "Feedback recorded. We will improve this.");
+        setHasVoted(nextVote);
+        if (nextVote === 'up') {
+          toast.success("Thank you for the feedback!");
+        } else if (nextVote === 'down') {
+          toast.success("Feedback recorded. We will improve this.");
+        } else {
+          toast.success("Feedback removed.");
+        }
       } catch (err) {
         console.error("Failed to submit feedback:", err);
         toast.error("Could not record feedback.");
