@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { getOfflineCache, setOfflineCache } from "@/lib/offline/offlineStorage";
 import { CreatePostButton } from "@/components/community-posts/CreatePostButton";
 import { InlineComments } from "@/components/community-posts/InlineComments";
 import { PostCard } from "@/components/community-posts/PostCard";
@@ -46,6 +47,20 @@ import {
 
 const PAGE_SIZE = 20;
 
+const FEED_CACHE_KEY = "community_feed:default";
+const TYPE_COUNTS_CACHE_KEY = "community_feed:type_counts";
+
+interface CachedFeed {
+  posts: CommunityPost[];
+  total: number;
+}
+
+/** Identifies the question the board is currently answering. */
+const feedQueryKey = (postType: string, search: string, mine: boolean) =>
+  `${postType}|${search.trim()}|${mine}`;
+
+const DEFAULT_FEED_QUERY = feedQueryKey("all", "", false);
+
 const CommunityPosts = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -78,6 +93,42 @@ const CommunityPosts = () => {
 
   const location = useLocation();
   const [highlightedPostId, setHighlightedPostId] = useState<string | null>(null);
+
+  // Which question the posts on screen are the answer to, and whether there is
+  // anything on screen at all. Both are read inside loadPosts, which must not
+  // re-create itself every time the list changes — the effect that calls it
+  // depends on its identity.
+  const displayedQueryRef = useRef<string | null>(null);
+  const hasPostsRef = useRef(false);
+  hasPostsRef.current = posts.length > 0;
+
+  // Paint the last feed this browser saw before going back to the server.
+  //
+  // Seeded after mount rather than in the useState initialiser above because
+  // /posts is one of the pre-rendered routes: filling the list during the
+  // first render would not match the markup React is hydrating against. A
+  // layout effect still runs before the browser paints, so on a tab switch —
+  // which is a plain re-mount, no hydration involved — the skeleton never
+  // appears at all.
+  useIsomorphicLayoutEffect(() => {
+    if (feedQueryKey(selectedType, debouncedSearch, mine) !== DEFAULT_FEED_QUERY) return;
+
+    const cached = getOfflineCache<CachedFeed>(FEED_CACHE_KEY);
+    if (!cached?.data?.posts?.length) return;
+
+    setPosts(cached.data.posts);
+    setTotal(cached.data.total);
+    setLoading(false);
+    displayedQueryRef.current = DEFAULT_FEED_QUERY;
+    // Set here as well as during render: loadPosts runs in a passive effect
+    // that React may flush before the re-render this setPosts schedules, and
+    // it decides whether to show a skeleton from this ref. Left to the render
+    // pass alone, the first fetch after a re-mount saw an empty list and
+    // blanked the board it had just filled from cache.
+    hasPostsRef.current = true;
+    // Mount only. This is the view the page opens on; every later change to
+    // the filters goes through loadPosts, which owns the list from then on.
+  }, []);
 
   useEffect(() => {
     if (searchParams.get("compose") === "true") {
@@ -122,8 +173,16 @@ const CommunityPosts = () => {
   // pulls every post and filters in memory.
   const loadPosts = useCallback(
     async (offset = 0) => {
-      if (offset === 0) setLoading(true);
-      else setLoadingMore(true);
+      const queryKey = feedQueryKey(selectedType, debouncedSearch, mine);
+
+      if (offset === 0) {
+        // Only blank the board when the question changed. Re-asking the same
+        // one — coming back to this tab, a pull-to-refresh, a new post — keeps
+        // what is on screen and swaps it when the answer arrives.
+        setLoading(!(displayedQueryRef.current === queryKey && hasPostsRef.current));
+      } else {
+        setLoadingMore(true);
+      }
 
       const { data, total: matched, error } = await getCommunityPosts({
         postType: selectedType,
@@ -145,6 +204,19 @@ const CommunityPosts = () => {
         }
         setPosts((previous) => (offset === 0 ? loadedPosts : [...previous, ...data]));
         setTotal(matched);
+
+        if (offset === 0) {
+          displayedQueryRef.current = queryKey;
+
+          // Only the view the page opens on is kept. A filtered or searched
+          // list is a question the user asked a moment ago, and opening the
+          // page later to a stale answer to it reads as a bug. `data` rather
+          // than `loadedPosts` for the same reason: a post pulled in by a
+          // #post- link belongs to that link, not to the feed.
+          if (queryKey === DEFAULT_FEED_QUERY) {
+            setOfflineCache<CachedFeed>(FEED_CACHE_KEY, { posts: data, total: matched });
+          }
+        }
       }
 
       setLoading(false);
@@ -210,7 +282,16 @@ const CommunityPosts = () => {
   // Read once on mount rather than after every filter change: the counts are
   // for the whole board and do not depend on what is currently selected.
   useEffect(() => {
-    getPostTypeCounts().then(setTypeCounts);
+    // Same idea as the feed itself: the chips are drawn from these counts, so
+    // starting from the last known set stops the row from rebuilding itself
+    // on every visit.
+    const cached = getOfflineCache<Record<string, number>>(TYPE_COUNTS_CACHE_KEY);
+    if (cached?.data) setTypeCounts(cached.data);
+
+    getPostTypeCounts().then((counts) => {
+      setTypeCounts(counts);
+      setOfflineCache(TYPE_COUNTS_CACHE_KEY, counts);
+    });
   }, []);
 
   /**
