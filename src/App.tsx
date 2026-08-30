@@ -255,6 +255,7 @@ function App() {
                     <Route path="/marketplace" element={<Navigate to="/events" replace />} />
                     <Route path="/marketplace/:id" element={<RedirectWithParam toPrefix="/events" />} />
                     <Route path="/mentors/:id" element={<RedirectWithParam toPrefix="/mentor" />} />
+                    <Route path="/study-partners" element={<Navigate to="/find-study-partners" replace />} />
 
                     {/* Public on purpose: a certificate nobody can check without an
                       account is worth no more than the image itself. */}
