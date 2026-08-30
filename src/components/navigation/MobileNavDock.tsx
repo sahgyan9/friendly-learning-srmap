@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Bell, BellRing, Menu, Moon, Sun, X } from "lucide-react";
+import { Bell, BellRing, Menu, Moon, Search, Sun, X } from "lucide-react";
 
 import NavbarProfileMenu from "@/components/NavbarProfileMenu";
 import NotificationItem from "@/components/notifications/NotificationItem";
@@ -24,6 +24,7 @@ import {
 import { useNotifications } from "@/hooks/useNotifications";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useSwipeToDismiss } from "@/hooks/useSwipeToDismiss";
+import { OPEN_SEARCH_EVENT } from "@/lib/search/events";
 import { useUnreadMessages } from "@/hooks/useUnreadMessages";
 import { rankNavSections, recordNavVisit } from "@/lib/nav-usage";
 import { toggleTheme } from "@/lib/theme";
@@ -509,7 +510,7 @@ export function MobileNavDock() {
                     <span className="dark:hidden">Dark Mode</span>
                     <span className="hidden dark:inline">Light Mode</span>
                   </button>
-                  {user && <NavbarProfileMenu />}
+                  {user && <NavbarProfileMenu variant="sheet" />}
                 </div>
               </div>
 
@@ -561,6 +562,27 @@ export function MobileNavDock() {
                       </Link>
                     );
                   })}
+
+                  {/* Not a nav link — there is no /search destination worth
+                      landing on, only the same command palette the header's
+                      search trigger opens. Dispatching the event it already
+                      listens for keeps this from becoming a second search
+                      implementation. */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSheetOpen(false);
+                      window.dispatchEvent(new CustomEvent(OPEN_SEARCH_EVENT));
+                    }}
+                    className="flex items-center gap-3 rounded-xl p-3 text-sm font-medium border transition-all bg-muted/40 hover:bg-muted text-foreground/90 border-border/50"
+                  >
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-background">
+                      <Search className="h-4 w-4 shrink-0" aria-hidden />
+                    </div>
+                    <div className="min-w-0 flex-1 text-left">
+                      <span className="truncate">Search</span>
+                    </div>
+                  </button>
                 </div>
               </div>
 
