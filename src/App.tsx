@@ -13,7 +13,6 @@ import SrmDobNag from "@/components/onboarding/SrmDobNag";
 import SignInNudge from "@/components/onboarding/SignInNudge";
 import PushNotificationFloatingPrompt from "@/components/notifications/PushNotificationFloatingPrompt";
 import PWAInstallBanner from "@/components/pwa/PWAInstallBanner";
-import OfflineIndicator from "@/components/offline/OfflineIndicator";
 import MessageOutboxSync from "@/components/offline/MessageOutboxSync";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import RouteRobots from "@/components/RouteRobots";
@@ -201,7 +200,6 @@ function App() {
               <SignInNudge />
               <PushNotificationFloatingPrompt />
               <PWAInstallBanner />
-              <OfflineIndicator />
               <MessageOutboxSync />
               <GlobalPullToRefresh />
 

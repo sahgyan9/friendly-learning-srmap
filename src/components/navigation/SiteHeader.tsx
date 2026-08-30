@@ -6,6 +6,7 @@ import DarkModeToggle from "@/components/DarkModeToggle";
 import NavbarProfileMenu from "@/components/NavbarProfileMenu";
 import MessagesIcon from "@/components/navbar/MessagesIcon";
 import NotificationBell from "@/components/notifications/NotificationBell";
+import { OfflineIndicator } from "@/components/offline/OfflineIndicator";
 import SiteSearch from "@/components/search/SiteSearch";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -207,6 +208,7 @@ export function SiteHeader() {
           {/* Right: account & actions. Matches the left block's flex-1 so the centre
               stays centred. */}
           <div className="flex min-w-0 flex-1 items-center justify-end gap-1.5 sm:gap-2">
+            <OfflineIndicator />
             {user ? (
               <>
                 {/* Both of these are duplicated by the bottom dock on mobile,
