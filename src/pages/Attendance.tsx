@@ -56,8 +56,6 @@ export interface AttendanceRecord {
   last_synced_at: string;
 }
 
-const TARGET_PRESETS = [75, 80, 85, 90];
-
 type SortField = "course_code" | "attendance_percentage" | "conducted_hours" | "margin";
 type SortDirection = "asc" | "desc";
 type FilterTab = "all" | "risk" | "safe";
@@ -70,7 +68,6 @@ export default function Attendance() {
   const [portalDialogOpen, setPortalDialogOpen] = useState(false);
   const [filterTab, setFilterTab] = useState<FilterTab>("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [globalTarget, setGlobalTarget] = useState<number>(75);
   const [sortField, setSortField] = useState<SortField>("attendance_percentage");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   const [simulations, setSimulations] = useState<Record<string, { deltaAttended: number; deltaConducted: number }>>({});
@@ -412,7 +409,7 @@ export default function Attendance() {
               {/* Controls */}
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
 
-                {/* Left: Filter tabs + Target presets */}
+                {/* Left: Filter tabs */}
                 <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
                   <Tabs value={filterTab} onValueChange={(val) => setFilterTab(val as FilterTab)}>
                     <TabsList className="h-8 bg-muted/40 p-0.5">
@@ -425,27 +422,6 @@ export default function Attendance() {
                       </TabsTrigger>
                     </TabsList>
                   </Tabs>
-
-                  {/* Target Threshold Selector */}
-                  <div className="flex items-center gap-1.5 text-xs bg-muted/30 px-2 py-1 rounded-lg border border-border/40">
-                    <span className="text-2xs font-semibold uppercase tracking-wider text-muted-foreground">Target:</span>
-                    <div className="flex items-center gap-1">
-                      {TARGET_PRESETS.map((target) => (
-                        <button
-                          key={target}
-                          type="button"
-                          onClick={() => setGlobalTarget(target)}
-                          className={`px-1.5 py-0.5 text-xs rounded font-medium transition-all ${
-                            globalTarget === target
-                              ? "bg-primary text-primary-foreground font-bold shadow-xs"
-                              : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                          }`}
-                        >
-                          {target}%
-                        </button>
-                      ))}
-                    </div>
-                  </div>
 
                   {hasAnySimulation && (
                     <button
@@ -513,7 +489,7 @@ export default function Attendance() {
                             onClick={() => handleSort("margin")}
                             className="inline-flex items-center gap-1 hover:text-foreground transition-colors mx-auto"
                           >
-                            <span>{globalTarget}% Margin</span>
+                            <span>75% Margin</span>
                             <ArrowUpDown className="h-3 w-3 opacity-50" />
                           </button>
                         </TableHead>
@@ -531,7 +507,7 @@ export default function Attendance() {
                           neededForTarget,
                           safeAllowanceForTarget,
                           isSimulated,
-                        } = getSimulatedMetrics(rec, globalTarget);
+                        } = getSimulatedMetrics(rec, 75);
 
                         const isDanger = pct < 75.0;
                         const isWarning = pct >= 75.0 && pct < 80.0;
