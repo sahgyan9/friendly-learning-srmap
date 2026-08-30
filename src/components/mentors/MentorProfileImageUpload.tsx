@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import AvatarCropDialog from "@/components/profile/AvatarCropDialog";
 import { downscaleImage } from "@/lib/image/downscale";
 import { getErrorMessage } from "@/lib/errors";
+import { IMAGE_UPLOAD_CACHE_CONTROL } from "@/lib/constants";
 
 interface MentorProfileImageUploadProps {
   profileImage: string;
@@ -60,7 +61,7 @@ const MentorProfileImageUpload = ({
       const { data, error } = await supabase.storage
         .from('profiles')
         .upload(fileName, file, {
-          cacheControl: '3600',
+          cacheControl: IMAGE_UPLOAD_CACHE_CONTROL,
           upsert: false
         });
       

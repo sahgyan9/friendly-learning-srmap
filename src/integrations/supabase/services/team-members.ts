@@ -2,6 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { downscaleImage } from '@/lib/image/downscale';
 import { storagePathFromPublicUrl } from '@/lib/image/storage-path';
+import { IMAGE_UPLOAD_CACHE_CONTROL } from '@/lib/constants';
 
 export type TeamMember = {
   id: string;
@@ -129,7 +130,7 @@ export async function uploadTeamMemberImage(original: File) {
   
   const { data, error } = await supabase.storage
     .from('team_members')
-    .upload(filePath, file);
+    .upload(filePath, file, { cacheControl: IMAGE_UPLOAD_CACHE_CONTROL });
   
   if (error) {
     return { data: null, error };

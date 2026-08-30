@@ -2,6 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { downscaleImage } from "@/lib/image/downscale";
 import { storagePathFromPublicUrl } from "@/lib/image/storage-path";
+import { IMAGE_UPLOAD_CACHE_CONTROL } from "@/lib/constants";
 
 export interface MarketplacePost {
   id: string;
@@ -235,7 +236,7 @@ export async function uploadMarketplaceImage(original: File) {
     
     const { data, error } = await supabase.storage
       .from('marketplace')
-      .upload(filePath, file);
+      .upload(filePath, file, { cacheControl: IMAGE_UPLOAD_CACHE_CONTROL });
     
     if (error) {
       console.error("Error in uploadMarketplaceImage:", error);

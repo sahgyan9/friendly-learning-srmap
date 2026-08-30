@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import AvatarCropDialog from "@/components/profile/AvatarCropDialog";
+import { IMAGE_UPLOAD_CACHE_CONTROL } from "@/lib/constants";
 import { downscaleImage } from "@/lib/image/downscale";
 import { storagePathFromPublicUrl } from "@/lib/image/storage-path";
 import { getErrorMessage } from "@/lib/errors";
@@ -60,7 +61,10 @@ export function ProfileAvatarUploader({
 
       const { error: uploadError } = await supabase.storage
         .from("profiles")
-        .upload(filePath, file, { upsert: true });
+        .upload(filePath, file, {
+          cacheControl: IMAGE_UPLOAD_CACHE_CONTROL,
+          upsert: true,
+        });
 
       if (uploadError) throw uploadError;
 

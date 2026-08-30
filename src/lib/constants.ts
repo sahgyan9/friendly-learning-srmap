@@ -24,6 +24,16 @@ export const getAppUrl = () => {
     return import.meta.env.VITE_APP_URL || SITE_URL;
 };
 
+// Cache-Control max-age, in seconds, sent with every image upload.
+//
+// One year, because none of the upload paths in this app ever reuse a file
+// name: each one is a UUID or carries a timestamp, and replacing an image
+// writes a new object and repoints the row at it. The bytes behind a given URL
+// therefore never change, so there is nothing for a revalidation to discover.
+// Supabase's default is 3600, which had every avatar in the app re-fetched
+// after an hour for no reason.
+export const IMAGE_UPLOAD_CACHE_CONTROL = '31536000';
+
 // Check if we're in development
 export const isDevelopment = import.meta.env.DEV;
 

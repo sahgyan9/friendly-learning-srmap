@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { sanitizeInput } from "@/utils/input-sanitization";
 import { downscaleImage } from "@/lib/image/downscale";
 import { storagePathFromPublicUrl } from "@/lib/image/storage-path";
+import { IMAGE_UPLOAD_CACHE_CONTROL } from "@/lib/constants";
 
 /**
  * A post as rendered in the feed. Author fields are flattened by the
@@ -532,7 +533,9 @@ export const uploadCommunityPostImage = async (original: File) => {
   const fileExt = file.name.split(".").pop();
   const filePath = `${crypto.randomUUID()}.${fileExt}`;
 
-  const { error } = await supabase.storage.from(POST_IMAGE_BUCKET).upload(filePath, file);
+  const { error } = await supabase.storage
+    .from(POST_IMAGE_BUCKET)
+    .upload(filePath, file, { cacheControl: IMAGE_UPLOAD_CACHE_CONTROL });
   if (error) {
     console.error("Error uploading community post image:", error);
     throw error;
