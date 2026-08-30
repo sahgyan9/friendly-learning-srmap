@@ -15,6 +15,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useHasVisitedGroupsNav } from "@/hooks/useFeatureAnnouncement";
 import { cn } from "@/lib/utils";
+import { getOfflineCache, setOfflineCache } from "@/lib/offline/offlineStorage";
 import {
   getCommunityKindCounts,
   listCommunities,
@@ -40,8 +41,17 @@ const Communities = () => {
   );
 
   // Data State
-  const [allCommunities, setAllCommunities] = useState<Community[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [allCommunities, setAllCommunities] = useState<Community[]>(() => {
+    const cached = getOfflineCache<Community[]>("workspace_communities_list");
+    if (cached?.data && Array.isArray(cached.data)) {
+      return cached.data;
+    }
+    return [];
+  });
+  const [loading, setLoading] = useState(() => {
+    const cached = getOfflineCache<Community[]>("workspace_communities_list");
+    return !(cached?.data && Array.isArray(cached.data) && cached.data.length > 0);
+  });
   const [kind, setKind] = useState("all");
   const [search, setSearch] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
@@ -56,16 +66,32 @@ const Communities = () => {
   const debouncedSearch = useDebounce(search, 300);
 
   const load = useCallback(async () => {
-    setLoading(true);
+    const cached = getOfflineCache<Community[]>("workspace_communities_list");
+    if (cached?.data && Array.isArray(cached.data) && cached.data.length > 0) {
+      setAllCommunities(cached.data);
+      setLoading(false);
+    }
+
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      setLoading(false);
+      return;
+    }
+
+    setLoading(allCommunities.length === 0);
     // Fetch all communities (the RPC handles search and kind filtering)
     const { data } = await listCommunities({
       search: debouncedSearch,
       kind,
       limit: 60,
     });
-    setAllCommunities(data ?? []);
+    if (data) {
+      setAllCommunities(data);
+      if (kind === "all" && !debouncedSearch) {
+        setOfflineCache("workspace_communities_list", data);
+      }
+    }
     setLoading(false);
-  }, [debouncedSearch, kind]);
+  }, [debouncedSearch, kind, allCommunities.length]);
 
   useEffect(() => {
     load();

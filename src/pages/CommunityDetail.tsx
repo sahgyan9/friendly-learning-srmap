@@ -62,6 +62,7 @@ import {
   deleteCommunityChannel,
   type CommunityChannel,
 } from "@/integrations/supabase/services/community-channels";
+import { getOfflineCache, setOfflineCache } from "@/lib/offline/offlineStorage";
 
 // ── Mobile channel tab bar ──────────────────────────────────────────────────
 // Shown only on mobile (md:hidden), directly below the compact workspace header.
@@ -163,10 +164,22 @@ const CommunityDetail = () => {
     }
   }, [tabParam]);
 
-  const [community, setCommunity] = useState<Community | null>(null);
+  const [community, setCommunity] = useState<Community | null>(() => {
+    if (slug) {
+      const cached = getOfflineCache<Community>(`community_detail:${slug}`);
+      return cached?.data ?? null;
+    }
+    return null;
+  });
   const [posts, setPosts] = useState<CommunityPost[]>([]);
   const [channels, setChannels] = useState<CommunityChannel[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => {
+    if (slug) {
+      const cached = getOfflineCache<Community>(`community_detail:${slug}`);
+      return !cached?.data;
+    }
+    return true;
+  });
   const [notFound, setNotFound] = useState(false);
   const [working, setWorking] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
@@ -202,14 +215,28 @@ const CommunityDetail = () => {
   const load = useCallback(async () => {
     if (!slug) return;
 
+    const cached = getOfflineCache<Community>(`community_detail:${slug}`);
+    if (cached?.data) {
+      setCommunity(cached.data);
+      setLoading(false);
+    }
+
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      setLoading(false);
+      return;
+    }
+
     const { data, error } = await getCommunityBySlug(slug);
     if (error || !data) {
-      setNotFound(true);
+      if (!cached?.data) {
+        setNotFound(true);
+      }
       setLoading(false);
       return;
     }
 
     setCommunity(data);
+    setOfflineCache(`community_detail:${slug}`, data);
 
     // Skipped rather than fetched-and-discarded when the viewer cannot see
     // inside: the database would return zero rows anyway, and asking for posts
