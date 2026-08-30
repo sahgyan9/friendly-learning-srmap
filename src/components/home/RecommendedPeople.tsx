@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useAuth } from "@/context/AuthContext";
 import { getOptimizedImageUrl } from "@/lib/image/imageUrl";
-import { supabase } from "@/integrations/supabase/client";
 import {
   allResults,
   askWhoCanHelp,
@@ -195,40 +194,17 @@ function ResultsGrid({ results }: { results: Grouped }) {
 export function RecommendedPeople() {
   const { user, profile, loading: authLoading } = useAuth();
 
-  const [interests, setInterests] = useState<string[] | null>(null);
-  const [interestsLoaded, setInterestsLoaded] = useState(false);
   const [results, setResults] = useState<Grouped | null>(null);
   const [visible, setVisible] = useState(false);
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const fetchedRef = useRef(false);
 
-  // Own interests aren't on the shared auth profile (only department/skills
-  // are) — one small owned-row read, independent of AuthContext.
-  useEffect(() => {
-    if (!user) return;
-    let cancelled = false;
-
-    (async () => {
-      try {
-        const { data } = await supabase.from("users").select("interests").eq("id", user.id).maybeSingle();
-        if (cancelled) return;
-        setInterests((data?.interests as string[] | undefined) ?? []);
-      } catch {
-        if (!cancelled) setInterests([]);
-      } finally {
-        if (!cancelled) setInterestsLoaded(true);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [user]);
-
-  const ready = Boolean(user) && !authLoading && interestsLoaded;
+  // interests now rides along on the shared auth profile, so this no longer
+  // costs an extra owned-row read on every home page load.
+  const ready = Boolean(user) && !authLoading && Boolean(profile);
   const query = ready
-    ? buildProfileQuery(profile?.department ?? null, interests ?? [], profile?.skills ?? [])
+    ? buildProfileQuery(profile?.department ?? null, profile?.interests ?? [], profile?.skills ?? [])
     : undefined;
 
   // Start observing as soon as we know we have something worth fetching.

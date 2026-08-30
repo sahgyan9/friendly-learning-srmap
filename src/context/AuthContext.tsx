@@ -18,6 +18,7 @@ interface UserProfile {
   mobile?: string;
   department?: string;
   skills?: string[];
+  interests?: string[];
   linkedin_url?: string;
   bio?: string;
   is_available?: boolean;
@@ -62,7 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const PROFILE_COLUMNS =
-    "id,name,email,role,profile_image,verification_status,is_admin,mobile,department,skills,linkedin_url,bio,is_available,theme,has_seen_welcome_tour,date_of_birth_linked" as const;
+    "id,name,email,role,profile_image,verification_status,is_admin,mobile,department,skills,interests,linkedin_url,bio,is_available,theme,has_seen_welcome_tour,date_of_birth_linked" as const;
 
   const applyProfile = (
     resolvedProfile: UserProfile,
