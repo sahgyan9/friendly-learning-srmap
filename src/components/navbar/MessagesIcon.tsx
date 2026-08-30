@@ -15,8 +15,11 @@ import { cn } from "@/lib/utils";
  * The count badge carries `ring-background`, not a border — the header is
  * translucent with a backdrop blur, so a border would let page content show
  * between the badge and the icon behind it.
+ *
+ * `className` exists so the header can hide this on mobile, where the bottom
+ * dock carries the same link and the same count within thumb reach.
  */
-const MessagesIcon = () => {
+const MessagesIcon = ({ className }: { className?: string }) => {
   const { user } = useAuth();
   const location = useLocation();
   const unreadCount = useUnreadMessages();
@@ -40,6 +43,7 @@ const MessagesIcon = () => {
             isActive
               ? "bg-sky-500/15 text-sky-600 dark:text-sky-400"
               : "bg-muted text-foreground/80 hover:bg-muted/70 hover:text-foreground",
+            className,
           )}
         >
           <MessageCircleMore className="h-5 w-5" aria-hidden />

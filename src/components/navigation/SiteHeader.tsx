@@ -24,6 +24,7 @@ import {
   ROUTE_ACCENT,
   accentFor,
   isActivePath,
+  pathShowsDock,
 } from "./nav-config";
 
 /**
@@ -46,6 +47,9 @@ export function SiteHeader() {
   const { user, profile } = useAuth();
   const location = useLocation();
   const accent = accentFor(location.pathname);
+  // Whether the bottom dock is carrying messages and notifications on this
+  // route — see the account cluster below.
+  const dockShown = pathShowsDock(location.pathname);
   const { hasSeen: hasSeenFaculty } = useHasSeenFacultyRatings();
   const { hasSeen: hasVisitedGroups } = useHasVisitedGroupsNav();
   const { hasSeen: hasVisitedEvents } = useHasVisitedEventsNav();
@@ -205,8 +209,19 @@ export function SiteHeader() {
           <div className="flex min-w-0 flex-1 items-center justify-end gap-1.5 sm:gap-2">
             {user ? (
               <>
-                <MessagesIcon />
-                <NotificationBell />
+                {/* Both of these are duplicated by the bottom dock on mobile,
+                    with the same counts and within thumb reach, so up here
+                    they are desktop-only — but only where the dock actually
+                    renders. On a route without one (an open conversation, the
+                    admin area) these stay the sole way to reach messages and
+                    notifications, so the class is conditional rather than a
+                    flat `lg:flex`.
+
+                    Hidden with CSS rather than unmounted: a JS media query
+                    would flip after hydration and pop the header's contents
+                    around on first paint. */}
+                <MessagesIcon className={dockShown ? "hidden lg:flex" : undefined} />
+                <NotificationBell className={dockShown ? "hidden lg:flex" : undefined} />
                 <NavbarProfileMenu />
               </>
             ) : (
