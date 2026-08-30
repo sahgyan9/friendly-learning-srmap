@@ -18,7 +18,6 @@ import {
   UserCheck,
 } from "lucide-react";
 import { motion } from "framer-motion";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
@@ -200,12 +199,8 @@ export default function Attendance() {
   };
 
   // Aggregates
-  const totalAttended = records.reduce((acc, r) => acc + r.attended_hours, 0);
-  const totalConducted = records.reduce((acc, r) => acc + r.conducted_hours, 0);
-  const overallPct = totalConducted > 0 ? Number(((totalAttended / totalConducted) * 100).toFixed(2)) : 100;
   const criticalCourses = records.filter((r) => r.attendance_percentage < 75.0);
   const lastSync = records[0]?.last_synced_at;
-  const totalSafeAllowance = records.reduce((acc, r) => acc + (r.safe_bunks || 0), 0);
 
   const filteredAndSortedRecords = useMemo(() => {
     const list = records.filter((r) => {
@@ -272,7 +267,7 @@ export default function Attendance() {
                 <span className="text-foreground font-medium">Attendance</span>
               </div>
 
-              <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                   <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
                     Attendance
@@ -283,25 +278,46 @@ export default function Attendance() {
                 </div>
 
                 {records.length > 0 && (
-                  <div className="flex items-center gap-3 shrink-0">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={handleManualSync}
-                      disabled={isSyncing}
-                      className="gap-2 h-8 text-xs font-medium"
-                    >
-                      <RefreshCw className={`h-3 w-3 ${isSyncing ? "animate-spin" : ""}`} />
-                      {isSyncing ? "Syncing…" : "Sync"}
-                    </Button>
-                    <button
-                      type="button"
-                      onClick={() => setPortalDialogOpen(true)}
-                      className="text-xs text-muted-foreground hover:text-foreground transition-colors underline-offset-4 hover:underline"
-                    >
-                      Re-link portal
-                    </button>
+                  <div className="flex items-center gap-3 bg-card/80 dark:bg-card/60 backdrop-blur-md px-3.5 py-2 rounded-xl border border-border/70 shadow-xs">
+                    <div className="flex items-center gap-2.5">
+                      <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                      </span>
+                      <div className="flex flex-col">
+                        <span className="text-xs font-semibold text-foreground tracking-tight leading-tight">
+                          Synced {lastSync ? formatRelativeTime(lastSync) : "Never"}
+                        </span>
+                        <span className="text-[10px] text-muted-foreground leading-tight">
+                          Auto-syncs Mon–Fri, 5:30 PM IST
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="h-6 w-px bg-border/70 mx-0.5" />
+
+                    <div className="flex items-center gap-1">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleManualSync}
+                        disabled={isSyncing}
+                        className="h-7 px-2.5 text-xs font-medium hover:bg-muted/80 text-foreground gap-1.5 rounded-lg transition-colors"
+                        title="Fetch latest attendance from SRM portal"
+                      >
+                        <RefreshCw className={`h-3 w-3 text-primary ${isSyncing ? "animate-spin" : ""}`} />
+                        <span>{isSyncing ? "Syncing…" : "Sync"}</span>
+                      </Button>
+                      <button
+                        type="button"
+                        onClick={() => setPortalDialogOpen(true)}
+                        className="text-[11px] text-muted-foreground hover:text-foreground px-2 py-1 transition-colors rounded-lg hover:bg-muted/60"
+                        title="Update portal credentials"
+                      >
+                        Re-link
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -344,67 +360,22 @@ export default function Attendance() {
 
           {/* Main Attendance Dashboard */}
           {!isLoading && records.length > 0 && (
-            <div className="space-y-5">
+            <div className="space-y-4">
 
-              {/* Shortage Alert (slim) */}
+              {/* Shortage Alert (slim banner) */}
               {criticalCourses.length > 0 && (
-                <div className="pl-3 border-l-2 border-destructive py-1 text-xs sm:text-sm">
+                <div className="flex items-center justify-between gap-3 bg-destructive/10 border border-destructive/20 text-destructive rounded-xl px-4 py-2.5 text-xs sm:text-sm font-medium">
                   <div className="flex items-center gap-2">
-                    <ShieldAlert className="h-4 w-4 text-destructive shrink-0" />
-                    <span className="text-destructive font-semibold">
-                      {criticalCourses.length} subject{criticalCourses.length === 1 ? "" : "s"} below 75%
+                    <ShieldAlert className="h-4 w-4 shrink-0 text-destructive" />
+                    <span>
+                      <strong>{criticalCourses.length} subject{criticalCourses.length === 1 ? "" : "s"} below 75%</strong> ({criticalCourses.map((c) => `${c.course_code}: ${c.attendance_percentage}%`).join(", ")})
                     </span>
                   </div>
-                  <div className="mt-0.5 pl-6 text-muted-foreground">
-                    {criticalCourses.map((c) => `${c.course_code} (${c.attendance_percentage}%)`).join(", ")}
-                  </div>
+                  <span className="text-[11px] font-semibold bg-destructive/20 px-2 py-0.5 rounded-md shrink-0">
+                    Needs attention
+                  </span>
                 </div>
               )}
-
-              {/* Stat Strip */}
-              <div className="rounded-xl border border-border/60 bg-card divide-y divide-border/60 sm:divide-y-0 sm:divide-x sm:flex">
-                <div className="flex-1 p-4 sm:p-5">
-                  <div className="text-2xs font-medium uppercase tracking-wide text-muted-foreground">Overall</div>
-                  <div className={`mt-1 text-2xl sm:text-3xl font-bold tracking-tight ${
-                    overallPct < 75 ? "text-destructive" : overallPct < 80 ? "text-amber-500" : "text-emerald-600 dark:text-emerald-400"
-                  }`}>
-                    {overallPct}%
-                  </div>
-                  <Progress
-                    value={Math.min(100, overallPct)}
-                    className={`mt-2 h-1 bg-muted ${
-                      overallPct < 75 ? "[&>div]:bg-destructive" : overallPct < 80 ? "[&>div]:bg-amber-500" : "[&>div]:bg-emerald-500"
-                    }`}
-                  />
-                  <div className="mt-1.5 text-2xs text-muted-foreground">{totalAttended} / {totalConducted} hrs</div>
-                </div>
-
-                <div className="flex-1 p-4 sm:p-5">
-                  <div className="text-2xs font-medium uppercase tracking-wide text-muted-foreground">At risk</div>
-                  <div className={`mt-1 text-2xl sm:text-3xl font-bold tracking-tight ${criticalCourses.length > 0 ? "text-destructive" : "text-foreground"}`}>
-                    {criticalCourses.length}
-                  </div>
-                  <div className="mt-1.5 text-2xs text-muted-foreground">
-                    {criticalCourses.length === 0 ? "all subjects clear 75%" : "below 75% cutoff"}
-                  </div>
-                </div>
-
-                <div className="flex-1 p-4 sm:p-5">
-                  <div className="text-2xs font-medium uppercase tracking-wide text-muted-foreground">Safe buffer</div>
-                  <div className="mt-1 text-2xl sm:text-3xl font-bold tracking-tight text-emerald-600 dark:text-emerald-400">
-                    {totalSafeAllowance}
-                  </div>
-                  <div className="mt-1.5 text-2xs text-muted-foreground">classes above 75%, combined</div>
-                </div>
-
-                <div className="flex-1 p-4 sm:p-5">
-                  <div className="text-2xs font-medium uppercase tracking-wide text-muted-foreground">Last synced</div>
-                  <div className="mt-1 text-lg sm:text-xl font-bold tracking-tight text-foreground">
-                    {lastSync ? formatRelativeTime(lastSync) : "Never"}
-                  </div>
-                  <div className="mt-1.5 text-2xs text-muted-foreground">auto-syncs Mon–Fri, 5:30 PM IST</div>
-                </div>
-              </div>
 
               {/* Controls */}
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
