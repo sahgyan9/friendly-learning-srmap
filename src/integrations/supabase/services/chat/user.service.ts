@@ -134,32 +134,36 @@ export async function searchCampusUsers(query: string, currentUserId?: string): 
       console.warn("search_campus_users RPC warning, falling back to mentors:", rpcError);
     }
 
-    // Fallback: query mentors table directly if RPC is unavailable
+    // Fallback: query mentors table directly if the RPC is unavailable (e.g.
+    // the migration hasn't reached production yet). Runs for both empty and
+    // non-empty queries so the default "recommended mentors" view degrades
+    // gracefully too, not just active searches.
+    let mentorsQuery = supabase
+      .from("mentors")
+      .select("id, name, profile_image, department, is_alumni")
+      .limit(15);
+
     if (trimmed) {
-      const { data: mentors, error: mentorError } = await supabase
-        .from("mentors")
-        .select("id, name, profile_image, department, is_alumni")
-        .ilike("name", `%${trimmed}%`)
-        .limit(15);
-
-      if (mentorError) {
-        console.error("Error searching mentors in fallback:", mentorError);
-        return [];
-      }
-
-      return (mentors ?? [])
-        .filter((m) => !currentUserId || m.id !== currentUserId)
-        .map((m) => ({
-          id: m.id,
-          name: m.name?.trim() || "Mentor",
-          profile_image: m.profile_image || null,
-          role: "mentor",
-          department: m.department || undefined,
-          badge: m.is_alumni ? "Alumni" : "Mentor",
-        }));
+      mentorsQuery = mentorsQuery.ilike("name", `%${trimmed}%`);
     }
 
-    return [];
+    const { data: mentors, error: mentorError } = await mentorsQuery;
+
+    if (mentorError) {
+      console.error("Error searching mentors in fallback:", mentorError);
+      return [];
+    }
+
+    return (mentors ?? [])
+      .filter((m) => !currentUserId || m.id !== currentUserId)
+      .map((m) => ({
+        id: m.id,
+        name: m.name?.trim() || "Mentor",
+        profile_image: m.profile_image || null,
+        role: "mentor",
+        department: m.department || undefined,
+        badge: m.is_alumni ? "Alumni" : "Mentor",
+      }));
   } catch (err) {
     console.error("Exception in searchCampusUsers:", err);
     return [];
