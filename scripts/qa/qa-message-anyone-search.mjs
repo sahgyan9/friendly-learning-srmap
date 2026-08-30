@@ -124,11 +124,39 @@ async function route(request) {
     });
   }
 
-  if (url.includes('/rest/v1/conversations?')) {
-    return respondJson(request, []);
+  if (url.includes('/rest/v1/conversations')) {
+    return respondJson(request, [
+      {
+        id: NEW_CONV_ID,
+        user1_id: USER_ID,
+        user2_id: ANSHU_ID,
+        last_updated: new Date().toISOString(),
+        last_message_id: null,
+      },
+    ]);
   }
 
-  if (url.includes('/rest/v1/messages?')) {
+  if (url.includes('/rest/v1/messages')) {
+    if (method === 'POST') {
+      const postData = JSON.parse(request.postData() || '{}');
+      return respondJson(
+        request,
+        [
+          {
+            id: 'm-' + Date.now(),
+            conversation_id: postData.conversation_id || NEW_CONV_ID,
+            sender_id: USER_ID,
+            receiver_id: ANSHU_ID,
+            content: postData.content || '',
+            sent_at: new Date().toISOString(),
+            is_read: false,
+            delivery_status: 'sent',
+            sender: PROFILE_ROW,
+          },
+        ],
+        201
+      );
+    }
     return respondJson(request, []);
   }
 
@@ -194,8 +222,8 @@ async function run() {
       await page.screenshot({ path: path.join(OUT, '02_sidebar_search_anshu_found.png') });
     }
 
-    // 3. Open New Conversation modal
-    console.log('Opening New Message modal...');
+    // 3. Open New Conversation modal and start chat with Anshu
+    console.log('Opening New Message modal and starting chat with Anshu...');
     const newMsgBtn = await page.$('button[aria-label="New Message"]');
     if (newMsgBtn) {
       await newMsgBtn.click();
@@ -208,6 +236,30 @@ async function run() {
         await modalInput.type('Anshu');
         await new Promise((r) => setTimeout(r, 800));
         await page.screenshot({ path: path.join(OUT, '04_modal_search_anshu.png') });
+
+        // Click Chat button for Anshu
+        const chatButtons = await page.$$('div[role="dialog"] button');
+        for (const btn of chatButtons) {
+          const text = await page.evaluate((el) => el.innerText, btn);
+          if (text.includes('Chat')) {
+            await btn.click();
+            break;
+          }
+        }
+        await new Promise((r) => setTimeout(r, 1200));
+
+        // Screenshot the newly opened active chat thread
+        await page.screenshot({ path: path.join(OUT, '05_active_chat_anshu_header.png') });
+
+        // Type and send a message
+        const textarea = await page.$('textarea');
+        if (textarea) {
+          await textarea.focus();
+          await textarea.type('Hey Anshu! Let’s collaborate on the project.');
+          await page.keyboard.press('Enter');
+          await new Promise((r) => setTimeout(r, 1000));
+          await page.screenshot({ path: path.join(OUT, '06_active_chat_anshu_message_sent.png') });
+        }
       }
     }
 
@@ -240,7 +292,7 @@ async function run() {
     if (mobileSearch) {
       await mobileSearch.type('Anshu');
       await new Promise((r) => setTimeout(r, 1000));
-      await mobilePage.screenshot({ path: path.join(OUT, '05_mobile_search_anshu.png') });
+      await mobilePage.screenshot({ path: path.join(OUT, '07_mobile_search_anshu.png') });
     }
 
     console.log('Visual QA completed successfully! Screenshots saved in', OUT);
