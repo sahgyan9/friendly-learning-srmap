@@ -2,9 +2,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { MESSAGES_READ_EVENT } from "@/lib/message-events";
+import { getOfflineCache, setOfflineCache } from "@/lib/offline/offlineStorage";
 
 /** Coalesces a burst — marking a conversation read updates every row in it. */
 const SETTLE_MS = 250;
+
+const unreadCacheKey = (userId: string) => `unread_messages:${userId}`;
 
 /**
  * The unread count behind the navbar's message badge.
@@ -81,6 +84,7 @@ export const useUnreadMessages = () => {
     }
 
     setUnreadCount(count ?? 0);
+    setOfflineCache(unreadCacheKey(userId), count ?? 0);
   }, [userId]);
 
   useEffect(() => {
@@ -97,6 +101,16 @@ export const useUnreadMessages = () => {
       if (timerRef.current) clearTimeout(timerRef.current);
       timerRef.current = setTimeout(readCount, SETTLE_MS);
     };
+
+    // Start from the last count this browser saw, so the badge does not blink
+    // out and back on every tab switch while the query below is in flight.
+    // Wrong for at most one round-trip, and readCount always overwrites it —
+    // whereas starting from 0 is wrong every single time for anyone who has
+    // unread messages.
+    const cached = getOfflineCache<number>(unreadCacheKey(userId));
+    if (typeof cached?.data === "number") {
+      setUnreadCount(cached.data);
+    }
 
     readCount();
 
