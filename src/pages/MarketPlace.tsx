@@ -1,11 +1,13 @@
 import { PRIMARY_DOMAIN } from "@/lib/constants";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Input } from "@/components/ui/input";
 import { Search, Plus, Loader2, Sparkles, RefreshCw } from "lucide-react";
 import { motion } from "framer-motion";
 import { SRMAPEventCard } from "@/components/marketplace/SRMAPEventCard";
-import { useSRMAPEvents } from "@/hooks/useSRMAPEvents";
+import { YourEventsStrip } from "@/components/marketplace/YourEventsStrip";
+import { useSRMAPEvents, type SRMAPEvent } from "@/hooks/useSRMAPEvents";
+import { useEventRSVPs } from "@/hooks/useEventRSVPs";
 import { Button } from "@/components/ui/button";
 import { isUserAdmin, syncSRMAPEvents } from '@/integrations/supabase/services/marketplace';
 import { useAuth } from '@/context/AuthContext';
@@ -17,12 +19,20 @@ import { ROUTE_META } from "@/lib/seo/route-meta";
 import StructuredData from "@/components/StructuredData";
 import { getBreadcrumbSchema } from "@/lib/structured-data";
 
+type EventTab = "all" | "mine" | "past";
+
+function parseEventDate(value: string) {
+    return new Date(value.replace(" ", "T") + "+05:30").getTime();
+}
+
 const MarketPlace = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [isAdmin, setIsAdmin] = useState(false);
     const [isSyncing, setIsSyncing] = useState(false);
+    const [activeTab, setActiveTab] = useState<EventTab>("all");
     const { user } = useAuth();
     const { events: srmapEvents, loading: srmapLoading, error: srmapError, refetch } = useSRMAPEvents();
+    const { rsvps, pendingEventId, toggleRSVP } = useEventRSVPs();
     const { markSeen: markEventsNavSeen } = useHasVisitedEventsNav();
 
     // Reaching this page is what clears the welcome tour's navbar dot.
@@ -63,12 +73,57 @@ const MarketPlace = () => {
         }
     };
 
-    const filteredEvents = srmapEvents.filter(e =>
-        !searchQuery ||
-        e.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        e.excerpt.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        e.department.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    // srmapEvents already arrives sorted live -> upcoming (soonest first) ->
+    // past (most recent first), so every list below preserves that order and
+    // only partitions it.
+    const { currentEvents, pastEvents, myEvents } = useMemo(() => {
+        const now = Date.now();
+        const current: SRMAPEvent[] = [];
+        const past: SRMAPEvent[] = [];
+
+        srmapEvents.forEach((event) => {
+            if (parseEventDate(event.endDate) < now) {
+                past.push(event);
+            } else {
+                current.push(event);
+            }
+        });
+
+        return {
+            // Events the student RSVP'd to float to the top of the main feed.
+            currentEvents: [
+                ...current.filter((e) => rsvps[e.id]),
+                ...current.filter((e) => !rsvps[e.id]),
+            ],
+            pastEvents: past,
+            myEvents: current.filter((e) => rsvps[e.id]),
+        };
+    }, [srmapEvents, rsvps]);
+
+    const tabEvents =
+        activeTab === "past" ? pastEvents : activeTab === "mine" ? myEvents : currentEvents;
+
+    const query = searchQuery.trim().toLowerCase();
+    const filteredEvents = query
+        ? tabEvents.filter(e =>
+            e.title.toLowerCase().includes(query) ||
+            e.excerpt.toLowerCase().includes(query) ||
+            e.department.toLowerCase().includes(query)
+        )
+        : tabEvents;
+
+    const tabs: { id: EventTab; label: string; count: number }[] = [
+        { id: "all", label: "All Events", count: currentEvents.length },
+        ...(user ? [{ id: "mine" as const, label: "My RSVPs", count: myEvents.length }] : []),
+        { id: "past", label: "Past", count: pastEvents.length },
+    ];
+
+    const emptyMessage =
+        activeTab === "mine"
+            ? "You haven't RSVP'd to anything yet. Hit Going or Interested on an event to pin it here."
+            : activeTab === "past"
+                ? "No past events in the archive yet."
+                : "No current university events found";
 
     return (
         <>
@@ -151,6 +206,44 @@ const MarketPlace = () => {
                             )}
                         </div>
 
+                        {/* Pinned "Your Events" ribbon — only when the student has live
+                            or upcoming RSVPs. */}
+                        {!srmapLoading && myEvents.length > 0 && (
+                            <YourEventsStrip events={myEvents} rsvps={rsvps} />
+                        )}
+
+                        {/* Tabs. Category tabs (Workshops, Hackathons...) are
+                            deliberately absent: the upstream feed rarely carries
+                            enough of any one category to fill one. */}
+                        {!srmapLoading && !srmapError && srmapEvents.length > 0 && (
+                            <div className="mb-6 flex flex-wrap gap-2" role="tablist" aria-label="Event filters">
+                                {tabs.map(tab => (
+                                    <button
+                                        key={tab.id}
+                                        type="button"
+                                        role="tab"
+                                        aria-selected={activeTab === tab.id}
+                                        onClick={() => setActiveTab(tab.id)}
+                                        className={cn(
+                                            "inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors",
+                                            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                                            activeTab === tab.id
+                                                ? "border-violet-500/40 bg-violet-500/12 text-violet-700 dark:text-violet-300"
+                                                : "border-border/60 text-muted-foreground hover:border-violet-500/30 hover:bg-violet-500/8",
+                                        )}
+                                    >
+                                        {tab.label}
+                                        <span className={cn(
+                                            "rounded-full px-1.5 py-0.5 text-2xs font-semibold",
+                                            activeTab === tab.id ? "bg-violet-500/20" : "bg-muted",
+                                        )}>
+                                            {tab.count}
+                                        </span>
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+
                         {srmapLoading ? (
                             <div className="flex justify-center items-center h-64">
                                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -170,12 +263,20 @@ const MarketPlace = () => {
                             </div>
                         ) : filteredEvents.length === 0 ? (
                             <div className="text-center py-12">
-                                <p className="text-lg text-muted-foreground">No events match your search</p>
+                                <p className="mx-auto max-w-md text-lg text-muted-foreground">
+                                    {query ? "No events match your search" : emptyMessage}
+                                </p>
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {filteredEvents.map(event => (
-                                    <SRMAPEventCard key={event.id} event={event} />
+                                    <SRMAPEventCard
+                                        key={event.id}
+                                        event={event}
+                                        rsvpStatus={rsvps[event.id] ?? null}
+                                        onRsvp={toggleRSVP}
+                                        rsvpPending={pendingEventId === event.id}
+                                    />
                                 ))}
                             </div>
                         )}

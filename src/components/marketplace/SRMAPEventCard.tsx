@@ -2,18 +2,27 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, GraduationCap, ArrowRight, Sparkles, MapPin, ExternalLink, Share2 } from "lucide-react";
+import { Calendar, GraduationCap, ArrowRight, Sparkles, MapPin, ExternalLink, Share2, Check, Star, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CardAccentBorder } from "@/components/ui/CardAccentBorder";
 import { getOptimizedImageUrl } from "@/lib/image/imageUrl";
 import { EventShareModal } from "@/components/events/EventShareModal";
 import type { SRMAPEvent } from "@/hooks/useSRMAPEvents";
+import type { EventAttendanceStatus } from "@/integrations/supabase/services/event-attendees";
 
 interface SRMAPEventCardProps {
   event: SRMAPEvent;
+  /** The signed-in student's RSVP for this event, if any. */
+  rsvpStatus?: EventAttendanceStatus | null;
+  /**
+   * Passing this turns on the quick RSVP buttons. Omitted (as on the related
+   * events strip in EventDetail) the card renders exactly as it always has.
+   */
+  onRsvp?: (eventId: number, status: EventAttendanceStatus) => void;
+  rsvpPending?: boolean;
 }
 
-export function SRMAPEventCard({ event }: SRMAPEventCardProps) {
+export function SRMAPEventCard({ event, rsvpStatus = null, onRsvp, rsvpPending = false }: SRMAPEventCardProps) {
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const parseDate = (value: string) => new Date(value.replace(" ", "T") + "+05:30");
   const start = parseDate(event.startDate);
@@ -51,6 +60,10 @@ export function SRMAPEventCard({ event }: SRMAPEventCardProps) {
         "group relative flex flex-col overflow-hidden transition-all duration-300",
         "hover:-translate-y-0.5 hover:shadow-lg hover:border-violet-500/30",
         isLive && "ring-2 ring-violet-500/40",
+        // An RSVP'd event outranks "live" for the border -- it is the one
+        // signal the student is scanning for in a grid of 18 cards.
+        rsvpStatus === "going" && "ring-2 ring-emerald-500/50",
+        rsvpStatus === "interested" && "ring-2 ring-amber-500/50",
         hasEnded && "opacity-70",
       )}
     >
@@ -173,6 +186,61 @@ export function SRMAPEventCard({ event }: SRMAPEventCardProps) {
           </p>
         )}
       </CardContent>
+
+      {/* Quick RSVP — only on surfaces that pass a handler (the events page) */}
+      {onRsvp && !hasEnded && (
+        <div className="relative flex items-center gap-1.5 px-6 pb-3">
+          <button
+            type="button"
+            disabled={rsvpPending}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onRsvp(event.id, "going");
+            }}
+            aria-pressed={rsvpStatus === "going"}
+            className={cn(
+              "inline-flex flex-1 items-center justify-center gap-1.5 rounded-md border px-2 py-1.5 text-xs font-semibold transition-colors",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60",
+              rsvpStatus === "going"
+                ? "border-emerald-500/40 bg-emerald-500/12 text-emerald-700 dark:text-emerald-400"
+                : "border-border/60 text-muted-foreground hover:border-emerald-500/30 hover:bg-emerald-500/8 hover:text-emerald-700 dark:hover:text-emerald-400",
+            )}
+          >
+            {rsvpPending && rsvpStatus === "going" ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
+            ) : (
+              <Check className="h-3.5 w-3.5" aria-hidden />
+            )}
+            Going
+          </button>
+
+          <button
+            type="button"
+            disabled={rsvpPending}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onRsvp(event.id, "interested");
+            }}
+            aria-pressed={rsvpStatus === "interested"}
+            className={cn(
+              "inline-flex flex-1 items-center justify-center gap-1.5 rounded-md border px-2 py-1.5 text-xs font-semibold transition-colors",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60",
+              rsvpStatus === "interested"
+                ? "border-amber-500/40 bg-amber-500/12 text-amber-700 dark:text-amber-400"
+                : "border-border/60 text-muted-foreground hover:border-amber-500/30 hover:bg-amber-500/8 hover:text-amber-700 dark:hover:text-amber-400",
+            )}
+          >
+            {rsvpPending && rsvpStatus === "interested" ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
+            ) : (
+              <Star className="h-3.5 w-3.5" aria-hidden />
+            )}
+            Interested
+          </button>
+        </div>
+      )}
 
       {/* Footer — date + Action CTA */}
       <CardFooter className="relative mt-auto flex items-center justify-between gap-3 border-t border-border/60 pt-3">
