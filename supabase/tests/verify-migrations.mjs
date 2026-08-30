@@ -539,6 +539,7 @@ for (const file of [
   '20260827160000_update_attendance_sync_schedule_to_1730_ist.sql',
   '20260830120000_event_attendees.sql',
   '20260830130000_direct_message_reactions.sql',
+  '20260830140000_allow_everyone_to_rate_mentor.sql',
 ]) {
   if (file === '20260804132345_b843f814-46d5-4c25-bc80-32e5f6ebba59.sql') {
     // Production's `faculty` table still carries `profile_image`, a column
@@ -3610,6 +3611,45 @@ check('toggle_direct_message_reaction removes reaction and returns false', toggl
 const { rows: msgsAfterUntoggle } = await q(`SELECT * FROM public.get_conversation_messages($1::uuid);`, [TEST_CONV_ID]);
 const untoggledMsg = msgsAfterUntoggle.find(m => m.id === msg2Rows[0].id);
 check('get_conversation_messages reflects removed reaction', !untoggledMsg?.reactions?.['🔥'] && (!untoggledMsg?.viewer_reactions || untoggledMsg.viewer_reactions.length === 0));
+
+// --- 20260830140000_allow_everyone_to_rate_mentor.sql ----------------
+console.log('\n--- 20260830140000_allow_everyone_to_rate_mentor.sql ---');
+
+// Test 1: can_user_rate_mentor allows rating without prior conversations
+const { rows: [canRateRes1] } = await q(`SELECT public.can_user_rate_mentor($1::uuid, $2::uuid) as eligible;`, [CURRENT_UID, OTHER_UID]);
+check('can_user_rate_mentor allows student to rate mentor without prior conversation', canRateRes1?.eligible === true);
+
+// Test 2: cannot rate oneself
+const { rows: [canRateSelfRes] } = await q(`SELECT public.can_user_rate_mentor($1::uuid, $1::uuid) as eligible;`, [OTHER_UID]);
+check('can_user_rate_mentor prevents mentor from rating themselves', canRateSelfRes?.eligible === false);
+
+// Test 3: Insert review as CURRENT_UID
+await q(`
+  INSERT INTO public.mentor_reviews (mentor_id, reviewer_id, rating, review_text)
+  VALUES ($1, $2, 5, 'Exceptional mentor and guide!')
+`, [OTHER_UID, CURRENT_UID]);
+
+const { rows: [canRateRes2] } = await q(`SELECT public.can_user_rate_mentor($1::uuid, $2::uuid) as eligible;`, [CURRENT_UID, OTHER_UID]);
+check('can_user_rate_mentor returns false after review is created', canRateRes2?.eligible === false);
+
+// Test 4: Verify trigger updated mentor rating
+const { rows: [mentorAfterReview] } = await q(`SELECT rating, review_count FROM public.mentors WHERE id = $1;`, [OTHER_UID]);
+check('mentor review rating trigger updates mentor average and count', Number(mentorAfterReview?.rating) === 5 && Number(mentorAfterReview?.review_count) === 1, JSON.stringify(mentorAfterReview));
+
+// Test 5: Update review
+await q(`
+  UPDATE public.mentor_reviews
+  SET rating = 4, review_text = 'Great mentor, helped a lot with React!'
+  WHERE mentor_id = $1 AND reviewer_id = $2
+`, [OTHER_UID, CURRENT_UID]);
+
+const { rows: [mentorAfterUpdate] } = await q(`SELECT rating, review_count FROM public.mentors WHERE id = $1;`, [OTHER_UID]);
+check('updating mentor review recalculates mentor average', Number(mentorAfterUpdate?.rating) === 4 && Number(mentorAfterUpdate?.review_count) === 1);
+
+// Test 6: Delete review
+await q(`DELETE FROM public.mentor_reviews WHERE mentor_id = $1 AND reviewer_id = $2`, [OTHER_UID, CURRENT_UID]);
+const { rows: [mentorAfterDelete] } = await q(`SELECT rating, review_count FROM public.mentors WHERE id = $1;`, [OTHER_UID]);
+check('deleting mentor review updates mentor average and review_count to 0', Number(mentorAfterDelete?.rating) === 0 && Number(mentorAfterDelete?.review_count) === 0);
 
 console.log(failures === 0
   ? '\nAll migration checks passed against real Postgres.'

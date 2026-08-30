@@ -20,23 +20,38 @@ const supabaseAdmin = createClient(
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
 );
 
-// Models verified on Google Gemini Developer API
+// Models verified on Google Gemini Developer API (fast, low-latency first)
 const CANDIDATE_MODELS = [
   "gemini-2.0-flash",
   "gemini-1.5-flash",
+  "gemini-1.5-flash-8b",
   "gemini-1.5-pro",
-  "gemini-flash-latest",
-  "gemini-flash-lite-latest",
-  "gemini-3.1-flash-lite",
 ];
 
 const MAX_OUTPUT_TOKENS_FULL = 4096;
 const MAX_OUTPUT_TOKENS_BASIC = 2048;
-const RETRY_503_MS = 1200;
-const ATTEMPT_TIMEOUT_MS = 20000;
+const RETRY_503_MS = 1000;
+const ATTEMPT_TIMEOUT_MS = 12000;
 
 const MAX_BASE64_LEN = 14 * 1024 * 1024;
 const MAX_TEXT_LEN = 20000;
+
+function extractJson(text: string): any {
+  let cleaned = text.trim();
+  // Strip markdown code fences if present anywhere
+  const codeBlockMatch = cleaned.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+  if (codeBlockMatch) {
+    cleaned = codeBlockMatch[1].trim();
+  } else {
+    // If no code block, extract the JSON object bounded by outermost { and }
+    const firstBrace = cleaned.indexOf("{");
+    const lastBrace = cleaned.lastIndexOf("}");
+    if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+      cleaned = cleaned.slice(firstBrace, lastBrace + 1);
+    }
+  }
+  return JSON.parse(cleaned);
+}
 
 const EXTRA_FIELDS_BLOCK = `- "tagline": string (a punchy, natural one-sentence headline under 100 chars describing their domain, skills, or focus, e.g. "CSE student helping with C++, data structures, and competitive programming." or "Physics student working on quantum computing and renewable energy." or "Full-stack developer with React and cloud infrastructure experience.")
 - "outcomes": array of 2 to 3 concise strings describing concrete things a junior/peer achieves with their help (e.g. ["Build and deploy fullstack React projects", "Master problem-solving in physics and calculus"])
@@ -193,13 +208,7 @@ serve(async (req) => {
             }
 
             if (rawText) {
-              let cleaned = rawText.trim();
-              if (cleaned.startsWith("```json")) {
-                cleaned = cleaned.replace(/^```json\s*/, "").replace(/\s*```$/, "");
-              } else if (cleaned.startsWith("```")) {
-                cleaned = cleaned.replace(/^```\s*/, "").replace(/\s*```$/, "");
-              }
-              const parsed = JSON.parse(cleaned);
+              const parsed = extractJson(rawText);
               return json({ data: parsed });
             }
           } catch (err) {
@@ -237,7 +246,7 @@ serve(async (req) => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            model: "google/gemini-flash-latest",
+            model: "google/gemini-2.0-flash",
             messages: [
               { role: "system", content: prompt },
               { role: "user", content: userContent },
@@ -249,13 +258,7 @@ serve(async (req) => {
           const data = await aiResponse.json();
           const content = data?.choices?.[0]?.message?.content;
           if (content) {
-            let cleaned = content.trim();
-            if (cleaned.startsWith("```json")) {
-              cleaned = cleaned.replace(/^```json\s*/, "").replace(/\s*```$/, "");
-            } else if (cleaned.startsWith("```")) {
-              cleaned = cleaned.replace(/^```\s*/, "").replace(/\s*```$/, "");
-            }
-            const parsed = JSON.parse(cleaned);
+            const parsed = extractJson(content);
             return json({ data: parsed });
           }
         }
