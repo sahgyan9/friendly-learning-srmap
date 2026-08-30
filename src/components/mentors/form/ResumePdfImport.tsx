@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { FileText, Loader2, Upload } from "lucide-react";
 import { toast } from "sonner";
@@ -6,6 +6,16 @@ import { supabase } from "@/integrations/supabase/client";
 import type { MentorFormData } from "@/hooks/useMentorForm";
 import { extractDocumentText } from "@/lib/pdfTextExtract";
 import PdfParsingModal, { type ParsingStage } from "./PdfParsingModal";
+import {
+  startParsingSession,
+  updateParsingProgress,
+  completeParsingSession,
+  failParsingSession,
+  markParsingSessionApplied,
+  clearParsingSession,
+  getActiveParsingSession,
+  subscribeToParsingSession,
+} from "@/lib/resumeParserSession";
 
 interface ResumePdfImportProps {
   onImported: (data: Record<string, any>) => void;
@@ -38,7 +48,8 @@ const fileToBase64 = (file: File): Promise<string> =>
     reader.readAsDataURL(file);
   });
 
-const ACCEPTED_FILE_TYPES = ".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+const ACCEPTED_FILE_TYPES =
+  ".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 
 const ResumePdfImport = ({
   onImported,
@@ -56,6 +67,37 @@ const ResumePdfImport = ({
   const [fileName, setFileName] = useState("");
   const [fileSizeBytes, setFileSizeBytes] = useState<number | undefined>(undefined);
   const [errorMessage, setErrorMessage] = useState("");
+
+  // Sync with active background session if present
+  useEffect(() => {
+    const active = getActiveParsingSession();
+    if (active && active.status === "parsing") {
+      setFileName(active.fileName);
+      setFileSizeBytes(active.fileSizeBytes);
+      setParsingStage(active.stage);
+      setModalOpen(true);
+      setIsLoading(true);
+    }
+
+    const unsubscribe = subscribeToParsingSession((session) => {
+      if (!session) {
+        setIsLoading(false);
+        return;
+      }
+      if (session.status === "parsing") {
+        setFileName(session.fileName);
+        setFileSizeBytes(session.fileSizeBytes);
+        setParsingStage(session.stage);
+        setIsLoading(true);
+      } else if (session.status === "error") {
+        setParsingStage("error");
+        setErrorMessage(session.errorMessage || "Failed to parse resume");
+        setIsLoading(false);
+      }
+    });
+
+    return unsubscribe;
+  }, []);
 
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -84,16 +126,22 @@ const ResumePdfImport = ({
     setModalOpen(true);
     setIsLoading(true);
 
+    // Initialize global session tracking for background & navigation resilience
+    startParsingSession(file.name, file.size);
+
     try {
       // Step 1: Extract text from PDF or Word (.docx) document
       const { text: extractedText, fileType } = await extractDocumentText(file);
 
       setParsingStage("analyzing");
+      updateParsingProgress("analyzing", 55, "Extracting skills, domains & projects...");
 
       let body: Record<string, any>;
       if (fileType === "docx") {
         if (!extractedText || extractedText.length < 20) {
-          throw new Error("Could not extract readable text from this Word document. Please ensure it has text or export to PDF.");
+          throw new Error(
+            "Could not extract readable text from this Word document. Please ensure it has text or export to PDF."
+          );
         }
         body = { pdfText: extractedText, mimeType: "text/plain", fields };
       } else {
@@ -104,10 +152,9 @@ const ResumePdfImport = ({
       }
 
       // Step 2 & 3: Run Gemini AI parser on Edge Function
-      const { data, error } = await supabase.functions.invoke(
-        "parse-linkedin-pdf",
-        { body },
-      );
+      updateParsingProgress("synthesizing", 76, "Synthesizing bio, outcomes & AMA topics...");
+
+      const { data, error } = await supabase.functions.invoke("parse-linkedin-pdf", { body });
 
       if (error) {
         let msg = error.message;
@@ -131,8 +178,8 @@ const ResumePdfImport = ({
         const rawSkills: string[] = Array.isArray(extracted.skills)
           ? extracted.skills
           : typeof extracted.skills === "string"
-            ? extracted.skills.split(",").map((s: string) => s.trim()).filter(Boolean)
-            : [];
+          ? extracted.skills.split(",").map((s: string) => s.trim()).filter(Boolean)
+          : [];
 
         const isDegreeOrInstitution = (s: string) => {
           const lower = s.toLowerCase().trim();
@@ -166,9 +213,10 @@ const ResumePdfImport = ({
             const link = typeof p.link === "string" && p.link.trim() ? p.link.trim() : undefined;
             if (!title) return null;
             return {
-              id: p.id || crypto.randomUUID(),
+              id: p.id || (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `proj_${Date.now()}_${Math.random()}`),
               title: title.slice(0, 60),
-              description: description.slice(0, 200) || "Project built during coursework or hackathons.",
+              description:
+                description.slice(0, 200) || "Project built during coursework or hackathons.",
               link: link && /^https?:\/\//i.test(link) ? link : link ? `https://${link}` : undefined,
             };
           })
@@ -182,11 +230,12 @@ const ResumePdfImport = ({
           .map((e: any) => {
             if (!e || typeof e !== "object") return null;
             const title = typeof e.title === "string" ? e.title.trim() : "";
-            const organization = typeof e.organization === "string" ? e.organization.trim() : undefined;
+            const organization =
+              typeof e.organization === "string" ? e.organization.trim() : undefined;
             const period = typeof e.period === "string" ? e.period.trim() : undefined;
             if (!title) return null;
             return {
-              id: e.id || crypto.randomUUID(),
+              id: e.id || (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `exp_${Date.now()}_${Math.random()}`),
               title: title.slice(0, 60),
               organization: organization ? organization.slice(0, 60) : undefined,
               period: period ? period.slice(0, 30) : undefined,
@@ -197,6 +246,7 @@ const ResumePdfImport = ({
       }
 
       setParsingStage("finalizing");
+      updateParsingProgress("finalizing", 97, "Validating fields & preparing profile draft...");
 
       // Only pass non-empty fields so we don't overwrite existing input with ""
       const filtered: Record<string, any> = {};
@@ -211,12 +261,16 @@ const ResumePdfImport = ({
         }
       });
 
+      // Save to global session storage so it persists even if user navigates away
+      completeParsingSession(filtered);
+
       // Show success stage on modal
       setParsingStage("success");
 
       // Wait a moment for celebratory animation to complete before applying
       setTimeout(() => {
         setModalOpen(false);
+        markParsingSessionApplied();
         onImported(filtered);
         toast.success("Resume parsed successfully! AI drafted your skills, projects & bio.");
       }, 750);
@@ -225,6 +279,7 @@ const ResumePdfImport = ({
       const msg = err instanceof Error ? err.message : "Failed to parse document";
       setErrorMessage(msg);
       setParsingStage("error");
+      failParsingSession(msg);
       toast.error(msg);
     } finally {
       setIsLoading(false);
@@ -240,10 +295,13 @@ const ResumePdfImport = ({
         stage={parsingStage}
         errorMessage={errorMessage}
         onRetry={() => {
+          clearParsingSession();
           setModalOpen(false);
           setTimeout(() => inputRef.current?.click(), 150);
         }}
-        onClose={() => setModalOpen(false)}
+        onClose={() => {
+          setModalOpen(false);
+        }}
       />
 
       {variant === "button" ? (
@@ -277,7 +335,9 @@ const ResumePdfImport = ({
           </Button>
         </>
       ) : (
-        <div className={`rounded-lg border border-dashed border-primary/40 bg-primary/5 p-4 ${className}`}>
+        <div
+          className={`rounded-lg border border-dashed border-primary/40 bg-primary/5 p-4 ${className}`}
+        >
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="flex items-start gap-3">
               <div className="rounded-md bg-primary/10 p-2">

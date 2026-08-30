@@ -42,6 +42,12 @@ import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import ResumePdfImport from "@/components/mentors/form/ResumePdfImport";
 import ResumeUpdateDiffModal from "@/components/profile/ResumeUpdateDiffModal";
+import {
+  getUnappliedParsedData,
+  markParsingSessionApplied,
+  clearParsingSession,
+  subscribeToParsingSession,
+} from "@/lib/resumeParserSession";
 import { ImportSrmPortalDialog } from "@/components/profile/ImportSrmPortal";
 import PostPublishPortalModal from "@/components/profile/PostPublishPortalModal";
 import { ProfileAvatarUploader } from "@/components/profile/ProfileAvatarUploader";
@@ -197,6 +203,35 @@ export default function ProfileSetupStudio() {
   const [pendingResumeData, setPendingResumeData] = useState<Record<string, any> | null>(null);
   const [portalDialogOpen, setPortalDialogOpen] = useState(false);
   const [postPublishModalOpen, setPostPublishModalOpen] = useState(false);
+
+  // Unapplied background-parsed resume state
+  const [unappliedResume, setUnappliedResume] = useState<{
+    jobId: string;
+    fileName: string;
+    data: Record<string, any>;
+  } | null>(null);
+
+  useEffect(() => {
+    // Check for existing unapplied resume parsed while user was away
+    const unapplied = getUnappliedParsedData();
+    if (unapplied) {
+      setUnappliedResume(unapplied);
+    }
+
+    const unsubscribe = subscribeToParsingSession((session) => {
+      if (session && session.status === "success" && session.data && !session.applied) {
+        setUnappliedResume({
+          jobId: session.jobId,
+          fileName: session.fileName,
+          data: session.data,
+        });
+      } else if (!session || session.applied) {
+        setUnappliedResume(null);
+      }
+    });
+
+    return unsubscribe;
+  }, []);
 
   const [nudgeReason, setNudgeReason] = useState<"resume" | "visit" | null>(null);
   const initialNudgeCheckedRef = useRef(false);
@@ -1072,6 +1107,56 @@ export default function ProfileSetupStudio() {
 
       {/* Main Full-Width Studio Container */}
       <main className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
+        {/* Unapplied Resume Recovery Banner (Shown when user returns after background parsing) */}
+        {unappliedResume && (
+          <section className="rounded-2xl border border-primary/40 bg-gradient-to-r from-primary/10 via-indigo-500/10 to-purple-500/10 p-4 sm:p-5 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-in fade-in slide-in-from-top-2">
+            <div className="flex items-start gap-3.5">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-xs ring-4 ring-primary/10">
+                <Sparkles className="h-5 w-5 animate-pulse" />
+              </div>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-extrabold text-sm sm:text-base text-foreground">
+                    Resume Parsed While You Were Away!
+                  </span>
+                  <span className="text-2xs font-semibold text-primary px-2.5 py-0.5 rounded-full bg-primary/15 border border-primary/20">
+                    {unappliedResume.fileName}
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Gemini AI finished extracting your skills, projects, work experience & bio. Review the extracted data to merge with your profile.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 text-xs text-muted-foreground hover:text-foreground"
+                onClick={() => {
+                  markParsingSessionApplied();
+                  setUnappliedResume(null);
+                }}
+              >
+                Dismiss
+              </Button>
+              <Button
+                size="sm"
+                className="h-8 text-xs font-bold gap-1.5 shadow-sm"
+                onClick={() => {
+                  const resumeData = unappliedResume.data;
+                  markParsingSessionApplied();
+                  setUnappliedResume(null);
+                  handlePdfImported(resumeData);
+                }}
+              >
+                <Sparkles className="h-3.5 w-3.5" />
+                Review & Apply Draft
+              </Button>
+            </div>
+          </section>
+        )}
+
         {/* Onboarding Kickstart / Mode Selector */}
         {!isPublished && completeness.score < 60 ? (
           <section className="rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/10 via-background to-indigo-500/10 p-5 sm:p-6 shadow-xs">
