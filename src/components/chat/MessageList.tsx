@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Message } from "@/types/chat";
+import { retryQueuedMessage } from "@/lib/offline/messageOutbox";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -526,6 +527,22 @@ const MessageList = ({
                           deliveryStatus={message.delivery_status || "sent"}
                           isOwnMessage={isMine}
                         />
+                      </div>
+                    )}
+
+                    {/* Outside the timestamp row above, which only renders for
+                        the last message in a group: a message that could not
+                        be sent needs its way out whether or not it happens to
+                        be the one carrying the group's timestamp. */}
+                    {isMine && message.delivery_status === "failed" && (
+                      <div className="mt-1 flex justify-end px-1">
+                        <button
+                          type="button"
+                          onClick={() => retryQueuedMessage(message.id)}
+                          className="text-3xs font-medium text-destructive underline-offset-2 hover:underline"
+                        >
+                          Not sent · Retry
+                        </button>
                       </div>
                     )}
                   </div>

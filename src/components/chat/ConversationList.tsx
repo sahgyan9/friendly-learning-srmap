@@ -2,13 +2,14 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Loader2, MessageCircleMore, SearchX } from "lucide-react";
+import { AlertCircle, Clock, Loader2, MessageCircleMore, SearchX } from "lucide-react";
 import { Conversation } from "@/types/chat";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { getInitials } from "@/utils/user-utils";
 import { useUserPresenceRealtime } from "@/hooks/useUserPresenceRealtime";
 import OnlineStatus from "./OnlineStatus";
+import { useOutboxMessages } from "@/hooks/useMessageOutbox";
 
 interface ConversationListProps {
   conversations: Conversation[];
@@ -36,6 +37,18 @@ const ConversationList = ({
   onOpenCampusSearch,
 }: ConversationListProps) => {
   const { isUserOnline } = useUserPresenceRealtime();
+  const outboxMessages = useOutboxMessages();
+
+  // The newest queued message per conversation. Built before the early
+  // returns below, because hooks cannot run conditionally — and iterated in
+  // order so the last one written wins, which is the one the row should show.
+  const latestQueuedByConversation = React.useMemo(() => {
+    const byConversation = new Map<string, (typeof outboxMessages)[number]>();
+    for (const message of outboxMessages) {
+      byConversation.set(message.conversationId, message);
+    }
+    return byConversation;
+  }, [outboxMessages]);
 
   if (isLoading) {
     return (
@@ -115,7 +128,12 @@ const ConversationList = ({
         const isActive = activeChat === conversation.id;
         const displayName = otherUser?.name?.trim() || "Student";
         const isOnline = isUserOnline(otherUser?.id);
-        const preview = conversation.last_message?.content ?? "No messages yet";
+        // A message written offline is the most recent thing in this
+        // conversation as far as the sender is concerned, so it is what the
+        // row should show — otherwise the list still reads as though they
+        // never wrote it.
+        const queued = latestQueuedByConversation.get(conversation.id);
+        const preview = queued?.content ?? conversation.last_message?.content ?? "No messages yet";
 
         return (
           <li key={conversation.id}>
@@ -173,6 +191,18 @@ const ConversationList = ({
                 </div>
 
                 <div className="mt-0.5 flex items-center gap-2">
+                  {queued &&
+                    (queued.failed ? (
+                      <AlertCircle
+                        className="h-3 w-3 shrink-0 text-destructive"
+                        aria-label="Not sent"
+                      />
+                    ) : (
+                      <Clock
+                        className="h-3 w-3 shrink-0 text-muted-foreground/70"
+                        aria-label="Waiting to send"
+                      />
+                    ))}
                   <p
                     className={cn(
                       "truncate text-xs leading-relaxed transition-colors duration-200",
