@@ -537,6 +537,7 @@ for (const file of [
   '20260826160000_srm_attendance_and_holidays.sql',
   '20260827100000_pwa_installs_tracking.sql',
   '20260827160000_update_attendance_sync_schedule_to_1730_ist.sql',
+  '20260830120000_event_attendees.sql',
 ]) {
   if (file === '20260804132345_b843f814-46d5-4c25-bc80-32e5f6ebba59.sql') {
     // Production's `faculty` table still carries `profile_image`, a column
@@ -3536,6 +3537,51 @@ const { rows: [kpiWithPwa] } = await asAuthenticated(() => q(`SELECT public.admi
 console.log('\n--- 20260827160000_update_attendance_sync_schedule_to_1730_ist.sql ---');
 const { rows: [attSyncJob] } = await q(`SELECT schedule, active FROM cron.job WHERE jobname='srm-attendance-sync-daily'`);
 check('srm-attendance-sync-daily scheduled at 12:00 UTC (17:30 IST / 5:30 PM)', attSyncJob?.schedule === '0 12 * * 1-5' && attSyncJob?.active === true, JSON.stringify(attSyncJob));
+
+// --- 20260830120000_event_attendees.sql -----------------------------
+console.log('\n--- 20260830120000_event_attendees.sql ---');
+const { rows: eventTableRows } = await q(`
+  SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'event_attendees';
+`);
+check('event_attendees table exists', eventTableRows.length === 1);
+
+// Seed an event into srmap_events_cache
+await q(`
+  INSERT INTO public.srmap_events_cache (id, title, excerpt, start_date, end_date, link, department)
+  VALUES (99999, 'AI Workshop 2026', 'Hands-on AI Bootcamp', '2026-09-01 10:00:00', '2026-09-01 17:00:00', 'https://srmap.edu.in', 'CSE')
+  ON CONFLICT (id) DO NOTHING;
+`);
+
+// Insert attendance rows for CURRENT_UID and OTHER_UID
+await q(`
+  INSERT INTO public.event_attendees (event_id, user_id, status, note)
+  VALUES (99999, $1, 'going', 'Looking for hackathon teammates')
+  ON CONFLICT (event_id, user_id) DO UPDATE SET status = EXCLUDED.status, note = EXCLUDED.note;
+`, [CURRENT_UID]);
+
+await q(`
+  INSERT INTO public.event_attendees (event_id, user_id, status, note)
+  VALUES (99999, $1, 'interested', 'Heading from UB')
+  ON CONFLICT (event_id, user_id) DO UPDATE SET status = EXCLUDED.status, note = EXCLUDED.note;
+`, [OTHER_UID]);
+
+// Query get_event_attendees RPC
+const { rows: attendees } = await q(`SELECT * FROM public.get_event_attendees(99999::bigint)`);
+check('get_event_attendees RPC returns attendee rows with joined user details', attendees.length === 2 && attendees[0].name === 'Asha Student' && attendees[0].status === 'going' && attendees[0].note === 'Looking for hackathon teammates');
+
+// Query get_event_attendance_counts RPC
+const { rows: [counts] } = await q(`SELECT * FROM public.get_event_attendance_counts(ARRAY[99999::bigint])`);
+check('get_event_attendance_counts RPC computes going and interested tallies', Number(counts?.going_count) === 1 && Number(counts?.interested_count) === 1 && Number(counts?.total_count) === 2, JSON.stringify(counts));
+
+// Test update status
+await q(`UPDATE public.event_attendees SET status = 'interested' WHERE event_id = 99999 AND user_id = $1`, [CURRENT_UID]);
+const { rows: [updatedCounts] } = await q(`SELECT * FROM public.get_event_attendance_counts(ARRAY[99999::bigint])`);
+check('get_event_attendance_counts reflects status change', Number(updatedCounts?.going_count) === 0 && Number(updatedCounts?.interested_count) === 2);
+
+// Test delete
+await q(`DELETE FROM public.event_attendees WHERE event_id = 99999 AND user_id = $1`, [OTHER_UID]);
+const { rows: afterDeleteAttendees } = await q(`SELECT * FROM public.get_event_attendees(99999::bigint)`);
+check('delete attendance leaves remaining attendees intact', afterDeleteAttendees.length === 1 && afterDeleteAttendees[0].user_id === CURRENT_UID);
 
 console.log(failures === 0
   ? '\nAll migration checks passed against real Postgres.'

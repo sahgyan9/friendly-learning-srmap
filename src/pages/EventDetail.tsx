@@ -38,6 +38,7 @@ import {
 import { useSRMAPEvent, useSRMAPEvents } from "@/hooks/useSRMAPEvents";
 import { SRMAPEventCard } from "@/components/marketplace/SRMAPEventCard";
 import { EventShareModal } from "@/components/events/EventShareModal";
+import { EventAttendeeRoster } from "@/components/events/EventAttendeeRoster";
 import {
   getGoogleCalendarUrl,
   getOutlookCalendarUrl,
@@ -763,18 +764,21 @@ const EventDetail = () => {
                 </CardContent>
               </Card>
 
-              {/* Teammate / Buddy Finder Callout */}
-              <Card className="border-violet-500/20 bg-gradient-to-br from-violet-500/5 via-background to-transparent shadow-sm">
+              {/* Interactive RSVP & Attendee Roster */}
+              <EventAttendeeRoster event={event} />
+
+              {/* Campus Group Sharing Callout */}
+              <Card className="border-border/60 bg-gradient-to-br from-violet-500/5 via-background to-transparent shadow-sm">
                 <CardContent className="p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
                       <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-500/10 text-violet-600 dark:text-violet-400">
-                        <Users className="h-4 w-4" />
+                        <Share2 className="h-4 w-4" />
                       </div>
-                      <h4 className="text-sm font-semibold">Attending this event?</h4>
+                      <h4 className="text-sm font-semibold">Share with your Campus Groups</h4>
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      Find project partners, study groups, or share this event into your Workspace Groups.
+                      Send this event into your Workspace Groups or WhatsApp to invite friends and club members.
                     </p>
                   </div>
                   <div className="flex flex-wrap items-center gap-2 shrink-0">
@@ -784,14 +788,18 @@ const EventDetail = () => {
                       className="text-xs border-violet-500/30 hover:bg-violet-500/10 gap-1.5"
                       onClick={() => setIsShareModalOpen(true)}
                     >
-                      <Share2 className="h-3.5 w-3.5 text-violet-600 dark:text-violet-400" />
+                      <Users className="h-3.5 w-3.5 text-violet-600 dark:text-violet-400" />
                       Share to Group
                     </Button>
-                    <Link to="/find-study-partners">
-                      <Button size="sm" className="text-xs bg-violet-600 hover:bg-violet-700 text-white">
-                        Find Study Partners
-                      </Button>
-                    </Link>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-xs border-border hover:bg-muted gap-1.5"
+                      onClick={handleShareWhatsApp}
+                    >
+                      <Share2 className="h-3.5 w-3.5" />
+                      WhatsApp
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
