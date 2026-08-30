@@ -30,6 +30,7 @@ import {
   Trophy,
   UsersRound,
   Bell,
+  AlertTriangle,
 } from "lucide-react";
 
 /**
@@ -373,6 +374,16 @@ export const DESTINATIONS: SearchDestination[] = [
     group: "Admin",
     keywords: ["contact messages", "enquiries", "enquiry", "inbox", "support inbox", "reports"],
     to: "/admin/contact-messages",
+    audience: ["admin"],
+  },
+  {
+    id: "admin-error-reports",
+    label: "Error reports",
+    hint: "Errors students flagged with the 'Report' button on a toast",
+    icon: AlertTriangle,
+    group: "Admin",
+    keywords: ["error reports", "errors", "bugs", "report error", "flagged errors", "toast report"],
+    to: "/admin/error-reports",
     audience: ["admin"],
   },
   {

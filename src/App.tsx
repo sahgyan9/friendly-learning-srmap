@@ -153,6 +153,7 @@ const AdminSecurity = lazyWithRetry("AdminSecurity", () => import("./pages/Admin
 const TeamMembersAdmin = lazyWithRetry("TeamMembersAdmin", () => import("./pages/TeamMembersAdmin"));
 const MarketplaceAdmin = lazyWithRetry("MarketplaceAdmin", () => import("./pages/MarketplaceAdmin"));
 const AdminAIFeedback = lazyWithRetry("AdminAIFeedback", () => import("./pages/AdminAIFeedback"));
+const AdminErrorReports = lazyWithRetry("AdminErrorReports", () => import("./pages/AdminErrorReports"));
 const AdminSearchInsights = lazyWithRetry("AdminSearchInsights", () => import("./pages/AdminSearchInsights"));
 const AdminNotices = lazyWithRetry("AdminNotices", () => import("./pages/AdminNotices"));
 const AdminArticles = lazyWithRetry("AdminArticles", () => import("./pages/AdminArticles"));
@@ -391,6 +392,14 @@ function App() {
                       element={
                         <ProtectedRoute requiredRole="admin">
                           <AdminAIFeedback />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/admin/error-reports"
+                      element={
+                        <ProtectedRoute requiredRole="admin">
+                          <AdminErrorReports />
                         </ProtectedRoute>
                       }
                     />

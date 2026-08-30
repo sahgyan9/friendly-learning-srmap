@@ -27,6 +27,14 @@ export const getNotificationNavigationUrl = (notification: Notification): string
         return `${baseUrl}/admin/contact-messages`;
     }
 
+    // Handle error report notifications ("Report" button on an error toast)
+    if (
+        notification.type === 'system' &&
+        'error_report_id' in data
+    ) {
+        return `${baseUrl}/admin/error-reports`;
+    }
+
     // Community join request notifications (e.g. "Someone wants to join your group")
     if (
         notification.title?.includes("wants to join your group") ||

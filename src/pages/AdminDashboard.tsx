@@ -23,6 +23,7 @@ import {
   Megaphone,
   SearchX,
   RefreshCw,
+  AlertTriangle,
 } from "lucide-react";
 import AdminPageWrapper from "@/components/admin/AdminPageWrapper";
 import AdminHeader from "@/components/admin/AdminHeader";
@@ -60,6 +61,13 @@ const AdminDashboard = () => {
       icon: MessageSquare,
       path: "/admin/ai-feedback",
       gradient: "from-blue-600 to-indigo-600",
+    },
+    {
+      title: "Error Reports",
+      description: "Errors students flagged with the 'Report' button on a toast.",
+      icon: AlertTriangle,
+      path: "/admin/error-reports",
+      gradient: "from-red-500 to-orange-600",
     },
     {
       title: "Search Insights",

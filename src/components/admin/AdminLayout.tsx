@@ -16,7 +16,8 @@ import {
   Sparkles,
   Megaphone,
   BookOpen,
-  SearchX
+  SearchX,
+  AlertTriangle
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -56,6 +57,12 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
       href: "/admin/contact-messages",
       icon: MessageSquare,
       current: location.pathname === "/admin/contact-messages",
+    },
+    {
+      name: "Error Reports",
+      href: "/admin/error-reports",
+      icon: AlertTriangle,
+      current: location.pathname === "/admin/error-reports",
     },
     {
       name: "Mentor Verification",
