@@ -6,13 +6,13 @@
                             http://www.google.com/schemas/sitemap-image/1.1 http://www.google.com/schemas/sitemap-image/1.1/sitemap-image.xsd">
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty</loc>
-    <lastmod>2026-08-30T08:37:41.147Z</lastmod>
+    <lastmod>2026-08-30T16:36:40.956Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-amit-gupta</loc>
-    <lastmod>2026-08-21T05:47:16.838561+00:00</lastmod>
+    <lastmod>2026-08-30T15:11:08.75476+00:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <image:image>
@@ -28,6 +28,26 @@
     <image:image>
       <image:loc>https://ruapdkrgcbqrhvsayvpf.supabase.co/storage/v1/object/public/faculty-portraits/dr-susmi-jacob.webp</image:loc>
       <image:title>Dr Susmi Jacob — Computer Science and Engineering, SRM University-AP</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://friendly-learning-srmap.vercel.app/faculty/ajay-kumar-sahu</loc>
+    <lastmod>2026-08-30T12:32:48.20095+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://ruapdkrgcbqrhvsayvpf.supabase.co/storage/v1/object/public/faculty-portraits/ajay-kumar-sahu.webp</image:loc>
+      <image:title>Ajay Kumar Sahu — Computer Science and Engineering, SRM University-AP</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-amit-kumar-mandal</loc>
+    <lastmod>2026-08-30T14:56:20.589589+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://ruapdkrgcbqrhvsayvpf.supabase.co/storage/v1/object/public/faculty-portraits/dr-amit-kumar-mandal.webp</image:loc>
+      <image:title>Dr Amit Kumar Mandal — Computer Science and Engineering, SRM University-AP</image:title>
     </image:image>
   </url>
   <url>
@@ -51,16 +71,6 @@
     </image:image>
   </url>
   <url>
-    <loc>https://friendly-learning-srmap.vercel.app/faculty/ajay-kumar-sahu</loc>
-    <lastmod>2026-08-26T09:53:37.791628+00:00</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-    <image:image>
-      <image:loc>https://ruapdkrgcbqrhvsayvpf.supabase.co/storage/v1/object/public/faculty-portraits/ajay-kumar-sahu.webp</image:loc>
-      <image:title>Ajay Kumar Sahu — Computer Science and Engineering, SRM University-AP</image:title>
-    </image:image>
-  </url>
-  <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-a-lakshmana-rao</loc>
     <lastmod>2026-08-26T13:44:45.586292+00:00</lastmod>
     <changefreq>weekly</changefreq>
@@ -71,6 +81,16 @@
     </image:image>
   </url>
   <url>
+    <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-anirban-bhar</loc>
+    <lastmod>2026-08-30T14:56:15.557718+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://ruapdkrgcbqrhvsayvpf.supabase.co/storage/v1/object/public/faculty-portraits/dr-anirban-bhar.webp</image:loc>
+      <image:title>Dr Anirban Bhar — Computer Science and Engineering, SRM University-AP</image:title>
+    </image:image>
+  </url>
+  <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-basabendu-barman</loc>
     <lastmod>2026-08-21T05:47:16.838561+00:00</lastmod>
     <changefreq>weekly</changefreq>
@@ -78,6 +98,26 @@
     <image:image>
       <image:loc>https://ruapdkrgcbqrhvsayvpf.supabase.co/storage/v1/object/public/faculty-portraits/dr-basabendu-barman.webp</image:loc>
       <image:title>Dr Basabendu Barman — Physics, SRM University-AP</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://friendly-learning-srmap.vercel.app/faculty/mr-boddu-l-v-siva-rama-krishna</loc>
+    <lastmod>2026-08-30T12:33:21.067738+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://ruapdkrgcbqrhvsayvpf.supabase.co/storage/v1/object/public/faculty-portraits/mr-boddu-l-v-siva-rama-krishna.webp</image:loc>
+      <image:title>Dr Boddu L V Siva Rama Krishna — Computer Science and Engineering, SRM University-AP</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-dipankar-kundu</loc>
+    <lastmod>2026-08-30T13:24:51.465372+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://ruapdkrgcbqrhvsayvpf.supabase.co/storage/v1/object/public/faculty-portraits/dr-dipankar-kundu.webp</image:loc>
+      <image:title>Dr Dipankar Kundu — Computer Science and Engineering, SRM University-AP</image:title>
     </image:image>
   </url>
   <url>
@@ -329,12 +369,6 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://friendly-learning-srmap.vercel.app/faculty/vadlamudi-aadarsh</loc>
-    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/akshaya-kumar-das</loc>
     <lastmod>2026-08-21T05:47:16.838561+00:00</lastmod>
     <changefreq>monthly</changefreq>
@@ -343,6 +377,12 @@
       <image:loc>https://ruapdkrgcbqrhvsayvpf.supabase.co/storage/v1/object/public/faculty-portraits/akshaya-kumar-das.webp</image:loc>
       <image:title>Dr Akshaya Kumar Das — Chemistry, SRM University-AP</image:title>
     </image:image>
+  </url>
+  <url>
+    <loc>https://friendly-learning-srmap.vercel.app/faculty/vadlamudi-aadarsh</loc>
+    <lastmod>2026-08-06T10:06:13.634883+00:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-akuthota-sankar-rao</loc>
@@ -407,16 +447,6 @@
     </image:image>
   </url>
   <url>
-    <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-amit-kumar-mandal</loc>
-    <lastmod>2026-08-21T05:47:16.838561+00:00</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-    <image:image>
-      <image:loc>https://ruapdkrgcbqrhvsayvpf.supabase.co/storage/v1/object/public/faculty-portraits/dr-amit-kumar-mandal.webp</image:loc>
-      <image:title>Dr Amit Kumar Mandal — Computer Science and Engineering, SRM University-AP</image:title>
-    </image:image>
-  </url>
-  <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-amit-kumar-singh</loc>
     <lastmod>2026-08-21T05:47:16.838561+00:00</lastmod>
     <changefreq>monthly</changefreq>
@@ -460,16 +490,6 @@
     <image:image>
       <image:loc>https://ruapdkrgcbqrhvsayvpf.supabase.co/storage/v1/object/public/faculty-portraits/anindita-sarkar.webp</image:loc>
       <image:title>Dr Anindita Sarkar — Computer Science and Engineering, SRM University-AP</image:title>
-    </image:image>
-  </url>
-  <url>
-    <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-anirban-bhar</loc>
-    <lastmod>2026-08-21T05:47:16.838561+00:00</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-    <image:image>
-      <image:loc>https://ruapdkrgcbqrhvsayvpf.supabase.co/storage/v1/object/public/faculty-portraits/dr-anirban-bhar.webp</image:loc>
-      <image:title>Dr Anirban Bhar — Computer Science and Engineering, SRM University-AP</image:title>
     </image:image>
   </url>
   <url>
@@ -997,16 +1017,6 @@
     </image:image>
   </url>
   <url>
-    <loc>https://friendly-learning-srmap.vercel.app/faculty/mr-boddu-l-v-siva-rama-krishna</loc>
-    <lastmod>2026-08-21T05:47:16.838561+00:00</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-    <image:image>
-      <image:loc>https://ruapdkrgcbqrhvsayvpf.supabase.co/storage/v1/object/public/faculty-portraits/mr-boddu-l-v-siva-rama-krishna.webp</image:loc>
-      <image:title>Dr Boddu L V Siva Rama Krishna — Computer Science and Engineering, SRM University-AP</image:title>
-    </image:image>
-  </url>
-  <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/ms-boddu-srujana</loc>
     <lastmod>2026-08-21T05:47:16.838561+00:00</lastmod>
     <changefreq>monthly</changefreq>
@@ -1285,16 +1295,6 @@
     <lastmod>2026-08-06T10:06:13.923622+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-dipankar-kundu</loc>
-    <lastmod>2026-08-21T05:47:16.838561+00:00</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-    <image:image>
-      <image:loc>https://ruapdkrgcbqrhvsayvpf.supabase.co/storage/v1/object/public/faculty-portraits/dr-dipankar-kundu.webp</image:loc>
-      <image:title>Dr Dipankar Kundu — Computer Science and Engineering, SRM University-AP</image:title>
-    </image:image>
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-dipesh-jadhav</loc>
@@ -4243,16 +4243,6 @@
     </image:image>
   </url>
   <url>
-    <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-sonali-mondal</loc>
-    <lastmod>2026-08-21T05:47:16.838561+00:00</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-    <image:image>
-      <image:loc>https://ruapdkrgcbqrhvsayvpf.supabase.co/storage/v1/object/public/faculty-portraits/dr-sonali-mondal.webp</image:loc>
-      <image:title>Dr Sonali Mondal — Mathematics, SRM University-AP</image:title>
-    </image:image>
-  </url>
-  <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-sonali-mondal-2</loc>
     <lastmod>2026-08-21T05:47:16.838561+00:00</lastmod>
     <changefreq>monthly</changefreq>
@@ -4260,6 +4250,16 @@
     <image:image>
       <image:loc>https://ruapdkrgcbqrhvsayvpf.supabase.co/storage/v1/object/public/faculty-portraits/dr-sonali-mondal-2.webp</image:loc>
       <image:title>Dr Sonali Mondal — Computer Science and Engineering, SRM University-AP</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-sonali-mondal</loc>
+    <lastmod>2026-08-21T05:47:16.838561+00:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+    <image:image>
+      <image:loc>https://ruapdkrgcbqrhvsayvpf.supabase.co/storage/v1/object/public/faculty-portraits/dr-sonali-mondal.webp</image:loc>
+      <image:title>Dr Sonali Mondal — Mathematics, SRM University-AP</image:title>
     </image:image>
   </url>
   <url>
