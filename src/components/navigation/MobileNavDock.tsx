@@ -1,11 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Menu, Moon, Sun, X } from "lucide-react";
 
 import NavbarProfileMenu from "@/components/NavbarProfileMenu";
-import { EventsIcon } from "@/components/icons/EventsIcon";
-import { FacultyIcon } from "@/components/icons/FacultyIcon";
-import { GroupsIcon } from "@/components/icons/GroupsIcon";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -23,9 +20,11 @@ import {
   useHasVisitedGroupsNav,
   useHasVisitedMentorsNav,
 } from "@/hooks/useFeatureAnnouncement";
+import { useUnreadMessages } from "@/hooks/useUnreadMessages";
 import { toggleTheme } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import {
+  type NavItem,
   PRIMARY_NAV,
   ROUTE_ACCENT,
   SECONDARY_NAV,
@@ -33,18 +32,41 @@ import {
   pathShowsDock,
 } from "./nav-config";
 
-// 4 core quick-access destinations in the floating dock
-const DOCK_PRIMARY_ITEMS = [
-  { name: "Home", url: "/", icon: PRIMARY_NAV[0].icon },
-  { name: "Groups", url: "/workspace-groups", icon: GroupsIcon },
-  { name: "Faculty", url: "/faculty", icon: FacultyIcon },
-  { name: "Events", url: "/events", icon: EventsIcon },
+/**
+ * The dock's slots are chosen at render time, not written down here.
+ *
+ * Home is pinned to the first slot and "More" to the last; everything between
+ * is filled from this order, skipping anything the visitor cannot open. That
+ * makes the dock adapt to who is looking at it — a signed-in student gets
+ * Messages in thumb reach (with its unread count), a signed-out visitor gets
+ * the destination that would otherwise sit below Messages instead of an empty
+ * gap.
+ *
+ * Order is by how often a signed-in student opens the thing, which is why
+ * Messages leads: it is the only entry here with a number attached, and a
+ * count you have to open a sheet to see is a count nobody sees.
+ */
+const DOCK_PRIORITY = [
+  "/messages",
+  "/workspace-groups",
+  "/faculty",
+  "/events",
+  "/posts",
+  "/mentors",
 ];
+
+/**
+ * Nav slots before "More". Six buttons is what fits at 360px without the
+ * labels colliding — measured, not guessed.
+ */
+const MAX_NAV_SLOTS = 5;
 
 export function MobileNavDock() {
   const { user, profile } = useAuth();
   const location = useLocation();
   const [sheetOpen, setSheetOpen] = useState(false);
+
+  const unreadCount = useUnreadMessages();
 
   const { hasSeen: hasSeenFaculty } = useHasSeenFacultyRatings();
   const { hasSeen: hasVisitedGroups } = useHasVisitedGroupsNav();
@@ -59,6 +81,31 @@ export function MobileNavDock() {
     "/mentors": tourCompleted && !hasVisitedMentors,
     "/faculty": !hasSeenFaculty,
   };
+
+  /**
+   * The visible slots, recomputed when the visitor or the route changes.
+   *
+   * The active section is always one of them. Without that, opening a
+   * destination that lives in the sheet — /mentors, say — left the whole dock
+   * unlit, which reads as "you are nowhere". When it is not already in the
+   * list it takes the last slot rather than being inserted near the front, so
+   * the items someone reaches for by muscle memory keep their positions.
+   */
+  const dockItems = useMemo(() => {
+    const byUrl = new Map(PRIMARY_NAV.map((item) => [item.url, item]));
+    const available = [byUrl.get("/"), ...DOCK_PRIORITY.map((url) => byUrl.get(url))]
+      .filter((item): item is NavItem => Boolean(item))
+      .filter((item) => !item.requiresAuth || Boolean(user));
+
+    const slots = available.slice(0, MAX_NAV_SLOTS);
+    const activeItem = available.find(
+      (item) => item.url !== "/" && isActivePath(location.pathname, item.url),
+    );
+    if (activeItem && !slots.some((slot) => slot.url === activeItem.url)) {
+      slots[slots.length - 1] = activeItem;
+    }
+    return slots;
+  }, [user, location.pathname]);
 
   // Close sheet on route changes
   useEffect(() => {
@@ -83,9 +130,14 @@ export function MobileNavDock() {
   // Remaining primary items to show in the "More" bottom sheet
   const morePrimaryItems = PRIMARY_NAV.filter(
     (item) =>
-      !DOCK_PRIMARY_ITEMS.some((dockItem) => dockItem.url === item.url) &&
+      !dockItems.some((dockItem) => dockItem.url === item.url) &&
       (!item.requiresAuth || user),
   );
+
+  // Unread messages are announced once: on the dock's Messages slot when it
+  // has one, on the More button when Messages has been pushed into the sheet.
+  const messagesDocked = dockItems.some((item) => item.url === "/messages");
+  const moreUnread = messagesDocked ? 0 : unreadCount;
 
   return (
     <div
@@ -105,20 +157,21 @@ export function MobileNavDock() {
           "shadow-black/5 dark:shadow-black/20",
         )}
       >
-        {DOCK_PRIMARY_ITEMS.map((item) => {
+        {dockItems.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.url);
           const highlighted = navHighlights[item.url];
           const itemAccent = ROUTE_ACCENT[item.url] ?? ROUTE_ACCENT["/"];
+          const count = item.url === "/messages" ? unreadCount : 0;
 
           return (
             <Link
               key={item.url}
               to={item.url}
-              aria-label={item.name}
+              aria-label={count > 0 ? `${item.name}, ${count} unread` : item.name}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "relative flex flex-1 flex-col items-center justify-center py-1 rounded-full transition-all duration-200",
+                "relative flex min-w-0 flex-1 flex-col items-center justify-center py-1 rounded-full transition-all duration-200",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                 active
                   ? `${itemAccent.pill} ${itemAccent.text}`
@@ -127,17 +180,26 @@ export function MobileNavDock() {
             >
               <div className="relative flex items-center justify-center">
                 <Icon className="h-5 w-5 transition-transform active:scale-90" aria-hidden />
-                {highlighted && (
+                {count > 0 ? (
                   <span
-                    className={cn(
-                      "absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full ring-2 ring-background",
-                      itemAccent.dot,
-                    )}
+                    className="absolute -right-2 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-3xs font-semibold leading-none text-destructive-foreground ring-2 ring-background"
                     aria-hidden
-                  />
+                  >
+                    {count > 99 ? "99+" : count}
+                  </span>
+                ) : (
+                  highlighted && (
+                    <span
+                      className={cn(
+                        "absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full ring-2 ring-background",
+                        itemAccent.dot,
+                      )}
+                      aria-hidden
+                    />
+                  )
                 )}
               </div>
-              <span className="text-3xs font-medium tracking-tight mt-0.5">
+              <span className="max-w-full truncate text-3xs font-medium tracking-tight mt-0.5">
                 {item.name}
               </span>
             </Link>
@@ -149,10 +211,14 @@ export function MobileNavDock() {
           <SheetTrigger asChild>
             <button
               type="button"
-              aria-label="More navigation options"
+              aria-label={
+                moreUnread > 0
+                  ? `More navigation options, ${moreUnread} unread messages`
+                  : "More navigation options"
+              }
               aria-expanded={sheetOpen}
               className={cn(
-                "relative flex flex-1 flex-col items-center justify-center py-1 rounded-full transition-all duration-200",
+                "relative flex min-w-0 flex-1 flex-col items-center justify-center py-1 rounded-full transition-all duration-200",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                 sheetOpen
                   ? "bg-muted text-foreground"
@@ -161,16 +227,24 @@ export function MobileNavDock() {
             >
               <div className="relative flex items-center justify-center">
                 <Menu className="h-5 w-5 transition-transform active:scale-90" aria-hidden />
-                {/* Dot indicator if any secondary item has an unviewed highlight */}
-                {Object.entries(navHighlights).some(
-                  ([path, isHighlighted]) =>
-                    isHighlighted &&
-                    !DOCK_PRIMARY_ITEMS.some((i) => i.url === path),
-                ) && (
+                {moreUnread > 0 ? (
                   <span
-                    className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-primary ring-2 ring-background"
+                    className="absolute -right-2 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-3xs font-semibold leading-none text-destructive-foreground ring-2 ring-background"
                     aria-hidden
-                  />
+                  >
+                    {moreUnread > 99 ? "99+" : moreUnread}
+                  </span>
+                ) : (
+                  /* Dot indicator if any hidden item has an unviewed highlight */
+                  Object.entries(navHighlights).some(
+                    ([path, isHighlighted]) =>
+                      isHighlighted && !dockItems.some((i) => i.url === path),
+                  ) && (
+                    <span
+                      className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-primary ring-2 ring-background"
+                      aria-hidden
+                    />
+                  )
                 )}
               </div>
               <span className="text-3xs font-medium tracking-tight mt-0.5">
