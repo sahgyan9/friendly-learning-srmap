@@ -151,27 +151,73 @@ const ResumePdfImport = ({
           : { pdfBase64: await fileToBase64(file), mimeType: file.type, fields };
       }
 
-      // Step 2 & 3: Run Gemini AI parser on Edge Function
+      // Step 2 & 3: Run Gemini AI parser on Edge Function with automatic retry on network drops
       updateParsingProgress("synthesizing", 76, "Synthesizing bio, outcomes & AMA topics...");
 
-      const { data, error } = await supabase.functions.invoke("parse-linkedin-pdf", { body });
+      let extractedData: Record<string, any> | null = null;
+      let lastErr: unknown = null;
+      const MAX_RETRIES = 2;
 
-      if (error) {
-        let msg = error.message;
+      for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
         try {
-          if ("context" in error && typeof (error as any).context?.json === "function") {
-            const errJson = await (error as any).context.json();
-            if (errJson?.error) msg = errJson.error;
+          const { data, error } = await supabase.functions.invoke("parse-linkedin-pdf", { body });
+
+          if (error) {
+            let msg = error.message;
+            try {
+              if ("context" in error && typeof (error as any).context?.json === "function") {
+                const errJson = await (error as any).context.json();
+                if (errJson?.error) msg = errJson.error;
+              }
+            } catch {}
+
+            // Don't retry on auth or explicit validation errors
+            if (msg.includes("Authentication required") || msg.includes("PDF is too large")) {
+              throw new Error(msg);
+            }
+            throw new Error(msg);
           }
-        } catch {}
+
+          if (data?.error) throw new Error(data.error);
+          if (!data?.data) throw new Error("No data returned from parser");
+
+          extractedData = data.data as Record<string, any>;
+          break;
+        } catch (callErr: any) {
+          lastErr = callErr;
+          const isNetworkError =
+            callErr?.message?.includes("Failed to send a request") ||
+            callErr?.message?.includes("Failed to fetch") ||
+            callErr?.message?.includes("NetworkError") ||
+            callErr?.name === "FunctionsFetchError";
+
+          if (isNetworkError && attempt < MAX_RETRIES) {
+            console.warn(`Resume parser attempt ${attempt} network error, retrying in 1.5s...`);
+            updateParsingProgress("synthesizing", 80, "Re-connecting to AI parser...");
+            await new Promise((r) => setTimeout(r, 1500));
+            continue;
+          }
+          break;
+        }
+      }
+
+      if (!extractedData) {
+        let msg = lastErr instanceof Error ? lastErr.message : "Failed to parse document";
+        if (
+          msg.includes("Failed to send a request") ||
+          msg.includes("Failed to fetch") ||
+          msg.includes("NetworkError") ||
+          msg.includes("FunctionsFetchError")
+        ) {
+          msg =
+            "Connection to the AI resume parser was interrupted or timed out. Please check your internet connection and try again.";
+        }
         throw new Error(msg);
       }
-      if (data?.error) throw new Error(data.error);
-      if (!data?.data) throw new Error("No data returned from parser");
 
       setParsingStage("synthesizing");
 
-      const extracted = data.data as Record<string, any>;
+      const extracted = extractedData;
 
       // Clean skills to strip degree titles or institution names if any slipped through
       if (extracted.skills) {
