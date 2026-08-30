@@ -523,7 +523,7 @@ export default function Attendance() {
                                   <span className="font-bold text-xs text-foreground tracking-tight">
                                     {rec.course_code}
                                   </span>
-                                  {rec.slot && (
+                                  {rec.slot && /^[A-Z][0-9]?(\+[A-Z][0-9]?)*$/i.test(rec.slot.trim()) && (
                                     <span className="inline-flex items-center text-[10px] font-semibold text-primary bg-primary/10 px-1.5 py-0.2 rounded border border-primary/20">
                                       {rec.slot}
                                     </span>

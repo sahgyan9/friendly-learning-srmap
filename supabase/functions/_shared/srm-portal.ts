@@ -572,8 +572,8 @@ export function parseAttendance(
           else if (c.includes("present") || c.includes("attended") || c.includes("hours attended") || c.includes("attended hrs") || c === "p") headerMap.present = idx;
           else if (c.includes("absent") || c.includes("hours absent") || c.includes("absent hrs") || c === "a") headerMap.absent = idx;
           else if (c.includes("od") || c.includes("ml") || c.includes("on duty") || c.includes("medical leave")) headerMap.od = idx;
-          else if (c.includes("slot")) headerMap.slot = idx;
-          else if (c.includes("faculty") || c.includes("staff") || c.includes("teacher")) headerMap.faculty = idx;
+          else if (c === "slot" || c === "slot code" || c === "course slot") headerMap.slot = idx;
+          else if (c.includes("faculty name") || c.includes("teacher name") || c.includes("staff name") || c === "faculty") headerMap.faculty = idx;
         } else {
           if (c.includes("attendance") || c.includes("total") || headerMap.percentage === undefined) {
             headerMap.percentage = idx;
@@ -623,10 +623,16 @@ export function parseAttendance(
     if (!name) name = code;
 
     if (headerMap.slot !== undefined && cells[headerMap.slot]) {
-      slot = cells[headerMap.slot];
+      const candidateSlot = cells[headerMap.slot].trim();
+      if (/^[A-Z][0-9]?(\+[A-Z][0-9]?)*$/i.test(candidateSlot) && candidateSlot.length <= 6) {
+        slot = candidateSlot.toUpperCase();
+      }
     }
     if (headerMap.faculty !== undefined && cells[headerMap.faculty]) {
-      facultyName = cells[headerMap.faculty];
+      const candidateFaculty = cells[headerMap.faculty].trim();
+      if (candidateFaculty.length >= 3 && !/^\d+$/.test(candidateFaculty)) {
+        facultyName = candidateFaculty;
+      }
     }
 
     let conducted = -1;

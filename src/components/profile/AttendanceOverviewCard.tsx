@@ -232,7 +232,7 @@ export const AttendanceOverviewCard = ({ onOpenPortalImport }: AttendanceOvervie
                     <div className="flex flex-col">
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <span className="font-bold text-xs text-foreground tracking-tight">{rec.course_code}</span>
-                        {rec.slot && (
+                        {rec.slot && /^[A-Z][0-9]?(\+[A-Z][0-9]?)*$/i.test(rec.slot.trim()) && (
                           <span className="text-[10px] text-primary font-semibold bg-primary/10 px-1 py-0.2 rounded border border-primary/20">
                             {rec.slot}
                           </span>
