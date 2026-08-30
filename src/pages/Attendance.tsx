@@ -55,8 +55,6 @@ export interface AttendanceRecord {
   last_synced_at: string;
 }
 
-const TARGET_PRESETS = [75, 80, 85, 90];
-
 type SortField = "course_code" | "attendance_percentage" | "conducted_hours" | "margin";
 type SortDirection = "asc" | "desc";
 type FilterTab = "all" | "risk" | "safe";
@@ -69,7 +67,6 @@ export default function Attendance() {
   const [portalDialogOpen, setPortalDialogOpen] = useState(false);
   const [filterTab, setFilterTab] = useState<FilterTab>("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [globalTarget, setGlobalTarget] = useState<number>(75);
   const [sortField, setSortField] = useState<SortField>("attendance_percentage");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   const [simulations, setSimulations] = useState<Record<string, { deltaAttended: number; deltaConducted: number }>>({});
@@ -350,23 +347,16 @@ export default function Attendance() {
 
               {/* Shortage Alert (slim) */}
               {criticalCourses.length > 0 && (
-                <div className="pl-3 border-l-2 border-destructive flex flex-col sm:flex-row sm:items-center justify-between gap-2 py-1">
-                  <div className="flex items-center gap-2 text-xs sm:text-sm">
+                <div className="pl-3 border-l-2 border-destructive py-1 text-xs sm:text-sm">
+                  <div className="flex items-center gap-2">
                     <ShieldAlert className="h-4 w-4 text-destructive shrink-0" />
                     <span className="text-destructive font-semibold">
                       {criticalCourses.length} subject{criticalCourses.length === 1 ? "" : "s"} below 75%
                     </span>
-                    <span className="text-muted-foreground hidden sm:inline">
-                      — {criticalCourses.map((c) => `${c.course_code} (${c.attendance_percentage}%)`).join(", ")}
-                    </span>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setFilterTab("risk")}
-                    className="text-xs font-semibold text-destructive hover:underline shrink-0"
-                  >
-                    View →
-                  </button>
+                  <div className="mt-0.5 pl-6 text-muted-foreground">
+                    {criticalCourses.map((c) => `${c.course_code} (${c.attendance_percentage}%)`).join(", ")}
+                  </div>
                 </div>
               )}
 
@@ -418,7 +408,7 @@ export default function Attendance() {
               {/* Controls */}
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
 
-                {/* Left: Filter tabs + target */}
+                {/* Left: Filter tabs */}
                 <div className="flex items-center gap-4 flex-wrap">
                   <Tabs value={filterTab} onValueChange={(val) => setFilterTab(val as FilterTab)}>
                     <TabsList className="h-8 bg-muted/40 p-0.5">
@@ -431,24 +421,6 @@ export default function Attendance() {
                       </TabsTrigger>
                     </TabsList>
                   </Tabs>
-
-                  <div className="flex items-center gap-1.5 text-xs">
-                    <span className="text-muted-foreground">Target</span>
-                    {TARGET_PRESETS.map((target) => (
-                      <button
-                        key={target}
-                        type="button"
-                        onClick={() => setGlobalTarget(target)}
-                        className={`px-1.5 py-0.5 rounded font-semibold transition-colors ${
-                          globalTarget === target
-                            ? "text-foreground underline underline-offset-4 decoration-2 decoration-primary"
-                            : "text-muted-foreground hover:text-foreground"
-                        }`}
-                      >
-                        {target}%
-                      </button>
-                    ))}
-                  </div>
 
                   {hasAnySimulation && (
                     <button
@@ -534,7 +506,7 @@ export default function Attendance() {
                           neededForTarget,
                           safeAllowanceForTarget,
                           isSimulated,
-                        } = getSimulatedMetrics(rec, globalTarget);
+                        } = getSimulatedMetrics(rec, 75);
 
                         const isDanger = pct < 75.0;
                         const isWarning = pct >= 75.0 && pct < 80.0;
