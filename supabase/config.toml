@@ -74,3 +74,8 @@ verify_jwt = false
 [functions.parse-linkedin-pdf]
 verify_jwt = false
 
+# send-push authenticates callers in code
+[functions.send-push]
+verify_jwt = false
+
+

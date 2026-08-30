@@ -157,6 +157,20 @@ Deno.serve(async (req: Request) => {
       console.log(`[send-push] Pruned ${staleSubIds.length} stale push subscription(s).`);
     }
 
+    // 4. If this was a chat message push and at least one device received it,
+    // acknowledge message delivery so sender sees double tick immediately
+    if (sent > 0 && (payload.tag?.startsWith("chat-") || payload.url?.startsWith("/messages"))) {
+      try {
+        await admin
+          .from("messages")
+          .update({ delivery_status: "delivered" })
+          .in("receiver_id", eligibleUserIds)
+          .eq("delivery_status", "sent");
+      } catch (delivErr) {
+        console.warn("[send-push] Could not update delivery_status:", delivErr);
+      }
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
