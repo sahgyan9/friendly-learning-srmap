@@ -5,12 +5,19 @@ import App from './App.tsx'
 import ErrorBoundary from './components/ErrorBoundary.tsx'
 import { initSentry } from './lib/sentry.ts'
 import { initPostHog } from './lib/posthog.ts'
+import { registerAppServiceWorker } from './lib/pwa/registerServiceWorker.ts'
 import './index.css'
 
 // Initialize Sentry for error tracking
 initSentry();
 // Initialize product analytics (page views, retention)
 initPostHog();
+// Register Service Worker for offline PWA shell and asset caching
+if (typeof window !== 'undefined') {
+  window.addEventListener('load', () => {
+    void registerAppServiceWorker();
+  });
+}
 
 const root = document.getElementById("root")!;
 const app = (
