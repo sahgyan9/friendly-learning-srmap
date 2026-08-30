@@ -18,6 +18,8 @@ interface MessageInputProps {
   editingMessage?: Message | null;
   onCancelEdit?: () => void;
   onSaveEdit?: (messageId: string, newContent: string) => Promise<void>;
+  isKeyboardOpen?: boolean;
+  isMobile?: boolean;
 }
 
 const MAX_ROWS_PX = 160;
@@ -33,6 +35,8 @@ const MessageInput = ({
   editingMessage,
   onCancelEdit,
   onSaveEdit,
+  isKeyboardOpen = false,
+  isMobile = false,
 }: MessageInputProps) => {
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -52,16 +56,16 @@ const MessageInput = ({
     el.style.height = `${Math.min(el.scrollHeight, MAX_ROWS_PX)}px`;
   }, [message]);
 
-  // Auto-focus input when a conversation is selected or opened
+  // Auto-focus input only on desktop when a conversation is selected
   useEffect(() => {
     setMessage("");
-    if (conversationId && !disabled) {
+    if (conversationId && !disabled && !isMobile) {
       const timer = setTimeout(() => {
         textareaRef.current?.focus();
       }, 50);
       return () => clearTimeout(timer);
     }
-  }, [conversationId, disabled]);
+  }, [conversationId, disabled, isMobile]);
 
   // Auto-focus and populate input when editing starts
   useEffect(() => {
@@ -164,7 +168,12 @@ const MessageInput = ({
   return (
     <form
       onSubmit={handleSubmit}
-      className="border-t border-border/80 bg-background/95 dark:bg-card/75 p-3 backdrop-blur-md"
+      className={cn(
+        "border-t border-border/80 bg-background/95 dark:bg-card/90 p-2.5 sm:p-3 backdrop-blur-md transition-[padding] duration-150",
+        isKeyboardOpen
+          ? "pb-2 sm:pb-3"
+          : "pb-[max(0.75rem,env(safe-area-inset-bottom))]",
+      )}
     >
       {/* Editing Message Banner */}
       {isEditing && editingMessage && (
@@ -236,12 +245,23 @@ const MessageInput = ({
 
         <textarea
           ref={textareaRef}
-          autoFocus={Boolean(conversationId)}
+          autoFocus={!isMobile && Boolean(conversationId)}
           value={message}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
           onFocus={() => {
             setIsFocused(true);
+            if (isMobile) {
+              if (window.scrollY !== 0) {
+                window.scrollTo({ top: 0, left: 0, behavior: "instant" as ScrollBehavior });
+              }
+              // Allow visualViewport a frame to settle, then re-lock scroll
+              setTimeout(() => {
+                if (window.scrollY !== 0) {
+                  window.scrollTo({ top: 0, left: 0, behavior: "instant" as ScrollBehavior });
+                }
+              }, 60);
+            }
             if (!isEditing && message.trim() && conversationId) refreshTyping();
           }}
           onBlur={() => {
@@ -291,7 +311,7 @@ const MessageInput = ({
         </Button>
       </div>
 
-      <p className="mt-2 px-2 text-3xs text-muted-foreground/75">
+      <p className="mt-2 px-2 text-3xs text-muted-foreground/75 hidden sm:block">
         <kbd className="rounded border border-border/70 bg-muted/70 px-1.5 py-0.5 font-sans font-medium text-foreground/80 shadow-2xs">Enter</kbd> {isEditing ? "to save" : "to send"} ·{" "}
         <kbd className="rounded border border-border/70 bg-muted/70 px-1.5 py-0.5 font-sans font-medium text-foreground/80 shadow-2xs">Shift + Enter</kbd> for new line
         {(isEditing || replyingTo) && (

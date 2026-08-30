@@ -124,6 +124,28 @@ const MessageList = ({
     if (typingUsers.length > 0 && isPinnedToBottom) scrollToBottom("smooth");
   }, [typingUsers.length, isPinnedToBottom, scrollToBottom]);
 
+  // When container height changes (e.g. mobile virtual keyboard opens/closes), keep anchored to latest message
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    let prevHeight = el.clientHeight;
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const newHeight = entry.contentRect.height;
+        if (newHeight !== prevHeight) {
+          prevHeight = newHeight;
+          if (isPinnedToBottom) {
+            el.scrollTop = el.scrollHeight;
+          }
+        }
+      }
+    });
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [isPinnedToBottom]);
+
   const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
     const el = event.currentTarget;
     const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
@@ -222,7 +244,8 @@ const MessageList = ({
         ref={containerRef}
         onScroll={handleScroll}
         data-testid="message-scroller"
-        className="h-full overflow-y-auto px-4 py-5 space-y-0"
+        className="h-full overflow-y-auto overscroll-y-contain px-3 py-4 sm:px-4 sm:py-5 space-y-0"
+        style={{ WebkitOverflowScrolling: "touch" }}
       >
         {rows.map(({ message, startsDay, isFirstInGroup, isLastInGroup }, index) => {
           const previous = index > 0 ? rows[index - 1].message : null;

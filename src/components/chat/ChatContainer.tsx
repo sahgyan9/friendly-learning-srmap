@@ -9,79 +9,111 @@ import SearchInput from "./SearchInput";
 import { MessageCircleMore, Sparkles, SquarePen } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { NewConversationModal } from "./NewConversationModal";
+import { cn } from "@/lib/utils";
+
+interface ChatViewportState {
+  height: number | null;
+  isKeyboardOpen: boolean;
+  viewportHeight: number;
+}
 
 /**
- * Measures actual space left below the element, in px, instead of guessing it.
+ * Robust viewport manager for desktop and mobile devices (especially iOS Safari).
  *
- * This used to be a hard-coded `calc(100dvh-9rem)` that assumed the site
- * header's height. SiteHeader mounts once above <Routes> and stays alive
- * across navigations, so its collapsible second row can already be collapsed
- * (or the "Connecting with mentor…" line can be showing) by the time this
- * page appears — the guess and the real header height then disagree.
+ * Root Cause & iOS Fix:
+ * On iOS Safari / WebKit, when an input field is focused inside a standard scrolling
+ * document, WebKit natively invokes its internal `scrollIntoView` algorithm to pull
+ * the input above the virtual keyboard. This causes `window.scrollY` to jump upwards,
+ * pushing the page header and chat header off-screen. Additionally, layout viewport
+ * coordinates become negative relative to the visual viewport, causing height calculations
+ * to misplace the input near the top of the screen with a massive empty void underneath.
  *
- * iOS Safari keyboard fix (2026-08-30): `getBoundingClientRect().top` is
- * relative to the *layout* viewport, but on iOS the keyboard shrinks (or
- * pans) the *visual* viewport instead — a separate coordinate space offset by
- * `visualViewport.offsetTop`. Ignoring that offset made this element compute
- * a height sized for a viewport it was no longer aligned with, so focusing
- * the composer left a gap between the input and the keyboard on iPhone. We
- * also lock the page's own scroll for as long as this is mounted: without a
- * scrollable document to act on, iOS resizes/pans the visual viewport
- * directly (which the listeners below already handle) instead of doing its
- * own "scroll the whole page to reveal the focused input" jump — which is
- * what produced the gap, since that native jump fires immediately on focus,
- * before this hook's own recalculation has a chance to catch up.
+ * This hook fixes the issue permanently:
+ * 1. On mobile in active chat mode, the container locks directly to `window.visualViewport.height`.
+ * 2. On visualViewport resize, scroll, and input focus, it instantly enforces `window.scrollTo(0, 0)`.
+ * 3. It tracks `isKeyboardOpen` so `MessageInput` can dynamically adjust bottom padding.
+ * 4. On desktop, it computes the available height below the site header cleanly.
  */
-function useAvailableHeight<T extends HTMLElement>() {
-  const ref = useRef<T>(null);
-  const [height, setHeight] = useState<number | null>(null);
+function useChatViewport(isMobile: boolean, isChatActive: boolean) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [viewportState, setViewportState] = useState<ChatViewportState>({
+    height: null,
+    isKeyboardOpen: false,
+    viewportHeight: typeof window !== "undefined" ? window.innerHeight : 0,
+  });
 
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
 
-    const recalc = () => {
+    const updateViewport = () => {
       const viewport = window.visualViewport;
-      const rectTop = el.getBoundingClientRect().top;
-      // Bring rectTop (layout-viewport-relative) into the visual viewport's
-      // coordinate space so it lines up with viewport.height below.
-      const visualTop = viewport ? rectTop - viewport.offsetTop : rectTop;
-      const top = Math.max(visualTop, 0);
-      const viewportHeight = viewport?.height ?? window.innerHeight;
-      const bottomPadding = 16; // leave comfort space at the bottom of the screen
-      const computed = Math.max(viewportHeight - top - bottomPadding, 320);
-      setHeight(computed);
+      const currentViewportHeight = viewport?.height ?? window.innerHeight;
+      const screenHeight = window.innerHeight;
+      const keyboardOpen = isMobile && currentViewportHeight < screenHeight - 100;
+
+      if (isMobile) {
+        // Prevent layout viewport displacement on iOS / mobile browsers
+        if (window.scrollY !== 0) {
+          window.scrollTo({ top: 0, left: 0, behavior: "instant" as ScrollBehavior });
+        }
+
+        setViewportState({
+          height: currentViewportHeight,
+          isKeyboardOpen: keyboardOpen,
+          viewportHeight: currentViewportHeight,
+        });
+      } else {
+        const rectTop = el.getBoundingClientRect().top;
+        const visualTop = viewport ? rectTop - viewport.offsetTop : rectTop;
+        const top = Math.max(visualTop, 0);
+        const bottomPadding = 16;
+        const computed = Math.max(currentViewportHeight - top - bottomPadding, 380);
+
+        setViewportState({
+          height: computed,
+          isKeyboardOpen: false,
+          viewportHeight: currentViewportHeight,
+        });
+      }
     };
 
-    recalc();
+    updateViewport();
 
-    const resizeObserver = new ResizeObserver(recalc);
+    const resizeObserver = new ResizeObserver(updateViewport);
     resizeObserver.observe(document.body);
 
-    window.addEventListener("resize", recalc);
-    window.visualViewport?.addEventListener("resize", recalc);
-    window.visualViewport?.addEventListener("scroll", recalc);
+    window.addEventListener("resize", updateViewport);
+    window.addEventListener("orientationchange", updateViewport);
+    window.visualViewport?.addEventListener("resize", updateViewport);
+    window.visualViewport?.addEventListener("scroll", updateViewport);
 
-    // Prevent iOS's native "scroll the document to reveal the focused input"
-    // behavior — see comment above. Restored on unmount so other pages keep
-    // their normal scrolling.
+    // Prevent background page bounce while chatting on mobile
     const { documentElement: html, body } = document;
     const prevHtmlOverflow = html.style.overflow;
     const prevBodyOverflow = body.style.overflow;
-    html.style.overflow = "hidden";
-    body.style.overflow = "hidden";
+    const prevBodyHeight = body.style.height;
+
+    if (isMobile && isChatActive) {
+      html.style.overflow = "hidden";
+      body.style.overflow = "hidden";
+      body.style.height = "100%";
+      window.scrollTo(0, 0);
+    }
 
     return () => {
       resizeObserver.disconnect();
-      window.removeEventListener("resize", recalc);
-      window.visualViewport?.removeEventListener("resize", recalc);
-      window.visualViewport?.removeEventListener("scroll", recalc);
+      window.removeEventListener("resize", updateViewport);
+      window.removeEventListener("orientationchange", updateViewport);
+      window.visualViewport?.removeEventListener("resize", updateViewport);
+      window.visualViewport?.removeEventListener("scroll", updateViewport);
       html.style.overflow = prevHtmlOverflow;
       body.style.overflow = prevBodyOverflow;
+      body.style.height = prevBodyHeight;
     };
-  }, []);
+  }, [isMobile, isChatActive]);
 
-  return { ref, height };
+  return { ref, ...viewportState };
 }
 
 interface ChatContainerProps {
@@ -129,7 +161,14 @@ const ChatContainer = ({
   const [editingMessage, setEditingMessage] = useState<Message | null>(null);
   const [isNewChatModalOpen, setIsNewChatModalOpen] = useState(false);
   const [campusSearchInitialQuery, setCampusSearchInitialQuery] = useState("");
-  const { ref: heightRef, height: availableHeight } = useAvailableHeight<HTMLDivElement>();
+
+  const showChat = !isMobile ? Boolean(activeChat) : mobileView === "chat" && Boolean(activeChat);
+  const showList = !isMobile || mobileView === "list";
+
+  const { ref: heightRef, height: availableHeight, isKeyboardOpen } = useChatViewport(
+    isMobile,
+    Boolean(activeChat && mobileView === "chat"),
+  );
 
   const currentConversation = conversations.find((c) => c.id === activeChat);
 
@@ -146,9 +185,6 @@ const ChatContainer = ({
     setReplyingTo(null);
     setEditingMessage(null);
   }, [activeChat]);
-
-  const showList = !isMobile || mobileView === "list";
-  const showChat = !isMobile ? Boolean(activeChat) : mobileView === "chat" && Boolean(activeChat);
 
   const namesById = useMemo(() => {
     const names = new Map<string, string>();
@@ -180,11 +216,18 @@ const ChatContainer = ({
   );
 
   return (
-    /* Glassmorphic outer card */
+    /* Glassmorphic card on desktop, full-viewport fluid on mobile */
     <div
       ref={heightRef}
-      className="relative flex min-h-[28rem] overflow-hidden rounded-2xl border border-border/80 bg-card/90 shadow-xl shadow-black/5 backdrop-blur-xl dark:border-white/10 dark:bg-card/50 dark:shadow-2xl dark:shadow-black/40"
-      style={{ height: availableHeight != null ? `${availableHeight}px` : "calc(100dvh - 5rem)" }}
+      className={cn(
+        "relative flex overflow-hidden transition-all duration-150",
+        isMobile && showChat
+          ? "fixed inset-0 z-40 h-full w-full rounded-none border-0 bg-background"
+          : "min-h-[28rem] rounded-2xl border border-border/80 bg-card/90 shadow-xl shadow-black/5 backdrop-blur-xl dark:border-white/10 dark:bg-card/50 dark:shadow-2xl dark:shadow-black/40",
+      )}
+      style={{
+        height: availableHeight != null ? `${availableHeight}px` : isMobile ? "100dvh" : "calc(100dvh - 5rem)",
+      }}
     >
       {/* Subtle radial glows behind the panel */}
       <div className="pointer-events-none absolute -right-32 -top-32 h-64 w-64 rounded-full bg-primary/6 blur-3xl" />
@@ -299,6 +342,8 @@ const ChatContainer = ({
             editingMessage={editingMessage}
             onCancelEdit={() => setEditingMessage(null)}
             onSaveEdit={handleEditMessage}
+            isKeyboardOpen={isKeyboardOpen}
+            isMobile={isMobile}
           />
         </section>
       ) : (

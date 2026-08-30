@@ -96,7 +96,7 @@ const Messages = () => {
           </div>
         </div>
       ) : (
-        <div className="container mx-auto flex flex-1 flex-col px-2 py-4 sm:px-4 lg:px-6">
+        <div className="container mx-auto flex flex-1 flex-col p-0 sm:px-4 sm:py-4 lg:px-6">
           <MessagesLayout />
         </div>
       )}

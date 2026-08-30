@@ -31,7 +31,7 @@ const ChatHeader = ({ conversation, getOtherUser, onBack }: ChatHeaderProps) => 
 
   return (
     <>
-      <header className="relative flex items-center gap-3 border-b border-border/70 bg-card/80 dark:border-white/8 dark:bg-card/60 px-3 py-3 backdrop-blur-md sm:px-4">
+      <header className="relative flex items-center gap-3 border-b border-border/70 bg-card/95 dark:border-white/8 dark:bg-card/85 px-3 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] md:pt-3 backdrop-blur-md sm:px-4">
         {/* Gradient accent line at the bottom */}
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
 
