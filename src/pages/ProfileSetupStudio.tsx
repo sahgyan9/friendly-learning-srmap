@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from "react";
-import { useNavigate, useSearchParams, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Sparkles,
@@ -10,26 +10,19 @@ import {
   Plus,
   Trash2,
   Eye,
-  Edit3,
   Loader2,
-  Share2,
   Check,
   ShieldCheck,
   Zap,
-  Globe,
-  Smile,
-  RefreshCw,
-  ExternalLink,
   Target,
   MessageSquareCode,
   Users,
-  Lightbulb,
-  Radio,
-  Clock,
-  ArrowUpRight,
   AlertCircle,
-  Upload,
   UserRound,
+  FolderGit2,
+  Briefcase,
+  ExternalLink,
+  HelpCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,7 +30,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Progress } from "@/components/ui/progress";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -49,8 +48,21 @@ import MentorAvatar from "@/components/mentors/MentorAvatar";
 import { getMentorById, updateMentorSummary } from "@/integrations/supabase/services/mentors";
 import { getEnhancedMentorProfile } from "@/utils/mentor-enhancements";
 import { formatDepartment } from "@/utils/user-utils";
-import type { Mentor } from "@/types/mentor";
 import SEOHead from "@/components/SEOHead";
+
+interface ProjectItem {
+  id: string;
+  title: string;
+  description: string;
+  link?: string;
+}
+
+interface ExperienceItem {
+  id: string;
+  title: string;
+  organization?: string;
+  period?: string;
+}
 
 interface StudioProfileState {
   name: string;
@@ -64,9 +76,43 @@ interface StudioProfileState {
   outcomes: string[];
   ask_me_anything: Array<{ topic: string; icon?: string }>;
   ideal_mentees: string[];
+  projects: ProjectItem[];
+  experiences: ExperienceItem[];
   isDiscoverable: boolean;
   isAvailable: boolean;
   courses: Array<{ code: string; name: string }>;
+}
+
+const POPULAR_SKILLS = [
+  "Data Structures",
+  "Python",
+  "React",
+  "TypeScript",
+  "Machine Learning",
+  "Web Development",
+  "Physics",
+  "Algorithms",
+  "C++",
+  "MATLAB",
+  "Circuit Analysis",
+  "SQL",
+  "Competitive Programming",
+  "AI & Deep Learning",
+];
+
+/**
+ * Normalizes year of studies to match the studio select dropdown.
+ */
+function normalizeYearOfStudies(val: any): string {
+  if (!val) return "";
+  const s = String(val).trim().toLowerCase();
+  if (s === "1" || s.startsWith("1st") || s.includes("first")) return "1st Year";
+  if (s === "2" || s.startsWith("2nd") || s.includes("second")) return "2nd Year";
+  if (s === "3" || s.startsWith("3rd") || s.includes("third")) return "3rd Year";
+  if (s === "4" || s.startsWith("4th") || s.includes("fourth")) return "4th Year";
+  if (s === "5" || s.startsWith("5th") || s.includes("fifth")) return "5th Year";
+  if (s.includes("graduat") || s.includes("alumni")) return "Graduated";
+  return String(val);
 }
 
 /**
@@ -79,7 +125,6 @@ function generateSmartDrafts(
   bio?: string,
   year?: string
 ) {
-  // Clean raw academic strings like "B.Sc.-Physics (Honors with Research) [UG - Full Time]" -> "BSc Physics"
   const cleanDept = formatDepartment(department) || department?.trim() || "";
   const validSkills = (skills || []).map((s) => s.trim()).filter(Boolean);
 
@@ -93,9 +138,7 @@ function generateSmartDrafts(
       : [cleanDept, "Coursework", "Problem Solving"].filter(Boolean);
   const skill1 = primarySkills[0] || cleanDept || "Coursework";
   const skill2 = primarySkills[1] || (cleanDept ? `${cleanDept} Concepts` : "Problem Solving");
-  const skill3 = primarySkills[2] || "Lab Work";
 
-  // 1. Tagline: identity-first and clean — "BSc Physics student helping with Quantum Mechanics and Quantum Algorithms."
   const deptLabel = cleanDept ? `${cleanDept} student` : "Student";
   let tagline: string;
   if (validSkills.length === 0) {
@@ -114,7 +157,6 @@ function generateSmartDrafts(
     tagline = `${deptLabel} helping with ${validSkills[0]}${validSkills[1] ? ` and ${validSkills[1]}` : ""}.`;
   }
 
-  // 2. Outcomes: Concrete, student-centered results
   const outcomes = [
     `Master problem sets, core theories, and practical intuition in ${skill1}`,
     `Get 1-on-1 guidance on ${skill2}, lab assignments, and project execution`,
@@ -123,7 +165,6 @@ function generateSmartDrafts(
       : `Prepare effectively for course assessments, exams, and project reviews`,
   ];
 
-  // 3. Ask Me Anything: 3-4 distinct topics
   const askMeAnything = (
     validSkills.length > 0
       ? validSkills.slice(0, 4)
@@ -132,7 +173,6 @@ function generateSmartDrafts(
     .filter(Boolean)
     .map((s) => ({ topic: s }));
 
-  // 4. Ideal Mentees: Who benefits most
   const idealMentees = [
     cleanDept
       ? `1st or 2nd year students taking ${cleanDept} core subjects`
@@ -147,18 +187,14 @@ function generateSmartDrafts(
 export default function ProfileSetupStudio() {
   const { user, profile, refreshProfile } = useAuth();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
 
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [isGeneratingAi, setIsGeneratingAi] = useState(false);
   const [isPublished, setIsPublished] = useState(false);
-  const [activeMobileTab, setActiveMobileTab] = useState<"edit" | "preview">("edit");
+  const [previewModalOpen, setPreviewModalOpen] = useState(false);
   const [portalDialogOpen, setPortalDialogOpen] = useState(false);
   const [postPublishModalOpen, setPostPublishModalOpen] = useState(false);
-  // "resume" = just imported a resume, so mention that; "visit" = landed on
-  // the Studio with no portal linked yet, so use the generic prompt. Either
-  // way this is an inline dismissible banner, never a blocking popup.
+
   const [nudgeReason, setNudgeReason] = useState<"resume" | "visit" | null>(null);
   const initialNudgeCheckedRef = useRef(false);
   const hasAutoDraftedRef = useRef(false);
@@ -177,6 +213,8 @@ export default function ProfileSetupStudio() {
     outcomes: [],
     ask_me_anything: [],
     ideal_mentees: [],
+    projects: [],
+    experiences: [],
     isDiscoverable: true,
     isAvailable: true,
     courses: [],
@@ -187,6 +225,18 @@ export default function ProfileSetupStudio() {
   const [newAmaInput, setNewAmaInput] = useState("");
   const [newIdealMenteeInput, setNewIdealMenteeInput] = useState("");
 
+  // Projects input state
+  const [newProjectTitle, setNewProjectTitle] = useState("");
+  const [newProjectDesc, setNewProjectDesc] = useState("");
+  const [newProjectLink, setNewProjectLink] = useState("");
+  const [showAddProject, setShowAddProject] = useState(false);
+
+  // Experiences input state
+  const [newExpTitle, setNewExpTitle] = useState("");
+  const [newExpOrg, setNewExpOrg] = useState("");
+  const [newExpPeriod, setNewExpPeriod] = useState("");
+  const [showAddExp, setShowAddExp] = useState(false);
+
   // Load existing profile or mentor data on mount
   useEffect(() => {
     async function loadData() {
@@ -196,22 +246,19 @@ export default function ProfileSetupStudio() {
       }
 
       try {
-        // 1. Fetch user row
         const { data: userData } = await supabase
           .from("users")
           .select("*")
           .eq("id", user.id)
           .maybeSingle();
 
-        // 2. Fetch mentor row
         const { data: mentorData } = await getMentorById(user.id);
 
         let studentName = mentorData?.name || userData?.name || "";
         let studentDept = mentorData?.department || userData?.department || "";
-        const studentYear = mentorData?.year_of_studies ? String(mentorData.year_of_studies) : "";
+        const studentYear = normalizeYearOfStudies(mentorData?.year_of_studies);
         let coursesList = Array.isArray(mentorData?.courses) ? (mentorData.courses as any[]) : [];
 
-        // If mentor courses is empty, check if academic_imports has synced courses
         if (coursesList.length === 0) {
           const { data: academicData } = await supabase
             .from("academic_imports")
@@ -251,6 +298,24 @@ export default function ProfileSetupStudio() {
           ? mentorData.ideal_mentees
           : [];
 
+        const currentProjects: ProjectItem[] = Array.isArray(mentorData?.projects)
+          ? (mentorData.projects as any[]).map((p: any) => ({
+              id: p.id || crypto.randomUUID(),
+              title: p.title || "",
+              description: p.description || "",
+              link: p.link || undefined,
+            }))
+          : [];
+
+        const currentExperiences: ExperienceItem[] = Array.isArray(mentorData?.experiences)
+          ? (mentorData.experiences as any[]).map((e: any) => ({
+              id: e.id || crypto.randomUUID(),
+              title: e.title || "",
+              organization: e.organization || undefined,
+              period: e.period || undefined,
+            }))
+          : [];
+
         setState({
           name: studentName,
           department: studentDept,
@@ -263,6 +328,8 @@ export default function ProfileSetupStudio() {
           outcomes: currentOutcomes,
           ask_me_anything: currentAma,
           ideal_mentees: currentIdealMentees,
+          projects: currentProjects,
+          experiences: currentExperiences,
           isDiscoverable: !alreadyPublished ? true : (userData?.interests_discoverable ?? true),
           isAvailable: mentorData?.is_available ?? true,
           courses: coursesList,
@@ -277,9 +344,7 @@ export default function ProfileSetupStudio() {
     loadData();
   }, [user]);
 
-  // Prompt to link the SRM Portal once per visit if it isn't linked yet and
-  // the student hasn't snoozed it this session — never on a fresh resume
-  // import, since that path already shows its own reason below.
+  // Prompt to link the SRM Portal once per visit if unlinked
   useEffect(() => {
     if (loading || initialNudgeCheckedRef.current || !user) return;
     initialNudgeCheckedRef.current = true;
@@ -293,18 +358,10 @@ export default function ProfileSetupStudio() {
     setNudgeReason(null);
   };
 
-  // The Studio's only auto-draft path. Fills the four AI summary sections when
-  // they are all empty, and never overwrites anything already there.
-  //
-  // Deliberately skipped once a profile is published: after that point, empty
-  // sections are a choice the student made, and silently refilling them on
-  // their next visit undoes that. Resume imports fill these fields themselves,
-  // so this stays out of their way too.
+  // Studio auto-draft for blank profiles
   useEffect(() => {
     if (loading || isPublished || hasAutoDraftedRef.current) return;
 
-    // Students who arrive via the SRM Portal have coursework but no skills, so
-    // their course names stand in as topics — otherwise they'd get no draft.
     const courseTopics = state.courses.map((c) => c.name).filter(Boolean);
     const topics = state.skills.length > 0 ? state.skills : courseTopics;
     const hasDept = state.department.trim().length > 0;
@@ -332,10 +389,6 @@ export default function ProfileSetupStudio() {
       ask_me_anything: prev.ask_me_anything.length > 0 ? prev.ask_me_anything : drafts.ask_me_anything,
       ideal_mentees: prev.ideal_mentees.length > 0 ? prev.ideal_mentees : drafts.ideal_mentees,
     }));
-
-    toast.success(
-      "We drafted a headline and topics to get you started — edit anything that doesn't sound like you."
-    );
   }, [
     loading,
     isPublished,
@@ -354,34 +407,29 @@ export default function ProfileSetupStudio() {
   // One-click AI Auto-Draft for all sections
   const handleAutoDraftAll = () => {
     if (state.skills.length === 0 && !state.department.trim()) {
-      toast.info("Please enter your department and at least 1-2 skills, or import your resume first so AI has context to generate suggestions.");
+      toast.info("Please enter your department and at least 1-2 skills, or import your resume first so AI has context.");
       return;
     }
-    setIsGeneratingAi(true);
-    setTimeout(() => {
-      const drafts = generateSmartDrafts(
-        state.skills,
-        state.department,
-        state.name,
-        state.bio,
-        state.year_of_studies
-      );
-      setState((prev) => ({
-        ...prev,
-        tagline: drafts.tagline || prev.tagline,
-        outcomes: drafts.outcomes.length > 0 ? drafts.outcomes : prev.outcomes,
-        ask_me_anything: drafts.ask_me_anything.length > 0 ? drafts.ask_me_anything : prev.ask_me_anything,
-        ideal_mentees: drafts.ideal_mentees.length > 0 ? drafts.ideal_mentees : prev.ideal_mentees,
-      }));
-      setIsGeneratingAi(false);
-      toast.success("✨ AI summary drafts generated for Tagline, Outcomes, AMA, and Target Students!");
-    }, 300);
+    const drafts = generateSmartDrafts(
+      state.skills,
+      state.department,
+      state.name,
+      state.bio,
+      state.year_of_studies
+    );
+    setState((prev) => ({
+      ...prev,
+      tagline: drafts.tagline || prev.tagline,
+      outcomes: drafts.outcomes.length > 0 ? drafts.outcomes : prev.outcomes,
+      ask_me_anything: drafts.ask_me_anything.length > 0 ? drafts.ask_me_anything : prev.ask_me_anything,
+      ideal_mentees: drafts.ideal_mentees.length > 0 ? drafts.ideal_mentees : prev.ideal_mentees,
+    }));
+    toast.success("✨ AI summary drafts generated for Tagline, Outcomes, AMA, and Target Students!");
   };
 
-  // Section-specific AI generators
   const handleSuggestTagline = () => {
     if (state.skills.length === 0 && !state.department.trim()) {
-      toast.info("Please enter your department or at least 1 skill first so AI can craft a relevant tagline.");
+      toast.info("Please enter your department or at least 1 skill first.");
       return;
     }
     const drafts = generateSmartDrafts(state.skills, state.department, state.name);
@@ -393,7 +441,7 @@ export default function ProfileSetupStudio() {
 
   const handleSuggestOutcomes = () => {
     if (state.skills.length === 0 && !state.department.trim()) {
-      toast.info("Please enter your department or at least 1 skill first so AI can suggest outcomes.");
+      toast.info("Please enter your department or at least 1 skill first.");
       return;
     }
     const drafts = generateSmartDrafts(state.skills, state.department, state.name);
@@ -405,7 +453,7 @@ export default function ProfileSetupStudio() {
 
   const handleSuggestAma = () => {
     if (state.skills.length === 0 && !state.department.trim()) {
-      toast.info("Please enter your department or at least 1 skill first so AI can suggest AMA topics.");
+      toast.info("Please enter your department or at least 1 skill first.");
       return;
     }
     const drafts = generateSmartDrafts(state.skills, state.department, state.name);
@@ -417,7 +465,7 @@ export default function ProfileSetupStudio() {
 
   const handleSuggestIdealMentees = () => {
     if (state.skills.length === 0 && !state.department.trim()) {
-      toast.info("Please enter your department or at least 1 skill first so AI can suggest target students.");
+      toast.info("Please enter your department or at least 1 skill first.");
       return;
     }
     const drafts = generateSmartDrafts(state.skills, state.department, state.name);
@@ -436,15 +484,12 @@ export default function ProfileSetupStudio() {
         ? data.skills.split(",").map((s: string) => s.trim()).filter(Boolean)
         : [];
 
-      // Merge skills so existing custom-added skills are preserved
       const mergedSkills = Array.from(new Set([...prev.skills, ...newSkills]));
-
       const rawDept = data.department || prev.department;
       const studentDept = formatDepartment(rawDept) || rawDept;
       const studentName = data.name || prev.name;
-      const studentYear = data.year_of_studies || prev.year_of_studies;
+      const studentYear = normalizeYearOfStudies(data.year_of_studies || prev.year_of_studies);
 
-      // Smart drafts if extracted fields are missing
       const autoDrafts = generateSmartDrafts(mergedSkills, studentDept, studentName);
 
       const outcomesArray = Array.isArray(data.outcomes) && data.outcomes.length > 0
@@ -467,6 +512,25 @@ export default function ProfileSetupStudio() {
 
       const finalTagline = data.tagline || prev.tagline || autoDrafts.tagline;
 
+      // Extract projects & experiences if present
+      const extractedProjects: ProjectItem[] = Array.isArray(data.projects) && data.projects.length > 0
+        ? data.projects.map((p: any) => ({
+            id: p.id || crypto.randomUUID(),
+            title: p.title || "",
+            description: p.description || "",
+            link: p.link || undefined,
+          }))
+        : prev.projects;
+
+      const extractedExperiences: ExperienceItem[] = Array.isArray(data.experiences) && data.experiences.length > 0
+        ? data.experiences.map((e: any) => ({
+            id: e.id || crypto.randomUUID(),
+            title: e.title || "",
+            organization: e.organization || undefined,
+            period: e.period || undefined,
+          }))
+        : prev.experiences;
+
       return {
         ...prev,
         name: studentName,
@@ -480,38 +544,121 @@ export default function ProfileSetupStudio() {
         outcomes: outcomesArray,
         ask_me_anything: amaArray,
         ideal_mentees: idealMenteesArray,
+        projects: extractedProjects,
+        experiences: extractedExperiences,
       };
     });
 
     toast.success(
       isPublished
-        ? "Resume updated! We merged new skills and refreshed your details."
-        : "Resume parsed! AI has filled your skills, headline, outcomes, and topics."
+        ? "Resume updated! We refreshed skills, projects, and bio details."
+        : "Resume parsed! AI filled your skills, headline, projects & experiences."
     );
 
-    // Resume alone can't see coursework — nudge toward the other 10-second
-    // import so search can also match students by course code, not just skills.
-    // Overrides any earlier "ask me later" snooze since this is a fresh,
-    // contextual trigger rather than a repeat nag.
     setNudgeReason("resume");
   };
 
-  // Skill Handlers
-  const handleAddSkill = () => {
-    const trimmed = newSkillInput.trim();
-    if (!trimmed) return;
-    if (state.skills.includes(trimmed)) {
-      toast.info("Skill already added");
-      return;
-    }
-    setState((prev) => ({ ...prev, skills: [...prev.skills, trimmed] }));
+  // Skill Handlers with comma-separated paste support
+  const handleAddSkillsFromInput = (raw: string) => {
+    const parts = raw
+      .split(/[,;\n]+/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+    if (parts.length === 0) return;
+
+    setState((prev) => {
+      const set = new Set(prev.skills);
+      parts.forEach((p) => set.add(p));
+      return { ...prev, skills: Array.from(set) };
+    });
     setNewSkillInput("");
+  };
+
+  const handleQuickAddSkill = (skill: string) => {
+    if (state.skills.includes(skill)) return;
+    setState((prev) => ({ ...prev, skills: [...prev.skills, skill] }));
   };
 
   const handleRemoveSkill = (skillToRemove: string) => {
     setState((prev) => ({
       ...prev,
       skills: prev.skills.filter((s) => s !== skillToRemove),
+    }));
+  };
+
+  // Projects Handlers
+  const handleAddProject = () => {
+    const title = newProjectTitle.trim();
+    const desc = newProjectDesc.trim();
+    if (!title) {
+      toast.error("Please enter a project title");
+      return;
+    }
+    if (state.projects.length >= 6) {
+      toast.info("Maximum 6 projects allowed on your profile");
+      return;
+    }
+
+    const trimmedLink = newProjectLink.trim();
+    const normalizedLink = trimmedLink
+      ? /^https?:\/\//i.test(trimmedLink)
+        ? trimmedLink
+        : `https://${trimmedLink}`
+      : undefined;
+
+    const newProject: ProjectItem = {
+      id: crypto.randomUUID(),
+      title,
+      description: desc || "Project built during coursework or hackathons.",
+      link: normalizedLink,
+    };
+
+    setState((prev) => ({ ...prev, projects: [...prev.projects, newProject] }));
+    setNewProjectTitle("");
+    setNewProjectDesc("");
+    setNewProjectLink("");
+    setShowAddProject(false);
+    toast.success("Project added!");
+  };
+
+  const handleRemoveProject = (id: string) => {
+    setState((prev) => ({
+      ...prev,
+      projects: prev.projects.filter((p) => p.id !== id),
+    }));
+  };
+
+  // Experiences Handlers
+  const handleAddExperience = () => {
+    const title = newExpTitle.trim();
+    if (!title) {
+      toast.error("Please enter a role or achievement title");
+      return;
+    }
+    if (state.experiences.length >= 6) {
+      toast.info("Maximum 6 experiences allowed on your profile");
+      return;
+    }
+
+    const newExp: ExperienceItem = {
+      id: crypto.randomUUID(),
+      title,
+      organization: newExpOrg.trim() || undefined,
+      period: newExpPeriod.trim() || undefined,
+    };
+
+    setState((prev) => ({ ...prev, experiences: [...prev.experiences, newExp] }));
+    setNewExpTitle("");
+    setNewExpOrg("");
+    setNewExpPeriod("");
+    setShowAddExp(false);
+    toast.success("Experience added!");
+  };
+
+  const handleRemoveExperience = (id: string) => {
+    setState((prev) => ({
+      ...prev,
+      experiences: prev.experiences.filter((e) => e.id !== id),
     }));
   };
 
@@ -566,7 +713,7 @@ export default function ProfileSetupStudio() {
     }));
   };
 
-  // Enhanced mentor mock for live preview
+  // Live profile preview model
   const previewMentor = useMemo(() => {
     return getEnhancedMentorProfile({
       id: user?.id || "preview-id",
@@ -582,6 +729,8 @@ export default function ProfileSetupStudio() {
       outcomes: state.outcomes,
       ask_me_anything: state.ask_me_anything,
       ideal_mentees: state.ideal_mentees,
+      projects: state.projects,
+      experiences: state.experiences,
       rating: 5.0,
       review_count: 0,
       is_available: state.isAvailable,
@@ -609,29 +758,23 @@ export default function ProfileSetupStudio() {
     return missing;
   }, [hasName, hasDepartment, state.skills]);
 
-  // Calculate completeness (unified 6-point rubric)
+  // Completeness score
   const completeness = useMemo(() => {
     const checks = [
       { label: "Photo / Avatar", done: Boolean(profile?.profile_image) },
       { label: "Tagline / Bio", done: Boolean(state.tagline?.trim() || state.bio?.trim()) },
       { label: "Skills (2+)", done: state.skills.length >= 2 },
+      { label: "Projects / Experience", done: state.projects.length > 0 || state.experiences.length > 0 },
       {
         label: "Outcomes / Topics",
         done: state.outcomes.length > 0 || state.ask_me_anything.length > 0,
       },
       { label: "Target Students", done: state.ideal_mentees.length > 0 },
-      {
-        label: "Coursework / LinkedIn",
-        done: Boolean(
-          state.linkedin_url?.trim() ||
-            (previewMentor.courses?.length ?? 0) > 0
-        ),
-      },
     ];
     const doneCount = checks.filter((c) => c.done).length;
     const score = Math.round((doneCount / checks.length) * 100);
     return { score, checks };
-  }, [state, profile, previewMentor]);
+  }, [state, profile]);
 
   // Save and Publish Handler
   const handlePublish = async () => {
@@ -682,7 +825,7 @@ export default function ProfileSetupStudio() {
       if (userErr) throw userErr;
 
       // 2. Upsert into public.mentors
-      const mentorPayload = {
+      const mentorPayload: Record<string, any> = {
         id: user.id,
         name: state.name.trim(),
         department: state.department.trim(),
@@ -693,7 +836,15 @@ export default function ProfileSetupStudio() {
         linkedin_url: state.linkedin_url.trim() || undefined,
         profile_image: profile?.profile_image || undefined,
         is_available: state.isAvailable,
+        courses: state.courses,
+        projects: state.projects.slice(0, 6),
+        experiences: state.experiences.slice(0, 6),
       };
+
+      if (state.isAvailable) {
+        mentorPayload.available_from = null;
+        mentorPayload.availability_note = null;
+      }
 
       const { error: mentorErr } = await supabase
         .from("mentors")
@@ -703,11 +854,16 @@ export default function ProfileSetupStudio() {
         console.warn("Mentor upsert note:", mentorErr);
       }
 
-      // 3. Update summary fields (tagline, outcomes, AMA, ideal mentees)
+      // 3. Update summary fields
       await updateMentorSummary(user.id, {
         tagline: state.tagline.trim() || null,
         outcomes: state.outcomes.map((s) => s.trim()).filter(Boolean),
-        ask_me_anything: state.ask_me_anything.map((a) => ({ topic: a.topic.trim() })).filter((a) => Boolean(a.topic)),
+        ask_me_anything: state.ask_me_anything
+          .map((a) => {
+            const topicStr = typeof a === "string" ? a : a?.topic;
+            return typeof topicStr === "string" ? { topic: topicStr.trim() } : null;
+          })
+          .filter((a): a is { topic: string } => Boolean(a && a.topic)),
         ideal_mentees: state.ideal_mentees.map((s) => s.trim()).filter(Boolean),
       });
 
@@ -724,10 +880,8 @@ export default function ProfileSetupStudio() {
       );
 
       if (!isPortalLinked) {
-        // Center popup reminding user to link SRM portal for verified coursework & badges
         setPostPublishModalOpen(true);
       } else {
-        // Already linked, navigate to public profile
         setTimeout(() => {
           navigate(`/mentor/${user.id}`);
         }, 400);
@@ -752,16 +906,16 @@ export default function ProfileSetupStudio() {
   }
 
   return (
-    <div className="min-h-screen bg-muted/20 pb-20 pt-20">
+    <div className="min-h-screen bg-muted/20 pb-24 pt-20">
       <SEOHead
         title={isPublished ? "Profile Studio | Friendly Learning SRMAP" : "Profile Setup Studio | Friendly Learning SRMAP"}
-        description="Review, polish, and preview your campus profile before publishing."
+        description="Review, polish, and publish your campus profile."
       />
 
       {/* Top Sticky Header */}
       <header className="sticky top-16 z-30 border-b border-border/80 bg-background/95 backdrop-blur-md px-4 py-3 sm:px-6 shadow-xs">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
+        <div className="mx-auto flex max-w-4xl items-center justify-between gap-4">
+          <div className="flex items-center gap-3 min-w-0">
             <Button
               variant="ghost"
               size="sm"
@@ -772,18 +926,18 @@ export default function ProfileSetupStudio() {
                   navigate(-1);
                 }
               }}
-              className="gap-1.5 text-muted-foreground hover:text-foreground"
+              className="gap-1.5 text-muted-foreground hover:text-foreground shrink-0"
             >
               <ArrowLeft className="h-4 w-4" />
               <span className="hidden sm:inline">
-                {isPublished ? "Back to Profile" : "Exit Studio"}
+                {isPublished ? "Back to Profile" : "Exit"}
               </span>
             </Button>
             <div className="h-4 w-px bg-border hidden sm:block" />
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-sm sm:text-base font-bold text-foreground flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-primary" />
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-sm sm:text-base font-bold text-foreground flex items-center gap-1.5 truncate">
+                  <Sparkles className="h-4 w-4 text-primary shrink-0" />
                   {isPublished ? "Profile Studio" : "Profile Setup Studio"}
                 </h1>
                 {isPublished ? (
@@ -806,17 +960,22 @@ export default function ProfileSetupStudio() {
                   </Badge>
                 )}
               </div>
-              <p className="text-xs text-muted-foreground hidden sm:block">
-                {isPublished
-                  ? "Edit on the left, watch your live public card update on the right."
-                  : canPublish
-                  ? "All required fields ready — you can publish your profile live."
-                  : `Required before publishing: ${missingRequirements.join(", ")}`}
-              </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2 shrink-0">
+            {/* Quick Preview Modal Trigger */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPreviewModalOpen(true)}
+              className="gap-1.5 text-xs font-semibold"
+              title="Preview how students see your card on campus"
+            >
+              <Eye className="h-3.5 w-3.5 text-muted-foreground" />
+              <span className="hidden sm:inline">Preview Card</span>
+            </Button>
+
             {!(nudgeReason && state.courses.length === 0) && (
               <Button
                 variant="outline"
@@ -825,7 +984,7 @@ export default function ProfileSetupStudio() {
                 className="hidden md:flex gap-1.5 text-xs font-medium"
               >
                 <GraduationCap className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
-                {state.courses.length > 0 ? `SRM Portal Linked (${state.courses.length})` : "Link SRM Portal"}
+                {state.courses.length > 0 ? `SRM Portal (${state.courses.length})` : "Link Portal"}
               </Button>
             )}
 
@@ -833,16 +992,11 @@ export default function ProfileSetupStudio() {
               onClick={handlePublish}
               disabled={isSaving || (!isPublished && !canPublish)}
               size="sm"
-              className={`gap-2 font-bold shadow-sm px-4 ${
+              className={`gap-1.5 font-bold shadow-sm px-4 ${
                 !isPublished && !canPublish
                   ? "bg-muted text-muted-foreground hover:bg-muted cursor-not-allowed opacity-75"
                   : "bg-primary hover:bg-primary/90 text-primary-foreground"
               }`}
-              title={
-                !isPublished && !canPublish
-                  ? `Required to publish: ${missingRequirements.join(", ")}`
-                  : undefined
-              }
             >
               {isSaving ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -854,58 +1008,28 @@ export default function ProfileSetupStudio() {
                   ? "Save Changes"
                   : canPublish
                   ? "Publish Profile"
-                  : "Complete Info to Publish"}
+                  : "Complete Info"}
               </span>
             </Button>
           </div>
         </div>
       </header>
 
-      {/* Mobile Switcher Tab (Only on small screens) */}
-      <div className="lg:hidden mx-auto max-w-lg px-4 pt-4">
-        <div className="grid grid-cols-2 rounded-xl bg-card p-1 border border-border/80 shadow-xs">
-          <button
-            type="button"
-            onClick={() => setActiveMobileTab("edit")}
-            className={`flex items-center justify-center gap-2 rounded-lg py-2 text-xs font-bold transition-all ${
-              activeMobileTab === "edit"
-                ? "bg-primary text-primary-foreground shadow-xs"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <Edit3 className="h-3.5 w-3.5" />
-            Edit Profile Data
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveMobileTab("preview")}
-            className={`flex items-center justify-center gap-2 rounded-lg py-2 text-xs font-bold transition-all ${
-              activeMobileTab === "preview"
-                ? "bg-primary text-primary-foreground shadow-xs"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <Eye className="h-3.5 w-3.5" />
-            Live Preview ({completeness.score}%)
-          </button>
-        </div>
-      </div>
-
-      {/* Main Studio Container */}
-      <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-6">
-        {/* Onboarding Kickstart / Mode Selector for Incomplete Profiles vs Management Toolbar */}
+      {/* Main Full-Width Studio Container */}
+      <main className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
+        {/* Onboarding Kickstart / Mode Selector */}
         {!isPublished && completeness.score < 60 ? (
-          <section className="mb-6 rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/10 via-background to-indigo-500/10 p-5 sm:p-6 shadow-xs">
-            <div className="max-w-3xl space-y-1.5 mb-5">
+          <section className="rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/10 via-background to-indigo-500/10 p-5 sm:p-6 shadow-xs">
+            <div className="max-w-2xl space-y-1.5 mb-5">
               <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/15 px-2.5 py-0.5 text-2xs font-bold text-primary uppercase tracking-wider">
                 <Sparkles className="h-3 w-3" />
-                Step 1: Choose How to Fill Your Details
+                Fast Setup
               </div>
               <h2 className="text-base sm:text-lg font-extrabold text-foreground">
-                Fast-track with your resume or enter your details manually
+                Import your resume or fill details below
               </h2>
               <p className="text-xs sm:text-sm text-muted-foreground">
-                Import your resume or LinkedIn PDF to fill your skills, headline, outcomes, and bio automatically in ~5 seconds, or start filling manually below.
+                Upload your resume (PDF or .docx) to auto-extract skills, projects, experience, headline, and bio in ~5 seconds.
               </p>
             </div>
 
@@ -915,15 +1039,15 @@ export default function ProfileSetupStudio() {
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
                     <span className="inline-flex items-center gap-1 text-2xs font-extrabold bg-primary text-primary-foreground px-2 py-0.5 rounded-md uppercase tracking-wider">
-                      ⚡ 5-Second Auto-Fill
+                      ⚡ AI Auto-Fill
                     </span>
                     <FileText className="h-4 w-4 text-primary" />
                   </div>
                   <h3 className="text-sm font-bold text-foreground">
-                    Import from Resume (PDF or Word .docx)
+                    Upload Resume (PDF / Word)
                   </h3>
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    Upload your resume. Gemini AI extracts your department, skills, bio, tagline, and mentoring topics instantly.
+                    Gemini AI extracts your department, skills, projects, work experience, bio, and mentoring topics instantly.
                   </p>
                 </div>
                 <ResumePdfImport
@@ -942,10 +1066,10 @@ export default function ProfileSetupStudio() {
                     <UserRound className="h-4 w-4 text-muted-foreground" />
                   </div>
                   <h3 className="text-sm font-bold text-foreground">
-                    Fill Details Step-by-Step
+                    Fill Step-by-Step
                   </h3>
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    Prefer entering details by hand? Scroll down to customize your bio, pick your skills, and craft your outcomes.
+                    Prefer entering details by hand? Scroll down to customize your bio, pick your skills, and add your projects.
                   </p>
                 </div>
                 <Button
@@ -962,22 +1086,22 @@ export default function ProfileSetupStudio() {
             </div>
           </section>
         ) : (
-          <section className="mb-6 rounded-2xl border border-primary/20 bg-gradient-to-r from-primary/5 via-background to-indigo-500/5 p-4 sm:p-5 shadow-xs">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <section className="rounded-2xl border border-primary/20 bg-gradient-to-r from-primary/5 via-background to-indigo-500/5 p-4 sm:p-5 shadow-xs">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="space-y-1">
                 <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/15 px-2.5 py-0.5 text-2xs font-bold text-primary uppercase tracking-wider">
                   {isPublished ? <CheckCircle2 className="h-3 w-3 text-emerald-500" /> : <Zap className="h-3 w-3" />}
-                  {isPublished ? "Profile Management & Re-sync" : "AI Smart Extraction & Auto-Draft"}
+                  {isPublished ? "Profile Management" : "Smart Auto-Draft"}
                 </div>
                 <h2 className="text-sm sm:text-base font-bold text-foreground">
                   {isPublished
-                    ? "Update skills, re-upload resume, or re-sync SRM Portal"
+                    ? "Update skills, re-sync resume, or refresh summaries"
                     : "Auto-fill your headline, outcomes, and topics with AI"}
                 </h2>
                 <p className="text-xs text-muted-foreground">
                   {isPublished
-                    ? "Upload a new resume (PDF or Word) to merge newly acquired skills or re-sync your latest semester grades from SRM AP."
-                    : "Upload your resume (PDF or Word) or click Auto-Draft to generate tailored profile summaries based on your skills."}
+                    ? "Upload a new resume to merge new skills & projects, or auto-draft fresh summaries anytime."
+                    : "Upload your resume or click Auto-Draft to generate tailored profile summaries."}
                 </p>
               </div>
 
@@ -1001,9 +1125,7 @@ export default function ProfileSetupStudio() {
           </section>
         )}
 
-        {/* Portal nudge: only the SRM Portal can fill in verified coursework, so
-            offer it either right after a resume import or once per visit if it's
-            still unlinked — dismissible ("ask me later"), never a blocking popup. */}
+        {/* Portal nudge banner */}
         <AnimatePresence>
           {nudgeReason && state.courses.length === 0 && (
             <motion.section
@@ -1025,7 +1147,7 @@ export default function ProfileSetupStudio() {
                         : "Want your verified coursework on your profile too?"}
                     </p>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      We'll pull in your coursework so juniors can find you by course code too. Takes about 10 seconds, and your CGPA stays private.
+                      We'll pull in your coursework so classmates can find you by course code too. Takes about 10 seconds, and your CGPA stays private.
                     </p>
                   </div>
                 </div>
@@ -1052,770 +1174,1028 @@ export default function ProfileSetupStudio() {
           )}
         </AnimatePresence>
 
-        {/* Studio Grid: Left (Editor) & Right (Sticky Live Preview) */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          {/* LEFT COLUMN: INTERACTIVE EDITOR */}
-          <div
-            className={`space-y-6 lg:col-span-7 ${
-              activeMobileTab === "preview" ? "hidden lg:block" : "block"
-            }`}
-          >
-            {/* 1. Basic Identity */}
-            <div id="section-basic-info" className="rounded-2xl border border-border/80 bg-card p-5 sm:p-6 shadow-xs space-y-4">
-              <div className="flex items-center justify-between border-b border-border/60 pb-3">
-                <div className="flex items-center gap-2">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 text-primary font-bold text-xs">
-                    1
-                  </div>
-                  <div>
-                    <h3 className="text-sm sm:text-base font-bold text-foreground">Basic Information</h3>
-                    <p className="text-xs text-muted-foreground">How peers and professors identify you</p>
-                  </div>
-                </div>
-
-                {/* Availability Switch */}
-                <div className="flex items-center gap-2 bg-muted/40 px-3 py-1.5 rounded-xl border border-border/50">
-                  <span className="text-2xs font-semibold text-foreground">
-                    {state.isAvailable ? "🟢 Available" : "⏸️ Paused"}
-                  </span>
-                  <Switch
-                    checked={state.isAvailable}
-                    onCheckedChange={(checked) => setState({ ...state, isAvailable: checked })}
-                  />
-                </div>
+        {/* 1. Basic Identity */}
+        <div id="section-basic-info" className="rounded-2xl border border-border/80 bg-card p-5 sm:p-6 shadow-xs space-y-4">
+          <div className="flex items-center justify-between border-b border-border/60 pb-3">
+            <div className="flex items-center gap-2">
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 text-primary font-bold text-xs">
+                1
               </div>
-
-              <ProfileAvatarUploader
-                variant="inline"
-                userId={user?.id || ""}
-                name={state.name || profile?.name || ""}
-                profileImage={profile?.profile_image || ""}
-                onImageUpdated={() => refreshProfile()}
-              />
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                <div className="space-y-1.5">
-                  <label className="font-semibold text-foreground flex items-center justify-between">
-                    <span>Full Name <span className="text-destructive">*</span></span>
-                    {!state.name.trim() && <span className="text-xs text-destructive">Required</span>}
-                  </label>
-                  <Input
-                    value={state.name}
-                    onChange={(e) => setState({ ...state, name: e.target.value })}
-                    placeholder="e.g. Usha Shah"
-                    className="text-sm"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="font-semibold text-foreground flex items-center justify-between">
-                    <span>Department / Major <span className="text-destructive">*</span></span>
-                    {!state.department.trim() && <span className="text-xs text-destructive">Required</span>}
-                  </label>
-                  <Input
-                    value={state.department}
-                    onChange={(e) => setState({ ...state, department: e.target.value })}
-                    placeholder="e.g. Computer Science, Physics, Mechanical..."
-                    className="text-sm"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="font-semibold text-foreground">Year of Studies</label>
-                  <select
-                    value={state.year_of_studies}
-                    onChange={(e) => setState({ ...state, year_of_studies: e.target.value })}
-                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus:outline-hidden focus:ring-2 focus:ring-ring"
-                  >
-                    <option value="">Select Year of Study</option>
-                    <option value="1st Year">1st Year</option>
-                    <option value="2nd Year">2nd Year</option>
-                    <option value="3rd Year">3rd Year</option>
-                    <option value="4th Year">4th Year</option>
-                    <option value="5th Year">5th Year</option>
-                    <option value="Graduated">Graduated / Alumni</option>
-                  </select>
-                </div>
-                <div className="space-y-1.5">
-                  <label className="font-semibold text-foreground">University / Location</label>
-                  <Input
-                    value={state.university}
-                    onChange={(e) => setState({ ...state, university: e.target.value })}
-                    placeholder="SRM University-AP"
-                    className="text-sm"
-                  />
-                </div>
+              <div>
+                <h3 className="text-sm sm:text-base font-bold text-foreground">Basic Information</h3>
+                <p className="text-xs text-muted-foreground">How peers and professors identify you on campus</p>
               </div>
             </div>
 
-            {/* 2. One-Line Tagline Headline */}
-            <div className="rounded-2xl border border-border/80 bg-card p-5 sm:p-6 shadow-xs space-y-3">
-              <div className="flex items-center justify-between border-b border-border/60 pb-3">
-                <div className="flex items-center gap-2">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-bold text-xs">
-                    2
-                  </div>
-                  <div>
-                    <h3 className="text-sm sm:text-base font-bold text-foreground flex items-center gap-1.5">
-                      One-Line Tagline
-                      <Badge variant="secondary" className="text-2xs font-semibold bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
-                        High Visibility
-                      </Badge>
-                    </h3>
-                    <p className="text-xs text-muted-foreground">Appears below your name across CampusMind search results</p>
-                  </div>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleSuggestTagline}
-                  className="gap-1 text-2xs font-semibold text-primary hover:text-primary hover:bg-primary/10 h-7 px-2"
-                >
-                  <Sparkles className="h-3 w-3" />
-                  AI Suggest
-                </Button>
-              </div>
-
-              <div className="space-y-2">
-                <Input
-                  value={state.tagline}
-                  maxLength={120}
-                  onChange={(e) => setState({ ...state, tagline: e.target.value })}
-                  placeholder={`e.g. Helping peers with ${state.skills[0] || state.department || "coursework"}, problem solving & lab prep`}
-                  className="text-sm font-medium"
-                />
-                <div className="flex items-center justify-between text-2xs text-muted-foreground pt-0.5">
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    <span className="font-semibold">💡 Quick Ideas:</span>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setState((prev) => {
-                          const clean = formatDepartment(prev.department) || prev.department;
-                          return {
-                            ...prev,
-                            tagline: `${clean ? `${clean} student` : "Student"} helping juniors with ${prev.skills[0] || "core subjects"} and lab work.`,
-                          };
-                        })
-                      }
-                      className="underline hover:text-foreground"
-                    >
-                      "Helping juniors master..."
-                    </button>
-                    <span>•</span>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setState((prev) => {
-                          const clean = formatDepartment(prev.department) || prev.department;
-                          return {
-                            ...prev,
-                            tagline: `${clean ? `${clean} student` : "Student"} happy to review projects, coursework, and notes.`,
-                          };
-                        })
-                      }
-                      className="underline hover:text-foreground"
-                    >
-                      "Happy to review projects..."
-                    </button>
-                  </div>
-                  <span className="tabular-nums">{state.tagline.length}/120</span>
-                </div>
-              </div>
-            </div>
-
-            {/* 3. Skills & Expertise */}
-            <div id="section-skills" className="rounded-2xl border border-border/80 bg-card p-5 sm:p-6 shadow-xs space-y-4">
-              <div className="flex items-center justify-between border-b border-border/60 pb-3">
-                <div className="flex items-center gap-2">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold text-xs">
-                    3
-                  </div>
-                  <div>
-                    <h3 className="text-sm sm:text-base font-bold text-foreground flex items-center gap-2">
-                      Skills & Expertise
-                      <span className="text-destructive text-xs">*</span>
-                    </h3>
-                    <p className="text-xs text-muted-foreground">Classmates will discover you when searching these topics (min 2 needed)</p>
-                  </div>
-                </div>
-                <span className={`text-2xs font-semibold ${
-                  state.skills.length >= 2 ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"
-                }`}>
-                  {state.skills.length} added {state.skills.length < 2 && "(min 2 needed)"}
-                </span>
-              </div>
-
-              {/* Skill Pills */}
-              <div className="flex flex-wrap gap-1.5 min-h-[42px] p-2 rounded-xl bg-muted/40 border border-border/60">
-                {state.skills.length === 0 ? (
-                  <span className="text-xs text-muted-foreground italic py-1 px-2">
-                    No skills added yet. Add a few below or import your resume above!
-                  </span>
-                ) : (
-                  state.skills.map((skill) => (
-                    <span
-                      key={skill}
-                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-background text-foreground border border-border shadow-2xs hover:border-destructive/40 transition-colors group"
-                    >
-                      {skill}
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveSkill(skill)}
-                        aria-label={`Remove ${skill}`}
-                        className="text-muted-foreground hover:text-destructive transition-colors ml-0.5"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </button>
-                    </span>
-                  ))
-                )}
-              </div>
-
-              {/* Add Skill Input */}
-              <div className="flex items-center gap-2">
-                <Input
-                  value={newSkillInput}
-                  onChange={(e) => setNewSkillInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      handleAddSkill();
-                    }
-                  }}
-                  placeholder="Type a skill and press Enter (e.g. Python, React, Machine Learning, Physics)..."
-                  className="text-sm"
-                />
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  onClick={handleAddSkill}
-                  className="gap-1 font-semibold shrink-0"
-                >
-                  <Plus className="h-4 w-4" />
-                  Add
-                </Button>
-              </div>
-            </div>
-
-            {/* 4. What I Can Help You Achieve (Outcomes) */}
-            <div className="rounded-2xl border border-border/80 bg-card p-5 sm:p-6 shadow-xs space-y-4">
-              <div className="flex items-center justify-between border-b border-border/60 pb-3">
-                <div className="flex items-center gap-2">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400 font-bold text-xs">
-                    4
-                  </div>
-                  <div>
-                    <h3 className="text-sm sm:text-base font-bold text-foreground flex items-center gap-1.5">
-                      <Target className="h-4 w-4 text-teal-600 dark:text-teal-400" />
-                      What I Can Help You Achieve
-                    </h3>
-                    <p className="text-xs text-muted-foreground">Concrete results students walk away with after messaging you</p>
-                  </div>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleSuggestOutcomes}
-                  className="gap-1 text-2xs font-semibold text-teal-600 hover:text-teal-700 hover:bg-teal-500/10 h-7 px-2"
-                >
-                  <Sparkles className="h-3 w-3" />
-                  AI Suggest
-                </Button>
-              </div>
-
-              {/* Outcomes List */}
-              <div className="space-y-2">
-                {state.outcomes.length === 0 ? (
-                  <p className="text-xs text-muted-foreground italic py-1">
-                    No outcomes added yet. Click &ldquo;AI Suggest&rdquo; above to auto-generate!
-                  </p>
-                ) : (
-                  state.outcomes.map((outcome, idx) => (
-                    <div
-                      key={idx}
-                      className="flex items-center justify-between gap-3 p-2.5 rounded-xl border border-border/60 bg-muted/20 text-xs text-foreground"
-                    >
-                      <span className="flex items-center gap-2">
-                        <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
-                        {outcome}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveOutcome(idx)}
-                        className="text-muted-foreground hover:text-destructive transition-colors shrink-0"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                  ))
-                )}
-
-                {/* Add Outcome */}
-                <div className="flex items-center gap-2 pt-1">
-                  <Input
-                    value={newOutcomeInput}
-                    onChange={(e) => setNewOutcomeInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        handleAddOutcome();
-                      }
-                    }}
-                    placeholder="e.g. Master problem sets and lab experiments in my major"
-                    className="text-xs"
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={handleAddOutcome}
-                    className="shrink-0 gap-1 text-xs"
-                  >
-                    <Plus className="h-3.5 w-3.5" />
-                    Add Outcome
-                  </Button>
-                </div>
-              </div>
-            </div>
-
-            {/* 5. Ask Me Anything Topics */}
-            <div className="rounded-2xl border border-border/80 bg-card p-5 sm:p-6 shadow-xs space-y-4">
-              <div className="flex items-center justify-between border-b border-border/60 pb-3">
-                <div className="flex items-center gap-2">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-sky-500/10 text-sky-600 dark:text-sky-400 font-bold text-xs">
-                    5
-                  </div>
-                  <div>
-                    <h3 className="text-sm sm:text-base font-bold text-foreground flex items-center gap-1.5">
-                      <MessageSquareCode className="h-4 w-4 text-sky-600 dark:text-sky-400" />
-                      Ask Me Anything Topics
-                    </h3>
-                    <p className="text-xs text-muted-foreground">Conversational prompts for juniors reaching out</p>
-                  </div>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleSuggestAma}
-                  className="gap-1 text-2xs font-semibold text-sky-600 hover:text-sky-700 hover:bg-sky-500/10 h-7 px-2"
-                >
-                  <Sparkles className="h-3 w-3" />
-                  AI Suggest
-                </Button>
-              </div>
-
-              {/* AMA Badges */}
-              <div className="flex flex-wrap gap-2">
-                {state.ask_me_anything.length === 0 ? (
-                  <p className="text-xs text-muted-foreground italic py-1">
-                    No AMA topics added yet. Click &ldquo;AI Suggest&rdquo; above!
-                  </p>
-                ) : (
-                  state.ask_me_anything.map((item, idx) => (
-                    <span
-                      key={idx}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-sky-50 dark:bg-sky-950/60 text-sky-800 dark:text-sky-200 border border-sky-200/60 dark:border-sky-800/60"
-                    >
-                      <span>💬</span>
-                      {item.topic}
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveAma(idx)}
-                        className="text-sky-600 hover:text-destructive transition-colors ml-1"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </button>
-                    </span>
-                  ))
-                )}
-              </div>
-
-              {/* Add AMA Topic */}
-              <div className="flex items-center gap-2">
-                <Input
-                  value={newAmaInput}
-                  onChange={(e) => setNewAmaInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      handleAddAma();
-                    }
-                  }}
-                  placeholder="e.g. Core concepts, project ideas, exam strategy..."
-                  className="text-xs"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleAddAma}
-                  className="shrink-0 gap-1 text-xs"
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                  Add Topic
-                </Button>
-              </div>
-            </div>
-
-            {/* 6. Perfect If You Are... (Ideal Mentees) */}
-            <div className="rounded-2xl border border-border/80 bg-card p-5 sm:p-6 shadow-xs space-y-4">
-              <div className="flex items-center justify-between border-b border-border/60 pb-3">
-                <div className="flex items-center gap-2">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400 font-bold text-xs">
-                    6
-                  </div>
-                  <div>
-                    <h3 className="text-sm sm:text-base font-bold text-foreground flex items-center gap-1.5">
-                      <Users className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-                      Perfect If You Are... (Target Students)
-                    </h3>
-                    <p className="text-xs text-muted-foreground">Helps juniors know immediately if you are the right person to ask</p>
-                  </div>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleSuggestIdealMentees}
-                  className="gap-1 text-2xs font-semibold text-purple-600 hover:text-purple-700 hover:bg-purple-500/10 h-7 px-2"
-                >
-                  <Sparkles className="h-3 w-3" />
-                  AI Suggest
-                </Button>
-              </div>
-
-              {/* Ideal Mentees List */}
-              <div className="space-y-2">
-                {state.ideal_mentees.length === 0 ? (
-                  <p className="text-xs text-muted-foreground italic py-1">
-                    No target descriptions added yet. Click &ldquo;AI Suggest&rdquo; above!
-                  </p>
-                ) : (
-                  state.ideal_mentees.map((mentee, idx) => (
-                    <div
-                      key={idx}
-                      className="flex items-center justify-between gap-3 p-2.5 rounded-xl border border-border/60 bg-muted/20 text-xs text-foreground"
-                    >
-                      <span className="flex items-center gap-2">
-                        <CheckCircle2 className="h-4 w-4 text-purple-500 shrink-0" />
-                        {mentee}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveIdealMentee(idx)}
-                        className="text-muted-foreground hover:text-destructive transition-colors shrink-0"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                  ))
-                )}
-
-                {/* Add Ideal Mentee */}
-                <div className="flex items-center gap-2 pt-1">
-                  <Input
-                    value={newIdealMenteeInput}
-                    onChange={(e) => setNewIdealMenteeInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        handleAddIdealMentee();
-                      }
-                    }}
-                    placeholder="e.g. 1st or 2nd year students taking courses in my major"
-                    className="text-xs"
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={handleAddIdealMentee}
-                    className="shrink-0 gap-1 text-xs"
-                  >
-                    <Plus className="h-3.5 w-3.5" />
-                    Add Description
-                  </Button>
-                </div>
-              </div>
-            </div>
-
-            {/* 7. Bio & Social Links */}
-            <div className="rounded-2xl border border-border/80 bg-card p-5 sm:p-6 shadow-xs space-y-4">
-              <div className="flex items-center gap-2 border-b border-border/60 pb-3">
-                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold text-xs">
-                  7
-                </div>
-                <div>
-                  <h3 className="text-sm sm:text-base font-bold text-foreground">Bio & Social Profiles</h3>
-                  <p className="text-xs text-muted-foreground">Share your background and connect links</p>
-                </div>
-              </div>
-
-              <div className="space-y-3 text-xs">
-                <div className="space-y-1.5">
-                  <label className="font-semibold text-foreground">Short Bio (2-3 sentences)</label>
-                  <Textarea
-                    value={state.bio}
-                    onChange={(e) => setState({ ...state, bio: e.target.value })}
-                    rows={3}
-                    placeholder="Tell peers what you're passionate about, your recent projects, or how you like to collaborate..."
-                    className="text-sm resize-none"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="font-semibold text-foreground">LinkedIn Profile URL</label>
-                  <Input
-                    value={state.linkedin_url}
-                    onChange={(e) => setState({ ...state, linkedin_url: e.target.value })}
-                    placeholder="https://linkedin.com/in/username"
-                    className="text-sm"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* 8. Privacy & CampusMind AI Discovery Consent */}
-            <div className="rounded-2xl border border-primary/20 bg-primary/5 p-5 shadow-xs flex items-center justify-between gap-4">
-              <div className="space-y-1">
-                <h4 className="text-xs sm:text-sm font-bold text-foreground flex items-center gap-1.5">
-                  <ShieldCheck className="h-4 w-4 text-primary" />
-                  CampusMind AI Search Discovery
-                </h4>
-                <p className="text-xs text-muted-foreground">
-                  Allow fellow SRM AP students to discover you when searching for your skills, department, or courses.
-                </p>
-              </div>
+            {/* Availability Switch */}
+            <div className="flex items-center gap-2 bg-muted/40 px-3 py-1.5 rounded-xl border border-border/50">
+              <span className="text-2xs font-semibold text-foreground">
+                {state.isAvailable ? "🟢 Available" : "⏸️ Paused"}
+              </span>
               <Switch
-                checked={state.isDiscoverable}
-                onCheckedChange={(checked) => setState({ ...state, isDiscoverable: checked })}
+                checked={state.isAvailable}
+                onCheckedChange={(checked) => setState({ ...state, isAvailable: checked })}
               />
             </div>
           </div>
 
-          {/* RIGHT COLUMN: STICKY LIVE PREVIEW */}
-          <div
-            className={`lg:col-span-5 lg:sticky lg:top-36 space-y-4 ${
-              activeMobileTab === "edit" ? "hidden lg:block" : "block"
-            }`}
-          >
-            {/* Live Preview Card Wrapper */}
-            <div className="rounded-2xl border border-border/80 bg-card p-5 shadow-md space-y-4">
-              {/* Preview Header & Strength Gauge */}
-              <div className="flex items-center justify-between border-b border-border/60 pb-3">
-                <div className="flex items-center gap-2">
-                  <div className="flex h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
-                  <span className="text-xs font-bold uppercase tracking-wider text-foreground">
-                    Live Public Card Preview
-                  </span>
-                </div>
-                <Badge
-                  variant="outline"
-                  className={`text-2xs font-bold ${
-                    completeness.score >= 80
-                      ? "bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-950/60 dark:text-emerald-300"
-                      : "bg-amber-50 text-amber-700 border-amber-300 dark:bg-amber-950/60 dark:text-amber-300"
-                  }`}
+          <ProfileAvatarUploader
+            variant="inline"
+            userId={user?.id || ""}
+            name={state.name || profile?.name || ""}
+            profileImage={profile?.profile_image || ""}
+            onImageUpdated={() => refreshProfile()}
+          />
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+            <div className="space-y-1.5">
+              <label className="font-semibold text-foreground flex items-center justify-between">
+                <span>Full Name <span className="text-destructive">*</span></span>
+                {!state.name.trim() && <span className="text-xs text-destructive">Required</span>}
+              </label>
+              <Input
+                value={state.name}
+                onChange={(e) => setState({ ...state, name: e.target.value })}
+                placeholder="e.g. Usha Shah"
+                className="text-sm"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="font-semibold text-foreground flex items-center justify-between">
+                <span>Department / Major <span className="text-destructive">*</span></span>
+                {!state.department.trim() && <span className="text-xs text-destructive">Required</span>}
+              </label>
+              <Input
+                value={state.department}
+                onChange={(e) => setState({ ...state, department: e.target.value })}
+                placeholder="e.g. Computer Science, Physics, Mechanical..."
+                className="text-sm"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="font-semibold text-foreground">Year of Studies</label>
+              <select
+                value={state.year_of_studies}
+                onChange={(e) => setState({ ...state, year_of_studies: e.target.value })}
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus:outline-hidden focus:ring-2 focus:ring-ring"
+              >
+                <option value="">Select Year of Study</option>
+                <option value="1st Year">1st Year</option>
+                <option value="2nd Year">2nd Year</option>
+                <option value="3rd Year">3rd Year</option>
+                <option value="4th Year">4th Year</option>
+                <option value="5th Year">5th Year</option>
+                <option value="Graduated">Graduated / Alumni</option>
+              </select>
+            </div>
+            <div className="space-y-1.5">
+              <label className="font-semibold text-foreground">University / Location</label>
+              <Input
+                value={state.university}
+                onChange={(e) => setState({ ...state, university: e.target.value })}
+                placeholder="SRM University-AP"
+                className="text-sm"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* 2. One-Line Tagline Headline */}
+        <div className="rounded-2xl border border-border/80 bg-card p-5 sm:p-6 shadow-xs space-y-3">
+          <div className="flex items-center justify-between border-b border-border/60 pb-3">
+            <div className="flex items-center gap-2">
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-bold text-xs">
+                2
+              </div>
+              <div>
+                <h3 className="text-sm sm:text-base font-bold text-foreground flex items-center gap-1.5">
+                  One-Line Tagline
+                  <Badge variant="secondary" className="text-2xs font-semibold bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
+                    High Visibility
+                  </Badge>
+                </h3>
+                <p className="text-xs text-muted-foreground">Appears below your name across CampusMind search results</p>
+              </div>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleSuggestTagline}
+              className="gap-1 text-2xs font-semibold text-primary hover:text-primary hover:bg-primary/10 h-7 px-2"
+            >
+              <Sparkles className="h-3 w-3" />
+              AI Suggest
+            </Button>
+          </div>
+
+          <div className="space-y-2">
+            <Input
+              value={state.tagline}
+              maxLength={120}
+              onChange={(e) => setState({ ...state, tagline: e.target.value })}
+              placeholder={`e.g. Helping peers with ${state.skills[0] || state.department || "coursework"}, problem solving & lab prep`}
+              className="text-sm font-medium"
+            />
+            <div className="flex items-center justify-between text-2xs text-muted-foreground pt-0.5">
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="font-semibold">💡 Quick Ideas:</span>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setState((prev) => {
+                      const clean = formatDepartment(prev.department) || prev.department;
+                      return {
+                        ...prev,
+                        tagline: `${clean ? `${clean} student` : "Student"} helping juniors with ${prev.skills[0] || "core subjects"} and lab work.`,
+                      };
+                    })
+                  }
+                  className="underline hover:text-foreground"
                 >
-                  {completeness.score}% Complete
-                </Badge>
+                  "Helping juniors master..."
+                </button>
+                <span>•</span>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setState((prev) => {
+                      const clean = formatDepartment(prev.department) || prev.department;
+                      return {
+                        ...prev,
+                        tagline: `${clean ? `${clean} student` : "Student"} happy to review projects, coursework, and notes.`,
+                      };
+                    })
+                  }
+                  className="underline hover:text-foreground"
+                >
+                  "Happy to review projects..."
+                </button>
               </div>
+              <span className="tabular-nums">{state.tagline.length}/120</span>
+            </div>
+          </div>
+        </div>
 
-              {/* Progress bar */}
-              <div className="space-y-1">
-                <Progress value={completeness.score} className="h-1.5" />
-                <div className="flex flex-wrap gap-1.5 pt-1">
-                  {completeness.checks.map((check, i) => (
-                    <span
-                      key={i}
-                      className={`inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full ${
-                        check.done
-                          ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                          : "bg-muted text-muted-foreground"
-                      }`}
-                    >
-                      {check.done ? "✓" : "○"} {check.label}
-                    </span>
-                  ))}
-                </div>
+        {/* 3. Skills & Expertise */}
+        <div id="section-skills" className="rounded-2xl border border-border/80 bg-card p-5 sm:p-6 shadow-xs space-y-4">
+          <div className="flex items-center justify-between border-b border-border/60 pb-3">
+            <div className="flex items-center gap-2">
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold text-xs">
+                3
               </div>
+              <div>
+                <h3 className="text-sm sm:text-base font-bold text-foreground flex items-center gap-2">
+                  Skills & Expertise
+                  <span className="text-destructive text-xs">*</span>
+                </h3>
+                <p className="text-xs text-muted-foreground">Classmates will discover you when searching these topics (min 2 needed)</p>
+              </div>
+            </div>
+            <span className={`text-2xs font-semibold ${
+              state.skills.length >= 2 ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"
+            }`}>
+              {state.skills.length} added {state.skills.length < 2 && "(min 2 needed)"}
+            </span>
+          </div>
 
-              {/* Simulated Public Profile Header */}
-              <div className="rounded-xl border border-border/60 bg-background/80 p-4 space-y-3">
-                <div className="flex items-start gap-3.5">
-                  <MentorAvatar
-                    name={previewMentor.name}
-                    src={previewMentor.profile_image}
-                    seed={previewMentor.id}
-                    className="h-14 w-14 rounded-xl shadow-xs object-cover"
-                    fallbackClassName="rounded-xl text-lg font-bold"
-                  />
-                  <div className="space-y-1 min-w-0 flex-1">
-                    <h4 className="text-base font-extrabold text-foreground truncate">
-                      {previewMentor.name || "Your Name"}
-                    </h4>
-                    <p className="text-xs text-muted-foreground flex flex-wrap items-center gap-1">
-                      <span className="font-semibold text-foreground/90">{state.department || "(Your Department)"}</span>
-                      <span>•</span>
-                      <span>{state.year_of_studies || "(Select Year)"}</span>
-                      <span>•</span>
-                      <span className="text-primary font-medium">{state.university}</span>
-                    </p>
-                    {state.tagline ? (
-                      <p className="text-xs italic text-foreground/90 pt-0.5 line-clamp-2">
-                        &ldquo;{state.tagline}&rdquo;
+          {/* Skill Pills */}
+          <div className="flex flex-wrap gap-1.5 min-h-[42px] p-2.5 rounded-xl bg-muted/40 border border-border/60">
+            {state.skills.length === 0 ? (
+              <span className="text-xs text-muted-foreground italic py-1 px-2">
+                No skills added yet. Add a few below, click quick suggestions, or import your resume!
+              </span>
+            ) : (
+              state.skills.map((skill) => (
+                <span
+                  key={skill}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-background text-foreground border border-border shadow-2xs hover:border-destructive/40 transition-colors group"
+                >
+                  {skill}
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveSkill(skill)}
+                    aria-label={`Remove ${skill}`}
+                    className="text-muted-foreground hover:text-destructive transition-colors ml-0.5"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </button>
+                </span>
+              ))
+            )}
+          </div>
+
+          {/* Add Skill Input */}
+          <div className="flex items-center gap-2">
+            <Input
+              value={newSkillInput}
+              onChange={(e) => setNewSkillInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === ",") {
+                  e.preventDefault();
+                  handleAddSkillsFromInput(newSkillInput);
+                }
+              }}
+              onPaste={(e) => {
+                const text = e.clipboardData.getData("text");
+                if (text && (text.includes(",") || text.includes("\n"))) {
+                  e.preventDefault();
+                  handleAddSkillsFromInput(text);
+                }
+              }}
+              placeholder="Type skills (comma-separated, e.g. Python, React, Machine Learning) & press Enter..."
+              className="text-sm"
+            />
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={() => handleAddSkillsFromInput(newSkillInput)}
+              className="gap-1 font-semibold shrink-0"
+            >
+              <Plus className="h-4 w-4" />
+              Add
+            </Button>
+          </div>
+
+          {/* Popular Skill Suggestions */}
+          <div className="space-y-1.5 pt-1">
+            <span className="text-2xs font-semibold text-muted-foreground uppercase tracking-wider">
+              Popular at SRM AP:
+            </span>
+            <div className="flex flex-wrap gap-1.5">
+              {POPULAR_SKILLS.filter((s) => !state.skills.includes(s)).slice(0, 8).map((skill) => (
+                <button
+                  key={skill}
+                  type="button"
+                  onClick={() => handleQuickAddSkill(skill)}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-2xs font-medium bg-muted/60 hover:bg-primary/10 hover:text-primary hover:border-primary/30 border border-border/50 text-muted-foreground transition-all"
+                >
+                  <Plus className="h-2.5 w-2.5" />
+                  {skill}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* 4. Featured Projects */}
+        <div id="section-projects" className="rounded-2xl border border-border/80 bg-card p-5 sm:p-6 shadow-xs space-y-4">
+          <div className="flex items-center justify-between border-b border-border/60 pb-3">
+            <div className="flex items-center gap-2">
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 font-bold text-xs">
+                4
+              </div>
+              <div>
+                <h3 className="text-sm sm:text-base font-bold text-foreground flex items-center gap-1.5">
+                  <FolderGit2 className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                  Featured Projects
+                  <span className="text-xs font-normal text-muted-foreground">({state.projects.length}/6)</span>
+                </h3>
+                <p className="text-xs text-muted-foreground">Showcase key projects from hackathons, courses, or personal research</p>
+              </div>
+            </div>
+
+            {!showAddProject && state.projects.length < 6 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowAddProject(true)}
+                className="gap-1 text-xs font-semibold h-7 px-2.5"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Add Project
+              </Button>
+            )}
+          </div>
+
+          {/* Project List */}
+          <div className="space-y-2.5">
+            {state.projects.length === 0 && !showAddProject ? (
+              <div className="rounded-xl border border-dashed border-border/80 p-4 text-center space-y-2 bg-muted/20">
+                <p className="text-xs text-muted-foreground">
+                  No projects added yet. Import your resume to auto-fill or add one manually!
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowAddProject(true)}
+                  className="gap-1 text-xs font-semibold"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Add First Project
+                </Button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {state.projects.map((proj) => (
+                  <div
+                    key={proj.id}
+                    className="flex flex-col justify-between rounded-xl border border-border/70 bg-background/60 p-3.5 space-y-2 hover:border-blue-500/30 transition-all"
+                  >
+                    <div className="space-y-1">
+                      <div className="flex items-start justify-between gap-2">
+                        <h4 className="text-xs sm:text-sm font-bold text-foreground truncate">
+                          {proj.title}
+                        </h4>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveProject(proj.id)}
+                          aria-label={`Remove ${proj.title}`}
+                          className="text-muted-foreground hover:text-destructive transition-colors shrink-0 p-0.5"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                      <p className="text-xs text-muted-foreground line-clamp-3 leading-relaxed">
+                        {proj.description}
                       </p>
-                    ) : (
-                      <p className="text-xs italic text-muted-foreground pt-0.5">
-                        (Add a one-line tagline on the left)
-                      </p>
+                    </div>
+
+                    {proj.link && (
+                      <a
+                        href={proj.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-2xs text-primary font-medium hover:underline truncate pt-1 border-t border-border/40"
+                      >
+                        <ExternalLink className="h-3 w-3 shrink-0" />
+                        <span className="truncate">{proj.link}</span>
+                      </a>
                     )}
                   </div>
-                </div>
+                ))}
+              </div>
+            )}
 
-                {/* Simulated Connect Button & Availability */}
-                <div className="pt-2 border-t border-border/40 flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <span
-                      className={`flex h-2 w-2 rounded-full ${
-                        state.isAvailable ? "bg-emerald-500" : "bg-amber-500"
-                      }`}
-                    />
-                    {state.isAvailable ? "Available to help peers" : "Temporarily paused"}
-                  </div>
-                  <Button size="sm" className="h-8 text-xs font-semibold pointer-events-none opacity-90">
-                    Connect
+            {/* Add Project Form Drawer / Inset */}
+            {showAddProject && (
+              <div className="rounded-xl border border-primary/30 bg-primary/5 p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-bold text-foreground">Add New Project</h4>
+                  <button
+                    type="button"
+                    onClick={() => setShowAddProject(false)}
+                    className="text-xs text-muted-foreground hover:text-foreground"
+                  >
+                    Cancel
+                  </button>
+                </div>
+                <div className="space-y-2 text-xs">
+                  <Input
+                    value={newProjectTitle}
+                    onChange={(e) => setNewProjectTitle(e.target.value)}
+                    placeholder="Project title (e.g. Autonomous Drone Simulator)"
+                    className="text-xs font-semibold"
+                  />
+                  <Textarea
+                    value={newProjectDesc}
+                    onChange={(e) => setNewProjectDesc(e.target.value)}
+                    rows={2}
+                    placeholder="What did you build, what stack did you use, and what problem did it solve?"
+                    className="text-xs resize-none"
+                  />
+                  <Input
+                    value={newProjectLink}
+                    onChange={(e) => setNewProjectLink(e.target.value)}
+                    placeholder="GitHub repo or live demo URL (optional)"
+                    className="text-xs"
+                  />
+                </div>
+                <div className="flex items-center justify-end gap-2 pt-1">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowAddProject(false)}
+                    className="text-xs"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={handleAddProject}
+                    className="text-xs font-bold gap-1"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    Save Project
                   </Button>
                 </div>
               </div>
+            )}
+          </div>
+        </div>
 
-              {/* Simulated Skills Grouping Preview */}
-              <div className="space-y-2">
-                <div className="text-xs font-bold text-foreground">Top Skills & Categorization</div>
-                <div className="flex flex-wrap gap-1">
-                  {state.skills.length === 0 ? (
-                    <span className="text-2xs text-muted-foreground">No skills added</span>
-                  ) : (
-                    state.skills.slice(0, 8).map((s) => (
-                      <Badge
-                        key={s}
-                        variant="secondary"
-                        className="text-2xs font-semibold px-2 py-0.5 bg-indigo-50 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-200"
-                      >
-                        {s}
-                      </Badge>
-                    ))
-                  )}
-                  {state.skills.length > 8 && (
-                    <span className="text-2xs text-muted-foreground self-center font-medium">
-                      +{state.skills.length - 8} more
-                    </span>
-                  )}
+        {/* 5. Experience & Leadership */}
+        <div id="section-experience" className="rounded-2xl border border-border/80 bg-card p-5 sm:p-6 shadow-xs space-y-4">
+          <div className="flex items-center justify-between border-b border-border/60 pb-3">
+            <div className="flex items-center gap-2">
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold text-xs">
+                5
+              </div>
+              <div>
+                <h3 className="text-sm sm:text-base font-bold text-foreground flex items-center gap-1.5">
+                  <Briefcase className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                  Experience & Leadership
+                  <span className="text-xs font-normal text-muted-foreground">({state.experiences.length}/6)</span>
+                </h3>
+                <p className="text-xs text-muted-foreground">Internships, club positions, research labs, or teaching assistance</p>
+              </div>
+            </div>
+
+            {!showAddExp && state.experiences.length < 6 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowAddExp(true)}
+                className="gap-1 text-xs font-semibold h-7 px-2.5"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Add Role
+              </Button>
+            )}
+          </div>
+
+          {/* Experience List */}
+          <div className="space-y-2.5">
+            {state.experiences.length === 0 && !showAddExp ? (
+              <div className="rounded-xl border border-dashed border-border/80 p-4 text-center space-y-2 bg-muted/20">
+                <p className="text-xs text-muted-foreground">
+                  No experience entries added yet. Import your resume to auto-fill or add one manually!
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowAddExp(true)}
+                  className="gap-1 text-xs font-semibold"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Add First Experience
+                </Button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {state.experiences.map((exp) => (
+                  <div
+                    key={exp.id}
+                    className="flex items-start justify-between gap-2.5 rounded-xl border border-border/70 bg-background/60 p-3.5 hover:border-amber-500/30 transition-all"
+                  >
+                    <div className="space-y-0.5 min-w-0">
+                      <h4 className="text-xs sm:text-sm font-bold text-foreground truncate">
+                        {exp.title}
+                      </h4>
+                      {exp.organization && (
+                        <p className="text-xs font-medium text-muted-foreground truncate">
+                          {exp.organization}
+                        </p>
+                      )}
+                      {exp.period && (
+                        <p className="text-2xs text-muted-foreground/80">
+                          {exp.period}
+                        </p>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveExperience(exp.id)}
+                      aria-label={`Remove ${exp.title}`}
+                      className="text-muted-foreground hover:text-destructive transition-colors shrink-0 p-0.5"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Add Experience Form Inset */}
+            {showAddExp && (
+              <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-bold text-foreground">Add Experience / Role</h4>
+                  <button
+                    type="button"
+                    onClick={() => setShowAddExp(false)}
+                    className="text-xs text-muted-foreground hover:text-foreground"
+                  >
+                    Cancel
+                  </button>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                  <Input
+                    value={newExpTitle}
+                    onChange={(e) => setNewExpTitle(e.target.value)}
+                    placeholder="Role title (e.g. Teaching Assistant, Lead Developer)"
+                    className="text-xs font-semibold sm:col-span-1"
+                  />
+                  <Input
+                    value={newExpOrg}
+                    onChange={(e) => setNewExpOrg(e.target.value)}
+                    placeholder="Organization / Lab / Club (optional)"
+                    className="text-xs sm:col-span-1"
+                  />
+                  <Input
+                    value={newExpPeriod}
+                    onChange={(e) => setNewExpPeriod(e.target.value)}
+                    placeholder="Period, e.g. 2024 - Present"
+                    className="text-xs sm:col-span-1"
+                  />
+                </div>
+                <div className="flex items-center justify-end gap-2 pt-1">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowAddExp(false)}
+                    className="text-xs"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={handleAddExperience}
+                    className="text-xs font-bold gap-1"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    Save Experience
+                  </Button>
                 </div>
               </div>
+            )}
+          </div>
+        </div>
 
-              {/* Simulated Outcomes Preview */}
-              {state.outcomes.length > 0 && (
-                <div className="space-y-1.5 pt-1">
-                  <div className="text-xs font-bold text-foreground flex items-center gap-1">
-                    <Target className="h-3.5 w-3.5 text-teal-600" />
-                    What I can help you achieve
-                  </div>
-                  <div className="space-y-1">
-                    {state.outcomes.map((o, idx) => (
-                      <div key={idx} className="flex items-start gap-1.5 text-2xs text-foreground/90">
-                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0 mt-0.5" />
-                        <span>{o}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+        {/* 6. What I Can Help You Achieve (Outcomes) */}
+        <div className="rounded-2xl border border-border/80 bg-card p-5 sm:p-6 shadow-xs space-y-4">
+          <div className="flex items-center justify-between border-b border-border/60 pb-3">
+            <div className="flex items-center gap-2">
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400 font-bold text-xs">
+                6
+              </div>
+              <div>
+                <h3 className="text-sm sm:text-base font-bold text-foreground flex items-center gap-1.5">
+                  <Target className="h-4 w-4 text-teal-600 dark:text-teal-400" />
+                  What I Can Help You Achieve
+                </h3>
+                <p className="text-xs text-muted-foreground">Concrete results students walk away with after connecting with you</p>
+              </div>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleSuggestOutcomes}
+              className="gap-1 text-2xs font-semibold text-teal-600 hover:text-teal-700 hover:bg-teal-500/10 h-7 px-2"
+            >
+              <Sparkles className="h-3 w-3" />
+              AI Suggest
+            </Button>
+          </div>
 
-              {/* Simulated Ask Me Anything Preview */}
-              {state.ask_me_anything.length > 0 && (
-                <div className="space-y-1.5 pt-1">
-                  <div className="text-xs font-bold text-foreground flex items-center gap-1">
-                    <MessageSquareCode className="h-3.5 w-3.5 text-sky-600" />
-                    Ask me anything about
-                  </div>
-                  <div className="flex flex-wrap gap-1">
-                    {state.ask_me_anything.map((a, idx) => (
-                      <span
-                        key={idx}
-                        className="inline-flex items-center gap-1 text-2xs font-medium px-2 py-0.5 rounded-md bg-muted/60 text-foreground border border-border/50"
-                      >
-                        💬 {a.topic}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Simulated Perfect If You Are Preview */}
-              {state.ideal_mentees.length > 0 && (
-                <div className="space-y-1.5 pt-1">
-                  <div className="text-xs font-bold text-foreground flex items-center gap-1">
-                    <Users className="h-3.5 w-3.5 text-purple-600" />
-                    Perfect if you are...
-                  </div>
-                  <div className="space-y-1">
-                    {state.ideal_mentees.map((m, idx) => (
-                      <div key={idx} className="flex items-start gap-1.5 text-2xs text-foreground/90">
-                        <CheckCircle2 className="h-3.5 w-3.5 text-purple-500 shrink-0 mt-0.5" />
-                        <span>{m}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Ready to publish callout */}
-              <div className="pt-3 border-t border-border/60">
-                {!isPublished && !canPublish && (
-                  <div className="mb-3 rounded-xl bg-amber-500/10 border border-amber-500/30 p-3 text-xs text-amber-900 dark:text-amber-200 space-y-1.5">
-                    <div className="font-bold flex items-center gap-1.5">
-                      <AlertCircle className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
-                      Required before publishing:
-                    </div>
-                    <ul className="list-disc list-inside text-2xs space-y-0.5 text-muted-foreground pl-1">
-                      {!hasName && <li>Enter your full name</li>}
-                      {!hasDepartment && <li>Enter your department / major</li>}
-                      {state.skills.length < 2 && (
-                        <li>Add at least 2 skills (currently {state.skills.length}) or import resume</li>
-                      )}
-                    </ul>
-                  </div>
-                )}
-
-                <Button
-                  onClick={handlePublish}
-                  disabled={isSaving || (!isPublished && !canPublish)}
-                  className={`w-full gap-2 font-bold shadow-md py-5 text-sm ${
-                    !isPublished && !canPublish
-                      ? "bg-muted text-muted-foreground hover:bg-muted cursor-not-allowed opacity-80"
-                      : "bg-primary hover:bg-primary/90 text-primary-foreground"
-                  }`}
+          <div className="space-y-2">
+            {state.outcomes.length === 0 ? (
+              <p className="text-xs text-muted-foreground italic py-1">
+                No outcomes added yet. Click &ldquo;AI Suggest&rdquo; above to auto-generate!
+              </p>
+            ) : (
+              state.outcomes.map((outcome, idx) => (
+                <div
+                  key={idx}
+                  className="flex items-center justify-between gap-3 p-2.5 rounded-xl border border-border/60 bg-muted/20 text-xs text-foreground"
                 >
-                  {isSaving ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Check className="h-4 w-4 stroke-[3]" />
-                  )}
+                  <span className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+                    {outcome}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveOutcome(idx)}
+                    className="text-muted-foreground hover:text-destructive transition-colors shrink-0"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ))
+            )}
+
+            <div className="flex items-center gap-2 pt-1">
+              <Input
+                value={newOutcomeInput}
+                onChange={(e) => setNewOutcomeInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleAddOutcome();
+                  }
+                }}
+                placeholder="e.g. Master problem sets and lab experiments in my major"
+                className="text-xs"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleAddOutcome}
+                className="shrink-0 gap-1 text-xs"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Add Outcome
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* 7. Ask Me Anything Topics */}
+        <div className="rounded-2xl border border-border/80 bg-card p-5 sm:p-6 shadow-xs space-y-4">
+          <div className="flex items-center justify-between border-b border-border/60 pb-3">
+            <div className="flex items-center gap-2">
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-sky-500/10 text-sky-600 dark:text-sky-400 font-bold text-xs">
+                7
+              </div>
+              <div>
+                <h3 className="text-sm sm:text-base font-bold text-foreground flex items-center gap-1.5">
+                  <MessageSquareCode className="h-4 w-4 text-sky-600 dark:text-sky-400" />
+                  Ask Me Anything Topics
+                </h3>
+                <p className="text-xs text-muted-foreground">Conversational prompts for peers reaching out</p>
+              </div>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleSuggestAma}
+              className="gap-1 text-2xs font-semibold text-sky-600 hover:text-sky-700 hover:bg-sky-500/10 h-7 px-2"
+            >
+              <Sparkles className="h-3 w-3" />
+              AI Suggest
+            </Button>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            {state.ask_me_anything.length === 0 ? (
+              <p className="text-xs text-muted-foreground italic py-1">
+                No AMA topics added yet. Click &ldquo;AI Suggest&rdquo; above!
+              </p>
+            ) : (
+              state.ask_me_anything.map((item, idx) => (
+                <span
+                  key={idx}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-sky-50 dark:bg-sky-950/60 text-sky-800 dark:text-sky-200 border border-sky-200/60 dark:border-sky-800/60"
+                >
+                  <span>💬</span>
+                  {item.topic}
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveAma(idx)}
+                    className="text-sky-600 hover:text-destructive transition-colors ml-1"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </button>
+                </span>
+              ))
+            )}
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Input
+              value={newAmaInput}
+              onChange={(e) => setNewAmaInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  handleAddAma();
+                }
+              }}
+              placeholder="e.g. Core concepts, project ideas, exam strategy..."
+              className="text-xs"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleAddAma}
+              className="shrink-0 gap-1 text-xs"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Add Topic
+            </Button>
+          </div>
+        </div>
+
+        {/* 8. Perfect If You Are... (Ideal Mentees) */}
+        <div className="rounded-2xl border border-border/80 bg-card p-5 sm:p-6 shadow-xs space-y-4">
+          <div className="flex items-center justify-between border-b border-border/60 pb-3">
+            <div className="flex items-center gap-2">
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400 font-bold text-xs">
+                8
+              </div>
+              <div>
+                <h3 className="text-sm sm:text-base font-bold text-foreground flex items-center gap-1.5">
+                  <Users className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                  Perfect If You Are... (Target Students)
+                </h3>
+                <p className="text-xs text-muted-foreground">Helps juniors know immediately if you are the right collaborator</p>
+              </div>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleSuggestIdealMentees}
+              className="gap-1 text-2xs font-semibold text-purple-600 hover:text-purple-700 hover:bg-purple-500/10 h-7 px-2"
+            >
+              <Sparkles className="h-3 w-3" />
+              AI Suggest
+            </Button>
+          </div>
+
+          <div className="space-y-2">
+            {state.ideal_mentees.length === 0 ? (
+              <p className="text-xs text-muted-foreground italic py-1">
+                No target descriptions added yet. Click &ldquo;AI Suggest&rdquo; above!
+              </p>
+            ) : (
+              state.ideal_mentees.map((mentee, idx) => (
+                <div
+                  key={idx}
+                  className="flex items-center justify-between gap-3 p-2.5 rounded-xl border border-border/60 bg-muted/20 text-xs text-foreground"
+                >
+                  <span className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-purple-500 shrink-0" />
+                    {mentee}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveIdealMentee(idx)}
+                    className="text-muted-foreground hover:text-destructive transition-colors shrink-0"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ))
+            )}
+
+            <div className="flex items-center gap-2 pt-1">
+              <Input
+                value={newIdealMenteeInput}
+                onChange={(e) => setNewIdealMenteeInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleAddIdealMentee();
+                  }
+                }}
+                placeholder="e.g. 1st or 2nd year students taking courses in my major"
+                className="text-xs"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleAddIdealMentee}
+                className="shrink-0 gap-1 text-xs"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Add Description
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* 9. Bio & Social Links */}
+        <div className="rounded-2xl border border-border/80 bg-card p-5 sm:p-6 shadow-xs space-y-4">
+          <div className="flex items-center gap-2 border-b border-border/60 pb-3">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold text-xs">
+              9
+            </div>
+            <div>
+              <h3 className="text-sm sm:text-base font-bold text-foreground">Bio & Social Profiles</h3>
+              <p className="text-xs text-muted-foreground">Share your background and connect links</p>
+            </div>
+          </div>
+
+          <div className="space-y-3 text-xs">
+            <div className="space-y-1.5">
+              <label className="font-semibold text-foreground">Short Bio (2-3 sentences)</label>
+              <Textarea
+                value={state.bio}
+                onChange={(e) => setState({ ...state, bio: e.target.value })}
+                rows={3}
+                placeholder="Tell peers what you're passionate about, your recent projects, or how you like to collaborate..."
+                className="text-sm resize-none"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="font-semibold text-foreground">LinkedIn Profile URL</label>
+              <Input
+                value={state.linkedin_url}
+                onChange={(e) => setState({ ...state, linkedin_url: e.target.value })}
+                placeholder="https://linkedin.com/in/username"
+                className="text-sm"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* 10. Privacy & CampusMind AI Discovery Consent */}
+        <div className="rounded-2xl border border-primary/20 bg-primary/5 p-5 shadow-xs flex items-center justify-between gap-4">
+          <div className="space-y-1">
+            <h4 className="text-xs sm:text-sm font-bold text-foreground flex items-center gap-1.5">
+              <ShieldCheck className="h-4 w-4 text-primary" />
+              CampusMind AI Search Discovery
+            </h4>
+            <p className="text-xs text-muted-foreground">
+              Allow fellow SRM AP students to discover you when searching for your skills, projects, department, or courses.
+            </p>
+          </div>
+          <Switch
+            checked={state.isDiscoverable}
+            onCheckedChange={(checked) => setState({ ...state, isDiscoverable: checked })}
+          />
+        </div>
+
+        {/* Missing requirements & Final Save/Publish Bar */}
+        <div className="rounded-2xl border border-border/80 bg-card p-5 sm:p-6 shadow-md space-y-4">
+          {!isPublished && !canPublish && (
+            <div className="rounded-xl bg-amber-500/10 border border-amber-500/30 p-3 text-xs text-amber-900 dark:text-amber-200 space-y-1.5">
+              <div className="font-bold flex items-center gap-1.5">
+                <AlertCircle className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
+                Required before publishing:
+              </div>
+              <ul className="list-disc list-inside text-2xs space-y-0.5 text-muted-foreground pl-1">
+                {!hasName && <li>Enter your full name</li>}
+                {!hasDepartment && <li>Enter your department / major</li>}
+                {state.skills.length < 2 && (
+                  <li>Add at least 2 skills (currently {state.skills.length}) or import resume</li>
+                )}
+              </ul>
+            </div>
+          )}
+
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-1">
+            <div className="space-y-0.5">
+              <p className="text-sm font-bold text-foreground">
+                {isPublished ? "Ready to save your profile changes?" : "Ready to publish your campus profile?"}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {isPublished
+                  ? "Changes take effect live across CampusMind search immediately."
+                  : "Classmates and juniors will be able to discover your skills and connect."}
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2.5">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPreviewModalOpen(true)}
+                className="gap-1.5 text-xs font-semibold"
+              >
+                <Eye className="h-3.5 w-3.5 text-muted-foreground" />
+                Preview Card
+              </Button>
+
+              <Button
+                onClick={handlePublish}
+                disabled={isSaving || (!isPublished && !canPublish)}
+                size="sm"
+                className={`gap-1.5 font-bold shadow-md px-5 py-2.5 text-sm ${
+                  !isPublished && !canPublish
+                    ? "bg-muted text-muted-foreground hover:bg-muted cursor-not-allowed opacity-80"
+                    : "bg-primary hover:bg-primary/90 text-primary-foreground"
+                }`}
+              >
+                {isSaving ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Check className="h-4 w-4 stroke-[3]" />
+                )}
+                <span>
                   {isPublished
-                    ? "Save & Update Profile"
+                    ? "Save Profile Changes"
                     : canPublish
                     ? "Publish Campus Profile"
-                    : "Complete Missing Details to Publish"}
-                </Button>
-                <p className="text-[11px] text-center text-muted-foreground mt-2">
-                  {isPublished
-                    ? "Your changes go live immediately across CampusMind search."
-                    : "You can edit these details anytime from your profile page."}
-                </p>
-              </div>
+                    : "Complete Required Info"}
+                </span>
+              </Button>
             </div>
           </div>
         </div>
       </main>
+
+      {/* Quick Preview Modal (Opens on Demand) */}
+      <Dialog open={previewModalOpen} onOpenChange={setPreviewModalOpen}>
+        <DialogContent className="max-w-xl sm:max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base font-bold">
+              <Eye className="h-4 w-4 text-primary" />
+              Live Campus Card Preview
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground">
+              This is how your profile appears to fellow SRM AP students across search and mentor discovery.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="mt-3 space-y-4">
+            {/* Header snippet */}
+            <div className="rounded-xl border border-border/60 bg-muted/30 p-4 space-y-3">
+              <div className="flex items-start gap-3.5">
+                <MentorAvatar
+                  name={previewMentor.name}
+                  src={previewMentor.profile_image}
+                  seed={previewMentor.id}
+                  className="h-14 w-14 rounded-xl shadow-xs object-cover"
+                  fallbackClassName="rounded-xl text-lg font-bold"
+                />
+                <div className="space-y-1 min-w-0 flex-1">
+                  <h4 className="text-base font-extrabold text-foreground truncate">
+                    {previewMentor.name || "Your Name"}
+                  </h4>
+                  <p className="text-xs text-muted-foreground flex flex-wrap items-center gap-1">
+                    <span className="font-semibold text-foreground/90">{state.department || "(Your Department)"}</span>
+                    <span>•</span>
+                    <span>{state.year_of_studies || "(Select Year)"}</span>
+                    <span>•</span>
+                    <span className="text-primary font-medium">{state.university}</span>
+                  </p>
+                  {state.tagline ? (
+                    <p className="text-xs italic text-foreground/90 pt-0.5 line-clamp-2">
+                      &ldquo;{state.tagline}&rdquo;
+                    </p>
+                  ) : (
+                    <p className="text-xs italic text-muted-foreground pt-0.5">
+                      (Add a one-line tagline in Studio)
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-border/40 flex items-center justify-between gap-2 text-xs">
+                <span className="flex items-center gap-1.5 text-muted-foreground">
+                  <span className={`h-2 w-2 rounded-full ${state.isAvailable ? "bg-emerald-500" : "bg-amber-500"}`} />
+                  {state.isAvailable ? "Available to help peers" : "Temporarily paused"}
+                </span>
+                <span className="text-2xs font-semibold text-muted-foreground">SRM AP Campus</span>
+              </div>
+            </div>
+
+            {/* Skills */}
+            <div className="space-y-1.5">
+              <div className="text-xs font-bold text-foreground">Skills</div>
+              <div className="flex flex-wrap gap-1">
+                {state.skills.length === 0 ? (
+                  <span className="text-2xs text-muted-foreground italic">No skills added</span>
+                ) : (
+                  state.skills.map((s) => (
+                    <Badge
+                      key={s}
+                      variant="secondary"
+                      className="text-2xs font-semibold px-2 py-0.5 bg-indigo-50 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-200"
+                    >
+                      {s}
+                    </Badge>
+                  ))
+                )}
+              </div>
+            </div>
+
+            {/* Projects Snippet */}
+            {state.projects.length > 0 && (
+              <div className="space-y-1.5">
+                <div className="text-xs font-bold text-foreground flex items-center gap-1">
+                  <FolderGit2 className="h-3.5 w-3.5 text-blue-600" />
+                  Projects ({state.projects.length})
+                </div>
+                <div className="space-y-1.5">
+                  {state.projects.map((p) => (
+                    <div key={p.id} className="p-2.5 rounded-lg border border-border/60 bg-background text-xs space-y-0.5">
+                      <div className="font-bold text-foreground">{p.title}</div>
+                      <div className="text-2xs text-muted-foreground line-clamp-2">{p.description}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Outcomes Snippet */}
+            {state.outcomes.length > 0 && (
+              <div className="space-y-1.5">
+                <div className="text-xs font-bold text-foreground flex items-center gap-1">
+                  <Target className="h-3.5 w-3.5 text-teal-600" />
+                  What I can help you achieve
+                </div>
+                <div className="space-y-1">
+                  {state.outcomes.map((o, idx) => (
+                    <div key={idx} className="flex items-start gap-1.5 text-2xs text-foreground/90">
+                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0 mt-0.5" />
+                      <span>{o}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Linked SRM Portal Course Dialog */}
       <ImportSrmPortalDialog
