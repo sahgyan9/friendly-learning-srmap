@@ -49,7 +49,15 @@ const NotificationBell = ({ className }: { className?: string }) => {
 
   if (!user) return null;
 
-  const showPushDot = unreadCount === 0 && !isSubscribed && isSupported && permission !== "denied";
+  /**
+   * Offer push only when the browser can still act on it. A permission the
+   * visitor has already declined cannot be re-requested from script, so an
+   * Enable button in that state is inert — it was shown anyway until the dock
+   * grew a panel of its own and the two surfaces had to agree.
+   */
+  const canOfferPush = isSupported && !isSubscribed && permission !== "denied";
+
+  const showPushDot = unreadCount === 0 && canOfferPush;
 
   const bellAriaLabel = unreadCount > 0
     ? `Notifications, ${unreadCount} unread`
@@ -114,7 +122,7 @@ const NotificationBell = ({ className }: { className?: string }) => {
             )}
           </div>
         </div>
-        {!isSubscribed && isSupported && (
+        {canOfferPush && (
           <div className="bg-primary/10 border-b border-primary/20 px-3.5 py-2 flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 min-w-0">
               <BellRing className="h-4 w-4 text-primary shrink-0 animate-pulse" />
