@@ -124,8 +124,12 @@ export const deleteNotification = async (notificationId: string) => {
  * of trying to patch state from the event.
  */
 export const subscribeToNotifications = (userId: string, onChange: () => void) => {
+  // The suffix is not decoration: the header bell and the mobile dock both
+  // subscribe for the same user at the same time, and a socket cannot join a
+  // topic it has already joined. Without it, one of the two badges would
+  // silently never update.
   const channel = supabase
-    .channel(`notifications-${userId}`)
+    .channel(`notifications-${userId}-${Math.random().toString(36).slice(2, 10)}`)
     .on(
       'postgres_changes',
       {

@@ -1,5 +1,5 @@
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Bell, BellRing } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -10,96 +10,34 @@ import {
 } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuth } from "@/context/AuthContext";
+import { useNotifications } from "@/hooks/useNotifications";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
-import {
-  getUserNotifications,
-  getUnreadNotificationsCount,
-  markNotificationAsRead,
-  markAllNotificationsAsRead,
-  subscribeToNotifications,
-  Notification
-} from "@/integrations/supabase/services/notifications";
 import NotificationItem from "./NotificationItem";
 import { OPEN_NOTIFICATIONS_EVENT } from "@/lib/search/events";
 
-/** Coalesces a burst of realtime events (e.g. "mark all read" touching many rows) into one refetch. */
-const SETTLE_MS = 250;
-
-const NotificationBell = () => {
+/**
+ * The header's notification bell.
+ *
+ * Fetching, the realtime subscription and the read/unread writes all moved to
+ * {@link useNotifications} when the mobile dock grew an alerts panel of its
+ * own — two surfaces showing one number should not each maintain their own
+ * copy of how that number is kept current.
+ *
+ * `className` is how the header hides this on mobile, where the dock's panel
+ * takes over.
+ */
+const NotificationBell = ({ className }: { className?: string }) => {
   const { user } = useAuth();
   const { isSupported, isSubscribed, isLoading: pushLoading, enablePush, permission } = usePushNotifications();
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
 
-  const userId = user?.id ?? null;
-  // Guards every setState so a response landing after sign-out/unmount can't
-  // resurrect stale state.
-  const activeRef = useRef(true);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const fetchNotifications = useCallback(async () => {
-    if (!userId) return;
-    setLoading(true);
-    try {
-      const [notificationsResult, unreadResult] = await Promise.all([
-        getUserNotifications(userId),
-        getUnreadNotificationsCount(userId)
-      ]);
-
-      if (!activeRef.current) return;
-
-      if (notificationsResult.data) {
-        setNotifications(notificationsResult.data);
-      }
-      if (unreadResult.data !== null) {
-        setUnreadCount(unreadResult.data);
-      }
-    } catch (error) {
-      console.error('Error fetching notifications:', error);
-    } finally {
-      if (activeRef.current) setLoading(false);
-    }
-  }, [userId]);
-
-  useEffect(() => {
-    activeRef.current = true;
-
-    if (!userId) {
-      setNotifications([]);
-      setUnreadCount(0);
-      return () => {
-        activeRef.current = false;
-      };
-    }
-
-    const refresh = () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-      timerRef.current = setTimeout(fetchNotifications, SETTLE_MS);
-    };
-
-    fetchNotifications();
-
-    // Treats every realtime event purely as "go look again" rather than
-    // patching state from the payload — see subscribeToNotifications for why.
-    const unsubscribe = subscribeToNotifications(userId, refresh);
-
-    // Catches a read made on another tab/device without waiting on realtime.
-    const onVisible = () => {
-      if (document.visibilityState === "visible") refresh();
-    };
-    window.addEventListener("focus", refresh);
-    document.addEventListener("visibilitychange", onVisible);
-
-    return () => {
-      activeRef.current = false;
-      if (timerRef.current) clearTimeout(timerRef.current);
-      window.removeEventListener("focus", refresh);
-      document.removeEventListener("visibilitychange", onVisible);
-      unsubscribe();
-    };
-  }, [userId, fetchNotifications]);
+  const {
+    notifications,
+    unreadCount,
+    loading,
+    markAsRead,
+    markAllAsRead,
+  } = useNotifications();
 
   // Searching for "notifications" opens this popover. There is no notifications
   // page to navigate to, so the search result asks the bell to open instead.
@@ -108,30 +46,6 @@ const NotificationBell = () => {
     window.addEventListener(OPEN_NOTIFICATIONS_EVENT, openFromSearch);
     return () => window.removeEventListener(OPEN_NOTIFICATIONS_EVENT, openFromSearch);
   }, []);
-
-  const handleMarkAsRead = async (notificationId: string) => {
-    try {
-      await markNotificationAsRead(notificationId);
-      setNotifications(prev =>
-        prev.map(n => n.id === notificationId ? { ...n, read: true } : n)
-      );
-      setUnreadCount(prev => Math.max(0, prev - 1));
-    } catch (error) {
-      console.error('Error marking notification as read:', error);
-    }
-  };
-
-  const handleMarkAllAsRead = async () => {
-    if (!userId) return;
-
-    try {
-      await markAllNotificationsAsRead(userId);
-      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-      setUnreadCount(0);
-    } catch (error) {
-      console.error('Error marking all notifications as read:', error);
-    }
-  };
 
   if (!user) return null;
 
@@ -165,6 +79,7 @@ const NotificationBell = () => {
             isOpen
               ? "bg-primary/15 text-primary"
               : "bg-muted text-foreground/80 hover:bg-muted/70 hover:text-foreground",
+            className,
           )}
         >
           <Bell className="h-5 w-5" aria-hidden />
@@ -191,7 +106,7 @@ const NotificationBell = () => {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={handleMarkAllAsRead}
+                onClick={markAllAsRead}
                 className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
               >
                 Mark all read
@@ -237,7 +152,7 @@ const NotificationBell = () => {
                 <NotificationItem
                   key={notification.id}
                   notification={notification}
-                  onMarkAsRead={handleMarkAsRead}
+                  onMarkAsRead={markAsRead}
                   onNotificationClick={() => setIsOpen(false)}
                 />
               ))}
