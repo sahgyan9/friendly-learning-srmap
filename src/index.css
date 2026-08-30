@@ -155,6 +155,15 @@ a[href*="lovable.dev"],
   .dark .text-gray-900 {
     @apply text-gray-100;
   }
+
+  /* Prevent iOS Safari / mobile WebKit from auto-zooming on focus when font-size < 16px */
+  @media screen and (max-width: 768px) {
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="file"]),
+    select,
+    textarea {
+      font-size: 16px !important;
+    }
+  }
 }
 
 @layer components {
