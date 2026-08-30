@@ -7,6 +7,7 @@ import { EnhancedMentor } from "@/utils/mentor-enhancements";
 interface MentorReviewHighlightsProps {
   mentor: EnhancedMentor;
   canRate: boolean;
+  hasRated?: boolean;
   isOwnProfile: boolean;
   ratingLoading: boolean;
   onShowRatingModal: () => void;
@@ -15,6 +16,7 @@ interface MentorReviewHighlightsProps {
 export default function MentorReviewHighlights({
   mentor,
   canRate,
+  hasRated = false,
   isOwnProfile,
   ratingLoading,
   onShowRatingModal,
@@ -45,10 +47,10 @@ export default function MentorReviewHighlights({
           </div>
         </div>
 
-        {canRate && !isOwnProfile && !ratingLoading && (
+        {!isOwnProfile && !ratingLoading && (
           <Button size="sm" onClick={onShowRatingModal} className="gap-1.5 font-semibold">
             <Star className="h-3.5 w-3.5 fill-current" />
-            Add Review
+            {hasRated ? "Edit Your Review" : "Add Review"}
           </Button>
         )}
       </div>

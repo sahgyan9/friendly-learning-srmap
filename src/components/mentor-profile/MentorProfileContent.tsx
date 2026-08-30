@@ -23,6 +23,7 @@ import MentorClubsSection from "./MentorClubsSection";
 interface MentorProfileContentProps {
   mentor: Mentor;
   canRate: boolean;
+  hasRated?: boolean;
   isOwnProfile: boolean;
   ratingLoading: boolean;
   onShowRatingModal: () => void;
@@ -32,6 +33,7 @@ interface MentorProfileContentProps {
 const MentorProfileContent = ({
   mentor: rawMentor,
   canRate,
+  hasRated = false,
   isOwnProfile,
   ratingLoading,
   onShowRatingModal,
@@ -72,6 +74,7 @@ const MentorProfileContent = ({
       <MentorHeroHeader
         mentor={mentor as any}
         canRate={canRate}
+        hasRated={hasRated}
         ratingLoading={ratingLoading}
         onShowRatingModal={onShowRatingModal}
         onMentorUpdated={onMentorUpdated}
@@ -137,6 +140,7 @@ const MentorProfileContent = ({
       <MentorReviewHighlights
         mentor={mentor}
         canRate={canRate}
+        hasRated={hasRated}
         isOwnProfile={isOwnProfile}
         ratingLoading={ratingLoading}
         onShowRatingModal={onShowRatingModal}

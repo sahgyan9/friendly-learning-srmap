@@ -19,12 +19,13 @@ import { getMentorSchema, getBreadcrumbSchema } from "@/lib/structured-data";
 const MentorProfile = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [mentor, setMentor] = useState<Mentor | null>(null);
   const [loading, setLoading] = useState(true);
   const [showRatingModal, setShowRatingModal] = useState(false);
-  const { user } = useAuth();
-
-  const { canRate, isLoading: ratingLoading, refreshRatingStatus } = useRating(id || "");
+  const mentorUuid = mentor?.id || (id && id.length === 36 ? id : "");
+  const { canRate, hasRated, existingReview, isLoading: ratingLoading, refreshRatingStatus } =
+    useRating(mentorUuid);
 
   useEffect(() => {
     const fetchMentor = async () => {
@@ -209,6 +210,7 @@ const MentorProfile = () => {
           <MentorProfileContent
             mentor={mentor}
             canRate={canRate}
+            hasRated={hasRated}
             isOwnProfile={isOwnProfile}
             ratingLoading={ratingLoading}
             onShowRatingModal={() => setShowRatingModal(true)}
@@ -224,6 +226,7 @@ const MentorProfile = () => {
         mentorId={mentor.id}
         mentorName={mentor.name}
         mentorImage={mentor.profile_image}
+        existingReview={existingReview}
         onRatingSubmitted={handleRatingSubmitted}
       />
     </div>

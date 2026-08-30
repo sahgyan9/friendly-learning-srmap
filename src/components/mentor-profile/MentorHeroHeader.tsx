@@ -43,6 +43,7 @@ import {
 interface MentorHeroHeaderProps {
   mentor: EnhancedMentor;
   canRate: boolean;
+  hasRated?: boolean;
   ratingLoading: boolean;
   onShowRatingModal: () => void;
   onMentorUpdated?: (mentor: Mentor) => void;
@@ -51,6 +52,7 @@ interface MentorHeroHeaderProps {
 export default function MentorHeroHeader({
   mentor,
   canRate,
+  hasRated = false,
   ratingLoading,
   onShowRatingModal,
   onMentorUpdated,
@@ -331,10 +333,15 @@ export default function MentorHeroHeader({
                   : "Connect with Mentor"}
               </Button>
 
-              {canRate && !ratingLoading && (
-                <Button variant="outline" size="lg" onClick={onShowRatingModal} className="w-full gap-2">
+              {!ratingLoading && (
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={onShowRatingModal}
+                  className="w-full gap-2"
+                >
                   <Star className="h-4 w-4 text-amber-400 fill-amber-400" />
-                  Rate Mentor
+                  {hasRated ? "Edit Your Rating" : "Rate Mentor"}
                 </Button>
               )}
             </>
