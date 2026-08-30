@@ -13,6 +13,7 @@ import SrmDobNag from "@/components/onboarding/SrmDobNag";
 import SignInNudge from "@/components/onboarding/SignInNudge";
 import PushNotificationFloatingPrompt from "@/components/notifications/PushNotificationFloatingPrompt";
 import PWAInstallBanner from "@/components/pwa/PWAInstallBanner";
+import OfflineIndicator from "@/components/offline/OfflineIndicator";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import RouteRobots from "@/components/RouteRobots";
 import ScrollToTop from "@/components/ScrollToTop";
@@ -199,6 +200,7 @@ function App() {
               <SignInNudge />
               <PushNotificationFloatingPrompt />
               <PWAInstallBanner />
+              <OfflineIndicator />
               <GlobalPullToRefresh />
 
               {/* One header for the whole app. Pages used to render their own
