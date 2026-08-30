@@ -50,6 +50,12 @@ export const useUnreadMessages = () => {
   const { user } = useAuth();
   const [unreadCount, setUnreadCount] = useState(0);
 
+  // Two surfaces now mount this hook at once on mobile — the header's messages
+  // button and the bottom dock — and Phoenix rejects a second join on a topic
+  // the socket has already joined. The instance suffix keeps the topics
+  // distinct so neither badge silently stops updating.
+  const instanceRef = useRef(Math.random().toString(36).slice(2, 10));
+
   const userId = user?.id ?? null;
   // Guards every setState, so a response that lands after sign-out or unmount
   // cannot resurrect a stale badge.
@@ -98,7 +104,7 @@ export const useUnreadMessages = () => {
     // removed unread message should take its badge with it, and it costs
     // nothing to say so.
     const channel = supabase
-      .channel(`unread-messages-${userId}`)
+      .channel(`unread-messages-${userId}-${instanceRef.current}`)
       .on(
         "postgres_changes",
         {
