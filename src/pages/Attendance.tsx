@@ -532,16 +532,19 @@ export default function Attendance() {
                                 <div className="text-xs text-muted-foreground font-medium line-clamp-1" title={rec.course_name}>
                                   {rec.course_name}
                                 </div>
-                                {rec.faculty_name && (
-                                  <div className="flex items-center gap-1 pt-0.5">
-                                    <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground/90 bg-muted/60 px-1.5 py-0.5 rounded border border-border/40 font-medium">
-                                      <UserCheck className="h-3 w-3 text-primary/70 shrink-0" />
-                                      <span className="truncate max-w-[220px]" title={rec.faculty_name}>
-                                        {rec.faculty_name}
-                                      </span>
-                                    </span>
-                                  </div>
-                                )}
+                                {rec.faculty_name && 
+                                  rec.faculty_name.toLowerCase().trim() !== rec.course_name.toLowerCase().trim() && 
+                                  rec.faculty_name.toLowerCase().trim() !== rec.course_code.toLowerCase().trim() && 
+                                  !rec.course_name.toLowerCase().includes(rec.faculty_name.toLowerCase().trim()) && (
+                                   <div className="flex items-center gap-1 pt-0.5">
+                                     <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground/90 bg-muted/60 px-1.5 py-0.5 rounded border border-border/40 font-medium">
+                                       <UserCheck className="h-3 w-3 text-primary/70 shrink-0" />
+                                       <span className="truncate max-w-[220px]" title={rec.faculty_name}>
+                                         {rec.faculty_name}
+                                       </span>
+                                     </span>
+                                   </div>
+                                 )}
                               </div>
                             </TableCell>
 

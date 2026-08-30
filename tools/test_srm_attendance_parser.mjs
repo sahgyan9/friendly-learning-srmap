@@ -16,28 +16,39 @@ function calculateAttendanceMetrics(conducted, attended) {
   return { percentage, classesNeeded, safeBunks };
 }
 
-function cleanFacultyName(raw) {
+function cleanFacultyName(raw, courseName = "", courseCode = "") {
   if (!raw) return null;
   let name = stripTags(raw).trim();
-  name = name.replace(/^\d+\s*[-–:]\s*/, "").replace(/\s*\(\d+\)$/, "");
+  name = name.replace(/^\d+\s*[-–:]\s*/, "").replace(/\s*\(\s*\d+\s*\)$/, "");
   name = name.split(/\s*[\/\-–]\s*(?:AP|Prof|Assistant|Associate|Professor|Dept|Department|PHY|CSE|ECE|MECH|CIVIL|MATHS|BIO)/i)[0].trim();
   if (name.length < 3 || /^(tba|not assigned|staff|null|undefined|none|-|--)$/i.test(name)) return null;
   if (!/[a-zA-Z]{3,}/.test(name)) return null;
-  if (name === name.toUpperCase() && name.length > 4) {
+
+  let prefix = "";
+  const prefixMatch = name.match(/^(Dr\.?|Prof\.?|Mr\.?|Ms\.?|Mrs\.?)\s+/i);
+  if (prefixMatch) {
+    const rawPre = prefixMatch[1].replace(/\.?$/, ".");
+    prefix = rawPre.charAt(0).toUpperCase() + rawPre.slice(1).toLowerCase() + " ";
+    name = name.slice(prefixMatch[0].length).trim();
+  }
+
+  if (name === name.toUpperCase() && name.length > 2) {
     name = name
       .toLowerCase()
       .split(" ")
       .map((w) => (w.length > 0 ? w[0].toUpperCase() + w.slice(1) : ""))
       .join(" ");
   }
-  name = name
-    .replace(/^Dr\.?\s+/i, "Dr. ")
-    .replace(/^Prof\.?\s+/i, "Prof. ")
-    .replace(/^Mr\.?\s+/i, "Mr. ")
-    .replace(/^Ms\.?\s+/i, "Ms. ")
-    .replace(/^Mrs\.?\s+/i, "Mrs. ")
-    .trim();
-  return name;
+
+  const finalName = (prefix + name).trim();
+
+  if (courseName && finalName.toLowerCase() === courseName.toLowerCase()) return null;
+  if (courseCode && finalName.toLowerCase() === courseCode.toLowerCase()) return null;
+  if (courseName && courseName.length >= 6 && (courseName.toLowerCase().includes(finalName.toLowerCase()) || finalName.toLowerCase().includes(courseName.toLowerCase()))) {
+    return null;
+  }
+
+  return finalName;
 }
 
 function cleanSlot(raw) {
@@ -128,7 +139,7 @@ function parseCourseList(...htmlSources) {
       }
 
       if (headerMap.faculty !== undefined && cells[headerMap.faculty]) {
-        facultyName = cleanFacultyName(cells[headerMap.faculty]);
+        facultyName = cleanFacultyName(cells[headerMap.faculty], name, code);
       }
 
       if (headerMap.type !== undefined && cells[headerMap.type]) {
@@ -140,22 +151,15 @@ function parseCourseList(...htmlSources) {
         if (!isNaN(parsedCredit)) credit = parsedCredit;
       }
 
-      if (!slot || !facultyName) {
-        for (let i = codeIndex + 1; i < cells.length; i++) {
+      if (!facultyName) {
+        for (let i = 0; i < cells.length; i++) {
           const val = cells[i];
           if (!val) continue;
 
-          if (!slot) {
-            const candidateSlot = cleanSlot(val);
-            if (candidateSlot) slot = candidateSlot;
-          }
-
-          if (!facultyName) {
-            if (/^(Dr\.|Prof\.|Mr\.|Ms\.|Mrs\.)/i.test(val) || /^\d{4,8}\s*[-–:]/i.test(val) || (/[A-Za-z]{3,}\s+[A-Za-z]{3,}/.test(val) && !/^(theory|practical|elective|regular|semester)/i.test(val))) {
-              const candidateFaculty = cleanFacultyName(val);
-              if (candidateFaculty && candidateFaculty.toLowerCase() !== name.toLowerCase()) {
-                facultyName = candidateFaculty;
-              }
+          if (/^(Dr\.?|Prof\.?|Mr\.?|Ms\.?|Mrs\.?)\s+/i.test(val) || (/\(\s*\d{4,8}\s*\)/.test(val) && /[A-Za-z]{3,}/.test(val))) {
+            const candidateFaculty = cleanFacultyName(val, name, code);
+            if (candidateFaculty) {
+              facultyName = candidateFaculty;
             }
           }
         }

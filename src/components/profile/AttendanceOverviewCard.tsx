@@ -241,7 +241,10 @@ export const AttendanceOverviewCard = ({ onOpenPortalImport }: AttendanceOvervie
                           {rec.course_name}
                         </span>
                       </div>
-                      {rec.faculty_name && (
+                      {rec.faculty_name && 
+                        rec.faculty_name.toLowerCase().trim() !== rec.course_name.toLowerCase().trim() && 
+                        rec.faculty_name.toLowerCase().trim() !== rec.course_code.toLowerCase().trim() && 
+                        !rec.course_name.toLowerCase().includes(rec.faculty_name.toLowerCase().trim()) && (
                         <span className="text-[10px] text-muted-foreground truncate max-w-[220px] mt-0.5" title={rec.faculty_name}>
                           {rec.faculty_name}
                         </span>

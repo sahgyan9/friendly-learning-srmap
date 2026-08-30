@@ -446,7 +446,7 @@ export interface RegisteredCourse {
   credit: number | null;
 }
 
-export function cleanFacultyName(raw: string | null | undefined): string | null {
+export function cleanFacultyName(raw: string | null | undefined, courseName = "", courseCode = ""): string | null {
   if (!raw) return null;
   let name = stripTags(raw).trim();
   // Strip employee codes like "( 17023 )" or "100234 - "
@@ -477,7 +477,20 @@ export function cleanFacultyName(raw: string | null | undefined): string | null 
       .join(" ");
   }
 
-  return (prefix + name).trim();
+  const finalName = (prefix + name).trim();
+
+  // Strict anti-corruption check: Never allow course name or course code to become faculty name
+  if (courseName && finalName.toLowerCase() === courseName.toLowerCase()) {
+    return null;
+  }
+  if (courseCode && finalName.toLowerCase() === courseCode.toLowerCase()) {
+    return null;
+  }
+  if (courseName && courseName.length >= 6 && (courseName.toLowerCase().includes(finalName.toLowerCase()) || finalName.toLowerCase().includes(courseName.toLowerCase()))) {
+    return null;
+  }
+
+  return finalName;
 }
 
 export function cleanSlot(raw: string | null | undefined): string | null {
@@ -550,10 +563,10 @@ export function parseCourseList(...htmlSources: (string | undefined)[]): Record<
       let courseType: string | null = null;
       let credit: number | null = null;
 
-      // Check if course code is embedded in Subjects Description (e.g. "PHY 424 ELECTRONIC MATERIALS AND DEVICE PHYSICS")
+      // Check if course code is embedded in Subjects Description with title (e.g. "PHY 424 ELECTRONIC MATERIALS AND DEVICE PHYSICS")
       for (let i = 0; i < cells.length; i++) {
         const cellText = cells[i];
-        const match = cellText.match(/^([A-Z]{2,4}\s*\d{3}[A-Z0-9]*)\s*[-:]?\s*(.*)$/i);
+        const match = cellText.match(/^([A-Z]{2,4}\s*\d{3}[A-Z0-9]*)\s+([A-Za-z].*)$/i);
         if (match) {
           code = match[1].toUpperCase().trim();
           name = match[2].trim();
@@ -569,6 +582,9 @@ export function parseCourseList(...htmlSources: (string | undefined)[]): Record<
           for (let i = 0; i < cells.length; i++) {
             if (/^[A-Z]{2,4}\s*\d{3}[A-Z0-9]*$/i.test(cells[i])) {
               code = cells[i].toUpperCase();
+              if (i + 1 < cells.length && isNaN(Number(cells[i + 1])) && !/^[1-9]$/.test(cells[i + 1])) {
+                name = cells[i + 1];
+              }
               break;
             }
           }
@@ -588,7 +604,7 @@ export function parseCourseList(...htmlSources: (string | undefined)[]): Record<
       }
 
       if (headerMap.faculty !== undefined && cells[headerMap.faculty]) {
-        facultyName = cleanFacultyName(cells[headerMap.faculty]);
+        facultyName = cleanFacultyName(cells[headerMap.faculty], name, code);
       }
 
       if (headerMap.type !== undefined && cells[headerMap.type]) {
@@ -600,8 +616,8 @@ export function parseCourseList(...htmlSources: (string | undefined)[]): Record<
         if (!isNaN(parsedCredit)) credit = parsedCredit;
       }
 
-      // Fallback cell inspection if headers were not present or incomplete
-      if (!slot || !facultyName) {
+      // Fallback cell inspection ONLY if explicit teacher title (Dr./Prof.) or employee parentheses are present
+      if (!facultyName) {
         for (let i = 0; i < cells.length; i++) {
           const val = cells[i];
           if (!val) continue;
@@ -612,9 +628,9 @@ export function parseCourseList(...htmlSources: (string | undefined)[]): Record<
           }
 
           if (!facultyName) {
-            if (/^(Dr\.|Prof\.|Mr\.|Ms\.|Mrs\.)/i.test(val) || /^\d{4,8}\s*[-–:]/i.test(val) || (/[A-Za-z]{3,}\s+[A-Za-z]{3,}/.test(val) && !/^(theory|practical|elective|regular|semester)/i.test(val))) {
-              const candidateFaculty = cleanFacultyName(val);
-              if (candidateFaculty && candidateFaculty.toLowerCase() !== name.toLowerCase()) {
+            if (/^(Dr\.?|Prof\.?|Mr\.?|Ms\.?|Mrs\.?)\s+/i.test(val) || (/\(\s*\d{4,8}\s*\)/.test(val) && /[A-Za-z]{3,}/.test(val))) {
+              const candidateFaculty = cleanFacultyName(val, name, code);
+              if (candidateFaculty) {
                 facultyName = candidateFaculty;
               }
             }
