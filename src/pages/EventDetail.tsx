@@ -37,6 +37,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useSRMAPEvent, useSRMAPEvents } from "@/hooks/useSRMAPEvents";
 import { SRMAPEventCard } from "@/components/marketplace/SRMAPEventCard";
+import { EventShareModal } from "@/components/events/EventShareModal";
 import {
   getGoogleCalendarUrl,
   getOutlookCalendarUrl,
@@ -59,6 +60,7 @@ const EventDetail = () => {
   const [speakerImageFailed, setSpeakerImageFailed] = useState(false);
   const [posterImageFailed, setPosterImageFailed] = useState(false);
   const [isPosterOpen, setIsPosterOpen] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
   // Extract poster image and clean description HTML
   const { posterUrl, cleanedHtml } = useMemo(() => {
@@ -404,25 +406,26 @@ const EventDetail = () => {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* Share Buttons */}
+          {/* Share Action */}
           <div className="flex items-center gap-2 pt-2">
             <Button
-              variant="secondary"
+              variant="outline"
               size="sm"
-              className="flex-1 gap-1.5 text-xs"
-              onClick={handleCopyLink}
+              className="flex-1 gap-1.5 text-xs font-medium border-violet-500/30 bg-violet-500/5 hover:bg-violet-500/15 text-violet-700 dark:text-violet-300"
+              onClick={() => setIsShareModalOpen(true)}
             >
-              {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-              {copied ? "Copied" : "Copy Link"}
+              <Share2 className="h-3.5 w-3.5" />
+              Share Event
             </Button>
             <Button
               variant="secondary"
               size="sm"
               className="gap-1.5 text-xs"
-              onClick={handleShareWhatsApp}
+              onClick={handleCopyLink}
+              title="Copy event link"
             >
-              <Share2 className="h-3.5 w-3.5" />
-              Share
+              {copied ? <Check className="h-3.5 w-3.5 text-green-600" /> : <Copy className="h-3.5 w-3.5" />}
+              {copied ? "Copied" : "Copy Link"}
             </Button>
           </div>
 
@@ -771,14 +774,25 @@ const EventDetail = () => {
                       <h4 className="text-sm font-semibold">Attending this event?</h4>
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      Connect with other SRM University-AP students, find project partners, or study groups.
+                      Find project partners, study groups, or share this event into your Workspace Groups.
                     </p>
                   </div>
-                  <Link to="/study-partners" className="shrink-0">
-                    <Button size="sm" variant="outline" className="text-xs border-violet-500/30 hover:bg-violet-500/10">
-                      Find Study Buddies
+                  <div className="flex flex-wrap items-center gap-2 shrink-0">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-xs border-violet-500/30 hover:bg-violet-500/10 gap-1.5"
+                      onClick={() => setIsShareModalOpen(true)}
+                    >
+                      <Share2 className="h-3.5 w-3.5 text-violet-600 dark:text-violet-400" />
+                      Share to Group
                     </Button>
-                  </Link>
+                    <Link to="/find-study-partners">
+                      <Button size="sm" className="text-xs bg-violet-600 hover:bg-violet-700 text-white">
+                        Find Study Partners
+                      </Button>
+                    </Link>
+                  </div>
                 </CardContent>
               </Card>
             </div>
@@ -818,6 +832,13 @@ const EventDetail = () => {
           )}
         </div>
       </div>
+
+      {/* Universal Campus Event Share Modal */}
+      <EventShareModal
+        event={event}
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+      />
     </>
   );
 };
