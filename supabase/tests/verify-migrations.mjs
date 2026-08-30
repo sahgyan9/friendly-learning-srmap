@@ -538,6 +538,7 @@ for (const file of [
   '20260827100000_pwa_installs_tracking.sql',
   '20260827160000_update_attendance_sync_schedule_to_1730_ist.sql',
   '20260830120000_event_attendees.sql',
+  '20260830130000_direct_message_reactions.sql',
 ]) {
   if (file === '20260804132345_b843f814-46d5-4c25-bc80-32e5f6ebba59.sql') {
     // Production's `faculty` table still carries `profile_image`, a column
@@ -3582,6 +3583,33 @@ check('get_event_attendance_counts reflects status change', Number(updatedCounts
 await q(`DELETE FROM public.event_attendees WHERE event_id = 99999 AND user_id = $1`, [OTHER_UID]);
 const { rows: afterDeleteAttendees } = await q(`SELECT * FROM public.get_event_attendees(99999::bigint)`);
 check('delete attendance leaves remaining attendees intact', afterDeleteAttendees.length === 1 && afterDeleteAttendees[0].user_id === CURRENT_UID);
+
+// --- 20260830130000_direct_message_reactions.sql --------------------
+console.log('\n--- 20260830130000_direct_message_reactions.sql ---');
+const { rows: reactionTableRows } = await q(`
+  SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'direct_message_reactions';
+`);
+check('direct_message_reactions table exists', reactionTableRows.length === 1);
+
+// Toggle reaction on msg2Rows[0].id as CURRENT_UID
+await q('DELETE FROM auth._session;');
+await q('INSERT INTO auth._session (uid) VALUES ($1);', [CURRENT_UID]);
+
+const { rows: [toggleRes1] } = await q(`SELECT public.toggle_direct_message_reaction($1::uuid, '🔥') as added;`, [msg2Rows[0].id]);
+check('toggle_direct_message_reaction adds reaction and returns true', toggleRes1?.added === true);
+
+// Fetch conversation messages and verify reactions aggregated
+const { rows: msgsWithReactions } = await q(`SELECT * FROM public.get_conversation_messages($1::uuid);`, [TEST_CONV_ID]);
+const targetMsg = msgsWithReactions.find(m => m.id === msg2Rows[0].id);
+check('get_conversation_messages returns reactions map and viewer_reactions', targetMsg?.reactions?.['🔥'] === 1 && Array.isArray(targetMsg?.viewer_reactions) && targetMsg?.viewer_reactions.includes('🔥'), JSON.stringify(targetMsg));
+
+// Toggle reaction off
+const { rows: [toggleRes2] } = await q(`SELECT public.toggle_direct_message_reaction($1::uuid, '🔥') as added;`, [msg2Rows[0].id]);
+check('toggle_direct_message_reaction removes reaction and returns false', toggleRes2?.added === false);
+
+const { rows: msgsAfterUntoggle } = await q(`SELECT * FROM public.get_conversation_messages($1::uuid);`, [TEST_CONV_ID]);
+const untoggledMsg = msgsAfterUntoggle.find(m => m.id === msg2Rows[0].id);
+check('get_conversation_messages reflects removed reaction', !untoggledMsg?.reactions?.['🔥'] && (!untoggledMsg?.viewer_reactions || untoggledMsg.viewer_reactions.length === 0));
 
 console.log(failures === 0
   ? '\nAll migration checks passed against real Postgres.'
