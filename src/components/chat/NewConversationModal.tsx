@@ -13,7 +13,8 @@ import { Badge } from "@/components/ui/badge";
 import { Search, Loader2, UserPlus, GraduationCap, MessageSquare, AlertCircle, Sparkles } from "lucide-react";
 import { searchCampusUsers, CampusUserResult } from "@/integrations/supabase/services/chat/user.service";
 import { getOrCreateConversation } from "@/integrations/supabase/services/chat/conversation.service";
-import { getInitials } from "@/utils/user-utils";
+import { getInitials, getBadgeVariant } from "@/utils/user-utils";
+import { useDebounce } from "@/hooks/useDebounce";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -36,6 +37,10 @@ export const NewConversationModal: React.FC<NewConversationModalProps> = ({
   const [results, setResults] = useState<CampusUserResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isStarting, setIsStarting] = useState<string | null>(null);
+  const searchRequestIdRef = React.useRef(0);
+  // Suggested-members view (empty query) should feel instant; an active
+  // search still debounces normally.
+  const debouncedSearchQuery = useDebounce(searchQuery, searchQuery.trim() ? 200 : 0);
 
   useEffect(() => {
     if (isOpen) {
@@ -43,24 +48,33 @@ export const NewConversationModal: React.FC<NewConversationModalProps> = ({
     }
   }, [isOpen, initialQuery]);
 
+  // Immediate feedback as soon as the query (or open state) changes, before
+  // the debounced fetch below settles.
   useEffect(() => {
     if (!isOpen) return;
-    const query = searchQuery.trim();
-
     setIsLoading(true);
-    const timer = setTimeout(async () => {
+  }, [searchQuery, isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const query = debouncedSearchQuery.trim();
+
+    const requestId = ++searchRequestIdRef.current;
+    (async () => {
       try {
         const users = await searchCampusUsers(query, currentUserId);
-        setResults(users);
+        if (searchRequestIdRef.current === requestId) {
+          setResults(users);
+        }
       } catch (err) {
         console.error("Search failed:", err);
       } finally {
-        setIsLoading(false);
+        if (searchRequestIdRef.current === requestId) {
+          setIsLoading(false);
+        }
       }
-    }, query ? 200 : 0);
-
-    return () => clearTimeout(timer);
-  }, [searchQuery, isOpen, currentUserId]);
+    })();
+  }, [debouncedSearchQuery, isOpen, currentUserId]);
 
   const handleStartChat = async (targetUser: CampusUserResult) => {
     if (!currentUserId) {
@@ -83,19 +97,6 @@ export const NewConversationModal: React.FC<NewConversationModalProps> = ({
       toast.error("Could not start conversation. Please try again.");
     } finally {
       setIsStarting(null);
-    }
-  };
-
-  const getBadgeVariant = (badge?: string) => {
-    switch (badge?.toLowerCase()) {
-      case "mentor":
-        return "bg-primary/15 text-primary border-primary/30";
-      case "alumni":
-        return "bg-purple-500/15 text-purple-600 dark:text-purple-400 border-purple-500/30";
-      case "admin":
-        return "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30";
-      default:
-        return "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30";
     }
   };
 

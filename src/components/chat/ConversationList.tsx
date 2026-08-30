@@ -6,10 +6,11 @@ import { Conversation } from "@/types/chat";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { getInitials } from "@/utils/user-utils";
+import { getInitials, getBadgeVariant } from "@/utils/user-utils";
 import { useUserPresenceRealtime } from "@/hooks/useUserPresenceRealtime";
 import OnlineStatus from "./OnlineStatus";
 import { useOutboxMessages } from "@/hooks/useMessageOutbox";
+import { useDebounce } from "@/hooks/useDebounce";
 import { searchCampusUsers, CampusUserResult } from "@/integrations/supabase/services/chat/user.service";
 
 interface ConversationListProps {
@@ -45,6 +46,8 @@ const ConversationList = ({
   const [discoveredUsers, setDiscoveredUsers] = useState<CampusUserResult[]>([]);
   const [isSearchingCampus, setIsSearchingCampus] = useState(false);
   const [startingUserId, setStartingUserId] = useState<string | null>(null);
+  const searchRequestIdRef = React.useRef(0);
+  const debouncedSearchQuery = useDebounce(searchQuery, 220);
 
   // The newest queued message per conversation. Built before the early
   // returns below, because hooks cannot run conditionally — and iterated in
@@ -57,38 +60,54 @@ const ConversationList = ({
     return byConversation;
   }, [outboxMessages]);
 
-  // Debounced search for campus users when searching
+  // Immediate feedback while the user types: clear stale results / show the
+  // spinner right away, without waiting for the debounce below to settle.
   useEffect(() => {
-    const query = searchQuery.trim();
-    if (!query) {
+    if (!searchQuery.trim()) {
       setDiscoveredUsers([]);
       setIsSearchingCampus(false);
       return;
     }
-
     setIsSearchingCampus(true);
-    const timer = setTimeout(async () => {
+  }, [searchQuery]);
+
+  // Debounced fetch, keyed only off the debounced query / currentUserId —
+  // filteredConversations/getOtherUser are fresh references on every parent
+  // render, and including them here would restart the debounce on every
+  // unrelated re-render (e.g. a realtime message arriving while typing).
+  useEffect(() => {
+    const query = debouncedSearchQuery.trim();
+    if (!query) return;
+
+    const requestId = ++searchRequestIdRef.current;
+    (async () => {
       try {
         const users = await searchCampusUsers(query, currentUserId);
-        // Exclude users already present in active filtered conversations
-        const existingParticipantIds = new Set(
-          filteredConversations.map((c) => {
-            const other = getOtherUser(c);
-            return other?.id;
-          }).filter(Boolean)
-        );
-
-        setDiscoveredUsers(users.filter((u) => !existingParticipantIds.has(u.id)));
+        if (searchRequestIdRef.current === requestId) {
+          setDiscoveredUsers(users);
+        }
       } catch (err) {
         console.error("Error finding campus users:", err);
-        setDiscoveredUsers([]);
+        if (searchRequestIdRef.current === requestId) {
+          setDiscoveredUsers([]);
+        }
       } finally {
-        setIsSearchingCampus(false);
+        if (searchRequestIdRef.current === requestId) {
+          setIsSearchingCampus(false);
+        }
       }
-    }, 220);
+    })();
+  }, [debouncedSearchQuery, currentUserId]);
 
-    return () => clearTimeout(timer);
-  }, [searchQuery, currentUserId, filteredConversations, getOtherUser]);
+  // Exclude users already present in active filtered conversations. Derived
+  // separately from the search effect above so recomputing it (e.g. a new
+  // conversation appearing) never restarts the debounced search.
+  const visibleDiscoveredUsers = React.useMemo(() => {
+    const existingParticipantIds = new Set(
+      filteredConversations.map((c) => getOtherUser(c)?.id).filter(Boolean)
+    );
+    return discoveredUsers.filter((u) => !existingParticipantIds.has(u.id));
+  }, [discoveredUsers, filteredConversations, getOtherUser]);
 
   const handleStartChatWithDiscoveredUser = async (user: CampusUserResult) => {
     if (startingUserId || !onStartDirectChat) return;
@@ -97,19 +116,6 @@ const ConversationList = ({
       await onStartDirectChat(user.id, user.name);
     } finally {
       setStartingUserId(null);
-    }
-  };
-
-  const getBadgeVariant = (badge?: string) => {
-    switch (badge?.toLowerCase()) {
-      case "mentor":
-        return "bg-primary/15 text-primary border-primary/30";
-      case "alumni":
-        return "bg-purple-500/15 text-purple-600 dark:text-purple-400 border-purple-500/30";
-      case "admin":
-        return "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30";
-      default:
-        return "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30";
     }
   };
 
@@ -131,7 +137,7 @@ const ConversationList = ({
 
   const hasSearchQuery = Boolean(searchQuery.trim());
   const hasConversations = filteredConversations.length > 0;
-  const hasDiscoveredUsers = discoveredUsers.length > 0;
+  const hasDiscoveredUsers = visibleDiscoveredUsers.length > 0;
 
   if (!hasConversations && !hasDiscoveredUsers && !isSearchingCampus) {
     return (
@@ -316,7 +322,7 @@ const ConversationList = ({
 
           {hasDiscoveredUsers ? (
             <ul className="space-y-1">
-              {discoveredUsers.map((user) => {
+              {visibleDiscoveredUsers.map((user) => {
                 const isStarting = startingUserId === user.id;
                 return (
                   <li key={user.id}>

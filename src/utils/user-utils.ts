@@ -1,4 +1,17 @@
 
+export const getBadgeVariant = (badge?: string | null): string => {
+  switch (badge?.toLowerCase()) {
+    case "mentor":
+      return "bg-primary/15 text-primary border-primary/30";
+    case "alumni":
+      return "bg-purple-500/15 text-purple-600 dark:text-purple-400 border-purple-500/30";
+    case "admin":
+      return "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30";
+    default:
+      return "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30";
+  }
+};
+
 export const getInitials = (name?: string | null): string => {
   if (!name || typeof name !== "string") return "U";
   return name
