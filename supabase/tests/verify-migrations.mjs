@@ -544,6 +544,7 @@ for (const file of [
   '20260830160000_error_reports.sql',
   '20260830170000_ai_overview_feedback_vote_update_and_undo.sql',
   '20260830180000_message_delivery_receipts_and_replica_identities.sql',
+  '20260830190000_search_campus_users_rpc.sql',
 ]) {
   if (file === '20260804132345_b843f814-46d5-4c25-bc80-32e5f6ebba59.sql') {
     // Production's `faculty` table still carries `profile_image`, a column
@@ -3845,6 +3846,41 @@ check('mark_messages_as_read updates delivery_status to read and is_read to true
 
 // Reset session to CURRENT_UID
 await q('DELETE FROM auth._session;');
+await q('INSERT INTO auth._session (uid) VALUES ($1);', [CURRENT_UID]);
+
+// --- 20260830190000_search_campus_users_rpc.sql ---
+console.log('\n--- 20260830190000_search_campus_users_rpc.sql ---');
+
+// Setup: Insert a newly signed-in student (Anshu) who is not a mentor
+const ANSHU_UID = '77777777-7777-7777-7777-777777777777';
+await q(`
+  INSERT INTO public.users (id, name, email, role, department, is_admin)
+  VALUES ($1, 'Anshu Sharma', 'anshu@srmap.edu.in', 'student', 'Computer Science & Engineering', false)
+  ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name;
+`, [ANSHU_UID]);
+
+// Test 1: Authenticated caller can search and find Anshu (student only, not a mentor)
+const { rows: anshuResults } = await q(`SELECT * FROM public.search_campus_users('Anshu');`);
+check('search_campus_users finds student Anshu', anshuResults.length >= 1 && anshuResults.some(r => r.name === 'Anshu Sharma' && r.badge === 'Student'));
+
+// Test 2: Search returns mentor Ravi with proper badge
+const { rows: raviResults } = await q(`SELECT * FROM public.search_campus_users('Ravi');`);
+check('search_campus_users finds mentor Ravi with proper badge', raviResults.length >= 1 && raviResults.some(r => r.name === 'Ravi Mentor' && (r.badge === 'Mentor' || r.badge === 'Alumni')));
+
+// Test 3: Search excludes caller themselves
+const { rows: selfResults } = await q(`SELECT * FROM public.search_campus_users('Asha');`);
+check('search_campus_users excludes caller themselves', !selfResults.some(r => r.id === CURRENT_UID), JSON.stringify(selfResults));
+
+// Test 4: Empty query returns campus directory list
+const { rows: defaultResults } = await q(`SELECT * FROM public.search_campus_users('');`);
+check('search_campus_users with empty query returns campus users', defaultResults.length >= 2);
+
+// Test 5: Unauthenticated caller receives 0 rows
+await q('DELETE FROM auth._session;');
+const { rows: anonResults } = await q(`SELECT * FROM public.search_campus_users('Anshu');`);
+check('search_campus_users returns empty for unauthenticated caller', anonResults.length === 0);
+
+// Reset session to CURRENT_UID
 await q('INSERT INTO auth._session (uid) VALUES ($1);', [CURRENT_UID]);
 
 console.log(failures === 0
