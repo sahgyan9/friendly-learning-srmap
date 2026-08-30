@@ -99,3 +99,50 @@ export async function validateUserData(userId: string) {
     };
   }
 }
+
+export interface CampusUserResult {
+  id: string;
+  name: string;
+  profile_image: string | null;
+  role?: string;
+  department?: string;
+  badge?: string;
+}
+
+/**
+ * Searches mentors and campus profiles by name/department to start new direct messages.
+ */
+export async function searchCampusUsers(query: string, currentUserId?: string): Promise<CampusUserResult[]> {
+  const trimmed = query.trim();
+  if (!trimmed) return [];
+
+  try {
+    const { data: mentors, error } = await supabase
+      .from("mentors")
+      .select("id, name, profile_image, department")
+      .ilike("name", `%${trimmed}%`)
+      .limit(10);
+
+    if (error) {
+      console.error("Error searching mentors:", error);
+      return [];
+    }
+
+    const results: CampusUserResult[] = (mentors ?? [])
+      .filter((m) => !currentUserId || m.id !== currentUserId)
+      .map((m) => ({
+        id: m.id,
+        name: m.name?.trim() || "Mentor",
+        profile_image: m.profile_image || null,
+        role: "mentor",
+        department: m.department || undefined,
+        badge: "Mentor",
+      }));
+
+    return results;
+  } catch (err) {
+    console.error("Exception in searchCampusUsers:", err);
+    return [];
+  }
+}
+

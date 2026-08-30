@@ -21,6 +21,7 @@ interface ConversationListProps {
   setActiveChat: (id: string) => void;
   getUnreadCount: (conversationId: string) => number;
   currentUserId: string;
+  onOpenCampusSearch?: (query?: string) => void;
 }
 
 const ConversationList = ({
@@ -32,6 +33,7 @@ const ConversationList = ({
   getOtherUser,
   setActiveChat,
   getUnreadCount,
+  onOpenCampusSearch,
 }: ConversationListProps) => {
   const { isUserOnline } = useUserPresenceRealtime();
 
@@ -63,18 +65,41 @@ const ConversationList = ({
         </div>
 
         {searchQuery.trim() ? (
-          <p className="text-sm text-muted-foreground">
-            No conversations match "<span className="text-foreground">{searchQuery.trim()}</span>"
-          </p>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              No conversations match "<span className="text-foreground">{searchQuery.trim()}</span>"
+            </p>
+            {onOpenCampusSearch && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => onOpenCampusSearch(searchQuery.trim())}
+                className="rounded-full text-xs px-4 border-primary/30 hover:bg-primary/10 text-primary"
+              >
+                Search campus directory
+              </Button>
+            )}
+          </div>
         ) : (
           <>
             <p className="mb-1 text-sm font-semibold">No conversations yet</p>
             <p className="mb-5 text-xs text-muted-foreground">
-              Message a mentor from their profile to get started.
+              Start a chat with a mentor or peer to get started.
             </p>
-            <Button size="sm" asChild className="rounded-full px-5">
-              <Link to="/mentors">Browse mentors</Link>
-            </Button>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
+              {onOpenCampusSearch && (
+                <Button
+                  size="sm"
+                  onClick={() => onOpenCampusSearch("")}
+                  className="rounded-full px-4 text-xs bg-primary"
+                >
+                  Start new chat
+                </Button>
+              )}
+              <Button size="sm" variant="outline" asChild className="rounded-full px-4 text-xs">
+                <Link to="/mentors">Browse mentors</Link>
+              </Button>
+            </div>
           </>
         )}
       </div>

@@ -6,8 +6,9 @@ import MessageList from "./MessageList";
 import ChatHeader from "./ChatHeader";
 import MessageInput from "./MessageInput";
 import SearchInput from "./SearchInput";
-import { MessageCircleMore, Sparkles } from "lucide-react";
+import { MessageCircleMore, Sparkles, SquarePen } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { NewConversationModal } from "./NewConversationModal";
 
 /**
  * Measures actual space left below the element, in px, instead of guessing it.
@@ -17,6 +18,19 @@ import { useIsMobile } from "@/hooks/use-mobile";
  * across navigations, so its collapsible second row can already be collapsed
  * (or the "Connecting with mentor…" line can be showing) by the time this
  * page appears — the guess and the real header height then disagree.
+ *
+ * iOS Safari keyboard fix (2026-08-30): `getBoundingClientRect().top` is
+ * relative to the *layout* viewport, but on iOS the keyboard shrinks (or
+ * pans) the *visual* viewport instead — a separate coordinate space offset by
+ * `visualViewport.offsetTop`. Ignoring that offset made this element compute
+ * a height sized for a viewport it was no longer aligned with, so focusing
+ * the composer left a gap between the input and the keyboard on iPhone. We
+ * also lock the page's own scroll for as long as this is mounted: without a
+ * scrollable document to act on, iOS resizes/pans the visual viewport
+ * directly (which the listeners below already handle) instead of doing its
+ * own "scroll the whole page to reveal the focused input" jump — which is
+ * what produced the gap, since that native jump fires immediately on focus,
+ * before this hook's own recalculation has a chance to catch up.
  */
 function useAvailableHeight<T extends HTMLElement>() {
   const ref = useRef<T>(null);
@@ -27,8 +41,13 @@ function useAvailableHeight<T extends HTMLElement>() {
     if (!el) return;
 
     const recalc = () => {
-      const top = Math.max(el.getBoundingClientRect().top, 0);
-      const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
+      const viewport = window.visualViewport;
+      const rectTop = el.getBoundingClientRect().top;
+      // Bring rectTop (layout-viewport-relative) into the visual viewport's
+      // coordinate space so it lines up with viewport.height below.
+      const visualTop = viewport ? rectTop - viewport.offsetTop : rectTop;
+      const top = Math.max(visualTop, 0);
+      const viewportHeight = viewport?.height ?? window.innerHeight;
       const bottomPadding = 16; // leave comfort space at the bottom of the screen
       const computed = Math.max(viewportHeight - top - bottomPadding, 320);
       setHeight(computed);
@@ -43,11 +62,22 @@ function useAvailableHeight<T extends HTMLElement>() {
     window.visualViewport?.addEventListener("resize", recalc);
     window.visualViewport?.addEventListener("scroll", recalc);
 
+    // Prevent iOS's native "scroll the document to reveal the focused input"
+    // behavior — see comment above. Restored on unmount so other pages keep
+    // their normal scrolling.
+    const { documentElement: html, body } = document;
+    const prevHtmlOverflow = html.style.overflow;
+    const prevBodyOverflow = body.style.overflow;
+    html.style.overflow = "hidden";
+    body.style.overflow = "hidden";
+
     return () => {
       resizeObserver.disconnect();
       window.removeEventListener("resize", recalc);
       window.visualViewport?.removeEventListener("resize", recalc);
       window.visualViewport?.removeEventListener("scroll", recalc);
+      html.style.overflow = prevHtmlOverflow;
+      body.style.overflow = prevBodyOverflow;
     };
   }, []);
 
@@ -97,6 +127,8 @@ const ChatContainer = ({
   const [mobileView, setMobileView] = useState<"list" | "chat">("list");
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const [editingMessage, setEditingMessage] = useState<Message | null>(null);
+  const [isNewChatModalOpen, setIsNewChatModalOpen] = useState(false);
+  const [campusSearchInitialQuery, setCampusSearchInitialQuery] = useState("");
   const { ref: heightRef, height: availableHeight } = useAvailableHeight<HTMLDivElement>();
 
   const currentConversation = conversations.find((c) => c.id === activeChat);
@@ -167,14 +199,28 @@ const ChatContainer = ({
         >
           {/* Sidebar header */}
           <div className="border-b border-border/70 p-3 dark:border-white/8">
-            <div className="mb-2 flex items-center gap-2 px-1">
-              <MessageCircleMore className="h-4 w-4 text-primary" />
-              <h2 className="text-sm font-semibold text-foreground/90">Messages</h2>
-              {conversations.length > 0 && (
-                <span className="ml-auto rounded-full bg-primary/15 px-2 py-0.5 text-3xs font-semibold text-primary">
-                  {conversations.length}
-                </span>
-              )}
+            <div className="mb-2 flex items-center justify-between gap-2 px-1">
+              <div className="flex items-center gap-2">
+                <MessageCircleMore className="h-4 w-4 text-primary" />
+                <h2 className="text-sm font-semibold text-foreground/90">Messages</h2>
+                {conversations.length > 0 && (
+                  <span className="rounded-full bg-primary/15 px-2 py-0.5 text-3xs font-semibold text-primary">
+                    {conversations.length}
+                  </span>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setCampusSearchInitialQuery("");
+                  setIsNewChatModalOpen(true);
+                }}
+                className="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors"
+                title="New Message"
+                aria-label="New Message"
+              >
+                <SquarePen className="h-4 w-4" />
+              </button>
             </div>
             <SearchInput searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
           </div>
@@ -194,10 +240,28 @@ const ChatContainer = ({
               setActiveChat={setActiveChat}
               getUnreadCount={getUnreadCount}
               currentUserId={currentUserId}
+              onOpenCampusSearch={(query) => {
+                setCampusSearchInitialQuery(query || "");
+                setIsNewChatModalOpen(true);
+              }}
             />
           </div>
         </aside>
       )}
+
+      {/* New conversation modal */}
+      <NewConversationModal
+        isOpen={isNewChatModalOpen}
+        onClose={() => setIsNewChatModalOpen(false)}
+        currentUserId={currentUserId}
+        initialQuery={campusSearchInitialQuery}
+        onConversationCreated={(convId) => {
+          setActiveChat(convId);
+          if (isMobile) {
+            setMobileView("chat");
+          }
+        }}
+      />
 
       {/* Main chat area */}
       {showChat ? (
