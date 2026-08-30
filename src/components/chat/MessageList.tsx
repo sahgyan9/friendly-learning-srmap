@@ -9,6 +9,7 @@ import {
   MessageCircleMore,
   Pencil,
   Reply,
+  Smile,
   Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -44,7 +45,10 @@ interface MessageListProps {
   onReply?: (message: Message) => void;
   onEdit?: (message: Message) => void;
   onDelete?: (messageId: string) => Promise<void>;
+  onReaction?: (messageId: string, emoji: string) => Promise<void>;
 }
+
+const QUICK_REACTION_EMOJIS = ["👍", "❤️", "🔥", "😂", "😮", "😢"];
 
 /** Messages from the same person within this window read as one utterance. */
 const GROUP_WINDOW_MS = 5 * 60 * 1000;
@@ -82,6 +86,7 @@ const MessageList = ({
   onReply,
   onEdit,
   onDelete,
+  onReaction,
 }: MessageListProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const isFirstRender = useRef(true);
@@ -90,8 +95,21 @@ const MessageList = ({
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
   const [messageToDelete, setMessageToDelete] = useState<string | null>(null);
+  const [activeReactionMsgId, setActiveReactionMsgId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const { typingUsers } = useTypingIndicator(conversationId, currentUserId);
+
+  useEffect(() => {
+    if (!activeReactionMsgId) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest(`[data-reaction-picker="${activeReactionMsgId}"]`)) {
+        setActiveReactionMsgId(null);
+      }
+    };
+    window.addEventListener("click", handleClickOutside);
+    return () => window.removeEventListener("click", handleClickOutside);
+  }, [activeReactionMsgId]);
 
   const scrollToBottom = useCallback((behavior: ScrollBehavior = "smooth") => {
     const el = containerRef.current;
@@ -309,6 +327,55 @@ const MessageList = ({
                   {/* WhatsApp-Style Hover Action Bar (For Sender's own messages: left of bubble) */}
                   {isMine && (
                     <div className="mb-1 flex items-center gap-0.5 rounded-full border border-border/80 bg-background/95 px-1 py-0.5 opacity-0 shadow-sm backdrop-blur-md transition-opacity duration-200 group-hover:opacity-100 focus-within:opacity-100 dark:border-white/15 dark:bg-card/90">
+                      {/* Reaction Picker Button */}
+                      <div className="relative" data-reaction-picker={message.id}>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActiveReactionMsgId((curr) => (curr === message.id ? null : message.id));
+                          }}
+                          className={cn(
+                            "rounded-full p-1 transition-colors",
+                            activeReactionMsgId === message.id
+                              ? "bg-primary/20 text-primary"
+                              : "text-muted-foreground hover:bg-primary/10 hover:text-primary"
+                          )}
+                          title="React"
+                          aria-label="React to message"
+                        >
+                          <Smile className="h-3.5 w-3.5" />
+                        </button>
+
+                        {activeReactionMsgId === message.id && (
+                          <div
+                            className="absolute bottom-full right-0 z-30 mb-1.5 flex items-center gap-1 rounded-full border border-border/90 bg-background/95 p-1 shadow-lg backdrop-blur-md animate-in fade-in zoom-in-95 duration-150 dark:border-white/15 dark:bg-card/95"
+                          >
+                            {QUICK_REACTION_EMOJIS.map((emoji) => {
+                              const hasReacted = message.viewer_reactions?.includes(emoji);
+                              return (
+                                <button
+                                  key={emoji}
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onReaction?.(message.id, emoji);
+                                    setActiveReactionMsgId(null);
+                                  }}
+                                  className={cn(
+                                    "flex h-7 w-7 items-center justify-center rounded-full text-base transition-all hover:scale-125 active:scale-95",
+                                    hasReacted ? "bg-primary/20 ring-1 ring-primary/40" : "hover:bg-muted"
+                                  )}
+                                  title={emoji}
+                                >
+                                  {emoji}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+
                       <button
                         type="button"
                         onClick={() => onReply?.(message)}
@@ -419,6 +486,33 @@ const MessageList = ({
                       )}
                     </div>
 
+                    {/* Direct Message Reaction Badges */}
+                    {message.reactions && Object.keys(message.reactions).length > 0 && (
+                      <div className={cn("mt-1 flex flex-wrap items-center gap-1", isMine ? "justify-end" : "justify-start")}>
+                        {Object.entries(message.reactions).map(([emoji, count]) => {
+                          const hasReacted = message.viewer_reactions?.includes(emoji);
+                          return (
+                            <button
+                              key={emoji}
+                              type="button"
+                              onClick={() => onReaction?.(message.id, emoji)}
+                              className={cn(
+                                "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs transition-all duration-150 select-none active:scale-95",
+                                hasReacted
+                                  ? "border-primary/50 bg-primary/15 text-primary font-semibold shadow-xs"
+                                  : "border-border/70 bg-background/80 hover:bg-muted text-foreground/80 dark:border-white/10 dark:bg-card/70"
+                              )}
+                              title={hasReacted ? `You reacted ${emoji}` : `React with ${emoji}`}
+                              aria-label={`Reaction ${emoji} count ${count}`}
+                            >
+                              <span className="text-sm leading-none">{emoji}</span>
+                              {count > 1 && <span className="text-3xs font-medium">{count}</span>}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+
                     {/* One timestamp per group */}
                     {isLastInGroup && (
                       <div
@@ -439,6 +533,55 @@ const MessageList = ({
                   {/* WhatsApp-Style Hover Action Bar (For Received messages: right of bubble) */}
                   {!isMine && (
                     <div className="mb-1 flex items-center gap-0.5 rounded-full border border-border/80 bg-background/95 px-1 py-0.5 opacity-0 shadow-sm backdrop-blur-md transition-opacity duration-200 group-hover:opacity-100 focus-within:opacity-100 dark:border-white/15 dark:bg-card/90">
+                      {/* Reaction Picker Button */}
+                      <div className="relative" data-reaction-picker={message.id}>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActiveReactionMsgId((curr) => (curr === message.id ? null : message.id));
+                          }}
+                          className={cn(
+                            "rounded-full p-1 transition-colors",
+                            activeReactionMsgId === message.id
+                              ? "bg-primary/20 text-primary"
+                              : "text-muted-foreground hover:bg-primary/10 hover:text-primary"
+                          )}
+                          title="React"
+                          aria-label="React to message"
+                        >
+                          <Smile className="h-3.5 w-3.5" />
+                        </button>
+
+                        {activeReactionMsgId === message.id && (
+                          <div
+                            className="absolute bottom-full left-0 z-30 mb-1.5 flex items-center gap-1 rounded-full border border-border/90 bg-background/95 p-1 shadow-lg backdrop-blur-md animate-in fade-in zoom-in-95 duration-150 dark:border-white/15 dark:bg-card/95"
+                          >
+                            {QUICK_REACTION_EMOJIS.map((emoji) => {
+                              const hasReacted = message.viewer_reactions?.includes(emoji);
+                              return (
+                                <button
+                                  key={emoji}
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onReaction?.(message.id, emoji);
+                                    setActiveReactionMsgId(null);
+                                  }}
+                                  className={cn(
+                                    "flex h-7 w-7 items-center justify-center rounded-full text-base transition-all hover:scale-125 active:scale-95",
+                                    hasReacted ? "bg-primary/20 ring-1 ring-primary/40" : "hover:bg-muted"
+                                  )}
+                                  title={emoji}
+                                >
+                                  {emoji}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+
                       <button
                         type="button"
                         onClick={() => onReply?.(message)}

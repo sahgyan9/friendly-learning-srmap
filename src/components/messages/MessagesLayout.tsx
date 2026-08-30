@@ -45,6 +45,7 @@ const MessagesLayout = () => {
     sendMessage,
     editMessage,
     deleteMessage,
+    reactToMessage,
   } = useMessages(userId, conversationId || null);
 
   const { isProcessingMentor } = useMentorConnection(userId, handleSelectChat);
@@ -161,6 +162,7 @@ const MessagesLayout = () => {
         handleSendMessage={sendMessage}
         handleEditMessage={editMessage}
         handleDeleteMessage={deleteMessage}
+        handleReaction={reactToMessage}
       />
     </>
   );

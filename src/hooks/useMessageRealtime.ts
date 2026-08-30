@@ -11,6 +11,7 @@ export const useMessageRealtime = (
   onMessageUpdate: (message: Message) => void,
   onConversationUpdate: (conversation: Conversation) => void,
   onMessageDelete?: (messageId: string) => void,
+  onReactionChange?: () => void,
 ) => {
   // Subscribe to message events (insert, update, delete)
   useRealtimeSubscription(
@@ -35,6 +36,14 @@ export const useMessageRealtime = (
         }
       }
     }, [activeChat, userId, onNewMessage, onMessageUpdate, onMessageDelete])
+  );
+
+  // Subscribe to direct message reactions
+  useRealtimeSubscription(
+    'direct_message_reactions',
+    useCallback(() => {
+      onReactionChange?.();
+    }, [onReactionChange])
   );
 
   // Subscribe to conversation updates

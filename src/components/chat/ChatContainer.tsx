@@ -134,6 +134,7 @@ interface ChatContainerProps {
   handleSendMessage: (content: string, replyTo?: Message | null) => Promise<void>;
   handleEditMessage?: (messageId: string, content: string) => Promise<any>;
   handleDeleteMessage?: (messageId: string) => Promise<any>;
+  handleReaction?: (messageId: string, emoji: string) => Promise<any>;
 }
 
 const ChatContainer = ({
@@ -154,6 +155,7 @@ const ChatContainer = ({
   handleSendMessage,
   handleEditMessage,
   handleDeleteMessage,
+  handleReaction,
 }: ChatContainerProps) => {
   const isMobile = useIsMobile();
   const [mobileView, setMobileView] = useState<"list" | "chat">("list");
@@ -328,6 +330,7 @@ const ChatContainer = ({
               onReply={setReplyingTo}
               onEdit={setEditingMessage}
               onDelete={handleDeleteMessage}
+              onReaction={handleReaction}
             />
           </div>
 

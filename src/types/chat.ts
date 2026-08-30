@@ -21,6 +21,8 @@ export interface Message {
   } | null;
   is_edited?: boolean;
   edited_at?: string | null;
+  reactions?: Record<string, number>;
+  viewer_reactions?: string[];
 }
 
 export interface Conversation {
