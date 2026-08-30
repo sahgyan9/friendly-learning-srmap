@@ -278,6 +278,10 @@ const MessageList = ({
           const isHighlighted = highlightedMessageId === message.id;
           const isWithin30Min = (Date.now() - new Date(message.sent_at).getTime()) <= EDIT_DELETE_WINDOW_MS;
 
+          // Still with the outbox: written offline, or given up on.
+          const isPending =
+            message.delivery_status === "queued" || message.delivery_status === "failed";
+
           // Resolve replied message if any
           const repliedMsg = message.reply_to_id ? messageMap.get(message.reply_to_id) : null;
           const replyData = message.reply_to || (repliedMsg ? {
@@ -514,8 +518,14 @@ const MessageList = ({
                       </div>
                     )}
 
-                    {/* One timestamp per group */}
-                    {isLastInGroup && (
+                    {/* One timestamp per group — except for a message the
+                        outbox is still holding, which shows its own.
+                        'sent', 'delivered' and 'read' are the same for every
+                        message in a group, so one tick speaks for all of them;
+                        'queued' is not. A message that has not left the device
+                        sitting above one that has, under a single tick, would
+                        say the opposite of what is true. */}
+                    {(isLastInGroup || isPending) && (
                       <div
                         className={cn(
                           "mt-1.5 flex items-center gap-1.5 px-1 text-3xs text-muted-foreground/60",
