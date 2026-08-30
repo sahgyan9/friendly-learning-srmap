@@ -1,11 +1,18 @@
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useMemo, useState } from "react";
 import { useMessagesState } from "./messages/use-messages-state";
 import { useMessagesOperations } from "./messages/use-messages-operations";
 import { toggleDirectMessageReaction, markMessagesAsRead } from "@/integrations/supabase/services/chat";
+import { MESSAGES_SENT_EVENT } from "@/lib/message-events";
 import { useMessageRealtime } from "./useMessageRealtime";
 import { useUserPresence } from "./useRealtime";
 import { Message, Conversation } from "@/types/chat";
 import { setOfflineCache } from "@/lib/offline/offlineStorage";
+import {
+  getOutboxForConversation,
+  outboxMessageToChatMessage,
+  subscribeToOutbox,
+  type OutboxMessage,
+} from "@/lib/offline/messageOutbox";
 
 /**
  * Hook for managing conversations and messages with real-time updates and offline caching
@@ -241,6 +248,55 @@ export const useMessages = (userId: string, activeChatId?: string | null) => {
     }
   }, [userId, conversations]);
 
+  // Messages written offline and still waiting to go out.
+  //
+  // Kept beside `messages` rather than mixed into it: that state is replaced
+  // wholesale every time the conversation is fetched, which would drop a
+  // queued message from view each refresh even though it is safely stored.
+  const [outboxMessages, setOutboxMessages] = useState<OutboxMessage[]>([]);
+
+  useEffect(() => {
+    const sync = () => setOutboxMessages(activeChat ? getOutboxForConversation(activeChat) : []);
+    sync();
+    return subscribeToOutbox(sync);
+  }, [activeChat]);
+
+  // A queued message that has just gone out leaves behind a real one this
+  // client has not read yet. Re-read both silently, so the clock turns into a
+  // tick without the thread flickering through a loading state.
+  useEffect(() => {
+    const onSent = () => {
+      if (activeChat) {
+        void fetchMessages(activeChat, setMessages, setIsLoadingMessages, setError, true);
+      }
+      if (userId) {
+        void fetchConversations(setConversations, setActiveChat, setIsLoadingConversations, setError, true);
+      }
+    };
+
+    window.addEventListener(MESSAGES_SENT_EVENT, onSent);
+    return () => window.removeEventListener(MESSAGES_SENT_EVENT, onSent);
+  }, [
+    activeChat,
+    userId,
+    fetchMessages,
+    fetchConversations,
+    setMessages,
+    setConversations,
+    setActiveChat,
+    setIsLoadingMessages,
+    setIsLoadingConversations,
+    setError,
+  ]);
+
+  // Queued messages sit after everything the server has, which is where they
+  // were written. They carry a 'queued' status, so the thread shows a clock
+  // against them rather than a tick that would claim they had arrived.
+  const messagesWithQueued = useMemo(() => {
+    if (outboxMessages.length === 0) return messages;
+    return [...messages, ...outboxMessages.map(outboxMessageToChatMessage)];
+  }, [messages, outboxMessages]);
+
   // Wrapper for sending messages
   const sendMessage = async (content: string, replyTo?: Message | null) => {
     await sendMessageOperation(
@@ -322,7 +378,7 @@ export const useMessages = (userId: string, activeChatId?: string | null) => {
 
   return {
     conversations,
-    messages,
+    messages: messagesWithQueued,
     activeChat,
     isLoadingConversations,
     isLoadingMessages,
