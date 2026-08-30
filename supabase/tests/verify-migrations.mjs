@@ -545,6 +545,7 @@ for (const file of [
   '20260830170000_ai_overview_feedback_vote_update_and_undo.sql',
   '20260830180000_message_delivery_receipts_and_replica_identities.sql',
   '20260830190000_search_campus_users_rpc.sql',
+  '20260830200000_search_campus_users_escape_wildcards.sql',
 ]) {
   if (file === '20260804132345_b843f814-46d5-4c25-bc80-32e5f6ebba59.sql') {
     // Production's `faculty` table still carries `profile_image`, a column
@@ -3882,6 +3883,30 @@ check('search_campus_users returns empty for unauthenticated caller', anonResult
 
 // Reset session to CURRENT_UID
 await q('INSERT INTO auth._session (uid) VALUES ($1);', [CURRENT_UID]);
+
+// --- 20260830200000_search_campus_users_escape_wildcards.sql ---
+console.log('\n--- 20260830200000_search_campus_users_escape_wildcards.sql ---');
+
+// Setup: two students whose names differ only in whether they contain a
+// literal underscore vs. an arbitrary character in that position.
+const WILDCARD_UID = '77777777-7777-7777-7777-777777777778';
+const NON_WILDCARD_UID = '77777777-7777-7777-7777-777777777779';
+await q(`
+  INSERT INTO public.users (id, name, email, role, department, is_admin)
+  VALUES
+    ($1, 'A_B Wildcard Test', 'wildcard1@srmap.edu.in', 'student', 'Computer Science & Engineering', false),
+    ($2, 'AxB Wildcard Test', 'wildcard2@srmap.edu.in', 'student', 'Computer Science & Engineering', false)
+  ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name;
+`, [WILDCARD_UID, NON_WILDCARD_UID]);
+
+// Test: searching for a literal underscore should not act as a single-char
+// wildcard and match the "AxB" row too.
+const { rows: wildcardResults } = await q(`SELECT * FROM public.search_campus_users('A_B');`);
+check(
+  'search_campus_users treats "_" in the query as a literal character, not a wildcard',
+  wildcardResults.some(r => r.name === 'A_B Wildcard Test') && !wildcardResults.some(r => r.name === 'AxB Wildcard Test'),
+  JSON.stringify(wildcardResults.map(r => r.name))
+);
 
 console.log(failures === 0
   ? '\nAll migration checks passed against real Postgres.'
