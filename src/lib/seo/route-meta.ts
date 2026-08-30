@@ -33,11 +33,11 @@ export interface RouteMeta {
  */
 export const ROUTE_META: Record<string, RouteMeta> = {
   "/": {
-    title: `${APP_NAME} - CampusMind AI Search for SRM AP | Peer Mentors, Faculty & Groups`,
+    title: `${APP_NAME} - CampusBrain AI Search for SRM AP | Peer Mentors, Faculty & Groups`,
     // Deliberately not APP_DESCRIPTION, which is a shorter blurb used elsewhere.
     // This is the wording index.html already served to crawlers.
     description:
-      "Ask CampusMind anything about SRM AP \u2014 find peer mentors, faculty by research area, hackathon teammates, and groups in one search. Friendly Learning SRMAP is the free, all-in-one campus platform for SRM AP students.",
+      "Ask CampusBrain anything about SRM AP \u2014 find peer mentors, faculty by research area, hackathon teammates, and groups in one search. Friendly Learning SRMAP is the free, all-in-one campus platform for SRM AP students.",
   },
   "/about": {
     title:

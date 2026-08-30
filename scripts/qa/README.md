@@ -17,7 +17,7 @@ Run them from the project root via `npm run`:
 | `npm run qa:recommended-people` | [`qa-recommended-people.mjs`](qa-recommended-people.mjs) | Tests recommended peers & mentors carousel |
 | `npm run qa:opportunities-loop` | [`qa-opportunities-loop.mjs`](qa-opportunities-loop.mjs) | Tests opportunity feed and application flows |
 | `npm run qa:workspace-redesign` | [`qa-workspace-redesign.mjs`](qa-workspace-redesign.mjs) | Tests workspace groups layout and channel rail |
-| `npm run qa:search-insights` | [`qa-search-insights.mjs`](qa-search-insights.mjs) | Tests CampusMind search UI and response rendering |
+| `npm run qa:search-insights` | [`qa-search-insights.mjs`](qa-search-insights.mjs) | Tests CampusBrain search UI and response rendering |
 | `npm run qa:mentor-honesty` | [`qa-mentor-honesty.mjs`](qa-mentor-honesty.mjs) | Verifies mentor profile integrity and badge states |
 
 > **Note on Outputs:** Screenshots produced by these scripts are written to `.qa/` and `.qa-*/` folders at the project root. These output folders are disposable and ignored by Git.

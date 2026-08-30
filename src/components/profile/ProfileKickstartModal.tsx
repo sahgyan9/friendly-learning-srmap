@@ -278,7 +278,7 @@ export function ProfileKickstartModal({
                   {/* Explicit AI Search Discovery Consent */}
                   <div className="flex items-center justify-between p-2.5 rounded-lg bg-muted/40 border border-border/60 mt-2">
                     <div className="space-y-0.5 pr-2">
-                      <span className="text-xs font-medium text-foreground block">CampusMind AI Search Discovery</span>
+                      <span className="text-xs font-medium text-foreground block">CampusBrain AI Search Discovery</span>
                       <span className="text-[11px] text-muted-foreground block leading-tight">
                         Allow peers to find you when asking about your skills or coursework
                       </span>

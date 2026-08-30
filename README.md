@@ -1,7 +1,7 @@
 # Friendly Learning SRMAP
 
 **Friendly Learning SRMAP** is the all-in-one campus platform for SRM AP
-students — post ideas, find teammates, search with CampusMind, rate faculty,
+students — post ideas, find teammates, search with CampusBrain, rate faculty,
 and get mentored by seniors who've already taken your course.
 
 **Live site**: https://friendly-learning-srmap.vercel.app

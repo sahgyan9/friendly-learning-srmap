@@ -94,7 +94,7 @@ const STATIC_BLOG_POSTS = [
   {
     slug: 'everything-you-can-do-on-friendly-learning',
     title: "Everything You Can Do on Friendly Learning (It's More Than You Think)",
-    excerpt: "Most students use one or two features. Here's the full picture — from CampusMind search and community posts to groups, mentors, faculty, and opportunities.",
+    excerpt: "Most students use one or two features. Here's the full picture — from CampusBrain search and community posts to groups, mentors, faculty, and opportunities.",
   },
   {
     slug: 'choosing-electives-srm-ap',

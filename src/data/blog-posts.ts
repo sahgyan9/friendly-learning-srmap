@@ -81,10 +81,10 @@ export const BLOG_POSTS: BlogPost[] = [
     slug: "everything-you-can-do-on-friendly-learning",
     title: "Everything You Can Do on Friendly Learning (It's More Than You Think)",
     excerpt:
-      "Most students use one or two features. Here's the full picture — from CampusMind search and community posts to groups, mentors, faculty, and opportunities.",
+      "Most students use one or two features. Here's the full picture — from CampusBrain search and community posts to groups, mentors, faculty, and opportunities.",
     date: "2026-08-07",
     readingMinutes: 7,
-    tags: ["Platform Guide", "Getting Started", "CampusMind"],
+    tags: ["Platform Guide", "Getting Started", "CampusBrain"],
     standfirst:
       "You probably landed here to find a mentor or look up a professor. That's a good start. But Friendly Learning is built to take you all the way from 'I have an idea' to 'I have a team' — and most of those tools are sitting unused.",
     sections: [
@@ -102,9 +102,9 @@ export const BLOG_POSTS: BlogPost[] = [
         ],
       },
       {
-        heading: "CampusMind — search in plain English",
+        heading: "CampusBrain — search in plain English",
         body: [
-          "The /ask page is the smartest search on campus. You don't need to know a name, a department, or a filter to use it. Type what you're actually looking for — 'someone who knows NLP for a research project' or 'mentor who's done GSoC' — and CampusMind searches students and faculty together and surfaces the closest matches.",
+          "The /ask page is the smartest search on campus. You don't need to know a name, a department, or a filter to use it. Type what you're actually looking for — 'someone who knows NLP for a research project' or 'mentor who's done GSoC' — and CampusBrain searches students and faculty together and surfaces the closest matches.",
           "It's the difference between searching a database and describing your problem to a knowledgeable friend. Most people find it in week three and wish they'd found it in week one.",
         ],
       },
@@ -136,7 +136,7 @@ export const BLOG_POSTS: BlogPost[] = [
         ],
       },
     ],
-    cta: { label: "Try CampusMind", to: "/ask" },
+    cta: { label: "Try CampusBrain", to: "/ask" },
   },
   {
     slug: "choosing-electives-srm-ap",

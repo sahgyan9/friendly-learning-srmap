@@ -180,7 +180,7 @@ const SEOHead = ({
       "name": "Friendly Learning SRMAP",
       "url": PRIMARY_DOMAIN,
       "logo": `${PRIMARY_DOMAIN}/og-image.png`,
-      "description": "All-in-one campus platform for SRM AP students \u2014 community posts, CampusMind search, peer mentors, faculty directory with ratings, groups, and opportunities.",
+      "description": "All-in-one campus platform for SRM AP students \u2014 community posts, CampusBrain search, peer mentors, faculty directory with ratings, groups, and opportunities.",
       "contactPoint": {
         "@type": "ContactPoint",
         "contactType": "customer service",

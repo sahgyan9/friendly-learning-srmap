@@ -1,7 +1,7 @@
 -- Student interests: opt-in discoverability for plain (non-mentor) students.
 --
 -- A student who lists interests AND flips interests_discoverable appears in
--- CampusMind search results — for signed-in viewers only. This is the first
+-- CampusBrain search results — for signed-in viewers only. This is the first
 -- entity type in the index representing people who never applied for anything,
 -- so the privacy posture is stricter than mentors/faculty:
 --

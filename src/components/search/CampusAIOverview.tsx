@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { CampusMindIcon } from "@/components/icons/CampusMindIcon";
+import { CampusBrainIcon } from "@/components/icons/CampusBrainIcon";
 import { CampusThinkingStatus } from "@/components/search/CampusThinkingStatus";
 import { HorizontalScroller } from "@/components/ui/HorizontalScroller";
 import { FacultyIcon } from "@/components/icons/FacultyIcon";
@@ -93,7 +93,7 @@ export const CampusAIOverview: React.FC<CampusAIOverviewProps> = ({
       case "notice":
         return <Megaphone className="h-3.5 w-3.5 text-orange-500" />;
       default:
-        return <CampusMindIcon className="h-3.5 w-3.5 text-primary" />;
+        return <CampusBrainIcon className="h-3.5 w-3.5 text-primary" />;
     }
   };
 
@@ -157,7 +157,7 @@ export const CampusAIOverview: React.FC<CampusAIOverviewProps> = ({
     return {
       type: "post" as const,
       label: "Resource",
-      icon: <CampusMindIcon className="h-3.5 w-3.5 text-primary" />,
+      icon: <CampusBrainIcon className="h-3.5 w-3.5 text-primary" />,
       badgeColor: "bg-primary/10 text-primary border-primary/20",
     };
   };
@@ -315,7 +315,7 @@ export const CampusAIOverview: React.FC<CampusAIOverviewProps> = ({
       >
         <div className="flex items-center gap-3">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-primary/20 bg-primary/10 text-primary">
-            <CampusMindIcon className="h-4 w-4 opacity-50" />
+            <CampusBrainIcon className="h-4 w-4 opacity-50" />
           </div>
           <div>
             <h3 className="text-sm font-semibold text-foreground">AI Overview is taking a break</h3>
@@ -340,7 +340,7 @@ export const CampusAIOverview: React.FC<CampusAIOverviewProps> = ({
       >
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <CampusMindIcon className="h-4 w-4 text-primary/60" />
+            <CampusBrainIcon className="h-4 w-4 text-primary/60" />
             <span>Campus AI Overview could not generate at this moment.</span>
           </div>
           <button

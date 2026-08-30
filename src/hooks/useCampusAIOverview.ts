@@ -161,7 +161,7 @@ export function useCampusAIOverview({
     // Safety timeout: don't hold loading state longer than 7 seconds
     const timeoutTimer = setTimeout(() => {
       if (isMounted && loading) {
-        console.warn("CampusMind AI overview timed out after 7s");
+        console.warn("CampusBrain AI overview timed out after 7s");
         setIsInitialLoading(false);
         setLoading(false);
         setError(true);

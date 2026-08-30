@@ -32,5 +32,5 @@ export const isDevelopment = import.meta.env.DEV;
 export const PRIMARY_DOMAIN = SITE_URL;
 
 // App metadata
-export const APP_DESCRIPTION = 'Ask CampusMind anything about SRM AP — find peer mentors, faculty by research area, hackathon teammates, and groups in one search. Friendly Learning SRMAP is the free, all-in-one campus platform for SRM AP students.';
-export const APP_KEYWORDS = 'CampusMind, CampusMind search, campus AI search SRM AP, friendly learning srmap, peer mentors, faculty ratings, hackathon partners, student groups, community posts, study partners, opportunities, SRM University-AP';
+export const APP_DESCRIPTION = 'Ask CampusBrain anything about SRM AP — find peer mentors, faculty by research area, hackathon teammates, and groups in one search. Friendly Learning SRMAP is the free, all-in-one campus platform for SRM AP students.';
+export const APP_KEYWORDS = 'CampusBrain, CampusBrain search, campus AI search SRM AP, friendly learning srmap, peer mentors, faculty ratings, hackathon partners, student groups, community posts, study partners, opportunities, SRM University-AP';

@@ -25,13 +25,13 @@ const Index = () => {
     "@type": "WebPage",
     "url": `${PRIMARY_DOMAIN}/`,
     "name": "Friendly Learning SRMAP - All-in-One Campus Platform for SRM AP Students",
-    "description": "Post ideas, find teammates, search with CampusMind, rate faculty, join groups, and get mentored by seniors — the all-in-one campus platform for SRM AP students.",
+    "description": "Post ideas, find teammates, search with CampusBrain, rate faculty, join groups, and get mentored by seniors — the all-in-one campus platform for SRM AP students.",
     "isPartOf": {
       "@type": "WebSite",
       "name": "Friendly Learning SRMAP",
       "url": `${PRIMARY_DOMAIN}/`
     },
-    "keywords": "friendly learning srmap, fl srmap, srmap mentorship, srm ap student mentors, campusmind",
+    "keywords": "friendly learning srmap, fl srmap, srmap mentorship, srm ap student mentors, campusbrain",
     "mainEntity": {
       "@type": "Organization",
       "name": "Friendly Learning",
@@ -59,7 +59,7 @@ const Index = () => {
         description={ROUTE_META["/"].description}
         canonical={`${PRIMARY_DOMAIN}/`}
         ogTitle="Friendly Learning SRMAP - Your Campus, Connected | SRM AP"
-        ogDescription="Post ideas, find teammates, search with CampusMind, rate faculty, and get mentored by seniors — the all-in-one campus platform for SRM AP students."
+        ogDescription="Post ideas, find teammates, search with CampusBrain, rate faculty, and get mentored by seniors — the all-in-one campus platform for SRM AP students."
       />
 
       {/* Structured data for SEO */}
@@ -74,7 +74,7 @@ const Index = () => {
         </div>
       )}
 
-      {/* ── 1. Hero with CampusMind AI Search & Momentum Metrics ── */}
+      {/* ── 1. Hero with CampusBrain AI Search & Momentum Metrics ── */}
       <CampusHero />
 
       {/* ── 2. Main Campus Hub: Section Title + Full-Width Composer + 2-Column Grid ── */}

@@ -152,7 +152,7 @@ const YourData = () => {
               <section className="mb-10">
                 <h2 className="text-2xl font-bold mb-4">What search can and can't see</h2>
                 <p className="text-lg mb-4">
-                  CampusMind search only ever looks at what's already public — faculty
+                  CampusBrain search only ever looks at what's already public — faculty
                   directory entries, mentor profiles, groups, posts in public groups, and
                   open opportunities. Direct messages, private group posts and private
                   group chat are never included, regardless of what you search for.

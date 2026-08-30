@@ -1442,7 +1442,7 @@ export default function ProfileSetupStudio() {
                     High Visibility
                   </Badge>
                 </h3>
-                <p className="text-xs text-muted-foreground">Appears below your name across CampusMind search results</p>
+                <p className="text-xs text-muted-foreground">Appears below your name across CampusBrain search results</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -2268,12 +2268,12 @@ export default function ProfileSetupStudio() {
           </div>
         </div>
 
-        {/* 10. Privacy & CampusMind AI Discovery Consent */}
+        {/* 10. Privacy & CampusBrain AI Discovery Consent */}
         <div className="rounded-2xl border border-primary/20 bg-primary/5 p-5 shadow-xs flex items-center justify-between gap-4">
           <div className="space-y-1">
             <h4 className="text-xs sm:text-sm font-bold text-foreground flex items-center gap-1.5">
               <ShieldCheck className="h-4 w-4 text-primary" />
-              CampusMind AI Search Discovery
+              CampusBrain AI Search Discovery
             </h4>
             <p className="text-xs text-muted-foreground">
               Allow fellow SRM AP students to discover you when searching for your skills, projects, department, or courses.
@@ -2310,7 +2310,7 @@ export default function ProfileSetupStudio() {
               </p>
               <p className="text-xs text-muted-foreground">
                 {isPublished
-                  ? "Changes take effect live across CampusMind search immediately."
+                  ? "Changes take effect live across CampusBrain search immediately."
                   : "Classmates and juniors will be able to discover your skills and connect."}
               </p>
             </div>

@@ -614,7 +614,7 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
                 existing.relevanceScore ?? 0,
                 score("mentor", { lexical: mentorSemLexical, similarity, quality: ctrQuality(hit.entity_id) }),
               );
-              existing.matchReason = "Matched via CampusMind AI semantic search";
+              existing.matchReason = "Matched via CampusBrain AI semantic search";
             } else {
               // Mentor chunk metadata has: department, skills (array), profile_image, bio.
               const metaSkills = Array.isArray(hit.metadata?.skills)
@@ -650,7 +650,7 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
                 badge: "Senior Mentor",
                 breadcrumb: `friendlylearning.in › mentors › ${slugify(hit.title)}`,
                 snippet: mentorSnippet,
-                matchReason: "Semantic match from CampusMind knowledge graph",
+                matchReason: "Semantic match from CampusBrain knowledge graph",
                 sitelinks: [
                   { label: "View Profile", to: mentorPath },
                   { label: "Skills & Experience", to: `${mentorPath}#skills` },
@@ -675,7 +675,7 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
                 existing.relevanceScore ?? 0,
                 score("faculty", { lexical: facultySemLexical, similarity, quality: ctrQuality(hit.entity_id) }),
               );
-              existing.matchReason = "Matched via CampusMind AI semantic search";
+              existing.matchReason = "Matched via CampusBrain AI semantic search";
             } else {
               const metaInterests = Array.isArray(hit.metadata?.interests)
                 ? (hit.metadata.interests as string[]).filter((s): s is string => typeof s === "string")
@@ -708,7 +708,7 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
                 badge: "Faculty & Research",
                 breadcrumb: `friendlylearning.in › faculty › ${slug}`,
                 snippet: facultySnippet,
-                matchReason: "Semantic match from CampusMind knowledge graph",
+                matchReason: "Semantic match from CampusBrain knowledge graph",
                 sitelinks: [
                   { label: "View Profile", to: facultyPath },
                   { label: "Research Interests", to: `${facultyPath}#interests` },

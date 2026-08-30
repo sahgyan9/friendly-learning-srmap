@@ -120,7 +120,7 @@ Deeper authorities it defers to: [FACULTY_AI_ROADMAP.md](FACULTY_AI_ROADMAP.md)
 ## Messaging & SEO consistency
 
 The platform **evolved from a mentorship directory into a full campus
-ecosystem** (posts, groups, CampusMind search, faculty ratings, opportunities,
+ecosystem** (posts, groups, CampusBrain search, faculty ratings, opportunities,
 mentors). The About page and HomeIntro already reflect this — but several SEO
 surfaces still say "Student Mentorship Platform." When editing copy in any of
 the files below, align to the ecosystem framing, not the old mentorship-only
@@ -128,7 +128,7 @@ framing.
 
 **Canonical one-liner (use as the reference pitch):**
 > Friendly Learning SRMAP is the all-in-one campus platform for SRM AP
-> students — post ideas, find teammates, search with CampusMind, rate faculty,
+> students — post ideas, find teammates, search with CampusBrain, rate faculty,
 > and get mentored by seniors who've already taken your course.
 
 **Known drift (as of Aug 2026):**

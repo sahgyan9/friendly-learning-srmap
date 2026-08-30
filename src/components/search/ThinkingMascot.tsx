@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils";
  *   — this app stores --background as a bare HSL triplet, so the var()
  *   fallback form silently computes to `fill: none`. Keep using
  *   hsl(var(--background)) here and anywhere else this pattern shows up
- *   (CampusMindIcon.tsx has the same latent bug on its satellite-node
+ *   (CampusBrainIcon.tsx has the same latent bug on its satellite-node
  *   sparks).
  */
 export const ThinkingMascot: React.FC<{ className?: string; animate?: boolean }> = ({

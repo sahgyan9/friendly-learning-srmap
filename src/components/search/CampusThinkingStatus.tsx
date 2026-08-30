@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { CampusMindIcon } from "@/components/icons/CampusMindIcon";
+import { CampusBrainIcon } from "@/components/icons/CampusBrainIcon";
 import { cn } from "@/lib/utils";
 
 const DEFAULT_THINKING_PHRASES = [
@@ -26,7 +26,7 @@ interface CampusThinkingStatusProps {
 
 /**
  * Animated dynamic AI reasoning indicator.
- * Displays the fast-calculating CampusMind neural icon alongside smoothly
+ * Displays the fast-calculating CampusBrain neural icon alongside smoothly
  * rotating thinking phrases with a glistening white/silver shimmer text animation.
  */
 export const CampusThinkingStatus: React.FC<CampusThinkingStatusProps> = ({
@@ -63,7 +63,7 @@ export const CampusThinkingStatus: React.FC<CampusThinkingStatusProps> = ({
       {/* Dynamic Animated Icon with soft ambient aura */}
       <div className="relative flex items-center justify-center shrink-0">
         <div className="absolute -inset-2 rounded-full bg-violet-500/20 dark:bg-violet-400/25 blur-md animate-pulse" />
-        <CampusMindIcon speed="fast" className={cn("relative text-violet-600 dark:text-violet-400", iconSize)} />
+        <CampusBrainIcon speed="fast" className={cn("relative text-violet-600 dark:text-violet-400", iconSize)} />
       </div>
 
       {/* Rotating Shimmer Text */}

@@ -21,7 +21,7 @@ import { FacultyIcon } from "@/components/icons/FacultyIcon";
 import { GroupsIcon } from "@/components/icons/GroupsIcon";
 import { MentorIcon } from "@/components/icons/MentorIcon";
 import { PostIcon } from "@/components/icons/PostIcon";
-import { CampusMindIcon } from "@/components/icons/CampusMindIcon";
+import { CampusBrainIcon } from "@/components/icons/CampusBrainIcon";
 import { CampusThinkingStatus } from "@/components/search/CampusThinkingStatus";
 import { GoogleResultCard } from "@/components/search/GoogleResultCard";
 import { FeaturedKnowledgeCard } from "@/components/search/FeaturedKnowledgeCard";
@@ -298,7 +298,7 @@ export default function SearchPage() {
                 }}
                 placeholder={
                   isAiMode
-                    ? 'Ask CampusMind: "Computer Science faculty" or "Web Dev mentors…"'
+                    ? 'Ask CampusBrain: "Computer Science faculty" or "Web Dev mentors…"'
                     : "Search mentors, faculty, hackathons, groups, posts…"
                 }
                 className="w-full h-10 sm:h-11 flex-1 min-w-0 bg-transparent text-base md:text-sm text-foreground placeholder:text-muted-foreground/50 border-none outline-none focus:outline-none focus:ring-0 p-0 [&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden"
@@ -329,7 +329,7 @@ export default function SearchPage() {
                   )}
                   title="Toggle AI Mode (Press Tab)"
                 >
-                  <CampusMindIcon className={cn("h-3.5 w-3.5", isAiMode ? "text-violet-200" : "text-violet-500")} />
+                  <CampusBrainIcon className={cn("h-3.5 w-3.5", isAiMode ? "text-violet-200" : "text-violet-500")} />
                   <span className="hidden sm:inline text-2xs">{isAiMode ? "AI Active" : "AI Mode"}</span>
                 </button>
               </div>
@@ -399,14 +399,14 @@ export default function SearchPage() {
           </div>
         )}
 
-        {/* Loading state with dynamic CampusMind thinking status */}
+        {/* Loading state with dynamic CampusBrain thinking status */}
         {q && isPageLoading && (
           <CampusThinkingStatus
             className="py-16"
             iconSize="h-9 w-9"
             textSize="text-sm sm:text-base"
             phrases={[
-              "Searching across SRM-AP with CampusMind…",
+              "Searching across SRM-AP with CampusBrain…",
               "Finding matched mentors, faculty & groups…",
               "Analyzing relevant courses & research areas…",
               "Synthesizing campus knowledge & insights…",

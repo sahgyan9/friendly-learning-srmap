@@ -1,5 +1,5 @@
 -- Migration: 20260821160000_search_history.sql
--- Description: Per-user recent search history for the CampusMind search box.
+-- Description: Per-user recent search history for the CampusBrain search box.
 
 CREATE TABLE public.search_history (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

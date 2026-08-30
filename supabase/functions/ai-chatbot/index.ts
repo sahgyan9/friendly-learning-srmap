@@ -156,7 +156,7 @@ const CANNED_FAQ: Array<[test: RegExp, build: (path: string | null) => CannedAns
         "**Friendly Learning** is a complete campus ecosystem for SRM University-AP students — not just a mentorship directory, but a full toolkit to help you find people, form teams, and get things done.\n\n" +
         "Here's what you can do:\n" +
         "- **Community Posts** — share what's on your mind, post a call for hackathon teammates or research collaborators, reply and get replies\n" +
-        "- **CampusMind Search** — the smart search at **/ask**: type a natural-language query like *\"who knows computer vision for a research project\"* and it surfaces matching students and faculty at once\n" +
+        "- **CampusBrain Search** — the smart search at **/ask**: type a natural-language query like *\"who knows computer vision for a research project\"* and it surfaces matching students and faculty at once\n" +
         "- **Mentors** — senior students who've taken your courses; message them directly, and the best ones earn a verified certificate\n" +
         "- **Faculty** — the full SRM AP faculty directory with research interests, so you can find the right professor for a project or elective\n" +
         "- **Groups** — once you find your people, create a private or public workspace to plan, coordinate, and win together\n" +
@@ -249,7 +249,7 @@ function matchCannedAnswer(message: string, path: string | null): CannedAnswer |
  * re-describes the cards already rendered beside the reply. Sending that kind
  * of question to Gemini produced a full restatement of every retrieved name
  * (real, but redundant with the cards) and inconsistently mentioned the thing
- * that actually answers "how do I find": CampusMind. Retrieval still runs, so
+ * that actually answers "how do I find": CampusBrain. Retrieval still runs, so
  * the cards stay real and topical — only the prose is templated instead of
  * generated, for both of the suggested chip questions and their near variants.
  * A query that names an actual topic ("who knows computer vision") does not
@@ -273,11 +273,11 @@ function matchFindIntent(message: string): "faculty" | "mentor" | null {
 function buildFindReply(kind: "faculty" | "mentor", hasMatches: boolean): string {
   if (!hasMatches) {
     return kind === "faculty"
-      ? "No faculty match that yet — try **CampusMind** at [/ask](/ask) with different wording, or browse the **Faculty Directory** directly."
-      : "No mentors match that yet — try **CampusMind** at [/ask](/ask) with different wording, or browse **Mentors** directly.";
+      ? "No faculty match that yet — try **CampusBrain** at [/ask](/ask) with different wording, or browse the **Faculty Directory** directly."
+      : "No mentors match that yet — try **CampusBrain** at [/ask](/ask) with different wording, or browse **Mentors** directly.";
   }
   const noun = kind === "faculty" ? "faculty" : "mentors";
-  return `A few ${noun} match — see the cards below. Search this yourself any time with **CampusMind** at [/ask](/ask).`;
+  return `A few ${noun} match — see the cards below. Search this yourself any time with **CampusBrain** at [/ask](/ask).`;
 }
 
 type RetrievalResult = {
@@ -462,7 +462,7 @@ function buildPrompt(
   };
   const referenceText = references.map(describeReference).join("\n");
 
-  return `You are the assistant for Friendly Learning, a student-built campus ecosystem at SRM University-AP. The platform lets students: post ideas and calls for teammates on the community board; use CampusMind (the smart natural-language search at /ask) to find matching students and faculty in one query; connect with senior student mentors for course help and career advice; browse the full SRM AP faculty directory by research interest; form private or public group workspaces after finding the right people; discover hackathons, internships and research opportunities; earn a verified certificate by genuinely helping 3 students as a mentor; and look up official campus notices, circulars and administrative info (who to contact for what, help desks, policies) that admins have published.
+  return `You are the assistant for Friendly Learning, a student-built campus ecosystem at SRM University-AP. The platform lets students: post ideas and calls for teammates on the community board; use CampusBrain (the smart natural-language search at /ask) to find matching students and faculty in one query; connect with senior student mentors for course help and career advice; browse the full SRM AP faculty directory by research interest; form private or public group workspaces after finding the right people; discover hackathons, internships and research opportunities; earn a verified certificate by genuinely helping 3 students as a mentor; and look up official campus notices, circulars and administrative info (who to contact for what, help desks, policies) that admins have published.
 
 The student is currently looking at: ${describePage(path)}.
 
@@ -624,14 +624,14 @@ serve(async (req) => {
       }
       usedModel = generated.model;
 
-      // Whether the model's prose mentions CampusMind is up to Gemini and it
+      // Whether the model's prose mentions CampusBrain is up to Gemini and it
       // regularly doesn't, even though buildPrompt describes it. Appended in
       // code rather than asked of the model so it's guaranteed rather than
       // hoped for, and only when real matches were actually found — a student
       // already looking at cards is the one this tip is for.
       aiResponse =
         shownFaculty.length > 0 || shownMentors.length > 0
-          ? `${generated.text}\n\n💡 **CampusMind** — the smart search at [/ask](/ask) — does this automatically. Describe your project or what you're looking for, and it surfaces the best-matching faculty and seniors on its own.`
+          ? `${generated.text}\n\n💡 **CampusBrain** — the smart search at [/ask](/ask) — does this automatically. Describe your project or what you're looking for, and it surfaces the best-matching faculty and seniors on its own.`
           : generated.text;
     }
 

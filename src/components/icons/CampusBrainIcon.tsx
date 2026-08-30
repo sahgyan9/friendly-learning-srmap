@@ -1,20 +1,20 @@
 import React from "react";
 import { cn } from "@/lib/utils";
 
-interface CampusMindIconProps extends React.SVGProps<SVGSVGElement> {
+interface CampusBrainIconProps extends React.SVGProps<SVGSVGElement> {
   className?: string;
   animate?: boolean;
   speed?: "normal" | "fast";
 }
 
 /**
- * Animated CampusMind Neural Orbit / Synapse Icon.
+ * Animated CampusBrain Neural Orbit / Synapse Icon.
  *
  * Features:
  * - Ambient relaxed state by default (`speed="normal"`: 8s orbit, 2.6s gentle breath).
  * - High-speed rigorous calculation state (`speed="fast"`: 2.0s rapid orbit, 0.85s snappy firing) when processing search queries or generating AI overviews.
  */
-export const CampusMindIcon: React.FC<CampusMindIconProps> = ({
+export const CampusBrainIcon: React.FC<CampusBrainIconProps> = ({
   className = "h-5 w-5",
   animate = true,
   speed = "normal",

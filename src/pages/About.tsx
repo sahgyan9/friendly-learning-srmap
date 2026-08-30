@@ -28,23 +28,23 @@ const About = () => {
     "mainEntity": [
       {
         "@type": "Question",
-        "name": "What is CampusMind?",
+        "name": "What is CampusBrain?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "CampusMind is the AI search built into Friendly Learning SRMAP. Ask it a plain-English question — \"who's researching computer vision\" or \"I need a DSA mentor\" — and it searches peer mentors, faculty, groups, and posts together, instead of making you guess the right keyword.",
+          "text": "CampusBrain is the AI search built into Friendly Learning SRMAP. Ask it a plain-English question — \"who's researching computer vision\" or \"I need a DSA mentor\" — and it searches peer mentors, faculty, groups, and posts together, instead of making you guess the right keyword.",
         },
       },
       {
         "@type": "Question",
-        "name": "How is CampusMind different from a regular search bar?",
+        "name": "How is CampusBrain different from a regular search bar?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "A regular search bar matches keywords. CampusMind understands what you're actually asking, so a question like \"I'm stuck on my OS assignment\" surfaces the right peer mentors and study groups even if none of them used those exact words.",
+          "text": "A regular search bar matches keywords. CampusBrain understands what you're actually asking, so a question like \"I'm stuck on my OS assignment\" surfaces the right peer mentors and study groups even if none of them used those exact words.",
         },
       },
       {
         "@type": "Question",
-        "name": "What can I ask CampusMind?",
+        "name": "What can I ask CampusBrain?",
         "acceptedAnswer": {
           "@type": "Answer",
           "text": "Anything about campus — faculty by research area, peer mentors for a subject, hackathon teammates, active groups, or general questions about SRM AP.",
@@ -52,7 +52,7 @@ const About = () => {
       },
       {
         "@type": "Question",
-        "name": "Is CampusMind free to use?",
+        "name": "Is CampusBrain free to use?",
         "acceptedAnswer": {
           "@type": "Answer",
           "text": "Yes. It's built into Friendly Learning SRMAP for every SRM AP student — no separate sign-up or subscription.",
@@ -65,17 +65,17 @@ const About = () => {
     "@context": "https://schema.org",
     "@type": "AboutPage",
     "name": "About Friendly Learning SRMAP",
-    "description": "Learn about Friendly Learning SRMAP — the complete campus ecosystem for SRM AP students to post ideas, find teammates, search using CampusMind, form groups, and earn recognition.",
+    "description": "Learn about Friendly Learning SRMAP — the complete campus ecosystem for SRM AP students to post ideas, find teammates, search using CampusBrain, form groups, and earn recognition.",
     "mainEntity": {
       "@type": "Organization",
       "name": "Friendly Learning SRMAP",
-      "description": "A complete campus ecosystem for SRM AP students: community posts, CampusMind natural-language search, peer mentors, faculty directory, private and public groups, and verified certificates.",
+      "description": "A complete campus ecosystem for SRM AP students: community posts, CampusBrain natural-language search, peer mentors, faculty directory, private and public groups, and verified certificates.",
       "foundingDate": "2024",
       "serviceArea": "SRM University-AP",
       "mission": "Go from 'I have an idea' to 'I have a team' — without leaving campus.",
       "services": [
         "Community Posts & Team Building",
-        "CampusMind Natural-Language Search",
+        "CampusBrain Natural-Language Search",
         "Peer Mentorship & Certificates",
         "Faculty Directory & Research Matching",
         "Private and Public Group Workspaces",
@@ -108,7 +108,7 @@ const About = () => {
       <SEOHead
         title={ROUTE_META["/about"].title}
         description={ROUTE_META["/about"].description}
-        keywords="about Friendly Learning SRMAP, campus ecosystem SRM AP, CampusMind search, find hackathon partners, peer mentorship, faculty directory, student groups, community posts, team building"
+        keywords="about Friendly Learning SRMAP, campus ecosystem SRM AP, CampusBrain search, find hackathon partners, peer mentorship, faculty directory, student groups, community posts, team building"
         canonical={`${PRIMARY_DOMAIN}/about`}
       />
 
@@ -148,8 +148,8 @@ const About = () => {
                   </div>
                   <div className="p-5 border rounded-xl">
                     <div className="text-3xl mb-3">🧠</div>
-                    <h3 className="text-lg font-bold mb-2">CampusMind Search</h3>
-                    <p className="text-muted-foreground text-sm">The smartest search on campus. Type a natural-language query — <em>"who knows computer vision for a research project"</em> — and CampusMind surfaces matching students and faculty together in one result.</p>
+                    <h3 className="text-lg font-bold mb-2">CampusBrain Search</h3>
+                    <p className="text-muted-foreground text-sm">The smartest search on campus. Type a natural-language query — <em>"who knows computer vision for a research project"</em> — and CampusBrain surfaces matching students and faculty together in one result.</p>
                   </div>
                   <div className="p-5 border rounded-xl">
                     <div className="text-3xl mb-3">🎓</div>
@@ -177,30 +177,30 @@ const About = () => {
                 </div>
               </section>
 
-              {/* ── What is CampusMind ── */}
+              {/* ── What is CampusBrain ── */}
               <section className="mb-8">
-                <h2 className="text-2xl font-bold mb-6">What is CampusMind?</h2>
+                <h2 className="text-2xl font-bold mb-6">What is CampusBrain?</h2>
                 <div className="space-y-5">
                   <div>
-                    <h3 className="text-lg font-bold mb-1.5">What is CampusMind?</h3>
+                    <h3 className="text-lg font-bold mb-1.5">What is CampusBrain?</h3>
                     <p className="text-muted-foreground text-sm">
-                      CampusMind is the AI search built into Friendly Learning SRMAP. Ask it a plain-English question — <em>"who's researching computer vision"</em> or <em>"I need a DSA mentor"</em> — and it searches peer mentors, faculty, groups, and posts together, instead of making you guess the right keyword.
+                      CampusBrain is the AI search built into Friendly Learning SRMAP. Ask it a plain-English question — <em>"who's researching computer vision"</em> or <em>"I need a DSA mentor"</em> — and it searches peer mentors, faculty, groups, and posts together, instead of making you guess the right keyword.
                     </p>
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold mb-1.5">How is CampusMind different from a regular search bar?</h3>
+                    <h3 className="text-lg font-bold mb-1.5">How is CampusBrain different from a regular search bar?</h3>
                     <p className="text-muted-foreground text-sm">
-                      A regular search bar matches keywords. CampusMind understands what you're actually asking, so a question like <em>"I'm stuck on my OS assignment"</em> surfaces the right peer mentors and study groups even if none of them used those exact words.
+                      A regular search bar matches keywords. CampusBrain understands what you're actually asking, so a question like <em>"I'm stuck on my OS assignment"</em> surfaces the right peer mentors and study groups even if none of them used those exact words.
                     </p>
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold mb-1.5">What can I ask CampusMind?</h3>
+                    <h3 className="text-lg font-bold mb-1.5">What can I ask CampusBrain?</h3>
                     <p className="text-muted-foreground text-sm">
                       Anything about campus — faculty by research area, peer mentors for a subject, hackathon teammates, active groups, or general questions about SRM AP.
                     </p>
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold mb-1.5">Is CampusMind free to use?</h3>
+                    <h3 className="text-lg font-bold mb-1.5">Is CampusBrain free to use?</h3>
                     <p className="text-muted-foreground text-sm">
                       Yes. It's built into Friendly Learning SRMAP for every SRM AP student — no separate sign-up or subscription.
                     </p>
@@ -223,7 +223,7 @@ const About = () => {
                   <div className="text-center p-4">
                     <div className="text-4xl mb-4">📝</div>
                     <h3 className="text-xl font-bold mb-2">Post or Search</h3>
-                    <p className="text-sm text-muted-foreground">Post what you're looking for on the community board, or use CampusMind to search in plain English — <em>"ML researcher for a CV project"</em> — and get matched instantly.</p>
+                    <p className="text-sm text-muted-foreground">Post what you're looking for on the community board, or use CampusBrain to search in plain English — <em>"ML researcher for a CV project"</em> — and get matched instantly.</p>
                   </div>
                   <div className="text-center p-4">
                     <div className="text-4xl mb-4">🤝</div>
@@ -251,7 +251,7 @@ const About = () => {
                 </p>
                 <div className="flex flex-wrap gap-3 justify-center">
                   <Button asChild size="lg">
-                    <Link to="/ask">Search with CampusMind</Link>
+                    <Link to="/ask">Search with CampusBrain</Link>
                   </Button>
                   <Button variant="outline" size="lg" asChild>
                     <Link to="/posts">Browse Posts</Link>

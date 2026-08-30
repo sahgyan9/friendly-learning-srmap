@@ -82,7 +82,7 @@ export default function ProfileCompletenessBanner({
                     isComplete ? "bg-emerald-500 animate-pulse" : "bg-primary"
                   }`}
                 />
-                {isComplete ? "Live on CampusMind Search" : "Your Public Campus Profile"}
+                {isComplete ? "Live on CampusBrain Search" : "Your Public Campus Profile"}
               </Badge>
             </div>
 

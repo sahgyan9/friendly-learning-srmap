@@ -15,7 +15,7 @@ import {
   Flame,
 } from "lucide-react";
 
-import { CampusMindIcon } from "@/components/icons/CampusMindIcon";
+import { CampusBrainIcon } from "@/components/icons/CampusBrainIcon";
 import { FacultyIcon } from "@/components/icons/FacultyIcon";
 import { GroupsIcon } from "@/components/icons/GroupsIcon";
 import { MentorIcon } from "@/components/icons/MentorIcon";
@@ -415,7 +415,7 @@ const SiteSearch = () => {
         <button
           type="button"
           onClick={() => setOpen(true)}
-          aria-label="Search CampusMind"
+          aria-label="Search CampusBrain"
           className={cn(
             "relative flex h-9 items-center gap-2 rounded-xl border border-primary/25 bg-background text-xs font-normal text-muted-foreground transition-all duration-200 shadow-xs select-none",
             "hover:border-primary/45 hover:bg-muted/30 hover:text-foreground",
@@ -426,7 +426,7 @@ const SiteSearch = () => {
             <Search className="h-3.5 w-3.5" aria-hidden />
           </span>
           <span className="hidden sm:inline truncate text-xs text-muted-foreground group-hover:text-foreground">
-            Ask CampusMind…
+            Ask CampusBrain…
           </span>
           <span className="ml-auto hidden sm:flex shrink-0 items-center rounded-md border border-primary/25 bg-primary/10 px-1.5 py-0.5 text-3xs font-semibold text-primary shadow-2xs">
             <span className="hidden md:inline">AI Mode</span>
@@ -461,7 +461,7 @@ const SiteSearch = () => {
         >
           <DialogTitle className="sr-only">Search Friendly Learning</DialogTitle>
           <DialogDescription className="sr-only">
-            Search for mentors, faculty, hackathons, groups, posts and pages with CampusMind AI.
+            Search for mentors, faculty, hackathons, groups, posts and pages with CampusBrain AI.
           </DialogDescription>
 
           <Command shouldFilter={false} className="rounded-none bg-transparent">
@@ -478,7 +478,7 @@ const SiteSearch = () => {
                 cmdk-input-wrapper=""
               >
                 {isAiMode ? (
-                  <CampusMindIcon speed={liveLoading ? "fast" : "normal"} className="mr-2.5 h-5 w-5 text-violet-500 dark:text-violet-400 shrink-0 pointer-events-none" />
+                  <CampusBrainIcon speed={liveLoading ? "fast" : "normal"} className="mr-2.5 h-5 w-5 text-violet-500 dark:text-violet-400 shrink-0 pointer-events-none" />
                 ) : (
                   <Search className="mr-2.5 h-4 w-4 text-muted-foreground/70 shrink-0 pointer-events-none" />
                 )}
@@ -488,7 +488,7 @@ const SiteSearch = () => {
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder={
                     isAiMode
-                      ? 'Ask CampusMind: "Computer Science faculty" or "Web Dev mentors…"'
+                      ? 'Ask CampusBrain: "Computer Science faculty" or "Web Dev mentors…"'
                       : "Search mentors, faculty, hackathons, groups…"
                   }
                   className="h-10 sm:h-11 flex-1 min-w-0 bg-transparent text-base md:text-sm text-foreground placeholder:text-muted-foreground/50 border-none outline-none focus:outline-none focus:ring-0"
@@ -505,7 +505,7 @@ const SiteSearch = () => {
                     }
                   }}
                 />
-                {liveLoading && <CampusMindIcon speed="fast" className="mr-2 h-4 w-4 text-violet-500 dark:text-violet-400 shrink-0" />}
+                {liveLoading && <CampusBrainIcon speed="fast" className="mr-2 h-4 w-4 text-violet-500 dark:text-violet-400 shrink-0" />}
                 {query && (
                   <button
                     onClick={() => setQuery("")}
@@ -528,7 +528,7 @@ const SiteSearch = () => {
                   )}
                   title="Toggle AI Mode (Press Tab)"
                 >
-                  <CampusMindIcon className={cn("h-3.5 w-3.5", isAiMode ? "text-violet-200" : "text-violet-500")} />
+                  <CampusBrainIcon className={cn("h-3.5 w-3.5", isAiMode ? "text-violet-200" : "text-violet-500")} />
                   <span className="hidden sm:inline">{isAiMode ? "AI Active" : "AI Mode"}</span>
                 </button>
               </div>
@@ -749,7 +749,7 @@ const SiteSearch = () => {
 
               {/* Active Search Top Result */}
               {searching && (
-                <CommandGroup heading={isAiMode ? "CampusMind AI Search" : "Full Search"}>
+                <CommandGroup heading={isAiMode ? "CampusBrain AI Search" : "Full Search"}>
                   <CommandItem
                     value="search-platform-action"
                     onSelect={goToSearch}
@@ -768,11 +768,11 @@ const SiteSearch = () => {
                           : "bg-primary/10 text-primary border-primary/20",
                       )}
                     >
-                      {isAiMode ? <CampusMindIcon className="h-5 w-5" /> : <Search className="h-4 w-4" />}
+                      {isAiMode ? <CampusBrainIcon className="h-5 w-5" /> : <Search className="h-4 w-4" />}
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="block font-semibold text-sm text-foreground leading-snug">
-                        {isAiMode ? "Ask CampusMind: " : "See all results for "}
+                        {isAiMode ? "Ask CampusBrain: " : "See all results for "}
                         "<span className={isAiMode ? "text-violet-500 dark:text-violet-400 break-all font-bold" : "text-primary break-all"}>{query.trim()}</span>"
                       </span>
                       <span className="block truncate text-xs text-muted-foreground">
@@ -865,8 +865,8 @@ const SiteSearch = () => {
                 </button>
               ) : (
                 <div className="hidden sm:flex items-center gap-1.5 text-3xs text-muted-foreground/60">
-                  <CampusMindIcon className="h-3.5 w-3.5 text-violet-500" />
-                  <span className="font-semibold text-foreground/80">CampusMind</span> AI
+                  <CampusBrainIcon className="h-3.5 w-3.5 text-violet-500" />
+                  <span className="font-semibold text-foreground/80">CampusBrain</span> AI
                 </div>
               )}
             </div>

@@ -13,7 +13,7 @@ import {
 const MENTOR_CTA_POINTS = [
   "Help others discover you by your skills and interests",
   "Earn a certificate and badges for helping students",
-  "Get discoverable in the CampusMind AI search",
+  "Get discoverable in the CampusBrain AI search",
   "Build a public track record of helping others",
 ];
 
