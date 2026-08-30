@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { PresenceProvider } from "@/context/PresenceContext";
 import { setUserContext } from "@/lib/sentry";
 import { setThemeUserId, syncLocalTheme, type Theme } from "@/lib/theme";
+import { getOfflineCache, setOfflineCache, clearOfflineCache } from "@/lib/offline/offlineStorage";
 
 interface UserProfile {
   id: string;
@@ -87,10 +88,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       syncLocalTheme(resolvedProfile.theme as Theme);
     }
     setIsMentor(Boolean(mentorDepartment && mentorDepartment !== "General"));
+    setOfflineCache(`profile:${userId}`, { profile: resolvedProfile, mentorDepartment });
   };
 
   const fetchUserProfile = useCallback(
     async (userId: string, authUser?: User | null) => {
+      // Restore offline profile immediately if available so UI doesn't flicker/block
+      const cached = getOfflineCache<{ profile: UserProfile; mentorDepartment?: string }>(`profile:${userId}`);
+      if (cached?.data?.profile && !profile) {
+        applyProfile(cached.data.profile, cached.data.mentorDepartment, userId, authUser);
+      }
+
       try {
         const [
           { data: profileData, error: profileError },
@@ -110,6 +118,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // handle_new_user trigger. Retrying with a 2-step backoff allows the
         // DB trigger to commit even under high latency or cold starts.
         if (profileError || !profileData) {
+          // If offline / network error occurred but we have cached profile, keep it
+          if (cached?.data?.profile) {
+            applyProfile(cached.data.profile, cached.data.mentorDepartment, userId, authUser);
+            return;
+          }
+
           if (!profileError) {
             for (const delay of [400, 800]) {
               await new Promise((r) => setTimeout(r, delay));
@@ -137,12 +151,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         applyProfile(profileData, mentorData?.department, userId, authUser);
       } catch {
-        clearProfile();
+        if (cached?.data?.profile) {
+          applyProfile(cached.data.profile, cached.data.mentorDepartment, userId, authUser);
+        } else {
+          clearProfile();
+        }
       } finally {
         setLoading(false);
       }
     },
-    [clearProfile],
+    [clearProfile, profile],
   );
 
   useEffect(() => {
@@ -185,13 +203,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [user, fetchUserProfile]);
 
   const signOut = useCallback(async () => {
+    if (user?.id) {
+      clearOfflineCache(`profile:${user.id}`);
+    }
     try {
       await supabase.auth.signOut();
     } catch {
       // Sign-out failures are non-fatal; the local session is cleared either way.
     }
     clearProfile();
-  }, [clearProfile]);
+  }, [clearProfile, user]);
 
   const value = useMemo<AuthContextType>(
     () => ({

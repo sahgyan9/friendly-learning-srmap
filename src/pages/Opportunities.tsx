@@ -13,6 +13,7 @@ import { useAuth } from "@/context/AuthContext";
 import { getBreadcrumbSchema } from "@/lib/structured-data";
 import { PRIMARY_DOMAIN } from "@/lib/constants";
 import { cn } from "@/lib/utils";
+import { getOfflineCache, setOfflineCache } from "@/lib/offline/offlineStorage";
 import {
   OPPORTUNITY_KINDS,
   daysLeft,
@@ -111,15 +112,40 @@ const Opportunities = () => {
   const kind = searchParams.get("kind") ?? "all";
   const [search, setSearch] = useState(searchParams.get("search") ?? "");
 
-  const [items, setItems] = useState<Opportunity[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [items, setItems] = useState<Opportunity[]>(() => {
+    const cached = getOfflineCache<Opportunity[]>("opportunities_list");
+    if (cached?.data && Array.isArray(cached.data)) {
+      return cached.data;
+    }
+    return [];
+  });
+  const [loading, setLoading] = useState(() => {
+    const cached = getOfflineCache<Opportunity[]>("opportunities_list");
+    return !(cached?.data && Array.isArray(cached.data) && cached.data.length > 0);
+  });
 
   const load = useCallback(async () => {
-    setLoading(true);
+    const cached = getOfflineCache<Opportunity[]>("opportunities_list");
+    if (cached?.data && Array.isArray(cached.data) && cached.data.length > 0) {
+      setItems(cached.data);
+      setLoading(false);
+    }
+
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      setLoading(false);
+      return;
+    }
+
+    setLoading(items.length === 0);
     const { data } = await getOpportunities({ kind, search });
-    setItems(data);
+    if (data && data.length > 0) {
+      setItems(data);
+      if (kind === "all" && !search) {
+        setOfflineCache("opportunities_list", data);
+      }
+    }
     setLoading(false);
-  }, [kind, search]);
+  }, [kind, search, items.length]);
 
   useEffect(() => {
     const timer = setTimeout(() => {

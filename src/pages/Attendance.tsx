@@ -37,6 +37,8 @@ import { toast } from "sonner";
 import { formatRelativeTime } from "@/utils/date-utils";
 import SEOHead from "@/components/SEOHead";
 import { ImportSrmPortalDialog } from "@/components/profile/ImportSrmPortal";
+import { getOfflineCache, setOfflineCache, formatOfflineTime } from "@/lib/offline/offlineStorage";
+import { useNetworkStatus } from "@/hooks/useNetworkStatus";
 
 export interface AttendanceRecord {
   id: string;
@@ -61,8 +63,30 @@ type FilterTab = "all" | "risk" | "safe";
 
 export default function Attendance() {
   const { user } = useAuth();
-  const [records, setRecords] = useState<AttendanceRecord[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { isOnline } = useNetworkStatus();
+  const [cachedTime, setCachedTime] = useState<number | null>(null);
+
+  // Initialize records from offline cache immediately if available
+  const [records, setRecords] = useState<AttendanceRecord[]>(() => {
+    if (user?.id) {
+      const cached = getOfflineCache<AttendanceRecord[]>(`attendance:${user.id}`);
+      if (cached?.data && Array.isArray(cached.data) && cached.data.length > 0) {
+        return cached.data;
+      }
+    }
+    return [];
+  });
+
+  const [isLoading, setIsLoading] = useState(() => {
+    if (user?.id) {
+      const cached = getOfflineCache<AttendanceRecord[]>(`attendance:${user.id}`);
+      if (cached?.data && Array.isArray(cached.data) && cached.data.length > 0) {
+        return false;
+      }
+    }
+    return true;
+  });
+
   const [isSyncing, setIsSyncing] = useState(false);
   const [portalDialogOpen, setPortalDialogOpen] = useState(false);
   const [filterTab, setFilterTab] = useState<FilterTab>("all");
@@ -73,7 +97,25 @@ export default function Attendance() {
 
   const fetchAttendance = async () => {
     if (!user) return;
-    setIsLoading(true);
+
+    // Load from offline cache first
+    const cached = getOfflineCache<AttendanceRecord[]>(`attendance:${user.id}`);
+    if (cached?.data && Array.isArray(cached.data) && cached.data.length > 0) {
+      setRecords(cached.data);
+      setCachedTime(cached.savedAt);
+      setIsLoading(false);
+    }
+
+    // If completely offline, don't perform network fetch
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      setIsLoading(false);
+      return;
+    }
+
+    if (records.length === 0) {
+      setIsLoading(true);
+    }
+
     try {
       const { data, error } = await supabase
         .from("student_attendance" as any)
@@ -84,7 +126,10 @@ export default function Attendance() {
       if (error) {
         console.error("Error fetching student attendance:", error);
       } else {
-        setRecords((data as unknown as AttendanceRecord[]) || []);
+        const freshRecords = (data as unknown as AttendanceRecord[]) || [];
+        setRecords(freshRecords);
+        setOfflineCache(`attendance:${user.id}`, freshRecords);
+        setCachedTime(Date.now());
       }
     } catch (err) {
       console.error("Failed to load attendance:", err);
@@ -108,6 +153,11 @@ export default function Attendance() {
 
   const handleManualSync = async () => {
     if (!user) return;
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      toast.error("You are currently offline. Connect to the internet to sync attendance.");
+      return;
+    }
+
     setIsSyncing(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -280,18 +330,36 @@ export default function Attendance() {
                 {records.length > 0 && (
                   <div className="flex items-center gap-3 bg-card/80 dark:bg-card/60 backdrop-blur-md px-3.5 py-2 rounded-xl border border-border/70 shadow-xs">
                     <div className="flex items-center gap-2.5">
-                      <span className="relative flex h-2 w-2">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                      </span>
-                      <div className="flex flex-col">
-                        <span className="text-xs font-semibold text-foreground tracking-tight leading-tight">
-                          Synced {lastSync ? formatRelativeTime(lastSync) : "Never"}
-                        </span>
-                        <span className="text-[10px] text-muted-foreground leading-tight">
-                          Auto-syncs Mon–Fri, 5:30 PM IST
-                        </span>
-                      </div>
+                      {isOnline ? (
+                        <>
+                          <span className="relative flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                          </span>
+                          <div className="flex flex-col">
+                            <span className="text-xs font-semibold text-foreground tracking-tight leading-tight">
+                              Synced {lastSync ? formatRelativeTime(lastSync) : "Never"}
+                            </span>
+                            <span className="text-[10px] text-muted-foreground leading-tight">
+                              Auto-syncs Mon–Fri, 5:30 PM IST
+                            </span>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <span className="relative flex h-2 w-2">
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                          </span>
+                          <div className="flex flex-col">
+                            <span className="text-xs font-semibold text-amber-600 dark:text-amber-400 tracking-tight leading-tight">
+                              Offline Mode
+                            </span>
+                            <span className="text-[10px] text-muted-foreground leading-tight">
+                              Saved {cachedTime ? formatOfflineTime(cachedTime) : (lastSync ? formatRelativeTime(lastSync) : "locally")}
+                            </span>
+                          </div>
+                        </>
+                      )}
                     </div>
 
                     <div className="h-6 w-px bg-border/70 mx-0.5" />
@@ -302,17 +370,24 @@ export default function Attendance() {
                         variant="ghost"
                         size="sm"
                         onClick={handleManualSync}
-                        disabled={isSyncing}
+                        disabled={isSyncing || !isOnline}
                         className="h-7 px-2.5 text-xs font-medium hover:bg-muted/80 text-foreground gap-1.5 rounded-lg transition-colors"
-                        title="Fetch latest attendance from SRM portal"
+                        title={isOnline ? "Fetch latest attendance from SRM portal" : "Connect to internet to sync"}
                       >
                         <RefreshCw className={`h-3 w-3 text-primary ${isSyncing ? "animate-spin" : ""}`} />
                         <span>{isSyncing ? "Syncing…" : "Sync"}</span>
                       </Button>
                       <button
                         type="button"
-                        onClick={() => setPortalDialogOpen(true)}
-                        className="text-[11px] text-muted-foreground hover:text-foreground px-2 py-1 transition-colors rounded-lg hover:bg-muted/60"
+                        onClick={() => {
+                          if (!isOnline) {
+                            toast.error("Connect to internet to update portal credentials");
+                            return;
+                          }
+                          setPortalDialogOpen(true);
+                        }}
+                        disabled={!isOnline}
+                        className="text-[11px] text-muted-foreground hover:text-foreground px-2 py-1 transition-colors rounded-lg hover:bg-muted/60 disabled:opacity-50"
                         title="Update portal credentials"
                       >
                         Re-link
