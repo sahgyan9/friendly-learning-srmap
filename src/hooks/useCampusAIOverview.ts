@@ -128,6 +128,9 @@ export function useCampusAIOverview({
   }, []);
 
   useEffect(() => {
+    setHasVoted(null);
+    setIsVoting(false);
+
     if (!enabled || trimmed.length < 3) {
       setOverview(null);
       setLoading(false);
