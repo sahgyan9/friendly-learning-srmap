@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   Award,
+  CalendarCheck2,
   Compass,
   LogOut,
   Settings,
@@ -10,7 +11,6 @@ import {
   Sparkles,
   User,
 } from "lucide-react";
-import { AttendanceIcon } from "@/components/icons/AttendanceIcon";
 import { useAuth } from "@/context/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -171,7 +171,7 @@ const NavbarProfileMenu = () => {
 
           <DropdownMenuItem asChild>
             <Link to="/attendance" className="cursor-pointer w-full flex items-center gap-2">
-              <AttendanceIcon className="h-4 w-4 text-primary" />
+              <CalendarCheck2 className="h-4 w-4 text-primary" />
               <span>Attendance</span>
             </Link>
           </DropdownMenuItem>
