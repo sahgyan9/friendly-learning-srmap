@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,12 +11,16 @@ import { motion } from "framer-motion";
 import DarkModeToggle from "@/components/DarkModeToggle";
 import GoogleAuthButton from "@/components/auth/GoogleAuthButton";
 import RoleSelectionModal from "@/components/auth/RoleSelectionModal";
+import { Loader2 } from "lucide-react";
 
 const SignUp = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const emailParam = searchParams.get('email') || "";
+
   const [formData, setFormData] = useState({
     name: "",
-    email: "",
+    email: emailParam,
     password: "",
     confirmPassword: "",
     mobile: ""
@@ -24,6 +28,12 @@ const SignUp = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showRoleSelection, setShowRoleSelection] = useState(false);
   const [pendingAuthData, setPendingAuthData] = useState<any>(null);
+
+  useEffect(() => {
+    if (emailParam) {
+      setFormData(prev => ({ ...prev, email: emailParam }));
+    }
+  }, [emailParam]);
 
   // Check if user is already logged in
   useEffect(() => {
@@ -212,6 +222,7 @@ const SignUp = () => {
                     type="text"
                     autoComplete="name"
                     required
+                    disabled={isLoading}
                     value={formData.name}
                     onChange={handleChange}
                     placeholder="Your full name"
@@ -226,6 +237,7 @@ const SignUp = () => {
                     type="email"
                     autoComplete="email"
                     required
+                    disabled={isLoading}
                     value={formData.email}
                     onChange={handleChange}
                     placeholder="Email address"
@@ -239,6 +251,7 @@ const SignUp = () => {
                     name="mobile"
                     type="tel"
                     required
+                    disabled={isLoading}
                     value={formData.mobile}
                     onChange={handleChange}
                     placeholder="Enter your mobile number"
@@ -252,6 +265,7 @@ const SignUp = () => {
                     name="password"
                     autoComplete="new-password"
                     required
+                    disabled={isLoading}
                     value={formData.password}
                     onChange={handleChange}
                     placeholder="Password"
@@ -266,6 +280,7 @@ const SignUp = () => {
                     name="confirmPassword"
                     autoComplete="new-password"
                     required
+                    disabled={isLoading}
                     value={formData.confirmPassword}
                     onChange={handleChange}
                     placeholder="Confirm password"
@@ -279,7 +294,14 @@ const SignUp = () => {
                     className="w-full"
                     disabled={isLoading}
                   >
-                    {isLoading ? "Creating account..." : "Sign up"}
+                    {isLoading ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span>Creating account...</span>
+                      </span>
+                    ) : (
+                      "Sign up"
+                    )}
                   </Button>
                 </div>
               </form>
