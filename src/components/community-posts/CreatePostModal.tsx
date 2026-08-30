@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
 import { X, ImagePlus } from "lucide-react";
 
@@ -26,6 +26,10 @@ interface CreatePostModalProps {
   communityId?: string;
   /** Shown in the header so nobody posts to a group thinking it's the board. */
   communityName?: string;
+  initialPostType?: string;
+  initialTitle?: string;
+  initialContent?: string;
+  initialTags?: string[];
 }
 
 const MAX_TAGS = 5;
@@ -76,16 +80,30 @@ export const CreatePostModal = ({
   onPostCreated,
   communityId,
   communityName,
+  initialPostType,
+  initialTitle,
+  initialContent,
+  initialTags,
 }: CreatePostModalProps) => {
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
-  const [postType, setPostType] = useState("");
+  const [title, setTitle] = useState(initialTitle || "");
+  const [content, setContent] = useState(initialContent || "");
+  const [postType, setPostType] = useState(initialPostType || "");
   const [tagInput, setTagInput] = useState("");
-  const [tags, setTags] = useState<string[]>([]);
+  const [tags, setTags] = useState<string[]>(initialTags || []);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Sync initial values when modal opens
+  useEffect(() => {
+    if (open) {
+      if (initialPostType) setPostType(initialPostType);
+      if (initialTitle) setTitle(initialTitle);
+      if (initialContent) setContent(initialContent);
+      if (initialTags && initialTags.length > 0) setTags(initialTags);
+    }
+  }, [open, initialPostType, initialTitle, initialContent, initialTags]);
 
   const placeholders = PLACEHOLDERS[postType] ?? PLACEHOLDERS.general;
 

@@ -486,7 +486,7 @@ export const EventShareModal: React.FC<EventShareModalProps> = ({
                 {/* 3. Teammate Post on Campus Feed Shortcut */}
                 <div className="pt-2 border-t border-border/50">
                   <Link
-                    to={`/posts?compose=true&tag=Hackathon%20Teammates&event_id=${event.id}`}
+                    to={`/posts?compose=true&type=hackathon&tag=Hackathon%20Teammates&event_title=${encodeURIComponent(event.title)}&event_id=${event.id}`}
                     onClick={onClose}
                     className="block"
                   >

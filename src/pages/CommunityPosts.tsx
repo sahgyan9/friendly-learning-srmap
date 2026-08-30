@@ -64,6 +64,13 @@ const CommunityPosts = () => {
   const [editingPost, setEditingPost] = useState<CommunityPost | null>(null);
   const [deletingPost, setDeletingPost] = useState<CommunityPost | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [autoOpenModal, setAutoOpenModal] = useState(false);
+  const [prefilledPost, setPrefilledPost] = useState<{
+    postType?: string;
+    title?: string;
+    content?: string;
+    tags?: string[];
+  }>({});
 
   const selectedType = searchParams.get("type") ?? "all";
   const [searchTerm, setSearchTerm] = useState(searchParams.get("q") ?? "");
@@ -71,6 +78,38 @@ const CommunityPosts = () => {
 
   const location = useLocation();
   const [highlightedPostId, setHighlightedPostId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (searchParams.get("compose") === "true") {
+      const type = searchParams.get("type") || "hackathon";
+      const tag = searchParams.get("tag");
+      const eventTitle = searchParams.get("event_title");
+
+      setPrefilledPost({
+        postType: type,
+        title: eventTitle ? `Looking for teammates for ${eventTitle}` : undefined,
+        content: eventTitle
+          ? `Hey everyone! I'm planning to attend ${eventTitle} and looking for teammates / partners to join together. Comment below or DM me if you'd like to team up!`
+          : undefined,
+        tags: tag ? [tag] : undefined,
+      });
+
+      if (!user) {
+        toast.info("Please sign in to post to the campus feed", {
+          description: "Your compose draft will be ready once you sign in.",
+        });
+      } else {
+        setAutoOpenModal(true);
+      }
+
+      // Clean compose params from URL without reload
+      const next = new URLSearchParams(searchParams);
+      next.delete("compose");
+      next.delete("event_title");
+      next.delete("event_id");
+      setSearchParams(next, { replace: true });
+    }
+  }, [searchParams, setSearchParams, user]);
 
   const targetPostId = useMemo(() => {
     if (location.hash && location.hash.startsWith("#post-")) {
@@ -351,7 +390,15 @@ const CommunityPosts = () => {
                     Find hackathon teammates, study help and project partners — anyone can post.
                   </p>
                 </div>
-                <CreatePostButton onPostCreated={() => loadPosts(0)} />
+                <CreatePostButton
+                  onPostCreated={() => loadPosts(0)}
+                  open={autoOpenModal ? true : undefined}
+                  onOpenChange={setAutoOpenModal}
+                  initialPostType={prefilledPost.postType}
+                  initialTitle={prefilledPost.title}
+                  initialContent={prefilledPost.content}
+                  initialTags={prefilledPost.tags}
+                />
               </div>
             </motion.div>
           </div>

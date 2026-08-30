@@ -14,26 +14,38 @@ interface CreatePostButtonProps {
    * configurable — it has to say that signing in is what happens next.
    */
   label?: string;
+  initialPostType?: string;
+  initialTitle?: string;
+  initialContent?: string;
+  initialTags?: string[];
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
-/**
- * Posting used to be gated behind "become a mentor" — which meant the students
- * actually looking for hackathon partners and study help could never post. Any
- * signed-in user can post now.
- *
- * Signed-out visitors get a button that says what it will do, the same way the
- * Groups page does. It used to read "Create post" and quietly bounce you to
- * sign-in on the click — which spends someone's intent to find out a rule we
- * already knew, and reads as the page having failed rather than as a step.
- */
 export const CreatePostButton = ({
   onPostCreated,
   className,
   label = "Create post",
+  initialPostType,
+  initialTitle,
+  initialContent,
+  initialTags,
+  open: controlledOpen,
+  onOpenChange: setControlledOpen,
 }: CreatePostButtonProps) => {
   const { user } = useAuth();
   const location = useLocation();
-  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+
+  const isControlled = controlledOpen !== undefined;
+  const showCreateModal = isControlled ? controlledOpen : internalOpen;
+  const setShowCreateModal = (open: boolean) => {
+    if (isControlled && setControlledOpen) {
+      setControlledOpen(open);
+    } else {
+      setInternalOpen(open);
+    }
+  };
 
   if (!user) {
     return (
@@ -57,6 +69,10 @@ export const CreatePostButton = ({
       <CreatePostModal
         open={showCreateModal}
         onOpenChange={setShowCreateModal}
+        initialPostType={initialPostType}
+        initialTitle={initialTitle}
+        initialContent={initialContent}
+        initialTags={initialTags}
         onPostCreated={() => {
           onPostCreated();
           setShowCreateModal(false);
