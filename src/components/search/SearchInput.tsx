@@ -37,7 +37,7 @@ const SearchInput = ({ value, onChange, onClear }: SearchInputProps) => {
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholders[placeholderIndex]}
-        className="w-full pl-12 pr-12 py-3.5 rounded-xl bg-card border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 shadow-sm transition-all duration-200 placeholder:text-gray-400 dark:placeholder:text-gray-500"
+        className="w-full pl-12 pr-12 py-3.5 rounded-xl bg-card border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 shadow-sm transition-all duration-200 placeholder:text-gray-400 dark:placeholder:text-gray-500 text-base md:text-sm"
       />
       
       {value && (

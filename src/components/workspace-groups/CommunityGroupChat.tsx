@@ -885,7 +885,7 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
                     ? "Write a message…"
                     : `Message #${channel}…`
               }
-              className="h-10 bg-muted/30 font-sans text-sm"
+              className="h-10 bg-muted/30 font-sans text-base md:text-sm"
               disabled={sending}
               aria-label={
                 editingMessage

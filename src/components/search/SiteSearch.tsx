@@ -491,7 +491,7 @@ const SiteSearch = () => {
                       ? 'Ask CampusMind: "Computer Science faculty" or "Web Dev mentors…"'
                       : "Search mentors, faculty, hackathons, groups…"
                   }
-                  className="h-10 sm:h-11 flex-1 min-w-0 bg-transparent text-sm sm:text-base text-foreground placeholder:text-muted-foreground/50 border-none outline-none focus:outline-none focus:ring-0"
+                  className="h-10 sm:h-11 flex-1 min-w-0 bg-transparent text-base md:text-sm text-foreground placeholder:text-muted-foreground/50 border-none outline-none focus:outline-none focus:ring-0"
                   onKeyDown={(e) => {
                     if (e.key === "Tab" && !e.shiftKey) {
                       e.preventDefault();
