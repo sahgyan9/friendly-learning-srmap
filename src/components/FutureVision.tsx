@@ -133,14 +133,13 @@ function PhaseCard({ phase, index }: { phase: Phase; index: number }) {
       animate={inView ? "show" : "hidden"}
       className="relative flex flex-col"
     >
-      {/* Connector line between cards (hidden on last) */}
+      {/* Connector arrow between cards (hidden on last) */}
       {index < phases.length - 1 && (
         <div
-          className="hidden lg:block absolute top-10 left-full w-full h-px z-0"
-          style={{ width: "calc(100% - 3rem)" }}
+          className="hidden lg:flex absolute top-10 -right-[1.125rem] w-3 z-20 items-center justify-center pointer-events-none text-muted-foreground/60"
+          aria-hidden="true"
         >
-          <div className="w-full h-px border-t-2 border-dashed border-border" />
-          <ArrowRight className="absolute -right-3 -top-3 w-5 h-5 text-border" />
+          <ArrowRight className="w-4 h-4" />
         </div>
       )}
 

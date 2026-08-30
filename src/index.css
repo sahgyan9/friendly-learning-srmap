@@ -261,8 +261,16 @@ a[href*="lovable.dev"],
     transition: padding-left 300ms cubic-bezier(0.4, 0, 0.2, 1);
   }
 
+  main[data-rail] .container .container {
+    padding-left: 0;
+  }
+
   main[data-rail="collapsed"] .container {
     padding-left: 4.5rem;
+  }
+
+  main[data-rail="collapsed"] .container .container {
+    padding-left: 0;
   }
 }
 
