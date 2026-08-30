@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { getInitials } from "@/utils/user-utils";
 import { SwipeableMessage } from "@/components/chat/SwipeableMessage";
+import { ChatMessageContent } from "@/components/chat/ChatMessageContent";
 import {
   Send,
   Loader2,
@@ -578,7 +579,11 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
                                   : "whitespace-pre-wrap text-sm leading-relaxed text-foreground"
                               }
                             >
-                              {item.message.content}
+                              {isEmoji ? (
+                                item.message.content
+                              ) : (
+                                <ChatMessageContent content={item.message.content} />
+                              )}
                               {item.message.isEdited && (
                                 <span className="ml-1.5 text-3xs italic text-muted-foreground/75 select-none font-normal">
                                   (edited)
@@ -719,7 +724,11 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
                                   : "whitespace-pre-wrap text-sm leading-relaxed text-foreground"
                               }
                             >
-                              {item.message.content}
+                              {isEmoji ? (
+                                item.message.content
+                              ) : (
+                                <ChatMessageContent content={item.message.content} />
+                              )}
                               {item.message.isEdited && (
                                 <span className="ml-1.5 text-3xs italic text-muted-foreground/75 select-none font-normal">
                                   (edited)

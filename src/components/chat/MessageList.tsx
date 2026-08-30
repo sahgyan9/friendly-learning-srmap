@@ -28,6 +28,7 @@ import {
 import { cn } from "@/lib/utils";
 import { getInitials } from "@/utils/user-utils";
 import { useTypingIndicator } from "@/hooks/useTypingIndicator";
+import { ChatMessageContent } from "./ChatMessageContent";
 import { SwipeableMessage } from "./SwipeableMessage";
 import TypingIndicator from "./TypingIndicator";
 import MessageStatus from "./MessageStatus";
@@ -405,7 +406,7 @@ const MessageList = ({
                         </button>
                       )}
 
-                      {message.content}
+                      <ChatMessageContent content={message.content} isOwnMessage={isMine} />
                       {message.is_edited && (
                         <span
                           className={cn(
