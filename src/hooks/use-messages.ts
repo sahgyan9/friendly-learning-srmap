@@ -172,11 +172,50 @@ export const useMessages = (userId: string, activeChatId?: string | null) => {
       );
     },
     // On reaction change in database
-    useCallback(() => {
+    useCallback((payload?: any) => {
+      if (payload?.eventType && (payload.new || payload.old)) {
+        const data = payload.new || payload.old;
+        const { message_id, user_id, emoji } = data || {};
+        if (message_id && emoji) {
+          setMessages((prev) =>
+            prev.map((msg) => {
+              if (msg.id !== message_id) return msg;
+              const currentReactions = { ...(msg.reactions || {}) };
+              const currentViewerReactions = [...(msg.viewer_reactions || [])];
+              const isViewer = user_id === userId;
+
+              if (payload.eventType === 'INSERT') {
+                currentReactions[emoji] = (currentReactions[emoji] || 0) + 1;
+                if (isViewer && !currentViewerReactions.includes(emoji)) {
+                  currentViewerReactions.push(emoji);
+                }
+              } else if (payload.eventType === 'DELETE') {
+                const nextCount = (currentReactions[emoji] || 1) - 1;
+                if (nextCount <= 0) {
+                  delete currentReactions[emoji];
+                } else {
+                  currentReactions[emoji] = nextCount;
+                }
+                if (isViewer) {
+                  const idx = currentViewerReactions.indexOf(emoji);
+                  if (idx !== -1) currentViewerReactions.splice(idx, 1);
+                }
+              }
+
+              return {
+                ...msg,
+                reactions: currentReactions,
+                viewer_reactions: currentViewerReactions,
+              };
+            })
+          );
+        }
+      }
+
       if (activeChat) {
         void fetchMessages(activeChat, setMessages, setIsLoadingMessages, setError, true);
       }
-    }, [activeChat, fetchMessages, setMessages, setIsLoadingMessages, setError])
+    }, [activeChat, userId, fetchMessages, setMessages, setIsLoadingMessages, setError])
   );
 
   // Re-sync conversations and active messages on window focus and tab visibility change

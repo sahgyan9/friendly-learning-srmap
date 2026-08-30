@@ -72,7 +72,7 @@ export async function updateUserPresence(userId: string, isOnline: boolean) {
   }
 }
 
-// Mark messages as delivered
+// Mark messages as delivered for a specific conversation
 export async function markMessagesDelivered(conversationId: string, userId: string) {
   try {
     const { error } = await supabase.rpc('mark_messages_delivered', {
@@ -88,6 +88,23 @@ export async function markMessagesDelivered(conversationId: string, userId: stri
     return { error: null };
   } catch (err) {
     console.error('Exception marking messages as delivered:', err);
+    return { error: err as Error };
+  }
+}
+
+// Mark all pending incoming messages as delivered for current user
+export async function markAllMessagesDelivered() {
+  try {
+    const { error } = await (supabase.rpc as any)('mark_all_messages_delivered');
+
+    if (error) {
+      console.error('Error marking all messages as delivered:', error);
+      return { error };
+    }
+
+    return { error: null };
+  } catch (err) {
+    console.error('Exception marking all messages as delivered:', err);
     return { error: err as Error };
   }
 }

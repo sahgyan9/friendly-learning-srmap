@@ -11,7 +11,7 @@ export const useMessageRealtime = (
   onMessageUpdate: (message: Message) => void,
   onConversationUpdate: (conversation: Conversation) => void,
   onMessageDelete?: (messageId: string) => void,
-  onReactionChange?: () => void,
+  onReactionChange?: (payload?: any) => void,
 ) => {
   // Subscribe to message events (insert, update, delete)
   useRealtimeSubscription(
@@ -22,9 +22,9 @@ export const useMessageRealtime = (
         
         onNewMessage(newMessage);
         
-        // If message is for the current user and they're viewing the conversation, mark as delivered
-        if (newMessage.receiver_id === userId && newMessage.conversation_id === activeChat) {
-          markMessagesDelivered(newMessage.conversation_id, userId);
+        // If message is received by current user, immediately acknowledge delivery
+        if (newMessage.receiver_id === userId) {
+          void markMessagesDelivered(newMessage.conversation_id, userId);
         }
       } else if (payload.eventType === 'UPDATE') {
         const updatedMessage = payload.new as unknown as Message;
@@ -35,14 +35,14 @@ export const useMessageRealtime = (
           onMessageDelete?.(deletedId);
         }
       }
-    }, [activeChat, userId, onNewMessage, onMessageUpdate, onMessageDelete])
+    }, [userId, onNewMessage, onMessageUpdate, onMessageDelete])
   );
 
   // Subscribe to direct message reactions
   useRealtimeSubscription(
     'direct_message_reactions',
-    useCallback(() => {
-      onReactionChange?.();
+    useCallback((payload) => {
+      onReactionChange?.(payload);
     }, [onReactionChange])
   );
 
@@ -60,7 +60,7 @@ export const useMessageRealtime = (
   // Mark messages as delivered when viewing a conversation
   useEffect(() => {
     if (activeChat && userId) {
-      markMessagesDelivered(activeChat, userId);
+      void markMessagesDelivered(activeChat, userId);
     }
   }, [activeChat, userId]);
 };

@@ -314,7 +314,10 @@ const MessageList = ({
 
               <SwipeableMessage
                 onReply={onReply ? () => onReply(message) : undefined}
-                onLongPress={() => setActiveActionsMsgId(message.id)}
+                onLongPress={() => {
+                  setActiveActionsMsgId(message.id);
+                  setActiveReactionMsgId(message.id);
+                }}
               >
                 <div
                   id={`chat-msg-${message.id}`}
@@ -553,7 +556,7 @@ const MessageList = ({
                       >
                         <time dateTime={message.sent_at}>{formatTime(message.sent_at)}</time>
                         <MessageStatus
-                          deliveryStatus={message.delivery_status || "sent"}
+                          deliveryStatus={message.is_read ? "read" : (message.delivery_status || "sent")}
                           isOwnMessage={isMine}
                         />
                       </div>

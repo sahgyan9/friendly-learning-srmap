@@ -1,4 +1,4 @@
-﻿/**
+/**
  * PresenceContext — shared Supabase Realtime channel for:
  *   1. Presence  (channel.track / channel.presenceState)  — replaces DB writes to user_presence
  *   2. Broadcast (channel.send)                           — replaces DB writes to typing_indicators
@@ -17,6 +17,7 @@ import {
 } from 'react';
 import { RealtimeChannel } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { useGlobalMessageReceipts } from '@/hooks/useGlobalMessageReceipts';
 
 interface PresenceState {
   user_id: string;
@@ -50,6 +51,9 @@ export function PresenceProvider({
   const [presenceMap, setPresenceMap] = useState<Record<string, PresenceState>>({});
   const channelRef = useRef<RealtimeChannel | null>(null);
   const typingListenersRef = useRef<Map<string, Set<(payload: TypingPayload) => void>>>(new Map());
+
+  // Automatically acknowledge incoming direct messages for double check delivery
+  useGlobalMessageReceipts(userId);
 
   useEffect(() => {
     const channel = supabase.channel(CHANNEL_NAME, {
