@@ -1,3 +1,4 @@
+import { useState } from "react";
 import CallToAction from "@/components/CallToAction";
 import Footer from "@/components/Footer";
 import SEOHead from "@/components/SEOHead";
@@ -12,9 +13,11 @@ import { CampusFeedWidget } from "@/components/home/CampusFeedWidget";
 import { CampusSidebarWidgets } from "@/components/home/CampusSidebarWidgets";
 import { RecommendedPeople } from "@/components/home/RecommendedPeople";
 import { EcosystemBento } from "@/components/home/EcosystemBento";
+import { PostComposerStrip } from "@/components/community-posts/PostComposerStrip";
 
 const Index = () => {
   const { user } = useAuth();
+  const [feedKey, setFeedKey] = useState(0);
 
   // Structured data for the homepage
   const homePageSchema = {
@@ -74,19 +77,28 @@ const Index = () => {
       {/* ── 1. Hero with CampusMind AI Search & Momentum Metrics ── */}
       <CampusHero />
 
-      {/* ── 2. Main Campus Hub: 2-Column Responsive Feed & Discovery ── */}
+      {/* ── 2. Main Campus Hub: Section Title + Full-Width Composer + 2-Column Grid ── */}
       <main className="py-8 md:py-10">
         <div className="container mx-auto px-4 max-w-6xl">
+          {/* Full-width Centered Section Heading */}
+          <div className="text-center mb-5">
+            <h2 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
+              Campus Feed & Discussion
+            </h2>
+          </div>
+
+          {/* Full-width Composer Strip */}
+          <div className="w-full max-w-5xl mx-auto mb-7">
+            <PostComposerStrip
+              onPostCreated={() => setFeedKey((k) => k + 1)}
+              className="max-w-none shadow-xs"
+            />
+          </div>
+
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
-            {/* Left Column: Live Campus Feed & Discussions (60-65% width) */}
+            {/* Left Column: Live Campus Feed (60-65% width) */}
             <section className="lg:col-span-7 xl:col-span-8 space-y-4">
-              <div className="flex items-center justify-between pb-1 border-b border-border/60">
-                <h2 className="text-lg font-bold text-foreground tracking-tight">
-                  Campus Feed & Discussions
-                </h2>
-                <span className="text-xs text-muted-foreground">Real-time student board</span>
-              </div>
-              <CampusFeedWidget />
+              <CampusFeedWidget key={feedKey} />
             </section>
 
             {/* Right Column: Live Campus Sidebar Widgets (35-40% width) */}
