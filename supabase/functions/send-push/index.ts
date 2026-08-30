@@ -158,12 +158,16 @@ Deno.serve(async (req: Request) => {
     }
 
     // 4. If this was a chat message push and at least one device received it,
-    // acknowledge message delivery so sender sees double tick immediately
-    if (sent > 0 && (payload.tag?.startsWith("chat-") || payload.url?.startsWith("/messages"))) {
+    // acknowledge delivery of THAT SPECIFIC message so the sender sees a double
+    // tick — scoped by message id, not by receiver, so it never touches other
+    // pending messages the receiver's device hasn't actually gotten yet.
+    const messageId = typeof payload.data?.messageId === "string" ? payload.data.messageId : undefined;
+    if (sent > 0 && messageId && (payload.tag?.startsWith("chat-") || payload.url?.startsWith("/messages"))) {
       try {
         await admin
           .from("messages")
           .update({ delivery_status: "delivered" })
+          .eq("id", messageId)
           .in("receiver_id", eligibleUserIds)
           .eq("delivery_status", "sent");
       } catch (delivErr) {

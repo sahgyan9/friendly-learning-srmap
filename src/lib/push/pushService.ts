@@ -172,6 +172,7 @@ export async function dispatchPushNotification(opts: {
   url?: string;
   tag?: string;
   icon?: string;
+  data?: Record<string, unknown>;
 }): Promise<boolean> {
   try {
     const rawIds = Array.isArray(opts.userIds) ? opts.userIds : [opts.userIds];
@@ -188,6 +189,7 @@ export async function dispatchPushNotification(opts: {
         tag: opts.tag || "campus-notification",
         icon: opts.icon || "/pwa-192x192.png",
         badge: "/badge-96x96.png",
+        data: opts.data,
       },
     });
 

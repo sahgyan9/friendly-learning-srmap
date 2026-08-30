@@ -129,6 +129,7 @@ export async function sendMessage(
           body: content.length > 80 ? content.slice(0, 77) + "..." : content,
           url: `/messages/${conversationId}`,
           tag: `chat-${conversationId}`,
+          data: { messageId: data?.id },
         }).catch(() => {});
       });
     } catch {
