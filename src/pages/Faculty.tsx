@@ -22,6 +22,7 @@ import { FacultyCard } from "@/components/faculty/FacultyCard";
 import { FacultyRatingModal } from "@/components/faculty/FacultyRatingModal";
 import { useAuth } from "@/context/AuthContext";
 import { useDebounce } from "@/hooks/useDebounce";
+import { getOfflineCache, setOfflineCache } from "@/lib/offline/offlineStorage";
 import { useHasSeenFacultyRatings } from "@/hooks/useFeatureAnnouncement";
 import { getBreadcrumbSchema } from "@/lib/structured-data";
 import { PRIMARY_DOMAIN } from "@/lib/constants";
@@ -66,6 +67,25 @@ interface CacheEntry {
 }
 const PAGE_CACHE = new Map<string, CacheEntry>();
 const CACHE_TTL_MS = 2 * 60 * 1000;
+
+/**
+ * The same directory, kept on the device rather than in memory.
+ *
+ * PAGE_CACHE above dies with the tab, so closing the app and opening it again
+ * meant rebuilding the whole directory from scratch — the one case where the
+ * wait is most obvious. One entry, holding the first page of whichever
+ * unsearched view was last looked at; a search is a question asked seconds
+ * ago and is not worth answering later from a stale copy.
+ */
+const FACULTY_VIEW_CACHE_KEY = "faculty_view";
+
+interface PersistedFacultyView extends Omit<CacheEntry, "fetchedAt"> {
+  viewKey: string;
+}
+
+/** Identifies a directory view, ignoring how far the user has scrolled into it. */
+const facultyViewKey = (search: string, department: string, interest: string, sort: string) =>
+  `${search.trim()}|${department}|${interest}|${sort}`;
 
 function makeCacheKey(search: string, department: string, interest: string, sort: string, limit: number) {
   return `${search}|${department}|${interest}|${sort}|${limit}`;
@@ -122,6 +142,36 @@ const Faculty = () => {
   const [loadingMore, setLoadingMore] = useState(false);
   const [ratingTarget, setRatingTarget] = useState<FacultyMember | null>(null);
 
+  // What the list on screen is showing, so a fetch can tell "the same view,
+  // already answered" from "a new one, needs a skeleton".
+  const displayedViewRef = useRef<string | null>(null);
+  const hasFacultyRef = useRef(false);
+  hasFacultyRef.current = faculty.length > 0;
+
+  // Paint the directory this device saw last, before going to the server.
+  // Runs only when the in-memory cache missed — that one is newer whenever it
+  // has anything. In an effect rather than the state initialisers above
+  // because /faculty is pre-rendered and the first render has to match the
+  // markup being hydrated; a layout effect still lands before paint.
+  useIsomorphicLayoutEffect(() => {
+    if (isFresh || debouncedSearch) return;
+
+    const stored = getOfflineCache<PersistedFacultyView>(FACULTY_VIEW_CACHE_KEY);
+    const view = stored?.data;
+    if (!view?.faculty?.length) return;
+    if (view.viewKey !== facultyViewKey(debouncedSearch, department, interest, sort)) return;
+
+    setFaculty(view.faculty);
+    setTotal(view.total);
+    setDepartments(view.departments);
+    setFacets(view.facets);
+    setStats(view.stats);
+    setLoading(false);
+    displayedViewRef.current = view.viewKey;
+    hasFacultyRef.current = true;
+    // Mount only: from here on the fetch below owns the list.
+  }, []);
+
   // Track whether this is the first mount with back navigation
   const isBackNav = navigationType === "POP";
   const didRestoreScroll = useRef(false);
@@ -161,9 +211,14 @@ const Faculty = () => {
           setFacets(hit.facets);
           setStats(hit.stats);
           setLoading(false);
+          displayedViewRef.current = facultyViewKey(debouncedSearch, department, interest, sort);
           return;
         }
-        setLoading(true);
+        // Only blank the list when the view actually changed. Re-asking for
+        // the one already on screen — a re-mount, a revalidation of what was
+        // restored from the device — keeps it there until the answer lands.
+        const viewKey = facultyViewKey(debouncedSearch, department, interest, sort);
+        setLoading(!(displayedViewRef.current === viewKey && hasFacultyRef.current));
       } else {
         setLoadingMore(true);
       }
@@ -209,6 +264,20 @@ const Faculty = () => {
         setDepartments(deptData);
         setFacets(facetData);
         setStats(statsData);
+
+        const viewKey = facultyViewKey(debouncedSearch, department, interest, sort);
+        displayedViewRef.current = viewKey;
+
+        if (!debouncedSearch) {
+          setOfflineCache<PersistedFacultyView>(FACULTY_VIEW_CACHE_KEY, {
+            viewKey,
+            faculty: data,
+            total: matched,
+            departments: deptData,
+            facets: facetData,
+            stats: statsData,
+          });
+        }
       }
       setLoading(false);
       setLoadingMore(false);

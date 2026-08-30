@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useIsomorphicLayoutEffect } from "@/hooks/useIsomorphicLayoutEffect";
 import { supabase } from "@/integrations/supabase/client";
+import { getOfflineCache, setOfflineCache } from "@/lib/offline/offlineStorage";
 
 export interface SRMAPEvent {
   id: number;
@@ -96,9 +98,17 @@ function mapRowToEvent(row: CachedEventRow): SRMAPEvent {
   };
 }
 
+const EVENTS_CACHE_KEY = "srmap_events";
+
 /**
  * Reads SRMAP's events feed from public.srmap_events_cache instead of
  * calling events.srmap.edu.in directly from the browser.
+ *
+ * The last set read is kept on the device, so the page opens on the events
+ * this browser already knows about while the current ones are fetched. The
+ * table is refreshed by a scheduled job, not by anything the user does, so a
+ * few-minutes-old copy of it is not misleading in the way a stale feed of
+ * their own content would be.
  */
 export function useSRMAPEvents() {
   const [events, setEvents] = useState<SRMAPEvent[]>([]);
@@ -106,9 +116,27 @@ export function useSRMAPEvents() {
   const [error, setError] = useState<string | null>(null);
   const isMountedRef = useRef(true);
 
+  const seededFromCacheRef = useRef(false);
+
+  // Before paint, so the page opens on the events this device already knows
+  // about. Doing it inside fetchEvents below would be one render too late:
+  // `loading` starts true, and that first render is a screen of skeletons.
+  useIsomorphicLayoutEffect(() => {
+    const cached = getOfflineCache<SRMAPEvent[]>(EVENTS_CACHE_KEY);
+    if (!cached?.data?.length) return;
+
+    // Re-sorted rather than restored as-is: the order puts live events first
+    // and upcoming ones next, which is a statement about the current time,
+    // not about the events. Yesterday's order would lead with an event that
+    // has since finished.
+    setEvents(sortEvents(cached.data));
+    setLoading(false);
+    seededFromCacheRef.current = true;
+  }, []);
+
   const fetchEvents = useCallback(async ({ isRefresh = false } = {}) => {
     try {
-      if (!isRefresh) setLoading(true);
+      if (!isRefresh && !seededFromCacheRef.current) setLoading(true);
       setError(null);
 
       // `content` (full event HTML) is intentionally omitted here — it is
@@ -128,6 +156,7 @@ export function useSRMAPEvents() {
         );
 
         setEvents(mapped);
+        setOfflineCache(EVENTS_CACHE_KEY, mapped);
       }
     } catch (err) {
       if (isMountedRef.current) {

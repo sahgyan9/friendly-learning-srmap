@@ -10,6 +10,7 @@ import SearchBar from "@/components/SearchBar";
 import SEOHead from "@/components/SEOHead";
 import StructuredData from "@/components/StructuredData";
 import { getMentors } from "@/integrations/supabase/services/mentors";
+import { getOfflineCache, setOfflineCache } from "@/lib/offline/offlineStorage";
 import { Mentor } from "@/types/mentor";
 import { getBreadcrumbSchema } from "@/lib/structured-data";
 import { useHasVisitedMentorsNav } from "@/hooks/useFeatureAnnouncement";
@@ -32,6 +33,8 @@ const DOMAIN_FILTERS = [
   { id: "alumni", label: "Alumni", icon: GraduationCap },
   { id: "top", label: "Top Rated ⭐", icon: Star },
 ];
+
+const MENTORS_CACHE_KEY = "mentors_list";
 
 const Mentors = () => {
   const { user, profile } = useAuth();
@@ -65,17 +68,41 @@ const Mentors = () => {
     return () => clearTimeout(timer);
   }, [isLoading]);
 
+  // Show the mentors this device already knows about while the current list
+  // is fetched. The filters and search below run over whatever is in state,
+  // so a restored list is filterable straight away.
+  //
+  // A layout effect, because isLoading starts true: seeding from the fetch
+  // effect below is one render too late and paints a frame of skeletons
+  // first, which is the flicker this is meant to remove.
+  const seededFromCacheRef = useRef(false);
+
+  useIsomorphicLayoutEffect(() => {
+    const cached = getOfflineCache<Mentor[]>(MENTORS_CACHE_KEY);
+    if (!cached?.data?.length) return;
+
+    setAllMentors(cached.data);
+    setFilteredMentors(cached.data);
+    setMentorCount(cached.data.length);
+    setIsLoading(false);
+    seededFromCacheRef.current = true;
+  }, []);
+
   // Fetch mentors from Supabase on component mount
   useEffect(() => {
     const fetchMentors = async () => {
-      setIsLoading(true);
+      if (!seededFromCacheRef.current) setIsLoading(true);
+
       try {
         const { data, error } = await getMentors();
 
         if (error) {
           console.error("Error fetching mentors:", error);
           toast.error("Failed to load mentors. Please try again.");
-          setFilteredMentors([]);
+          // Emptied only when there is nothing to fall back on. Clearing a
+          // restored list because one request failed would replace a slightly
+          // old directory with no directory at all.
+          if (!seededFromCacheRef.current) setFilteredMentors([]);
           return;
         }
 
@@ -83,10 +110,11 @@ const Mentors = () => {
         setAllMentors(mentors);
         setFilteredMentors(mentors);
         setMentorCount(mentors.length);
+        setOfflineCache(MENTORS_CACHE_KEY, mentors);
       } catch (err) {
         console.error("Exception fetching mentors:", err);
         toast.error("An unexpected error occurred loading mentors.");
-        setFilteredMentors([]);
+        if (!seededFromCacheRef.current) setFilteredMentors([]);
       } finally {
         setIsLoading(false);
       }
