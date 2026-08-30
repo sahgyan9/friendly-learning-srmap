@@ -3,10 +3,28 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { AuthProvider, useAuth } from "./AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 
+// AuthProvider renders PresenceProvider, which opens a Realtime channel on
+// mount. Without these the provider threw during the very first effect and
+// every test in this file failed before it could assert anything.
+const presenceChannel = {
+  on: vi.fn().mockReturnThis(),
+  subscribe: vi.fn().mockReturnThis(),
+  presenceState: vi.fn().mockReturnValue({}),
+  track: vi.fn().mockResolvedValue(undefined),
+  untrack: vi.fn().mockResolvedValue(undefined),
+  send: vi.fn().mockResolvedValue(undefined),
+};
+
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
     auth: { onAuthStateChange: vi.fn(), signOut: vi.fn() },
     from: vi.fn(),
+    // Loading a profile also asks is_admin_user; the provider treats a
+    // rejection as "not an admin", so an unmocked rpc looked like a working
+    // test right up until it rejected the whole Promise.all around it.
+    rpc: vi.fn(() => Promise.resolve({ data: false, error: null })),
+    channel: vi.fn(() => presenceChannel),
+    removeChannel: vi.fn(),
   },
 }));
 vi.mock("@/lib/sentry", () => ({ setUserContext: vi.fn() }));
@@ -40,6 +58,11 @@ function Probe() {
 let authCallback: (event: string, session: unknown) => void;
 
 beforeEach(() => {
+  // The provider caches each profile it loads in localStorage and falls back
+  // to it when the row cannot be read — correct in production, but it also
+  // means the profile one test loads is still there for the next one, which
+  // is exactly what the "row is missing" case is supposed to be without.
+  localStorage.clear();
   onAuthStateChange.mockReset();
   from.mockReset();
   onAuthStateChange.mockImplementation((cb) => {
