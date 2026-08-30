@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Bell, Menu, Moon, Sun, X } from "lucide-react";
+import { Bell, BellRing, Menu, Moon, Sun, X } from "lucide-react";
 
 import NavbarProfileMenu from "@/components/NavbarProfileMenu";
 import NotificationItem from "@/components/notifications/NotificationItem";
@@ -22,6 +22,7 @@ import {
   useHasVisitedMentorsNav,
 } from "@/hooks/useFeatureAnnouncement";
 import { useNotifications } from "@/hooks/useNotifications";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useSwipeToDismiss } from "@/hooks/useSwipeToDismiss";
 import { useUnreadMessages } from "@/hooks/useUnreadMessages";
 import { rankNavSections, recordNavVisit } from "@/lib/nav-usage";
@@ -83,6 +84,25 @@ export function MobileNavDock() {
     markAsRead,
     markAllAsRead,
   } = useNotifications({ includeList: alertsOpen });
+  const {
+    isSupported: pushSupported,
+    isSubscribed: pushSubscribed,
+    isLoading: pushLoading,
+    permission: pushPermission,
+    enablePush,
+  } = usePushNotifications();
+
+  /**
+   * Offer push only when the browser can still act on it.
+   *
+   * The header bell shows this prompt whenever push is unsubscribed, denied
+   * included — which on a phone is the common case, since a declined
+   * permission cannot be re-requested from script. A button that provably
+   * cannot do anything is worse than no button, so this surface checks the
+   * permission too.
+   */
+  const showPushPrompt =
+    pushSupported && !pushSubscribed && pushPermission !== "denied";
 
   const moreSwipe = useSwipeToDismiss(() => setSheetOpen(false));
   const alertsSwipe = useSwipeToDismiss(() => setAlertsOpen(false));
@@ -322,6 +342,30 @@ export function MobileNavDock() {
                   )}
                 </div>
               </div>
+
+              {showPushPrompt && (
+                <div className="mx-4 mb-3 flex items-center justify-between gap-3 rounded-xl border border-primary/20 bg-primary/10 px-3.5 py-2.5">
+                  <div className="flex min-w-0 items-center gap-2.5">
+                    <BellRing className="h-4 w-4 shrink-0 animate-pulse text-primary" aria-hidden />
+                    <div className="min-w-0">
+                      <p className="truncate text-xs font-medium text-foreground/90">
+                        Get push alerts
+                      </p>
+                      <p className="truncate text-3xs text-muted-foreground">
+                        Replies and events, even with the app closed
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    size="sm"
+                    className="h-7 shrink-0 px-3 text-2xs font-semibold"
+                    disabled={pushLoading}
+                    onClick={enablePush}
+                  >
+                    {pushLoading ? "Enabling..." : "Enable"}
+                  </Button>
+                </div>
+              )}
 
               {notificationsLoading && notifications.length === 0 ? (
                 <div className="p-8 text-center text-xs text-muted-foreground">
