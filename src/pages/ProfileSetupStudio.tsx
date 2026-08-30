@@ -240,6 +240,8 @@ export default function ProfileSetupStudio() {
 
   // Baseline state loaded from database (for 1-click per-section revert)
   const [baselineState, setBaselineState] = useState<StudioProfileState | null>(null);
+  const [showExitConfirmDialog, setShowExitConfirmDialog] = useState(false);
+  const [targetExitPath, setTargetExitPath] = useState<string | null>(null);
 
   // Studio Form State
   const [state, setState] = useState<StudioProfileState>({
@@ -260,6 +262,39 @@ export default function ProfileSetupStudio() {
     isAvailable: true,
     courses: [],
   });
+
+  // Track if current state differs from the database baseline
+  const hasUnsavedChanges = useMemo(() => {
+    if (!baselineState || loading) return false;
+    return JSON.stringify(state) !== JSON.stringify(baselineState);
+  }, [state, baselineState, loading]);
+
+  // Continuously sync uncommitted draft to sessionStorage so navigating away never loses edits
+  useEffect(() => {
+    if (!user || loading || !baselineState) return;
+    const draftKey = `fl_studio_profile_draft_${user.id}`;
+    if (hasUnsavedChanges) {
+      try {
+        sessionStorage.setItem(draftKey, JSON.stringify(state));
+      } catch {}
+    } else {
+      try {
+        sessionStorage.removeItem(draftKey);
+      } catch {}
+    }
+  }, [state, hasUnsavedChanges, user, loading, baselineState]);
+
+  // Browser-level safety net for tab close / reload
+  useEffect(() => {
+    if (!hasUnsavedChanges) return;
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "You have unsaved changes. Please save before leaving!";
+      return e.returnValue;
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [hasUnsavedChanges]);
 
   const [newSkillInput, setNewSkillInput] = useState("");
   const [newOutcomeInput, setNewOutcomeInput] = useState("");
@@ -376,7 +411,25 @@ export default function ProfileSetupStudio() {
           courses: coursesList,
         };
 
-        setState(initialSnapshot);
+        // Check if user had an unsaved local draft in sessionStorage from previous session
+        const draftKey = `fl_studio_profile_draft_${user.id}`;
+        let stateToSet = initialSnapshot;
+        try {
+          const savedDraftRaw = sessionStorage.getItem(draftKey);
+          if (savedDraftRaw) {
+            const parsedDraft = JSON.parse(savedDraftRaw);
+            if (
+              parsedDraft &&
+              typeof parsedDraft === "object" &&
+              JSON.stringify(parsedDraft) !== JSON.stringify(initialSnapshot)
+            ) {
+              stateToSet = { ...initialSnapshot, ...parsedDraft };
+              toast.info("Restored unsaved profile draft from your previous session");
+            }
+          }
+        } catch {}
+
+        setState(stateToSet);
         setBaselineState(initialSnapshot);
       } catch (err) {
         console.error("Error loading profile studio data:", err);
@@ -960,6 +1013,15 @@ export default function ProfileSetupStudio() {
       setBaselineState(state);
       setIsPublished(true);
 
+      // Clean up session storage and parsing session now that data is safely in Postgres
+      if (user) {
+        try {
+          sessionStorage.removeItem(`fl_studio_profile_draft_${user.id}`);
+        } catch {}
+      }
+      markParsingSessionApplied();
+      clearParsingSession();
+
       const isPortalLinked = state.courses.length > 0 || Boolean(profile?.date_of_birth_linked);
 
       toast.success(
@@ -976,12 +1038,42 @@ export default function ProfileSetupStudio() {
           navigate(`/mentor/${user.id}`);
         }, 400);
       }
+      return true;
     } catch (err: any) {
       console.error("Error publishing profile:", err);
       toast.error(err?.message || "Failed to save profile. Please try again.", { id: toastId });
+      return false;
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleRequestExit = (targetPath?: string) => {
+    const path = targetPath || (user?.id ? `/mentor/${user.id}` : "/");
+    if (!hasUnsavedChanges) {
+      navigate(path);
+    } else {
+      setTargetExitPath(path);
+      setShowExitConfirmDialog(true);
+    }
+  };
+
+  const handleSaveAndExit = async () => {
+    const success = await handlePublish();
+    if (success) {
+      setShowExitConfirmDialog(false);
+    }
+  };
+
+  const handleDiscardAndExit = () => {
+    if (user) {
+      try {
+        sessionStorage.removeItem(`fl_studio_profile_draft_${user.id}`);
+      } catch {}
+    }
+    clearParsingSession();
+    setShowExitConfirmDialog(false);
+    navigate(targetExitPath || (user?.id ? `/mentor/${user.id}` : "/"));
   };
 
   if (loading) {
@@ -1009,13 +1101,7 @@ export default function ProfileSetupStudio() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => {
-                if (user?.id) {
-                  navigate(`/mentor/${user.id}`);
-                } else {
-                  navigate(-1);
-                }
-              }}
+              onClick={() => handleRequestExit()}
               className="gap-1.5 text-muted-foreground hover:text-foreground shrink-0"
             >
               <ArrowLeft className="h-4 w-4" />
@@ -1030,9 +1116,18 @@ export default function ProfileSetupStudio() {
                   <Sparkles className="h-4 w-4 text-primary shrink-0" />
                   {isPublished ? "Profile Studio" : "Profile Setup Studio"}
                 </h1>
+                {hasUnsavedChanges && (
+                  <Badge
+                    variant="outline"
+                    className="bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/30 text-2xs gap-1 font-bold animate-pulse"
+                  >
+                    <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                    Unsaved Changes
+                  </Badge>
+                )}
                 {isPublished ? (
                   <Badge variant="outline" className="bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-300 text-2xs gap-1 font-semibold">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                     Live on Campus
                   </Badge>
                 ) : (
@@ -2446,6 +2541,52 @@ export default function ProfileSetupStudio() {
                 </div>
               </div>
             )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Unsaved Changes Confirmation Dialog */}
+      <Dialog open={showExitConfirmDialog} onOpenChange={setShowExitConfirmDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 font-bold text-xs uppercase tracking-wider">
+              <AlertCircle className="h-4 w-4" />
+              Unsaved Profile Changes
+            </div>
+            <DialogTitle className="text-lg font-extrabold text-foreground">
+              You have unsaved changes — Please save before leaving!
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground leading-relaxed">
+              You have updated your profile details (skills, projects, experience, or resume draft). If you leave without saving, these changes will not be committed to your live campus profile.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex flex-col sm:flex-row items-center justify-end gap-2 pt-3 border-t border-border/60">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleDiscardAndExit}
+              className="w-full sm:w-auto text-xs text-destructive hover:bg-destructive/10"
+            >
+              Discard & Leave
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowExitConfirmDialog(false)}
+              className="w-full sm:w-auto text-xs"
+            >
+              Keep Editing
+            </Button>
+            <Button
+              size="sm"
+              onClick={handleSaveAndExit}
+              disabled={isSaving || (!isPublished && !canPublish)}
+              className="w-full sm:w-auto text-xs font-bold gap-1.5 bg-primary text-primary-foreground shadow-sm"
+            >
+              {isSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5 stroke-[3]" />}
+              Save Changes & Exit
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

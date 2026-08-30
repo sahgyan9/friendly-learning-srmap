@@ -316,7 +316,6 @@ const ResumePdfImport = ({
       // Wait a moment for celebratory animation to complete before applying
       setTimeout(() => {
         setModalOpen(false);
-        markParsingSessionApplied();
         onImported(filtered);
         toast.success("Resume parsed successfully! AI drafted your skills, projects & bio.");
       }, 750);
