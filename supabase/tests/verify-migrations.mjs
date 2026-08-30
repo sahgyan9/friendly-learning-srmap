@@ -34,7 +34,7 @@ await db.exec(`
   CREATE SCHEMA IF NOT EXISTS auth;
   CREATE TABLE auth._session (uid uuid);
   INSERT INTO auth._session VALUES ('${CURRENT_UID}');
-  CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$ SELECT uid FROM auth._session $$;
+  CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE SECURITY DEFINER AS $$ SELECT uid FROM auth._session $$;
 
   CREATE TABLE public.users (
     id uuid PRIMARY KEY,
@@ -542,6 +542,7 @@ for (const file of [
   '20260830140000_allow_everyone_to_rate_mentor.sql',
   '20260830150000_direct_message_reactions_realtime.sql',
   '20260830160000_error_reports.sql',
+  '20260830170000_ai_overview_feedback_vote_update_and_undo.sql',
 ]) {
   if (file === '20260804132345_b843f814-46d5-4c25-bc80-32e5f6ebba59.sql') {
     // Production's `faculty` table still carries `profile_image`, a column
@@ -3738,11 +3739,79 @@ check('admin can mark a report reviewed with notes', reviewedReport?.status === 
 await actAs(CURRENT_UID);
 await q(`UPDATE public.users SET is_admin = false WHERE id = '${OTHER_UID}'`);
 
+// --- 20260830170000_ai_overview_feedback_vote_update_and_undo.sql ----
+console.log('\n--- 20260830170000_ai_overview_feedback_vote_update_and_undo.sql ---');
+
+// Test 1: session_id and updated_at columns exist
+const { rows: feedbackCols } = await q(`
+  SELECT column_name FROM information_schema.columns 
+  WHERE table_schema = 'public' AND table_name = 'ai_overview_feedback'
+    AND column_name IN ('session_id', 'updated_at')
+  ORDER BY column_name;
+`);
+check('session_id and updated_at columns exist on ai_overview_feedback', feedbackCols.length === 2);
+
+// Test 2: Initial vote via submit_ai_overview_feedback (vote = up)
+const testQuery = 'physics quantum computing lab';
+const testResponse = { summary: 'Quantum lab is in UB 4th floor.' };
+const testSession1 = 'session-user-alpha';
+const testSession2 = 'session-user-beta';
+
+const { rows: [voteRes1] } = await q(`
+  SELECT public.submit_ai_overview_feedback($1, $2::jsonb, true, $3) AS res;
+`, [testQuery, JSON.stringify(testResponse), testSession1]);
+check('submit_ai_overview_feedback records initial thumbs-up vote', voteRes1?.res?.success === true && voteRes1?.res?.action === 'voted' && voteRes1?.res?.has_voted === 'up');
+
+const { rows: [feedbackRow1] } = await q(`
+  SELECT query, is_helpful, session_id, user_id FROM public.ai_overview_feedback WHERE session_id = $1;
+`, [testSession1]);
+check('feedback row created with is_helpful = true', feedbackRow1?.query === testQuery && feedbackRow1?.is_helpful === true);
+
+// Test 3: Switching vote (thumbs-down) on same query and session updates row in place
+const { rows: [voteRes2] } = await q(`
+  SELECT public.submit_ai_overview_feedback($1, $2::jsonb, false, $3) AS res;
+`, [testQuery, JSON.stringify(testResponse), testSession1]);
+check('submit_ai_overview_feedback switches vote to down', voteRes2?.res?.success === true && voteRes2?.res?.action === 'voted' && voteRes2?.res?.has_voted === 'down');
+
+const { rows: feedbackRowsAfterSwitch } = await q(`
+  SELECT query, is_helpful, session_id FROM public.ai_overview_feedback WHERE session_id = $1;
+`, [testSession1]);
+check('row updated in place rather than creating duplicate', feedbackRowsAfterSwitch.length === 1 && feedbackRowsAfterSwitch[0]?.is_helpful === false);
+
+// Test 4: Second session votes on same query -> independent row created
+const { rows: [voteRes3] } = await q(`
+  SELECT public.submit_ai_overview_feedback($1, $2::jsonb, true, $3) AS res;
+`, [testQuery, JSON.stringify(testResponse), testSession2]);
+check('second session records independent vote', voteRes3?.res?.success === true && voteRes3?.res?.has_voted === 'up');
+
+const { rows: totalForQuery } = await q(`
+  SELECT count(*)::int AS count FROM public.ai_overview_feedback WHERE query = $1;
+`, [testQuery]);
+check('two distinct sessions produce two feedback rows for query', totalForQuery[0]?.count === 2);
+
+// Test 5: Undoing vote (p_is_helpful = null) removes session 1's feedback
+const { rows: [undoRes1] } = await q(`
+  SELECT public.submit_ai_overview_feedback($1, $2::jsonb, NULL, $3) AS res;
+`, [testQuery, JSON.stringify(testResponse), testSession1]);
+check('submit_ai_overview_feedback clears vote on null', undoRes1?.res?.success === true && undoRes1?.res?.action === 'cleared');
+
+const { rows: remainingRows } = await q(`
+  SELECT session_id, is_helpful FROM public.ai_overview_feedback WHERE query = $1;
+`, [testQuery]);
+check('undo leaves other session feedback intact', remainingRows.length === 1 && remainingRows[0]?.session_id === testSession2);
+
+// Test 6: Undoing session 2's vote leaves zero rows
+await q(`SELECT public.submit_ai_overview_feedback($1, $2::jsonb, NULL, $3);`, [testQuery, JSON.stringify(testResponse), testSession2]);
+const { rows: [finalCount] } = await q(`
+  SELECT count(*)::int AS count FROM public.ai_overview_feedback WHERE query = $1;
+`, [testQuery]);
+check('undoing all votes leaves zero feedback rows for query', finalCount?.count === 0);
 
 console.log(failures === 0
   ? '\nAll migration checks passed against real Postgres.'
   : `\n${failures} check(s) FAILED.`);
 process.exit(failures === 0 ? 0 : 1);
+
 
 
 
