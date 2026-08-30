@@ -3,6 +3,12 @@
 
 const STATIC_CACHE = 'fl-srmap-static-v2';
 const RUNTIME_CACHE = 'fl-srmap-runtime-v2';
+const IMAGE_CACHE = 'fl-srmap-images-v1';
+
+// Uploaded images are kept in their own cache so the housekeeping below can
+// evict them without touching the app shell. ~300 entries is a few weeks of
+// avatars and post photos at the sizes downscaleImage() produces.
+const IMAGE_CACHE_MAX_ENTRIES = 300;
 
 // Core essential assets to precache on install
 const PRECACHE_ASSETS = [
@@ -34,7 +40,7 @@ self.addEventListener('install', (event) => {
 
 // Activate Event - Clean up outdated caches and claim clients
 self.addEventListener('activate', (event) => {
-  const currentCaches = [STATIC_CACHE, RUNTIME_CACHE];
+  const currentCaches = [STATIC_CACHE, RUNTIME_CACHE, IMAGE_CACHE];
   event.waitUntil(
     caches
       .keys()
@@ -52,6 +58,68 @@ self.addEventListener('activate', (event) => {
   );
 });
 
+// Uploaded images (avatars, post photos, marketplace and event pictures) are
+// served from Supabase Storage. Every upload path in the app names its file
+// with a UUID or a timestamp and never overwrites it — changing your picture
+// writes a new object and rewrites the row's URL — so a given URL always points
+// at the same bytes and is safe to serve from cache without revalidating.
+//
+// This is why avatars visibly re-loaded on every tab switch: the rule below
+// skipped anything on supabase.co, so the browser was left to re-request each
+// one on the default max-age of an hour, and an installed PWA evicts its HTTP
+// cache far more eagerly than a browser tab does.
+function isStorageImageRequest(request, url) {
+  if (!url.pathname.startsWith('/storage/v1/object/public/')) {
+    return false;
+  }
+  if (!url.hostname.endsWith('.supabase.co') && url.origin !== self.location.origin) {
+    return false;
+  }
+  return request.destination === 'image' || /\.(png|jpe?g|gif|webp|avif|svg)$/i.test(url.pathname);
+}
+
+// The Cache API has no size limit of its own and no eviction policy, so an
+// active user would otherwise accumulate every image they ever scrolled past
+// until the origin hit its quota and *all* of it was thrown away. cache.keys()
+// returns entries in insertion order, so dropping from the front is oldest-first.
+async function trimImageCache() {
+  const cache = await caches.open(IMAGE_CACHE);
+  const keys = await cache.keys();
+  const excess = keys.length - IMAGE_CACHE_MAX_ENTRIES;
+  if (excess <= 0) {
+    return;
+  }
+  await Promise.all(keys.slice(0, excess).map((key) => cache.delete(key)));
+}
+
+async function cacheFirstImage(request) {
+  const cache = await caches.open(IMAGE_CACHE);
+  const cached = await cache.match(request);
+  if (cached) {
+    return cached;
+  }
+
+  // An <img> fetches no-cors, which would hand back an opaque response: status
+  // 0, unreadable, and indistinguishable from a 404 we would then cache
+  // forever. Public storage objects allow any origin, so ask for it again as a
+  // CORS request and get a status we can actually check.
+  let response;
+  try {
+    response = await fetch(new Request(request.url, { mode: 'cors', credentials: 'omit' }));
+  } catch {
+    response = await fetch(request);
+  }
+
+  if (response && (response.status === 200 || response.type === 'opaque')) {
+    await cache.put(request, response.clone());
+    // Deliberately not awaited: trimming is housekeeping and must not delay
+    // the image the page is waiting on.
+    trimImageCache().catch(() => {});
+  }
+
+  return response;
+}
+
 // Fetch Event - Dynamic Stale-While-Revalidate and Offline Fallback
 self.addEventListener('fetch', (event) => {
   const { request } = event;
@@ -59,6 +127,19 @@ self.addEventListener('fetch', (event) => {
 
   // Skip non-GET requests (mutations, uploads, etc.)
   if (request.method !== 'GET') {
+    return;
+  }
+
+  // Uploaded images first: these live on supabase.co too, and the API skip
+  // below would otherwise send every avatar and post photo straight to the
+  // network on every single render.
+  if (isStorageImageRequest(request, url)) {
+    event.respondWith(
+      cacheFirstImage(request).catch(async () => {
+        const cached = await caches.match(request);
+        return cached || new Response('', { status: 504, statusText: 'Image unavailable offline' });
+      })
+    );
     return;
   }
 
