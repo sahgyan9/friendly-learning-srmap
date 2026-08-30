@@ -77,36 +77,44 @@ export default function ResumeUpdateDiffModal({
 }: ResumeUpdateDiffModalProps) {
   if (!extractedData) return null;
 
-  // Extract candidate new data
-  const rawSkills: string[] = Array.isArray(extractedData.skills)
-    ? extractedData.skills
-    : typeof extractedData.skills === "string" && extractedData.skills.trim()
-    ? extractedData.skills.split(",").map((s: string) => s.trim()).filter(Boolean)
-    : [];
+  // Extract candidate new data with useMemo so object/array references are stable
+  const rawSkills: string[] = useMemo(() => {
+    if (Array.isArray(extractedData.skills)) return extractedData.skills;
+    if (typeof extractedData.skills === "string" && extractedData.skills.trim()) {
+      return extractedData.skills.split(",").map((s: string) => s.trim()).filter(Boolean);
+    }
+    return [];
+  }, [extractedData.skills]);
 
-  const existingSkillsSet = useMemo(() => new Set(currentState.skills.map((s) => s.toLowerCase())), [currentState.skills]);
+  const existingSkillsSet = useMemo(
+    () => new Set(currentState.skills.map((s) => s.toLowerCase())),
+    [currentState.skills]
+  );
+
   const newDiscoveredSkills = useMemo(
     () => rawSkills.filter((s) => !existingSkillsSet.has(s.toLowerCase())),
     [rawSkills, existingSkillsSet]
   );
 
-  const extractedProjects: ProjectItem[] = Array.isArray(extractedData.projects)
-    ? extractedData.projects.map((p: any) => ({
-        id: p.id || crypto.randomUUID(),
-        title: p.title || "",
-        description: p.description || "",
-        link: p.link || undefined,
-      }))
-    : [];
+  const extractedProjects: ProjectItem[] = useMemo(() => {
+    if (!Array.isArray(extractedData.projects)) return [];
+    return extractedData.projects.map((p: any) => ({
+      id: p.id || crypto.randomUUID(),
+      title: p.title || "",
+      description: p.description || "",
+      link: p.link || undefined,
+    }));
+  }, [extractedData.projects]);
 
-  const extractedExperiences: ExperienceItem[] = Array.isArray(extractedData.experiences)
-    ? extractedData.experiences.map((e: any) => ({
-        id: e.id || crypto.randomUUID(),
-        title: e.title || "",
-        organization: e.organization || undefined,
-        period: e.period || undefined,
-      }))
-    : [];
+  const extractedExperiences: ExperienceItem[] = useMemo(() => {
+    if (!Array.isArray(extractedData.experiences)) return [];
+    return extractedData.experiences.map((e: any) => ({
+      id: e.id || crypto.randomUUID(),
+      title: e.title || "",
+      organization: e.organization || undefined,
+      period: e.period || undefined,
+    }));
+  }, [extractedData.experiences]);
 
   const newBio = typeof extractedData.bio === "string" ? extractedData.bio.trim() : "";
   const newTagline = typeof extractedData.tagline === "string" ? extractedData.tagline.trim() : "";
@@ -122,18 +130,30 @@ export default function ResumeUpdateDiffModal({
   const [updateSummaries, setUpdateSummaries] = useState(false);
   const [updateIdentity, setUpdateIdentity] = useState(false);
 
-  // Initialize defaults on open
+  // Initialize defaults ONCE when the modal opens with new data
   useEffect(() => {
-    if (open) {
+    if (open && extractedData) {
       setSelectedNewSkills(newDiscoveredSkills);
       setTaglineChoice(currentState.tagline ? "keep" : "replace");
       setBioChoice(currentState.bio ? "keep" : "replace");
-      setProjectMode(currentState.projects.length > 0 && extractedProjects.length > 0 ? "append" : extractedProjects.length > 0 ? "replace" : "keep");
-      setExperienceMode(currentState.experiences.length > 0 && extractedExperiences.length > 0 ? "append" : extractedExperiences.length > 0 ? "replace" : "keep");
+      setProjectMode(
+        currentState.projects.length > 0 && extractedProjects.length > 0
+          ? "append"
+          : extractedProjects.length > 0
+          ? "replace"
+          : "keep"
+      );
+      setExperienceMode(
+        currentState.experiences.length > 0 && extractedExperiences.length > 0
+          ? "append"
+          : extractedExperiences.length > 0
+          ? "replace"
+          : "keep"
+      );
       setUpdateSummaries(currentState.outcomes.length === 0);
       setUpdateIdentity(!currentState.department || !currentState.year_of_studies);
     }
-  }, [open, newDiscoveredSkills, currentState, extractedProjects, extractedExperiences]);
+  }, [open, extractedData]);
 
   const toggleSkill = (skill: string) => {
     setSelectedNewSkills((prev) =>
