@@ -218,9 +218,17 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      const { profileHtml, courseListHtml, transcriptHtml, attendanceHtml } = await fetchAcademicSections(loginResult.jar);
+      const {
+        profileHtml,
+        courseListHtml,
+        transcriptHtml,
+        attendanceHtml,
+        timeTableHtml,
+        internalMarksHtml,
+        examDetailsHtml,
+      } = await fetchAcademicSections(loginResult.jar);
       const { program, currentSemester, mobileNumber } = parseProfile(profileHtml);
-      const courseMap = parseCourseList(courseListHtml);
+      const courseMap = parseCourseList(courseListHtml, timeTableHtml, internalMarksHtml, attendanceHtml, examDetailsHtml);
       const { cgpa, subjects } = parseTranscript(transcriptHtml);
       const attendanceCourses = parseAttendance(attendanceHtml, courseMap);
 

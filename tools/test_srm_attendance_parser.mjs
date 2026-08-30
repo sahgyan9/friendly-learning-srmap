@@ -16,57 +16,161 @@ function calculateAttendanceMetrics(conducted, attended) {
   return { percentage, classesNeeded, safeBunks };
 }
 
-function parseCourseList(html) {
+function cleanFacultyName(raw) {
+  if (!raw) return null;
+  let name = stripTags(raw).trim();
+  name = name.replace(/^\d+\s*[-–:]\s*/, "").replace(/\s*\(\d+\)$/, "");
+  name = name.split(/\s*[\/\-–]\s*(?:AP|Prof|Assistant|Associate|Professor|Dept|Department|PHY|CSE|ECE|MECH|CIVIL|MATHS|BIO)/i)[0].trim();
+  if (name.length < 3 || /^(tba|not assigned|staff|null|undefined|none|-|--)$/i.test(name)) return null;
+  if (!/[a-zA-Z]{3,}/.test(name)) return null;
+  if (name === name.toUpperCase() && name.length > 4) {
+    name = name
+      .toLowerCase()
+      .split(" ")
+      .map((w) => (w.length > 0 ? w[0].toUpperCase() + w.slice(1) : ""))
+      .join(" ");
+  }
+  name = name
+    .replace(/^Dr\.?\s+/i, "Dr. ")
+    .replace(/^Prof\.?\s+/i, "Prof. ")
+    .replace(/^Mr\.?\s+/i, "Mr. ")
+    .replace(/^Ms\.?\s+/i, "Ms. ")
+    .replace(/^Mrs\.?\s+/i, "Mrs. ")
+    .trim();
+  return name;
+}
+
+function cleanSlot(raw) {
+  if (!raw) return null;
+  const slot = stripTags(raw).replace(/\s+/g, "").toUpperCase();
+  if (/^[A-Z][0-9]?(\+[A-Z][0-9]?)*$/.test(slot) && slot.length <= 8) {
+    if (!/^(THEORY|PRACTICAL|LAB|PROJECT|REGULAR|AUDIT|CORE|ELECTIVE|REGULAR|PASS)$/i.test(slot)) {
+      return slot;
+    }
+  }
+  return null;
+}
+
+function parseCourseList(...htmlSources) {
   const result = {};
-  if (!html) return result;
 
-  for (const trMatch of html.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/gi)) {
-    const rowContent = trMatch[1];
-    const cells = [...rowContent.matchAll(/<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi)].map((m) => stripTags(m[1]).trim());
-    if (cells.length < 3) continue;
+  for (const html of htmlSources) {
+    if (!html || typeof html !== "string") continue;
 
-    let codeIndex = -1;
-    for (let i = 0; i < cells.length; i++) {
-      if (/^[A-Z]{2,4}\s*\d{3}[A-Z0-9]*$/i.test(cells[i])) {
-        codeIndex = i;
-        break;
+    const allRows = [];
+    for (const trMatch of html.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/gi)) {
+      const rowContent = trMatch[1];
+      const cells = [...rowContent.matchAll(/<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi)].map((m) => stripTags(m[1]).trim());
+      if (cells.length >= 2) {
+        allRows.push(cells);
       }
     }
-    if (codeIndex === -1) continue;
 
-    const code = cells[codeIndex].toUpperCase();
-    const name = cells[codeIndex + 1] && isNaN(Number(cells[codeIndex + 1])) ? cells[codeIndex + 1] : code;
+    if (allRows.length === 0) continue;
 
-    let slot = null;
-    let facultyName = null;
-    let courseType = null;
-    let credit = null;
-
-    for (let i = codeIndex + 2; i < cells.length; i++) {
-      const val = cells[i];
-      if (!val) continue;
-
-      if (/^[1-9]$/.test(val) && credit === null) {
-        credit = parseInt(val, 10);
-      } else if (/^(theory|practical|lab|project|embedded|core|elective)$/i.test(val) && !courseType) {
-        courseType = val;
-      } else if (/^[A-Z][0-9]?(\+[A-Z][0-9]?)*$/i.test(val) && val.length <= 6 && !slot) {
-        slot = val;
-      } else if ((/^(Dr\.|Prof\.|Mr\.|Ms\.|Mrs\.)/i.test(val) || /^[A-Z\s\.\-]{3,50}$/i.test(val)) && !/^\d+$/.test(val) && !facultyName) {
-        if (val.length >= 3 && !/^(theory|practical|lab|semester|regular|registered|enrolled|passed)$/i.test(val)) {
-          facultyName = val;
+    const headerMap = {};
+    for (const row of allRows) {
+      const rowStr = row.join(" ").toLowerCase();
+      if (rowStr.includes("course") || rowStr.includes("subject") || rowStr.includes("code") || rowStr.includes("faculty") || rowStr.includes("slot") || rowStr.includes("teacher")) {
+        row.forEach((cell, idx) => {
+          const c = cell.toLowerCase().trim();
+          if (c.includes("course code") || c.includes("sub code") || c.includes("subject code") || c === "code") headerMap.code = idx;
+          else if (c.includes("course title") || c.includes("course name") || c.includes("sub desc") || c.includes("subject description") || c.includes("subject name") || c.includes("description") || c.includes("title")) headerMap.name = idx;
+          else if (c === "slot" || c.includes("slot code") || c.includes("course slot") || c === "batch/slot" || c.includes("slot")) headerMap.slot = idx;
+          else if (c.includes("faculty") || c.includes("teacher") || c.includes("staff") || c.includes("instructor") || c.includes("handled by") || c.includes("advisor")) headerMap.faculty = idx;
+          else if (c === "type" || c.includes("course type")) headerMap.type = idx;
+          else if (c === "credit" || c.includes("credits")) headerMap.credit = idx;
+        });
+        if (headerMap.code !== undefined && (headerMap.faculty !== undefined || headerMap.slot !== undefined || headerMap.name !== undefined)) {
+          break;
         }
       }
     }
 
-    result[code] = {
-      code,
-      name,
-      slot,
-      facultyName,
-      courseType,
-      credit,
-    };
+    for (const cells of allRows) {
+      const firstCell = (cells[0] || "").toLowerCase();
+      if (firstCell.includes("s.no") || firstCell.includes("subject code") || firstCell.includes("course code") || firstCell.includes("sl.no")) {
+        continue;
+      }
+
+      let code = "";
+      let codeIndex = -1;
+
+      if (headerMap.code !== undefined && /^[A-Z]{2,4}\s*\d{3}[A-Z0-9]*$/i.test(cells[headerMap.code])) {
+        code = cells[headerMap.code].toUpperCase();
+        codeIndex = headerMap.code;
+      } else {
+        for (let i = 0; i < cells.length; i++) {
+          if (/^[A-Z]{2,4}\s*\d{3}[A-Z0-9]*$/i.test(cells[i])) {
+            code = cells[i].toUpperCase();
+            codeIndex = i;
+            break;
+          }
+        }
+      }
+
+      if (!code) continue;
+
+      let name = "";
+      let slot = null;
+      let facultyName = null;
+      let courseType = null;
+      let credit = null;
+
+      if (headerMap.name !== undefined && cells[headerMap.name]) {
+        name = cells[headerMap.name];
+      } else if (codeIndex + 1 < cells.length && isNaN(Number(cells[codeIndex + 1]))) {
+        name = cells[codeIndex + 1];
+      }
+
+      if (headerMap.slot !== undefined && cells[headerMap.slot]) {
+        slot = cleanSlot(cells[headerMap.slot]);
+      }
+
+      if (headerMap.faculty !== undefined && cells[headerMap.faculty]) {
+        facultyName = cleanFacultyName(cells[headerMap.faculty]);
+      }
+
+      if (headerMap.type !== undefined && cells[headerMap.type]) {
+        courseType = cells[headerMap.type];
+      }
+
+      if (headerMap.credit !== undefined && cells[headerMap.credit]) {
+        const parsedCredit = parseInt(cells[headerMap.credit], 10);
+        if (!isNaN(parsedCredit)) credit = parsedCredit;
+      }
+
+      if (!slot || !facultyName) {
+        for (let i = codeIndex + 1; i < cells.length; i++) {
+          const val = cells[i];
+          if (!val) continue;
+
+          if (!slot) {
+            const candidateSlot = cleanSlot(val);
+            if (candidateSlot) slot = candidateSlot;
+          }
+
+          if (!facultyName) {
+            if (/^(Dr\.|Prof\.|Mr\.|Ms\.|Mrs\.)/i.test(val) || /^\d{4,8}\s*[-–:]/i.test(val) || (/[A-Za-z]{3,}\s+[A-Za-z]{3,}/.test(val) && !/^(theory|practical|elective|regular|semester)/i.test(val))) {
+              const candidateFaculty = cleanFacultyName(val);
+              if (candidateFaculty && candidateFaculty.toLowerCase() !== name.toLowerCase()) {
+                facultyName = candidateFaculty;
+              }
+            }
+          }
+        }
+      }
+
+      const existing = result[code] || {};
+      result[code] = {
+        code,
+        name: name || existing.name || code,
+        slot: slot || existing.slot || null,
+        facultyName: facultyName || existing.facultyName || null,
+        courseType: courseType || existing.courseType || null,
+        credit: credit !== null ? credit : (existing.credit ?? null),
+      };
+    }
   }
 
   return result;
