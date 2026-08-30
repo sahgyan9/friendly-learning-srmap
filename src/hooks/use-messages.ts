@@ -189,10 +189,15 @@ export const useMessages = (userId: string, activeChatId?: string | null) => {
 
     window.addEventListener("focus", handleSync);
     document.addEventListener("visibilitychange", onVisible);
+    // A dropped and restored connection doesn't always change tab focus or
+    // visibility (e.g. wifi blips while the tab stays in front), so it needs
+    // its own listener rather than relying on those two alone.
+    window.addEventListener("online", handleSync);
 
     return () => {
       window.removeEventListener("focus", handleSync);
       document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("online", handleSync);
     };
   }, [userId, activeChat, fetchConversations, fetchMessages, setActiveChat, setError, setIsLoadingConversations, setIsLoadingMessages, setConversations, setMessages]);
 

@@ -151,6 +151,14 @@ export default function Attendance() {
     return () => window.removeEventListener("fl:refresh", handlePullRefresh);
   }, [user]);
 
+  // Cached attendance shows immediately while offline; refresh in the
+  // background once the connection returns instead of leaving it stale.
+  useEffect(() => {
+    const handleOnline = () => fetchAttendance();
+    window.addEventListener("online", handleOnline);
+    return () => window.removeEventListener("online", handleOnline);
+  }, [user]);
+
   const handleManualSync = async () => {
     if (!user) return;
     if (typeof navigator !== "undefined" && !navigator.onLine) {

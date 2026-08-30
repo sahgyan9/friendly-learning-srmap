@@ -13,7 +13,8 @@ import { useAuth } from "@/context/AuthContext";
 import { getBreadcrumbSchema } from "@/lib/structured-data";
 import { PRIMARY_DOMAIN } from "@/lib/constants";
 import { cn } from "@/lib/utils";
-import { getOfflineCache, setOfflineCache } from "@/lib/offline/offlineStorage";
+import { useOfflineCachedList } from "@/hooks/useOfflineCachedList";
+import { useDebounce } from "@/hooks/useDebounce";
 import {
   OPPORTUNITY_KINDS,
   daysLeft,
@@ -111,48 +112,21 @@ const Opportunities = () => {
   const { user } = useAuth();
   const kind = searchParams.get("kind") ?? "all";
   const [search, setSearch] = useState(searchParams.get("search") ?? "");
+  const debouncedSearch = useDebounce(search, 200);
 
-  const [items, setItems] = useState<Opportunity[]>(() => {
-    const cached = getOfflineCache<Opportunity[]>("opportunities_list");
-    if (cached?.data && Array.isArray(cached.data)) {
-      return cached.data;
-    }
-    return [];
+  const fetchOpportunities = useCallback(
+    () => getOpportunities({ kind, search: debouncedSearch }),
+    [kind, debouncedSearch],
+  );
+  const {
+    items,
+    loading,
+    refetch: load,
+  } = useOfflineCachedList<Opportunity>({
+    cacheKey: "opportunities_list",
+    fetcher: fetchOpportunities,
+    shouldCache: kind === "all" && !debouncedSearch,
   });
-  const [loading, setLoading] = useState(() => {
-    const cached = getOfflineCache<Opportunity[]>("opportunities_list");
-    return !(cached?.data && Array.isArray(cached.data) && cached.data.length > 0);
-  });
-
-  const load = useCallback(async () => {
-    const cached = getOfflineCache<Opportunity[]>("opportunities_list");
-    if (cached?.data && Array.isArray(cached.data) && cached.data.length > 0) {
-      setItems(cached.data);
-      setLoading(false);
-    }
-
-    if (typeof navigator !== "undefined" && !navigator.onLine) {
-      setLoading(false);
-      return;
-    }
-
-    setLoading(items.length === 0);
-    const { data } = await getOpportunities({ kind, search });
-    if (data && data.length > 0) {
-      setItems(data);
-      if (kind === "all" && !search) {
-        setOfflineCache("opportunities_list", data);
-      }
-    }
-    setLoading(false);
-  }, [kind, search, items.length]);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      load();
-    }, 200);
-    return () => clearTimeout(timer);
-  }, [load]);
 
   // Revalidate opportunities on mobile/tablet pull-to-refresh gesture
   useEffect(() => {

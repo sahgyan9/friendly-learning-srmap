@@ -200,6 +200,13 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
     load();
   }, [load]);
 
+  // Cached messages show immediately while offline; refresh in the background
+  // once the connection returns instead of leaving them stale.
+  useEffect(() => {
+    window.addEventListener("online", load);
+    return () => window.removeEventListener("online", load);
+  }, [load]);
+
   // Switching rooms drops a half-attached reply/edit.
   useEffect(() => {
     setReplyingTo(null);

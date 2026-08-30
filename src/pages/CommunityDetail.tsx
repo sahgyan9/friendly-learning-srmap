@@ -255,6 +255,14 @@ const CommunityDetail = () => {
     load();
   }, [load]);
 
+  // Cached data shows immediately while offline; once the connection returns,
+  // refresh in the background rather than leaving stale data on screen until
+  // the next manual pull-to-refresh.
+  useEffect(() => {
+    window.addEventListener("online", load);
+    return () => window.removeEventListener("online", load);
+  }, [load]);
+
   // New and removed channels reach everyone already in the group without a
   // refresh. payload.old on this table is PK-only, so this re-reads the list
   // rather than trying to patch state from the row.

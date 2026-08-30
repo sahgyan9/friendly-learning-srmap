@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowRight, Flame, MessageSquare, PenLine, Sparkles, Users, BookOpen } from "lucide-react";
 import { toast } from "sonner";
@@ -8,7 +8,7 @@ import { PostComposerStrip } from "@/components/community-posts/PostComposerStri
 import { CreatePostButton } from "@/components/community-posts/CreatePostButton";
 import { ImageLightbox } from "@/components/community-posts/ImageLightbox";
 import { useAuth } from "@/context/AuthContext";
-import { getOfflineCache, setOfflineCache } from "@/lib/offline/offlineStorage";
+import { useOfflineCachedList } from "@/hooks/useOfflineCachedList";
 import {
   getCommunityPosts,
   togglePostLike,
@@ -28,44 +28,18 @@ type FilterTabId = (typeof FILTER_TABS)[number]["id"];
 export const CampusFeedWidget = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [posts, setPosts] = useState<CommunityPost[]>(() => {
-    const cached = getOfflineCache<CommunityPost[]>("campus_feed_posts");
-    if (cached?.data && Array.isArray(cached.data)) {
-      return cached.data;
-    }
-    return [];
-  });
-  const [loading, setLoading] = useState(() => {
-    const cached = getOfflineCache<CommunityPost[]>("campus_feed_posts");
-    return !(cached?.data && Array.isArray(cached.data) && cached.data.length > 0);
+  const fetchPosts = useCallback(() => getCommunityPosts({ limit: 12 }), []);
+  const {
+    items: posts,
+    setItems: setPosts,
+    loading,
+    refetch: reload,
+  } = useOfflineCachedList<CommunityPost>({
+    cacheKey: "campus_feed_posts",
+    fetcher: fetchPosts,
   });
   const [activeTab, setActiveTab] = useState<FilterTabId>("all");
   const [lightbox, setLightbox] = useState<{ images: string[]; title?: string; index: number } | null>(null);
-
-  const reload = useCallback(async () => {
-    const cached = getOfflineCache<CommunityPost[]>("campus_feed_posts");
-    if (cached?.data && Array.isArray(cached.data) && cached.data.length > 0) {
-      setPosts(cached.data);
-      setLoading(false);
-    }
-
-    if (typeof navigator !== "undefined" && !navigator.onLine) {
-      setLoading(false);
-      return;
-    }
-
-    const { data } = await getCommunityPosts({ limit: 12 });
-    if (data && data.length > 0) {
-      setPosts(data);
-      setOfflineCache("campus_feed_posts", data);
-    }
-    setLoading(false);
-  }, []);
-
-  useEffect(() => {
-    reload();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const handleLike = async (postId: string, event: React.MouseEvent) => {
     event.stopPropagation();
