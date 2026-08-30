@@ -541,6 +541,7 @@ for (const file of [
   '20260830130000_direct_message_reactions.sql',
   '20260830140000_allow_everyone_to_rate_mentor.sql',
   '20260830150000_direct_message_reactions_realtime.sql',
+  '20260830160000_error_reports.sql',
 ]) {
   if (file === '20260804132345_b843f814-46d5-4c25-bc80-32e5f6ebba59.sql') {
     // Production's `faculty` table still carries `profile_image`, a column
@@ -3657,6 +3658,86 @@ const { rows: [reactionsInPub] } = await q(`SELECT count(*)::int AS n FROM pg_pu
 check('direct_message_reactions added to the realtime publication (previously a reaction only showed up after a manual refresh)', reactionsInPub.n === 1, `n=${reactionsInPub.n}`);
 const { rows: [messagesInPub] } = await q(`SELECT count(*)::int AS n FROM pg_publication_tables WHERE pubname='supabase_realtime' AND tablename='messages'`);
 check('messages table is in the realtime publication (delivery/read-receipt ticks depend on UPDATE events reaching the sender live)', messagesInPub.n === 1, `n=${messagesInPub.n}`);
+
+// --- 20260830160000_error_reports.sql --------------------------------
+console.log('\n--- 20260830160000_error_reports.sql ---');
+const { rows: errorReportsTableRows } = await q(`
+  SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'error_reports';
+`);
+check('error_reports table exists', errorReportsTableRows.length === 1);
+
+// Ensure CURRENT_UID is a normal non-admin user and OTHER_UID is admin
+await q(`UPDATE public.users SET is_admin = false WHERE id = '${CURRENT_UID}'`);
+await q(`UPDATE public.users SET is_admin = true WHERE id = '${OTHER_UID}'`);
+await q(`GRANT USAGE ON SCHEMA auth, public TO anon, authenticated`);
+await q(`GRANT SELECT ON auth._session TO anon, authenticated`);
+await q('DELETE FROM auth._session;');
+await q('INSERT INTO auth._session (uid) VALUES ($1);', [CURRENT_UID]);
+
+await asAuthenticated(async () => {
+  await q(`
+    INSERT INTO public.error_reports (message, route, user_agent)
+    VALUES ('Failed to load contact messages', '/admin/contact-messages', 'test-agent')
+  `);
+});
+const { rows: [ownReport] } = await q(`SELECT id, user_id, status FROM public.error_reports WHERE message = 'Failed to load contact messages'`);
+check('inserting without user_id defaults it to auth.uid()', ownReport?.user_id === CURRENT_UID && ownReport?.status === 'new', JSON.stringify(ownReport));
+
+const impersonation = await asAuthenticated(() => attempt(
+  `INSERT INTO public.error_reports (message, user_id) VALUES ('spoofed', '${OTHER_UID}')`
+));
+check('cannot claim a report under someone else\'s user_id', impersonation !== null, impersonation ?? 'INSERT SUCCEEDED');
+
+// Anonymous visitor insert
+await actAs(null);
+await q(`SET ROLE anon`);
+let anonReportError = null;
+let anonSelectRows = null;
+try {
+  await q(`INSERT INTO public.error_reports (message, route, user_id) VALUES ('Invalid login credentials', '/signin', NULL)`);
+} catch (error) {
+  anonReportError = error.message;
+}
+try {
+  ({ rows: anonSelectRows } = await q(`SELECT * FROM public.error_reports`));
+} catch (error) {
+  anonSelectRows = null;
+}
+await q(`RESET ROLE`);
+check('signed-out visitors can insert an error report', anonReportError === null, anonReportError ?? '');
+check('signed-out visitors cannot read error reports back (no SELECT policy for anon)', anonSelectRows === null || anonSelectRows.length === 0, JSON.stringify(anonSelectRows));
+
+// Non-admin cannot see reports
+await actAs(CURRENT_UID);
+const { rows: nonAdminSelectRows } = await asAuthenticated(() =>
+  q(`SELECT * FROM public.error_reports WHERE user_id = '${CURRENT_UID}'`)
+);
+check('a non-admin cannot see their own filed report', nonAdminSelectRows.length === 0, JSON.stringify(nonAdminSelectRows));
+
+// Admin can see reports
+await actAs(OTHER_UID);
+const { rows: adminSelectRows } = await asAuthenticated(() =>
+  q(`SELECT * FROM public.error_reports ORDER BY created_at ASC`)
+);
+check('an admin can see every filed report, including the anon one', adminSelectRows.length === 2, JSON.stringify(adminSelectRows.map(r => r.message)));
+
+const { rows: adminNotifRows } = await q(`
+  SELECT * FROM public.notifications
+  WHERE user_id = '${OTHER_UID}' AND data->>'error_report_id' IS NOT NULL
+  ORDER BY created_at ASC;
+`);
+check('admin gets an in-app notification for every filed error report', adminNotifRows.length === 2, JSON.stringify(adminNotifRows.map(r => r.data)));
+check('the notification carries the route and message for triage', adminNotifRows[0]?.data?.route === '/admin/contact-messages' && adminNotifRows[0]?.data?.message === 'Failed to load contact messages', JSON.stringify(adminNotifRows[0]));
+
+await asAuthenticated(() =>
+  q(`UPDATE public.error_reports SET status = 'reviewed', admin_notes = 'Known issue, fix in progress' WHERE id = '${ownReport.id}'`)
+);
+const { rows: [reviewedReport] } = await q(`SELECT status, admin_notes FROM public.error_reports WHERE id = '${ownReport.id}'`);
+check('admin can mark a report reviewed with notes', reviewedReport?.status === 'reviewed' && reviewedReport?.admin_notes === 'Known issue, fix in progress', JSON.stringify(reviewedReport));
+
+await actAs(CURRENT_UID);
+await q(`UPDATE public.users SET is_admin = false WHERE id = '${OTHER_UID}'`);
+
 
 console.log(failures === 0
   ? '\nAll migration checks passed against real Postgres.'
