@@ -87,7 +87,7 @@ const Messages = () => {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-background pt-[var(--navbar-height,4rem)]">
+    <div className="flex min-h-[100dvh] flex-col bg-background pt-[var(--navbar-height,4rem)]">
       {isInitializingConversation ? (
         <div className="container mx-auto flex flex-1 items-center justify-center">
           <div className="text-center">

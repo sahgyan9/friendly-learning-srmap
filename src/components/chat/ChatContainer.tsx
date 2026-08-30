@@ -27,9 +27,11 @@ function useAvailableHeight<T extends HTMLElement>() {
     if (!el) return;
 
     const recalc = () => {
-      const top = el.getBoundingClientRect().top;
+      const top = Math.max(el.getBoundingClientRect().top, 0);
       const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
-      setHeight(Math.max(viewportHeight - top, 0));
+      const bottomPadding = 16; // leave comfort space at the bottom of the screen
+      const computed = Math.max(viewportHeight - top - bottomPadding, 320);
+      setHeight(computed);
     };
 
     recalc();

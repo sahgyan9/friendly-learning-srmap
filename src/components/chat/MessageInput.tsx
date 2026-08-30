@@ -259,7 +259,7 @@ const MessageInput = ({
           disabled={busy}
           rows={1}
           className={cn(
-            "min-h-0 flex-1 resize-none bg-transparent py-2 pr-1 text-sm leading-relaxed text-foreground",
+            "min-h-0 flex-1 resize-none bg-transparent py-2 pr-1 text-base md:text-sm leading-relaxed text-foreground",
             "placeholder:text-muted-foreground/80 dark:placeholder:text-muted-foreground/50",
             "outline-none",
           )}
