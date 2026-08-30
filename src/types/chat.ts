@@ -7,7 +7,9 @@ export interface Message {
   sent_at: string;
   is_read: boolean;
   conversation_id: string;
-  delivery_status?: 'sent' | 'delivered' | 'read';
+  // 'queued' and 'failed' never come from the server: they describe a message
+  // written offline that the outbox is still holding. See lib/offline/messageOutbox.
+  delivery_status?: 'sent' | 'delivered' | 'read' | 'queued' | 'failed';
   sender?: {
     id: string;
     name: string;
