@@ -1,5 +1,5 @@
 import { memo } from "react";
-import { ArrowDown, Check, Loader2, Sparkles } from "lucide-react";
+import { ArrowDown, Check, Loader2, Sparkles, WifiOff } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { usePullToRefresh, type PullToRefreshStatus } from "@/hooks/usePullToRefresh";
@@ -24,9 +24,10 @@ export const PullToRefreshIndicator = memo(function PullToRefreshIndicator({
   const isThreshold = status === "threshold-reached";
   const isRefreshing = status === "refreshing";
   const isSuccess = status === "success";
+  const isOffline = status === "offline";
 
   // Visual displacement calculation (bounded smooth translation)
-  const displayY = isRefreshing || isSuccess ? 54 : Math.min(pullDistance * 0.75 + 10, 72);
+  const displayY = isRefreshing || isSuccess || isOffline ? 54 : Math.min(pullDistance * 0.75 + 10, 72);
 
   return (
     <div
@@ -56,15 +57,27 @@ export const PullToRefreshIndicator = memo(function PullToRefreshIndicator({
           "backdrop-blur-md transition-colors duration-200",
           isSuccess
             ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-600 dark:text-emerald-400"
-            : isThreshold
-              ? "bg-primary/15 border-primary/40 text-primary shadow-primary/10"
-              : "bg-background/90 dark:bg-card/90 border-border/80 text-foreground/85",
+            : isOffline
+              ? "bg-amber-500/15 border-amber-500/40 text-amber-600 dark:text-amber-400"
+              : isThreshold
+                ? "bg-primary/15 border-primary/40 text-primary shadow-primary/10"
+                : "bg-background/90 dark:bg-card/90 border-border/80 text-foreground/85",
         )}
       >
         {/* State Icons */}
         <div className="relative flex items-center justify-center w-4 h-4">
           <AnimatePresence mode="wait">
-            {isSuccess ? (
+            {isOffline ? (
+              <motion.div
+                key="offline"
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                exit={{ scale: 0 }}
+                transition={{ type: "spring", stiffness: 450, damping: 20 }}
+              >
+                <WifiOff className="w-4 h-4 text-amber-500 stroke-[2.5]" />
+              </motion.div>
+            ) : isSuccess ? (
               <motion.div
                 key="success"
                 initial={{ scale: 0, rotate: -45 }}
@@ -104,13 +117,15 @@ export const PullToRefreshIndicator = memo(function PullToRefreshIndicator({
 
         {/* State Label */}
         <span className="tracking-wide">
-          {isSuccess
-            ? "Updated"
-            : isRefreshing
-              ? "Refreshing…"
-              : isThreshold
-                ? "Release to refresh"
-                : "Pull to refresh"}
+          {isOffline
+            ? "You're offline"
+            : isSuccess
+              ? "Updated"
+              : isRefreshing
+                ? "Refreshing…"
+                : isThreshold
+                  ? "Release to refresh"
+                  : "Pull to refresh"}
         </span>
       </motion.div>
     </div>

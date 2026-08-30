@@ -6,7 +6,8 @@ export type PullToRefreshStatus =
   | "pulling"
   | "threshold-reached"
   | "refreshing"
-  | "success";
+  | "success"
+  | "offline";
 
 interface UsePullToRefreshOptions {
   onRefresh?: () => Promise<unknown> | void;
@@ -66,6 +67,23 @@ export function usePullToRefresh({
   const handleRefresh = useCallback(async () => {
     if (isRefreshingRef.current) return;
     isRefreshingRef.current = true;
+
+    // Nothing to fetch without a connection — the per-page listeners we
+    // dispatch to below don't report success/failure back to us (they're
+    // fire-and-forget), so without this check a failed offline fetch still
+    // reads the fixed timeout below as a win and claims "Updated".
+    if (typeof navigator !== "undefined" && navigator.onLine === false) {
+      setStatus("offline");
+      setPullDistance(52);
+      triggerHaptic("warning");
+      await new Promise((res) => setTimeout(res, 900));
+      setStatus("idle");
+      setPullDistance(0);
+      isRefreshingRef.current = false;
+      reachedThresholdRef.current = false;
+      return;
+    }
+
     setStatus("refreshing");
     setPullDistance(52); // Hold at indicator resting height
 
