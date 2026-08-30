@@ -30,7 +30,7 @@ const CANDIDATE_MODELS = [
   "gemini-3.1-flash-lite",
 ];
 
-const MAX_OUTPUT_TOKENS_FULL = 3072;
+const MAX_OUTPUT_TOKENS_FULL = 4096;
 const MAX_OUTPUT_TOKENS_BASIC = 2048;
 const RETRY_503_MS = 1200;
 const ATTEMPT_TIMEOUT_MS = 20000;
@@ -42,6 +42,8 @@ const EXTRA_FIELDS_BLOCK = `- "tagline": string (a punchy, natural one-sentence 
 - "outcomes": array of 2 to 3 concise strings describing concrete things a junior/peer achieves with their help (e.g. ["Build and deploy fullstack React projects", "Master problem-solving in physics and calculus"])
 - "ask_me_anything": array of 3 to 4 distinct topic strings (e.g. ["Quantum Algorithms", "React Development", "Research Paper Writing", "Lab Reports"])
 - "ideal_mentees": array of 2 to 3 concise strings describing who gets the most value (e.g. ["1st or 2nd year students taking Physics courses", "Classmates looking for hackathon teammates"])
+- "projects": array of max 4 objects representing projects found in the resume, with keys: "title" (string, project title, max 60 chars), "description" (string, 1-2 sentences on what was built and key tech used, max 180 chars), "link" (string, URL if mentioned in resume, or "")
+- "experiences": array of max 4 objects representing work/internship/leadership experience or positions of responsibility found in the resume, with keys: "title" (string, role or position title, max 60 chars), "organization" (string, company, lab, club, or organization name, max 60 chars), "period" (string, e.g. "Summer 2024" or "2023 - 2024", or "")
 `;
 
 function buildPrompt(fields: "basic" | "full"): string {

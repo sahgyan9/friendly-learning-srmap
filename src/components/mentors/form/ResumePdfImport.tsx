@@ -8,8 +8,8 @@ import { extractDocumentText } from "@/lib/pdfTextExtract";
 import PdfParsingModal, { type ParsingStage } from "./PdfParsingModal";
 
 interface ResumePdfImportProps {
-  onImported: (data: Partial<MentorFormData>) => void;
-  /** "basic" skips the tagline/outcomes/AMA/ideal-mentees fields this caller
+  onImported: (data: Record<string, any>) => void;
+  /** "basic" skips the tagline/outcomes/AMA/ideal-mentees/projects fields this caller
    * doesn't read, so Gemini generates less and returns faster. Defaults to
    * "full" for callers (like the profile setup studio) that use all of it. */
   fields?: "basic" | "full";
@@ -156,6 +156,46 @@ const ResumePdfImport = ({
         extracted.skills = cleanedSkills.join(", ");
       }
 
+      // Structure projects (ensure ID, trimmed fields, up to 6 items max)
+      if (Array.isArray(extracted.projects)) {
+        extracted.projects = extracted.projects
+          .map((p: any) => {
+            if (!p || typeof p !== "object") return null;
+            const title = typeof p.title === "string" ? p.title.trim() : "";
+            const description = typeof p.description === "string" ? p.description.trim() : "";
+            const link = typeof p.link === "string" && p.link.trim() ? p.link.trim() : undefined;
+            if (!title) return null;
+            return {
+              id: p.id || crypto.randomUUID(),
+              title: title.slice(0, 60),
+              description: description.slice(0, 200) || "Project built during coursework or hackathons.",
+              link: link && /^https?:\/\//i.test(link) ? link : link ? `https://${link}` : undefined,
+            };
+          })
+          .filter(Boolean)
+          .slice(0, 6);
+      }
+
+      // Structure experiences (ensure ID, trimmed fields, up to 6 items max)
+      if (Array.isArray(extracted.experiences)) {
+        extracted.experiences = extracted.experiences
+          .map((e: any) => {
+            if (!e || typeof e !== "object") return null;
+            const title = typeof e.title === "string" ? e.title.trim() : "";
+            const organization = typeof e.organization === "string" ? e.organization.trim() : undefined;
+            const period = typeof e.period === "string" ? e.period.trim() : undefined;
+            if (!title) return null;
+            return {
+              id: e.id || crypto.randomUUID(),
+              title: title.slice(0, 60),
+              organization: organization ? organization.slice(0, 60) : undefined,
+              period: period ? period.slice(0, 30) : undefined,
+            };
+          })
+          .filter(Boolean)
+          .slice(0, 6);
+      }
+
       setParsingStage("finalizing");
 
       // Only pass non-empty fields so we don't overwrite existing input with ""
@@ -177,8 +217,8 @@ const ResumePdfImport = ({
       // Wait a moment for celebratory animation to complete before applying
       setTimeout(() => {
         setModalOpen(false);
-        onImported(filtered as Partial<MentorFormData>);
-        toast.success("Resume parsed successfully! AI drafted your skills & bio.");
+        onImported(filtered);
+        toast.success("Resume parsed successfully! AI drafted your skills, projects & bio.");
       }, 750);
     } catch (err: unknown) {
       console.error("Resume import failed:", err);

@@ -51,6 +51,8 @@ export function ProfileKickstartModal({
     outcomes?: string[];
     ask_me_anything?: any[];
     ideal_mentees?: string[];
+    projects?: any[];
+    experiences?: any[];
   } | null>(null);
 
   const handlePdfImported = async (data: Record<string, any>) => {
@@ -78,6 +80,8 @@ export function ProfileKickstartModal({
       outcomes: Array.isArray(data.outcomes) ? data.outcomes : [],
       ask_me_anything: Array.isArray(data.ask_me_anything) ? data.ask_me_anything : [],
       ideal_mentees: Array.isArray(data.ideal_mentees) ? data.ideal_mentees : [],
+      projects: Array.isArray(data.projects) ? data.projects : [],
+      experiences: Array.isArray(data.experiences) ? data.experiences : [],
     };
 
     setImportedPreview(preview);
@@ -113,7 +117,7 @@ export function ProfileKickstartModal({
       if (userError) throw userError;
 
       // 2. Also update or upsert into mentors table so their public card is ready
-      const mentorPayload = {
+      const mentorPayload: Record<string, any> = {
         id: user.id,
         name: importedPreview.name || profile?.name || "Student",
         department: importedPreview.department || profile?.department || "Computer Science",
@@ -125,6 +129,13 @@ export function ProfileKickstartModal({
         hobbies: importedPreview.hobbies || "",
         is_available: true,
       };
+
+      if (importedPreview.projects && importedPreview.projects.length > 0) {
+        mentorPayload.projects = importedPreview.projects;
+      }
+      if (importedPreview.experiences && importedPreview.experiences.length > 0) {
+        mentorPayload.experiences = importedPreview.experiences;
+      }
 
       const { error: mentorError } = await supabase
         .from("mentors")
