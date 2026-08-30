@@ -22,6 +22,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import { formatRelativeTime } from "@/utils/date-utils";
+import { getFacultyDirectoryUrl } from "@/integrations/supabase/services/faculty";
 
 export interface AttendanceRecord {
   id: string;
@@ -244,11 +245,22 @@ export const AttendanceOverviewCard = ({ onOpenPortalImport }: AttendanceOvervie
                       {rec.faculty_name && 
                         rec.faculty_name.toLowerCase().trim() !== rec.course_name.toLowerCase().trim() && 
                         rec.faculty_name.toLowerCase().trim() !== rec.course_code.toLowerCase().trim() && 
-                        !rec.course_name.toLowerCase().includes(rec.faculty_name.toLowerCase().trim()) && (
-                        <span className="text-[10px] text-muted-foreground truncate max-w-[220px] mt-0.5" title={rec.faculty_name}>
-                          {rec.faculty_name}
-                        </span>
-                      )}
+                        !rec.course_name.toLowerCase().includes(rec.faculty_name.toLowerCase().trim()) && (() => {
+                        const directoryUrl = getFacultyDirectoryUrl(rec.faculty_name);
+                        return directoryUrl ? (
+                          <Link
+                            to={directoryUrl}
+                            className="text-[10px] text-muted-foreground hover:text-primary truncate max-w-[220px] mt-0.5 hover:underline transition-colors block"
+                            title={`Find ${rec.faculty_name} in Faculty Directory`}
+                          >
+                            {rec.faculty_name}
+                          </Link>
+                        ) : (
+                          <span className="text-[10px] text-muted-foreground truncate max-w-[220px] mt-0.5" title={rec.faculty_name}>
+                            {rec.faculty_name}
+                          </span>
+                        );
+                      })()}
                     </div>
                   </TableCell>
                   <TableCell className="py-2 text-center text-2xs text-muted-foreground">

@@ -548,3 +548,32 @@ export function getFacultyProfileUrl(faculty: { slug?: string; profile_url?: str
   return null;
 }
 
+/**
+ * Resolves a safe search URL for the faculty directory given a faculty name from external sources (e.g. SRM portal attendance).
+ * Strips employee IDs, designation noise, and prefixes (Dr., Prof., etc.) so the directory query matches cleanly.
+ */
+export function getFacultyDirectoryUrl(facultyName?: string | null): string | null {
+  if (!facultyName) return null;
+  let cleaned = facultyName.trim();
+
+  // Strip parenthesized employee IDs e.g. "Dr. Ramesh (10234)" -> "Dr. Ramesh"
+  cleaned = cleaned.replace(/\s*\(\s*\d+\s*\)/g, "").trim();
+
+  // Strip leading employee codes e.g. "100234 - "
+  cleaned = cleaned.replace(/^\d+\s*[-–:]\s*/, "").trim();
+
+  // Strip common department/designation suffixes e.g. "/ AP / CSE"
+  cleaned = cleaned.split(/\s*[\/\-–]\s*(?:AP|Prof|Assistant|Associate|Professor|Dept|Department|PHY|CSE|ECE|MECH|CIVIL|MATHS|BIO)/i)[0].trim();
+
+  if (cleaned.length < 3 || /^(tba|not assigned|staff|null|undefined|none|-|--)$/i.test(cleaned)) {
+    return null;
+  }
+
+  // Strip prefixes (Dr., Prof., Mr., Ms., Mrs.) for cleaner keyword search matching
+  const nameWithoutPrefix = cleaned.replace(/^(Dr\.?|Prof\.?|Mr\.?|Ms\.?|Mrs\.?)\s+/i, "").trim();
+  const searchTarget = nameWithoutPrefix || cleaned;
+
+  return `/faculty?q=${encodeURIComponent(searchTarget)}`;
+}
+
+

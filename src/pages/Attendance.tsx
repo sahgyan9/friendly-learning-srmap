@@ -39,6 +39,7 @@ import SEOHead from "@/components/SEOHead";
 import { ImportSrmPortalDialog } from "@/components/profile/ImportSrmPortal";
 import { getOfflineCache, setOfflineCache, formatOfflineTime } from "@/lib/offline/offlineStorage";
 import { useNetworkStatus } from "@/hooks/useNetworkStatus";
+import { getFacultyDirectoryUrl } from "@/integrations/supabase/services/faculty";
 
 export interface AttendanceRecord {
   id: string;
@@ -589,16 +590,32 @@ export default function Attendance() {
                                 {rec.faculty_name && 
                                   rec.faculty_name.toLowerCase().trim() !== rec.course_name.toLowerCase().trim() && 
                                   rec.faculty_name.toLowerCase().trim() !== rec.course_code.toLowerCase().trim() && 
-                                  !rec.course_name.toLowerCase().includes(rec.faculty_name.toLowerCase().trim()) && (
-                                   <div className="flex items-center gap-1 pt-0.5">
-                                     <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground/90 bg-muted/60 px-1.5 py-0.5 rounded border border-border/40 font-medium">
-                                       <UserCheck className="h-3 w-3 text-primary/70 shrink-0" />
-                                       <span className="truncate max-w-[220px]" title={rec.faculty_name}>
-                                         {rec.faculty_name}
-                                       </span>
-                                     </span>
-                                   </div>
-                                 )}
+                                  !rec.course_name.toLowerCase().includes(rec.faculty_name.toLowerCase().trim()) && (() => {
+                                    const directoryUrl = getFacultyDirectoryUrl(rec.faculty_name);
+                                    return (
+                                      <div className="flex items-center gap-1 pt-0.5">
+                                        {directoryUrl ? (
+                                          <Link
+                                            to={directoryUrl}
+                                            className="group/fac inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground bg-muted/60 hover:bg-muted px-1.5 py-0.5 rounded border border-border/40 hover:border-primary/40 font-medium transition-all shadow-2xs hover:shadow-xs"
+                                            title={`Find ${rec.faculty_name} in Faculty Directory`}
+                                          >
+                                            <UserCheck className="h-3 w-3 text-primary/70 group-hover/fac:text-primary shrink-0 transition-colors" />
+                                            <span className="truncate max-w-[220px]">
+                                              {rec.faculty_name}
+                                            </span>
+                                          </Link>
+                                        ) : (
+                                          <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground/90 bg-muted/60 px-1.5 py-0.5 rounded border border-border/40 font-medium">
+                                            <UserCheck className="h-3 w-3 text-primary/70 shrink-0" />
+                                            <span className="truncate max-w-[220px]" title={rec.faculty_name}>
+                                              {rec.faculty_name}
+                                            </span>
+                                          </span>
+                                        )}
+                                      </div>
+                                    );
+                                })()}
                               </div>
                             </TableCell>
 
