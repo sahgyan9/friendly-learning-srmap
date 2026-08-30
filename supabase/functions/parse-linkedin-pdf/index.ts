@@ -20,12 +20,15 @@ const supabaseAdmin = createClient(
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
 );
 
-// Models verified on Google Gemini Developer API (fast, low-latency first)
+// Models verified on Google Gemini Developer API (fast, low-latency first).
+// Gemini 1.5 and 2.0-flash have been retired from v1beta generateContent --
+// keep this roster in sync with parse-notice/index.ts and parse-doc-ocr/index.ts.
 const CANDIDATE_MODELS = [
-  "gemini-2.0-flash",
-  "gemini-1.5-flash",
-  "gemini-1.5-flash-8b",
-  "gemini-1.5-pro",
+  "gemini-3.7-flash",
+  "gemini-3.6-flash",
+  "gemini-3.5-flash",
+  "gemini-flash-latest",
+  "gemini-flash-lite-latest",
 ];
 
 const MAX_OUTPUT_TOKENS_FULL = 4096;
