@@ -26,7 +26,7 @@ export function OfflineIndicator() {
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 20, scale: 0.95 }}
           transition={{ duration: 0.2 }}
-          className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 pointer-events-none"
+          className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom,0px))] left-1/2 -translate-x-1/2 z-50 pointer-events-none lg:bottom-6"
           role="status"
           aria-live="polite"
         >
@@ -48,7 +48,7 @@ export function OfflineIndicator() {
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 20, scale: 0.95 }}
           transition={{ duration: 0.2 }}
-          className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 pointer-events-none"
+          className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom,0px))] left-1/2 -translate-x-1/2 z-50 pointer-events-none lg:bottom-6"
           role="status"
           aria-live="polite"
         >
