@@ -13,3 +13,15 @@ export const MESSAGES_READ_EVENT = "fl:messages-read";
 export const announceMessagesRead = () => {
   window.dispatchEvent(new CustomEvent(MESSAGES_READ_EVENT));
 };
+
+/**
+ * Fired when the outbox manages to send something, so an open conversation can
+ * replace the queued copy with the real message instead of waiting on a
+ * realtime event it may not be subscribed for. Same reasoning as above: a
+ * nudge, not a payload.
+ */
+export const MESSAGES_SENT_EVENT = "fl:messages-sent";
+
+export const announceMessagesSent = () => {
+  window.dispatchEvent(new CustomEvent(MESSAGES_SENT_EVENT));
+};
