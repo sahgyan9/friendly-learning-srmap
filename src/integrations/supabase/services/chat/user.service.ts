@@ -110,36 +110,56 @@ export interface CampusUserResult {
 }
 
 /**
- * Searches mentors and campus profiles by name/department to start new direct messages.
+ * Searches students, mentors, and peers across SRM AP to start new direct messages.
+ * Uses the secure search_campus_users RPC which safely respects RLS and excludes
+ * private contact data (email, mobile, etc.).
  */
 export async function searchCampusUsers(query: string, currentUserId?: string): Promise<CampusUserResult[]> {
   const trimmed = query.trim();
-  if (!trimmed) return [];
 
   try {
-    const { data: mentors, error } = await supabase
-      .from("mentors")
-      .select("id, name, profile_image, department")
-      .ilike("name", `%${trimmed}%`)
-      .limit(10);
+    // Invoke the secure search_campus_users RPC
+    const { data: rpcUsers, error: rpcError } = await (supabase.rpc as any)("search_campus_users", {
+      p_query: trimmed,
+      p_limit: 25,
+    });
 
-    if (error) {
-      console.error("Error searching mentors:", error);
-      return [];
+    if (!rpcError && Array.isArray(rpcUsers)) {
+      return (rpcUsers as CampusUserResult[]).filter(
+        (u) => !currentUserId || u.id !== currentUserId
+      );
     }
 
-    const results: CampusUserResult[] = (mentors ?? [])
-      .filter((m) => !currentUserId || m.id !== currentUserId)
-      .map((m) => ({
-        id: m.id,
-        name: m.name?.trim() || "Mentor",
-        profile_image: m.profile_image || null,
-        role: "mentor",
-        department: m.department || undefined,
-        badge: "Mentor",
-      }));
+    if (rpcError) {
+      console.warn("search_campus_users RPC warning, falling back to mentors:", rpcError);
+    }
 
-    return results;
+    // Fallback: query mentors table directly if RPC is unavailable
+    if (trimmed) {
+      const { data: mentors, error: mentorError } = await supabase
+        .from("mentors")
+        .select("id, name, profile_image, department, is_alumni")
+        .ilike("name", `%${trimmed}%`)
+        .limit(15);
+
+      if (mentorError) {
+        console.error("Error searching mentors in fallback:", mentorError);
+        return [];
+      }
+
+      return (mentors ?? [])
+        .filter((m) => !currentUserId || m.id !== currentUserId)
+        .map((m) => ({
+          id: m.id,
+          name: m.name?.trim() || "Mentor",
+          profile_image: m.profile_image || null,
+          role: "mentor",
+          department: m.department || undefined,
+          badge: m.is_alumni ? "Alumni" : "Mentor",
+        }));
+    }
+
+    return [];
   } catch (err) {
     console.error("Exception in searchCampusUsers:", err);
     return [];

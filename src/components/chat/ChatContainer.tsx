@@ -1,4 +1,3 @@
-
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Conversation, Message } from "@/types/chat";
 import ConversationList from "./ConversationList";
@@ -9,6 +8,8 @@ import SearchInput from "./SearchInput";
 import { MessageCircleMore, Sparkles, SquarePen } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { NewConversationModal } from "./NewConversationModal";
+import { getOrCreateConversation } from "@/integrations/supabase/services/chat/conversation.service";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 interface ChatViewportState {
@@ -217,6 +218,29 @@ const ChatContainer = ({
     [namesById, currentUserId],
   );
 
+  const handleStartDirectChat = async (targetUserId: string, targetUserName?: string) => {
+    if (!currentUserId) {
+      toast.error("Please sign in to start a message thread");
+      return;
+    }
+    try {
+      const { data: conv, error } = await getOrCreateConversation(currentUserId, targetUserId);
+      if (error || !conv) {
+        throw error || new Error("Failed to initialize conversation");
+      }
+      if (targetUserName) {
+        toast.success(`Connected with ${targetUserName}`);
+      }
+      setActiveChat(conv.id);
+      if (isMobile) {
+        setMobileView("chat");
+      }
+    } catch (err) {
+      console.error("Error starting chat:", err);
+      toast.error("Could not start conversation. Please try again.");
+    }
+  };
+
   return (
     /* Glassmorphic card on desktop, full-viewport fluid on mobile */
     <div
@@ -289,6 +313,7 @@ const ChatContainer = ({
                 setCampusSearchInitialQuery(query || "");
                 setIsNewChatModalOpen(true);
               }}
+              onStartDirectChat={handleStartDirectChat}
             />
           </div>
         </aside>
