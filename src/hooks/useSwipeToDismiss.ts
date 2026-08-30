@@ -43,6 +43,16 @@ export function useSwipeToDismiss(onDismiss: () => void) {
   const activeRef = useRef(false);
 
   const onTouchStart = useCallback((event: TouchEvent<HTMLElement>) => {
+    // React bubbles a portaled element's events through the *component*
+    // tree, not the DOM tree it actually rendered into — so a touch on a
+    // sheet nested inside another sheet's JSX (the account sheet lives
+    // inside the More sheet's markup, though Radix portals both to
+    // <body> as DOM siblings) reaches both sheets' handlers from one
+    // gesture. Without this, dragging the top sheet closed the one
+    // underneath it too. Stopping here keeps a swipe scoped to whichever
+    // sheet's own content it started on.
+    event.stopPropagation();
+
     const scroller = scrollerRef.current;
     if (scroller && scroller.scrollTop > 0) return;
 
@@ -55,6 +65,7 @@ export function useSwipeToDismiss(onDismiss: () => void) {
   }, []);
 
   const onTouchMove = useCallback((event: TouchEvent<HTMLElement>) => {
+    event.stopPropagation();
     if (!activeRef.current) return;
 
     const touch = event.touches[0];
@@ -78,7 +89,8 @@ export function useSwipeToDismiss(onDismiss: () => void) {
     );
   }, [offset]);
 
-  const onTouchEnd = useCallback(() => {
+  const onTouchEnd = useCallback((event: TouchEvent<HTMLElement>) => {
+    event.stopPropagation();
     if (!activeRef.current) return;
     activeRef.current = false;
 
