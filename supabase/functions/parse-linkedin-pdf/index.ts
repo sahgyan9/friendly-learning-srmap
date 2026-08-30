@@ -47,12 +47,16 @@ const EXTRA_FIELDS_BLOCK = `- "tagline": string (a punchy, natural one-sentence 
 `;
 
 function buildPrompt(fields: "basic" | "full"): string {
+  const currentDateStr = new Date().toISOString().slice(0, 10);
+  const currentYear = new Date().getFullYear();
   return `You are an expert resume parser for a university peer learning & mentorship platform. Extract structured information from this student's PDF (which may be a LinkedIn profile export or a standard resume/CV).
+Today's date is ${currentDateStr} (Academic year ${currentYear}-${currentYear + 1}).
+
 Return a valid JSON object with these exact keys:
 - "name": string (full student name)
 - "department": string (field of study or major, e.g. "Physics", "Computer Science and Engineering")
 - "university": string (e.g. "SRM University-AP")
-- "year_of_studies": string (must be one of: "1st Year", "2nd Year", "3rd Year", "4th Year", "5th Year", "Graduated", or "")
+- "year_of_studies": string (Compute the student's current academic year from their degree dates relative to today's date ${currentDateStr}. Note: For an intake of 2023 graduating in 2027, 2023-2024 is 1st Year, 2024-2025 is 2nd Year, 2025-2026 is 3rd Year, and in the 2026-2027 academic session they are in their "4th Year". Must be one of: "1st Year", "2nd Year", "3rd Year", "4th Year", "5th Year", "Graduated", or "")
 - "skills": string (comma-separated list of max 15 distinct technical, scientific, or domain skills, e.g. "Python, Quantum Mechanics, React, MATLAB". CRITICAL CONSTRAINT: DO NOT include degrees, diplomas, program names, specializations, or academic titles like "B.S. IT", "B.Tech", "M.Sc.", "Specialising in...", "SRM University", "Student" in the skills list)
 ${fields === "full" ? EXTRA_FIELDS_BLOCK : ""}- "bio": string (concise 2-3 sentence professional summary in first person)
 - "linkedin_url": string (full LinkedIn profile URL if visible, or empty)
