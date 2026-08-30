@@ -437,11 +437,76 @@ export function parseTranscript(html: string): { cgpa: number | null; subjects: 
   return { cgpa, subjects };
 }
 
+export interface RegisteredCourse {
+  code: string;
+  name: string;
+  slot: string | null;
+  facultyName: string | null;
+  courseType: string | null;
+  credit: number | null;
+}
+
+export function parseCourseList(html: string): Record<string, RegisteredCourse> {
+  const result: Record<string, RegisteredCourse> = {};
+  if (!html) return result;
+
+  for (const trMatch of html.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/gi)) {
+    const rowContent = trMatch[1];
+    const cells = [...rowContent.matchAll(/<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi)].map((m) => stripTags(m[1]).trim());
+    if (cells.length < 3) continue;
+
+    let codeIndex = -1;
+    for (let i = 0; i < cells.length; i++) {
+      if (/^[A-Z]{2,4}\s*\d{3}[A-Z0-9]*$/i.test(cells[i])) {
+        codeIndex = i;
+        break;
+      }
+    }
+    if (codeIndex === -1) continue;
+
+    const code = cells[codeIndex].toUpperCase();
+    const name = cells[codeIndex + 1] && isNaN(Number(cells[codeIndex + 1])) ? cells[codeIndex + 1] : code;
+
+    let slot: string | null = null;
+    let facultyName: string | null = null;
+    let courseType: string | null = null;
+    let credit: number | null = null;
+
+    for (let i = codeIndex + 2; i < cells.length; i++) {
+      const val = cells[i];
+      if (!val) continue;
+
+      if (/^[1-9]$/.test(val) && credit === null) {
+        credit = parseInt(val, 10);
+      } else if (/^(theory|practical|lab|project|embedded|core|elective)$/i.test(val) && !courseType) {
+        courseType = val;
+      } else if (/^[A-Z][0-9]?(\+[A-Z][0-9]?)*$/i.test(val) && val.length <= 6 && !slot) {
+        slot = val;
+      } else if ((/^(Dr\.|Prof\.|Mr\.|Ms\.|Mrs\.)/i.test(val) || /^[A-Z\s\.\-]{3,50}$/i.test(val)) && !/^\d+$/.test(val) && !facultyName) {
+        if (val.length >= 3 && !/^(theory|practical|lab|semester|regular|registered|enrolled|passed)$/i.test(val)) {
+          facultyName = val;
+        }
+      }
+    }
+
+    result[code] = {
+      code,
+      name,
+      slot,
+      facultyName,
+      courseType,
+      credit,
+    };
+  }
+
+  return result;
+}
+
 export interface AttendanceCourse {
   courseCode: string;
   courseName: string;
-  slot?: string;
-  facultyName?: string;
+  slot: string | null;
+  facultyName: string | null;
   conductedHours: number;
   attendedHours: number;
   absentHours: number;
@@ -460,87 +525,194 @@ export function calculateAttendanceMetrics(conducted: number, attended: number) 
   return { percentage, classesNeeded, safeBunks };
 }
 
-export function parseAttendance(html: string): AttendanceCourse[] {
+export function parseAttendance(
+  html: string,
+  courseListDetails: Record<string, RegisteredCourse> = {},
+): AttendanceCourse[] {
   const courses: AttendanceCourse[] = [];
-  
+  if (!html) return courses;
+
+  const allRows: string[][] = [];
   for (const trMatch of html.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/gi)) {
     const rowContent = trMatch[1];
     const cells = [...rowContent.matchAll(/<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi)].map((m) => stripTags(m[1]).trim());
-    
-    // Ignore header row or empty rows
-    if (cells.length < 5) continue;
-    if (cells[0].toLowerCase().includes("subject code") || cells[1]?.toLowerCase().includes("subject description")) {
+    if (cells.length >= 3) {
+      allRows.push(cells);
+    }
+  }
+
+  if (allRows.length === 0) return courses;
+
+  // 1. Try to find a header row to map column indices dynamically
+  const headerMap: {
+    code?: number;
+    name?: number;
+    maxHours?: number;
+    conducted?: number;
+    present?: number;
+    absent?: number;
+    od?: number;
+    percentage?: number;
+    slot?: number;
+    faculty?: number;
+  } = {};
+
+  for (const row of allRows) {
+    const rowStr = row.join(" ").toLowerCase();
+    if (rowStr.includes("subject") || rowStr.includes("course") || rowStr.includes("conducted") || rowStr.includes("present")) {
+      row.forEach((cell, idx) => {
+        const c = cell.toLowerCase().trim();
+        const isPct = c.includes("%") || c.includes("percent");
+
+        if (!isPct) {
+          if (c.includes("subject code") || c.includes("course code") || c === "code") headerMap.code = idx;
+          else if (c.includes("subject desc") || c.includes("course name") || c.includes("course title") || c.includes("description") || c.includes("subject name")) headerMap.name = idx;
+          else if (c.includes("max") || c.includes("total planned") || c.includes("planned")) headerMap.maxHours = idx;
+          else if (c.includes("conducted") || c.includes("classes held") || c.includes("total classes") || c.includes("total hrs") || c.includes("total hours")) headerMap.conducted = idx;
+          else if (c.includes("present") || c.includes("attended") || c.includes("hours attended") || c.includes("attended hrs") || c === "p") headerMap.present = idx;
+          else if (c.includes("absent") || c.includes("hours absent") || c.includes("absent hrs") || c === "a") headerMap.absent = idx;
+          else if (c.includes("od") || c.includes("ml") || c.includes("on duty") || c.includes("medical leave")) headerMap.od = idx;
+          else if (c.includes("slot")) headerMap.slot = idx;
+          else if (c.includes("faculty") || c.includes("staff") || c.includes("teacher")) headerMap.faculty = idx;
+        } else {
+          if (c.includes("attendance") || c.includes("total") || headerMap.percentage === undefined) {
+            headerMap.percentage = idx;
+          }
+        }
+      });
+      if (headerMap.code !== undefined || (headerMap.conducted !== undefined && headerMap.present !== undefined)) {
+        break;
+      }
+    }
+  }
+
+  // 2. Parse course rows
+  for (const cells of allRows) {
+    if (cells[0].toLowerCase().includes("subject") || cells[0].toLowerCase().includes("s.no") || cells[1]?.toLowerCase().includes("subject description")) {
       continue;
     }
 
     let code = "";
-    let name = "";
-    let conducted = -1;
-    let attended = -1;
-    let absent = -1;
+    let codeIndex = -1;
 
-    // Pattern 1: Exact SRM AP Portal standard table layout:
-    // [Subject Code, Subject Description, Classes Conducted, Present (P), Absent (A), OD/ML, Present %, OD ML %, Attendance %]
-    if (cells.length >= 6 && /^[A-Z]{2,4}\s*\d{3}[A-Z0-9]*$/i.test(cells[0])) {
-      code = cells[0].toUpperCase();
-      name = cells[1] || code;
-      const c = parseFloat(cells[2]);
-      const p = parseFloat(cells[3]);
-      const a = parseFloat(cells[4]);
-      if (!isNaN(c) && !isNaN(p)) {
-        conducted = c;
-        attended = p;
-        absent = !isNaN(a) ? a : Math.max(0, conducted - attended);
-      }
-    }
-
-    // Pattern 2: Generic fallback parser across potential variations
-    if (!code) {
+    if (headerMap.code !== undefined && /^[A-Z]{2,4}\s*\d{3}[A-Z0-9]*$/i.test(cells[headerMap.code])) {
+      code = cells[headerMap.code].toUpperCase();
+      codeIndex = headerMap.code;
+    } else {
       for (let i = 0; i < cells.length; i++) {
-        const cell = cells[i];
-        if (!code && /^[A-Z]{2,4}\s*\d{3}[A-Z0-9]*$/i.test(cell)) {
-          code = cell.toUpperCase();
-          if (i + 1 < cells.length && isNaN(Number(cells[i + 1]))) {
-            name = cells[i + 1];
-          }
+        if (/^[A-Z]{2,4}\s*\d{3}[A-Z0-9]*$/i.test(cells[i])) {
+          code = cells[i].toUpperCase();
+          codeIndex = i;
+          break;
         }
       }
     }
 
     if (!code) continue;
 
-    if (conducted < 0 || attended < 0) {
-      // Look for numbers representing conducted and attended hours
+    const registered = courseListDetails[code] || {};
+    let name = registered.name || "";
+    let slot = registered.slot || null;
+    let facultyName = registered.facultyName || null;
+
+    if (headerMap.name !== undefined && cells[headerMap.name]) {
+      name = cells[headerMap.name];
+    } else if (codeIndex + 1 < cells.length && isNaN(Number(cells[codeIndex + 1]))) {
+      name = cells[codeIndex + 1];
+    }
+    if (!name) name = code;
+
+    if (headerMap.slot !== undefined && cells[headerMap.slot]) {
+      slot = cells[headerMap.slot];
+    }
+    if (headerMap.faculty !== undefined && cells[headerMap.faculty]) {
+      facultyName = cells[headerMap.faculty];
+    }
+
+    let conducted = -1;
+    let present = -1;
+    let absent = -1;
+    let od = 0;
+
+    // Use dynamic header map if available
+    if (headerMap.conducted !== undefined && headerMap.present !== undefined) {
+      const c = parseFloat(cells[headerMap.conducted]);
+      const p = parseFloat(cells[headerMap.present]);
+      const a = headerMap.absent !== undefined ? parseFloat(cells[headerMap.absent]) : NaN;
+      const o = headerMap.od !== undefined ? parseFloat(cells[headerMap.od]) : NaN;
+      if (!isNaN(c) && !isNaN(p)) {
+        conducted = c;
+        present = p;
+        if (!isNaN(a)) absent = a;
+        if (!isNaN(o)) od = o;
+      }
+    }
+
+    // Standard SRM AP Portal standard table layout:
+    // [Subject Code (0), Subject Description (1), Max Hours (2), Conducted (3), Present (4), Absent (5), OD/ML (6), Present % (7), OD % (8), Total % (9)]
+    if (conducted < 0 && cells.length >= 6 && codeIndex === 0) {
+      const cond = parseFloat(cells[3]);
+      const pres = parseFloat(cells[4]);
+      const abs = parseFloat(cells[5]);
+      const odVal = cells.length > 6 ? parseFloat(cells[6]) : 0;
+
+      if (!isNaN(cond) && !isNaN(pres)) {
+        conducted = cond;
+        present = pres;
+        absent = !isNaN(abs) ? abs : Math.max(0, conducted - present);
+        od = !isNaN(odVal) ? odVal : 0;
+      }
+    }
+
+    // Fallback: If table layout is [Code, Description, Conducted, Present, Absent, OD, %] (no Max Hours column)
+    if (conducted < 0 && cells.length >= 5 && codeIndex === 0) {
+      const c1 = parseFloat(cells[2]);
+      const c2 = parseFloat(cells[3]);
+      const c3 = parseFloat(cells[4]);
+      if (!isNaN(c1) && !isNaN(c2) && !isNaN(c3) && (c2 + c3 === c1 || c2 <= c1)) {
+        conducted = c1;
+        present = c2;
+        absent = c3;
+      }
+    }
+
+    // Generic numeric fallback parser
+    if (conducted < 0 || present < 0) {
       const numbers: number[] = [];
-      for (let i = 0; i < cells.length; i++) {
-        const val = parseFloat(cells[i]);
-        if (!isNaN(val) && /^\d+(\.\d+)?%?$/.test(cells[i].replace("%", "").trim())) {
+      for (let i = codeIndex + 1; i < cells.length; i++) {
+        const val = parseFloat(cells[i].replace("%", "").trim());
+        if (!isNaN(val)) {
           numbers.push(val);
         }
       }
 
-      if (numbers.length >= 2) {
-        if (numbers.length >= 3 && numbers[numbers.length - 1] <= 100) {
-          attended = numbers[1] ?? numbers[numbers.length - 2];
-          conducted = numbers[0] ?? numbers[numbers.length - 3];
-        } else {
-          conducted = numbers[0];
-          attended = numbers[1];
+      if (numbers.length >= 4 && numbers[1] >= numbers[2]) {
+        conducted = numbers[1];
+        present = numbers[2];
+        absent = numbers[3];
+        if (numbers.length >= 5 && numbers[4] < conducted) {
+          od = numbers[4];
         }
-        absent = Math.max(0, conducted - attended);
+      } else if (numbers.length >= 2) {
+        conducted = numbers[0];
+        present = numbers[1];
+        absent = numbers.length >= 3 ? numbers[2] : Math.max(0, conducted - present);
       }
     }
 
-    if (conducted >= 0 && attended >= 0) {
-      const metrics = calculateAttendanceMetrics(conducted, attended);
+    if (conducted >= 0 && present >= 0) {
+      const effectiveAttended = Math.min(conducted, present + (isNaN(od) ? 0 : od));
+      const effectiveAbsent = absent >= 0 ? absent : Math.max(0, conducted - effectiveAttended);
+      const metrics = calculateAttendanceMetrics(conducted, effectiveAttended);
+
       courses.push({
         courseCode: code,
         courseName: name || code,
-        slot: null,
-        facultyName: null,
+        slot,
+        facultyName,
         conductedHours: conducted,
-        attendedHours: attended,
-        absentHours: absent >= 0 ? absent : Math.max(0, conducted - attended),
+        attendedHours: effectiveAttended,
+        absentHours: effectiveAbsent,
         attendancePercentage: metrics.percentage,
         classesNeeded: metrics.classesNeeded,
         safeBunks: metrics.safeBunks,
@@ -603,7 +775,7 @@ export async function doLogin(
 
 export async function fetchAcademicSections(
   jar: Jar,
-): Promise<{ profileHtml: string; transcriptHtml: string; attendanceHtml: string }> {
+): Promise<{ profileHtml: string; courseListHtml: string; transcriptHtml: string; attendanceHtml: string }> {
   const fetchSection = (id: number) =>
     fetch(`${PORTAL_BASE}/students/report/studentreportresources.jsp`, {
       method: "POST",
@@ -613,14 +785,20 @@ export async function fetchAcademicSections(
         "X-Requested-With": "XMLHttpRequest",
       },
       body: `ids=${id}`,
-    }).then((r) => r.text());
+    })
+      .then((r) => r.text())
+      .catch((err) => {
+        console.warn(`Failed to fetch report section ${id}:`, err);
+        return "";
+      });
 
-  const [profileHtml, transcriptHtml, attendanceHtml] = await Promise.all([
+  const [profileHtml, courseListHtml, transcriptHtml, attendanceHtml] = await Promise.all([
     fetchSection(1),
+    fetchSection(2),
     fetchSection(6),
     fetchSection(3),
   ]);
-  return { profileHtml, transcriptHtml, attendanceHtml };
+  return { profileHtml, courseListHtml, transcriptHtml, attendanceHtml };
 }
 
 export async function fetchLoginPageAndCaptcha(): Promise<{ jar: Jar; imageBytes: Uint8Array; contentType: string }> {

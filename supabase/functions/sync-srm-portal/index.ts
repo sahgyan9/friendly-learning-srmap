@@ -22,6 +22,7 @@ import {
   fetchAcademicSections,
   fetchLoginPageAndCaptcha,
   parseAttendance,
+  parseCourseList,
   parseProfile,
   parseTranscript,
   recognizeCaptcha,
@@ -217,10 +218,11 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      const { profileHtml, transcriptHtml, attendanceHtml } = await fetchAcademicSections(loginResult.jar);
+      const { profileHtml, courseListHtml, transcriptHtml, attendanceHtml } = await fetchAcademicSections(loginResult.jar);
       const { program, currentSemester, mobileNumber } = parseProfile(profileHtml);
+      const courseMap = parseCourseList(courseListHtml);
       const { cgpa, subjects } = parseTranscript(transcriptHtml);
-      const attendanceCourses = parseAttendance(attendanceHtml);
+      const attendanceCourses = parseAttendance(attendanceHtml, courseMap);
 
       // 1. Upsert academic transcript & profile summary
       await admin.from("academic_imports").upsert({

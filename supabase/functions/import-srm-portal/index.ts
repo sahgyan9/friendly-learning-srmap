@@ -37,6 +37,7 @@ import {
   fetchAcademicSections,
   fetchLoginPageAndCaptcha,
   parseAttendance,
+  parseCourseList,
   parseProfile,
   parseTranscript,
   recognizeCaptcha,
@@ -166,10 +167,11 @@ Deno.serve(async (req) => {
 
       jar = loginResult.jar;
 
-      const { profileHtml, transcriptHtml, attendanceHtml } = await fetchAcademicSections(jar);
+      const { profileHtml, courseListHtml, transcriptHtml, attendanceHtml } = await fetchAcademicSections(jar);
       const { program, currentSemester, mobileNumber } = parseProfile(profileHtml);
+      const courseMap = parseCourseList(courseListHtml);
       const { cgpa, subjects } = parseTranscript(transcriptHtml);
-      const attendanceCourses = parseAttendance(attendanceHtml);
+      const attendanceCourses = parseAttendance(attendanceHtml, courseMap);
 
       await supabaseAdmin.from("academic_imports").upsert({
         user_id: userId,
