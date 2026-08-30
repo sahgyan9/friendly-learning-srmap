@@ -543,6 +543,7 @@ for (const file of [
   '20260830150000_direct_message_reactions_realtime.sql',
   '20260830160000_error_reports.sql',
   '20260830170000_ai_overview_feedback_vote_update_and_undo.sql',
+  '20260830180000_message_delivery_receipts_and_replica_identities.sql',
 ]) {
   if (file === '20260804132345_b843f814-46d5-4c25-bc80-32e5f6ebba59.sql') {
     // Production's `faculty` table still carries `profile_image`, a column
@@ -3806,6 +3807,45 @@ const { rows: [finalCount] } = await q(`
   SELECT count(*)::int AS count FROM public.ai_overview_feedback WHERE query = $1;
 `, [testQuery]);
 check('undoing all votes leaves zero feedback rows for query', finalCount?.count === 0);
+
+// --- 20260830180000_message_delivery_receipts_and_replica_identities.sql ---
+console.log('\n--- 20260830180000_message_delivery_receipts_and_replica_identities.sql ---');
+
+// Test 1: Insert message from CURRENT_UID to OTHER_UID
+const { rows: [sentMsg] } = await q(`
+  INSERT INTO public.messages (conversation_id, sender_id, receiver_id, content, delivery_status, is_read)
+  VALUES ($1, $2, $3, 'Hello delivery test', 'sent', false)
+  RETURNING *;
+`, [TEST_CONV_ID, CURRENT_UID, OTHER_UID]);
+check('message initially created with delivery_status = sent', sentMsg?.delivery_status === 'sent' && sentMsg?.is_read === false);
+
+// Test 2: As OTHER_UID, call mark_messages_delivered
+await q('DELETE FROM auth._session;');
+await q('INSERT INTO auth._session (uid) VALUES ($1);', [OTHER_UID]);
+
+await q(`SELECT public.mark_messages_delivered($1::uuid, $2::uuid);`, [TEST_CONV_ID, OTHER_UID]);
+const { rows: [deliveredMsg] } = await q(`SELECT * FROM public.messages WHERE id = $1;`, [sentMsg.id]);
+check('mark_messages_delivered updates delivery_status to delivered', deliveredMsg?.delivery_status === 'delivered');
+
+// Test 3: Insert another sent message and call mark_all_messages_delivered
+const { rows: [sentMsg2] } = await q(`
+  INSERT INTO public.messages (conversation_id, sender_id, receiver_id, content, delivery_status, is_read)
+  VALUES ($1, $2, $3, 'Hello all delivered test', 'sent', false)
+  RETURNING *;
+`, [TEST_CONV_ID, CURRENT_UID, OTHER_UID]);
+
+await q(`SELECT public.mark_all_messages_delivered();`);
+const { rows: [deliveredMsg2] } = await q(`SELECT * FROM public.messages WHERE id = $1;`, [sentMsg2.id]);
+check('mark_all_messages_delivered updates pending messages to delivered', deliveredMsg2?.delivery_status === 'delivered');
+
+// Test 4: Call mark_messages_as_read as OTHER_UID
+const { rows: readMsgs } = await q(`SELECT * FROM public.mark_messages_as_read($1::uuid, $2::uuid);`, [TEST_CONV_ID, OTHER_UID]);
+const readTarget = readMsgs.find(m => m.id === sentMsg.id);
+check('mark_messages_as_read updates delivery_status to read and is_read to true', readTarget?.delivery_status === 'read' && readTarget?.is_read === true);
+
+// Reset session to CURRENT_UID
+await q('DELETE FROM auth._session;');
+await q('INSERT INTO auth._session (uid) VALUES ($1);', [CURRENT_UID]);
 
 console.log(failures === 0
   ? '\nAll migration checks passed against real Postgres.'
