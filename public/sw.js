@@ -1,15 +1,183 @@
 // Friendly Learning SRMAP Service Worker
-// Handles background push notifications, deep links, and client window activation.
+// Handles background push notifications, app shell caching, and offline persistence.
 
-const CACHE_NAME = 'fl-srmap-v1';
+const STATIC_CACHE = 'fl-srmap-static-v2';
+const RUNTIME_CACHE = 'fl-srmap-runtime-v2';
 
+// Core essential assets to precache on install
+const PRECACHE_ASSETS = [
+  '/',
+  '/index.html',
+  '/manifest.json',
+  '/favicon.ico',
+  '/logo-mark-light.svg',
+  '/logo-mark-dark.svg',
+  '/pwa-192x192.png',
+  '/pwa-512x512.png',
+  '/badge-96x96.png',
+  '/apple-touch-icon.png',
+];
+
+// Install Event - Precache App Shell
 self.addEventListener('install', (event) => {
-  self.skipWaiting();
+  event.waitUntil(
+    caches
+      .open(STATIC_CACHE)
+      .then((cache) => {
+        return cache.addAll(PRECACHE_ASSETS).catch((err) => {
+          console.warn('[SW] Pre-caching partial error (non-fatal):', err);
+        });
+      })
+      .then(() => self.skipWaiting())
+  );
 });
 
+// Activate Event - Clean up outdated caches and claim clients
 self.addEventListener('activate', (event) => {
-  event.waitUntil(self.clients.claim());
+  const currentCaches = [STATIC_CACHE, RUNTIME_CACHE];
+  event.waitUntil(
+    caches
+      .keys()
+      .then((cacheNames) => {
+        return Promise.all(
+          cacheNames.map((cacheName) => {
+            if (!currentCaches.includes(cacheName)) {
+              console.log('[SW] Deleting old cache:', cacheName);
+              return caches.delete(cacheName);
+            }
+          })
+        );
+      })
+      .then(() => self.clients.claim())
+  );
 });
+
+// Fetch Event - Dynamic Stale-While-Revalidate and Offline Fallback
+self.addEventListener('fetch', (event) => {
+  const { request } = event;
+  const url = new URL(request.url);
+
+  // Skip non-GET requests (mutations, uploads, etc.)
+  if (request.method !== 'GET') {
+    return;
+  }
+
+  // Skip Supabase API mutations, Realtime WebSocket URLs, and Auth endpoints from cache
+  if (
+    url.hostname.includes('supabase.co') ||
+    url.pathname.startsWith('/rest/v1/') ||
+    url.pathname.startsWith('/auth/v1/') ||
+    url.pathname.startsWith('/functions/v1/')
+  ) {
+    // For API calls, let network handle it natively (client-side offlineStorage handles structured data)
+    return;
+  }
+
+  // Skip browser extensions and internal schemes
+  if (!url.protocol.startsWith('http')) {
+    return;
+  }
+
+  // 1. Navigation Requests (HTML pages: e.g. /attendance, /opportunities, /)
+  // Network-First with fallback to cached route or cached /index.html (SPA Fallback)
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      fetch(request)
+        .then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            const responseClone = networkResponse.clone();
+            caches.open(RUNTIME_CACHE).then((cache) => {
+              cache.put(request, responseClone);
+            });
+          }
+          return networkResponse;
+        })
+        .catch(async () => {
+          // If offline, try matching the specific route from cache
+          const cachedPage = await caches.match(request);
+          if (cachedPage) {
+            return cachedPage;
+          }
+          // Fall back to the SPA app shell (/index.html or /)
+          const fallbackShell = await caches.match('/index.html');
+          if (fallbackShell) {
+            return fallbackShell;
+          }
+          const rootFallback = await caches.match('/');
+          if (rootFallback) {
+            return rootFallback;
+          }
+          return new Response('Offline: Page not cached', {
+            status: 503,
+            statusText: 'Service Unavailable',
+            headers: { 'Content-Type': 'text/plain' },
+          });
+        })
+    );
+    return;
+  }
+
+  // 2. Static Assets (JS chunks, CSS stylesheets, images, SVGs, web fonts)
+  const isStaticAsset =
+    url.pathname.startsWith('/assets/') ||
+    url.pathname.endsWith('.js') ||
+    url.pathname.endsWith('.css') ||
+    url.pathname.endsWith('.woff2') ||
+    url.pathname.endsWith('.woff') ||
+    url.pathname.endsWith('.png') ||
+    url.pathname.endsWith('.svg') ||
+    url.pathname.endsWith('.ico') ||
+    url.hostname.includes('fonts.googleapis.com') ||
+    url.hostname.includes('fonts.gstatic.com');
+
+  if (isStaticAsset) {
+    // Stale-While-Revalidate: Return cached version immediately, fetch & update cache in background
+    event.respondWith(
+      caches.match(request).then((cachedResponse) => {
+        const fetchPromise = fetch(request)
+          .then((networkResponse) => {
+            if (networkResponse && networkResponse.status === 200) {
+              const responseClone = networkResponse.clone();
+              caches.open(STATIC_CACHE).then((cache) => {
+                cache.put(request, responseClone);
+              });
+            }
+            return networkResponse;
+          })
+          .catch(() => {
+            // Network failure is fine if we have cachedResponse
+            return null;
+          });
+
+        return cachedResponse || fetchPromise.then((res) => res || new Response('', { status: 408 }));
+      })
+    );
+    return;
+  }
+
+  // 3. All other same-origin requests: Network-First with runtime cache fallback
+  if (url.origin === self.location.origin) {
+    event.respondWith(
+      fetch(request)
+        .then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            const responseClone = networkResponse.clone();
+            caches.open(RUNTIME_CACHE).then((cache) => {
+              cache.put(request, responseClone);
+            });
+          }
+          return networkResponse;
+        })
+        .catch(() => {
+          return caches.match(request);
+        })
+    );
+  }
+});
+
+// ----------------------------------------------------
+// Web Push Notifications & Client Window Management
+// ----------------------------------------------------
 
 // Handle incoming Web Push message
 self.addEventListener('push', (event) => {
@@ -25,23 +193,51 @@ self.addEventListener('push', (event) => {
     }
   }
 
-  const title = data.title || 'Friendly Learning SRMAP';
-  const options = {
-    body: data.body || 'You have a new notification on Friendly Learning SRMAP.',
-    icon: data.icon || '/pwa-192x192.png',
-    badge: data.badge || '/badge-96x96.png',
-    tag: data.tag || 'general-notification',
-    renotify: true,
-    data: {
-      url: data.url || '/',
-      timestamp: Date.now(),
-      ...data.data,
-    },
-    vibrate: [200, 100, 200],
-    actions: data.actions || [],
-  };
+  const targetUrl = data.url || data.data?.url || '/';
 
-  event.waitUntil(self.registration.showNotification(title, options));
+  const showPromise = self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+    // Check if the user currently has an open window focused on this exact URL or active chat
+    const isActivelyViewing = windowClients.some((client) => {
+      const isVisible = client.visibilityState === 'visible';
+      if (!isVisible) return false;
+
+      // If target URL points to a specific chat, check if the client is currently at that path
+      if (targetUrl && targetUrl !== '/') {
+        const clientUrl = new URL(client.url);
+        const targetPath = targetUrl.startsWith('/') ? targetUrl : new URL(targetUrl, self.location.origin).pathname;
+        if (clientUrl.pathname === targetPath || clientUrl.pathname.startsWith(targetPath)) {
+          return true;
+        }
+      }
+      return false;
+    });
+
+    if (isActivelyViewing) {
+      // User is actively in this conversation in the foreground.
+      // Suppress the OS banner / vibration so it doesn't disturb them.
+      return;
+    }
+
+    const title = data.title || 'Friendly Learning SRMAP';
+    const options = {
+      body: data.body || 'You have a new notification on Friendly Learning SRMAP.',
+      icon: data.icon || '/pwa-192x192.png',
+      badge: data.badge || '/badge-96x96.png',
+      tag: data.tag || 'general-notification',
+      renotify: true,
+      data: {
+        url: targetUrl,
+        timestamp: Date.now(),
+        ...data.data,
+      },
+      vibrate: [200, 100, 200],
+      actions: data.actions || [],
+    };
+
+    return self.registration.showNotification(title, options);
+  });
+
+  event.waitUntil(showPromise);
 });
 
 // Handle notification click and navigation

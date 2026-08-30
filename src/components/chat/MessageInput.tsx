@@ -46,8 +46,7 @@ const MessageInput = ({
   const { startTyping, stopTyping, refreshTyping } = useTypingIndicator(conversationId, userId);
 
   const isEditing = Boolean(editingMessage);
-  const busy = disabled || sending || isSubmitting;
-  const canSend = message.trim().length > 0 && !busy;
+  const canSend = message.trim().length > 0 && !sending && !isSubmitting && !disabled;
 
   useEffect(() => {
     const el = textareaRef.current;
@@ -84,17 +83,16 @@ const MessageInput = ({
 
   const submit = async () => {
     const content = message.trim();
-    if (!content || busy) return;
+    if (!content || sending || isSubmitting || disabled) return;
 
     setIsSubmitting(true);
+    setMessage("");
 
     try {
       if (isEditing && editingMessage && onSaveEdit) {
         await onSaveEdit(editingMessage.id, content);
-        setMessage("");
         onCancelEdit?.();
       } else {
-        setMessage("");
         await stopTyping();
         await onSendMessage(content, replyingTo);
         onCancelReply?.();
@@ -104,7 +102,9 @@ const MessageInput = ({
       setMessage(content);
     } finally {
       setIsSubmitting(false);
-      textareaRef.current?.focus();
+      if (!isMobile) {
+        textareaRef.current?.focus();
+      }
     }
   };
 
@@ -241,7 +241,7 @@ const MessageInput = ({
         )}
       >
         {/* Emoji picker */}
-        <EmojiPicker onEmojiSelect={handleEmojiSelect} disabled={busy} />
+        <EmojiPicker onEmojiSelect={handleEmojiSelect} disabled={disabled} />
 
         <textarea
           ref={textareaRef}
@@ -276,7 +276,7 @@ const MessageInput = ({
                 : "Write a message…"
           }
           aria-label={isEditing ? "Edit message" : "Message"}
-          disabled={busy}
+          disabled={disabled}
           rows={1}
           className={cn(
             "min-h-0 flex-1 resize-none bg-transparent py-2 pr-1 text-base md:text-sm leading-relaxed text-foreground",
@@ -289,6 +289,8 @@ const MessageInput = ({
         <Button
           type="submit"
           size="icon"
+          onPointerDown={(e) => e.preventDefault()}
+          onMouseDown={(e) => e.preventDefault()}
           className={cn(
             "mb-0.5 h-9 w-9 shrink-0 rounded-xl transition-all duration-200",
             canSend

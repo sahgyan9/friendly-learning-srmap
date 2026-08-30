@@ -49,6 +49,8 @@ import {
 import type { CommunityPost } from "@/integrations/supabase/services/community-posts";
 import { isEmojiOnly, getEmojiCount, getEmojiFontSizeClass } from "@/utils/emoji-utils";
 
+import { getOfflineCache, setOfflineCache } from "@/lib/offline/offlineStorage";
+
 interface CommunityGroupChatProps {
   communityId: string;
   communityKind: string;
@@ -140,8 +142,17 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
 }) => {
   const { user } = useAuth();
   const isDefaultChannel = channel === DEFAULT_CHANNEL;
-  const [messages, setMessages] = useState<GroupChatMessage[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [messages, setMessages] = useState<GroupChatMessage[]>(() => {
+    const cached = getOfflineCache<GroupChatMessage[]>(`group_messages:${communityId}:${channel}`);
+    if (cached?.data && Array.isArray(cached.data)) {
+      return cached.data;
+    }
+    return [];
+  });
+  const [loading, setLoading] = useState(() => {
+    const cached = getOfflineCache<GroupChatMessage[]>(`group_messages:${communityId}:${channel}`);
+    return !(cached?.data && Array.isArray(cached.data) && cached.data.length > 0);
+  });
   /**
    * The read failed rather than came back empty.
    *
@@ -165,14 +176,27 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
   const canPost = isMember || isOwner;
 
   const load = useCallback(async () => {
+    const cached = getOfflineCache<GroupChatMessage[]>(`group_messages:${communityId}:${channel}`);
+    if (cached?.data && Array.isArray(cached.data) && cached.data.length > 0) {
+      setMessages(cached.data);
+      setLoading(false);
+    }
+
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      setLoading(false);
+      return;
+    }
+
     const { data, error } = await listGroupMessages(communityId, channel);
-    setMessages(data);
-    setUnreadable(Boolean(error));
+    if (data) {
+      setMessages(data);
+      setOfflineCache(`group_messages:${communityId}:${channel}`, data);
+    }
+    setUnreadable(Boolean(error && !cached?.data));
     setLoading(false);
   }, [communityId, channel]);
 
   useEffect(() => {
-    setLoading(true);
     load();
   }, [load]);
 
@@ -258,6 +282,11 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
     const content = inputText.trim();
     if (!content) return;
 
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      toast.error("You are currently offline. Connect to internet to send group messages.");
+      return;
+    }
+
     if (!user) {
       toast.error("Please sign in to send messages");
       return;
@@ -268,19 +297,20 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
     }
 
     setSending(true);
+    setInputText("");
 
     if (editingMessage) {
       const { error } = await editGroupMessage(editingMessage.id, content);
       setSending(false);
 
       if (error) {
+        setInputText(content);
         toast.error(error.message || "Could not edit that message (only editable within 30m)");
         return;
       }
 
       toast.success("Message edited");
       setEditingMessage(null);
-      setInputText("");
       load();
       return;
     }
@@ -289,11 +319,11 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
     setSending(false);
 
     if (error) {
+      setInputText(content);
       toast.error(error.message || "Could not send that message");
       return;
     }
 
-    setInputText("");
     setReplyingTo(null);
     load();
   };
@@ -895,7 +925,7 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
                     : `Message #${channel}…`
               }
               className="h-10 bg-muted/30 font-sans text-base md:text-sm"
-              disabled={sending}
+              disabled={false}
               aria-label={
                 editingMessage
                   ? "Edit message content"
@@ -922,6 +952,8 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
             <Button
               size="icon"
               onClick={handleSendMessage}
+              onPointerDown={(e) => e.preventDefault()}
+              onMouseDown={(e) => e.preventDefault()}
               disabled={!inputText.trim() || sending}
               className={cn("h-10 w-10 shrink-0", editingMessage && "bg-amber-500 hover:bg-amber-600 text-white")}
               aria-label={editingMessage ? "Save edited message" : "Send message"}
