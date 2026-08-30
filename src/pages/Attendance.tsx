@@ -15,6 +15,7 @@ import {
   ShieldAlert,
   ShieldCheck,
   Sparkles,
+  UserCheck,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
@@ -55,6 +56,8 @@ export interface AttendanceRecord {
   last_synced_at: string;
 }
 
+const TARGET_PRESETS = [75, 80, 85, 90];
+
 type SortField = "course_code" | "attendance_percentage" | "conducted_hours" | "margin";
 type SortDirection = "asc" | "desc";
 type FilterTab = "all" | "risk" | "safe";
@@ -67,6 +70,7 @@ export default function Attendance() {
   const [portalDialogOpen, setPortalDialogOpen] = useState(false);
   const [filterTab, setFilterTab] = useState<FilterTab>("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [globalTarget, setGlobalTarget] = useState<number>(75);
   const [sortField, setSortField] = useState<SortField>("attendance_percentage");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   const [simulations, setSimulations] = useState<Record<string, { deltaAttended: number; deltaConducted: number }>>({});
@@ -408,8 +412,8 @@ export default function Attendance() {
               {/* Controls */}
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
 
-                {/* Left: Filter tabs */}
-                <div className="flex items-center gap-4 flex-wrap">
+                {/* Left: Filter tabs + Target presets */}
+                <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
                   <Tabs value={filterTab} onValueChange={(val) => setFilterTab(val as FilterTab)}>
                     <TabsList className="h-8 bg-muted/40 p-0.5">
                       <TabsTrigger value="all" className="text-xs px-2.5 h-7">All ({records.length})</TabsTrigger>
@@ -421,6 +425,27 @@ export default function Attendance() {
                       </TabsTrigger>
                     </TabsList>
                   </Tabs>
+
+                  {/* Target Threshold Selector */}
+                  <div className="flex items-center gap-1.5 text-xs bg-muted/30 px-2 py-1 rounded-lg border border-border/40">
+                    <span className="text-2xs font-semibold uppercase tracking-wider text-muted-foreground">Target:</span>
+                    <div className="flex items-center gap-1">
+                      {TARGET_PRESETS.map((target) => (
+                        <button
+                          key={target}
+                          type="button"
+                          onClick={() => setGlobalTarget(target)}
+                          className={`px-1.5 py-0.5 text-xs rounded font-medium transition-all ${
+                            globalTarget === target
+                              ? "bg-primary text-primary-foreground font-bold shadow-xs"
+                              : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                          }`}
+                        >
+                          {target}%
+                        </button>
+                      ))}
+                    </div>
+                  </div>
 
                   {hasAnySimulation && (
                     <button
@@ -447,22 +472,22 @@ export default function Attendance() {
               </div>
 
               {/* Table */}
-              <div className="rounded-xl border border-border/60 bg-card overflow-hidden">
+              <div className="rounded-xl border border-border/60 bg-card overflow-hidden shadow-xs">
                 <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
-                      <TableRow className="border-border/60 hover:bg-transparent">
-                        <TableHead className="min-w-[220px] text-xs font-semibold whitespace-nowrap">
+                      <TableRow className="border-border/60 hover:bg-transparent bg-muted/20">
+                        <TableHead className="min-w-[240px] text-xs font-semibold whitespace-nowrap">
                           <button
                             type="button"
                             onClick={() => handleSort("course_code")}
                             className="inline-flex items-center gap-1 hover:text-foreground transition-colors"
                           >
-                            <span>Course</span>
+                            <span>Course & Faculty</span>
                             <ArrowUpDown className="h-3 w-3 opacity-50" />
                           </button>
                         </TableHead>
-                        <TableHead className="min-w-[100px] text-xs font-semibold text-center whitespace-nowrap">
+                        <TableHead className="min-w-[110px] text-xs font-semibold text-center whitespace-nowrap">
                           <button
                             type="button"
                             onClick={() => handleSort("conducted_hours")}
@@ -482,18 +507,18 @@ export default function Attendance() {
                             <ArrowUpDown className="h-3 w-3 opacity-50" />
                           </button>
                         </TableHead>
-                        <TableHead className="min-w-[120px] text-xs font-semibold text-center whitespace-nowrap">
+                        <TableHead className="min-w-[130px] text-xs font-semibold text-center whitespace-nowrap">
                           <button
                             type="button"
                             onClick={() => handleSort("margin")}
                             className="inline-flex items-center gap-1 hover:text-foreground transition-colors mx-auto"
                           >
-                            <span>Margin</span>
+                            <span>{globalTarget}% Margin</span>
                             <ArrowUpDown className="h-3 w-3 opacity-50" />
                           </button>
                         </TableHead>
                         <TableHead className="min-w-[90px] text-xs font-semibold text-right pr-4 whitespace-nowrap">
-                          Plan
+                          Simulate
                         </TableHead>
                       </TableRow>
                     </TableHeader>
@@ -506,35 +531,58 @@ export default function Attendance() {
                           neededForTarget,
                           safeAllowanceForTarget,
                           isSimulated,
-                        } = getSimulatedMetrics(rec, 75);
+                        } = getSimulatedMetrics(rec, globalTarget);
 
                         const isDanger = pct < 75.0;
                         const isWarning = pct >= 75.0 && pct < 80.0;
-                        const statusColor = isDanger ? "border-l-destructive" : isWarning ? "border-l-amber-500" : "border-l-transparent";
+                        const statusColor = isDanger ? "border-l-destructive" : isWarning ? "border-l-amber-500" : "border-l-emerald-500";
+                        const displayedAbsent = isSimulated ? (cond - att) : rec.absent_hours;
 
                         return (
                           <TableRow key={rec.id || rec.course_code} className="border-border/40 hover:bg-muted/30 transition-colors">
-                            {/* 1. Course */}
-                            <TableCell className={`py-3 align-middle border-l-2 ${statusColor}`}>
-                              <div className="pl-2 space-y-0.5">
-                                <div className="font-bold text-xs text-foreground tracking-tight">
-                                  {rec.course_code}
-                                  {rec.slot && <span className="ml-1.5 font-normal text-2xs text-muted-foreground">{rec.slot}</span>}
+                            {/* 1. Course & Faculty */}
+                            <TableCell className={`py-3.5 align-middle border-l-3 ${statusColor}`}>
+                              <div className="pl-2 space-y-1">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className="font-bold text-xs text-foreground tracking-tight">
+                                    {rec.course_code}
+                                  </span>
+                                  {rec.slot && (
+                                    <span className="inline-flex items-center text-[10px] font-semibold text-primary bg-primary/10 px-1.5 py-0.2 rounded border border-primary/20">
+                                      {rec.slot}
+                                    </span>
+                                  )}
                                 </div>
-                                <div className="text-xs text-muted-foreground line-clamp-1" title={rec.course_name}>
+                                <div className="text-xs text-muted-foreground font-medium line-clamp-1" title={rec.course_name}>
                                   {rec.course_name}
                                 </div>
+                                {rec.faculty_name && (
+                                  <div className="flex items-center gap-1 pt-0.5">
+                                    <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground/90 bg-muted/60 px-1.5 py-0.5 rounded border border-border/40 font-medium">
+                                      <UserCheck className="h-3 w-3 text-primary/70 shrink-0" />
+                                      <span className="truncate max-w-[220px]" title={rec.faculty_name}>
+                                        {rec.faculty_name}
+                                      </span>
+                                    </span>
+                                  </div>
+                                )}
                               </div>
                             </TableCell>
 
                             {/* 2. Hours */}
-                            <TableCell className="py-3 text-center align-middle text-xs whitespace-nowrap font-mono tabular-nums">
-                              <div className="font-semibold text-foreground">{att}<span className="font-normal text-muted-foreground font-sans">/{cond}</span></div>
-                              <div className="text-2xs text-muted-foreground">{cond - att} absent</div>
+                            <TableCell className="py-3.5 text-center align-middle text-xs whitespace-nowrap font-mono tabular-nums">
+                              <div className="font-bold text-foreground text-sm tracking-tight">
+                                {att}<span className="font-normal text-muted-foreground text-xs font-sans">/{cond} hrs</span>
+                              </div>
+                              <div className="text-2xs text-muted-foreground mt-0.5">
+                                <span className={displayedAbsent > 0 ? "text-destructive/80 font-medium" : "text-muted-foreground"}>
+                                  {displayedAbsent} absent
+                                </span>
+                              </div>
                             </TableCell>
 
                             {/* 3. Percentage */}
-                            <TableCell className="py-3 text-center align-middle whitespace-nowrap">
+                            <TableCell className="py-3.5 text-center align-middle whitespace-nowrap">
                               <div className="flex flex-col items-center gap-1">
                                 <span className={`text-sm font-black tracking-tight ${
                                   isDanger ? "text-destructive" : isWarning ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400"
@@ -542,12 +590,12 @@ export default function Attendance() {
                                   {pct}%
                                 </span>
                                 {isSimulated && (
-                                  <span className="text-2xs text-muted-foreground">was {rec.attendance_percentage}%</span>
+                                  <span className="text-[10px] text-muted-foreground">was {rec.attendance_percentage}%</span>
                                 )}
                                 <div className="w-16">
                                   <Progress
                                     value={Math.min(100, pct)}
-                                    className={`h-1 bg-muted ${
+                                    className={`h-1.5 bg-muted ${
                                       isDanger ? "[&>div]:bg-destructive" : isWarning ? "[&>div]:bg-amber-500" : "[&>div]:bg-emerald-500"
                                     }`}
                                   />
@@ -556,36 +604,38 @@ export default function Attendance() {
                             </TableCell>
 
                             {/* 4. Margin */}
-                            <TableCell className="py-3 text-center align-middle whitespace-nowrap">
+                            <TableCell className="py-3.5 text-center align-middle whitespace-nowrap">
                               {neededForTarget > 0 ? (
-                                <span className="inline-flex items-center gap-1 text-xs font-semibold text-destructive">
-                                  <AlertTriangle className="h-3 w-3" /> Need {neededForTarget}
+                                <span className="inline-flex items-center gap-1 text-xs font-bold text-destructive bg-destructive/10 px-2 py-0.5 rounded-md border border-destructive/20">
+                                  <AlertTriangle className="h-3 w-3" /> Need {neededForTarget} cls
                                 </span>
                               ) : safeAllowanceForTarget > 0 ? (
-                                <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                                <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
                                   <ShieldCheck className="h-3 w-3" /> {safeAllowanceForTarget} safe
                                 </span>
                               ) : (
-                                <span className="text-xs text-muted-foreground">On target</span>
+                                <span className="text-xs text-muted-foreground font-medium bg-muted/40 px-2 py-0.5 rounded-md border border-border/40">
+                                  On target
+                                </span>
                               )}
                             </TableCell>
 
-                            {/* 5. Planner */}
-                            <TableCell className="py-3 text-right align-middle pr-4 whitespace-nowrap">
-                              <div className="inline-flex items-center justify-end gap-0.5">
+                            {/* 5. Planner / Simulation */}
+                            <TableCell className="py-3.5 text-right align-middle pr-4 whitespace-nowrap">
+                              <div className="inline-flex items-center justify-end gap-1">
                                 <TooltipProvider>
                                   <Tooltip>
                                     <TooltipTrigger asChild>
                                       <button
                                         type="button"
                                         onClick={() => adjustSim(rec.course_code, true)}
-                                        className="h-6 w-6 rounded flex items-center justify-center text-muted-foreground hover:text-emerald-600 hover:bg-emerald-500/10 active:scale-95 transition-all"
+                                        className="h-7 w-7 rounded-md flex items-center justify-center text-emerald-600 bg-emerald-500/10 hover:bg-emerald-500/20 active:scale-95 transition-all border border-emerald-500/20"
                                         aria-label="Simulate attending next class"
                                       >
                                         <Plus className="h-3.5 w-3.5" />
                                       </button>
                                     </TooltipTrigger>
-                                    <TooltipContent side="top">Simulate +1 present</TooltipContent>
+                                    <TooltipContent side="top">Simulate +1 Present</TooltipContent>
                                   </Tooltip>
                                 </TooltipProvider>
 
@@ -595,13 +645,13 @@ export default function Attendance() {
                                       <button
                                         type="button"
                                         onClick={() => adjustSim(rec.course_code, false)}
-                                        className="h-6 w-6 rounded flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10 active:scale-95 transition-all"
+                                        className="h-7 w-7 rounded-md flex items-center justify-center text-destructive bg-destructive/10 hover:bg-destructive/20 active:scale-95 transition-all border border-destructive/20"
                                         aria-label="Simulate missing next class"
                                       >
                                         <Minus className="h-3.5 w-3.5" />
                                       </button>
                                     </TooltipTrigger>
-                                    <TooltipContent side="top">Simulate +1 absent</TooltipContent>
+                                    <TooltipContent side="top">Simulate +1 Absent</TooltipContent>
                                   </Tooltip>
                                 </TooltipProvider>
 
@@ -613,7 +663,7 @@ export default function Attendance() {
                                           <button
                                             type="button"
                                             onClick={() => adjustSim(rec.course_code, false, true)}
-                                            className="h-6 w-6 rounded flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted active:scale-95 transition-all"
+                                            className="h-6 w-6 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted active:scale-95 transition-all"
                                             aria-label="Reset simulation"
                                           >
                                             <RotateCcw className="h-3 w-3" />

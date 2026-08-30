@@ -227,13 +227,25 @@ export const AttendanceOverviewCard = ({ onOpenPortalImport }: AttendanceOvervie
               const statusColor = isRecDanger ? "border-l-destructive" : isRecWarning ? "border-l-amber-500" : "border-l-transparent";
 
               return (
-                <TableRow key={rec.id || rec.course_code} className="border-border/40 text-xs h-9">
+                <TableRow key={rec.id || rec.course_code} className="border-border/40 text-xs h-auto">
                   <TableCell className={`py-2 pl-4 sm:pl-5 font-medium border-l-2 ${statusColor}`}>
-                    <div className="flex items-center gap-1.5">
-                      <span className="font-bold text-xs text-foreground tracking-tight">{rec.course_code}</span>
-                      <span className="text-2xs text-muted-foreground truncate max-w-[130px] sm:max-w-[200px]" title={rec.course_name}>
-                        {rec.course_name}
-                      </span>
+                    <div className="flex flex-col">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="font-bold text-xs text-foreground tracking-tight">{rec.course_code}</span>
+                        {rec.slot && (
+                          <span className="text-[10px] text-primary font-semibold bg-primary/10 px-1 py-0.2 rounded border border-primary/20">
+                            {rec.slot}
+                          </span>
+                        )}
+                        <span className="text-2xs text-muted-foreground truncate max-w-[130px] sm:max-w-[180px]" title={rec.course_name}>
+                          {rec.course_name}
+                        </span>
+                      </div>
+                      {rec.faculty_name && (
+                        <span className="text-[10px] text-muted-foreground truncate max-w-[220px] mt-0.5" title={rec.faculty_name}>
+                          {rec.faculty_name}
+                        </span>
+                      )}
                     </div>
                   </TableCell>
                   <TableCell className="py-2 text-center text-2xs text-muted-foreground">
