@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 import {
+  retryQueuedMessage,
   enqueueMessage,
   flushOutbox,
   getOutbox,
@@ -162,6 +163,49 @@ describe("the message outbox", () => {
 
     expect(sendMessage).toHaveBeenCalledTimes(2);
     expect(getOutbox()).toHaveLength(0);
+  });
+
+  it("gives a message that gave up one more attempt when tapped", async () => {
+    queue("please go");
+    sendMessage.mockResolvedValue({ data: null, error: { message: "Failed to fetch" } });
+    for (let attempt = 0; attempt < 5; attempt += 1) await flushOutbox();
+    expect(getOutbox()[0].failed).toBe(true);
+
+    sendMessage.mockClear();
+    sendMessage.mockResolvedValue({ data: { id: "server-id" }, error: null });
+    retryQueuedMessage(`outbox-${getOutbox()[0].localId}`);
+    await new Promise((resolve) => setTimeout(resolve, 20));
+
+    expect(sendMessage).toHaveBeenCalledTimes(1);
+    expect(getOutbox()).toHaveLength(0);
+  });
+
+  it("still checks for a duplicate when retrying by hand", async () => {
+    const queued = queue("did this send?");
+    sendMessage.mockResolvedValue({ data: null, error: { message: "Failed to fetch" } });
+    for (let attempt = 0; attempt < 5; attempt += 1) await flushOutbox();
+
+    // It had landed all along — which is exactly why a manual retry must not
+    // be treated as a first attempt.
+    getConversationMessages.mockResolvedValue({
+      data: [{ id: "s1", sender_id: "me", content: "did this send?", sent_at: queued.queuedAt }],
+      error: null,
+    });
+    sendMessage.mockClear();
+
+    retryQueuedMessage(`outbox-${queued.localId}`);
+    await new Promise((resolve) => setTimeout(resolve, 20));
+
+    expect(sendMessage).not.toHaveBeenCalled();
+    expect(getOutbox()).toHaveLength(0);
+  });
+
+  it("ignores a retry for a message that is not in the queue", async () => {
+    retryQueuedMessage("outbox-does-not-exist");
+    retryQueuedMessage("a-real-server-message-id");
+    await new Promise((resolve) => setTimeout(resolve, 20));
+
+    expect(sendMessage).not.toHaveBeenCalled();
   });
 
   it("tells the open conversation when the queue changes", async () => {

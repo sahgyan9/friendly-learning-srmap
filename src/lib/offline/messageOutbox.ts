@@ -224,3 +224,21 @@ export function outboxMessageToChatMessage(message: OutboxMessage): Message {
 export function isOutboxMessageId(id: string): boolean {
   return id.startsWith("outbox-");
 }
+
+/**
+ * One more attempt at a message that gave up, from a tap in the thread.
+ *
+ * Note what is deliberately not reset: `attempts`. Putting it back to zero
+ * would make this count as a first attempt, and a first attempt skips the
+ * did-this-already-land check — which is exactly the check a message that has
+ * failed five times needs most.
+ */
+export function retryQueuedMessage(chatMessageId: string) {
+  if (!isOutboxMessageId(chatMessageId)) return;
+
+  const localId = chatMessageId.slice("outbox-".length);
+  if (!read().some((message) => message.localId === localId)) return;
+
+  update(localId, { failed: false, lastError: undefined });
+  void flushOutbox();
+}

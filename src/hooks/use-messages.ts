@@ -7,12 +7,8 @@ import { useMessageRealtime } from "./useMessageRealtime";
 import { useUserPresence } from "./useRealtime";
 import { Message, Conversation } from "@/types/chat";
 import { setOfflineCache } from "@/lib/offline/offlineStorage";
-import {
-  getOutboxForConversation,
-  outboxMessageToChatMessage,
-  subscribeToOutbox,
-  type OutboxMessage,
-} from "@/lib/offline/messageOutbox";
+import { outboxMessageToChatMessage } from "@/lib/offline/messageOutbox";
+import { useOutboxForConversation } from "./useMessageOutbox";
 
 /**
  * Hook for managing conversations and messages with real-time updates and offline caching
@@ -253,13 +249,7 @@ export const useMessages = (userId: string, activeChatId?: string | null) => {
   // Kept beside `messages` rather than mixed into it: that state is replaced
   // wholesale every time the conversation is fetched, which would drop a
   // queued message from view each refresh even though it is safely stored.
-  const [outboxMessages, setOutboxMessages] = useState<OutboxMessage[]>([]);
-
-  useEffect(() => {
-    const sync = () => setOutboxMessages(activeChat ? getOutboxForConversation(activeChat) : []);
-    sync();
-    return subscribeToOutbox(sync);
-  }, [activeChat]);
+  const outboxMessages = useOutboxForConversation(activeChat);
 
   // A queued message that has just gone out leaves behind a real one this
   // client has not read yet. Re-read both silently, so the clock turns into a
