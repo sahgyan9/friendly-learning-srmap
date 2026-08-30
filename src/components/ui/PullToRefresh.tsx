@@ -31,7 +31,10 @@ export const PullToRefreshIndicator = memo(function PullToRefreshIndicator({
   return (
     <div
       className={cn(
-        "fixed inset-x-0 top-0 z-50 pointer-events-none flex justify-center",
+        // z-[60] beats SiteHeader's sticky z-50 — same top-0, so without a
+        // higher layer the header (mounted after this in App.tsx) paints
+        // over the badge and only a sliver shows below the navbar.
+        "fixed inset-x-0 top-0 z-[60] pointer-events-none flex justify-center",
         className,
       )}
       aria-hidden="true"
