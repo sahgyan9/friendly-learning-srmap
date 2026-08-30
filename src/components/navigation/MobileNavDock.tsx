@@ -457,7 +457,64 @@ export function MobileNavDock() {
               </div>
             </div>
 
+            {/* Order here is by how far someone had to reach for it: the
+                links they came for, then the two controls that belong to the
+                phone rather than the site, then the destinations already one
+                tap away in the dock itself. */}
             <div className="px-5 space-y-4 pt-1">
+              {/* Secondary Navigation Links */}
+              <div>
+                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">
+                  Resources & Info
+                </span>
+                <div className="grid grid-cols-2 gap-1.5 mt-2">
+                  {SECONDARY_NAV.map((item) => {
+                    const active = isActive(item.url);
+                    return (
+                      <Link
+                        key={item.url}
+                        to={item.url}
+                        aria-current={active ? "page" : undefined}
+                        className={cn(
+                          "flex items-center rounded-lg px-3 py-2 text-sm transition-colors",
+                          active
+                            ? "bg-primary/10 text-primary font-medium"
+                            : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                        )}
+                      >
+                        {item.name}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Appearance, with the account avatar beside it — both are
+                  "this device, this person" controls rather than places to
+                  go, so they share a row instead of each taking a strip. */}
+              <div className="flex items-center justify-between gap-2 rounded-xl bg-muted/40 p-2.5 border border-border/40">
+                <span className="text-sm font-medium pl-1">Appearance</span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => toggleTheme()}
+                    className="flex items-center gap-2 rounded-lg bg-background px-3 py-1.5 text-xs font-medium shadow-xs border border-border/60 hover:bg-muted transition-colors"
+                  >
+                    <span className="relative flex h-3.5 w-3.5 items-center justify-center" aria-hidden>
+                      <Sun className="absolute h-3.5 w-3.5 rotate-0 scale-100 transition-transform duration-300 dark:-rotate-90 dark:scale-0" />
+                      <Moon className="absolute h-3.5 w-3.5 rotate-90 scale-0 text-yellow-400 transition-transform duration-300 dark:rotate-0 dark:scale-100" />
+                    </span>
+                    <span className="dark:hidden">Dark Mode</span>
+                    <span className="hidden dark:inline">Light Mode</span>
+                  </button>
+                  {user && <NavbarProfileMenu />}
+                </div>
+              </div>
+
+              <Separator />
+
               {/* Additional Core Destinations */}
               <div>
                 <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">
@@ -507,68 +564,15 @@ export function MobileNavDock() {
                 </div>
               </div>
 
-              <Separator />
-
-              {/* Secondary Navigation Links */}
-              <div>
-                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">
-                  Resources & Info
-                </span>
-                <div className="grid grid-cols-2 gap-1.5 mt-2">
-                  {SECONDARY_NAV.map((item) => {
-                    const active = isActive(item.url);
-                    return (
-                      <Link
-                        key={item.url}
-                        to={item.url}
-                        aria-current={active ? "page" : undefined}
-                        className={cn(
-                          "flex items-center rounded-lg px-3 py-2 text-sm transition-colors",
-                          active
-                            ? "bg-primary/10 text-primary font-medium"
-                            : "text-muted-foreground hover:bg-muted hover:text-foreground",
-                        )}
-                      >
-                        {item.name}
-                      </Link>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <Separator />
-
-              {/* Theme Toggle Strip */}
-              <div className="flex items-center justify-between rounded-xl bg-muted/40 p-3 border border-border/40">
-                <span className="text-sm font-medium">Appearance</span>
-                <button
-                  type="button"
-                  onClick={() => toggleTheme()}
-                  className="flex items-center gap-2 rounded-lg bg-background px-3 py-1.5 text-xs font-medium shadow-xs border border-border/60 hover:bg-muted transition-colors"
-                >
-                  <span className="relative flex h-3.5 w-3.5 items-center justify-center" aria-hidden>
-                    <Sun className="absolute h-3.5 w-3.5 rotate-0 scale-100 transition-transform duration-300 dark:-rotate-90 dark:scale-0" />
-                    <Moon className="absolute h-3.5 w-3.5 rotate-90 scale-0 text-yellow-400 transition-transform duration-300 dark:rotate-0 dark:scale-100" />
-                  </span>
-                  <span className="dark:hidden">Dark Mode</span>
-                  <span className="hidden dark:inline">Light Mode</span>
-                </button>
-              </div>
-
-              {/* Account / Auth Actions */}
-              <div className="pt-1">
-                {user ? (
-                  <div className="rounded-xl border border-border/60 p-2 bg-muted/20">
-                    <NavbarProfileMenu />
-                  </div>
-                ) : (
-                  <Button asChild className="w-full">
-                    <Link to="/signin" state={{ from: location }}>
-                      Sign in
-                    </Link>
-                  </Button>
-                )}
-              </div>
+              {/* Signed out, the avatar's slot in the Appearance row is empty
+                  and this is the one thing worth offering instead. */}
+              {!user && (
+                <Button asChild className="w-full">
+                  <Link to="/signin" state={{ from: location }}>
+                    Sign in
+                  </Link>
+                </Button>
+              )}
             </div>
           </SheetContent>
         </Sheet>
