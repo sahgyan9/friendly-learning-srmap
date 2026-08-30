@@ -1252,113 +1252,46 @@ export default function ProfileSetupStudio() {
           </section>
         )}
 
-        {/* Onboarding Kickstart / Mode Selector */}
-        {!isPublished && completeness.score < 60 ? (
-          <section className="rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/10 via-background to-indigo-500/10 p-5 sm:p-6 shadow-xs">
-            <div className="max-w-2xl space-y-1.5 mb-5">
-              <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/15 px-2.5 py-0.5 text-2xs font-bold text-primary uppercase tracking-wider">
-                <Sparkles className="h-3 w-3" />
-                Fast Setup
+        {/* Sleek AI Fast-Track Banner (Compact & Non-Intrusive) */}
+        <section className="rounded-2xl border border-primary/25 bg-gradient-to-r from-primary/10 via-indigo-500/5 to-purple-500/10 p-4 sm:p-5 shadow-xs">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-xs">
+                <Sparkles className="h-5 w-5" />
               </div>
-              <h2 className="text-base sm:text-lg font-extrabold text-foreground">
-                Import your resume or fill details below
-              </h2>
-              <p className="text-xs sm:text-sm text-muted-foreground">
-                Upload your resume (PDF or .docx) to auto-extract skills, projects, experience, headline, and bio in ~5 seconds.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Option A: Fast Resume Import */}
-              <div className="rounded-xl border border-primary/40 bg-card p-4 sm:p-5 flex flex-col justify-between gap-3 shadow-xs hover:border-primary transition-all">
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <span className="inline-flex items-center gap-1 text-2xs font-extrabold bg-primary text-primary-foreground px-2 py-0.5 rounded-md uppercase tracking-wider">
-                      ⚡ AI Auto-Fill
-                    </span>
-                    <FileText className="h-4 w-4 text-primary" />
-                  </div>
-                  <h3 className="text-sm font-bold text-foreground">
-                    Upload Resume (PDF / Word)
-                  </h3>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    Gemini AI extracts your department, skills, projects, work experience, bio, and mentoring topics instantly.
-                  </p>
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-extrabold text-sm sm:text-base text-foreground">
+                    {isPublished ? "Update Profile with AI" : "Fast-Track Your Profile with AI"}
+                  </span>
+                  <span className="text-2xs font-bold text-primary px-2 py-0.5 rounded-md bg-primary/15 uppercase tracking-wider">
+                    AI Auto-Fill
+                  </span>
                 </div>
-                <ResumePdfImport
-                  onImported={handlePdfImported}
-                  buttonLabel="Upload Resume"
-                />
-              </div>
-
-              {/* Option B: Fill Manually */}
-              <div className="rounded-xl border border-border/80 bg-card p-4 sm:p-5 flex flex-col justify-between gap-3 shadow-xs hover:border-border transition-all">
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <span className="inline-flex items-center gap-1 text-2xs font-bold bg-muted text-muted-foreground px-2 py-0.5 rounded-md uppercase tracking-wider">
-                      ✍️ Custom Entry
-                    </span>
-                    <UserRound className="h-4 w-4 text-muted-foreground" />
-                  </div>
-                  <h3 className="text-sm font-bold text-foreground">
-                    Fill Step-by-Step
-                  </h3>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    Prefer entering details by hand? Scroll down to customize your bio, pick your skills, and add your projects.
-                  </p>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    document.getElementById("section-basic-info")?.scrollIntoView({ behavior: "smooth" });
-                  }}
-                  className="font-bold text-xs"
-                >
-                  Start Custom Form
-                </Button>
-              </div>
-            </div>
-          </section>
-        ) : (
-          <section className="rounded-2xl border border-primary/20 bg-gradient-to-r from-primary/5 via-background to-indigo-500/5 p-4 sm:p-5 shadow-xs">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="space-y-1">
-                <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/15 px-2.5 py-0.5 text-2xs font-bold text-primary uppercase tracking-wider">
-                  {isPublished ? <CheckCircle2 className="h-3 w-3 text-emerald-500" /> : <Zap className="h-3 w-3" />}
-                  {isPublished ? "Profile Management" : "Smart Auto-Draft"}
-                </div>
-                <h2 className="text-sm sm:text-base font-bold text-foreground">
-                  {isPublished
-                    ? "Update skills, re-sync resume, or refresh summaries"
-                    : "Auto-fill your headline, outcomes, and topics with AI"}
-                </h2>
-                <p className="text-xs text-muted-foreground">
-                  {isPublished
-                    ? "Upload a new resume to merge new skills & projects with a visual comparison, or auto-draft fresh summaries anytime."
-                    : "Upload your resume or click Auto-Draft to generate tailored profile summaries."}
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Upload your resume (PDF or .docx) to auto-extract skills, projects, experience, headline, and bio in ~5 seconds — or customize the sections below directly.
                 </p>
               </div>
-
-              <div className="flex flex-wrap items-center gap-2 shrink-0">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={handleAutoDraftAll}
-                  className="gap-1.5 font-bold text-xs bg-background/80"
-                >
-                  <Sparkles className="h-3.5 w-3.5 text-primary" />
-                  {isPublished ? "Regenerate Summaries" : "Auto-Draft All"}
-                </Button>
-                <ResumePdfImport
-                  variant="button"
-                  onImported={handlePdfImported}
-                  buttonLabel={isPublished ? "Re-upload Resume" : "Fill from Resume"}
-                />
-              </div>
             </div>
-          </section>
-        )}
+
+            <div className="flex items-center gap-2 shrink-0 self-start sm:self-center">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleAutoDraftAll}
+                className="gap-1.5 text-xs font-semibold bg-background/80 hover:bg-background"
+              >
+                <Sparkles className="h-3.5 w-3.5 text-primary" />
+                AI Auto-Draft
+              </Button>
+              <ResumePdfImport
+                variant="button"
+                onImported={handlePdfImported}
+                buttonLabel={isPublished ? "Re-upload Resume" : "Upload Resume"}
+              />
+            </div>
+          </div>
+        </section>
 
         {/* Portal nudge banner */}
         <AnimatePresence>
