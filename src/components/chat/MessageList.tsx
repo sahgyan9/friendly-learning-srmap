@@ -34,6 +34,7 @@ import { ChatMessageContent } from "./ChatMessageContent";
 import { SwipeableMessage } from "./SwipeableMessage";
 import TypingIndicator from "./TypingIndicator";
 import MessageStatus from "./MessageStatus";
+import { triggerHaptic } from "@/lib/haptics";
 import { isEmojiOnly, getEmojiCount, getEmojiFontSizeClass } from "@/utils/emoji-utils";
 import { isToday, isYesterday, isSameYear } from "date-fns";
 
@@ -97,20 +98,26 @@ const MessageList = ({
   const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
   const [messageToDelete, setMessageToDelete] = useState<string | null>(null);
   const [activeReactionMsgId, setActiveReactionMsgId] = useState<string | null>(null);
+  // Set by a long press on touch devices, where the hover action bar below
+  // never gets a hover state to reveal it.
+  const [activeActionsMsgId, setActiveActionsMsgId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const { typingUsers } = useTypingIndicator(conversationId, currentUserId);
 
   useEffect(() => {
-    if (!activeReactionMsgId) return;
+    if (!activeReactionMsgId && !activeActionsMsgId) return;
     const handleClickOutside = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
-      if (!target.closest(`[data-reaction-picker="${activeReactionMsgId}"]`)) {
+      if (activeReactionMsgId && !target.closest(`[data-reaction-picker="${activeReactionMsgId}"]`)) {
         setActiveReactionMsgId(null);
+      }
+      if (activeActionsMsgId && !target.closest(`[data-message-actions="${activeActionsMsgId}"]`)) {
+        setActiveActionsMsgId(null);
       }
     };
     window.addEventListener("click", handleClickOutside);
     return () => window.removeEventListener("click", handleClickOutside);
-  }, [activeReactionMsgId]);
+  }, [activeReactionMsgId, activeActionsMsgId]);
 
   const scrollToBottom = useCallback((behavior: ScrollBehavior = "smooth") => {
     const el = containerRef.current;
@@ -122,6 +129,8 @@ const MessageList = ({
     isFirstRender.current = true;
     setIsPinnedToBottom(true);
     setUnseenCount(0);
+    setActiveReactionMsgId(null);
+    setActiveActionsMsgId(null);
   }, [conversationId]);
 
   useEffect(() => {
@@ -303,7 +312,10 @@ const MessageList = ({
                 </div>
               )}
 
-              <SwipeableMessage onReply={onReply ? () => onReply(message) : undefined}>
+              <SwipeableMessage
+                onReply={onReply ? () => onReply(message) : undefined}
+                onLongPress={() => setActiveActionsMsgId(message.id)}
+              >
                 <div
                   id={`chat-msg-${message.id}`}
                   className={cn(
@@ -331,7 +343,13 @@ const MessageList = ({
 
                   {/* WhatsApp-Style Hover Action Bar (For Sender's own messages: left of bubble) */}
                   {isMine && (
-                    <div className="mb-1 flex items-center gap-0.5 rounded-full border border-border/80 bg-background/95 px-1 py-0.5 opacity-0 shadow-sm backdrop-blur-md transition-opacity duration-200 group-hover:opacity-100 focus-within:opacity-100 dark:border-white/15 dark:bg-card/90">
+                    <div
+                      data-message-actions={message.id}
+                      className={cn(
+                        "mb-1 flex items-center gap-0.5 rounded-full border border-border/80 bg-background/95 px-1 py-0.5 opacity-0 shadow-sm backdrop-blur-md transition-opacity duration-200 group-hover:opacity-100 focus-within:opacity-100 dark:border-white/15 dark:bg-card/90",
+                        activeActionsMsgId === message.id && "opacity-100",
+                      )}
+                    >
                       {/* Reaction Picker Button */}
                       <div className="relative" data-reaction-picker={message.id}>
                         <button
@@ -366,6 +384,7 @@ const MessageList = ({
                                     e.stopPropagation();
                                     onReaction?.(message.id, emoji);
                                     setActiveReactionMsgId(null);
+                                    setActiveActionsMsgId(null);
                                   }}
                                   className={cn(
                                     "flex h-7 w-7 items-center justify-center rounded-full text-base transition-all hover:scale-125 active:scale-95",
@@ -383,7 +402,7 @@ const MessageList = ({
 
                       <button
                         type="button"
-                        onClick={() => onReply?.(message)}
+                        onClick={() => { onReply?.(message); setActiveActionsMsgId(null); }}
                         className="rounded-full p-1 text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
                         title="Reply"
                         aria-label="Reply to message"
@@ -392,7 +411,7 @@ const MessageList = ({
                       </button>
                       <button
                         type="button"
-                        onClick={() => handleCopyMessage(message.content, message.id)}
+                        onClick={() => { handleCopyMessage(message.content, message.id); setActiveActionsMsgId(null); }}
                         className={cn(
                           "rounded-full p-1 transition-colors",
                           isCopied
@@ -407,7 +426,7 @@ const MessageList = ({
                       {isWithin30Min && onEdit && (
                         <button
                           type="button"
-                          onClick={() => onEdit(message)}
+                          onClick={() => { onEdit(message); setActiveActionsMsgId(null); }}
                           className="rounded-full p-1 text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
                           title="Edit message (within 30m)"
                           aria-label="Edit message"
@@ -418,7 +437,7 @@ const MessageList = ({
                       {isWithin30Min && onDelete && (
                         <button
                           type="button"
-                          onClick={() => setMessageToDelete(message.id)}
+                          onClick={() => { setMessageToDelete(message.id); setActiveActionsMsgId(null); }}
                           className="rounded-full p-1 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
                           title="Delete message (within 30m)"
                           aria-label="Delete message"
@@ -559,7 +578,13 @@ const MessageList = ({
 
                   {/* WhatsApp-Style Hover Action Bar (For Received messages: right of bubble) */}
                   {!isMine && (
-                    <div className="mb-1 flex items-center gap-0.5 rounded-full border border-border/80 bg-background/95 px-1 py-0.5 opacity-0 shadow-sm backdrop-blur-md transition-opacity duration-200 group-hover:opacity-100 focus-within:opacity-100 dark:border-white/15 dark:bg-card/90">
+                    <div
+                      data-message-actions={message.id}
+                      className={cn(
+                        "mb-1 flex items-center gap-0.5 rounded-full border border-border/80 bg-background/95 px-1 py-0.5 opacity-0 shadow-sm backdrop-blur-md transition-opacity duration-200 group-hover:opacity-100 focus-within:opacity-100 dark:border-white/15 dark:bg-card/90",
+                        activeActionsMsgId === message.id && "opacity-100",
+                      )}
+                    >
                       {/* Reaction Picker Button */}
                       <div className="relative" data-reaction-picker={message.id}>
                         <button
@@ -594,6 +619,7 @@ const MessageList = ({
                                     e.stopPropagation();
                                     onReaction?.(message.id, emoji);
                                     setActiveReactionMsgId(null);
+                                    setActiveActionsMsgId(null);
                                   }}
                                   className={cn(
                                     "flex h-7 w-7 items-center justify-center rounded-full text-base transition-all hover:scale-125 active:scale-95",
@@ -611,7 +637,7 @@ const MessageList = ({
 
                       <button
                         type="button"
-                        onClick={() => onReply?.(message)}
+                        onClick={() => { onReply?.(message); setActiveActionsMsgId(null); }}
                         className="rounded-full p-1 text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
                         title="Reply"
                         aria-label="Reply to message"
@@ -620,7 +646,7 @@ const MessageList = ({
                       </button>
                       <button
                         type="button"
-                        onClick={() => handleCopyMessage(message.content, message.id)}
+                        onClick={() => { handleCopyMessage(message.content, message.id); setActiveActionsMsgId(null); }}
                         className={cn(
                           "rounded-full p-1 transition-colors",
                           isCopied

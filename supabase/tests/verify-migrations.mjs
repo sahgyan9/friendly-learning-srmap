@@ -540,6 +540,7 @@ for (const file of [
   '20260830120000_event_attendees.sql',
   '20260830130000_direct_message_reactions.sql',
   '20260830140000_allow_everyone_to_rate_mentor.sql',
+  '20260830150000_direct_message_reactions_realtime.sql',
 ]) {
   if (file === '20260804132345_b843f814-46d5-4c25-bc80-32e5f6ebba59.sql') {
     // Production's `faculty` table still carries `profile_image`, a column
@@ -3650,6 +3651,12 @@ check('updating mentor review recalculates mentor average', Number(mentorAfterUp
 await q(`DELETE FROM public.mentor_reviews WHERE mentor_id = $1 AND reviewer_id = $2`, [OTHER_UID, CURRENT_UID]);
 const { rows: [mentorAfterDelete] } = await q(`SELECT rating, review_count FROM public.mentors WHERE id = $1;`, [OTHER_UID]);
 check('deleting mentor review updates mentor average and review_count to 0', Number(mentorAfterDelete?.rating) === 0 && Number(mentorAfterDelete?.review_count) === 0);
+
+console.log('\n--- 20260830150000_direct_message_reactions_realtime.sql ---');
+const { rows: [reactionsInPub] } = await q(`SELECT count(*)::int AS n FROM pg_publication_tables WHERE pubname='supabase_realtime' AND tablename='direct_message_reactions'`);
+check('direct_message_reactions added to the realtime publication (previously a reaction only showed up after a manual refresh)', reactionsInPub.n === 1, `n=${reactionsInPub.n}`);
+const { rows: [messagesInPub] } = await q(`SELECT count(*)::int AS n FROM pg_publication_tables WHERE pubname='supabase_realtime' AND tablename='messages'`);
+check('messages table is in the realtime publication (delivery/read-receipt ticks depend on UPDATE events reaching the sender live)', messagesInPub.n === 1, `n=${messagesInPub.n}`);
 
 console.log(failures === 0
   ? '\nAll migration checks passed against real Postgres.'

@@ -120,6 +120,12 @@ export const useMessages = (userId: string, activeChatId?: string | null) => {
                 ...updatedMessage,
                 sender: msg.sender,
                 reply_to: msg.reply_to,
+                // The raw messages-table row carried by this event has no
+                // reactions/viewer_reactions columns (those are computed by
+                // get_conversation_messages), so spreading it over msg would
+                // otherwise blank out any reaction badges already shown.
+                reactions: msg.reactions,
+                viewer_reactions: msg.viewer_reactions,
               }
             : msg
         )
