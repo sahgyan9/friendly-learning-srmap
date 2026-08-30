@@ -60,7 +60,9 @@ const EDIT_DELETE_WINDOW_MS = 30 * 60 * 1000;
 const dayKey = (iso: string) => new Date(iso).toDateString();
 
 function formatDayLabel(iso: string): string {
+  if (!iso) return "Today";
   const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "Today";
 
   if (isToday(date)) return "Today";
   if (isYesterday(date)) return "Yesterday";

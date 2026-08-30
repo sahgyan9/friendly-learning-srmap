@@ -175,3 +175,38 @@ export async function getOrCreateConversation(user1Id: string, user2Id: string) 
     return { data: null, error: err as Error };
   }
 }
+
+// Fetch single conversation by ID with participant profiles
+export async function getConversationById(conversationId: string): Promise<Conversation | null> {
+  try {
+    const { data: conv, error } = await supabase
+      .from('conversations')
+      .select('*')
+      .eq('id', conversationId)
+      .maybeSingle();
+
+    if (error || !conv) {
+      console.warn('Conversation not found or inaccessible by id:', conversationId, error);
+      return null;
+    }
+
+    const participantIds = [conv.user1_id, conv.user2_id];
+    const profiles = await fetchParticipantProfiles(participantIds);
+
+    const fallback = (id: string): ChatProfile => ({
+      id,
+      name: "Student",
+      profile_image: null,
+      role: "student",
+    });
+
+    return {
+      ...conv,
+      user1: profiles.get(conv.user1_id) ?? fallback(conv.user1_id),
+      user2: profiles.get(conv.user2_id) ?? fallback(conv.user2_id),
+    };
+  } catch (err) {
+    console.error('Error in getConversationById:', err);
+    return null;
+  }
+}

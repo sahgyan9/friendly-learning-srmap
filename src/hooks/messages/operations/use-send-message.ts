@@ -1,7 +1,7 @@
 
 import { toast } from "sonner";
 import { Conversation, Message } from "@/types/chat";
-import { sendMessage as sendMessageApi } from "@/integrations/supabase/services/chat";
+import { sendMessage as sendMessageApi, getConversationById } from "@/integrations/supabase/services/chat";
 import { enqueueMessage } from "@/lib/offline/messageOutbox";
 
 /**
@@ -49,7 +49,11 @@ export const useSendMessage = (userId: string) => {
       return;
     }
 
-    const conversation = conversations.find(c => c.id === conversationId);
+    let conversation = conversations.find(c => c.id === conversationId);
+    if (!conversation) {
+      conversation = await getConversationById(conversationId) ?? undefined;
+    }
+
     if (!conversation) {
       console.error("Conversation not found:", conversationId);
       toast.error("Error: Conversation not found");

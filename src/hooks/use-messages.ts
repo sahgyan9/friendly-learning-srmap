@@ -1,7 +1,7 @@
 import { useEffect, useCallback, useMemo, useState } from "react";
 import { useMessagesState } from "./messages/use-messages-state";
 import { useMessagesOperations } from "./messages/use-messages-operations";
-import { toggleDirectMessageReaction, markMessagesAsRead } from "@/integrations/supabase/services/chat";
+import { toggleDirectMessageReaction, markMessagesAsRead, getConversationById } from "@/integrations/supabase/services/chat";
 import { MESSAGES_SENT_EVENT } from "@/lib/message-events";
 import { useMessageRealtime } from "./useMessageRealtime";
 import { useUserPresence } from "./useRealtime";
@@ -262,6 +262,26 @@ export const useMessages = (userId: string, activeChatId?: string | null) => {
       fetchMessages(activeChat, setMessages, setIsLoadingMessages, setError);
     }
   }, [activeChat]);
+
+  // Ensure active conversation details are loaded into state if not already present
+  useEffect(() => {
+    if (!activeChat || !userId) return;
+
+    const exists = conversations.some((c) => c.id === activeChat);
+    if (!exists) {
+      void getConversationById(activeChat).then((conv) => {
+        if (conv) {
+          setConversations((prev) => {
+            if (prev.some((c) => c.id === conv.id)) return prev;
+            return [conv, ...prev];
+          });
+        } else {
+          // If not found yet, refetch conversations list silently
+          void fetchConversations(setConversations, setActiveChat, setIsLoadingConversations, setError, true);
+        }
+      });
+    }
+  }, [activeChat, userId, conversations]);
 
   // Mark messages as read when viewing a conversation
   useEffect(() => {
