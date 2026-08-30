@@ -220,15 +220,12 @@ Deno.serve(async (req) => {
 
       const {
         profileHtml,
-        courseListHtml,
         transcriptHtml,
         attendanceHtml,
-        timeTableHtml,
-        internalMarksHtml,
-        examDetailsHtml,
+        allSectionsHtml,
       } = await fetchAcademicSections(loginResult.jar);
       const { program, currentSemester, mobileNumber } = parseProfile(profileHtml);
-      const courseMap = parseCourseList(courseListHtml, timeTableHtml, internalMarksHtml, attendanceHtml, examDetailsHtml);
+      const courseMap = parseCourseList(...(allSectionsHtml || []));
       const { cgpa, subjects } = parseTranscript(transcriptHtml);
       const attendanceCourses = parseAttendance(attendanceHtml, courseMap);
 

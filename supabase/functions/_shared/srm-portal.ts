@@ -449,34 +449,35 @@ export interface RegisteredCourse {
 export function cleanFacultyName(raw: string | null | undefined): string | null {
   if (!raw) return null;
   let name = stripTags(raw).trim();
-  // Strip employee codes prefix/suffix like "100234 - Dr. Pranab Mandal" or "Dr. Pranab Mandal (100234)"
-  name = name.replace(/^\d+\s*[-–:]\s*/, "").replace(/\s*\(\d+\)$/, "");
-  // Strip designation/department suffix like "Dr. Pranab Mandal / AP / PHY" or "Dr. Pranab Mandal - Assistant Professor"
+  // Strip employee codes like "( 17023 )" or "100234 - "
+  name = name.replace(/^\d+\s*[-–:]\s*/, "").replace(/\s*\(\s*\d+\s*\)$/, "");
+  // Strip designation/department suffix like "/ AP / PHY"
   name = name.split(/\s*[\/\-–]\s*(?:AP|Prof|Assistant|Associate|Professor|Dept|Department|PHY|CSE|ECE|MECH|CIVIL|MATHS|BIO)/i)[0].trim();
 
   if (name.length < 3 || /^(tba|not assigned|staff|null|undefined|none|-|--)$/i.test(name)) {
     return null;
   }
-  // Must have alphabetical characters
   if (!/[a-zA-Z]{3,}/.test(name)) return null;
 
-  // Title case if in ALL CAPS
-  if (name === name.toUpperCase() && name.length > 4) {
+  // Normalize prefix (Dr. / Prof. / Mr. / Ms. / Mrs.)
+  let prefix = "";
+  const prefixMatch = name.match(/^(Dr\.?|Prof\.?|Mr\.?|Ms\.?|Mrs\.?)\s+/i);
+  if (prefixMatch) {
+    const rawPre = prefixMatch[1].replace(/\.?$/, ".");
+    prefix = rawPre.charAt(0).toUpperCase() + rawPre.slice(1).toLowerCase() + " ";
+    name = name.slice(prefixMatch[0].length).trim();
+  }
+
+  // Convert name portion to Title Case if all uppercase
+  if (name === name.toUpperCase() && name.length > 2) {
     name = name
       .toLowerCase()
       .split(" ")
       .map((w) => (w.length > 0 ? w[0].toUpperCase() + w.slice(1) : ""))
       .join(" ");
   }
-  name = name
-    .replace(/^Dr\.?\s+/i, "Dr. ")
-    .replace(/^Prof\.?\s+/i, "Prof. ")
-    .replace(/^Mr\.?\s+/i, "Mr. ")
-    .replace(/^Ms\.?\s+/i, "Ms. ")
-    .replace(/^Mrs\.?\s+/i, "Mrs. ")
-    .trim();
 
-  return name;
+  return (prefix + name).trim();
 }
 
 export function cleanSlot(raw: string | null | undefined): string | null {
@@ -519,17 +520,17 @@ export function parseCourseList(...htmlSources: (string | undefined)[]): Record<
 
     for (const row of allRows) {
       const rowStr = row.join(" ").toLowerCase();
-      if (rowStr.includes("course") || rowStr.includes("subject") || rowStr.includes("code") || rowStr.includes("faculty") || rowStr.includes("slot") || rowStr.includes("teacher")) {
+      if (rowStr.includes("course") || rowStr.includes("subject") || rowStr.includes("code") || rowStr.includes("faculty") || rowStr.includes("slot") || rowStr.includes("teacher") || rowStr.includes("l-t-p-c")) {
         row.forEach((cell, idx) => {
           const c = cell.toLowerCase().trim();
           if (c.includes("course code") || c.includes("sub code") || c.includes("subject code") || c === "code") headerMap.code = idx;
-          else if (c.includes("course title") || c.includes("course name") || c.includes("sub desc") || c.includes("subject description") || c.includes("subject name") || c.includes("description") || c.includes("title")) headerMap.name = idx;
+          else if (c.includes("subjects description") || c.includes("subject description") || c.includes("course title") || c.includes("course name") || c.includes("sub desc") || c.includes("subject name") || c.includes("description") || c.includes("title")) headerMap.name = idx;
           else if (c === "slot" || c.includes("slot code") || c.includes("course slot") || c === "batch/slot" || c.includes("slot")) headerMap.slot = idx;
           else if (c.includes("faculty") || c.includes("teacher") || c.includes("staff") || c.includes("instructor") || c.includes("handled by") || c.includes("advisor")) headerMap.faculty = idx;
           else if (c === "type" || c.includes("course type")) headerMap.type = idx;
-          else if (c === "credit" || c.includes("credits")) headerMap.credit = idx;
+          else if (c.includes("l-t-p-c") || c.includes("ltpc") || c === "credit" || c.includes("credits")) headerMap.credit = idx;
         });
-        if (headerMap.code !== undefined && (headerMap.faculty !== undefined || headerMap.slot !== undefined || headerMap.name !== undefined)) {
+        if (headerMap.code !== undefined || headerMap.faculty !== undefined || headerMap.slot !== undefined || headerMap.name !== undefined) {
           break;
         }
       }
@@ -538,38 +539,48 @@ export function parseCourseList(...htmlSources: (string | undefined)[]): Record<
     // 2. Parse data rows
     for (const cells of allRows) {
       const firstCell = (cells[0] || "").toLowerCase();
-      if (firstCell.includes("s.no") || firstCell.includes("subject code") || firstCell.includes("course code") || firstCell.includes("sl.no")) {
+      if (firstCell.includes("s.no") || firstCell.includes("subject code") || firstCell.includes("course code") || firstCell.includes("sl.no") || firstCell.includes("subjects description")) {
         continue;
       }
 
       let code = "";
-      let codeIndex = -1;
-
-      if (headerMap.code !== undefined && /^[A-Z]{2,4}\s*\d{3}[A-Z0-9]*$/i.test(cells[headerMap.code])) {
-        code = cells[headerMap.code].toUpperCase();
-        codeIndex = headerMap.code;
-      } else {
-        for (let i = 0; i < cells.length; i++) {
-          if (/^[A-Z]{2,4}\s*\d{3}[A-Z0-9]*$/i.test(cells[i])) {
-            code = cells[i].toUpperCase();
-            codeIndex = i;
-            break;
-          }
-        }
-      }
-
-      if (!code) continue;
-
       let name = "";
       let slot: string | null = null;
       let facultyName: string | null = null;
       let courseType: string | null = null;
       let credit: number | null = null;
 
-      if (headerMap.name !== undefined && cells[headerMap.name]) {
-        name = cells[headerMap.name];
-      } else if (codeIndex + 1 < cells.length && isNaN(Number(cells[codeIndex + 1]))) {
-        name = cells[codeIndex + 1];
+      // Check if course code is embedded in Subjects Description (e.g. "PHY 424 ELECTRONIC MATERIALS AND DEVICE PHYSICS")
+      for (let i = 0; i < cells.length; i++) {
+        const cellText = cells[i];
+        const match = cellText.match(/^([A-Z]{2,4}\s*\d{3}[A-Z0-9]*)\s*[-:]?\s*(.*)$/i);
+        if (match) {
+          code = match[1].toUpperCase().trim();
+          name = match[2].trim();
+          break;
+        }
+      }
+
+      // If code was not matched in single cell, check regular cell matching
+      if (!code) {
+        if (headerMap.code !== undefined && /^[A-Z]{2,4}\s*\d{3}[A-Z0-9]*$/i.test(cells[headerMap.code])) {
+          code = cells[headerMap.code].toUpperCase();
+        } else {
+          for (let i = 0; i < cells.length; i++) {
+            if (/^[A-Z]{2,4}\s*\d{3}[A-Z0-9]*$/i.test(cells[i])) {
+              code = cells[i].toUpperCase();
+              break;
+            }
+          }
+        }
+      }
+
+      if (!code) continue;
+
+      if (!name) {
+        if (headerMap.name !== undefined && cells[headerMap.name]) {
+          name = cells[headerMap.name];
+        }
       }
 
       if (headerMap.slot !== undefined && cells[headerMap.slot]) {
@@ -585,13 +596,13 @@ export function parseCourseList(...htmlSources: (string | undefined)[]): Record<
       }
 
       if (headerMap.credit !== undefined && cells[headerMap.credit]) {
-        const parsedCredit = parseInt(cells[headerMap.credit], 10);
+        const parsedCredit = parseInt(cells[headerMap.credit].replace(/^[^\d]*/, ""), 10);
         if (!isNaN(parsedCredit)) credit = parsedCredit;
       }
 
       // Fallback cell inspection if headers were not present or incomplete
       if (!slot || !facultyName) {
-        for (let i = codeIndex + 1; i < cells.length; i++) {
+        for (let i = 0; i < cells.length; i++) {
           const val = cells[i];
           if (!val) continue;
 
@@ -914,6 +925,7 @@ export async function fetchAcademicSections(
   timeTableHtml: string;
   internalMarksHtml: string;
   examDetailsHtml: string;
+  allSectionsHtml: string[];
 }> {
   const fetchSection = (id: number) =>
     fetch(`${PORTAL_BASE}/students/report/studentreportresources.jsp`, {
@@ -931,32 +943,18 @@ export async function fetchAcademicSections(
         return "";
       });
 
-  const [
-    profileHtml,
-    courseListHtml,
-    attendanceHtml,
-    internalMarksHtml,
-    timeTableHtml,
-    transcriptHtml,
-    examDetailsHtml,
-  ] = await Promise.all([
-    fetchSection(1),
-    fetchSection(2),
-    fetchSection(3),
-    fetchSection(4),
-    fetchSection(5),
-    fetchSection(6),
-    fetchSection(7),
-  ]);
+  const sectionIds = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
+  const allSectionsHtml = await Promise.all(sectionIds.map((id) => fetchSection(id)));
 
   return {
-    profileHtml,
-    courseListHtml,
-    transcriptHtml,
-    attendanceHtml,
-    timeTableHtml,
-    internalMarksHtml,
-    examDetailsHtml,
+    profileHtml: allSectionsHtml[0] || "",
+    courseListHtml: allSectionsHtml[1] || "",
+    attendanceHtml: allSectionsHtml[2] || "",
+    internalMarksHtml: allSectionsHtml[3] || "",
+    timeTableHtml: allSectionsHtml[4] || "",
+    transcriptHtml: allSectionsHtml[5] || "",
+    examDetailsHtml: allSectionsHtml[6] || "",
+    allSectionsHtml,
   };
 }
 
