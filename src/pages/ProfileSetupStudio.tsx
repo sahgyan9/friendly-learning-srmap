@@ -22,7 +22,7 @@ import {
   FolderGit2,
   Briefcase,
   ExternalLink,
-  HelpCircle,
+  RotateCcw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,6 +41,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import ResumePdfImport from "@/components/mentors/form/ResumePdfImport";
+import ResumeUpdateDiffModal from "@/components/profile/ResumeUpdateDiffModal";
 import { ImportSrmPortalDialog } from "@/components/profile/ImportSrmPortal";
 import PostPublishPortalModal from "@/components/profile/PostPublishPortalModal";
 import { ProfileAvatarUploader } from "@/components/profile/ProfileAvatarUploader";
@@ -192,6 +193,8 @@ export default function ProfileSetupStudio() {
   const [isSaving, setIsSaving] = useState(false);
   const [isPublished, setIsPublished] = useState(false);
   const [previewModalOpen, setPreviewModalOpen] = useState(false);
+  const [diffModalOpen, setDiffModalOpen] = useState(false);
+  const [pendingResumeData, setPendingResumeData] = useState<Record<string, any> | null>(null);
   const [portalDialogOpen, setPortalDialogOpen] = useState(false);
   const [postPublishModalOpen, setPostPublishModalOpen] = useState(false);
 
@@ -199,6 +202,9 @@ export default function ProfileSetupStudio() {
   const initialNudgeCheckedRef = useRef(false);
   const hasAutoDraftedRef = useRef(false);
   const portalNudgeDismissKey = user ? `portal-nudge-dismissed-${user.id}` : null;
+
+  // Baseline state loaded from database (for 1-click per-section revert)
+  const [baselineState, setBaselineState] = useState<StudioProfileState | null>(null);
 
   // Studio Form State
   const [state, setState] = useState<StudioProfileState>({
@@ -316,7 +322,7 @@ export default function ProfileSetupStudio() {
             }))
           : [];
 
-        setState({
+        const initialSnapshot: StudioProfileState = {
           name: studentName,
           department: studentDept,
           year_of_studies: studentYear,
@@ -333,7 +339,10 @@ export default function ProfileSetupStudio() {
           isDiscoverable: !alreadyPublished ? true : (userData?.interests_discoverable ?? true),
           isAvailable: mentorData?.is_available ?? true,
           courses: coursesList,
-        });
+        };
+
+        setState(initialSnapshot);
+        setBaselineState(initialSnapshot);
       } catch (err) {
         console.error("Error loading profile studio data:", err);
       } finally {
@@ -403,6 +412,30 @@ export default function ProfileSetupStudio() {
     state.bio,
     state.year_of_studies,
   ]);
+
+  // Check if a specific section differs from the baseline snapshot
+  const isSectionModified = (key: keyof StudioProfileState): boolean => {
+    if (!baselineState) return false;
+    if (key === "tagline") return state.tagline !== baselineState.tagline;
+    if (key === "bio") return state.bio !== baselineState.bio;
+    if (key === "skills") return JSON.stringify(state.skills) !== JSON.stringify(baselineState.skills);
+    if (key === "projects") return JSON.stringify(state.projects) !== JSON.stringify(baselineState.projects);
+    if (key === "experiences") return JSON.stringify(state.experiences) !== JSON.stringify(baselineState.experiences);
+    if (key === "outcomes") return JSON.stringify(state.outcomes) !== JSON.stringify(baselineState.outcomes);
+    if (key === "ask_me_anything") return JSON.stringify(state.ask_me_anything) !== JSON.stringify(baselineState.ask_me_anything);
+    if (key === "ideal_mentees") return JSON.stringify(state.ideal_mentees) !== JSON.stringify(baselineState.ideal_mentees);
+    return false;
+  };
+
+  // Revert a single section to its baseline saved value
+  const handleRevertSection = (key: keyof StudioProfileState, label: string) => {
+    if (!baselineState) return;
+    setState((prev) => ({
+      ...prev,
+      [key]: baselineState[key],
+    }));
+    toast.success(`Restored ${label} to your previously saved version`);
+  };
 
   // One-click AI Auto-Draft for all sections
   const handleAutoDraftAll = () => {
@@ -475,8 +508,26 @@ export default function ProfileSetupStudio() {
     }
   };
 
-  // Handle PDF import structured extraction
+  // Handle PDF import structured extraction: Route existing profiles through Diff Modal
   const handlePdfImported = (data: Record<string, any>) => {
+    const hasExistingData =
+      isPublished ||
+      state.skills.length > 0 ||
+      state.tagline.trim().length > 0 ||
+      state.projects.length > 0 ||
+      state.bio.trim().length > 0;
+
+    if (hasExistingData) {
+      // Existing profile: Open comparison sheet
+      setPendingResumeData(data);
+      setDiffModalOpen(true);
+    } else {
+      // First-time empty setup: Apply directly
+      applyDirectExtraction(data);
+    }
+  };
+
+  const applyDirectExtraction = (data: Record<string, any>) => {
     setState((prev) => {
       const newSkills = Array.isArray(data.skills)
         ? data.skills
@@ -512,7 +563,6 @@ export default function ProfileSetupStudio() {
 
       const finalTagline = data.tagline || prev.tagline || autoDrafts.tagline;
 
-      // Extract projects & experiences if present
       const extractedProjects: ProjectItem[] = Array.isArray(data.projects) && data.projects.length > 0
         ? data.projects.map((p: any) => ({
             id: p.id || crypto.randomUUID(),
@@ -549,12 +599,16 @@ export default function ProfileSetupStudio() {
       };
     });
 
-    toast.success(
-      isPublished
-        ? "Resume updated! We refreshed skills, projects, and bio details."
-        : "Resume parsed! AI filled your skills, headline, projects & experiences."
-    );
+    toast.success("Resume parsed! Skills, projects, and bio populated.");
+    setNudgeReason("resume");
+  };
 
+  const handleApplyDiffUpdates = (updates: Partial<StudioProfileState>) => {
+    setState((prev) => ({
+      ...prev,
+      ...updates,
+    }));
+    toast.success("Resume updates merged! You can edit any field or revert individual sections anytime before saving.");
     setNudgeReason("resume");
   };
 
@@ -868,6 +922,7 @@ export default function ProfileSetupStudio() {
       });
 
       await refreshProfile();
+      setBaselineState(state);
       setIsPublished(true);
 
       const isPortalLinked = state.courses.length > 0 || Boolean(profile?.date_of_birth_linked);
@@ -1100,7 +1155,7 @@ export default function ProfileSetupStudio() {
                 </h2>
                 <p className="text-xs text-muted-foreground">
                   {isPublished
-                    ? "Upload a new resume to merge new skills & projects, or auto-draft fresh summaries anytime."
+                    ? "Upload a new resume to merge new skills & projects with a visual comparison, or auto-draft fresh summaries anytime."
                     : "Upload your resume or click Auto-Draft to generate tailored profile summaries."}
                 </p>
               </div>
@@ -1277,15 +1332,28 @@ export default function ProfileSetupStudio() {
                 <p className="text-xs text-muted-foreground">Appears below your name across CampusMind search results</p>
               </div>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleSuggestTagline}
-              className="gap-1 text-2xs font-semibold text-primary hover:text-primary hover:bg-primary/10 h-7 px-2"
-            >
-              <Sparkles className="h-3 w-3" />
-              AI Suggest
-            </Button>
+            <div className="flex items-center gap-2">
+              {isSectionModified("tagline") && (
+                <button
+                  type="button"
+                  onClick={() => handleRevertSection("tagline", "Tagline")}
+                  className="text-2xs font-semibold text-muted-foreground hover:text-foreground flex items-center gap-1 bg-muted/60 hover:bg-muted px-2 py-0.5 rounded-md transition-colors"
+                  title="Restore to previous saved tagline"
+                >
+                  <RotateCcw className="h-2.5 w-2.5" />
+                  Revert to saved
+                </button>
+              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleSuggestTagline}
+                className="gap-1 text-2xs font-semibold text-primary hover:text-primary hover:bg-primary/10 h-7 px-2"
+              >
+                <Sparkles className="h-3 w-3" />
+                AI Suggest
+              </Button>
+            </div>
           </div>
 
           <div className="space-y-2">
@@ -1351,11 +1419,24 @@ export default function ProfileSetupStudio() {
                 <p className="text-xs text-muted-foreground">Classmates will discover you when searching these topics (min 2 needed)</p>
               </div>
             </div>
-            <span className={`text-2xs font-semibold ${
-              state.skills.length >= 2 ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"
-            }`}>
-              {state.skills.length} added {state.skills.length < 2 && "(min 2 needed)"}
-            </span>
+            <div className="flex items-center gap-2">
+              {isSectionModified("skills") && (
+                <button
+                  type="button"
+                  onClick={() => handleRevertSection("skills", "Skills")}
+                  className="text-2xs font-semibold text-muted-foreground hover:text-foreground flex items-center gap-1 bg-muted/60 hover:bg-muted px-2 py-0.5 rounded-md transition-colors"
+                  title="Restore to previous saved skills"
+                >
+                  <RotateCcw className="h-2.5 w-2.5" />
+                  Revert skills
+                </button>
+              )}
+              <span className={`text-2xs font-semibold ${
+                state.skills.length >= 2 ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"
+              }`}>
+                {state.skills.length} added {state.skills.length < 2 && "(min 2 needed)"}
+              </span>
+            </div>
           </div>
 
           {/* Skill Pills */}
@@ -1455,17 +1536,30 @@ export default function ProfileSetupStudio() {
               </div>
             </div>
 
-            {!showAddProject && state.projects.length < 6 && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowAddProject(true)}
-                className="gap-1 text-xs font-semibold h-7 px-2.5"
-              >
-                <Plus className="h-3.5 w-3.5" />
-                Add Project
-              </Button>
-            )}
+            <div className="flex items-center gap-2">
+              {isSectionModified("projects") && (
+                <button
+                  type="button"
+                  onClick={() => handleRevertSection("projects", "Projects")}
+                  className="text-2xs font-semibold text-muted-foreground hover:text-foreground flex items-center gap-1 bg-muted/60 hover:bg-muted px-2 py-0.5 rounded-md transition-colors"
+                  title="Restore to previously saved projects"
+                >
+                  <RotateCcw className="h-2.5 w-2.5" />
+                  Revert projects
+                </button>
+              )}
+              {!showAddProject && state.projects.length < 6 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowAddProject(true)}
+                  className="gap-1 text-xs font-semibold h-7 px-2.5"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Add Project
+                </Button>
+              )}
+            </div>
           </div>
 
           {/* Project List */}
@@ -1603,17 +1697,30 @@ export default function ProfileSetupStudio() {
               </div>
             </div>
 
-            {!showAddExp && state.experiences.length < 6 && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowAddExp(true)}
-                className="gap-1 text-xs font-semibold h-7 px-2.5"
-              >
-                <Plus className="h-3.5 w-3.5" />
-                Add Role
-              </Button>
-            )}
+            <div className="flex items-center gap-2">
+              {isSectionModified("experiences") && (
+                <button
+                  type="button"
+                  onClick={() => handleRevertSection("experiences", "Experience")}
+                  className="text-2xs font-semibold text-muted-foreground hover:text-foreground flex items-center gap-1 bg-muted/60 hover:bg-muted px-2 py-0.5 rounded-md transition-colors"
+                  title="Restore to previously saved experience entries"
+                >
+                  <RotateCcw className="h-2.5 w-2.5" />
+                  Revert experience
+                </button>
+              )}
+              {!showAddExp && state.experiences.length < 6 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowAddExp(true)}
+                  className="gap-1 text-xs font-semibold h-7 px-2.5"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Add Role
+                </Button>
+              )}
+            </div>
           </div>
 
           {/* Experience List */}
@@ -1741,15 +1848,28 @@ export default function ProfileSetupStudio() {
                 <p className="text-xs text-muted-foreground">Concrete results students walk away with after connecting with you</p>
               </div>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleSuggestOutcomes}
-              className="gap-1 text-2xs font-semibold text-teal-600 hover:text-teal-700 hover:bg-teal-500/10 h-7 px-2"
-            >
-              <Sparkles className="h-3 w-3" />
-              AI Suggest
-            </Button>
+            <div className="flex items-center gap-2">
+              {isSectionModified("outcomes") && (
+                <button
+                  type="button"
+                  onClick={() => handleRevertSection("outcomes", "Outcomes")}
+                  className="text-2xs font-semibold text-muted-foreground hover:text-foreground flex items-center gap-1 bg-muted/60 hover:bg-muted px-2 py-0.5 rounded-md transition-colors"
+                  title="Restore to previously saved outcomes"
+                >
+                  <RotateCcw className="h-2.5 w-2.5" />
+                  Revert outcomes
+                </button>
+              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleSuggestOutcomes}
+                className="gap-1 text-2xs font-semibold text-teal-600 hover:text-teal-700 hover:bg-teal-500/10 h-7 px-2"
+              >
+                <Sparkles className="h-3 w-3" />
+                AI Suggest
+              </Button>
+            </div>
           </div>
 
           <div className="space-y-2">
@@ -1820,15 +1940,28 @@ export default function ProfileSetupStudio() {
                 <p className="text-xs text-muted-foreground">Conversational prompts for peers reaching out</p>
               </div>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleSuggestAma}
-              className="gap-1 text-2xs font-semibold text-sky-600 hover:text-sky-700 hover:bg-sky-500/10 h-7 px-2"
-            >
-              <Sparkles className="h-3 w-3" />
-              AI Suggest
-            </Button>
+            <div className="flex items-center gap-2">
+              {isSectionModified("ask_me_anything") && (
+                <button
+                  type="button"
+                  onClick={() => handleRevertSection("ask_me_anything", "AMA Topics")}
+                  className="text-2xs font-semibold text-muted-foreground hover:text-foreground flex items-center gap-1 bg-muted/60 hover:bg-muted px-2 py-0.5 rounded-md transition-colors"
+                  title="Restore to previously saved AMA topics"
+                >
+                  <RotateCcw className="h-2.5 w-2.5" />
+                  Revert AMA
+                </button>
+              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleSuggestAma}
+                className="gap-1 text-2xs font-semibold text-sky-600 hover:text-sky-700 hover:bg-sky-500/10 h-7 px-2"
+              >
+                <Sparkles className="h-3 w-3" />
+                AI Suggest
+              </Button>
+            </div>
           </div>
 
           <div className="flex flex-wrap gap-2">
@@ -1897,15 +2030,28 @@ export default function ProfileSetupStudio() {
                 <p className="text-xs text-muted-foreground">Helps juniors know immediately if you are the right collaborator</p>
               </div>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleSuggestIdealMentees}
-              className="gap-1 text-2xs font-semibold text-purple-600 hover:text-purple-700 hover:bg-purple-500/10 h-7 px-2"
-            >
-              <Sparkles className="h-3 w-3" />
-              AI Suggest
-            </Button>
+            <div className="flex items-center gap-2">
+              {isSectionModified("ideal_mentees") && (
+                <button
+                  type="button"
+                  onClick={() => handleRevertSection("ideal_mentees", "Target Students")}
+                  className="text-2xs font-semibold text-muted-foreground hover:text-foreground flex items-center gap-1 bg-muted/60 hover:bg-muted px-2 py-0.5 rounded-md transition-colors"
+                  title="Restore to previously saved target students"
+                >
+                  <RotateCcw className="h-2.5 w-2.5" />
+                  Revert target students
+                </button>
+              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleSuggestIdealMentees}
+                className="gap-1 text-2xs font-semibold text-purple-600 hover:text-purple-700 hover:bg-purple-500/10 h-7 px-2"
+              >
+                <Sparkles className="h-3 w-3" />
+                AI Suggest
+              </Button>
+            </div>
           </div>
 
           <div className="space-y-2">
@@ -1963,14 +2109,27 @@ export default function ProfileSetupStudio() {
 
         {/* 9. Bio & Social Links */}
         <div className="rounded-2xl border border-border/80 bg-card p-5 sm:p-6 shadow-xs space-y-4">
-          <div className="flex items-center gap-2 border-b border-border/60 pb-3">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold text-xs">
-              9
+          <div className="flex items-center justify-between border-b border-border/60 pb-3">
+            <div className="flex items-center gap-2">
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold text-xs">
+                9
+              </div>
+              <div>
+                <h3 className="text-sm sm:text-base font-bold text-foreground">Bio & Social Profiles</h3>
+                <p className="text-xs text-muted-foreground">Share your background and connect links</p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-sm sm:text-base font-bold text-foreground">Bio & Social Profiles</h3>
-              <p className="text-xs text-muted-foreground">Share your background and connect links</p>
-            </div>
+            {isSectionModified("bio") && (
+              <button
+                type="button"
+                onClick={() => handleRevertSection("bio", "Bio")}
+                className="text-2xs font-semibold text-muted-foreground hover:text-foreground flex items-center gap-1 bg-muted/60 hover:bg-muted px-2 py-0.5 rounded-md transition-colors"
+                title="Restore to previous saved bio"
+              >
+                <RotateCcw className="h-2.5 w-2.5" />
+                Revert bio
+              </button>
+            )}
           </div>
 
           <div className="space-y-3 text-xs">
@@ -2081,6 +2240,15 @@ export default function ProfileSetupStudio() {
           </div>
         </div>
       </main>
+
+      {/* Resume Update Diff Review Modal (Non-Destructive Comparison) */}
+      <ResumeUpdateDiffModal
+        open={diffModalOpen}
+        onOpenChange={setDiffModalOpen}
+        currentState={state}
+        extractedData={pendingResumeData}
+        onApplyChanges={handleApplyDiffUpdates}
+      />
 
       {/* Quick Preview Modal (Opens on Demand) */}
       <Dialog open={previewModalOpen} onOpenChange={setPreviewModalOpen}>
