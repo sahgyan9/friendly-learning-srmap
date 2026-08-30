@@ -209,7 +209,7 @@ export const EventShareModal: React.FC<EventShareModalProps> = ({
     try {
       const otherUserId = conv.user1_id === user.id ? conv.user2_id : conv.user1_id;
       const messageContent = `📢 **Campus Event Share**\n\n${richShareText}`;
-      const { error } = await sendMessage(conv.id, user.id, messageContent, otherUserId);
+      const { error } = await sendMessage(conv.id, user.id, otherUserId, messageContent);
       if (error) throw error;
 
       setSentDmIds((prev) => new Set([...prev, conv.id]));
