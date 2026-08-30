@@ -58,24 +58,40 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Uploaded images (avatars, post photos, marketplace and event pictures) are
-// served from Supabase Storage. Every upload path in the app names its file
-// with a UUID or a timestamp and never overwrites it — changing your picture
-// writes a new object and rewrites the row's URL — so a given URL always points
-// at the same bytes and is safe to serve from cache without revalidating.
+// Images the app shows come from two places: Supabase Storage (anything a user
+// uploaded) and the wsrv.nl proxy (anything resized through getImageUrl).
+//
+// Both are safe to serve cache-first without revalidating. Every upload path
+// names its file with a UUID or a timestamp and never overwrites it — changing
+// your picture writes a new object and rewrites the row's URL — and a proxy URL
+// carries its whole transform in the query string. Either way, one URL means
+// one unchanging image.
 //
 // This is why avatars visibly re-loaded on every tab switch: the rule below
 // skipped anything on supabase.co, so the browser was left to re-request each
 // one on the default max-age of an hour, and an installed PWA evicts its HTTP
 // cache far more eagerly than a browser tab does.
-function isStorageImageRequest(request, url) {
+function isCacheableImageRequest(request, url) {
+  const looksLikeImage =
+    request.destination === 'image' || /\.(png|jpe?g|gif|webp|avif|svg)$/i.test(url.pathname);
+
+  // The wsrv.nl proxy, which every image in the app that goes through
+  // getImageUrl() is served by — event posters, post photos, anything resized.
+  // The whole transform is encoded in the query string, so one of these URLs
+  // describes exactly one image and can be treated the same way as a storage
+  // object. Without this the events page re-fetched all nineteen posters on
+  // every visit and could not show them offline at all.
+  if (url.hostname === 'wsrv.nl' || url.hostname === 'images.weserv.nl') {
+    return looksLikeImage || url.search.length > 0;
+  }
+
   if (!url.pathname.startsWith('/storage/v1/object/public/')) {
     return false;
   }
   if (!url.hostname.endsWith('.supabase.co') && url.origin !== self.location.origin) {
     return false;
   }
-  return request.destination === 'image' || /\.(png|jpe?g|gif|webp|avif|svg)$/i.test(url.pathname);
+  return looksLikeImage;
 }
 
 // The Cache API has no size limit of its own and no eviction policy, so an
@@ -133,7 +149,7 @@ self.addEventListener('fetch', (event) => {
   // Uploaded images first: these live on supabase.co too, and the API skip
   // below would otherwise send every avatar and post photo straight to the
   // network on every single render.
-  if (isStorageImageRequest(request, url)) {
+  if (isCacheableImageRequest(request, url)) {
     event.respondWith(
       cacheFirstImage(request).catch(async () => {
         const cached = await caches.match(request);
