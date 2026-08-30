@@ -20,6 +20,7 @@ import {
   UserRound,
   ShieldCheck,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { EventsIcon } from "@/components/icons/EventsIcon";
 import { FacultyIcon } from "@/components/icons/FacultyIcon";
 import { GroupsIcon } from "@/components/icons/GroupsIcon";
@@ -99,22 +100,109 @@ const sampleFacultyFallback: Faculty[] = [
   },
 ];
 
-function parseEventDate(value: string | undefined): { month: string; day: string; time: string; isLive: boolean } {
-  if (!value) return { month: "UPC", day: "--", time: "", isLive: false };
+const EventSpeakerPhoto = ({
+  src,
+  title,
+  isLive,
+  size = "sm",
+  className,
+}: {
+  src?: string | null;
+  title: string;
+  isLive?: boolean;
+  size?: "sm" | "md";
+  className?: string;
+}) => {
+  const [failed, setFailed] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+
+  const imageSrc = src && !failed ? getOptimizedImageUrl(src, { width: size === "md" ? 200 : 160, quality: 80 }) : null;
+  const dimensionClass = size === "md" ? "h-14 w-14 rounded-xl" : "h-12 w-12 rounded-xl";
+  const iconClass = size === "md" ? "h-6 w-6" : "h-5 w-5";
+
+  return (
+    <div className={cn("relative shrink-0 mt-0.5", className)}>
+      <div className={cn(dimensionClass, "overflow-hidden border border-border/80 bg-muted/60 shadow-xs flex items-center justify-center")}>
+        {imageSrc ? (
+          <>
+            <img
+              src={imageSrc}
+              alt={title || "Event Speaker / Featured"}
+              className={cn(
+                "h-full w-full object-cover object-top transition-transform duration-300 group-hover:scale-105",
+                loaded ? "opacity-100" : "opacity-0"
+              )}
+              loading="lazy"
+              onLoad={() => setLoaded(true)}
+              onError={() => setFailed(true)}
+            />
+            {!loaded && (
+              <div className="absolute inset-0 flex items-center justify-center bg-violet-500/10 animate-pulse">
+                <GraduationCap className={cn(iconClass, "text-violet-500/50")} />
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-violet-500/15 via-violet-500/8 to-muted/40 text-violet-600 dark:text-violet-400">
+            <GraduationCap className={cn(iconClass, "text-violet-600/70 dark:text-violet-400/80")} />
+          </div>
+        )}
+      </div>
+
+      {/* Speaker cap or Live corner badge */}
+      {isLive ? (
+        <div
+          className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full border-2 border-background bg-violet-600 shadow-2xs"
+          title="Live Now"
+        >
+          <span className="h-1.5 w-1.5 rounded-full bg-white animate-ping" />
+        </div>
+      ) : (
+        <div className="absolute -bottom-1 -right-1 rounded-full border-2 border-background bg-card p-0.5 shadow-2xs">
+          <GraduationCap className="h-2.5 w-2.5 text-violet-600 dark:text-violet-400" />
+        </div>
+      )}
+    </div>
+  );
+};
+
+function parseEventDate(startVal: string | undefined, endVal?: string | undefined): {
+  month: string;
+  day: string;
+  formattedDate: string;
+  time: string;
+  isLive: boolean;
+} {
+  if (!startVal) return { month: "UPC", day: "--", formattedDate: "Upcoming", time: "", isLive: false };
   try {
-    const d = new Date(value.replace(" ", "T") + "+05:30");
-    if (isNaN(d.getTime())) return { month: "UPC", day: "--", time: "", isLive: false };
+    const start = new Date(startVal.replace(" ", "T") + "+05:30");
+    if (isNaN(start.getTime())) return { month: "UPC", day: "--", formattedDate: "Upcoming", time: "", isLive: false };
     
-    const month = d.toLocaleDateString("en-US", { month: "short" }).toUpperCase();
-    const day = d.toLocaleDateString("en-US", { day: "numeric" });
-    const time = d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
+    const month = start.toLocaleDateString("en-US", { month: "short" });
+    const day = start.toLocaleDateString("en-US", { day: "numeric" });
+    const time = start.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
     
     const now = new Date();
-    const isLive = d.toDateString() === now.toDateString();
+    let isLive = false;
+    let formattedDate = `${month} ${day}`;
 
-    return { month, day, time, isLive };
+    if (endVal) {
+      const end = new Date(endVal.replace(" ", "T") + "+05:30");
+      if (!isNaN(end.getTime())) {
+        isLive = now >= start && now <= end;
+        if (start.toDateString() !== end.toDateString()) {
+          const endMonth = end.toLocaleDateString("en-US", { month: "short" });
+          const endDay = end.toLocaleDateString("en-US", { day: "numeric" });
+          formattedDate = month === endMonth ? `${month} ${day} – ${endDay}` : `${month} ${day} – ${endMonth} ${endDay}`;
+        }
+      }
+    } else {
+      isLive = start.toDateString() === now.toDateString();
+    }
+
+    return { month, day, formattedDate, time, isLive };
   } catch {
-    return { month: "UPC", day: "--", time: "", isLive: false };
+    return { month: "UPC", day: "--", formattedDate: "Upcoming", time: "", isLive: false };
   }
 }
 
@@ -205,7 +293,7 @@ export const CampusSidebarWidgets = () => {
 
   return (
     <div className="space-y-4">
-      {/* ── Widget 1: Upcoming Events (Mini Calendar View) ── */}
+      {/* ── Widget 1: Upcoming Events ── */}
       <Card className="p-4 border-border/80 bg-card shadow-xs">
         <div className="flex items-center justify-between mb-3.5">
           <div className="flex items-center gap-2">
@@ -226,13 +314,19 @@ export const CampusSidebarWidgets = () => {
         {eventsLoading ? (
           <div className="space-y-2.5">
             {[0, 1, 2].map((i) => (
-              <div key={i} className="h-16 animate-pulse rounded-xl bg-muted/60" />
+              <div key={i} className="flex items-center gap-3 p-2.5 rounded-xl border border-border/60 bg-muted/20">
+                <div className="h-12 w-12 rounded-xl animate-pulse bg-muted/60 shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-3.5 w-3/4 rounded animate-pulse bg-muted/60" />
+                  <div className="h-2.5 w-1/2 rounded animate-pulse bg-muted/60" />
+                </div>
+              </div>
             ))}
           </div>
         ) : events && events.length > 0 ? (
           <div className="space-y-2.5">
             {events.slice(0, 3).map((event) => {
-              const { month, day, time, isLive } = parseEventDate(event.startDate);
+              const { formattedDate, time, isLive } = parseEventDate(event.startDate, event.endDate);
               return (
                 <Tooltip key={event.id}>
                   <TooltipTrigger asChild>
@@ -240,17 +334,12 @@ export const CampusSidebarWidgets = () => {
                       to={`/events/${event.id}`}
                       className="group flex items-start gap-3 p-2.5 rounded-xl border border-border/60 bg-muted/20 hover:bg-muted/60 hover:border-primary/30 transition-all duration-200"
                     >
-                      {/* Calendar Date Badge */}
-                      <div
-                        className={`flex flex-col items-center justify-center shrink-0 w-11 h-12 rounded-lg border text-center leading-none mt-0.5 ${
-                          isLive
-                            ? "bg-rose-500/10 border-rose-500/30 text-rose-600"
-                            : "bg-background border-border/80 text-foreground"
-                        }`}
-                      >
-                        <span className="text-4xs font-bold tracking-wider text-muted-foreground uppercase">{month}</span>
-                        <span className="text-base font-extrabold mt-0.5">{day}</span>
-                      </div>
+                      {/* Speaker Photo / Featured Event Thumbnail */}
+                      <EventSpeakerPhoto
+                        src={event.imageUrl}
+                        title={event.title}
+                        isLive={isLive}
+                      />
 
                       {/* Event Details */}
                       <div className="min-w-0 flex-1">
@@ -258,17 +347,22 @@ export const CampusSidebarWidgets = () => {
                           {event.title}
                         </h4>
 
-                        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-2xs text-muted-foreground mt-1">
+                        {/* Date, Time & Venue below heading */}
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-2xs text-muted-foreground mt-1">
+                          <span className="inline-flex items-center gap-1 font-medium text-foreground/80 shrink-0">
+                            <Calendar className="h-3 w-3 text-violet-600 dark:text-violet-400 shrink-0" />
+                            {formattedDate}
+                          </span>
                           {time && time !== "12:00 AM" && (
-                            <span className="inline-flex items-center gap-1 shrink-0">
-                              <Clock className="h-3 w-3 text-muted-foreground/70" />
+                            <span className="inline-flex items-center gap-1 shrink-0 text-muted-foreground/80">
+                              <Clock className="h-3 w-3 text-muted-foreground/70 shrink-0" />
                               {time}
                             </span>
                           )}
                           {event.venue && (
-                            <span className="truncate inline-flex items-center gap-1">
+                            <span className="truncate inline-flex items-center gap-1 text-muted-foreground/70 w-full sm:w-auto">
                               <MapPin className="h-3 w-3 text-muted-foreground/70 shrink-0" />
-                              {event.venue}
+                              <span className="truncate">{event.venue}</span>
                             </span>
                           )}
                         </div>
@@ -280,11 +374,21 @@ export const CampusSidebarWidgets = () => {
                     sideOffset={12}
                     className="max-w-sm rounded-2xl p-4 bg-white dark:bg-card text-foreground border border-border shadow-2xl ring-1 ring-black/10 dark:ring-white/10 z-50 animate-in fade-in-0 zoom-in-95 duration-150"
                   >
-                    <div className="space-y-2.5">
+                    <div className="space-y-3">
+                      {/* Badges */}
                       <div className="flex items-center gap-2">
                         <Badge variant="outline" className="bg-primary/10 text-primary border-primary/25 text-3xs font-semibold px-2.5 py-0.5 rounded-full">
                           Campus Event
                         </Badge>
+                        {isLive && (
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-600 px-2.5 py-0.5 text-3xs font-semibold text-white shadow-xs">
+                            <span className="relative flex h-1.5 w-1.5">
+                              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75" />
+                              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-white" />
+                            </span>
+                            Live Now
+                          </span>
+                        )}
                         {event.department && (
                           <Badge variant="secondary" className="text-3xs font-medium px-2 py-0.5 rounded-full">
                             {event.department.split(" ")[0]}
@@ -292,29 +396,55 @@ export const CampusSidebarWidgets = () => {
                         )}
                       </div>
 
-                      <h3 className="font-bold text-sm text-foreground leading-snug tracking-tight">
-                        {event.title}
-                      </h3>
+                      {/* Speaker Photo + Title row */}
+                      <div className="flex items-start gap-3">
+                        <EventSpeakerPhoto
+                          src={event.imageUrl}
+                          title={event.title}
+                          isLive={isLive}
+                          size="md"
+                        />
+                        <div className="min-w-0 flex-1 space-y-1">
+                          <h3 className="font-bold text-sm text-foreground leading-snug tracking-tight">
+                            {event.title}
+                          </h3>
+                          {/* Date directly below heading */}
+                          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
+                            <span className="inline-flex items-center gap-1 font-medium text-foreground">
+                              <Calendar className="h-3.5 w-3.5 text-violet-600 dark:text-violet-400 shrink-0" />
+                              {formattedDate}
+                            </span>
+                            {time && time !== "12:00 AM" && (
+                              <span className="inline-flex items-center gap-1 shrink-0">
+                                <Clock className="h-3 w-3 text-muted-foreground/70 shrink-0" />
+                                {time}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
 
-                      <div className="pt-2 border-t border-border/60 space-y-1.5 text-xs text-muted-foreground">
-                        <div className="flex items-center gap-2">
-                          <span className="inline-flex items-center justify-center h-5 w-5 rounded-md bg-rose-500/10 text-rose-600 text-2xs shrink-0 font-semibold">
-                            📅
-                          </span>
-                          <span className="font-medium text-foreground">{month} {day}</span>
-                          {time && time !== "12:00 AM" && (
-                            <span className="text-muted-foreground font-normal">• {time}</span>
+                      {/* Location & Organizer strip */}
+                      {(event.venue || event.organizer) && (
+                        <div className="pt-2 border-t border-border/60 space-y-1.5 text-xs text-muted-foreground">
+                          {event.venue && (
+                            <div className="flex items-center gap-2">
+                              <span className="inline-flex items-center justify-center h-5 w-5 rounded-md bg-blue-500/10 text-blue-600 text-2xs shrink-0 font-semibold">
+                                <MapPin className="h-3 w-3" />
+                              </span>
+                              <span className="text-muted-foreground font-normal line-clamp-1">{event.venue}</span>
+                            </div>
+                          )}
+                          {event.organizer && (
+                            <div className="flex items-center gap-2">
+                              <span className="inline-flex items-center justify-center h-5 w-5 rounded-md bg-violet-500/10 text-violet-600 text-2xs shrink-0 font-semibold">
+                                <Building2 className="h-3 w-3" />
+                              </span>
+                              <span className="text-muted-foreground font-normal line-clamp-1">{event.organizer}</span>
+                            </div>
                           )}
                         </div>
-                        {event.venue && (
-                          <div className="flex items-center gap-2">
-                            <span className="inline-flex items-center justify-center h-5 w-5 rounded-md bg-blue-500/10 text-blue-600 text-2xs shrink-0 font-semibold">
-                              📍
-                            </span>
-                            <span className="text-muted-foreground font-normal line-clamp-1">{event.venue}</span>
-                          </div>
-                        )}
-                      </div>
+                      )}
                     </div>
                   </TooltipContent>
                 </Tooltip>
