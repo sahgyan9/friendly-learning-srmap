@@ -5,11 +5,13 @@ import { ImagePlus, Users } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/context/AuthContext";
 import { getInitials } from "@/utils/user-utils";
+import { cn } from "@/lib/utils";
 import { CreatePostModal } from "./CreatePostModal";
 import { CreateCommunityModal } from "@/components/workspace-groups/CreateCommunityModal";
 
 interface PostComposerStripProps {
-  onPostCreated: () => void;
+  onPostCreated?: () => void;
+  className?: string;
 }
 
 /**
@@ -27,7 +29,7 @@ interface PostComposerStripProps {
  * "write a post" — which is the whole point, since groups are the thing people
  * assume they need to be someone official to start.
  */
-export const PostComposerStrip = ({ onPostCreated }: PostComposerStripProps) => {
+export const PostComposerStrip = ({ onPostCreated, className }: PostComposerStripProps) => {
   const { user, profile } = useAuth();
   const location = useLocation();
   const [showPost, setShowPost] = useState(false);
@@ -44,7 +46,7 @@ export const PostComposerStrip = ({ onPostCreated }: PostComposerStripProps) => 
   // `from` is what sends them back here afterwards instead of to the homepage.
   if (!user) {
     return (
-      <div className="mx-auto mb-4 max-w-2xl rounded-xl border bg-card px-3 py-2 shadow-sm">
+      <div className={cn("mx-auto w-full max-w-2xl rounded-xl border bg-card px-3 py-2 shadow-xs", className)}>
         <div className="flex items-center gap-2">
           <Avatar className="h-8 w-8 shrink-0 ring-1 ring-border">
             <AvatarFallback className="bg-muted text-xs font-semibold text-muted-foreground">
@@ -74,7 +76,7 @@ export const PostComposerStrip = ({ onPostCreated }: PostComposerStripProps) => 
 
   return (
     <>
-      <div className="mx-auto mb-4 max-w-2xl rounded-xl border bg-card px-3 py-2 shadow-sm">
+      <div className={cn("mx-auto w-full max-w-2xl rounded-xl border bg-card px-3 py-2 shadow-xs", className)}>
         <div className="flex items-center gap-2">
           <Avatar className="h-8 w-8 shrink-0 ring-1 ring-border">
             <AvatarImage src={profile?.profile_image ?? undefined} alt={profile?.name ?? ""} />

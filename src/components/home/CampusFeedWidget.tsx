@@ -95,11 +95,6 @@ export const CampusFeedWidget = () => {
 
   return (
     <div className="space-y-4">
-      {/* Top Composer Strip */}
-      <div className="rounded-xl border border-border/80 bg-card p-3 shadow-xs">
-        <PostComposerStrip onPostCreated={reload} />
-      </div>
-
       {/* Filter Tabs */}
       <div className="flex items-center gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none]">
         {FILTER_TABS.map((tab) => {
