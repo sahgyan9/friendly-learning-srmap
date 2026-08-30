@@ -61,6 +61,8 @@ export function SiteHeader() {
   const isSearchPage = location.pathname === "/search";
   const scrolledPastThreshold = useCollapseOnScroll(96, 64);
   const headerCollapsed = isSearchPage && scrolledPastThreshold;
+  const isMobileChatThread =
+    location.pathname.startsWith("/messages/") && location.pathname.length > "/messages/".length;
 
   // Points at where a feature lives in the nav until someone's found it.
   const tourCompleted = profile?.has_seen_welcome_tour === true;
@@ -101,6 +103,7 @@ export function SiteHeader() {
         className={cn(
           "sticky top-0 z-50 overflow-hidden bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/75 transition-all duration-300 ease-in-out",
           headerCollapsed ? "max-h-0" : "max-h-16 border-b",
+          isMobileChatThread && "hidden md:block",
           accent.border,
         )}
       >

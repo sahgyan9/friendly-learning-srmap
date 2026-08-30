@@ -222,7 +222,7 @@ const ChatContainer = ({
       className={cn(
         "relative flex overflow-hidden transition-all duration-150",
         isMobile && showChat
-          ? "fixed inset-0 z-40 h-full w-full rounded-none border-0 bg-background"
+          ? "fixed inset-0 z-[60] h-full w-full rounded-none border-0 bg-background"
           : "min-h-[28rem] rounded-2xl border border-border/80 bg-card/90 shadow-xl shadow-black/5 backdrop-blur-xl dark:border-white/10 dark:bg-card/50 dark:shadow-2xl dark:shadow-black/40",
       )}
       style={{
