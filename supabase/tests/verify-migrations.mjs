@@ -546,6 +546,7 @@ for (const file of [
   '20260830180000_message_delivery_receipts_and_replica_identities.sql',
   '20260830190000_search_campus_users_rpc.sql',
   '20260830200000_search_campus_users_escape_wildcards.sql',
+  '20260830210000_search_campus_users_single_query.sql',
 ]) {
   if (file === '20260804132345_b843f814-46d5-4c25-bc80-32e5f6ebba59.sql') {
     // Production's `faculty` table still carries `profile_image`, a column
