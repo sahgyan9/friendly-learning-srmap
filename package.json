@@ -31,6 +31,7 @@
     "qa:workspace-redesign": "node scripts/qa/qa-workspace-redesign.mjs",
     "qa:search-insights": "node scripts/qa/qa-search-insights.mjs",
     "qa:mentor-honesty": "node scripts/qa/qa-mentor-honesty.mjs",
+    "qa:message-outbox": "node scripts/qa/qa-message-outbox.mjs",
     "eval:search": "vitest run --config vitest.eval.config.ts"
   },
   "dependencies": {
