@@ -6,7 +6,6 @@ import { announceMessagesRead } from "@/lib/message-events";
 // Get messages for a conversation using RPC function
 export async function getConversationMessages(conversationId: string) {
   try {
-    
     const { data, error } = await supabase.rpc('get_conversation_messages', {
       conversation_id: conversationId
     });
@@ -16,41 +15,28 @@ export async function getConversationMessages(conversationId: string) {
       return { data: null, error };
     }
 
-    // Fetch sender data for each message
+    const rawMessages = data || [];
     const messagesWithSenders: Message[] = [];
-    const senderCache = new Map<string, any>();
     
-    for (const message of data || []) {
-      let senderData = null;
-      
-      if (message.sender_id) {
-        if (senderCache.has(message.sender_id)) {
-          senderData = senderCache.get(message.sender_id);
-        } else {
-          const { data: sender, error: senderError } = await supabase
-            .from('users')
-            .select('id, name, profile_image')
-            .eq('id', message.sender_id)
-            .maybeSingle();
-
-          if (!senderError && sender) {
-            senderData = sender;
-            senderCache.set(message.sender_id, sender);
-          }
-        }
-      }
-
-      // Ensure delivery_status is properly typed
-      const deliveryStatus = message.delivery_status as 'sent' | 'delivered' | 'read' || 'sent';
+    for (const message of rawMessages) {
+      const deliveryStatus = (message.delivery_status as 'sent' | 'delivered' | 'read') || 'sent';
 
       messagesWithSenders.push({
-        ...message,
+        id: message.id,
+        conversation_id: message.conversation_id,
+        sender_id: message.sender_id,
+        receiver_id: message.receiver_id,
+        content: message.content,
+        sent_at: message.sent_at,
+        is_read: Boolean(message.is_read),
         delivery_status: deliveryStatus,
-        sender: senderData,
+        sender: (message as any).sender || undefined,
         reply_to_id: (message as any).reply_to_id || null,
         reply_to: null,
         is_edited: Boolean((message as any).is_edited),
         edited_at: (message as any).edited_at || null,
+        reactions: (message as any).reactions || {},
+        viewer_reactions: (message as any).viewer_reactions || [],
       });
     }
 
@@ -72,6 +58,26 @@ export async function getConversationMessages(conversationId: string) {
     return { data: messagesWithSenders, error: null };
   } catch (err) {
     console.error('Exception in getConversationMessages:', err);
+    return { data: null, error: err as Error };
+  }
+}
+
+// Toggle emoji reaction on a direct message
+export async function toggleDirectMessageReaction(messageId: string, emoji: string) {
+  try {
+    const { data, error } = await (supabase.rpc as any)('toggle_direct_message_reaction', {
+      p_message_id: messageId,
+      p_emoji: emoji,
+    });
+
+    if (error) {
+      console.error('RPC toggle_direct_message_reaction error:', error);
+      return { data: null, error };
+    }
+
+    return { data: Boolean(data), error: null };
+  } catch (err) {
+    console.error('Exception in toggleDirectMessageReaction:', err);
     return { data: null, error: err as Error };
   }
 }
