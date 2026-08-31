@@ -639,7 +639,7 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
                                 onClick={() => handleToggleReaction(item.message.id, emoji)}
                                 className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-3xs transition-colors ${
                                   reacted
-                                    ? "bg-primary/10 font-bold text-primary"
+                                    ? "bg-primary/10 text-primary hover:bg-primary/15"
                                     : "bg-muted text-muted-foreground hover:bg-muted/70"
                                 }`}
                               >
@@ -792,7 +792,7 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
                                 onClick={() => handleToggleReaction(item.message.id, emoji)}
                                 className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-3xs transition-colors ${
                                   reacted
-                                    ? "bg-primary/10 font-bold text-primary"
+                                    ? "bg-primary/10 text-primary hover:bg-primary/15"
                                     : "bg-muted text-muted-foreground hover:bg-muted/70"
                                 }`}
                               >

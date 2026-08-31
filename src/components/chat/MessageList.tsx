@@ -290,6 +290,7 @@ const MessageList = ({
           const isCopied = copiedMessageId === message.id;
           const isHighlighted = highlightedMessageId === message.id;
           const isWithin30Min = (Date.now() - new Date(message.sent_at).getTime()) <= EDIT_DELETE_WINDOW_MS;
+          const hasReactions = Boolean(message.reactions && Object.keys(message.reactions).length > 0);
 
           // Still with the outbox: written offline, or given up on.
           const isPending =
@@ -459,7 +460,7 @@ const MessageList = ({
                     </div>
                   )}
 
-                  <div className={cn("flex max-w-[75%] flex-col sm:max-w-[65%]", isMine && "items-end")}>
+                  <div className={cn("flex max-w-[75%] flex-col sm:max-w-[65%]", isMine && "items-end", hasReactions && "mb-4")}>
                     <div
                       className={cn(
                         "relative whitespace-pre-wrap break-words transition-all duration-300",
@@ -519,34 +520,39 @@ const MessageList = ({
                           (edited)
                         </span>
                       )}
-                    </div>
 
-                    {/* Direct Message Reaction Badges */}
-                    {message.reactions && Object.keys(message.reactions).length > 0 && (
-                      <div className={cn("mt-1 flex flex-wrap items-center gap-1", isMine ? "justify-end" : "justify-start")}>
-                        {Object.entries(message.reactions).map(([emoji, count]) => {
-                          const hasReacted = message.viewer_reactions?.includes(emoji);
-                          return (
-                            <button
-                              key={emoji}
-                              type="button"
-                              onClick={() => onReaction?.(message.id, emoji)}
-                              className={cn(
-                                "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs transition-all duration-150 select-none active:scale-95",
-                                hasReacted
-                                  ? "bg-primary/15 text-primary font-semibold"
-                                  : "bg-muted hover:bg-muted/70 text-foreground/80 dark:bg-white/10 dark:hover:bg-white/15"
-                              )}
-                              title={hasReacted ? `You reacted ${emoji}` : `React with ${emoji}`}
-                              aria-label={`Reaction ${emoji} count ${count}`}
-                            >
-                              <span className="text-sm leading-none">{emoji}</span>
-                              {count > 1 && <span className="text-3xs font-medium">{count}</span>}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
+                      {/* Reaction badge: overlaps the bubble's bottom corner,
+                          WhatsApp-style, rather than sitting in its own row
+                          below it. */}
+                      {hasReactions && (
+                        <div
+                          className={cn(
+                            "absolute -bottom-3 z-10 flex items-center gap-1.5 rounded-full bg-card px-2 py-1 shadow-md ring-1 ring-black/5 dark:bg-card dark:ring-white/10",
+                            isMine ? "right-2" : "left-2",
+                          )}
+                        >
+                          {Object.entries(message.reactions ?? {}).map(([emoji, count]) => {
+                            const hasReacted = message.viewer_reactions?.includes(emoji);
+                            return (
+                              <button
+                                key={emoji}
+                                type="button"
+                                onClick={() => onReaction?.(message.id, emoji)}
+                                className={cn(
+                                  "inline-flex items-center gap-0.5 text-xs transition-transform duration-150 select-none hover:scale-110 active:scale-90",
+                                  hasReacted ? "text-primary font-semibold" : "text-foreground/70"
+                                )}
+                                title={hasReacted ? `You reacted ${emoji}` : `React with ${emoji}`}
+                                aria-label={`Reaction ${emoji} count ${count}`}
+                              >
+                                <span className="text-sm leading-none">{emoji}</span>
+                                {count > 1 && <span className="text-3xs font-medium">{count}</span>}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
 
                     {/* One timestamp per group — except for a message the
                         outbox is still holding, which shows its own.
