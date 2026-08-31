@@ -484,7 +484,9 @@ function buildPrompt(
       const presence = mentorPresenceMap.get(row.entity_id);
       if (presence) {
         let status: string;
-        if (presence.current_event_title) {
+        if (presence.current_class_name) {
+          status = `Currently in class "${presence.current_class_name}" (${presence.current_class_code || ''}${presence.current_class_room ? `, Room ${presence.current_class_room}` : ''} until ${presence.current_class_end || 'class ends'}) — busy / in lecture`;
+        } else if (presence.current_event_title) {
           status = `Currently attending campus event "${presence.current_event_title}" (until ${presence.current_event_end || 'event ends'}) — busy / slower to reply`;
         } else if (presence.is_active_now) {
           status = "Active & accepting connection requests";
