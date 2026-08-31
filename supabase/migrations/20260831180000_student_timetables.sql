@@ -92,14 +92,13 @@ $$;
 COMMENT ON FUNCTION public.get_user_weekly_timetable(uuid) IS
   'Returns weekly class schedule for a user. Security definer so mentors class schedule can be checked for availability.';
 
+-- anon/authenticated deliberately excluded: superseded by
+-- 20260831180001_lock_timetable_rpc_grants.sql, kept in sync here so this
+-- harness's fixtures prove the same final state without replaying that
+-- file's DROP FUNCTION cascade (see verify-migrations.mjs's notes on why
+-- 180001 isn't applied by this harness).
 REVOKE ALL ON FUNCTION public.get_user_weekly_timetable(uuid) FROM PUBLIC, anon, authenticated;
-GRANT EXECUTE ON FUNCTION public.get_user_weekly_timetable(uuid) TO anon, authenticated, service_role, postgres;
-DO $$
-BEGIN
-  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'supabase_read_only_user') THEN
-    GRANT EXECUTE ON FUNCTION public.get_user_weekly_timetable(uuid) TO supabase_read_only_user;
-  END IF;
-END $$;
+GRANT EXECUTE ON FUNCTION public.get_user_weekly_timetable(uuid) TO service_role, postgres;
 
 -- -----------------------------------------------------------------------------
 -- Enhanced get_mentors_live_availability with both event and class presence
@@ -181,6 +180,13 @@ AS $$
     WHERE ea.user_id = m.id
       AND e.end_date::timestamp >= (now() AT TIME ZONE 'Asia/Kolkata')
   ) up_evt ON true
+  -- Day-name-only match: deliberately never falls back to day_order = ISODOW.
+  -- SRM AP's Day Order is a rotating academic cycle that drifts from the
+  -- calendar weekday on any week with a holiday-driven make-up day. Guessing
+  -- "Day N == today's Nth weekday" is a wrong-not-missing answer (same
+  -- reasoning as event_is_all_day above). Only rows the portal labelled with
+  -- an actual weekday name ("Monday".."Saturday") are used here; see
+  -- 20260831180001 for where this was corrected in production.
   LEFT JOIN LATERAL (
     SELECT
       st.course_code AS current_class_code,
@@ -189,11 +195,7 @@ AS $$
       st.room_number AS current_class_room
     FROM public.student_timetables st
     WHERE st.user_id = m.id
-      AND (
-        st.day_name ILIKE TRIM(TO_CHAR((now() AT TIME ZONE 'Asia/Kolkata'), 'Day')) || '%'
-        OR st.day_name ILIKE 'Day ' || EXTRACT(ISODOW FROM (now() AT TIME ZONE 'Asia/Kolkata'))::text
-        OR st.day_order = EXTRACT(ISODOW FROM (now() AT TIME ZONE 'Asia/Kolkata'))
-      )
+      AND st.day_name ILIKE TRIM(TO_CHAR((now() AT TIME ZONE 'Asia/Kolkata'), 'Day')) || '%'
       AND (now() AT TIME ZONE 'Asia/Kolkata')::time >= st.start_time
       AND (now() AT TIME ZONE 'Asia/Kolkata')::time <= st.end_time
       AND NOT EXISTS (
@@ -210,13 +212,7 @@ COMMENT ON FUNCTION public.get_mentors_live_availability(uuid[]) IS
   'Batch live presence, reply turnaround, active events, and ongoing timetable class lookup for mentors.';
 
 REVOKE ALL ON FUNCTION public.get_mentors_live_availability(uuid[]) FROM PUBLIC, anon, authenticated;
-GRANT EXECUTE ON FUNCTION public.get_mentors_live_availability(uuid[]) TO anon, authenticated, service_role, postgres;
-DO $$
-BEGIN
-  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'supabase_read_only_user') THEN
-    GRANT EXECUTE ON FUNCTION public.get_mentors_live_availability(uuid[]) TO supabase_read_only_user;
-  END IF;
-END $$;
+GRANT EXECUTE ON FUNCTION public.get_mentors_live_availability(uuid[]) TO service_role, postgres;
 
 CREATE OR REPLACE FUNCTION public.get_mentor_live_availability(p_mentor_id uuid)
 RETURNS TABLE (
@@ -252,10 +248,4 @@ COMMENT ON FUNCTION public.get_mentor_live_availability(uuid) IS
   'Single mentor live presence and active class/event lookup. Calls get_mentors_live_availability.';
 
 REVOKE ALL ON FUNCTION public.get_mentor_live_availability(uuid) FROM PUBLIC, anon, authenticated;
-GRANT EXECUTE ON FUNCTION public.get_mentor_live_availability(uuid) TO anon, authenticated, service_role, postgres;
-DO $$
-BEGIN
-  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'supabase_read_only_user') THEN
-    GRANT EXECUTE ON FUNCTION public.get_mentor_live_availability(uuid) TO supabase_read_only_user;
-  END IF;
-END $$;
+GRANT EXECUTE ON FUNCTION public.get_mentor_live_availability(uuid) TO service_role, postgres;
