@@ -17,6 +17,14 @@ export type AskResult = {
   source_path: string;
   /** Cosine similarity, 0-1. Below 0.30 is filtered out server-side. */
   similarity: number;
+  /**
+   * Postgres full-text rank, 0-1, from the keyword leg. 0 when only the vector
+   * leg matched this row. Documents have no other lexical evidence — every
+   * other entity type gets its from a dedicated SQL query in useSearchResults —
+   * so this is what lets an exact term ("hall ticket", a reference number)
+   * count for a policy chunk the way a name match counts for a person.
+   */
+  keyword_rank?: number;
 };
 
 export type AskResponse = {

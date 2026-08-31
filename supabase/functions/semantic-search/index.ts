@@ -34,6 +34,13 @@
 // and the page comes back with twenty-three professors and no calendar. Several
 // phrasings only agree on what the question was actually about.
 //
+// Both legs, always. Alongside the vector search, every request runs a
+// Postgres full-text search (keyword_search_knowledge, 20260831160000) and
+// fuses it into the same ranking. Embeddings blur exact tokens — "hall
+// ticket", a reference number, a course code — and those are what students
+// type. Where the keyword leg's migration has not been applied, it logs and
+// returns nothing rather than failing the search.
+//
 // `ensure_types` reserves slots for the category the caller believes the
 // question belongs to. The single top-N across all entity types is a race an
 // exhaustively-indexed type always wins, and losing it is invisible — a healthy
@@ -214,9 +221,11 @@ serve(async (req) => {
     metadata: Record<string, unknown>;
     source_path: string;
     similarity: number;
+    /** Present on rows from the keyword leg; 0-1, absent from a vector-only row. */
+    keyword_rank?: number;
   };
 
-  const allTypes = ["faculty", "mentor", "student", "opportunity", "community", "post", "document", "notice", "article"];
+  const allTypes =["faculty", "mentor", "student", "opportunity", "community", "post", "document", "notice", "article"];
   const limit = Math.min(Math.max(payload.limit ?? 12, 1), 50);
 
   try {
@@ -275,12 +284,45 @@ serve(async (req) => {
       return (data ?? []) as Row[];
     };
 
+    /**
+     * The keyword leg.
+     *
+     * Vectors are good at "contest" matching "hackathon" and bad at exact
+     * tokens — "hall ticket", "re-registration", a course code, a reference
+     * number. Those are what students type. The two methods fail on opposite
+     * inputs, so fusing them recovers answers that no amount of tuning either
+     * one could reach.
+     *
+     * Runs on the distilled phrasing rather than the reader's whole sentence:
+     * `keyword_search_knowledge` OR-s the terms, and the programme and cohort
+     * words already stripped upstream would only add rank for chunks that
+     * mention a branch.
+     */
+    const keywordSearch = async (text: string, types: string[], rowLimit: number): Promise<Row[]> => {
+      const { data, error } = await supabaseAdmin.rpc("keyword_search_knowledge", {
+        p_query: text,
+        p_entity_types: types,
+        p_limit: rowLimit,
+        p_viewer: viewer,
+      });
+      // Never fatal. The vector leg is the primary route, and a project whose
+      // 20260831160000 migration has not been applied yet must keep searching
+      // rather than 500 — a migration file in the repo is not a migration in
+      // the database.
+      if (error) {
+        console.error("keyword_search_knowledge unavailable:", error.message);
+        return [];
+      }
+      return ((data ?? []) as Row[]).map((row) => ({ ...row, similarity: row.similarity ?? 0 }));
+    };
+
     const embedded = await Promise.all(queries.map(embedFor));
     const cached = embedded.every((e) => e.cached);
 
-    const lists = await Promise.all(
-      embedded.map((e) => search(e.embedding, payload.types ?? allTypes, limit)),
-    );
+    const [lists, keywordHits] = await Promise.all([
+      Promise.all(embedded.map((e) => search(e.embedding, payload.types ?? allTypes, limit))),
+      keywordSearch(queries[0], payload.types ?? allTypes, limit),
+    ]);
 
     /**
      * Reciprocal Rank Fusion.
@@ -297,7 +339,7 @@ serve(async (req) => {
      * between the first few ranks so a narrow win does not become a landslide.
      */
     const RRF_K = 60;
-    const fused = new Map<string, { row: Row; score: number }>();
+    const fused = new Map<string, { row: Row; score: number; keywordRank: number }>();
     const keyOf = (r: Row) => `${r.entity_type}|${r.entity_id}|${r.source_path}|${r.title}`;
 
     const fuse = (list: Row[], weight = 1) => {
@@ -305,18 +347,24 @@ serve(async (req) => {
         const key = keyOf(row);
         const existing = fused.get(key);
         const contribution = weight / (RRF_K + index + 1);
+        const rank = row.keyword_rank ?? 0;
         if (existing) {
           existing.score += contribution;
-          // Keep the best evidence any phrasing found. Downstream ranking reads
+          existing.keywordRank = Math.max(existing.keywordRank, rank);
+          // Keep the best evidence any leg found. Downstream ranking reads
           // `similarity` and knows nothing about fusion.
           if (row.similarity > existing.row.similarity) existing.row = row;
         } else {
-          fused.set(key, { row, score: contribution });
+          fused.set(key, { row, score: contribution, keywordRank: rank });
         }
       });
     };
 
     lists.forEach((list) => fuse(list));
+    // Equal weight with one phrasing's vector list. A chunk both legs agree on
+    // rises; a chunk only the keyword leg found still gets a place, which is
+    // the point — the vector floor is exactly what was hiding it.
+    fuse(keywordHits);
 
     /**
      * A floor for the category the question was actually about.
@@ -331,16 +379,24 @@ serve(async (req) => {
     const ensureTypes = (payload.ensure_types ?? []).filter((t) => allTypes.includes(t));
     if (ensureTypes.length > 0) {
       const ensureLimit = Math.min(Math.max(payload.ensure_limit ?? 3, 1), 10);
-      const floor = await search(embedded[0].embedding, ensureTypes, ensureLimit);
+      const [vectorFloor, keywordFloor] = await Promise.all([
+        search(embedded[0].embedding, ensureTypes, ensureLimit),
+        keywordSearch(queries[0], ensureTypes, ensureLimit),
+      ]);
       // Half weight: these are guaranteed a place, not a promotion. Anything
       // that also ranked on its own merits keeps the score it earned.
-      fuse(floor, 0.5);
+      fuse(vectorFloor, 0.5);
+      fuse(keywordFloor, 0.5);
     }
 
     const rows = Array.from(fused.values())
       .sort((a, b) => b.score - a.score)
       .slice(0, limit)
-      .map((entry) => entry.row);
+      // `keyword_rank` rides out to the client because documents have never had
+      // a lexical signal to score with — every other entity type gets one from
+      // its own SQL query in useSearchResults, and a document arriving with
+      // similarity alone was competing on one leg.
+      .map((entry) => ({ ...entry.row, keyword_rank: entry.keywordRank }));
 
     // Grouped server-side so the client renders each list without re-filtering,
     // and so "no faculty but three mentors" is expressible.

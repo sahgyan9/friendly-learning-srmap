@@ -902,7 +902,7 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
                 // hardcoded +100 that put policy PDFs above every person on
                 // the page regardless of topic; intent handles that now, and
                 // a genuine policy question raises targetCategory="documents".
-                relevanceScore: score("document", { similarity, quality: ctrQuality(hit.entity_id) }),
+                relevanceScore: score("document", { similarity, lexical: hit.keyword_rank ?? 0, quality: ctrQuality(hit.entity_id) }),
               });
             }
           } else if (hit.entity_type === "notice" || hit.entity_type === "article") {
@@ -949,7 +949,7 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
                   : "Campus knowledge article",
                 sitelinks: [{ label: isNotice ? "Read Notice" : "Read Article", to: path }],
                 meta: hit.metadata,
-                relevanceScore: score("document", { similarity, quality: ctrQuality(hit.entity_id) }),
+                relevanceScore: score("document", { similarity, lexical: hit.keyword_rank ?? 0, quality: ctrQuality(hit.entity_id) }),
               });
             }
           }

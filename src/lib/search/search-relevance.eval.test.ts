@@ -69,6 +69,10 @@ const CASES: EvalCase[] = [
   { query: "when does the semester end for ece 3rd year", expectSection: "document", forbidTop: ["faculty", "mentor"] },
   { query: "last date to pay the fee", expectSection: "document", forbidTop: ["faculty", "mentor"] },
 
+  // ── Exact terms. What the keyword leg (20260831160000) is for: the phrase
+  // appears verbatim in a policy heading, and an embedding blurs it. ──
+  { query: "attendance shortfall", expectSection: "document", forbidTop: ["faculty", "mentor"] },
+
   // ── Activities. Neither people nor policy. ──
   { query: "upcoming hackathons", expectSection: "opportunity", forbidTop: ["document", "faculty"] },
   { query: "smart india hackathon", expectSection: "opportunity", forbidTop: ["document"] },
