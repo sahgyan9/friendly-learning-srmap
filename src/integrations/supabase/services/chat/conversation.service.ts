@@ -139,6 +139,41 @@ export async function getUserConversations(userId: string) {
   }
 }
 
+function chatProfileFallback(id: string): ChatProfile {
+  return {
+    id,
+    name: "Student",
+    profile_image: null,
+    role: "student",
+  };
+}
+
+// Attaches participant profiles (and, when present, the last message) to a
+// raw conversations row. Shared by every function that hands a Conversation
+// back to callers, so they all return the same shape rather than some
+// carrying user1/user2/last_message and others silently omitting them.
+async function hydrateConversation(
+  conv: Pick<Conversation, 'id' | 'user1_id' | 'user2_id' | 'last_message_id' | 'last_updated'>,
+): Promise<Conversation> {
+  const [profiles, lastMessageResult] = await Promise.all([
+    fetchParticipantProfiles([conv.user1_id, conv.user2_id]),
+    conv.last_message_id
+      ? supabase
+          .from('messages')
+          .select('id, content, sent_at, sender_id, receiver_id, is_read, conversation_id')
+          .eq('id', conv.last_message_id)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+  ]);
+
+  return {
+    ...conv,
+    user1: profiles.get(conv.user1_id) ?? chatProfileFallback(conv.user1_id),
+    user2: profiles.get(conv.user2_id) ?? chatProfileFallback(conv.user2_id),
+    last_message: lastMessageResult.data ?? undefined,
+  };
+}
+
 // Get or create a conversation between two users
 export async function getOrCreateConversation(user1Id: string, user2Id: string) {
   try {
@@ -155,7 +190,7 @@ export async function getOrCreateConversation(user1Id: string, user2Id: string) 
 
     // If conversation exists, return it
     if (existingConversations && existingConversations.length > 0) {
-      return { data: existingConversations[0], error: null };
+      return { data: await hydrateConversation(existingConversations[0]), error: null };
     }
 
     // If no conversation exists, create a new one using RPC
@@ -169,7 +204,7 @@ export async function getOrCreateConversation(user1Id: string, user2Id: string) 
       return { data: null, error: createError };
     }
 
-    return { data: newConversation, error: null };
+    return { data: await hydrateConversation(newConversation), error: null };
   } catch (err) {
     console.error('Exception in getOrCreateConversation:', err);
     return { data: null, error: err as Error };
@@ -190,21 +225,7 @@ export async function getConversationById(conversationId: string): Promise<Conve
       return null;
     }
 
-    const participantIds = [conv.user1_id, conv.user2_id];
-    const profiles = await fetchParticipantProfiles(participantIds);
-
-    const fallback = (id: string): ChatProfile => ({
-      id,
-      name: "Student",
-      profile_image: null,
-      role: "student",
-    });
-
-    return {
-      ...conv,
-      user1: profiles.get(conv.user1_id) ?? fallback(conv.user1_id),
-      user2: profiles.get(conv.user2_id) ?? fallback(conv.user2_id),
-    };
+    return await hydrateConversation(conv);
   } catch (err) {
     console.error('Error in getConversationById:', err);
     return null;
