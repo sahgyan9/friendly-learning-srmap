@@ -84,6 +84,30 @@ type Retrieved = {
   similarity: number;
 };
 
+type UserTimetableSlot = {
+  day_order: number | null;
+  day_name: string;
+  hour: number;
+  start_time: string;
+  end_time: string;
+  slot: string | null;
+  course_code: string;
+  course_name: string;
+  faculty_name: string | null;
+  room_number: string | null;
+  is_lab: boolean;
+};
+
+type UserTimetableSchedule = {
+  user_id: string;
+  user_name: string;
+  target_day_label: string;
+  slots: UserTimetableSlot[];
+  has_classes: boolean;
+  requires_auth?: boolean;
+  not_synced?: boolean;
+};
+
 function tagsOf(row: Retrieved): string[] {
   const raw = row.metadata?.interests ?? row.metadata?.skills;
   return Array.isArray(raw) ? raw.filter((v): v is string => typeof v === "string") : [];
@@ -287,9 +311,10 @@ type RetrievalResult = {
   notices: Retrieved[];
   documents: Retrieved[];
   articles: Retrieved[];
+  blogPosts: Retrieved[];
 };
 
-const EMPTY_RETRIEVAL: RetrievalResult = { faculty: [], mentors: [], notices: [], documents: [], articles: [] };
+const EMPTY_RETRIEVAL: RetrievalResult = { faculty: [], mentors: [], notices: [], documents: [], articles: [], blogPosts: [] };
 
 /**
  * One retrieval definition for the whole platform, cache included.
@@ -321,6 +346,7 @@ async function retrieve(query: string): Promise<RetrievalResult> {
       notices: body.notices ?? [],
       documents: body.documents ?? [],
       articles: body.articles ?? [],
+      blogPosts: body.blog_posts ?? [],
     };
   } catch (error) {
     // A retrieval failure degrades the answer; it must not fail the whole reply.
@@ -458,6 +484,162 @@ function getTemporalContext(): { todayText: string; currentTimeText: string } {
   return { todayText, currentTimeText };
 }
 
+async function resolveUserTimetables(
+  mentors: Retrieved[],
+  query: string,
+  callerUserId?: string | null,
+  callerUserName?: string | null,
+): Promise<UserTimetableSchedule[]> {
+  const hasTimetableIntent = /\b(timetable|time[\s-]?table|class(?:es)?|schedule|lecture|period|periods|subject)\b/i.test(query);
+  if (!hasTimetableIntent) return [];
+
+  const q = query.toLowerCase();
+  const isFirstPerson =
+    /\b(my|me|i|myself|mine)\b/i.test(query) ||
+    /\b(do i have|am i free|what classes do i have|what do i have)\b/i.test(query);
+
+  let offsetDays: number | null = null;
+  if (/\byesterday\b/.test(q)) {
+    offsetDays = -1;
+  } else if (/\btoday\b|\btoda+y\b|\bnow\b|\bcurrently\b|\bright now\b|\bat the moment\b/.test(q)) {
+    offsetDays = 0;
+  } else if (/\btomorrow\b|\btomm?orr?ow?\b/.test(q)) {
+    offsetDays = 1;
+  } else {
+    const dayMap: Record<string, number> = {
+      monday: 1, mon: 1,
+      tuesday: 2, tue: 2,
+      wednesday: 3, wed: 3,
+      thursday: 4, thu: 4,
+      friday: 5, fri: 5,
+      saturday: 6, sat: 6,
+      sunday: 7, sun: 7,
+    };
+    const weekdayMatch = q.match(/\b(monday|tuesday|wednesday|thursday|friday|saturday|sunday|mon|tue|wed|thu|fri|sat|sun)\b/);
+    if (weekdayMatch) {
+      const matchedName = weekdayMatch[1];
+      const targetDow = dayMap[matchedName];
+      if (targetDow !== undefined) {
+        const now = new Date();
+        const istDateStr = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" }).format(now);
+        const [y, mo, d] = istDateStr.split("-").map(Number);
+        const istLocal = new Date(y, mo - 1, d);
+        const currentDow = istLocal.getDay() === 0 ? 7 : istLocal.getDay();
+        offsetDays = targetDow - currentDow;
+      }
+    } else {
+      offsetDays = 0;
+    }
+  }
+
+  if (offsetDays === null) offsetDays = 0;
+
+  const targetDate = new Date(Date.now() + offsetDays * 24 * 60 * 60 * 1000);
+  const dayName = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Kolkata",
+    weekday: "long",
+  }).format(targetDate);
+
+  const istDateStr = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" }).format(targetDate);
+  const [y, mo, d] = istDateStr.split("-").map(Number);
+  const istLocal = new Date(y, mo - 1, d);
+  const isodow = istLocal.getDay() === 0 ? 7 : istLocal.getDay();
+
+  const dayLabel =
+    offsetDays === 0
+      ? `Today (${dayName})`
+      : offsetDays === 1
+      ? `Tomorrow (${dayName})`
+      : offsetDays === -1
+      ? `Yesterday (${dayName})`
+      : `${dayName}`;
+
+  const schedules: UserTimetableSchedule[] = [];
+
+  if (isFirstPerson) {
+    if (!callerUserId) {
+      schedules.push({
+        user_id: "anon",
+        user_name: "You",
+        target_day_label: dayLabel,
+        slots: [],
+        has_classes: false,
+        requires_auth: true,
+      });
+    } else {
+      try {
+        const { data: rows } = await supabase.rpc("get_user_weekly_timetable", {
+          p_user_id: callerUserId,
+        });
+        if (Array.isArray(rows)) {
+          if (rows.length === 0) {
+            schedules.push({
+              user_id: callerUserId,
+              user_name: callerUserName || "You",
+              target_day_label: dayLabel,
+              slots: [],
+              has_classes: false,
+              not_synced: true,
+            });
+          } else {
+            const todaySlots = rows.filter((r: any) => {
+              const dn = (r.day_name ?? "").trim().toLowerCase();
+              if (dn === dayName.toLowerCase()) return true;
+              if (dn === `day ${isodow}`) return true;
+              if (r.day_order !== null && r.day_order === isodow) return true;
+              return false;
+            }).sort((a: any, b: any) => a.hour - b.hour);
+
+            schedules.push({
+              user_id: callerUserId,
+              user_name: callerUserName || "You",
+              target_day_label: dayLabel,
+              slots: todaySlots,
+              has_classes: todaySlots.length > 0,
+            });
+          }
+        }
+      } catch (err) {
+        console.warn("ai-chatbot get_user_weekly_timetable error for caller:", err);
+      }
+    }
+  }
+
+  const subjects = mentors.filter((m) => m.entity_id && m.entity_id !== callerUserId);
+  if (subjects.length > 0) {
+    await Promise.all(
+      subjects.slice(0, 3).map(async (m) => {
+        try {
+          const { data: rows } = await supabase.rpc("get_user_weekly_timetable", {
+            p_user_id: m.entity_id,
+          });
+          if (Array.isArray(rows)) {
+            const todaySlots = rows.filter((r: any) => {
+              const dn = (r.day_name ?? "").trim().toLowerCase();
+              if (dn === dayName.toLowerCase()) return true;
+              if (dn === `day ${isodow}`) return true;
+              if (r.day_order !== null && r.day_order === isodow) return true;
+              return false;
+            }).sort((a: any, b: any) => a.hour - b.hour);
+
+            schedules.push({
+              user_id: m.entity_id,
+              user_name: m.title,
+              target_day_label: dayLabel,
+              slots: todaySlots,
+              has_classes: todaySlots.length > 0,
+            });
+          }
+        } catch (err) {
+          console.warn(`ai-chatbot get_user_weekly_timetable error for ${m.entity_id}:`, err);
+        }
+      }),
+    );
+  }
+
+  return schedules;
+}
+
 /**
  * The grounding rules are the safety boundary, not styling. These are named
  * employees of a real university and named students; the model may summarise
@@ -468,9 +650,11 @@ function buildPrompt(
   faculty: Retrieved[],
   mentors: Retrieved[],
   references: Retrieved[],
+  blogPosts: Retrieved[],
   path: string | null,
   mentorPresenceMap: Map<string, any> = new Map(),
   mentorEventsMap: Map<string, any[]> = new Map(),
+  timetableSchedules: UserTimetableSchedule[] = [],
 ): string {
   const { todayText, currentTimeText } = getTemporalContext();
 
@@ -533,6 +717,38 @@ function buildPrompt(
   };
   const referenceText = references.map(describeReference).join("\n");
 
+  // Blog posts always carry a link (unlike the notice-only rule above) — they
+  // are the one reference type worth linking to even when just mentioned in
+  // passing, since there's no administrative-accuracy risk in pointing a
+  // student at another student's write-up.
+  const describeBlogPost = (row: Retrieved) => {
+    const body = (row.body ?? "").slice(0, REFERENCE_BODY_CHARS);
+    return `- ${row.title}${row.subtitle ? ` (${row.subtitle})` : ""}: ${body}\n  Link: ${row.source_path}`;
+  };
+  const blogPostText = blogPosts.map(describeBlogPost).join("\n");
+
+  const timetableText = timetableSchedules.length > 0
+    ? "\n\nTIMETABLE_SCHEDULE (ground truth class schedule from student_timetables):\n"
+      + timetableSchedules.map((s) => {
+        if (s.requires_auth) {
+          return `- The student asked for their own timetable ("${message}"), but is currently NOT signed in. State clearly that they must sign in to view their personal student timetable.`;
+        }
+        if (s.not_synced) {
+          return `- ${s.user_name}: Has NOT imported or synced their timetable from the SRM student portal yet. State clearly that they can sync their timetable by logging into the SRM Portal in Settings / Profile to see their classes here.`;
+        }
+        if (!s.has_classes) {
+          return `- ${s.user_name}: NO classes scheduled on ${s.target_day_label} as per their timetable.`;
+        }
+        const lines = s.slots.map((sl) => {
+          const room = sl.room_number ? `, Room ${sl.room_number}` : "";
+          const lab = sl.is_lab ? " [LAB]" : "";
+          const prof = sl.faculty_name ? ` (Faculty: ${sl.faculty_name})` : "";
+          return `  • Hour ${sl.hour} (${sl.start_time.slice(0, 5)}–${sl.end_time.slice(0, 5)}): ${sl.course_name} (${sl.course_code})${lab}${room}${prof}`;
+        }).join("\n");
+        return `- ${s.user_name} has ${s.slots.length} class${s.slots.length === 1 ? "" : "es"} on ${s.target_day_label}:\n${lines}`;
+      }).join("\n")
+    : "";
+
   return `You are the assistant for Friendly Learning, a student-built campus ecosystem at SRM University-AP. The platform lets students: post ideas and calls for teammates on the community board; use CampusBrain (the smart natural-language search at /ask) to find matching students and faculty in one query; connect with senior student mentors for course help and career advice; browse the full SRM AP faculty directory by research interest; form private or public group workspaces after finding the right people; discover hackathons, internships and research opportunities; earn a verified certificate by genuinely helping 3 students as a mentor; and look up official campus notices, circulars and administrative info (who to contact for what, help desks, policies) that admins have published.
 
 TEMPORAL CONTEXT (Indian Standard Time / Asia/Kolkata):
@@ -548,6 +764,8 @@ ${people ? `These people were retrieved from the platform's database as topical 
 
 ${referenceText ? `These official notices/circulars/administrative records were retrieved as topical matches:\n${referenceText}` : "No official notice or record in the database matched this question."}
 
+${blogPostText ? `These community blog posts were retrieved as topical matches. They are personal writing by individual students or mentors, NOT official university sources — never present anything from them as institutional fact or policy:\n${blogPostText}` : ""}${timetableText}
+
 Rules you must follow:
 1. Only describe a person using the interests or skills listed above. Do not add biography, opinions, achievements, seniority, or quality judgements — you do not know them.
 2. Never invent a name. If nobody is listed above, say the directory has no match yet and give general advice instead.
@@ -561,6 +779,13 @@ Rules you must follow:
 10. If the question is about the page they're currently on, answer with that page in mind rather than generically.
 11. If the student asks whether a specific mentor is free or available right now (e.g. "Is Gyan free right now?", "Is [Mentor] available?"): answer directly with their real-time availability status, whether they are currently attending a campus event, their custom availability note if on file, and typical response turnaround time from the context above, and invite the student to send them a message.
 12. If the student asks what events a mentor is attending or going to (e.g. "What events is Gyan attending?", "Is Gyan going to [Event]?"): list only the events under that mentor's "Campus events RSVP'd" above, and say plainly whether each is GOING (confirmed) or INTERESTED (bookmarked, not a commitment) — never call an INTERESTED event a confirmed attendance. If nothing is listed there, say they have no RSVPs on file rather than guessing.
+13. If the student asks for their own timetable or a mentor's schedule (e.g. "my timetable", "my todays time table", "what is my schedule today", "does [Mentor] have classes tomorrow"):
+    - Consult TIMETABLE_SCHEDULE above.
+    - If they need to sign in, tell them warmly: "Please **sign in** to view your personal student timetable."
+    - If they haven't synced their SRM portal, guide them to sync it in **Settings / Profile**.
+    - If they have no classes on that day, state that clearly.
+    - If they have classes, list their classes with start/end times, course names, and room numbers.
+14. Community blog posts are one student's or mentor's personal experience or opinion, never an official source — never use one to answer an administrative question (rule 5), and when you do mention one, frame it as "a student wrote about..." rather than stating its content as fact. When you cite one, include it as a markdown link using its Link, e.g. [their post](/blogs/my-slug).
 
 Answer the student's question directly.`;
 }
@@ -623,7 +848,7 @@ serve(async (req) => {
       );
     }
 
-    const { faculty, mentors, notices, documents, articles } = await retrieve(message);
+    const { faculty, mentors, notices, documents, articles, blogPosts } = await retrieve(message);
     const shownMentors = mentors.slice(0, MAX_MENTOR_SUGGESTIONS);
     const shownFaculty = faculty.slice(0, MAX_FACULTY_SUGGESTIONS);
     // Merged rather than kept separate: all three are "official record" to the
@@ -632,6 +857,13 @@ serve(async (req) => {
     const shownReferences = [...notices, ...documents, ...articles]
       .sort((a, b) => b.similarity - a.similarity)
       .slice(0, MAX_REFERENCE_ITEMS);
+    // Kept separate from shownReferences on purpose: a blog post is written by
+    // a student or mentor, not an admin, and the prompt below tells the model
+    // these are "official notices/circulars/administrative records" — folding
+    // in someone's personal essay would let the model cite an opinion with the
+    // same authority as a real policy document, exactly what rule 5's
+    // administrative-questions guardrail exists to prevent.
+    const shownBlogPosts = blogPosts.sort((a, b) => b.similarity - a.similarity).slice(0, MAX_REFERENCE_ITEMS);
 
     // The suggestion cards read full mentor rows (skills.slice, rating.toFixed),
     // so the retrieved IDs are rehydrated rather than passed through as chunks.
@@ -701,6 +933,18 @@ serve(async (req) => {
       relevanceScore: f.similarity,
     }));
 
+    let userProfileName: string | null = null;
+    if (userId) {
+      try {
+        const { data: userRow } = await supabase.from("users").select("name").eq("id", userId).maybeSingle();
+        if (userRow?.name) userProfileName = userRow.name;
+      } catch (err) {
+        console.warn("ai-chatbot fetch user name error:", err);
+      }
+    }
+
+    const timetableSchedules = await resolveUserTimetables(shownMentors, message, userId, userProfileName);
+
     const findIntent = matchFindIntent(message);
     let aiResponse: string;
     let usedModel: string;
@@ -717,8 +961,20 @@ serve(async (req) => {
       // More may be retrieved than shown, and the model happily named the
       // extra one — not a hallucination (it was retrieved) but the student
       // sees a name with no card beside it, which reads exactly like one.
-      const prompt = buildPrompt(message, shownFaculty, shownMentors, shownReferences, currentPath, mentorLiveMap, mentorEventsMap);
-      const sourceUrls = new Set(shownReferences.flatMap((r) => extractUrls(r.body ?? "")));
+      const prompt = buildPrompt(
+        message,
+        shownFaculty,
+        shownMentors,
+        shownReferences,
+        shownBlogPosts,
+        currentPath,
+        mentorLiveMap,
+        mentorEventsMap,
+        timetableSchedules,
+      );
+      const sourceUrls = new Set(
+        [...shownReferences, ...shownBlogPosts].flatMap((r) => extractUrls(r.body ?? "")),
+      );
       let generated = await generate(prompt);
 
       // See unsourcedUrls' comment: one retry with an explicit correction

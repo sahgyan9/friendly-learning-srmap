@@ -223,6 +223,7 @@ Deno.serve(async (req) => {
         profileHtml,
         transcriptHtml,
         attendanceHtml,
+        timeTableHtml,
         allSectionsHtml,
       } = await fetchAcademicSections(loginResult.jar);
       const { program, currentSemester, mobileNumber } = parseProfile(profileHtml);

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getErrorField } from "@/lib/errors";
 import { parseQuery } from "@/lib/search/query-engine";
+import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 
 export interface AIEntityBadge {
@@ -23,16 +24,18 @@ export interface AIOverviewResult {
 
 const OVERVIEW_CACHE = new Map<string, AIOverviewResult>();
 
-export const getCachedOverview = (q: string): AIOverviewResult | null => {
+export const getCachedOverview = (q: string, userId?: string | null): AIOverviewResult | null => {
   const norm = q.trim().toLowerCase().replace(/\s+/g, " ");
-  if (OVERVIEW_CACHE.has(norm)) {
-    return OVERVIEW_CACHE.get(norm)!;
+  const isPersonal = /\b(my|me|i|myself|mine)\b/i.test(norm);
+  const cacheKey = isPersonal ? `user_${userId || "anon"}_${norm}` : norm;
+  if (OVERVIEW_CACHE.has(cacheKey)) {
+    return OVERVIEW_CACHE.get(cacheKey)!;
   }
   try {
-    const raw = sessionStorage.getItem(`ai_overview_v6_${norm}`);
+    const raw = sessionStorage.getItem(`ai_overview_v6_${cacheKey}`);
     if (raw) {
       const parsed = JSON.parse(raw) as AIOverviewResult;
-      OVERVIEW_CACHE.set(norm, parsed);
+      OVERVIEW_CACHE.set(cacheKey, parsed);
       return parsed;
     }
   } catch {
@@ -41,11 +44,13 @@ export const getCachedOverview = (q: string): AIOverviewResult | null => {
   return null;
 };
 
-export const setCachedOverview = (q: string, data: AIOverviewResult) => {
+export const setCachedOverview = (q: string, data: AIOverviewResult, userId?: string | null) => {
   const norm = q.trim().toLowerCase().replace(/\s+/g, " ");
-  OVERVIEW_CACHE.set(norm, data);
+  const isPersonal = /\b(my|me|i|myself|mine)\b/i.test(norm);
+  const cacheKey = isPersonal ? `user_${userId || "anon"}_${norm}` : norm;
+  OVERVIEW_CACHE.set(cacheKey, data);
   try {
-    sessionStorage.setItem(`ai_overview_v6_${norm}`, JSON.stringify(data));
+    sessionStorage.setItem(`ai_overview_v6_${cacheKey}`, JSON.stringify(data));
   } catch {
     // Ignore storage issues
   }
@@ -105,8 +110,9 @@ export function useCampusAIOverview({
   enabled = true,
   onCitationsLoaded,
 }: UseCampusAIOverviewOptions) {
+  const { user } = useAuth();
   const trimmed = query.trim();
-  const cachedInitial = trimmed.length >= 3 ? getCachedOverview(trimmed) : null;
+  const cachedInitial = trimmed.length >= 3 ? getCachedOverview(trimmed, user?.id) : null;
 
   const [overview, setOverview] = useState<AIOverviewResult | null>(cachedInitial);
   const [loading, setLoading] = useState<boolean>(() => Boolean(enabled && trimmed.length >= 3 && !cachedInitial));
@@ -122,14 +128,16 @@ export function useCampusAIOverview({
 
   const handleRetry = useCallback(() => {
     const norm = query.trim().toLowerCase().replace(/\s+/g, " ");
-    OVERVIEW_CACHE.delete(norm);
+    const isPersonal = /\b(my|me|i|myself|mine)\b/i.test(norm);
+    const cacheKey = isPersonal ? `user_${user?.id || "anon"}_${norm}` : norm;
+    OVERVIEW_CACHE.delete(cacheKey);
     try {
-      sessionStorage.removeItem(`ai_overview_v6_${norm}`);
+      sessionStorage.removeItem(`ai_overview_v6_${cacheKey}`);
     } catch {
       // Ignore storage issues
     }
     setRetryCount((c) => c + 1);
-  }, [query]);
+  }, [query, user?.id]);
 
   // Check feature flag once
   useEffect(() => {
@@ -156,7 +164,7 @@ export function useCampusAIOverview({
       return;
     }
 
-    const cached = getCachedOverview(trimmed);
+    const cached = getCachedOverview(trimmed, user?.id);
     if (cached) {
       setOverview(cached);
       setLoading(false);
@@ -200,11 +208,6 @@ export function useCampusAIOverview({
           return;
         }
 
-        // The overview retrieves for itself, so it needs the same phrasings and
-        // the same reserved slots the results list uses. Sending only the raw
-        // sentence is how the page came to show eight mentors and twenty-three
-        // professors above an overview saying no information was available —
-        // two retrievals of one question, disagreeing.
         const parsed = parseQuery(trimmed);
 
         const { data, error: funcError } = await supabase.functions.invoke<AIOverviewResult>(
@@ -214,6 +217,7 @@ export function useCampusAIOverview({
               query: trimmed,
               queries: parsed.retrievalQueries,
               keyword_query: parsed.keywordQuery,
+              user_id: user?.id || null,
               ...(parsed.targetCategory === "documents"
                 ? { ensure_types: ["document", "notice", "article"] }
                 : {}),
@@ -225,7 +229,7 @@ export function useCampusAIOverview({
 
         if (isMounted && data) {
           setOverview(data);
-          setCachedOverview(trimmed, data);
+          setCachedOverview(trimmed, data, user?.id);
           if (onCitationsLoadedRef.current && data.citations) {
             onCitationsLoadedRef.current(data.citations);
           }
@@ -253,7 +257,7 @@ export function useCampusAIOverview({
       controller.abort();
       clearTimeout(timeoutTimer);
     };
-  }, [trimmed, enabled, retryCount]);
+  }, [trimmed, enabled, retryCount, user?.id]);
 
   const handleFeedback = useCallback(
     async (vote: 'up' | 'down') => {
