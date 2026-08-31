@@ -619,6 +619,7 @@ export const WriteBlogPost = () => {
                     setContentText(text);
                   }}
                   placeholder="Start typing your story freely..."
+                  focusMode={focusMode}
                 />
               </div>
             </div>

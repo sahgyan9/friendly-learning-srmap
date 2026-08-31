@@ -59,11 +59,14 @@ import { uploadBlogPostImage } from "@/integrations/supabase/services/blog-posts
 import { getErrorMessage } from "@/lib/errors";
 import { BlogImageCropDialog } from "./BlogImageCropDialog";
 import { MathEquationDialog } from "./MathEquationDialog";
+import { cn } from "@/lib/utils";
 
 interface BlogPostEditorProps {
   content: string;
   onChange: (html: string, text: string) => void;
   placeholder?: string;
+  focusMode?: boolean;
+  topOffset?: string;
 }
 
 type HeadingValue = "paragraph" | "1" | "2" | "3" | "4";
@@ -115,6 +118,8 @@ export const BlogPostEditor = ({
   content,
   onChange,
   placeholder = "Write your story freely...",
+  focusMode = false,
+  topOffset,
 }: BlogPostEditorProps) => {
   const [mathDialog, setMathDialog] = useState<MathDialogState>(EMPTY_MATH_DIALOG);
   const [pendingImageFile, setPendingImageFile] = useState<File | null>(null);
@@ -186,8 +191,46 @@ export const BlogPostEditor = ({
     if (value === "paragraph") {
       editor.chain().focus().setParagraph().run();
     } else {
-      editor.chain().focus().setHeading({ level: Number(value) as 1 | 2 | 3 | 4 }).run();
+      const level = Number(value) as 1 | 2 | 3 | 4;
+      if (editor.isActive("listItem")) {
+        editor.chain().focus().liftListItem("listItem").setHeading({ level }).run();
+      } else {
+        editor.chain().focus().setHeading({ level }).run();
+      }
     }
+  };
+
+  const handleToggleBlockquote = () => {
+    if (editor.isActive("blockquote")) {
+      editor.chain().focus().toggleBlockquote().run();
+      return;
+    }
+
+    if (editor.isActive("listItem")) {
+      editor.chain().focus().liftListItem("listItem").toggleBlockquote().run();
+      return;
+    }
+
+    if (editor.isActive("codeBlock")) {
+      editor.chain().focus().clearNodes().toggleBlockquote().run();
+      return;
+    }
+
+    editor.chain().focus().toggleBlockquote().run();
+  };
+
+  const handleToggleCodeBlock = () => {
+    if (editor.isActive("codeBlock")) {
+      editor.chain().focus().toggleCodeBlock().run();
+      return;
+    }
+
+    if (editor.isActive("listItem")) {
+      editor.chain().focus().liftListItem("listItem").toggleCodeBlock().run();
+      return;
+    }
+
+    editor.chain().focus().toggleCodeBlock().run();
   };
 
   const currentFontFamily = editor.getAttributes("textStyle").fontFamily || "Inter, system-ui, sans-serif";
@@ -481,6 +524,18 @@ export const BlogPostEditor = ({
             <Code className="h-3.5 w-3.5" />
           </Button>
 
+          {/* Quote Block */}
+          <Button
+            type="button"
+            variant={editor.isActive("blockquote") ? "secondary" : "ghost"}
+            size="icon"
+            className="h-7 w-7"
+            onClick={handleToggleBlockquote}
+            title="Quote Block"
+          >
+            <Quote className="h-3.5 w-3.5" />
+          </Button>
+
           {/* Clear Formatting */}
           <Button
             type="button"
@@ -498,7 +553,12 @@ export const BlogPostEditor = ({
       {/* ========================================================================= */}
       {/* Sticky Top Document Toolbar */}
       {/* ========================================================================= */}
-      <div className="sticky top-16 z-30 mb-6 flex flex-wrap items-center gap-1 rounded-xl border border-border/70 bg-background/90 backdrop-blur-md px-2.5 py-1.5 shadow-sm transition-all">
+      <div
+        className={cn(
+          "sticky z-30 mb-6 flex flex-wrap items-center gap-1 rounded-xl border border-border/70 bg-background/95 backdrop-blur-md px-2.5 py-1.5 shadow-sm transition-all",
+          topOffset || (focusMode ? "top-14" : "top-[120px]")
+        )}
+      >
         {/* Heading Dropdown */}
         <Select value={headingValue} onValueChange={(v) => handleHeadingChange(v as HeadingValue)}>
           <SelectTrigger className="h-8 w-[120px] text-xs font-medium border-border/50 bg-background/50">
@@ -789,7 +849,7 @@ export const BlogPostEditor = ({
               variant={editor.isActive("blockquote") ? "secondary" : "ghost"}
               size="icon"
               className="h-8 w-8"
-              onClick={() => editor.chain().focus().toggleBlockquote().run()}
+              onClick={handleToggleBlockquote}
             >
               <Quote className="h-4 w-4" />
             </Button>
@@ -804,7 +864,7 @@ export const BlogPostEditor = ({
               variant={editor.isActive("codeBlock") ? "secondary" : "ghost"}
               size="icon"
               className="h-8 w-8"
-              onClick={() => editor.chain().focus().toggleCodeBlock().run()}
+              onClick={handleToggleCodeBlock}
             >
               <Code2 className="h-4 w-4" />
             </Button>
