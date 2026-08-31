@@ -100,6 +100,15 @@ export async function validateUserData(userId: string) {
   }
 }
 
+// Escapes ILIKE wildcard metacharacters so a literal '%' or '_' typed by the
+// searcher matches itself instead of acting as a pattern wildcard. Mirrors the
+// escaping applied server-side in the search_campus_users RPC (Postgres
+// ILIKE's default escape character is backslash) — needed here too because
+// the fallback below builds its own ILIKE pattern client-side.
+function escapeIlikePattern(value: string): string {
+  return value.replace(/\\/g, "\\\\").replace(/%/g, "\\%").replace(/_/g, "\\_");
+}
+
 export interface CampusUserResult {
   id: string;
   name: string;
@@ -144,7 +153,7 @@ export async function searchCampusUsers(query: string, currentUserId?: string): 
       .limit(15);
 
     if (trimmed) {
-      mentorsQuery = mentorsQuery.ilike("name", `%${trimmed}%`);
+      mentorsQuery = mentorsQuery.ilike("name", `%${escapeIlikePattern(trimmed)}%`);
     }
 
     const { data: mentors, error: mentorError } = await mentorsQuery;
