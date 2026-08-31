@@ -573,6 +573,7 @@ for (const file of [
   // carries no vector type and no `<=>` operator — which was the whole reason
   // for keeping the keyword leg a separate function from search_knowledge().
   '20260831160000_knowledge_chunks_fulltext.sql',
+  '20260831180000_student_timetables.sql',
 ]) {
   if (file === '20260804132345_b843f814-46d5-4c25-bc80-32e5f6ebba59.sql') {
     // Production's `faculty` table still carries `profile_image`, a column
@@ -4369,6 +4370,64 @@ check(
   kwAcl?.anon === false && kwAcl?.auth === false,
   JSON.stringify(kwAcl)
 );
+
+// --- 20260831180000_student_timetables.sql ---
+console.log('\n--- 20260831180000_student_timetables.sql ---');
+
+// Insert a test weekly timetable entry
+await q(`
+  INSERT INTO public.student_timetables (
+    user_id, register_number, day_order, day_name, hour, start_time, end_time, slot, course_code, course_name, faculty_name, room_number, is_lab
+  )
+  VALUES (
+    $1, 'AP23111260062', 1, 'Monday', 1, '09:00:00', '09:50:00', 'A', 'CSE 303', 'Machine Learning', 'Dr. Anand Mishra', 'ALH 302', false
+  )
+  ON CONFLICT (user_id, day_name, hour, course_code) DO UPDATE SET room_number = EXCLUDED.room_number;
+`, [NEW_MENTOR_UID]);
+
+// Test get_user_weekly_timetable
+const { rows: weeklySchedule } = await q(`
+  SELECT * FROM public.get_user_weekly_timetable($1::uuid);
+`, [NEW_MENTOR_UID]);
+
+check(
+  'get_user_weekly_timetable returns weekly slots for student',
+  weeklySchedule.length > 0 && weeklySchedule[0].course_code === 'CSE 303' && weeklySchedule[0].course_name === 'Machine Learning' && weeklySchedule[0].room_number === 'ALH 302',
+  JSON.stringify(weeklySchedule[0])
+);
+
+// Insert an active class slot for right now to test live availability
+const currentDayName = new Intl.DateTimeFormat('en-US', { weekday: 'long', timeZone: 'Asia/Kolkata' }).format(new Date());
+await q(`
+  INSERT INTO public.student_timetables (
+    user_id, register_number, day_order, day_name, hour, start_time, end_time, slot, course_code, course_name, faculty_name, room_number, is_lab
+  )
+  VALUES (
+    $1, 'AP23111260062', 1, $2, 2,
+    ((now() AT TIME ZONE 'Asia/Kolkata') - interval '15 minutes')::time,
+    ((now() AT TIME ZONE 'Asia/Kolkata') + interval '35 minutes')::time,
+    'B', 'CSE 302', 'Operating Systems', 'Dr. Ravi Kant', 'UB 401', false
+  )
+  ON CONFLICT (user_id, day_name, hour, course_code) DO UPDATE SET
+    start_time = EXCLUDED.start_time,
+    end_time = EXCLUDED.end_time;
+`, [NEW_MENTOR_UID, currentDayName]);
+
+const { rows: livePresenceInClass } = await q(`
+  SELECT * FROM public.get_mentor_live_availability($1::uuid);
+`, [NEW_MENTOR_UID]);
+
+check(
+  'an ongoing class right now marks mentor busy and names the class and room',
+  livePresenceInClass[0]?.is_active_now === false && livePresenceInClass[0]?.current_class_name === 'Operating Systems' && livePresenceInClass[0]?.current_class_room === 'UB 401',
+  JSON.stringify(livePresenceInClass[0])
+);
+
+// Clean up test in-session class slot
+await q(`
+  DELETE FROM public.student_timetables
+  WHERE user_id = $1 AND course_code = 'CSE 302';
+`, [NEW_MENTOR_UID]);
 
 console.log(failures === 0
   ? '\nAll migration checks passed against real Postgres.'
