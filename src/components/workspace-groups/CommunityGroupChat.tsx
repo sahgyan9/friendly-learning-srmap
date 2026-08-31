@@ -637,10 +637,10 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
                               <button
                                 key={emoji}
                                 onClick={() => handleToggleReaction(item.message.id, emoji)}
-                                className={`inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-3xs transition-colors ${
+                                className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-3xs shadow-sm transition-colors ${
                                   reacted
-                                    ? "border-primary/30 bg-primary/10 font-bold text-primary"
-                                    : "border-muted bg-muted/40 text-muted-foreground hover:bg-muted"
+                                    ? "bg-primary/10 font-bold text-primary"
+                                    : "bg-muted/60 text-muted-foreground hover:bg-muted"
                                 }`}
                               >
                                 <span>{emoji}</span>
@@ -790,10 +790,10 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
                               <button
                                 key={emoji}
                                 onClick={() => handleToggleReaction(item.message.id, emoji)}
-                                className={`inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-3xs transition-colors ${
+                                className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-3xs shadow-sm transition-colors ${
                                   reacted
-                                    ? "border-primary/30 bg-primary/10 font-bold text-primary"
-                                    : "border-muted bg-muted/40 text-muted-foreground hover:bg-muted"
+                                    ? "bg-primary/10 font-bold text-primary"
+                                    : "bg-muted/60 text-muted-foreground hover:bg-muted"
                                 }`}
                               >
                                 <span>{emoji}</span>

@@ -532,10 +532,10 @@ const MessageList = ({
                               type="button"
                               onClick={() => onReaction?.(message.id, emoji)}
                               className={cn(
-                                "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs transition-all duration-150 select-none active:scale-95",
+                                "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs shadow-sm transition-all duration-150 select-none active:scale-95",
                                 hasReacted
-                                  ? "border-primary/50 bg-primary/15 text-primary font-semibold shadow-xs"
-                                  : "border-border/70 bg-background/80 hover:bg-muted text-foreground/80 dark:border-white/10 dark:bg-card/70"
+                                  ? "bg-primary/15 text-primary font-semibold"
+                                  : "bg-background/90 hover:bg-muted text-foreground/80 dark:bg-card/90"
                               )}
                               title={hasReacted ? `You reacted ${emoji}` : `React with ${emoji}`}
                               aria-label={`Reaction ${emoji} count ${count}`}
