@@ -52,26 +52,39 @@ const AUTO_TAG_KEYWORDS: Record<string, string[]> = {
   research: ["research", "paper", "ieee", "publication", "conference", "thesis"],
 };
 
+const getInitialLocalDraft = () => {
+  try {
+    const raw = localStorage.getItem("fl_blog_draft_new");
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+};
+
 export const WriteBlogPost = () => {
   const { slug: slugParam } = useParams<{ slug?: string }>();
   const navigate = useNavigate();
   const { user, profile, isAdmin } = useAuth();
   const isEditing = Boolean(slugParam);
 
+  const initialLocalDraft = useMemo(() => (!slugParam ? getInitialLocalDraft() : null), [slugParam]);
+
   const [loadingExisting, setLoadingExisting] = useState(isEditing);
   const [existing, setExisting] = useState<BlogPost | null>(null);
+  const [existingDbDraftId, setExistingDbDraftId] = useState<string | null>(() => initialLocalDraft?.dbDraftId || null);
   const [submitting, setSubmitting] = useState(false);
   const [slugTouched, setSlugTouched] = useState(isEditing);
 
-  const [title, setTitle] = useState("");
-  const [slug, setSlug] = useState("");
-  const [excerpt, setExcerpt] = useState("");
-  const [tags, setTags] = useState<string[]>([]);
-  const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null);
+  const [title, setTitle] = useState(() => initialLocalDraft?.title || "");
+  const [slug, setSlug] = useState(() => initialLocalDraft?.slug || "");
+  const [excerpt, setExcerpt] = useState(() => initialLocalDraft?.excerpt || "");
+  const [tags, setTags] = useState<string[]>(() => initialLocalDraft?.tags || []);
+  const [coverImageUrl, setCoverImageUrl] = useState<string | null>(() => initialLocalDraft?.coverImageUrl || null);
   const [pendingCoverFile, setPendingCoverFile] = useState<File | null>(null);
   const [uploadingCover, setUploadingCover] = useState(false);
-  const [contentHtml, setContentHtml] = useState("");
-  const [contentText, setContentText] = useState("");
+  const [contentHtml, setContentHtml] = useState(() => initialLocalDraft?.contentHtml || "");
+  const [contentText, setContentText] = useState(() => initialLocalDraft?.contentText || "");
   const [isPublished, setIsPublished] = useState(false);
 
   // Creative Mode States
@@ -82,6 +95,7 @@ export const WriteBlogPost = () => {
 
   const titleTextareaRef = useRef<HTMLTextAreaElement>(null);
   const coverFileInputRef = useRef<HTMLInputElement>(null);
+  const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Auto-resize title input
   const adjustTitleHeight = () => {
@@ -113,24 +127,8 @@ export const WriteBlogPost = () => {
   // Load existing post if editing
   useEffect(() => {
     if (!slugParam) {
-      // Check for cached draft in localStorage for new post
-      const savedDraft = localStorage.getItem("fl_blog_draft_new");
-      if (savedDraft) {
-        try {
-          const parsed = JSON.parse(savedDraft);
-          if (parsed.title || parsed.contentHtml) {
-            setTitle(parsed.title || "");
-            setSlug(parsed.slug || "");
-            setExcerpt(parsed.excerpt || "");
-            setTags(parsed.tags || []);
-            setCoverImageUrl(parsed.coverImageUrl || null);
-            setContentHtml(parsed.contentHtml || "");
-            setContentText(parsed.contentText || "");
-            toast.info("Restored unsaved draft from your browser", { duration: 3000 });
-          }
-        } catch (e) {
-          // ignore corrupted local draft
-        }
+      if (initialLocalDraft && (initialLocalDraft.title || initialLocalDraft.contentHtml)) {
+        toast.info("Restored draft from your browser", { duration: 3000 });
       }
       return;
     }
@@ -147,6 +145,7 @@ export const WriteBlogPost = () => {
         return;
       }
       setExisting(post);
+      setExistingDbDraftId(post.id);
       setTitle(post.title);
       setSlug(post.slug);
       setExcerpt(post.excerpt ?? "");
@@ -164,35 +163,95 @@ export const WriteBlogPost = () => {
     adjustTitleHeight();
   }, [title]);
 
-  // Auto-save draft to localStorage (debounced)
+  // Dual Auto-Save: Saves to localStorage AND syncs draft row to Supabase database (debounced)
   useEffect(() => {
-    if (isEditing) return; // don't overwrite new draft slot when editing an existing post
-    if (!title && !contentHtml) return;
+    if (isEditing && !existing) return;
+    if (!title.trim() && !contentHtml.trim()) return;
 
     setSaveStatus("saving");
-    const timeout = setTimeout(() => {
+
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
+    }
+
+    autoSaveTimerRef.current = setTimeout(async () => {
       try {
+        const targetId = existing?.id || existingDbDraftId;
+        const targetSlug = (slug.trim() || slugify(title.trim() || "draft")).trim();
+
+        // 1. Immediate local storage snapshot
         localStorage.setItem(
           "fl_blog_draft_new",
           JSON.stringify({
             title,
-            slug,
+            slug: targetSlug,
             excerpt,
             tags,
             coverImageUrl,
             contentHtml,
             contentText,
+            dbDraftId: targetId,
             updatedAt: Date.now(),
           })
         );
-        setSaveStatus("saved");
-      } catch (e) {
-        setSaveStatus("unsaved");
-      }
-    }, 1200);
 
-    return () => clearTimeout(timeout);
-  }, [title, slug, excerpt, tags, coverImageUrl, contentHtml, contentText, isEditing]);
+        // 2. Cloud Database Sync (if user is authenticated)
+        if (user) {
+          const draftPayload = {
+            title: title.trim() || "Untitled Draft",
+            slug: targetSlug || `draft-${Date.now().toString(36)}`,
+            excerpt: excerpt.trim() || autoExcerpt.trim() || null,
+            cover_image_url: coverImageUrl,
+            content_html: contentHtml,
+            content_text: contentText || "",
+            tags: deriveFinalTags(),
+            is_published: false,
+          };
+
+          if (targetId) {
+            await updateBlogPost(targetId, draftPayload);
+          } else if (!isEditing) {
+            try {
+              const created = await createBlogPost(user.id, draftPayload);
+              if (created?.id) {
+                setExistingDbDraftId(created.id);
+                localStorage.setItem(
+                  "fl_blog_draft_new",
+                  JSON.stringify({
+                    title,
+                    slug: targetSlug,
+                    excerpt,
+                    tags,
+                    coverImageUrl,
+                    contentHtml,
+                    contentText,
+                    dbDraftId: created.id,
+                    updatedAt: Date.now(),
+                  })
+                );
+              }
+            } catch {
+              // Slug uniqueness fallback
+              const uniqueSlug = `${targetSlug}-${Date.now().toString(36).slice(-4)}`;
+              const created = await createBlogPost(user.id, { ...draftPayload, slug: uniqueSlug });
+              if (created?.id) {
+                setExistingDbDraftId(created.id);
+              }
+            }
+          }
+        }
+
+        setSaveStatus("saved");
+      } catch (err) {
+        console.warn("Auto-save sync warning:", err);
+        setSaveStatus("saved");
+      }
+    }, 1500);
+
+    return () => {
+      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    };
+  }, [title, slug, excerpt, tags, coverImageUrl, contentHtml, contentText, user?.id, isEditing, existing?.id, existingDbDraftId]);
 
   const handleTitleChange = (value: string) => {
     setTitle(value);
@@ -233,22 +292,22 @@ export const WriteBlogPost = () => {
 
   const handleSubmit = async (publish: boolean) => {
     if (!user) {
-      toast.error("Please sign in to publish your post");
+      toast.error(publish ? "Please sign in to publish your post" : "Please sign in to save your draft");
       return;
     }
 
     const trimmedTitle = title.trim();
-    const finalSlug = (slug.trim() || slugify(trimmedTitle)).trim();
+    const finalSlug = (slug.trim() || slugify(trimmedTitle || "untitled-draft")).trim();
     const finalExcerpt = excerpt.trim() || autoExcerpt.trim() || null;
     const finalTags = deriveFinalTags();
 
-    if (!trimmedTitle) {
+    if (publish && !trimmedTitle) {
       toast.error("Please enter a title for your post");
       titleTextareaRef.current?.focus();
       return;
     }
 
-    if (!contentText.trim()) {
+    if (publish && !contentText.trim()) {
       toast.error("Please write some content in your post");
       return;
     }
@@ -262,7 +321,7 @@ export const WriteBlogPost = () => {
     setSubmitting(true);
     try {
       const payload = {
-        title: trimmedTitle,
+        title: trimmedTitle || "Untitled Draft",
         slug: finalSlug,
         excerpt: finalExcerpt,
         cover_image_url: coverImageUrl,
@@ -272,17 +331,26 @@ export const WriteBlogPost = () => {
         is_published: publish,
       };
 
-      if (isEditing && existing) {
-        await updateBlogPost(existing.id, payload);
+      const targetId = isEditing && existing ? existing.id : existingDbDraftId;
+
+      if (targetId) {
+        await updateBlogPost(targetId, payload);
       } else {
-        await createBlogPost(user.id, payload);
-        // Clear local draft after successful creation
-        localStorage.removeItem("fl_blog_draft_new");
+        const created = await createBlogPost(user.id, payload);
+        if (!publish && created?.id) {
+          setExistingDbDraftId(created.id);
+        }
       }
 
-      if (publish) triggerEmbedding();
-      toast.success(publish ? "🎉 Post published to Community Blog!" : "Draft saved!");
-      navigate(`/blogs/${finalSlug}`);
+      if (publish) {
+        localStorage.removeItem("fl_blog_draft_new");
+        triggerEmbedding();
+        toast.success("🎉 Post published to Community Blog!");
+        navigate(`/blogs/${finalSlug}`);
+      } else {
+        toast.success("💾 Draft saved to cloud and browser!");
+        navigate("/blogs");
+      }
     } catch (error) {
       toast.error(getErrorMessage(error, `Failed to ${isEditing ? "update" : "publish"} post`));
     } finally {
