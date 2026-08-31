@@ -165,3 +165,40 @@ export async function removeEventAttendance(eventId: number) {
     return { error: err as Error };
   }
 }
+
+export type UserEventScheduleItem = {
+  event_id: number;
+  title: string;
+  start_date: string;
+  end_date: string;
+  event_type: string;
+  department: string;
+  link: string;
+  image_url: string | null;
+  status: EventAttendanceStatus;
+  note: string | null;
+  is_happening_now: boolean;
+  is_all_day: boolean;
+};
+
+/**
+ * Fetch all upcoming and ongoing events RSVP'd by a student/mentor.
+ */
+export async function getUserEventSchedule(userId: string) {
+  try {
+    // @ts-expect-error RPC typing may lag until types.ts is refreshed
+    const { data, error } = await supabase.rpc("get_user_event_schedule", {
+      p_user_id: userId,
+    });
+
+    if (error) {
+      console.error("Error fetching user event schedule:", error);
+      return { data: [] as UserEventScheduleItem[], error };
+    }
+
+    return { data: (data as unknown as UserEventScheduleItem[]) || [], error: null };
+  } catch (err) {
+    console.error("Exception in getUserEventSchedule:", err);
+    return { data: [] as UserEventScheduleItem[], error: err as Error };
+  }
+}
