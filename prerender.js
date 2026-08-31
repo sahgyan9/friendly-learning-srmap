@@ -85,6 +85,7 @@ const routesToPrerender = [
   '/find-study-partners',
   '/hackathon-partners',
   '/blog',
+  '/blogs',
   '/how-verification-works',
   '/your-data',
 ]
@@ -250,6 +251,33 @@ const supabase = (() => {
         DYNAMIC_META[route] = {
           title: `${c.name} | SRM AP Workspace Group`,
           description: c.description ? c.description.substring(0, 150) + '...' : `Join ${c.name}, a workspace group at SRM University-AP.`
+        };
+      }
+    }
+
+    // 5. Community Blog posts (published, most recent 100) — distinct from the
+    // 4 hardcoded /blog posts above; error-checked like faculty/mentors since
+    // this table is new and a build against an unmigrated database should
+    // degrade to skipping these routes, not fail the whole prerender.
+    const { data: blogPosts, error: blogPostsError } = await supabase
+      .from('blog_posts')
+      .select('slug, title, excerpt, cover_image_url')
+      .eq('is_published', true)
+      .not('slug', 'is', null)
+      .order('published_at', { ascending: false })
+      .limit(100);
+
+    if (blogPostsError) {
+      console.warn('[prerender] Could not fetch blog_posts:', blogPostsError.message);
+    } else if (blogPosts) {
+      for (const p of blogPosts) {
+        const route = `/blogs/${p.slug}`;
+        routesToPrerender.push(route);
+        DYNAMIC_META[route] = {
+          title: `${p.title} | Community Blog`,
+          description: p.excerpt
+            ? p.excerpt.slice(0, 155)
+            : `Read "${p.title}" on Friendly Learning SRMAP's Community Blog.`,
         };
       }
     }

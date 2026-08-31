@@ -112,6 +112,13 @@ export const ROUTE_META: Record<string, RouteMeta> = {
     description:
       "Practical guides for SRM AP students — choosing electives with faculty ratings, finding hackathon teammates who show up, and asking for academic help early.",
   },
+  // Distinct from "/blog" above (4 hardcoded editorial posts) — this is the
+  // self-serve section any signed-in student or mentor can publish to.
+  "/blogs": {
+    title: "Community Blog | Friendly Learning SRMAP",
+    description:
+      "Long-form writing by SRM AP students and mentors — hackathon recaps, course notes, and campus life, written by the people living it.",
+  },
 
   // These three render no SEOHead at all, so until now they had no description
   // of their own anywhere — client-side or otherwise.

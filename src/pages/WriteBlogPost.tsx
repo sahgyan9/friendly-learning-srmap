@@ -25,6 +25,9 @@ import {
   type BlogPost,
 } from "@/integrations/supabase/services/blog-posts";
 
+/** Any single-segment route already registered under /blogs/ in App.tsx. */
+const RESERVED_SLUGS = new Set(["write"]);
+
 const WriteBlogPost = () => {
   const { slug: slugParam } = useParams<{ slug?: string }>();
   const navigate = useNavigate();
@@ -97,6 +100,13 @@ const WriteBlogPost = () => {
     if (!user) return;
     if (!title.trim() || !slug.trim() || !contentText.trim()) {
       toast.error("Title, slug, and body content are required");
+      return;
+    }
+    // "write" collides with the /blogs/write route itself — Vercel's rewrite
+    // for it takes precedence, so a post at that slug would be permanently
+    // unreachable at /blogs/write, shadowed by the editor route.
+    if (RESERVED_SLUGS.has(slug.trim().toLowerCase())) {
+      toast.error(`"${slug.trim()}" is a reserved URL — please choose a different slug`);
       return;
     }
 

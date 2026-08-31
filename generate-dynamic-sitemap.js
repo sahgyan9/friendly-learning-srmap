@@ -416,106 +416,96 @@ async function generateWorkspaceGroupsSitemap() {
 }
 
 /**
- * Fetch blog posts from Supabase and generate a sitemap
+ * The editorial /blog sitemap — always the 4 hardcoded posts in
+ * src/data/blog-posts.ts, unconditionally. This used to probe a `blog_posts`
+ * table and, if found, treat it as authoritative for /blog/*, on the
+ * assumption a future database table would supersede the hardcoded posts at
+ * the same URL namespace. That assumption no longer holds: `blog_posts` now
+ * exists, but backs the separate, deliberately-distinct /blogs community
+ * section (see generateCommunityBlogSitemap below), not /blog. Left as the
+ * probe-and-maybe-switch logic it was, this would have silently replaced the
+ * 4 real editorial post URLs with community-authored ones under the wrong
+ * namespace the moment blog_posts was deployed.
  */
 async function generateBlogSitemap() {
     // No client, no dynamic entries — the caller treats false as
     // "this sitemap was not produced" and leaves it out of the index.
     if (!supabase) return false;
 
-    console.log('Checking if blog_posts table exists...');
+    generateStaticBlogSitemap();
+    return true;
+}
+
+/**
+ * The community /blogs sitemap — any signed-in student or mentor's published
+ * posts, distinct from the editorial /blog sitemap above. Filters to
+ * is_published explicitly: this is a public sitemap, and an unfiltered
+ * select() would leak draft URLs (a self-serve table defaults new rows to
+ * unpublished, unlike knowledge_articles).
+ */
+async function generateCommunityBlogSitemap() {
+    if (!supabase) return false;
+
+    console.log('Fetching community blog posts from Supabase...');
 
     try {
-        // First check if we can access the pg_tables system table
-        try {
-            // First check if the blog_posts table exists
-            const { data: tableExists, error: checkError } = await supabase
-                .from('pg_tables')
-                .select('tablename')
-                .eq('schemaname', 'public')
-                .eq('tablename', 'blog_posts')
-                .maybeSingle();
-
-            if (checkError || !tableExists) {
-                console.log('Blog posts table does not exist yet. Using static blog sitemap.');
-                generateStaticBlogSitemap();
-                return true;
-            }
-        } catch (e) {
-            console.log('Could not check pg_tables. Using static blog sitemap.');
-            generateStaticBlogSitemap();
-            return true;
-        }
-
-
-
-        // Fetch published blog posts if table exists
         const { data: posts, error } = await supabase
             .from('blog_posts')
-            .select('id, created_at, title, image_url, slug');
+            .select('id, created_at, updated_at, published_at, title, cover_image_url, slug')
+            .eq('is_published', true);
 
         if (error) {
-            throw error;
+            // PGRST205 (table not found) is expected until the blog_posts
+            // migration is deployed — not a build failure, just nothing to add yet.
+            console.log('Could not fetch blog_posts (may not be deployed yet):', error.message);
+            return false;
         }
 
         const timestamp = new Date().toISOString();
 
         let sitemap = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" 
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd
-                            http://www.google.com/schemas/sitemap-image/1.1 http://www.google.com/schemas/sitemap-image/1.1/sitemap-image.xsd">`;
-
-        // Add main blog page
-        sitemap += `
+                            http://www.google.com/schemas/sitemap-image/1.1 http://www.google.com/schemas/sitemap-image/1.1/sitemap-image.xsd">
   <url>
-    <loc>${config.siteUrl}/blog</loc>
+    <loc>${config.siteUrl}/blogs</loc>
     <lastmod>${timestamp}</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>`;
 
-        // Check if we have posts
-        if (posts && posts.length > 0) {
-            // Add each blog post page
-            posts.forEach(post => {
-                const postUrl = post.slug ?
-                    `${config.siteUrl}/blog/${post.slug}` :
-                    `${config.siteUrl}/blog/${post.id}`;
+        (posts || []).forEach(post => {
+            const postUrl = `${config.siteUrl}/blogs/${post.slug}`;
 
-                sitemap += `
+            sitemap += `
   <url>
     <loc>${xmlEscape(postUrl)}</loc>
     <lastmod>${post.updated_at || post.published_at || timestamp}</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.7</priority>`;
+    <priority>0.6</priority>`;
 
-                if (post.image_url) {
-                    sitemap += `
+            if (post.cover_image_url) {
+                sitemap += `
     <image:image>
-      <image:loc>${xmlEscape(post.image_url)}</image:loc>
+      <image:loc>${xmlEscape(post.cover_image_url)}</image:loc>
       <image:title>${xmlEscape(post.title)}</image:title>
     </image:image>`;
-                }
+            }
 
-                sitemap += `
+            sitemap += `
   </url>`;
-            });
-        } else {
-            console.log('No blog posts found in database. Only including main blog page in sitemap.');
-        }
+        });
 
         sitemap += `
 </urlset>`;
 
-        fs.writeFileSync(path.join(config.publicDir, 'sitemap-blog.xml'), sitemap);
-        console.log(`Blog sitemap generated successfully${posts ? ' with ' + posts.length + ' posts' : ''}`);
+        fs.writeFileSync(path.join(config.publicDir, 'sitemap-blogs.xml'), sitemap);
+        console.log(`Community blog sitemap generated successfully with ${(posts || []).length} posts`);
         return true;
     } catch (error) {
-        console.error('Error generating blog sitemap:', error);
-        // Fallback to static blog sitemap if there's an error
-        generateStaticBlogSitemap();
+        console.error('Error generating community blog sitemap:', error);
         return false;
     }
 }
@@ -694,6 +684,14 @@ async function generateSitemapIndex(availableSitemaps) {
   </sitemap>`;
     }
 
+    if (availableSitemaps.blogs) {
+        sitemapIndex += `
+  <sitemap>
+    <loc>${config.siteUrl}/sitemap-blogs.xml</loc>
+    <lastmod>${timestamp}</lastmod>
+  </sitemap>`;
+    }
+
     if (availableSitemaps.mentors) {
         sitemapIndex += `
   <sitemap>
@@ -746,6 +744,7 @@ async function generateSitemaps() {
         // Generate dynamic content sitemaps and track which ones were successfully created
         const availableSitemaps = {
             blog: false,
+            blogs: false,
             mentors: false,
             community: false,
             groups: false,
@@ -754,6 +753,9 @@ async function generateSitemaps() {
 
         // Generate blog sitemap
         availableSitemaps.blog = await generateBlogSitemap();
+
+        // Generate community blog sitemap (distinct from the editorial one above)
+        availableSitemaps.blogs = await generateCommunityBlogSitemap();
 
         // Generate mentors sitemap
         availableSitemaps.mentors = await generateMentorsSitemap();
@@ -775,6 +777,7 @@ async function generateSitemaps() {
         // that omits the pages entirely.
         const fileNames = {
             blog: 'sitemap-blog.xml',
+            blogs: 'sitemap-blogs.xml',
             mentors: 'sitemap-mentors.xml',
             community: 'sitemap-community.xml',
             groups: 'sitemap-groups.xml',
