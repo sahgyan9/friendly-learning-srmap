@@ -87,6 +87,29 @@ type UserEventSchedule = {
   }>;
 };
 
+type UserTimetableSlot = {
+  day_order: number | null;
+  day_name: string;
+  hour: number;
+  start_time: string;
+  end_time: string;
+  slot: string | null;
+  course_code: string;
+  course_name: string;
+  faculty_name: string | null;
+  room_number: string | null;
+  is_lab: boolean;
+};
+
+type UserTimetableSchedule = {
+  user_id: string;
+  user_name: string;
+  /** Human-readable day label, e.g. "Tomorrow (Tuesday)" */
+  target_day_label: string;
+  slots: UserTimetableSlot[];
+  has_classes: boolean;
+};
+
 function getTemporalContext(): { todayText: string; tomorrowText: string; currentMonthYear: string; currentTimeText: string } {
   const now = new Date();
   const options: Intl.DateTimeFormatOptions = {
@@ -261,6 +284,100 @@ async function resolveUserEventSchedules(matches: Retrieved[]): Promise<UserEven
 }
 
 /**
+ * Resolves a named person's class schedule for a specific day (today / tomorrow /
+ * yesterday) from `student_timetables` via the `get_user_weekly_timetable` RPC.
+ *
+ * Only activates when the query contains timetable/class/schedule intent AND a
+ * temporal reference. This is what was missing for queries like "as per aarav
+ * time table does he have class tomorrow" — without this, the model only saw
+ * the RESOLVED_FACTS calendar block ("working day") and answered that instead
+ * of the actual class list.
+ *
+ * Day matching handles both storage formats the SRM portal produces:
+ *   • Standard weekday name: "Monday", "Tuesday" …
+ *   • SRM Day Order:         "Day 1" = Monday, "Day 2" = Tuesday …
+ */
+async function resolveUserTimetables(
+  matches: Retrieved[],
+  query: string,
+): Promise<UserTimetableSchedule[]> {
+  if (!SUPABASE_SERVICE_ROLE_KEY) return [];
+
+  // Only fire for timetable / class-schedule intent
+  const hasTimetableIntent = /\b(timetable|time[\s-]?table|class(?:es)?|schedule|lecture|period|subject)\b/i.test(query);
+  if (!hasTimetableIntent) return [];
+
+  // Detect the target day offset
+  const q = query.toLowerCase();
+  let offsetDays: number | null = null;
+  if (/\byesterday\b/.test(q)) offsetDays = -1;
+  else if (/\btoday\b|\btoda+y\b|\bnow\b|\bcurrently\b|\bright now\b|\bat the moment\b/.test(q)) offsetDays = 0;
+  else if (/\btomorrow\b|\btomm?orr?ow?\b/.test(q)) offsetDays = 1;
+  if (offsetDays === null) return [];
+
+  // Resolve the target day in IST
+  const targetDate = new Date(Date.now() + offsetDays * 24 * 60 * 60 * 1000);
+  const dayName = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Kolkata",
+    weekday: "long",
+  }).format(targetDate); // e.g. "Tuesday"
+
+  // ISO day of week in IST: 1=Monday … 7=Sunday
+  const istDateStr = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" }).format(targetDate);
+  const [y, mo, d] = istDateStr.split("-").map(Number);
+  const istLocal = new Date(y, mo - 1, d);
+  const isodow = istLocal.getDay() === 0 ? 7 : istLocal.getDay(); // 1=Mon…7=Sun
+
+  const dayLabel = offsetDays === 0 ? `Today (${dayName})` : offsetDays === 1 ? `Tomorrow (${dayName})` : `Yesterday (${dayName})`;
+
+  // Only look up mentors and students that appear in semantic matches
+  const subjects = matches.filter(
+    (m) => (m.entity_type === "mentor" || m.entity_type === "student") && m.entity_id,
+  );
+  if (subjects.length === 0) return [];
+
+  const schedules: UserTimetableSchedule[] = [];
+  await Promise.all(
+    subjects.slice(0, 3).map(async (m) => {
+      try {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_user_weekly_timetable`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "apikey": SUPABASE_SERVICE_ROLE_KEY,
+            "Authorization": `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+          },
+          body: JSON.stringify({ p_user_id: m.entity_id }),
+        });
+        if (!response.ok) return;
+        const rows: UserTimetableSlot[] = await response.json();
+        if (!Array.isArray(rows)) return;
+
+        // Filter to the queried day — handle both "Tuesday" and "Day 2" formats
+        const todaySlots = rows.filter((r) => {
+          const dn = (r.day_name ?? "").trim().toLowerCase();
+          if (dn === dayName.toLowerCase()) return true;                        // "tuesday"
+          if (dn === `day ${isodow}`) return true;                              // "day 2"
+          if (r.day_order !== null && r.day_order === isodow) return true;      // numeric
+          return false;
+        }).sort((a, b) => a.hour - b.hour);
+
+        schedules.push({
+          user_id: m.entity_id,
+          user_name: m.title,
+          target_day_label: dayLabel,
+          slots: todaySlots,
+          has_classes: todaySlots.length > 0,
+        });
+      } catch (err) {
+        console.error(`resolveUserTimetables error for ${m.entity_id}:`, err);
+      }
+    }),
+  );
+  return schedules;
+}
+
+/**
  * Reuse semantic-search to leverage the query cache and central embedding logic.
  *
  * `variants` and `ensureTypes` come from the caller, because the parser that
@@ -369,6 +486,7 @@ function buildPrompt(
   calendarFacts: CalendarFact[],
   mentorPresence: MentorPresence[] = [],
   eventSchedules: UserEventSchedule[] = [],
+  timetableSchedules: UserTimetableSchedule[] = [],
 ): string {
   const { todayText, tomorrowText, currentTimeText } = getTemporalContext();
 
@@ -433,6 +551,21 @@ function buildPrompt(
       }).join("\n")
     : "";
 
+  const timetableScheduleBlock = timetableSchedules.length > 0
+    ? "\n\nTIMETABLE_SCHEDULE (fetched directly from student_timetables database — ground truth for 'does X have class [day]' queries; use this to answer the question, not the RESOLVED_FACTS working-day status alone):\n"
+      + timetableSchedules.map((s) => {
+        if (!s.has_classes) {
+          return `- ${s.user_name}: NO classes scheduled on ${s.target_day_label} (their timetable has no entries for that day).`;
+        }
+        const lines = s.slots.map((sl) => {
+          const room = sl.room_number ? `, Room ${sl.room_number}` : "";
+          const lab = sl.is_lab ? " [LAB]" : "";
+          return `  • Hour ${sl.hour} (${sl.start_time.slice(0, 5)}–${sl.end_time.slice(0, 5)}): ${sl.course_name} (${sl.course_code})${lab}${room}`;
+        }).join("\n");
+        return `- ${s.user_name} has ${s.slots.length} class${s.slots.length === 1 ? "" : "es"} on ${s.target_day_label}:\n${lines}`;
+      }).join("\n")
+    : "";
+
   const context = matches.map((m, index) => {
     let tags = "";
     const rawTags = m.metadata?.interests ?? m.metadata?.skills ?? m.metadata?.tags;
@@ -451,7 +584,7 @@ TEMPORAL ANCHOR (Indian Standard Time / Asia/Kolkata):
 - Today's Date: ${todayText}
 - Current Time Right Now: ${currentTimeText} IST
 - Tomorrow's Date: ${tomorrowText}
-- Current Academic Year: 2026-27${resolvedFactsBlock}${mentorPresenceBlock}${mentorEventScheduleBlock}
+- Current Academic Year: 2026-27${resolvedFactsBlock}${mentorPresenceBlock}${mentorEventScheduleBlock}${timetableScheduleBlock}
 
 Here are the most relevant campus resources we found (faculty, mentors, opportunities, groups, posts, official campus documents & policies):
 ${context ? context : "No matching campus resources found."}
@@ -487,6 +620,13 @@ Rules:
      - List the upcoming events with titles, event type, date/time, whether their RSVP is 'Going' (confirmed) or 'Interested' (bookmarked), and any personal note they attached.
      - Direct the student to explore more details on the Events page (/events).
      - In 'verdict', provide a summary status (e.g. "🎟️ Gyan attending CODEVIUM 2026").
+14. PERSONAL TIMETABLE / "DOES X HAVE CLASS [DAY]" QUERIES:
+   - If a TIMETABLE_SCHEDULE block is present above, use it as the primary answer — it is fetched directly from the database and is more specific than anything in the academic calendar.
+   - The RESOLVED_FACTS block only answers "is that day a holiday or working day for the whole campus?" — it does NOT answer whether a specific person has any class on that day. You must consult TIMETABLE_SCHEDULE for the individual's schedule.
+   - If the person has NO classes on that day (has_classes: false), state clearly: "[Name] has no classes scheduled on [day] as per their timetable." Mention the day is still a working day if RESOLVED_FACTS says so.
+   - If the person HAS classes, list each one clearly: course name, course code, time slot (HH:MM–HH:MM), and room number (if available). Bold the course names.
+   - In 'verdict', write a timetable headline (e.g. "📚 Aarav has 4 classes tomorrow", "📭 Aarav — No Classes Tomorrow").
+   - Do NOT say "classes proceed as per the university timetable" as the answer — that is a non-answer. List the actual classes from TIMETABLE_SCHEDULE.
 
 Your response MUST be a valid JSON object matching this schema exactly:
 {
@@ -645,11 +785,12 @@ serve(async (req) => {
       retrieve(query, variants, ensureTypes, keywordQuery),
       resolveCalendarFacts(query),
     ]);
-    const [mentorPresence, eventSchedules] = await Promise.all([
+    const [mentorPresence, eventSchedules, timetableSchedules] = await Promise.all([
       resolveMentorPresence(matches),
       resolveUserEventSchedules(matches),
+      resolveUserTimetables(matches, query),
     ]);
-    const overview = await generateOverview(buildPrompt(query, matches, calendarFacts, mentorPresence, eventSchedules));
+    const overview = await generateOverview(buildPrompt(query, matches, calendarFacts, mentorPresence, eventSchedules, timetableSchedules));
 
     // Ensure all inline citations mentioned in summary (e.g. [1], [3]) are mapped in overview.citations
     if (overview && overview.summary) {
