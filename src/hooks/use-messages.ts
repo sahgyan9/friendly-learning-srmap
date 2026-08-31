@@ -189,16 +189,26 @@ export const useMessages = (userId: string, activeChatId?: string | null) => {
             const isViewer = user_id === userId;
 
             if (payload.eventType === 'INSERT') {
-              currentReactions[emoji] = (currentReactions[emoji] || 0) + 1;
+              // For the viewer's own reaction, reactToMessage already bumped
+              // the count optimistically. This event is just the echo of
+              // that write coming back over realtime — skip it, or every
+              // reaction you add double-counts until the next refetch.
+              const isEchoOfOwnOptimisticUpdate = isViewer && currentViewerReactions.includes(emoji);
+              if (!isEchoOfOwnOptimisticUpdate) {
+                currentReactions[emoji] = (currentReactions[emoji] || 0) + 1;
+              }
               if (isViewer && !currentViewerReactions.includes(emoji)) {
                 currentViewerReactions.push(emoji);
               }
             } else if (payload.eventType === 'DELETE') {
-              const nextCount = (currentReactions[emoji] || 1) - 1;
-              if (nextCount <= 0) {
-                delete currentReactions[emoji];
-              } else {
-                currentReactions[emoji] = nextCount;
+              const isEchoOfOwnOptimisticUpdate = isViewer && !currentViewerReactions.includes(emoji);
+              if (!isEchoOfOwnOptimisticUpdate) {
+                const nextCount = (currentReactions[emoji] || 1) - 1;
+                if (nextCount <= 0) {
+                  delete currentReactions[emoji];
+                } else {
+                  currentReactions[emoji] = nextCount;
+                }
               }
               if (isViewer) {
                 const idx = currentViewerReactions.indexOf(emoji);
