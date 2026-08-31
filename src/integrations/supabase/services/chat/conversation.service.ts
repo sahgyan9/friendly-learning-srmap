@@ -60,11 +60,20 @@ async function fetchParticipantProfiles(userIds: string[]): Promise<Map<string, 
       ? (mentor?.name ?? user?.name)
       : (user?.name ?? mentor?.name);
 
+    const resolvedRole =
+      user?.role === "admin"
+        ? "admin"
+        : user?.role === "both"
+        ? "both"
+        : mentor || user?.role === "mentor"
+        ? "mentor"
+        : user?.role ?? "student";
+
     profiles.set(id, {
       id,
-      name: displayName(preferredName, user?.role),
+      name: displayName(preferredName, resolvedRole),
       profile_image: mentor?.profile_image ?? user?.profile_image ?? null,
-      role: user?.role ?? (mentor ? "mentor" : "student"),
+      role: resolvedRole,
     });
   }
 

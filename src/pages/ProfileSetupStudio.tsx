@@ -957,6 +957,8 @@ export default function ProfileSetupStudio() {
         bio: state.bio.trim() || undefined,
         linkedin_url: state.linkedin_url.trim() || undefined,
         interests_discoverable: state.isDiscoverable,
+        role: profile?.role === "admin" ? "admin" : profile?.role === "both" ? "both" : "mentor",
+        verification_status: "approved",
       };
 
       const { error: userErr } = await supabase
