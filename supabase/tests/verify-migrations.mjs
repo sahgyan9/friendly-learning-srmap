@@ -547,6 +547,7 @@ for (const file of [
   '20260830190000_search_campus_users_rpc.sql',
   '20260830200000_search_campus_users_escape_wildcards.sql',
   '20260830210000_search_campus_users_single_query.sql',
+  '20260831120000_search_campus_users_include_nameless.sql',
 ]) {
   if (file === '20260804132345_b843f814-46d5-4c25-bc80-32e5f6ebba59.sql') {
     // Production's `faculty` table still carries `profile_image`, a column
@@ -3907,6 +3908,37 @@ check(
   'search_campus_users treats "_" in the query as a literal character, not a wildcard',
   wildcardResults.some(r => r.name === 'A_B Wildcard Test') && !wildcardResults.some(r => r.name === 'AxB Wildcard Test'),
   JSON.stringify(wildcardResults.map(r => r.name))
+);
+
+// --- 20260831120000_search_campus_users_include_nameless.sql ---
+console.log('\n--- 20260831120000_search_campus_users_include_nameless.sql ---');
+
+// Setup: a student with no display name set on either users or mentors —
+// previously excluded entirely regardless of query.
+const NAMELESS_UID = '77777777-7777-7777-7777-77777777777a';
+await q(`
+  INSERT INTO public.users (id, name, email, role, department, is_admin)
+  VALUES ($1, NULL, 'nameless@srmap.edu.in', 'student', 'Computer Science & Engineering', false)
+  ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name;
+`, [NAMELESS_UID]);
+
+// Test 1: nameless student appears in the empty-query directory browse, shown
+// as 'Student'. A nameless row sorts last (coalesce(m.name, u.name) is NULL,
+// which sorts NULLS LAST), so ask for enough rows to not be crowded out by
+// the other named fixtures earlier tests in this run have already inserted.
+const { rows: namelessDefaultResults } = await q(`SELECT * FROM public.search_campus_users('', 100);`);
+check(
+  'search_campus_users includes a nameless student in directory browse, badged Student',
+  namelessDefaultResults.some(r => r.id === NAMELESS_UID && r.name === 'Student' && r.badge === 'Student'),
+  JSON.stringify(namelessDefaultResults.filter(r => r.id === NAMELESS_UID))
+);
+
+// Test 2: searching by their department still surfaces them.
+const { rows: namelessDeptResults } = await q(`SELECT * FROM public.search_campus_users('Computer Science & Engineering');`);
+check(
+  'search_campus_users finds a nameless student by department',
+  namelessDeptResults.some(r => r.id === NAMELESS_UID),
+  JSON.stringify(namelessDeptResults.map(r => r.id))
 );
 
 console.log(failures === 0
