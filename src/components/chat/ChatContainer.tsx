@@ -210,12 +210,40 @@ const ChatContainer = ({
     return names;
   }, [conversations, messages]);
 
+  // get_conversation_messages doesn't return sender.profile_image, so the
+  // avatar for received messages has to come from the conversation record
+  // (already loaded for the header) rather than from the message itself.
+  const avatarsById = useMemo(() => {
+    const avatars = new Map<string, string>();
+
+    const record = (id?: string, image?: string | null) => {
+      if (!id || !image) return;
+      if (avatars.has(id)) return;
+      avatars.set(id, image);
+    };
+
+    for (const conversation of conversations) {
+      record(conversation.user1_id, conversation.user1?.profile_image);
+      record(conversation.user2_id, conversation.user2?.profile_image);
+    }
+    for (const message of messages) {
+      record(message.sender_id, message.sender?.profile_image);
+    }
+
+    return avatars;
+  }, [conversations, messages]);
+
   const getSenderName = useCallback(
     (senderId: string) => {
       if (senderId === currentUserId) return "You";
       return namesById.get(senderId) ?? "User";
     },
     [namesById, currentUserId],
+  );
+
+  const getSenderAvatar = useCallback(
+    (senderId: string) => avatarsById.get(senderId),
+    [avatarsById],
   );
 
   const handleStartDirectChat = async (targetUserId: string, targetUserName?: string) => {
@@ -352,6 +380,7 @@ const ChatContainer = ({
               currentUserId={currentUserId}
               conversationId={activeChat}
               getSenderName={getSenderName}
+              getSenderAvatar={getSenderAvatar}
               onReply={setReplyingTo}
               onEdit={setEditingMessage}
               onDelete={handleDeleteMessage}

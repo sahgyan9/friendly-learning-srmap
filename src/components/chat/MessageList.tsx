@@ -44,6 +44,7 @@ interface MessageListProps {
   currentUserId: string;
   conversationId: string | null;
   getSenderName?: (senderId: string) => string;
+  getSenderAvatar?: (senderId: string) => string | null | undefined;
   onReply?: (message: Message) => void;
   onEdit?: (message: Message) => void;
   onDelete?: (messageId: string) => Promise<void>;
@@ -87,6 +88,7 @@ const MessageList = ({
   currentUserId,
   conversationId,
   getSenderName,
+  getSenderAvatar,
   onReply,
   onEdit,
   onDelete,
@@ -337,7 +339,11 @@ const MessageList = ({
                   {!isMine &&
                     (isLastInGroup ? (
                       <Avatar className="h-7 w-7 shrink-0 ring-1 ring-white/10">
-                        <AvatarImage src={message.sender?.profile_image} alt="" className="object-cover" />
+                        <AvatarImage
+                          src={message.sender?.profile_image || getSenderAvatar?.(message.sender_id) || undefined}
+                          alt=""
+                          className="object-cover"
+                        />
                         <AvatarFallback className="bg-white/8 text-3xs font-semibold text-muted-foreground">
                           {getInitials(message.sender?.name || senderName)}
                         </AvatarFallback>
