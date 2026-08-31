@@ -11,10 +11,10 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Search, Loader2, UserPlus, GraduationCap, MessageSquare, AlertCircle, Sparkles } from "lucide-react";
-import { searchCampusUsers, CampusUserResult } from "@/integrations/supabase/services/chat/user.service";
+import type { CampusUserResult } from "@/integrations/supabase/services/chat/user.service";
 import { getOrCreateConversation } from "@/integrations/supabase/services/chat/conversation.service";
 import { getInitials, getBadgeVariant } from "@/utils/user-utils";
-import { useDebounce } from "@/hooks/useDebounce";
+import { useCampusUserSearch } from "@/hooks/useCampusUserSearch";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -34,47 +34,20 @@ export const NewConversationModal: React.FC<NewConversationModalProps> = ({
   initialQuery = "",
 }) => {
   const [searchQuery, setSearchQuery] = useState(initialQuery);
-  const [results, setResults] = useState<CampusUserResult[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
   const [isStarting, setIsStarting] = useState<string | null>(null);
-  const searchRequestIdRef = React.useRef(0);
   // Suggested-members view (empty query) should feel instant; an active
   // search still debounces normally.
-  const debouncedSearchQuery = useDebounce(searchQuery, searchQuery.trim() ? 200 : 0);
+  const { results, isSearching: isLoading } = useCampusUserSearch(searchQuery, currentUserId, {
+    searchOnEmpty: true,
+    debounceMs: 200,
+    enabled: isOpen,
+  });
 
   useEffect(() => {
     if (isOpen) {
       setSearchQuery(initialQuery);
     }
   }, [isOpen, initialQuery]);
-
-  // Immediate feedback as soon as the query (or open state) changes, before
-  // the debounced fetch below settles.
-  useEffect(() => {
-    if (!isOpen) return;
-    setIsLoading(true);
-  }, [searchQuery, isOpen]);
-
-  useEffect(() => {
-    if (!isOpen) return;
-    const query = debouncedSearchQuery.trim();
-
-    const requestId = ++searchRequestIdRef.current;
-    (async () => {
-      try {
-        const users = await searchCampusUsers(query, currentUserId);
-        if (searchRequestIdRef.current === requestId) {
-          setResults(users);
-        }
-      } catch (err) {
-        console.error("Search failed:", err);
-      } finally {
-        if (searchRequestIdRef.current === requestId) {
-          setIsLoading(false);
-        }
-      }
-    })();
-  }, [debouncedSearchQuery, isOpen, currentUserId]);
 
   const handleStartChat = async (targetUser: CampusUserResult) => {
     if (!currentUserId) {
