@@ -5,7 +5,7 @@ import { getCommunityPosts } from "@/integrations/supabase/services/community-po
 import { searchMentors } from "@/integrations/supabase/services/mentors";
 import { listCommunities, getCommunityKindMeta } from "@/integrations/supabase/services/communities";
 import { getOpportunities } from "@/integrations/supabase/services/opportunities";
-import { askWhoCanHelp, allResults } from "@/integrations/supabase/services/ask";
+import { askWhoCanHelp, allResults, type AskResult } from "@/integrations/supabase/services/ask";
 import { supabase } from "@/integrations/supabase/client";
 
 // Global cache for click-through rate boosts
@@ -120,6 +120,9 @@ const EMPTY: SearchResultsState = {
   hasMore: false,
   total: 0,
 };
+
+/** The three entity types that answer a calendar or policy question. */
+const RESERVED_DOCUMENT_TYPES: AskResult["entity_type"][] = ["document", "notice", "article"];
 
 /** Items per page on a single-category tab */
 const PAGE_SIZE = 20;
@@ -277,7 +280,17 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
           limit: tab === "communities" ? limit + offset : limit * 3,
           offset: 0,
         }).catch(() => ({ data: [], total: 0 })),
-        askWhoCanHelp(parsed.semanticQuery || trimmed, 20).catch(() => ({ data: null })),
+        askWhoCanHelp(parsed.semanticQuery || trimmed, 20, undefined, {
+          variants: parsed.retrievalQueries,
+          // The parser decided this is a calendar or policy question. Documents
+          // are a few hundred chunks against thousands of exhaustively-indexed
+          // people, so without a reserved slot they lose a race they should
+          // have won — which is how "when are midterms for btech cse 7th sem"
+          // returned 23 faculty and zero guidelines.
+          ...(parsed.targetCategory === "documents"
+            ? { ensureTypes: RESERVED_DOCUMENT_TYPES, ensureLimit: 4 }
+            : {}),
+        }).catch(() => ({ data: null })),
       ]);
 
       if (run !== sequence.current) return;
@@ -889,6 +902,53 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
                 // hardcoded +100 that put policy PDFs above every person on
                 // the page regardless of topic; intent handles that now, and
                 // a genuine policy question raises targetCategory="documents".
+                relevanceScore: score("document", { similarity, quality: ctrQuality(hit.entity_id) }),
+              });
+            }
+          } else if (hit.entity_type === "notice" || hit.entity_type === "article") {
+            // Retrieved since campus_notices and knowledge_articles shipped,
+            // and dropped on the floor here ever since: this chain ended at
+            // "document", so a notice announcing the midterm timetable — the
+            // single most on-topic row the index could return for "when are
+            // midterms" — was fetched, counted, and never rendered.
+            //
+            // Both belong in the Guidelines list a reader already understands.
+            // Neither is chunked into sections, so the per-document section cap
+            // does not apply.
+            if (!documentMap.has(hit.entity_id)) {
+              const candidateText = `${hit.title} ${hit.subtitle ?? ""} ${hit.body ?? ""}`;
+              if (parsed.specificTokens.length > 0 && similarity < 0.58) {
+                if (!hasTopicalMatch(candidateText, parsed)) return;
+              }
+
+              const isNotice = hit.entity_type === "notice";
+              const rawCategory = typeof hit.metadata?.category === "string" ? hit.metadata.category : "";
+              const label = rawCategory
+                ? rawCategory.replace(/_/g, " ")
+                : isNotice
+                ? "Campus Notice"
+                : "Campus Article";
+              const path = hit.source_path
+                || (isNotice
+                  ? `/notices/${hit.entity_id}`
+                  : `/articles/${typeof hit.metadata?.slug === "string" ? hit.metadata.slug : hit.entity_id}`);
+
+              documentMap.set(hit.entity_id, {
+                id: hit.entity_id,
+                title: hit.title,
+                subtitle: hit.subtitle || label,
+                to: path,
+                entityType: "document",
+                badge: label.toUpperCase(),
+                breadcrumb: `friendlylearning.in › ${isNotice ? "notices" : "articles"} › ${slugify(hit.title)}`,
+                snippet: hit.body
+                  ? (hit.body.length > 220 ? `${hit.body.slice(0, 220)}…` : hit.body)
+                  : (typeof hit.metadata?.summary === "string" ? hit.metadata.summary : label),
+                matchReason: isNotice
+                  ? "Official campus notice"
+                  : "Campus knowledge article",
+                sitelinks: [{ label: isNotice ? "Read Notice" : "Read Article", to: path }],
+                meta: hit.metadata,
                 relevanceScore: score("document", { similarity, quality: ctrQuality(hit.entity_id) }),
               });
             }

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getErrorField } from "@/lib/errors";
+import { parseQuery } from "@/lib/search/query-engine";
 import { toast } from "sonner";
 
 export interface AIEntityBadge {
@@ -199,10 +200,23 @@ export function useCampusAIOverview({
           return;
         }
 
+        // The overview retrieves for itself, so it needs the same phrasings and
+        // the same reserved slots the results list uses. Sending only the raw
+        // sentence is how the page came to show eight mentors and twenty-three
+        // professors above an overview saying no information was available —
+        // two retrievals of one question, disagreeing.
+        const parsed = parseQuery(trimmed);
+
         const { data, error: funcError } = await supabase.functions.invoke<AIOverviewResult>(
           "generate-ai-overview",
           {
-            body: { query: trimmed },
+            body: {
+              query: trimmed,
+              queries: parsed.retrievalQueries,
+              ...(parsed.targetCategory === "documents"
+                ? { ensure_types: ["document", "notice", "article"] }
+                : {}),
+            },
           }
         );
 

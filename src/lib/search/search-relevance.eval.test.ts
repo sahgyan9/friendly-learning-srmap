@@ -60,6 +60,15 @@ const CASES: EvalCase[] = [
   { query: "academic calendar midterm dates", expectSection: "document" },
   { query: "hostel curfew timing", expectSection: "document" },
 
+  // ── Dates. The same question with and without the qualifiers a real student
+  // types. The short form always worked; the long one returned 23 faculty and
+  // zero guidelines, because "cse" expanded to the department phrase that sits
+  // in every faculty chunk. Both must land in the same place. ──
+  { query: "when are midterms", expectSection: "document", forbidTop: ["faculty", "mentor"] },
+  { query: "when are midterms for btech cse 7th sem starting", expectSection: "document", forbidTop: ["faculty", "mentor"] },
+  { query: "when does the semester end for ece 3rd year", expectSection: "document", forbidTop: ["faculty", "mentor"] },
+  { query: "last date to pay the fee", expectSection: "document", forbidTop: ["faculty", "mentor"] },
+
   // ── Activities. Neither people nor policy. ──
   { query: "upcoming hackathons", expectSection: "opportunity", forbidTop: ["document", "faculty"] },
   { query: "smart india hackathon", expectSection: "opportunity", forbidTop: ["document"] },
@@ -95,7 +104,11 @@ function readEnv(): { url: string; key: string } {
   return { url: pick("VITE_SUPABASE_URL"), key: pick("VITE_SUPABASE_ANON_KEY") };
 }
 
-async function retrieve(query: string, url: string, key: string): Promise<KnowledgeHit[]> {
+async function retrieve(
+  parsed: ReturnType<typeof parseQuery>,
+  url: string,
+  key: string,
+): Promise<KnowledgeHit[]> {
   const response = await fetch(`${url}/functions/v1/semantic-search`, {
     method: "POST",
     headers: {
@@ -103,8 +116,17 @@ async function retrieve(query: string, url: string, key: string): Promise<Knowle
       apikey: key,
       "Content-Type": "application/json",
     },
-    // Same limit useSearchResults asks for, so the eval sees the same budget.
-    body: JSON.stringify({ query, limit: 20 }),
+    // Same limit, same variants and same reserved slots useSearchResults asks
+    // for. An eval that sends a single distilled query measures a pipeline
+    // nobody runs, and would have scored the midterms regression as a pass.
+    body: JSON.stringify({
+      query: parsed.semanticQuery,
+      queries: parsed.retrievalQueries,
+      limit: 20,
+      ...(parsed.targetCategory === "documents"
+        ? { ensure_types: ["document", "notice", "article"], ensure_limit: 4 }
+        : {}),
+    }),
   });
 
   if (!response.ok) throw new Error(`semantic-search ${response.status}: ${await response.text()}`);
@@ -174,13 +196,10 @@ describe("search relevance (live)", () => {
 
       for (const testCase of CASES) {
         const parsed = parseQuery(testCase.query);
-        // useSearchResults embeds the distilled query, not the raw one — the
-        // eval must do the same or it is measuring a pipeline nobody runs.
-        const embedded = parsed.semanticQuery || testCase.query;
 
         let ranked: Ranked[] = [];
         try {
-          ranked = rank(testCase.query, await retrieve(embedded, url, key));
+          ranked = rank(testCase.query, await retrieve(parsed, url, key));
         } catch (error) {
           failures.push(`${testCase.query} — retrieval failed: ${(error as Error).message}`);
           continue;

@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
  * shape that fits none of them.
  */
 export type AskResult = {
-  entity_type: "faculty" | "mentor" | "student" | "opportunity" | "community" | "post" | "document" | "notice";
+  entity_type: "faculty" | "mentor" | "student" | "opportunity" | "community" | "post" | "document" | "notice" | "article";
   entity_id: string;
   title: string;
   subtitle: string | null;
@@ -38,6 +38,14 @@ export type AskResponse = {
   documents?: AskResult[];
   /** Same optionality reasoning as `documents` — absent, not empty, predates this field. */
   notices?: AskResult[];
+  /**
+   * Admin-written knowledge articles. The server has grouped these since
+   * knowledge_articles shipped; this type did not declare the field, so
+   * `allResults` never flattened it and every article the index retrieved was
+   * counted in `total` and then thrown away — the exact silent loss that
+   * `other` exists to prevent, defeated by the group being claimed server-side.
+   */
+  articles?: AskResult[];
   /** Entity types the server has no group for yet. Never silently dropped. */
   other: AskResult[];
 };
@@ -62,6 +70,7 @@ export function allResults(data: AskResponse): AskResult[] {
     ...(data.posts ?? []),
     ...(data.documents ?? []),
     ...(data.notices ?? []),
+    ...(data.articles ?? []),
     ...(data.other ?? []),
   ].sort((a, b) => b.similarity - a.similarity);
 }
@@ -85,14 +94,49 @@ export function metaList(result: AskResult, key: string): string[] {
  * function embeds the question and does the retrieval; nothing here needs an
  * API key.
  */
-export async function askWhoCanHelp(query: string, limit = 12, types?: AskResult["entity_type"][]) {
+export async function askWhoCanHelp(
+  query: string,
+  limit = 12,
+  types?: AskResult["entity_type"][],
+  options?: {
+    /**
+     * Extra phrasings of the same question, embedded and rank-fused with the
+     * first. A long question distils to one point in vector space and that
+     * point can be wrong; asking two or three ways is what stops one bad
+     * distillation from deciding the whole page.
+     */
+    variants?: string[];
+    /** Entity types guaranteed a few slots, whatever else outranks them. */
+    ensureTypes?: AskResult["entity_type"][];
+    ensureLimit?: number;
+  },
+) {
   const trimmed = query.trim();
   if (trimmed.length < 3) {
     return { data: null, error: new Error("Type at least 3 characters") };
   }
 
-  const body: { query: string; limit: number; types?: string[] } = { query: trimmed, limit };
+  const body: {
+    query: string;
+    queries?: string[];
+    limit: number;
+    types?: string[];
+    ensure_types?: string[];
+    ensure_limit?: number;
+  } = { query: trimmed, limit };
+
+  const variants = Array.from(
+    new Set([trimmed, ...(options?.variants ?? []).map((v) => v.trim())]),
+  ).filter((v) => v.length >= 3);
+  // `query` stays populated regardless: a deployed function that predates
+  // `queries` must keep working rather than 400 on an unknown field.
+  if (variants.length > 1) body.queries = variants;
+
   if (types && types.length > 0) body.types = types;
+  if (options?.ensureTypes?.length) {
+    body.ensure_types = options.ensureTypes;
+    if (options.ensureLimit) body.ensure_limit = options.ensureLimit;
+  }
 
   const { data, error } = await supabase.functions.invoke<AskResponse>("semantic-search", {
     body,
