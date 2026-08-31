@@ -173,43 +173,47 @@ export const useMessages = (userId: string, activeChatId?: string | null) => {
     },
     // On reaction change in database
     useCallback((payload?: any) => {
-      if (payload?.eventType && (payload.new || payload.old)) {
-        const data = payload.new || payload.old;
-        const { message_id, user_id, emoji } = data || {};
-        if (message_id && emoji) {
-          setMessages((prev) =>
-            prev.map((msg) => {
-              if (msg.id !== message_id) return msg;
-              const currentReactions = { ...(msg.reactions || {}) };
-              const currentViewerReactions = [...(msg.viewer_reactions || [])];
-              const isViewer = user_id === userId;
+      const data = payload?.new || payload?.old;
+      const { message_id, user_id, emoji } = data || {};
 
-              if (payload.eventType === 'INSERT') {
-                currentReactions[emoji] = (currentReactions[emoji] || 0) + 1;
-                if (isViewer && !currentViewerReactions.includes(emoji)) {
-                  currentViewerReactions.push(emoji);
-                }
-              } else if (payload.eventType === 'DELETE') {
-                const nextCount = (currentReactions[emoji] || 1) - 1;
-                if (nextCount <= 0) {
-                  delete currentReactions[emoji];
-                } else {
-                  currentReactions[emoji] = nextCount;
-                }
-                if (isViewer) {
-                  const idx = currentViewerReactions.indexOf(emoji);
-                  if (idx !== -1) currentViewerReactions.splice(idx, 1);
-                }
+      // Patch the affected message in place when the payload carries enough
+      // to do so. Only fall back to a full refetch when it doesn't (e.g. an
+      // unrecognized event shape) — patching and then unconditionally
+      // refetching anyway meant the patch was always immediately overwritten.
+      if (payload?.eventType && message_id && emoji) {
+        setMessages((prev) =>
+          prev.map((msg) => {
+            if (msg.id !== message_id) return msg;
+            const currentReactions = { ...(msg.reactions || {}) };
+            const currentViewerReactions = [...(msg.viewer_reactions || [])];
+            const isViewer = user_id === userId;
+
+            if (payload.eventType === 'INSERT') {
+              currentReactions[emoji] = (currentReactions[emoji] || 0) + 1;
+              if (isViewer && !currentViewerReactions.includes(emoji)) {
+                currentViewerReactions.push(emoji);
               }
+            } else if (payload.eventType === 'DELETE') {
+              const nextCount = (currentReactions[emoji] || 1) - 1;
+              if (nextCount <= 0) {
+                delete currentReactions[emoji];
+              } else {
+                currentReactions[emoji] = nextCount;
+              }
+              if (isViewer) {
+                const idx = currentViewerReactions.indexOf(emoji);
+                if (idx !== -1) currentViewerReactions.splice(idx, 1);
+              }
+            }
 
-              return {
-                ...msg,
-                reactions: currentReactions,
-                viewer_reactions: currentViewerReactions,
-              };
-            })
-          );
-        }
+            return {
+              ...msg,
+              reactions: currentReactions,
+              viewer_reactions: currentViewerReactions,
+            };
+          })
+        );
+        return;
       }
 
       if (activeChat) {
