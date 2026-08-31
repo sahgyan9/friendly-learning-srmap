@@ -474,6 +474,18 @@ export interface ParsedQuery {
   semanticQuery: string;
   /** Every phrasing to embed and fuse. `semanticQuery` is always the first. */
   retrievalQueries: string[];
+  /**
+   * What the reader is asking *about*, for the full-text leg — content words
+   * only, with no role noun and nothing this parser synthesised.
+   *
+   * Not the same string as `semanticQuery`, and the difference matters. The
+   * vector leg wants the role noun because the corpus writes it verbatim
+   * ("Faculty member at SRM University-AP"), so ROLE_TERMS gets appended there.
+   * A keyword search on that same string matches the literal word "professor"
+   * wherever it appears — and a policy document containing it then scores
+   * lexical evidence for a query about quantum computing.
+   */
+  keywordQuery: string;
   /** Primary search intent */
   intent: QueryIntent;
   /** Explicit targeted entity category (e.g. 'mentors', 'faculty', 'opportunities') */
@@ -758,6 +770,10 @@ export function parseQuery(query: string): ParsedQuery {
     suggestedQuery,
     cleanTopic,
     semanticQuery,
+    // Deliberately built from subjectTokens, which already exclude role
+    // keywords, stop words and programme qualifiers — the words left are the
+    // ones a lexical match should actually count for.
+    keywordQuery: subjectTokens.length > 0 ? subjectTokens.join(" ") : normalized,
     retrievalQueries: buildRetrievalQueries({
       semanticQuery,
       normalized,

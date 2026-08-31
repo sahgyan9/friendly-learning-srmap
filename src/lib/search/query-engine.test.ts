@@ -94,6 +94,30 @@ describe("retrieval variants", () => {
   });
 });
 
+describe("keyword query", () => {
+  it("excludes the role noun the embedding phrasing appends", () => {
+    // "quantum computing professor" embedded as "...faculty professor" on
+    // purpose — faculty chunks read "Faculty member at SRM University-AP".
+    // Full-text searching that same string matched the literal word
+    // "professor" inside a policy document, which then outranked the actual
+    // quantum computing professors on lexical weight.
+    const parsed = parseQuery("quantum computing professor");
+
+    expect(parsed.semanticQuery).toMatch(/professor/);
+    expect(parsed.keywordQuery).toBe("quantum computing");
+  });
+
+  it("carries the content words, with qualifiers and stop words gone", () => {
+    expect(parseQuery(MIDTERMS).keywordQuery).toBe("midterms cse starting");
+  });
+
+  it("never returns empty, so the keyword leg always has something to search", () => {
+    for (const q of ["who can help me", "the", "faculty"]) {
+      expect(parseQuery(q).keywordQuery.length).toBeGreaterThan(0);
+    }
+  });
+});
+
 describe("did you mean", () => {
   it("does not offer the singular of a word the reader spelled correctly", () => {
     // Shipped behaviour: searching "midterms" printed *Did you mean "midterm"?*

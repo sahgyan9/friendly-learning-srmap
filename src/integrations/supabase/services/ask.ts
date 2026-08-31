@@ -114,6 +114,12 @@ export async function askWhoCanHelp(
      * distillation from deciding the whole page.
      */
     variants?: string[];
+    /**
+     * Content words for the full-text leg. Must not carry the role noun the
+     * embedding phrasings append — a keyword search matches "professor"
+     * literally, wherever it sits.
+     */
+    keywordQuery?: string;
     /** Entity types guaranteed a few slots, whatever else outranks them. */
     ensureTypes?: AskResult["entity_type"][];
     ensureLimit?: number;
@@ -131,6 +137,7 @@ export async function askWhoCanHelp(
     types?: string[];
     ensure_types?: string[];
     ensure_limit?: number;
+    keyword_query?: string;
   } = { query: trimmed, limit };
 
   const variants = Array.from(
@@ -139,6 +146,8 @@ export async function askWhoCanHelp(
   // `query` stays populated regardless: a deployed function that predates
   // `queries` must keep working rather than 400 on an unknown field.
   if (variants.length > 1) body.queries = variants;
+
+  if (options?.keywordQuery?.trim()) body.keyword_query = options.keywordQuery.trim();
 
   if (types && types.length > 0) body.types = types;
   if (options?.ensureTypes?.length) {

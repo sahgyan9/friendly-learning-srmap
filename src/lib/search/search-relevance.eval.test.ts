@@ -179,20 +179,20 @@ function rank(query: string, hits: KnowledgeHit[]): Ranked[] {
         title: hit.title,
         text: `${hit.title} ${hit.subtitle ?? ""} ${interests} ${hit.body ?? ""}`.toLowerCase(),
         similarity: hit.similarity,
-        // `keyword_rank` is the lexical evidence the keyword leg found, and it
-        // is what useSearchResults now passes for documents. Omitting it here
-        // would leave the heaviest weight in relevance.ts (lexical, 46 vs
-        // semantic's 40) untested on the one entity type that had no lexical
-        // signal at all until 20260831160000.
+        // Every type is scored the same way, from the same source.
         //
-        // People still score semantic-only, matching the app: their lexical
-        // evidence comes from a separate SQL query this path does not run.
+        // Giving documents their keyword_rank while leaving everyone else at
+        // lexical 0 invented an asymmetry the app does not have — in the app
+        // every type has some lexical route, people via their own SQL query.
+        // The eval cannot run those queries, but keyword_search_knowledge
+        // returns a rank for people too, so it is the one lexical signal
+        // available here on equal terms. Scoring one type with it and the rest
+        // without handed documents 46 points of weight that faculty and posts
+        // could not compete for, and two queries flipped to the wrong section
+        // on that alone.
         score: scoreResult(
           type,
-          {
-            similarity: hit.similarity,
-            ...(type === "document" ? { lexical: hit.keyword_rank ?? 0 } : {}),
-          },
+          { similarity: hit.similarity, lexical: hit.keyword_rank ?? 0 },
           parsed.targetCategory,
         ),
       }];

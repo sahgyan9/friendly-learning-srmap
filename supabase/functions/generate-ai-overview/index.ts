@@ -62,6 +62,10 @@ type MentorPresence = {
   current_event_end?: string | null;
   upcoming_going_count?: number;
   upcoming_interested_count?: number;
+  current_class_code?: string | null;
+  current_class_name?: string | null;
+  current_class_end?: string | null;
+  current_class_room?: string | null;
 };
 
 type UserEventSchedule = {
@@ -273,6 +277,7 @@ async function retrieve(
   query: string,
   variants: string[] = [],
   ensureTypes: string[] = [],
+  keywordQuery = "",
 ): Promise<Retrieved[]> {
   try {
     const { todayText, tomorrowText, currentMonthYear } = getTemporalContext();
@@ -294,6 +299,7 @@ async function retrieve(
       body: JSON.stringify({
         query: searchQuery,
         ...(queries.length > 1 ? { queries } : {}),
+        ...(keywordQuery.trim() ? { keyword_query: keywordQuery.trim() } : {}),
         limit: 12,
         ...(ensureTypes.length > 0 ? { ensure_types: ensureTypes, ensure_limit: 4 } : {}),
       }),
@@ -388,7 +394,9 @@ function buildPrompt(
     ? "\n\nMENTOR_LIVE_PRESENCE (real-time availability status from platform database — ground truth for 'is [mentor] free/available right now' questions):\n"
       + mentorPresence.map((mp) => {
         let status: string;
-        if (mp.current_event_title) {
+        if (mp.current_class_name) {
+          status = `CURRENTLY IN CLASS: "${mp.current_class_name}" (${mp.current_class_code || ''}${mp.current_class_room ? `, Room ${mp.current_class_room}` : ''} until ${mp.current_class_end || 'class ends'}) — BUSY / IN LECTURE`;
+        } else if (mp.current_event_title) {
           status = `CURRENTLY IN A CAMPUS EVENT: "${mp.current_event_title}" (until ${mp.current_event_end || 'event ends'}) — BUSY / SLOWER TO REPLY`;
         } else if (mp.is_active_now) {
           status = "ACTIVE & ACCEPTING CONNECTION REQUESTS";
@@ -461,17 +469,18 @@ Rules:
 5. Synthesize the context in a natural, helpful, student-friendly tone. Do not just list the titles.
 6. For anything specific to SRM AP — people, policies, procedures, dates, fees, contacts — only state facts that are actually in the provided context; never invent one. If no campus context matches an SRM-AP-specific question, say there are no direct matches yet and suggest broad advice. (This grounding requirement does not apply to rule 3's general-knowledge questions — you already know those answers.)
 7. INLINE CITATIONS: When you state an SRM-AP-specific fact, date, or entity from the resources, include an inline citation bracket like [1] or [2] matching the resource number above.
-8. INSTANT VERDICT: In 'verdict', provide an ultra-short 3-8 word headline status verdict (e.g. "🏖️ Official Holiday — No Classes", "📅 Next Exams: 28 Sept – 1 Oct 2026", "👥 8 Fullstack Mentors Available", "🎪 Gyan is at Codevium", "🟢 Gyan is Active & Available", "⏸️ Gyan is Away until Sept 2").
+8. INSTANT VERDICT: In 'verdict', provide an ultra-short 3-8 word headline status verdict (e.g. "🏖️ Official Holiday — No Classes", "📅 Next Exams: 28 Sept – 1 Oct 2026", "👥 8 Fullstack Mentors Available", "📚 Gyan is in Class (until 10:45 AM)", "🎪 Gyan is at Codevium", "🟢 Gyan is Active & Available", "⏸️ Gyan is Away until Sept 2").
 9. KEY TAKEAWAYS: Extract 1-3 distinct, concise bullet takeaways in 'keyInsights' with bold emoji/category prefixes (e.g., "**📅 Exact Date:** ...", "**🏛️ Library Access:** ...", "**⚠️ Policy:** ..."). Do NOT simply repeat the exact same sentence as the summary; make them actionable, scannable bullet points. For a rule-3 general-knowledge question this array may be empty or omitted.
 10. Identify the top 1-4 specific entities to recommend as badges — only ones that are genuinely relevant to the question. Use the exact 'id', 'type', 'title' (for name), 'path' (for to), and 'subtitle' (for detail) from the context. Only use types: 'faculty', 'mentor', 'opportunity', 'community', 'post', or 'document'.
 11. CITATIONS MAP: Provide a 'citations' array mapping the numbers you used in the summary to the entity.
 12. MENTOR AVAILABILITY / "IS X FREE" QUERIES:
    - If the student asks whether a specific mentor (e.g. "Is Gyan free right now?", "Is [Mentor] available?") is free or accepting messages:
      - Consult the MENTOR_LIVE_PRESENCE and MENTOR_EVENT_SCHEDULES blocks above.
+     - If the mentor is CURRENTLY IN CLASS: state clearly that they are currently attending class ("[Course Name]" until [End Time], Room [Room]) and are busy in lecture, but the student can still leave a message on their profile.
      - If the mentor is CURRENTLY IN A CAMPUS EVENT: state clearly that they are attending "[Event Name]" (until [End Time]) and may be busy or slower to respond, but the student can still leave a message on their profile.
      - If the mentor is ACTIVE: state clearly that they are active and accepting connection requests. Mention their custom availability note if one exists, their typical reply turnaround time, and link to their profile so the student can message them.
      - If the mentor is PAUSED / AWAY: state clearly that they are currently taking a break / paused (giving the return date and their note if available), but remind the student they can still leave a message or browse other mentors in the same department.
-     - In 'verdict', write a clear status headline (e.g. "🎪 Gyan is at Codevium", "🟢 Gyan is Active & Available", "⏸️ Gyan is Away").
+     - In 'verdict', write a clear status headline (e.g. "📚 Gyan is in Class (until 10:45 AM)", "🎪 Gyan is at Codevium", "🟢 Gyan is Active & Available", "⏸️ Gyan is Away").
 13. MENTOR EVENT ATTENDANCE / "WHAT EVENTS IS X ATTENDING" QUERIES:
    - If the student asks what events a mentor is attending (e.g. "What are the upcoming events Gyan is attending?", "Is Gyan going to [Event]?"):
      - Consult the MENTOR_EVENT_SCHEDULES block above.
@@ -630,9 +639,10 @@ serve(async (req) => {
     // falls back to the raw sentence exactly as before.
     const variants: string[] = Array.isArray(body.queries) ? body.queries : [];
     const ensureTypes: string[] = Array.isArray(body.ensure_types) ? body.ensure_types : [];
+    const keywordQuery: string = typeof body.keyword_query === "string" ? body.keyword_query : "";
 
     const [matches, calendarFacts] = await Promise.all([
-      retrieve(query, variants, ensureTypes),
+      retrieve(query, variants, ensureTypes, keywordQuery),
       resolveCalendarFacts(query),
     ]);
     const [mentorPresence, eventSchedules] = await Promise.all([

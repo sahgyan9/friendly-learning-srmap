@@ -282,6 +282,7 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
         }).catch(() => ({ data: [], total: 0 })),
         askWhoCanHelp(parsed.semanticQuery || trimmed, 20, undefined, {
           variants: parsed.retrievalQueries,
+          keywordQuery: parsed.keywordQuery,
           // The parser decided this is a calendar or policy question. Documents
           // are a few hundred chunks against thousands of exhaustively-indexed
           // people, so without a reserved slot they lose a race they should

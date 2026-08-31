@@ -213,6 +213,7 @@ export function useCampusAIOverview({
             body: {
               query: trimmed,
               queries: parsed.retrievalQueries,
+              keyword_query: parsed.keywordQuery,
               ...(parsed.targetCategory === "documents"
                 ? { ensure_types: ["document", "notice", "article"] }
                 : {}),

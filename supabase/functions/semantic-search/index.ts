@@ -173,6 +173,7 @@ serve(async (req) => {
     min_similarity?: number;
     ensure_types?: string[];
     ensure_limit?: number;
+    keyword_query?: string;
   } = {};
   try {
     payload = await req.json();
@@ -224,6 +225,10 @@ serve(async (req) => {
     /** Present on rows from the keyword leg; 0-1, absent from a vector-only row. */
     keyword_rank?: number;
   };
+
+  // Falls back to the distilled phrasing for a caller that predates this
+  // field, which is the old behaviour rather than an empty keyword leg.
+  const keywordQuery = (payload.keyword_query ?? "").trim() || queries[0];
 
   const allTypes =["faculty", "mentor", "student", "opportunity", "community", "post", "document", "notice", "article"];
   const limit = Math.min(Math.max(payload.limit ?? 12, 1), 50);
@@ -293,10 +298,13 @@ serve(async (req) => {
      * inputs, so fusing them recovers answers that no amount of tuning either
      * one could reach.
      *
-     * Runs on the distilled phrasing rather than the reader's whole sentence:
-     * `keyword_search_knowledge` OR-s the terms, and the programme and cohort
-     * words already stripped upstream would only add rank for chunks that
-     * mention a branch.
+     * Runs on `keyword_query` — content words only — and NOT on the phrasing
+     * the vector leg uses. The caller appends the role noun to that one on
+     * purpose, because faculty chunks read "Faculty member at SRM
+     * University-AP" verbatim and the embedding needs it. Full-text searching
+     * the same string matches the literal word "professor" wherever it occurs,
+     * which is how a policy document came to score lexical evidence on
+     * "quantum computing professor" and outrank the actual professors.
      */
     const keywordSearch = async (text: string, types: string[], rowLimit: number): Promise<Row[]> => {
       const { data, error } = await supabaseAdmin.rpc("keyword_search_knowledge", {
@@ -321,7 +329,7 @@ serve(async (req) => {
 
     const [lists, keywordHits] = await Promise.all([
       Promise.all(embedded.map((e) => search(e.embedding, payload.types ?? allTypes, limit))),
-      keywordSearch(queries[0], payload.types ?? allTypes, limit),
+      keywordSearch(keywordQuery, payload.types ?? allTypes, limit),
     ]);
 
     /**
@@ -381,7 +389,7 @@ serve(async (req) => {
       const ensureLimit = Math.min(Math.max(payload.ensure_limit ?? 3, 1), 10);
       const [vectorFloor, keywordFloor] = await Promise.all([
         search(embedded[0].embedding, ensureTypes, ensureLimit),
-        keywordSearch(queries[0], ensureTypes, ensureLimit),
+        keywordSearch(keywordQuery, ensureTypes, ensureLimit),
       ]);
       // Half weight: these are guaranteed a place, not a promotion. Anything
       // that also ranked on its own merits keeps the score it earned.
