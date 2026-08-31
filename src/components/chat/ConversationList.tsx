@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, Clock, Loader2, MessageCircleMore, SearchX, Sparkles, GraduationCap, MessageSquare } from "lucide-react";
+import { AlertCircle, Clock, Loader2, MessageCircleMore, SearchX, Sparkles, GraduationCap, MessageSquare, ShieldCheck } from "lucide-react";
 import { Conversation } from "@/types/chat";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -176,6 +176,7 @@ const ConversationList = ({
               const isActive = activeChat === conversation.id;
               const displayName = otherUser?.name?.trim() || "Student";
               const isOnline = isUserOnline(otherUser?.id);
+              const isMentor = otherUser?.role === "mentor";
               const queued = latestQueuedByConversation.get(conversation.id);
               const preview = queued?.content ?? conversation.last_message?.content ?? "No messages yet";
 
@@ -217,14 +218,21 @@ const ConversationList = ({
 
                     <div className="min-w-0 flex-1">
                       <div className="flex items-baseline justify-between gap-2">
-                        <span
-                          className={cn(
-                            "truncate text-sm transition-colors duration-200",
-                            hasUnread ? "font-bold" : "font-medium",
-                            isActive ? "text-foreground" : "text-foreground/90",
+                        <span className="flex min-w-0 items-center gap-1">
+                          <span
+                            className={cn(
+                              "truncate text-sm transition-colors duration-200",
+                              hasUnread ? "font-bold" : "font-medium",
+                              isActive ? "text-foreground" : "text-foreground/90",
+                            )}
+                          >
+                            {displayName}
+                          </span>
+                          {isMentor && (
+                            <Badge variant="secondary" className="h-4 shrink-0 px-1 text-4xs">
+                              <ShieldCheck className="mr-0.5 inline h-2.5 w-2.5" /> Mentor
+                            </Badge>
                           )}
-                        >
-                          {displayName}
                         </span>
                         <span className={cn(
                           "shrink-0 text-3xs tabular-nums transition-colors duration-200",

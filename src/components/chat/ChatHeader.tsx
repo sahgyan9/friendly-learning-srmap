@@ -1,9 +1,10 @@
 
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Video, Phone } from "lucide-react";
+import { ArrowLeft, Video, Phone, ShieldCheck } from "lucide-react";
 import { Conversation } from "@/types/chat";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getInitials } from "@/utils/user-utils";
 import { useUserPresenceRealtime } from "@/hooks/useUserPresenceRealtime";
@@ -85,9 +86,12 @@ const ChatHeader = ({ conversation, getOtherUser, onBack }: ChatHeaderProps) => 
           {isMentor && otherUser?.id ? (
             <Link
               to={`/mentor/${otherUser.id}`}
-              className="block truncate font-semibold leading-tight transition-colors duration-150 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="flex min-w-0 items-center gap-1.5 font-semibold leading-tight transition-colors duration-150 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              {displayName}
+              <span className="truncate">{displayName}</span>
+              <Badge variant="secondary" className="h-4 shrink-0 px-1 text-4xs">
+                <ShieldCheck className="mr-0.5 inline h-2.5 w-2.5" /> Mentor
+              </Badge>
             </Link>
           ) : (
             <h2 className="truncate font-semibold leading-tight">{displayName}</h2>
