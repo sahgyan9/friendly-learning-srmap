@@ -548,6 +548,7 @@ for (const file of [
   '20260830200000_search_campus_users_escape_wildcards.sql',
   '20260830210000_search_campus_users_single_query.sql',
   '20260831120000_search_campus_users_include_nameless.sql',
+  '20260831130000_sync_mentor_user_roles_and_chat_profiles.sql',
 ]) {
   if (file === '20260804132345_b843f814-46d5-4c25-bc80-32e5f6ebba59.sql') {
     // Production's `faculty` table still carries `profile_image`, a column
@@ -3939,6 +3940,62 @@ check(
   'search_campus_users finds a nameless student by department',
   namelessDeptResults.some(r => r.id === NAMELESS_UID),
   JSON.stringify(namelessDeptResults.map(r => r.id))
+);
+
+// --- 20260831130000_sync_mentor_user_roles_and_chat_profiles.sql ---
+console.log('\n--- 20260831130000_sync_mentor_user_roles_and_chat_profiles.sql ---');
+
+const NEW_MENTOR_UID = '88888888-8888-8888-8888-888888888889';
+// Setup: create a student who is currently role = 'student' and verification_status = 'pending'
+await q(`
+  INSERT INTO public.users (id, name, email, role, verification_status, department, is_admin)
+  VALUES ($1, 'Future Mentor Test', 'futurementor@srmap.edu.in', 'student', 'pending', 'Computer Science & Engineering', false)
+  ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, role = 'student', verification_status = 'pending';
+`, [NEW_MENTOR_UID]);
+
+// Create a conversation between CURRENT_UID and NEW_MENTOR_UID so chat_participant_profiles can query them
+const CONV_TEST_ID = '99999999-9999-9999-9999-999999999991';
+await q(`
+  INSERT INTO public.conversations (id, user1_id, user2_id)
+  VALUES ($1, $2, $3)
+  ON CONFLICT (id) DO NOTHING;
+`, [CONV_TEST_ID, CURRENT_UID, NEW_MENTOR_UID]);
+
+// Test 1: Insert into public.mentors -> trigger auto-promotes users.role to 'mentor' and verification_status to 'approved'
+await q(`
+  INSERT INTO public.mentors (id, name, department, skills, bio)
+  VALUES ($1, 'Future Mentor Test', 'Computer Science & Engineering', ARRAY['React', 'TypeScript'], 'Helping students')
+  ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, department = EXCLUDED.department;
+`, [NEW_MENTOR_UID]);
+
+const { rows: updatedUserRows } = await q(`SELECT role, verification_status FROM public.users WHERE id = $1;`, [NEW_MENTOR_UID]);
+check(
+  'trg_sync_user_on_mentor_change automatically updates users.role to mentor',
+  updatedUserRows[0]?.role === 'mentor',
+  `role: ${updatedUserRows[0]?.role}`
+);
+check(
+  'trg_sync_user_on_mentor_change automatically updates users.verification_status to approved',
+  updatedUserRows[0]?.verification_status === 'approved',
+  `verification_status: ${updatedUserRows[0]?.verification_status}`
+);
+
+// Test 2: chat_participant_profiles dynamically resolves role as mentor
+const { rows: chatProfileRows } = await q(`
+  SELECT * FROM public.chat_participant_profiles(ARRAY[$1]::uuid[]);
+`, [NEW_MENTOR_UID]);
+check(
+  'chat_participant_profiles returns role = mentor for mentor user',
+  chatProfileRows.some(r => r.id === NEW_MENTOR_UID && r.role === 'mentor'),
+  JSON.stringify(chatProfileRows)
+);
+
+// Test 3: search_campus_users returns role = mentor and badge = Mentor
+const { rows: searchMentorRows } = await q(`SELECT * FROM public.search_campus_users('Future Mentor');`);
+check(
+  'search_campus_users returns role = mentor and badge = Mentor',
+  searchMentorRows.some(r => r.id === NEW_MENTOR_UID && r.role === 'mentor' && r.badge === 'Mentor'),
+  JSON.stringify(searchMentorRows)
 );
 
 console.log(failures === 0
