@@ -178,6 +178,7 @@ const RAIL_EXCLUDED_PREFIXES = [
   "/reset-password",
   "/profile/setup",
   "/profile/kickstart",
+  "/blogs/write",
 ];
 
 export function pathShowsRail(pathname: string) {
