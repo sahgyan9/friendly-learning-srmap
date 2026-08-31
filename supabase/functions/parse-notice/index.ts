@@ -16,16 +16,16 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
 
+import {
+  getPrioritizedGeminiKeys,
+  markGeminiKeyCooldown,
+  markGeminiKeySuccess,
+} from "../_shared/gemini-pool.ts";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
-
-const GEMINI_KEYS = [
-  Deno.env.get("Gemini_API_Key"),
-  Deno.env.get("Gemini_API_Key_2"),
-  Deno.env.get("GEMINI_API_KEY"),
-].filter((k): k is string => Boolean(k && k.trim().length > 0));
 
 const supabaseAdmin = createClient(
   Deno.env.get("SUPABASE_URL") ?? "",
@@ -96,7 +96,8 @@ serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
 
-  if (GEMINI_KEYS.length === 0) return json({ error: "Gemini API Key is not configured" }, 500);
+  const geminiKeys = getPrioritizedGeminiKeys();
+  if (geminiKeys.length === 0) return json({ error: "Gemini API Key is not configured" }, 500);
 
   if (!(await isAdmin(req))) {
     return json({ error: "Unauthorized" }, 401);
@@ -123,7 +124,8 @@ serve(async (req) => {
   }
 
   let lastError = "";
-  for (const key of GEMINI_KEYS) {
+  for (const key of geminiKeys) {
+    let keyHit429 = false;
     for (const model of CANDIDATE_MODELS) {
       try {
         const response = await fetch(
@@ -144,6 +146,8 @@ serve(async (req) => {
         );
 
         if (response.status === 429) {
+          markGeminiKeyCooldown(key, 429);
+          keyHit429 = true;
           lastError = `${model} -> 429 rate limit`;
           break; // Switch to next key in pool
         }
@@ -163,6 +167,7 @@ serve(async (req) => {
           continue;
         }
 
+        markGeminiKeySuccess(key);
         return json({
           model,
           title: parsed.title ?? "",
@@ -178,6 +183,7 @@ serve(async (req) => {
         lastError = `${model} -> ${err instanceof Error ? err.message : String(err)}`;
       }
     }
+    if (keyHit429) continue;
   }
 
   return json({ error: `All candidate models failed. Last error: ${lastError}` }, 500);

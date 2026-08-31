@@ -1,17 +1,15 @@
-// Parse LinkedIn PDF resume and extract structured profile data using Gemini API
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
+import {
+  getPrioritizedGeminiKeys,
+  markGeminiKeyCooldown,
+  markGeminiKeySuccess,
+} from "../_shared/gemini-pool.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
-
-const GEMINI_KEYS = [
-  Deno.env.get("Gemini_API_Key"),
-  Deno.env.get("Gemini_API_Key_2"),
-  Deno.env.get("GEMINI_API_KEY"),
-].filter((k): k is string => Boolean(k && k.trim().length > 0));
 
 const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
 
@@ -159,9 +157,11 @@ serve(async (req) => {
       );
     };
 
-    // 1. Try native Google Gemini API keys first
-    if (GEMINI_KEYS.length > 0) {
-      for (const key of GEMINI_KEYS) {
+    // 1. Try smart load-balanced Google Gemini API keys first
+    const geminiKeys = getPrioritizedGeminiKeys();
+    if (geminiKeys.length > 0) {
+      for (const key of geminiKeys) {
+        let keyHit429 = false;
         for (const model of CANDIDATE_MODELS) {
           const call = () =>
             fetchWithTimeout(
@@ -187,13 +187,16 @@ serve(async (req) => {
           try {
             let res = await call();
             if (res.status === 503) {
+              markGeminiKeyCooldown(key, 503);
               await new Promise((r) => setTimeout(r, RETRY_503_MS));
               res = await call();
             }
 
             if (res.status === 429) {
+              markGeminiKeyCooldown(key, 429);
+              keyHit429 = true;
               lastError = `${model} -> 429 rate limited`;
-              break; // Switch to next key
+              break; // Switch to next key immediately
             }
 
             if (!res.ok) {
@@ -211,6 +214,7 @@ serve(async (req) => {
             }
 
             if (rawText) {
+              markGeminiKeySuccess(key);
               const parsed = extractJson(rawText);
               return json({ data: parsed });
             }
@@ -218,6 +222,7 @@ serve(async (req) => {
             lastError = `${model} -> ${err instanceof Error ? err.message : String(err)}`;
           }
         }
+        if (keyHit429) continue;
       }
     }
 

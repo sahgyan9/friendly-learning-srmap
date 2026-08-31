@@ -38,6 +38,12 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
 
+import {
+  getPrioritizedGeminiKeys,
+  markGeminiKeyCooldown,
+  markGeminiKeySuccess,
+} from "../_shared/gemini-pool.ts";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -46,12 +52,6 @@ const corsHeaders = {
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-
-const GEMINI_KEYS = [
-  Deno.env.get("Gemini_API_Key"),
-  Deno.env.get("Gemini_API_Key_2"),
-  Deno.env.get("GEMINI_API_KEY"),
-].filter((k): k is string => Boolean(k && k.trim().length > 0));
 
 // Same ladder generate-ai-overview walks, for the same reason: model
 // availability here moves without notice and a hard-pinned name has broken
@@ -183,9 +183,11 @@ function cleanJsonText(raw: string): string {
 
 async function generate(prompt: string): Promise<unknown> {
   const tried: string[] = [];
+  const keys = getPrioritizedGeminiKeys();
 
-  for (let keyIdx = 0; keyIdx < GEMINI_KEYS.length; keyIdx++) {
-    const key = GEMINI_KEYS[keyIdx];
+  for (let keyIdx = 0; keyIdx < keys.length; keyIdx++) {
+    const key = keys[keyIdx];
+    let keyHit429 = false;
 
     for (const model of GENERATION_MODELS) {
       const call = () =>
@@ -209,10 +211,13 @@ async function generate(prompt: string): Promise<unknown> {
 
       let response = await call();
       if (response.status === 503) {
+        markGeminiKeyCooldown(key, 503);
         await new Promise((r) => setTimeout(r, RETRY_503_MS));
         response = await call();
       }
       if (response.status === 429) {
+        markGeminiKeyCooldown(key, 429);
+        keyHit429 = true;
         tried.push(`key_${keyIdx + 1}:${model}=429`);
         break; // whole key is rate-limited; move to the next one
       }
@@ -231,7 +236,9 @@ async function generate(prompt: string): Promise<unknown> {
       }
       if (text) {
         try {
-          return JSON.parse(cleanJsonText(text));
+          const parsed = JSON.parse(cleanJsonText(text));
+          markGeminiKeySuccess(key);
+          return parsed;
         } catch (e) {
           tried.push(
             `key_${keyIdx + 1}:${model}=parse:${e instanceof Error ? e.message : String(e)}`,
@@ -241,6 +248,7 @@ async function generate(prompt: string): Promise<unknown> {
       }
       tried.push(`key_${keyIdx + 1}:${model}=empty`);
     }
+    if (keyHit429) continue;
   }
 
   throw new Error(`Gemini failed across all keys and models: ${tried.join(" | ")}`);
@@ -345,7 +353,7 @@ serve(async (req) => {
     });
 
   if (!(await isAuthorised(req))) return json({ error: "Unauthorized" }, 401);
-  if (GEMINI_KEYS.length === 0) return json({ error: "No Gemini API key configured" }, 500);
+  if (getPrioritizedGeminiKeys().length === 0) return json({ error: "No Gemini API key configured" }, 500);
 
   let payload: {
     mentorIds?: string[];

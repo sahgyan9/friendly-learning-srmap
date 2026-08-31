@@ -1,16 +1,15 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
+import {
+  getPrioritizedGeminiKeys,
+  markGeminiKeyCooldown,
+  markGeminiKeySuccess,
+} from "../_shared/gemini-pool.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-cron-secret",
 };
-
-const GEMINI_KEYS = [
-  Deno.env.get("Gemini_API_Key"),
-  Deno.env.get("Gemini_API_Key_2"),
-  Deno.env.get("GEMINI_API_KEY"),
-].filter((k): k is string => Boolean(k && k.trim().length > 0));
 
 const CRON_SECRET = Deno.env.get("CRON_SECRET");
 
@@ -36,7 +35,7 @@ serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
 
-  if (GEMINI_KEYS.length === 0) return json({ error: "Gemini API Key is not configured" }, 500);
+  if (getPrioritizedGeminiKeys().length === 0) return json({ error: "Gemini API Key is not configured" }, 500);
 
   // Authorisation: valid user JWT or CRON_SECRET header
   const cronHeader = req.headers.get("x-cron-secret");
@@ -63,8 +62,11 @@ serve(async (req) => {
     return json({ error: "Invalid JSON body" }, 400);
   }
 
+  const geminiKeys = getPrioritizedGeminiKeys();
+
   if (payload.listModels) {
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${GEMINI_KEYS[0]}&pageSize=200`);
+    const activeKey = geminiKeys[0] || "";
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${activeKey}&pageSize=200`);
     const data = await res.json();
     return json(data);
   }
@@ -82,7 +84,8 @@ Rules:
 5. If there are numbered or lettered points, preserve the hierarchy.`;
 
   let lastError = "";
-  for (const key of GEMINI_KEYS) {
+  for (const key of geminiKeys) {
+    let keyHit429 = false;
     for (const model of CANDIDATE_MODELS) {
       try {
         const response = await fetch(
@@ -113,6 +116,8 @@ Rules:
         );
 
         if (response.status === 429) {
+          markGeminiKeyCooldown(key, 429);
+          keyHit429 = true;
           lastError = `${model} -> 429 rate limit`;
           break; // Switch to next key in pool
         }
@@ -124,11 +129,13 @@ Rules:
 
         const data = await response.json();
         const text = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+        markGeminiKeySuccess(key);
         return json({ pageNum, model, text });
       } catch (err) {
         lastError = `${model} -> ${err instanceof Error ? err.message : String(err)}`;
       }
     }
+    if (keyHit429) continue;
   }
 
   return json({ error: `All candidate models failed. Last error: ${lastError}` }, 500);

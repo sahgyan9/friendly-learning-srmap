@@ -38,12 +38,13 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+import {
+  getPrioritizedGeminiKeys,
+  markGeminiKeyCooldown,
+  markGeminiKeySuccess,
+} from "../_shared/gemini-pool.ts";
+
 const MODEL = Deno.env.get("EMBEDDING_MODEL") ?? "gemini-embedding-001";
-const GEMINI_KEYS = [
-  Deno.env.get("Gemini_API_Key"),
-  Deno.env.get("Gemini_API_Key_2"),
-  Deno.env.get("GEMINI_API_KEY"),
-].filter((k): k is string => Boolean(k && k.trim().length > 0));
 const DIMENSIONS = 768;
 
 const MIN_QUERY = 3;
@@ -71,9 +72,10 @@ async function hashQuery(query: string): Promise<string> {
  */
 async function embedQuery(text: string): Promise<number[]> {
   const errors: string[] = [];
+  const keys = getPrioritizedGeminiKeys();
 
-  for (let i = 0; i < GEMINI_KEYS.length; i++) {
-    const key = GEMINI_KEYS[i];
+  for (let i = 0; i < keys.length; i++) {
+    const key = keys[i];
     try {
       const response = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:embedContent?key=${key}`,
@@ -89,9 +91,16 @@ async function embedQuery(text: string): Promise<number[]> {
         },
       );
 
-      if (response.status === 429 || response.status >= 500) {
-        errors.push(`key_${i + 1}=${response.status}`);
+      if (response.status === 429) {
+        markGeminiKeyCooldown(key, 429);
+        errors.push(`key_${i + 1}=429`);
         continue; // Failover to next key in pool
+      }
+
+      if (response.status >= 500) {
+        markGeminiKeyCooldown(key, response.status);
+        errors.push(`key_${i + 1}=${response.status}`);
+        continue;
       }
 
       if (!response.ok) {
@@ -106,6 +115,7 @@ async function embedQuery(text: string): Promise<number[]> {
         throw new Error(`expected ${DIMENSIONS} dimensions, got ${values.length}`);
       }
 
+      markGeminiKeySuccess(key);
       const norm = Math.sqrt(values.reduce((sum, v) => sum + v * v, 0));
       return norm > 0 ? values.map((v) => v / norm) : values;
     } catch (err) {
@@ -125,7 +135,7 @@ serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
 
-  if (GEMINI_KEYS.length === 0) return json({ error: "Search is not configured" }, 503);
+  if (getPrioritizedGeminiKeys().length === 0) return json({ error: "Search is not configured" }, 503);
 
   let payload: { query?: string; limit?: number; types?: string[]; min_similarity?: number } = {};
   try {

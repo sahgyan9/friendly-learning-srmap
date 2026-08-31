@@ -39,10 +39,11 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
  * Embeddings deliberately keep using only the primary key — embed-knowledge
  * and semantic-search's embedQuery are unaffected by this list.
  */
-const GEMINI_KEYS = [
-  Deno.env.get("Gemini_API_Key"),
-  Deno.env.get("Gemini_API_Key_2"),
-].filter((k): k is string => !!k);
+import {
+  getPrioritizedGeminiKeys,
+  markGeminiKeyCooldown,
+  markGeminiKeySuccess,
+} from "../_shared/gemini-pool.ts";
 
 /**
  * Tried in order until one answers. Not defensive programming for its own sake:
@@ -361,15 +362,12 @@ function stripUrls(text: string, urls: string[]): string {
 
 async function generate(prompt: string): Promise<{ text: string; model: string }> {
   const tried: string[] = [];
+  const keys = getPrioritizedGeminiKeys();
 
-  // Outer loop over keys, inner loop over models — a key is only moved past
-  // once every model has been tried against it. In practice a model failure
-  // has so far always been 429 (see GENERATION_MODELS' comment), so this only
-  // costs extra latency in the worst case where both keys are genuinely
-  // exhausted, which already ends in the same "busy, try in a minute" reply
-  // as today.
-  for (let keyIndex = 0; keyIndex < GEMINI_KEYS.length; keyIndex++) {
-    const key = GEMINI_KEYS[keyIndex];
+  // Smart load balancing across keys, inner loop over models
+  for (let keyIndex = 0; keyIndex < keys.length; keyIndex++) {
+    const key = keys[keyIndex];
+    let keyHit429 = false;
 
     for (const model of GENERATION_MODELS) {
       // Reasoning models bill thinking tokens against maxOutputTokens, which cut
@@ -397,13 +395,19 @@ async function generate(prompt: string): Promise<{ text: string; model: string }
       // seconds. One retry, only for that status; a 429 is retried by the student
       // a minute later, not by us.
       if (response.status === 503) {
+        markGeminiKeyCooldown(key, 503);
         await new Promise((resolve) => setTimeout(resolve, RETRY_503_MS));
         response = await call();
       }
 
+      if (response.status === 429) {
+        markGeminiKeyCooldown(key, 429);
+        keyHit429 = true;
+        tried.push(`${model}@key${keyIndex + 1}=429`);
+        break; // whole key is rate-limited; skip to next key immediately
+      }
+
       // Any failure falls through to the next candidate rather than throwing.
-      // Throwing on the first non-404 made a transient 429 on one model take the
-      // whole assistant down even though a later model would have answered.
       if (!response.ok) {
         tried.push(`${model}@key${keyIndex + 1}=${response.status}:${(await response.text()).slice(0, 120)}`);
         continue;
@@ -419,15 +423,19 @@ async function generate(prompt: string): Promise<{ text: string; model: string }
         tried.push(`${model}@key${keyIndex + 1}=truncated-at-${text.length}-chars`);
         continue;
       }
-      if (text) return { text: text.trim(), model };
+      if (text) {
+        markGeminiKeySuccess(key);
+        return { text: text.trim(), model };
+      }
 
       // An empty candidate means a safety block or an exhausted token budget;
       // both are worth naming in the debug trail rather than looking like a 404.
       tried.push(`${model}@key${keyIndex + 1}=empty:${JSON.stringify(body).slice(0, 150)}`);
     }
+    if (keyHit429) continue;
   }
 
-  throw new Error(`no usable generation model across ${GEMINI_KEYS.length} key(s). ${tried.join(" | ")}`);
+  throw new Error(`no usable generation model across ${keys.length} key(s). ${tried.join(" | ")}`);
 }
 
 /**

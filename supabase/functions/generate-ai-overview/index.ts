@@ -1,4 +1,9 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import {
+  getPrioritizedGeminiKeys,
+  markGeminiKeyCooldown,
+  markGeminiKeySuccess,
+} from "../_shared/gemini-pool.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -7,11 +12,6 @@ const corsHeaders = {
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-const GEMINI_KEYS = [
-  Deno.env.get("Gemini_API_Key"),
-  Deno.env.get("Gemini_API_Key_2"),
-  Deno.env.get("GEMINI_API_KEY"),
-].filter((k): k is string => Boolean(k && k.trim().length > 0));
 const MODEL = "gemini-flash-latest";
 
 // A single entity can back several indexed chunks (a multi-section document
@@ -330,9 +330,11 @@ function cleanJsonText(raw: string): string {
 
 async function generateOverview(prompt: string) {
   const tried: string[] = [];
+  const keys = getPrioritizedGeminiKeys();
 
-  for (let keyIdx = 0; keyIdx < GEMINI_KEYS.length; keyIdx++) {
-    const key = GEMINI_KEYS[keyIdx];
+  for (let keyIdx = 0; keyIdx < keys.length; keyIdx++) {
+    const key = keys[keyIdx];
+    let keyHit429 = false;
 
     for (const model of GENERATION_MODELS) {
       const call = () => fetch(
@@ -354,12 +356,15 @@ async function generateOverview(prompt: string) {
       let response = await call();
 
       if (response.status === 503) {
+        markGeminiKeyCooldown(key, 503);
         await new Promise((resolve) => setTimeout(resolve, RETRY_503_MS));
         response = await call();
       }
 
       // If rate-limited (429) on this key, failover immediately to next key in pool
       if (response.status === 429) {
+        markGeminiKeyCooldown(key, 429);
+        keyHit429 = true;
         tried.push(`key_${keyIdx + 1}:${model}=429_rate_limit`);
         break; // Switch to next key
       }
@@ -381,7 +386,9 @@ async function generateOverview(prompt: string) {
       if (text) {
         const cleaned = cleanJsonText(text);
         try {
-          return JSON.parse(cleaned);
+          const parsed = JSON.parse(cleaned);
+          markGeminiKeySuccess(key);
+          return parsed;
         } catch (e) {
           tried.push(`key_${keyIdx + 1}:${model}=json-parse-error:${e instanceof Error ? e.message : String(e)}`);
           continue;
@@ -390,6 +397,7 @@ async function generateOverview(prompt: string) {
 
       tried.push(`key_${keyIdx + 1}:${model}=empty`);
     }
+    if (keyHit429) continue;
   }
 
   throw new Error(`Gemini API failed across all keys and models: ${tried.join(" | ")}`);
@@ -401,7 +409,8 @@ serve(async (req) => {
   try {
     const body = await req.json();
     if (body.listModels) {
-      const activeKey = GEMINI_KEYS[0] || "";
+      const keys = getPrioritizedGeminiKeys();
+      const activeKey = keys[0] || "";
       const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${activeKey}&pageSize=200`);
       const data = await res.json();
       const generationModels = (data.models ?? [])
