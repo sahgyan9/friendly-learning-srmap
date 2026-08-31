@@ -46,6 +46,43 @@ type Retrieved = {
   similarity: number;
 };
 
+type MentorPresence = {
+  mentor_id: string;
+  name: string;
+  slug: string | null;
+  department: string | null;
+  is_available: boolean;
+  available_from: string | null;
+  availability_note: string | null;
+  is_active_now: boolean;
+  median_reply_minutes: number | null;
+  last_message_at: string | null;
+  students_helped: number;
+  current_event_title?: string | null;
+  current_event_end?: string | null;
+  upcoming_going_count?: number;
+  upcoming_interested_count?: number;
+};
+
+type UserEventSchedule = {
+  user_id: string;
+  user_name: string;
+  events: Array<{
+    event_id: number;
+    title: string;
+    start_date: string;
+    end_date: string;
+    event_type: string;
+    department: string;
+    link: string;
+    image_url: string | null;
+    status: string;
+    note: string | null;
+    is_happening_now: boolean;
+    is_all_day: boolean;
+  }>;
+};
+
 function getTemporalContext(): { todayText: string; tomorrowText: string; currentMonthYear: string; currentTimeText: string } {
   const now = new Date();
   const options: Intl.DateTimeFormatOptions = {
@@ -147,8 +184,96 @@ async function resolveCalendarFacts(query: string): Promise<CalendarFact[]> {
   return facts;
 }
 
-// Reuse semantic-search to leverage the query cache and central embedding logic.
-async function retrieve(query: string): Promise<Retrieved[]> {
+/**
+ * Real-time presence and response turnaround for mentors retrieved in search matches.
+ * Provides deterministic ground truth on whether the mentor is active vs away,
+ * their custom availability note, and typical turnaround velocity.
+ */
+async function resolveMentorPresence(matches: Retrieved[]): Promise<MentorPresence[]> {
+  if (!SUPABASE_SERVICE_ROLE_KEY) return [];
+  const mentorIds = matches
+    .filter((m) => m.entity_type === "mentor" && m.entity_id)
+    .map((m) => m.entity_id);
+  if (mentorIds.length === 0) return [];
+
+  try {
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_mentors_live_availability`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "apikey": SUPABASE_SERVICE_ROLE_KEY,
+        "Authorization": `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+      },
+      body: JSON.stringify({ p_mentor_ids: mentorIds }),
+    });
+    if (!response.ok) return [];
+    const rows = await response.json();
+    return Array.isArray(rows) ? (rows as MentorPresence[]) : [];
+  } catch (error) {
+    console.error("resolveMentorPresence failed:", error);
+    return [];
+  }
+}
+
+/**
+ * Real-time event schedules & RSVPs for mentors retrieved in search matches.
+ * Provides deterministic grounding for queries like "what events is Gyan attending?"
+ * or "what is Gyan doing this week?".
+ */
+async function resolveUserEventSchedules(matches: Retrieved[]): Promise<UserEventSchedule[]> {
+  if (!SUPABASE_SERVICE_ROLE_KEY) return [];
+  const mentors = matches.filter((m) => m.entity_type === "mentor" && m.entity_id);
+  if (mentors.length === 0) return [];
+
+  const schedules: UserEventSchedule[] = [];
+  await Promise.all(
+    mentors.slice(0, 3).map(async (m) => {
+      try {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_user_event_schedule`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "apikey": SUPABASE_SERVICE_ROLE_KEY,
+            "Authorization": `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+          },
+          body: JSON.stringify({ p_user_id: m.entity_id }),
+        });
+        if (response.ok) {
+          const events = await response.json();
+          if (Array.isArray(events) && events.length > 0) {
+            schedules.push({
+              user_id: m.entity_id,
+              user_name: m.title,
+              events,
+            });
+          }
+        }
+      } catch (err) {
+        console.error(`resolveUserEventSchedules error for ${m.entity_id}:`, err);
+      }
+    })
+  );
+  return schedules;
+}
+
+/**
+ * Reuse semantic-search to leverage the query cache and central embedding logic.
+ *
+ * `variants` and `ensureTypes` come from the caller, because the parser that
+ * produces them (src/lib/search/query-engine.ts) is frontend code this function
+ * cannot import. Without them this retrieves on the raw sentence alone — which
+ * is how the overview came to answer "when are midterms for btech cse 7th sem
+ * starting" with *no official information is available*. It was telling the
+ * truth about what it had been given: the retrieval behind it returned
+ * twenty-three CSE professors and not one line of the academic calendar. An
+ * empty-handed model is a retrieval bug, never a model bug — check what
+ * reached the prompt before touching the prompt.
+ */
+async function retrieve(
+  query: string,
+  variants: string[] = [],
+  ensureTypes: string[] = [],
+): Promise<Retrieved[]> {
   try {
     const { todayText, tomorrowText, currentMonthYear } = getTemporalContext();
     let searchQuery = query;
@@ -159,10 +284,19 @@ async function retrieve(query: string): Promise<Retrieved[]> {
       searchQuery = `${query} (${todayText} / ${tomorrowText} Academic Calendar AY 2026-27 ${currentMonthYear} working days holidays)`;
     }
 
+    const queries = Array.from(
+      new Set([searchQuery, ...variants.map((v) => (typeof v === "string" ? v.trim() : ""))]),
+    ).filter((q) => q.length >= 3);
+
     const response = await fetch(`${SUPABASE_URL}/functions/v1/semantic-search`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ query: searchQuery, limit: 12 }),
+      body: JSON.stringify({
+        query: searchQuery,
+        ...(queries.length > 1 ? { queries } : {}),
+        limit: 12,
+        ...(ensureTypes.length > 0 ? { ensure_types: ensureTypes, ensure_limit: 4 } : {}),
+      }),
     });
 
     if (!response.ok) return [];
@@ -223,7 +357,13 @@ async function retrieve(query: string): Promise<Retrieved[]> {
   }
 }
 
-function buildPrompt(query: string, matches: Retrieved[], calendarFacts: CalendarFact[]): string {
+function buildPrompt(
+  query: string,
+  matches: Retrieved[],
+  calendarFacts: CalendarFact[],
+  mentorPresence: MentorPresence[] = [],
+  eventSchedules: UserEventSchedule[] = [],
+): string {
   const { todayText, tomorrowText, currentTimeText } = getTemporalContext();
 
   const resolvedFactsBlock = calendarFacts.length > 0
@@ -241,6 +381,47 @@ function buildPrompt(query: string, matches: Retrieved[], calendarFacts: Calenda
             ? `for ${f.occasion_name}`
             : "no occasion name on record";
         return `- ${f.dateLabel}: HOLIDAY, ${why}.`;
+      }).join("\n")
+    : "";
+
+  const mentorPresenceBlock = mentorPresence.length > 0
+    ? "\n\nMENTOR_LIVE_PRESENCE (real-time availability status from platform database — ground truth for 'is [mentor] free/available right now' questions):\n"
+      + mentorPresence.map((mp) => {
+        let status: string;
+        if (mp.current_event_title) {
+          status = `CURRENTLY IN A CAMPUS EVENT: "${mp.current_event_title}" (until ${mp.current_event_end || 'event ends'}) — BUSY / SLOWER TO REPLY`;
+        } else if (mp.is_active_now) {
+          status = "ACTIVE & ACCEPTING CONNECTION REQUESTS";
+        } else {
+          status = "PAUSED / AWAY";
+          if (mp.available_from) {
+            status += ` (Away until ${new Date(mp.available_from).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })})`;
+          }
+        }
+        const note = mp.availability_note ? ` (Custom note from mentor: "${mp.availability_note}")` : "";
+        const turnaround = mp.median_reply_minutes
+          ? ` (Typical reply turnaround: ~${mp.median_reply_minutes < 60 ? `${mp.median_reply_minutes} min` : `${Math.round(mp.median_reply_minutes / 60)} hr`})`
+          : "";
+        const goingCount = mp.upcoming_going_count ?? 0;
+        const interestedCount = mp.upcoming_interested_count ?? 0;
+        const eventsInfoParts: string[] = [];
+        if (goingCount > 0) eventsInfoParts.push(`attending ${goingCount} upcoming campus event${goingCount === 1 ? '' : 's'}`);
+        if (interestedCount > 0) eventsInfoParts.push(`interested in ${interestedCount} more`);
+        const eventsInfo = eventsInfoParts.length > 0 ? ` (${eventsInfoParts.join(', ')})` : "";
+        return `- ${mp.name} (Department: ${mp.department || 'General'}): ${status}${note}${turnaround}${eventsInfo}. Direct profile link: /mentor/${mp.slug || mp.mentor_id}`;
+      }).join("\n")
+    : "";
+
+  const mentorEventScheduleBlock = eventSchedules.length > 0
+    ? "\n\nMENTOR_EVENT_SCHEDULES (upcoming and ongoing campus events the mentor has RSVP'd to):\n"
+      + eventSchedules.map((s) => {
+        const eventLines = s.events.map((e) => {
+          const timeStr = e.is_all_day ? "All day" : `${e.start_date} to ${e.end_date}`;
+          const currentTag = e.is_happening_now ? " [HAPPENING RIGHT NOW]" : "";
+          const noteStr = e.note ? ` (Note: "${e.note}")` : "";
+          return `  - "${e.title}" (${e.event_type}, ${e.department}) — Status: ${e.status.toUpperCase()}${currentTag} on ${timeStr}${noteStr}. Link: /events`;
+        }).join("\n");
+        return `- ${s.user_name} is registered for:\n${eventLines}`;
       }).join("\n")
     : "";
 
@@ -262,7 +443,7 @@ TEMPORAL ANCHOR (Indian Standard Time / Asia/Kolkata):
 - Today's Date: ${todayText}
 - Current Time Right Now: ${currentTimeText} IST
 - Tomorrow's Date: ${tomorrowText}
-- Current Academic Year: 2026-27${resolvedFactsBlock}
+- Current Academic Year: 2026-27${resolvedFactsBlock}${mentorPresenceBlock}${mentorEventScheduleBlock}
 
 Here are the most relevant campus resources we found (faculty, mentors, opportunities, groups, posts, official campus documents & policies):
 ${context ? context : "No matching campus resources found."}
@@ -280,10 +461,23 @@ Rules:
 5. Synthesize the context in a natural, helpful, student-friendly tone. Do not just list the titles.
 6. For anything specific to SRM AP — people, policies, procedures, dates, fees, contacts — only state facts that are actually in the provided context; never invent one. If no campus context matches an SRM-AP-specific question, say there are no direct matches yet and suggest broad advice. (This grounding requirement does not apply to rule 3's general-knowledge questions — you already know those answers.)
 7. INLINE CITATIONS: When you state an SRM-AP-specific fact, date, or entity from the resources, include an inline citation bracket like [1] or [2] matching the resource number above.
-8. INSTANT VERDICT: In 'verdict', provide an ultra-short 3-8 word headline status verdict (e.g. "🏖️ Official Holiday — No Classes", "📅 Next Exams: 28 Sept – 1 Oct 2026", "👥 8 Fullstack Mentors Available", "🏛️ Hostels Curfew: 9:30 PM", "🧮 2 + 2 = 4").
+8. INSTANT VERDICT: In 'verdict', provide an ultra-short 3-8 word headline status verdict (e.g. "🏖️ Official Holiday — No Classes", "📅 Next Exams: 28 Sept – 1 Oct 2026", "👥 8 Fullstack Mentors Available", "🎪 Gyan is at Codevium", "🟢 Gyan is Active & Available", "⏸️ Gyan is Away until Sept 2").
 9. KEY TAKEAWAYS: Extract 1-3 distinct, concise bullet takeaways in 'keyInsights' with bold emoji/category prefixes (e.g., "**📅 Exact Date:** ...", "**🏛️ Library Access:** ...", "**⚠️ Policy:** ..."). Do NOT simply repeat the exact same sentence as the summary; make them actionable, scannable bullet points. For a rule-3 general-knowledge question this array may be empty or omitted.
 10. Identify the top 1-4 specific entities to recommend as badges — only ones that are genuinely relevant to the question. Use the exact 'id', 'type', 'title' (for name), 'path' (for to), and 'subtitle' (for detail) from the context. Only use types: 'faculty', 'mentor', 'opportunity', 'community', 'post', or 'document'.
 11. CITATIONS MAP: Provide a 'citations' array mapping the numbers you used in the summary to the entity.
+12. MENTOR AVAILABILITY / "IS X FREE" QUERIES:
+   - If the student asks whether a specific mentor (e.g. "Is Gyan free right now?", "Is [Mentor] available?") is free or accepting messages:
+     - Consult the MENTOR_LIVE_PRESENCE and MENTOR_EVENT_SCHEDULES blocks above.
+     - If the mentor is CURRENTLY IN A CAMPUS EVENT: state clearly that they are attending "[Event Name]" (until [End Time]) and may be busy or slower to respond, but the student can still leave a message on their profile.
+     - If the mentor is ACTIVE: state clearly that they are active and accepting connection requests. Mention their custom availability note if one exists, their typical reply turnaround time, and link to their profile so the student can message them.
+     - If the mentor is PAUSED / AWAY: state clearly that they are currently taking a break / paused (giving the return date and their note if available), but remind the student they can still leave a message or browse other mentors in the same department.
+     - In 'verdict', write a clear status headline (e.g. "🎪 Gyan is at Codevium", "🟢 Gyan is Active & Available", "⏸️ Gyan is Away").
+13. MENTOR EVENT ATTENDANCE / "WHAT EVENTS IS X ATTENDING" QUERIES:
+   - If the student asks what events a mentor is attending (e.g. "What are the upcoming events Gyan is attending?", "Is Gyan going to [Event]?"):
+     - Consult the MENTOR_EVENT_SCHEDULES block above.
+     - List the upcoming events with titles, event type, date/time, whether their RSVP is 'Going' (confirmed) or 'Interested' (bookmarked), and any personal note they attached.
+     - Direct the student to explore more details on the Events page (/events).
+     - In 'verdict', provide a summary status (e.g. "🎟️ Gyan attending CODEVIUM 2026").
 
 Your response MUST be a valid JSON object matching this schema exactly:
 {
@@ -422,7 +616,7 @@ serve(async (req) => {
     }
 
     const { query } = body;
-    
+
     if (!query || query.trim().length < 3) {
       return new Response(JSON.stringify({ error: "Query too short" }), {
         status: 400,
@@ -430,8 +624,22 @@ serve(async (req) => {
       });
     }
 
-    const [matches, calendarFacts] = await Promise.all([retrieve(query), resolveCalendarFacts(query)]);
-    const overview = await generateOverview(buildPrompt(query, matches, calendarFacts));
+    // Optional, and optional on purpose: the caller has already parsed this
+    // question to render the page, and reparsing it here would mean two
+    // implementations of query understanding drifting apart. Absent, retrieval
+    // falls back to the raw sentence exactly as before.
+    const variants: string[] = Array.isArray(body.queries) ? body.queries : [];
+    const ensureTypes: string[] = Array.isArray(body.ensure_types) ? body.ensure_types : [];
+
+    const [matches, calendarFacts] = await Promise.all([
+      retrieve(query, variants, ensureTypes),
+      resolveCalendarFacts(query),
+    ]);
+    const [mentorPresence, eventSchedules] = await Promise.all([
+      resolveMentorPresence(matches),
+      resolveUserEventSchedules(matches),
+    ]);
+    const overview = await generateOverview(buildPrompt(query, matches, calendarFacts, mentorPresence, eventSchedules));
 
     // Ensure all inline citations mentioned in summary (e.g. [1], [3]) are mapped in overview.citations
     if (overview && overview.summary) {

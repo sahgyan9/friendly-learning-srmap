@@ -438,6 +438,26 @@ async function generate(prompt: string): Promise<{ text: string; model: string }
   throw new Error(`no usable generation model across ${keys.length} key(s). ${tried.join(" | ")}`);
 }
 
+function getTemporalContext(): { todayText: string; currentTimeText: string } {
+  const now = new Date();
+  const options: Intl.DateTimeFormatOptions = {
+    timeZone: "Asia/Kolkata",
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  };
+  const todayText = new Intl.DateTimeFormat("en-IN", options).format(now);
+  const timeOptions: Intl.DateTimeFormatOptions = {
+    timeZone: "Asia/Kolkata",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  };
+  const currentTimeText = new Intl.DateTimeFormat("en-IN", timeOptions).format(now);
+  return { todayText, currentTimeText };
+}
+
 /**
  * The grounding rules are the safety boundary, not styling. These are named
  * employees of a real university and named students; the model may summarise
@@ -449,11 +469,52 @@ function buildPrompt(
   mentors: Retrieved[],
   references: Retrieved[],
   path: string | null,
+  mentorPresenceMap: Map<string, any> = new Map(),
+  mentorEventsMap: Map<string, any[]> = new Map(),
 ): string {
+  const { todayText, currentTimeText } = getTemporalContext();
+
   const describe = (row: Retrieved, kind: string) => {
     const tags = tagsOf(row);
-    return `- ${row.title} (${kind}${row.subtitle ? `, ${row.subtitle}` : ""})` +
-      (tags.length ? `\n  Listed ${kind === "faculty" ? "research interests" : "skills"}: ${tags.join(", ")}` : "");
+    let desc = `- ${row.title} (${kind}${row.subtitle ? `, ${row.subtitle}` : ""})`;
+    if (tags.length) {
+      desc += `\n  Listed ${kind === "faculty" ? "research interests" : "skills"}: ${tags.join(", ")}`;
+    }
+    if (kind === "senior student") {
+      const presence = mentorPresenceMap.get(row.entity_id);
+      if (presence) {
+        let status: string;
+        if (presence.current_event_title) {
+          status = `Currently attending campus event "${presence.current_event_title}" (until ${presence.current_event_end || 'event ends'}) — busy / slower to reply`;
+        } else if (presence.is_active_now) {
+          status = "Active & accepting connection requests";
+        } else {
+          status = `Paused / Away${presence.available_from ? ` until ${new Date(presence.available_from).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}` : ""}`;
+        }
+        desc += `\n  Availability status: ${status}`;
+        if (presence.availability_note) {
+          desc += ` (Custom note: "${presence.availability_note}")`;
+        }
+        if (presence.median_reply_minutes) {
+          desc += `\n  Typical reply turnaround: ~${presence.median_reply_minutes < 60 ? `${presence.median_reply_minutes} min` : `${Math.round(presence.median_reply_minutes / 60)} hr`}`;
+        }
+        const events = mentorEventsMap.get(row.entity_id);
+        if (events && events.length > 0) {
+          // Both RSVP kinds are shown, not just "going" — a bookmark is still
+          // useful context for "what's Gyan up to" — but each line keeps its
+          // status label so the model can never call an "interested" a
+          // confirmed attendance.
+          desc += "\n  Campus events RSVP'd:";
+          for (const e of events) {
+            const when = e.is_all_day ? "all day" : `${e.start_date} to ${e.end_date}`;
+            const now = e.is_happening_now ? " [happening now]" : "";
+            desc += `\n    - "${e.title}" — ${String(e.status).toUpperCase()}${now}, ${when}`;
+          }
+        }
+        desc += `\n  Profile link: /mentor/${presence.slug || row.entity_id}`;
+      }
+    }
+    return desc;
   };
 
   const people = [
@@ -471,6 +532,11 @@ function buildPrompt(
   const referenceText = references.map(describeReference).join("\n");
 
   return `You are the assistant for Friendly Learning, a student-built campus ecosystem at SRM University-AP. The platform lets students: post ideas and calls for teammates on the community board; use CampusBrain (the smart natural-language search at /ask) to find matching students and faculty in one query; connect with senior student mentors for course help and career advice; browse the full SRM AP faculty directory by research interest; form private or public group workspaces after finding the right people; discover hackathons, internships and research opportunities; earn a verified certificate by genuinely helping 3 students as a mentor; and look up official campus notices, circulars and administrative info (who to contact for what, help desks, policies) that admins have published.
+
+TEMPORAL CONTEXT (Indian Standard Time / Asia/Kolkata):
+- Today: ${todayText}
+- Current Time Right Now: ${currentTimeText} IST
+- Academic Year: 2026-27
 
 The student is currently looking at: ${describePage(path)}.
 
@@ -491,6 +557,8 @@ Rules you must follow:
 8. Do not repeat the retrieved lists verbatim; people are already shown to the student as cards beside your reply. Refer to them naturally.
 9. Format the reply in markdown: short paragraphs (1-3 sentences), **bold** on key terms or names, and a bullet list when you're enumerating more than two things. Never return one undifferentiated block of text.
 10. If the question is about the page they're currently on, answer with that page in mind rather than generically.
+11. If the student asks whether a specific mentor is free or available right now (e.g. "Is Gyan free right now?", "Is [Mentor] available?"): answer directly with their real-time availability status, whether they are currently attending a campus event, their custom availability note if on file, and typical response turnaround time from the context above, and invite the student to send them a message.
+12. If the student asks what events a mentor is attending or going to (e.g. "What events is Gyan attending?", "Is Gyan going to [Event]?"): list only the events under that mentor's "Campus events RSVP'd" above, and say plainly whether each is GOING (confirmed) or INTERESTED (bookmarked, not a commitment) — never call an INTERESTED event a confirmed attendance. If nothing is listed there, say they have no RSVPs on file rather than guessing.
 
 Answer the student's question directly.`;
 }
@@ -567,20 +635,55 @@ serve(async (req) => {
     // so the retrieved IDs are rehydrated rather than passed through as chunks.
     // Nulls here would crash the card, hence the defaults.
     let suggestedMentors: Array<Record<string, unknown>> = [];
+    const mentorLiveMap = new Map<string, any>();
+    const mentorEventsMap = new Map<string, any[]>();
     if (shownMentors.length) {
+      try {
+        const { data: livePresence } = await supabase.rpc("get_mentors_live_availability", {
+          p_mentor_ids: shownMentors.map((m) => m.entity_id),
+        });
+        (livePresence ?? []).forEach((p: any) => mentorLiveMap.set(p.mentor_id, p));
+      } catch (err) {
+        console.warn("ai-chatbot get_mentors_live_availability warning:", err);
+      }
+
+      // Per-mentor RPC because get_user_event_schedule takes one user at a
+      // time; shownMentors is already capped by MAX_MENTOR_SUGGESTIONS so
+      // this is at most that many parallel calls, same shape as
+      // resolveUserEventSchedules in generate-ai-overview.
+      await Promise.all(
+        shownMentors.map(async (m) => {
+          try {
+            const { data: events } = await supabase.rpc("get_user_event_schedule", {
+              p_user_id: m.entity_id,
+            });
+            if (Array.isArray(events) && events.length > 0) {
+              mentorEventsMap.set(m.entity_id, events);
+            }
+          } catch (err) {
+            console.warn("ai-chatbot get_user_event_schedule warning:", err);
+          }
+        }),
+      );
+
       const { data } = await supabase
         .from("mentors")
-        .select("id, name, department, skills, rating, profile_image, bio")
+        .select("id, name, department, skills, rating, profile_image, bio, is_available, available_from, availability_note, slug")
         .in("id", shownMentors.map((m) => m.entity_id));
 
       const order = new Map(shownMentors.map((m, index) => [m.entity_id, index]));
       suggestedMentors = (data ?? [])
-        .map((row) => ({
-          ...row,
-          skills: row.skills ?? [],
-          rating: row.rating ?? 0,
-          relevanceScore: shownMentors.find((m) => m.entity_id === row.id)?.similarity ?? 0,
-        }))
+        .map((row) => {
+          const presence = mentorLiveMap.get(row.id);
+          return {
+            ...row,
+            skills: row.skills ?? [],
+            rating: row.rating ?? 0,
+            is_active_now: presence?.is_active_now ?? (row.is_available ?? true),
+            median_reply_minutes: presence?.median_reply_minutes ?? null,
+            relevanceScore: shownMentors.find((m) => m.entity_id === row.id)?.similarity ?? 0,
+          };
+        })
         // Keep the retrieval ranking; the IN query returns arbitrary order.
         .sort((a, b) => (order.get(a.id as string) ?? 0) - (order.get(b.id as string) ?? 0));
     }
@@ -612,7 +715,7 @@ serve(async (req) => {
       // More may be retrieved than shown, and the model happily named the
       // extra one — not a hallucination (it was retrieved) but the student
       // sees a name with no card beside it, which reads exactly like one.
-      const prompt = buildPrompt(message, shownFaculty, shownMentors, shownReferences, currentPath);
+      const prompt = buildPrompt(message, shownFaculty, shownMentors, shownReferences, currentPath, mentorLiveMap, mentorEventsMap);
       const sourceUrls = new Set(shownReferences.flatMap((r) => extractUrls(r.body ?? "")));
       let generated = await generate(prompt);
 
