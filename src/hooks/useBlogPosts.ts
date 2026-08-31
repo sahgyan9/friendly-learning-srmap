@@ -26,7 +26,6 @@ export const useBlogPosts = (options: { search?: string; tag?: string; limit?: n
     } finally {
       setLoading(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search, tag, limit, offset]);
 
   useEffect(() => {
