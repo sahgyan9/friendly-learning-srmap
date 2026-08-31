@@ -2,26 +2,30 @@
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <sitemap>
     <loc>https://friendly-learning-srmap.vercel.app/sitemap.xml</loc>
-    <lastmod>2026-08-31T02:23:48.917Z</lastmod>
+    <lastmod>2026-08-31T15:42:20.841Z</lastmod>
   </sitemap>
   <sitemap>
     <loc>https://friendly-learning-srmap.vercel.app/sitemap-blog.xml</loc>
-    <lastmod>2026-08-31T02:23:48.917Z</lastmod>
+    <lastmod>2026-08-31T15:42:20.841Z</lastmod>
+  </sitemap>
+  <sitemap>
+    <loc>https://friendly-learning-srmap.vercel.app/sitemap-blogs.xml</loc>
+    <lastmod>2026-08-31T15:42:20.841Z</lastmod>
   </sitemap>
   <sitemap>
     <loc>https://friendly-learning-srmap.vercel.app/sitemap-mentors.xml</loc>
-    <lastmod>2026-08-31T02:23:48.917Z</lastmod>
+    <lastmod>2026-08-31T15:42:20.841Z</lastmod>
   </sitemap>
   <sitemap>
     <loc>https://friendly-learning-srmap.vercel.app/sitemap-community.xml</loc>
-    <lastmod>2026-08-31T02:23:48.917Z</lastmod>
+    <lastmod>2026-08-31T15:42:20.841Z</lastmod>
   </sitemap>
   <sitemap>
     <loc>https://friendly-learning-srmap.vercel.app/sitemap-groups.xml</loc>
-    <lastmod>2026-08-31T02:23:48.917Z</lastmod>
+    <lastmod>2026-08-31T15:42:20.841Z</lastmod>
   </sitemap>
   <sitemap>
     <loc>https://friendly-learning-srmap.vercel.app/sitemap-faculty.xml</loc>
-    <lastmod>2026-08-31T02:23:48.917Z</lastmod>
+    <lastmod>2026-08-31T15:42:20.841Z</lastmod>
   </sitemap>
 </sitemapindex>
