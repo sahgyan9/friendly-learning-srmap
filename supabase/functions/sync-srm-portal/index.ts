@@ -24,6 +24,7 @@ import {
   parseAttendance,
   parseCourseList,
   parseProfile,
+  parseTimeTable,
   parseTranscript,
   recognizeCaptcha,
 } from "../_shared/srm-portal.ts";
@@ -314,6 +315,29 @@ Deno.serve(async (req) => {
               console.error("Push dispatch non-fatal error:", pushErr);
             }
           }
+        }
+      }
+
+      // 3. Upsert weekly timetable slots
+      const timetableSlots = parseTimeTable(timeTableHtml, courseMap);
+      if (timetableSlots.length > 0) {
+        for (const slot of timetableSlots) {
+          await admin.from("student_timetables").upsert({
+            user_id: row.user_id,
+            register_number: row.register_number,
+            day_order: slot.dayOrder,
+            day_name: slot.dayName,
+            hour: slot.hour,
+            start_time: slot.startTime,
+            end_time: slot.endTime,
+            slot: slot.slot,
+            course_code: slot.courseCode,
+            course_name: slot.courseName,
+            faculty_name: slot.facultyName,
+            room_number: slot.roomNumber,
+            is_lab: slot.isLab,
+            last_synced_at: nowIso,
+          }, { onConflict: "user_id,day_name,hour,course_code" });
         }
       }
 

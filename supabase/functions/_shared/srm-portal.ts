@@ -881,6 +881,120 @@ export function parseAttendance(
   return courses;
 }
 
+export interface ParsedTimetableSlot {
+  dayOrder: number | null;
+  dayName: string;
+  hour: number;
+  startTime: string;
+  endTime: string;
+  slot: string | null;
+  courseCode: string;
+  courseName: string;
+  facultyName: string | null;
+  roomNumber: string | null;
+  isLab: boolean;
+}
+
+export const SRM_PERIOD_TIMINGS: Array<{ hour: number; startTime: string; endTime: string }> = [
+  { hour: 1, startTime: "09:00:00", endTime: "09:50:00" },
+  { hour: 2, startTime: "09:55:00", endTime: "10:45:00" },
+  { hour: 3, startTime: "10:50:00", endTime: "11:40:00" },
+  { hour: 4, startTime: "11:45:00", endTime: "12:35:00" },
+  { hour: 5, startTime: "13:30:00", endTime: "14:20:00" },
+  { hour: 6, startTime: "14:25:00", endTime: "15:15:00" },
+  { hour: 7, startTime: "15:20:00", endTime: "16:10:00" },
+  { hour: 8, startTime: "16:15:00", endTime: "17:05:00" },
+  { hour: 9, startTime: "17:10:00", endTime: "18:00:00" },
+];
+
+export function parseTimeTable(
+  html: string,
+  courseMap: Record<string, RegisteredCourse> = {},
+): ParsedTimetableSlot[] {
+  const slots: ParsedTimetableSlot[] = [];
+  if (!html || typeof html !== "string") return slots;
+
+  for (const trMatch of html.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/gi)) {
+    const rowHtml = trMatch[1];
+    const cells = [...rowHtml.matchAll(/<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi)].map((m) => m[1]);
+    if (cells.length < 2) continue;
+
+    const firstCellText = stripTags(cells[0]).trim();
+    // Match Day 1..Day 6 or Monday..Saturday
+    const dayMatch = firstCellText.match(/(?:Day\s*(\d)|(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Mon|Tue|Wed|Thu|Fri|Sat))/i);
+    if (!dayMatch) continue;
+
+    let dayOrder: number | null = null;
+    let dayName = firstCellText;
+
+    if (dayMatch[1]) {
+      dayOrder = parseInt(dayMatch[1], 10);
+      dayName = `Day ${dayOrder}`;
+    } else if (dayMatch[2]) {
+      const normalizedDay = dayMatch[2].toLowerCase();
+      const dayMap: Record<string, number> = {
+        monday: 1, mon: 1,
+        tuesday: 2, tue: 2,
+        wednesday: 3, wed: 3,
+        thursday: 4, thu: 4,
+        friday: 5, fri: 5,
+        saturday: 6, sat: 6,
+      };
+      dayOrder = dayMap[normalizedDay] ?? null;
+      dayName = dayMatch[2].charAt(0).toUpperCase() + dayMatch[2].slice(1).toLowerCase();
+    }
+
+    // Process each hour column in this day row
+    for (let colIdx = 1; colIdx < cells.length; colIdx++) {
+      const cellHtml = cells[colIdx];
+      const cellText = stripTags(cellHtml).trim();
+      if (!cellText || cellText === "-" || /^(free|lunch|break|nil|na)$/i.test(cellText)) continue;
+
+      const hour = colIdx;
+      const timing = SRM_PERIOD_TIMINGS.find((t) => t.hour === hour) || {
+        hour,
+        startTime: `${String(8 + hour).padStart(2, "0")}:00:00`,
+        endTime: `${String(8 + hour).padStart(2, "0")}:50:00`,
+      };
+
+      // Extract course code (e.g. CSE 302, PHY 424, CSE302)
+      const codeMatch = cellText.match(/([A-Z]{2,4}\s*\d{3}[A-Z0-9]*)/i);
+      if (!codeMatch) continue;
+
+      const courseCode = codeMatch[1].toUpperCase().replace(/\s+/, " ");
+      const courseDetails = courseMap[courseCode] || courseMap[courseCode.replace(/\s+/, "")];
+
+      // Extract room number if present (e.g. ALH 302, UB-401, Lab 4)
+      const roomMatch = cellText.match(/(?:ALH|UB|CL|TP|LAB|ROOM|HALL)[\s\-_0-9A-Z]+/i);
+      const roomNumber = roomMatch ? roomMatch[0].trim() : null;
+
+      // Extract slot if present (e.g. A, B, C, D, L1+L2)
+      const slotMatch = cellText.match(/\b([A-G][0-9]?|L\d+(?:\+L\d+)?)\b/i);
+      const slot = slotMatch ? slotMatch[1].toUpperCase() : (courseDetails?.slot || null);
+
+      const isLab = cellText.toLowerCase().includes("lab") || /L\d+/i.test(slot || "") || courseCode.toLowerCase().includes("l");
+      const courseName = courseDetails?.name || courseCode;
+      const facultyName = courseDetails?.facultyName || cleanFacultyName(cellText, courseName, courseCode);
+
+      slots.push({
+        dayOrder,
+        dayName,
+        hour: timing.hour,
+        startTime: timing.startTime,
+        endTime: timing.endTime,
+        slot,
+        courseCode,
+        courseName,
+        facultyName,
+        roomNumber,
+        isLab,
+      });
+    }
+  }
+
+  return slots;
+}
+
 // --- login + section fetch, shared by the human-supervised and unattended paths ---
 
 export interface LoginResult {

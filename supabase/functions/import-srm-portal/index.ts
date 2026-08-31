@@ -39,6 +39,7 @@ import {
   parseAttendance,
   parseCourseList,
   parseProfile,
+  parseTimeTable,
   parseTranscript,
   recognizeCaptcha,
 } from "../_shared/srm-portal.ts";
@@ -171,6 +172,7 @@ Deno.serve(async (req) => {
         profileHtml,
         transcriptHtml,
         attendanceHtml,
+        timeTableHtml,
         allSectionsHtml,
       } = await fetchAcademicSections(jar);
       const { program, currentSemester, mobileNumber } = parseProfile(profileHtml);
@@ -245,6 +247,29 @@ Deno.serve(async (req) => {
           } catch (pushErr) {
             console.error("Push dispatch non-fatal error:", pushErr);
           }
+        }
+      }
+
+      // Upsert weekly timetable slots
+      const timetableSlots = parseTimeTable(timeTableHtml, courseMap);
+      if (timetableSlots.length > 0) {
+        for (const slot of timetableSlots) {
+          await supabaseAdmin.from("student_timetables").upsert({
+            user_id: userId,
+            register_number: registerNumber,
+            day_order: slot.dayOrder,
+            day_name: slot.dayName,
+            hour: slot.hour,
+            start_time: slot.startTime,
+            end_time: slot.endTime,
+            slot: slot.slot,
+            course_code: slot.courseCode,
+            course_name: slot.courseName,
+            faculty_name: slot.facultyName,
+            room_number: slot.roomNumber,
+            is_lab: slot.isLab,
+            last_synced_at: nowIso,
+          }, { onConflict: "user_id,day_name,hour,course_code" });
         }
       }
 
