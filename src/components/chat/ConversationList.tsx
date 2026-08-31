@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, Clock, Loader2, MessageCircleMore, SearchX, Sparkles, UserPlus, GraduationCap, MessageSquare } from "lucide-react";
+import { AlertCircle, Clock, Loader2, MessageCircleMore, SearchX, Sparkles, GraduationCap, MessageSquare } from "lucide-react";
 import { Conversation } from "@/types/chat";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -10,8 +10,8 @@ import { getInitials, getBadgeVariant } from "@/utils/user-utils";
 import { useUserPresenceRealtime } from "@/hooks/useUserPresenceRealtime";
 import OnlineStatus from "./OnlineStatus";
 import { useOutboxMessages } from "@/hooks/useMessageOutbox";
-import { useDebounce } from "@/hooks/useDebounce";
-import { searchCampusUsers, CampusUserResult } from "@/integrations/supabase/services/chat/user.service";
+import { useCampusUserSearch } from "@/hooks/useCampusUserSearch";
+import type { CampusUserResult } from "@/integrations/supabase/services/chat/user.service";
 
 interface ConversationListProps {
   conversations: Conversation[];
@@ -29,6 +29,7 @@ interface ConversationListProps {
 }
 
 const ConversationList = ({
+  conversations,
   filteredConversations,
   activeChat,
   isLoading,
@@ -43,11 +44,12 @@ const ConversationList = ({
 }: ConversationListProps) => {
   const { isUserOnline } = useUserPresenceRealtime();
   const outboxMessages = useOutboxMessages();
-  const [discoveredUsers, setDiscoveredUsers] = useState<CampusUserResult[]>([]);
-  const [isSearchingCampus, setIsSearchingCampus] = useState(false);
   const [startingUserId, setStartingUserId] = useState<string | null>(null);
-  const searchRequestIdRef = React.useRef(0);
-  const debouncedSearchQuery = useDebounce(searchQuery, 220);
+  const { results: discoveredUsers, isSearching: isSearchingCampus } = useCampusUserSearch(
+    searchQuery,
+    currentUserId,
+    { debounceMs: 220 },
+  );
 
   // The newest queued message per conversation. Built before the early
   // returns below, because hooks cannot run conditionally — and iterated in
@@ -60,54 +62,18 @@ const ConversationList = ({
     return byConversation;
   }, [outboxMessages]);
 
-  // Immediate feedback while the user types: clear stale results / show the
-  // spinner right away, without waiting for the debounce below to settle.
-  useEffect(() => {
-    if (!searchQuery.trim()) {
-      setDiscoveredUsers([]);
-      setIsSearchingCampus(false);
-      return;
-    }
-    setIsSearchingCampus(true);
-  }, [searchQuery]);
-
-  // Debounced fetch, keyed only off the debounced query / currentUserId —
-  // filteredConversations/getOtherUser are fresh references on every parent
-  // render, and including them here would restart the debounce on every
-  // unrelated re-render (e.g. a realtime message arriving while typing).
-  useEffect(() => {
-    const query = debouncedSearchQuery.trim();
-    if (!query) return;
-
-    const requestId = ++searchRequestIdRef.current;
-    (async () => {
-      try {
-        const users = await searchCampusUsers(query, currentUserId);
-        if (searchRequestIdRef.current === requestId) {
-          setDiscoveredUsers(users);
-        }
-      } catch (err) {
-        console.error("Error finding campus users:", err);
-        if (searchRequestIdRef.current === requestId) {
-          setDiscoveredUsers([]);
-        }
-      } finally {
-        if (searchRequestIdRef.current === requestId) {
-          setIsSearchingCampus(false);
-        }
-      }
-    })();
-  }, [debouncedSearchQuery, currentUserId]);
-
-  // Exclude users already present in active filtered conversations. Derived
-  // separately from the search effect above so recomputing it (e.g. a new
-  // conversation appearing) never restarts the debounced search.
+  // Exclude users the caller already has a conversation with. Deliberately
+  // built from the FULL conversation list, not filteredConversations: that
+  // list is narrowed to conversations whose other-user *name* matches the
+  // search box, while search_campus_users also matches on department/
+  // keyword — so a department-matched existing contact wouldn't be excluded
+  // here and would show up a second time as if never messaged before.
   const visibleDiscoveredUsers = React.useMemo(() => {
     const existingParticipantIds = new Set(
-      filteredConversations.map((c) => getOtherUser(c)?.id).filter(Boolean)
+      conversations.map((c) => getOtherUser(c)?.id).filter(Boolean)
     );
     return discoveredUsers.filter((u) => !existingParticipantIds.has(u.id));
-  }, [discoveredUsers, filteredConversations, getOtherUser]);
+  }, [discoveredUsers, conversations, getOtherUser]);
 
   const handleStartChatWithDiscoveredUser = async (user: CampusUserResult) => {
     if (startingUserId || !onStartDirectChat) return;
