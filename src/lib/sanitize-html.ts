@@ -18,5 +18,7 @@ import DOMPurify from "dompurify";
 export function sanitizeBlogHtml(html: string): string {
   return DOMPurify.sanitize(html, {
     USE_PROFILES: { html: true, svg: true },
+    ADD_TAGS: ["mark"],
+    ADD_ATTR: ["style", "data-color", "target", "rel"],
   });
 }
