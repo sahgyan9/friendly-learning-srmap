@@ -70,6 +70,15 @@ await db.exec(`
     courses jsonb NOT NULL DEFAULT '[]'::jsonb
   );
 
+  CREATE OR REPLACE FUNCTION public.mentor_is_listed(
+    p_is_available boolean,
+    p_available_from timestamptz
+  )
+  RETURNS boolean LANGUAGE sql IMMUTABLE AS $$
+    SELECT COALESCE(p_is_available, true)
+        OR (p_available_from IS NOT NULL AND p_available_from <= now());
+  $$;
+
   -- Trimmed stand-in for public.knowledge_chunks (20260806160000). The real
   -- table's \`embedding\` column is \`extensions.vector(768)\`, but the installed
   -- @electric-sql/pglite (0.5.4, currently the latest release) ships no vector
@@ -280,12 +289,21 @@ await db.exec(`
     ADD COLUMN mobile text,
     ADD COLUMN created_at timestamptz NOT NULL DEFAULT now(),
     ADD COLUMN is_available boolean NOT NULL DEFAULT true,
-    ADD COLUMN available_from date,
+    ADD COLUMN available_from timestamptz,
     ADD COLUMN availability_note text;
 
   CREATE FUNCTION public.is_active_mentor(p_user_id uuid)
     RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER AS $$
     SELECT EXISTS (SELECT 1 FROM public.mentors m WHERE m.id = p_user_id AND coalesce(m.is_available, true) = true)
+  $$;
+
+  CREATE OR REPLACE FUNCTION public.mentor_is_listed(
+    p_is_available boolean,
+    p_available_from timestamptz
+  )
+  RETURNS boolean LANGUAGE sql IMMUTABLE AS $$
+    SELECT COALESCE(p_is_available, true)
+        OR (p_available_from IS NOT NULL AND p_available_from <= now());
   $$;
 
   -- 1:1 chat. Dashboard-origin (see above); still live (mentor_certificates'
@@ -549,6 +567,12 @@ for (const file of [
   '20260830210000_search_campus_users_single_query.sql',
   '20260831120000_search_campus_users_include_nameless.sql',
   '20260831130000_sync_mentor_user_roles_and_chat_profiles.sql',
+  '20260831140000_mentor_live_presence.sql',
+  '20260831150000_event_rsvps_in_mentor_presence.sql',
+  // Runs here rather than joining the SKIP list because keyword_search_knowledge
+  // carries no vector type and no `<=>` operator — which was the whole reason
+  // for keeping the keyword leg a separate function from search_knowledge().
+  '20260831160000_knowledge_chunks_fulltext.sql',
 ]) {
   if (file === '20260804132345_b843f814-46d5-4c25-bc80-32e5f6ebba59.sql') {
     // Production's `faculty` table still carries `profile_image`, a column
@@ -3996,6 +4020,354 @@ check(
   'search_campus_users returns role = mentor and badge = Mentor',
   searchMentorRows.some(r => r.id === NEW_MENTOR_UID && r.role === 'mentor' && r.badge === 'Mentor'),
   JSON.stringify(searchMentorRows)
+);
+
+// --- 20260831140000_mentor_live_presence.sql ---
+console.log('\n--- 20260831140000_mentor_live_presence.sql ---');
+
+// Set mentor availability with note
+await q(`
+  UPDATE public.mentors
+  SET is_available = true,
+      available_from = NULL,
+      availability_note = 'Available in evenings for React/TS queries'
+  WHERE id = $1;
+`, [NEW_MENTOR_UID]);
+
+const { rows: livePresenceActive } = await q(`
+  SELECT * FROM public.get_mentor_live_availability($1::uuid);
+`, [NEW_MENTOR_UID]);
+
+check(
+  'get_mentor_live_availability returns active status and availability note',
+  livePresenceActive[0]?.is_active_now === true && livePresenceActive[0]?.availability_note === 'Available in evenings for React/TS queries',
+  JSON.stringify(livePresenceActive[0])
+);
+
+// Test paused status with future available_from
+await q(`
+  UPDATE public.mentors
+  SET is_available = false,
+      available_from = now() + interval '2 days',
+      availability_note = 'Busy with midterms'
+  WHERE id = $1;
+`, [NEW_MENTOR_UID]);
+
+const { rows: livePresencePaused } = await q(`
+  SELECT * FROM public.get_mentors_live_availability(ARRAY[$1]::uuid[]);
+`, [NEW_MENTOR_UID]);
+
+check(
+  'get_mentors_live_availability correctly marks paused mentor as is_active_now = false',
+  livePresencePaused[0]?.is_active_now === false && livePresencePaused[0]?.is_available === false,
+  JSON.stringify(livePresencePaused[0])
+);
+
+// A timed pause whose deadline has already passed but the cron
+// (resume_expired_mentor_availability) hasn't run yet -- is_available is
+// still false in this window. mentor_is_listed already treats this as
+// available everywhere else (the mentor grid, search); is_active_now must
+// agree, or the chatbot contradicts the grid for up to 15 minutes on every
+// pause expiry.
+await q(`
+  UPDATE public.mentors
+  SET is_available = false,
+      available_from = now() - interval '1 minute',
+      availability_note = 'Busy with midterms'
+  WHERE id = $1;
+`, [NEW_MENTOR_UID]);
+
+const { rows: livePresenceExpiredPause } = await q(`
+  SELECT * FROM public.get_mentors_live_availability(ARRAY[$1]::uuid[]);
+`, [NEW_MENTOR_UID]);
+
+check(
+  'get_mentors_live_availability treats an expired pause as active, matching mentor_is_listed',
+  livePresenceExpiredPause[0]?.is_active_now === true,
+  JSON.stringify(livePresenceExpiredPause[0])
+);
+
+// Reset to a clean "available, no pause" baseline for the event tests below.
+await q(`
+  UPDATE public.mentors
+  SET is_available = true,
+      available_from = NULL,
+      availability_note = NULL
+  WHERE id = $1;
+`, [NEW_MENTOR_UID]);
+
+// --- 20260831150000_event_rsvps_in_mentor_presence.sql ---
+console.log('\n--- 20260831150000_event_rsvps_in_mentor_presence.sql ---');
+
+// Insert a test upcoming event in srmap_events_cache
+await q(`
+  INSERT INTO public.srmap_events_cache (id, title, excerpt, start_date, end_date, link, image_url, department, event_type)
+  VALUES (
+    888881,
+    'HackSRM 2026',
+    'Flagship 24-hour hackathon',
+    '2026-09-15 09:00:00',
+    '2026-09-16 09:00:00',
+    'https://events.srmap.edu.in/event/hacksrm-2026',
+    NULL,
+    'CSE Events',
+    'Hackathon'
+  )
+  ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title;
+`);
+
+// Add RSVP for mentor
+await q(`
+  INSERT INTO public.event_attendees (event_id, user_id, status, note)
+  VALUES (888881, $1, 'going', 'Mentoring web dev teams')
+  ON CONFLICT (event_id, user_id) DO UPDATE SET status = EXCLUDED.status, note = EXCLUDED.note;
+`, [NEW_MENTOR_UID]);
+
+// Test get_user_event_schedule
+const { rows: mentorEvents } = await q(`
+  SELECT * FROM public.get_user_event_schedule($1::uuid);
+`, [NEW_MENTOR_UID]);
+
+check(
+  'get_user_event_schedule returns upcoming RSVP event with proper fields',
+  mentorEvents.length > 0 && mentorEvents[0].title === 'HackSRM 2026' && mentorEvents[0].status === 'going' && mentorEvents[0].note === 'Mentoring web dev teams',
+  JSON.stringify(mentorEvents[0])
+);
+
+const { rows: livePresenceWithEvent } = await q(`
+  SELECT * FROM public.get_mentor_live_availability($1::uuid);
+`, [NEW_MENTOR_UID]);
+
+check(
+  'get_mentor_live_availability counts the going HackSRM RSVP under upcoming_going_count',
+  livePresenceWithEvent[0]?.upcoming_going_count >= 1,
+  JSON.stringify(livePresenceWithEvent[0])
+);
+
+// A bounded, real-time "going" event happening right now must mark the
+// mentor busy and name the event -- this is the actual "is Gyan free right
+// now, factoring in an ongoing event" behaviour the feature exists for, and
+// nothing above exercises it (HackSRM is in the future at test time).
+await q(`
+  INSERT INTO public.srmap_events_cache (id, title, excerpt, start_date, end_date, link, image_url, department, event_type)
+  VALUES (
+    888882,
+    'Live Seminar Now',
+    'A seminar happening during the test run',
+    to_char((now() AT TIME ZONE 'Asia/Kolkata') - interval '1 hour', 'YYYY-MM-DD HH24:MI:SS'),
+    to_char((now() AT TIME ZONE 'Asia/Kolkata') + interval '1 hour', 'YYYY-MM-DD HH24:MI:SS'),
+    'https://events.srmap.edu.in/event/live-seminar-now',
+    NULL,
+    'CSE Events',
+    'Seminar'
+  )
+  ON CONFLICT (id) DO UPDATE SET start_date = EXCLUDED.start_date, end_date = EXCLUDED.end_date;
+`);
+await q(`
+  INSERT INTO public.event_attendees (event_id, user_id, status)
+  VALUES (888882, $1, 'going')
+  ON CONFLICT (event_id, user_id) DO UPDATE SET status = EXCLUDED.status;
+`, [NEW_MENTOR_UID]);
+
+const { rows: liveDuringSeminar } = await q(`
+  SELECT * FROM public.get_mentor_live_availability($1::uuid);
+`, [NEW_MENTOR_UID]);
+
+check(
+  'a bounded "going" event happening now marks the mentor busy and names the event',
+  liveDuringSeminar[0]?.is_active_now === false && liveDuringSeminar[0]?.current_event_title === 'Live Seminar Now',
+  JSON.stringify(liveDuringSeminar[0])
+);
+
+await q(`DELETE FROM public.event_attendees WHERE event_id = 888882 AND user_id = $1;`, [NEW_MENTOR_UID]);
+
+// An all-day *placeholder* window (00:00:00-23:59:59, meaning "we don't know
+// the real time") must NOT block availability even with a "going" RSVP --
+// otherwise a mentor merely going to a day-long fest reads as unreachable
+// for the whole day, which is worse than not knowing at all.
+await q(`
+  INSERT INTO public.srmap_events_cache (id, title, excerpt, start_date, end_date, link, image_url, department, event_type)
+  VALUES (
+    888883,
+    'All-Day Fest Today',
+    'A fest with no real reported time',
+    to_char((now() AT TIME ZONE 'Asia/Kolkata')::date, 'YYYY-MM-DD') || ' 00:00:00',
+    to_char((now() AT TIME ZONE 'Asia/Kolkata')::date, 'YYYY-MM-DD') || ' 23:59:59',
+    'https://events.srmap.edu.in/event/all-day-fest-today',
+    NULL,
+    'CSE Events',
+    'Fest'
+  )
+  ON CONFLICT (id) DO UPDATE SET start_date = EXCLUDED.start_date, end_date = EXCLUDED.end_date;
+`);
+await q(`
+  INSERT INTO public.event_attendees (event_id, user_id, status)
+  VALUES (888883, $1, 'going')
+  ON CONFLICT (event_id, user_id) DO UPDATE SET status = EXCLUDED.status;
+`, [NEW_MENTOR_UID]);
+
+const { rows: liveDuringAllDayFest } = await q(`
+  SELECT * FROM public.get_mentor_live_availability($1::uuid);
+`, [NEW_MENTOR_UID]);
+
+check(
+  'an all-day placeholder event does not block availability even when "going"',
+  liveDuringAllDayFest[0]?.is_active_now === true && liveDuringAllDayFest[0]?.current_event_title === null,
+  JSON.stringify(liveDuringAllDayFest[0])
+);
+
+const { rows: allDayScheduleRow } = await q(`
+  SELECT * FROM public.get_user_event_schedule($1::uuid) WHERE title = 'All-Day Fest Today';
+`, [NEW_MENTOR_UID]);
+
+check(
+  'get_user_event_schedule flags the placeholder window as is_all_day',
+  allDayScheduleRow[0]?.is_all_day === true,
+  JSON.stringify(allDayScheduleRow[0])
+);
+
+await q(`DELETE FROM public.event_attendees WHERE event_id = 888883 AND user_id = $1;`, [NEW_MENTOR_UID]);
+
+// 'interested' is a bookmark, not a commitment: it must never block
+// availability, and it must count separately from 'going' rather than
+// inflating the same number a chatbot would read as "attending."
+await q(`
+  INSERT INTO public.event_attendees (event_id, user_id, status)
+  VALUES (888882, $1, 'interested')
+  ON CONFLICT (event_id, user_id) DO UPDATE SET status = EXCLUDED.status;
+`, [NEW_MENTOR_UID]);
+
+const { rows: liveWithInterestedOnly } = await q(`
+  SELECT * FROM public.get_mentor_live_availability($1::uuid);
+`, [NEW_MENTOR_UID]);
+
+check(
+  '"interested" in a currently-happening event does not block availability',
+  liveWithInterestedOnly[0]?.is_active_now === true && liveWithInterestedOnly[0]?.current_event_title === null,
+  JSON.stringify(liveWithInterestedOnly[0])
+);
+
+check(
+  'interested RSVPs are counted separately from going, not merged into one number',
+  liveWithInterestedOnly[0]?.upcoming_interested_count >= 1 && liveWithInterestedOnly[0]?.upcoming_going_count >= 1,
+  JSON.stringify(liveWithInterestedOnly[0])
+);
+
+// --- 20260831160000_knowledge_chunks_fulltext.sql ---
+console.log('\n--- 20260831160000_knowledge_chunks_fulltext.sql ---');
+
+// Two chunks that a vector search would rank close together and a keyword
+// search must not: one actually about midterm dates, one about something else
+// entirely that shares the query's generic words.
+const CAL_CHUNK = '33333333-0000-4000-8000-000000000001';
+const POLICY_CHUNK = '33333333-0000-4000-8000-000000000002';
+const PRIVATE_CHUNK = '33333333-0000-4000-8000-000000000003';
+
+await q(`
+  INSERT INTO public.knowledge_chunks
+    (entity_type, entity_id, title, subtitle, body, metadata, visibility, source_path, content_hash)
+  VALUES
+    ('document', $1, 'Academic Calendar AY 2026-27: Odd Semester',
+     'academic_calendar', 'Midterm examinations begin 28 September 2026 and end 1 October 2026.',
+     '{}'::jsonb, 'public', '/documents/academic-calendar', 'h1'),
+    ('document', $2, 'Student Attendance Policy',
+     'academic_policy', 'Students must maintain seventy five percent attendance in every course.',
+     '{}'::jsonb, 'public', '/documents/attendance', 'h2'),
+    ('notice', $3, 'Internal midterm seating plan',
+     'notice', 'Midterm seating arrangement for staff only.',
+     '{}'::jsonb, 'signed_in', '/notices/seating', 'h3')
+  ON CONFLICT (entity_type, entity_id) DO NOTHING;
+`, [CAL_CHUNK, POLICY_CHUNK, PRIVATE_CHUNK]);
+
+const { rows: [generated] } = await q(`
+  SELECT search_vector::text AS sv FROM public.knowledge_chunks WHERE entity_id = $1;
+`, [CAL_CHUNK]);
+
+check(
+  'search_vector is generated and stemmed on insert (no backfill needed)',
+  typeof generated?.sv === 'string' && generated.sv.includes('midterm'),
+  generated?.sv?.slice(0, 120)
+);
+
+// The exact regression: the reader's words are "midterms ... starting", the
+// document says "Midterm examinations begin". AND-ing these terms returns
+// nothing, which is why the function OR-s them.
+const { rows: orTerms } = await q(`
+  SELECT entity_id, keyword_rank FROM public.keyword_search_knowledge('midterms cse starting', ARRAY['document'], 10, NULL);
+`);
+
+check(
+  'OR-s the query terms so a partial match still returns the right document',
+  orTerms.some((r) => r.entity_id === CAL_CHUNK),
+  JSON.stringify(orTerms)
+);
+
+check(
+  'ranks the calendar above an unrelated policy sharing no query term',
+  orTerms[0]?.entity_id === CAL_CHUNK,
+  JSON.stringify(orTerms)
+);
+
+const { rows: ranks } = await q(`
+  SELECT keyword_rank FROM public.keyword_search_knowledge('midterm examinations', ARRAY['document'], 10, NULL);
+`);
+
+check(
+  'keyword_rank is normalised into 0-1 so callers can combine it with cosine similarity',
+  ranks.length > 0 && ranks.every((r) => r.keyword_rank > 0 && r.keyword_rank <= 1),
+  JSON.stringify(ranks)
+);
+
+// Same visibility contract as search_knowledge(): a signed_in chunk is
+// invisible to an anonymous caller. A keyword leg that leaked one would be a
+// worse bug than the one this migration fixes.
+const { rows: kwAnonRows } = await q(`
+  SELECT entity_id FROM public.keyword_search_knowledge('midterm seating', ARRAY['notice'], 10, NULL);
+`);
+const { rows: kwViewerRows } = await q(`
+  SELECT entity_id FROM public.keyword_search_knowledge('midterm seating', ARRAY['notice'], 10, $1::uuid);
+`, [CURRENT_UID]);
+
+check(
+  'hides signed_in chunks from an anonymous caller, and shows them to a viewer',
+  !kwAnonRows.some((r) => r.entity_id === PRIVATE_CHUNK) && kwViewerRows.some((r) => r.entity_id === PRIVATE_CHUNK),
+  `anon=${JSON.stringify(kwAnonRows)} viewer=${JSON.stringify(kwViewerRows)}`
+);
+
+const { rows: typeFiltered } = await q(`
+  SELECT entity_type FROM public.keyword_search_knowledge('midterm', ARRAY['notice'], 10, $1::uuid);
+`, [CURRENT_UID]);
+
+check(
+  'honours p_entity_types',
+  typeFiltered.length > 0 && typeFiltered.every((r) => r.entity_type === 'notice'),
+  JSON.stringify(typeFiltered)
+);
+
+// Punctuation-only and empty input must return nothing rather than raise —
+// this runs on whatever a student typed.
+const { rows: junk } = await q(`
+  SELECT entity_id FROM public.keyword_search_knowledge('   ???   ', ARRAY['document'], 10, NULL);
+`);
+
+check(
+  'returns no rows (and does not raise) on input with no searchable words',
+  junk.length === 0,
+  JSON.stringify(junk)
+);
+
+const { rows: [kwAcl] } = await q(`
+  SELECT
+    has_function_privilege('anon', p.oid, 'EXECUTE') AS anon,
+    has_function_privilege('authenticated', p.oid, 'EXECUTE') AS auth
+  FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+  WHERE n.nspname = 'public' AND p.proname = 'keyword_search_knowledge';
+`);
+
+check(
+  'keyword_search_knowledge is not executable by anon or authenticated',
+  kwAcl?.anon === false && kwAcl?.auth === false,
+  JSON.stringify(kwAcl)
 );
 
 console.log(failures === 0
