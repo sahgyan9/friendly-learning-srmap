@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
  * shape that fits none of them.
  */
 export type AskResult = {
-  entity_type: "faculty" | "mentor" | "student" | "opportunity" | "community" | "post" | "document" | "notice" | "article";
+  entity_type: "faculty" | "mentor" | "student" | "opportunity" | "community" | "post" | "document" | "notice" | "article" | "blog_post";
   entity_id: string;
   title: string;
   subtitle: string | null;
@@ -54,6 +54,12 @@ export type AskResponse = {
    * `other` exists to prevent, defeated by the group being claimed server-side.
    */
   articles?: AskResult[];
+  /**
+   * Self-serve blog_posts (any signed-in student/mentor, not just admins).
+   * Same optionality reasoning as articles/documents/notices — absent, not
+   * empty, on any deployed semantic-search that predates this field.
+   */
+  blog_posts?: AskResult[];
   /** Entity types the server has no group for yet. Never silently dropped. */
   other: AskResult[];
 };
@@ -79,6 +85,7 @@ export function allResults(data: AskResponse): AskResult[] {
     ...(data.documents ?? []),
     ...(data.notices ?? []),
     ...(data.articles ?? []),
+    ...(data.blog_posts ?? []),
     ...(data.other ?? []),
   ].sort((a, b) => b.similarity - a.similarity);
 }

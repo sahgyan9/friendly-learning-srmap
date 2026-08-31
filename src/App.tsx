@@ -134,6 +134,9 @@ const FindStudyPartners = lazyWithRetry("FindStudyPartners", () => import("./pag
 const HackathonPartners = lazyWithRetry("HackathonPartners", () => import("./pages/HackathonPartners"));
 const Blog = lazyWithRetry("Blog", () => import("./pages/Blog"));
 const BlogPost = lazyWithRetry("BlogPost", () => import("./pages/BlogPost"));
+const Blogs = lazyWithRetry("Blogs", () => import("./pages/Blogs"));
+const BlogPostDetail = lazyWithRetry("BlogPostDetail", () => import("./pages/BlogPostDetail"));
+const WriteBlogPost = lazyWithRetry("WriteBlogPost", () => import("./pages/WriteBlogPost"));
 const Certificate = lazyWithRetry("Certificate", () => import("./pages/Certificate"));
 const VerifyCertificate = lazyWithRetry("VerifyCertificate", () => import("./pages/VerifyCertificate"));
 const HowVerificationWorks = lazyWithRetry("HowVerificationWorks", () => import("./pages/HowVerificationWorks"));
@@ -247,6 +250,13 @@ function App() {
                     <Route path="/hackathon-partners" element={<HackathonPartners />} />
                     <Route path="/blog" element={<Blog />} />
                     <Route path="/blog/:slug" element={<BlogPost />} />
+                    {/* Community Blog — any signed-in user can publish here, unlike
+                      /blog above (4 hardcoded editorial posts). Kept as a distinct
+                      namespace on purpose. /blogs/write and /blogs/:slug/edit are
+                      registered below under Authenticated; react-router v7 ranks
+                      static segments above :slug regardless of declaration order. */}
+                    <Route path="/blogs" element={<Blogs />} />
+                    <Route path="/blogs/:slug" element={<BlogPostDetail />} />
 
                     {/* Backward Compatibility SPA Redirects */}
                     <Route path="/chat" element={<ChatRedirect />} />
@@ -286,6 +296,22 @@ function App() {
                       element={
                         <ProtectedRoute>
                           <Attendance />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/blogs/write"
+                      element={
+                        <ProtectedRoute>
+                          <WriteBlogPost />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/blogs/:slug/edit"
+                      element={
+                        <ProtectedRoute>
+                          <WriteBlogPost />
                         </ProtectedRoute>
                       }
                     />

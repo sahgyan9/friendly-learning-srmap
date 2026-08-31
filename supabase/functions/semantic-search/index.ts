@@ -230,7 +230,7 @@ serve(async (req) => {
   // field, which is the old behaviour rather than an empty keyword leg.
   const keywordQuery = (payload.keyword_query ?? "").trim() || queries[0];
 
-  const allTypes =["faculty", "mentor", "student", "opportunity", "community", "post", "document", "notice", "article"];
+  const allTypes =["faculty", "mentor", "student", "opportunity", "community", "post", "document", "notice", "article", "blog_post"];
   const limit = Math.min(Math.max(payload.limit ?? 12, 1), 50);
 
   try {
@@ -425,8 +425,9 @@ serve(async (req) => {
       documents: rows.filter((r) => r.entity_type === "document"),
       notices: rows.filter((r) => r.entity_type === "notice"),
       articles: rows.filter((r) => r.entity_type === "article"),
+      blog_posts: rows.filter((r) => r.entity_type === "blog_post"),
     };
-    const claimed = new Set(["faculty", "mentor", "student", "opportunity", "community", "post", "document", "notice", "article"]);
+    const claimed = new Set(["faculty", "mentor", "student", "opportunity", "community", "post", "document", "notice", "article", "blog_post"]);
 
     return json({
       query,

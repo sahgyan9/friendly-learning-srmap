@@ -29,7 +29,8 @@ export type SearchHitKind =
   | "article"
   | "opportunity"
   | "document"
-  | "notice";
+  | "notice"
+  | "blog_post";
 
 export interface SearchHit {
   id: string;

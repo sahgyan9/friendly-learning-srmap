@@ -953,6 +953,39 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
                 relevanceScore: score("document", { similarity, lexical: hit.keyword_rank ?? 0, quality: ctrQuality(hit.entity_id) }),
               });
             }
+          } else if (hit.entity_type === "blog_post") {
+            // Deliberately its own branch rather than folded into the notice/
+            // article one above: a blog post has an author byline and reads as
+            // personal writing, not an official record, so it gets its own
+            // badge/breadcrumb rather than inheriting "Campus Article" wording.
+            // Still rendered under entityType "document" — there's no dedicated
+            // tab for it yet, same as notice/article.
+            if (!documentMap.has(hit.entity_id)) {
+              const candidateText = `${hit.title} ${hit.subtitle ?? ""} ${hit.body ?? ""}`;
+              if (parsed.specificTokens.length > 0 && similarity < 0.58) {
+                if (!hasTopicalMatch(candidateText, parsed)) return;
+              }
+
+              const blogSlug = typeof hit.metadata?.slug === "string" ? hit.metadata.slug : hit.entity_id;
+              const path = hit.source_path || `/blogs/${blogSlug}`;
+
+              documentMap.set(hit.entity_id, {
+                id: hit.entity_id,
+                title: hit.title,
+                subtitle: hit.subtitle || "Community Blog",
+                to: path,
+                entityType: "document",
+                badge: "COMMUNITY BLOG",
+                breadcrumb: `friendlylearning.in › blogs › ${blogSlug}`,
+                snippet: hit.body
+                  ? (hit.body.length > 220 ? `${hit.body.slice(0, 220)}…` : hit.body)
+                  : "A community blog post written by an SRM AP student or mentor.",
+                matchReason: "Community-written blog post",
+                sitelinks: [{ label: "Read Post", to: path }],
+                meta: hit.metadata,
+                relevanceScore: score("document", { similarity, lexical: hit.keyword_rank ?? 0, quality: ctrQuality(hit.entity_id) }),
+              });
+            }
           }
         });
       }

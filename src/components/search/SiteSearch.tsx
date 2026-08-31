@@ -13,6 +13,7 @@ import {
   Sparkles,
   History as HistoryIcon,
   Flame,
+  PenLine,
 } from "lucide-react";
 
 import { CampusBrainIcon } from "@/components/icons/CampusBrainIcon";
@@ -346,6 +347,8 @@ const SiteSearch = () => {
         ? GroupsIcon
         : hit.kind === "post"
         ? PostIcon
+        : hit.kind === "blog_post"
+        ? PenLine
         : BookOpen;
 
     const iconStyle =
@@ -359,6 +362,8 @@ const SiteSearch = () => {
         ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
         : hit.kind === "post"
         ? "border-amber-500/20 bg-amber-500/10 text-amber-600 dark:text-amber-400"
+        : hit.kind === "blog_post"
+        ? "border-indigo-500/20 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400"
         : "border-slate-500/20 bg-slate-500/10 text-slate-600 dark:text-slate-400";
 
     return (
