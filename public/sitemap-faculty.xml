@@ -6,7 +6,7 @@
                             http://www.google.com/schemas/sitemap-image/1.1 http://www.google.com/schemas/sitemap-image/1.1/sitemap-image.xsd">
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty</loc>
-    <lastmod>2026-08-30T16:36:40.956Z</lastmod>
+    <lastmod>2026-08-31T02:23:48.911Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
@@ -71,6 +71,16 @@
     </image:image>
   </url>
   <url>
+    <loc>https://friendly-learning-srmap.vercel.app/faculty/abhimanyu-bar</loc>
+    <lastmod>2026-08-30T16:37:07.257558+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://ruapdkrgcbqrhvsayvpf.supabase.co/storage/v1/object/public/faculty-portraits/abhimanyu-bar.webp</image:loc>
+      <image:title>Abhimanyu Bar — Computer Science and Engineering, SRM University-AP</image:title>
+    </image:image>
+  </url>
+  <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-a-lakshmana-rao</loc>
     <lastmod>2026-08-26T13:44:45.586292+00:00</lastmod>
     <changefreq>weekly</changefreq>
@@ -131,6 +141,16 @@
     </image:image>
   </url>
   <url>
+    <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-m-mahesh-kumar</loc>
+    <lastmod>2026-08-30T16:37:34.953929+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://ruapdkrgcbqrhvsayvpf.supabase.co/storage/v1/object/public/faculty-portraits/dr-m-mahesh-kumar.webp</image:loc>
+      <image:title>Dr M Mahesh Kumar — Computer Science and Engineering, SRM University-AP</image:title>
+    </image:image>
+  </url>
+  <url>
     <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-mohammad-abdussami</loc>
     <lastmod>2026-08-21T05:47:16.838561+00:00</lastmod>
     <changefreq>weekly</changefreq>
@@ -178,16 +198,6 @@
     <image:image>
       <image:loc>https://ruapdkrgcbqrhvsayvpf.supabase.co/storage/v1/object/public/faculty-portraits/dr-swetamber-p-das.webp</image:loc>
       <image:title>Dr Swetamber P Das — Physics, SRM University-AP</image:title>
-    </image:image>
-  </url>
-  <url>
-    <loc>https://friendly-learning-srmap.vercel.app/faculty/abhimanyu-bar</loc>
-    <lastmod>2026-08-21T05:47:16.838561+00:00</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-    <image:image>
-      <image:loc>https://ruapdkrgcbqrhvsayvpf.supabase.co/storage/v1/object/public/faculty-portraits/abhimanyu-bar.webp</image:loc>
-      <image:title>Abhimanyu Bar — Computer Science and Engineering, SRM University-AP</image:title>
     </image:image>
   </url>
   <url>
@@ -2588,16 +2598,6 @@
     <image:image>
       <image:loc>https://ruapdkrgcbqrhvsayvpf.supabase.co/storage/v1/object/public/faculty-portraits/dr-m-krishna-siva-prasad.webp</image:loc>
       <image:title>Dr M Krishna Siva Prasad — Computer Science and Engineering, SRM University-AP</image:title>
-    </image:image>
-  </url>
-  <url>
-    <loc>https://friendly-learning-srmap.vercel.app/faculty/dr-m-mahesh-kumar</loc>
-    <lastmod>2026-08-21T05:47:16.838561+00:00</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-    <image:image>
-      <image:loc>https://ruapdkrgcbqrhvsayvpf.supabase.co/storage/v1/object/public/faculty-portraits/dr-m-mahesh-kumar.webp</image:loc>
-      <image:title>Dr M Mahesh Kumar — Computer Science and Engineering, SRM University-AP</image:title>
     </image:image>
   </url>
   <url>
