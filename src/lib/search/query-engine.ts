@@ -205,16 +205,100 @@ export const GENERIC_RESEARCH_WORDS = new Set([
 ]);
 
 /**
+ * Programme, branch and cohort words: who is asking, not what is being asked.
+ *
+ * "when are midterms for btech cse 7th sem starting" is the same question as
+ * "when are midterms". The extra words narrow *whose* midterms, and none of
+ * them appear in the academic calendar chunk that holds the answer — but they
+ * are half the tokens, so embedding them drowns the actual question. Worse,
+ * "cse" also matched CAMPUS_DEPARTMENTS, which prepended the full phrase
+ * "Computer Science and Engineering" to the embedded text; every faculty chunk
+ * in the index reads "Department of Computer Science and Engineering" verbatim,
+ * so the query landed in the middle of the people cluster and came back with 23
+ * professors and zero guidelines.
+ *
+ * These are filters, not topic. They are kept in `tokens` and in
+ * `qualifierTokens` so a future filter can use them, and dropped from the text
+ * that gets embedded.
+ */
+export const QUALIFIER_TOKENS = new Set([
+  // Programmes
+  "btech", "b.tech", "be", "mtech", "m.tech", "msc", "m.sc", "bsc", "b.sc",
+  "mba", "bba", "phd", "integrated", "dual",
+  // Cohort / stage
+  "sem", "semester", "semesters", "term", "year", "yr", "batch", "section",
+  "branch", "stream", "programme", "cohort",
+  "1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th",
+  "second", "third", "fourth", "fifth", "sixth", "seventh", "eighth",
+]);
+
+/** Ordinals ("7th", "12th") are qualifiers whatever number they carry. */
+export function isQualifierToken(word: string): boolean {
+  const clean = word.toLowerCase().trim();
+  if (QUALIFIER_TOKENS.has(clean)) return true;
+  return /^\d{1,2}(st|nd|rd|th)$/.test(clean);
+}
+
+/**
+ * Words that make a query a question about *when*, not about *who*.
+ *
+ * The answer to these lives in the academic calendar and the notice board, and
+ * nowhere near a person's profile. Detecting the shape is what lets retrieval
+ * aim at documents before ranking ever gets a say — and ranking cannot rescue
+ * a row that was never retrieved, which is exactly what went wrong here.
+ */
+export const TEMPORAL_MARKERS = new Set([
+  "when", "date", "dates", "deadline", "deadlines", "schedule", "scheduled",
+  "timetable", "timing", "timings", "starts", "start", "starting", "begin",
+  "begins", "beginning", "ends", "ending", "due", "duration", "reopening",
+  "reopen", "vacation", "holidays", "holiday", "exam", "exams", "midterm",
+  "midterms", "endterm", "endterms", "calendar", "result", "results",
+]);
+
+export function hasTemporalMarker(rawWords: string[], normalized: string): boolean {
+  return (
+    rawWords.some((w) => TEMPORAL_MARKERS.has(w)) ||
+    normalized.includes("last date") ||
+    normalized.includes("how long")
+  );
+}
+
+/**
  * Checks if a search token matches inside text using whole word boundaries.
  * Prevents subword false matches like 'to' inside 'protocol' or 'can' inside 'candidates'.
+ *
+ * The regex is deliberately open-ended on the right, so the token "midterm"
+ * matches the text "midterms". The reverse did not hold, and that asymmetry
+ * mattered: a student types the plural far more often than the corpus writes
+ * it, so `hasTopicalMatch` was rejecting the very calendar section that
+ * answered the question. A singular retry closes the gap in both directions.
  */
 export function matchesWordBoundary(text: string, token: string): boolean {
   if (!text || !token) return false;
   const cleanTok = token.trim().toLowerCase();
   if (!cleanTok) return false;
-  const escaped = cleanTok.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const regex = new RegExp(`\\b${escaped}`, "i");
-  return regex.test(text);
+  const escape = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  if (new RegExp(`\\b${escape(cleanTok)}`, "i").test(text)) return true;
+
+  const singular = singularise(cleanTok);
+  if (singular === cleanTok) return false;
+  return new RegExp(`\\b${escape(singular)}`, "i").test(text);
+}
+
+/**
+ * Crude English singulariser, used only to decide whether two forms of the
+ * same word should count as the same word. Wrong on irregulars, which is
+ * acceptable: the cost of a miss is one unmatched token, not a wrong answer.
+ */
+export function singularise(word: string): string {
+  const clean = word.toLowerCase().trim();
+  if (clean.length <= 3) return clean;
+  if (clean.endsWith("ies") && clean.length > 4) return `${clean.slice(0, -3)}y`;
+  if (clean.endsWith("ses") || clean.endsWith("xes") || clean.endsWith("zes") || clean.endsWith("ches") || clean.endsWith("shes")) {
+    return clean.slice(0, -2);
+  }
+  if (clean.endsWith("s") && !clean.endsWith("ss") && !clean.endsWith("us")) return clean.slice(0, -1);
+  return clean;
 }
 
 /**
@@ -287,15 +371,32 @@ export function levenshteinDistance(a: string, b: string): number {
   return matrix[b.length][a.length];
 }
 
+/**
+ * A misspelling is not the same thing as a word this list happens not to hold.
+ *
+ * CAMPUS_VOCABULARY stores "midterm", so a student typing "midterms" — correct
+ * English, and the commoner form — was told *Did you mean "midterm"?* on the
+ * first line of the results page. Levenshtein distance cannot tell an inflection
+ * from a typo: both are one edit away. Only morphology can, so plural, gerund
+ * and past forms of a known word are treated as known.
+ *
+ * Programme and cohort words are exempt too — "sem" is a real thing students
+ * type and sits one edit from several vocabulary entries.
+ */
 export function correctTypo(word: string): string | null {
   const clean = word.toLowerCase().trim();
   if (clean.length < 3) return null;
   if (CAMPUS_VOCABULARY.includes(clean)) return null;
+  if (isQualifierToken(clean)) return null;
+  if (CAMPUS_VOCABULARY.includes(singularise(clean))) return null;
 
   let bestMatch: string | null = null;
   let minDistance = 3;
 
   for (const vocab of CAMPUS_VOCABULARY) {
+    // An inflection of a vocabulary word is that word, not a typo of it.
+    if (isInflectionOf(clean, vocab)) return null;
+
     const dist = levenshteinDistance(clean, vocab);
     const threshold = clean.length <= 5 ? 1 : 2;
     if (dist <= threshold && dist < minDistance) {
@@ -304,7 +405,20 @@ export function correctTypo(word: string): string | null {
     }
   }
 
+  // A "correction" that only changes the ending is a stem, and suggesting it
+  // reads as the search not knowing English rather than as a helpful fix.
+  if (bestMatch && isInflectionOf(clean, bestMatch)) return null;
+
   return bestMatch;
+}
+
+/** True when `word` is `base` carrying an ordinary English suffix, or vice versa. */
+export function isInflectionOf(word: string, base: string): boolean {
+  if (word === base) return true;
+  if (singularise(word) === singularise(base)) return true;
+  const [longer, shorter] = word.length >= base.length ? [word, base] : [base, word];
+  if (!longer.startsWith(shorter)) return false;
+  return ["s", "es", "ing", "ed", "d", "ly"].includes(longer.slice(shorter.length));
 }
 
 // ─── 4. Query Analysis & Tokenization ────────────────────────────────────────
@@ -346,6 +460,8 @@ export interface ParsedQuery {
   filteredFacultyTokens: string[];
   /** Name tokens for person exact matching (excludes honorifics) */
   nameTokens: string[];
+  /** Programme / branch / cohort words: who is asking, not what is asked. */
+  qualifierTokens: string[];
   /** Explicitly detected department if any (e.g. "Physics", "Computer Science and Engineering") */
   detectedDepartment: string | null;
   /** Expanded department / domain phrases */
@@ -356,6 +472,8 @@ export interface ParsedQuery {
   cleanTopic: string;
   /** Distilled semantic query for vector embedding search without conversational noise */
   semanticQuery: string;
+  /** Every phrasing to embed and fuse. `semanticQuery` is always the first. */
+  retrievalQueries: string[];
   /** Primary search intent */
   intent: QueryIntent;
   /** Explicit targeted entity category (e.g. 'mentors', 'faculty', 'opportunities') */
@@ -375,6 +493,7 @@ export function parseQuery(query: string): ParsedQuery {
   const tokens: string[] = [];
   const subjectTokens: string[] = [];
   const nameTokens: string[] = [];
+  const qualifierTokens: string[] = [];
   const correctedWords: string[] = [];
   let hasCorrection = false;
 
@@ -421,6 +540,12 @@ export function parseQuery(query: string): ParsedQuery {
     normalized.includes("what is the penalty") ||
     normalized.includes("what are the rules");
 
+  // "when does X happen" is a calendar question even when X is a word this
+  // parser has never seen. isDocumentExplicit only fires on a fixed list of
+  // nouns, so "when do classes reopen" and "last date for re-registration"
+  // both fell through to a generic people search.
+  const isTemporalQuery = hasTemporalMarker(rawWords, normalized);
+
   const isFresherQuery = rawWords.some((w) =>
     ["fresher", "freshers", "firstyear", "beginner", "newbie"].includes(w)
   ) || normalized.includes("first year") || normalized.includes("1st year");
@@ -455,7 +580,9 @@ export function parseQuery(query: string): ParsedQuery {
     targetCategory = "posts";
   } else if (isOppExplicit) {
     targetCategory = "opportunities";
-  } else if (isDocumentExplicit) {
+  } else if (isDocumentExplicit || isTemporalQuery) {
+    // Last in the chain on purpose. "when can i meet a professor" is still a
+    // faculty query — naming a person category outranks asking about a date.
     targetCategory = "documents";
   }
 
@@ -544,8 +671,12 @@ export function parseQuery(query: string): ParsedQuery {
       correctedWords.push(word);
     }
 
-    // Filter subject & name tokens
-    if (protectedWords.has(word) || (!ROLE_KEYWORDS.has(word) && !STOP_WORDS.has(word))) {
+    // Filter subject & name tokens. Qualifiers are held back the same way role
+    // keywords are: recorded, because they say who is asking, but kept out of
+    // the topic so they cannot dominate the embedded text.
+    if (isQualifierToken(word) && !protectedWords.has(word)) {
+      qualifierTokens.push(word);
+    } else if (protectedWords.has(word) || (!ROLE_KEYWORDS.has(word) && !STOP_WORDS.has(word))) {
       subjectTokens.push(word);
       nameTokens.push(word);
     }
@@ -582,7 +713,18 @@ export function parseQuery(query: string): ParsedQuery {
 
   // Semantic query: concise domain topic for vector search
   let semanticQuery = subjectTokens.join(" ").trim();
-  if (detectedDepartment && !semanticQuery.toLowerCase().includes(detectedDepartment.toLowerCase())) {
+
+  // Expanding "cse" to "Computer Science and Engineering" helps when the reader
+  // is looking for a person in that department, because that exact phrase is in
+  // every faculty and mentor chunk. On a calendar or policy question it does
+  // the opposite: it is the longest, most distinctive phrase in the embedded
+  // text, and it points at people the question was never about.
+  const departmentIsTopic = targetCategory !== "documents";
+  if (
+    detectedDepartment &&
+    departmentIsTopic &&
+    !semanticQuery.toLowerCase().includes(detectedDepartment.toLowerCase())
+  ) {
     semanticQuery = `${detectedDepartment} ${semanticQuery}`.trim();
   }
   if (!semanticQuery) semanticQuery = normalized;
@@ -610,15 +752,65 @@ export function parseQuery(query: string): ParsedQuery {
     specificTokens,
     filteredFacultyTokens,
     nameTokens: nameTokens.length > 0 ? nameTokens : tokens,
+    qualifierTokens,
     detectedDepartment,
     expandedPhrases: Array.from(expandedPhrasesSet),
     suggestedQuery,
     cleanTopic,
     semanticQuery,
+    retrievalQueries: buildRetrievalQueries({
+      semanticQuery,
+      normalized,
+      subjectTokens,
+      rawWords,
+      isTemporalQuery,
+    }),
     intent,
     targetCategory,
     infoTopic,
   };
+}
+
+/**
+ * The two or three phrasings of one question that get embedded and fused.
+ *
+ * One question has to land in one place in vector space, and distillation
+ * decides where. When distillation is right the single query is excellent;
+ * when it drops the wrong word — or keeps one word too many — there is no
+ * second chance, and the page comes back with the wrong category entirely.
+ *
+ * Asking two or three ways and fusing the rankings removes that single point
+ * of failure. Repeats are free: semantic-search caches each variant by hash,
+ * so the second student to ask spends no embedding quota at all.
+ *
+ * Deliberately capped at three, and deliberately one for short queries — a
+ * two-word search does not need the insurance and should not pay for it.
+ */
+export function buildRetrievalQueries(input: {
+  semanticQuery: string;
+  normalized: string;
+  subjectTokens: string[];
+  rawWords: string[];
+  isTemporalQuery: boolean;
+}): string[] {
+  const { semanticQuery, normalized, subjectTokens, rawWords, isTemporalQuery } = input;
+  const variants: string[] = [semanticQuery];
+
+  // A date question asked in the corpus's own words. The academic calendar
+  // does not contain the sentence "when are midterms"; it contains a table
+  // headed with these nouns.
+  if (isTemporalQuery && subjectTokens.length > 0) {
+    variants.push(`academic calendar ${subjectTokens.join(" ")} dates schedule`);
+  }
+
+  // The reader's own sentence, undistilled — the backstop for everything the
+  // stop-word list threw away. Only worth an embedding on a long query, which
+  // is where distillation actually loses information.
+  if (rawWords.length >= 5) variants.push(normalized);
+
+  return Array.from(
+    new Set(variants.map((v) => v.trim()).filter((v) => v.length >= 3)),
+  ).slice(0, 3);
 }
 
 /**
