@@ -95,6 +95,8 @@ interface KnowledgeHit {
   subtitle?: string | null;
   body?: string | null;
   similarity: number;
+  /** 0-1 full-text rank from the keyword leg; 0 when only the vector leg matched. */
+  keyword_rank?: number;
   metadata?: Record<string, unknown> | null;
 }
 
@@ -177,9 +179,22 @@ function rank(query: string, hits: KnowledgeHit[]): Ranked[] {
         title: hit.title,
         text: `${hit.title} ${hit.subtitle ?? ""} ${interests} ${hit.body ?? ""}`.toLowerCase(),
         similarity: hit.similarity,
-        // No lexical signal available here — this path has no keyword query —
-        // so semantic and intent are what is under test.
-        score: scoreResult(type, { similarity: hit.similarity }, parsed.targetCategory),
+        // `keyword_rank` is the lexical evidence the keyword leg found, and it
+        // is what useSearchResults now passes for documents. Omitting it here
+        // would leave the heaviest weight in relevance.ts (lexical, 46 vs
+        // semantic's 40) untested on the one entity type that had no lexical
+        // signal at all until 20260831160000.
+        //
+        // People still score semantic-only, matching the app: their lexical
+        // evidence comes from a separate SQL query this path does not run.
+        score: scoreResult(
+          type,
+          {
+            similarity: hit.similarity,
+            ...(type === "document" ? { lexical: hit.keyword_rank ?? 0 } : {}),
+          },
+          parsed.targetCategory,
+        ),
       }];
     })
     .sort((a, b) => b.score - a.score);
