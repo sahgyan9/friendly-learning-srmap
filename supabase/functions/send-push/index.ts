@@ -55,6 +55,32 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
+    // Identify the caller. verify_jwt is off (server-to-server callers like
+    // cron-triggered sync functions call this with the service role key, which
+    // isn't a user JWT), so this function must authenticate itself. Anyone
+    // holding only the public anon key — which ships in every client bundle —
+    // is rejected: a real request is either the service role key or a signed-in
+    // user's session token.
+    const authHeader = req.headers.get("Authorization") || "";
+    const token = authHeader.replace(/^Bearer\s+/i, "").trim();
+
+    let callerId: string | null = null;
+    let isServiceRole = false;
+
+    if (token && token === SERVICE_ROLE_KEY) {
+      isServiceRole = true;
+    } else if (token) {
+      const { data: authData } = await admin.auth.getUser(token);
+      callerId = authData?.user?.id ?? null;
+    }
+
+    if (!isServiceRole && !callerId) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
     const payload: PushPayload = await req.json();
     const rawIds = payload.userIds || (payload.userId ? [payload.userId] : []);
     const targetUserIds = Array.from(new Set(rawIds.filter(Boolean)));
@@ -164,12 +190,21 @@ Deno.serve(async (req: Request) => {
     const messageId = typeof payload.data?.messageId === "string" ? payload.data.messageId : undefined;
     if (sent > 0 && messageId && (payload.tag?.startsWith("chat-") || payload.url?.startsWith("/messages"))) {
       try {
-        await admin
+        let deliveryUpdate = admin
           .from("messages")
           .update({ delivery_status: "delivered" })
           .eq("id", messageId)
           .in("receiver_id", eligibleUserIds)
           .eq("delivery_status", "sent");
+
+        // A regular (non-service-role) caller may only acknowledge delivery of
+        // a message they actually sent — otherwise anyone who can invoke this
+        // function could flip delivery_status on someone else's message.
+        if (!isServiceRole) {
+          deliveryUpdate = deliveryUpdate.eq("sender_id", callerId as string);
+        }
+
+        await deliveryUpdate;
       } catch (delivErr) {
         console.warn("[send-push] Could not update delivery_status:", delivErr);
       }
