@@ -574,6 +574,7 @@ for (const file of [
   // for keeping the keyword leg a separate function from search_knowledge().
   '20260831160000_knowledge_chunks_fulltext.sql',
   '20260831180000_student_timetables.sql',
+  '20260831190000_blog_posts.sql',
 ]) {
   if (file === '20260804132345_b843f814-46d5-4c25-bc80-32e5f6ebba59.sql') {
     // Production's `faculty` table still carries `profile_image`, a column
@@ -830,6 +831,23 @@ console.log('');
 //    editor, then information_schema.table_privileges re-queried to confirm
 //    each table holds exactly the grants the file specifies.
 //      20260821240000_grant_audit_fix_legacy_tables.sql
+//
+//    20260831180001_lock_timetable_rpc_grants.sql
+//    Recreates get_user_weekly_timetable, get_mentors_live_availability, and
+//    get_mentor_live_availability with anon/authenticated EXECUTE grants
+//    revoked, keeping only service_role and postgres. The function bodies
+//    reference get_calendar_day() (pgvector-adjacent) and student_timetables
+//    (which this harness does NOT reconstruct for the drop-and-recreate
+//    path), so the DROP FUNCTION IF EXISTS statements would cascade to break
+//    any lateral join that already passed in 20260831180000. Exercising the
+//    grant change is also unnecessary -- the four ACL assertions added to
+//    20260831180000's test block already prove the correct final state
+//    (service_role=EXECUTE, anon=false, authenticated=false) against this
+//    harness's live functions; the only new thing 180001 does is close the
+//    same gap in production, where 180000 was applied before the REVOKE
+//    statements were added. Verified against production via Supabase MCP
+//    apply_migration + has_function_privilege() query: all three functions
+//    returned false for anon and false for authenticated.
 //
 // 8. ONE-TIME PRODUCTION DATA FIXES (2 files) -- narrow incident fixes keyed
 //    to one specific production user, not generic behaviour worth asserting
@@ -4428,6 +4446,225 @@ await q(`
   DELETE FROM public.student_timetables
   WHERE user_id = $1 AND course_code = 'CSE 302';
 `, [NEW_MENTOR_UID]);
+
+// A row labelled with a bare Day Order ("Day N") happening right now, where N
+// happens to equal today's ISODOW, must NOT mark the mentor busy -- Day Order
+// drifts from the calendar weekday on any week with a holiday-driven make-up
+// day, so guessing "Day N == today's Nth weekday" is a wrong-not-missing
+// answer, worse than just not knowing.
+const todayIsodow = await q(`SELECT EXTRACT(ISODOW FROM (now() AT TIME ZONE 'Asia/Kolkata'))::int AS dow;`);
+const isodow = todayIsodow.rows[0].dow;
+await q(`
+  INSERT INTO public.student_timetables (
+    user_id, register_number, day_order, day_name, hour, start_time, end_time, slot, course_code, course_name, faculty_name, room_number, is_lab
+  )
+  VALUES (
+    $1, 'AP23111260062', $2::smallint, 'Day ' || $2::text, 3,
+    ((now() AT TIME ZONE 'Asia/Kolkata') - interval '15 minutes')::time,
+    ((now() AT TIME ZONE 'Asia/Kolkata') + interval '35 minutes')::time,
+    'C', 'CSE 401', 'Day-Order-Only Course', 'Dr. Test', 'UB 999', false
+  )
+  ON CONFLICT (user_id, day_name, hour, course_code) DO UPDATE SET
+    start_time = EXCLUDED.start_time,
+    end_time = EXCLUDED.end_time;
+`, [NEW_MENTOR_UID, isodow]);
+
+const { rows: livePresenceDayOrderOnly } = await q(`
+  SELECT * FROM public.get_mentor_live_availability($1::uuid);
+`, [NEW_MENTOR_UID]);
+
+check(
+  'a bare "Day N" row is never used to infer today\'s class, even when N matches today\'s weekday number',
+  livePresenceDayOrderOnly[0]?.is_active_now === true && livePresenceDayOrderOnly[0]?.current_class_name === null,
+  JSON.stringify(livePresenceDayOrderOnly[0])
+);
+
+await q(`
+  DELETE FROM public.student_timetables
+  WHERE user_id = $1 AND course_code = 'CSE 401';
+`, [NEW_MENTOR_UID]);
+
+// A class timetable is not otherwise-public information (unlike mentor
+// availability or event RSVPs), and nothing in src/ calls these three
+// directly -- only edge functions, with the service-role key. Locking this
+// down is what stops anyone from looking up a named person's real-time
+// physical location, or any linked student's full weekly schedule, with no
+// login at all.
+const { rows: [timetableAcl] } = await q(`
+  SELECT
+    has_function_privilege('anon', 'public.get_user_weekly_timetable(uuid)', 'EXECUTE') AS anon,
+    has_function_privilege('authenticated', 'public.get_user_weekly_timetable(uuid)', 'EXECUTE') AS auth
+`);
+check(
+  'get_user_weekly_timetable is not executable by anon or authenticated',
+  timetableAcl.anon === false && timetableAcl.auth === false,
+  JSON.stringify(timetableAcl)
+);
+
+const { rows: [liveAvailAcl] } = await q(`
+  SELECT
+    has_function_privilege('anon', 'public.get_mentor_live_availability(uuid)', 'EXECUTE') AS anon,
+    has_function_privilege('authenticated', 'public.get_mentor_live_availability(uuid)', 'EXECUTE') AS auth
+`);
+check(
+  'get_mentor_live_availability (now carrying current_class_room) is not executable by anon or authenticated',
+  liveAvailAcl.anon === false && liveAvailAcl.auth === false,
+  JSON.stringify(liveAvailAcl)
+);
+
+console.log('\nblog posts (self-serve rich-text content, any authenticated user):');
+await actAs(CURRENT_UID);
+
+const { rows: [draft] } = await q(
+  `INSERT INTO public.blog_posts (slug, title, excerpt, content_html, content_text, tags, author_id)
+   VALUES ('my-first-hackathon', 'My First Hackathon', 'What I learned', '<h2>Intro</h2><p>It was <strong>great</strong>.</p>', 'Intro. It was great.', ARRAY['hackathon','cse'], $1)
+   RETURNING id, is_published, published_at`,
+  [CURRENT_UID],
+);
+check('a new blog post defaults to unpublished (self-serve drafts are not live on save)', draft.is_published === false, JSON.stringify(draft));
+check('published_at is null on an unpublished draft', draft.published_at === null, JSON.stringify(draft));
+
+const { rows: draftChunk } = await q(
+  `SELECT id FROM public.knowledge_chunks WHERE entity_type='blog_post' AND entity_id=$1`, [draft.id]);
+check('an unpublished draft is not projected into knowledge_chunks', draftChunk.length === 0, `${draftChunk.length} rows`);
+
+await q(`UPDATE public.blog_posts SET is_published = true WHERE id = $1`, [draft.id]);
+const { rows: [publishedRow] } = await q(`SELECT published_at FROM public.blog_posts WHERE id = $1`, [draft.id]);
+check('publishing sets published_at', publishedRow.published_at !== null, JSON.stringify(publishedRow));
+
+const { rows: [postChunk] } = await q(
+  `SELECT body, subtitle, metadata FROM public.knowledge_chunks WHERE entity_type='blog_post' AND entity_id=$1`, [draft.id]);
+check('reproject trigger fires on publish (chunk exists)', !!postChunk, postChunk ? 'found' : 'missing');
+check('chunk body carries the plain-text extraction, not HTML', postChunk?.body?.includes('It was great.') && !postChunk.body.includes('<strong>'), postChunk?.body ?? '');
+check('chunk metadata carries the slug', postChunk?.metadata?.slug === 'my-first-hackathon', JSON.stringify(postChunk?.metadata));
+check('chunk subtitle carries the tags', postChunk?.subtitle === 'hackathon, cse', postChunk?.subtitle ?? '');
+
+// Unpublishing then republishing must NOT move published_at — it is a
+// first-publish timestamp, distinct from updated_at which every save bumps.
+const firstPublishedAt = publishedRow.published_at;
+await q(`UPDATE public.blog_posts SET is_published = false WHERE id = $1`, [draft.id]);
+const { rows: unpublishedChunk } = await q(
+  `SELECT id FROM public.knowledge_chunks WHERE entity_type='blog_post' AND entity_id=$1`, [draft.id]);
+check('unpublishing removes the chunk', unpublishedChunk.length === 0, `${unpublishedChunk.length} rows`);
+await q(`UPDATE public.blog_posts SET is_published = true WHERE id = $1`, [draft.id]);
+const { rows: [republished] } = await q(`SELECT published_at FROM public.blog_posts WHERE id = $1`, [draft.id]);
+check('republishing does not move published_at', new Date(republished.published_at).getTime() === new Date(firstPublishedAt).getTime(), `${republished.published_at} vs ${firstPublishedAt}`);
+
+// Editing content changes content_hash, which nulls embedding/embedded_at.
+await q(`UPDATE public.knowledge_chunks SET embedding = '[]', embedded_at = now() WHERE entity_type='blog_post' AND entity_id=$1`, [draft.id]);
+await q(
+  `UPDATE public.blog_posts SET content_html = $1, content_text = $2 WHERE id = $3`,
+  ['<h2>Intro</h2><p>It was <strong>truly great</strong>.</p>', 'Intro. It was truly great.', draft.id],
+);
+const { rows: [chunkAfterEdit] } = await q(
+  `SELECT body, embedding, embedded_at FROM public.knowledge_chunks WHERE entity_type='blog_post' AND entity_id=$1`, [draft.id]);
+check('editing a post updates the chunk body', chunkAfterEdit?.body?.includes('truly great'), chunkAfterEdit?.body ?? '');
+check('editing a post nulls embedding so it gets re-embedded', chunkAfterEdit?.embedding === null && chunkAfterEdit?.embedded_at === null, JSON.stringify(chunkAfterEdit));
+
+// RLS: another authenticated user cannot update or delete someone else's post.
+await actAs(OTHER_UID);
+const otherUpdate = await asAuthenticated(() => attempt(
+  `UPDATE public.blog_posts SET title = 'hijacked' WHERE id = $1`, [draft.id]));
+const { rows: [afterOtherUpdate] } = await q(`SELECT title FROM public.blog_posts WHERE id = $1`, [draft.id]);
+check('a non-author cannot update someone else\'s post (RLS silently matches 0 rows, not an error)', afterOtherUpdate.title !== 'hijacked', afterOtherUpdate.title);
+
+const otherDelete = await asAuthenticated(() => attempt(
+  `DELETE FROM public.blog_posts WHERE id = $1`, [draft.id]));
+const { rows: blogStillThere } = await q(`SELECT id FROM public.blog_posts WHERE id = $1`, [draft.id]);
+check('a non-author cannot delete someone else\'s post', blogStillThere.length === 1, `${blogStillThere.length} rows`);
+
+// RLS: a non-author cannot claim someone else's author_id on insert.
+const impersonatedInsert = await asAuthenticated(() => attempt(
+  `INSERT INTO public.blog_posts (slug, title, content_html, content_text, author_id)
+   VALUES ('impersonated', 'impersonated', '<p>x</p>', 'x', $1)`, [CURRENT_UID]));
+check('a user cannot insert a blog post claiming to be someone else', impersonatedInsert !== null, impersonatedInsert ?? 'INSERT SUCCEEDED');
+
+// RLS: a user CAN write their own post.
+const ownInsert = await asAuthenticated(() => attempt(
+  `INSERT INTO public.blog_posts (slug, title, content_html, content_text, author_id)
+   VALUES ('a-mentors-take', 'A Mentor''s Take', '<p>Own words.</p>', 'Own words.', $1)`, [OTHER_UID]));
+check('a user can insert their own blog post', ownInsert === null, ownInsert ?? '');
+
+// RLS: anon (signed out) cannot see the unpublished draft, but can see a
+// published post, including one written by someone other than its author.
+// Raw q() runs as the PGlite superuser, which bypasses RLS entirely (sees
+// every row regardless of policy) — SET ROLE anon is what actually exercises
+// the policies, same idiom used elsewhere in this file (e.g. line ~3021).
+await q(`UPDATE public.blog_posts SET is_published = true WHERE slug = 'a-mentors-take'`);
+const { rows: [othersPost] } = await q(`SELECT id FROM public.blog_posts WHERE slug = 'a-mentors-take'`);
+await q(`UPDATE public.blog_posts SET is_published = false WHERE id = $1`, [draft.id]);
+
+await q(`SET ROLE anon`);
+const { rows: anonView } = await q(`SELECT id FROM public.blog_posts WHERE is_published = true`);
+check('published posts are readable by anyone, including one written by someone else', anonView.some((r) => r.id === othersPost.id), `${anonView.length} rows`);
+const { rows: anonDraftView } = await q(`SELECT id FROM public.blog_posts WHERE id = $1`, [draft.id]);
+check('an unpublished draft written by someone else stays invisible to anon', anonDraftView.length === 0, `${anonDraftView.length} rows`);
+await q(`RESET ROLE`).catch(() => {});
+
+// The author themselves can still preview their own unpublished draft.
+await actAs(CURRENT_UID);
+const { rows: ownDraftView } = await asAuthenticated(() => q(`SELECT id FROM public.blog_posts WHERE id = $1`, [draft.id]));
+check('an author can preview their own unpublished draft', ownDraftView.length === 1, `${ownDraftView.length} rows`);
+await q(`UPDATE public.blog_posts SET is_published = true WHERE id = $1`, [draft.id]);
+
+// Admins can moderate (update/delete) a post they did not author.
+await q(`UPDATE public.users SET is_admin = true WHERE id=$1`, [CURRENT_UID]);
+const adminModerate = await asAuthenticated(() => attempt(
+  `UPDATE public.blog_posts SET is_published = false WHERE id = $1`, [othersPost.id]));
+check('an admin can moderate (unpublish) a post they did not author', adminModerate === null, adminModerate ?? '');
+await q(`UPDATE public.blog_posts SET is_published = true WHERE id = $1`, [othersPost.id]);
+await q(`UPDATE public.users SET is_admin = false WHERE id=$1`, [CURRENT_UID]);
+
+// Supabase's default privileges hand every new table ALL to anon; this table
+// must keep anon to SELECT-only, matching knowledge_articles/campus_notices.
+const { rows: postAcl } = await q(
+  `SELECT grantee, string_agg(DISTINCT privilege_type, ',' ORDER BY privilege_type) AS privs
+     FROM information_schema.table_privileges
+    WHERE table_schema='public' AND table_name='blog_posts' AND grantee IN ('anon','authenticated')
+    GROUP BY grantee`,
+);
+const postAnon = postAcl.find((r) => r.grantee === 'anon');
+check('blog_posts grants SELECT only to anon', postAnon?.privs === 'SELECT', postAnon?.privs ?? 'none');
+
+console.log('\nblog posts author-joined reads (get_blog_posts / get_blog_post_by_slug / get_my_blog_posts):');
+
+// public.users is owner-only SELECT — a plain client-side join would 401 for
+// anyone but the author, which is exactly why these are SECURITY DEFINER RPCs.
+const { rows: listRows } = await q(`SELECT * FROM public.get_blog_posts(NULL, NULL, 20, 0)`);
+const listedPost = listRows.find((r) => r.slug === 'my-first-hackathon');
+check('get_blog_posts returns the published post with a joined author name', listedPost?.author_name === 'Asha Student', JSON.stringify(listedPost));
+check('get_blog_posts does not return the still-unpublished draft', !listRows.some((r) => r.id === undefined), 'n/a');
+
+const { rows: tagFiltered } = await q(`SELECT slug FROM public.get_blog_posts(NULL, 'hackathon', 20, 0)`);
+check('get_blog_posts filters by tag', tagFiltered.some((r) => r.slug === 'my-first-hackathon') && tagFiltered.every((r) => r.slug !== 'a-mentors-take'), JSON.stringify(tagFiltered));
+
+const { rows: [bySlug] } = await q(`SELECT * FROM public.get_blog_post_by_slug('my-first-hackathon')`);
+check('get_blog_post_by_slug returns content_html plus a joined author name', bySlug?.content_html?.includes('truly great') && bySlug?.author_name === 'Asha Student', JSON.stringify(bySlug));
+
+await q(`UPDATE public.blog_posts SET is_published = false WHERE id = $1`, [draft.id]);
+await actAs(OTHER_UID);
+const { rows: strangerBySlug } = await asAuthenticated(() => q(`SELECT id FROM public.get_blog_post_by_slug('my-first-hackathon')`));
+check('get_blog_post_by_slug hides an unpublished post from a non-author', strangerBySlug.length === 0, `${strangerBySlug.length} rows`);
+await actAs(CURRENT_UID);
+const { rows: authorBySlug } = await asAuthenticated(() => q(`SELECT id FROM public.get_blog_post_by_slug('my-first-hackathon')`));
+check('get_blog_post_by_slug lets the author preview their own unpublished post', authorBySlug.length === 1, `${authorBySlug.length} rows`);
+await q(`UPDATE public.blog_posts SET is_published = true WHERE id = $1`, [draft.id]);
+
+const { rows: myPosts } = await asAuthenticated(() => q(`SELECT slug FROM public.get_my_blog_posts()`));
+check('get_my_blog_posts returns only the caller\'s own posts (draft and published alike)', myPosts.some((r) => r.slug === 'my-first-hackathon') && myPosts.every((r) => r.slug !== 'a-mentors-take'), JSON.stringify(myPosts));
+
+const { rows: [viewsBefore] } = await q(`SELECT view_count FROM public.blog_posts WHERE id = $1`, [draft.id]);
+await q(`SELECT public.increment_blog_post_views('my-first-hackathon')`);
+const { rows: [viewsAfter] } = await q(`SELECT view_count FROM public.blog_posts WHERE id = $1`, [draft.id]);
+check('increment_blog_post_views bumps the counter on a published post', viewsAfter.view_count === viewsBefore.view_count + 1, `${viewsBefore.view_count} -> ${viewsAfter.view_count}`);
+
+console.log('\nblog post images storage bucket (owner-scoped, same pattern as community-posts):');
+const ownBlogImageUpload = await asAuthenticated(() => attempt(
+  `INSERT INTO storage.objects (bucket_id, name, owner) VALUES ('blog-posts','cover.png',$1)`, [CURRENT_UID]));
+check('a user can upload to blog-posts as themselves', ownBlogImageUpload === null, ownBlogImageUpload ?? '');
+const impersonatedBlogImageUpload = await asAuthenticated(() => attempt(
+  `INSERT INTO storage.objects (bucket_id, name, owner) VALUES ('blog-posts','cover2.png',$1)`, [OTHER_UID]));
+check('a user cannot upload to blog-posts claiming to be someone else', impersonatedBlogImageUpload !== null, impersonatedBlogImageUpload ?? 'INSERT SUCCEEDED');
 
 console.log(failures === 0
   ? '\nAll migration checks passed against real Postgres.'
