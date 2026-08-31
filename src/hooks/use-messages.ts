@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useMemo, useState } from "react";
+import { useEffect, useCallback, useMemo, useRef, useState } from "react";
 import { useMessagesState } from "./messages/use-messages-state";
 import { useMessagesOperations } from "./messages/use-messages-operations";
 import { toggleDirectMessageReaction, markMessagesAsRead, getConversationById } from "@/integrations/supabase/services/chat";
@@ -263,24 +263,37 @@ export const useMessages = (userId: string, activeChatId?: string | null) => {
     }
   }, [activeChat]);
 
-  // Ensure active conversation details are loaded into state if not already present
+  // Ensure active conversation details are loaded into state if not already
+  // present. Guarded by a ref (not just the `exists` check) because
+  // `conversations` gets a new array reference from unrelated updates
+  // elsewhere in this hook — depending on it without the ref meant an
+  // activeChat that's genuinely invalid or inaccessible (deleted, RLS-blocked,
+  // a stale link) retried this lookup forever, since every retry's own
+  // fetchConversations() call produced yet another new reference.
+  const hydrationAttemptedRef = useRef<Set<string>>(new Set());
   useEffect(() => {
     if (!activeChat || !userId) return;
 
     const exists = conversations.some((c) => c.id === activeChat);
-    if (!exists) {
-      void getConversationById(activeChat).then((conv) => {
-        if (conv) {
-          setConversations((prev) => {
-            if (prev.some((c) => c.id === conv.id)) return prev;
-            return [conv, ...prev];
-          });
-        } else {
-          // If not found yet, refetch conversations list silently
-          void fetchConversations(setConversations, setActiveChat, setIsLoadingConversations, setError, true);
-        }
-      });
+    if (exists) {
+      hydrationAttemptedRef.current.delete(activeChat);
+      return;
     }
+    if (hydrationAttemptedRef.current.has(activeChat)) return;
+    hydrationAttemptedRef.current.add(activeChat);
+
+    void getConversationById(activeChat).then((conv) => {
+      if (conv) {
+        setConversations((prev) => {
+          if (prev.some((c) => c.id === conv.id)) return prev;
+          return [conv, ...prev];
+        });
+      }
+      // If not found, leave it alone rather than retrying: the focus/
+      // visibility/online resync effect below already refreshes the full
+      // list on real user activity and will pick up a genuinely delayed
+      // write, while a truly invalid id would otherwise be retried forever.
+    });
   }, [activeChat, userId, conversations]);
 
   // Mark messages as read when viewing a conversation
