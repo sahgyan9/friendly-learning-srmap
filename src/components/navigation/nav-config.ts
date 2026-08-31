@@ -6,6 +6,7 @@ import {
   Info,
   Mail,
   MessageCircleMore,
+  PenLine,
 } from "lucide-react";
 
 import { EventsIcon } from "@/components/icons/EventsIcon";
@@ -59,6 +60,10 @@ export const PRIMARY_NAV: NavItem[] = [
 export const SECONDARY_NAV: NavItem[] = [
   { name: "How it works", url: "/how-it-works", icon: HelpCircle },
   { name: "Blog", url: "/blog", icon: BookOpen },
+  // Self-serve, any signed-in student or mentor can publish — distinct from
+  // "Blog" above (4 posts the team wrote). Different icon on purpose, so the
+  // two are never mistaken for one entry at a glance.
+  { name: "Community Blog", url: "/blogs", icon: PenLine },
   { name: "About", url: "/about", icon: Info },
   { name: "Contact", url: "/contact", icon: Mail },
 ];
@@ -136,9 +141,18 @@ export function accentFor(pathname: string) {
   return ROUTE_ACCENT[key] ?? ROUTE_ACCENT["/"];
 }
 
-/** True when `url` is the section the visitor is currently in. */
+/**
+ * True when `url` is the section the visitor is currently in.
+ *
+ * Segment-bounded on purpose: a plain `startsWith` matched "/blogs" against
+ * url "/blog" too (one is a string-prefix of the other), which lit up both
+ * "Blog" and "Community Blog" together the moment /blogs shipped. Requiring
+ * the next character to be "/" or nothing keeps "/blog/some-post" matching
+ * "/blog" while "/blogs" only matches "/blogs".
+ */
 export function isActivePath(pathname: string, url: string) {
-  return url === "/" ? pathname === "/" : pathname.startsWith(url);
+  if (url === "/") return pathname === "/";
+  return pathname === url || pathname.startsWith(`${url}/`);
 }
 
 /**
