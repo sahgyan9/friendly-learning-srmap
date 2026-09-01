@@ -575,6 +575,7 @@ for (const file of [
   '20260831160000_knowledge_chunks_fulltext.sql',
   '20260831180000_student_timetables.sql',
   '20260831190000_blog_posts.sql',
+  '20260901120000_search_query_user_logs.sql',
 ]) {
   if (file === '20260804132345_b843f814-46d5-4c25-bc80-32e5f6ebba59.sql') {
     // Production's `faculty` table still carries `profile_image`, a column
@@ -4666,10 +4667,67 @@ const impersonatedBlogImageUpload = await asAuthenticated(() => attempt(
   `INSERT INTO storage.objects (bucket_id, name, owner) VALUES ('blog-posts','cover2.png',$1)`, [OTHER_UID]));
 check('a user cannot upload to blog-posts claiming to be someone else', impersonatedBlogImageUpload !== null, impersonatedBlogImageUpload ?? 'INSERT SUCCEEDED');
 
+console.log('\nsearch logs user attribution (20260901120000_search_query_user_logs.sql):');
+await q(`DELETE FROM public.search_logs`);
+await actAs(CURRENT_UID);
+
+// 1. Authenticated user searches:
+await actAs(CURRENT_UID);
+await asAuthenticated(() => q(`SELECT public.log_search_run('machine learning faculty', 5)`));
+const { rows: [authSearchLog] } = await q(`SELECT * FROM public.search_logs WHERE query_text = 'machine learning faculty'`);
+check('log_search_run attributes query to authenticated user ID', authSearchLog?.user_id === CURRENT_UID && authSearchLog?.result_count === 5, JSON.stringify(authSearchLog));
+
+// 2. Anonymous guest searches:
+await actAs(null);
+await q(`SELECT public.log_search_run('quantum physics mentor', 0)`);
+const { rows: [anonSearchLog] } = await q(`SELECT * FROM public.search_logs WHERE query_text = 'quantum physics mentor'`);
+check('log_search_run logs anonymous query with user_id NULL and zero results', anonSearchLog?.user_id === null && anonSearchLog?.result_count === 0, JSON.stringify(anonSearchLog));
+
+// 3. Security: non-admin caller cannot execute get_admin_search_logs or get_admin_search_stats
+await actAs(CURRENT_UID);
+await q(`UPDATE public.users SET is_admin = false WHERE id = $1`, [CURRENT_UID]);
+const nonAdminLogsAttempt = await asAuthenticated(() => attempt(`SELECT * FROM public.get_admin_search_logs()`));
+check('non-admin user is blocked from executing get_admin_search_logs', nonAdminLogsAttempt !== null && nonAdminLogsAttempt.includes('Only admins can view search logs'), nonAdminLogsAttempt ?? 'ALLOWED');
+
+const nonAdminStatsAttempt = await asAuthenticated(() => attempt(`SELECT public.get_admin_search_stats()`));
+check('non-admin user is blocked from executing get_admin_search_stats', nonAdminStatsAttempt !== null && nonAdminStatsAttempt.includes('Only admins can view search stats'), nonAdminStatsAttempt ?? 'ALLOWED');
+
+// Direct table RLS on search_logs blocks non-admin
+const { rows: nonAdminDirectRead } = await asAuthenticated(() => q(`SELECT * FROM public.search_logs`));
+check('non-admin user receives 0 rows when selecting search_logs directly', nonAdminDirectRead.length === 0, `${nonAdminDirectRead.length} rows`);
+
+// 4. Admin caller retrieves joined user profile data
+await actAs(CURRENT_UID);
+await q(`UPDATE public.users SET is_admin = true WHERE id = $1`, [CURRENT_UID]);
+const { rows: adminLogRows } = await asAuthenticated(() => q(`SELECT * FROM public.get_admin_search_logs(50, 0, '', 'all')`));
+check('admin can retrieve search logs via get_admin_search_logs', adminLogRows.length >= 2, `${adminLogRows.length} rows`);
+
+const foundAuthLog = adminLogRows.find((r) => r.query_text === 'machine learning faculty');
+check('get_admin_search_logs returns student profile info for authenticated query', foundAuthLog?.is_anonymous === false && foundAuthLog?.user_name === 'Asha Student' && foundAuthLog?.user_email === 'asha@srmap.edu.in', JSON.stringify(foundAuthLog));
+
+const foundAnonLog = adminLogRows.find((r) => r.query_text === 'quantum physics mentor');
+check('get_admin_search_logs returns Anonymous Guest label for guest query', foundAnonLog?.is_anonymous === true && foundAnonLog?.user_name === 'Anonymous Guest' && foundAnonLog?.user_email === null, JSON.stringify(foundAnonLog));
+
+// Filter checks
+const { rows: authOnlyLogs } = await asAuthenticated(() => q(`SELECT * FROM public.get_admin_search_logs(50, 0, '', 'authenticated')`));
+check('get_admin_search_logs filters by authenticated user type', authOnlyLogs.every((r) => r.is_anonymous === false), JSON.stringify(authOnlyLogs));
+
+const { rows: anonOnlyLogs } = await asAuthenticated(() => q(`SELECT * FROM public.get_admin_search_logs(50, 0, '', 'anonymous')`));
+check('get_admin_search_logs filters by anonymous user type', anonOnlyLogs.every((r) => r.is_anonymous === true), JSON.stringify(anonOnlyLogs));
+
+const { rows: zeroResultLogs } = await asAuthenticated(() => q(`SELECT * FROM public.get_admin_search_logs(50, 0, '', 'zero_results')`));
+check('get_admin_search_logs filters by zero_results', zeroResultLogs.every((r) => r.result_count === 0), JSON.stringify(zeroResultLogs));
+
+// Search stats check
+const { rows: [statsResult] } = await asAuthenticated(() => q(`SELECT public.get_admin_search_stats() AS stats`));
+const searchStats = statsResult?.stats;
+check('get_admin_search_stats returns correct aggregated KPI numbers', searchStats?.total_searches === 2 && searchStats?.authenticated_searches === 1 && searchStats?.anonymous_searches === 1 && searchStats?.unique_searchers === 1 && searchStats?.zero_result_searches === 1, JSON.stringify(searchStats));
+
 console.log(failures === 0
   ? '\nAll migration checks passed against real Postgres.'
   : `\n${failures} check(s) FAILED.`);
 process.exit(failures === 0 ? 0 : 1);
+
 
 
 
