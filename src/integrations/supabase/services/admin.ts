@@ -255,3 +255,69 @@ export async function getAdminAuditLogs(limit: number = 50) {
     throw error;
   }
 }
+
+export interface AdminSearchLogEntry {
+  id: string;
+  user_id: string | null;
+  query_text: string;
+  result_count: number;
+  created_at: string;
+  user_name: string;
+  user_email: string | null;
+  user_avatar: string | null;
+  user_role: "admin" | "mentor" | "alumni" | "student" | "guest" | string;
+  user_department: string | null;
+  user_college_id: string | null;
+  is_anonymous: boolean;
+}
+
+export interface AdminSearchStats {
+  total_searches: number;
+  authenticated_searches: number;
+  anonymous_searches: number;
+  unique_searchers: number;
+  zero_result_searches: number;
+}
+
+export async function getAdminSearchLogs(options?: {
+  limit?: number;
+  offset?: number;
+  filter?: string;
+  userType?: "all" | "authenticated" | "anonymous" | "zero_results";
+}): Promise<AdminSearchLogEntry[]> {
+  try {
+    const { data, error } = await supabase.rpc("get_admin_search_logs" as any, {
+      p_limit: options?.limit ?? 50,
+      p_offset: options?.offset ?? 0,
+      p_filter: options?.filter ?? "",
+      p_user_type: options?.userType ?? "all",
+    });
+
+    if (error) {
+      console.error("Error fetching admin search logs:", error);
+      throw error;
+    }
+
+    return (data || []) as AdminSearchLogEntry[];
+  } catch (error) {
+    console.error("Exception in getAdminSearchLogs:", error);
+    throw error;
+  }
+}
+
+export async function getAdminSearchStats(): Promise<AdminSearchStats | null> {
+  try {
+    const { data, error } = await supabase.rpc("get_admin_search_stats" as any);
+
+    if (error) {
+      console.error("Error fetching admin search stats:", error);
+      throw error;
+    }
+
+    return data as AdminSearchStats | null;
+  } catch (error) {
+    console.error("Exception in getAdminSearchStats:", error);
+    return null;
+  }
+}
+
