@@ -69,9 +69,12 @@ Three ways to start:
    ${PRIMARY_DOMAIN}/profile
 
 Also worth exploring:
+- 🔄 Link SRM Portal once (auto-sync daily attendance & timetable) → ${PRIMARY_DOMAIN}/attendance
+- 🧠 CampusBrain AI (SRM AP answers) → ${PRIMARY_DOMAIN}/search
+- 📅 Events & activities (see who's attending & team up) → ${PRIMARY_DOMAIN}/events
 - Find study partners → ${PRIMARY_DOMAIN}/find-study-partners
 - Hackathon teammates → ${PRIMARY_DOMAIN}/hackathon-partners
-- Anonymous faculty ratings (pick better courses) → ${PRIMARY_DOMAIN}/faculty
+- 👨‍🏫 Faculty search & ratings (discover research & courses) → ${PRIMARY_DOMAIN}/faculty
 
 Reply to this email if anything's confusing or broken.
 
@@ -84,7 +87,16 @@ ${PRIMARY_DOMAIN}`;
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light dark">
+  <meta name="supported-color-schemes" content="light dark">
   <title>${subject}</title>
+  <style>
+    :root { color-scheme: light dark; supported-color-schemes: light dark; }
+    @media (prefers-color-scheme: dark) {
+      .header-text { color: #ffffff !important; }
+      .header-subtext { color: #f1f5f9 !important; }
+    }
+  </style>
 </head>
 <body style="margin:0; padding:0; background-color:#f4f6f8; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color:#1e293b;">
   <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color:#f4f6f8; padding: 24px 12px;">
@@ -92,9 +104,9 @@ ${PRIMARY_DOMAIN}`;
       <td align="center">
         <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width:600px; background-color:#ffffff; border-radius:16px; overflow:hidden; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);">
           
-          <!-- Header Banner — brand primary hsl(222 55% 50%) to hsl(222 55% 38%) -->
+          <!-- Header Banner — solid brand primary for dark mode reliability -->
           <tr>
-            <td style="background: linear-gradient(135deg, #3b63c4 0%, #2c4c96 100%); padding: 32px 28px; text-align: center;">
+            <td style="background-color: #3963c6; padding: 32px 28px; text-align: center;">
               <!--
                 The mark is two-tone (blue F, navy L) on a transparent PNG, made
                 for light backgrounds — see brand_assets/BRAND_GUIDELINES.md §1.
@@ -121,10 +133,10 @@ ${PRIMARY_DOMAIN}`;
                   </td>
                 </tr>
               </table>
-              <h1 style="color:#ffffff; margin:0; font-size:24px; font-weight:700; line-height:1.3;">
+              <h1 class="header-text" style="color:#ffffff; margin:0; font-size:24px; font-weight:700; line-height:1.3;">
                 You're live, ${firstName}! 🎉
               </h1>
-              <p style="color:#dbeafe; font-size:15px; margin:8px 0 0 0;">
+              <p class="header-subtext" style="color:#ffffff; font-size:15px; margin:8px 0 0 0; font-weight:500; opacity:0.95;">
                 No approval queue — your mentor profile is already up.
               </p>
             </td>
@@ -200,7 +212,7 @@ ${PRIMARY_DOMAIN}`;
                   <td style="padding: 16px;">
                     <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
                       <tr>
-                        <td width="36" valign="top" style="font-size:20px; padding-right:12px;">⚡</td>
+                        <td width="36" valign="top" style="font-size:20px; padding-right:12px;">⏱️</td>
                         <td>
                           <h3 style="margin:0; font-size:15px; font-weight:600; color:#0f172a;">Set Your Pace</h3>
                           <p style="margin:4px 0 12px 0; font-size:13px; color:#64748b; line-height:1.4;">
@@ -222,6 +234,27 @@ ${PRIMARY_DOMAIN}`;
                 <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
                   <tr>
                     <td style="padding:4px 0;">
+                      <span style="font-size:14px; margin-right:8px;">🔄</span>
+                      <a href="${PRIMARY_DOMAIN}/attendance" style="font-size:13px; color:#3963c6; text-decoration:none; font-weight:500;">Link SRM Portal once</a>
+                      <span style="font-size:13px; color:#94a3b8; margin-left:6px;">— auto-sync daily attendance & timetable</span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding:4px 0;">
+                      <span style="font-size:14px; margin-right:8px;">🧠</span>
+                      <a href="${PRIMARY_DOMAIN}/search" style="font-size:13px; color:#3963c6; text-decoration:none; font-weight:500;">CampusBrain AI</a>
+                      <span style="font-size:13px; color:#94a3b8; margin-left:6px;">— SRM AP syllabus & regulations answers</span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding:4px 0;">
+                      <span style="font-size:14px; margin-right:8px;">📅</span>
+                      <a href="${PRIMARY_DOMAIN}/events" style="font-size:13px; color:#3963c6; text-decoration:none; font-weight:500;">Events & activities</a>
+                      <span style="font-size:13px; color:#94a3b8; margin-left:6px;">— see who's attending & team up</span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding:4px 0;">
                       <span style="font-size:14px; margin-right:8px;">🤝</span>
                       <a href="${PRIMARY_DOMAIN}/find-study-partners" style="font-size:13px; color:#3963c6; text-decoration:none; font-weight:500;">Find study partners</a>
                       <span style="font-size:13px; color:#94a3b8; margin-left:6px;">— never prep for exams alone</span>
@@ -236,9 +269,9 @@ ${PRIMARY_DOMAIN}`;
                   </tr>
                   <tr>
                     <td style="padding:4px 0;">
-                      <span style="font-size:14px; margin-right:8px;">⭐</span>
-                      <a href="${PRIMARY_DOMAIN}/faculty" style="font-size:13px; color:#3963c6; text-decoration:none; font-weight:500;">Anonymous faculty ratings</a>
-                      <span style="font-size:13px; color:#94a3b8; margin-left:6px;">— pick better courses next semester</span>
+                      <span style="font-size:14px; margin-right:8px;">👨‍🏫</span>
+                      <a href="${PRIMARY_DOMAIN}/faculty" style="font-size:13px; color:#3963c6; text-decoration:none; font-weight:500;">Faculty search & ratings</a>
+                      <span style="font-size:13px; color:#94a3b8; margin-left:6px;">— discover research & anonymous reviews</span>
                     </td>
                   </tr>
                 </table>

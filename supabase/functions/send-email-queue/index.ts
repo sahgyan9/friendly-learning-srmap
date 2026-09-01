@@ -180,19 +180,29 @@ function renderWelcomeMentorEmail(opts: {
     "<!DOCTYPE html>",
     '<html lang="en"><head><meta charset="UTF-8">',
     '<meta name="viewport" content="width=device-width, initial-scale=1.0">',
-    `<title>${escapeHtml(subject)}</title></head>`,
+    '<meta name="color-scheme" content="light dark">',
+    '<meta name="supported-color-schemes" content="light dark">',
+    `<title>${escapeHtml(subject)}</title>`,
+    "<style>",
+    "  :root { color-scheme: light dark; supported-color-schemes: light dark; }",
+    "  @media (prefers-color-scheme: dark) {",
+    "    .header-text { color: #ffffff !important; }",
+    "    .header-subtext { color: #f1f5f9 !important; }",
+    "  }",
+    "</style>",
+    "</head>",
     '<body style="margin:0;padding:0;background-color:#f4f6f8;font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,Helvetica,Arial,sans-serif;color:#1e293b;">',
     '<table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color:#f4f6f8;padding:24px 12px;"><tr><td align="center">',
     '<table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width:600px;background-color:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 10px 25px -5px rgba(0,0,0,0.05);">',
 
-    '<tr><td style="background:linear-gradient(135deg,#3b63c4 0%,#2c4c96 100%);padding:32px 28px;text-align:center;">',
+    '<tr><td style="background-color:#3963c6;padding:32px 28px;text-align:center;">',
     '<table role="presentation" border="0" cellspacing="0" cellpadding="0" style="margin:0 auto 16px auto;background-color:#ffffff;border-radius:10px;box-shadow:0 4px 12px rgba(15,23,42,0.18);"><tr><td style="padding:9px 16px;">',
     '<table role="presentation" border="0" cellspacing="0" cellpadding="0"><tr>',
     `<td style="vertical-align:middle;padding-right:8px;"><img src="${SITE_URL}/lovable-uploads/df76e963-f250-4f25-8f7b-3917f857fe63.png" width="40" height="26" alt="Friendly Learning" style="display:block;border:0;"></td>`,
     '<td style="vertical-align:middle;white-space:nowrap;font-size:15px;font-weight:700;letter-spacing:-0.2px;"><span style="color:#3963c6;">Friendly</span><span style="color:#0f172a;">Learning</span><span style="color:#3963c6;font-size:10px;font-weight:600;letter-spacing:0.3px;margin-left:4px;">SRMAP</span></td>',
     "</tr></table></td></tr></table>",
-    `<h1 style="color:#ffffff;margin:0;font-size:24px;font-weight:700;line-height:1.3;">You're live, ${safeName}! 🎉</h1>`,
-    '<p style="color:#dbeafe;font-size:15px;margin:8px 0 0 0;">No approval queue — your mentor profile is already up.</p>',
+    `<h1 class="header-text" style="color:#ffffff;margin:0;font-size:24px;font-weight:700;line-height:1.3;">You're live, ${safeName}! 🎉</h1>`,
+    '<p class="header-subtext" style="color:#ffffff;font-size:15px;margin:8px 0 0 0;font-weight:500;opacity:0.95;">No approval queue — your mentor profile is already up.</p>',
     "</td></tr>",
 
     '<tr><td style="padding:28px 24px;">',
@@ -223,7 +233,7 @@ function renderWelcomeMentorEmail(opts: {
 
     '<table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom:24px;border:1px solid #e2e8f0;border-radius:12px;background-color:#ffffff;"><tr><td style="padding:16px;">',
     '<table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0"><tr>',
-    '<td width="36" valign="top" style="font-size:20px;padding-right:12px;">⚡</td>',
+    '<td width="36" valign="top" style="font-size:20px;padding-right:12px;">⏱️</td>',
     '<td><h3 style="margin:0;font-size:15px;font-weight:600;color:#0f172a;">Set Your Pace</h3>',
     '<p style="margin:4px 0 12px 0;font-size:13px;color:#64748b;line-height:1.4;">During exams or busy weeks, toggle "Taking a break" anytime — your existing chats stay open, you just come off the directory.</p>',
     `<a href="${SITE_URL}/profile" style="display:inline-block;background-color:#475569;color:#ffffff;text-decoration:none;font-size:13px;font-weight:600;padding:8px 16px;border-radius:6px;">View Profile Settings →</a>`,
@@ -232,9 +242,12 @@ function renderWelcomeMentorEmail(opts: {
     '<div style="background-color:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:16px 18px;margin-bottom:16px;">',
     '<p style="margin:0 0 10px 0;font-size:14px;font-weight:700;color:#0f172a;">Also worth exploring</p>',
     '<table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">',
+    `<tr><td style="padding:4px 0;"><span style="font-size:14px;margin-right:8px;">🔄</span><a href="${SITE_URL}/attendance" style="font-size:13px;color:#3963c6;text-decoration:none;font-weight:500;">Link SRM Portal once</a><span style="font-size:13px;color:#94a3b8;margin-left:6px;">— auto-sync daily attendance & timetable</span></td></tr>`,
+    `<tr><td style="padding:4px 0;"><span style="font-size:14px;margin-right:8px;">🧠</span><a href="${SITE_URL}/search" style="font-size:13px;color:#3963c6;text-decoration:none;font-weight:500;">CampusBrain AI</a><span style="font-size:13px;color:#94a3b8;margin-left:6px;">— SRM AP syllabus & regulations answers</span></td></tr>`,
+    `<tr><td style="padding:4px 0;"><span style="font-size:14px;margin-right:8px;">📅</span><a href="${SITE_URL}/events" style="font-size:13px;color:#3963c6;text-decoration:none;font-weight:500;">Events & activities</a><span style="font-size:13px;color:#94a3b8;margin-left:6px;">— see who's attending & team up</span></td></tr>`,
     `<tr><td style="padding:4px 0;"><span style="font-size:14px;margin-right:8px;">🤝</span><a href="${SITE_URL}/find-study-partners" style="font-size:13px;color:#3963c6;text-decoration:none;font-weight:500;">Find study partners</a><span style="font-size:13px;color:#94a3b8;margin-left:6px;">— never prep for exams alone</span></td></tr>`,
     `<tr><td style="padding:4px 0;"><span style="font-size:14px;margin-right:8px;">🚀</span><a href="${SITE_URL}/hackathon-partners" style="font-size:13px;color:#3963c6;text-decoration:none;font-weight:500;">Hackathon teammates</a><span style="font-size:13px;color:#94a3b8;margin-left:6px;">— build something real</span></td></tr>`,
-    `<tr><td style="padding:4px 0;"><span style="font-size:14px;margin-right:8px;">⭐</span><a href="${SITE_URL}/faculty" style="font-size:13px;color:#3963c6;text-decoration:none;font-weight:500;">Anonymous faculty ratings</a><span style="font-size:13px;color:#94a3b8;margin-left:6px;">— pick better courses next semester</span></td></tr>`,
+    `<tr><td style="padding:4px 0;"><span style="font-size:14px;margin-right:8px;">👨‍🏫</span><a href="${SITE_URL}/faculty" style="font-size:13px;color:#3963c6;text-decoration:none;font-weight:500;">Faculty search & ratings</a><span style="font-size:13px;color:#94a3b8;margin-left:6px;">— discover research & anonymous reviews</span></td></tr>`,
     "</table></div>",
 
     '<p style="font-size:14px;line-height:1.5;color:#334155;margin-top:24px;">Spot something broken, or just want to say hi? Reply to this email — I read these.</p>',
@@ -271,9 +284,12 @@ function renderWelcomeMentorEmail(opts: {
     `   ${SITE_URL}/profile`,
     "",
     "Also worth exploring:",
+    `- 🔄 Link SRM Portal once (auto-sync daily attendance & timetable) → ${SITE_URL}/attendance`,
+    `- 🧠 CampusBrain AI (SRM AP answers) → ${SITE_URL}/search`,
+    `- 📅 Events & activities (see who's attending & team up) → ${SITE_URL}/events`,
     `- Find study partners → ${SITE_URL}/find-study-partners`,
     `- Hackathon teammates → ${SITE_URL}/hackathon-partners`,
-    `- Anonymous faculty ratings (pick better courses) → ${SITE_URL}/faculty`,
+    `- 👨‍🏫 Faculty search & ratings (discover research & courses) → ${SITE_URL}/faculty`,
     "",
     "Reply to this email if anything's confusing or broken.",
     "",
@@ -286,11 +302,9 @@ function renderWelcomeMentorEmail(opts: {
 /**
  * The one email a brand-new account gets, sent once, right after signup.
  *
- * Mirrors renderWelcomeMentorEmail in tone and shape. Everyone lands here as a
- * student regardless of what they end up doing on the site, so this stays
- * generic -- find a mentor, ask a question, or start a group -- rather than
- * assuming a track. Someone who later becomes a mentor gets that welcome too,
- * from the separate trigger; the two are not mutually exclusive.
+ * Welcomes new students to the full campus ecosystem: 1-click SRM Portal Sync
+ * (daily attendance & live timetable), CampusBrain AI, senior mentors, study
+ * groups, hackathon teammates, and anonymous faculty ratings.
  */
 function renderWelcomeStudentEmail(opts: {
   recipientName: string;
@@ -305,101 +319,138 @@ function renderWelcomeStudentEmail(opts: {
 
   const subject = "Welcome to Friendly Learning 🎉";
 
-  const steps: Array<[string, string]> = [
-    [
-      "Find someone one step ahead",
-      "Every mentor here was a student a year or two ago, not a decade. Browse by department and message directly — no introductions needed.",
-    ],
-    [
-      "Ask the question you already have",
-      "Which elective, how to start a project, whether an offer is worth taking. Small questions are exactly what this is for.",
-    ],
-    [
-      "Join a group",
-      "Study circles, hackathon teams, placement-prep rooms. Some are open to anyone, some are invite-only — join what fits.",
-    ],
-  ];
-
-  const stepHtml = steps
-    .map(
-      ([title, body], i) => `
-      <tr>
-        <td style="padding:0 0 18px;vertical-align:top;">
-          <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
-            <td style="vertical-align:top;padding-right:12px;">
-              <div style="width:26px;height:26px;border-radius:13px;background:#2563eb;color:#ffffff;font-size:13px;font-weight:700;text-align:center;line-height:26px;">${i + 1}</div>
-            </td>
-            <td style="vertical-align:top;">
-              <p style="margin:0 0 4px;font-size:15px;font-weight:600;color:#111827;">${title}</p>
-              <p style="margin:0;font-size:14px;color:#4b5563;line-height:1.55;">${body}</p>
-            </td>
-          </tr></table>
-        </td>
-      </tr>`,
-    )
-    .join("");
-
   const html = [
     "<!DOCTYPE html>",
     '<html lang="en"><head><meta charset="UTF-8">',
     '<meta name="viewport" content="width=device-width, initial-scale=1.0">',
-    `<title>${escapeHtml(subject)}</title></head>`,
-    '<body style="margin:0;padding:20px;font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;line-height:1.6;color:#1f2937;background:#f9fafb;">',
-    '<div style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:10px;overflow:hidden;border:1px solid #e5e7eb;">',
+    '<meta name="color-scheme" content="light dark">',
+    '<meta name="supported-color-schemes" content="light dark">',
+    `<title>${escapeHtml(subject)}</title>`,
+    "<style>",
+    "  :root { color-scheme: light dark; supported-color-schemes: light dark; }",
+    "  @media (prefers-color-scheme: dark) {",
+    "    .header-text { color: #ffffff !important; }",
+    "    .header-subtext { color: #f1f5f9 !important; }",
+    "  }",
+    "</style>",
+    "</head>",
+    '<body style="margin:0;padding:0;background-color:#f4f6f8;font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,Helvetica,Arial,sans-serif;color:#1e293b;">',
+    '<table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color:#f4f6f8;padding:24px 12px;"><tr><td align="center">',
+    '<table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width:600px;background-color:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 10px 25px -5px rgba(0,0,0,0.05);">',
 
-    '<div style="background:#2563eb;padding:28px 24px;text-align:center;">',
-    '<h1 style="color:#ffffff;margin:0 0 4px;font-size:21px;">You\'re in 🎉</h1>',
-    '<p style="color:#dbeafe;margin:0;font-size:14px;">Welcome to Friendly Learning</p>',
-    "</div>",
+    '<tr><td style="background-color:#3963c6;padding:32px 28px;text-align:center;">',
+    '<table role="presentation" border="0" cellspacing="0" cellpadding="0" style="margin:0 auto 16px auto;background-color:#ffffff;border-radius:10px;box-shadow:0 4px 12px rgba(15,23,42,0.18);"><tr><td style="padding:9px 16px;">',
+    '<table role="presentation" border="0" cellspacing="0" cellpadding="0"><tr>',
+    `<td style="vertical-align:middle;padding-right:8px;"><img src="${SITE_URL}/lovable-uploads/df76e963-f250-4f25-8f7b-3917f857fe63.png" width="40" height="26" alt="Friendly Learning" style="display:block;border:0;"></td>`,
+    '<td style="vertical-align:middle;white-space:nowrap;font-size:15px;font-weight:700;letter-spacing:-0.2px;"><span style="color:#3963c6;">Friendly</span><span style="color:#0f172a;">Learning</span><span style="color:#3963c6;font-size:10px;font-weight:600;letter-spacing:0.3px;margin-left:4px;">SRMAP</span></td>',
+    "</tr></table></td></tr></table>",
+    `<h1 class="header-text" style="color:#ffffff;margin:0;font-size:24px;font-weight:700;line-height:1.3;">Welcome to Friendly Learning 🎉</h1>`,
+    '<p class="header-subtext" style="color:#ffffff;font-size:15px;margin:8px 0 0 0;font-weight:500;opacity:0.95;">Your all-in-one SRM AP campus companion is ready.</p>',
+    "</td></tr>",
 
-    '<div style="padding:28px;">',
-    `<p style="margin:0 0 16px;font-size:16px;">Hi ${safeName},</p>`,
+    '<tr><td style="padding:28px 24px;">',
+    `<p style="font-size:15px;line-height:1.6;color:#334155;margin-top:0;">Hi <strong>${safeName}</strong>,</p>`,
+    '<p style="font-size:15px;line-height:1.6;color:#334155;">Welcome to <strong>Friendly Learning SRMAP</strong> — built for students by students. No more juggling separate group links, unorganised notes, or guessing who to ask for help. Everything you need on campus is now in one place.</p>',
 
-    '<p style="margin:0 0 24px;font-size:15px;color:#374151;">',
-    "Friendly Learning exists for one reason: the person best placed to explain something is usually the one who learned it a year ago, not ten. That's here, waiting.",
-    "</p>",
+    '<table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin:22px 0 26px 0;border:2px solid #3963c6;border-radius:14px;background-color:#ffffff;"><tr><td style="padding:18px 20px;">',
+    '<table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0"><tr>',
+    '<td width="36" valign="top" style="font-size:22px;padding-right:12px;">🔄</td>',
+    '<td>',
+    '<h3 style="margin:0;font-size:16px;font-weight:700;color:#0f172a;">Step 1: Link Your SRM Portal Once</h3>',
+    '<p style="margin:6px 0 12px 0;font-size:13px;color:#475569;line-height:1.5;">Tired of entering captchas every morning? <strong>Link your SRM portal once</strong> to automatically sync your <strong>daily attendance (refreshed at 5:30 PM IST)</strong>, live class timetable, and courses.</p>',
+    `<a href="${SITE_URL}/attendance" style="display:inline-block;background-color:#3963c6;color:#ffffff;text-decoration:none;font-size:13px;font-weight:600;padding:9px 18px;border-radius:6px;">Sync SRM Portal Now &rarr;</a>`,
+    '</td></tr></table></td></tr></table>',
 
-    '<div style="height:1px;background:#e5e7eb;margin:0 0 22px;"></div>',
+    '<h2 style="font-size:17px;font-weight:700;color:#0f172a;margin-top:28px;margin-bottom:16px;">🚀 Quick Ways to Get Started</h2>',
 
-    '<p style="margin:0 0 16px;font-size:15px;font-weight:600;color:#111827;">Three ways to start</p>',
-    '<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">',
-    stepHtml,
-    "</table>",
+    '<table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom:12px;border:1px solid #e2e8f0;border-radius:12px;background-color:#ffffff;"><tr><td style="padding:16px;">',
+    '<table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0"><tr>',
+    '<td width="36" valign="top" style="font-size:20px;padding-right:12px;">🧠</td>',
+    '<td>',
+    '<h3 style="margin:0;font-size:15px;font-weight:600;color:#0f172a;">Ask CampusBrain (AI Assistant)</h3>',
+    '<p style="margin:4px 0 12px 0;font-size:13px;color:#64748b;line-height:1.4;">Instant answers tailored to SRM AP — syllabus doubts, faculty details, campus facilities, and academic regulations.</p>',
+    `<a href="${SITE_URL}/search" style="display:inline-block;background-color:#3963c6;color:#ffffff;text-decoration:none;font-size:13px;font-weight:600;padding:7px 14px;border-radius:6px;">Try CampusBrain &rarr;</a>`,
+    '</td></tr></table></td></tr></table>',
 
-    '<p style="text-align:center;margin:6px 0 22px;">',
-    `<a href="${SITE_URL}/mentors" style="background:#2563eb;color:#ffffff;padding:13px 30px;text-decoration:none;border-radius:6px;font-weight:600;display:inline-block;font-size:15px;">Browse mentors</a>`,
-    "</p>",
+    '<table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom:12px;border:1px solid #e2e8f0;border-radius:12px;background-color:#ffffff;"><tr><td style="padding:16px;">',
+    '<table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0"><tr>',
+    '<td width="36" valign="top" style="font-size:20px;padding-right:12px;">🎓</td>',
+    '<td>',
+    '<h3 style="margin:0;font-size:15px;font-weight:600;color:#0f172a;">Connect with Senior Mentors</h3>',
+    '<p style="margin:4px 0 12px 0;font-size:13px;color:#64748b;line-height:1.4;">Message seniors who’ve already taken your courses. Get 1-on-1 advice on electives, internships, and project guides.</p>',
+    `<a href="${SITE_URL}/mentors" style="display:inline-block;background-color:#3963c6;color:#ffffff;text-decoration:none;font-size:13px;font-weight:600;padding:7px 14px;border-radius:6px;">Browse Mentors &rarr;</a>`,
+    '</td></tr></table></td></tr></table>',
 
-    '<p style="margin:0 0 6px;font-size:13px;color:#6b7280;text-align:center;line-height:1.6;">',
-    `Ask a <a href="${SITE_URL}/community-posts" style="color:#2563eb;">question</a> &middot; `,
-    `See <a href="${SITE_URL}/communities" style="color:#2563eb;">groups</a>`,
-    "</p>",
+    '<table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom:12px;border:1px solid #e2e8f0;border-radius:12px;background-color:#ffffff;"><tr><td style="padding:16px;">',
+    '<table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0"><tr>',
+    '<td width="36" valign="top" style="font-size:20px;padding-right:12px;">👥</td>',
+    '<td>',
+    '<h3 style="margin:0;font-size:15px;font-weight:600;color:#0f172a;">Join Groups & Find Teammates</h3>',
+    '<p style="margin:4px 0 12px 0;font-size:13px;color:#64748b;line-height:1.4;">Team up for hackathons, join subject circles, or post an open question to the campus community feed.</p>',
+    `<a href="${SITE_URL}/workspace-groups" style="display:inline-block;background-color:#3963c6;color:#ffffff;text-decoration:none;font-size:13px;font-weight:600;padding:7px 14px;border-radius:6px;">Explore Groups &rarr;</a>`,
+    '</td></tr></table></td></tr></table>',
 
-    "</div>",
+    '<table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom:12px;border:1px solid #e2e8f0;border-radius:12px;background-color:#ffffff;"><tr><td style="padding:16px;">',
+    '<table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0"><tr>',
+    '<td width="36" valign="top" style="font-size:20px;padding-right:12px;">📅</td>',
+    '<td>',
+    '<h3 style="margin:0;font-size:15px;font-weight:600;color:#0f172a;">Events & Campus Activities</h3>',
+    '<p style="margin:4px 0 12px 0;font-size:13px;color:#64748b;line-height:1.4;">Brings all campus events and activities together in one place, and shows who else is attending so students can team up or form a group before the event even starts.</p>',
+    `<a href="${SITE_URL}/events" style="display:inline-block;background-color:#3963c6;color:#ffffff;text-decoration:none;font-size:13px;font-weight:600;padding:7px 14px;border-radius:6px;">Explore Events &rarr;</a>`,
+    '</td></tr></table></td></tr></table>',
 
-    '<div style="padding:16px 28px;border-top:1px solid #e5e7eb;background:#f9fafb;">',
-    '<p style="margin:0;font-size:12px;color:#6b7280;text-align:center;">',
-    "You are getting this because you just created an account.<br>",
-    `<a href="${unsubscribeUrl}" style="color:#6b7280;">Unsubscribe from these emails</a>`,
-    "</p></div></div></body></html>",
+    '<table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom:20px;border:1px solid #e2e8f0;border-radius:12px;background-color:#ffffff;"><tr><td style="padding:16px;">',
+    '<table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0"><tr>',
+    '<td width="36" valign="top" style="font-size:20px;padding-right:12px;">👨‍🏫</td>',
+    '<td>',
+    '<h3 style="margin:0;font-size:15px;font-weight:600;color:#0f172a;">Faculty Search & Ratings</h3>',
+    '<p style="margin:4px 0 12px 0;font-size:13px;color:#64748b;line-height:1.4;">Helps students discover faculty members and explore their research interests, alongside 100% anonymous reviews to help you pick courses.</p>',
+    `<a href="${SITE_URL}/faculty" style="display:inline-block;background-color:#3963c6;color:#ffffff;text-decoration:none;font-size:13px;font-weight:600;padding:7px 14px;border-radius:6px;">Search Faculty &rarr;</a>`,
+    '</td></tr></table></td></tr></table>',
+
+    `<div style="text-align:center;margin:28px 0 16px 0;"><a href="${SITE_URL}" style="display:inline-block;background-color:#3963c6;color:#ffffff;text-decoration:none;font-size:15px;font-weight:600;padding:13px 32px;border-radius:8px;">Open Friendly Learning &rarr;</a></div>`,
+
+    '<p style="font-size:13px;line-height:1.5;color:#64748b;text-align:center;margin-top:20px;">Spot something broken, or just want to say hi? Reply to this email — I read every reply.</p>',
+    '</td></tr>',
+
+    '<tr><td style="background-color:#f8fafc;border-top:1px solid #e2e8f0;padding:20px 24px;text-align:center;">',
+    '<p style="margin:0 0 4px 0;font-size:13px;font-weight:600;color:#475569;">Friendly Learning SRMAP</p>',
+    '<p style="margin:0;font-size:12px;color:#94a3b8;">Connecting students, mentors, and learning communities across campus.</p>',
+    `<p style="margin:8px 0 0 0;font-size:12px;"><a href="${unsubscribeUrl}" style="color:#3963c6;text-decoration:none;font-weight:500;">Unsubscribe from these emails</a></p>`,
+    '</td></tr>',
+
+    '</table></td></tr></table></body></html>',
   ].join("");
 
   const text = [
     `Hi ${firstName},`,
     "",
-    "Friendly Learning exists for one reason: the person best placed to explain something is usually the one who learned it a year ago, not ten. That's here, waiting.",
+    "Welcome to Friendly Learning SRMAP — built for students by students. No more juggling separate group links, unorganised notes, or guessing who to ask for help. Everything you need on campus is now in one place.",
     "",
-    "THREE WAYS TO START",
+    "🔄 STEP 1: LINK YOUR SRM PORTAL ONCE",
+    `Tired of typing captchas every morning? Link your SRM portal once to automatically sync your daily attendance (refreshed at 5:30 PM IST), live class timetable, and courses:`,
+    `👉 ${SITE_URL}/attendance`,
     "",
-    "1. Find someone one step ahead. Browse mentors by department and message directly.",
+    "🚀 WHAT YOU CAN DO ON FRIENDLY LEARNING:",
     "",
-    "2. Ask the question you already have. Which elective, how to start a project, whether an offer is worth taking.",
+    `1. Ask CampusBrain (AI Assistant) — instant answers on syllabus, faculty, and regulations:`,
+    `   👉 ${SITE_URL}/search`,
     "",
-    "3. Join a group. Study circles, hackathon teams, placement-prep rooms.",
+    `2. Connect with Senior Mentors — 1-on-1 guidance from seniors in your branch:`,
+    `   👉 ${SITE_URL}/mentors`,
     "",
-    `Browse mentors: ${SITE_URL}/mentors`,
-    `Ask a question: ${SITE_URL}/community-posts`,
-    `See groups: ${SITE_URL}/communities`,
+    `3. Join Groups & Find Teammates — hackathon teams, study circles, and community posts:`,
+    `   👉 ${SITE_URL}/workspace-groups`,
+    "",
+    `4. Events & Campus Activities — brings all campus events together and shows attendees to team up:`,
+    `   👉 ${SITE_URL}/events`,
+    "",
+    `5. Faculty Search — helps students discover faculty members and explore their research interests:`,
+    `   👉 ${SITE_URL}/faculty`,
+    "",
+    `Explore Friendly Learning: ${SITE_URL}`,
+    "",
+    "Spot something broken, or just want to say hi? Reply to this email — I read every reply.",
     "",
     `Unsubscribe: ${unsubscribeUrl}`,
   ].join("\n");
