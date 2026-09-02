@@ -189,6 +189,19 @@ export const DESTINATIONS: SearchDestination[] = [
     ],
     to: "/find-study-partners",
   },
+  {
+    id: "srm-ap-student-portal",
+    label: "SRM AP Student Portal sync",
+    hint: "Auto-synced attendance, no repeat portal logins",
+    icon: ShieldCheck,
+    group: "Go to",
+    keywords: [
+      "student portal", "srmap student portal", "srm ap student portal", "portal",
+      "student.srmap.edu.in", "attendance", "attendance sync", "attendance tracker",
+      "75 percent", "75%", "eligibility", "condonation", "sync portal", "link portal",
+    ],
+    to: "/srm-ap-student-portal",
+  },
 
   // ------------------------------------------------------------- Reading
   {

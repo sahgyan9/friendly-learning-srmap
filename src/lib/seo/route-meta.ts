@@ -152,6 +152,12 @@ export const ROUTE_META: Record<string, RouteMeta> = {
     description:
       "Track live course attendance from the SRM AP student portal, monitor 75% examination eligibility thresholds, and plan upcoming classes.",
   },
+  "/srm-ap-student-portal": {
+    title:
+      "SRM AP Student Portal — Attendance Auto-Synced, No Repeat Logins | Friendly Learning SRMAP",
+    description:
+      "Tired of logging into the SRM AP student portal just to check attendance? Link your account once and Friendly Learning SRMAP auto-syncs it every weekday, tracks your 75% eligibility margin, and alerts you before you fall short.",
+  },
 };
 
 /** Absolute URL for a pre-rendered route, used for canonical and og:url. */

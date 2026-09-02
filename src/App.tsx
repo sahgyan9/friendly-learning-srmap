@@ -132,6 +132,7 @@ const EventDetail = lazyWithRetry("EventDetail", () => import("./pages/EventDeta
 const HowItWorks = lazyWithRetry("HowItWorks", () => import("./pages/HowItWorks"));
 const FindStudyPartners = lazyWithRetry("FindStudyPartners", () => import("./pages/FindStudyPartners"));
 const HackathonPartners = lazyWithRetry("HackathonPartners", () => import("./pages/HackathonPartners"));
+const SrmStudentPortal = lazyWithRetry("SrmStudentPortal", () => import("./pages/SrmStudentPortal"));
 const Blog = lazyWithRetry("Blog", () => import("./pages/Blog"));
 const BlogPost = lazyWithRetry("BlogPost", () => import("./pages/BlogPost"));
 const Blogs = lazyWithRetry("Blogs", () => import("./pages/Blogs"));
@@ -248,6 +249,7 @@ function App() {
                     <Route path="/how-it-works" element={<HowItWorks />} />
                     <Route path="/find-study-partners" element={<FindStudyPartners />} />
                     <Route path="/hackathon-partners" element={<HackathonPartners />} />
+                    <Route path="/srm-ap-student-portal" element={<SrmStudentPortal />} />
                     <Route path="/blog" element={<Blog />} />
                     <Route path="/blog/:slug" element={<BlogPost />} />
                     {/* Community Blog — any signed-in user can publish here, unlike

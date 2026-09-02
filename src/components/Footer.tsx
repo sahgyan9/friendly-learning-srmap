@@ -30,6 +30,9 @@ const Footer = () => {
             <Link to="/how-verification-works" className="text-muted-foreground hover:text-primary transition-colors">
               How Verification Works
             </Link>
+            <Link to="/srm-ap-student-portal" className="text-muted-foreground hover:text-primary transition-colors">
+              SRM AP Student Portal
+            </Link>
             <Link to="/your-data" className="text-muted-foreground hover:text-primary transition-colors">
               Your Data
             </Link>

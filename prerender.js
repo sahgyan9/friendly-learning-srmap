@@ -84,6 +84,7 @@ const routesToPrerender = [
   '/how-it-works',
   '/find-study-partners',
   '/hackathon-partners',
+  '/srm-ap-student-portal',
   '/blog',
   '/blogs',
   '/how-verification-works',
