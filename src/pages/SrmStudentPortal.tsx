@@ -69,8 +69,8 @@ const SrmStudentPortal = () => {
                 </h1>
                 <p className="text-xl text-muted-foreground">
                   Stop opening the SRM AP student portal every day just to check attendance.
-                  Link your account once and Friendly Learning SRMAP keeps your numbers current
-                  automatically.
+                  Link your account once and Friendly Learning SRMAP handles the daily syncing
+                  for you.
                 </p>
               </header>
 
