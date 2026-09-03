@@ -78,7 +78,7 @@ const Index = () => {
       <CampusHero />
 
       {/* ── 2. Main Campus Hub: Section Title + Full-Width Composer + 2-Column Grid ── */}
-      <main className="py-8 md:py-10 relative z-10">
+      <main className="py-8 md:py-10">
         <div className="container mx-auto px-4 max-w-6xl">
           {/* Full-width Centered Section Heading */}
           <div className="text-center mb-5">
