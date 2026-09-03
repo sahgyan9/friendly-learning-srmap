@@ -10,7 +10,6 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FacultyRatingModal } from "@/components/faculty/FacultyRatingModal";
 import FacultyHeroHeader from "@/components/faculty-profile/FacultyHeroHeader";
-import { FacultyAIAssistant } from "@/components/faculty-profile/FacultyAIAssistant";
 import FacultyQuickStatsStrip from "@/components/faculty-profile/FacultyQuickStatsStrip";
 import FacultyResearchShowcase from "@/components/faculty-profile/FacultyResearchShowcase";
 import FacultyStudentSentimentCard from "@/components/faculty-profile/FacultyStudentSentimentCard";
@@ -156,9 +155,6 @@ const FacultyDetail = () => {
               ownReview={ownReview}
               onRateClick={() => setShowRatingModal(true)}
             />
-
-            {/* 1.5. ASK CAMPUSBRAIN AI CHIP & QUERY BOX */}
-            <FacultyAIAssistant faculty={faculty} />
 
             {/* 2. AT-A-GLANCE STATS STRIP */}
             <FacultyQuickStatsStrip
