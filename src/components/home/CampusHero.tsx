@@ -3,9 +3,9 @@ import AskBox from "@/components/search/AskBox";
 
 export const CampusHero = () => {
   return (
-    <section className="relative overflow-hidden pt-10 pb-8 md:pt-14 md:pb-10 border-b border-border/60 bg-gradient-to-b from-muted/30 via-background to-background">
+    <section className="relative z-30 pt-10 pb-8 md:pt-14 md:pb-10 border-b border-border/60 bg-gradient-to-b from-muted/30 via-background to-background">
       {/* Decorative ambient background glows */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-full overflow-hidden pointer-events-none -z-10">
+      <div className="absolute inset-0 overflow-hidden pointer-events-none -z-10">
         <div className="absolute -top-24 left-1/3 w-96 h-96 bg-primary/10 rounded-full blur-3xl opacity-50" />
         <div className="absolute top-12 right-1/3 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl opacity-40" />
       </div>

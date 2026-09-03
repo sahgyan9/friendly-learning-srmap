@@ -231,7 +231,14 @@ const AskBox = ({ className }: { className?: string }) => {
   };
 
   return (
-    <div ref={containerRef} className={cn("relative mx-auto w-full max-w-2xl", className)}>
+    <div
+      ref={containerRef}
+      className={cn(
+        "relative mx-auto w-full max-w-2xl transition-all",
+        isActive ? "z-50" : "z-10",
+        className,
+      )}
+    >
       <div className="group relative">
         {/* Glow behind the input */}
         <div
@@ -351,7 +358,7 @@ const AskBox = ({ className }: { className?: string }) => {
 
         {/* Inline Expandable Dropdown (Desktop) */}
         {isActive && query.trim().length >= 2 && (
-          <div className="absolute left-0 right-0 top-full mt-2 z-50 rounded-2xl border border-border/80 bg-card/95 p-2 shadow-2xl backdrop-blur-md animate-in fade-in-50 zoom-in-95 duration-150">
+          <div className="absolute left-0 right-0 top-full mt-2 z-50 rounded-2xl border border-border bg-card text-card-foreground p-2 shadow-2xl backdrop-blur-xl ring-1 ring-border/50 animate-in fade-in-50 zoom-in-95 duration-150">
             <div className="max-h-[380px] overflow-y-auto divide-y divide-border/40 px-1 [scrollbar-width:thin]">
               {loading && allHits.length === 0 ? (
                 <div className="flex items-center justify-center gap-2 py-8 text-xs text-muted-foreground">
