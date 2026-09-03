@@ -11,7 +11,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Heart, MessageCircle, Share2, BadgeCheck, ChevronDown, ArrowRight, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { Heart, MessageCircle, Share2, BadgeCheck, ChevronDown, ArrowRight, MoreHorizontal, Pencil, Trash2, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getInitials } from "@/utils/user-utils";
 import { formatRelativeTime } from "@/utils/date-utils";
@@ -21,6 +21,8 @@ import { AwaitingReplyBadge, PostStatusBadge, PostTypeBadge } from "./PostTypeBa
 import { LinkifiedText } from "@/components/common/LinkifiedText";
 import { CardAccentBorder } from "@/components/ui/CardAccentBorder";
 import { PostImageGallery } from "./PostImageGallery";
+import { ConnectModal } from "./ConnectModal";
+import { AuthorPeekPopover } from "./AuthorPeekPopover";
 
 interface PostCardProps {
   post: CommunityPost;
@@ -145,16 +147,21 @@ export function PostCard({
 }: PostCardProps) {
   const navigate = useNavigate();
   const [isExpanded, setIsExpanded] = useState(false);
+  const [showConnectModal, setShowConnectModal] = useState(false);
   const isCompact = variant === "compact";
   const postedAt = formatRelativeTime(post.created_at);
   const theme = POST_TYPE_THEMES[post.post_type] ?? POST_TYPE_THEMES.general;
+
+  const isCollaborativePost =
+    post.post_type === "hackathon" ||
+    post.post_type === "project" ||
+    post.post_type === "study-help" ||
+    post.post_type === "problem-solving";
 
   const handleAuthorClick = (event: React.MouseEvent) => {
     event.stopPropagation();
     if (onAuthorClick) {
       onAuthorClick(post.author.id, event);
-    } else if (post.author.is_mentor) {
-      navigate(`/mentor/${post.author.id}`);
     }
   };
 
@@ -207,44 +214,48 @@ export function PostCard({
         {/* ── Top Header: Author details & Post Type Badges ── */}
         <div className="flex items-start justify-between gap-3">
           {/* Author avatar & info */}
-          <div className="flex min-w-0 items-center gap-2.5">
-            <Avatar
-              className="h-9 w-9 shrink-0 ring-1 ring-border/80 transition-all duration-200 cursor-pointer hover:ring-2 hover:ring-primary/60 hover:scale-105"
-              onClick={handleAuthorClick}
-            >
-              <AvatarImage src={post.author.profile_image ?? undefined} alt={post.author.name} />
-              <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
-                {getInitials(post.author.name)}
-              </AvatarFallback>
-            </Avatar>
+          <AuthorPeekPopover
+            author={post.author}
+            onMessageClick={() => setShowConnectModal(true)}
+          >
+            <div className="flex min-w-0 items-center gap-2.5 cursor-pointer group/author">
+              <Avatar
+                className="h-9 w-9 shrink-0 ring-1 ring-border/80 transition-all duration-200 group-hover/author:ring-2 group-hover/author:ring-primary/60 group-hover/author:scale-105"
+                onClick={handleAuthorClick}
+              >
+                <AvatarImage src={post.author.profile_image ?? undefined} alt={post.author.name} />
+                <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
+                  {getInitials(post.author.name)}
+                </AvatarFallback>
+              </Avatar>
 
-            <div className="min-w-0 leading-tight text-left">
-              <div className="flex items-center gap-1">
-                <span
-                  className="truncate text-xs font-semibold text-foreground text-left cursor-pointer hover:text-primary hover:underline transition-colors"
-                  onClick={handleAuthorClick}
-                >
-                  {post.author.name}
-                </span>
-                {post.author.is_mentor && (
-                  <BadgeCheck
-                    className="h-3.5 w-3.5 shrink-0 text-primary cursor-pointer"
-                    aria-label="Verified mentor"
+              <div className="min-w-0 leading-tight text-left">
+                <div className="flex items-center gap-1">
+                  <span
+                    className="truncate text-xs font-semibold text-foreground text-left group-hover/author:text-primary group-hover/author:underline transition-colors"
                     onClick={handleAuthorClick}
-                  />
-                )}
-              </div>
-              <div className="flex items-center gap-1.5 text-2xs text-muted-foreground">
-                {post.author.department && (
-                  <>
-                    <span className="truncate max-w-[120px]">{post.author.department}</span>
-                    <span>•</span>
-                  </>
-                )}
-                <span className="shrink-0">{postedAt}</span>
+                  >
+                    {post.author.name}
+                  </span>
+                  {post.author.is_mentor && (
+                    <BadgeCheck
+                      className="h-3.5 w-3.5 shrink-0 text-primary"
+                      aria-label="Verified mentor"
+                    />
+                  )}
+                </div>
+                <div className="flex items-center gap-1.5 text-2xs text-muted-foreground">
+                  {post.author.department && (
+                    <>
+                      <span className="truncate max-w-[120px]">{post.author.department}</span>
+                      <span>•</span>
+                    </>
+                  )}
+                  <span className="shrink-0">{postedAt}</span>
+                </div>
               </div>
             </div>
-          </div>
+          </AuthorPeekPopover>
 
           {/* Badges */}
           <div className="flex flex-wrap items-center justify-end gap-1.5 shrink-0">
@@ -370,67 +381,105 @@ export function PostCard({
         className="relative flex items-center justify-between gap-1 border-t border-border/60 px-4 py-2"
         onClick={(e) => e.stopPropagation()}
       >
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="sm"
-              className={cn(
-                "h-8 gap-1.5 px-3 text-xs font-medium text-muted-foreground hover:text-rose-600 transition-all duration-200 hover:scale-105",
-                post.viewer_has_liked && "text-rose-600 dark:text-rose-400 font-semibold",
-              )}
-              onClick={onLike ? (event) => onLike(post.id, event) : undefined}
-              aria-pressed={post.viewer_has_liked}
-              aria-label={post.viewer_has_liked ? "Unlike post" : "Like post"}
-            >
-              <Heart className={cn("h-4 w-4 transition-transform", post.viewer_has_liked && "fill-current scale-110")} />
-              <span>{post.likes_count > 0 ? post.likes_count : "Like"}</span>
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="top" className="flex items-center gap-1 text-xs font-medium">
-            {post.viewer_has_liked ? "💖 Liked" : "❤️ Like"}
-          </TooltipContent>
-        </Tooltip>
+        <div className="flex items-center gap-1">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className={cn(
+                  "h-8 gap-1.5 px-3 text-xs font-medium text-muted-foreground hover:text-rose-600 transition-all duration-200 hover:scale-105",
+                  post.viewer_has_liked && "text-rose-600 dark:text-rose-400 font-semibold",
+                )}
+                onClick={onLike ? (event) => onLike(post.id, event) : undefined}
+                aria-pressed={post.viewer_has_liked}
+                aria-label={post.viewer_has_liked ? "Unlike post" : "Like post"}
+              >
+                <Heart className={cn("h-4 w-4 transition-transform", post.viewer_has_liked && "fill-current scale-110")} />
+                <span>{post.likes_count > 0 ? post.likes_count : "Like"}</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="flex items-center gap-1 text-xs font-medium">
+              {post.viewer_has_liked ? "💖 Liked" : "❤️ Like"}
+            </TooltipContent>
+          </Tooltip>
 
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 gap-1.5 px-3 text-xs font-medium text-muted-foreground hover:text-primary transition-all duration-200 hover:scale-105"
-              onClick={(event) => {
-                event.stopPropagation();
-                onComment?.(post.id, event);
-              }}
-              aria-label="Comments"
-            >
-              <MessageCircle className="h-4 w-4" />
-              <span>{post.comments_count > 0 ? `${post.comments_count} Comment${post.comments_count > 1 ? "s" : ""}` : "Comment"}</span>
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="top" className="flex items-center gap-1 text-xs font-medium">
-            💬 {post.comments_count > 0 ? `${post.comments_count} Comments` : "Write a comment"}
-          </TooltipContent>
-        </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 gap-1.5 px-3 text-xs font-medium text-muted-foreground hover:text-primary transition-all duration-200 hover:scale-105"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onComment?.(post.id, event);
+                }}
+                aria-label="Comments"
+              >
+                <MessageCircle className="h-4 w-4" />
+                <span>{post.comments_count > 0 ? `${post.comments_count} Comment${post.comments_count > 1 ? "s" : ""}` : "Comment"}</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="flex items-center gap-1 text-xs font-medium">
+              💬 {post.comments_count > 0 ? `${post.comments_count} Comments` : "Write a comment"}
+            </TooltipContent>
+          </Tooltip>
 
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 gap-1.5 px-3 text-xs font-medium text-muted-foreground hover:text-primary transition-all duration-200 hover:scale-105"
-              onClick={onShare ? (event) => onShare(post, event) : undefined}
-              aria-label="Share post"
-            >
-              <Share2 className="h-4 w-4" />
-              <span>Share</span>
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="top" className="flex items-center gap-1 text-xs font-medium">
-            🔗 Share link
-          </TooltipContent>
-        </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 gap-1.5 px-3 text-xs font-medium text-muted-foreground hover:text-primary transition-all duration-200 hover:scale-105"
+                onClick={onShare ? (event) => onShare(post, event) : undefined}
+                aria-label="Share post"
+              >
+                <Share2 className="h-4 w-4" />
+                <span>Share</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="flex items-center gap-1 text-xs font-medium">
+              🔗 Share link
+            </TooltipContent>
+          </Tooltip>
+        </div>
+
+        {/* Primary CTA for collaborative posts */}
+        {!post.viewer_is_author && isCollaborativePost && (
+          <Button
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowConnectModal(true);
+            }}
+            className={cn(
+              "h-8 gap-1.5 px-3.5 text-xs font-semibold shadow-xs transition-all duration-200 hover:scale-[1.02]",
+              post.post_type === "hackathon" && "bg-amber-600 hover:bg-amber-700 text-white",
+              post.post_type === "project" && "bg-violet-600 hover:bg-violet-700 text-white",
+              post.post_type === "study-help" && "bg-sky-600 hover:bg-sky-700 text-white",
+              post.post_type === "problem-solving" && "bg-rose-600 hover:bg-rose-700 text-white",
+            )}
+          >
+            {post.post_type === "study-help" ? (
+              <>
+                <MessageCircle className="h-3.5 w-3.5" />
+                <span>Connect</span>
+              </>
+            ) : (
+              <>
+                <Users className="h-3.5 w-3.5" />
+                <span>Team Up</span>
+              </>
+            )}
+          </Button>
+        )}
       </div>
+
+      <ConnectModal
+        open={showConnectModal}
+        onOpenChange={setShowConnectModal}
+        post={post}
+      />
     </Card>
   );
 }
