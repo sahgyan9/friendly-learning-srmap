@@ -82,7 +82,8 @@ const config = {
         '/srm-ap-student-portal': { changefreq: 'weekly', priority: 0.9 },
         '/blog': { changefreq: 'weekly', priority: 0.8 },
         '/how-verification-works': { changefreq: 'monthly', priority: 0.5 },
-        '/your-data': { changefreq: 'monthly', priority: 0.5 }
+        '/your-data': { changefreq: 'monthly', priority: 0.5 },
+        '/oberleaf': { changefreq: 'weekly', priority: 0.9, images: [{ loc: '/downloads/oberleaf-icon.svg', title: 'Oberleaf - Local-First LaTeX Studio for SRM AP' }] }
     }
 };
 

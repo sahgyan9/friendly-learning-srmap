@@ -214,6 +214,18 @@ export const DESTINATIONS: SearchDestination[] = [
     to: "/blog",
   },
   {
+    id: "oberleaf",
+    label: "Oberleaf LaTeX Studio",
+    hint: "Fast, local-first LaTeX studio with instant equation preview",
+    icon: FileText,
+    group: "Go to",
+    keywords: [
+      "oberleaf", "latex", "overleaf", "tex", "studio", "miktex", "pdflatex",
+      "math", "equation", "thesis", "research paper", "offline", "download",
+    ],
+    to: "/oberleaf",
+  },
+  {
     id: "how-it-works",
     label: "How it works",
     hint: "What to do first, and what happens after",

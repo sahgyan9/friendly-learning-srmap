@@ -158,6 +158,11 @@ export const ROUTE_META: Record<string, RouteMeta> = {
     description:
       "Tired of logging into the SRM AP student portal just to check attendance? Link your account once and Friendly Learning SRMAP auto-syncs it every weekday, tracks your 75% eligibility margin, and alerts you before you fall short.",
   },
+  "/oberleaf": {
+    title: "Oberleaf — Local-First LaTeX Studio for SRM AP | Friendly Learning SRMAP",
+    description:
+      "Free, local-first LaTeX desktop studio for SRM AP students and researchers. Sub-second compilation, zero cloud timeouts, instant equation preview, and 100% offline privacy.",
+  },
 };
 
 /** Absolute URL for a pre-rendered route, used for canonical and og:url. */

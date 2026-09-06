@@ -37,7 +37,8 @@ const KNOWN_ROUTES = [
   '/ask',
   '/certificate',
   '/verify',
-  '/search'
+  '/search',
+  '/oberleaf'
 ];
 
 // Private routes that should redirect if not authenticated

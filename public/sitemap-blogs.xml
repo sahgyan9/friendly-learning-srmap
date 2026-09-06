@@ -6,9 +6,15 @@
                             http://www.google.com/schemas/sitemap-image/1.1 http://www.google.com/schemas/sitemap-image/1.1/sitemap-image.xsd">
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/blogs</loc>
-    <lastmod>2026-09-01T02:33:13.247Z</lastmod>
+    <lastmod>2026-09-06T15:22:49.638Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://friendly-learning-srmap.vercel.app/blogs/friendly-learning-srmap</loc>
+    <lastmod>2026-09-06T03:14:27.052618+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/blogs/quantum-ai-innovation-center-qaic</loc>
@@ -19,6 +25,24 @@
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/blogs/ather-community-day-acd-26</loc>
     <lastmod>2026-08-31T17:04:14.276479+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://friendly-learning-srmap.vercel.app/blogs/shakti-photon-solutions-journey</loc>
+    <lastmod>2026-09-06T06:49:49.088168+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://friendly-learning-srmap.vercel.app/blogs/refund-process-of-grant</loc>
+    <lastmod>2026-09-02T14:35:29.680155+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://friendly-learning-srmap.vercel.app/blogs/podcast</loc>
+    <lastmod>2026-09-02T14:38:02.77601+00:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>

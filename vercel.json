@@ -24,6 +24,7 @@
         { "source": "/blog", "destination": "/blog.html" },
         { "source": "/how-verification-works", "destination": "/how-verification-works.html" },
         { "source": "/your-data", "destination": "/your-data.html" },
+        { "source": "/oberleaf", "destination": "/oberleaf.html" },
         { "source": "/faculty/:slug", "destination": "/faculty/:slug.html" },
         { "source": "/opportunities/:slug", "destination": "/opportunities/:slug.html" },
         { "source": "/mentor/:slug", "destination": "/mentor/:slug.html" },

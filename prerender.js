@@ -89,6 +89,7 @@ const routesToPrerender = [
   '/blogs',
   '/how-verification-works',
   '/your-data',
+  '/oberleaf',
 ]
 
 // 4 blog posts from src/data/blog-posts.ts
