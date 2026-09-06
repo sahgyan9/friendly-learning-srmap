@@ -1,18 +1,50 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Download, Check, Copy, Terminal, Zap, Shield, Clock, FileText, Cpu, Laptop } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Footer from "@/components/Footer";
 import SEOHead from "@/components/SEOHead";
 import { ROUTE_META } from "@/lib/seo/route-meta";
 import { PRIMARY_DOMAIN } from "@/lib/constants";
+import {
+  getAppDownloadStats,
+  recordAppDownload,
+  type AppDownloadStats,
+} from "@/integrations/supabase/services/app-downloads";
 
 const OberleafLanding: React.FC = () => {
   const [copied, setCopied] = useState(false);
+  const [stats, setStats] = useState<AppDownloadStats | null>(null);
   const oneLinerCommand = `irm https://friendlylearning.in/downloads/install.ps1 | iex`;
+
+  useEffect(() => {
+    getAppDownloadStats("oberleaf").then((data) => {
+      if (data) setStats(data);
+    });
+  }, []);
+
+  const handleDownloadClick = () => {
+    // Record download telemetry
+    recordAppDownload("oberleaf", "setup_bat");
+    setStats((prev) =>
+      prev
+        ? { ...prev, total_downloads: prev.total_downloads + 1 }
+        : {
+            app_name: "oberleaf",
+            total_downloads: 1,
+            downloads_7d: 1,
+            downloads_30d: 1,
+            by_type: { setup_bat: 1 },
+          }
+    );
+    if (typeof window !== "undefined" && (window as any).posthog) {
+      (window as any).posthog.capture("oberleaf_download_click", { type: "setup_bat" });
+    }
+  };
 
   const handleCopy = () => {
     navigator.clipboard.writeText(oneLinerCommand);
     setCopied(true);
+    recordAppDownload("oberleaf", "powershell_copy");
     setTimeout(() => setCopied(false), 2500);
   };
 
@@ -50,6 +82,18 @@ const OberleafLanding: React.FC = () => {
           
           {/* Hero Section */}
           <div className="text-center space-y-6 pt-4">
+            <div className="flex flex-wrap items-center justify-center gap-2 mb-2">
+              <span className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-xs font-semibold uppercase tracking-wider">
+                🍃 Local-First Scholarly TeX Studio for SRM AP
+              </span>
+              {stats && stats.total_downloads > 0 && (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 text-xs font-semibold tracking-wider animate-in fade-in duration-300">
+                  <Download className="w-3.5 h-3.5" />
+                  <span>{stats.total_downloads} {stats.total_downloads === 1 ? "download" : "downloads"}</span>
+                </span>
+              )}
+            </div>
+
             <div className="w-20 h-20 mx-auto rounded-2xl p-2 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 shadow-md flex items-center justify-center">
               <img
                 src="/downloads/oberleaf-icon.svg"
@@ -65,12 +109,19 @@ const OberleafLanding: React.FC = () => {
             <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight font-serif">
               Ober<span className="text-emerald-600 dark:text-emerald-400 italic">leaf</span>
             </h1>
+            <p className="text-xl md:text-2xl text-muted-foreground font-medium max-w-3xl mx-auto">
+              The local-first LaTeX studio for students, scholars, and professors.
+            </p>
+            <p className="text-sm md:text-base text-muted-foreground max-w-2xl mx-auto">
+              Zero cloud compute timeouts, 1–2 second local compilation, live equation preview, and complete offline privacy for your papers and thesis.
+            </p>
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
               <a
                 href="/downloads/Oberleaf-Setup.bat"
                 download="Oberleaf-Setup.bat"
+                onClick={handleDownloadClick}
                 className="w-full sm:w-auto"
               >
                 <Button size="lg" className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-8 py-6 text-base rounded-xl shadow-lg hover:shadow-emerald-600/25 transition flex items-center justify-center space-x-2">

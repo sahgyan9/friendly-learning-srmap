@@ -8,6 +8,7 @@ import {
   Megaphone,
   Smartphone,
   RefreshCw,
+  Download,
   type LucideIcon,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -40,6 +41,8 @@ interface KpiMetrics {
   pwa_installs_total?: number;
   pwa_installs_7d?: number;
   pwa_active_7d?: number;
+  oberleaf_downloads_total?: number;
+  oberleaf_downloads_7d?: number;
   generated_at: string;
 }
 
@@ -164,6 +167,15 @@ const KpiPanel = () => {
           stats: [
             { label: "Published", value: String(metrics.notices_published_total ?? 0) },
             { label: "Last 7 days", value: String(metrics.notices_published_7d ?? 0) },
+          ],
+        },
+        {
+          key: "oberleaf",
+          icon: Download,
+          title: "Oberleaf LaTeX",
+          stats: [
+            { label: "Total downloads", value: String(metrics.oberleaf_downloads_total ?? 0) },
+            { label: "Last 7 days", value: String(metrics.oberleaf_downloads_7d ?? 0) },
           ],
         },
       ]
