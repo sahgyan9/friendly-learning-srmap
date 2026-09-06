@@ -7,6 +7,7 @@ import { listCommunities, getCommunityKindMeta } from "@/integrations/supabase/s
 import { getOpportunities } from "@/integrations/supabase/services/opportunities";
 import { askWhoCanHelp, allResults, type AskResult } from "@/integrations/supabase/services/ask";
 import { supabase } from "@/integrations/supabase/client";
+import { SITE_HOST } from "@/lib/constants";
 
 // Global cache for click-through rate boosts
 let qualityCache: Record<string, number> | null = null;
@@ -72,7 +73,7 @@ export interface SearchResultItem {
   entityType?: "faculty" | "mentor" | "student" | "opportunity" | "community" | "post" | "document" | "blog";
   /** Human-readable entity badge text (e.g. 'FACULTY', 'SENIOR MENTOR', 'COMMUNITY GROUP') */
   badge?: string;
-  /** Google-style URL breadcrumb path (e.g. 'friendlylearning.in › faculty › dr-avinash-trivedi') */
+  /** Google-style URL breadcrumb path (e.g. 'example.com › faculty › dr-avinash-trivedi') */
   breadcrumb?: string;
   /** Rich snippet / contextual excerpt for SERP */
   snippet?: string;
@@ -167,7 +168,7 @@ function searchBlogLocally(parsed: import("@/lib/search/query-engine").ParsedQue
       to: `/blog/${p.slug}`,
       entityType: "blog" as const,
       badge: "Campus Guide",
-      breadcrumb: `friendlylearning.in › blog › ${p.slug}`,
+      breadcrumb: `${SITE_HOST} › blog › ${p.slug}`,
       snippet: p.excerpt || p.standfirst,
       matchReason: `${p.readingMinutes} min read · Official Guide`,
       sitelinks: [
@@ -205,7 +206,7 @@ function searchBlogLocally(parsed: import("@/lib/search/query-engine").ParsedQue
       to: `/blog/${p.slug}`,
       entityType: "blog" as const,
       badge: "Campus Guide",
-      breadcrumb: `friendlylearning.in › blog › ${p.slug}`,
+      breadcrumb: `${SITE_HOST} › blog › ${p.slug}`,
       snippet: p.excerpt || p.standfirst,
       matchReason: `${p.readingMinutes} min read`,
       sitelinks: [
@@ -363,7 +364,7 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
           image: m.profile_image,
           entityType: "mentor",
           badge: m.is_alumni ? "Alumni Mentor" : "Senior Mentor",
-          breadcrumb: `friendlylearning.in › mentors › ${slugify(m.name ?? "mentor")}`,
+          breadcrumb: `${SITE_HOST} › mentors › ${slugify(m.name ?? "mentor")}`,
           snippet: bioSnippet,
           matchReason: skillsList.some(s => s.toLowerCase().includes(trimmed.toLowerCase())) ? `Matched skill: ${skillsList.filter(s => s.toLowerCase().includes(trimmed.toLowerCase())).join(", ")}` : (m.department ? `${m.department} · Available for Mentoring` : undefined),
           matchedTokens: parsed.tokens,
@@ -444,7 +445,7 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
           image: f.image_url,
           entityType: "faculty",
           badge: "Faculty & Research",
-          breadcrumb: `friendlylearning.in › faculty › ${f.slug}`,
+          breadcrumb: `${SITE_HOST} › faculty › ${f.slug}`,
           snippet: researchSnippet,
           matchReason: matchedInterests.length > 0
             ? `Matched research area: ${matchedInterests.join(", ")}`
@@ -487,7 +488,7 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
           to: `/opportunities/${o.slug}`,
           entityType: "opportunity",
           badge: o.kind ? o.kind.toUpperCase() : "OPPORTUNITY",
-          breadcrumb: `friendlylearning.in › opportunities › ${o.slug}`,
+          breadcrumb: `${SITE_HOST} › opportunities › ${o.slug}`,
           snippet: oppSnippet,
           matchReason: o.register_by ? `Register before ${new Date(o.register_by).toLocaleDateString("en-US", { month: "short", day: "numeric" })} · ${o.interest_count || 0} interested` : `${o.interest_count || 0} students interested`,
           matchedTokens: parsed.tokens,
@@ -537,7 +538,7 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
           image: p.image_url,
           entityType: "post",
           badge: p.post_type ? p.post_type.toUpperCase() : "CAMPUS POST",
-          breadcrumb: `friendlylearning.in › posts › ${slugify(p.title)}`,
+          breadcrumb: `${SITE_HOST} › posts › ${slugify(p.title)}`,
           snippet: postSnippet,
           matchReason: `Posted by ${p.author.name} · ${p.likes_count || 0} likes · ${p.comments_count || 0} replies`,
           matchedTokens: parsed.tokens,
@@ -586,7 +587,7 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
           image: c.cover_image,
           entityType: "community",
           badge: kindMeta.label,
-          breadcrumb: `friendlylearning.in › groups › ${c.slug}`,
+          breadcrumb: `${SITE_HOST} › groups › ${c.slug}`,
           snippet: groupSnippet,
           matchReason: `${c.member_count} members · ${c.post_count || 0} discussions`,
           matchedTokens: parsed.tokens,
@@ -662,7 +663,7 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
                 image: typeof hit.metadata?.profile_image === "string" ? hit.metadata.profile_image : null,
                 entityType: "mentor",
                 badge: "Senior Mentor",
-                breadcrumb: `friendlylearning.in › mentors › ${slugify(hit.title)}`,
+                breadcrumb: `${SITE_HOST} › mentors › ${slugify(hit.title)}`,
                 snippet: mentorSnippet,
                 matchReason: "Semantic match from CampusBrain knowledge graph",
                 sitelinks: [
@@ -720,7 +721,7 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
                 image: typeof hit.metadata?.image_url === "string" ? hit.metadata.image_url : null,
                 entityType: "faculty",
                 badge: "Faculty & Research",
-                breadcrumb: `friendlylearning.in › faculty › ${slug}`,
+                breadcrumb: `${SITE_HOST} › faculty › ${slug}`,
                 snippet: facultySnippet,
                 matchReason: "Semantic match from CampusBrain knowledge graph",
                 sitelinks: [
@@ -755,7 +756,7 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
                 image: typeof hit.metadata?.profile_image === "string" ? hit.metadata.profile_image : null,
                 entityType: "student",
                 badge: "Student",
-                breadcrumb: `friendlylearning.in › students › ${slugify(hit.title)}`,
+                breadcrumb: `${SITE_HOST} › students › ${slugify(hit.title)}`,
                 snippet: interestsArr.length > 0 ? `Student interested in ${interestsArr.slice(0, 4).join(", ")}. Active in campus learning community.` : "Student profile on Friendly Learning SRMAP.",
                 matchReason: "Student with matching skills or interests",
                 meta: hit.metadata,
@@ -782,7 +783,7 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
                 image: typeof hit.metadata?.image_url === "string" ? hit.metadata.image_url : null,
                 entityType: "opportunity",
                 badge: "Opportunity",
-                breadcrumb: `friendlylearning.in › opportunities › ${oppSlug}`,
+                breadcrumb: `${SITE_HOST} › opportunities › ${oppSlug}`,
                 snippet: oppDesc || "Campus hackathon and competition opportunity.",
                 matchReason: "Relevant competition opportunity",
                 sitelinks: [
@@ -816,7 +817,7 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
                 image: typeof hit.metadata?.cover_image === "string" ? hit.metadata.cover_image : null,
                 entityType: "community",
                 badge: "Student Group",
-                breadcrumb: `friendlylearning.in › groups › ${commSlug}`,
+                breadcrumb: `${SITE_HOST} › groups › ${commSlug}`,
                 snippet: commDesc || "Campus student workspace group for collaborative learning.",
                 matchReason: "Matched active student workspace",
                 sitelinks: [
@@ -847,7 +848,7 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
                 image: typeof hit.metadata?.image_url === "string" ? hit.metadata.image_url : null,
                 entityType: "post",
                 badge: "Campus Post",
-                breadcrumb: `friendlylearning.in › posts › ${slugify(hit.title)}`,
+                breadcrumb: `${SITE_HOST} › posts › ${slugify(hit.title)}`,
                 snippet: postContent || "Campus discussion post on Friendly Learning.",
                 matchReason: "Relevant thread in community discussions",
                 sitelinks: [
@@ -892,7 +893,7 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
                 to: hit.source_path || `/documents/${docSlug}`,
                 entityType: "document",
                 badge: docCategory.toUpperCase(),
-                breadcrumb: `friendlylearning.in › documents › ${docSlug}`,
+                breadcrumb: `${SITE_HOST} › documents › ${docSlug}`,
                 snippet: docSnippet,
                 matchReason: "Grounded in official SRM-AP campus documents",
                 sitelinks: [
@@ -941,7 +942,7 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
                 to: path,
                 entityType: "document",
                 badge: label.toUpperCase(),
-                breadcrumb: `friendlylearning.in › ${isNotice ? "notices" : "articles"} › ${slugify(hit.title)}`,
+                breadcrumb: `${SITE_HOST} › ${isNotice ? "notices" : "articles"} › ${slugify(hit.title)}`,
                 snippet: hit.body
                   ? (hit.body.length > 220 ? `${hit.body.slice(0, 220)}…` : hit.body)
                   : (typeof hit.metadata?.summary === "string" ? hit.metadata.summary : label),
@@ -976,7 +977,7 @@ export function useSearchResults(q: string, tab: SearchTab, offset = 0) {
                 to: path,
                 entityType: "document",
                 badge: "COMMUNITY BLOG",
-                breadcrumb: `friendlylearning.in › blogs › ${blogSlug}`,
+                breadcrumb: `${SITE_HOST} › blogs › ${blogSlug}`,
                 snippet: hit.body
                   ? (hit.body.length > 220 ? `${hit.body.slice(0, 220)}…` : hit.body)
                   : "A community blog post written by an SRM AP student or mentor.",

@@ -3,6 +3,8 @@
  * Allows 1-click export to Google Calendar, Apple Calendar, Outlook, or .ics download.
  */
 
+import { SITE_HOST } from "@/lib/constants";
+
 interface CalendarEventData {
   title: string;
   description: string;
@@ -66,7 +68,7 @@ export function downloadIcsFile(event: CalendarEventData, filename?: string) {
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
     "BEGIN:VEVENT",
-    `UID:fl-event-${Date.now()}@friendlylearning.in`,
+    `UID:fl-event-${Date.now()}@${SITE_HOST}`,
     `DTSTAMP:${formatUtcForCalendar(new Date())}`,
     `DTSTART:${formatUtcForCalendar(start)}`,
     `DTEND:${formatUtcForCalendar(end)}`,
