@@ -576,6 +576,7 @@ for (const file of [
   '20260831180000_student_timetables.sql',
   '20260831190000_blog_posts.sql',
   '20260901120000_search_query_user_logs.sql',
+  '20260906210000_app_downloads_tracking.sql',
 ]) {
   if (file === '20260804132345_b843f814-46d5-4c25-bc80-32e5f6ebba59.sql') {
     // Production's `faculty` table still carries `profile_image`, a column
@@ -4722,6 +4723,15 @@ check('get_admin_search_logs filters by zero_results', zeroResultLogs.every((r) 
 const { rows: [statsResult] } = await asAuthenticated(() => q(`SELECT public.get_admin_search_stats() AS stats`));
 const searchStats = statsResult?.stats;
 check('get_admin_search_stats returns correct aggregated KPI numbers', searchStats?.total_searches === 2 && searchStats?.authenticated_searches === 1 && searchStats?.anonymous_searches === 1 && searchStats?.unique_searchers === 1 && searchStats?.zero_result_searches === 1, JSON.stringify(searchStats));
+
+// App downloads tracking tests (20260906210000_app_downloads_tracking.sql)
+await actAs(null);
+const { rows: [dlCountRow] } = await q(`SELECT public.record_app_download('oberleaf', 'setup_bat', 'windows') AS cnt`);
+check('record_app_download records anonymous download and returns new total', dlCountRow?.cnt === 1, JSON.stringify(dlCountRow));
+
+const { rows: [dlStatsRow] } = await q(`SELECT public.get_app_download_stats('oberleaf') AS stats`);
+const dlStats = dlStatsRow?.stats;
+check('get_app_download_stats returns total and by_type jsonb', dlStats?.total_downloads === 1 && dlStats?.by_type?.setup_bat === 1, JSON.stringify(dlStats));
 
 console.log(failures === 0
   ? '\nAll migration checks passed against real Postgres.'
