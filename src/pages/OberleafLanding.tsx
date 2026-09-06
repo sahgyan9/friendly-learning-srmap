@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Download, Check, Copy, Terminal, Zap, Shield, Clock, FileText, Cpu, Laptop, ChevronDown } from "lucide-react";
+import { Download, Check, Copy, Terminal, Zap, Shield, Clock, FileText, Cpu, Laptop, ChevronDown, AlertTriangle, FileArchive } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Footer from "@/components/Footer";
 import SEOHead from "@/components/SEOHead";
@@ -14,7 +14,14 @@ import {
 const OberleafLanding: React.FC = () => {
   const [copied, setCopied] = useState(false);
   const [stats, setStats] = useState<AppDownloadStats | null>(null);
-  const oneLinerCommand = `irm https://friendlylearning.in/downloads/install.ps1 | iex`;
+  // Downloads to a file and runs it with -File rather than piping into `iex`.
+  // `irm ... | iex` is the single most heavily flagged PowerShell pattern there
+  // is, so Defender's AMSI scanner was killing the old one-liner outright; it
+  // also pointed at friendlylearning.in, which does not serve this site and
+  // answered every request with a 404 page.
+  const oneLinerCommand =
+    `curl.exe -fsSL ${PRIMARY_DOMAIN}/downloads/install.ps1 -o "$env:TEMP\\oberleaf.ps1"; ` +
+    `powershell -ExecutionPolicy Bypass -File "$env:TEMP\\oberleaf.ps1"`;
 
   useEffect(() => {
     getAppDownloadStats("oberleaf").then((data) => {
@@ -22,9 +29,9 @@ const OberleafLanding: React.FC = () => {
     });
   }, []);
 
-  const handleDownloadClick = () => {
+  const handleDownloadClick = (type: "setup_zip" | "setup_bat") => () => {
     // Record download telemetry
-    recordAppDownload("oberleaf", "setup_bat");
+    recordAppDownload("oberleaf", type);
     setStats((prev) =>
       prev
         ? { ...prev, total_downloads: prev.total_downloads + 1 }
@@ -33,11 +40,11 @@ const OberleafLanding: React.FC = () => {
             total_downloads: 1,
             downloads_7d: 1,
             downloads_30d: 1,
-            by_type: { setup_bat: 1 },
+            by_type: { [type]: 1 },
           }
     );
     if (typeof window !== "undefined" && (window as any).posthog) {
-      (window as any).posthog.capture("oberleaf_download_click", { type: "setup_bat" });
+      (window as any).posthog.capture("oberleaf_download_click", { type });
     }
   };
 
@@ -60,7 +67,7 @@ const OberleafLanding: React.FC = () => {
       "price": "0",
       "priceCurrency": "INR",
     },
-    "downloadUrl": `${PRIMARY_DOMAIN}/downloads/Oberleaf-Setup.bat`,
+    "downloadUrl": `${PRIMARY_DOMAIN}/downloads/Oberleaf-Setup.zip`,
     "publisher": {
       "@type": "Organization",
       "name": "Friendly Learning SRMAP",
@@ -99,15 +106,21 @@ const OberleafLanding: React.FC = () => {
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
+            {/*
+              The .zip is the primary download on purpose. Chrome and Edge treat
+              a bare .bat as a dangerous file type and block or hard-warn on it,
+              and the extracted bundle ships install.ps1 alongside the launcher,
+              so setup never has to fetch and run a remote script.
+            */}
             <a
-              href="/downloads/Oberleaf-Setup.bat"
-              download="Oberleaf-Setup.bat"
-              onClick={handleDownloadClick}
+              href="/downloads/Oberleaf-Setup.zip"
+              download="Oberleaf-Setup.zip"
+              onClick={handleDownloadClick("setup_zip")}
               className="w-full sm:w-auto"
             >
               <Button size="lg" className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-8 py-6 text-base rounded-xl shadow-lg hover:shadow-emerald-600/25 transition flex items-center justify-center space-x-2">
-                <Download className="w-5 h-5 mr-2" />
-                <span>Download for Windows (.bat)</span>
+                <FileArchive className="w-5 h-5 mr-2" />
+                <span>Download for Windows (.zip)</span>
               </Button>
             </a>
 
@@ -122,6 +135,19 @@ const OberleafLanding: React.FC = () => {
               </Button>
             </a>
           </div>
+
+          <p className="text-xs text-muted-foreground">
+            Prefer a single file?{" "}
+            <a
+              href="/downloads/Oberleaf-Setup.bat"
+              download="Oberleaf-Setup.bat"
+              onClick={handleDownloadClick("setup_bat")}
+              className="underline underline-offset-4 hover:text-foreground transition-colors"
+            >
+              Download Oberleaf-Setup.bat
+            </a>{" "}
+            &mdash; your browser will warn you about the file type.
+          </p>
 
           <div className="flex flex-wrap items-center justify-center gap-2 text-xs text-muted-foreground">
             <span>Supports Windows 10 & 11 • Automatic package resolution via <code className="bg-muted px-1 py-0.5 rounded">winget</code></span>
@@ -161,9 +187,9 @@ const OberleafLanding: React.FC = () => {
                 <div className="w-10 h-10 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-lg">
                   1
                 </div>
-                <h3 className="font-semibold text-base">Click Download</h3>
+                <h3 className="font-semibold text-base">Download & Extract</h3>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  Download <code className="text-emerald-600 dark:text-emerald-400">Oberleaf-Setup.bat</code> directly using the button above.
+                  Grab <code className="text-emerald-600 dark:text-emerald-400">Oberleaf-Setup.zip</code> above, then right-click it and choose <strong>Extract All</strong>. Keep both files in the same folder.
                 </p>
               </div>
 
@@ -173,7 +199,7 @@ const OberleafLanding: React.FC = () => {
                 </div>
                 <h3 className="font-semibold text-base">Run the Setup</h3>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  Double-click the downloaded file. It automatically checks and installs Git, Node.js, and MiKTeX for you silently.
+                  Double-click <code className="text-emerald-600 dark:text-emerald-400">Oberleaf-Setup.bat</code>. If Windows shows a blue "protected your PC" box, click <strong>More info → Run anyway</strong>. It then installs Git, Node.js and MiKTeX for you.
                 </p>
               </div>
 
@@ -263,11 +289,87 @@ const OberleafLanding: React.FC = () => {
             </div>
           </div>
 
+          {/* Troubleshooting — Windows blocks unsigned installers by default,
+              and students hit this before they ever reach the app. */}
+          <div id="troubleshooting" className="border border-amber-500/30 rounded-2xl p-6 md:p-8 bg-amber-500/5 space-y-6 scroll-mt-20">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0" />
+              <h2 className="text-xl font-bold font-serif">Blocked by Windows or your antivirus?</h2>
+            </div>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Oberleaf is free and open source, so it is not code-signed &mdash; a signing
+              certificate costs more per year than this project has ever spent. Windows
+              treats every unsigned installer with suspicion, which produces the warnings
+              below. All of them are safe to dismiss, and you can read every line of the
+              installer{" "}
+              <a
+                href="https://github.com/sahgyan9/Oberleaf/blob/main/scripts/install.ps1"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline underline-offset-4 hover:text-foreground"
+              >
+                on GitHub
+              </a>{" "}
+              before running it.
+            </p>
+
+            <div className="space-y-4">
+              <div className="p-4 rounded-xl border border-border bg-background/60 space-y-1.5">
+                <h3 className="font-semibold text-sm">"Windows protected your PC" (blue box)</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Click <strong>More info</strong>, then <strong>Run anyway</strong>. This is
+                  SmartScreen reacting to a new file, not a virus detection.
+                </p>
+              </div>
+
+              <div className="p-4 rounded-xl border border-border bg-background/60 space-y-1.5">
+                <h3 className="font-semibold text-sm">The browser refuses to save the .bat file</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Chrome and Edge block <code>.bat</code> downloads by default. Use the{" "}
+                  <strong>.zip</strong> button above instead &mdash; it contains the same two
+                  files and downloads without complaint.
+                </p>
+              </div>
+
+              <div className="p-4 rounded-xl border border-border bg-background/60 space-y-1.5">
+                <h3 className="font-semibold text-sm">Antivirus quarantined the file</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Some scanners flag any script that installs software. In Windows Security
+                  open <strong>Protection history</strong>, find the Oberleaf entry and choose{" "}
+                  <strong>Allow on device</strong>, then run setup again. If your college
+                  laptop is managed by IT and you cannot override it, clone the repository
+                  from GitHub and run <code>npm install</code> instead.
+                </p>
+              </div>
+
+              <div className="p-4 rounded-xl border border-border bg-background/60 space-y-1.5">
+                <h3 className="font-semibold text-sm">The window closed instantly</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Fixed &mdash; the setup window now stays open until you close it and prints
+                  the reason for any failure. If you are still seeing this, you are running an
+                  old copy: download it again from the button above. Every run also writes a
+                  log to <code>%TEMP%\oberleaf-setup.log</code>; send that file when reporting
+                  a problem.
+                </p>
+              </div>
+
+              <div className="p-4 rounded-xl border border-border bg-background/60 space-y-1.5">
+                <h3 className="font-semibold text-sm">Installs fail with a permissions error</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Right-click <code>Oberleaf-Setup.bat</code> and choose{" "}
+                  <strong>Run as administrator</strong>. Without it, Git, Node.js and MiKTeX
+                  are installed for your user account only, which some managed machines
+                  disallow.
+                </p>
+              </div>
+            </div>
+          </div>
+
           {/* Alternative: PowerShell Command for Advanced Users */}
           <div className="border border-border rounded-xl p-6 bg-muted/40 space-y-3">
             <div className="flex items-center space-x-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               <Terminal className="w-4 h-4" />
-              <span>Alternative: Run in PowerShell (1 Line)</span>
+              <span>Alternative: Run in PowerShell</span>
             </div>
             <div className="flex items-center justify-between p-3 rounded-lg bg-stone-900 text-stone-100 font-mono text-xs overflow-x-auto">
               <span className="truncate pr-4">{oneLinerCommand}</span>

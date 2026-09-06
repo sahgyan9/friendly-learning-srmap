@@ -10,7 +10,7 @@ export interface AppDownloadStats {
 
 export async function recordAppDownload(
   appName: string = "oberleaf",
-  downloadType: "setup_bat" | "powershell_installer" | "powershell_copy" = "setup_bat",
+  downloadType: "setup_bat" | "setup_zip" | "powershell_installer" | "powershell_copy" = "setup_bat",
   platform: string = "windows"
 ): Promise<number | null> {
   try {
