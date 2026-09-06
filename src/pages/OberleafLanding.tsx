@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Download, Check, Copy, Terminal, Zap, Shield, Clock, FileText, Cpu, Laptop } from "lucide-react";
+import { Download, Check, Copy, Terminal, Zap, Shield, Clock, FileText, Cpu, Laptop, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Footer from "@/components/Footer";
 import SEOHead from "@/components/SEOHead";
@@ -77,67 +77,79 @@ const OberleafLanding: React.FC = () => {
         canonical={`${PRIMARY_DOMAIN}/oberleaf`}
         structuredData={softwareSchema}
       />
-      <section className="flex-1 pt-24 pb-16">
-        <div className="container px-4 md:px-6 max-w-5xl mx-auto space-y-16">
-          
-          {/* Hero Section */}
-          <div className="text-center space-y-6 pt-4">
-            <div className="w-20 h-20 mx-auto rounded-2xl p-2 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 shadow-md flex items-center justify-center">
-              <img
-                src="/downloads/oberleaf-icon.svg"
-                alt="Oberleaf Logo"
-                className="w-16 h-16 object-contain"
-                onError={(e) => {
-                  // Fallback if SVG hasn't cached yet
-                  e.currentTarget.style.display = 'none';
-                }}
-              />
-            </div>
 
-            <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight font-serif">
-              Ober<span className="text-emerald-600 dark:text-emerald-400 italic">leaf</span>
-            </h1>
-
-            {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-              <a
-                href="/downloads/Oberleaf-Setup.bat"
-                download="Oberleaf-Setup.bat"
-                onClick={handleDownloadClick}
-                className="w-full sm:w-auto"
-              >
-                <Button size="lg" className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-8 py-6 text-base rounded-xl shadow-lg hover:shadow-emerald-600/25 transition flex items-center justify-center space-x-2">
-                  <Download className="w-5 h-5 mr-2" />
-                  <span>Download for Windows (.bat)</span>
-                </Button>
-              </a>
-
-              <a
-                href="https://github.com/sahgyan9/Oberleaf"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full sm:w-auto"
-              >
-                <Button variant="outline" size="lg" className="w-full py-6 text-base rounded-xl">
-                  View on GitHub
-                </Button>
-              </a>
-            </div>
-
-            <div className="flex flex-wrap items-center justify-center gap-2 text-xs text-muted-foreground">
-              <span>Supports Windows 10 & 11 • Automatic package resolution via <code className="bg-muted px-1 py-0.5 rounded">winget</code></span>
-              {stats && stats.total_downloads > 0 && (
-                <>
-                  <span>•</span>
-                  <span className="inline-flex items-center gap-1 font-semibold text-emerald-600 dark:text-emerald-400">
-                    <Download className="w-3.5 h-3.5" />
-                    {stats.total_downloads} {stats.total_downloads === 1 ? "download" : "downloads"}
-                  </span>
-                </>
-              )}
-            </div>
+      {/* Clean Hero Landing (Clean initial viewport above the fold) */}
+      <section className="min-h-[calc(100vh-4rem)] min-h-[calc(100dvh-4rem)] flex flex-col items-center justify-center text-center px-4 md:px-6 relative py-12">
+        <div className="max-w-3xl mx-auto space-y-6 my-auto">
+          <div className="w-20 h-20 mx-auto rounded-2xl p-2 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 shadow-md flex items-center justify-center">
+            <img
+              src="/downloads/oberleaf-icon.svg"
+              alt="Oberleaf Logo"
+              className="w-16 h-16 object-contain"
+              onError={(e) => {
+                // Fallback if SVG hasn't cached yet
+                e.currentTarget.style.display = 'none';
+              }}
+            />
           </div>
 
+          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight font-serif">
+            Ober<span className="text-emerald-600 dark:text-emerald-400 italic">leaf</span>
+          </h1>
+
+          {/* CTA Buttons */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
+            <a
+              href="/downloads/Oberleaf-Setup.bat"
+              download="Oberleaf-Setup.bat"
+              onClick={handleDownloadClick}
+              className="w-full sm:w-auto"
+            >
+              <Button size="lg" className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-8 py-6 text-base rounded-xl shadow-lg hover:shadow-emerald-600/25 transition flex items-center justify-center space-x-2">
+                <Download className="w-5 h-5 mr-2" />
+                <span>Download for Windows (.bat)</span>
+              </Button>
+            </a>
+
+            <a
+              href="https://github.com/sahgyan9/Oberleaf"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full sm:w-auto"
+            >
+              <Button variant="outline" size="lg" className="w-full py-6 text-base rounded-xl">
+                View on GitHub
+              </Button>
+            </a>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-center gap-2 text-xs text-muted-foreground">
+            <span>Supports Windows 10 & 11 • Automatic package resolution via <code className="bg-muted px-1 py-0.5 rounded">winget</code></span>
+            {stats && stats.total_downloads > 0 && (
+              <>
+                <span>•</span>
+                <span className="inline-flex items-center gap-1 font-semibold text-emerald-600 dark:text-emerald-400">
+                  <Download className="w-3.5 h-3.5" />
+                  {stats.total_downloads} {stats.total_downloads === 1 ? "download" : "downloads"}
+                </span>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Subtle scroll cue to indicate guides and details below */}
+        <a
+          href="#setup-guide"
+          aria-label="Scroll to setup guide"
+          className="mt-auto pt-6 flex flex-col items-center gap-1 text-xs text-muted-foreground/60 hover:text-foreground transition-colors cursor-pointer"
+        >
+          <ChevronDown className="w-4 h-4 animate-bounce" />
+        </a>
+      </section>
+
+      {/* Guide & Content Sections (Accessible by scrolling down) */}
+      <section id="setup-guide" className="pb-16 pt-8 scroll-mt-20">
+        <div className="container px-4 md:px-6 max-w-5xl mx-auto space-y-16">
           {/* Quick 3-Step Setup Guide */}
           <div className="border border-border/80 rounded-2xl p-6 md:p-8 bg-card/60 backdrop-blur-xs shadow-sm">
             <h2 className="text-2xl font-bold text-center mb-8 font-serif">
