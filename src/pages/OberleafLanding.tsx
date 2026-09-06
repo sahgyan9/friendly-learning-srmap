@@ -82,18 +82,6 @@ const OberleafLanding: React.FC = () => {
           
           {/* Hero Section */}
           <div className="text-center space-y-6 pt-4">
-            <div className="flex flex-wrap items-center justify-center gap-2 mb-2">
-              <span className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-xs font-semibold uppercase tracking-wider">
-                🍃 Local-First Scholarly TeX Studio for SRM AP
-              </span>
-              {stats && stats.total_downloads > 0 && (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 text-xs font-semibold tracking-wider animate-in fade-in duration-300">
-                  <Download className="w-3.5 h-3.5" />
-                  <span>{stats.total_downloads} {stats.total_downloads === 1 ? "download" : "downloads"}</span>
-                </span>
-              )}
-            </div>
-
             <div className="w-20 h-20 mx-auto rounded-2xl p-2 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 shadow-md flex items-center justify-center">
               <img
                 src="/downloads/oberleaf-icon.svg"
@@ -109,12 +97,6 @@ const OberleafLanding: React.FC = () => {
             <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight font-serif">
               Ober<span className="text-emerald-600 dark:text-emerald-400 italic">leaf</span>
             </h1>
-            <p className="text-xl md:text-2xl text-muted-foreground font-medium max-w-3xl mx-auto">
-              The local-first LaTeX studio for students, scholars, and professors.
-            </p>
-            <p className="text-sm md:text-base text-muted-foreground max-w-2xl mx-auto">
-              Zero cloud compute timeouts, 1–2 second local compilation, live equation preview, and complete offline privacy for your papers and thesis.
-            </p>
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
@@ -142,9 +124,18 @@ const OberleafLanding: React.FC = () => {
               </a>
             </div>
 
-            <p className="text-xs text-muted-foreground">
-              Supports Windows 10 & 11 • Automatic package resolution via <code className="bg-muted px-1 py-0.5 rounded">winget</code>
-            </p>
+            <div className="flex flex-wrap items-center justify-center gap-2 text-xs text-muted-foreground">
+              <span>Supports Windows 10 & 11 • Automatic package resolution via <code className="bg-muted px-1 py-0.5 rounded">winget</code></span>
+              {stats && stats.total_downloads > 0 && (
+                <>
+                  <span>•</span>
+                  <span className="inline-flex items-center gap-1 font-semibold text-emerald-600 dark:text-emerald-400">
+                    <Download className="w-3.5 h-3.5" />
+                    {stats.total_downloads} {stats.total_downloads === 1 ? "download" : "downloads"}
+                  </span>
+                </>
+              )}
+            </div>
           </div>
 
           {/* Quick 3-Step Setup Guide */}
