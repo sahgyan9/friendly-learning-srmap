@@ -50,10 +50,6 @@ const OberleafLanding: React.FC = () => {
           
           {/* Hero Section */}
           <div className="text-center space-y-6 pt-4">
-            <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-xs font-semibold uppercase tracking-wider mb-2">
-              <span>🍃 Local-First Scholarly TeX Studio for SRM AP</span>
-            </div>
-
             <div className="w-20 h-20 mx-auto rounded-2xl p-2 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 shadow-md flex items-center justify-center">
               <img
                 src="/downloads/oberleaf-icon.svg"
@@ -69,12 +65,6 @@ const OberleafLanding: React.FC = () => {
             <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight font-serif">
               Ober<span className="text-emerald-600 dark:text-emerald-400 italic">leaf</span>
             </h1>
-            <p className="text-xl md:text-2xl text-muted-foreground font-medium max-w-3xl mx-auto">
-              The local-first LaTeX studio for students, scholars, and professors.
-            </p>
-            <p className="text-sm md:text-base text-muted-foreground max-w-2xl mx-auto">
-              Zero cloud compute timeouts, 1–2 second local compilation, live equation preview, and complete offline privacy for your papers and thesis.
-            </p>
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
