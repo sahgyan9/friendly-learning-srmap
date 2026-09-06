@@ -7,6 +7,7 @@ import {
   Mail,
   MessageCircleMore,
   PenLine,
+  FileText,
 } from "lucide-react";
 
 import { EventsIcon } from "@/components/icons/EventsIcon";
@@ -58,6 +59,7 @@ export const PRIMARY_NAV: NavItem[] = [
 
 /** Rendered under a rule in the rail and the sheet. Reachable from search anywhere. */
 export const SECONDARY_NAV: NavItem[] = [
+  { name: "Oberleaf LaTeX", url: "/oberleaf", icon: FileText },
   { name: "How it works", url: "/how-it-works", icon: HelpCircle },
   { name: "Blog", url: "/blog", icon: BookOpen },
   // Self-serve, any signed-in student or mentor can publish — distinct from
@@ -78,6 +80,12 @@ export const ROUTE_ACCENT: Record<string, {
   dot: string;       // "new" dot colour
   border: string;    // bottom accent border
 }> = {
+  "/oberleaf": {
+    pill: "bg-emerald-500/10",
+    text: "text-emerald-600 dark:text-emerald-400",
+    dot: "bg-emerald-500",
+    border: "border-emerald-500/40",
+  },
   // Explicit blue rather than `primary`. In dark mode `--primary` resolves to
   // `210 40% 98%` — very nearly white — so `text-primary` gave the active Home
   // entry a white glyph on a white-tinted pill, which reads as "disabled", not

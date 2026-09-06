@@ -1,0 +1,89 @@
+<svg
+  width="512"
+  height="512"
+  viewBox="0 0 512 512"
+  fill="none"
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <defs>
+    <linearGradient id="paper" x1="96" y1="72" x2="416" y2="440" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#F4F3EF"/>
+    </linearGradient>
+
+    <filter id="shadow" x="40" y="40" width="432" height="432" filterUnits="userSpaceOnUse">
+      <feDropShadow
+        dx="0"
+        dy="8"
+        stdDeviation="12"
+        flood-color="#1C1917"
+        flood-opacity="0.10"
+      />
+    </filter>
+  </defs>
+
+  <!-- Archival paper -->
+  <g filter="url(#shadow)">
+    <path
+      d="
+        M128 64
+        H332
+        L416 148
+        V448
+        H128
+        C110 448 96 434 96 416
+        V96
+        C96 78 110 64 128 64
+        Z
+      "
+      fill="url(#paper)"
+    />
+
+    <!-- Folded corner -->
+    <path
+      d="M332 64V148H416"
+      fill="#E7E5DF"
+    />
+
+    <path
+      d="M332 64L416 148H332V64Z"
+      fill="#F4F3EF"
+    />
+  </g>
+
+  <!-- G monogram -->
+  <path
+    d="
+      M330 202
+      C312 178 286 166 254 166
+      C199 166 160 208 160 262
+      C160 317 199 358 254 358
+      C286 358 312 348 330 326
+
+      M330 326
+      V270
+      H264
+    "
+    stroke="#1B5E20"
+    stroke-width="30"
+    stroke-linecap="square"
+    stroke-linejoin="miter"
+  />
+
+  <!-- Subtle typesetting accent -->
+  <path
+    d="M166 390H346"
+    stroke="#1C1917"
+    stroke-width="6"
+    stroke-linecap="round"
+    opacity="0.28"
+  />
+
+  <!-- Citation accent -->
+  <circle
+    cx="356"
+    cy="390"
+    r="5"
+    fill="#2563EB"
+  />
+</svg>

@@ -142,6 +142,7 @@ const Certificate = lazyWithRetry("Certificate", () => import("./pages/Certifica
 const VerifyCertificate = lazyWithRetry("VerifyCertificate", () => import("./pages/VerifyCertificate"));
 const HowVerificationWorks = lazyWithRetry("HowVerificationWorks", () => import("./pages/HowVerificationWorks"));
 const YourData = lazyWithRetry("YourData", () => import("./pages/YourData"));
+const OberleafLanding = lazyWithRetry("OberleafLanding", () => import("./pages/OberleafLanding"));
 const NotFound = lazyWithRetry("NotFound", () => import("./pages/NotFound"));
 const Unauthorized = lazyWithRetry("Unauthorized", () => import("./pages/Unauthorized"));
 const Search = lazyWithRetry("Search", () => import("./pages/Search"));
@@ -236,6 +237,7 @@ function App() {
                     <Route path="/about" element={<About />} />
                     <Route path="/how-verification-works" element={<HowVerificationWorks />} />
                     <Route path="/your-data" element={<YourData />} />
+                    <Route path="/oberleaf" element={<OberleafLanding />} />
 
                     {/* Canonical Routes */}
                     <Route path="/posts" element={<CommunityPosts />} />
