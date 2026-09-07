@@ -199,7 +199,7 @@ const OberleafLanding: React.FC = () => {
                 </div>
                 <h3 className="font-semibold text-base">Run the Setup</h3>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  Double-click <code className="text-emerald-600 dark:text-emerald-400">Oberleaf-Setup.bat</code>. If Windows shows a blue "protected your PC" box, click <strong>More info → Run anyway</strong>. It then installs Git, Node.js and MiKTeX for you.
+                  Double-click <code className="text-emerald-600 dark:text-emerald-400">Oberleaf-Setup.bat</code>. The interactive wizard lets you customize your installation folder and shortcut preferences, and displays live progress as components configure.
                 </p>
               </div>
 
@@ -209,7 +209,7 @@ const OberleafLanding: React.FC = () => {
                 </div>
                 <h3 className="font-semibold text-base">Write & Compile</h3>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  An <strong>Oberleaf</strong> shortcut is placed on your Desktop and Start Menu. Oberleaf opens ready to compile!
+                  Oberleaf opens ready to write. Projects are kept safe in <code className="text-emerald-600 dark:text-emerald-400">Documents\Oberleaf Projects</code> with 1-click Explorer reveal, live daemon status, and clean uninstallation in Windows Settings.
                 </p>
               </div>
             </div>
@@ -271,9 +271,9 @@ const OberleafLanding: React.FC = () => {
                 <div className="w-10 h-10 rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center">
                   <Laptop className="w-5 h-5" />
                 </div>
-                <h3 className="font-semibold text-base">Desktop & Start Menu Icon</h3>
+                <h3 className="font-semibold text-base">Desktop & Explorer Integration</h3>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  Search "Oberleaf" in Windows Search or click the desktop shortcut to launch anytime with 1 click.
+                  1-click desktop and start menu shortcuts, live bottom status bar with daemon/compiler telemetry, and instant reveal in Windows File Explorer.
                 </p>
               </div>
 
