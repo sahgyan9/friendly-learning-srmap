@@ -20,8 +20,8 @@ import path from "node:path";
 const here = path.dirname(fileURLToPath(import.meta.url));
 const downloads = path.join(here, "..", "public", "downloads");
 
-const README = `Oberleaf - Scholarly TeX Studio
-==============================
+const README = `Oberleaf
+========
 
 1. Extract this whole zip into a folder (right-click > Extract All).
    Keep Oberleaf-Setup.bat and install.ps1 together.
