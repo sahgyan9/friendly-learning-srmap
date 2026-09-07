@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PRIMARY_DOMAIN } from "@/lib/constants";
+import { sanitizeBlogHtml } from "@/lib/sanitize-html";
 import {
   getArticleBySlug,
   type KnowledgeArticle,
@@ -16,10 +17,16 @@ import {
 
 /**
  * Public reader for a knowledge_articles entry — the page AI Overview and
- * search citations link to for entity_type "article". content_html is
- * Tiptap output written only by admins (RLS-gated insert/update), so
- * rendering it directly is the same trust boundary as the admin editor
- * itself, not user-supplied HTML.
+ * search citations link to for entity_type "article".
+ *
+ * content_html is Tiptap output written only by admins (RLS-gated
+ * insert/update), so this is not a user-supplied-HTML boundary. It is still
+ * sanitized on the way out, for the same reason BlogPostDetail does it: the
+ * argument for rendering it raw rests entirely on RLS holding and on every
+ * future author being trusted, and neither is worth betting the reader's
+ * session on when the sanitizer is already written and costs nothing. Unlike
+ * blog posts (sanitized in blog-posts.ts on write), articles are stored raw,
+ * so this is the only place it happens — see ArticleForm.tsx.
  */
 const ArticleDetail = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -115,7 +122,7 @@ const ArticleDetail = () => {
 
             <div
               className="prose prose-sm sm:prose-base dark:prose-invert max-w-none mt-6 prose-headings:font-semibold prose-a:text-primary"
-              dangerouslySetInnerHTML={{ __html: article.content_html }}
+              dangerouslySetInnerHTML={{ __html: sanitizeBlogHtml(article.content_html) }}
             />
 
             <div className="mt-8 flex items-center justify-end border-t border-border pt-4">
