@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Download, Check, Copy, Terminal, Zap, Shield, Clock, FileText, Cpu, Laptop, ChevronDown, AlertTriangle, FileArchive } from "lucide-react";
+import { Download, Check, Copy, Terminal, Zap, Shield, Clock, FileText, Cpu, Laptop, ChevronDown, AlertTriangle, FileArchive, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Footer from "@/components/Footer";
 import SEOHead from "@/components/SEOHead";
@@ -48,11 +48,45 @@ const OberleafLanding: React.FC = () => {
     }
   };
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(oneLinerCommand);
-    setCopied(true);
-    recordAppDownload("oberleaf", "powershell_copy");
-    setTimeout(() => setCopied(false), 2500);
+  const [copyFailed, setCopyFailed] = useState(false);
+
+  // navigator.clipboard is undefined outside a secure context and rejects when
+  // the document is not focused, so the old one-liner failed silently and left
+  // the button claiming nothing had happened. Fall back to a selection-based
+  // copy, and say so plainly if even that is refused.
+  const handleCopy = async () => {
+    const markCopied = () => {
+      setCopied(true);
+      setCopyFailed(false);
+      recordAppDownload("oberleaf", "powershell_copy");
+      setTimeout(() => setCopied(false), 2500);
+    };
+
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(oneLinerCommand);
+        markCopied();
+        return;
+      }
+      throw new Error("Clipboard API unavailable");
+    } catch {
+      try {
+        const scratch = document.createElement("textarea");
+        scratch.value = oneLinerCommand;
+        scratch.setAttribute("readonly", "");
+        scratch.style.position = "fixed";
+        scratch.style.opacity = "0";
+        document.body.appendChild(scratch);
+        scratch.select();
+        const ok = document.execCommand("copy");
+        document.body.removeChild(scratch);
+        if (!ok) throw new Error("execCommand copy refused");
+        markCopied();
+      } catch {
+        setCopyFailed(true);
+        setTimeout(() => setCopyFailed(false), 4000);
+      }
+    }
   };
 
   const softwareSchema = {
@@ -103,6 +137,21 @@ const OberleafLanding: React.FC = () => {
           <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight font-serif">
             Ober<span className="text-emerald-600 dark:text-emerald-400 italic">leaf</span>
           </h1>
+
+          {/* The hero used to be a logo, the product name and a download button
+              with nothing in between. A visitor arriving from search had to
+              scroll past the fold before anything said what the download was. */}
+          <p className="text-lg md:text-xl text-muted-foreground leading-relaxed max-w-2xl mx-auto">
+            A LaTeX editor that runs on your own laptop. Same workflow as Overleaf
+            &mdash; live PDF preview, instant equation rendering, project history
+            &mdash; with no compile queue, no 60-second timeout, and nothing leaving
+            your machine.
+          </p>
+
+          <p className="text-sm text-muted-foreground">
+            Free and open source. Setup installs Git, Node.js and MiKTeX for you if
+            they are missing.
+          </p>
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
@@ -212,6 +261,71 @@ const OberleafLanding: React.FC = () => {
                   Oberleaf opens ready to write. Projects are kept safe in <code className="text-emerald-600 dark:text-emerald-400">Documents\Oberleaf Projects</code> with 1-click Explorer reveal, live daemon status, and clean uninstallation in Windows Settings.
                 </p>
               </div>
+            </div>
+          </div>
+
+          {/* Already installed? The app self-updates from GitHub, but nothing on
+              this page said so, and students who installed weeks ago had no way
+              to know newer fixes existed or how to pull them in. */}
+          <div id="updating" className="border border-border/80 rounded-2xl p-6 md:p-8 bg-card/60 space-y-5 scroll-mt-20">
+            <div className="flex items-center gap-2">
+              <RefreshCw className="w-5 h-5 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
+              <h2 className="text-xl font-bold font-serif">Already installed? You are already covered.</h2>
+            </div>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Oberleaf checks GitHub for a newer version a couple of seconds after it
+              starts and offers the update in a dialog. Accepting it stashes anything
+              you changed locally, pulls the latest code and reinstalls dependencies.
+              Your work lives in{" "}
+              <code className="text-emerald-600 dark:text-emerald-400">Documents\Oberleaf Projects</code>{" "}
+              and is never touched by an update. Re-downloading the installer is only
+              necessary if the app will not start at all.
+            </p>
+
+            <div className="space-y-3">
+              <h3 className="text-sm font-semibold">Recently shipped</h3>
+              <ul className="space-y-2.5 text-xs text-muted-foreground leading-relaxed">
+                <li className="flex gap-2">
+                  <span className="text-emerald-600 dark:text-emerald-400 flex-shrink-0">&bull;</span>
+                  <span>
+                    <strong className="text-foreground">Errors that point at the right line.</strong>{" "}
+                    TeX reports a fault where it finally gave up, not where you made the
+                    mistake. Oberleaf now reads your source alongside the log, explains
+                    the error in plain English, and offers a one-click fix for the common
+                    ones &mdash; a missing <code>\usepackage</code>, a matrix used outside
+                    math mode, a stray delimiter.
+                  </span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-emerald-600 dark:text-emerald-400 flex-shrink-0">&bull;</span>
+                  <span>
+                    <strong className="text-foreground">Font maps checked on first run.</strong>{" "}
+                    A fresh MiKTeX install can leave pdfTeX's font table unbuilt, which
+                    kills any document using <code>microtype</code> with a message that
+                    explains nothing. The dependency doctor now compiles a probe document
+                    to detect it and prints the exact command that fixes it.
+                  </span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-emerald-600 dark:text-emerald-400 flex-shrink-0">&bull;</span>
+                  <span>
+                    <strong className="text-foreground">No more phantom errors.</strong>{" "}
+                    A previous run's log could survive into the next compile, so a mistake
+                    you had already fixed kept being reported. Every build now starts from
+                    a clean log.
+                  </span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-emerald-600 dark:text-emerald-400 flex-shrink-0">&bull;</span>
+                  <span>
+                    <strong className="text-foreground">Safer sharing and safer saves.</strong>{" "}
+                    Invite links now carry a per-session token, so a shared workspace is
+                    reachable only by the people you sent the link to. Switching files or
+                    closing the window also flushes any unsaved edit to disk first,
+                    instead of dropping it.
+                  </span>
+                </li>
+              </ul>
             </div>
           </div>
 
@@ -371,8 +485,10 @@ const OberleafLanding: React.FC = () => {
               <Terminal className="w-4 h-4" />
               <span>Alternative: Run in PowerShell</span>
             </div>
-            <div className="flex items-center justify-between p-3 rounded-lg bg-stone-900 text-stone-100 font-mono text-xs overflow-x-auto">
-              <span className="truncate pr-4">{oneLinerCommand}</span>
+            <div className="flex items-center justify-between gap-3 p-3 rounded-lg bg-stone-900 text-stone-100 font-mono text-xs">
+              {/* `truncate` here beat the container's horizontal scroll, so the
+                  command was permanently cut off and unreadable. */}
+              <span className="overflow-x-auto whitespace-nowrap py-1">{oneLinerCommand}</span>
               <Button
                 variant="ghost"
                 size="sm"
@@ -383,6 +499,12 @@ const OberleafLanding: React.FC = () => {
                 <span className="ml-1.5 text-[11px]">{copied ? 'Copied' : 'Copy'}</span>
               </Button>
             </div>
+            {copyFailed && (
+              <p className="text-xs text-amber-600 dark:text-amber-400">
+                Your browser blocked the clipboard. Select the command above and copy
+                it with Ctrl+C.
+              </p>
+            )}
           </div>
 
         </div>
