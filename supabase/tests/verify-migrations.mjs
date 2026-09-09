@@ -577,6 +577,7 @@ for (const file of [
   '20260831190000_blog_posts.sql',
   '20260901120000_search_query_user_logs.sql',
   '20260906210000_app_downloads_tracking.sql',
+  '20260909020000_add_ltpc_to_student_timetables.sql',
 ]) {
   if (file === '20260804132345_b843f814-46d5-4c25-bc80-32e5f6ebba59.sql') {
     // Production's `faculty` table still carries `profile_image`, a column
@@ -4732,6 +4733,15 @@ check('record_app_download records anonymous download and returns new total', dl
 const { rows: [dlStatsRow] } = await q(`SELECT public.get_app_download_stats('oberleaf') AS stats`);
 const dlStats = dlStatsRow?.stats;
 check('get_app_download_stats returns total and by_type jsonb', dlStats?.total_downloads === 1 && dlStats?.by_type?.setup_bat === 1, JSON.stringify(dlStats));
+
+// Student timetables L-T-P-C test (20260909020000_add_ltpc_to_student_timetables.sql)
+console.log('\n--- 20260909020000_add_ltpc_to_student_timetables.sql ---');
+const { rows: [ltpcColCheck] } = await q(`
+  SELECT column_name, data_type 
+  FROM information_schema.columns 
+  WHERE table_name = 'student_timetables' AND column_name = 'ltpc'
+`);
+check('ltpc column exists on student_timetables', ltpcColCheck?.column_name === 'ltpc', JSON.stringify(ltpcColCheck));
 
 console.log(failures === 0
   ? '\nAll migration checks passed against real Postgres.'
