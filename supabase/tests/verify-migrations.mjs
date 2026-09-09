@@ -578,6 +578,7 @@ for (const file of [
   '20260901120000_search_query_user_logs.sql',
   '20260906210000_app_downloads_tracking.sql',
   '20260909020000_add_ltpc_to_student_timetables.sql',
+  '20260909030000_student_finance_and_fee_alerts.sql',
 ]) {
   if (file === '20260804132345_b843f814-46d5-4c25-bc80-32e5f6ebba59.sql') {
     // Production's `faculty` table still carries `profile_image`, a column
@@ -4742,6 +4743,26 @@ const { rows: [ltpcColCheck] } = await q(`
   WHERE table_name = 'student_timetables' AND column_name = 'ltpc'
 `);
 check('ltpc column exists on student_timetables', ltpcColCheck?.column_name === 'ltpc', JSON.stringify(ltpcColCheck));
+
+// Student finance & fee alerts test (20260909030000_student_finance_and_fee_alerts.sql)
+console.log('\n--- 20260909030000_student_finance_and_fee_alerts.sql ---');
+const { rows: [duesTableCheck] } = await q(`
+  SELECT table_name FROM information_schema.tables WHERE table_name = 'student_fee_dues'
+`);
+check('student_fee_dues table exists', duesTableCheck?.table_name === 'student_fee_dues', JSON.stringify(duesTableCheck));
+
+const { rows: [historyTableCheck] } = await q(`
+  SELECT table_name FROM information_schema.tables WHERE table_name = 'student_fee_paid_history'
+`);
+check('student_fee_paid_history table exists', historyTableCheck?.table_name === 'student_fee_paid_history', JSON.stringify(historyTableCheck));
+
+// Test inserting fee alert notification
+const { rows: [notifCheck] } = await q(`
+  INSERT INTO public.notifications (user_id, type, title, content)
+  VALUES ($1, 'fee_alert', 'Fee Raised: Hostel Fees (INR 147900.00)', 'Please pay on time to avoid Penalty of Fine.')
+  RETURNING id, type
+`, [CURRENT_UID]);
+check('notifications accepts fee_alert type', notifCheck?.type === 'fee_alert', JSON.stringify(notifCheck));
 
 console.log(failures === 0
   ? '\nAll migration checks passed against real Postgres.'

@@ -31,7 +31,6 @@ export async function getEventAttendees(eventId: number) {
     const currentUserId = auth.user?.id || null;
 
     // Call the SECURITY DEFINER RPC to safely get attendee profiles
-    // @ts-expect-error RPC typing may lag until types.ts is refreshed
     const { data, error } = await supabase.rpc("get_event_attendees", {
       p_event_id: eventId,
     });
@@ -60,7 +59,6 @@ export async function getEventAttendanceCounts(eventIds: number[]) {
   if (!eventIds.length) return { data: {}, error: null };
 
   try {
-    // @ts-expect-error RPC typing
     const { data, error } = await supabase.rpc("get_event_attendance_counts", {
       p_event_ids: eventIds,
     });
@@ -186,7 +184,6 @@ export type UserEventScheduleItem = {
  */
 export async function getUserEventSchedule(userId: string) {
   try {
-    // @ts-expect-error RPC typing may lag until types.ts is refreshed
     const { data, error } = await supabase.rpc("get_user_event_schedule", {
       p_user_id: userId,
     });
