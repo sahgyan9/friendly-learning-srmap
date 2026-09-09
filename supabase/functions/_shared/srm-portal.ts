@@ -1064,6 +1064,123 @@ export function parseTimeTable(
   return slots;
 }
 
+// --- finance & fee dues parsing ---------------------------------------------
+
+export interface ParsedFeeDueItem {
+  slNo: number;
+  feeCategory: string;
+  feeHead: string;
+  dueAmount: number;
+  collectedAmount: number;
+  toBePaidAmount: number;
+  isFine: boolean;
+  portalFeeDueId?: string;
+  portalFeeHeadId?: string;
+}
+
+export interface ParsedFeePaidItem {
+  term: string;
+  feeType: string;
+  dueDate: string | null;
+  amount: number;
+  receiptDate: string | null;
+  paymentMode: string | null;
+  receiptNumber: string | null;
+  paidAmount: number;
+  balanceDue: number;
+}
+
+export function parseFeeDues(html: string): {
+  feeDues: ParsedFeeDueItem[];
+  totalDueAmount: number;
+  totalToBePaid: number;
+  hasFine: boolean;
+  fineItems: ParsedFeeDueItem[];
+} {
+  const feeDues: ParsedFeeDueItem[] = [];
+  if (!html || typeof html !== "string") {
+    return { feeDues, totalDueAmount: 0, totalToBePaid: 0, hasFine: false, fineItems: [] };
+  }
+
+  const tbodyMatch = html.match(/<tbody[^>]*>([\s\S]*?)<\/tbody>/i);
+  if (!tbodyMatch) {
+    return { feeDues, totalDueAmount: 0, totalToBePaid: 0, hasFine: false, fineItems: [] };
+  }
+
+  const rowRegex = /<tr[^>]*>([\s\S]*?)<\/tr>/gi;
+  for (const rowMatch of tbodyMatch[1].matchAll(rowRegex)) {
+    const rowHtml = rowMatch[1];
+    const cells = [...rowHtml.matchAll(/<td[^>]*>([\s\S]*?)<\/td>/gi)].map((c) => stripTags(c[1]));
+
+    if (cells.length >= 6) {
+      const slNo = parseInt(cells[0], 10) || feeDues.length + 1;
+      const feeCategory = cells[1];
+      const feeHead = cells[2];
+      const dueAmount = parseFloat(cells[3].replace(/,/g, "")) || 0;
+      const collectedAmount = parseFloat(cells[4].replace(/,/g, "")) || 0;
+      const toBePaidAmount = parseFloat(cells[5].replace(/,/g, "")) || 0;
+
+      const isFine = /fine|penalty|late\s*fee/i.test(`${feeCategory} ${feeHead}`);
+
+      feeDues.push({
+        slNo,
+        feeCategory,
+        feeHead,
+        dueAmount,
+        collectedAmount,
+        toBePaidAmount,
+        isFine,
+      });
+    }
+  }
+
+  let totalToBePaid = 0;
+  const totalDueMatch = html.match(/id="tdduetotal"[^>]*>([\d\.,]+)<\/td>/i);
+  if (totalDueMatch) {
+    totalToBePaid = parseFloat(totalDueMatch[1].replace(/,/g, "")) || 0;
+  } else {
+    totalToBePaid = feeDues.reduce((sum, d) => sum + d.toBePaidAmount, 0);
+  }
+  const totalDueAmount = feeDues.reduce((sum, d) => sum + d.dueAmount, 0);
+
+  const fineItems = feeDues.filter((d) => d.isFine);
+  const hasFine = fineItems.length > 0;
+
+  return { feeDues, totalDueAmount, totalToBePaid, hasFine, fineItems };
+}
+
+export function parseFeePaidHistory(html: string): ParsedFeePaidItem[] {
+  const history: ParsedFeePaidItem[] = [];
+  if (!html || typeof html !== "string") return history;
+
+  const tableMatch = html.match(/<table[^>]*id=["']tbl7["'][^>]*>([\s\S]*?)<\/table>/i);
+  if (!tableMatch) return history;
+
+  const rowRegex = /<tr[^>]*>([\s\S]*?)<\/tr>/gi;
+  for (const rowMatch of tableMatch[1].matchAll(rowRegex)) {
+    const rowHtml = rowMatch[1];
+    if (rowHtml.includes('class="subheader"') || rowHtml.includes("<th")) continue;
+
+    const cells = [...rowHtml.matchAll(/<td[^>]*>([\s\S]*?)<\/td>/gi)].map((c) => stripTags(c[1]));
+
+    if (cells.length >= 9) {
+      history.push({
+        term: cells[0],
+        feeType: cells[1],
+        dueDate: cells[2] || null,
+        amount: parseFloat(cells[3].replace(/,/g, "")) || 0,
+        receiptDate: cells[4] || null,
+        paymentMode: cells[5] || null,
+        receiptNumber: cells[6] || null,
+        paidAmount: parseFloat(cells[7].replace(/,/g, "")) || 0,
+        balanceDue: parseFloat(cells[8].replace(/,/g, "")) || 0,
+      });
+    }
+  }
+
+  return history;
+}
+
 // --- login + section fetch, shared by the human-supervised and unattended paths ---
 
 export interface LoginResult {
@@ -1124,6 +1241,8 @@ export async function fetchAcademicSections(
   timeTableHtml: string;
   internalMarksHtml: string;
   examDetailsHtml: string;
+  feePaidHtml: string;
+  feeDueHtml: string;
   allSectionsHtml: string[];
 }> {
   const fetchSection = (id: number) =>
@@ -1142,8 +1261,27 @@ export async function fetchAcademicSections(
         return "";
       });
 
+  const fetchFeeDues = () =>
+    fetch(`${PORTAL_BASE}/students/transaction/feeduegroups.jsp`, {
+      method: "POST",
+      headers: {
+        Cookie: cookieHeader(jar),
+        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+        "X-Requested-With": "XMLHttpRequest",
+      },
+      body: "ids=8",
+    })
+      .then((r) => r.text())
+      .catch((err) => {
+        console.warn("Failed to fetch fee dues:", err);
+        return "";
+      });
+
   const sectionIds = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
-  const allSectionsHtml = await Promise.all(sectionIds.map((id) => fetchSection(id)));
+  const [allSectionsHtml, feeDueHtml] = await Promise.all([
+    Promise.all(sectionIds.map((id) => fetchSection(id))),
+    fetchFeeDues(),
+  ]);
 
   return {
     profileHtml: allSectionsHtml[0] || "",
@@ -1153,6 +1291,8 @@ export async function fetchAcademicSections(
     timeTableHtml: allSectionsHtml[9] || "",
     transcriptHtml: allSectionsHtml[5] || "",
     examDetailsHtml: allSectionsHtml[6] || "",
+    feePaidHtml: allSectionsHtml[6] || "", // Section 7 (ids=7) is Fee Paid Details
+    feeDueHtml: feeDueHtml || "",
     allSectionsHtml,
   };
 }

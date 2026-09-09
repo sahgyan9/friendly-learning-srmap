@@ -38,6 +38,8 @@ import {
   fetchLoginPageAndCaptcha,
   parseAttendance,
   parseCourseList,
+  parseFeeDues,
+  parseFeePaidHistory,
   parseProfile,
   parseTimeTable,
   parseTranscript,
@@ -173,6 +175,8 @@ Deno.serve(async (req) => {
         transcriptHtml,
         attendanceHtml,
         timeTableHtml,
+        feePaidHtml,
+        feeDueHtml,
         allSectionsHtml,
       } = await fetchAcademicSections(jar);
       const { program, currentSemester, mobileNumber } = parseProfile(profileHtml);
@@ -271,6 +275,47 @@ Deno.serve(async (req) => {
             ltpc: slot.ltpc || null,
             last_synced_at: nowIso,
           }, { onConflict: "user_id,day_name,hour,course_code" });
+        }
+      }
+
+      // Upsert fee dues
+      const { feeDues } = parseFeeDues(feeDueHtml);
+      if (feeDues.length > 0) {
+        for (const item of feeDues) {
+          await supabaseAdmin.from("student_fee_dues").upsert({
+            user_id: userId,
+            register_number: registerNumber,
+            fee_category: item.feeCategory,
+            fee_head: item.feeHead,
+            due_amount: item.dueAmount,
+            collected_amount: item.collectedAmount,
+            to_be_paid_amount: item.toBePaidAmount,
+            is_fine: item.isFine,
+            last_synced_at: nowIso,
+          }, { onConflict: "user_id,fee_category,fee_head" });
+        }
+      } else {
+        await supabaseAdmin.from("student_fee_dues").delete().eq("user_id", userId);
+      }
+
+      // Upsert fee paid history
+      const paidHistory = parseFeePaidHistory(feePaidHtml);
+      if (paidHistory.length > 0) {
+        for (const item of paidHistory) {
+          await supabaseAdmin.from("student_fee_paid_history").upsert({
+            user_id: userId,
+            register_number: registerNumber,
+            term: item.term,
+            fee_type: item.feeType,
+            due_date: item.dueDate,
+            amount: item.amount,
+            receipt_date: item.receiptDate,
+            payment_mode: item.paymentMode,
+            receipt_number: item.receiptNumber || "",
+            paid_amount: item.paidAmount,
+            balance_due: item.balanceDue,
+            last_synced_at: nowIso,
+          }, { onConflict: "user_id,term,fee_type,receipt_number" });
         }
       }
 

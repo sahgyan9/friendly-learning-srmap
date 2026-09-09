@@ -23,6 +23,8 @@ import {
   fetchLoginPageAndCaptcha,
   parseAttendance,
   parseCourseList,
+  parseFeeDues,
+  parseFeePaidHistory,
   parseProfile,
   parseTimeTable,
   parseTranscript,
@@ -224,6 +226,8 @@ Deno.serve(async (req) => {
         transcriptHtml,
         attendanceHtml,
         timeTableHtml,
+        feePaidHtml,
+        feeDueHtml,
         allSectionsHtml,
       } = await fetchAcademicSections(loginResult.jar);
       const { program, currentSemester, mobileNumber } = parseProfile(profileHtml);
@@ -340,6 +344,133 @@ Deno.serve(async (req) => {
             ltpc: slot.ltpc || null,
             last_synced_at: nowIso,
           }, { onConflict: "user_id,day_name,hour,course_code" });
+        }
+      }
+
+      // 4. Upsert fee dues & trigger alerts if money or fine is raised
+      const { feeDues, totalToBePaid, hasFine } = parseFeeDues(feeDueHtml);
+      if (feeDues.length > 0) {
+        const { data: existingDues } = await admin
+          .from("student_fee_dues")
+          .select("fee_category, fee_head, to_be_paid_amount, is_fine")
+          .eq("user_id", row.user_id);
+
+        const existingMap = new Map(
+          (existingDues || []).map((d: { fee_category: string; fee_head: string; to_be_paid_amount: number; is_fine: boolean }) => [
+            `${d.fee_category}::${d.fee_head}`,
+            d,
+          ])
+        );
+
+        let newFeeOrFineDetected = false;
+        let alertTitle = "";
+        let alertMessage = "";
+
+        for (const item of feeDues) {
+          await admin.from("student_fee_dues").upsert({
+            user_id: row.user_id,
+            register_number: row.register_number,
+            fee_category: item.feeCategory,
+            fee_head: item.feeHead,
+            due_amount: item.dueAmount,
+            collected_amount: item.collectedAmount,
+            to_be_paid_amount: item.toBePaidAmount,
+            is_fine: item.isFine,
+            last_synced_at: nowIso,
+          }, { onConflict: "user_id,fee_category,fee_head" });
+
+          const existing = existingMap.get(`${item.feeCategory}::${item.feeHead}`);
+          if (item.toBePaidAmount > 0) {
+            if (!existing || item.toBePaidAmount > (existing.to_be_paid_amount || 0)) {
+              newFeeOrFineDetected = true;
+              if (item.isFine) {
+                alertTitle = `Fine Imposed: ${item.feeHead} (INR ${item.toBePaidAmount.toLocaleString("en-IN")})`;
+                alertMessage = `A fine of INR ${item.toBePaidAmount.toLocaleString("en-IN")} has been levied on your account. Please clear your dues immediately on the portal.`;
+              } else if (!alertTitle) {
+                alertTitle = `Fee Raised: ${item.feeCategory} (INR ${item.toBePaidAmount.toLocaleString("en-IN")})`;
+                alertMessage = `A fee of INR ${item.toBePaidAmount.toLocaleString("en-IN")} for ${item.feeHead} has been raised on your SRM portal. Please pay on time to avoid Penalty of Fine.`;
+              }
+            }
+          }
+        }
+
+        // Delete any dues that were cleared/paid (no longer in portal dues)
+        const currentKeys = new Set(feeDues.map((d) => `${d.feeCategory}::${d.feeHead}`));
+        for (const [key, d] of existingMap.entries()) {
+          if (!currentKeys.has(key)) {
+            await admin
+              .from("student_fee_dues")
+              .delete()
+              .eq("user_id", row.user_id)
+              .eq("fee_category", d.fee_category)
+              .eq("fee_head", d.fee_head);
+          }
+        }
+
+        // If there's an active fine or newly raised fee, trigger in-app notification & web push
+        if (newFeeOrFineDetected && alertTitle) {
+          const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+          const { data: recentFeeAlerts } = await admin
+            .from("notifications")
+            .select("id, title")
+            .eq("user_id", row.user_id)
+            .eq("type", "fee_alert")
+            .gte("created_at", sevenDaysAgo);
+
+          const alreadyNotified = (recentFeeAlerts || []).some(
+            (a: { title?: string }) => a.title === alertTitle,
+          );
+
+          if (!alreadyNotified) {
+            await admin.from("notifications").insert({
+              user_id: row.user_id,
+              type: "fee_alert",
+              title: alertTitle,
+              content: alertMessage,
+              data: {
+                total_to_be_paid: totalToBePaid,
+                url: "/srmportal?tab=finance",
+              },
+              read: false,
+            });
+
+            try {
+              await admin.functions.invoke("send-push", {
+                body: {
+                  userId: row.user_id,
+                  title: alertTitle,
+                  body: alertMessage,
+                  url: "/srmportal?tab=finance",
+                  tag: "fee-alert",
+                },
+              });
+            } catch (pushErr) {
+              console.error("Fee push dispatch non-fatal error:", pushErr);
+            }
+          }
+        }
+      } else {
+        await admin.from("student_fee_dues").delete().eq("user_id", row.user_id);
+      }
+
+      // 5. Upsert fee paid history
+      const paidHistory = parseFeePaidHistory(feePaidHtml);
+      if (paidHistory.length > 0) {
+        for (const item of paidHistory) {
+          await admin.from("student_fee_paid_history").upsert({
+            user_id: row.user_id,
+            register_number: row.register_number,
+            term: item.term,
+            fee_type: item.feeType,
+            due_date: item.dueDate,
+            amount: item.amount,
+            receipt_date: item.receiptDate,
+            payment_mode: item.paymentMode,
+            receipt_number: item.receiptNumber || "",
+            paid_amount: item.paidAmount,
+            balance_due: item.balanceDue,
+            last_synced_at: nowIso,
+          }, { onConflict: "user_id,term,fee_type,receipt_number" });
         }
       }
 
