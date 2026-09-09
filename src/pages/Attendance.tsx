@@ -6,6 +6,7 @@ import {
   Calendar,
   ChevronRight,
   Clock,
+  CreditCard,
   GraduationCap,
   Info,
   Loader2,
@@ -46,6 +47,7 @@ import { cn } from "@/lib/utils";
 import WeeklyMatrixTable, { TimetableSlot } from "@/components/timetable/WeeklyMatrixTable";
 import CourseFacultyDirectory from "@/components/timetable/CourseFacultyDirectory";
 import ActiveScheduleBanner from "@/components/timetable/ActiveScheduleBanner";
+import FeeFinanceOverview, { StudentFeeDue, StudentFeePaidHistory } from "@/components/finance/FeeFinanceOverview";
 
 export interface AttendanceRecord {
   id: string;
@@ -74,9 +76,15 @@ export default function Attendance() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [cachedTime, setCachedTime] = useState<number | null>(null);
   const [timetableCachedTime, setTimetableCachedTime] = useState<number | null>(null);
+  const [financeCachedTime, setFinanceCachedTime] = useState<number | null>(null);
 
   const portalTabParam = searchParams.get("tab");
-  const activePortalTab = portalTabParam === "timetable" ? "timetable" : "attendance";
+  const activePortalTab: "attendance" | "timetable" | "finance" =
+    portalTabParam === "timetable"
+      ? "timetable"
+      : portalTabParam === "finance"
+      ? "finance"
+      : "attendance";
   const [activeCourseCode, setActiveCourseCode] = useState<string | null>(null);
 
   // Initialize records from offline cache immediately if available
@@ -121,6 +129,38 @@ export default function Attendance() {
     return true;
   });
 
+  // Initialize fee dues from offline cache
+  const [feeDues, setFeeDues] = useState<StudentFeeDue[]>(() => {
+    if (user?.id) {
+      const cached = getOfflineCache<StudentFeeDue[]>(`finance_dues:${user.id}`);
+      if (cached?.data && Array.isArray(cached.data) && cached.data.length > 0) {
+        return cached.data;
+      }
+    }
+    return [];
+  });
+
+  // Initialize fee paid history from offline cache
+  const [feePaidHistory, setFeePaidHistory] = useState<StudentFeePaidHistory[]>(() => {
+    if (user?.id) {
+      const cached = getOfflineCache<StudentFeePaidHistory[]>(`finance_history:${user.id}`);
+      if (cached?.data && Array.isArray(cached.data) && cached.data.length > 0) {
+        return cached.data;
+      }
+    }
+    return [];
+  });
+
+  const [isFinanceLoading, setIsFinanceLoading] = useState(() => {
+    if (user?.id) {
+      const cached = getOfflineCache<StudentFeeDue[]>(`finance_dues:${user.id}`);
+      if (cached?.data && Array.isArray(cached.data) && cached.data.length > 0) {
+        return false;
+      }
+    }
+    return true;
+  });
+
   const [isSyncing, setIsSyncing] = useState(false);
   const [portalDialogOpen, setPortalDialogOpen] = useState(false);
   const [filterTab, setFilterTab] = useState<FilterTab>("all");
@@ -129,7 +169,7 @@ export default function Attendance() {
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   const [simulations, setSimulations] = useState<Record<string, { deltaAttended: number; deltaConducted: number }>>({});
 
-  const handleTabChange = (tab: "attendance" | "timetable") => {
+  const handleTabChange = (tab: "attendance" | "timetable" | "finance") => {
     setSearchParams(
       (prev) => {
         const next = new URLSearchParams(prev);
@@ -230,9 +270,65 @@ export default function Attendance() {
     }
   };
 
+  const fetchFinance = async () => {
+    if (!user) return;
+
+    // Load from offline cache first
+    const cachedDues = getOfflineCache<StudentFeeDue[]>(`finance_dues:${user.id}`);
+    const cachedHistory = getOfflineCache<StudentFeePaidHistory[]>(`finance_history:${user.id}`);
+    if (cachedDues?.data && Array.isArray(cachedDues.data) && cachedDues.data.length > 0) {
+      setFeeDues(cachedDues.data);
+      setFinanceCachedTime(cachedDues.savedAt);
+      setIsFinanceLoading(false);
+    }
+    if (cachedHistory?.data && Array.isArray(cachedHistory.data) && cachedHistory.data.length > 0) {
+      setFeePaidHistory(cachedHistory.data);
+    }
+
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      setIsFinanceLoading(false);
+      return;
+    }
+
+    if (feeDues.length === 0 && feePaidHistory.length === 0) {
+      setIsFinanceLoading(true);
+    }
+
+    try {
+      const [duesRes, historyRes] = await Promise.all([
+        supabase
+          .from("student_fee_dues")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("to_be_paid_amount", { ascending: false }),
+        supabase
+          .from("student_fee_paid_history")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("term", { ascending: false })
+          .order("created_at", { ascending: false }),
+      ]);
+
+      if (duesRes.data) {
+        setFeeDues(duesRes.data);
+        setOfflineCache(`finance_dues:${user.id}`, duesRes.data);
+        setFinanceCachedTime(Date.now());
+      }
+      if (historyRes.data) {
+        setFeePaidHistory(historyRes.data);
+        setOfflineCache(`finance_history:${user.id}`, historyRes.data);
+      }
+    } catch (err) {
+      console.error("Failed to load finance records:", err);
+    } finally {
+      setIsFinanceLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchAttendance();
     fetchTimetable();
+    fetchFinance();
   }, [user]);
 
   // Revalidate on pull-to-refresh gesture
@@ -240,6 +336,7 @@ export default function Attendance() {
     const handlePullRefresh = () => {
       fetchAttendance();
       fetchTimetable();
+      fetchFinance();
     };
     window.addEventListener("fl:refresh", handlePullRefresh);
     return () => window.removeEventListener("fl:refresh", handlePullRefresh);
@@ -250,6 +347,7 @@ export default function Attendance() {
     const handleOnline = () => {
       fetchAttendance();
       fetchTimetable();
+      fetchFinance();
     };
     window.addEventListener("online", handleOnline);
     return () => window.removeEventListener("online", handleOnline);
@@ -282,7 +380,7 @@ export default function Attendance() {
         }
       } else {
         toast.success("SRM Portal synced successfully!");
-        await Promise.all([fetchAttendance(), fetchTimetable()]);
+        await Promise.all([fetchAttendance(), fetchTimetable(), fetchFinance()]);
       }
     } catch (err) {
       console.error("Sync error:", err);
@@ -393,7 +491,7 @@ export default function Attendance() {
   }, [records, filterTab, searchQuery, sortField, sortDirection]);
 
   const hasAnySimulation = Object.keys(simulations).length > 0;
-  const lastSync = records[0]?.last_synced_at || timetableSlots[0]?.last_synced_at;
+  const lastSync = records[0]?.last_synced_at || timetableSlots[0]?.last_synced_at || feeDues[0]?.last_synced_at;
 
   return (
     <>
@@ -401,16 +499,20 @@ export default function Attendance() {
         title={
           activePortalTab === "timetable"
             ? "Class Timetable | SRM Portal | Friendly Learning SRMAP"
+            : activePortalTab === "finance"
+            ? "Fee & Finance | SRM Portal | Friendly Learning SRMAP"
             : "Attendance & Bunk Predictor | SRM Portal | Friendly Learning SRMAP"
         }
         description={
           activePortalTab === "timetable"
             ? "View your SRM AP weekly class timetable, period timings 1 to 8, classroom numbers, and faculty details."
+            : activePortalTab === "finance"
+            ? "Track your SRM AP fee dues, avoid penalty of fine, check payment history, and view receipts."
             : "Track live course attendance from the SRM AP student portal, monitor 75% examination eligibility thresholds, and plan upcoming classes."
         }
       />
 
-      <div className="min-h-screen bg-background pb-16">
+      <div className="min-h-screen bg-background pb-28 sm:pb-16">
 
         {/* Plain Header */}
         <div className="border-b border-border/60">
@@ -435,11 +537,11 @@ export default function Attendance() {
                     SRM Portal
                   </h1>
                   <p className="mt-1 text-xs sm:text-sm text-muted-foreground">
-                    Live from the SRM AP student portal · 75% examination eligibility & weekly timetable
+                    Live from the SRM AP student portal · Attendance, timetable & fee dues
                   </p>
                 </div>
 
-                {(records.length > 0 || timetableSlots.length > 0) && (
+                {(records.length > 0 || timetableSlots.length > 0 || feeDues.length > 0) && (
                   <div className="flex items-center gap-3 bg-card/80 dark:bg-card/60 backdrop-blur-md px-3.5 py-2 rounded-xl border border-border/70 shadow-xs">
                     <div className="flex items-center gap-2.5">
                       {isOnline ? (
@@ -467,7 +569,7 @@ export default function Attendance() {
                               Offline Mode
                             </span>
                             <span className="text-[10px] text-muted-foreground leading-tight">
-                              Saved {cachedTime ? formatOfflineTime(cachedTime) : (timetableCachedTime ? formatOfflineTime(timetableCachedTime) : (lastSync ? formatRelativeTime(lastSync) : "locally"))}
+                              Saved {cachedTime ? formatOfflineTime(cachedTime) : (timetableCachedTime ? formatOfflineTime(timetableCachedTime) : (financeCachedTime ? formatOfflineTime(financeCachedTime) : (lastSync ? formatRelativeTime(lastSync) : "locally")))}
                             </span>
                           </div>
                         </>
@@ -515,7 +617,7 @@ export default function Attendance() {
         <div className="container max-w-5xl mx-auto px-4 sm:px-6 pt-6">
 
           {/* Global Empty / Not Linked State */}
-          {!isLoading && !isTimetableLoading && records.length === 0 && timetableSlots.length === 0 && (
+          {!isLoading && !isTimetableLoading && !isFinanceLoading && records.length === 0 && timetableSlots.length === 0 && feeDues.length === 0 && (
             <div className="border border-dashed border-border/80 rounded-xl py-14 px-6 text-center max-w-lg mx-auto space-y-4">
               <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
                 <GraduationCap className="h-6 w-6" />
@@ -523,7 +625,7 @@ export default function Attendance() {
               <div className="space-y-1.5">
                 <h2 className="text-lg font-bold text-foreground">No SRM Portal linked yet</h2>
                 <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                  Connect your SRM AP student portal to see subject-wise attendance, your safe leave buffer above 75%, and your full weekly class timetable — synced automatically.
+                  Connect your SRM AP student portal to see subject-wise attendance, your safe leave buffer above 75%, weekly class timetable, and fee dues with penalty alerts — synced automatically.
                 </p>
               </div>
               <Button
@@ -538,13 +640,13 @@ export default function Attendance() {
           )}
 
           {/* Segmented Tab Switcher */}
-          {(records.length > 0 || timetableSlots.length > 0 || isLoading || isTimetableLoading) && (
-            <div className="flex items-center gap-1.5 p-1 bg-muted/40 border border-border/60 rounded-xl w-fit mb-6">
+          {(records.length > 0 || timetableSlots.length > 0 || feeDues.length > 0 || isLoading || isTimetableLoading || isFinanceLoading) && (
+            <div className="flex items-center gap-1.5 p-1 bg-muted/40 border border-border/60 rounded-xl w-fit mb-6 overflow-x-auto max-w-full scrollbar-none touch-pan-x">
               <button
                 type="button"
                 onClick={() => handleTabChange("attendance")}
                 className={cn(
-                  "flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all",
+                  "flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all whitespace-nowrap",
                   activePortalTab === "attendance"
                     ? "bg-card text-foreground shadow-xs border border-border/50"
                     : "text-muted-foreground hover:text-foreground"
@@ -562,7 +664,7 @@ export default function Attendance() {
                 type="button"
                 onClick={() => handleTabChange("timetable")}
                 className={cn(
-                  "flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all",
+                  "flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all whitespace-nowrap",
                   activePortalTab === "timetable"
                     ? "bg-card text-foreground shadow-xs border border-border/50"
                     : "text-muted-foreground hover:text-foreground"
@@ -573,6 +675,27 @@ export default function Attendance() {
                 {timetableSlots.length > 0 && (
                   <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.2 rounded-full font-bold">
                     {timetableSlots.length}
+                  </span>
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => handleTabChange("finance")}
+                className={cn(
+                  "flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all whitespace-nowrap",
+                  activePortalTab === "finance"
+                    ? "bg-card text-foreground shadow-xs border border-border/50"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <CreditCard className="h-3.5 w-3.5" />
+                <span>Fee & Finance</span>
+                {feeDues.some((d) => d.to_be_paid_amount > 0) && (
+                  <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse shrink-0" />
+                )}
+                {feeDues.length > 0 && (
+                  <span className="text-[10px] bg-muted px-1.5 py-0.2 rounded-full font-medium">
+                    {feeDues.length}
                   </span>
                 )}
               </button>
@@ -1017,6 +1140,17 @@ export default function Attendance() {
         </>
       )}
 
+      {/* Tab 3: Fee & Finance Dashboard */}
+      {activePortalTab === "finance" && (
+        <FeeFinanceOverview
+          dues={feeDues}
+          paidHistory={feePaidHistory}
+          isLoading={isFinanceLoading}
+          onRefresh={fetchFinance}
+          isSyncing={isSyncing}
+        />
+      )}
+
       {/* Re-link Portal Modal */}
       <ImportSrmPortalDialog
         open={portalDialogOpen}
@@ -1024,6 +1158,7 @@ export default function Attendance() {
         onSuccess={() => {
           fetchAttendance();
           fetchTimetable();
+          fetchFinance();
         }}
       />
 

@@ -9,6 +9,11 @@ export const getNotificationNavigationUrl = (notification: Notification): string
     const baseUrl = window.location.origin;
     const data = (notification.data && typeof notification.data === 'object') ? (notification.data as Record<string, any>) : {};
 
+    // Handle fee alert notifications
+    if (notification.type === 'fee_alert' || notification.title?.includes('Fee Raised') || notification.title?.includes('Fine Imposed') || data.type === 'fee_alert') {
+        return `${baseUrl}/srmportal?tab=finance`;
+    }
+
     // Handle attendance alert notifications
     if (notification.type === 'attendance_alert' || notification.title?.includes('Attendance') || data.type === 'attendance_alert') {
         return `${baseUrl}/attendance`;
