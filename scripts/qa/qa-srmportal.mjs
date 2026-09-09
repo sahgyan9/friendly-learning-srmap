@@ -146,6 +146,81 @@ const MOCK_TIMETABLE = [
   { id: 'tt-16', user_id: USER_ID, register_number: 'AP23111260062', day_order: 4, day_name: 'Thursday', hour: 8, start_time: '16:00:00', end_time: '17:30:00', slot: null, course_code: 'PHY 428', course_name: 'Nuclear and Particle Physics', faculty_name: 'Dr. B. C. Paul', room_number: 'X 312', is_lab: false, ltpc: '3-1-0-4', last_synced_at: new Date(Date.now() - 3600000).toISOString() },
 ];
 
+const MOCK_FEE_DUES = [
+  {
+    id: 'fee-1',
+    user_id: USER_ID,
+    register_number: 'AP23111260062',
+    fee_category: 'Hostel Fees',
+    fee_head: 'Hostel Mess Fees (2026-2027)',
+    due_amount: 73950,
+    collected_amount: 0,
+    to_be_paid_amount: 73950,
+    is_fine: false,
+    last_synced_at: new Date(Date.now() - 3600000).toISOString(),
+  },
+  {
+    id: 'fee-2',
+    user_id: USER_ID,
+    register_number: 'AP23111260062',
+    fee_category: 'Hostel Fees',
+    fee_head: 'Hostel Room Rent (2026-2027)',
+    due_amount: 73950,
+    collected_amount: 0,
+    to_be_paid_amount: 73950,
+    is_fine: false,
+    last_synced_at: new Date(Date.now() - 3600000).toISOString(),
+  },
+];
+
+const MOCK_FEE_PAID_HISTORY = [
+  {
+    id: 'hist-1',
+    user_id: USER_ID,
+    register_number: 'AP23111260062',
+    term: '2026-2027',
+    fee_type: 'Insurance Fees, Tuition Fees',
+    due_date: '25/06/2026',
+    amount: 246820,
+    receipt_date: '06/07/2026, 25/06/2026',
+    payment_mode: 'Online-PAYU, Student Concession',
+    receipt_number: 'SEAS/26-27/42945, SEAS/26-27/55715',
+    paid_amount: 246820,
+    balance_due: 0,
+    last_synced_at: new Date(Date.now() - 3600000).toISOString(),
+  },
+  {
+    id: 'hist-2',
+    user_id: USER_ID,
+    register_number: 'AP23111260062',
+    term: '2025-2026',
+    fee_type: 'Hostel Fees',
+    due_date: '09/07/2025',
+    amount: 147900,
+    receipt_date: '17/07/2025',
+    payment_mode: 'Online-PAYU',
+    receipt_number: 'SEAS/25-26/96404',
+    paid_amount: 147900,
+    balance_due: 0,
+    last_synced_at: new Date(Date.now() - 3600000).toISOString(),
+  },
+  {
+    id: 'hist-3',
+    user_id: USER_ID,
+    register_number: 'AP23111260062',
+    term: '2025-2026',
+    fee_type: 'Exam Fees',
+    due_date: '06/11/2025',
+    amount: 3600,
+    receipt_date: '06/11/2025',
+    payment_mode: 'Online-PAYU',
+    receipt_number: 'SEAS/25-26/118399',
+    paid_amount: 3600,
+    balance_due: 0,
+    last_synced_at: new Date(Date.now() - 3600000).toISOString(),
+  },
+];
+
 function respondJson(request, body, status = 200) {
   return request.respond({
     status,
@@ -215,6 +290,14 @@ async function setupPage(page, theme = 'light') {
 
     if (url.includes('/rest/v1/student_timetables')) {
       return respondJson(req, MOCK_TIMETABLE);
+    }
+
+    if (url.includes('/rest/v1/student_fee_dues')) {
+      return respondJson(req, MOCK_FEE_DUES);
+    }
+
+    if (url.includes('/rest/v1/student_fee_paid_history')) {
+      return respondJson(req, MOCK_FEE_PAID_HISTORY);
     }
 
     if (url.includes('/rest/v1/users')) {
@@ -303,6 +386,56 @@ try {
     await new Promise((r) => setTimeout(r, 2000));
     await page.screenshot({ path: path.join(OUT, 'srmportal-timetable-mobile-360px-dark.png'), fullPage: true });
     console.log('✓ srmportal-timetable-mobile-360px-dark.png');
+    await page.close();
+  }
+
+  // 6. SRM Portal: Fee & Finance Tab (Desktop Light)
+  {
+    const page = await browser.newPage();
+    await page.setViewport({ width: 1280, height: 900 });
+    await setupPage(page, 'light');
+    await page.goto(`${BASE}/srmportal?tab=finance`, { waitUntil: 'networkidle2' });
+    await new Promise((r) => setTimeout(r, 2000));
+    await page.screenshot({ path: path.join(OUT, 'srmportal-finance-desktop-light.png'), fullPage: true });
+    console.log('✓ srmportal-finance-desktop-light.png');
+    await page.close();
+  }
+
+  // 7. SRM Portal: Fee & Finance Tab (Desktop Dark)
+  {
+    const page = await browser.newPage();
+    await page.setViewport({ width: 1280, height: 900 });
+    await setupPage(page, 'dark');
+    await page.goto(`${BASE}/srmportal?tab=finance`, { waitUntil: 'networkidle2' });
+    await page.evaluate(() => document.documentElement.classList.add('dark'));
+    await new Promise((r) => setTimeout(r, 2000));
+    await page.screenshot({ path: path.join(OUT, 'srmportal-finance-desktop-dark.png'), fullPage: true });
+    console.log('✓ srmportal-finance-desktop-dark.png');
+    await page.close();
+  }
+
+  // 8. SRM Portal: Fee & Finance Tab (Mobile 360px Light)
+  {
+    const page = await browser.newPage();
+    await page.setViewport({ width: 360, height: 800 });
+    await setupPage(page, 'light');
+    await page.goto(`${BASE}/srmportal?tab=finance`, { waitUntil: 'networkidle2' });
+    await new Promise((r) => setTimeout(r, 2000));
+    await page.screenshot({ path: path.join(OUT, 'srmportal-finance-mobile-360px-light.png'), fullPage: true });
+    console.log('✓ srmportal-finance-mobile-360px-light.png');
+    await page.close();
+  }
+
+  // 9. SRM Portal: Fee & Finance Tab (Mobile 360px Dark)
+  {
+    const page = await browser.newPage();
+    await page.setViewport({ width: 360, height: 800 });
+    await setupPage(page, 'dark');
+    await page.goto(`${BASE}/srmportal?tab=finance`, { waitUntil: 'networkidle2' });
+    await page.evaluate(() => document.documentElement.classList.add('dark'));
+    await new Promise((r) => setTimeout(r, 2000));
+    await page.screenshot({ path: path.join(OUT, 'srmportal-finance-mobile-360px-dark.png'), fullPage: true });
+    console.log('✓ srmportal-finance-mobile-360px-dark.png');
     await page.close();
   }
 
