@@ -2,6 +2,8 @@
 
 This document defines strict communication, UI, and coding standards for all AI agents and contributors working on this codebase. It establishes rules to eliminate "AI-ish" behavior, performative enthusiasm, and emoji clutter.
 
+For a complete architectural analysis of the platform's production AI engine, codebase AI lineage (Lovable to Antigravity), and audit of residual AI-generated patterns, see [`docs/AI_NATURE_AND_BEHAVIOR.md`](docs/AI_NATURE_AND_BEHAVIOR.md).
+
 ---
 
 ## 1. What is "AI-ish" Behavior?

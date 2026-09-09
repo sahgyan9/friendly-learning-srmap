@@ -103,7 +103,7 @@ Deeper authorities it defers to: [FACULTY_AI_ROADMAP.md](FACULTY_AI_ROADMAP.md)
 - `supabase/` — database migrations (`supabase/migrations/`), edge functions (`supabase/functions/`), and tests.
 - `scripts/qa/` — visual QA and interaction test harnesses (`qa-*.mjs`, documented in [`scripts/qa/README.md`](scripts/qa/README.md)).
 - `docs/archive/` — historical bug fix summaries and legacy notes (archived to keep root clean, indexed in [`docs/archive/README.md`](docs/archive/README.md)).
-- Core root documentation: [`AGENTS.md`](AGENTS.md) (this file), [`FABLE_BUILD_PLAN.md`](FABLE_BUILD_PLAN.md) (plan of record), [`FACULTY_AI_ROADMAP.md`](FACULTY_AI_ROADMAP.md) (AI/search architecture), [`FRONTEND_BRIEF.md`](FRONTEND_BRIEF.md) (design specs), [`DEPLOYMENT_GUIDE.md`](DEPLOYMENT_GUIDE.md) (deployment targets), and [`SEARCH_GUIDE.md`](SEARCH_GUIDE.md).
+- Core root documentation: [`AGENTS.md`](AGENTS.md) (this file), [`PROJECT_LOG.md`](PROJECT_LOG.md) (mandatory session log), [`AI_STYLE_GUIDE.md`](AI_STYLE_GUIDE.md) (anti-slop standard), [`docs/AI_NATURE_AND_BEHAVIOR.md`](docs/AI_NATURE_AND_BEHAVIOR.md) (AI engine & behavior guide), [`FABLE_BUILD_PLAN.md`](FABLE_BUILD_PLAN.md) (plan of record), [`FACULTY_AI_ROADMAP.md`](FACULTY_AI_ROADMAP.md) (AI/search architecture), [`FRONTEND_BRIEF.md`](FRONTEND_BRIEF.md) (design specs), [`DEPLOYMENT_GUIDE.md`](DEPLOYMENT_GUIDE.md) (deployment targets), and [`SEARCH_GUIDE.md`](SEARCH_GUIDE.md).
 
 ## Product red lines — settled, do not re-litigate
 
