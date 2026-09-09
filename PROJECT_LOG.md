@@ -101,6 +101,45 @@
 
 ---
 
+### Session 003 — 2026-09-09 · Agent: Antigravity (Gemini 3.8 Flash)
+- **Prompt**:
+  1. "I noticed, my 425 is orange color code, PHY 426 is green and so on but in course & faculty directory all the Color of course code is orange. Which code is responsible for bugs and fix this with commit and push"
+  2. "there is discrepency in L-T-P-C/Type as well. Please look into this as well"
+  3. "this might help" [User uploaded screenshot showing matrix color vs directory badge color mismatch and L-T-P-C / Type pill clash]
+- **Root Cause Analysis (RCA)**:
+  - **Issue 1: Course Code Badge Color Discrepancy**:
+    - In `src/components/timetable/WeeklyMatrixTable.tsx` (Lines 101–108), courses are dynamically assigned color palettes (`PALETTES`: amber, sky, emerald, purple, rose) based on unique course codes in `slots`. `PHY 425` is amber/orange, `PHY 424` is sky blue, and `PHY 426` is emerald green.
+    - In `src/components/timetable/CourseFacultyDirectory.tsx` (Line 106), the course code badge was statically hardcoded to amber/orange (`bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20`) for every single row regardless of course code.
+  - **Issue 2: L-T-P-C / Type Discrepancy**:
+    - In `CourseFacultyDirectory.tsx` (Lines 115–125), the column was titled `L-T-P-C / Type` and rendered `{item.isLab ? "2-0-2-4 (Lab)" : "3-1-0-4 (Theory)"}` inside emerald green or sky blue pills.
+    - This caused three distinct defects:
+      1. Hardcoding `2-0-2-4` and `3-1-0-4` as mockup strings instead of real credit structure.
+      2. Mislabeling `PHY 424` (`2-0-2-4`) as purely `(Lab)` even though it is an integrated course with 2 lecture hours in classroom C 301 and 2 practical hours in lab X 312.
+      3. The green and blue pill styling clashed directly with the course palette colors from the matrix above (where sky was PHY 424 and emerald was PHY 426).
+      4. The SRM AP portal (Section 10 `#tblSubjectList`) has the header `L-T-P-C` and values `2-0-2-4` and `3-1-0-4` without fake tags.
+    - Furthermore, `public.student_timetables` in Postgres previously lacked an `ltpc` column, so parsed values were not persisted.
+- **What was done**:
+  1. **Database Schema & Backfill**:
+     - Created and applied migration `supabase/migrations/20260909020000_add_ltpc_to_student_timetables.sql` adding `ltpc text` column to `public.student_timetables` with `GRANT SELECT TO authenticated, anon`.
+     - Backfilled production database: `PHY 424: 2-0-2-4`, `PHY 425: 2-0-2-4`, `PHY 426: 3-1-0-4`.
+     - Registered migration in `supabase/tests/verify-migrations.mjs` and verified clean and upgrade passes via `npm run test:migrations`.
+  2. **Edge Function Sync Logic**:
+     - Updated `supabase/functions/_shared/srm-portal.ts`, `sync-srm-portal/index.ts`, and `import-srm-portal/index.ts` to include `ltpc` in `ParsedTimetableSlot` and persist `ltpc` during background syncs.
+  3. **Frontend Timetable Components**:
+     - In `WeeklyMatrixTable.tsx`: Exported `PALETTES` and `getCourseColorMap(slots)`, and added `ltpc?: string | null` to `TimetableSlot`.
+     - In `CourseFacultyDirectory.tsx`:
+       - Imported `getCourseColorMap` and applied `palette.badge` to each course code badge, synchronizing colors identically with matrix cells.
+       - Renamed column header from `L-T-P-C / Type` to `L-T-P-C` matching the official SRM AP portal table.
+       - Replaced the hardcoded pills with clean, neutral monospace badges displaying `item.ltpc || "—"`.
+- **Status at end**:
+  - `npm run typecheck`: 0 errors.
+  - `npm run test:migrations`: All checks passed against real Postgres.
+  - Visual QA verified: `PHY 424` is sky blue, `PHY 425` is amber, `PHY 426` is emerald across both matrix and directory; L-T-P-C displays exact numbers (`2-0-2-4`, `3-1-0-4`) cleanly.
+- **Next agent should**:
+  - Maintain synchronized color tokens and follow `PROJECT_LOG.md` and `AI_STYLE_GUIDE.md`.
+
+---
+
 ## Session Template (copy for each new session)
 
 ```markdown
@@ -111,3 +150,4 @@
 - **Status at end**: (verified data changes, database row counts, test passes)
 - **Next agent should**: (clear handoff instructions for the next session)
 ```
+
