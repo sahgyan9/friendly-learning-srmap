@@ -12,7 +12,7 @@ import DarkModeToggle from "@/components/DarkModeToggle";
 import GoogleAuthButton from "@/components/auth/GoogleAuthButton";
 import RoleSelectionModal from "@/components/auth/RoleSelectionModal";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, ArrowRight, Loader2 } from "lucide-react";
+import { AlertCircle, ArrowRight, Loader2, Info } from "lucide-react";
 
 const SignIn = () => {
   const navigate = useNavigate();
@@ -259,8 +259,9 @@ const SignIn = () => {
                                   <ArrowRight className="h-3 w-3" />
                                 </Link>
                               </div>
-                              <div className="text-[11px] text-muted-foreground bg-background/80 p-2 rounded border border-border/60">
-                                💡 <strong>Signed in with Google before?</strong> If you previously registered using Google, please click <strong>"Continue with Google"</strong> above.
+                              <div className="text-[11px] text-muted-foreground bg-background/80 p-2 rounded border border-border/60 flex items-start gap-1.5">
+                                <Info className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
+                                <div><strong>Signed in with Google before?</strong> If you previously registered using Google, please click <strong>"Continue with Google"</strong> above.</div>
                               </div>
                             </div>
                           )}

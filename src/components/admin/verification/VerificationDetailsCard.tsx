@@ -23,7 +23,8 @@ import {
     Award,
     Heart,
     ExternalLink,
-    MapPin
+    MapPin,
+    Info
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import WelcomeEmailButton from "./WelcomeEmailButton";
@@ -527,9 +528,10 @@ const VerificationDetailsCard = ({
                         <p className="text-sm text-red-600 dark:text-red-400 mb-3">
                             {verification.rejection_reason}
                         </p>
-                        <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded border border-blue-200 dark:border-blue-800">
+                        <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded border border-blue-200 dark:border-blue-800 flex items-start gap-2">
+                            <Info className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 shrink-0" />
                             <p className="text-xs text-blue-700 dark:text-blue-300">
-                                💡 <strong>User can edit and resubmit:</strong> The user can access their rejected application at{' '}
+                                <strong>User can edit and resubmit:</strong> The user can access their rejected application at{' '}
                                 <code className="bg-blue-100 dark:bg-blue-800 px-1 rounded">/become-mentor?edit=true</code> to make improvements and resubmit.
                             </p>
                         </div>

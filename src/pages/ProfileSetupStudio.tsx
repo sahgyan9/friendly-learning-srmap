@@ -23,7 +23,9 @@ import {
   Briefcase,
   ExternalLink,
   RotateCcw,
+  MessageSquare,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -545,7 +547,7 @@ export default function ProfileSetupStudio() {
       ask_me_anything: drafts.ask_me_anything.length > 0 ? drafts.ask_me_anything : prev.ask_me_anything,
       ideal_mentees: drafts.ideal_mentees.length > 0 ? drafts.ideal_mentees : prev.ideal_mentees,
     }));
-    toast.success("✨ AI summary drafts generated for Tagline, Outcomes, AMA, and Target Students!");
+    toast.success("Summary fields drafted for Tagline, Outcomes, AMA, and Target Students.");
   };
 
   const handleSuggestTagline = () => {
@@ -556,7 +558,7 @@ export default function ProfileSetupStudio() {
     const drafts = generateSmartDrafts(state.skills, state.department, state.name);
     if (drafts.tagline) {
       setState((prev) => ({ ...prev, tagline: drafts.tagline }));
-      toast.success("💡 Tagline generated based on your skills!");
+      toast.success("Tagline drafted from listed skills.");
     }
   };
 
@@ -568,7 +570,7 @@ export default function ProfileSetupStudio() {
     const drafts = generateSmartDrafts(state.skills, state.department, state.name);
     if (drafts.outcomes.length > 0) {
       setState((prev) => ({ ...prev, outcomes: drafts.outcomes }));
-      toast.success("💡 Outcomes suggested!");
+      toast.success("Outcomes drafted.");
     }
   };
 
@@ -580,7 +582,7 @@ export default function ProfileSetupStudio() {
     const drafts = generateSmartDrafts(state.skills, state.department, state.name);
     if (drafts.ask_me_anything.length > 0) {
       setState((prev) => ({ ...prev, ask_me_anything: drafts.ask_me_anything }));
-      toast.success("💡 AMA topics suggested!");
+      toast.success("AMA topics drafted.");
     }
   };
 
@@ -592,7 +594,7 @@ export default function ProfileSetupStudio() {
     const drafts = generateSmartDrafts(state.skills, state.department, state.name);
     if (drafts.ideal_mentees.length > 0) {
       setState((prev) => ({ ...prev, ideal_mentees: drafts.ideal_mentees }));
-      toast.success("💡 Target students suggested!");
+      toast.success("Target students drafted.");
     }
   };
 
@@ -1028,8 +1030,8 @@ export default function ProfileSetupStudio() {
 
       toast.success(
         isPublished
-          ? "✓ Profile changes saved live!"
-          : "🎉 Profile published live to Friendly Learning SRMAP!",
+          ? "Profile changes saved."
+          : "Profile published to Friendly Learning SRMAP.",
         { id: toastId }
       );
 
@@ -1359,8 +1361,9 @@ export default function ProfileSetupStudio() {
 
             {/* Availability Switch */}
             <div className="flex items-center gap-2 bg-muted/40 px-3 py-1.5 rounded-xl border border-border/50">
-              <span className="text-2xs font-semibold text-foreground">
-                {state.isAvailable ? "🟢 Available" : "⏸️ Paused"}
+              <span className="inline-flex items-center gap-1.5 text-2xs font-semibold text-foreground">
+                <span className={cn("h-2 w-2 rounded-full", state.isAvailable ? "bg-emerald-500" : "bg-amber-500")} />
+                {state.isAvailable ? "Available" : "Paused"}
               </span>
               <Switch
                 checked={state.isAvailable}
@@ -1481,7 +1484,7 @@ export default function ProfileSetupStudio() {
             />
             <div className="flex items-center justify-between text-2xs text-muted-foreground pt-0.5">
               <div className="flex flex-wrap items-center gap-1.5">
-                <span className="font-semibold">💡 Quick Ideas:</span>
+                <span className="font-semibold">Quick Ideas:</span>
                 <button
                   type="button"
                   onClick={() =>
@@ -2090,7 +2093,7 @@ export default function ProfileSetupStudio() {
                   key={idx}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-sky-50 dark:bg-sky-950/60 text-sky-800 dark:text-sky-200 border border-sky-200/60 dark:border-sky-800/60"
                 >
-                  <span>💬</span>
+                  <MessageSquare className="h-3 w-3 text-sky-600 dark:text-sky-400 shrink-0" />
                   {item.topic}
                   <button
                     type="button"

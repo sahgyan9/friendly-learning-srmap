@@ -4,6 +4,7 @@ import SEOHead from "@/components/SEOHead";
 import { ROUTE_META } from "@/lib/seo/route-meta";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
+import { RefreshCw, Target, Bell, Lock } from "lucide-react";
 
 /**
  * Public landing page for students searching for the SRM AP student portal.
@@ -75,21 +76,33 @@ const SrmStudentPortal = () => {
               </header>
 
               <div className="grid md:grid-cols-2 gap-8 mb-12">
-                <div className="p-6 border rounded-lg">
-                  <h3 className="text-xl font-bold mb-3">🔄 Auto-Synced, No Repeat Logins</h3>
-                  <p>Link once, and we pull fresh attendance from the SRM AP student portal every weekday at 5:30 PM IST — no signing in and clicking through the portal's report each time.</p>
+                <div className="p-6 border rounded-lg bg-card">
+                  <h3 className="text-xl font-bold mb-3 flex items-center gap-2.5">
+                    <RefreshCw className="h-5 w-5 text-primary shrink-0" />
+                    <span>Auto-Synced, No Repeat Logins</span>
+                  </h3>
+                  <p className="text-muted-foreground">Link once, and we pull fresh attendance from the SRM AP student portal every weekday at 5:30 PM IST — no signing in and clicking through the portal's report each time.</p>
                 </div>
-                <div className="p-6 border rounded-lg">
-                  <h3 className="text-xl font-bold mb-3">🎯 75% Eligibility Tracking</h3>
-                  <p>Every course shows your live attendance percentage against the mandatory 75% examination eligibility rule, with a safe-bunk or classes-needed count next to it.</p>
+                <div className="p-6 border rounded-lg bg-card">
+                  <h3 className="text-xl font-bold mb-3 flex items-center gap-2.5">
+                    <Target className="h-5 w-5 text-primary shrink-0" />
+                    <span>75% Eligibility Tracking</span>
+                  </h3>
+                  <p className="text-muted-foreground">Every course shows your live attendance percentage against the mandatory 75% examination eligibility rule, with a safe-bunk or classes-needed count next to it.</p>
                 </div>
-                <div className="p-6 border rounded-lg">
-                  <h3 className="text-xl font-bold mb-3">🔔 Shortage Alerts</h3>
-                  <p>If a course drops below 75%, you get notified the same evening — before it turns into a surprise at exam registration.</p>
+                <div className="p-6 border rounded-lg bg-card">
+                  <h3 className="text-xl font-bold mb-3 flex items-center gap-2.5">
+                    <Bell className="h-5 w-5 text-primary shrink-0" />
+                    <span>Shortage Alerts</span>
+                  </h3>
+                  <p className="text-muted-foreground">If a course drops below 75%, you get notified the same evening — before it turns into a surprise at exam registration.</p>
                 </div>
-                <div className="p-6 border rounded-lg">
-                  <h3 className="text-xl font-bold mb-3">🔒 Encrypted Credentials</h3>
-                  <p>Your portal password is stored with AES-256-GCM encryption, never logged in plaintext, and used only to fetch your own attendance.</p>
+                <div className="p-6 border rounded-lg bg-card">
+                  <h3 className="text-xl font-bold mb-3 flex items-center gap-2.5">
+                    <Lock className="h-5 w-5 text-primary shrink-0" />
+                    <span>Encrypted Credentials</span>
+                  </h3>
+                  <p className="text-muted-foreground">Your portal password is stored with AES-256-GCM encryption, never logged in plaintext, and used only to fetch your own attendance.</p>
                 </div>
               </div>
 

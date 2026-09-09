@@ -149,7 +149,7 @@ const CommunityPostDetail = () => {
     }
 
     setPost({ ...post, status });
-    toast.success(status === "fulfilled" ? "Marked as fulfilled 🎉" : `Marked as ${status}`);
+    toast.success(status === "fulfilled" ? "Marked as fulfilled." : `Marked as ${status}`);
   };
 
   const handleDelete = async () => {

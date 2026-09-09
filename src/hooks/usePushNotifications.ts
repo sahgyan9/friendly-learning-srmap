@@ -64,7 +64,7 @@ export function usePushNotifications() {
     if (result.success) {
       setIsSubscribed(true);
       setPermission(getNotificationPermission());
-      toast.success("Push notifications enabled on this device! 🎉");
+      toast.success("Push notifications enabled on this device.");
       return true;
     } else {
       setPermission(getNotificationPermission());
@@ -97,7 +97,7 @@ export function usePushNotifications() {
     const success = await dispatchPushNotification({
       userIds: [user.id],
       title: "Friendly Learning SRMAP",
-      body: "Test notification: Web Push is working seamlessly on this device! 🚀",
+      body: "Test notification: Web Push notifications are active on this device.",
       url: "/profile",
       tag: "test-push",
     });

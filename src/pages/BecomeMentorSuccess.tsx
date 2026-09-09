@@ -49,7 +49,7 @@ const BecomeMentorSuccess = () => {
             <CheckCircle className="h-8 w-8 text-green-600" />
           </div>
 
-          <h1 className="text-3xl font-bold text-foreground mb-3">You're a mentor now 🎉</h1>
+          <h1 className="text-3xl font-bold text-foreground mb-3">You're a mentor now</h1>
           <p className="text-muted-foreground mb-8">
             Your profile is live. Students looking for help in your department can find and
             message you right away.

@@ -327,7 +327,7 @@ export function PostCard({
               }}
               className={cn("mt-1 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold transition-all duration-200 focus:outline-none", theme.readMoreBtn)}
             >
-              <span>{isCompact ? "📖 Read full post" : isExpanded ? "📖 Show less" : "📖 Read full post"}</span>
+              <span>{isCompact ? "Read full post" : isExpanded ? "Show less" : "Read full post"}</span>
               {isCompact ? (
                 <ArrowRight className="h-3.5 w-3.5" />
               ) : (
@@ -388,7 +388,7 @@ export function PostCard({
             </Button>
           </TooltipTrigger>
           <TooltipContent side="top" className="flex items-center gap-1 text-xs font-medium">
-            {post.viewer_has_liked ? "💖 Liked" : "❤️ Like"}
+            {post.viewer_has_liked ? "Liked" : "Like"}
           </TooltipContent>
         </Tooltip>
 
@@ -409,7 +409,7 @@ export function PostCard({
             </Button>
           </TooltipTrigger>
           <TooltipContent side="top" className="flex items-center gap-1 text-xs font-medium">
-            💬 {post.comments_count > 0 ? `${post.comments_count} Comments` : "Write a comment"}
+            {post.comments_count > 0 ? `${post.comments_count} Comments` : "Write a comment"}
           </TooltipContent>
         </Tooltip>
 

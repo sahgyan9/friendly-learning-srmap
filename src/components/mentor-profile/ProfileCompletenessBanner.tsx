@@ -88,7 +88,7 @@ export default function ProfileCompletenessBanner({
 
             <h3 className="text-base sm:text-lg font-bold text-foreground">
               {isComplete
-                ? "Your Profile is Live & 100% Complete 🎉"
+                ? "Your Profile is Live & 100% Complete"
                 : `Profile Strength: ${percentage}% — Help peers & juniors find you`}
             </h3>
 

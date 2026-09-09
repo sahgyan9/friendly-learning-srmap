@@ -5,6 +5,7 @@ import { ROUTE_META } from "@/lib/seo/route-meta";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { GraduationCap, Code, BookOpen, Rocket } from "lucide-react";
 
 const HowItWorks = () => {
     const structuredData = {
@@ -75,17 +76,29 @@ const HowItWorks = () => {
                                 <h2 className="text-2xl font-bold mb-6">What You Can Do on Friendly Learning SRMAP</h2>
                                 <div className="grid md:grid-cols-2 gap-6">
                                     <div>
-                                        <h4 className="font-bold mb-2">🎓 Find Academic Help</h4>
+                                        <h4 className="font-bold mb-2 flex items-center gap-2">
+                                            <GraduationCap className="h-4 w-4 text-primary shrink-0" />
+                                            <span>Find Academic Help</span>
+                                        </h4>
                                         <p className="text-sm mb-4">Connect with mentors and peers for course help, assignment guidance, and exam preparation.</p>
 
-                                        <h4 className="font-bold mb-2">💻 Build Hackathon Teams</h4>
+                                        <h4 className="font-bold mb-2 flex items-center gap-2">
+                                            <Code className="h-4 w-4 text-primary shrink-0" />
+                                            <span>Build Hackathon Teams</span>
+                                        </h4>
                                         <p className="text-sm mb-4">Find developers, designers, and business minds to create winning hackathon teams.</p>
                                     </div>
                                     <div>
-                                        <h4 className="font-bold mb-2">📚 Form Study Groups</h4>
+                                        <h4 className="font-bold mb-2 flex items-center gap-2">
+                                            <BookOpen className="h-4 w-4 text-primary shrink-0" />
+                                            <span>Form Study Groups</span>
+                                        </h4>
                                         <p className="text-sm mb-4">Connect with classmates for collaborative learning and study sessions.</p>
 
-                                        <h4 className="font-bold mb-2">🚀 Start Projects</h4>
+                                        <h4 className="font-bold mb-2 flex items-center gap-2">
+                                            <Rocket className="h-4 w-4 text-primary shrink-0" />
+                                            <span>Start Projects</span>
+                                        </h4>
                                         <p className="text-sm mb-4">Find collaborators for startup ideas, research projects, and innovative solutions.</p>
                                     </div>
                                 </div>

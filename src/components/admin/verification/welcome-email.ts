@@ -134,7 +134,7 @@ ${PRIMARY_DOMAIN}`;
                 </tr>
               </table>
               <h1 class="header-text" style="color:#ffffff; margin:0; font-size:24px; font-weight:700; line-height:1.3;">
-                You're live, ${firstName}! 🎉
+                You're live, ${firstName}!
               </h1>
               <p class="header-subtext" style="color:#ffffff; font-size:15px; margin:8px 0 0 0; font-weight:500; opacity:0.95;">
                 No approval queue — your mentor profile is already up.
@@ -154,12 +154,12 @@ ${PRIMARY_DOMAIN}`;
 
               <div style="background-color:#eff6ff; border-left:4px solid #3963c6; padding:14px 18px; border-radius:0 8px 8px 0; margin: 20px 0;">
                 <p style="margin:0; font-size:14px; line-height:1.5; color:#1e40af;">
-                  💡 <em>Nobody's expecting office hours — most questions take two minutes. Help 3 students (real replies, not just messages sent) and you earn a certificate with a public verify link. Not a participation badge — an earned one.</em>
+                  <em>Nobody's expecting office hours — most questions take two minutes. Help 3 students (real replies, not just messages sent) and you earn a certificate with a public verify link. Not a participation badge — an earned one.</em>
                 </p>
               </div>
 
               <h2 style="font-size:17px; font-weight:700; color:#0f172a; margin-top:24px; margin-bottom:16px;">
-                🚀 Quick Ways to Get Started
+                Quick Ways to Get Started
               </h2>
 
               <!-- Section Card 1 -->
@@ -255,21 +255,21 @@ ${PRIMARY_DOMAIN}`;
                   </tr>
                   <tr>
                     <td style="padding:4px 0;">
-                      <span style="font-size:14px; margin-right:8px;">🤝</span>
+                      <span style="color:#3963c6; margin-right:8px; font-weight:bold;">&bull;</span>
                       <a href="${PRIMARY_DOMAIN}/find-study-partners" style="font-size:13px; color:#3963c6; text-decoration:none; font-weight:500;">Find study partners</a>
                       <span style="font-size:13px; color:#94a3b8; margin-left:6px;">— never prep for exams alone</span>
                     </td>
                   </tr>
                   <tr>
                     <td style="padding:4px 0;">
-                      <span style="font-size:14px; margin-right:8px;">🚀</span>
+                      <span style="color:#3963c6; margin-right:8px; font-weight:bold;">&bull;</span>
                       <a href="${PRIMARY_DOMAIN}/hackathon-partners" style="font-size:13px; color:#3963c6; text-decoration:none; font-weight:500;">Hackathon teammates</a>
                       <span style="font-size:13px; color:#94a3b8; margin-left:6px;">— build something real</span>
                     </td>
                   </tr>
                   <tr>
                     <td style="padding:4px 0;">
-                      <span style="font-size:14px; margin-right:8px;">👨‍🏫</span>
+                      <span style="color:#3963c6; margin-right:8px; font-weight:bold;">&bull;</span>
                       <a href="${PRIMARY_DOMAIN}/faculty" style="font-size:13px; color:#3963c6; text-decoration:none; font-weight:500;">Faculty search & ratings</a>
                       <span style="font-size:13px; color:#94a3b8; margin-left:6px;">— discover research & anonymous reviews</span>
                     </td>

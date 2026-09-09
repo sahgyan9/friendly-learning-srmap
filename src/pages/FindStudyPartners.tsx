@@ -4,13 +4,14 @@ import { ROUTE_META } from "@/lib/seo/route-meta";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { Target, BookOpen, Users, Clock } from "lucide-react";
 
 const FindStudyPartners = () => {
     const structuredData = {
         "@context": "https://schema.org",
         "@type": "WebPage",
-        "name": "Find Study Partners at University - Friendly Learning SRMAP",
-        "description": "Connect with study partners at your university through Friendly Learning SRMAP. Find students in your courses, form study groups, and improve your academic performance together.",
+        "name": "Find Study Partners at SRM AP - Friendly Learning SRMAP",
+        "description": "Connect with study partners at SRM University-AP through Friendly Learning SRMAP. Find students in your courses, form study groups, and improve your academic performance together.",
         "url": `${PRIMARY_DOMAIN}/find-study-partners`,
         "mainEntity": {
             "@type": "Service",
@@ -20,7 +21,7 @@ const FindStudyPartners = () => {
                 "name": "Friendly Learning SRMAP"
             },
             "serviceType": "Educational Networking",
-            "areaServed": "Universities Worldwide"
+            "areaServed": "SRM University-AP"
         }
     };
 
@@ -46,21 +47,33 @@ const FindStudyPartners = () => {
                             </header>
 
                             <div className="grid md:grid-cols-2 gap-8 mb-12">
-                                <div className="p-6 border rounded-lg">
-                                    <h3 className="text-xl font-bold mb-3">🎯 Course-Specific Partners</h3>
-                                    <p>Find students taking the same courses as you for targeted study sessions and assignment collaboration.</p>
+                                <div className="p-6 border rounded-lg bg-card">
+                                    <h3 className="text-xl font-bold mb-3 flex items-center gap-2.5">
+                                        <Target className="h-5 w-5 text-primary shrink-0" />
+                                        <span>Course-Specific Partners</span>
+                                    </h3>
+                                    <p className="text-muted-foreground">Find students taking the same courses as you for targeted study sessions and assignment collaboration.</p>
                                 </div>
-                                <div className="p-6 border rounded-lg">
-                                    <h3 className="text-xl font-bold mb-3">📚 Study Group Formation</h3>
-                                    <p>Create or join study groups with students who share your learning goals and schedule preferences.</p>
+                                <div className="p-6 border rounded-lg bg-card">
+                                    <h3 className="text-xl font-bold mb-3 flex items-center gap-2.5">
+                                        <BookOpen className="h-5 w-5 text-primary shrink-0" />
+                                        <span>Study Group Formation</span>
+                                    </h3>
+                                    <p className="text-muted-foreground">Create or join study groups with students who share your learning goals and schedule preferences.</p>
                                 </div>
-                                <div className="p-6 border rounded-lg">
-                                    <h3 className="text-xl font-bold mb-3">🤝 Skill Exchange</h3>
-                                    <p>Help others in subjects you excel at while getting support in areas where you need improvement.</p>
+                                <div className="p-6 border rounded-lg bg-card">
+                                    <h3 className="text-xl font-bold mb-3 flex items-center gap-2.5">
+                                        <Users className="h-5 w-5 text-primary shrink-0" />
+                                        <span>Skill Exchange</span>
+                                    </h3>
+                                    <p className="text-muted-foreground">Help others in subjects you excel at while getting support in areas where you need improvement.</p>
                                 </div>
-                                <div className="p-6 border rounded-lg">
-                                    <h3 className="text-xl font-bold mb-3">⏰ Flexible Scheduling</h3>
-                                    <p>Connect with students who match your availability for study sessions and group meetings.</p>
+                                <div className="p-6 border rounded-lg bg-card">
+                                    <h3 className="text-xl font-bold mb-3 flex items-center gap-2.5">
+                                        <Clock className="h-5 w-5 text-primary shrink-0" />
+                                        <span>Flexible Scheduling</span>
+                                    </h3>
+                                    <p className="text-muted-foreground">Connect with students who match your availability for study sessions and group meetings.</p>
                                 </div>
                             </div>
 

@@ -448,7 +448,7 @@ const Faculty = () => {
                 {departments.map((item) => (
                   <SelectItem key={item} value={item}>
                     {item}
-                    {userMatchedDept && item === userMatchedDept ? " ⭐ (Your Dept)" : ""}
+                    {userMatchedDept && item === userMatchedDept ? " (Your Dept)" : ""}
                   </SelectItem>
                 ))}
               </SelectContent>

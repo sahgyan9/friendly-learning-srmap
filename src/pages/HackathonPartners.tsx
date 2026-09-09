@@ -4,6 +4,7 @@ import { ROUTE_META } from "@/lib/seo/route-meta";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { Code, Palette, BarChart3 } from "lucide-react";
 
 const HackathonPartners = () => {
     const structuredData = {
@@ -45,20 +46,26 @@ const HackathonPartners = () => {
                             </header>
 
                             <div className="grid md:grid-cols-3 gap-8 mb-12">
-                                <div className="text-center p-6 border rounded-lg">
-                                    <div className="text-4xl mb-4">💻</div>
+                                <div className="text-center p-6 border rounded-lg bg-card">
+                                    <div className="w-12 h-12 mx-auto rounded-xl bg-primary/10 flex items-center justify-center text-primary mb-4">
+                                        <Code className="w-6 h-6" />
+                                    </div>
                                     <h3 className="text-xl font-bold mb-3">Find Developers</h3>
-                                    <p>Connect with skilled programmers who know the languages and frameworks you need</p>
+                                    <p className="text-sm text-muted-foreground leading-relaxed">Connect with skilled programmers who know the languages and frameworks you need</p>
                                 </div>
-                                <div className="text-center p-6 border rounded-lg">
-                                    <div className="text-4xl mb-4">🎨</div>
+                                <div className="text-center p-6 border rounded-lg bg-card">
+                                    <div className="w-12 h-12 mx-auto rounded-xl bg-purple-500/10 dark:bg-purple-900/30 flex items-center justify-center text-purple-600 dark:text-purple-400 mb-4">
+                                        <Palette className="w-6 h-6" />
+                                    </div>
                                     <h3 className="text-xl font-bold mb-3">Find Designers</h3>
-                                    <p>Team up with UI/UX designers and graphic designers to make your project stand out</p>
+                                    <p className="text-sm text-muted-foreground leading-relaxed">Team up with UI/UX designers and graphic designers to make your project stand out</p>
                                 </div>
-                                <div className="text-center p-6 border rounded-lg">
-                                    <div className="text-4xl mb-4">📊</div>
+                                <div className="text-center p-6 border rounded-lg bg-card">
+                                    <div className="w-12 h-12 mx-auto rounded-xl bg-blue-500/10 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 mb-4">
+                                        <BarChart3 className="w-6 h-6" />
+                                    </div>
                                     <h3 className="text-xl font-bold mb-3">Find Business Minds</h3>
-                                    <p>Partner with students skilled in business strategy, marketing, and pitch development</p>
+                                    <p className="text-sm text-muted-foreground leading-relaxed">Partner with students skilled in business strategy, marketing, and pitch development</p>
                                 </div>
                             </div>
 

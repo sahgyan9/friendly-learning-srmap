@@ -310,7 +310,7 @@ export const useMentorForm = (userId: string, initialData: MentorFormData, isEdi
         // Approved by the insert trigger before this line runs, so say so — and
         // say it here rather than on the button that opens the form, which is
         // where it would have been a claim with no row behind it.
-        toast.success("You're a mentor 🎉", {
+        toast.success("You're a mentor", {
           description:
             "Your profile is live. Students looking for help in your department can find and message you now.",
           duration: 8000,
@@ -323,7 +323,7 @@ export const useMentorForm = (userId: string, initialData: MentorFormData, isEdi
           await createNotification({
             user_id: userId,
             type: "system",
-            title: "You're a mentor 🎉",
+            title: "You're a mentor",
             content: `Your profile is live and students can message you. Help ${MIN_STUDENTS_FOR_CERTIFICATE} of them through a real conversation and you earn your certificate.`,
             data: { mentor_welcome: true },
           });

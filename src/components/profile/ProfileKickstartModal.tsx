@@ -85,7 +85,7 @@ export function ProfileKickstartModal({
     };
 
     setImportedPreview(preview);
-    toast.success("PDF parsed! Review the preview below and click 'Save to My Profile 🎉'.");
+    toast.success("PDF parsed. Review the preview below and click 'Save to My Profile'.");
   };
 
   const handleSaveImportedData = async () => {
@@ -164,7 +164,7 @@ export function ProfileKickstartModal({
 
       await refreshProfile();
       onProfileUpdated?.();
-      toast.success("Profile saved successfully! Your public card is now active 🎉");
+      toast.success("Profile saved. Your public card is now active.");
       onOpenChange(false);
     } catch (err: unknown) {
       console.error("Error saving imported data:", err);
@@ -295,7 +295,7 @@ export function ProfileKickstartModal({
                       disabled={isSaving}
                       className="w-full font-medium"
                     >
-                      {isSaving ? "Saving..." : "Save to My Profile 🎉"}
+                      {isSaving ? "Saving..." : "Save to My Profile"}
                     </Button>
                     <Button
                       asChild

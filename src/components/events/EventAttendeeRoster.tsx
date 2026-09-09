@@ -147,8 +147,8 @@ export const EventAttendeeRoster: React.FC<EventAttendeeRosterProps> = ({ event 
     } else {
       toast.success(
         status === "going"
-          ? "You're marked as Going! 🎉"
-          : "You're marked as Interested! ⭐",
+          ? "Marked as Going."
+          : "Marked as Interested.",
         {
           description: "Peers can now see you're attending.",
         }
@@ -587,8 +587,9 @@ export const EventAttendeeRoster: React.FC<EventAttendeeRosterProps> = ({ event 
                       {/* Attendee Note Bubble if provided */}
                       {attendee.note && (
                         <div className="mt-2.5 rounded-lg bg-muted/60 px-2.5 py-1.5 text-xs text-foreground/90 border border-border/40">
-                          <p className="line-clamp-2 leading-relaxed text-[11px]">
-                            💬 “{attendee.note}”
+                          <p className="flex items-center gap-1.5 line-clamp-2 leading-relaxed text-[11px]">
+                            <MessageSquare className="h-3 w-3 inline text-muted-foreground shrink-0" />
+                            <span>“{attendee.note}”</span>
                           </p>
                         </div>
                       )}

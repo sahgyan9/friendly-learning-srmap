@@ -9,7 +9,7 @@ import { getMentorVerification, canEditApplication } from "@/integrations/supaba
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, Edit, FileText, Clock, CheckCircle, XCircle } from "lucide-react";
+import { AlertTriangle, Edit, FileText, Clock, CheckCircle, XCircle, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
@@ -113,7 +113,7 @@ const BecomeMentor = () => {
         return {
           icon: <CheckCircle className="h-6 w-6 text-green-600" />,
           badge: <Badge variant="outline" className="bg-green-50 text-green-800 border-green-200 dark:bg-green-950/60 dark:text-green-200 dark:border-green-800">Live</Badge>,
-          title: "You're a mentor 🎉",
+          title: "You're a mentor",
           description: "Your profile is live. Students can find you in the mentor list and message you.",
           cardClass: "border-green-200 bg-green-50 dark:bg-green-900/20"
         };
@@ -239,8 +239,9 @@ const BecomeMentor = () => {
                     )}
                     
                     <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200">
-                      <p className="text-sm text-blue-700 dark:text-blue-300">
-                        💡 <strong>Good news:</strong> Your previous information has been saved. You can edit your application and make the suggested improvements.
+                      <p className="flex items-start gap-2 text-sm text-blue-700 dark:text-blue-300">
+                        <Info className="h-4 w-4 text-blue-600 shrink-0 mt-0.5" />
+                        <span><strong>Good news:</strong> Your previous information has been saved. You can edit your application and make the suggested improvements.</span>
                       </p>
                     </div>
 

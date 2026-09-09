@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, Edit, FileText, ArrowRight, X } from "lucide-react";
+import { AlertTriangle, Edit, FileText, ArrowRight, X, Info } from "lucide-react";
 import { Link } from "react-router-dom";
 import { getMentorVerification } from "@/integrations/supabase/services/mentor-verification";
 import { useAuth } from "@/context/AuthContext";
@@ -53,7 +53,7 @@ const RejectedApplicationNotice = () => {
             <div className="flex-1 space-y-3">
               <div className="flex items-center space-x-2">
                 <h3 className="text-lg font-semibold text-amber-800 dark:text-amber-200">
-                  🎯 Your Mentor Application Needs Attention
+                  Your Mentor Application Needs Attention
                 </h3>
                 <Badge variant="outline" className="bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300">
                   Action Required
@@ -92,8 +92,8 @@ const RejectedApplicationNotice = () => {
               </div>
 
               <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
-                <div className="flex items-start space-x-2">
-                  <div className="text-blue-500 text-lg">💡</div>
+                <div className="flex items-start space-x-2.5">
+                  <Info className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5 shrink-0" />
                   <div>
                     <p className="text-sm font-medium text-blue-800 dark:text-blue-200 mb-1">
                       Don't worry, your data is safe!

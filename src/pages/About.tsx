@@ -11,6 +11,7 @@ import StructuredData from "@/components/StructuredData";
 import { getOrganizationSchema } from "@/lib/structured-data";
 import { OPEN_SEARCH_EVENT } from "@/lib/search/events";
 import { getTeamMembers, TeamMember } from "@/integrations/supabase/services/team-members";
+import { MessageSquare, Brain, GraduationCap, BookOpen, Users, Rocket, FileText, Handshake, Trophy } from "lucide-react";
 
 const About = () => {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
@@ -141,17 +142,23 @@ const About = () => {
                 <h2 className="text-2xl sm:text-3xl font-bold mb-6">Everything the Platform Does</h2>
                 <div className="grid md:grid-cols-2 gap-5">
                   <div className="p-6 border rounded-xl bg-card shadow-xs">
-                    <div className="text-3xl mb-3">💬</div>
+                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary mb-3">
+                      <MessageSquare className="w-5 h-5" />
+                    </div>
                     <h3 className="text-lg font-bold mb-2">Community Posts</h3>
                     <p className="text-muted-foreground text-sm leading-relaxed">Share what's on your mind. Post a call for hackathon teammates, a research collaborator, or a study partner. The campus community can reply, react, and connect with you directly.</p>
                   </div>
                   <div className="p-6 border rounded-xl bg-card shadow-xs">
-                    <div className="text-3xl mb-3">🧠</div>
+                    <div className="w-10 h-10 rounded-lg bg-purple-500/10 dark:bg-purple-900/30 flex items-center justify-center text-purple-600 dark:text-purple-400 mb-3">
+                      <Brain className="w-5 h-5" />
+                    </div>
                     <h3 className="text-lg font-bold mb-2">CampusBrain Search</h3>
                     <p className="text-muted-foreground text-sm leading-relaxed">The smartest search on campus. Type a natural-language query — <em>"who knows computer vision for a research project"</em> — and CampusBrain surfaces matching students and faculty together in one result.</p>
                   </div>
                   <div className="p-6 border rounded-xl bg-card shadow-xs">
-                    <div className="text-3xl mb-3">🎓</div>
+                    <div className="w-10 h-10 rounded-lg bg-blue-500/10 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 mb-3">
+                      <GraduationCap className="w-5 h-5" />
+                    </div>
                     <h3 className="text-lg font-bold mb-2">Peer Mentors</h3>
                     <p className="text-muted-foreground text-sm leading-relaxed">
                       Senior students who've taken your exact courses. Message them directly for course help, project feedback, or career advice. Mentors who genuinely help 3 students earn a verified certificate — see{" "}
@@ -159,17 +166,23 @@ const About = () => {
                     </p>
                   </div>
                   <div className="p-6 border rounded-xl bg-card shadow-xs">
-                    <div className="text-3xl mb-3">👨‍🏫</div>
+                    <div className="w-10 h-10 rounded-lg bg-emerald-500/10 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 mb-3">
+                      <BookOpen className="w-5 h-5" />
+                    </div>
                     <h3 className="text-lg font-bold mb-2">Faculty Directory</h3>
                     <p className="text-muted-foreground text-sm leading-relaxed">The full SRM AP faculty catalogue with research interests, department, and ratings. Find the right professor for your next project, paper, or elective decision — before you commit.</p>
                   </div>
                   <div className="p-6 border rounded-xl bg-card shadow-xs">
-                    <div className="text-3xl mb-3">🏠</div>
+                    <div className="w-10 h-10 rounded-lg bg-amber-500/10 dark:bg-amber-900/30 flex items-center justify-center text-amber-600 dark:text-amber-400 mb-3">
+                      <Users className="w-5 h-5" />
+                    </div>
                     <h3 className="text-lg font-bold mb-2">Groups & Workspaces</h3>
                     <p className="text-muted-foreground text-sm leading-relaxed">Once you find your people, create a group. Private groups for your team to plan and coordinate. Public groups for communities of interest. Start the conversation and work toward the win together.</p>
                   </div>
                   <div className="p-6 border rounded-xl bg-card shadow-xs">
-                    <div className="text-3xl mb-3">🚀</div>
+                    <div className="w-10 h-10 rounded-lg bg-rose-500/10 dark:bg-rose-900/30 flex items-center justify-center text-rose-600 dark:text-rose-400 mb-3">
+                      <Rocket className="w-5 h-5" />
+                    </div>
                     <h3 className="text-lg font-bold mb-2">Opportunities</h3>
                     <p className="text-muted-foreground text-sm leading-relaxed">Hackathons, internships, and research calls — posted by students and faculty across campus. Filter by type, find what matches your skills, and form your team right on the platform.</p>
                   </div>
@@ -220,17 +233,23 @@ const About = () => {
                 <h2 className="text-2xl sm:text-3xl font-bold mb-6">How It Works</h2>
                 <div className="grid md:grid-cols-3 gap-6">
                   <div className="text-center p-6 border rounded-xl bg-card shadow-xs">
-                    <div className="text-4xl mb-4">📝</div>
+                    <div className="w-12 h-12 mx-auto rounded-xl bg-primary/10 flex items-center justify-center text-primary mb-4">
+                      <FileText className="w-6 h-6" />
+                    </div>
                     <h3 className="text-xl font-bold mb-2">Post or Search</h3>
                     <p className="text-sm text-muted-foreground leading-relaxed">Post what you're looking for on the community board, or use CampusBrain to search in plain English — <em>"ML researcher for a CV project"</em> — and get matched instantly.</p>
                   </div>
                   <div className="text-center p-6 border rounded-xl bg-card shadow-xs">
-                    <div className="text-4xl mb-4">🤝</div>
+                    <div className="w-12 h-12 mx-auto rounded-xl bg-blue-500/10 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 mb-4">
+                      <Handshake className="w-6 h-6" />
+                    </div>
                     <h3 className="text-xl font-bold mb-2">Find & Connect</h3>
                     <p className="text-sm text-muted-foreground leading-relaxed">Browse mentor profiles, faculty research pages, or group listings. Message a mentor directly, or reach out to collaborators who replied to your post.</p>
                   </div>
                   <div className="text-center p-6 border rounded-xl bg-card shadow-xs">
-                    <div className="text-4xl mb-4">🏆</div>
+                    <div className="w-12 h-12 mx-auto rounded-xl bg-amber-500/10 dark:bg-amber-900/30 flex items-center justify-center text-amber-600 dark:text-amber-400 mb-4">
+                      <Trophy className="w-6 h-6" />
+                    </div>
                     <h3 className="text-xl font-bold mb-2">Form a Group & Win</h3>
                     <p className="text-sm text-muted-foreground leading-relaxed">Once you have your people, start a private or public group workspace. Plan, coordinate, build — and submit that hackathon project, research paper, or startup pitch together.</p>
                   </div>

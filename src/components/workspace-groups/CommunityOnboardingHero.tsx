@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Compass, Plus, Sparkles, Users, Zap } from "lucide-react";
+import { ArrowRight, BookOpen, Code, Compass, Palette, Plus, Sparkles, Users, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CommunityCard } from "@/components/workspace-groups/CommunityCard";
 import type { Community } from "@/integrations/supabase/services/communities";
@@ -18,6 +18,7 @@ interface InterestFilter {
   id: string;
   label: string;
   categoryName: string;
+  icon: React.ComponentType<{ className?: string }>;
   kinds?: string[];
   keywords?: string[];
 }
@@ -25,20 +26,23 @@ interface InterestFilter {
 const INTEREST_TAGS: InterestFilter[] = [
   {
     id: "all",
-    label: "✨ All Recommendations",
+    label: "All Recommendations",
     categoryName: "Starter",
+    icon: Sparkles,
   },
   {
     id: "hackathons",
-    label: "⚡ Hackathons & SIH",
+    label: "Hackathons & SIH",
     categoryName: "Hackathon & SIH",
+    icon: Zap,
     kinds: ["hackathon", "project"],
     keywords: ["hackathon", "hackthon", "sih", "teammate", "team", "competition", "dev"],
   },
   {
     id: "dev-tech",
-    label: "💻 Tech & Dev Projects",
+    label: "Tech & Dev Projects",
     categoryName: "Tech & Coding",
+    icon: Code,
     kinds: ["hackathon", "project", "research"],
     keywords: [
       "mern",
@@ -60,15 +64,17 @@ const INTEREST_TAGS: InterestFilter[] = [
   },
   {
     id: "study-research",
-    label: "📚 Study & Research",
+    label: "Study & Research",
     categoryName: "Study & Research",
+    icon: BookOpen,
     kinds: ["study", "research"],
     keywords: ["study", "research", "exam", "battery", "technology", "lab", "paper", "prep", "notes", "course"],
   },
   {
     id: "clubs-culture",
-    label: "🎭 Clubs & Wellness",
+    label: "Clubs & Wellness",
     categoryName: "Clubs & Wellness",
+    icon: Palette,
     kinds: ["club", "general"],
     keywords: ["club", "wellness", "health", "mindful", "culture", "music", "dance", "sports", "art", "society"],
   },
@@ -136,13 +142,14 @@ export function CommunityOnboardingHero({
                   type="button"
                   onClick={() => setSelectedTag(tag.id)}
                   className={cn(
-                    "rounded-full px-3.5 py-1.5 text-xs font-medium transition-all duration-200 shadow-2xs",
+                    "inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-medium transition-all duration-200 shadow-2xs",
                     active
                       ? "bg-primary text-primary-foreground font-semibold shadow-xs scale-105"
                       : "border border-border/80 bg-card/80 text-muted-foreground hover:bg-accent hover:text-foreground hover:border-primary/40",
                   )}
                 >
-                  {tag.label}
+                  <tag.icon className="h-3.5 w-3.5" />
+                  <span>{tag.label}</span>
                 </button>
               );
             })}

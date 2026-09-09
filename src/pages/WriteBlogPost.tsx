@@ -345,10 +345,10 @@ export const WriteBlogPost = () => {
       if (publish) {
         localStorage.removeItem("fl_blog_draft_new");
         triggerEmbedding();
-        toast.success("🎉 Post published to Community Blog!");
+        toast.success("Post published to Community Blog.");
         navigate(`/blogs/${finalSlug}`);
       } else {
-        toast.success("💾 Draft saved to cloud and browser!");
+        toast.success("Draft saved.");
         navigate("/blogs");
       }
     } catch (error) {

@@ -9,6 +9,11 @@ import {
   ArrowRight,
   CheckCircle2,
   Cpu,
+  GraduationCap,
+  Calendar,
+  BookOpen,
+  Users,
+  PenLine,
 } from "lucide-react";
 
 interface Phase {
@@ -330,12 +335,13 @@ export function FutureVision() {
 
                 {/* Orbiting nodes */}
                 {[
-                  { angle: 0, label: "Mentor", icon: "🎓" },
-                  { angle: 72, label: "Events", icon: "📅" },
-                  { angle: 144, label: "Faculty", icon: "📖" },
-                  { angle: 216, label: "Groups", icon: "👥" },
-                  { angle: 288, label: "Posts", icon: "📝" },
+                  { angle: 0, label: "Mentor", icon: GraduationCap },
+                  { angle: 72, label: "Events", icon: Calendar },
+                  { angle: 144, label: "Faculty", icon: BookOpen },
+                  { angle: 216, label: "Groups", icon: Users },
+                  { angle: 288, label: "Posts", icon: PenLine },
                 ].map((node) => {
+                  const NodeIcon = node.icon;
                   const rad = (node.angle * Math.PI) / 180;
                   const r = 105; // orbit radius in px
                   const x = Math.cos(rad) * r;
@@ -343,7 +349,7 @@ export function FutureVision() {
                   return (
                     <motion.div
                       key={node.label}
-                      className="absolute w-12 h-12 rounded-full bg-card border border-border shadow-md flex items-center justify-center text-lg"
+                      className="absolute w-12 h-12 rounded-full bg-card border border-border shadow-md flex items-center justify-center text-primary"
                       style={{
                         left: `calc(50% + ${x}px - 24px)`,
                         top: `calc(50% + ${y}px - 24px)`,
@@ -357,7 +363,7 @@ export function FutureVision() {
                       }}
                       title={node.label}
                     >
-                      {node.icon}
+                      <NodeIcon className="w-5 h-5 text-primary" />
                     </motion.div>
                   );
                 })}

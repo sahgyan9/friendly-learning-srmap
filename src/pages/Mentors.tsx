@@ -31,7 +31,7 @@ const DOMAIN_FILTERS = [
   { id: "quantum", label: "Quantum & Physics", icon: Atom },
   { id: "design", label: "Design & UI/UX", icon: Palette },
   { id: "alumni", label: "Alumni", icon: GraduationCap },
-  { id: "top", label: "Top Rated ⭐", icon: Star },
+  { id: "top", label: "Top Rated", icon: Star },
 ];
 
 const MENTORS_CACHE_KEY = "mentors_list";

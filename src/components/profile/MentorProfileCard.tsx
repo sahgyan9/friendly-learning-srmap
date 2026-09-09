@@ -1,4 +1,4 @@
-import { Award, GraduationCap } from "lucide-react";
+import { Award, GraduationCap, Star } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -106,7 +106,10 @@ export function MentorProfileCard({
           <div className="flex items-center gap-4 p-3 bg-muted rounded-lg">
             <div>
               <p className="text-2xl font-bold">{(mentorProfile.rating || 0).toFixed(1)}</p>
-              <p className="text-xs text-muted-foreground">⭐ Rating</p>
+              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                <Star className="h-3 w-3 fill-amber-500 text-amber-500" />
+                <span>Rating</span>
+              </p>
             </div>
             <div className="h-10 w-px bg-border" />
             <div>

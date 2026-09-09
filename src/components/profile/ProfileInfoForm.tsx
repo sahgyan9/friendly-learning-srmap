@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { GraduationCap, Loader2, User, Sparkles, Bell, BellRing, Smartphone, Send, CheckCircle2 } from "lucide-react";
+import { GraduationCap, Loader2, User, Sparkles, Bell, BellRing, Smartphone, Send, CheckCircle2, Star } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -137,9 +137,10 @@ export function ProfileInfoForm({
                 {showMentorFields && (
                   <Badge
                     variant="outline"
-                    className="bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/30 font-medium text-xs px-2.5 py-0.5"
+                    className="bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/30 font-medium text-xs px-2.5 py-0.5 inline-flex items-center"
                   >
-                    ⭐ Peer Mentor
+                    <Star className="h-3 w-3 mr-1 fill-amber-500 text-amber-500" />
+                    <span>Peer Mentor</span>
                   </Badge>
                 )}
               </div>
