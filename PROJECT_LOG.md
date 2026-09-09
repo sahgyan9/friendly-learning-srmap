@@ -135,8 +135,49 @@
   - `npm run typecheck`: 0 errors.
   - `npm run test:migrations`: All checks passed against real Postgres.
   - Visual QA verified: `PHY 424` is sky blue, `PHY 425` is amber, `PHY 426` is emerald across both matrix and directory; L-T-P-C displays exact numbers (`2-0-2-4`, `3-1-0-4`) cleanly.
+---
+
+### Session 004 — 2026-09-09 · Agent: Antigravity (Gemini 3.8 Flash)
+- **Prompt**:
+  1. "if you notice, we have recently added timetable in our platform. I observed many people suffer from find because they don't get notification when the money get raised in their portal. If you see the portal of sahgyan9@gmail.com I have to pay the fee and if i don't pay fee there will be fine. I want my platform to notify users when money is raised in their portal, and even when fine is raised. Our portal should notify money is raised it notifiy that the money is raised Please pay on time to avoid Penalty of Fine. Avoid AI-ish behaviour (you can read doc), ask for any doubt and first verify that you are able to sync Finance data from portal"
+  2. Constraints agreed with user: In-app and Web Push only (no emails); tab named "Fee & Finance" on `/srmportal?tab=finance`; daily sync at 5:30 PM IST cron + on-demand manual sync; strict compliance with `AI_STYLE_GUIDE.md`.
+- **Root Cause Analysis (RCA)**:
+  - **SRM AP Finance Architecture Investigation**:
+    - Probed SRM AP student portal endpoints (`student.srmap.edu.in/srmapstudentcorner/`):
+      - Active unpaid fee dues do **NOT** live in `studentreportresources.jsp`. They live in `students/transaction/feeduegroups.jsp` with POST `ids=8`.
+      - Historical fee payments and receipts live in `students/report/studentreportresources.jsp` with POST `ids=7` (`#tbl7`).
+      - Account `AP23111260062` (`sahgyan9@gmail.com`) currently has INR 1,47,900 in pending Hostel Fees (Mess: 73,950.00; Room Rent: 73,950.00) and 15 historical receipts.
+    - **Notification Constraint Requirement**:
+      - `public.notifications.type` had a CHECK constraint (`notifications_type_check`) that rejected any type other than legacy types. Inserting `fee_alert` caused Postgres error `23514`.
+    - **Data Integrity & RLS**:
+      - Separate tables `public.student_fee_dues` and `public.student_fee_paid_history` were needed with user-scoped RLS policies and `authenticated`/`service_role` grants.
+- **What was done**:
+  1. **Portal Parser & Live Ingestion**:
+     - Added `parseFeeDues` and `parseFeePaidHistory` in `supabase/functions/_shared/srm-portal.ts`, tested in `tools/test_finance_parser.mjs`.
+     - Updated `fetchAcademicSections` to fetch `feeduegroups.jsp` (`ids=8`) and `studentreportresources.jsp` (`ids=7`).
+  2. **Database Schema & Live Persistence**:
+     - Applied migration `supabase/migrations/20260909030000_student_finance_and_fee_alerts.sql` with `public.student_fee_dues`, `public.student_fee_paid_history`, RLS policies, and `notifications_type_check` extended with `'fee_alert'`.
+     - Populated live dues and history for `sahgyan9@gmail.com` in production DB (`ruapdkrgcbqrhvsayvpf`): 2 dues rows (INR 147,900.00), 15 history rows, and an in-app `fee_alert` notification.
+     - Registered migration in `supabase/tests/verify-migrations.mjs`; clean and upgrade passes verified via `npm run test:migrations`.
+  3. **Edge Functions**:
+     - Updated `sync-srm-portal` and `import-srm-portal` with finance ingestion, fine/fee difference detection, deduplication against recent notifications, in-app notification creation, and `send-push` dispatch.
+     - Deployed both functions to Supabase production with `--no-verify-jwt`.
+  4. **Frontend Integration**:
+     - Created `src/components/finance/FeeFinanceOverview.tsx`: displays outstanding balance (₹1,47,900), "Pay on SRM Portal" direct portal link, penalty notice with "Please pay on time to avoid Penalty of Fine", dues breakdown table with fine badges, and collapsible receipt history with Indian rupee formatting.
+     - Integrated 3rd tab `Fee & Finance` (`?tab=finance`) into `src/pages/Attendance.tsx` with offline caching (`finance_dues`, `finance_history`), pulse dot on active dues, and unified manual sync.
+     - Updated `src/utils/notificationNavigation.ts` to navigate `fee_alert` to `/srmportal?tab=finance`.
+     - Regenerated `src/integrations/supabase/types.ts` with updated database schema.
+  5. **Verification**:
+     - `npm run typecheck`: 0 errors.
+     - `npm run build`: Success (client, SSR, dynamic sitemaps, prerender).
+     - `npm run test:migrations`: All checks passed on Postgres clean & upgrade scenarios.
+     - Visual QA: Puppeteer tests captured desktop (light/dark) and mobile 360px (light/dark) in `.qa-srmportal/`.
+- **Status at end**:
+  - Live finance data synced and verified in production Postgres for `sahgyan9@gmail.com`.
+  - Frontend `Fee & Finance` tab fully functional with offline support and responsive design.
+  - Zero TypeScript errors (baseline maintained at 0).
 - **Next agent should**:
-  - Maintain synchronized color tokens and follow `PROJECT_LOG.md` and `AI_STYLE_GUIDE.md`.
+  - Preserve `student_fee_dues` and `student_fee_paid_history` RLS and follow `PROJECT_LOG.md` and `AI_STYLE_GUIDE.md`.
 
 ---
 
