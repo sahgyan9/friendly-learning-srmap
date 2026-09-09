@@ -914,12 +914,61 @@ export function parseTimeTable(
   const slots: ParsedTimetableSlot[] = [];
   if (!html || typeof html !== "string") return slots;
 
+  // 1. Extract subject details from #tblSubjectList if present in Section 10
+  const localSubjectMap: Record<string, { courseName?: string; facultyName?: string; roomName?: string; ltpc?: string }> = {};
+  const subjectTableMatch = html.match(/<table[^>]*id=["']tblSubjectList["'][^>]*>([\s\S]*?)<\/table>/i);
+  if (subjectTableMatch) {
+    for (const trMatch of subjectTableMatch[1].matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/gi)) {
+      const cells = [...trMatch[1].matchAll(/<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi)].map((m) => stripTags(m[1]));
+      if (cells.length >= 4) {
+        const code = cells[0].toUpperCase().trim();
+        if (/^[A-Z]{2,4}\s*\d{3}[A-Z0-9]*$/i.test(code)) {
+          let fac = cells[3] || "";
+          fac = fac.replace(/\s*\(\s*\d+\s*\)$/, "").trim();
+          localSubjectMap[code] = {
+            courseName: cells[1] || code,
+            ltpc: cells[2] || undefined,
+            facultyName: fac || undefined,
+            roomName: cells[4] || undefined,
+          };
+        }
+      }
+    }
+  }
+
+  // 2. Extract dynamic period timings from the subheader row if present
+  const dynamicTimings: Array<{ hour: number; startTime: string; endTime: string }> = [];
+  const subheaderMatch = html.match(/<tr[^>]*class=["'][^"']*subheader[^"']*["'][^>]*>([\s\S]*?)<\/tr>/i);
+  if (subheaderMatch) {
+    const timeCells = [...subheaderMatch[1].matchAll(/<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi)].map((m) => stripTags(m[1]));
+    for (let i = 1; i < timeCells.length; i++) {
+      const tStr = timeCells[i].trim();
+      const match = tStr.match(/(\d{1,2}):(\d{2})\s*(?:To|-)\s*(\d{1,2}):(\d{2})/i);
+      if (match) {
+        let startH = parseInt(match[1], 10);
+        const startM = match[2];
+        let endH = parseInt(match[3], 10);
+        const endM = match[4];
+
+        // 12-hour afternoon hours: 01:00..07:00 are PM (13..19)
+        if (startH >= 1 && startH <= 7) startH += 12;
+        if (endH >= 1 && endH <= 7) endH += 12;
+
+        dynamicTimings.push({
+          hour: i,
+          startTime: `${String(startH).padStart(2, "0")}:${startM}:00`,
+          endTime: `${String(endH).padStart(2, "0")}:${endM}:00`,
+        });
+      }
+    }
+  }
+
   for (const trMatch of html.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/gi)) {
     const rowHtml = trMatch[1];
-    const cells = [...rowHtml.matchAll(/<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi)].map((m) => m[1]);
+    const cells = [...rowHtml.matchAll(/<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi)];
     if (cells.length < 2) continue;
 
-    const firstCellText = stripTags(cells[0]).trim();
+    const firstCellText = stripTags(cells[0][1]).trim();
     // Match Day 1..Day 6 or Monday..Saturday
     const dayMatch = firstCellText.match(/(?:Day\s*(\d)|(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Mon|Tue|Wed|Thu|Fri|Sat))/i);
     if (!dayMatch) continue;
@@ -946,16 +995,18 @@ export function parseTimeTable(
 
     // Process each hour column in this day row
     for (let colIdx = 1; colIdx < cells.length; colIdx++) {
-      const cellHtml = cells[colIdx];
+      const cellTag = cells[colIdx][0];
+      const cellHtml = cells[colIdx][1];
       const cellText = stripTags(cellHtml).trim();
       if (!cellText || cellText === "-" || /^(free|lunch|break|nil|na)$/i.test(cellText)) continue;
 
       const hour = colIdx;
-      const timing = SRM_PERIOD_TIMINGS.find((t) => t.hour === hour) || {
-        hour,
-        startTime: `${String(8 + hour).padStart(2, "0")}:00:00`,
-        endTime: `${String(8 + hour).padStart(2, "0")}:50:00`,
-      };
+      const timing = dynamicTimings.find((t) => t.hour === hour) ||
+        SRM_PERIOD_TIMINGS.find((t) => t.hour === hour) || {
+          hour,
+          startTime: `${String(8 + hour).padStart(2, "0")}:00:00`,
+          endTime: `${String(8 + hour).padStart(2, "0")}:50:00`,
+        };
 
       // Extract course code (e.g. CSE 302, PHY 424, CSE302)
       const codeMatch = cellText.match(/([A-Z]{2,4}\s*\d{3}[A-Z0-9]*)/i);
@@ -963,18 +1014,34 @@ export function parseTimeTable(
 
       const courseCode = codeMatch[1].toUpperCase().replace(/\s+/, " ");
       const courseDetails = courseMap[courseCode] || courseMap[courseCode.replace(/\s+/, "")];
+      const localDetails = localSubjectMap[courseCode] || localSubjectMap[courseCode.replace(/\s+/, "")];
 
-      // Extract room number if present (e.g. ALH 302, UB-401, Lab 4)
-      const roomMatch = cellText.match(/(?:ALH|UB|CL|TP|LAB|ROOM|HALL)[\s\-_0-9A-Z]+/i);
-      const roomNumber = roomMatch ? roomMatch[0].trim() : null;
+      // Extract room number: check parenthesis first like "(X 312)", "(C 301)", then standard building keywords
+      let roomNumber: string | null = null;
+      const parenRoomMatch = cellText.match(/\(([^)]+)\)/);
+      if (parenRoomMatch && parenRoomMatch[1].trim().length >= 2) {
+        roomNumber = parenRoomMatch[1].trim();
+      } else {
+        const roomMatch = cellText.match(/(?:ALH|UB|CL|TP|LAB|ROOM|HALL)[\s\-_0-9A-Z]+/i);
+        roomNumber = roomMatch ? roomMatch[0].trim() : (localDetails?.roomName || null);
+      }
 
       // Extract slot if present (e.g. A, B, C, D, L1+L2)
       const slotMatch = cellText.match(/\b([A-G][0-9]?|L\d+(?:\+L\d+)?)\b/i);
       const slot = slotMatch ? slotMatch[1].toUpperCase() : (courseDetails?.slot || null);
 
-      const isLab = cellText.toLowerCase().includes("lab") || /L\d+/i.test(slot || "") || courseCode.toLowerCase().includes("l");
-      const courseName = courseDetails?.name || courseCode;
-      const facultyName = courseDetails?.facultyName || cleanFacultyName(cellText, courseName, courseCode);
+      // Extract course name: title attribute (e.g. title="DEVICE CHARACTERIZATION AND INSTRUMENTATION") > local table > courseMap
+      const titleMatch = cellTag.match(/title=["']([^"']*)["']/i);
+      const titleAttr = titleMatch ? titleMatch[1].trim() : "";
+      const courseName = titleAttr || localDetails?.courseName || courseDetails?.name || courseCode;
+
+      // Extract faculty name: localSubjectMap > courseMap > cleanFacultyName
+      const facultyName = localDetails?.facultyName || courseDetails?.facultyName || cleanFacultyName(cellText, courseName, courseCode);
+
+      const isLab = cellText.toLowerCase().includes("lab") ||
+        /L\d+/i.test(slot || "") ||
+        /2-0-2-4/.test(localDetails?.ltpc || "") ||
+        courseCode.toLowerCase().includes("l");
 
       slots.push({
         dayOrder,
@@ -1081,7 +1148,7 @@ export async function fetchAcademicSections(
     courseListHtml: allSectionsHtml[1] || "",
     attendanceHtml: allSectionsHtml[2] || "",
     internalMarksHtml: allSectionsHtml[3] || "",
-    timeTableHtml: allSectionsHtml[4] || "",
+    timeTableHtml: allSectionsHtml[9] || "",
     transcriptHtml: allSectionsHtml[5] || "",
     examDetailsHtml: allSectionsHtml[6] || "",
     allSectionsHtml,
