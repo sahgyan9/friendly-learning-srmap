@@ -268,6 +268,7 @@ Deno.serve(async (req) => {
             faculty_name: slot.facultyName,
             room_number: slot.roomNumber,
             is_lab: slot.isLab,
+            ltpc: slot.ltpc || null,
             last_synced_at: nowIso,
           }, { onConflict: "user_id,day_name,hour,course_code" });
         }

@@ -893,6 +893,7 @@ export interface ParsedTimetableSlot {
   facultyName: string | null;
   roomNumber: string | null;
   isLab: boolean;
+  ltpc?: string | null;
 }
 
 export const SRM_PERIOD_TIMINGS: Array<{ hour: number; startTime: string; endTime: string }> = [
@@ -1055,6 +1056,7 @@ export function parseTimeTable(
         facultyName,
         roomNumber,
         isLab,
+        ltpc: localDetails?.ltpc || null,
       });
     }
   }
