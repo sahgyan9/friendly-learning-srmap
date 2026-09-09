@@ -1,9 +1,11 @@
 import { useState, useEffect, useMemo } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import {
   AlertTriangle,
   ArrowUpDown,
+  Calendar,
   ChevronRight,
+  Clock,
   GraduationCap,
   Info,
   Loader2,
@@ -40,6 +42,10 @@ import { ImportSrmPortalDialog } from "@/components/profile/ImportSrmPortal";
 import { getOfflineCache, setOfflineCache, formatOfflineTime } from "@/lib/offline/offlineStorage";
 import { useNetworkStatus } from "@/hooks/useNetworkStatus";
 import { getFacultyDirectoryUrl } from "@/integrations/supabase/services/faculty";
+import { cn } from "@/lib/utils";
+import WeeklyMatrixTable, { TimetableSlot } from "@/components/timetable/WeeklyMatrixTable";
+import CourseFacultyDirectory from "@/components/timetable/CourseFacultyDirectory";
+import ActiveScheduleBanner from "@/components/timetable/ActiveScheduleBanner";
 
 export interface AttendanceRecord {
   id: string;
@@ -65,7 +71,13 @@ type FilterTab = "all" | "risk" | "safe";
 export default function Attendance() {
   const { user } = useAuth();
   const { isOnline } = useNetworkStatus();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [cachedTime, setCachedTime] = useState<number | null>(null);
+  const [timetableCachedTime, setTimetableCachedTime] = useState<number | null>(null);
+
+  const portalTabParam = searchParams.get("tab");
+  const activePortalTab = portalTabParam === "timetable" ? "timetable" : "attendance";
+  const [activeCourseCode, setActiveCourseCode] = useState<string | null>(null);
 
   // Initialize records from offline cache immediately if available
   const [records, setRecords] = useState<AttendanceRecord[]>(() => {
@@ -88,6 +100,27 @@ export default function Attendance() {
     return true;
   });
 
+  // Initialize timetable slots from offline cache
+  const [timetableSlots, setTimetableSlots] = useState<TimetableSlot[]>(() => {
+    if (user?.id) {
+      const cached = getOfflineCache<TimetableSlot[]>(`timetable:${user.id}`);
+      if (cached?.data && Array.isArray(cached.data) && cached.data.length > 0) {
+        return cached.data;
+      }
+    }
+    return [];
+  });
+
+  const [isTimetableLoading, setIsTimetableLoading] = useState(() => {
+    if (user?.id) {
+      const cached = getOfflineCache<TimetableSlot[]>(`timetable:${user.id}`);
+      if (cached?.data && Array.isArray(cached.data) && cached.data.length > 0) {
+        return false;
+      }
+    }
+    return true;
+  });
+
   const [isSyncing, setIsSyncing] = useState(false);
   const [portalDialogOpen, setPortalDialogOpen] = useState(false);
   const [filterTab, setFilterTab] = useState<FilterTab>("all");
@@ -95,6 +128,21 @@ export default function Attendance() {
   const [sortField, setSortField] = useState<SortField>("attendance_percentage");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   const [simulations, setSimulations] = useState<Record<string, { deltaAttended: number; deltaConducted: number }>>({});
+
+  const handleTabChange = (tab: "attendance" | "timetable") => {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (tab === "attendance") {
+          next.delete("tab");
+        } else {
+          next.set("tab", tab);
+        }
+        return next;
+      },
+      { replace: true }
+    );
+  };
 
   const fetchAttendance = async () => {
     if (!user) return;
@@ -139,23 +187,70 @@ export default function Attendance() {
     }
   };
 
+  const fetchTimetable = async () => {
+    if (!user) return;
+
+    // Load from offline cache first
+    const cached = getOfflineCache<TimetableSlot[]>(`timetable:${user.id}`);
+    if (cached?.data && Array.isArray(cached.data) && cached.data.length > 0) {
+      setTimetableSlots(cached.data);
+      setTimetableCachedTime(cached.savedAt);
+      setIsTimetableLoading(false);
+    }
+
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      setIsTimetableLoading(false);
+      return;
+    }
+
+    if (timetableSlots.length === 0) {
+      setIsTimetableLoading(true);
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from("student_timetables" as any)
+        .select("*")
+        .eq("user_id", user.id)
+        .order("day_order", { ascending: true })
+        .order("hour", { ascending: true });
+
+      if (error) {
+        console.error("Error fetching student timetable:", error);
+      } else {
+        const freshSlots = (data as unknown as TimetableSlot[]) || [];
+        setTimetableSlots(freshSlots);
+        setOfflineCache(`timetable:${user.id}`, freshSlots);
+        setTimetableCachedTime(Date.now());
+      }
+    } catch (err) {
+      console.error("Failed to load timetable:", err);
+    } finally {
+      setIsTimetableLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchAttendance();
+    fetchTimetable();
   }, [user]);
 
-  // Revalidate attendance on pull-to-refresh gesture
+  // Revalidate on pull-to-refresh gesture
   useEffect(() => {
     const handlePullRefresh = () => {
       fetchAttendance();
+      fetchTimetable();
     };
     window.addEventListener("fl:refresh", handlePullRefresh);
     return () => window.removeEventListener("fl:refresh", handlePullRefresh);
   }, [user]);
 
-  // Cached attendance shows immediately while offline; refresh in the
-  // background once the connection returns instead of leaving it stale.
+  // Cached data shows immediately while offline; refresh when connection returns
   useEffect(() => {
-    const handleOnline = () => fetchAttendance();
+    const handleOnline = () => {
+      fetchAttendance();
+      fetchTimetable();
+    };
     window.addEventListener("online", handleOnline);
     return () => window.removeEventListener("online", handleOnline);
   }, [user]);
@@ -163,7 +258,7 @@ export default function Attendance() {
   const handleManualSync = async () => {
     if (!user) return;
     if (typeof navigator !== "undefined" && !navigator.onLine) {
-      toast.error("You are currently offline. Connect to the internet to sync attendance.");
+      toast.error("You are currently offline. Connect to the internet to sync portal data.");
       return;
     }
 
@@ -171,7 +266,7 @@ export default function Attendance() {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        toast.error("Please sign in to sync attendance.");
+        toast.error("Please sign in to sync portal data.");
         return;
       }
 
@@ -180,18 +275,18 @@ export default function Attendance() {
       });
 
       if (res.error || res.data?.error) {
-        const errMsg = res.data?.error || res.error?.message || "Attendance sync failed. Please verify your portal link.";
+        const errMsg = res.data?.error || res.error?.message || "Portal sync failed. Please verify your portal link.";
         toast.error(errMsg);
         if (res.data?.error?.includes("Re-link") || res.data?.error?.includes("No linked")) {
           setPortalDialogOpen(true);
         }
       } else {
-        toast.success("Attendance synced successfully from SRM Portal!");
-        await fetchAttendance();
+        toast.success("SRM Portal synced successfully!");
+        await Promise.all([fetchAttendance(), fetchTimetable()]);
       }
     } catch (err) {
       console.error("Sync error:", err);
-      toast.error("Failed to sync attendance. Please try again.");
+      toast.error("Failed to sync SRM Portal. Please try again.");
     } finally {
       setIsSyncing(false);
     }
@@ -259,7 +354,6 @@ export default function Attendance() {
 
   // Aggregates
   const criticalCourses = records.filter((r) => r.attendance_percentage < 75.0);
-  const lastSync = records[0]?.last_synced_at;
 
   const filteredAndSortedRecords = useMemo(() => {
     const list = records.filter((r) => {
@@ -299,12 +393,21 @@ export default function Attendance() {
   }, [records, filterTab, searchQuery, sortField, sortDirection]);
 
   const hasAnySimulation = Object.keys(simulations).length > 0;
+  const lastSync = records[0]?.last_synced_at || timetableSlots[0]?.last_synced_at;
 
   return (
     <>
       <SEOHead
-        title="Attendance | Friendly Learning SRMAP"
-        description="Track live course attendance from the SRM AP student portal, monitor 75% examination eligibility thresholds, and plan upcoming classes."
+        title={
+          activePortalTab === "timetable"
+            ? "Class Timetable | SRM Portal | Friendly Learning SRMAP"
+            : "Attendance & Bunk Predictor | SRM Portal | Friendly Learning SRMAP"
+        }
+        description={
+          activePortalTab === "timetable"
+            ? "View your SRM AP weekly class timetable, period timings 1 to 8, classroom numbers, and faculty details."
+            : "Track live course attendance from the SRM AP student portal, monitor 75% examination eligibility thresholds, and plan upcoming classes."
+        }
       />
 
       <div className="min-h-screen bg-background pb-16">
@@ -323,20 +426,20 @@ export default function Attendance() {
                 <ChevronRight className="h-3 w-3 text-muted-foreground/60" />
                 <Link to="/profile" className="hover:text-foreground transition-colors">Profile</Link>
                 <ChevronRight className="h-3 w-3 text-muted-foreground/60" />
-                <span className="text-foreground font-medium">Attendance</span>
+                <span className="text-foreground font-medium">SRM Portal</span>
               </div>
 
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                   <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-                    Attendance
+                    SRM Portal
                   </h1>
                   <p className="mt-1 text-xs sm:text-sm text-muted-foreground">
-                    Live from the SRM AP student portal · 75% examination eligibility threshold
+                    Live from the SRM AP student portal · 75% examination eligibility & weekly timetable
                   </p>
                 </div>
 
-                {records.length > 0 && (
+                {(records.length > 0 || timetableSlots.length > 0) && (
                   <div className="flex items-center gap-3 bg-card/80 dark:bg-card/60 backdrop-blur-md px-3.5 py-2 rounded-xl border border-border/70 shadow-xs">
                     <div className="flex items-center gap-2.5">
                       {isOnline ? (
@@ -364,7 +467,7 @@ export default function Attendance() {
                               Offline Mode
                             </span>
                             <span className="text-[10px] text-muted-foreground leading-tight">
-                              Saved {cachedTime ? formatOfflineTime(cachedTime) : (lastSync ? formatRelativeTime(lastSync) : "locally")}
+                              Saved {cachedTime ? formatOfflineTime(cachedTime) : (timetableCachedTime ? formatOfflineTime(timetableCachedTime) : (lastSync ? formatRelativeTime(lastSync) : "locally"))}
                             </span>
                           </div>
                         </>
@@ -381,7 +484,7 @@ export default function Attendance() {
                         onClick={handleManualSync}
                         disabled={isSyncing || !isOnline}
                         className="h-7 px-2.5 text-xs font-medium hover:bg-muted/80 text-foreground gap-1.5 rounded-lg transition-colors"
-                        title={isOnline ? "Fetch latest attendance from SRM portal" : "Connect to internet to sync"}
+                        title={isOnline ? "Fetch latest portal data from SRM portal" : "Connect to internet to sync"}
                       >
                         <RefreshCw className={`h-3 w-3 text-primary ${isSyncing ? "animate-spin" : ""}`} />
                         <span>{isSyncing ? "Syncing…" : "Sync"}</span>
@@ -411,24 +514,16 @@ export default function Attendance() {
 
         <div className="container max-w-5xl mx-auto px-4 sm:px-6 pt-6">
 
-          {/* Loading State */}
-          {isLoading && (
-            <div className="flex flex-col items-center justify-center gap-2.5 text-muted-foreground text-sm min-h-[240px]">
-              <Loader2 className="h-6 w-6 animate-spin text-primary" />
-              <p className="text-xs">Loading attendance records…</p>
-            </div>
-          )}
-
-          {/* Empty / Not Linked State */}
-          {!isLoading && records.length === 0 && (
+          {/* Global Empty / Not Linked State */}
+          {!isLoading && !isTimetableLoading && records.length === 0 && timetableSlots.length === 0 && (
             <div className="border border-dashed border-border/80 rounded-xl py-14 px-6 text-center max-w-lg mx-auto space-y-4">
               <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
                 <GraduationCap className="h-6 w-6" />
               </div>
               <div className="space-y-1.5">
-                <h2 className="text-lg font-bold text-foreground">No attendance linked yet</h2>
+                <h2 className="text-lg font-bold text-foreground">No SRM Portal linked yet</h2>
                 <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                  Connect your SRM AP student portal to see subject-wise attendance, your safe leave buffer above 75%, and eligibility alerts — synced automatically on weekdays.
+                  Connect your SRM AP student portal to see subject-wise attendance, your safe leave buffer above 75%, and your full weekly class timetable — synced automatically.
                 </p>
               </div>
               <Button
@@ -442,9 +537,69 @@ export default function Attendance() {
             </div>
           )}
 
-          {/* Main Attendance Dashboard */}
-          {!isLoading && records.length > 0 && (
-            <div className="space-y-4">
+          {/* Segmented Tab Switcher */}
+          {(records.length > 0 || timetableSlots.length > 0 || isLoading || isTimetableLoading) && (
+            <div className="flex items-center gap-1.5 p-1 bg-muted/40 border border-border/60 rounded-xl w-fit mb-6">
+              <button
+                type="button"
+                onClick={() => handleTabChange("attendance")}
+                className={cn(
+                  "flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all",
+                  activePortalTab === "attendance"
+                    ? "bg-card text-foreground shadow-xs border border-border/50"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <UserCheck className="h-3.5 w-3.5" />
+                <span>Attendance & Bunk Calculator</span>
+                {records.length > 0 && (
+                  <span className="text-[10px] bg-muted px-1.5 py-0.2 rounded-full font-medium">
+                    {records.length}
+                  </span>
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => handleTabChange("timetable")}
+                className={cn(
+                  "flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all",
+                  activePortalTab === "timetable"
+                    ? "bg-card text-foreground shadow-xs border border-border/50"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <Calendar className="h-3.5 w-3.5" />
+                <span>Class Timetable</span>
+                {timetableSlots.length > 0 && (
+                  <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.2 rounded-full font-bold">
+                    {timetableSlots.length}
+                  </span>
+                )}
+              </button>
+            </div>
+          )}
+
+          {/* Tab 1: Attendance Dashboard */}
+          {activePortalTab === "attendance" && (
+            <>
+              {isLoading && records.length === 0 && (
+                <div className="flex flex-col items-center justify-center gap-2.5 text-muted-foreground text-sm min-h-[240px]">
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                  <p className="text-xs">Loading attendance records…</p>
+                </div>
+              )}
+
+              {!isLoading && records.length === 0 && timetableSlots.length > 0 && (
+                <div className="border border-dashed border-border/80 rounded-xl py-12 px-6 text-center max-w-md mx-auto space-y-3">
+                  <h3 className="text-base font-semibold text-foreground">No attendance records found</h3>
+                  <p className="text-xs text-muted-foreground">
+                    Click "Sync" above to fetch your latest attendance records from the portal.
+                  </p>
+                </div>
+              )}
+
+              {records.length > 0 && (
+                <div className="space-y-4">
 
               {/* Shortage Alert (slim banner) */}
               {criticalCourses.length > 0 && (
@@ -786,15 +941,91 @@ export default function Attendance() {
 
             </div>
           )}
+        </>
+      )}
 
-          {/* Re-link Portal Modal */}
-          <ImportSrmPortalDialog
-            open={portalDialogOpen}
-            onOpenChange={setPortalDialogOpen}
-            onSuccess={() => {
-              fetchAttendance();
-            }}
-          />
+      {/* Tab 2: Timetable Dashboard */}
+      {activePortalTab === "timetable" && (
+        <>
+          {isTimetableLoading && timetableSlots.length === 0 && (
+            <div className="flex flex-col items-center justify-center gap-2.5 text-muted-foreground text-sm min-h-[240px]">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              <p className="text-xs">Loading class timetable…</p>
+            </div>
+          )}
+
+          {!isTimetableLoading && timetableSlots.length === 0 && (
+            <div className="border border-dashed border-border/80 rounded-xl py-12 px-6 text-center max-w-md mx-auto space-y-3">
+              <div className="mx-auto w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                <Calendar className="h-5 w-5" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-base font-semibold text-foreground">No timetable records found</h3>
+                <p className="text-xs text-muted-foreground">
+                  If you recently registered or updated courses on the SRM AP portal, click "Sync" to fetch your weekly schedule.
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleManualSync}
+                disabled={isSyncing || !isOnline}
+                className="gap-1.5 text-xs font-medium"
+              >
+                <RefreshCw className={`h-3 w-3 ${isSyncing ? "animate-spin" : ""}`} />
+                <span>{isSyncing ? "Syncing…" : "Sync Timetable"}</span>
+              </Button>
+            </div>
+          )}
+
+          {timetableSlots.length > 0 && (
+            <div className="space-y-6">
+              <ActiveScheduleBanner slots={timetableSlots} />
+
+              {activeCourseCode && (
+                <div className="flex items-center justify-between bg-primary/10 border border-primary/20 text-primary rounded-xl px-4 py-2.5 text-xs">
+                  <div className="flex items-center gap-2">
+                    <span>Filtering timetable for <strong>{activeCourseCode}</strong></span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setActiveCourseCode(null)}
+                    className="font-semibold underline hover:text-foreground transition-colors"
+                  >
+                    Reset highlight
+                  </button>
+                </div>
+              )}
+
+              <WeeklyMatrixTable
+                slots={timetableSlots}
+                activeCourseCode={activeCourseCode}
+                onSelectCourse={(courseCode) =>
+                  setActiveCourseCode((prev) => (prev === courseCode ? null : courseCode))
+                }
+              />
+
+              <CourseFacultyDirectory
+                slots={timetableSlots}
+                activeCourseCode={activeCourseCode}
+                onSelectCourse={(courseCode) =>
+                  setActiveCourseCode((prev) => (prev === courseCode ? null : courseCode))
+                }
+              />
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Re-link Portal Modal */}
+      <ImportSrmPortalDialog
+        open={portalDialogOpen}
+        onOpenChange={setPortalDialogOpen}
+        onSuccess={() => {
+          fetchAttendance();
+          fetchTimetable();
+        }}
+      />
 
         </div>
       </div>

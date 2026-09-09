@@ -304,6 +304,14 @@ function App() {
                       }
                     />
                     <Route
+                      path="/srmportal"
+                      element={
+                        <ProtectedRoute>
+                          <Attendance />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
                       path="/blogs/write"
                       element={
                         <ProtectedRoute>

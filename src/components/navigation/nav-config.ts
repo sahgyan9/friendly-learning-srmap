@@ -139,6 +139,12 @@ export const ROUTE_ACCENT: Record<string, {
     dot: "bg-emerald-500",
     border: "border-emerald-500/40",
   },
+  "/srmportal": {
+    pill: "bg-emerald-500/10",
+    text: "text-emerald-600 dark:text-emerald-400",
+    dot: "bg-emerald-500",
+    border: "border-emerald-500/40",
+  },
 };
 
 /** Matches the most specific accent prefix for a path, falling back to the primary. */

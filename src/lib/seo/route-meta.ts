@@ -152,6 +152,11 @@ export const ROUTE_META: Record<string, RouteMeta> = {
     description:
       "Track live course attendance from the SRM AP student portal, monitor 75% examination eligibility thresholds, and plan upcoming classes.",
   },
+  "/srmportal": {
+    title: "SRM Portal — Attendance & Timetable | Friendly Learning SRMAP",
+    description:
+      "Live SRM AP student portal dashboard — track attendance, 75% examination eligibility margin, and weekly class timetable.",
+  },
   "/srm-ap-student-portal": {
     title:
       "SRM AP Student Portal — Attendance Auto-Synced, No Repeat Logins | Friendly Learning SRMAP",

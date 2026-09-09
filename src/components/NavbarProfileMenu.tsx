@@ -196,7 +196,7 @@ const NavbarProfileMenu = ({ variant = "dropdown" }: { variant?: "dropdown" | "s
             </span>
           ),
         },
-    { key: "attendance", icon: CalendarCheck2, iconClassName: "text-primary", label: "Attendance", to: "/attendance" },
+    { key: "srm-portal", icon: CalendarCheck2, iconClassName: "text-primary", label: "SRM Portal", to: "/srmportal" },
     { key: "settings", icon: Settings, label: "Account Settings", to: "/profile" },
     ...(isAdmin
       ? [
