@@ -88,6 +88,8 @@ Deeper authorities it defers to: [FACULTY_AI_ROADMAP.md](FACULTY_AI_ROADMAP.md)
   commits down by logical concern (e.g. `docs(...)`, `feat(...)`, `fix(...)`,
   `test(...)`, `refactor(...)`) with explicit staging (`git add <files>`).
   Never sweep unrelated working-tree modifications into a feature commit.
+- **Follow `AI_STYLE_GUIDE.md` strictly.** Eliminate emoji clutter in UI/commits/messages, performative cheerleading, and corporate filler. Maintain a direct senior staff engineer tone and explain root causes.
+- **`PROJECT_LOG.md` is mandatory project memory.** Read it before starting any session, and append an entry at the conclusion of every session detailing prompts, RCA, files changed, and verification.
 - **Screenshot before claiming a UI change is done**, at 360px and desktop, in
   both themes. Reusable Puppeteer harnesses exist in `scripts/qa/` (e.g.
   `scripts/qa/qa-signed-in-sweep.mjs` plants a fake session and stubs Supabase

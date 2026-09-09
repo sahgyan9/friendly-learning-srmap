@@ -26,6 +26,8 @@ same commit that ships a task.
   its job — verify that the data actually changed.
 - **This repo lives in a OneDrive-synced folder.** Run `git diff` after every
   edit; files can be silently reverted, including ones you never touched.
+- **Follow `AI_STYLE_GUIDE.md` strictly.** Eliminate emoji clutter, performative cheerleading, and corporate filler. Maintain a direct senior staff engineer tone.
+- **`PROJECT_LOG.md` is mandatory.** Read before starting work and append an entry at the end of every session.
 - **Commit in small, logical increments.** Break changes into clean, atomic
   commits by concern (e.g. `docs(...)`, `feat(...)`, `fix(...)`, `test(...)`)
   rather than a single omnibus commit. Stage files explicitly.
