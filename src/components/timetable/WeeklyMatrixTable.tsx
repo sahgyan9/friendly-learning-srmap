@@ -17,6 +17,7 @@ export interface TimetableSlot {
   faculty_name: string | null;
   room_number: string | null;
   is_lab: boolean;
+  ltpc?: string | null;
   last_synced_at: string;
 }
 
@@ -49,7 +50,7 @@ const COURSE_COLORS: Record<string, { badge: string; text: string; border: strin
   },
 };
 
-const PALETTES = [
+export const PALETTES = [
   {
     badge: "bg-amber-500/10 dark:bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30",
     text: "text-amber-600 dark:text-amber-400",
@@ -77,6 +78,15 @@ const PALETTES = [
   },
 ];
 
+export function getCourseColorMap(slots: TimetableSlot[]) {
+  const map: Record<string, { badge: string; text: string; border: string }> = {};
+  const uniqueCourses = Array.from(new Set(slots.map((s) => s.course_code)));
+  uniqueCourses.forEach((code, idx) => {
+    map[code] = PALETTES[idx % PALETTES.length];
+  });
+  return map;
+}
+
 interface WeeklyMatrixTableProps {
   slots: TimetableSlot[];
   activeCourseCode?: string | null;
@@ -99,12 +109,7 @@ export default function WeeklyMatrixTable({
 
   // Map courses to color tokens
   const courseColorMap = useMemo(() => {
-    const map: Record<string, { badge: string; text: string; border: string }> = {};
-    const uniqueCourses = Array.from(new Set(slots.map((s) => s.course_code)));
-    uniqueCourses.forEach((code, idx) => {
-      map[code] = PALETTES[idx % PALETTES.length];
-    });
-    return map;
+    return getCourseColorMap(slots);
   }, [slots]);
 
   // Check if student has Saturday classes
