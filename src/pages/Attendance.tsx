@@ -654,11 +654,6 @@ export default function Attendance() {
               >
                 <UserCheck className="h-3.5 w-3.5" />
                 <span>Attendance & Bunk Calculator</span>
-                {records.length > 0 && (
-                  <span className="text-[10px] bg-muted px-1.5 py-0.2 rounded-full font-medium">
-                    {records.length}
-                  </span>
-                )}
               </button>
               <button
                 type="button"
@@ -672,11 +667,6 @@ export default function Attendance() {
               >
                 <Calendar className="h-3.5 w-3.5" />
                 <span>Class Timetable</span>
-                {timetableSlots.length > 0 && (
-                  <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.2 rounded-full font-bold">
-                    {timetableSlots.length}
-                  </span>
-                )}
               </button>
               <button
                 type="button"
@@ -692,11 +682,6 @@ export default function Attendance() {
                 <span>Fee & Finance</span>
                 {feeDues.some((d) => d.to_be_paid_amount > 0) && (
                   <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse shrink-0" />
-                )}
-                {feeDues.length > 0 && (
-                  <span className="text-[10px] bg-muted px-1.5 py-0.2 rounded-full font-medium">
-                    {feeDues.length}
-                  </span>
                 )}
               </button>
             </div>
