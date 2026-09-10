@@ -59,6 +59,10 @@ export default function FeeFinanceOverview({
     0
   );
 
+  const totalConcessions = paidHistory
+    .filter((h) => Number(h.paid_amount) === 0 && Number(h.amount) > 0)
+    .reduce((sum, h) => sum + (Number(h.amount) || 0), 0);
+
   const portalPaymentUrl = "https://student.srmap.edu.in/srmapstudentcorner";
 
   if (isLoading && dues.length === 0 && paidHistory.length === 0) {
@@ -203,11 +207,21 @@ export default function FeeFinanceOverview({
             </p>
           </div>
 
-          <div className="mt-4 pt-3 border-t border-border/40 flex items-center justify-between text-xs text-muted-foreground">
-            <span>Historical total paid:</span>
-            <span className="font-mono font-medium text-foreground">
-              {formatINR(totalLifetimePaid)}
-            </span>
+          <div className="mt-4 pt-3 border-t border-border/40 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-muted-foreground">
+            <div className="flex items-center justify-between sm:justify-start gap-2">
+              <span>Historical total paid:</span>
+              <span className="font-mono font-medium text-foreground">
+                {formatINR(totalLifetimePaid)}
+              </span>
+            </div>
+            {totalConcessions > 0 && (
+              <div className="flex items-center justify-between sm:justify-end gap-1.5 text-[11px]">
+                <span className="text-muted-foreground">Scholarship Concessions:</span>
+                <span className="font-mono font-medium text-emerald-600 dark:text-emerald-400">
+                  {formatINR(totalConcessions)}
+                </span>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -384,42 +398,66 @@ export default function FeeFinanceOverview({
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {paidHistory.map((item) => (
-                        <TableRow
-                          key={item.id}
-                          className="border-border/60 hover:bg-muted/30 transition-colors text-xs"
-                        >
-                          <TableCell className="font-medium text-foreground whitespace-nowrap">
-                            {item.term}
-                          </TableCell>
-                          <TableCell className="text-foreground max-w-xs truncate" title={item.fee_type}>
-                            {item.fee_type}
-                          </TableCell>
-                          <TableCell className="font-mono text-muted-foreground max-w-[140px] truncate" title={item.receipt_number}>
-                            {item.receipt_number || "—"}
-                          </TableCell>
-                          <TableCell className="text-muted-foreground whitespace-nowrap">
-                            {item.receipt_date || item.due_date || "—"}
-                          </TableCell>
-                          <TableCell className="text-muted-foreground max-w-[120px] truncate" title={item.payment_mode || ""}>
-                            {item.payment_mode || "—"}
-                          </TableCell>
-                          <TableCell className="font-mono font-medium text-right text-foreground whitespace-nowrap">
-                            {formatINR(Number(item.paid_amount) || 0)}
-                          </TableCell>
-                          <TableCell className="font-mono text-right text-muted-foreground whitespace-nowrap">
-                            {Number(item.balance_due) > 0 ? (
-                              <span className="text-destructive font-semibold">
-                                {formatINR(Number(item.balance_due))}
-                              </span>
-                            ) : (
-                              <span className="text-emerald-600 dark:text-emerald-400">
-                                ₹0
-                              </span>
+                      {paidHistory.map((item) => {
+                        const isConcession = Number(item.paid_amount) === 0 && Number(item.amount) > 0;
+                        return (
+                          <TableRow
+                            key={item.id}
+                            className={cn(
+                              "border-border/60 hover:bg-muted/30 transition-colors text-xs",
+                              isConcession && "bg-muted/15"
                             )}
-                          </TableCell>
-                        </TableRow>
-                      ))}
+                          >
+                            <TableCell className="font-medium text-foreground whitespace-nowrap">
+                              {item.term}
+                            </TableCell>
+                            <TableCell className="text-foreground max-w-xs truncate" title={item.fee_type}>
+                              <div className="flex items-center gap-1.5">
+                                <span className="truncate">{item.fee_type}</span>
+                                {isConcession && (
+                                  <Badge
+                                    variant="outline"
+                                    className="text-[10px] px-1.5 py-0 border-emerald-500/30 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 shrink-0 font-medium"
+                                  >
+                                    Waiver
+                                  </Badge>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell className="font-mono text-muted-foreground max-w-[140px] truncate" title={item.receipt_number}>
+                              {item.receipt_number || "—"}
+                            </TableCell>
+                            <TableCell className="text-muted-foreground whitespace-nowrap">
+                              {item.receipt_date || item.due_date || "—"}
+                            </TableCell>
+                            <TableCell className="text-muted-foreground max-w-[120px] truncate" title={item.payment_mode || ""}>
+                              {item.payment_mode || "—"}
+                            </TableCell>
+                            <TableCell className="font-mono font-medium text-right whitespace-nowrap">
+                              {isConcession ? (
+                                <span className="text-emerald-600 dark:text-emerald-400 font-semibold" title={`Institutional waiver credit: ${formatINR(Number(item.amount))}`}>
+                                  {formatINR(Number(item.amount))}
+                                </span>
+                              ) : (
+                                <span className="text-foreground">
+                                  {formatINR(Number(item.paid_amount) || 0)}
+                                </span>
+                              )}
+                            </TableCell>
+                            <TableCell className="font-mono text-right text-muted-foreground whitespace-nowrap">
+                              {Number(item.balance_due) > 0 ? (
+                                <span className="text-destructive font-semibold">
+                                  {formatINR(Number(item.balance_due))}
+                                </span>
+                              ) : (
+                                <span className="text-emerald-600 dark:text-emerald-400">
+                                  ₹0
+                                </span>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
                     </TableBody>
                   </Table>
                 </div>
