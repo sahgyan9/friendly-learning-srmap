@@ -66,9 +66,22 @@ export interface AttendanceRecord {
   last_synced_at: string;
 }
 
+export interface StudentDailyAttendance {
+  id: string;
+  user_id: string;
+  register_number: string;
+  attendance_date: string;
+  day_order: string;
+  period_slot: number;
+  course_code: string;
+  course_name: string;
+  status: string;
+  last_synced_at: string;
+}
+
 type SortField = "course_code" | "attendance_percentage" | "conducted_hours" | "margin";
 type SortDirection = "asc" | "desc";
-type FilterTab = "all" | "risk" | "safe";
+type FilterTab = "all" | "risk" | "safe" | "today";
 
 export default function Attendance() {
   const { user } = useAuth();
@@ -159,6 +172,17 @@ export default function Attendance() {
       }
     }
     return true;
+  });
+
+  // Initialize today's daily attendance from offline cache
+  const [dailyAttendance, setDailyAttendance] = useState<StudentDailyAttendance[]>(() => {
+    if (user?.id) {
+      const cached = getOfflineCache<StudentDailyAttendance[]>(`daily_attendance:${user.id}`);
+      if (cached?.data && Array.isArray(cached.data) && cached.data.length > 0) {
+        return cached.data;
+      }
+    }
+    return [];
   });
 
   const [isSyncing, setIsSyncing] = useState(false);
@@ -325,10 +349,42 @@ export default function Attendance() {
     }
   };
 
+  const fetchDailyAttendance = async () => {
+    if (!user) return;
+
+    // Load from offline cache first
+    const cached = getOfflineCache<StudentDailyAttendance[]>(`daily_attendance:${user.id}`);
+    if (cached?.data && Array.isArray(cached.data) && cached.data.length > 0) {
+      setDailyAttendance(cached.data);
+    }
+
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from("student_daily_attendance" as any)
+        .select("*")
+        .eq("user_id", user.id)
+        .order("attendance_date", { ascending: false })
+        .order("period_slot", { ascending: true });
+
+      if (!error && data) {
+        const freshDaily = (data as unknown as StudentDailyAttendance[]) || [];
+        setDailyAttendance(freshDaily);
+        setOfflineCache(`daily_attendance:${user.id}`, freshDaily);
+      }
+    } catch (err) {
+      console.error("Failed to load daily attendance:", err);
+    }
+  };
+
   useEffect(() => {
     fetchAttendance();
     fetchTimetable();
     fetchFinance();
+    fetchDailyAttendance();
   }, [user]);
 
   // Revalidate on pull-to-refresh gesture
@@ -337,6 +393,7 @@ export default function Attendance() {
       fetchAttendance();
       fetchTimetable();
       fetchFinance();
+      fetchDailyAttendance();
     };
     window.addEventListener("fl:refresh", handlePullRefresh);
     return () => window.removeEventListener("fl:refresh", handlePullRefresh);
@@ -348,6 +405,7 @@ export default function Attendance() {
       fetchAttendance();
       fetchTimetable();
       fetchFinance();
+      fetchDailyAttendance();
     };
     window.addEventListener("online", handleOnline);
     return () => window.removeEventListener("online", handleOnline);
@@ -380,7 +438,7 @@ export default function Attendance() {
         }
       } else {
         toast.success("SRM Portal synced successfully!");
-        await Promise.all([fetchAttendance(), fetchTimetable(), fetchFinance()]);
+        await Promise.all([fetchAttendance(), fetchTimetable(), fetchFinance(), fetchDailyAttendance()]);
       }
     } catch (err) {
       console.error("Sync error:", err);
@@ -453,10 +511,47 @@ export default function Attendance() {
   // Aggregates
   const criticalCourses = records.filter((r) => r.attendance_percentage < 75.0);
 
+  const latestAttendanceDate = useMemo(() => {
+    if (dailyAttendance.length === 0) return null;
+    return dailyAttendance[0].attendance_date;
+  }, [dailyAttendance]);
+
+  const todayAttendanceRecords = useMemo(() => {
+    if (!latestAttendanceDate) return [];
+    return dailyAttendance.filter((r) => r.attendance_date === latestAttendanceDate);
+  }, [dailyAttendance, latestAttendanceDate]);
+
+  const todayCourseStatusMap = useMemo(() => {
+    const map = new Map<string, { status: "Present" | "Absent"; date: string }>();
+    if (!todayAttendanceRecords.length) return map;
+
+    const grouped = new Map<string, StudentDailyAttendance[]>();
+    for (const item of todayAttendanceRecords) {
+      const key = item.course_code.trim().toUpperCase().replace(/\s+/g, "");
+      if (!grouped.has(key)) {
+        grouped.set(key, []);
+      }
+      grouped.get(key)!.push(item);
+    }
+
+    for (const [code, items] of grouped.entries()) {
+      const hasAbsent = items.some((i) => i.status.toUpperCase() === "A");
+      map.set(code, {
+        status: hasAbsent ? "Absent" : "Present",
+        date: items[0].attendance_date,
+      });
+    }
+    return map;
+  }, [todayAttendanceRecords]);
+
   const filteredAndSortedRecords = useMemo(() => {
     const list = records.filter((r) => {
       if (filterTab === "risk" && r.attendance_percentage >= 75.0) return false;
       if (filterTab === "safe" && r.attendance_percentage < 75.0) return false;
+      if (filterTab === "today") {
+        const normCode = r.course_code.trim().toUpperCase().replace(/\s+/g, "");
+        if (!todayCourseStatusMap.has(normCode)) return false;
+      }
 
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim();
@@ -488,10 +583,14 @@ export default function Attendance() {
     });
 
     return list;
-  }, [records, filterTab, searchQuery, sortField, sortDirection]);
+  }, [records, filterTab, searchQuery, sortField, sortDirection, todayCourseStatusMap]);
 
   const hasAnySimulation = Object.keys(simulations).length > 0;
-  const lastSync = records[0]?.last_synced_at || timetableSlots[0]?.last_synced_at || feeDues[0]?.last_synced_at;
+  const lastSync =
+    records[0]?.last_synced_at ||
+    timetableSlots[0]?.last_synced_at ||
+    feeDues[0]?.last_synced_at ||
+    dailyAttendance[0]?.last_synced_at;
 
   return (
     <>
@@ -738,6 +837,11 @@ export default function Attendance() {
                       <TabsTrigger value="safe" className="text-xs px-2.5 h-7 data-[state=active]:text-emerald-600 dark:data-[state=active]:text-emerald-400">
                         Safe ({records.length - criticalCourses.length})
                       </TabsTrigger>
+                      {todayCourseStatusMap.size > 0 && (
+                        <TabsTrigger value="today" className="text-xs px-2.5 h-7 data-[state=active]:text-primary font-medium">
+                          Today ({todayCourseStatusMap.size})
+                        </TabsTrigger>
+                      )}
                     </TabsList>
                   </Tabs>
 
@@ -765,236 +869,389 @@ export default function Attendance() {
                 </div>
               </div>
 
-              {/* Table */}
-              <div className="rounded-xl border border-border/60 bg-card overflow-hidden shadow-xs">
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="border-border/60 hover:bg-transparent bg-muted/20">
-                        <TableHead className="min-w-[240px] text-xs font-semibold whitespace-nowrap">
-                          <button
-                            type="button"
-                            onClick={() => handleSort("course_code")}
-                            className="inline-flex items-center gap-1 hover:text-foreground transition-colors"
-                          >
-                            <span>Course & Faculty</span>
-                            <ArrowUpDown className="h-3 w-3 opacity-50" />
-                          </button>
-                        </TableHead>
-                        <TableHead className="min-w-[110px] text-xs font-semibold text-center whitespace-nowrap">
-                          <button
-                            type="button"
-                            onClick={() => handleSort("conducted_hours")}
-                            className="inline-flex items-center gap-1 hover:text-foreground transition-colors mx-auto"
-                          >
-                            <span>Hours</span>
-                            <ArrowUpDown className="h-3 w-3 opacity-50" />
-                          </button>
-                        </TableHead>
-                        <TableHead className="min-w-[130px] text-xs font-semibold text-center whitespace-nowrap">
-                          <button
-                            type="button"
-                            onClick={() => handleSort("attendance_percentage")}
-                            className="inline-flex items-center gap-1 hover:text-foreground transition-colors mx-auto"
-                          >
-                            <span>Attendance</span>
-                            <ArrowUpDown className="h-3 w-3 opacity-50" />
-                          </button>
-                        </TableHead>
-                        <TableHead className="min-w-[130px] text-xs font-semibold text-center whitespace-nowrap">
-                          <button
-                            type="button"
-                            onClick={() => handleSort("margin")}
-                            className="inline-flex items-center gap-1 hover:text-foreground transition-colors mx-auto"
-                          >
-                            <span>75% Margin</span>
-                            <ArrowUpDown className="h-3 w-3 opacity-50" />
-                          </button>
-                        </TableHead>
-                        <TableHead className="min-w-[90px] text-xs font-semibold text-right pr-4 whitespace-nowrap">
-                          Simulate
-                        </TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredAndSortedRecords.map((rec) => {
-                        const {
-                          pct,
-                          cond,
-                          att,
-                          neededForTarget,
-                          safeAllowanceForTarget,
-                          isSimulated,
-                        } = getSimulatedMetrics(rec, 75);
+              {/* Desktop & Tablet Table (compacted for 100% single view without horizontal scroll) */}
+              <div className="hidden sm:block rounded-xl border border-border/60 bg-card overflow-hidden shadow-xs">
+                <Table className="w-full">
+                  <TableHeader>
+                    <TableRow className="border-border/60 hover:bg-transparent bg-muted/20">
+                      <TableHead className="w-[38%] min-w-[170px] text-xs font-semibold whitespace-nowrap px-3 py-2.5">
+                        <button
+                          type="button"
+                          onClick={() => handleSort("course_code")}
+                          className="inline-flex items-center gap-1 hover:text-foreground transition-colors"
+                        >
+                          <span>Course & Faculty</span>
+                          <ArrowUpDown className="h-3 w-3 opacity-50" />
+                        </button>
+                      </TableHead>
+                      <TableHead className="w-[14%] min-w-[70px] text-xs font-semibold text-center whitespace-nowrap px-2 py-2.5">
+                        <button
+                          type="button"
+                          onClick={() => handleSort("conducted_hours")}
+                          className="inline-flex items-center gap-1 hover:text-foreground transition-colors mx-auto"
+                        >
+                          <span>Hours</span>
+                          <ArrowUpDown className="h-3 w-3 opacity-50" />
+                        </button>
+                      </TableHead>
+                      <TableHead className="w-[16%] min-w-[85px] text-xs font-semibold text-center whitespace-nowrap px-2 py-2.5">
+                        <button
+                          type="button"
+                          onClick={() => handleSort("attendance_percentage")}
+                          className="inline-flex items-center gap-1 hover:text-foreground transition-colors mx-auto"
+                        >
+                          <span>Attendance</span>
+                          <ArrowUpDown className="h-3 w-3 opacity-50" />
+                        </button>
+                      </TableHead>
+                      <TableHead className="w-[17%] min-w-[85px] text-xs font-semibold text-center whitespace-nowrap px-2 py-2.5">
+                        <button
+                          type="button"
+                          onClick={() => handleSort("margin")}
+                          className="inline-flex items-center gap-1 hover:text-foreground transition-colors mx-auto"
+                        >
+                          <span>75% Margin</span>
+                          <ArrowUpDown className="h-3 w-3 opacity-50" />
+                        </button>
+                      </TableHead>
+                      <TableHead className="w-[15%] min-w-[75px] text-xs font-semibold text-right pr-3 whitespace-nowrap px-2 py-2.5">
+                        Simulate
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredAndSortedRecords.map((rec) => {
+                      const {
+                        pct,
+                        cond,
+                        att,
+                        neededForTarget,
+                        safeAllowanceForTarget,
+                        isSimulated,
+                      } = getSimulatedMetrics(rec, 75);
 
-                        const isDanger = pct < 75.0;
-                        const isWarning = pct >= 75.0 && pct < 80.0;
-                        const statusColor = isDanger ? "border-l-destructive" : isWarning ? "border-l-amber-500" : "border-l-emerald-500";
-                        const displayedAbsent = isSimulated ? (cond - att) : rec.absent_hours;
+                      const isDanger = pct < 75.0;
+                      const isWarning = pct >= 75.0 && pct < 80.0;
+                      const statusColor = isDanger ? "border-l-destructive" : isWarning ? "border-l-amber-500" : "border-l-emerald-500";
+                      const displayedAbsent = isSimulated ? (cond - att) : rec.absent_hours;
+                      const normCode = rec.course_code.trim().toUpperCase().replace(/\s+/g, "");
+                      const todayStatus = todayCourseStatusMap.get(normCode);
 
-                        return (
-                          <TableRow key={rec.id || rec.course_code} className="border-border/40 hover:bg-muted/30 transition-colors">
-                            {/* 1. Course & Faculty */}
-                            <TableCell className={`py-3.5 align-middle border-l-3 ${statusColor}`}>
-                              <div className="pl-2 space-y-1">
-                                <div className="flex items-center gap-2 flex-wrap">
-                                  <span className="font-bold text-xs text-foreground tracking-tight">
-                                    {rec.course_code}
+                      return (
+                        <TableRow key={rec.id || rec.course_code} className="border-border/40 hover:bg-muted/30 transition-colors">
+                          {/* 1. Course & Faculty */}
+                          <TableCell className={`py-3 px-3 align-middle border-l-3 ${statusColor}`}>
+                            <div className="pl-1.5 space-y-1">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="font-bold text-xs text-foreground tracking-tight">
+                                  {rec.course_code}
+                                </span>
+                                {rec.slot && /^[A-Z][0-9]?(\+[A-Z][0-9]?)*$/i.test(rec.slot.trim()) && (
+                                  <span className="inline-flex items-center text-[10px] font-semibold text-primary bg-primary/10 px-1.5 py-0.2 rounded border border-primary/20">
+                                    {rec.slot}
                                   </span>
-                                  {rec.slot && /^[A-Z][0-9]?(\+[A-Z][0-9]?)*$/i.test(rec.slot.trim()) && (
-                                    <span className="inline-flex items-center text-[10px] font-semibold text-primary bg-primary/10 px-1.5 py-0.2 rounded border border-primary/20">
-                                      {rec.slot}
-                                    </span>
-                                  )}
-                                </div>
-                                <div className="text-xs text-muted-foreground font-medium line-clamp-1" title={rec.course_name}>
-                                  {rec.course_name}
-                                </div>
-                                {rec.faculty_name && 
-                                  rec.faculty_name.toLowerCase().trim() !== rec.course_name.toLowerCase().trim() && 
-                                  rec.faculty_name.toLowerCase().trim() !== rec.course_code.toLowerCase().trim() && 
-                                  !rec.course_name.toLowerCase().includes(rec.faculty_name.toLowerCase().trim()) && (() => {
-                                    const directoryUrl = getFacultyDirectoryUrl(rec.faculty_name);
-                                    return (
-                                      <div className="flex items-center gap-1 pt-0.5">
-                                        {directoryUrl ? (
-                                          <Link
-                                            to={directoryUrl}
-                                            className="group/fac inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground bg-muted/60 hover:bg-muted px-1.5 py-0.5 rounded border border-border/40 hover:border-primary/40 font-medium transition-all shadow-2xs hover:shadow-xs"
-                                            title={`Find ${rec.faculty_name} in Faculty Directory`}
-                                          >
-                                            <UserCheck className="h-3 w-3 text-primary/70 group-hover/fac:text-primary shrink-0 transition-colors" />
-                                            <span className="truncate max-w-[220px]">
-                                              {rec.faculty_name}
-                                            </span>
-                                          </Link>
-                                        ) : (
-                                          <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground/90 bg-muted/60 px-1.5 py-0.5 rounded border border-border/40 font-medium">
-                                            <UserCheck className="h-3 w-3 text-primary/70 shrink-0" />
-                                            <span className="truncate max-w-[220px]" title={rec.faculty_name}>
-                                              {rec.faculty_name}
-                                            </span>
-                                          </span>
-                                        )}
-                                      </div>
-                                    );
-                                })()}
-                              </div>
-                            </TableCell>
-
-                            {/* 2. Hours */}
-                            <TableCell className="py-3.5 text-center align-middle text-xs whitespace-nowrap font-mono tabular-nums">
-                              <div className="font-bold text-foreground text-sm tracking-tight">
-                                {att}<span className="font-normal text-muted-foreground text-xs font-sans">/{cond} hrs</span>
-                              </div>
-                              <div className="text-2xs text-muted-foreground mt-0.5">
-                                <span className={displayedAbsent > 0 ? "text-destructive/80 font-medium" : "text-muted-foreground"}>
-                                  {displayedAbsent} absent
-                                </span>
-                              </div>
-                            </TableCell>
-
-                            {/* 3. Percentage */}
-                            <TableCell className="py-3.5 text-center align-middle whitespace-nowrap">
-                              <div className="flex flex-col items-center gap-1">
-                                <span className={`text-sm font-black tracking-tight ${
-                                  isDanger ? "text-destructive" : isWarning ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400"
-                                }`}>
-                                  {pct}%
-                                </span>
-                                {isSimulated && (
-                                  <span className="text-[10px] text-muted-foreground">was {rec.attendance_percentage}%</span>
                                 )}
-                                <div className="w-16">
-                                  <Progress
-                                    value={Math.min(100, pct)}
-                                    className={`h-1.5 bg-muted ${
-                                      isDanger ? "[&>div]:bg-destructive" : isWarning ? "[&>div]:bg-amber-500" : "[&>div]:bg-emerald-500"
-                                    }`}
-                                  />
-                                </div>
+                                {todayStatus && (
+                                  <span
+                                    className={cn(
+                                      "inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-bold uppercase tracking-wider border",
+                                      todayStatus.status === "Present"
+                                        ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30"
+                                        : "bg-destructive/15 text-destructive border-destructive/30"
+                                    )}
+                                    title={`Attendance marked ${todayStatus.status} today (${todayStatus.date})`}
+                                  >
+                                    {todayStatus.status}
+                                  </span>
+                                )}
                               </div>
-                            </TableCell>
+                              <div className="text-xs text-muted-foreground font-medium line-clamp-1" title={rec.course_name}>
+                                {rec.course_name}
+                              </div>
+                              {rec.faculty_name && 
+                                rec.faculty_name.toLowerCase().trim() !== rec.course_name.toLowerCase().trim() && 
+                                rec.faculty_name.toLowerCase().trim() !== rec.course_code.toLowerCase().trim() && 
+                                !rec.course_name.toLowerCase().includes(rec.faculty_name.toLowerCase().trim()) && (() => {
+                                  const directoryUrl = getFacultyDirectoryUrl(rec.faculty_name);
+                                  return (
+                                    <div className="flex items-center gap-1 pt-0.5">
+                                      {directoryUrl ? (
+                                        <Link
+                                          to={directoryUrl}
+                                          className="group/fac inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground bg-muted/60 hover:bg-muted px-1.5 py-0.5 rounded border border-border/40 hover:border-primary/40 font-medium transition-all shadow-2xs hover:shadow-xs"
+                                          title={`Find ${rec.faculty_name} in Faculty Directory`}
+                                        >
+                                          <UserCheck className="h-3 w-3 text-primary/70 group-hover/fac:text-primary shrink-0 transition-colors" />
+                                          <span className="truncate max-w-[200px]">
+                                            {rec.faculty_name}
+                                          </span>
+                                        </Link>
+                                      ) : (
+                                        <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground/90 bg-muted/60 px-1.5 py-0.5 rounded border border-border/40 font-medium">
+                                          <UserCheck className="h-3 w-3 text-primary/70 shrink-0" />
+                                          <span className="truncate max-w-[200px]" title={rec.faculty_name}>
+                                            {rec.faculty_name}
+                                          </span>
+                                        </span>
+                                      )}
+                                    </div>
+                                  );
+                              })()}
+                            </div>
+                          </TableCell>
 
-                            {/* 4. Margin */}
-                            <TableCell className="py-3.5 text-center align-middle whitespace-nowrap">
-                              {neededForTarget > 0 ? (
-                                <span className="inline-flex items-center gap-1 text-xs font-bold text-destructive bg-destructive/10 px-2 py-0.5 rounded-md border border-destructive/20">
-                                  <AlertTriangle className="h-3 w-3" /> Need {neededForTarget} cls
-                                </span>
-                              ) : safeAllowanceForTarget > 0 ? (
-                                <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
-                                  <ShieldCheck className="h-3 w-3" /> {safeAllowanceForTarget} safe
-                                </span>
-                              ) : (
-                                <span className="text-xs text-muted-foreground font-medium bg-muted/40 px-2 py-0.5 rounded-md border border-border/40">
-                                  On target
-                                </span>
+                          {/* 2. Hours */}
+                          <TableCell className="py-3 px-2 text-center align-middle text-xs whitespace-nowrap font-mono tabular-nums">
+                            <div className="font-bold text-foreground text-xs sm:text-sm tracking-tight">
+                              {att}<span className="font-normal text-muted-foreground text-xs font-sans">/{cond} hrs</span>
+                            </div>
+                            <div className="text-2xs text-muted-foreground mt-0.5">
+                              <span className={displayedAbsent > 0 ? "text-destructive/80 font-medium" : "text-muted-foreground"}>
+                                {displayedAbsent} absent
+                              </span>
+                            </div>
+                          </TableCell>
+
+                          {/* 3. Percentage */}
+                          <TableCell className="py-3 px-2 text-center align-middle whitespace-nowrap">
+                            <div className="flex flex-col items-center gap-1">
+                              <span className={`text-xs sm:text-sm font-black tracking-tight ${
+                                isDanger ? "text-destructive" : isWarning ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400"
+                              }`}>
+                                {pct}%
+                              </span>
+                              {isSimulated && (
+                                <span className="text-[10px] text-muted-foreground">was {rec.attendance_percentage}%</span>
                               )}
-                            </TableCell>
-
-                            {/* 5. Planner / Simulation */}
-                            <TableCell className="py-3.5 text-right align-middle pr-4 whitespace-nowrap">
-                              <div className="inline-flex items-center justify-end gap-1">
-                                <TooltipProvider>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <button
-                                        type="button"
-                                        onClick={() => adjustSim(rec.course_code, true)}
-                                        className="h-7 w-7 rounded-md flex items-center justify-center text-emerald-600 bg-emerald-500/10 hover:bg-emerald-500/20 active:scale-95 transition-all border border-emerald-500/20"
-                                        aria-label="Simulate attending next class"
-                                      >
-                                        <Plus className="h-3.5 w-3.5" />
-                                      </button>
-                                    </TooltipTrigger>
-                                    <TooltipContent side="top">Simulate +1 Present</TooltipContent>
-                                  </Tooltip>
-                                </TooltipProvider>
-
-                                <TooltipProvider>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <button
-                                        type="button"
-                                        onClick={() => adjustSim(rec.course_code, false)}
-                                        className="h-7 w-7 rounded-md flex items-center justify-center text-destructive bg-destructive/10 hover:bg-destructive/20 active:scale-95 transition-all border border-destructive/20"
-                                        aria-label="Simulate missing next class"
-                                      >
-                                        <Minus className="h-3.5 w-3.5" />
-                                      </button>
-                                    </TooltipTrigger>
-                                    <TooltipContent side="top">Simulate +1 Absent</TooltipContent>
-                                  </Tooltip>
-                                </TooltipProvider>
-
-                                <div className="w-6 h-6 flex items-center justify-center shrink-0">
-                                  {isSimulated ? (
-                                    <TooltipProvider>
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <button
-                                            type="button"
-                                            onClick={() => adjustSim(rec.course_code, false, true)}
-                                            className="h-6 w-6 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted active:scale-95 transition-all"
-                                            aria-label="Reset simulation"
-                                          >
-                                            <RotateCcw className="h-3 w-3" />
-                                          </button>
-                                        </TooltipTrigger>
-                                        <TooltipContent side="top">Reset</TooltipContent>
-                                      </Tooltip>
-                                    </TooltipProvider>
-                                  ) : null}
-                                </div>
+                              <div className="w-14 sm:w-16">
+                                <Progress
+                                  value={Math.min(100, pct)}
+                                  className={`h-1.5 bg-muted ${
+                                    isDanger ? "[&>div]:bg-destructive" : isWarning ? "[&>div]:bg-amber-500" : "[&>div]:bg-emerald-500"
+                                  }`}
+                                />
                               </div>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                </div>
+                            </div>
+                          </TableCell>
+
+                          {/* 4. Margin */}
+                          <TableCell className="py-3 px-2 text-center align-middle whitespace-nowrap">
+                            {neededForTarget > 0 ? (
+                              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-destructive bg-destructive/10 px-1.5 py-0.5 rounded-md border border-destructive/20">
+                                <AlertTriangle className="h-3 w-3" /> Need {neededForTarget} cls
+                              </span>
+                            ) : safeAllowanceForTarget > 0 ? (
+                              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded-md border border-emerald-500/20">
+                                <ShieldCheck className="h-3 w-3" /> {safeAllowanceForTarget} safe
+                              </span>
+                            ) : (
+                              <span className="text-[11px] text-muted-foreground font-medium bg-muted/40 px-1.5 py-0.5 rounded-md border border-border/40">
+                                On target
+                              </span>
+                            )}
+                          </TableCell>
+
+                          {/* 5. Planner / Simulation */}
+                          <TableCell className="py-3 px-2 pr-3 text-right align-middle whitespace-nowrap">
+                            <div className="inline-flex items-center justify-end gap-1">
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <button
+                                      type="button"
+                                      onClick={() => adjustSim(rec.course_code, true)}
+                                      className="h-6.5 w-6.5 rounded-md flex items-center justify-center text-emerald-600 bg-emerald-500/10 hover:bg-emerald-500/20 active:scale-95 transition-all border border-emerald-500/20"
+                                      aria-label="Simulate attending next class"
+                                    >
+                                      <Plus className="h-3 w-3" />
+                                    </button>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="top">Simulate +1 Present</TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <button
+                                      type="button"
+                                      onClick={() => adjustSim(rec.course_code, false)}
+                                      className="h-6.5 w-6.5 rounded-md flex items-center justify-center text-destructive bg-destructive/10 hover:bg-destructive/20 active:scale-95 transition-all border border-destructive/20"
+                                      aria-label="Simulate missing next class"
+                                    >
+                                      <Minus className="h-3 w-3" />
+                                    </button>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="top">Simulate +1 Absent</TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+
+                              <div className="w-5 h-5 flex items-center justify-center shrink-0">
+                                {isSimulated ? (
+                                  <TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <button
+                                          type="button"
+                                          onClick={() => adjustSim(rec.course_code, false, true)}
+                                          className="h-5 w-5 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted active:scale-95 transition-all"
+                                          aria-label="Reset simulation"
+                                        >
+                                          <RotateCcw className="h-2.5 w-2.5" />
+                                        </button>
+                                      </TooltipTrigger>
+                                      <TooltipContent side="top">Reset</TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                ) : null}
+                              </div>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Mobile Cards (< sm: zero horizontal scroll, direct readability) */}
+              <div className="sm:hidden space-y-3">
+                {filteredAndSortedRecords.map((rec) => {
+                  const {
+                    pct,
+                    cond,
+                    att,
+                    neededForTarget,
+                    safeAllowanceForTarget,
+                    isSimulated,
+                  } = getSimulatedMetrics(rec, 75);
+
+                  const isDanger = pct < 75.0;
+                  const isWarning = pct >= 75.0 && pct < 80.0;
+                  const statusColor = isDanger ? "border-l-destructive" : isWarning ? "border-l-amber-500" : "border-l-emerald-500";
+                  const displayedAbsent = isSimulated ? (cond - att) : rec.absent_hours;
+                  const normCode = rec.course_code.trim().toUpperCase().replace(/\s+/g, "");
+                  const todayStatus = todayCourseStatusMap.get(normCode);
+
+                  return (
+                    <div
+                      key={`mobile-${rec.id || rec.course_code}`}
+                      className={cn(
+                        "rounded-xl border border-border/70 bg-card p-3.5 shadow-xs space-y-2.5 border-l-4",
+                        statusColor
+                      )}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="font-bold text-xs text-foreground tracking-tight">
+                              {rec.course_code}
+                            </span>
+                            {rec.slot && /^[A-Z][0-9]?(\+[A-Z][0-9]?)*$/i.test(rec.slot.trim()) && (
+                              <span className="inline-flex items-center text-[10px] font-semibold text-primary bg-primary/10 px-1.5 py-0.2 rounded border border-primary/20">
+                                {rec.slot}
+                              </span>
+                            )}
+                            {todayStatus && (
+                              <span
+                                className={cn(
+                                  "inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-bold uppercase tracking-wider border",
+                                  todayStatus.status === "Present"
+                                    ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30"
+                                    : "bg-destructive/15 text-destructive border-destructive/30"
+                                )}
+                              >
+                                {todayStatus.status}
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-xs text-muted-foreground font-medium line-clamp-1" title={rec.course_name}>
+                            {rec.course_name}
+                          </div>
+                          {rec.faculty_name && (
+                            <div className="text-[11px] text-muted-foreground truncate max-w-[210px]">
+                              {rec.faculty_name}
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="text-right shrink-0">
+                          <span className={cn(
+                            "text-sm font-black tracking-tight",
+                            isDanger ? "text-destructive" : isWarning ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400"
+                          )}>
+                            {pct}%
+                          </span>
+                          {isSimulated && (
+                            <span className="text-[10px] text-muted-foreground block">was {rec.attendance_percentage}%</span>
+                          )}
+                        </div>
+                      </div>
+
+                      <Progress
+                        value={Math.min(100, pct)}
+                        className={cn(
+                          "h-1.5 bg-muted",
+                          isDanger ? "[&>div]:bg-destructive" : isWarning ? "[&>div]:bg-amber-500" : "[&>div]:bg-emerald-500"
+                        )}
+                      />
+
+                      <div className="flex items-center justify-between gap-2 pt-1 border-t border-border/50 text-xs">
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-semibold text-foreground font-mono text-xs">{att}/{cond} hrs</span>
+                          <span className={cn("text-[10px]", displayedAbsent > 0 ? "text-destructive font-medium" : "text-muted-foreground")}>
+                            ({displayedAbsent} abs)
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          {neededForTarget > 0 ? (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-destructive bg-destructive/10 px-1.5 py-0.5 rounded border border-destructive/20">
+                              <AlertTriangle className="h-2.5 w-2.5" /> Need {neededForTarget}
+                            </span>
+                          ) : safeAllowanceForTarget > 0 ? (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
+                              <ShieldCheck className="h-2.5 w-2.5" /> {safeAllowanceForTarget} safe
+                            </span>
+                          ) : (
+                            <span className="text-[10px] text-muted-foreground font-medium bg-muted/40 px-1.5 py-0.5 rounded border border-border/40">
+                              On target
+                            </span>
+                          )}
+
+                          <div className="flex items-center gap-1 ml-1">
+                            <button
+                              type="button"
+                              onClick={() => adjustSim(rec.course_code, true)}
+                              className="h-6 w-6 rounded flex items-center justify-center text-emerald-600 bg-emerald-500/10 hover:bg-emerald-500/20 active:scale-95 transition-all border border-emerald-500/20"
+                              aria-label="Simulate +1 Present"
+                            >
+                              <Plus className="h-3 w-3" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => adjustSim(rec.course_code, false)}
+                              className="h-6 w-6 rounded flex items-center justify-center text-destructive bg-destructive/10 hover:bg-destructive/20 active:scale-95 transition-all border border-destructive/20"
+                              aria-label="Simulate +1 Absent"
+                            >
+                              <Minus className="h-3 w-3" />
+                            </button>
+                            {isSimulated && (
+                              <button
+                                type="button"
+                                onClick={() => adjustSim(rec.course_code, false, true)}
+                                className="h-5 w-5 rounded flex items-center justify-center text-muted-foreground hover:text-foreground"
+                                aria-label="Reset simulation"
+                              >
+                                <RotateCcw className="h-2.5 w-2.5" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
 
               {/* Filter Empty State */}
@@ -1144,6 +1401,7 @@ export default function Attendance() {
           fetchAttendance();
           fetchTimetable();
           fetchFinance();
+          fetchDailyAttendance();
         }}
       />
 

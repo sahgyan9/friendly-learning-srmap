@@ -127,6 +127,61 @@ const MOCK_ATTENDANCE = [
   },
 ];
 
+const MOCK_DAILY_ATTENDANCE = [
+  {
+    id: 'da-1',
+    user_id: USER_ID,
+    register_number: 'AP21110010001',
+    attendance_date: '2026-09-10',
+    day_order: 'Thursday',
+    period_slot: 2,
+    course_code: 'CSE 301',
+    course_name: 'Design and Analysis of Algorithms',
+    status: 'P',
+    last_synced_at: new Date().toISOString(),
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: 'da-2',
+    user_id: USER_ID,
+    register_number: 'AP21110010001',
+    attendance_date: '2026-09-10',
+    day_order: 'Thursday',
+    period_slot: 3,
+    course_code: 'CSE 301',
+    course_name: 'Design and Analysis of Algorithms',
+    status: 'P',
+    last_synced_at: new Date().toISOString(),
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: 'da-3',
+    user_id: USER_ID,
+    register_number: 'AP21110010001',
+    attendance_date: '2026-09-10',
+    day_order: 'Thursday',
+    period_slot: 5,
+    course_code: 'CSE 304',
+    course_name: 'Database Management Systems',
+    status: 'A',
+    last_synced_at: new Date().toISOString(),
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: 'da-4',
+    user_id: USER_ID,
+    register_number: 'AP21110010001',
+    attendance_date: '2026-09-10',
+    day_order: 'Thursday',
+    period_slot: 7,
+    course_code: 'ECE 205',
+    course_name: 'Digital Logic and Microprocessors',
+    status: 'P',
+    last_synced_at: new Date().toISOString(),
+    created_at: new Date().toISOString(),
+  },
+];
+
 const MOCK_TIMETABLE = [
   { id: 'tt-1', user_id: USER_ID, register_number: 'AP23111260062', day_order: 1, day_name: 'Monday', hour: 3, start_time: '11:00:00', end_time: '11:50:00', slot: null, course_code: 'PHY 425', course_name: 'Advanced Quantum Mechanics', faculty_name: 'Dr. Jaganadha Rao', room_number: 'X 312', is_lab: false, ltpc: '2-0-2-4', last_synced_at: new Date(Date.now() - 3600000).toISOString() },
   { id: 'tt-2', user_id: USER_ID, register_number: 'AP23111260062', day_order: 1, day_name: 'Monday', hour: 4, start_time: '12:00:00', end_time: '12:50:00', slot: null, course_code: 'PHY 424', course_name: 'Electronic Materials and Device Physics', faculty_name: 'Dr. J. P. Singh', room_number: 'C 301', is_lab: false, ltpc: '2-0-2-4', last_synced_at: new Date(Date.now() - 3600000).toISOString() },
@@ -299,6 +354,10 @@ async function setupPage(page, theme = 'light') {
       return respondJson(req, FAKE_SESSION.user);
     }
 
+    if (url.includes('/rest/v1/student_daily_attendance')) {
+      return respondJson(req, MOCK_DAILY_ATTENDANCE);
+    }
+
     if (url.includes('/rest/v1/student_attendance')) {
       return respondJson(req, MOCK_ATTENDANCE);
     }
@@ -342,7 +401,7 @@ async function setupPage(page, theme = 'light') {
 try {
   console.log('Running SRM Portal UI QA with attendance & timetable stubs...');
 
-  // 1. SRM Portal: Default Attendance Tab (Desktop Light)
+  // 1a. SRM Portal: Default Attendance Tab (Desktop Light)
   {
     const page = await browser.newPage();
     await page.setViewport({ width: 1280, height: 900 });
@@ -351,6 +410,56 @@ try {
     await new Promise((r) => setTimeout(r, 2000));
     await page.screenshot({ path: path.join(OUT, 'srmportal-attendance-desktop-light.png'), fullPage: true });
     console.log('✓ srmportal-attendance-desktop-light.png');
+    await page.close();
+  }
+
+  // 1b. SRM Portal: Attendance Tab (Desktop Dark)
+  {
+    const page = await browser.newPage();
+    await page.setViewport({ width: 1280, height: 900 });
+    await setupPage(page, 'dark');
+    await page.goto(`${BASE}/srmportal`, { waitUntil: 'networkidle2' });
+    await page.evaluate(() => document.documentElement.classList.add('dark'));
+    await new Promise((r) => setTimeout(r, 2000));
+    await page.screenshot({ path: path.join(OUT, 'srmportal-attendance-desktop-dark.png'), fullPage: true });
+    console.log('✓ srmportal-attendance-desktop-dark.png');
+    await page.close();
+  }
+
+  // 1c. SRM Portal: Attendance Tab (Desktop 1024px Light - zero horizontal scroll test)
+  {
+    const page = await browser.newPage();
+    await page.setViewport({ width: 1024, height: 800 });
+    await setupPage(page, 'light');
+    await page.goto(`${BASE}/srmportal`, { waitUntil: 'networkidle2' });
+    await new Promise((r) => setTimeout(r, 2000));
+    await page.screenshot({ path: path.join(OUT, 'srmportal-attendance-desktop-1024px.png'), fullPage: true });
+    console.log('✓ srmportal-attendance-desktop-1024px.png');
+    await page.close();
+  }
+
+  // 1d. SRM Portal: Attendance Tab Mobile (360px Light)
+  {
+    const page = await browser.newPage();
+    await page.setViewport({ width: 360, height: 800 });
+    await setupPage(page, 'light');
+    await page.goto(`${BASE}/srmportal`, { waitUntil: 'networkidle2' });
+    await new Promise((r) => setTimeout(r, 2000));
+    await page.screenshot({ path: path.join(OUT, 'srmportal-attendance-mobile-360px-light.png'), fullPage: true });
+    console.log('✓ srmportal-attendance-mobile-360px-light.png');
+    await page.close();
+  }
+
+  // 1e. SRM Portal: Attendance Tab Mobile (360px Dark)
+  {
+    const page = await browser.newPage();
+    await page.setViewport({ width: 360, height: 800 });
+    await setupPage(page, 'dark');
+    await page.goto(`${BASE}/srmportal`, { waitUntil: 'networkidle2' });
+    await page.evaluate(() => document.documentElement.classList.add('dark'));
+    await new Promise((r) => setTimeout(r, 2000));
+    await page.screenshot({ path: path.join(OUT, 'srmportal-attendance-mobile-360px-dark.png'), fullPage: true });
+    console.log('✓ srmportal-attendance-mobile-360px-dark.png');
     await page.close();
   }
 
