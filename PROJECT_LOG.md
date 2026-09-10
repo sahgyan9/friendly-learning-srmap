@@ -288,6 +288,44 @@
   - Preserve `parseFeeReceipts` as the source of truth for `student_fee_paid_history`.
   - Follow `AGENTS.md` and `PROJECT_LOG.md` guidelines.
 
+### Session 024 — 2026-09-10 · Agent: Antigravity (Gemini 3.8 Flash)
+- **Prompt**:
+  1. "can you notice the discrepency, find the root cause. and what would improve it. Also note before giving suggestion will the changes affect any other parts?"
+  2. "go ahead and document your learning so that future agents doesn't makes same mistake then commit and push your chnages"
+- **Root Cause Analysis (RCA)**:
+  - **The Discrepancy**:
+    - Query 1: `"holiday in the month of september"` answered that **Vinayaka Chavithi on Monday, 14 September 2026** is an official holiday for Odd Semester AY 2026-27.
+    - Query 2: `"is coming monday holiday"` (run on Thursday, 10 September 2026, where coming Monday is 14 September 2026) answered that **Monday, 14 September 2026 is a regular working day** and *"there are no holidays scheduled for this date"*.
+  - **Technical Mechanism**:
+    1. The deterministic ground truth already exists in the database: `public.academic_calendar_days` has `calendar_date = '2026-09-14'`, `occasion_name = 'Vinayaka Chavithi'`, `is_holiday = true`, and `get_calendar_day('2026-09-14')` returns this row.
+    2. In `supabase/functions/generate-ai-overview/index.ts`, `resolveCalendarDates()` was restricted to only matching `"yesterday"`, `"today"`, and `"tomorrow"`. It returned `[]` for relative weekday phrases (`"coming monday"`, `"next monday"`, `"is monday holiday"`) and explicit dates (`"14th september"`).
+    3. Because `resolveCalendarDates` returned `[]`, `resolveCalendarFacts()` was never called for `2026-09-14`, and no `RESOLVED_FACTS` block was injected into Gemini's prompt.
+    4. Prompt Rule 1 instructed the model that without `RESOLVED_FACTS`, it should read the retrieved Academic Calendar document chunks. The search query retrieved Page 1 ("Odd Semester Key Academic Dates & Timelines", which only lists administrative deadlines like exams and fee dates) as Chunk [1]. Page 3's calendar grid is a compressed, unaligned text sequence (`Mon 6 13 20 27 3 10 17 24 31 7 H 21 28 ...`) where `H` is unlabelled and "14" explicitly appears in the December column. The LLM deduced that coming Monday is 14 September, looked at Chunk [1], saw no holiday, and hallucinated that it was a working day.
+    5. In contrast, `"holiday in the month of september"` succeeded because the LLM did not perform date-math on weekdays; it simply scanned Page 3's explicit text list of holidays: `"4. Vinayaka Chavithi - 14.09.2026 (Monday)"`.
+    6. Additionally, in `src/lib/search/query-engine.ts`, `CAMPUS_VOCABULARY` lacked weekdays, causing `correctTypo("monday")` to mistakenly compute a Levenshtein match to `"today"` (suggesting *"Did you mean 'is coming today holiday'?"*).
+- **What was done**:
+  1. **Calendar Date Resolution (`generate-ai-overview/index.ts`)**:
+     - Upgraded `resolveCalendarDates` to detect relative weekdays (`coming/next/this/upcoming monday`, `is monday holiday`, `on friday`) with forward-offset calculation in `Asia/Kolkata` time zone.
+     - Added explicit date matching (`14th september`, `september 14`, `14-09-2026`).
+     - Enhanced `resolveCalendarFacts` so that when `get_calendar_day` returns no special holiday row, it deterministically sets Sundays as weekend holidays and weekdays (Mon-Fri) as working days (`is_holiday: false`) with no declared holiday on record, eliminating table hallucination.
+     - Fixed forward-offset calculation in `resolveUserTimetables` so target weekdays earlier in order do not resolve backwards to past dates.
+     - Added weekdays to `hasTemporalWords` in `retrieve()`.
+  2. **Query Engine Vocabulary (`src/lib/search/query-engine.ts`)**:
+     - Added all 7 weekdays (`monday`...`sunday`) and 12 months (`january`...`december`) to `CAMPUS_VOCABULARY` to prevent typo-correction from replacing valid days with "today".
+     - Added unit tests in `src/lib/search/query-engine.test.ts`.
+  3. **Documentation**:
+     - Updated `docs/AI_NATURE_AND_BEHAVIOR.md` documenting that deterministic Postgres calendar resolution must always precede LLM generation.
+  4. **Edge Function Deployment**:
+     - Deployed `generate-ai-overview` (version 38, `verify_jwt: false`) to Supabase project `ruapdkrgcbqrhvsayvpf`.
+- **Status at end**:
+  - `is coming monday holiday` now returns: `Verdict: 🏖️ Official Holiday — Vinayaka Chavithi` ("Yes, the upcoming Monday, 14 September 2026, is an official university holiday on the occasion of Vinayaka Chavithi...").
+  - `holiday in the month of september` returns: `Verdict: 📅 Two Holidays in September 2026` ("Sri Krishna Astami on Friday, 4th September 2026, and Vinayaka Chavithi on Monday, 14th September 2026...").
+  - `is coming friday holiday` returns: `Verdict: 📅 Friday is a Working Day` ("Coming Friday, 11 September 2026, is a regular working day at SRM University-AP...").
+  - `npm run typecheck`: 0 errors.
+  - `npm run test`: 20 test files passed, 162 tests passed.
+- **Next agent should**:
+  - Never allow LLM prompts to calculate calendar holidays from unstructured table text. Always route date questions through deterministic `get_calendar_day` resolution.
+
 ---
 
 ## Session Template (copy for each new session)

@@ -44,8 +44,8 @@ The platform implements an AI subsystem built around the core principle: **"Retr
 - **Location**: `supabase/functions/generate-ai-overview/index.ts`.
 - **Purpose**: Generates Google-style contextual AI search summaries on `/search` and `/ask`.
 - **Pre-LLM Deterministic Resolvers**: Before invoking any LLM, the function queries deterministic database state:
-  - `resolveCalendarFacts()`: Calls `get_calendar_day` RPC to verify whether a queried date (today/tomorrow) is an official university holiday or working day.
-  - `resolveUserTimetables()`: Resolves live class schedules directly from `student_timetables`.
+  - `resolveCalendarFacts()`: Calls `get_calendar_day` RPC to verify whether a queried date (today, tomorrow, yesterday, relative weekdays like "coming monday", or explicit dates like "14th september") is an official university holiday or working day. **Deterministic Postgres lookup must always precede LLM generation**: models must never be asked to interpret compressed multi-column working days grids or compute date offsets on their own.
+  - `resolveUserTimetables()`: Resolves live class schedules directly from `student_timetables` with forward-offset weekday matching.
   - `resolveUserEventSchedules()`: Fetches RSVP'd campus events.
   - `resolveMentorPresence()`: Checks live class/event availability.
 - **Failover & Key Pooling**: Uses `_shared/gemini-pool.ts` to manage multiple Gemini API keys, automatically marking keys on cooldown when encountering HTTP 429 rate limits.
