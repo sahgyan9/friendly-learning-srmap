@@ -336,7 +336,9 @@ export const CAMPUS_VOCABULARY = [
   "mathematics", "biology", "economics", "management", "hackathon", "competition", "internship",
   "mentor", "faculty", "professor", "cybersecurity", "blockchain", "robotics", "algorithms",
   "structures", "research", "project", "database", "cloud", "security", "freshers", "electives",
-  "tomorrow", "today", "yesterday", "holiday", "holidays", "calendar", "midterm", "endterm", "curfew", "attendance"
+  "tomorrow", "today", "yesterday", "holiday", "holidays", "calendar", "midterm", "endterm", "curfew", "attendance",
+  "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday",
+  "january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"
 ];
 
 // ─── 3. Levenshtein Distance for Typo Tolerance ─────────────────────────────

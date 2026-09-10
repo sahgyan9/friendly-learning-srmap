@@ -137,6 +137,13 @@ describe("did you mean", () => {
     expect(correctTypo("pyhton")).toBe("python");
     expect(correctTypo("machien")).toBe("machine");
   });
+
+  it("does not typo-correct valid weekdays or months", () => {
+    expect(correctTypo("monday")).toBeNull();
+    expect(correctTypo("friday")).toBeNull();
+    expect(correctTypo("september")).toBeNull();
+    expect(parseQuery("is coming monday holiday").suggestedQuery).toBeNull();
+  });
 });
 
 describe("word boundary matching", () => {
