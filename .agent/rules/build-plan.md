@@ -19,11 +19,11 @@ same commit that ships a task.
 ## Three things worth repeating here
 
 - **`npm run typecheck` is the check** — bare `tsc` is a no-op in this repo, and
-  the baseline is **13 known pre-existing errors, not zero**. ESLint is broken
-  repo-wide; skip it.
+  the baseline is **0 errors**. ESLint is broken repo-wide; skip it.
 - **Frontend, database, and edge functions are three separate deploy targets.**
   Shipping one never ships the others, and HTTP 200 is not proof a function did
   its job — verify that the data actually changed.
+- **SRM Portal Fee & Finance:** Table `#tbl7` (`ids=7`) is gross billing clearance, not student payments. Genuine bank receipts come from `ids=27` (`receiptgeneration.jsp`). Track scholarship concessions with `paid_amount = 0.00`.
 - **This repo lives in a OneDrive-synced folder.** Run `git diff` after every
   edit; files can be silently reverted, including ones you never touched.
 - **Follow `AI_STYLE_GUIDE.md` strictly.** Eliminate emoji clutter, performative cheerleading, and corporate filler. Maintain a direct senior staff engineer tone.
