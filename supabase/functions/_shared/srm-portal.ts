@@ -1181,12 +1181,109 @@ export function parseFeePaidHistory(html: string): ParsedFeePaidItem[] {
   return history;
 }
 
+export function parseFeeReceipts(html: string): ParsedFeePaidItem[] {
+  const receipts: ParsedFeePaidItem[] = [];
+  if (!html || typeof html !== "string") return receipts;
+
+  const rowRegex = /<tr[^>]*>([\s\S]*?)<\/tr>/gi;
+  for (const rowMatch of html.matchAll(rowRegex)) {
+    const rowHtml = rowMatch[1];
+    if (rowHtml.includes("<th") || rowHtml.includes("class=\"info\"")) continue;
+
+    const cells = [...rowHtml.matchAll(/<td[^>]*>([\s\S]*?)<\/td>/gi)].map((c) =>
+      stripTags(c[1].replace(/<br\s*\/?>/gi, ", "))
+    );
+
+    if (cells.length >= 5) {
+      const receiptDate = cells[1];
+      const receiptNumber = cells[2];
+      const feeType = cells[3];
+      const amount = parseFloat(cells[4].replace(/,/g, "")) || 0;
+
+      let term = "";
+      const termMatch = receiptNumber.match(/\/(\d{2})-(\d{2})$/);
+      if (termMatch) {
+        term = `20${termMatch[1]}-20${termMatch[2]}`;
+      } else {
+        const dateMatch = receiptDate.match(/(\d{4})$/);
+        if (dateMatch) {
+          const yr = parseInt(dateMatch[1], 10);
+          term = `${yr}-${yr + 1}`;
+        }
+      }
+
+      receipts.push({
+        term,
+        feeType,
+        dueDate: null,
+        amount,
+        receiptDate,
+        paymentMode: "Online / University Receipt",
+        receiptNumber,
+        paidAmount: amount,
+        balanceDue: 0,
+      });
+    }
+  }
+
+  return receipts;
+}
+
+export function extractFeeConcessions(tbl7Html: string, receipts: ParsedFeePaidItem[]): ParsedFeePaidItem[] {
+  const concessions: ParsedFeePaidItem[] = [];
+  if (!tbl7Html || typeof tbl7Html !== "string") return concessions;
+
+  const tableMatch = tbl7Html.match(/<table[^>]*id=["']tbl7["'][^>]*>([\s\S]*?)<\/table>/i);
+  if (!tableMatch) return concessions;
+
+  const rowRegex = /<tr[^>]*>([\s\S]*?)<\/tr>/gi;
+  for (const rowMatch of tableMatch[1].matchAll(rowRegex)) {
+    const rowHtml = rowMatch[1];
+    if (rowHtml.includes('class="subheader"') || rowHtml.includes("<th")) continue;
+
+    const cells = [...rowHtml.matchAll(/<td[^>]*>([\s\S]*?)<\/td>/gi)].map((c) => stripTags(c[1]));
+
+    if (cells.length >= 9) {
+      const term = cells[0];
+      const grossAmount = parseFloat(cells[3].replace(/,/g, "")) || 0;
+      const receiptDate = cells[4];
+      const mode = cells[5] || "";
+
+      if (/concession|scholarship/i.test(mode)) {
+        // Calculate student paid tuition/academic fee for this term
+        const studentPaidForTermTuition = receipts
+          .filter((rec) => rec.term === term && !/hostel|exam|provisional|insurance/i.test(rec.feeType))
+          .reduce((sum, rec) => sum + rec.amount, 0);
+
+        const concessionAmount = grossAmount > studentPaidForTermTuition ? grossAmount - studentPaidForTermTuition : 0;
+
+        if (concessionAmount > 0) {
+          concessions.push({
+            term,
+            feeType: "Tuition Fee Waiver (Merit Scholarship Concession)",
+            dueDate: null,
+            amount: concessionAmount,
+            receiptDate: receiptDate?.split(",")[0]?.trim() || null,
+            paymentMode: "Institutional Concession / Scholarship",
+            receiptNumber: `SCHOLARSHIP-${term}`,
+            paidAmount: 0,
+            balanceDue: 0,
+          });
+        }
+      }
+    }
+  }
+
+  return concessions;
+}
+
 // --- login + section fetch, shared by the human-supervised and unattended paths ---
 
 export interface LoginResult {
   loggedIn: boolean;
   jar: Jar;
   errorMessage?: string;
+  landingPageHtml?: string;
 }
 
 /**
@@ -1220,7 +1317,24 @@ export async function doLogin(
 
   const loggedIn = loginRes.status === 302;
   if (loggedIn) {
-    return { loggedIn: true, jar: mergeSetCookies(jar, loginRes) };
+    jar = mergeSetCookies(jar, loginRes);
+    const redirectUrl = loginRes.headers.get("location");
+    let landingPageHtml = "";
+    if (redirectUrl) {
+      try {
+        const fullUrl = redirectUrl.startsWith("http")
+          ? redirectUrl
+          : `${PORTAL_BASE}/${redirectUrl.replace(/^\//, "")}`;
+        const landingRes = await fetch(fullUrl, {
+          headers: { Cookie: cookieHeader(jar) },
+        });
+        jar = mergeSetCookies(jar, landingRes);
+        landingPageHtml = await landingRes.text();
+      } catch (err) {
+        console.warn("Failed to fetch portal landing page:", err);
+      }
+    }
+    return { loggedIn: true, jar, landingPageHtml };
   }
 
   let errorMessage = "Couldn't sign in — check your register number, portal password, and try again.";
@@ -1233,6 +1347,7 @@ export async function doLogin(
 
 export async function fetchAcademicSections(
   jar: Jar,
+  landingPageHtml?: string,
 ): Promise<{
   profileHtml: string;
   courseListHtml: string;
@@ -1243,6 +1358,7 @@ export async function fetchAcademicSections(
   examDetailsHtml: string;
   feePaidHtml: string;
   feeDueHtml: string;
+  receiptHtml: string;
   allSectionsHtml: string[];
 }> {
   const fetchSection = (id: number) =>
@@ -1277,10 +1393,33 @@ export async function fetchAcademicSections(
         return "";
       });
 
+  let stuId = "";
+  if (landingPageHtml) {
+    const stuIdMatch = landingPageHtml.match(/stuId:\s*['"](\d+)['"]/i);
+    if (stuIdMatch) stuId = stuIdMatch[1];
+  }
+
+  const fetchReceipts = () =>
+    fetch(`${PORTAL_BASE}/students/report/receiptgeneration.jsp`, {
+      method: "POST",
+      headers: {
+        Cookie: cookieHeader(jar),
+        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+        "X-Requested-With": "XMLHttpRequest",
+      },
+      body: stuId ? `ids=27&stuId=${encodeURIComponent(stuId)}` : "ids=27",
+    })
+      .then((r) => r.text())
+      .catch((err) => {
+        console.warn("Failed to fetch payment receipts:", err);
+        return "";
+      });
+
   const sectionIds = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
-  const [allSectionsHtml, feeDueHtml] = await Promise.all([
+  const [allSectionsHtml, feeDueHtml, receiptHtml] = await Promise.all([
     Promise.all(sectionIds.map((id) => fetchSection(id))),
     fetchFeeDues(),
+    fetchReceipts(),
   ]);
 
   return {
@@ -1293,6 +1432,7 @@ export async function fetchAcademicSections(
     examDetailsHtml: allSectionsHtml[6] || "",
     feePaidHtml: allSectionsHtml[6] || "", // Section 7 (ids=7) is Fee Paid Details
     feeDueHtml: feeDueHtml || "",
+    receiptHtml: receiptHtml || "",
     allSectionsHtml,
   };
 }

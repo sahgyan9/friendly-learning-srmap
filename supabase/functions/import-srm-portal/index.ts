@@ -40,6 +40,8 @@ import {
   parseCourseList,
   parseFeeDues,
   parseFeePaidHistory,
+  parseFeeReceipts,
+  extractFeeConcessions,
   parseProfile,
   parseTimeTable,
   parseTranscript,
@@ -177,8 +179,9 @@ Deno.serve(async (req) => {
         timeTableHtml,
         feePaidHtml,
         feeDueHtml,
+        receiptHtml,
         allSectionsHtml,
-      } = await fetchAcademicSections(jar);
+      } = await fetchAcademicSections(jar, loginResult.landingPageHtml);
       const { program, currentSemester, mobileNumber } = parseProfile(profileHtml);
       const courseMap = parseCourseList(...(allSectionsHtml || []));
       const { cgpa, subjects } = parseTranscript(transcriptHtml);
@@ -298,10 +301,20 @@ Deno.serve(async (req) => {
         await supabaseAdmin.from("student_fee_dues").delete().eq("user_id", userId);
       }
 
-      // Upsert fee paid history
-      const paidHistory = parseFeePaidHistory(feePaidHtml);
-      if (paidHistory.length > 0) {
-        for (const item of paidHistory) {
+      // Upsert fee paid history & institutional concessions
+      const paidReceipts = parseFeeReceipts(receiptHtml);
+      let itemsToUpsert = paidReceipts;
+
+      if (paidReceipts.length > 0) {
+        const concessions = extractFeeConcessions(feePaidHtml, paidReceipts);
+        itemsToUpsert = [...paidReceipts, ...concessions];
+        await supabaseAdmin.from("student_fee_paid_history").delete().eq("user_id", userId);
+      } else {
+        itemsToUpsert = parseFeePaidHistory(feePaidHtml);
+      }
+
+      if (itemsToUpsert.length > 0) {
+        for (const item of itemsToUpsert) {
           await supabaseAdmin.from("student_fee_paid_history").upsert({
             user_id: userId,
             register_number: registerNumber,

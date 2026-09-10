@@ -25,6 +25,8 @@ import {
   parseCourseList,
   parseFeeDues,
   parseFeePaidHistory,
+  parseFeeReceipts,
+  extractFeeConcessions,
   parseProfile,
   parseTimeTable,
   parseTranscript,
@@ -228,8 +230,9 @@ Deno.serve(async (req) => {
         timeTableHtml,
         feePaidHtml,
         feeDueHtml,
+        receiptHtml,
         allSectionsHtml,
-      } = await fetchAcademicSections(loginResult.jar);
+      } = await fetchAcademicSections(loginResult.jar, loginResult.landingPageHtml);
       const { program, currentSemester, mobileNumber } = parseProfile(profileHtml);
       const courseMap = parseCourseList(...(allSectionsHtml || []));
       const { cgpa, subjects } = parseTranscript(transcriptHtml);
@@ -453,10 +456,21 @@ Deno.serve(async (req) => {
         await admin.from("student_fee_dues").delete().eq("user_id", row.user_id);
       }
 
-      // 5. Upsert fee paid history
-      const paidHistory = parseFeePaidHistory(feePaidHtml);
-      if (paidHistory.length > 0) {
-        for (const item of paidHistory) {
+      // 5. Upsert fee paid history & institutional concessions
+      const paidReceipts = parseFeeReceipts(receiptHtml);
+      let itemsToUpsert = paidReceipts;
+
+      if (paidReceipts.length > 0) {
+        const concessions = extractFeeConcessions(feePaidHtml, paidReceipts);
+        itemsToUpsert = [...paidReceipts, ...concessions];
+        // Clean out previous stale / gross ledger records for this user
+        await admin.from("student_fee_paid_history").delete().eq("user_id", row.user_id);
+      } else {
+        itemsToUpsert = parseFeePaidHistory(feePaidHtml);
+      }
+
+      if (itemsToUpsert.length > 0) {
+        for (const item of itemsToUpsert) {
           await admin.from("student_fee_paid_history").upsert({
             user_id: row.user_id,
             register_number: row.register_number,
