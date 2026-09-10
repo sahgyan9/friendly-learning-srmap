@@ -1277,6 +1277,78 @@ export function extractFeeConcessions(tbl7Html: string, receipts: ParsedFeePaidI
   return concessions;
 }
 
+// --- Section 33: Student Attendance (New) - Daily period-wise attendance ---
+
+export interface TodayAttendanceItem {
+  date: string;       // YYYY-MM-DD
+  rawDate: string;    // DD-MM-YYYY
+  dayOrder: string;
+  hour: number;
+  courseCode: string;
+  courseName: string;
+  rawSubject: string;
+  status: string;     // 'P', 'A', 'OD'
+}
+
+export function parseTodayAttendance(html: string): TodayAttendanceItem[] {
+  const items: TodayAttendanceItem[] = [];
+  if (!html || typeof html !== "string") return items;
+
+  const todaySectionMatch = html.match(/Today Attendance[\s\S]*?(<div class="container-fluid"[\s\S]*?<\/body>)/i);
+  const searchBlock = todaySectionMatch ? todaySectionMatch[1] : html;
+
+  const rowRegex = /<div class="row"[^>]*>([\s\S]*?)<\/div>\s*(?=(?:<div class="row"|<\/body>|$))/gi;
+  for (const match of searchBlock.matchAll(rowRegex)) {
+    const rowContent = match[1];
+    if (
+      rowContent.includes("Day Order") ||
+      rowContent.includes("Today Attendance") ||
+      rowContent.includes("Current Attendance")
+    ) {
+      continue;
+    }
+
+    const colRegex = /<div class="col-[^"]*"[^>]*>([\s\S]*?)<\/div>/gi;
+    const cols = [...rowContent.matchAll(colRegex)].map((c) => stripTags(c[1]));
+
+    if (cols.length >= 5) {
+      const rawDate = cols[0];
+      const dayOrder = cols[1];
+      const hour = parseInt(cols[2], 10) || 0;
+      const rawSubject = cols[3];
+      const status = cols[4].toUpperCase();
+
+      let formattedDate = rawDate;
+      const dateParts = rawDate.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
+      if (dateParts) {
+        formattedDate = `${dateParts[3]}-${dateParts[2].padStart(2, "0")}-${dateParts[1].padStart(2, "0")}`;
+      }
+
+      let courseCode = rawSubject;
+      let courseName = rawSubject;
+      const codeMatch = rawSubject.match(/^([A-Z]{2,5}\s*\d{2,4}[A-Z]?)\s*[:-]?\s*(.*)$/i);
+      if (codeMatch) {
+        courseCode = codeMatch[1].replace(/\s+/g, " ").trim().toUpperCase();
+        courseName = codeMatch[2].trim() || courseCode;
+      }
+
+      items.push({
+        date: formattedDate,
+        rawDate,
+        dayOrder,
+        hour,
+        courseCode,
+        courseName,
+        rawSubject,
+        status,
+      });
+    }
+  }
+
+  items.sort((a, b) => a.hour - b.hour);
+  return items;
+}
+
 // --- login + section fetch, shared by the human-supervised and unattended paths ---
 
 export interface LoginResult {
@@ -1338,10 +1410,10 @@ export async function doLogin(
   }
 
   let errorMessage = "Couldn't sign in — check your register number, portal password, and try again.";
-  const text = await loginRes.text();
-  if (text.includes("Captcha Invalid")) errorMessage = "That captcha didn't match — try again.";
-  else if (text.includes("Invalid User ID or Password")) errorMessage = "Register number or portal password (default DOB DDMMYYYY or custom password) is incorrect.";
-
+  const text = await loginRes.text().catch(() => "");
+  if (text.includes("Invalid User ID or Password")) {
+    errorMessage = "Invalid register number or date of birth. Check both and try again.";
+  }
   return { loggedIn: false, jar, errorMessage };
 }
 
@@ -1351,14 +1423,15 @@ export async function fetchAcademicSections(
 ): Promise<{
   profileHtml: string;
   courseListHtml: string;
-  transcriptHtml: string;
   attendanceHtml: string;
-  timeTableHtml: string;
   internalMarksHtml: string;
+  timeTableHtml: string;
+  transcriptHtml: string;
   examDetailsHtml: string;
   feePaidHtml: string;
   feeDueHtml: string;
   receiptHtml: string;
+  todayAttendanceHtml: string;
   allSectionsHtml: string[];
 }> {
   const fetchSection = (id: number) =>
@@ -1378,18 +1451,17 @@ export async function fetchAcademicSections(
       });
 
   const fetchFeeDues = () =>
-    fetch(`${PORTAL_BASE}/students/transaction/feeduegroups.jsp`, {
+    fetch(`${PORTAL_BASE}/students/report/feepaymentdetail.jsp`, {
       method: "POST",
       headers: {
         Cookie: cookieHeader(jar),
         "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
         "X-Requested-With": "XMLHttpRequest",
       },
-      body: "ids=8",
     })
       .then((r) => r.text())
       .catch((err) => {
-        console.warn("Failed to fetch fee dues:", err);
+        console.warn("Failed to fetch fee payment details:", err);
         return "";
       });
 
@@ -1415,11 +1487,28 @@ export async function fetchAcademicSections(
         return "";
       });
 
+  const fetchTodayAttendance = () =>
+    fetch(`${PORTAL_BASE}/students/transaction/studentattendance.jsp`, {
+      method: "POST",
+      headers: {
+        Cookie: cookieHeader(jar),
+        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+        "X-Requested-With": "XMLHttpRequest",
+      },
+      body: stuId ? `ids=33&stuId=${encodeURIComponent(stuId)}` : "ids=33",
+    })
+      .then((r) => r.text())
+      .catch((err) => {
+        console.warn("Failed to fetch today attendance:", err);
+        return "";
+      });
+
   const sectionIds = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
-  const [allSectionsHtml, feeDueHtml, receiptHtml] = await Promise.all([
+  const [allSectionsHtml, feeDueHtml, receiptHtml, todayAttendanceHtml] = await Promise.all([
     Promise.all(sectionIds.map((id) => fetchSection(id))),
     fetchFeeDues(),
     fetchReceipts(),
+    fetchTodayAttendance(),
   ]);
 
   return {
@@ -1433,6 +1522,7 @@ export async function fetchAcademicSections(
     feePaidHtml: allSectionsHtml[6] || "", // Section 7 (ids=7) is Fee Paid Details
     feeDueHtml: feeDueHtml || "",
     receiptHtml: receiptHtml || "",
+    todayAttendanceHtml: todayAttendanceHtml || "",
     allSectionsHtml,
   };
 }

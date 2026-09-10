@@ -27,6 +27,7 @@ import {
   parseFeePaidHistory,
   parseFeeReceipts,
   extractFeeConcessions,
+  parseTodayAttendance,
   parseProfile,
   parseTimeTable,
   parseTranscript,
@@ -231,6 +232,7 @@ Deno.serve(async (req) => {
         feePaidHtml,
         feeDueHtml,
         receiptHtml,
+        todayAttendanceHtml,
         allSectionsHtml,
       } = await fetchAcademicSections(loginResult.jar, loginResult.landingPageHtml);
       const { program, currentSemester, mobileNumber } = parseProfile(profileHtml);
@@ -485,6 +487,24 @@ Deno.serve(async (req) => {
             balance_due: item.balanceDue,
             last_synced_at: nowIso,
           }, { onConflict: "user_id,term,fee_type,receipt_number" });
+        }
+      }
+
+      // 6. Upsert today attendance
+      const todayAttendance = parseTodayAttendance(todayAttendanceHtml);
+      if (todayAttendance.length > 0) {
+        for (const item of todayAttendance) {
+          await admin.from("student_daily_attendance").upsert({
+            user_id: row.user_id,
+            register_number: row.register_number,
+            attendance_date: item.date,
+            day_order: item.dayOrder,
+            period_slot: item.hour,
+            course_code: item.courseCode,
+            course_name: item.courseName,
+            status: item.status,
+            last_synced_at: nowIso,
+          }, { onConflict: "user_id,attendance_date,period_slot" });
         }
       }
 
