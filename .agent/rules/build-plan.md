@@ -24,6 +24,7 @@ same commit that ships a task.
   Shipping one never ships the others, and HTTP 200 is not proof a function did
   its job — verify that the data actually changed.
 - **SRM Portal Fee & Finance:** Table `#tbl7` (`ids=7`) is gross billing clearance, not student payments. Genuine bank receipts come from `ids=27` (`receiptgeneration.jsp`). Track scholarship concessions with `paid_amount = 0.00`.
+- **Academic Calendar & Holidays:** Never delegate working-day table computation to an LLM. Always resolve dates deterministically via `get_calendar_day(p_date)` backed by `academic_calendar_days`.
 - **This repo lives in a OneDrive-synced folder.** Run `git diff` after every
   edit; files can be silently reverted, including ones you never touched.
 - **Follow `AI_STYLE_GUIDE.md` strictly.** Eliminate emoji clutter, performative cheerleading, and corporate filler. Maintain a direct senior staff engineer tone.
