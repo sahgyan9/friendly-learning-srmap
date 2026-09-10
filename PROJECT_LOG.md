@@ -384,8 +384,40 @@
   - Zero horizontal scroll verified on desktop (1280px & 1024px) and mobile (360px).
   - Typecheck baseline: 0 errors.
   - Build: clean exit 0.
+### Session 027 — 2026-09-10 · Agent: Antigravity (Gemini 3.8 Flash)
+- **Prompt**:
+  - "can zero horizontal scroll be done for time table as well?"
+- **Root Cause Analysis (RCA) & Architecture**:
+  - The SRM Portal Timetable view previously had two major causes of horizontal overflow:
+    1. `WeeklyMatrixTable.tsx` hardcoded `min-w-[780px]` and column cells with `min-w-[95px]`. On desktop viewports (1024px or split screen), this forced an overflow scrollbar. On mobile (360px), attempting to fit a 9-column matrix (Day + 8 period hours) in 360px yielded ~36px per column, which crushes timetable badges and room numbers.
+    2. `CourseFacultyDirectory.tsx` hardcoded `min-w-[650px]` on its table without mobile card accommodation, forcing horizontal scroll on all screens under 650px.
+  - **Solution**:
+    1. **Dual-Mode Timetable View (`WeeklyMatrixTable.tsx`)**:
+       - Default to Day Agenda View on mobile (`< 768px`) and Week Matrix Grid on desktop (`>= 768px`), with a manual toggle (`Day` vs `Week`).
+       - **Day Agenda View**: Horizontal day pill selector (`[Mon 4 cls] [Tue 1 cls] [Wed 5 cls] [Thu 6 cls] [Fri Free]`) with automatic pre-selection of today in Asia/Kolkata timezone. Fits cleanly in 328px with zero horizontal scroll. Chronological vertical timeline cards displaying period badge (`Hour 2`), time (`10:00 - 10:50`), color-coded course code badge, course name, room number badge (`X 312`), faculty name with directory link, and practical/lab indicator.
+       - **Week Matrix Grid**: Removed artificial `min-w-[780px]` and `min-w-[95px]`. Converted to `table-fixed w-full` with proportional columns (`w-[8%]` day column, `8 * w-[11.5%]` period columns). Truncated cell code and room numbers with hover tooltip. Fits 100% inside 1024px and 1280px with zero horizontal scroll.
+    2. **Course & Faculty Directory (`CourseFacultyDirectory.tsx`)**:
+       - **Mobile View (`sm:hidden`)**: Responsive card stack showing course code badge, LTPC badge, weekly hours, course name, faculty link with external link icon, and room badges with map pin icons.
+       - **Desktop View (`hidden sm:block`)**: `table-fixed w-full` with proportional columns (`w-[14%]`, `w-[33%]`, `w-[13%]`, `w-[22%]`, `w-[18%]`), completely eliminating `min-w-[650px]`.
+- **What was done**:
+  1. Refactored `src/components/timetable/WeeklyMatrixTable.tsx` with responsive Day Agenda and Week Matrix modes.
+  2. Refactored `src/components/timetable/CourseFacultyDirectory.tsx` with mobile cards and table-fixed desktop layout.
+  3. Extended `scripts/qa/qa-srmportal.mjs` with 1024px desktop and mobile day-with-classes test scenarios.
+  4. Ran visual QA sweep and confirmed zero horizontal scroll on all viewports.
+- **Verification**:
+  - `npm run typecheck`: 0 errors.
+  - `npm run build`: Clean exit 0 (client, SSR, and prerender).
+  - Puppeteer screenshots across all viewports and themes:
+    - `srmportal-timetable-desktop-light.png` (1280px): zero horizontal scroll verified.
+    - `srmportal-timetable-desktop-dark.png` (1280px): zero horizontal scroll verified.
+    - `srmportal-timetable-desktop-1024px.png` (1024px): zero horizontal scroll verified.
+    - `srmportal-timetable-mobile-360px-light.png` (360px): zero horizontal scroll verified.
+    - `srmportal-timetable-mobile-360px-dark.png` (360px): zero horizontal scroll verified.
+    - `srmportal-timetable-mobile-360px-classes.png` (360px): zero horizontal scroll verified.
+- **Status at end**:
+  - Both Weekly Matrix View and Course & Faculty Directory have zero horizontal scroll across mobile (360px) and desktop (1024px, 1280px).
 - **Next agent should**:
-  - Keep `student_daily_attendance` synced whenever attendance is refreshed.
+  - Maintain the Day Agenda View as default on mobile viewports for all calendar/timetable schedules.
 
 ---
 
@@ -399,5 +431,6 @@
 - **Status at end**: (verified data changes, database row counts, test passes)
 - **Next agent should**: (clear handoff instructions for the next session)
 ```
+
 
 
