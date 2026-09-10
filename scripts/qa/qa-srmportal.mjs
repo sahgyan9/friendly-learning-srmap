@@ -488,6 +488,18 @@ try {
     await page.close();
   }
 
+  // 3b. SRM Portal: Timetable Tab (Desktop 1024px Light - zero horizontal scroll test)
+  {
+    const page = await browser.newPage();
+    await page.setViewport({ width: 1024, height: 800 });
+    await setupPage(page, 'light');
+    await page.goto(`${BASE}/srmportal?tab=timetable`, { waitUntil: 'networkidle2' });
+    await new Promise((r) => setTimeout(r, 2000));
+    await page.screenshot({ path: path.join(OUT, 'srmportal-timetable-desktop-1024px.png'), fullPage: true });
+    console.log('✓ srmportal-timetable-desktop-1024px.png');
+    await page.close();
+  }
+
   // 4. SRM Portal: Timetable Tab (Mobile 360px Light)
   {
     const page = await browser.newPage();
@@ -510,6 +522,25 @@ try {
     await new Promise((r) => setTimeout(r, 2000));
     await page.screenshot({ path: path.join(OUT, 'srmportal-timetable-mobile-360px-dark.png'), fullPage: true });
     console.log('✓ srmportal-timetable-mobile-360px-dark.png');
+    await page.close();
+  }
+
+  // 5b. SRM Portal: Timetable Tab Mobile Day with Classes (360px Light)
+  {
+    const page = await browser.newPage();
+    await page.setViewport({ width: 360, height: 800 });
+    await setupPage(page, 'light');
+    await page.goto(`${BASE}/srmportal?tab=timetable`, { waitUntil: 'networkidle2' });
+    await new Promise((r) => setTimeout(r, 1500));
+    // Click Thursday pill
+    await page.evaluate(() => {
+      const buttons = Array.from(document.querySelectorAll('button'));
+      const thuBtn = buttons.find((b) => b.textContent && b.textContent.includes('Thu'));
+      if (thuBtn) thuBtn.click();
+    });
+    await new Promise((r) => setTimeout(r, 1000));
+    await page.screenshot({ path: path.join(OUT, 'srmportal-timetable-mobile-360px-classes.png'), fullPage: true });
+    console.log('✓ srmportal-timetable-mobile-360px-classes.png');
     await page.close();
   }
 
