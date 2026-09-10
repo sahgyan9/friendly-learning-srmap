@@ -152,24 +152,120 @@ function isoDate(offsetDays: number): string {
 }
 
 /**
- * Which date(s) is this query actually about? Deliberately narrow (today /
- * tomorrow / yesterday only) rather than a general date parser — those are
- * the phrasings that showed up in the reported bug, and a wrong guess here
- * would inject a *wrong* resolved fact, which is worse than injecting none.
+ * Which date(s) is this query actually about?
+ * Resolves relative dates ("today", "tomorrow", "yesterday"), weekdays ("coming monday",
+ * "next tuesday", "is monday a holiday"), and explicit date formats ("14th september").
  */
 function resolveCalendarDates(query: string): { label: string; iso: string }[] {
   const q = query.toLowerCase();
   const dates: { label: string; iso: string }[] = [];
-  if (/\byesterday\b/.test(q)) dates.push({ label: "Yesterday", iso: isoDate(-1) });
-  // "now"/"currently"/"right now" ask about the present day just as much as the
-  // word "today" does (e.g. "can i get outpass now") -- without this, queries
-  // phrased that way skip RESOLVED_FACTS entirely and fall back to the model
-  // reading the working-days grid itself, the exact failure mode this
-  // resolver exists to eliminate.
+  const addedIso = new Set<string>();
+
+  const addDate = (label: string, iso: string) => {
+    if (!addedIso.has(iso)) {
+      addedIso.add(iso);
+      dates.push({ label, iso });
+    }
+  };
+
+  if (/\byesterday\b/.test(q)) addDate("Yesterday", isoDate(-1));
   if (/\btoday\b|\btoda+y\b|\bnow\b|\bcurrently\b|\bright now\b|\bat the moment\b/.test(q)) {
-    dates.push({ label: "Today", iso: isoDate(0) });
+    addDate("Today", isoDate(0));
   }
-  if (/\btomorrow\b|\btomm?orr?ow?\b/.test(q)) dates.push({ label: "Tomorrow", iso: isoDate(1) });
+  if (/\btomorrow\b|\btomm?orr?ow?\b/.test(q)) addDate("Tomorrow", isoDate(1));
+
+  // Weekday detection (e.g. "coming monday", "next tuesday", "is monday holiday")
+  const dayMap: Record<string, number> = {
+    monday: 1, mon: 1,
+    tuesday: 2, tue: 2,
+    wednesday: 3, wed: 3,
+    thursday: 4, thu: 4,
+    friday: 5, fri: 5,
+    saturday: 6, sat: 6,
+    sunday: 7, sun: 7,
+  };
+  const weekdayMatch = q.match(/\b(?:(coming|next|this|upcoming)\s+)?(monday|tuesday|wednesday|thursday|friday|saturday|sunday|mon|tue|wed|thu|fri|sat|sun)\b/);
+  if (weekdayMatch) {
+    const modifier = weekdayMatch[1]; // 'coming', 'next', 'this', 'upcoming', or undefined
+    const dayWord = weekdayMatch[2];
+    const targetDow = dayMap[dayWord];
+    if (targetDow !== undefined) {
+      const now = new Date();
+      const istDateStr = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" }).format(now);
+      const [curY, curM, curD] = istDateStr.split("-").map(Number);
+      const istLocal = new Date(curY, curM - 1, curD);
+      const currentDow = istLocal.getDay() === 0 ? 7 : istLocal.getDay(); // 1=Mon ... 7=Sun
+
+      let diff = targetDow - currentDow;
+      if (diff < 0 || (diff === 0 && (modifier === "coming" || modifier === "next" || modifier === "upcoming"))) {
+        diff += 7;
+      }
+      const targetIso = isoDate(diff);
+      const targetDate = new Date(now.getTime() + diff * 24 * 60 * 60 * 1000);
+      const fullDateStr = new Intl.DateTimeFormat("en-IN", {
+        timeZone: "Asia/Kolkata",
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      }).format(targetDate);
+      const dayFullName = Object.keys(dayMap).find((k) => k.length > 3 && dayMap[k] === targetDow);
+      const capDay = dayFullName ? dayFullName.charAt(0).toUpperCase() + dayFullName.slice(1) : dayWord;
+      const label = modifier
+        ? `${modifier.charAt(0).toUpperCase() + modifier.slice(1)} ${capDay} (${fullDateStr})`
+        : `${capDay} (${fullDateStr})`;
+      addDate(label, targetIso);
+    }
+  }
+
+  // Explicit date detection: '14th september', '14 september', 'september 14', etc.
+  const months: Record<string, number> = {
+    january: 1, jan: 1, february: 2, feb: 2, march: 3, mar: 3,
+    april: 4, apr: 4, may: 5, june: 6, jun: 6, july: 7, jul: 7,
+    august: 8, aug: 8, september: 9, sept: 9, sep: 9,
+    october: 10, oct: 10, november: 11, nov: 11, december: 12, dec: 12,
+  };
+  const monthPattern = Object.keys(months).join("|");
+  const dFirst = q.match(new RegExp(`\\b(\\d{1,2})(?:st|nd|rd|th)?\\s+(${monthPattern})\\b(?:\\s+(\\d{4}))?`));
+  const mFirst = q.match(new RegExp(`\\b(${monthPattern})\\s+(\\d{1,2})(?:st|nd|rd|th)?\\b(?:\\s+(\\d{4}))?`));
+
+  let mNum: number | undefined;
+  let dNum: number | undefined;
+  let yNum: number | undefined;
+
+  const now = new Date();
+  const istDateStr = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" }).format(now);
+  const [curY, curM] = istDateStr.split("-").map(Number);
+  yNum = curY;
+
+  if (dFirst) {
+    dNum = parseInt(dFirst[1], 10);
+    mNum = months[dFirst[2]];
+    if (dFirst[3]) yNum = parseInt(dFirst[3], 10);
+  } else if (mFirst) {
+    mNum = months[mFirst[1]];
+    dNum = parseInt(mFirst[2], 10);
+    if (mFirst[3]) yNum = parseInt(mFirst[3], 10);
+  }
+
+  if (mNum && dNum && dNum >= 1 && dNum <= 31) {
+    // If year was not explicitly given, align with academic year (AY 2026-27: Jul-Dec 2026, Jan-Jun 2027)
+    if (!dFirst?.[3] && !mFirst?.[3]) {
+      if (curM >= 7 && mNum < 7) yNum = curY + 1;
+      else if (curM < 7 && mNum >= 7) yNum = curY - 1;
+    }
+    const iso = `${yNum}-${String(mNum).padStart(2, "0")}-${String(dNum).padStart(2, "0")}`;
+    const targetDate = new Date(`${iso}T12:00:00+05:30`);
+    const fullDateStr = new Intl.DateTimeFormat("en-IN", {
+      timeZone: "Asia/Kolkata",
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    }).format(targetDate);
+    addDate(fullDateStr, iso);
+  }
+
   return dates;
 }
 
@@ -177,10 +273,7 @@ function resolveCalendarDates(query: string): { label: string; iso: string }[] {
  * The deterministic half of "retrieve, then explain": ask Postgres whether
  * each resolved date is a declared holiday, instead of asking the model to
  * read a compressed working-days grid and cross-reference a separate
- * occasion table. Falls back to nothing (not an error) if the resolver
- * migration hasn't been applied yet, or if academic_calendar_days simply
- * has no row for that date — the prompt already has RAG-retrieved chunks
- * as a fallback either way.
+ * occasion table.
  */
 async function resolveCalendarFacts(query: string): Promise<CalendarFact[]> {
   if (!SUPABASE_SERVICE_ROLE_KEY) return [];
@@ -202,15 +295,40 @@ async function resolveCalendarFacts(query: string): Promise<CalendarFact[]> {
       if (!response.ok) continue; // e.g. function not deployed yet — degrade silently
       const rows = await response.json();
       const row = Array.isArray(rows) ? rows[0] : null;
-      if (!row) continue; // no data for this date; let RAG/the model's own reading handle it
-      facts.push({
-        dateLabel: label,
-        is_holiday: !!row.is_holiday,
-        occasion_name: row.occasion_name ?? null,
-        source: row.source ?? "none",
-        notice_title: row.notice_title ?? null,
-        notice_summary: row.notice_summary ?? null,
-      });
+      if (row) {
+        facts.push({
+          dateLabel: label,
+          is_holiday: !!row.is_holiday,
+          occasion_name: row.occasion_name ?? null,
+          source: row.source ?? "none",
+          notice_title: row.notice_title ?? null,
+          notice_summary: row.notice_summary ?? null,
+        });
+      } else {
+        // Ground truth for weekdays and weekends when no special holiday/notice row exists
+        const [y, m, d] = iso.split("-").map(Number);
+        const dt = new Date(y, m - 1, d);
+        const dow = dt.getDay(); // 0 = Sun, 6 = Sat
+        if (dow === 0) {
+          facts.push({
+            dateLabel: label,
+            is_holiday: true,
+            occasion_name: "Sunday (Weekend)",
+            source: "calendar",
+            notice_title: null,
+            notice_summary: null,
+          });
+        } else if (dow >= 1 && dow <= 5) {
+          facts.push({
+            dateLabel: label,
+            is_holiday: false,
+            occasion_name: null,
+            source: "calendar",
+            notice_title: null,
+            notice_summary: null,
+          });
+        }
+      }
     } catch (error) {
       console.error(`get_calendar_day failed for ${iso}:`, error);
     }
@@ -342,9 +460,10 @@ async function resolveUserTimetables(
       saturday: 6, sat: 6,
       sunday: 7, sun: 7,
     };
-    const weekdayMatch = q.match(/\b(monday|tuesday|wednesday|thursday|friday|saturday|sunday|mon|tue|wed|thu|fri|sat|sun)\b/);
+    const weekdayMatch = q.match(/\b(?:(coming|next|this|upcoming)\s+)?(monday|tuesday|wednesday|thursday|friday|saturday|sunday|mon|tue|wed|thu|fri|sat|sun)\b/);
     if (weekdayMatch) {
-      const matchedName = weekdayMatch[1];
+      const modifier = weekdayMatch[1];
+      const matchedName = weekdayMatch[2];
       const targetDow = dayMap[matchedName];
       if (targetDow !== undefined) {
         const now = new Date();
@@ -352,7 +471,11 @@ async function resolveUserTimetables(
         const [y, mo, d] = istDateStr.split("-").map(Number);
         const istLocal = new Date(y, mo - 1, d);
         const currentDow = istLocal.getDay() === 0 ? 7 : istLocal.getDay();
-        offsetDays = targetDow - currentDow;
+        let diff = targetDow - currentDow;
+        if (diff < 0 || (diff === 0 && (modifier === "coming" || modifier === "next" || modifier === "upcoming"))) {
+          diff += 7;
+        }
+        offsetDays = diff;
       }
     } else {
       // Default: for timetable queries with no explicit day (e.g. "my timetable", "my schedule"), default to today!
@@ -516,8 +639,8 @@ async function retrieve(
     const { todayText, tomorrowText, currentMonthYear } = getTemporalContext();
     let searchQuery = query;
 
-    // Temporal Query Expansion for relative time queries (e.g. today, tomorrow, tommorow, holiday, day order)
-    const hasTemporalWords = /\b(today|toda+y|tomorrow|tomm?orr?ow?|yesterday|now|currently|right now|at the moment|this week|next week|this month|next month|day order|holiday|holidays|working day)\b/i.test(query);
+    // Temporal Query Expansion for relative time queries (e.g. today, tomorrow, weekdays, holiday, day order)
+    const hasTemporalWords = /\b(today|toda+y|tomorrow|tomm?orr?ow?|yesterday|now|currently|right now|at the moment|this week|next week|this month|next month|day order|holiday|holidays|working day|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/i.test(query);
     if (hasTemporalWords) {
       searchQuery = `${query} (${todayText} / ${tomorrowText} Academic Calendar AY 2026-27 ${currentMonthYear} working days holidays)`;
     }
