@@ -83,23 +83,115 @@ export default function CourseFacultyDirectory({
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-xl border border-border/70 bg-card/60 shadow-sm backdrop-blur-sm">
-        <table className="w-full text-sm text-left border-collapse min-w-[650px]">
+      {/* Mobile Card List (Zero Horizontal Scroll on Small Viewports) */}
+      <div className="sm:hidden space-y-3">
+        {directory.map((item) => {
+          const isSelected = activeCourseCode === item.code;
+          const palette = courseColorMap[item.code] || PALETTES[0];
+
+          return (
+            <div
+              key={item.code}
+              onClick={() => onSelectCourse?.(item.code)}
+              className={cn(
+                "p-3.5 rounded-xl border transition-all text-left bg-card/60 backdrop-blur-sm cursor-pointer",
+                isSelected
+                  ? "border-primary ring-1 ring-primary/40 bg-primary/5"
+                  : "border-border/70 hover:border-border"
+              )}
+            >
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <span
+                  className={cn(
+                    "inline-block px-2.5 py-1 rounded text-xs tracking-tight font-mono font-bold border",
+                    palette.badge
+                  )}
+                >
+                  {item.code}
+                </span>
+                <div className="flex items-center gap-1.5 flex-wrap justify-end">
+                  {item.isLab && (
+                    <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30">
+                      LAB
+                    </span>
+                  )}
+                  <span className="inline-block px-2 py-0.5 rounded-md font-mono text-[11px] font-medium bg-muted/80 text-foreground/90 border border-border/60">
+                    {item.ltpc || "—"}
+                  </span>
+                  <span className="text-[11px] text-muted-foreground font-mono">
+                    {item.totalWeeklyHours}h/wk
+                  </span>
+                </div>
+              </div>
+
+              <div className="font-medium text-sm text-foreground mb-2.5">
+                {item.name}
+              </div>
+
+              <div className="pt-2 border-t border-border/50 flex flex-col gap-1.5 text-xs">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-muted-foreground flex items-center gap-1.5 min-w-0">
+                    <User className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
+                    {item.facultyUrl ? (
+                      <Link
+                        to={item.facultyUrl}
+                        onClick={(e) => e.stopPropagation()}
+                        className="truncate text-primary hover:underline font-medium"
+                      >
+                        {item.facultyName}
+                      </Link>
+                    ) : (
+                      <span className="truncate text-foreground/90 font-medium">{item.facultyName}</span>
+                    )}
+                  </span>
+                  {item.facultyUrl && (
+                    <Link
+                      to={item.facultyUrl}
+                      onClick={(e) => e.stopPropagation()}
+                      className="text-primary hover:underline shrink-0"
+                    >
+                      <ExternalLink className="w-3 h-3 opacity-60" />
+                    </Link>
+                  )}
+                </div>
+
+                {item.rooms.length > 0 && (
+                  <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+                    <MapPin className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
+                    {item.rooms.map((room) => (
+                      <span
+                        key={room}
+                        className="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-mono bg-muted text-foreground/90 border border-border"
+                      >
+                        {room}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Desktop Table View (Compact, Table-Fixed, Zero Horizontal Scroll) */}
+      <div className="hidden sm:block rounded-xl border border-border/70 bg-card/60 shadow-xs backdrop-blur-sm overflow-hidden">
+        <table className="w-full text-sm text-left border-collapse table-fixed">
           <thead>
             <tr className="border-b border-border/80 bg-muted/40 text-xs font-semibold text-muted-foreground">
-              <th scope="col" className="py-3 px-4 w-[110px]">
+              <th scope="col" className="py-3 px-3.5 w-[14%]">
                 Code
               </th>
-              <th scope="col" className="py-3 px-4">
+              <th scope="col" className="py-3 px-3.5 w-[33%]">
                 Course Name
               </th>
-              <th scope="col" className="py-3 px-3 text-center w-[120px]">
+              <th scope="col" className="py-3 px-2 text-center w-[13%]">
                 L-T-P-C
               </th>
-              <th scope="col" className="py-3 px-4">
+              <th scope="col" className="py-3 px-3.5 w-[22%]">
                 Faculty
               </th>
-              <th scope="col" className="py-3 px-4">
+              <th scope="col" className="py-3 px-3.5 w-[18%]">
                 Assigned Rooms
               </th>
             </tr>
@@ -117,51 +209,56 @@ export default function CourseFacultyDirectory({
                     isSelected ? "bg-primary/5 dark:bg-primary/10" : ""
                   }`}
                 >
-                  <td className="py-3.5 px-4 font-mono font-semibold">
+                  <td className="py-3 px-3.5 font-mono font-semibold">
                     <span
                       className={cn(
-                        "inline-block px-2.5 py-1 rounded text-xs tracking-tight font-semibold border",
+                        "inline-block px-2 py-0.5 rounded text-xs tracking-tight font-semibold border",
                         palette.badge
                       )}
                     >
                       {item.code}
                     </span>
                   </td>
-                  <td className="py-3.5 px-4 font-medium text-foreground">
-                    <div className="flex items-center gap-1.5">
-                      <span>{item.name}</span>
+                  <td className="py-3 px-3.5 font-medium text-foreground">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="truncate">{item.name}</span>
+                      {item.isLab && (
+                        <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30">
+                          LAB
+                        </span>
+                      )}
                     </div>
                   </td>
-                  <td className="py-3.5 px-3 text-center text-xs font-mono">
-                    <span className="inline-block px-2.5 py-0.5 rounded-md font-mono text-xs font-medium bg-muted/70 text-foreground/90 border border-border/60">
+                  <td className="py-3 px-2 text-center text-xs font-mono">
+                    <span className="inline-block px-2 py-0.5 rounded-md font-mono text-xs font-medium bg-muted/70 text-foreground/90 border border-border/60">
                       {item.ltpc || "—"}
                     </span>
                   </td>
-                  <td className="py-3.5 px-4">
+                  <td className="py-3 px-3.5">
                     {item.facultyUrl ? (
                       <Link
                         to={item.facultyUrl}
                         onClick={(e) => e.stopPropagation()}
-                        className="inline-flex items-center gap-1 text-primary hover:underline font-medium text-xs group"
+                        className="inline-flex items-center gap-1 text-primary hover:underline font-medium text-xs group max-w-full"
                       >
-                        <User className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
-                        <span>{item.facultyName}</span>
-                        <ExternalLink className="w-3 h-3 opacity-60" />
+                        <User className="w-3.5 h-3.5 shrink-0 text-muted-foreground group-hover:text-primary transition-colors" />
+                        <span className="truncate">{item.facultyName}</span>
+                        <ExternalLink className="w-3 h-3 shrink-0 opacity-60" />
                       </Link>
                     ) : (
-                      <span className="text-foreground text-xs flex items-center gap-1.5">
-                        <User className="w-3.5 h-3.5 text-muted-foreground" />
-                        {item.facultyName}
+                      <span className="text-foreground text-xs flex items-center gap-1.5 max-w-full">
+                        <User className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
+                        <span className="truncate">{item.facultyName}</span>
                       </span>
                     )}
                   </td>
-                  <td className="py-3.5 px-4">
+                  <td className="py-3 px-3.5">
                     {item.rooms.length > 0 ? (
-                      <div className="flex items-center gap-1.5 flex-wrap">
+                      <div className="flex items-center gap-1 flex-wrap">
                         {item.rooms.map((room) => (
                           <span
                             key={room}
-                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-mono bg-muted text-foreground/90 border border-border"
+                            className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs font-mono bg-muted text-foreground/90 border border-border"
                           >
                             <MapPin className="w-3 h-3 text-muted-foreground" />
                             {room}
