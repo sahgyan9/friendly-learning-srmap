@@ -250,6 +250,44 @@
   - Keep `AI_STYLE_GUIDE.md` and `docs/AI_NATURE_AND_BEHAVIOR.md` in mind for any new components or copy.
   - Never introduce raw unicode emojis into user-facing web buttons, toasts, cards, or dialogs.
 
+### Session 023 — 2026-09-10 · Agent: Antigravity (Gemini 3.8 Flash)
+- **Prompt**: "we recently added fee and finance and its showing Historical total paid: ₹14,77,860 Which is not true. Do RCA and tell me the issue" -> "go ahead"
+- **Root Cause Analysis (RCA)**:
+  - The previous parser ingested table `#tbl7` from SRM portal endpoint `students/report/studentreportresources.jsp?ids=7`.
+  - Table `#tbl7` is an internal ledger reconciliation between university fee assessments (`Fixed/Advances`) and accounting offsets (`Receipts/Payments`), not a receipt ledger of out-of-pocket payments made by the student.
+  - The mapped column (`Receipts/Payments -> Amount`) recorded gross ledger clearance amounts rather than student payments.
+  - This mistakenly counted **₹8,36,400** in SRM University merit scholarship concessions (₹2,09,100/yr across 4 academic years) and **₹13,400** in due reversals/journal adjustments as cash paid by the student.
+  - The student's actual out-of-pocket payments (verified across all 25 official university payment receipts in `students/report/receiptgeneration.jsp`, section 27) total exactly **₹6,28,060**.
+- **What was done**:
+  1. **Scraper & Shared Pipeline**:
+     - Updated `supabase/functions/_shared/srm-portal.ts`:
+       - Enhanced `fetchAcademicSections` to extract `stuId` from the landing page and fetch `students/report/receiptgeneration.jsp` (`ids: 27`).
+       - Added `parseFeeReceipts(html)` to extract 1:1 genuine transaction receipts with exact payment amounts, receipt numbers (`SEAS/...`), dates, and terms.
+       - Added `extractFeeConcessions(tbl7Html, receipts)` to capture institutional merit scholarship waivers with `paid_amount = 0.00` and `amount = concessionAmount`, so scholarship credits are documented without inflating out-of-pocket payments.
+  2. **Edge Functions**:
+     - Updated `supabase/functions/sync-srm-portal/index.ts` and `supabase/functions/import-srm-portal/index.ts` to ingest from `parseFeeReceipts` as the primary source of truth, fall back safely if unavailable, and clean out stale gross ledger entries.
+  3. **Database Migration & Verification**:
+     - Updated `tools/apply_finance_sync.mjs` and applied migration to production Supabase project (`ruapdkrgcbqrhvsayvpf`) via MCP `apply_migration`.
+     - Verified via database assertions: `count(*) = 29` (25 genuine payment receipts + 4 scholarship waivers) and `sum(paid_amount) = 628060.00`.
+  4. **Frontend UI**:
+     - Updated `src/components/finance/FeeFinanceOverview.tsx`:
+       - Computes `totalLifetimePaid` from genuine receipts (₹6,28,060).
+       - Computes `totalConcessions` from institutional waiver entries (₹8,38,620).
+       - Displays "Historical total paid: ₹6,28,060" and dedicated "Scholarship Concessions: ₹8,38,620" in the advisory card.
+       - Renders a clean "Waiver" badge and emerald credit display for institutional concessions in the history table.
+  5. **Verification**:
+     - `npm run typecheck`: 0 errors.
+     - `npm run test:migrations`: All checks passed on clean and upgrade Postgres scenarios.
+     - `npm run build`: Production client, SSR bundle, and prerender passed with 0 errors.
+     - Visual QA: Updated `scripts/qa/qa-srmportal.mjs` and captured desktop/mobile screenshots in light and dark mode in `.qa-srmportal/`.
+- **Status at end**:
+  - Historical total paid accurately reflects true out-of-pocket payments (₹6,28,060).
+  - Scholarship concessions (₹8,38,620) are documented as credits without inflating total paid.
+  - Zero TypeScript errors.
+- **Next agent should**:
+  - Preserve `parseFeeReceipts` as the source of truth for `student_fee_paid_history`.
+  - Follow `AGENTS.md` and `PROJECT_LOG.md` guidelines.
+
 ---
 
 ## Session Template (copy for each new session)
