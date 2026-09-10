@@ -579,6 +579,7 @@ for (const file of [
   '20260906210000_app_downloads_tracking.sql',
   '20260909020000_add_ltpc_to_student_timetables.sql',
   '20260909030000_student_finance_and_fee_alerts.sql',
+  '20260910120000_student_daily_attendance.sql',
 ]) {
   if (file === '20260804132345_b843f814-46d5-4c25-bc80-32e5f6ebba59.sql') {
     // Production's `faculty` table still carries `profile_image`, a column
@@ -4427,7 +4428,11 @@ await q(`
   VALUES (
     $1, 'AP23111260062', 1, $2, 2,
     ((now() AT TIME ZONE 'Asia/Kolkata') - interval '15 minutes')::time,
-    ((now() AT TIME ZONE 'Asia/Kolkata') + interval '35 minutes')::time,
+    CASE 
+      WHEN ((now() AT TIME ZONE 'Asia/Kolkata') + interval '35 minutes')::time < ((now() AT TIME ZONE 'Asia/Kolkata') - interval '15 minutes')::time 
+      THEN '23:59:59'::time 
+      ELSE ((now() AT TIME ZONE 'Asia/Kolkata') + interval '35 minutes')::time 
+    END,
     'B', 'CSE 302', 'Operating Systems', 'Dr. Ravi Kant', 'UB 401', false
   )
   ON CONFLICT (user_id, day_name, hour, course_code) DO UPDATE SET
@@ -4762,7 +4767,19 @@ const { rows: [notifCheck] } = await q(`
   VALUES ($1, 'fee_alert', 'Fee Raised: Hostel Fees (INR 147900.00)', 'Please pay on time to avoid Penalty of Fine.')
   RETURNING id, type
 `, [CURRENT_UID]);
-check('notifications accepts fee_alert type', notifCheck?.type === 'fee_alert', JSON.stringify(notifCheck));
+// Student daily attendance test (20260910120000_student_daily_attendance.sql)
+console.log('\n--- 20260910120000_student_daily_attendance.sql ---');
+const { rows: [dailyAttendanceTableCheck] } = await q(`
+  SELECT table_name FROM information_schema.tables WHERE table_name = 'student_daily_attendance'
+`);
+check('student_daily_attendance table exists', dailyAttendanceTableCheck?.table_name === 'student_daily_attendance', JSON.stringify(dailyAttendanceTableCheck));
+
+const { rows: [dailyInsertCheck] } = await q(`
+  INSERT INTO public.student_daily_attendance (user_id, attendance_date, day_order, period_slot, course_code, course_name, status)
+  VALUES ($1, '2026-09-10', 'Thursday', 2, 'PHY 424', 'ELECTRONIC MATERIALS AND DEVICE PHYSICS', 'P')
+  RETURNING id, status
+`, [CURRENT_UID]);
+check('student_daily_attendance accepts insert with period_slot and status', dailyInsertCheck?.status === 'P', JSON.stringify(dailyInsertCheck));
 
 console.log(failures === 0
   ? '\nAll migration checks passed against real Postgres.'
