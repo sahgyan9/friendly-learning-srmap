@@ -326,6 +326,28 @@
 - **Next agent should**:
   - Never allow LLM prompts to calculate calendar holidays from unstructured table text. Always route date questions through deterministic `get_calendar_day` resolution.
 
+### Session 025 — 2026-09-10 · Agent: Antigravity (Gemini 3.8 Flash)
+- **Prompt**:
+  1. "what is this number 3, 6, and 2 in srm portal page"
+  2. "we dont' need that, just remove that and commit and push with your learning documented"
+- **Root Cause Analysis (RCA)**:
+  - The numeric badges on the SRM portal tabs in `src/pages/Attendance.tsx` rendered raw entity counts:
+    - `Attendance & Bunk Calculator`: `records.length` (count of enrolled subjects synced).
+    - `Class Timetable`: `timetableSlots.length` (count of weekly timetable slots/periods, e.g. 16).
+    - `Fee & Finance`: `feeDues.length` (count of fee billing categories/dues on record).
+  - Raw entity counters on navigation tabs create noise and confusion; students misinterpret counts (like "16" on timetable or "3" on attendance) as unread notifications, pending actions, or errors.
+  - Tab navigation should remain clean; the pulsing amber indicator for overdue/pending fee balances (`to_be_paid_amount > 0`) was preserved as an actionable alert without misleading numeric counters.
+- **What was done**:
+  - Removed `{records.length}`, `{timetableSlots.length}`, and `{feeDues.length}` badge spans from the tab buttons in `src/pages/Attendance.tsx`.
+  - Maintained the amber alert pip on `Fee & Finance` when outstanding dues exist.
+  - Verified `npm run typecheck` (0 errors) and `npm test` (20 files passed, 162 tests passed).
+- **Status at end**:
+  - SRM Portal tab buttons have clean titles without confusing numeric badges.
+  - Typecheck: 0 errors.
+  - Unit tests: 162/162 passed.
+- **Next agent should**:
+  - Do not introduce numeric badges to tab headers unless they represent true unread/actionable items with explicit student value.
+
 ---
 
 ## Session Template (copy for each new session)
