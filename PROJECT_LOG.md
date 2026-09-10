@@ -348,6 +348,45 @@
 - **Next agent should**:
   - Do not introduce numeric badges to tab headers unless they represent true unread/actionable items with explicit student value.
 
+### Session 026 — 2026-09-10 · Agent: Antigravity (Gemini 3.8 Flash)
+- **Prompt**:
+  1. "I think, if you see the portal Student Attendance (new), where it shows the todays attendance given. Can you find that? if yes, brainstorm to integrate it properly usig Don Norman Priciples"
+  2. "See any way students goes to todays attendance and bunk calculator. can we incorporate todays attendance in same table. what do you say"
+  3. "one doesn't need to see both present things. filling that with just present or absent is fine and make sure you compact the table so that its in one view and i don't have to scroll horizontally, understood"
+- **Root Cause Analysis (RCA) & Architecture**:
+  - The SRM Student Portal hosts today's period attendance at `POST /students/transaction/studentattendance.jsp` with payload `ids=33&stuId=<internal_id>`. It returns a 5-column HTML table containing daily attendance: Date, Day Order, Hour, Subject, and Status (`P`, `A`, `OD`).
+  - To prevent fragmented mental models, today's attendance is incorporated directly into the Attendance & Bunk Calculator table using Don Norman's principles (Visibility, Mapping, Feedback, and Semantic Signifiers).
+  - Designed with two explicit constraints:
+    1. Zero period noise: Single compact badge `[Present]` or `[Absent]`, never verbose period repetition like `[P7: P] [P8: P]`.
+    2. Zero horizontal scrolling: Compacted table column widths (`38%`, `14%`, `16%`, `17%`, `15%`) with ~485px total min-width, fitting completely on 1024px and 1280px screens without horizontal scroll. Added responsive mobile card view (`sm:hidden`) for phones (<640px).
+- **What was done**:
+  1. **Database Migration (`supabase/migrations/20260910120000_student_daily_attendance.sql`)**:
+     - Created `student_daily_attendance` table with `attendance_date`, `day_order`, `period_slot`, `course_code`, `course_name`, `status`, and unique constraint `(user_id, attendance_date, period_slot)`.
+     - Applied to Supabase project `ruapdkrgcbqrhvsayvpf` via MCP `apply_migration`.
+     - Added test assertion to `supabase/tests/verify-migrations.mjs` and verified PGlite test suite passes (`npm run test:migrations`).
+  2. **Backend Scraper & Edge Functions**:
+     - Added `TodayAttendanceItem` interface, `parseTodayAttendance()` parser, and Section 33 fetch to `supabase/functions/_shared/srm-portal.ts`.
+     - Updated `supabase/functions/import-srm-portal/index.ts` and `supabase/functions/sync-srm-portal/index.ts` to parse Section 33 and upsert daily attendance records.
+     - Deployed both edge functions to Supabase project `ruapdkrgcbqrhvsayvpf` with `--no-verify-jwt`.
+  3. **Frontend UI (`src/pages/Attendance.tsx`)**:
+     - Added `StudentDailyAttendance` interface and `dailyAttendance` state with offline storage fallback.
+     - Computed `todayCourseStatusMap` with course code normalization.
+     - Added `"Today"` filter tab (`All`, `At risk`, `Safe`, `Today (X)`).
+     - Rendered compact `[Present]` (emerald) / `[Absent]` (destructive) badges alongside course code and slot badge.
+     - Compacted table columns for desktop/tablet to eliminate horizontal scrolling.
+     - Added responsive card view (`sm:hidden`) for mobile screens.
+  4. **Visual QA & Verification**:
+     - Updated `scripts/qa/qa-srmportal.mjs` with daily attendance mock data.
+     - Captured and visually verified screenshots at 1280px, 1024px, and 360px mobile in both light and dark themes.
+     - Verified `npm run typecheck` (0 errors) and `npm run build` (clean exit 0).
+- **Status at end**:
+  - Today's attendance is fully integrated into the existing Attendance & Bunk Calculator table.
+  - Zero horizontal scroll verified on desktop (1280px & 1024px) and mobile (360px).
+  - Typecheck baseline: 0 errors.
+  - Build: clean exit 0.
+- **Next agent should**:
+  - Keep `student_daily_attendance` synced whenever attendance is refreshed.
+
 ---
 
 ## Session Template (copy for each new session)
@@ -360,4 +399,5 @@
 - **Status at end**: (verified data changes, database row counts, test passes)
 - **Next agent should**: (clear handoff instructions for the next session)
 ```
+
 
