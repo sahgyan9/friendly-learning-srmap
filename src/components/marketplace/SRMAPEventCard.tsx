@@ -25,9 +25,8 @@ interface SRMAPEventCardProps {
 
 export function SRMAPEventCard({ event, rsvpStatus = null, onRsvp, rsvpPending = false }: SRMAPEventCardProps) {
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
-  const parseDate = (value: string) => parseEventDate(value);
-  const start = parseDate(event.startDate);
-  const end = parseDate(event.endDate);
+  const start = parseEventDate(event.startDate);
+  const end = parseEventDate(event.endDate);
   const now = new Date();
   const isLive = now >= start && now <= end;
   const hasEnded = now > end;

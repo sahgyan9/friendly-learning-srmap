@@ -72,9 +72,8 @@ export const EventShareModal: React.FC<EventShareModalProps> = ({
   const canonicalUrl = `${PRIMARY_DOMAIN}/events/${event.id}`;
 
   const { formattedDate, formattedTime } = useMemo(() => {
-    const parseDate = (val: string) => parseEventDate(val);
-    const start = parseDate(event.startDate);
-    const end = parseDate(event.endDate);
+    const start = parseEventDate(event.startDate);
+    const end = parseEventDate(event.endDate);
 
     const fStart = start.toLocaleDateString("en-IN", {
       weekday: "short",

@@ -15,6 +15,7 @@ import { getErrorField, getErrorMessage } from "@/lib/errors";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/context/AuthContext";
+import { getInitials } from "@/utils/user-utils";
 import { MentorReviewData } from "@/hooks/useRating";
 
 interface RatingModalProps {
@@ -177,16 +178,6 @@ const RatingModal = ({
     }
   };
 
-  const getInitials = (name: string) => {
-    if (!name || typeof name !== "string") return "M";
-    return name
-      .split(" ")
-      .map((part) => part[0])
-      .join("")
-      .toUpperCase()
-      .substring(0, 2);
-  };
-
   const isEditing = Boolean(reviewId);
 
   return (
@@ -205,7 +196,7 @@ const RatingModal = ({
         <div className="flex items-center space-x-3 rounded-lg border bg-muted/30 p-3">
           <Avatar className="h-12 w-12">
             <AvatarImage src={mentorImage} alt={mentorName} />
-            <AvatarFallback>{getInitials(mentorName)}</AvatarFallback>
+            <AvatarFallback>{getInitials(mentorName, "M")}</AvatarFallback>
           </Avatar>
           <div className="min-w-0">
             <h3 className="font-semibold text-foreground truncate">{mentorName}</h3>

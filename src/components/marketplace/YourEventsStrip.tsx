@@ -16,10 +16,6 @@ interface YourEventsStripProps {
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
-function parseDate(value: string) {
-  return parseEventDate(value);
-}
-
 /**
  * "Live now", "Today · 3:00 PM", "Tomorrow · 9:00 AM", "In 5 days · 4 Sep".
  *
@@ -28,8 +24,8 @@ function parseDate(value: string) {
  * "Tomorrow", and one 30 hours away can be the day after.
  */
 function formatCountdown(event: SRMAPEvent, now: Date = new Date()): string {
-  const start = parseDate(event.startDate);
-  const end = parseDate(event.endDate);
+  const start = parseEventDate(event.startDate);
+  const end = parseEventDate(event.endDate);
 
   if (now >= start && now <= end) return "Live now";
 

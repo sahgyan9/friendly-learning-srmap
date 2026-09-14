@@ -23,17 +23,13 @@ export function parseEventDate(dateStr: string): Date {
   return isNaN(d.getTime()) ? new Date() : d;
 }
 
-function parseDate(dateStr: string): Date {
-  return parseEventDate(dateStr);
-}
-
 function formatUtcForCalendar(date: Date): string {
   return date.toISOString().replace(/-|:|\.\d+/g, "");
 }
 
 export function getGoogleCalendarUrl(event: CalendarEventData): string {
-  const start = parseDate(event.startDate);
-  const end = parseDate(event.endDate);
+  const start = parseEventDate(event.startDate);
+  const end = parseEventDate(event.endDate);
 
   const params = new URLSearchParams({
     action: "TEMPLATE",
@@ -47,8 +43,8 @@ export function getGoogleCalendarUrl(event: CalendarEventData): string {
 }
 
 export function getOutlookCalendarUrl(event: CalendarEventData): string {
-  const start = parseDate(event.startDate);
-  const end = parseDate(event.endDate);
+  const start = parseEventDate(event.startDate);
+  const end = parseEventDate(event.endDate);
 
   const params = new URLSearchParams({
     path: "/calendar/action/compose",
@@ -64,8 +60,8 @@ export function getOutlookCalendarUrl(event: CalendarEventData): string {
 }
 
 export function downloadIcsFile(event: CalendarEventData, filename?: string) {
-  const start = parseDate(event.startDate);
-  const end = parseDate(event.endDate);
+  const start = parseEventDate(event.startDate);
+  const end = parseEventDate(event.endDate);
 
   const cleanTitle = event.title.replace(/\n/g, " ");
   const cleanDesc = event.description.replace(/\n/g, "\\n");

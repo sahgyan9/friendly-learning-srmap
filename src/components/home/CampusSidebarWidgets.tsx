@@ -28,7 +28,7 @@ import { MentorIcon } from "@/components/icons/MentorIcon";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { parseEventDate as parseRawEventDate } from "@/lib/calendar-utils";
+import { parseEventDate } from "@/lib/calendar-utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import MentorAvatar from "@/components/mentors/MentorAvatar";
 import { useAuth } from "@/context/AuthContext";
@@ -167,7 +167,7 @@ const EventSpeakerPhoto = ({
   );
 };
 
-function parseEventDate(startVal: string | undefined, endVal?: string | undefined): {
+function formatEventTiming(startVal: string | undefined, endVal?: string | undefined): {
   month: string;
   day: string;
   formattedDate: string;
@@ -176,7 +176,7 @@ function parseEventDate(startVal: string | undefined, endVal?: string | undefine
 } {
   if (!startVal) return { month: "UPC", day: "--", formattedDate: "Upcoming", time: "", isLive: false };
   try {
-    const start = parseRawEventDate(startVal);
+    const start = parseEventDate(startVal);
     if (isNaN(start.getTime())) return { month: "UPC", day: "--", formattedDate: "Upcoming", time: "", isLive: false };
     
     const month = start.toLocaleDateString("en-US", { month: "short" });
@@ -188,7 +188,7 @@ function parseEventDate(startVal: string | undefined, endVal?: string | undefine
     let formattedDate = `${month} ${day}`;
 
     if (endVal) {
-      const end = parseRawEventDate(endVal);
+      const end = parseEventDate(endVal);
       if (!isNaN(end.getTime())) {
         isLive = now >= start && now <= end;
         if (start.toDateString() !== end.toDateString()) {
@@ -327,7 +327,7 @@ export const CampusSidebarWidgets = () => {
         ) : events && events.length > 0 ? (
           <div className="space-y-2.5">
             {events.slice(0, 3).map((event) => {
-              const { formattedDate, time, isLive } = parseEventDate(event.startDate, event.endDate);
+              const { formattedDate, time, isLive } = formatEventTiming(event.startDate, event.endDate);
               return (
                 <Tooltip key={event.id}>
                   <TooltipTrigger asChild>

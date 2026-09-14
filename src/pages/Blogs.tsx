@@ -27,6 +27,7 @@ import { CardAccentBorder } from "@/components/ui/CardAccentBorder";
 import { HorizontalScroller } from "@/components/ui/HorizontalScroller";
 import { useAuth } from "@/context/AuthContext";
 import { useBlogPosts, useMyBlogPosts } from "@/hooks/useBlogPosts";
+import { getInitials } from "@/utils/user-utils";
 import { deleteBlogPost } from "@/integrations/supabase/services/blog-posts";
 
 const BLOG_CATEGORIES = [
@@ -42,15 +43,6 @@ const BLOG_CATEGORIES = [
 
 const formatDate = (iso: string | null) =>
   iso ? new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "";
-
-const getInitials = (name: string) =>
-  name
-    .split(" ")
-    .map((part) => part[0])
-    .filter(Boolean)
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
 
 interface LocalDraftInfo {
   title?: string;

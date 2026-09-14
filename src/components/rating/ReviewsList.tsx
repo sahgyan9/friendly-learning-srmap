@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { Star } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { getInitials } from "@/utils/user-utils";
 import { supabase } from "@/integrations/supabase/client";
 
 interface Review {
@@ -57,16 +58,6 @@ const ReviewsList = ({ mentorId }: ReviewsListProps) => {
     } catch {
       return "Date unknown";
     }
-  };
-
-  const getInitials = (name: string) => {
-    if (!name || typeof name !== 'string') return 'U';
-    return name
-      .split(' ')
-      .map(part => part[0])
-      .join('')
-      .toUpperCase()
-      .substring(0, 2);
   };
 
   if (isLoading) {

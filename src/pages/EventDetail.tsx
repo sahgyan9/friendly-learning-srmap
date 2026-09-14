@@ -107,9 +107,8 @@ const EventDetail = () => {
         };
       }
 
-      const parseDate = (val: string) => parseEventDate(val);
-      const start = parseDate(event.startDate);
-      const end = parseDate(event.endDate);
+      const start = parseEventDate(event.startDate);
+      const end = parseEventDate(event.endDate);
       const now = new Date();
 
       const live = now >= start && now <= end;

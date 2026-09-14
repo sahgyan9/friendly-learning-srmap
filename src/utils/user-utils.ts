@@ -12,14 +12,18 @@ export const getBadgeVariant = (badge?: string | null): string => {
   }
 };
 
-export const getInitials = (name?: string | null): string => {
-  if (!name || typeof name !== "string") return "U";
-  return name
-    .split(" ")
+/** Up to two uppercase initials for an avatar fallback; "U" when there is no usable name. */
+export const getInitials = (name?: string | null, fallback = "U"): string => {
+  if (!name || typeof name !== "string") return fallback;
+  const initials = name
+    .trim()
+    .split(/\s+/)
     .map((part) => part[0])
+    .filter(Boolean)
     .join("")
     .toUpperCase()
     .substring(0, 2);
+  return initials || fallback;
 };
 
 export const formatDepartment = (department?: string | null): string => {

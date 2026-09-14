@@ -36,10 +36,8 @@ import { sanitizeBlogHtml } from "@/lib/sanitize-html";
 import { getErrorMessage } from "@/lib/errors";
 import { useAuth } from "@/context/AuthContext";
 import { useBlogPost } from "@/hooks/useBlogPosts";
+import { getInitials } from "@/utils/user-utils";
 import { deleteBlogPost, incrementBlogPostViews } from "@/integrations/supabase/services/blog-posts";
-
-const getInitials = (name: string) =>
-  name.split(" ").map((part) => part[0]).filter(Boolean).slice(0, 2).join("").toUpperCase();
 
 const BlogPostDetail = () => {
   const { slug } = useParams<{ slug: string }>();

@@ -19,13 +19,9 @@ import SEOHead from "@/components/SEOHead";
 import { ROUTE_META } from "@/lib/seo/route-meta";
 import StructuredData from "@/components/StructuredData";
 import { getBreadcrumbSchema } from "@/lib/structured-data";
-import { parseEventDate as parseUniversalEventDate } from "@/lib/calendar-utils";
+import { parseEventDate } from "@/lib/calendar-utils";
 
 type EventTab = "all" | "mine" | "past";
-
-function parseEventDate(value: string) {
-    return parseUniversalEventDate(value).getTime();
-}
 
 const MarketPlace = () => {
     const [searchQuery, setSearchQuery] = useState('');
@@ -85,7 +81,7 @@ const MarketPlace = () => {
         const past: SRMAPEvent[] = [];
 
         srmapEvents.forEach((event) => {
-            if (parseEventDate(event.endDate) < now) {
+            if (parseEventDate(event.endDate).getTime() < now) {
                 past.push(event);
             } else {
                 current.push(event);
