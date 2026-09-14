@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useIsomorphicLayoutEffect } from "@/hooks/useIsomorphicLayoutEffect";
 import { supabase } from "@/integrations/supabase/client";
 import { getOfflineCache, setOfflineCache } from "@/lib/offline/offlineStorage";
+import { parseEventDate } from "@/lib/calendar-utils";
 
 export interface SRMAPEvent {
   id: number;
@@ -43,7 +44,7 @@ interface CachedEventRow {
  * offset string.
  */
 function parseSRMAPDate(value: string): number {
-  return new Date(value.replace(" ", "T") + "+05:30").getTime();
+  return parseEventDate(value).getTime();
 }
 
 function sortEvents(events: SRMAPEvent[]): SRMAPEvent[] {

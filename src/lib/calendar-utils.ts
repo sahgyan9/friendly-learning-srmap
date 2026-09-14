@@ -13,8 +13,18 @@ interface CalendarEventData {
   endDate: string;
 }
 
+export function parseEventDate(dateStr: string): Date {
+  if (!dateStr) return new Date();
+  if (dateStr.includes("T") || dateStr.includes("+") || dateStr.endsWith("Z")) {
+    const d = new Date(dateStr);
+    return isNaN(d.getTime()) ? new Date() : d;
+  }
+  const d = new Date(dateStr.replace(" ", "T") + "+05:30");
+  return isNaN(d.getTime()) ? new Date() : d;
+}
+
 function parseDate(dateStr: string): Date {
-  return new Date(dateStr.replace(" ", "T") + "+05:30");
+  return parseEventDate(dateStr);
 }
 
 function formatUtcForCalendar(date: Date): string {

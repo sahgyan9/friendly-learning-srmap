@@ -38,6 +38,7 @@ import { Conversation } from "@/types/chat";
 import { SRMAPEvent } from "@/hooks/useSRMAPEvents";
 import { PRIMARY_DOMAIN } from "@/lib/constants";
 import { getInitials } from "@/utils/user-utils";
+import { parseEventDate } from "@/lib/calendar-utils";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -71,7 +72,7 @@ export const EventShareModal: React.FC<EventShareModalProps> = ({
   const canonicalUrl = `${PRIMARY_DOMAIN}/events/${event.id}`;
 
   const { formattedDate, formattedTime } = useMemo(() => {
-    const parseDate = (val: string) => new Date(val.replace(" ", "T") + "+05:30");
+    const parseDate = (val: string) => parseEventDate(val);
     const start = parseDate(event.startDate);
     const end = parseDate(event.endDate);
 

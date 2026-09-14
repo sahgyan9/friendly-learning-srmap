@@ -28,6 +28,7 @@ import { MentorIcon } from "@/components/icons/MentorIcon";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { parseEventDate as parseRawEventDate } from "@/lib/calendar-utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import MentorAvatar from "@/components/mentors/MentorAvatar";
 import { useAuth } from "@/context/AuthContext";
@@ -175,7 +176,7 @@ function parseEventDate(startVal: string | undefined, endVal?: string | undefine
 } {
   if (!startVal) return { month: "UPC", day: "--", formattedDate: "Upcoming", time: "", isLive: false };
   try {
-    const start = new Date(startVal.replace(" ", "T") + "+05:30");
+    const start = parseRawEventDate(startVal);
     if (isNaN(start.getTime())) return { month: "UPC", day: "--", formattedDate: "Upcoming", time: "", isLive: false };
     
     const month = start.toLocaleDateString("en-US", { month: "short" });
@@ -187,7 +188,7 @@ function parseEventDate(startVal: string | undefined, endVal?: string | undefine
     let formattedDate = `${month} ${day}`;
 
     if (endVal) {
-      const end = new Date(endVal.replace(" ", "T") + "+05:30");
+      const end = parseRawEventDate(endVal);
       if (!isNaN(end.getTime())) {
         isLive = now >= start && now <= end;
         if (start.toDateString() !== end.toDateString()) {
