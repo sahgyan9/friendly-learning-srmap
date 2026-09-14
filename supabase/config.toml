@@ -84,4 +84,32 @@ verify_jwt = false
 [functions.generate-ai-overview]
 verify_jwt = false
 
+# The entries below record what was actually deployed on 2026-09-14
+# (supabase functions list). Every function must have an entry, because a
+# `functions deploy` without one silently falls back to the platform default.
 
+# contact-form is the public Contact page: signed-out visitors must be able to
+# submit it, so the platform gate cannot apply. Length caps and a per-email rate
+# limit are enforced in code.
+[functions.contact-form]
+verify_jwt = false
+
+# parse-doc-ocr accepts a user JWT or CRON_SECRET, and the cron path carries no
+# user JWT.
+[functions.parse-doc-ocr]
+verify_jwt = false
+
+# parse-notice is only called from the admin notice form with the admin's JWT,
+# and has no cron path, so the platform gate is kept on as a second layer.
+[functions.parse-notice]
+verify_jwt = true
+
+# send-contact-reply is only called from the admin contact inbox with the
+# admin's JWT; the platform gate is kept on as a second layer.
+[functions.send-contact-reply]
+verify_jwt = true
+
+# send-message-notification is a retired 410 stub (it used to be an open mail
+# relay). It stays deployed so the URL cannot quietly start working again.
+[functions.send-message-notification]
+verify_jwt = false
