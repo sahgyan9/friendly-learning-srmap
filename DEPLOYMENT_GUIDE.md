@@ -174,8 +174,11 @@ A row appears there only once the request finishes.
 
 ## Redeploying an edge function
 
-Every function in this project sets `verify_jwt = false` in `supabase/config.toml`
-and authenticates itself in code. **Preserve that flag when redeploying.** The
+Every function has an entry in `supabase/config.toml`, and almost all set
+`verify_jwt = false` and authenticate themselves in code (the exceptions,
+`parse-notice` and `send-contact-reply`, are admin-only and keep the platform
+gate as a second layer). **Preserve each function's flag when redeploying**, and
+add an entry for any new function before its first deploy. The
 platform JWT gate would only verify the anon key — which ships in the client
 bundle and therefore proves nothing — while breaking the pg_cron path, which
 carries no user JWT at all.
@@ -193,3 +196,27 @@ REVOKE ALL ON FUNCTION public.<name>(<args>) FROM PUBLIC, anon, authenticated;
 
 which lands it at `postgres=X service_role=X`, matching every other locked-down
 helper in the database. See `20260804170000_lock_down_anon_rpc_surface.sql`.
+
+## Server secrets
+
+Edge-function secrets live in the Supabase dashboard (Project Settings, Edge
+Functions, Secrets) or `supabase secrets set NAME=value`. **This table lists
+names only. Never write a value into this repo: it is public.** `SUPABASE_URL`,
+`SUPABASE_ANON_KEY` and `SUPABASE_SERVICE_ROLE_KEY` are injected by the
+platform and are not set by hand.
+
+| Secret | Used by | What breaks without it | Rotating it |
+| --- | --- | --- | --- |
+| `CRON_SECRET` | sync-faculty, sync-srm-portal, sync-srmap-events, send-email-queue, embed-knowledge, generate-mentor-summary, parse-doc-ocr, seed-campus-documents (to call embed-knowledge), ai-chatbot (debug output) | Every scheduled job gets 401: no email sweep, no embeddings, no syncs. | Set the new value here **and** in Vault as `sync_faculty_cron_secret` (the cron jobs read it from there) in the same sitting. |
+| `INGEST_SECRET` | seed-campus-documents | Developer ingestion of campus documents is refused. | Free to rotate; only the person running the ingestion needs it. |
+| `SRM_DOB_ENCRYPTION_KEY` | import-srm-portal (encrypts), sync-srm-portal (decrypts), via `_shared/dob-crypto.ts` | Background SRM portal sync cannot decrypt any stored login. | **Do not rotate casually.** A new key cannot read rows encrypted with the old one, so every linked student must re-link their portal. Keep an offline copy. Generate with `openssl rand -base64 32`. |
+| `RESEND_API_KEY` | send-email-queue, send-contact-reply | No email is sent. Queue rows record the error in `last_error`. | Create a new key in Resend, set it, then revoke the old one. |
+| `EMAIL_FROM`, `EMAIL_REPLY_TO` | send-email-queue, send-contact-reply | From/Reply-To fall back to code defaults. The from-address must be on the verified Resend domain. | Plain config, not secret. |
+| `SITE_URL` | send-email-queue, email-unsubscribe | Links in emails point at the default origin. | Plain config. Update after a domain change. |
+| `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` | send-push (public key also as `VITE_VAPID_PUBLIC_KEY` in Vercel) | Push notifications fail. | Rotating invalidates every existing browser subscription; users must re-enable push. |
+| `Gemini_API_Key`, `Gemini_API_Key_2`, `Gemini_API_Key_3` (any name matching `/gemini.*key/i`) | `_shared/gemini-pool.ts`: embed-knowledge, semantic-search, ai-chatbot, generate-ai-overview, generate-mentor-summary, parse-notice, parse-doc-ocr, parse-linkedin-pdf | Search falls back to keyword-only; AI answers and parsing fail. | Add the new key first; the pool rotates across all present keys. Then remove the old one. |
+| `EMBEDDING_MODEL` | embed-knowledge, semantic-search | Defaults to `gemini-embedding-001`. | Changing it means re-embedding every chunk (768 dimensions is fixed). |
+| `CHAT_MODEL` | ai-chatbot | Uses the code default. | Plain config. |
+
+Frontend variables (`VITE_*`) are set in Vercel and documented in
+`.env.example`. The anon key there is public by design.
