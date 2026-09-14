@@ -71,8 +71,17 @@ Deeper authorities it defers to: [FACULTY_AI_ROADMAP.md](FACULTY_AI_ROADMAP.md)
 - **New tables/functions are exposed by default.** `REVOKE ALL … FROM PUBLIC,
   anon, authenticated` for anything not deliberately an API; revoking from
   `anon` alone is a no-op when the grant is to `PUBLIC`.
-- **Keep `verify_jwt = false`** when redeploying edge functions here; they
-  authenticate in code, and the platform gate breaks the pg_cron path.
+- **Keep each function's `verify_jwt` value from `supabase/config.toml`**
+  when redeploying; most are `false` because they authenticate in code and the
+  platform gate breaks the pg_cron path. Every function needs an entry there.
+- **When you edit and redeploy an edge function, bring it up to the current
+  conventions in the same change:** `Deno.serve`, `supabase-js@2.45.0`, and
+  `_shared/http.ts` for CORS/JSON/secret checks. Do not mass-migrate functions
+  you are not otherwise deploying. Run `npx deno@2 check --no-lock
+  <fn>/index.ts` from `supabase/functions/` first.
+- **Download before you deploy.** `supabase functions download <fn> --workdir
+  .tmp/dl --use-api` and diff against the repo; production has drifted from git
+  before (three undeclared test functions were found deployed on 2026-09-14).
 - **`public.users` is owner-only.** Cross-user reads go through a
   `SECURITY DEFINER` RPC, never a widened policy.
 - **Adding an entity type to search is three edits** — a projector function, a
