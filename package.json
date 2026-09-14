@@ -21,6 +21,7 @@
     "test:watch": "vitest",
     "generate:dynamic-sitemap": "node generate-dynamic-sitemap.js",
     "test:migrations": "node supabase/tests/verify-migrations.mjs && node supabase/tests/verify-upgrade.mjs",
+    "test:anon-lockdown": "node supabase/tests/verify-anon-lockdown.mjs",
     "qa:screenshot": "node scripts/qa/qa-screenshot.mjs",
     "qa:welcome-tour": "node scripts/qa/qa-welcome-tour.mjs",
     "qa:faculty-mock": "node scripts/qa/qa-faculty-mock.mjs",

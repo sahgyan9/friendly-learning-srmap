@@ -11,13 +11,11 @@ Use it when:
   The IDs are defined there; use the same ones rather than renumbering.
 - You are about to suggest what to build next. Ten of its eleven tasks are done
   and in production; the file lists what remains, what was deliberately
-  deferred and why, and the follow-ups discovered during execution (notably:
-  **link previews are broken for every dynamic route**).
+  deferred and why, and the follow-ups discovered during execution.
 - You are picking up implementation. It carries the hard-won rules that are not
-  obvious from the code — the typecheck baseline of 13, the SKIP-list
+  obvious from the code — the typecheck baseline of 0, the SKIP-list
   obligation for pgvector migrations, the three edits required to add a search
-  entity type, and the fact that `@/hooks/use-toast` is silently dead in this
-  app.
+  entity type, and that toasts come from `sonner`.
 
 It defers to [FACULTY_AI_ROADMAP.md](../../FACULTY_AI_ROADMAP.md) on anything
 retrieval- or AI-related; that file stays the deeper authority there.

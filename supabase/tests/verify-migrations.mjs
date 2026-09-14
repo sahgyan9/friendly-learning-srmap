@@ -606,7 +606,8 @@ for (const file of [
 console.log('');
 
 // =====================================================================
-// SKIPPED (73 of the 129 files in supabase/migrations/, not executed above).
+// SKIPPED (files in supabase/migrations/ not executed above; the count drifts
+// as migrations are added, so it is not recorded here).
 // Every migration in the repo falls into exactly one of these eight groups
 // -- with one exception (see the NOTE inside group 1), which names the file
 // and the reason it isn't bulleted, rather than silently dropping it. None

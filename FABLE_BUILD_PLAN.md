@@ -139,9 +139,10 @@ directory. See `.claude/rules/supabase-changes.md`.
 HTTP 200 is not proof, column grants, `verify_jwt = false`, OneDrive reverts).
 What follows are the additions this session earned.
 
-- **`npm run typecheck` is the check.** Bare `tsc` is a no-op here. ESLint is
-  broken repo-wide — skip it, do not fix it as a side quest. The baseline is
-  **13 errors**; adding a fourteenth is a regression.
+- **`npm run typecheck` is the check.** Bare `tsc` is a no-op here. The
+  baseline is **0 errors** (it was 13 when this plan was written; see
+  follow-up 4). ESLint works: lint the files you touch with
+  `npx eslint <paths>` and add no new errors.
 - **Verify a database change by reading the data, never the response.** Every
   schema change this session was rehearsed against production inside
   `BEGIN … ROLLBACK` with assertions that `RAISE EXCEPTION` on failure, applied,
@@ -158,10 +159,9 @@ What follows are the additions this session earned.
   `semantic-search` with no Authorization header, so it was permanently
   anonymous and could never have surfaced a student. If a feature depends on
   viewer identity, trace the header the whole way down.
-- **Toasts: import from `sonner`, never `@/hooks/use-toast`.** The shadcn
-  `<Toaster />` is not mounted anywhere in this app; 36 messages across 14 files
-  were being silently dropped. `@/components/ui/use-toast` is a re-export of the
-  same dead hook — also avoid.
+- **Toasts: import from `sonner`.** The shadcn `use-toast` hook was never
+  mounted (36 messages across 14 files were silently dropped) and has since
+  been deleted.
 - **Stage commits explicitly.** Never `git add -A` while subagents may have
   in-flight edits. Multi-line commit messages: write to a temp file and use
   `git commit -F`; embedded quotes break PowerShell argument parsing.
@@ -193,7 +193,7 @@ collapses synonyms, so do not build a curated taxonomy.
   and the AI layer**, including approaches deliberately rejected. This file
   defers to it on anything retrieval-related.
 - [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) — the three deploy targets.
-- [RECOMMENDATIONS_ROADMAP.md](RECOMMENDATIONS_ROADMAP.md) — *behavioural*
+- [RECOMMENDATIONS_ROADMAP.md](docs/archive/RECOMMENDATIONS_ROADMAP.md) — *behavioural*
   recommendations (collaborative filtering), still parked and still correct to
   park. **T2.2 is not that feature**: it is content-based, matching stated
   interests through the existing embedding layer, needing no interaction volume.

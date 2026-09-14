@@ -1,6 +1,11 @@
 # Quality Assurance
 
-- Always screenshot your output and self-review before marking anything as done.
-- After generating or modifying any page, take a screenshot using Puppeteer and visually inspect it.
-- If building from scratch (no reference image), present the screenshot to the user for feedback before proceeding to the next page.
-- If recreating from a reference image, compare the screenshot against the reference and fix mismatches before moving on.
+- **Run the cheap checks on every change:** `npm run typecheck` (must stay at 0
+  errors), `npx eslint <files you touched>` (add no new errors), and `npm test`
+  when you changed logic that has tests.
+- **Screenshot only when the change is visual**, and then at 360px and desktop
+  in both themes, using the harnesses in `scripts/qa/`. Browser and agent-driven
+  verification spends the owner's usage, so do not run it for non-visual
+  changes (docs, types, server-only code).
+- **Verify data changes against the data**, not the HTTP status. See
+  `supabase-changes.md`.

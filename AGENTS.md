@@ -35,10 +35,15 @@ Deeper authorities it defers to: [FACULTY_AI_ROADMAP.md](FACULTY_AI_ROADMAP.md)
 - `npm run typecheck` — **the** type check. Bare `tsc` is a no-op in this repo.
 - `npm run test:migrations` — PGlite migration harness.
 - `npm run build` — sitemap + client + SSR + prerender.
-- **ESLint is broken repo-wide.** Skip it; do not fix it as a side quest.
-- **The typecheck baseline is 0 errors** (verified 2026-08-22; an earlier
-  version of this note said 13 — those were fixed by later refactor commits
-  and never credited). Adding any is a regression.
+- `npm run test:anon-lockdown` — checks the anonymous-role grants against production.
+- **ESLint works** (an older note here said it was broken; it was not). The
+  repo-wide count is not zero, so judge your change by linting the files you
+  touched: `npx eslint <paths>`. Do not add new errors, and never add a
+  `react-hooks/rules-of-hooks` violation. ESLint also scans
+  `.claude/worktrees/`, so a leftover worktree doubles the total.
+- **The typecheck baseline is 0 errors** (verified 2026-09-14). Adding any is a
+  regression. `strict` is off in `tsconfig.app.json`, so 0 errors is a floor,
+  not proof of null safety.
 
 ## Rules that will cost you a day if you skip them
 
@@ -72,9 +77,11 @@ Deeper authorities it defers to: [FACULTY_AI_ROADMAP.md](FACULTY_AI_ROADMAP.md)
   and silently dropped.
 - **Callers of `semantic-search` must forward the caller's `Authorization`
   header**, or signed-in-only results (student profiles) silently never appear.
-- **Toasts: import from `sonner`.** `@/hooks/use-toast` and
-  `@/components/ui/use-toast` are silently dead — that `<Toaster />` is not
-  mounted. 36 messages across 14 files were being dropped before this was found.
+- **Toasts: import from `sonner`.** The shadcn `use-toast` hook was never
+  mounted and has been deleted; do not re-add it.
+- **No secret, fallback secret, or bypass literal in code.** The GitHub repo is
+  public. Read secrets from `Deno.env` only and fail closed when unset. Every
+  server secret is listed (names only) in DEPLOYMENT_GUIDE.md.
 - **Register new migrations in `supabase/tests/verify-migrations.mjs`** with a
   real behavioural assertion. If it touches pgvector it cannot run in PGlite —
   add it to the SKIP list *with the reason and the production verification you

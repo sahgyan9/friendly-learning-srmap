@@ -9,9 +9,9 @@ do not need any other tool's config directory.
 Written and executed 2026-08-08/09 with the owner's approval. If Gyan refers to
 "the plan", "the plan Fable made", or a task ID like `T2.3`, that is the file.
 Ten of its eleven tasks are shipped and live; it records what remains, what was
-deliberately deferred and why, and the follow-ups found while building — chiefly
-that **link previews are broken for every dynamic route** (a shared faculty,
-opportunity, or blog link previews as the homepage).
+deliberately deferred and why, and the follow-ups found while building. Link
+previews for dynamic routes were fixed for the top entities per type; the long
+tail still previews as the homepage.
 
 Use its task IDs rather than renumbering, and update its status table in the
 same commit that ships a task.
@@ -19,7 +19,8 @@ same commit that ships a task.
 ## Three things worth repeating here
 
 - **`npm run typecheck` is the check** — bare `tsc` is a no-op in this repo, and
-  the baseline is **0 errors**. ESLint is broken repo-wide; skip it.
+  the baseline is **0 errors**. ESLint works; lint the files you touched with
+  `npx eslint <paths>` and add no new errors.
 - **Frontend, database, and edge functions are three separate deploy targets.**
   Shipping one never ships the others, and HTTP 200 is not proof a function did
   its job — verify that the data actually changed.
