@@ -50,10 +50,19 @@ const Contact = () => {
       });
 
       if (error) {
-        throw error;
+        // A 400 or 429 carries a message written for the visitor (field too
+        // long, rate limit). invoke() does not surface the body on its own.
+        let serverMessage: string | undefined;
+        try {
+          const context = (error as { context?: Response }).context;
+          if (context && typeof context.json === "function") serverMessage = (await context.json())?.error;
+        } catch {
+          // Body was not JSON; fall through to the generic message.
+        }
+        throw new Error(serverMessage || "Failed to send message. Please try again.");
       }
 
-      if (data.success) {
+      if (data?.success) {
         toast.success("Message sent successfully! We'll get back to you soon.");
         setFormData({
           name: profile?.name || "",
@@ -62,11 +71,11 @@ const Contact = () => {
           message: ""
         });
       } else {
-        throw new Error(data.error || 'Failed to send message');
+        throw new Error(data?.error || "Failed to send message. Please try again.");
       }
     } catch (error) {
       console.error('Error sending contact message:', error);
-      toast.error("Failed to send message. Please try again.");
+      toast.error(error instanceof Error ? error.message : "Failed to send message. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -130,6 +139,7 @@ const Contact = () => {
                             name="name"
                             type="text"
                             required
+                            maxLength={100}
                             value={formData.name}
                             onChange={handleChange}
                             className="w-full p-3 border border-input rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary"
@@ -146,6 +156,7 @@ const Contact = () => {
                             name="email"
                             type="email"
                             required
+                            maxLength={254}
                             value={formData.email}
                             onChange={handleChange}
                             className="w-full p-3 border border-input rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary"
@@ -162,6 +173,7 @@ const Contact = () => {
                             name="subject"
                             type="text"
                             required
+                            maxLength={200}
                             value={formData.subject}
                             onChange={handleChange}
                             className="w-full p-3 border border-input rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary"
@@ -189,6 +201,7 @@ const Contact = () => {
                         name="message"
                         rows={5}
                         required
+                        maxLength={5000}
                         value={formData.message}
                         onChange={handleChange}
                         className="w-full p-3 border border-input rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary"
