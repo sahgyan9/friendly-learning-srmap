@@ -11,8 +11,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-
 const supabaseAdmin = createClient(
   Deno.env.get("SUPABASE_URL") ?? "",
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
@@ -141,7 +139,6 @@ serve(async (req) => {
       ? { text: `Here is the extracted text content of the student's PDF document:\n"""\n${(pdfText as string).slice(0, MAX_TEXT_LEN)}\n"""` }
       : { inlineData: { mimeType: mimeType || "application/pdf", data: pdfBase64 } };
 
-    const finalMime = mimeType || "application/pdf";
     const fieldsMode: "basic" | "full" = fields === "basic" ? "basic" : "full";
     const prompt = buildPrompt(fieldsMode);
     const maxOutputTokens =
@@ -226,55 +223,9 @@ serve(async (req) => {
       }
     }
 
-    // 2. Fallback to Lovable Gateway if available
-    if (LOVABLE_API_KEY) {
-      try {
-        const userContent = hasText
-          ? [
-              {
-                type: "text",
-                text: `Extract mentor profile fields from this LinkedIn/resume PDF text:\n\n${(pdfText as string).slice(0, MAX_TEXT_LEN)}`,
-              },
-            ]
-          : [
-              { type: "text", text: "Extract mentor profile fields from this LinkedIn PDF." },
-              {
-                type: "file",
-                file: {
-                  filename: "linkedin.pdf",
-                  file_data: `data:${finalMime};base64,${pdfBase64}`,
-                },
-              },
-            ];
-
-        const aiResponse = await fetchWithTimeout("https://ai.gateway.lovable.dev/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${LOVABLE_API_KEY}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            model: "google/gemini-2.0-flash",
-            messages: [
-              { role: "system", content: prompt },
-              { role: "user", content: userContent },
-            ],
-          }),
-        });
-
-        if (aiResponse.ok) {
-          const data = await aiResponse.json();
-          const content = data?.choices?.[0]?.message?.content;
-          if (content) {
-            const parsed = extractJson(content);
-            return json({ data: parsed });
-          }
-        }
-      } catch (gatewayErr) {
-        console.error("Lovable gateway fallback error:", gatewayErr);
-      }
-    }
-
+    // There used to be a fallback to Lovable's AI gateway here (LOVABLE_API_KEY),
+    // left over from when the project was built on Lovable. The Gemini key pool
+    // above is the only path now.
     return json({ error: `Could not parse PDF. ${lastError}` }, 500);
   } catch (e) {
     console.error("parse-linkedin-pdf error:", e);

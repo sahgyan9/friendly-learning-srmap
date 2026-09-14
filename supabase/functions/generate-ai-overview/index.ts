@@ -369,8 +369,8 @@ async function resolveMentorPresence(matches: Retrieved[]): Promise<MentorPresen
 
 /**
  * Real-time event schedules & RSVPs for mentors retrieved in search matches.
- * Provides deterministic grounding for queries like "what events is Gyan attending?"
- * or "what is Gyan doing this week?".
+ * Provides deterministic grounding for queries like "what events is [Name] attending?"
+ * or "what is [Name] doing this week?".
  */
 async function resolveUserEventSchedules(matches: Retrieved[]): Promise<UserEventSchedule[]> {
   if (!SUPABASE_SERVICE_ROLE_KEY) return [];
@@ -849,45 +849,45 @@ Rules:
 5. Synthesize the context in a natural, helpful, student-friendly tone. Do not just list the titles.
 6. For anything specific to SRM AP — people, policies, procedures, dates, fees, contacts — only state facts that are actually in the provided context; never invent one. If no campus context matches an SRM-AP-specific question, say there are no direct matches yet and suggest broad advice. (This grounding requirement does not apply to rule 3's general-knowledge questions — you already know those answers.)
 7. INLINE CITATIONS: When you state an SRM-AP-specific fact, date, or entity from the resources, include an inline citation bracket like [1] or [2] matching the resource number above.
-8. INSTANT VERDICT: In 'verdict', provide an ultra-short 3-8 word headline status verdict (e.g. "🏖️ Official Holiday — No Classes", "📅 Next Exams: 28 Sept – 1 Oct 2026", "👥 8 Fullstack Mentors Available", "📚 You have 4 classes today", "📭 No Classes Today", "🔑 Sign In for Timetable", "🔄 Sync SRM Portal for Timetable", "📚 Gyan is in Class (until 10:45 AM)", "🎪 Gyan is at Codevium", "🟢 Gyan is Active & Available", "⏸️ Gyan is Away until Sept 2").
-9. KEY TAKEAWAYS: Extract 1-3 distinct, concise bullet takeaways in 'keyInsights' with bold emoji/category prefixes (e.g., "**📅 Exact Date:** ...", "**🏛️ Library Access:** ...", "**⚠️ Policy:** ..."). Do NOT simply repeat the exact same sentence as the summary; make them actionable, scannable bullet points. For a rule-3 general-knowledge question this array may be empty or omitted.
+8. INSTANT VERDICT: In 'verdict', provide an ultra-short 3-8 word headline status verdict in plain text (e.g. "Official Holiday — No Classes", "Next Exams: 28 Sept – 1 Oct 2026", "8 Fullstack Mentors Available", "You have 4 classes today", "No Classes Today", "Sign In for Timetable", "Sync SRM Portal for Timetable", "[Name] is in Class (until 10:45 AM)", "[Name] is at [Event]", "[Name] is Active & Available", "[Name] is Away until [Date]"). Never use emoji anywhere in the response. In every example in these rules, [Name], [Event] and [Date] are placeholders: always use the real name, event and date from the context, never a name that appears only in these instructions.
+9. KEY TAKEAWAYS: Extract 1-3 distinct, concise bullet takeaways in 'keyInsights' with bold category prefixes (e.g., "**Exact Date:** ...", "**Library Access:** ...", "**Policy:** ..."). Do NOT simply repeat the exact same sentence as the summary; make them actionable, scannable bullet points. For a rule-3 general-knowledge question this array may be empty or omitted.
 10. Identify the top 1-4 specific entities to recommend as badges — only ones that are genuinely relevant to the question. Use the exact 'id', 'type', 'title' (for name), 'path' (for to), and 'subtitle' (for detail) from the context. Only use types: 'faculty', 'mentor', 'opportunity', 'community', 'post', or 'document'.
 11. CITATIONS MAP: Provide a 'citations' array mapping the numbers you used in the summary to the entity.
 12. MENTOR AVAILABILITY / "IS X FREE" QUERIES:
-   - If the student asks whether a specific mentor (e.g. "Is Gyan free right now?", "Is [Mentor] available?") is free or accepting messages:
+   - If the student asks whether a specific mentor (e.g. "Is [Name] free right now?", "Is [Name] available?") is free or accepting messages:
      - Consult the MENTOR_LIVE_PRESENCE and MENTOR_EVENT_SCHEDULES blocks above.
      - If the mentor is CURRENTLY IN CLASS: state clearly that they are currently attending class ("[Course Name]" until [End Time], Room [Room]) and are busy in lecture, but the student can still leave a message on their profile.
      - If the mentor is CURRENTLY IN A CAMPUS EVENT: state clearly that they are attending "[Event Name]" (until [End Time]) and may be busy or slower to respond, but the student can still leave a message on their profile.
      - If the mentor is ACTIVE: state clearly that they are active and accepting connection requests. Mention their custom availability note if one exists, their typical reply turnaround time, and link to their profile so the student can message them.
      - If the mentor is PAUSED / AWAY: state clearly that they are currently taking a break / paused (giving the return date and their note if available), but remind the student they can still leave a message or browse other mentors in the same department.
-     - In 'verdict', write a clear status headline (e.g. "📚 Gyan is in Class (until 10:45 AM)", "🎪 Gyan is at Codevium", "🟢 Gyan is Active & Available", "⏸️ Gyan is Away").
+     - In 'verdict', write a clear status headline (e.g. "[Name] is in Class (until 10:45 AM)", "[Name] is at [Event]", "[Name] is Active & Available", "[Name] is Away").
 13. MENTOR EVENT ATTENDANCE / "WHAT EVENTS IS X ATTENDING" QUERIES:
-   - If the student asks what events a mentor is attending (e.g. "What are the upcoming events Gyan is attending?", "Is Gyan going to [Event]?"):
+   - If the student asks what events a mentor is attending (e.g. "What are the upcoming events [Name] is attending?", "Is [Name] going to [Event]?"):
      - Consult the MENTOR_EVENT_SCHEDULES block above.
      - List the upcoming events with titles, event type, date/time, whether their RSVP is 'Going' (confirmed) or 'Interested' (bookmarked), and any personal note they attached.
      - Direct the student to explore more details on the Events page (/events).
-     - In 'verdict', provide a summary status (e.g. "🎟️ Gyan attending CODEVIUM 2026").
+     - In 'verdict', provide a summary status (e.g. "[Name] attending [Event]").
 14. PERSONAL TIMETABLE / "MY TIMETABLE" / "DOES X HAVE CLASS [DAY]" QUERIES:
    - If a TIMETABLE_SCHEDULE block is present above, use it as the primary answer — it is fetched directly from the database and is more specific than anything in the academic calendar.
    - The RESOLVED_FACTS block only answers "is that day a holiday or working day for the whole campus?" — it does NOT answer whether a specific person has any class on that day. You must consult TIMETABLE_SCHEDULE for the individual's schedule.
    - If the user asks for their own timetable ("my timetable", "my todays time table", "my schedule", "what classes do I have today", etc.):
-     * If TIMETABLE_SCHEDULE states they are not signed in, kindly inform them: "Please **sign in** to view your personal class timetable." (Verdict: "🔑 Sign In to View Timetable").
-     * If TIMETABLE_SCHEDULE states they haven't synced their SRM portal yet, inform them: "You haven't synced your SRM student portal timetable yet. You can sync it from your **Settings / Profile** to see your daily classes here." (Verdict: "🔄 Sync SRM Portal for Timetable").
-     * If they have NO classes on that day (has_classes: false), state clearly: "You have no classes scheduled on [day] as per your timetable." Mention if it is still a working day or holiday. (Verdict: "📭 No Classes Today" or "📭 No Classes Tomorrow").
-     * If they HAVE classes, list every class clearly in order with time slot (HH:MM–HH:MM), **Course Name** (Course Code), and Room Number. (Verdict: e.g. "📚 You have 4 classes today").
-   - If querying a named mentor/student (e.g. Aarav, Gyan):
+     * If TIMETABLE_SCHEDULE states they are not signed in, kindly inform them: "Please **sign in** to view your personal class timetable." (Verdict: "Sign In to View Timetable").
+     * If TIMETABLE_SCHEDULE states they haven't synced their SRM portal yet, inform them: "You haven't synced your SRM student portal timetable yet. You can sync it from your **Settings / Profile** to see your daily classes here." (Verdict: "Sync SRM Portal for Timetable").
+     * If they have NO classes on that day (has_classes: false), state clearly: "You have no classes scheduled on [day] as per your timetable." Mention if it is still a working day or holiday. (Verdict: "No Classes Today" or "No Classes Tomorrow").
+     * If they HAVE classes, list every class clearly in order with time slot (HH:MM–HH:MM), **Course Name** (Course Code), and Room Number. (Verdict: e.g. "You have 4 classes today").
+   - If querying a named mentor/student (e.g. "[Name]'s timetable"):
      * If they have NO classes: "[Name] has no classes scheduled on [day] as per their timetable."
-     * If they HAVE classes: list their classes with times, course names, and rooms. (Verdict: e.g. "📚 Aarav has 3 classes tomorrow").
+     * If they HAVE classes: list their classes with times, course names, and rooms. (Verdict: e.g. "[Name] has 3 classes tomorrow").
    - Do NOT say "classes proceed as per the university timetable" as the answer — that is a non-answer. List the actual classes from TIMETABLE_SCHEDULE.
 
 Your response MUST be a valid JSON object matching this schema exactly:
 {
-  "verdict": "🏖️ Official University Holiday (Odd Semester)",
+  "verdict": "Official University Holiday (Odd Semester)",
   "summary": "Synthesized text using markdown formatting with inline citations like [1]...",
   "citations": [
     { "id": 1, "text": "Name of the person/resource", "url": "/path/to/resource" }
   ],
-  "keyInsights": ["**📅 Exact Date:** Friday, 21 August 2026...", "**🏛️ Library:** Day boarders can enter..."],
+  "keyInsights": ["**Exact Date:** Friday, 21 August 2026...", "**Library:** Day boarders can enter..."],
   "actionRecommendation": "Tip: ...",
   "badges": [
     {
@@ -1089,7 +1089,7 @@ serve(async (req) => {
 
     // Ensure all inline citations mentioned in summary (e.g. [1], [3]) are mapped in overview.citations
     if (overview && overview.summary) {
-      const citedIds = Array.from(new Set(
+      const citedIds: number[] = Array.from(new Set<number>(
         (overview.summary.match(/\[(\d+)\]/g) || [])
           .map((s: string) => parseInt(s.replace(/\D/g, ""), 10))
           .filter((n: number) => !isNaN(n) && n >= 1 && n <= matches.length)

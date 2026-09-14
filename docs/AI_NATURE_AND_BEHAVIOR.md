@@ -78,9 +78,9 @@ Understanding the codebase requires understanding its provenance:
    - Initial commit `1956692` created by `gpt-engineer-app[bot]` via Lovable.dev using the `vite_react_shadcn_ts` template.
    - Over 455 commits were authored directly by Lovable bots (`gpt-engineer-app[bot]`).
    - Residual artifacts still present in the repository:
-     - `public/lovable-uploads/` (original uploaded images and logos).
+     - `public/lovable-uploads/` (original uploaded images and logos). Emails now load their logo from `/brand/logo-email.png`; the old file stays because emails already sent still reference it.
      - Domain bounce scripts in `index.html` redirecting `*.lovable.app` to the production domain.
-     - `LOVABLE_API_KEY` configuration in edge function environments.
+     - `LOVABLE_API_KEY` fallback in `parse-linkedin-pdf` (removed 2026-09-14; the secret can be deleted from the project).
 2. **Phase 3 — Shift to Disciplined Agentic Engineering (July 2026)**:
    - Transitioned from raw prompt-and-pray generation to disciplined Conventional Commits and staff-level agentic workflows with Claude Code (`Claude Sonnet 5`, `Claude Fable 5`).
    - Established `FABLE_BUILD_PLAN.md` and `FACULTY_AI_ROADMAP.md` as permanent authorities.
