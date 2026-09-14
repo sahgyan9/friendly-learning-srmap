@@ -583,6 +583,7 @@ for (const file of [
   '20260910120000_student_daily_attendance.sql',
   '20260914100000_event_notifications_and_reminders.sql',
   '20260914120000_embed_knowledge_topup_schedule.sql',
+  '20260914130000_restore_admin_status_rpc_and_guard.sql',
 ]) {
   if (file === '20260804132345_b843f814-46d5-4c25-bc80-32e5f6ebba59.sql') {
     // Production's `faculty` table still carries `profile_image`, a column
@@ -621,7 +622,15 @@ console.log('');
 //    Computes vector similarity over the search_query_cache to generate
 //    dynamic related searches. Because it uses vector operators (`<=>`),
 //    it requires pgvector and cannot run against the PGlite jsonb stub.
-//    Verified manually via local apply and inspecting related searches.
+//    The note here used to say "verified manually via local apply"; on
+//    2026-09-14 the function turned out never to have reached production
+//    (PostgREST PGRST202, no pg_proc row). Superseded by the file below.
+//
+//    20260914130100_restore_get_related_searches.sql
+//    Re-creates get_related_searches with a pinned search_path and
+//    extensions-qualified pgvector type/operator. pgvector, so not runnable
+//    here. Production verification: PostgREST call of
+//    rpc/get_related_searches returns 200 instead of PGRST202 after apply.
 //
 //    20260817000000_multi_chunk_indexing.sql
 //    Redefines projectors and alters knowledge_chunks to support multi-chunk
@@ -4873,6 +4882,28 @@ check('embed-knowledge-topup reads CRON_SECRET from Vault, not a literal',
 await db.exec(fs.readFileSync(path.join(MIGRATIONS, '20260914120000_embed_knowledge_topup_schedule.sql'), 'utf8'));
 const { rows: [{ n: topupCount }] } = await q(`SELECT count(*)::int AS n FROM cron.job WHERE jobname='embed-knowledge-topup'`);
 check('embed-knowledge-topup migration is re-runnable without duplicating the job', topupCount === 1, String(topupCount));
+
+// --- 20260914130000_restore_admin_status_rpc_and_guard.sql ---
+// Applied above on top of 20260820120000 and 20260824140000, which is the
+// "already present" case; production is the "missing" case. Both must end
+// with exactly one function, one trigger, and the guard still enforced.
+console.log('\n--- 20260914130000_restore_admin_status_rpc_and_guard.sql ---');
+const { rows: [{ n: adminRpcCount }] } = await q(`
+  SELECT count(*)::int AS n FROM pg_proc p JOIN pg_namespace ns ON ns.oid = p.pronamespace
+  WHERE ns.nspname = 'public' AND p.proname = 'set_user_admin_status'`);
+check('set_user_admin_status exists exactly once after the restore', adminRpcCount === 1, String(adminRpcCount));
+const { rows: [{ n: guardTriggerCount }] } = await q(`
+  SELECT count(*)::int AS n FROM pg_trigger WHERE tgname = 'trg_guard_users_is_admin' AND NOT tgisinternal`);
+check('is_admin guard trigger exists exactly once after the restore', guardTriggerCount === 1, String(guardTriggerCount));
+await q(`UPDATE public.users SET is_admin = false WHERE id = $1`, [OTHER_UID]);
+await actAs(OTHER_UID);
+let restoreGuardBlocked = false;
+try {
+  await asAuthenticated(() => q(`UPDATE public.users SET is_admin = true WHERE id = $1`, [OTHER_UID]));
+} catch (error) {
+  restoreGuardBlocked = /insufficient_privilege|cannot be changed directly/i.test(error.message);
+}
+check('self-elevation is still blocked after re-applying the guard', restoreGuardBlocked);
 
 console.log(failures === 0
   ? '\nAll migration checks passed against real Postgres.'
