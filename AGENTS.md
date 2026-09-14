@@ -44,6 +44,10 @@ Deeper authorities it defers to: [FACULTY_AI_ROADMAP.md](FACULTY_AI_ROADMAP.md)
 - **The typecheck baseline is 0 errors** (verified 2026-09-14). Adding any is a
   regression. `strict` is off in `tsconfig.app.json`, so 0 errors is a floor,
   not proof of null safety.
+- `npm run typecheck:strict` runs full `strict` mode over `src/lib` and
+  `src/utils` (plus whatever they import). **Baseline is 13 errors**
+  (2026-09-14), mostly generated RPC argument types that mark nullable SQL
+  parameters as non-null. New code in those folders should add none.
 
 ## Rules that will cost you a day if you skip them
 

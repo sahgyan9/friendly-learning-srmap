@@ -35,7 +35,9 @@ export async function recordSearchHistory(query: string, resultUrl?: string | nu
   if (!trimmed) return;
   await supabase.rpc("record_search_history", {
     p_query: trimmed,
-    p_result_url: resultUrl ?? null,
+    // The generated Args type marks this optional rather than nullable;
+    // omitting it and passing null both reach the SQL default of NULL.
+    p_result_url: resultUrl ?? undefined,
   });
 }
 
