@@ -33,11 +33,10 @@ import {
   createBlogPost,
   updateBlogPost,
   getBlogPostBySlug,
-  triggerEmbedding,
-  slugify,
   uploadBlogPostImage,
   type BlogPost,
 } from "@/integrations/supabase/services/blog-posts";
+import { titleToSlug as slugify } from "@/integrations/supabase/services/knowledge-sync";
 
 /** Any single-segment route already registered under /blogs/ in App.tsx. */
 const RESERVED_SLUGS = new Set(["write"]);
@@ -343,8 +342,10 @@ export const WriteBlogPost = () => {
       }
 
       if (publish) {
+        // No embed-knowledge call here: it only accepts admins, so from a
+        // student's session it was a guaranteed, silent 401. The
+        // embed-knowledge-topup cron embeds the post within 10 minutes.
         localStorage.removeItem("fl_blog_draft_new");
-        triggerEmbedding();
         toast.success("Post published to Community Blog.");
         navigate(`/blogs/${finalSlug}`);
       } else {

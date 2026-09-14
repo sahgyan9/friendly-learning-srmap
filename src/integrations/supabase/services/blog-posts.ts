@@ -157,23 +157,6 @@ export const deleteBlogPost = async (id: string) => {
   }
 };
 
-export const slugify = (title: string) =>
-  title
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-
-/** Best-effort: speeds up when a newly published post becomes searchable in
- * /ask, but the hourly embed-knowledge cron catches up regardless if this
- * fails. Same idiom as articles.ts's triggerEmbedding. */
-export const triggerEmbedding = async () => {
-  try {
-    await supabase.functions.invoke("embed-knowledge");
-  } catch (error) {
-    console.error("Best-effort embed-knowledge trigger failed (cron will catch up):", error);
-  }
-};
 
 /** Fire-and-forget — a missed view count is not worth surfacing an error for. */
 export const incrementBlogPostViews = (slug: string) => {

@@ -122,12 +122,3 @@ export const parseNoticeFromImage = async (imageBase64: string, mimeType: string
   return data as ParsedNotice;
 };
 
-/** Best-effort: speeds up when the new notice becomes searchable in /ask, but
- * the hourly embed-knowledge cron will pick it up regardless if this fails. */
-export const triggerEmbedding = async () => {
-  try {
-    await supabase.functions.invoke('embed-knowledge');
-  } catch (error) {
-    console.error('Best-effort embed-knowledge trigger failed (cron will catch up):', error);
-  }
-};

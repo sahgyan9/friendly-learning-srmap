@@ -10,10 +10,9 @@ import ArticleEditor from "./ArticleEditor";
 import {
   createArticle,
   updateArticle,
-  triggerEmbedding,
-  slugify,
   KnowledgeArticle,
 } from "@/integrations/supabase/services/articles";
+import { titleToSlug as slugify, triggerEmbedding } from "@/integrations/supabase/services/knowledge-sync";
 
 interface ArticleFormProps {
   existingArticle?: KnowledgeArticle;

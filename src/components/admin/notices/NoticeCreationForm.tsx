@@ -12,8 +12,8 @@ import {
   createNotice,
   parseNoticeFromText,
   parseNoticeFromImage,
-  triggerEmbedding,
 } from "@/integrations/supabase/services/notices";
+import { triggerEmbedding } from "@/integrations/supabase/services/knowledge-sync";
 
 interface NoticeCreationFormProps {
   onCancel: () => void;

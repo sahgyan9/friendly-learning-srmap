@@ -14,8 +14,9 @@ import {
 } from "@/components/ui/sheet";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { slugify } from "@/integrations/supabase/services/blog-posts";
+import { titleToSlug as slugify } from "@/integrations/supabase/services/knowledge-sync";
 import { useAuth } from "@/context/AuthContext";
+import { getInitials } from "@/utils/user-utils";
 
 export const POPULAR_TAGS = [
   "Hackathons",
@@ -86,15 +87,6 @@ export function BlogSettingsSheet({
   const isGradient = coverUrl?.startsWith("gradient:") ?? false;
   const gradientStyle = isGradient ? coverUrl?.replace("gradient:", "") : null;
   const displayExcerpt = excerpt.trim() || autoExcerpt.trim() || "Your story summary will appear here...";
-
-  const getInitials = (name: string) =>
-    name
-      .split(" ")
-      .map((part) => part[0])
-      .filter(Boolean)
-      .slice(0, 2)
-      .join("")
-      .toUpperCase();
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>

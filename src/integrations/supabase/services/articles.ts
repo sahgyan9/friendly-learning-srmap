@@ -82,20 +82,3 @@ export const deleteArticle = async (id: string) => {
   return { data, error: null };
 };
 
-export const slugify = (title: string) =>
-  title
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-
-/** Best-effort: speeds up when the new/edited article becomes searchable in
- * /ask, but the hourly embed-knowledge cron will pick it up regardless if
- * this fails. Same idiom as notices.ts's triggerEmbedding. */
-export const triggerEmbedding = async () => {
-  try {
-    await supabase.functions.invoke('embed-knowledge');
-  } catch (error) {
-    console.error('Best-effort embed-knowledge trigger failed (cron will catch up):', error);
-  }
-};
