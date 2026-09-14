@@ -75,16 +75,19 @@ export default function ResumeUpdateDiffModal({
   extractedData,
   onApplyChanges,
 }: ResumeUpdateDiffModalProps) {
-  if (!extractedData) return null;
+  // Every hook runs on every render, including while there is no extracted
+  // data yet; the early `return null` is below the last hook. Returning before
+  // the hooks breaks React's hook-order rule the moment the data changes.
+  const data: Record<string, any> = extractedData ?? {};
 
   // Extract candidate new data with useMemo so object/array references are stable
   const rawSkills: string[] = useMemo(() => {
-    if (Array.isArray(extractedData.skills)) return extractedData.skills;
-    if (typeof extractedData.skills === "string" && extractedData.skills.trim()) {
-      return extractedData.skills.split(",").map((s: string) => s.trim()).filter(Boolean);
+    if (Array.isArray(data.skills)) return data.skills;
+    if (typeof data.skills === "string" && data.skills.trim()) {
+      return data.skills.split(",").map((s: string) => s.trim()).filter(Boolean);
     }
     return [];
-  }, [extractedData.skills]);
+  }, [data.skills]);
 
   const existingSkillsSet = useMemo(
     () => new Set(currentState.skills.map((s) => s.toLowerCase())),
@@ -97,29 +100,29 @@ export default function ResumeUpdateDiffModal({
   );
 
   const extractedProjects: ProjectItem[] = useMemo(() => {
-    if (!Array.isArray(extractedData.projects)) return [];
-    return extractedData.projects.map((p: any) => ({
+    if (!Array.isArray(data.projects)) return [];
+    return data.projects.map((p: any) => ({
       id: p.id || crypto.randomUUID(),
       title: p.title || "",
       description: p.description || "",
       link: p.link || undefined,
     }));
-  }, [extractedData.projects]);
+  }, [data.projects]);
 
   const extractedExperiences: ExperienceItem[] = useMemo(() => {
-    if (!Array.isArray(extractedData.experiences)) return [];
-    return extractedData.experiences.map((e: any) => ({
+    if (!Array.isArray(data.experiences)) return [];
+    return data.experiences.map((e: any) => ({
       id: e.id || crypto.randomUUID(),
       title: e.title || "",
       organization: e.organization || undefined,
       period: e.period || undefined,
     }));
-  }, [extractedData.experiences]);
+  }, [data.experiences]);
 
-  const newBio = typeof extractedData.bio === "string" ? extractedData.bio.trim() : "";
-  const newTagline = typeof extractedData.tagline === "string" ? extractedData.tagline.trim() : "";
-  const newYear = extractedData.year_of_studies || "";
-  const newDept = formatDepartment(extractedData.department) || extractedData.department || "";
+  const newBio = typeof data.bio === "string" ? data.bio.trim() : "";
+  const newTagline = typeof data.tagline === "string" ? data.tagline.trim() : "";
+  const newYear = data.year_of_studies || "";
+  const newDept = formatDepartment(data.department) || data.department || "";
 
   // Selection states
   const [selectedNewSkills, setSelectedNewSkills] = useState<string[]>([]);
@@ -222,6 +225,8 @@ export default function ResumeUpdateDiffModal({
     onApplyChanges(updates);
     onOpenChange(false);
   };
+
+  if (!extractedData) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
