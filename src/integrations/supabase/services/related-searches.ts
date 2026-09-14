@@ -2,7 +2,7 @@ import { supabase } from "../client";
 
 export async function getDynamicRelatedSearches(query: string, limit: number = 6): Promise<string[]> {
   try {
-    const { data, error } = await (supabase.rpc as any)("get_related_searches", {
+    const { data, error } = await supabase.rpc("get_related_searches", {
       p_query: query,
       p_limit: limit,
     });

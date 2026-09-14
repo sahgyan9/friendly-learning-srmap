@@ -4151,6 +4151,12 @@ export type Database = {
           viewer_is_author: boolean
         }[]
       }
+      get_related_searches: {
+        Args: { p_limit?: number; p_query: string }
+        Returns: {
+          query_text: string
+        }[]
+      }
       get_team_members_public: {
         Args: never
         Returns: {
@@ -4754,6 +4760,10 @@ export type Database = {
           available_from: string
           is_available: boolean
         }[]
+      }
+      set_user_admin_status: {
+        Args: { p_is_admin: boolean; p_target_user_id: string }
+        Returns: Json
       }
       slugify: { Args: { p_text: string }; Returns: string }
       submit_ai_overview_feedback: {

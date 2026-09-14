@@ -36,7 +36,7 @@ export async function isUserAdmin(userId?: string) {
 // Function to set a user as an admin (requires admin privileges)
 export async function setUserAsAdmin(userIdToPromote: string) {
   try {
-    const { data, error } = await supabase.rpc('set_user_admin_status' as any, {
+    const { data, error } = await supabase.rpc('set_user_admin_status', {
       p_target_user_id: userIdToPromote,
       p_is_admin: true,
     });
@@ -56,7 +56,7 @@ export async function setUserAsAdmin(userIdToPromote: string) {
 // Function to remove admin privileges from a user (requires admin privileges)
 export async function removeAdminPrivilege(userIdToRevoke: string) {
   try {
-    const { data, error } = await supabase.rpc('set_user_admin_status' as any, {
+    const { data, error } = await supabase.rpc('set_user_admin_status', {
       p_target_user_id: userIdToRevoke,
       p_is_admin: false,
     });
