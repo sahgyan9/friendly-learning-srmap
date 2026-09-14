@@ -427,7 +427,7 @@ export function PostCard({
             </Button>
           </TooltipTrigger>
           <TooltipContent side="top" className="flex items-center gap-1 text-xs font-medium">
-            🔗 Share link
+            Share link
           </TooltipContent>
         </Tooltip>
       </div>

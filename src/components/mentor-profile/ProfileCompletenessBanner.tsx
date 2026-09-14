@@ -51,7 +51,7 @@ export default function ProfileCompletenessBanner({
     const url = window.location.href;
     if (navigator.clipboard) {
       navigator.clipboard.writeText(url);
-      toast.success("Profile link copied to clipboard! 📋");
+      toast.success("Profile link copied.");
     } else {
       toast.info(`Profile URL: ${url}`);
     }
@@ -130,7 +130,7 @@ export default function ProfileCompletenessBanner({
               className="gap-1.5 font-medium bg-background/80"
             >
               <GraduationCap className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-              {(mentor.courses?.length ?? 0) > 0 ? `SRM Portal Linked ✓` : "Link SRM Portal"}
+              {(mentor.courses?.length ?? 0) > 0 ? "SRM Portal Linked" : "Link SRM Portal"}
             </Button>
           </div>
         </div>

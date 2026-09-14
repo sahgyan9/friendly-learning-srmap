@@ -120,7 +120,7 @@ const STARTERS: Record<string, string[]> = {
   club: ["When's the next meet?", "How do I get involved?", "What did I miss?"],
   study: ["What are we revising this week?", "Anyone up for a session today?", "Where are the notes?"],
   research: ["What should we read first?", "Sharing a paper I found —", "What's everyone working on?"],
-  general: ["Hi everyone 👋", "What is this group for?", "What's everyone working on?"],
+  general: ["Hi everyone", "What is this group for?", "What's everyone working on?"],
 };
 
 /** A message and a post both land in the stream; this is what they have in common. */

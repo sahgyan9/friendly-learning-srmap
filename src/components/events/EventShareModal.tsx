@@ -103,10 +103,10 @@ export const EventShareModal: React.FC<EventShareModalProps> = ({
   }, [event]);
 
   const richShareText = useMemo(() => {
-    return `🎓 *${event.title}*
-📅 ${formattedDate} (${formattedTime})
-📍 ${event.venue || "SRM University-AP Campus"}
-🔗 ${canonicalUrl}`;
+    return `*${event.title}*
+${formattedDate} (${formattedTime})
+Venue: ${event.venue || "SRM University-AP Campus"}
+${canonicalUrl}`;
   }, [event, formattedDate, formattedTime, canonicalUrl]);
 
   // Load user's communities & chats when modal opens
@@ -185,7 +185,7 @@ export const EventShareModal: React.FC<EventShareModalProps> = ({
 
     setSendingGroupId(group.id);
     try {
-      const messageContent = `📢 **Campus Event Share**\n\n${richShareText}`;
+      const messageContent = `**Campus event**\n\n${richShareText}`;
       const { error } = await sendGroupMessage(group.id, "general", messageContent);
       if (error) throw error;
 
@@ -208,7 +208,7 @@ export const EventShareModal: React.FC<EventShareModalProps> = ({
     setSendingDmId(conv.id);
     try {
       const otherUserId = conv.user1_id === user.id ? conv.user2_id : conv.user1_id;
-      const messageContent = `📢 **Campus Event Share**\n\n${richShareText}`;
+      const messageContent = `**Campus event**\n\n${richShareText}`;
       const { error } = await sendMessage(conv.id, user.id, otherUserId, messageContent);
       if (error) throw error;
 
