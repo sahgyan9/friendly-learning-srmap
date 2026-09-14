@@ -484,6 +484,31 @@
 
 ---
 
+### Session 029 — 2026-09-14 · Agent: Claude Code (Claude Opus 5)
+- **Prompt**: "do the debt audit pass but in details", then "fix all that you have proposed in debt audit". Audit report: https://claude.ai/code/artifact/ed241e02-30ef-4bf6-9574-c102c65439ab
+- **What was done** (commits `79f4517` → `54738e3`, all pushed; frontend deployed by Vercel):
+  1. Docs: AGENTS.md / tool pointers no longer say ESLint is broken; stale typecheck baseline, broken roadmap link and migration count fixed; `.claude/rules` workflow/technical-defaults (single index.html + Tailwind CDN) deleted, design/QA rules rewritten for this app; server-secret inventory added to DEPLOYMENT_GUIDE.md; edge-function deploy conventions recorded.
+  2. Security: `embed-knowledge` no longer accepts the hardcoded `x-cron-secret` literal (repo is public); new migration `20260914120000_embed_knowledge_topup_schedule.sql` versions the hand-made cron job on the Vault secret; `_shared/http.ts` added; `contact-form` gets length caps, a rate limit, no PII in logs; `populate-mentors` removed from the repo; `config.toml` declares every deployed function.
+  3. Dead code: 26 unimported components/services deleted; 22 finished one-off `tools/` scripts deleted, `tools/README.md` added; 3 worktrees removed; 12 local and 7 remote stale branches deleted, unmerged ones kept as `archive/*` tags.
+  4. Correctness: admin AI-overview switch never worked (read a nonexistent `platform_settings.key` column) — fixed; blog publish no longer makes a guaranteed-401 embed call; `ResumeUpdateDiffModal` hook order fixed (13 rules-of-hooks errors → 0); rejected mentor applicants get 1 notification instead of 4; not-found pages set `noindex`.
+  5. Types: `types.ts` regenerated from the live DB; 47 stale `as any` casts removed; `npm run typecheck:strict` (baseline 13) added; 3 pre-existing `deno check` errors fixed.
+  6. Copy/deps: decorative emoji removed from toasts, notifications, emails, share text and AI prompts; AI prompts no longer use the owner's name as an example; Lovable gateway fallback removed; email logo moved to `/brand/logo-email.png`; `npm audit fix` (0 prod vulns), unused devDeps removed, `@vitejs/plugin-react` replaces the SWC plugin.
+- **Root Cause Analysis (RCA)**:
+  - Instruction debt caused code debt: "skip ESLint" hid real hook errors; generic rule files contradicted the project.
+  - Production drifted from git in both directions: three unauthenticated test functions (`test-send-email`, `test-gemini-keys`, `test-gemini-pool`) are deployed but never committed; `set_user_admin_status` and `get_related_searches` have migrations but are absent from the live schema (generated types).
+  - `as any` on Supabase calls predated generated types and masked the `platform_settings` bug.
+- **Status at end**:
+  - Verified: typecheck 0; `typecheck:strict` 13 (baseline); 8 test files / 72 tests pass (earlier "162 tests" counted worktree copies); `test:migrations` passes incl. new assertions; client + SSR build and prerender succeed; Vercel deploys for `8f4b1b8` and `f74d4cc` succeeded; live robots.txt and `/brand/logo-email.png` confirmed.
+  - The CLI could not open a DB connection (pooler ECONNRESET), and deleting/deploying edge functions was blocked pending owner approval. **Not yet in production**: the new migration, and deploys of embed-knowledge, contact-form, send-email-queue, import-srm-portal, sync-srm-portal, ai-chatbot, generate-ai-overview, parse-linkedin-pdf. **Still live and unauthenticated**: `test-send-email` (emails every user from the last 48h and returns their addresses), `test-gemini-keys`, `test-gemini-pool`, `populate-mentors`.
+  - Commit `48f2409` also carries the deletion of `public/google-site-verification.html` (staged earlier than intended); described in `2f9dd38`.
+- **Next agent should**:
+  - With owner approval: delete the four functions above; apply `20260914120000` via the SQL editor, confirm `embed-knowledge-topup` reads Vault, then deploy embed-knowledge; deploy the other seven functions (download-and-diff first); delete the `LOVABLE_API_KEY` secret.
+  - Check whether `set_user_admin_status` and `get_related_searches` exist in production; if not, apply their migrations (admin promote/demote is broken without the first).
+  - Check `platform_settings.ai_overview_enabled`: if it is `false`, the AI overview turns off now that the switch works.
+  - Deliberately not done: moving 62 component-level `supabase.from()` calls into services, splitting ProfileSetupStudio.tsx (do it before the next feature there), bumping puppeteer's major version, mass-migrating untouched edge functions.
+
+---
+
 ## Session Template (copy for each new session)
 
 ```markdown
