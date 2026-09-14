@@ -582,6 +582,7 @@ for (const file of [
   '20260909030000_student_finance_and_fee_alerts.sql',
   '20260910120000_student_daily_attendance.sql',
   '20260914100000_event_notifications_and_reminders.sql',
+  '20260914120000_embed_knowledge_topup_schedule.sql',
 ]) {
   if (file === '20260804132345_b843f814-46d5-4c25-bc80-32e5f6ebba59.sql') {
     // Production's `faculty` table still carries `profile_image`, a column
@@ -4858,6 +4859,20 @@ check(
   secondDispatch.length === 0,
   JSON.stringify(secondDispatch)
 );
+
+// --- 20260914120000_embed_knowledge_topup_schedule.sql ---
+console.log('\n--- 20260914120000_embed_knowledge_topup_schedule.sql ---');
+const { rows: topupJobs } = await q(`SELECT schedule, active, command FROM cron.job WHERE jobname='embed-knowledge-topup'`);
+check('embed-knowledge-topup exists exactly once, every 10 minutes, active',
+  topupJobs.length === 1 && topupJobs[0].schedule === '*/10 * * * *' && topupJobs[0].active === true,
+  JSON.stringify(topupJobs.map(({ schedule, active }) => ({ schedule, active }))));
+check('embed-knowledge-topup reads CRON_SECRET from Vault, not a literal',
+  /vault\.decrypted_secrets/.test(topupJobs[0]?.command ?? '') &&
+  !/friendly-learning-knowledge-sync/.test(topupJobs[0]?.command ?? ''));
+// Re-running replaces the job rather than duplicating it.
+await db.exec(fs.readFileSync(path.join(MIGRATIONS, '20260914120000_embed_knowledge_topup_schedule.sql'), 'utf8'));
+const { rows: [{ n: topupCount }] } = await q(`SELECT count(*)::int AS n FROM cron.job WHERE jobname='embed-knowledge-topup'`);
+check('embed-knowledge-topup migration is re-runnable without duplicating the job', topupCount === 1, String(topupCount));
 
 console.log(failures === 0
   ? '\nAll migration checks passed against real Postgres.'

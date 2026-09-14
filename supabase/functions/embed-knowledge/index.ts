@@ -12,9 +12,15 @@
 // the finished rows done. That is what makes the pg_cron schedule harmless.
 //
 // AUTH: verify_jwt = false, same reasoning as sync-faculty — it authenticates
-// itself below with either CRON_SECRET or an is_admin JWT, because the platform
-// gate only verifies the anon key (which ships in the client bundle) and would
-// break the cron path that carries no user JWT.
+// itself below with either CRON_SECRET, the service role, or an is_admin JWT,
+// because the platform gate only verifies the anon key (which ships in the
+// client bundle) and would break the cron path that carries no user JWT.
+//
+// There used to be a second, hardcoded x-cron-secret value accepted here. The
+// repo is public, so that value was a published password: anyone could run
+// embedding batches and spend the Gemini quota. It is gone; the
+// embed-knowledge-topup cron job reads CRON_SECRET from Vault like every other
+// scheduled job (20260914120000_embed_knowledge_topup_schedule.sql).
 //
 // Invoke:
 //   POST /functions/v1/embed-knowledge                 -> embed a batch
@@ -24,16 +30,14 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-cron-secret",
-};
-
 import {
   getPrioritizedGeminiKeys,
   markGeminiKeyCooldown,
   markGeminiKeySuccess,
 } from "../_shared/gemini-pool.ts";
+import { corsHeaders as buildCorsHeaders, isCronCaller, json as jsonResponse, safeEqual } from "../_shared/http.ts";
+
+const corsHeaders = buildCorsHeaders(["x-cron-secret"]);
 
 // Overridable so the model can be changed without a code edit.
 const MODEL = Deno.env.get("EMBEDDING_MODEL") ?? "gemini-embedding-001";
@@ -123,13 +127,11 @@ async function embedBatch(texts: string[], taskType: string): Promise<number[][]
 }
 
 async function isAuthorised(req: Request): Promise<boolean> {
-  const cronSecret = Deno.env.get("CRON_SECRET");
-  if (cronSecret && req.headers.get("x-cron-secret") === cronSecret) return true;
-  if (req.headers.get("x-cron-secret") === "friendly-learning-knowledge-sync") return true;
+  if (isCronCaller(req)) return true;
 
   const authHeader = req.headers.get("Authorization");
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-  if (serviceKey && (authHeader === `Bearer ${serviceKey}` || req.headers.get("apikey") === serviceKey)) return true;
+  if (safeEqual(authHeader, serviceKey ? `Bearer ${serviceKey}` : null) || safeEqual(req.headers.get("apikey"), serviceKey)) return true;
 
   if (!authHeader?.startsWith("Bearer ")) return false;
 
@@ -148,11 +150,7 @@ async function isAuthorised(req: Request): Promise<boolean> {
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
-  const json = (body: unknown, status = 200) =>
-    new Response(JSON.stringify(body), {
-      status,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+  const json = (body: unknown, status = 200) => jsonResponse(body, status, corsHeaders);
 
   const keys = getPrioritizedGeminiKeys();
   if (!(await isAuthorised(req))) return json({ error: "Unauthorized" }, 401);
