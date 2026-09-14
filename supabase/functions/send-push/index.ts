@@ -7,9 +7,14 @@ import webpush from "npm:web-push@3.6.7";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const VAPID_PUBLIC_KEY = Deno.env.get("VAPID_PUBLIC_KEY") || "BKOAXjuHWTibnWSS7ncFnSVue84A_AYycGVEvqWT4gnIRwfJZxt7HxKjIjm7WlteDJf5sqkqeFTTHxAAtxAHsc4";
-const VAPID_PRIVATE_KEY = Deno.env.get("VAPID_PRIVATE_KEY") || "EK3cmJuKDHrXph1nF_C0fH2OJbzplDfSQJTB0l-1j4o";
-const VAPID_SUBJECT = Deno.env.get("VAPID_SUBJECT") || "mailto:support@friendlylearning.com";
+// No fallbacks. This file used to fall back to a key pair written right here,
+// and because the VAPID_* secrets were never set, production signed every push
+// with a private key published in a public repo. The pair was rotated on
+// 2026-09-14; the public half also lives in src/lib/push/pushService.ts.
+const VAPID_PUBLIC_KEY = Deno.env.get("VAPID_PUBLIC_KEY") ?? "";
+const VAPID_PRIVATE_KEY = Deno.env.get("VAPID_PRIVATE_KEY") ?? "";
+const VAPID_SUBJECT = Deno.env.get("VAPID_SUBJECT") ?? "";
+const PUSH_CONFIGURED = Boolean(VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY && VAPID_SUBJECT);
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -20,14 +25,14 @@ const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
   auth: { persistSession: false, autoRefreshToken: false },
 });
 
-try {
-  webpush.setVapidDetails(
-    VAPID_SUBJECT,
-    VAPID_PUBLIC_KEY,
-    VAPID_PRIVATE_KEY
-  );
-} catch (err) {
-  console.error("[send-push] VAPID configuration error:", err);
+if (PUSH_CONFIGURED) {
+  try {
+    webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
+  } catch (err) {
+    console.error("[send-push] VAPID configuration error:", err);
+  }
+} else {
+  console.error("[send-push] VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY and VAPID_SUBJECT must all be set; refusing to send.");
 }
 
 interface PushPayload {
@@ -45,6 +50,13 @@ interface PushPayload {
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
+  }
+
+  if (!PUSH_CONFIGURED) {
+    return new Response(JSON.stringify({ error: "Push notifications are not configured on the server." }), {
+      status: 503,
+      headers: { "Content-Type": "application/json", ...corsHeaders },
+    });
   }
 
   if (req.method !== "POST") {

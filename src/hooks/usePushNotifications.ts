@@ -7,6 +7,7 @@ import {
   unsubscribeUserFromPush,
   dispatchPushNotification,
   registerServiceWorker,
+  ensureSubscriptionUsesCurrentKey,
 } from "@/lib/push/pushService";
 import { toast } from "sonner";
 
@@ -34,6 +35,7 @@ export function usePushNotifications() {
       try {
         const registration = await registerServiceWorker();
         if (registration) {
+          await ensureSubscriptionUsesCurrentKey(user.id);
           const subscription = await registration.pushManager.getSubscription();
           setIsSubscribed(Boolean(subscription));
         }
