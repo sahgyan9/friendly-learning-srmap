@@ -171,7 +171,7 @@ const CANNED_FAQ: Array<[test: RegExp, build: (path: string | null) => CannedAns
   [
     /^\s*(hi|hey|hello|yo|sup|hii+|heyy+)[\s!.,]*$/i,
     () => ({
-      text: "Hey! 👋 I'm your campus guide. Whether you're looking for a mentor, want to find faculty for research, need a hackathon team, or just want to know how a page works — ask away.",
+      text: "Hi, I'm your campus guide. Whether you're looking for a mentor, want to find faculty for research, need a hackathon team, or just want to know how a page works — ask away.",
     }),
   ],
   [
@@ -687,7 +687,7 @@ function buildPrompt(
         const events = mentorEventsMap.get(row.entity_id);
         if (events && events.length > 0) {
           // Both RSVP kinds are shown, not just "going" — a bookmark is still
-          // useful context for "what's Gyan up to" — but each line keeps its
+          // useful context for "what's [Name] up to" — but each line keeps its
           // status label so the model can never call an "interested" a
           // confirmed attendance.
           desc += "\n  Campus events RSVP'd:";
@@ -777,8 +777,8 @@ Rules you must follow:
 8. Do not repeat the retrieved lists verbatim; people are already shown to the student as cards beside your reply. Refer to them naturally.
 9. Format the reply in markdown: short paragraphs (1-3 sentences), **bold** on key terms or names, and a bullet list when you're enumerating more than two things. Never return one undifferentiated block of text.
 10. If the question is about the page they're currently on, answer with that page in mind rather than generically.
-11. If the student asks whether a specific mentor is free or available right now (e.g. "Is Gyan free right now?", "Is [Mentor] available?"): answer directly with their real-time availability status, whether they are currently attending a campus event, their custom availability note if on file, and typical response turnaround time from the context above, and invite the student to send them a message.
-12. If the student asks what events a mentor is attending or going to (e.g. "What events is Gyan attending?", "Is Gyan going to [Event]?"): list only the events under that mentor's "Campus events RSVP'd" above, and say plainly whether each is GOING (confirmed) or INTERESTED (bookmarked, not a commitment) — never call an INTERESTED event a confirmed attendance. If nothing is listed there, say they have no RSVPs on file rather than guessing.
+11. If the student asks whether a specific mentor is free or available right now (e.g. "Is [Name] free right now?", "Is [Name] available?"): answer directly with their real-time availability status, whether they are currently attending a campus event, their custom availability note if on file, and typical response turnaround time from the context above, and invite the student to send them a message.
+12. If the student asks what events a mentor is attending or going to (e.g. "What events is [Name] attending?", "Is [Name] going to [Event]?" — [Name] and [Event] are placeholders, never names to use): list only the events under that mentor's "Campus events RSVP'd" above, and say plainly whether each is GOING (confirmed) or INTERESTED (bookmarked, not a commitment) — never call an INTERESTED event a confirmed attendance. If nothing is listed there, say they have no RSVPs on file rather than guessing.
 13. If the student asks for their own timetable or a mentor's schedule (e.g. "my timetable", "my todays time table", "what is my schedule today", "does [Mentor] have classes tomorrow"):
     - Consult TIMETABLE_SCHEDULE above.
     - If they need to sign in, tell them warmly: "Please **sign in** to view your personal student timetable."
@@ -1000,7 +1000,7 @@ serve(async (req) => {
       // already looking at cards is the one this tip is for.
       aiResponse =
         shownFaculty.length > 0 || shownMentors.length > 0
-          ? `${generated.text}\n\n💡 **CampusBrain** — the smart search at [/ask](/ask) — does this automatically. Describe your project or what you're looking for, and it surfaces the best-matching faculty and seniors on its own.`
+          ? `${generated.text}\n\n**CampusBrain** — the smart search at [/ask](/ask) — does this automatically. Describe your project or what you're looking for, and it surfaces the best-matching faculty and seniors on its own.`
           : generated.text;
     }
 

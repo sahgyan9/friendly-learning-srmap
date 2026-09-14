@@ -269,7 +269,7 @@ export const formatEmailTemplate = (message: string, recipientName: string, admi
     <body>
       <div class="container">
         <div class="header">
-          <div class="logo">🎓 Friendly Learning</div>
+          <div class="logo">Friendly Learning</div>
           <p>Response to your inquiry</p>
         </div>
         

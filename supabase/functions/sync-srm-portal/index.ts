@@ -32,6 +32,7 @@ import {
   parseTimeTable,
   parseTranscript,
   recognizeCaptcha,
+  type LoginResult,
 } from "../_shared/srm-portal.ts";
 import { decryptDob } from "../_shared/dob-crypto.ts";
 
@@ -289,7 +290,7 @@ Deno.serve(async (req) => {
           );
 
           if (!alreadyAlerted) {
-            const alertTitle = `⚠️ Attendance Alert: ${course.courseCode} (${course.attendancePercentage}%)`;
+            const alertTitle = `Attendance alert: ${course.courseCode} (${course.attendancePercentage}%)`;
             const alertMessage = `Your attendance in ${course.courseName} is ${course.attendancePercentage}%. You need to attend the next ${course.classesNeeded} consecutive class(es) to reach 75%.`;
 
             // Insert into public.notifications for real-time Bell Icon update

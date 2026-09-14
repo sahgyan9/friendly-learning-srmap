@@ -223,7 +223,7 @@ Deno.serve(async (req) => {
 
         // Trigger immediate Alert if < 75%
         if (course.attendancePercentage < 75.0 && course.conductedHours > 0) {
-          const alertTitle = `⚠️ Attendance Alert: ${course.courseCode} (${course.attendancePercentage}%)`;
+          const alertTitle = `Attendance alert: ${course.courseCode} (${course.attendancePercentage}%)`;
           const alertMessage = `Your attendance in ${course.courseName} is ${course.attendancePercentage}%. You need to attend the next ${course.classesNeeded} consecutive class(es) to reach 75%.`;
 
           await supabaseAdmin.from("notifications").insert({

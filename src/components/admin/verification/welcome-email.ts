@@ -69,12 +69,12 @@ Three ways to start:
    ${PRIMARY_DOMAIN}/profile
 
 Also worth exploring:
-- 🔄 Link SRM Portal once (auto-sync daily attendance & timetable) → ${PRIMARY_DOMAIN}/attendance
-- 🧠 CampusBrain AI (SRM AP answers) → ${PRIMARY_DOMAIN}/search
-- 📅 Events & activities (see who's attending & team up) → ${PRIMARY_DOMAIN}/events
+- Link SRM Portal once (auto-sync daily attendance & timetable) → ${PRIMARY_DOMAIN}/attendance
+- CampusBrain AI (SRM AP answers) → ${PRIMARY_DOMAIN}/search
+- Events & activities (see who's attending & team up) → ${PRIMARY_DOMAIN}/events
 - Find study partners → ${PRIMARY_DOMAIN}/find-study-partners
 - Hackathon teammates → ${PRIMARY_DOMAIN}/hackathon-partners
-- 👨‍🏫 Faculty search & ratings (discover research & courses) → ${PRIMARY_DOMAIN}/faculty
+- Faculty search & ratings (discover research & courses) → ${PRIMARY_DOMAIN}/faculty
 
 Reply to this email if anything's confusing or broken.
 
@@ -123,7 +123,7 @@ ${PRIMARY_DOMAIN}`;
                     <table role="presentation" border="0" cellspacing="0" cellpadding="0">
                       <tr>
                         <td style="vertical-align:middle; padding-right:8px;">
-                          <img src="${PRIMARY_DOMAIN}/lovable-uploads/df76e963-f250-4f25-8f7b-3917f857fe63.png" width="40" height="26" alt="Friendly Learning" style="display:block; border:0;">
+                          <img src="${PRIMARY_DOMAIN}/brand/logo-email.png" width="40" height="26" alt="Friendly Learning" style="display:block; border:0;">
                         </td>
                         <td style="vertical-align:middle; white-space:nowrap; font-size:15px; font-weight:700; letter-spacing:-0.2px;">
                           <span style="color:#3963c6;">Friendly</span><span style="color:#0f172a;">Learning</span><span style="color:#3963c6; font-size:10px; font-weight:600; letter-spacing:0.3px; margin-left:4px;">SRMAP</span>
@@ -168,7 +168,6 @@ ${PRIMARY_DOMAIN}`;
                   <td style="padding: 16px;">
                     <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
                       <tr>
-                        <td width="36" valign="top" style="font-size:20px; padding-right:12px;">💬</td>
                         <td>
                           <h3 style="margin:0; font-size:15px; font-weight:600; color:#0f172a;">Answer a Question</h3>
                           <p style="margin:4px 0 12px 0; font-size:13px; color:#64748b; line-height:1.4;">
@@ -190,7 +189,6 @@ ${PRIMARY_DOMAIN}`;
                   <td style="padding: 16px;">
                     <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
                       <tr>
-                        <td width="36" valign="top" style="font-size:20px; padding-right:12px;">👥</td>
                         <td>
                           <h3 style="margin:0; font-size:15px; font-weight:600; color:#0f172a;">Join or Start a Group</h3>
                           <p style="margin:4px 0 12px 0; font-size:13px; color:#64748b; line-height:1.4;">
@@ -212,7 +210,6 @@ ${PRIMARY_DOMAIN}`;
                   <td style="padding: 16px;">
                     <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
                       <tr>
-                        <td width="36" valign="top" style="font-size:20px; padding-right:12px;">⏱️</td>
                         <td>
                           <h3 style="margin:0; font-size:15px; font-weight:600; color:#0f172a;">Set Your Pace</h3>
                           <p style="margin:4px 0 12px 0; font-size:13px; color:#64748b; line-height:1.4;">
@@ -234,21 +231,18 @@ ${PRIMARY_DOMAIN}`;
                 <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
                   <tr>
                     <td style="padding:4px 0;">
-                      <span style="font-size:14px; margin-right:8px;">🔄</span>
                       <a href="${PRIMARY_DOMAIN}/attendance" style="font-size:13px; color:#3963c6; text-decoration:none; font-weight:500;">Link SRM Portal once</a>
                       <span style="font-size:13px; color:#94a3b8; margin-left:6px;">— auto-sync daily attendance & timetable</span>
                     </td>
                   </tr>
                   <tr>
                     <td style="padding:4px 0;">
-                      <span style="font-size:14px; margin-right:8px;">🧠</span>
                       <a href="${PRIMARY_DOMAIN}/search" style="font-size:13px; color:#3963c6; text-decoration:none; font-weight:500;">CampusBrain AI</a>
                       <span style="font-size:13px; color:#94a3b8; margin-left:6px;">— SRM AP syllabus & regulations answers</span>
                     </td>
                   </tr>
                   <tr>
                     <td style="padding:4px 0;">
-                      <span style="font-size:14px; margin-right:8px;">📅</span>
                       <a href="${PRIMARY_DOMAIN}/events" style="font-size:13px; color:#3963c6; text-decoration:none; font-weight:500;">Events & activities</a>
                       <span style="font-size:13px; color:#94a3b8; margin-left:6px;">— see who's attending & team up</span>
                     </td>
