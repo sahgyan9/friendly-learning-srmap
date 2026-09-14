@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import NoIndex from "@/components/NoIndex";
 import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
@@ -204,6 +205,7 @@ const EventDetail = () => {
   if (error || !event) {
     return (
       <div className="min-h-screen bg-background pt-24">
+        <NoIndex />
         <div className="container mx-auto px-4 py-12 text-center max-w-lg">
           <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted mx-auto mb-4">
             <GraduationCap className="h-8 w-8 text-muted-foreground" />

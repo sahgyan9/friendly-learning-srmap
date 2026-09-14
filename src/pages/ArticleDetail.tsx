@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import NoIndex from "@/components/NoIndex";
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, BookOpen, Sparkles } from "lucide-react";
 
@@ -65,6 +66,7 @@ const ArticleDetail = () => {
   if (!article) {
     return (
       <div className="min-h-screen bg-background flex flex-col">
+        <NoIndex />
         <div className="container mx-auto max-w-3xl px-4 pb-16 pt-28 flex-1 text-center">
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-muted">
             <BookOpen className="h-7 w-7 text-muted-foreground" />

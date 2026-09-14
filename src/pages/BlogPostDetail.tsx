@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import NoIndex from "@/components/NoIndex";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { motion, useScroll, useSpring } from "framer-motion";
 import {
@@ -135,6 +136,7 @@ const BlogPostDetail = () => {
   if (!post) {
     return (
       <div className="min-h-screen bg-background flex flex-col">
+        <NoIndex />
         <div className="container mx-auto max-w-2xl px-4 pb-16 pt-32 flex-1 text-center">
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-muted text-muted-foreground mb-4">
             <BookOpen className="h-8 w-8" />

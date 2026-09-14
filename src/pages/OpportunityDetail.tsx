@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import NoIndex from "@/components/NoIndex";
 import { Link, useParams } from "react-router-dom";
 import {
   ArrowLeft,
@@ -184,6 +185,7 @@ const OpportunityDetail = () => {
   if (!opportunity) {
     return (
       <div className="min-h-screen bg-background">
+        <NoIndex />
         <div className="container mx-auto max-w-3xl px-4 pt-28 text-center">
           <h1 className="text-2xl font-bold">Opportunity not found</h1>
           <p className="mt-2 text-muted-foreground">It may have closed or been removed.</p>

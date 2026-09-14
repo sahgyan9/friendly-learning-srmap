@@ -1,6 +1,7 @@
 import { PRIMARY_DOMAIN } from "@/lib/constants";
 
 import { useState, useEffect } from "react";
+import NoIndex from "@/components/NoIndex";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -100,6 +101,7 @@ const MentorProfile = () => {
     const isCurrentUser = Boolean(user && id && user.id === id);
     return (
       <div className="min-h-screen">
+        <NoIndex />
         <motion.div
           className="container px-4 md:px-6 pt-24 pb-16"
           initial={{ opacity: 0 }}

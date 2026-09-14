@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
+import { NOINDEX_HOLD_ATTR } from '@/lib/seo/noindex-hold';
 
 const privatePaths = [/^\/admin(\b|\/)/, /^\/profile(\b|\/)/, /^\/messages(\b|\/)/, /^\/unauthorized$/];
 
@@ -17,6 +18,8 @@ export default function RouteRobots() {
     const { pathname } = useLocation();
 
     useEffect(() => {
+        // A mounted <NoIndex /> (a not-found state) owns the tag until it unmounts.
+        if (document.documentElement.hasAttribute(NOINDEX_HOLD_ATTR)) return;
         const isPrivate = privatePaths.some((re) => re.test(pathname));
         if (isPrivate) {
             setMeta('robots', 'noindex, nofollow, noarchive');

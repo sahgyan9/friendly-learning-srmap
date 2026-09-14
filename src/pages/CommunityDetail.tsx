@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import NoIndex from "@/components/NoIndex";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import {
@@ -404,6 +405,7 @@ const CommunityDetail = () => {
   if (notFound || !community) {
     return (
       <div className="min-h-screen bg-background">
+        <NoIndex />
         <div className="container mx-auto max-w-2xl px-4 py-24 text-center">
           <h1 className="mb-3 text-2xl font-bold">That group doesn't exist</h1>
           <p className="mb-6 text-muted-foreground">

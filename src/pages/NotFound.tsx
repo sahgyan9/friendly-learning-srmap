@@ -2,6 +2,7 @@ import { PRIMARY_DOMAIN } from "@/lib/constants";
 import { useLocation, Link } from "react-router-dom";
 import { useEffect } from "react";
 import SEOHead from "@/components/SEOHead";
+import NoIndex from "@/components/NoIndex";
 import StructuredData from "@/components/StructuredData";
 import { Button } from "@/components/ui/button";
 import { FileSearch } from "lucide-react";
@@ -64,6 +65,7 @@ const NotFound = () => {
         canonical={`${PRIMARY_DOMAIN}${location.pathname}`}
       />
       <StructuredData data={structuredData} />
+      <NoIndex />
 
       <div className="min-h-screen bg-background">
 
