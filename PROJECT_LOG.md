@@ -473,9 +473,14 @@
     - `event-detail-rsvp-mobile-light.png`: verified 360px responsive layout without overflow.
 - **Status at end**:
   - Students RSVPing to university events receive instant in-app notification confirmation and reassurance that 24h and 2h pre-event reminders are active.
-  - Pre-event reminders generate deterministically via database RPC, pg_cron hourly job, and event sync hook.
+  - Migration `20260914100000_event_notifications_and_reminders.sql` applied to production (`ruapdkrgcbqrhvsayvpf`) via Supabase MCP `apply_migration`.
+  - Verified on live Postgres:
+    - `notifications_type_check` includes `'event_alert'` and `'event_reminder'`.
+    - `public.dispatch_upcoming_event_reminders(uuid)` callable with execute privilege for `authenticated`, `service_role`, `postgres`.
+    - pg_cron job `event-reminders-hourly` active on schedule `0 * * * *`.
+  - Edge function `sync-srmap-events` deployed to production (version 11, `verify_jwt = false`) via Supabase MCP `deploy_edge_function`.
 - **Next agent should**:
-  - When deploying to production Supabase, apply `20260914100000_event_notifications_and_reminders.sql` and redeploy `sync-srmap-events` with `verify_jwt = false`.
+  - Monitor `event-reminders-hourly` cron executions and `sync-srmap-events` logs in production.
 
 ---
 
