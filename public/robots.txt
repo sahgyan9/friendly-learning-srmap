@@ -1,6 +1,6 @@
 # ===================================================================
 # Robots.txt for Friendly Learning SRMAP
-# Last Updated: July 28, 2026
+# Last Updated: September 14, 2026
 # 
 # This file tells search engine crawlers which pages they can and 
 # cannot crawl on friendly-learning-srmap.vercel.app
@@ -11,6 +11,7 @@
 Sitemap: https://friendly-learning-srmap.vercel.app/sitemap-index.xml
 Sitemap: https://friendly-learning-srmap.vercel.app/sitemap.xml
 Sitemap: https://friendly-learning-srmap.vercel.app/sitemap-blog.xml
+Sitemap: https://friendly-learning-srmap.vercel.app/sitemap-blogs.xml
 Sitemap: https://friendly-learning-srmap.vercel.app/sitemap-community.xml
 Sitemap: https://friendly-learning-srmap.vercel.app/sitemap-groups.xml
 Sitemap: https://friendly-learning-srmap.vercel.app/sitemap-mentors.xml
@@ -35,13 +36,12 @@ Allow: /signin
 Allow: /signup
 Allow: /become-mentor
 Disallow: /admin/
-Disallow: /api/
 Disallow: /unauthorized
 Disallow: /profile
 Disallow: /messages
-Disallow: /draft/
 Disallow: /auth/
-Disallow: /password-reset
+Disallow: /reset-password
+Disallow: /forgot-password
 Disallow: /*?preview=true
 Disallow: /*?*utm_*
 Disallow: /*?*fbclid*
@@ -52,13 +52,12 @@ Disallow: /*?*source=*
 User-agent: Bingbot
 Allow: /
 Disallow: /admin/
-Disallow: /api/
 Disallow: /unauthorized
 Disallow: /profile
 Disallow: /messages
-Disallow: /draft/
 Disallow: /auth/
-Disallow: /password-reset
+Disallow: /reset-password
+Disallow: /forgot-password
 Disallow: /*?preview=true
 Disallow: /*?*utm_*
 Disallow: /*?*fbclid*
@@ -69,24 +68,22 @@ Disallow: /*?*source=*
 User-agent: Slurp
 Allow: /
 Disallow: /admin/
-Disallow: /api/
 Disallow: /unauthorized
 Disallow: /profile
 Disallow: /messages
-Disallow: /draft/
 Disallow: /auth/
-Disallow: /password-reset
+Disallow: /reset-password
+Disallow: /forgot-password
 
 User-agent: DuckDuckBot
 Allow: /
 Disallow: /admin/
-Disallow: /api/
 Disallow: /unauthorized
 Disallow: /profile
 Disallow: /messages
-Disallow: /draft/
 Disallow: /auth/
-Disallow: /password-reset
+Disallow: /reset-password
+Disallow: /forgot-password
 
 # -- Rules for AI crawlers - prevent content scraping --
 User-agent: GPTBot
@@ -102,13 +99,12 @@ Disallow: /
 User-agent: *
 Allow: /
 Disallow: /admin/
-Disallow: /api/
 Disallow: /unauthorized
 Disallow: /profile
 Disallow: /messages
-Disallow: /draft/
 Disallow: /auth/
-Disallow: /password-reset
+Disallow: /reset-password
+Disallow: /forgot-password
 Disallow: /*?preview=true
 Disallow: /*?*utm_*
 Disallow: /*?*fbclid*
