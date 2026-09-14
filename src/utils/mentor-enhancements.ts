@@ -1,3 +1,29 @@
+import {
+  Atom,
+  BatteryCharging,
+  Binary,
+  BrainCircuit,
+  Briefcase,
+  Cloud,
+  Code2,
+  Container,
+  Cpu,
+  Database,
+  FileText,
+  FlaskConical,
+  GitBranch,
+  Globe,
+  MessageCircle,
+  MessagesSquare,
+  Palette,
+  Server,
+  ShieldCheck,
+  Sigma,
+  Smartphone,
+  TrendingUp,
+  Trophy,
+  type LucideIcon,
+} from "lucide-react";
 import { Mentor } from "@/types/mentor";
 import { formatDepartment } from "@/utils/user-utils";
 
@@ -8,7 +34,7 @@ export interface EnhancedMentor extends Omit<Mentor, "ask_me_anything" | "taglin
   /** May be empty. An empty list means the section does not appear. */
   outcomes: string[];
   /** May be empty. The icon is a decorative lookup, the topic is the mentor's. */
-  ask_me_anything: Array<{ topic: string; icon: string }>;
+  ask_me_anything: Array<{ topic: string; icon: LucideIcon }>;
   /** May be empty. An empty list means the section does not appear. */
   ideal_mentees: string[];
   categorized_skills: Record<string, string[]>;
@@ -93,15 +119,15 @@ export function getEnhancedMentorProfile(mentor: Mentor): EnhancedMentor {
 
   // 5. Ask me anything about — the mentor's topics.
   //
-  // The emoji is decoration chosen by a lookup table, not a claim, so deriving
-  // it here is fine. The topics themselves are never invented; the default list
+  // The icon is decoration chosen by a lookup table, not a claim, so deriving
+  // it here is fine. It is always derived from the topic: an `icon` stored on
+  // older rows was an emoji, and decorative emoji are not used in this UI. The topics themselves are never invented; the default list
   // that used to sit here ("Python", "Backend", "Hackathons", "Docker",
   // "Interview Prep") is gone.
   const askMe = (mentor.ask_me_anything ?? [])
     .map((item) => {
       const topic = typeof item === "string" ? item : String(item?.topic ?? "");
-      const icon =
-        typeof item === "object" && item?.icon ? item.icon : getEmojiForTopic(topic);
+      const icon = getIconForTopic(topic);
       return { topic: topic.trim(), icon };
     })
     .filter((t) => t.topic.length > 0);
@@ -146,7 +172,7 @@ export function getEnhancedMentorProfile(mentor: Mentor): EnhancedMentor {
   };
 }
 
-function getEmojiForTopic(topic: string | any): string {
+function getIconForTopic(topic: string | any): LucideIcon {
   let str = "";
   if (typeof topic === "string") {
     str = topic;
@@ -156,34 +182,34 @@ function getEmojiForTopic(topic: string | any): string {
     str = String(topic || "");
   }
   const t = str.toLowerCase();
-  if (t.includes("python")) return "🐍";
-  if (t.includes("hackathon")) return "⚡";
-  if (t.includes("docker") || t.includes("kubernetes") || t.includes("deploy")) return "📦";
-  if (t.includes("interview") || t.includes("prep") || t.includes("placement")) return "🧠";
-  if (t.includes("react") || t.includes("frontend") || t.includes("web") || t.includes("full-stack") || t.includes("fullstack")) return "🌐";
-  if (t.includes("database") || t.includes("sql") || t.includes("postgres")) return "🗄️";
-  if (t.includes("cpp") || t.includes("c++") || t.includes("dsa") || t.includes("competitive")) return "🚀";
-  if (t.includes("data structure") || t.includes("algorithm")) return "🧮";
+  if (t.includes("python")) return Code2;
+  if (t.includes("hackathon")) return Trophy;
+  if (t.includes("docker") || t.includes("kubernetes") || t.includes("deploy")) return Container;
+  if (t.includes("interview") || t.includes("prep") || t.includes("placement")) return MessagesSquare;
+  if (t.includes("react") || t.includes("frontend") || t.includes("web") || t.includes("full-stack") || t.includes("fullstack")) return Globe;
+  if (t.includes("database") || t.includes("sql") || t.includes("postgres")) return Database;
+  if (t.includes("cpp") || t.includes("c++") || t.includes("dsa") || t.includes("competitive")) return Binary;
+  if (t.includes("data structure") || t.includes("algorithm")) return Sigma;
   // Topics are chosen by the model now rather than picked from a fixed list, so
   // they are far more varied than the handful this map was built for -- one
   // profile rendered five chips that all fell through to the default. These
   // cover what a peer mentor at an engineering university actually offers.
   // "rag" is matched with a word boundary on purpose: bare includes("rag")
   // also fires on "storage".
-  if (t.includes("llm") || t.includes("gpt") || t.includes("transformer") || t.includes("fine-tun") || /\brag\b/.test(t) || t.includes("retrieval") || t.includes("prompt")) return "🧠";
-  if (t.includes("quantum") || t.includes("qiskit")) return "⚛️";
-  if (t.includes("physics") || t.includes("econophysics")) return "🔬";
-  if (t.includes("research") || t.includes("paper") || t.includes("thesis")) return "📄";
-  if (t.includes("finance") || t.includes("market") || t.includes("trading") || t.includes("crypto")) return "📈";
-  if (t.includes("cloud") || t.includes("aws") || t.includes("azure")) return "☁️";
-  if (t.includes("security") || t.includes("cyber")) return "🔐";
-  if (t.includes("design") || t.includes("ui") || t.includes("ux") || t.includes("figma")) return "🎨";
-  if (t.includes("mobile") || t.includes("android") || t.includes("flutter") || t.includes("ios")) return "📱";
-  if (t.includes("open-source") || t.includes("open source") || t.includes("git")) return "🌱";
-  if (t.includes("intern") || t.includes("career") || t.includes("resume")) return "💼";
-  if (t.includes("hardware") || t.includes("robot") || t.includes("iot") || t.includes("embedded") || t.includes("cad") || t.includes("fusion 360") || t.includes("solidworks") || t.includes("3d")) return "🔧";
-  if (t.includes("energy") || t.includes("hydrogen") || t.includes("sustain")) return "🔋";
-  if (t.includes("api") || t.includes("backend") || t.includes("server")) return "💻";
-  if (t.includes("ai") || t.includes("ml") || t.includes("data") || t.includes("nlp") || t.includes("vision")) return "🤖";
-  return "✨";
+  if (t.includes("llm") || t.includes("gpt") || t.includes("transformer") || t.includes("fine-tun") || /\brag\b/.test(t) || t.includes("retrieval") || t.includes("prompt")) return MessagesSquare;
+  if (t.includes("quantum") || t.includes("qiskit")) return Atom;
+  if (t.includes("physics") || t.includes("econophysics")) return FlaskConical;
+  if (t.includes("research") || t.includes("paper") || t.includes("thesis")) return FileText;
+  if (t.includes("finance") || t.includes("market") || t.includes("trading") || t.includes("crypto")) return TrendingUp;
+  if (t.includes("cloud") || t.includes("aws") || t.includes("azure")) return Cloud;
+  if (t.includes("security") || t.includes("cyber")) return ShieldCheck;
+  if (t.includes("design") || t.includes("ui") || t.includes("ux") || t.includes("figma")) return Palette;
+  if (t.includes("mobile") || t.includes("android") || t.includes("flutter") || t.includes("ios")) return Smartphone;
+  if (t.includes("open-source") || t.includes("open source") || t.includes("git")) return GitBranch;
+  if (t.includes("intern") || t.includes("career") || t.includes("resume")) return Briefcase;
+  if (t.includes("hardware") || t.includes("robot") || t.includes("iot") || t.includes("embedded") || t.includes("cad") || t.includes("fusion 360") || t.includes("solidworks") || t.includes("3d")) return Cpu;
+  if (t.includes("energy") || t.includes("hydrogen") || t.includes("sustain")) return BatteryCharging;
+  if (t.includes("api") || t.includes("backend") || t.includes("server")) return Server;
+  if (t.includes("ai") || t.includes("ml") || t.includes("data") || t.includes("nlp") || t.includes("vision")) return BrainCircuit;
+  return MessageCircle;
 }

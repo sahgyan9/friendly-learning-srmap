@@ -54,8 +54,8 @@ export default function MentorOutcomesSection({
     const cleaned = next
       .map((s) => s.trim())
       .filter(Boolean)
-      // Stored as objects so a mentor-chosen icon stays possible; the icon is
-      // filled in by the emoji lookup when absent.
+      // Stored as objects for compatibility with older rows; the displayed
+      // icon is always derived from the topic by getIconForTopic.
       .map((topic) => ({ topic }));
     const { data, error } = await updateMentorSummary(mentor.id, {
       ask_me_anything: cleaned,
@@ -168,7 +168,7 @@ export default function MentorOutcomesSection({
                     whileHover={{ scale: 1.03, y: -2 }}
                     className="flex cursor-default items-center gap-2 rounded-xl border border-border/60 bg-background/80 px-4 py-2 text-sm font-semibold text-foreground shadow-xs transition-all hover:border-primary/40 hover:bg-primary/5"
                   >
-                    <span className="text-base">{item.icon}</span>
+                    <item.icon className="h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
                     <span>{item.topic}</span>
                   </motion.div>
                 ))}
