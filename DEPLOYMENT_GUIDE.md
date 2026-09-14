@@ -211,12 +211,14 @@ platform and are not set by hand.
 | `INGEST_SECRET` | seed-campus-documents | Developer ingestion of campus documents is refused. | Free to rotate; only the person running the ingestion needs it. |
 | `SRM_DOB_ENCRYPTION_KEY` | import-srm-portal (encrypts), sync-srm-portal (decrypts), via `_shared/dob-crypto.ts` | Background SRM portal sync cannot decrypt any stored login. | **Do not rotate casually.** A new key cannot read rows encrypted with the old one, so every linked student must re-link their portal. Keep an offline copy. Generate with `openssl rand -base64 32`. |
 | `RESEND_API_KEY` | send-email-queue, send-contact-reply | No email is sent. Queue rows record the error in `last_error`. | Create a new key in Resend, set it, then revoke the old one. |
-| `EMAIL_FROM`, `EMAIL_REPLY_TO` | send-email-queue, send-contact-reply | From/Reply-To fall back to code defaults. The from-address must be on the verified Resend domain. | Plain config, not secret. |
-| `SITE_URL` | send-email-queue, email-unsubscribe | Links in emails point at the default origin. | Plain config. Update after a domain change. |
-| `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` | send-push (public key also as `VITE_VAPID_PUBLIC_KEY` in Vercel) | Push notifications fail. | Rotating invalidates every existing browser subscription; users must re-enable push. |
+| `EMAIL_FROM`, `EMAIL_REPLY_TO` | send-email-queue, send-contact-reply | From/Reply-To fall back to code defaults. The from-address must be on the verified Resend domain. `EMAIL_REPLY_TO` is not set (checked 2026-09-14). | Plain config, not secret. |
+| `SITE_URL` | send-email-queue, email-unsubscribe | Links in emails point at the code default. Not set (checked 2026-09-14). | Plain config. Update after a domain change. |
+| `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` | send-push (public key also as `VITE_VAPID_PUBLIC_KEY` in Vercel) | **Not set (checked 2026-09-14).** send-push falls back to a key pair hardcoded in its source, so the private key is public. Needs rotation: generate a new pair, set all three secrets and `VITE_VAPID_PUBLIC_KEY`, then remove the fallbacks. | Rotating invalidates every existing browser subscription; users must re-enable push. |
 | `Gemini_API_Key`, `Gemini_API_Key_2`, `Gemini_API_Key_3` (any name matching `/gemini.*key/i`) | `_shared/gemini-pool.ts`: embed-knowledge, semantic-search, ai-chatbot, generate-ai-overview, generate-mentor-summary, parse-notice, parse-doc-ocr, parse-linkedin-pdf | Search falls back to keyword-only; AI answers and parsing fail. | Add the new key first; the pool rotates across all present keys. Then remove the old one. |
-| `EMBEDDING_MODEL` | embed-knowledge, semantic-search | Defaults to `gemini-embedding-001`. | Changing it means re-embedding every chunk (768 dimensions is fixed). |
-| `CHAT_MODEL` | ai-chatbot | Uses the code default. | Plain config. |
+| `EMBEDDING_MODEL` | embed-knowledge, semantic-search | Defaults to `gemini-embedding-001`. Not set. | Changing it means re-embedding every chunk (768 dimensions is fixed). |
+| `CHAT_MODEL` | ai-chatbot | Uses the code default. Not set. | Plain config. |
+
+`LOVABLE_API_KEY` was removed on 2026-09-14 (nothing reads it). `VITE_POSTHOG_KEY` is also set as a function secret; no function reads it, and its real home is Vercel.
 
 Frontend variables (`VITE_*`) are set in Vercel and documented in
 `.env.example`. The anon key there is public by design.
