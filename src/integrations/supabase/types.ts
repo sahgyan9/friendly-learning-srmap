@@ -12,6 +12,31 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       academic_calendar_days: {
@@ -2968,6 +2993,63 @@ export type Database = {
           },
         ]
       }
+      student_daily_attendance: {
+        Row: {
+          attendance_date: string
+          course_code: string
+          course_name: string
+          created_at: string
+          day_order: string
+          id: string
+          last_synced_at: string
+          period_slot: number
+          register_number: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          attendance_date: string
+          course_code: string
+          course_name: string
+          created_at?: string
+          day_order: string
+          id?: string
+          last_synced_at?: string
+          period_slot: number
+          register_number?: string | null
+          status: string
+          user_id: string
+        }
+        Update: {
+          attendance_date?: string
+          course_code?: string
+          course_name?: string
+          created_at?: string
+          day_order?: string
+          id?: string
+          last_synced_at?: string
+          period_slot?: number
+          register_number?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_daily_attendance_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_daily_attendance_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       student_fee_dues: {
         Row: {
           collected_amount: number
@@ -3627,6 +3709,18 @@ export type Database = {
         Returns: boolean
       }
       delete_group_message: { Args: { p_message_id: string }; Returns: boolean }
+      dispatch_upcoming_event_reminders: {
+        Args: { p_user_id?: string }
+        Returns: {
+          content: string
+          event_id: number
+          notification_id: string
+          reminder_tier: string
+          title: string
+          url: string
+          user_id: string
+        }[]
+      }
       edit_direct_message: {
         Args: { p_content: string; p_message_id: string }
         Returns: {
@@ -4888,6 +4982,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {},
   },
