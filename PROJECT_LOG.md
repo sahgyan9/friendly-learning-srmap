@@ -421,6 +421,64 @@
 
 ---
 
+### Session 028 — 2026-09-14 · Agent: Antigravity (Gemini 3.8 Flash)
+- **Prompt**:
+  - "right now we have features in university events where one can mark him self as going or interested. But they don't receive a notification becasue of this they might miss the events"
+- **Root Cause Analysis (RCA) & Architecture**:
+  1. `event_attendees` tracking recorded user RSVPs (`going`, `interested`), but:
+     - No confirmation notification was inserted into `public.notifications` on RSVP.
+     - No background reminder mechanism existed prior to event start times.
+     - `notifications_type_check` Postgres check constraint was restricted to `['message', 'badge', 'mention', 'system', 'alumni_prompt', 'attendance_alert', 'fee_alert']`. Any attempt to insert an event notification triggered Postgres check constraint violation `23514`.
+     - `notificationNavigation.ts` had no handling for event notifications or routing to `/events/:eventId`.
+     - `NotificationItem.tsx` had no dedicated icon/badge treatment for event notifications.
+     - Event date parsing across multiple components used `new Date(value.replace(" ", "T") + "+05:30")`, which threw `RangeError: Invalid time value` or returned `Invalid Date` when given standard ISO strings (`2026-09-16T...Z`).
+  2. **Solution**:
+     - **Database Migration (`20260914100000_event_notifications_and_reminders.sql`)**:
+       - Updated `notifications_type_check` to permit `'event_alert'` and `'event_reminder'`.
+       - Created `public.dispatch_upcoming_event_reminders(p_user_id uuid DEFAULT NULL)`:
+         - Runs in `Asia/Kolkata` time zone.
+         - Generates 24-hour reminders (`24h`) for events occurring within `[now() + 20 hours, now() + 26 hours]`.
+         - Generates starting-soon reminders (`starting_soon`) for events occurring within `[now(), now() + 2 hours]`.
+         - Enforces strict deduplication via metadata checks (`metadata->>'event_id'`, `metadata->>'reminder_tier'`).
+       - Scheduled hourly pg_cron job `event-reminders-hourly` at minute 0 (`0 * * * *`).
+     - **Edge Function (`supabase/functions/sync-srmap-events/index.ts`)**:
+       - Added post-sync hook calling `dispatch_upcoming_event_reminders()` and forwarding Web Push notifications through `send-push`.
+     - **Universal Date Parsing (`src/lib/calendar-utils.ts`)**:
+       - Exported robust `parseEventDate(dateStr)` handling both SRMAP space-separated IST strings and ISO strings without crashing or returning `Invalid Date`.
+       - Standardized date parsing across `EventDetail.tsx`, `SRMAPEventCard.tsx`, `YourEventsStrip.tsx`, `MarketPlace.tsx`, `useSRMAPEvents.ts`, `EventShareModal.tsx`, `event-attendees.ts`, and `CampusSidebarWidgets.tsx`.
+     - **Frontend Services & Navigation**:
+       - Extended `setEventAttendance` in `src/integrations/supabase/services/event-attendees.ts` to accept event metadata and generate instant confirmation `event_alert` notifications.
+       - Added client fallback RPC caller `checkMyUpcomingEventReminders()` invoked on event surface mounts (`MarketPlace.tsx`, `EventDetail.tsx`).
+       - Updated `src/utils/notificationNavigation.ts` to navigate `event_alert` and `event_reminder` directly to `/events/:eventId`.
+       - Updated `src/components/notifications/NotificationItem.tsx` with `Calendar` icon and violet badge.
+     - **UI Reassurance & RSVP Interactivity**:
+       - Added `Reminders active (24h & 2h before)` reassurance indicator with Lucide `Bell` icon to `SRMAPEventCard.tsx`, `YourEventsStrip.tsx`, and `EventAttendeeRoster.tsx`.
+       - Updated toast messaging on RSVP: `"Peers can now see you're attending. We'll remind you before it starts."` (zero emojis per `AI_STYLE_GUIDE.md`).
+- **What was done**:
+  1. Created migration `supabase/migrations/20260914100000_event_notifications_and_reminders.sql` with check constraint update, reminder RPC, and pg_cron schedule.
+  2. Updated `supabase/functions/sync-srmap-events/index.ts` to trigger reminder dispatch and Web Push delivery after feed syncs.
+  3. Created `parseEventDate` in `src/lib/calendar-utils.ts` and refactored all event date parsing across frontend components.
+  4. Updated `event-attendees.ts` service with RSVP notifications and reminder check RPC caller.
+  5. Updated `NotificationItem.tsx`, `notificationNavigation.ts`, `SRMAPEventCard.tsx`, `YourEventsStrip.tsx`, `EventAttendeeRoster.tsx`, `MarketPlace.tsx`, and `EventDetail.tsx`.
+  6. Added automated tests in `supabase/tests/verify-migrations.mjs` verifying constraint, reminder tiers, and idempotency.
+  7. Built Puppeteer visual QA test harness `scripts/qa/qa-event-notifications.mjs` and verified light/dark themes and mobile/desktop viewports.
+- **Verification**:
+  - `npm run test:migrations`: 100% PASS (Clean & Upgrade scenarios, 0 failures).
+  - `npm run typecheck`: 0 errors.
+  - `npm run build`: Clean exit 0.
+  - Puppeteer screenshots verified in `.qa/event-notifications/`:
+    - `marketplace-cards-desktop-light.png` & `marketplace-cards-desktop-dark.png`: verified `Reminders active (24h & 2h before)` badge under RSVP buttons.
+    - `notifications-popover-desktop-light.png`: verified event notification icon, header count, and list display.
+    - `event-detail-rsvp-desktop-light.png` & `event-detail-rsvp-desktop-dark.png`: verified event detail page and roster.
+    - `event-detail-rsvp-mobile-light.png`: verified 360px responsive layout without overflow.
+- **Status at end**:
+  - Students RSVPing to university events receive instant in-app notification confirmation and reassurance that 24h and 2h pre-event reminders are active.
+  - Pre-event reminders generate deterministically via database RPC, pg_cron hourly job, and event sync hook.
+- **Next agent should**:
+  - When deploying to production Supabase, apply `20260914100000_event_notifications_and_reminders.sql` and redeploy `sync-srmap-events` with `verify_jwt = false`.
+
+---
+
 ## Session Template (copy for each new session)
 
 ```markdown
