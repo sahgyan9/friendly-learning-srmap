@@ -144,7 +144,7 @@ export const GoogleResultCard: React.FC<GoogleResultCardProps> = ({
 
   const logClick = () => {
     if (query && query.trim().length >= 3) {
-      supabase.rpc("log_search_click" as any, {
+      supabase.rpc("log_search_click", {
         p_query: query,
         p_entity_type: entityType,
         p_entity_id: item.id

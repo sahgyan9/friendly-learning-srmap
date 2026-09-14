@@ -48,7 +48,7 @@ const AdminErrorReports = () => {
     setLoading(true);
     try {
       // error_reports isn't in the generated Supabase types yet -- see reportError.ts.
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("error_reports")
         .select("*")
         .order("created_at", { ascending: false });
@@ -68,10 +68,10 @@ const AdminErrorReports = () => {
   const updateStatus = async (id: string, status: ErrorReport["status"], notes?: string) => {
     setUpdating(true);
     try {
-      const updatePayload: Record<string, unknown> = { status };
+      const updatePayload: { status: ErrorReport["status"]; admin_notes?: string } = { status };
       if (notes !== undefined) updatePayload.admin_notes = notes;
 
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from("error_reports")
         .update(updatePayload)
         .eq("id", id);

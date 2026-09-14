@@ -18,7 +18,7 @@ async function loadSearchQuality() {
   if (!qualityPromise) {
     qualityPromise = (async () => {
       try {
-        const { data, error } = await (supabase as any)
+        const { data, error } = await supabase
           .from("search_result_quality")
           .select("entity_id, click_count_30d");
         

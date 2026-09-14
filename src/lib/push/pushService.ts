@@ -100,7 +100,7 @@ export async function subscribeUserToPush(userId: string): Promise<{ success: bo
     }
 
     // Save or update subscription in Supabase
-    const { error: dbError } = await (supabase as any)
+    const { error: dbError } = await supabase
       .from("push_subscriptions")
       .upsert(
         {
@@ -120,7 +120,7 @@ export async function subscribeUserToPush(userId: string): Promise<{ success: bo
     }
 
     // Enable push preference on user profile
-    await (supabase as any)
+    await supabase
       .from("users")
       .update({ push_notifications_enabled: true })
       .eq("id", userId);
@@ -148,7 +148,7 @@ export async function unsubscribeUserFromPush(userId: string): Promise<{ success
       const endpoint = subscription.endpoint;
       await subscription.unsubscribe();
 
-      await (supabase as any)
+      await supabase
         .from("push_subscriptions")
         .delete()
         .eq("user_id", userId)

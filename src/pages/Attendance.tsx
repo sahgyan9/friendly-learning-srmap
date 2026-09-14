@@ -231,7 +231,7 @@ export default function Attendance() {
 
     try {
       const { data, error } = await supabase
-        .from("student_attendance" as any)
+        .from("student_attendance")
         .select("*")
         .eq("user_id", user.id)
         .order("attendance_percentage", { ascending: true });
@@ -273,7 +273,7 @@ export default function Attendance() {
 
     try {
       const { data, error } = await supabase
-        .from("student_timetables" as any)
+        .from("student_timetables")
         .select("*")
         .eq("user_id", user.id)
         .order("day_order", { ascending: true })
@@ -364,7 +364,7 @@ export default function Attendance() {
 
     try {
       const { data, error } = await supabase
-        .from("student_daily_attendance" as any)
+        .from("student_daily_attendance")
         .select("*")
         .eq("user_id", user.id)
         .order("attendance_date", { ascending: false })

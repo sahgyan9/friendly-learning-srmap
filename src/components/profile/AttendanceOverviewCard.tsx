@@ -56,7 +56,7 @@ export const AttendanceOverviewCard = ({ onOpenPortalImport }: AttendanceOvervie
     setIsLoading(true);
     try {
       const { data, error } = await supabase
-        .from("student_attendance" as any)
+        .from("student_attendance")
         .select("*")
         .eq("user_id", user.id)
         .order("attendance_percentage", { ascending: true });

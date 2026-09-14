@@ -12,7 +12,7 @@ export interface SearchHistoryEntry {
 // types — same `as any` convention already used for log_search_click in
 // GoogleResultCard.tsx. Regenerate types.ts after these apply and these can
 // drop.
-const searchHistoryTable = () => (supabase.from("search_history" as any) as any);
+const searchHistoryTable = () => (supabase.from("search_history") as any);
 
 export async function getSearchHistory(): Promise<SearchHistoryEntry[]> {
   const { data, error } = await searchHistoryTable()
@@ -33,7 +33,7 @@ export async function getSearchHistory(): Promise<SearchHistoryEntry[]> {
 export async function recordSearchHistory(query: string, resultUrl?: string | null): Promise<void> {
   const trimmed = query.trim();
   if (!trimmed) return;
-  await supabase.rpc("record_search_history" as any, {
+  await supabase.rpc("record_search_history", {
     p_query: trimmed,
     p_result_url: resultUrl ?? null,
   });

@@ -5,7 +5,7 @@
 import { supabase } from "@/integrations/supabase/client";
 
 export async function reportErrorToAdmin(message: string): Promise<void> {
-  const { error } = await (supabase as any).from("error_reports").insert({
+  const { error } = await supabase.from("error_reports").insert({
     message: message.slice(0, 2000),
     route: typeof window !== "undefined" ? window.location.pathname : null,
     user_agent: typeof navigator !== "undefined" ? navigator.userAgent : null,

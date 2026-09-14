@@ -140,7 +140,7 @@ export async function setEventAttendance({
     const sanitizedNote = note?.trim() ? sanitizeInput(note.trim(), 150) : null;
 
     const { error } = await supabase
-      .from("event_attendees" as any)
+      .from("event_attendees")
       .upsert(
         {
           event_id: eventId,
@@ -236,7 +236,7 @@ export async function removeEventAttendance(eventId: number) {
     }
 
     const { error } = await supabase
-      .from("event_attendees" as any)
+      .from("event_attendees")
       .delete()
       .eq("event_id", eventId)
       .eq("user_id", auth.user.id);
@@ -262,7 +262,7 @@ export async function checkMyUpcomingEventReminders() {
     const { data: auth } = await supabase.auth.getUser();
     if (!auth.user) return { reminders: [], error: null };
 
-    const { data, error } = await supabase.rpc("dispatch_upcoming_event_reminders" as any, {
+    const { data, error } = await supabase.rpc("dispatch_upcoming_event_reminders", {
       p_user_id: auth.user.id,
     });
 

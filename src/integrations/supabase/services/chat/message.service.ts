@@ -1,5 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 import { Message } from "@/types/chat";
 import { announceMessagesRead } from "@/lib/message-events";
 
@@ -65,7 +66,7 @@ export async function getConversationMessages(conversationId: string) {
 // Toggle emoji reaction on a direct message
 export async function toggleDirectMessageReaction(messageId: string, emoji: string) {
   try {
-    const { data, error } = await (supabase.rpc as any)('toggle_direct_message_reaction', {
+    const { data, error } = await supabase.rpc('toggle_direct_message_reaction', {
       p_message_id: messageId,
       p_emoji: emoji,
     });
@@ -91,7 +92,7 @@ export async function sendMessage(
   replyToId?: string | null
 ) {
   try {
-    const params: Record<string, any> = {
+    const params: Database["public"]["Functions"]["send_message"]["Args"] = {
       p_conversation_id: conversationId,
       p_sender_id: senderId,
       p_receiver_id: receiverId,
@@ -101,11 +102,11 @@ export async function sendMessage(
       params.p_reply_to_id = replyToId;
     }
 
-    let { data, error } = await (supabase.rpc as any)('send_message', params);
+    let { data, error } = await supabase.rpc('send_message', params);
 
     // Fallback if remote DB hasn't yet deployed the 5-arg RPC
     if (error && replyToId && (error.message?.includes('p_reply_to_id') || error.code === '42883')) {
-      const fallback = await (supabase.rpc as any)('send_message', {
+      const fallback = await supabase.rpc('send_message', {
         p_conversation_id: conversationId,
         p_sender_id: senderId,
         p_receiver_id: receiverId,
@@ -146,7 +147,7 @@ export async function sendMessage(
 // Edit a direct message within 30 minutes
 export async function editDirectMessage(messageId: string, content: string) {
   try {
-    const { data, error } = await (supabase.rpc as any)('edit_direct_message', {
+    const { data, error } = await supabase.rpc('edit_direct_message', {
       p_message_id: messageId,
       p_content: content,
     });
@@ -166,7 +167,7 @@ export async function editDirectMessage(messageId: string, content: string) {
 // Delete a direct message within 30 minutes
 export async function deleteDirectMessage(messageId: string) {
   try {
-    const { data, error } = await (supabase.rpc as any)('delete_direct_message', {
+    const { data, error } = await supabase.rpc('delete_direct_message', {
       p_message_id: messageId,
     });
 

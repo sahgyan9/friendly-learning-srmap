@@ -47,7 +47,7 @@ export function useEventRSVPs() {
         // event_attendees is not in the generated Database types yet; the
         // service layer casts the same way (services/event-attendees.ts).
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .from("event_attendees" as any)
+        .from("event_attendees")
         .select("event_id, status")
         .eq("user_id", user.id);
 

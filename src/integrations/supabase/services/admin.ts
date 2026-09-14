@@ -286,7 +286,7 @@ export async function getAdminSearchLogs(options?: {
   userType?: "all" | "authenticated" | "anonymous" | "zero_results";
 }): Promise<AdminSearchLogEntry[]> {
   try {
-    const { data, error } = await supabase.rpc("get_admin_search_logs" as any, {
+    const { data, error } = await supabase.rpc("get_admin_search_logs", {
       p_limit: options?.limit ?? 50,
       p_offset: options?.offset ?? 0,
       p_filter: options?.filter ?? "",
@@ -307,14 +307,14 @@ export async function getAdminSearchLogs(options?: {
 
 export async function getAdminSearchStats(): Promise<AdminSearchStats | null> {
   try {
-    const { data, error } = await supabase.rpc("get_admin_search_stats" as any);
+    const { data, error } = await supabase.rpc("get_admin_search_stats");
 
     if (error) {
       console.error("Error fetching admin search stats:", error);
       throw error;
     }
 
-    return data as AdminSearchStats | null;
+    return data as unknown as AdminSearchStats | null;
   } catch (error) {
     console.error("Exception in getAdminSearchStats:", error);
     return null;

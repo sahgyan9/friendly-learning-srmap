@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
 import { getErrorField } from "@/lib/errors";
 import { parseQuery } from "@/lib/search/query-engine";
 import { useAuth } from "@/context/AuthContext";
@@ -80,13 +81,16 @@ async function getAIOverviewFeatureFlag(): Promise<boolean> {
   if (!featureFlagPromise) {
     featureFlagPromise = (async () => {
       try {
-        const { data, error } = await (supabase as any)
+        // Same row AdminSettings writes. This used to filter on a `key` column
+        // that platform_settings does not have, so the query always errored,
+        // fell through to `true`, and the admin toggle never took effect.
+        const { data, error } = await supabase
           .from("platform_settings")
           .select("value")
-          .eq("key", "enable_campus_ai_overview")
-          .single();
+          .eq("id", "ai_overview_enabled")
+          .maybeSingle();
         if (!error && data) {
-          featureFlagCache = data.value === true;
+          featureFlagCache = !(data.value === false || data.value === "false");
         } else {
           featureFlagCache = true;
         }
@@ -271,9 +275,9 @@ export function useCampusAIOverview({
         const sessionId = getFeedbackSessionId();
         const isHelpful = nextVote === null ? null : nextVote === 'up';
 
-        const { error } = await (supabase.rpc as any)("submit_ai_overview_feedback", {
+        const { error } = await supabase.rpc("submit_ai_overview_feedback", {
           p_query: trimmed,
-          p_response: overview,
+          p_response: overview as unknown as Json,
           p_is_helpful: isHelpful,
           p_session_id: sessionId,
         });

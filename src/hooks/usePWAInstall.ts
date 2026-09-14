@@ -73,7 +73,7 @@ async function recordPwaInstall(platform: string, method: string) {
 
   // 2. Supabase Database Record
   try {
-    const { error } = await (supabase.rpc as any)("record_pwa_install", {
+    const { error } = await supabase.rpc("record_pwa_install", {
       p_device_id: deviceId,
       p_platform: platform,
     });
@@ -95,7 +95,7 @@ async function recordPwaActivePing(platform: string) {
     const lastPing = localStorage.getItem("fl_pwa_last_active_ping");
     if (lastPing === today) return;
 
-    await (supabase.rpc as any)("record_pwa_install", {
+    await supabase.rpc("record_pwa_install", {
       p_device_id: deviceId,
       p_platform: platform,
     });

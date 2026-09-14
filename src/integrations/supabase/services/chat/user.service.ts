@@ -128,7 +128,7 @@ export async function searchCampusUsers(query: string, currentUserId?: string): 
 
   try {
     // Invoke the secure search_campus_users RPC
-    const { data: rpcUsers, error: rpcError } = await (supabase.rpc as any)("search_campus_users", {
+    const { data: rpcUsers, error: rpcError } = await supabase.rpc("search_campus_users", {
       p_query: trimmed,
       p_limit: 25,
     });

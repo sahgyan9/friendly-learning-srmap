@@ -111,7 +111,7 @@ export default function AdminAIFeedback() {
 
       // 3. Fetch feedback
       const { data: feedbackData, error: feedbackError } = await supabase
-        .from("ai_overview_feedback" as any)
+        .from("ai_overview_feedback")
         .select("*")
         .order("created_at", { ascending: false });
 
@@ -123,7 +123,7 @@ export default function AdminAIFeedback() {
 
       // 4. Fetch search query cache
       const { data: queryData, error: queryError } = await supabase
-        .from("search_query_cache" as any)
+        .from("search_query_cache")
         .select("query_hash, query_text, hit_count, created_at, last_used_at")
         .order("last_used_at", { ascending: false });
 
@@ -147,7 +147,7 @@ export default function AdminAIFeedback() {
   const updateStatus = async (id: string, newStatus: string) => {
     try {
       const { error } = await supabase
-        .from("ai_overview_feedback" as any)
+        .from("ai_overview_feedback")
         .update({ status: newStatus })
         .eq("id", id);
         

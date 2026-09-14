@@ -33,7 +33,7 @@ function isNavigationQuery(query: string): boolean {
 export async function getTrendingSearches(limit = 6): Promise<TrendingSearch[]> {
   // Over-fetch (RPC caps at 20) since filtering out navigation queries below
   // can drop the count under `limit`.
-  const { data, error } = await supabase.rpc("get_trending_searches" as any, {
+  const { data, error } = await supabase.rpc("get_trending_searches", {
     p_limit: Math.min(limit * 3, 20),
   } as any);
 

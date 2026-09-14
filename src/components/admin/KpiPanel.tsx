@@ -81,7 +81,7 @@ const KpiPanel = () => {
   const fetchMetrics = useCallback(async (isRefresh: boolean) => {
     if (isRefresh) setRefreshing(true);
     try {
-      const { data, error: rpcError } = await (supabase.rpc as any)("admin_kpi_metrics");
+      const { data, error: rpcError } = await supabase.rpc("admin_kpi_metrics");
       if (rpcError) throw rpcError;
       setMetrics((data ?? null) as unknown as KpiMetrics | null);
       setError(false);

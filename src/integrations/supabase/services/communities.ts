@@ -625,7 +625,7 @@ export type UserJoinedCommunity = {
 export const getUserJoinedCommunities = async (userId: string): Promise<UserJoinedCommunity[]> => {
   try {
     // 1. Try dedicated RPC with security definer visibility enforcement
-    const { data: rpcData, error: rpcError } = await (supabase.rpc as any)("get_user_joined_communities", {
+    const { data: rpcData, error: rpcError } = await supabase.rpc("get_user_joined_communities", {
       p_user_id: userId,
     });
 

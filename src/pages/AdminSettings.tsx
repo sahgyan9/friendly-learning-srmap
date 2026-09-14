@@ -20,7 +20,7 @@ const AdminSettings = () => {
   useEffect(() => {
     const fetchSettings = async () => {
       const { data, error } = await supabase
-        .from('platform_settings' as any)
+        .from('platform_settings')
         .select('value')
         .eq('id', 'ai_overview_enabled')
         .single();
@@ -38,7 +38,7 @@ const AdminSettings = () => {
   const toggleAiOverview = async (checked: boolean) => {
     setAiEnabled(checked);
     const { error } = await supabase
-      .from('platform_settings' as any)
+      .from('platform_settings')
       .update({ value: checked })
       .eq('id', 'ai_overview_enabled');
 

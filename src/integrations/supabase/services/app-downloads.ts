@@ -14,7 +14,7 @@ export async function recordAppDownload(
   platform: string = "windows"
 ): Promise<number | null> {
   try {
-    const { data, error } = await supabase.rpc("record_app_download" as any, {
+    const { data, error } = await supabase.rpc("record_app_download", {
       p_app_name: appName,
       p_download_type: downloadType,
       p_platform: platform,
@@ -34,14 +34,14 @@ export async function getAppDownloadStats(
   appName: string = "oberleaf"
 ): Promise<AppDownloadStats | null> {
   try {
-    const { data, error } = await supabase.rpc("get_app_download_stats" as any, {
+    const { data, error } = await supabase.rpc("get_app_download_stats", {
       p_app_name: appName,
     });
     if (error) {
       console.warn("[app-downloads] Failed to fetch stats:", error.message);
       return null;
     }
-    return data as AppDownloadStats;
+    return data as unknown as AppDownloadStats;
   } catch (err) {
     console.warn("[app-downloads] Exception fetching stats:", err);
     return null;

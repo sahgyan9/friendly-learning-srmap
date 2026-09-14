@@ -30,7 +30,7 @@ export interface CampusDocumentSection {
  * just one row.
  */
 export const getDocumentSections = async (slug: string) => {
-  const { data, error } = await (supabase as any)
+  const { data, error } = await supabase
     .from("campus_documents")
     .select("*")
     .eq("document_slug", slug)

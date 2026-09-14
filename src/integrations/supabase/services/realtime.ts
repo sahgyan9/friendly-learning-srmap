@@ -95,7 +95,7 @@ export async function markMessagesDelivered(conversationId: string, userId: stri
 // Mark all pending incoming messages as delivered for current user
 export async function markAllMessagesDelivered() {
   try {
-    const { error } = await (supabase.rpc as any)('mark_all_messages_delivered');
+    const { error } = await supabase.rpc('mark_all_messages_delivered');
 
     if (error) {
       console.error('Error marking all messages as delivered:', error);
