@@ -371,7 +371,48 @@ serve(async (req) => {
       .lt("last_synced_at", syncStartedAt);
     if (pruneError) throw pruneError;
 
-    return json({ synced: enrichedRows.length, pruned: pruned ?? 0 });
+    // Dispatch upcoming event reminders for attendees and trigger web push
+    let dispatchedRemindersCount = 0;
+    try {
+      const { data: reminders, error: reminderErr } = await supabaseAdmin
+        .rpc("dispatch_upcoming_event_reminders");
+
+      if (reminderErr) {
+        console.error("Error dispatching event reminders:", reminderErr);
+      } else if (reminders && reminders.length > 0) {
+        dispatchedRemindersCount = reminders.length;
+        for (const rem of reminders as Array<{
+          user_id: string;
+          title: string;
+          content: string;
+          url?: string;
+          event_id: number;
+          reminder_tier: string;
+        }>) {
+          try {
+            await supabaseAdmin.functions.invoke("send-push", {
+              body: {
+                userId: rem.user_id,
+                title: rem.title,
+                body: rem.content,
+                url: rem.url || `/events/${rem.event_id}`,
+                tag: `event-${rem.event_id}-${rem.reminder_tier}`,
+              },
+            });
+          } catch (pushErr) {
+            console.warn("Event reminder push non-fatal error:", pushErr);
+          }
+        }
+      }
+    } catch (err) {
+      console.error("Non-fatal error in event reminder step:", err);
+    }
+
+    return json({
+      synced: enrichedRows.length,
+      pruned: pruned ?? 0,
+      remindersDispatched: dispatchedRemindersCount,
+    });
   } catch (error) {
     return json({ error: error instanceof Error ? error.message : String(error) }, 500);
   }

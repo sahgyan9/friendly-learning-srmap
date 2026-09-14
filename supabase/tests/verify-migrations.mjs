@@ -507,6 +507,7 @@ for (const file of [
   '20260808150000_mentor_projects_experience.sql',
   '20260808160000_academic_imports.sql',
   '20260808170000_mentor_courses.sql',
+  '20260814180000_srmap_events_rich_details.sql',
   '20260815200000_ai_overview_feedback.sql',
   '20260815210000_ai_overview_feedback_status.sql',
   '20260815220000_platform_settings.sql',
@@ -580,6 +581,7 @@ for (const file of [
   '20260909020000_add_ltpc_to_student_timetables.sql',
   '20260909030000_student_finance_and_fee_alerts.sql',
   '20260910120000_student_daily_attendance.sql',
+  '20260914100000_event_notifications_and_reminders.sql',
 ]) {
   if (file === '20260804132345_b843f814-46d5-4c25-bc80-32e5f6ebba59.sql') {
     // Production's `faculty` table still carries `profile_image`, a column
@@ -4440,6 +4442,12 @@ await q(`
     end_time = EXCLUDED.end_time;
 `, [NEW_MENTOR_UID, currentDayName]);
 
+// Ensure today is not treated as a calendar holiday in the test database so in-session class presence can be tested regardless of test execution date
+await q(`
+  DELETE FROM public.academic_calendar_days
+  WHERE calendar_date = (now() AT TIME ZONE 'Asia/Kolkata')::date;
+`);
+
 const { rows: livePresenceInClass } = await q(`
   SELECT * FROM public.get_mentor_live_availability($1::uuid);
 `, [NEW_MENTOR_UID]);
@@ -4780,6 +4788,75 @@ const { rows: [dailyInsertCheck] } = await q(`
   RETURNING id, status
 `, [CURRENT_UID]);
 check('student_daily_attendance accepts insert with period_slot and status', dailyInsertCheck?.status === 'P', JSON.stringify(dailyInsertCheck));
+
+// --- 20260914100000_event_notifications_and_reminders.sql ---
+console.log('\n--- 20260914100000_event_notifications_and_reminders.sql ---');
+
+// 1. Check that notifications_type_check allows 'event_alert' and 'event_reminder'
+const { rows: [eventAlertNotif] } = await q(`
+  INSERT INTO public.notifications (user_id, type, title, content, data)
+  VALUES ($1, 'event_alert', 'RSVP Confirmed: Tech Fest', 'You are marked as Going.', '{"event_id": 9999}'::jsonb)
+  RETURNING id, type;
+`, [CURRENT_UID]);
+check('notifications accepts event_alert type', eventAlertNotif?.type === 'event_alert', JSON.stringify(eventAlertNotif));
+
+const { rows: [eventReminderNotif] } = await q(`
+  INSERT INTO public.notifications (user_id, type, title, content, data)
+  VALUES ($1, 'event_reminder', 'Tomorrow: Tech Fest', 'Starts tomorrow at 10 AM.', '{"event_id": 9999, "reminder_tier": "24h"}'::jsonb)
+  RETURNING id, type;
+`, [CURRENT_UID]);
+check('notifications accepts event_reminder type', eventReminderNotif?.type === 'event_reminder', JSON.stringify(eventReminderNotif));
+
+// 2. Test dispatch_upcoming_event_reminders with an event starting in 5 hours (24h tier) and in 45 mins (starting_soon tier)
+const TEST_EVENT_24H_ID = 888801;
+const TEST_EVENT_SOON_ID = 888802;
+
+await q(`
+  INSERT INTO public.srmap_events_cache (id, title, excerpt, start_date, end_date, link, department, event_type, venue)
+  VALUES
+    ($1, 'HackSRM 2026', 'Annual hackathon',
+     to_char((now() AT TIME ZONE 'Asia/Kolkata') + interval '5 hours', 'YYYY-MM-DD HH24:MI:SS'),
+     to_char((now() AT TIME ZONE 'Asia/Kolkata') + interval '12 hours', 'YYYY-MM-DD HH24:MI:SS'),
+     'https://events.srmap.edu.in/hacksrm', 'CSE', 'Hackathon', 'ALH 301'),
+    ($2, 'AI Workshop', 'Hands-on AI seminar',
+     to_char((now() AT TIME ZONE 'Asia/Kolkata') + interval '45 minutes', 'YYYY-MM-DD HH24:MI:SS'),
+     to_char((now() AT TIME ZONE 'Asia/Kolkata') + interval '2 hours', 'YYYY-MM-DD HH24:MI:SS'),
+     'https://events.srmap.edu.in/ai-workshop', 'CSE', 'Workshop', 'UB 204')
+  ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title;
+`, [TEST_EVENT_24H_ID, TEST_EVENT_SOON_ID]);
+
+// User RSVPs to both events
+await q(`
+  INSERT INTO public.event_attendees (event_id, user_id, status)
+  VALUES
+    ($1, $3, 'going'),
+    ($2, $3, 'interested')
+  ON CONFLICT (event_id, user_id) DO NOTHING;
+`, [TEST_EVENT_24H_ID, TEST_EVENT_SOON_ID, CURRENT_UID]);
+
+// Run dispatch_upcoming_event_reminders
+const { rows: dispatchedReminders } = await q(`
+  SELECT * FROM public.dispatch_upcoming_event_reminders($1::uuid);
+`, [CURRENT_UID]);
+
+check(
+  'dispatch_upcoming_event_reminders generates reminders for upcoming events',
+  dispatchedReminders.length === 2 &&
+  dispatchedReminders.some(r => Number(r.event_id) === TEST_EVENT_24H_ID && r.reminder_tier === '24h') &&
+  dispatchedReminders.some(r => Number(r.event_id) === TEST_EVENT_SOON_ID && r.reminder_tier === 'starting_soon'),
+  JSON.stringify(dispatchedReminders)
+);
+
+// Run again to verify idempotency (zero duplicate reminders)
+const { rows: secondDispatch } = await q(`
+  SELECT * FROM public.dispatch_upcoming_event_reminders($1::uuid);
+`, [CURRENT_UID]);
+
+check(
+  'dispatch_upcoming_event_reminders is idempotent and does not create duplicate reminders',
+  secondDispatch.length === 0,
+  JSON.stringify(secondDispatch)
+);
 
 console.log(failures === 0
   ? '\nAll migration checks passed against real Postgres.'
