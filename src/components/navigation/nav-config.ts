@@ -71,7 +71,7 @@ export const SECONDARY_NAV: NavItem[] = [
 ];
 
 /**
- * Per-route accent palette — mirrors FeaturesShowcase card colours.
+ * Per-route accent palette.
  * Each entry has Tailwind classes for: pill bg, text, dot, and border.
  */
 export const ROUTE_ACCENT: Record<string, {

@@ -148,7 +148,7 @@ export const MentorCard = ({ mentor }: MentorCardProps) => {
         {/* Solid full-width accent border — same pattern as portfolio-insight */}
         <CardAccentBorder gradient="primary" />
 
-        {/* Hover glow — matches FeaturesShowcase card hover pattern */}
+        {/* Hover glow on the card */}
         <div className="pointer-events-none absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-primary/5 to-transparent" />
 
         {/* Loading overlay */}

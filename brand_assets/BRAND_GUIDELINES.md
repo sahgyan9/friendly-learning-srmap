@@ -207,7 +207,7 @@ worth keeping literal across future transactional emails:
 ## 8. Page hero header pattern
 
 All feature pages (Faculty, Events, Groups, Posts) share a standardised hero
-header that mirrors the FeaturesShowcase card design language. Keep new pages
+header that follows the card design language used on /faculty and /posts. Keep new pages
 consistent with this pattern.
 
 ### Structure
@@ -233,7 +233,7 @@ consistent with this pattern.
 </div>
 ```
 
-### Feature-to-accent mapping (matches FeaturesShowcase)
+### Feature-to-accent mapping
 
 | Feature | Number | Icon | Accent colour |
 |---------|--------|------|---------------|
@@ -247,7 +247,7 @@ consistent with this pattern.
 | Certificates | 08 | `BadgeCheck` | `teal` |
 | Attendance | 09 | `GraduationCap` | `emerald` / `text-[#3963C6]` |
 
-### Card hover glow (FeaturesShowcase-consistent)
+### Card hover glow
 
 Every card that links to a feature page carries a hover glow overlay. Add to
 `<Card>` or the outermost wrapper:

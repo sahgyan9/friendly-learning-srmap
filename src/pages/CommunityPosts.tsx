@@ -446,7 +446,7 @@ const CommunityPosts = () => {
 
 
       <div className="min-h-screen bg-background">
-        {/* Hero header — same design language as FeaturesShowcase cards */}
+        {/* Hero header */}
         <div className="relative overflow-hidden border-b border-border/60 bg-gradient-to-br from-emerald-500/5 via-background to-background">
           {/* Decorative blobs */}
           <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-emerald-500/8 blur-3xl" />
@@ -458,7 +458,7 @@ const CommunityPosts = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
-              {/* Pill label — matches FeaturesShowcase numbering */}
+              {/* Pill label */}
               <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">
                 <FileText className="h-3.5 w-3.5" />
                 Posts

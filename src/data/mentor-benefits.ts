@@ -5,9 +5,8 @@ export interface MentorBenefit {
   title: string;
   body: string;
   /**
-   * Per-benefit accent, as Tailwind classes. Stored alongside the copy the same
-   * way FeaturesShowcase stores its `accent`/`accentBg` — a wall of identically
-   * grey cards reads as a form to fill in, not a reason to bother.
+   * Per-benefit accent, as Tailwind classes, stored alongside the copy — a wall
+   * of identically grey cards reads as a form to fill in, not a reason to bother.
    */
   accent: {
     /** Gradient tint + border for the card itself. */

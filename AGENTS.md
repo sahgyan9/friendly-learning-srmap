@@ -132,7 +132,7 @@ Deeper authorities it defers to: [FACULTY_AI_ROADMAP.md](FACULTY_AI_ROADMAP.md)
 
 The platform **evolved from a mentorship directory into a full campus
 ecosystem** (posts, groups, CampusBrain search, faculty ratings, opportunities,
-mentors). The About page and HomeIntro already reflect this — but several SEO
+mentors). The About page already reflects this — but several SEO
 surfaces still say "Student Mentorship Platform." When editing copy in any of
 the files below, align to the ecosystem framing, not the old mentorship-only
 framing.
