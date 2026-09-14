@@ -1,7 +1,7 @@
 
 import { formatDistanceToNow } from "date-fns";
 import { Button } from "@/components/ui/button";
-import { Badge, Star, MessageCircle, ChevronRight, UserPlus, Users, Award, Bell, AlertTriangle } from "lucide-react";
+import { Badge, Star, MessageCircle, ChevronRight, UserPlus, Users, Award, Bell, AlertTriangle, Calendar } from "lucide-react";
 import { Notification } from "@/integrations/supabase/services/notifications";
 import { getNotificationNavigationUrl, isNotificationClickable } from "@/utils/notificationNavigation";
 import { cn } from "@/lib/utils";
@@ -16,6 +16,17 @@ const NotificationItem = ({ notification, onMarkAsRead, onNotificationClick }: N
   const getIcon = () => {
     const title = notification.title || "";
     const content = notification.content || "";
+    const data = (notification.data && typeof notification.data === "object") ? (notification.data as Record<string, unknown>) : {};
+
+    if (
+      notification.type === "event_alert" ||
+      notification.type === "event_reminder" ||
+      title.includes("RSVP") ||
+      title.includes("Starting Soon:") ||
+      "event_id" in data
+    ) {
+      return <Calendar className="h-4 w-4 text-violet-500 shrink-0" />;
+    }
 
     if (notification.type === 'attendance_alert' || title.includes("Attendance")) {
       return <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0" />;

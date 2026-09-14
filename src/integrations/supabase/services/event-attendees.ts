@@ -1,5 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { sanitizeInput } from "@/utils/input-sanitization";
+import { createNotification } from "@/integrations/supabase/services/notifications";
+import { parseEventDate } from "@/lib/calendar-utils";
 
 export type EventAttendanceStatus = "going" | "interested";
 
@@ -91,18 +93,44 @@ export async function getEventAttendanceCounts(eventIds: number[]) {
   }
 }
 
+function formatEventDateSnippet(dateStr?: string | null): string {
+  if (!dateStr) return "";
+  try {
+    const d = parseEventDate(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    return d.toLocaleDateString("en-IN", {
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
+  } catch {
+    return dateStr;
+  }
+}
+
+export type SetEventAttendanceParams = {
+  eventId: number;
+  status: EventAttendanceStatus;
+  note?: string | null;
+  eventTitle?: string;
+  eventStartDate?: string;
+  eventVenue?: string | null;
+};
+
 /**
  * Set or update the current user's attendance status for an event.
+ * Creates an in-app confirmation notification (and dispatches Web Push).
  */
 export async function setEventAttendance({
   eventId,
   status,
   note,
-}: {
-  eventId: number;
-  status: EventAttendanceStatus;
-  note?: string | null;
-}) {
+  eventTitle,
+  eventStartDate,
+  eventVenue,
+}: SetEventAttendanceParams) {
   try {
     const { data: auth } = await supabase.auth.getUser();
     if (!auth.user) {
@@ -127,6 +155,67 @@ export async function setEventAttendance({
     if (error) {
       console.error("Error setting event attendance:", error);
       return { error };
+    }
+
+    // Lookup event details if not provided by caller
+    let title = eventTitle || "";
+    let startDate = eventStartDate || "";
+    let venue = eventVenue || "";
+
+    if (!title) {
+      const { data: eventRow } = await supabase
+        .from("srmap_events_cache")
+        .select("title, start_date, venue")
+        .eq("id", eventId)
+        .maybeSingle();
+
+      if (eventRow) {
+        title = eventRow.title || `Event #${eventId}`;
+        startDate = eventRow.start_date || "";
+        venue = eventRow.venue || "";
+      } else {
+        title = `Event #${eventId}`;
+      }
+    }
+
+    // Send in-app confirmation & trigger push notification
+    try {
+      const statusLabel = status === "going" ? "Going" : "Interested";
+      const dateSnippet = formatEventDateSnippet(startDate);
+      const venueSnippet = venue?.trim() ? ` at ${venue.trim()}` : "";
+      const timingSnippet = dateSnippet ? ` (${dateSnippet})` : "";
+
+      const notifTitle = `RSVP Confirmed: ${title}`;
+      const notifContent = `You are marked as ${statusLabel} for "${title}"${timingSnippet}${venueSnippet}. We'll remind you before it begins.`;
+
+      // Check if we recently sent an RSVP confirmation for this event to avoid spamming on status toggles
+      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+      const { data: recentNotifs } = await supabase
+        .from("notifications")
+        .select("id")
+        .eq("user_id", auth.user.id)
+        .eq("type", "event_alert")
+        .gte("created_at", oneHourAgo);
+
+      const alreadyHasRecent = (recentNotifs || []).length > 3;
+
+      if (!alreadyHasRecent) {
+        await createNotification({
+          user_id: auth.user.id,
+          type: "event_alert",
+          title: notifTitle,
+          content: notifContent,
+          data: {
+            event_id: eventId,
+            url: `/events/${eventId}`,
+            status,
+            type: "event_rsvp_confirmed",
+          },
+          read: false,
+        });
+      }
+    } catch (notifErr) {
+      console.warn("Non-fatal error creating event RSVP confirmation notification:", notifErr);
     }
 
     return { error: null };
@@ -161,6 +250,31 @@ export async function removeEventAttendance(eventId: number) {
   } catch (err) {
     console.error("Exception in removeEventAttendance:", err);
     return { error: err as Error };
+  }
+}
+
+/**
+ * Dispatches upcoming event reminders for the current student if any are due.
+ * Acts as an active client-side safety net when visiting events surfaces.
+ */
+export async function checkMyUpcomingEventReminders() {
+  try {
+    const { data: auth } = await supabase.auth.getUser();
+    if (!auth.user) return { reminders: [], error: null };
+
+    const { data, error } = await supabase.rpc("dispatch_upcoming_event_reminders" as any, {
+      p_user_id: auth.user.id,
+    });
+
+    if (error) {
+      console.warn("Could not check upcoming event reminders:", error);
+      return { reminders: [], error };
+    }
+
+    return { reminders: data || [], error: null };
+  } catch (err) {
+    console.warn("Exception checking upcoming event reminders:", err);
+    return { reminders: [], error: err as Error };
   }
 }
 

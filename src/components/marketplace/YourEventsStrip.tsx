@@ -1,10 +1,12 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { CalendarCheck, Star, Check, ArrowRight } from "lucide-react";
+import { CalendarCheck, Star, Check, ArrowRight, Bell } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import type { SRMAPEvent } from "@/hooks/useSRMAPEvents";
 import type { EventAttendanceStatus } from "@/integrations/supabase/services/event-attendees";
+
+import { parseEventDate } from "@/lib/calendar-utils";
 
 interface YourEventsStripProps {
   /** Live or upcoming events the student has RSVP'd to, soonest first. */
@@ -15,7 +17,7 @@ interface YourEventsStripProps {
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 function parseDate(value: string) {
-  return new Date(value.replace(" ", "T") + "+05:30");
+  return parseEventDate(value);
 }
 
 /**
@@ -73,24 +75,31 @@ export function YourEventsStrip({ events, rsvps }: YourEventsStripProps) {
       aria-label="Your events"
       className="mb-6 rounded-xl border border-violet-500/20 bg-gradient-to-br from-violet-500/8 via-background to-background p-4"
     >
-      <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-1.5">
-        <h2 className="flex items-center gap-2 text-sm font-bold tracking-tight">
-          <CalendarCheck className="h-4 w-4 text-violet-500" aria-hidden />
-          Your Events
-        </h2>
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+          <h2 className="flex items-center gap-2 text-sm font-bold tracking-tight">
+            <CalendarCheck className="h-4 w-4 text-violet-500" aria-hidden />
+            Your Events
+          </h2>
 
-        {goingCount > 0 && (
-          <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-2xs font-semibold text-emerald-700 dark:text-emerald-400">
-            <Check className="h-3 w-3" aria-hidden />
-            {goingCount} Going
-          </span>
-        )}
-        {interestedCount > 0 && (
-          <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-2xs font-semibold text-amber-700 dark:text-amber-400">
-            <Star className="h-3 w-3" aria-hidden />
-            {interestedCount} Interested
-          </span>
-        )}
+          {goingCount > 0 && (
+            <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-2xs font-semibold text-emerald-700 dark:text-emerald-400">
+              <Check className="h-3 w-3" aria-hidden />
+              {goingCount} Going
+            </span>
+          )}
+          {interestedCount > 0 && (
+            <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-2xs font-semibold text-amber-700 dark:text-amber-400">
+              <Star className="h-3 w-3" aria-hidden />
+              {interestedCount} Interested
+            </span>
+          )}
+        </div>
+
+        <span className="inline-flex items-center gap-1 text-2xs text-muted-foreground">
+          <Bell className="h-3 w-3 text-violet-500" />
+          Reminders active
+        </span>
       </div>
 
       <ul className="flex snap-x gap-3 overflow-x-auto pb-1 sm:grid sm:grid-cols-2 sm:overflow-visible lg:grid-cols-3">

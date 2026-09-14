@@ -10,6 +10,7 @@ import { useSRMAPEvents, type SRMAPEvent } from "@/hooks/useSRMAPEvents";
 import { useEventRSVPs } from "@/hooks/useEventRSVPs";
 import { Button } from "@/components/ui/button";
 import { isUserAdmin, syncSRMAPEvents } from '@/integrations/supabase/services/marketplace';
+import { checkMyUpcomingEventReminders } from '@/integrations/supabase/services/event-attendees';
 import { useAuth } from '@/context/AuthContext';
 import { useHasVisitedEventsNav } from "@/hooks/useFeatureAnnouncement";
 import { toast } from "sonner";
@@ -18,11 +19,12 @@ import SEOHead from "@/components/SEOHead";
 import { ROUTE_META } from "@/lib/seo/route-meta";
 import StructuredData from "@/components/StructuredData";
 import { getBreadcrumbSchema } from "@/lib/structured-data";
+import { parseEventDate as parseUniversalEventDate } from "@/lib/calendar-utils";
 
 type EventTab = "all" | "mine" | "past";
 
 function parseEventDate(value: string) {
-    return new Date(value.replace(" ", "T") + "+05:30").getTime();
+    return parseUniversalEventDate(value).getTime();
 }
 
 const MarketPlace = () => {
@@ -43,6 +45,7 @@ const MarketPlace = () => {
     useEffect(() => {
         if (user) {
             checkAdminStatus();
+            checkMyUpcomingEventReminders().catch(() => {});
         }
     }, [user]);
 
@@ -274,7 +277,11 @@ const MarketPlace = () => {
                                         key={event.id}
                                         event={event}
                                         rsvpStatus={rsvps[event.id] ?? null}
-                                        onRsvp={toggleRSVP}
+                                        onRsvp={(id, status) => toggleRSVP(id, status, {
+                                            title: event.title,
+                                            startDate: event.startDate,
+                                            venue: event.venue,
+                                        })}
                                         rsvpPending={pendingEventId === event.id}
                                     />
                                 ))}

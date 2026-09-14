@@ -18,6 +18,7 @@ import {
   ShieldCheck,
   HelpCircle,
   Clock,
+  Bell,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -135,10 +136,14 @@ export const EventAttendeeRoster: React.FC<EventAttendeeRosterProps> = ({ event 
     }
 
     setActionLoading(true);
+    const eventAny = event as Record<string, any>;
     const { error } = await setEventAttendance({
       eventId: eventNumericId,
       status,
       note: myAttendance?.note || null,
+      eventTitle: event.title,
+      eventStartDate: eventAny.startDate || eventAny.date,
+      eventVenue: eventAny.venue,
     });
     setActionLoading(false);
 
@@ -150,7 +155,7 @@ export const EventAttendeeRoster: React.FC<EventAttendeeRosterProps> = ({ event 
           ? "Marked as Going."
           : "Marked as Interested.",
         {
-          description: "Peers can now see you're attending.",
+          description: "Peers can now see you're attending. We'll remind you before it starts.",
         }
       );
       await fetchRoster();
@@ -160,10 +165,14 @@ export const EventAttendeeRoster: React.FC<EventAttendeeRosterProps> = ({ event 
   const handleSaveNote = async () => {
     if (!user) return;
     setActionLoading(true);
+    const eventAny = event as Record<string, any>;
     const { error } = await setEventAttendance({
       eventId: eventNumericId,
       status: selectedStatusForNote,
       note: customNote,
+      eventTitle: event.title,
+      eventStartDate: eventAny.startDate || eventAny.date,
+      eventVenue: eventAny.venue,
     });
     setActionLoading(false);
 
@@ -256,76 +265,85 @@ export const EventAttendeeRoster: React.FC<EventAttendeeRosterProps> = ({ event 
 
             {/* RSVP Controls for Signed-in User */}
             {user ? (
-              <div className="flex items-center gap-2 shrink-0">
-                <Button
-                  size="sm"
-                  variant={myAttendance?.status === "going" ? "default" : "outline"}
-                  className={cn(
-                    "text-xs gap-1.5 h-8 font-medium transition-all",
-                    myAttendance?.status === "going"
-                      ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
-                      : "border-border/80 hover:border-emerald-500/50 hover:bg-emerald-500/5"
-                  )}
-                  disabled={actionLoading}
-                  onClick={() => handleRsvpClick("going")}
-                >
-                  {myAttendance?.status === "going" ? (
-                    <Check className="h-3.5 w-3.5" />
-                  ) : (
-                    <UserCheck className="h-3.5 w-3.5" />
-                  )}
-                  <span>Going</span>
-                  {goingAttendees.length > 0 && (
-                    <span className="opacity-75 tabular-nums">({goingAttendees.length})</span>
-                  )}
-                </Button>
+              <div className="flex flex-col items-start sm:items-end gap-1.5 shrink-0">
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant={myAttendance?.status === "going" ? "default" : "outline"}
+                    className={cn(
+                      "text-xs gap-1.5 h-8 font-medium transition-all",
+                      myAttendance?.status === "going"
+                        ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
+                        : "border-border/80 hover:border-emerald-500/50 hover:bg-emerald-500/5"
+                    )}
+                    disabled={actionLoading}
+                    onClick={() => handleRsvpClick("going")}
+                  >
+                    {myAttendance?.status === "going" ? (
+                      <Check className="h-3.5 w-3.5" />
+                    ) : (
+                      <UserCheck className="h-3.5 w-3.5" />
+                    )}
+                    <span>Going</span>
+                    {goingAttendees.length > 0 && (
+                      <span className="opacity-75 tabular-nums">({goingAttendees.length})</span>
+                    )}
+                  </Button>
 
-                <Button
-                  size="sm"
-                  variant={myAttendance?.status === "interested" ? "default" : "outline"}
-                  className={cn(
-                    "text-xs gap-1.5 h-8 font-medium transition-all",
-                    myAttendance?.status === "interested"
-                      ? "bg-violet-600 hover:bg-violet-700 text-white shadow-sm"
-                      : "border-border/80 hover:border-violet-500/50 hover:bg-violet-500/5"
+                  <Button
+                    size="sm"
+                    variant={myAttendance?.status === "interested" ? "default" : "outline"}
+                    className={cn(
+                      "text-xs gap-1.5 h-8 font-medium transition-all",
+                      myAttendance?.status === "interested"
+                        ? "bg-violet-600 hover:bg-violet-700 text-white shadow-sm"
+                        : "border-border/80 hover:border-violet-500/50 hover:bg-violet-500/5"
+                    )}
+                    disabled={actionLoading}
+                    onClick={() => handleRsvpClick("interested")}
+                  >
+                    <Star className="h-3.5 w-3.5" />
+                    <span>Interested</span>
+                    {interestedAttendees.length > 0 && (
+                      <span className="opacity-75 tabular-nums">({interestedAttendees.length})</span>
+                    )}
+                  </Button>
+
+                  {myAttendance && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
+                          <ChevronDown className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="text-xs">
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setSelectedStatusForNote(myAttendance.status);
+                            setCustomNote(myAttendance.note || "");
+                            setIsNoteDialogOpen(true);
+                          }}
+                        >
+                          <Edit3 className="mr-2 h-3.5 w-3.5" />
+                          {myAttendance.note ? "Edit note" : "Add note"}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="text-destructive focus:text-destructive"
+                          onClick={handleCancelRsvp}
+                        >
+                          <Trash2 className="mr-2 h-3.5 w-3.5" />
+                          Cancel RSVP
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   )}
-                  disabled={actionLoading}
-                  onClick={() => handleRsvpClick("interested")}
-                >
-                  <Star className="h-3.5 w-3.5" />
-                  <span>Interested</span>
-                  {interestedAttendees.length > 0 && (
-                    <span className="opacity-75 tabular-nums">({interestedAttendees.length})</span>
-                  )}
-                </Button>
+                </div>
 
                 {myAttendance && (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
-                        <ChevronDown className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="text-xs">
-                      <DropdownMenuItem
-                        onClick={() => {
-                          setSelectedStatusForNote(myAttendance.status);
-                          setCustomNote(myAttendance.note || "");
-                          setIsNoteDialogOpen(true);
-                        }}
-                      >
-                        <Edit3 className="mr-2 h-3.5 w-3.5" />
-                        {myAttendance.note ? "Edit note" : "Add note"}
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        className="text-destructive focus:text-destructive"
-                        onClick={handleCancelRsvp}
-                      >
-                        <Trash2 className="mr-2 h-3.5 w-3.5" />
-                        Cancel RSVP
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <span className="inline-flex items-center gap-1 text-2xs text-muted-foreground font-medium">
+                    <Bell className="h-3 w-3 text-violet-500 shrink-0" />
+                    <span>Reminders active (24h &amp; 2h before)</span>
+                  </span>
                 )}
               </div>
             ) : (

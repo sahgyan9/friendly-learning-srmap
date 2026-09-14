@@ -19,6 +19,21 @@ export const getNotificationNavigationUrl = (notification: Notification): string
         return `${baseUrl}/attendance`;
     }
 
+    // Handle campus event notifications and reminders
+    if (
+        notification.type === 'event_alert' ||
+        notification.type === 'event_reminder' ||
+        data.type === 'event_alert' ||
+        data.type === 'event_reminder' ||
+        data.type === 'event_rsvp_confirmed' ||
+        data.event_id
+    ) {
+        if (data.event_id) {
+            return `${baseUrl}/events/${data.event_id}`;
+        }
+        return `${baseUrl}/marketplace`;
+    }
+
     // Direct URL in data payload
     if (data.url && typeof data.url === 'string') {
         return data.url.startsWith('http') ? data.url : `${baseUrl}${data.url.startsWith('/') ? '' : '/'}${data.url}`;

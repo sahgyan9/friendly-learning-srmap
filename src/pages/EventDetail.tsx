@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
@@ -43,6 +43,7 @@ import {
   getGoogleCalendarUrl,
   getOutlookCalendarUrl,
   downloadIcsFile,
+  parseEventDate,
 } from "@/lib/calendar-utils";
 import SEOHead from "@/components/SEOHead";
 import StructuredData from "@/components/StructuredData";
@@ -51,6 +52,8 @@ import { PRIMARY_DOMAIN } from "@/lib/constants";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { getOptimizedImageUrl as optimizedImageUrl } from "@/lib/image/imageUrl";
+
+import { checkMyUpcomingEventReminders } from "@/integrations/supabase/services/event-attendees";
 
 const EventDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -62,6 +65,10 @@ const EventDetail = () => {
   const [posterImageFailed, setPosterImageFailed] = useState(false);
   const [isPosterOpen, setIsPosterOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+
+  useEffect(() => {
+    checkMyUpcomingEventReminders().catch(() => {});
+  }, []);
 
   // Extract poster image and clean description HTML
   const { posterUrl, cleanedHtml } = useMemo(() => {
@@ -100,7 +107,7 @@ const EventDetail = () => {
         };
       }
 
-      const parseDate = (val: string) => new Date(val.replace(" ", "T") + "+05:30");
+      const parseDate = (val: string) => parseEventDate(val);
       const start = parseDate(event.startDate);
       const end = parseDate(event.endDate);
       const now = new Date();
@@ -234,8 +241,8 @@ const EventDetail = () => {
     "@type": "Event",
     name: event.title,
     description: event.excerpt || event.title,
-    startDate: new Date(event.startDate.replace(" ", "T") + "+05:30").toISOString(),
-    endDate: new Date(event.endDate.replace(" ", "T") + "+05:30").toISOString(),
+    startDate: parseEventDate(event.startDate).toISOString(),
+    endDate: parseEventDate(event.endDate).toISOString(),
     eventStatus: hasEnded
       ? "https://schema.org/EventMovedOnline"
       : "https://schema.org/EventScheduled",

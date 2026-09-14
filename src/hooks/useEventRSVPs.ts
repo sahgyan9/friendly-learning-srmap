@@ -84,7 +84,11 @@ export function useEventRSVPs() {
    * Optimistic: the card flips immediately and reverts if the write fails.
    */
   const toggleRSVP = useCallback(
-    async (eventId: number, status: EventAttendanceStatus) => {
+    async (
+      eventId: number,
+      status: EventAttendanceStatus,
+      eventMeta?: { title?: string; startDate?: string; venue?: string | null },
+    ) => {
       if (!user) {
         toast.error("Sign in required", {
           description: "Please sign in with your SRM AP account to RSVP.",
@@ -108,7 +112,13 @@ export function useEventRSVPs() {
 
       const { error } = isClearing
         ? await removeEventAttendance(eventId)
-        : await setEventAttendance({ eventId, status });
+        : await setEventAttendance({
+            eventId,
+            status,
+            eventTitle: eventMeta?.title,
+            eventStartDate: eventMeta?.startDate,
+            eventVenue: eventMeta?.venue,
+          });
 
       if (!isMountedRef.current) return;
       setPendingEventId(null);
@@ -133,7 +143,7 @@ export function useEventRSVPs() {
       } else {
         toast.success(
           status === "going" ? "You're marked as Going!" : "You're marked as Interested!",
-          { description: "Peers can now see you're attending." },
+          { description: "Peers can now see you're attending. We'll remind you before it starts." },
         );
       }
     },
