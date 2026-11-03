@@ -109,6 +109,7 @@ Deeper authorities it defers to: [FACULTY_AI_ROADMAP.md](FACULTY_AI_ROADMAP.md)
   before (three undeclared test functions were found deployed on 2026-09-14).
 - **`public.users` is owner-only.** Cross-user reads go through a
   `SECURITY DEFINER` RPC, never a widened policy.
+- **Anonymous posts: author identity must never leave the database for non-authors.** On anonymous community posts (`is_anonymous = true`), direct table SELECT by non-authors is denied by RLS, feed/post/comment RPCs mask `author_id` to null and author name to 'Anonymous student', `community_posts` and `post_comments` are dropped from the realtime publication (to prevent broadcasting unmasked row payloads), search indexing strips author metadata, and admin unmasking requires explicit justification audited to `admin_audit_log`.
 - **Adding an entity type to search is three edits** — a projector function, a
   call in `rebuild_knowledge_chunks()`, and a **response group in the
   `semantic-search` function**. Miss the third and rows are retrieved, counted,
