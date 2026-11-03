@@ -187,6 +187,8 @@ await db.exec(`
     is_archived BOOLEAN NOT NULL DEFAULT false,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
   );
+  ALTER TABLE public.community_posts
+    ADD COLUMN IF NOT EXISTS community_id UUID REFERENCES public.communities(id) ON DELETE CASCADE;
   CREATE TABLE public.community_members (
     community_id UUID NOT NULL REFERENCES public.communities(id) ON DELETE CASCADE,
     user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
@@ -229,6 +231,16 @@ await db.exec(`
                          WHERE m.community_id = c.id AND m.user_id = auth.uid())
              OR public.is_admin_user(auth.uid())))))
     END $$;
+
+  CREATE FUNCTION public.can_view_post(p_post_id uuid, p_user_id uuid)
+    RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER AS $$
+    SELECT coalesce(
+      (SELECT public.can_view_community(p.community_id, p_user_id)
+         FROM public.community_posts p
+        WHERE p.id = p_post_id),
+      false
+    )
+  $$;
 
   -- Supabase creates this publication; the channels migration adds a table to it.
   CREATE PUBLICATION supabase_realtime;
@@ -422,6 +434,15 @@ await db.exec(`
     created_at timestamptz DEFAULT now(), updated_at timestamptz DEFAULT now()
   );
 
+  CREATE TABLE IF NOT EXISTS public.admin_audit_log (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    admin_user_id UUID REFERENCES auth.users(id) NOT NULL,
+    action TEXT NOT NULL,
+    target_user_id UUID REFERENCES auth.users(id),
+    details JSONB,
+    created_at TIMESTAMPTZ DEFAULT now()
+  );
+
   -- storage.objects / storage.buckets: platform-provided by Supabase Storage,
   -- not by any migration. Stubbed for the bucket policies 20260804132345/20260821170000.
   CREATE SCHEMA storage;
@@ -584,6 +605,7 @@ for (const file of [
   '20260914100000_event_notifications_and_reminders.sql',
   '20260914120000_embed_knowledge_topup_schedule.sql',
   '20260914130000_restore_admin_status_rpc_and_guard.sql',
+  '20261103100000_wellbeing_safety_layer.sql',
 ]) {
   if (file === '20260804132345_b843f814-46d5-4c25-bc80-32e5f6ebba59.sql') {
     // Production's `faculty` table still carries `profile_image`, a column
@@ -4143,8 +4165,8 @@ await q(`
     888881,
     'HackSRM 2026',
     'Flagship 24-hour hackathon',
-    '2026-09-15 09:00:00',
-    '2026-09-16 09:00:00',
+    to_char(now() + interval '7 days', 'YYYY-MM-DD 09:00:00'),
+    to_char(now() + interval '8 days', 'YYYY-MM-DD 09:00:00'),
     'https://events.srmap.edu.in/event/hacksrm-2026',
     NULL,
     'CSE Events',
@@ -4904,6 +4926,176 @@ try {
   restoreGuardBlocked = /insufficient_privilege|cannot be changed directly/i.test(error.message);
 }
 check('self-elevation is still blocked after re-applying the guard', restoreGuardBlocked);
+
+// --- 20261103100000_wellbeing_safety_layer.sql ---
+console.log('\n--- 20261103100000_wellbeing_safety_layer.sql ---');
+
+// 1. Column presence
+const { rows: postCols } = await q(`
+  SELECT column_name FROM information_schema.columns
+  WHERE table_schema = 'public' AND table_name = 'community_posts' AND column_name IN ('is_anonymous', 'distress_flagged')
+`);
+check('community_posts has is_anonymous and distress_flagged columns', postCols.length === 2, JSON.stringify(postCols));
+
+const { rows: commentCols } = await q(`
+  SELECT column_name FROM information_schema.columns
+  WHERE table_schema = 'public' AND table_name = 'post_comments' AND column_name IN ('is_anonymous', 'distress_flagged')
+`);
+check('post_comments has is_anonymous and distress_flagged columns', commentCols.length === 2, JSON.stringify(commentCols));
+
+// 2. Test Anonymous Post Creation & Direct Table Leak Prevention
+const ANON_POST_ID = '99999999-9999-9999-9999-999999999991';
+const REGULAR_POST_ID = '99999999-9999-9999-9999-999999999992';
+
+await q(`
+  INSERT INTO public.community_posts (id, author_id, title, content, post_type, is_anonymous)
+  VALUES
+    ('${ANON_POST_ID}', '${CURRENT_UID}', 'Struggling with exams', 'Feeling very overwhelmed lately', 'wellbeing', true),
+    ('${REGULAR_POST_ID}', '${CURRENT_UID}', 'Study group for DSA', 'Anyone studying trees?', 'study-help', false)
+  ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title;
+`);
+
+// Act as OTHER_UID (another student)
+await actAs(OTHER_UID);
+
+// Leak check A: Direct SELECT on community_posts table as non-author
+const { rows: strangerTableSelect } = await asAuthenticated(() => q(`
+  SELECT id, author_id FROM public.community_posts WHERE id = '${ANON_POST_ID}';
+`));
+check('non-author cannot select anonymous post from table directly via RLS', strangerTableSelect.length === 0, JSON.stringify(strangerTableSelect));
+
+// Non-author CAN select regular post
+const { rows: strangerRegularSelect } = await asAuthenticated(() => q(`
+  SELECT id, author_id FROM public.community_posts WHERE id = '${REGULAR_POST_ID}';
+`));
+check('non-author can select regular post from table directly', strangerRegularSelect.length === 1, JSON.stringify(strangerRegularSelect));
+
+// Leak check B: get_community_feed masks author details for anonymous posts
+const { rows: feedRows } = await asAuthenticated(() => q(`
+  SELECT id, author_id, author_name, author_image, is_anonymous, viewer_is_author
+  FROM public.get_community_feed(p_limit => 10);
+`));
+const anonFeedPost = feedRows.find(r => r.id === ANON_POST_ID);
+check(
+  'get_community_feed masks author_id to null and author_name to Anonymous student for non-author',
+  anonFeedPost && anonFeedPost.author_id === null && anonFeedPost.author_name === 'Anonymous student' && anonFeedPost.author_image === null && anonFeedPost.viewer_is_author === false,
+  JSON.stringify(anonFeedPost)
+);
+
+// Leak check C: get_community_post masks author details for anonymous posts
+const { rows: postDetailRows } = await asAuthenticated(() => q(`
+  SELECT id, author_id, author_name, author_image, is_anonymous, viewer_is_author
+  FROM public.get_community_post('${ANON_POST_ID}');
+`));
+check(
+  'get_community_post masks author_id to null and author_name to Anonymous student for non-author',
+  postDetailRows.length === 1 && postDetailRows[0].author_id === null && postDetailRows[0].author_name === 'Anonymous student' && postDetailRows[0].viewer_is_author === false,
+  JSON.stringify(postDetailRows[0])
+);
+
+// Author perspective: author sees their own post and author details
+await actAs(CURRENT_UID);
+const { rows: authorViewRows } = await asAuthenticated(() => q(`
+  SELECT id, author_id, author_name, is_anonymous, viewer_is_author
+  FROM public.get_community_post('${ANON_POST_ID}');
+`));
+check(
+  'author sees own author_id, viewer_is_author = true, and is_anonymous = true',
+  authorViewRows.length === 1 && authorViewRows[0].author_id === CURRENT_UID && authorViewRows[0].viewer_is_author === true && authorViewRows[0].is_anonymous === true,
+  JSON.stringify(authorViewRows[0])
+);
+
+// 3. Distress Flagging (deterministic, non-blocking)
+const DISTRESS_POST_ID = '99999999-9999-9999-9999-999999999993';
+await q(`
+  INSERT INTO public.community_posts (id, author_id, title, content, post_type, is_anonymous)
+  VALUES ('${DISTRESS_POST_ID}', '${CURRENT_UID}', 'Feeling lost', 'I feel like I want to die and cannot take this anymore', 'wellbeing', true)
+  ON CONFLICT (id) DO UPDATE SET content = EXCLUDED.content;
+`);
+
+const { rows: queueMatch } = await q(`
+  SELECT * FROM public.moderation_queue WHERE content_id = '${DISTRESS_POST_ID}' AND source = 'keyword';
+`);
+check(
+  'distress phrase in post triggers moderation_queue row insertion with matched phrase',
+  queueMatch.length >= 1 && queueMatch[0].source === 'keyword' && queueMatch[0].status === 'new',
+  JSON.stringify(queueMatch[0])
+);
+
+// 4. Peer Report
+await actAs(OTHER_UID);
+const { rows: peerReportRes } = await asAuthenticated(() => q(`
+  SELECT public.report_peer_concern('post', '${REGULAR_POST_ID}', 'Worried about my classmate') as res;
+`));
+check(
+  'authenticated user can report peer concern on a post',
+  peerReportRes.length === 1 && peerReportRes[0].res.success === true,
+  JSON.stringify(peerReportRes[0])
+);
+
+// 5. Admin Moderation Queue & Author Unmasking Audit
+const ADMIN_UID = '33333333-3333-3333-3333-333333333333';
+await q(`
+  INSERT INTO auth.users (id, email) VALUES ('${ADMIN_UID}', 'admin@example.local') ON CONFLICT (id) DO NOTHING;
+`);
+await q(`
+  INSERT INTO public.users (id, name, email, is_admin)
+  VALUES ('${ADMIN_UID}', 'Admin User', 'admin@example.local', true)
+  ON CONFLICT (id) DO UPDATE SET is_admin = true;
+`);
+
+// Non-admin cannot read moderation queue
+await actAs(OTHER_UID);
+let nonAdminQueueBlocked = false;
+try {
+  await asAuthenticated(() => q(`SELECT * FROM public.get_moderation_queue();`));
+} catch (e) {
+  nonAdminQueueBlocked = /admin only/i.test(e.message);
+}
+check('non-admin is blocked from get_moderation_queue (42501)', nonAdminQueueBlocked);
+
+// Admin reads queue - anonymous post author is protected/unrevealed by default
+await actAs(ADMIN_UID);
+const { rows: adminQueueRows } = await asAuthenticated(() => q(`
+  SELECT * FROM public.get_moderation_queue();
+`));
+const anonQueueItem = adminQueueRows.find(r => r.content_id === DISTRESS_POST_ID);
+check(
+  'admin queue shows author as Anonymous student (Protected) before explicit reveal',
+  anonQueueItem && anonQueueItem.author_revealed === false && anonQueueItem.author_id === null && anonQueueItem.author_name === 'Anonymous student (Protected)',
+  JSON.stringify(anonQueueItem)
+);
+
+// Admin reveals author with justification
+const { rows: revealRes } = await asAuthenticated(() => q(`
+  SELECT public.reveal_moderation_author('${anonQueueItem.id}', 'Direct outreach for student welfare') as author;
+`));
+check(
+  'admin can reveal author with justification',
+  revealRes.length === 1 && revealRes[0].author.author_id === CURRENT_UID,
+  JSON.stringify(revealRes[0])
+);
+
+// Assert action was logged to admin_audit_log
+const { rows: auditRows } = await q(`
+  SELECT * FROM public.admin_audit_log WHERE action = 'reveal_distress_author' AND admin_user_id = '${ADMIN_UID}';
+`);
+check(
+  'author reveal is audited in admin_audit_log with admin ID, reason, and timestamp',
+  auditRows.length >= 1 && auditRows[0].details.reason === 'Direct outreach for student welfare',
+  JSON.stringify(auditRows[0])
+);
+
+// 6. Platform Settings keys created with NULL only
+const { rows: wellbeingSettings } = await q(`
+  SELECT id, value FROM public.platform_settings
+  WHERE id IN ('wellbeing_counsellors', 'wellbeing_admin_phone', 'wellbeing_admin_label');
+`);
+check(
+  'platform_settings contains wellbeing keys with NULL values only',
+  wellbeingSettings.length === 3 && wellbeingSettings.every(s => s.value === null),
+  JSON.stringify(wellbeingSettings)
+);
 
 console.log(failures === 0
   ? '\nAll migration checks passed against real Postgres.'
