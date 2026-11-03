@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
-import { X, ImagePlus } from "lucide-react";
+import { X, ImagePlus, UserX } from "lucide-react";
 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -8,12 +8,15 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import {
   POST_TYPES,
   createCommunityPost,
   uploadCommunityPostImages,
 } from "@/integrations/supabase/services/community-posts";
+import { WellbeingHelpCard } from "@/components/wellbeing/WellbeingHelpCard";
+import { detectDistressText } from "@/lib/wellbeing/distress-keywords";
 
 interface CreatePostModalProps {
   open: boolean;
@@ -40,6 +43,10 @@ const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 const SELECTABLE_TYPES = POST_TYPES.filter((type) => type.value !== "all");
 
 const PLACEHOLDERS: Record<string, { title: string; content: string }> = {
+  wellbeing: {
+    title: "Not feeling okay, looking for someone to talk to",
+    content: "Share what is on your mind. You can post anonymously, and calm support resources are always available below.",
+  },
   hackathon: {
     title: "Looking for 2 teammates for Smart India Hackathon",
     content: "What you're building, the skills you need, the deadline, and how to reach you.",
@@ -61,7 +68,7 @@ const PLACEHOLDERS: Record<string, { title: string; content: string }> = {
     content: "The problem, what you've tried, and where it breaks.",
   },
   achievement: {
-    title: "Won 1st place in National Hackathon 2026!",
+    title: "Won first place at the National Hackathon 2026",
     content: "Share your milestone, competition or project wins, key takeaways, and experience.",
   },
   announcement: {
@@ -88,6 +95,7 @@ export const CreatePostModal = ({
   const [title, setTitle] = useState(initialTitle || "");
   const [content, setContent] = useState(initialContent || "");
   const [postType, setPostType] = useState(initialPostType || "");
+  const [isAnonymous, setIsAnonymous] = useState(false);
   const [tagInput, setTagInput] = useState("");
   const [tags, setTags] = useState<string[]>(initialTags || []);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -98,7 +106,10 @@ export const CreatePostModal = ({
   // Sync initial values when modal opens
   useEffect(() => {
     if (open) {
-      if (initialPostType) setPostType(initialPostType);
+      if (initialPostType) {
+        setPostType(initialPostType);
+        if (initialPostType === "wellbeing") setIsAnonymous(true);
+      }
       if (initialTitle) setTitle(initialTitle);
       if (initialContent) setContent(initialContent);
       if (initialTags && initialTags.length > 0) setTags(initialTags);
@@ -111,6 +122,7 @@ export const CreatePostModal = ({
     setTitle("");
     setContent("");
     setPostType("");
+    setIsAnonymous(false);
     setTags([]);
     setTagInput("");
     setImageFiles([]);
@@ -136,7 +148,7 @@ export const CreatePostModal = ({
 
     const availableSlots = MAX_IMAGES - imageFiles.length;
     if (availableSlots <= 0) {
-      toast.error(`Maximum ${MAX_IMAGES} images allowed per post`);
+      toast.error(`A post can have up to ${MAX_IMAGES} images`);
       if (fileInputRef.current) fileInputRef.current.value = "";
       return;
     }
@@ -146,11 +158,11 @@ export const CreatePostModal = ({
 
     for (const file of files.slice(0, availableSlots)) {
       if (!file.type.startsWith("image/")) {
-        toast.error(`${file.name} is not an image file`);
+        toast.error(`${file.name} is not an image`);
         continue;
       }
       if (file.size > MAX_IMAGE_BYTES) {
-        toast.error(`${file.name} exceeds 5MB limit`);
+        toast.error(`${file.name} is over the 5 MB limit`);
         continue;
       }
       validFiles.push(file);
@@ -216,6 +228,7 @@ export const CreatePostModal = ({
         tags: tags.length > 0 ? tags : undefined,
         image_urls: uploadedUrls,
         community_id: communityId,
+        is_anonymous: isAnonymous,
       });
 
       if (error) {
@@ -223,7 +236,7 @@ export const CreatePostModal = ({
         return;
       }
 
-      toast.success("Posted! Your post is live on the board.");
+      toast.success("Post published", { description: "It is now on the board." });
       resetForm();
       onPostCreated();
     } catch (error) {
@@ -259,7 +272,12 @@ export const CreatePostModal = ({
                 <button
                   key={type.value}
                   type="button"
-                  onClick={() => setPostType(type.value)}
+                  onClick={() => {
+                    setPostType(type.value);
+                    if (type.value === "wellbeing") {
+                      setIsAnonymous(true);
+                    }
+                  }}
                   aria-pressed={postType === type.value}
                   className={cn(
                     "flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition-colors",
@@ -377,12 +395,12 @@ export const CreatePostModal = ({
                   <img
                     src={previewUrl}
                     alt={`Upload preview ${idx + 1}`}
-                    className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                    className="h-full w-full object-cover transition-transform group-hover:opacity-90"
                   />
                   <button
                     type="button"
                     onClick={(e) => removeImage(idx, e)}
-                    className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-black/70 text-white shadow-md transition-all hover:bg-red-600 focus:outline-none"
+                    className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-black/70 text-white transition-colors duration-150 hover:bg-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     aria-label={`Remove image ${idx + 1}`}
                   >
                     <X className="h-3.5 w-3.5" />
@@ -407,6 +425,30 @@ export const CreatePostModal = ({
             </div>
           </div>
 
+          {/* Anonymous toggle */}
+          <div className="flex items-center justify-between rounded-lg border border-border bg-muted/40 p-3 shadow-xs">
+            <div className="space-y-0.5 pr-2">
+              <div className="flex items-center gap-1.5 font-medium text-sm text-foreground">
+                <UserX className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                <span>Post anonymously</span>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Your name, avatar, and department are masked for everyone else. Only you can see and manage your post.
+              </p>
+            </div>
+            <Switch
+              id="anonymous-toggle"
+              checked={isAnonymous}
+              onCheckedChange={setIsAnonymous}
+              aria-label="Post anonymously"
+            />
+          </div>
+
+          {/* Calm Help Card for well-being posts or detected distress language */}
+          {(postType === "wellbeing" || detectDistressText(title) || detectDistressText(content)) && (
+            <WellbeingHelpCard compact />
+          )}
+
           <div className="flex justify-end gap-2 pt-2">
             <Button
               type="button"
@@ -416,8 +458,8 @@ export const CreatePostModal = ({
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Posting..." : "Post"}
+            <Button type="submit" isLoading={isSubmitting}>
+              {isSubmitting ? "Publishing" : "Publish"}
             </Button>
           </div>
         </form>

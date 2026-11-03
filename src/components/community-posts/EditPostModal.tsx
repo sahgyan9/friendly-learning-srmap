@@ -7,7 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { X, ImagePlus } from "lucide-react";
+import { X, ImagePlus, UserX } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import {
   POST_STATUSES,
   POST_TYPES as ALL_POST_TYPES,
@@ -16,6 +17,8 @@ import {
   getPostImageUrls,
   type CommunityPost,
 } from "@/integrations/supabase/services/community-posts";
+import { WellbeingHelpCard } from "@/components/wellbeing/WellbeingHelpCard";
+import { detectDistressText } from "@/lib/wellbeing/distress-keywords";
 import { toast } from "sonner";
 
 const MAX_IMAGES = 5;
@@ -35,6 +38,7 @@ export const EditPostModal = ({ post, open, onOpenChange, onPostUpdated }: EditP
   const [content, setContent] = useState("");
   const [postType, setPostType] = useState("");
   const [status, setStatus] = useState("");
+  const [isAnonymous, setIsAnonymous] = useState(false);
   const [tagInput, setTagInput] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const [existingImages, setExistingImages] = useState<string[]>([]);
@@ -49,6 +53,7 @@ export const EditPostModal = ({ post, open, onOpenChange, onPostUpdated }: EditP
       setContent(post.content);
       setPostType(post.post_type);
       setStatus(post.status);
+      setIsAnonymous(post.is_anonymous);
       setTags(post.tags || []);
       setExistingImages(getPostImageUrls(post.image_url));
       setNewImageFiles([]);
@@ -79,7 +84,7 @@ export const EditPostModal = ({ post, open, onOpenChange, onPostUpdated }: EditP
 
     const availableSlots = MAX_IMAGES - totalImagesCount;
     if (availableSlots <= 0) {
-      toast.error(`Maximum ${MAX_IMAGES} images allowed per post`);
+      toast.error(`A post can have up to ${MAX_IMAGES} images`);
       if (fileInputRef.current) fileInputRef.current.value = "";
       return;
     }
@@ -89,11 +94,11 @@ export const EditPostModal = ({ post, open, onOpenChange, onPostUpdated }: EditP
 
     for (const file of files.slice(0, availableSlots)) {
       if (!file.type.startsWith("image/")) {
-        toast.error(`${file.name} is not an image file`);
+        toast.error(`${file.name} is not an image`);
         continue;
       }
       if (file.size > MAX_IMAGE_BYTES) {
-        toast.error(`${file.name} exceeds 5MB limit`);
+        toast.error(`${file.name} is over the 5 MB limit`);
         continue;
       }
       validFiles.push(file);
@@ -132,7 +137,7 @@ export const EditPostModal = ({ post, open, onOpenChange, onPostUpdated }: EditP
     e.preventDefault();
 
     if (!title.trim() || !content.trim() || !postType || !status) {
-      toast.error("Please fill in all required fields");
+      toast.error("Add a title, a description and a category");
       return;
     }
 
@@ -153,13 +158,14 @@ export const EditPostModal = ({ post, open, onOpenChange, onPostUpdated }: EditP
         status: status,
         tags: tags.length > 0 ? tags : undefined,
         image_urls: finalImageUrls,
+        is_anonymous: isAnonymous,
       });
 
       if (error) {
-        toast.error("Failed to update post");
+        toast.error("Could not update post");
         console.error(error);
       } else if (data) {
-        toast.success("Post updated successfully!");
+        toast.success("Post updated");
         onPostUpdated(data);
       }
     } catch (err) {
@@ -310,12 +316,12 @@ export const EditPostModal = ({ post, open, onOpenChange, onPostUpdated }: EditP
                   <img
                     src={imgUrl}
                     alt={`Existing image ${idx + 1}`}
-                    className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                    className="h-full w-full object-cover transition-transform group-hover:opacity-90"
                   />
                   <button
                     type="button"
                     onClick={(e) => removeExistingImage(imgUrl, e)}
-                    className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-black/70 text-white shadow-md transition-all hover:bg-red-600 focus:outline-none"
+                    className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-black/70 text-white transition-colors duration-150 hover:bg-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     aria-label={`Remove existing image ${idx + 1}`}
                   >
                     <X className="h-3.5 w-3.5" />
@@ -332,12 +338,12 @@ export const EditPostModal = ({ post, open, onOpenChange, onPostUpdated }: EditP
                   <img
                     src={previewUrl}
                     alt={`New upload ${idx + 1}`}
-                    className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                    className="h-full w-full object-cover transition-transform group-hover:opacity-90"
                   />
                   <button
                     type="button"
                     onClick={(e) => removeNewImage(idx, e)}
-                    className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-black/70 text-white shadow-md transition-all hover:bg-red-600 focus:outline-none"
+                    className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-black/70 text-white transition-colors duration-150 hover:bg-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     aria-label={`Remove new image ${idx + 1}`}
                   >
                     <X className="h-3.5 w-3.5" />
@@ -359,6 +365,30 @@ export const EditPostModal = ({ post, open, onOpenChange, onPostUpdated }: EditP
             </div>
           </div>
 
+          {/* Anonymous toggle */}
+          <div className="flex items-center justify-between rounded-lg border border-border bg-muted/40 p-3 shadow-xs">
+            <div className="space-y-0.5 pr-2">
+              <div className="flex items-center gap-1.5 font-medium text-sm text-foreground">
+                <UserX className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                <span>Post anonymously</span>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Your identity is masked for other students.
+              </p>
+            </div>
+            <Switch
+              id="edit-anonymous-toggle"
+              checked={isAnonymous}
+              onCheckedChange={setIsAnonymous}
+              aria-label="Post anonymously"
+            />
+          </div>
+
+          {/* Wellbeing help card if well-being category or distress language is detected */}
+          {(postType === "wellbeing" || detectDistressText(title) || detectDistressText(content)) && (
+            <WellbeingHelpCard compact />
+          )}
+
           <div className="flex justify-end gap-2">
             <Button
               type="button"
@@ -368,8 +398,8 @@ export const EditPostModal = ({ post, open, onOpenChange, onPostUpdated }: EditP
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Updating..." : "Update Post"}
+            <Button type="submit" isLoading={isSubmitting}>
+              {isSubmitting ? "Saving" : "Save changes"}
             </Button>
           </div>
         </form>

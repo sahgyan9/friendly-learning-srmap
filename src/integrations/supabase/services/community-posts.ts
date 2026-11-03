@@ -1,6 +1,7 @@
 import {
   BookOpen,
   ClipboardList,
+  HeartPulse,
   Megaphone,
   MessagesSquare,
   Microscope,
@@ -46,6 +47,8 @@ export type CommunityPost = {
   viewer_is_author: boolean;
   /** Null on a board post. Set means the post lives inside that community. */
   community: { id: string; name: string; slug: string } | null;
+  is_anonymous: boolean;
+  distress_flagged?: boolean;
 };
 
 export type PostComment = {
@@ -59,6 +62,8 @@ export type PostComment = {
     profile_image: string | null;
   };
   viewer_is_author: boolean;
+  is_anonymous: boolean;
+  distress_flagged?: boolean;
 };
 
 export type CreatePostData = {
@@ -70,6 +75,7 @@ export type CreatePostData = {
   image_urls?: string[];
   /** Omit for the public board. Set to post inside a community you belong to. */
   community_id?: string;
+  is_anonymous?: boolean;
 };
 
 export type UpdatePostData = Partial<CreatePostData> & { status?: string };
@@ -119,6 +125,7 @@ export type CommunityFeedOptions = {
 /** Every post kind the board supports, in the order students see them. */
 export const POST_TYPES = [
   { value: "all", label: "All posts", icon: ClipboardList },
+  { value: "wellbeing", label: "Well-being / Not feeling okay", icon: HeartPulse },
   { value: "hackathon", label: "Hackathon partners", icon: Zap },
   { value: "study-help", label: "Study help", icon: BookOpen },
   { value: "project", label: "Project ideas", icon: Wrench },
@@ -211,6 +218,8 @@ type FeedRow = {
   community_name: string | null;
   community_slug: string | null;
   total_count?: number;
+  is_anonymous?: boolean;
+  viewer_post_flagged?: boolean;
 };
 
 function toCommunityPost(row: FeedRow): CommunityPost {
@@ -228,11 +237,11 @@ function toCommunityPost(row: FeedRow): CommunityPost {
     updated_at: row.updated_at,
     author: {
       id: row.author_id,
-      name: row.author_name ?? "Student",
+      name: row.author_name ?? (row.is_anonymous ? "Anonymous student" : "Student"),
       profile_image: row.author_image,
       department: row.author_department,
       role: row.author_role,
-      is_mentor: row.author_is_mentor,
+      is_mentor: Boolean(row.author_is_mentor),
     },
     viewer_has_liked: row.viewer_has_liked,
     viewer_is_author: row.viewer_is_author,
@@ -240,6 +249,8 @@ function toCommunityPost(row: FeedRow): CommunityPost {
       row.community_id && row.community_slug
         ? { id: row.community_id, name: row.community_name ?? "A group", slug: row.community_slug }
         : null,
+    is_anonymous: Boolean(row.is_anonymous),
+    distress_flagged: Boolean(row.viewer_post_flagged),
   };
 }
 
@@ -336,7 +347,8 @@ export const createCommunityPost = async (postData: CreatePostData) => {
       tags: (postData.tags ?? []).map((tag) => sanitizeInput(tag, 50)).filter(Boolean).slice(0, 10),
       image_url: finalImageUrl,
       community_id: postData.community_id ?? null,
-    })
+      is_anonymous: Boolean(postData.is_anonymous),
+    } as never)
     .select("id")
     .single();
 
@@ -355,6 +367,7 @@ export const updateCommunityPost = async (postId: string, updateData: UpdatePost
   if (updateData.content !== undefined) patch.content = sanitizeInput(updateData.content, 5000);
   if (updateData.post_type !== undefined) patch.post_type = updateData.post_type;
   if (updateData.status !== undefined) patch.status = updateData.status;
+  if (updateData.is_anonymous !== undefined) patch.is_anonymous = updateData.is_anonymous;
 
   if (updateData.image_urls !== undefined) {
     patch.image_url =
@@ -381,7 +394,7 @@ export const updateCommunityPost = async (postId: string, updateData: UpdatePost
     previousImageUrl = existing?.image_url ?? null;
   }
 
-  const { error } = await supabase.from("community_posts").update(patch as any).eq("id", postId);
+  const { error } = await supabase.from("community_posts").update(patch as never).eq("id", postId);
 
   if (error) {
     console.error("Error updating community post:", error);
@@ -459,6 +472,19 @@ export const togglePostLike = async (postId: string) => {
   return { error, liked: true };
 };
 
+type PostCommentRow = {
+  id: string;
+  content: string;
+  created_at: string;
+  updated_at: string;
+  author_id: string | null;
+  author_name: string | null;
+  author_image: string | null;
+  viewer_is_author: boolean;
+  is_anonymous?: boolean;
+  distress_flagged?: boolean;
+};
+
 export const getPostComments = async (postId: string) => {
   const { data, error } = await supabase.rpc("get_post_comments", { p_post_id: postId });
 
@@ -467,23 +493,29 @@ export const getPostComments = async (postId: string) => {
     return { data: null, error };
   }
 
-  const comments: PostComment[] = (data ?? []).map((row) => ({
+  const comments: PostComment[] = ((data as unknown as PostCommentRow[]) ?? []).map((row) => ({
     id: row.id,
     content: row.content,
     created_at: row.created_at,
     updated_at: row.updated_at,
     author: {
       id: row.author_id,
-      name: row.author_name ?? "Student",
+      name: row.author_name ?? (row.is_anonymous ? "Anonymous student" : "Student"),
       profile_image: row.author_image,
     },
     viewer_is_author: row.viewer_is_author,
+    is_anonymous: Boolean(row.is_anonymous),
+    distress_flagged: Boolean(row.distress_flagged),
   }));
 
   return { data: comments, error: null };
 };
 
-export const addPostComment = async (postId: string, content: string) => {
+export const addPostComment = async (
+  postId: string,
+  content: string,
+  isAnonymous: boolean = false
+) => {
   const { data: auth } = await supabase.auth.getUser();
   const user = auth.user;
   if (!user) return { data: null, error: new Error("User not authenticated") };
@@ -495,7 +527,12 @@ export const addPostComment = async (postId: string, content: string) => {
 
   const { error } = await supabase
     .from("post_comments")
-    .insert({ post_id: postId, user_id: user.id, content: sanitizedContent });
+    .insert({
+      post_id: postId,
+      user_id: user.id,
+      content: sanitizedContent,
+      is_anonymous: isAnonymous,
+    } as never);
 
   if (error) {
     console.error("Error adding comment:", error);
@@ -503,6 +540,92 @@ export const addPostComment = async (postId: string, content: string) => {
   }
 
   return { data: null, error: null };
+};
+
+export const reportPeerConcern = async (
+  contentType: "post" | "comment",
+  contentId: string,
+  note?: string
+) => {
+  const { data, error } = await supabase.rpc("report_peer_concern" as never, {
+    p_content_type: contentType,
+    p_content_id: contentId,
+    p_note: note ?? null,
+  } as never);
+
+  if (error) {
+    console.error("Error reporting peer concern:", error);
+    return { success: false, error };
+  }
+
+  return { success: (data as { success?: boolean } | null)?.success ?? true, error: null };
+};
+
+export type ModerationQueueItem = {
+  id: string;
+  content_type: "post" | "comment";
+  content_id: string;
+  content_title: string | null;
+  content_snippet: string | null;
+  is_anonymous: boolean;
+  author_revealed: boolean;
+  author_id: string | null;
+  author_name: string | null;
+  author_email: string | null;
+  author_department: string | null;
+  author_college_id: string | null;
+  author_revealed_by_name: string | null;
+  author_revealed_at: string | null;
+  author_reveal_reason: string | null;
+  matched_phrase: string | null;
+  source: "keyword" | "peer_report";
+  reported_by_id: string | null;
+  reported_by_name: string | null;
+  status: "new" | "contacted" | "resolved";
+  admin_notes: string | null;
+  action_taken_at: string | null;
+  action_taken_by_name: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export const getModerationQueue = async () => {
+  const { data, error } = await supabase.rpc("get_moderation_queue" as never);
+  if (error) {
+    console.error("Error fetching moderation queue:", error);
+    return { data: null, error };
+  }
+  return { data: ((data ?? []) as unknown) as ModerationQueueItem[], error: null };
+};
+
+export const revealModerationAuthor = async (queueId: string, reason: string) => {
+  const { data, error } = await supabase.rpc("reveal_moderation_author" as never, {
+    p_queue_id: queueId,
+    p_reason: reason,
+  } as never);
+  if (error) {
+    console.error("Error revealing moderation author:", error);
+    return { data: null, error };
+  }
+  const result = data as { author?: unknown } | null;
+  return { data: result?.author ?? data, error: null };
+};
+
+export const updateModerationStatus = async (
+  queueId: string,
+  status: "new" | "contacted" | "resolved",
+  notes?: string
+) => {
+  const { data, error } = await supabase.rpc("update_moderation_status" as never, {
+    p_queue_id: queueId,
+    p_status: status,
+    p_admin_notes: notes ?? null,
+  } as never);
+  if (error) {
+    console.error("Error updating moderation status:", error);
+    return { success: false, error };
+  }
+  return { success: (data as { success?: boolean } | null)?.success ?? true, error: null };
 };
 
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];

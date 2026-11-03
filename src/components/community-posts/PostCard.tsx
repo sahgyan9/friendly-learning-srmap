@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -11,15 +12,41 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Heart, MessageCircle, Share2, BadgeCheck, ChevronDown, ArrowRight, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import {
+  Heart,
+  MessageCircle,
+  Share2,
+  BadgeCheck,
+  ChevronDown,
+  ArrowRight,
+  MoreHorizontal,
+  Pencil,
+  Trash2,
+  User,
+  HeartHandshake,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getInitials } from "@/utils/user-utils";
 import { formatRelativeTime } from "@/utils/date-utils";
 import type { CommunityPost } from "@/integrations/supabase/services/community-posts";
-import { isAwaitingReply, getPostImageUrls } from "@/integrations/supabase/services/community-posts";
+import {
+  isAwaitingReply,
+  getPostImageUrls,
+  reportPeerConcern,
+} from "@/integrations/supabase/services/community-posts";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { WellbeingHelpCard } from "@/components/wellbeing/WellbeingHelpCard";
 import { AwaitingReplyBadge, PostStatusBadge, PostTypeBadge } from "./PostTypeBadge";
 import { LinkifiedText } from "@/components/common/LinkifiedText";
-import { CardAccentBorder } from "@/components/ui/CardAccentBorder";
 import { PostImageGallery } from "./PostImageGallery";
 
 interface PostCardProps {
@@ -38,90 +65,6 @@ interface PostCardProps {
   variant?: "full" | "compact";
   className?: string;
 }
-
-/**
- * Maps each post type to its CardAccentBorder gradient key.
- * Keeps the visual language consistent with PostTypeBadge's TYPE_ACCENTS.
- */
-type PostTypeTheme = {
-  accent: string;
-  hoverBorder: string;
-  hoverGlow: string;
-  titleHover: string;
-  readMoreBtn: string;
-  tagBadge: string;
-};
-
-/**
- * Single source of truth for post type themes.
- * Each type gets a cohesive accent color, hover glow, border, and badge highlight.
- */
-const POST_TYPE_THEMES: Record<string, PostTypeTheme> = {
-  hackathon: {
-    accent: "amber",
-    hoverBorder: "hover:border-amber-500/40 dark:hover:border-amber-400/40",
-    hoverGlow: "from-amber-500/5",
-    titleHover: "group-hover:text-amber-600 dark:group-hover:text-amber-400",
-    readMoreBtn: "text-amber-600 dark:text-amber-400 bg-amber-500/10 hover:bg-amber-500/20",
-    tagBadge: "bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/20 hover:bg-amber-500/20",
-  },
-  "study-help": {
-    accent: "sky",
-    hoverBorder: "hover:border-sky-500/40 dark:hover:border-sky-400/40",
-    hoverGlow: "from-sky-500/5",
-    titleHover: "group-hover:text-sky-600 dark:group-hover:text-sky-400",
-    readMoreBtn: "text-sky-600 dark:text-sky-400 bg-sky-500/10 hover:bg-sky-500/20",
-    tagBadge: "bg-sky-500/10 text-sky-700 dark:text-sky-300 border-sky-500/20 hover:bg-sky-500/20",
-  },
-  project: {
-    accent: "violet",
-    hoverBorder: "hover:border-violet-500/40 dark:hover:border-violet-400/40",
-    hoverGlow: "from-violet-500/5",
-    titleHover: "group-hover:text-violet-600 dark:group-hover:text-violet-400",
-    readMoreBtn: "text-violet-600 dark:text-violet-400 bg-violet-500/10 hover:bg-violet-500/20",
-    tagBadge: "bg-violet-500/10 text-violet-700 dark:text-violet-300 border-violet-500/20 hover:bg-violet-500/20",
-  },
-  research: {
-    accent: "emerald",
-    hoverBorder: "hover:border-emerald-500/40 dark:hover:border-emerald-400/40",
-    hoverGlow: "from-emerald-500/5",
-    titleHover: "group-hover:text-emerald-600 dark:group-hover:text-emerald-400",
-    readMoreBtn: "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20",
-    tagBadge: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/20 hover:bg-emerald-500/20",
-  },
-  "problem-solving": {
-    accent: "rose",
-    hoverBorder: "hover:border-rose-500/40 dark:hover:border-rose-400/40",
-    hoverGlow: "from-rose-500/5",
-    titleHover: "group-hover:text-rose-600 dark:group-hover:text-rose-400",
-    readMoreBtn: "text-rose-600 dark:text-rose-400 bg-rose-500/10 hover:bg-rose-500/20",
-    tagBadge: "bg-rose-500/10 text-rose-700 dark:text-rose-300 border-rose-500/20 hover:bg-rose-500/20",
-  },
-  achievement: {
-    accent: "gold",
-    hoverBorder: "hover:border-amber-500/40 dark:hover:border-amber-400/40",
-    hoverGlow: "from-amber-500/5",
-    titleHover: "group-hover:text-amber-600 dark:group-hover:text-amber-400",
-    readMoreBtn: "text-amber-600 dark:text-amber-400 bg-amber-500/10 hover:bg-amber-500/20",
-    tagBadge: "bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/20 hover:bg-amber-500/20",
-  },
-  announcement: {
-    accent: "orange",
-    hoverBorder: "hover:border-orange-500/40 dark:hover:border-orange-400/40",
-    hoverGlow: "from-orange-500/5",
-    titleHover: "group-hover:text-orange-600 dark:group-hover:text-orange-400",
-    readMoreBtn: "text-orange-600 dark:text-orange-400 bg-orange-500/10 hover:bg-orange-500/20",
-    tagBadge: "bg-orange-500/10 text-orange-700 dark:text-orange-300 border-orange-500/20 hover:bg-orange-500/20",
-  },
-  general: {
-    accent: "muted",
-    hoverBorder: "hover:border-primary/40 dark:hover:border-primary/40",
-    hoverGlow: "from-primary/5",
-    titleHover: "group-hover:text-primary",
-    readMoreBtn: "text-primary bg-primary/10 hover:bg-primary/20",
-    tagBadge: "bg-primary/10 text-primary border-primary/20 hover:bg-primary/20",
-  },
-};
 
 /**
  * The single source of truth for how a community post looks.
@@ -145,16 +88,30 @@ export function PostCard({
 }: PostCardProps) {
   const navigate = useNavigate();
   const [isExpanded, setIsExpanded] = useState(false);
+  const [showPeerReportDialog, setShowPeerReportDialog] = useState(false);
+  const [reportingPeer, setReportingPeer] = useState(false);
   const isCompact = variant === "compact";
   const postedAt = formatRelativeTime(post.created_at);
-  const theme = POST_TYPE_THEMES[post.post_type] ?? POST_TYPE_THEMES.general;
 
   const handleAuthorClick = (event: React.MouseEvent) => {
     event.stopPropagation();
+    if (post.is_anonymous) return;
     if (onAuthorClick) {
       onAuthorClick(post.author.id, event);
     } else if (post.author.is_mentor) {
       navigate(`/mentor/${post.author.id}`);
+    }
+  };
+
+  const handlePeerReport = async () => {
+    setReportingPeer(true);
+    const { error } = await reportPeerConcern("post", post.id);
+    setReportingPeer(false);
+    setShowPeerReportDialog(false);
+    if (error) {
+      toast.error("Could not submit report. Please reach out to campus staff directly.");
+    } else {
+      toast.success("Thank you for looking out for your peer. Our moderation team has been notified.");
     }
   };
 
@@ -187,64 +144,84 @@ export function PostCard({
   };
 
   return (
-    <Card
+    <>
+      <Card
       className={cn(
-        "group relative flex flex-col overflow-hidden transition-all duration-300 select-text",
-        (isCompact || isLongText) && cn("cursor-pointer hover:-translate-y-0.5 hover:shadow-lg", theme.hoverBorder),
+        "group relative flex flex-col overflow-hidden transition-colors duration-150 select-text",
+        (isCompact || isLongText) && "cursor-pointer hover:border-foreground/20",
         className,
       )}
       onClick={handleCardClick}
     >
-      {/* Solid full-width top accent border — colour tracks the post type */}
-      <CardAccentBorder gradient={theme.accent as any} />
-
-      {/* Hover glow — matches post type accent */}
-      <div className={cn("pointer-events-none absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br to-transparent", theme.hoverGlow)} />
-
       {/* ── Body ── */}
       <div className={cn("relative flex flex-1 flex-col gap-3 px-4", isCompact ? "py-4" : "py-5")}>
 
         {/* ── Top Header: Author details & Post Type Badges ── */}
         <div className="flex items-start justify-between gap-3">
           {/* Author avatar & info */}
-          <div className="flex min-w-0 items-center gap-2.5">
-            <Avatar
-              className="h-9 w-9 shrink-0 ring-1 ring-border/80 transition-all duration-200 cursor-pointer hover:ring-2 hover:ring-primary/60 hover:scale-105"
-              onClick={handleAuthorClick}
-            >
-              <AvatarImage src={post.author.profile_image ?? undefined} alt={post.author.name} />
-              <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
-                {getInitials(post.author.name)}
-              </AvatarFallback>
-            </Avatar>
-
-            <div className="min-w-0 leading-tight text-left">
-              <div className="flex items-center gap-1">
-                <span
-                  className="truncate text-xs font-semibold text-foreground text-left cursor-pointer hover:text-primary hover:underline transition-colors"
-                  onClick={handleAuthorClick}
-                >
-                  {post.author.name}
-                </span>
-                {post.author.is_mentor && (
-                  <BadgeCheck
-                    className="h-3.5 w-3.5 shrink-0 text-primary cursor-pointer"
-                    aria-label="Verified mentor"
-                    onClick={handleAuthorClick}
-                  />
-                )}
+          {post.is_anonymous ? (
+            <div className="flex min-w-0 items-center gap-2.5">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border bg-muted text-muted-foreground">
+                <User className="h-4 w-4" aria-hidden="true" />
               </div>
-              <div className="flex items-center gap-1.5 text-2xs text-muted-foreground">
-                {post.author.department && (
-                  <>
-                    <span className="truncate max-w-[120px]">{post.author.department}</span>
-                    <span>•</span>
-                  </>
-                )}
-                <span className="shrink-0">{postedAt}</span>
+
+              <div className="min-w-0 leading-tight text-left">
+                <div className="flex items-center gap-1">
+                  <span className="truncate text-xs font-semibold text-foreground text-left">
+                    Anonymous student
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5 text-2xs text-muted-foreground">
+                  <span className="shrink-0">{postedAt}</span>
+                  {post.viewer_is_author && (
+                    <>
+                      <span aria-hidden>·</span>
+                      <span className="text-primary font-medium">Only you see this is yours</span>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
+          ) : (
+            <div className="flex min-w-0 items-center gap-2.5">
+              <Avatar
+                className="h-9 w-9 shrink-0 cursor-pointer border transition-colors duration-150 hover:border-foreground/30"
+                onClick={handleAuthorClick}
+              >
+                <AvatarImage src={post.author.profile_image ?? undefined} alt={post.author.name} />
+                <AvatarFallback className="bg-secondary text-xs font-medium text-secondary-foreground">
+                  {getInitials(post.author.name)}
+                </AvatarFallback>
+              </Avatar>
+
+              <div className="min-w-0 leading-tight text-left">
+                <div className="flex items-center gap-1">
+                  <span
+                    className="truncate text-xs font-semibold text-foreground text-left cursor-pointer hover:text-primary hover:underline transition-colors"
+                    onClick={handleAuthorClick}
+                  >
+                    {post.author.name}
+                  </span>
+                  {post.author.is_mentor && (
+                    <BadgeCheck
+                      className="h-3.5 w-3.5 shrink-0 text-primary cursor-pointer"
+                      aria-label="Verified mentor"
+                      onClick={handleAuthorClick}
+                    />
+                  )}
+                </div>
+                <div className="flex items-center gap-1.5 text-2xs text-muted-foreground">
+                  {post.author.department && (
+                    <>
+                      <span className="truncate max-w-[120px]">{post.author.department}</span>
+                      <span aria-hidden>·</span>
+                    </>
+                  )}
+                  <span className="shrink-0">{postedAt}</span>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Badges */}
           <div className="flex flex-wrap items-center justify-end gap-1.5 shrink-0">
@@ -252,38 +229,45 @@ export function PostCard({
             <PostStatusBadge status={post.status} />
             {isAwaitingReply(post) && <AwaitingReplyBadge />}
 
-            {post.viewer_is_author && (onEdit || onDelete) && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground"
-                    onClick={(event) => event.stopPropagation()}
-                    aria-label="Post options"
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
+                  onClick={(event) => event.stopPropagation()}
+                  aria-label="Post options"
+                >
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" onClick={(event) => event.stopPropagation()}>
+                {post.viewer_is_author && onEdit && (
+                  <DropdownMenuItem onClick={() => onEdit(post)}>
+                    <Pencil className="mr-2 h-3.5 w-3.5" />
+                    Edit
+                  </DropdownMenuItem>
+                )}
+                {post.viewer_is_author && onDelete && (
+                  <DropdownMenuItem
+                    className="text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer"
+                    onClick={() => onDelete(post)}
                   >
-                    <MoreHorizontal className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" onClick={(event) => event.stopPropagation()}>
-                  {onEdit && (
-                    <DropdownMenuItem onClick={() => onEdit(post)}>
-                      <Pencil className="mr-2 h-3.5 w-3.5" />
-                      Edit
-                    </DropdownMenuItem>
-                  )}
-                  {onDelete && (
-                    <DropdownMenuItem
-                      className="text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer"
-                      onClick={() => onDelete(post)}
-                    >
-                      <Trash2 className="mr-2 h-3.5 w-3.5" />
-                      Delete
-                    </DropdownMenuItem>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
+                    <Trash2 className="mr-2 h-3.5 w-3.5" />
+                    Delete
+                  </DropdownMenuItem>
+                )}
+                {!post.viewer_is_author && (
+                  <DropdownMenuItem
+                    onClick={() => setShowPeerReportDialog(true)}
+                    className="cursor-pointer text-muted-foreground hover:text-foreground"
+                  >
+                    <HeartHandshake className="mr-2 h-3.5 w-3.5 text-rose-500" />
+                    I&apos;m worried about this person
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 
@@ -291,9 +275,8 @@ export function PostCard({
         <div className={cn("space-y-1.5 text-left", isCompactTextOnly && "flex-1")}>
           <h3
             className={cn(
-              "font-semibold leading-snug tracking-tight text-left text-foreground transition-colors duration-200",
-              isCompact ? "line-clamp-2 text-base" : "text-xl",
-              theme.titleHover,
+              "font-semibold leading-snug tracking-tight text-left text-foreground",
+              isCompact ? "line-clamp-2 text-base" : "text-lg",
             )}
           >
             {post.title}
@@ -325,7 +308,7 @@ export function PostCard({
                   setIsExpanded((prev) => !prev);
                 }
               }}
-              className={cn("mt-1 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold transition-all duration-200 focus:outline-none", theme.readMoreBtn)}
+              className="mt-1 inline-flex items-center gap-1 rounded-sm text-sm font-medium text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <span>{isCompact ? "Read full post" : isExpanded ? "Show less" : "Read full post"}</span>
               {isCompact ? (
@@ -349,25 +332,32 @@ export function PostCard({
           }}
         />
 
-        {/* Tags — themed per post type */}
+        {/* Tags */}
         {post.tags && post.tags.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
             {post.tags.slice(0, isCompact ? 2 : 6).map((tag) => (
               <Badge
                 key={tag}
                 variant="outline"
-                className={cn("text-xs font-normal transition-colors", theme.tagBadge)}
+                className="text-xs font-normal text-muted-foreground"
               >
                 #{tag}
               </Badge>
             ))}
           </div>
         )}
+
+        {/* Well-being post help card */}
+        {post.post_type === "wellbeing" && (
+          <div className="pt-1">
+            <WellbeingHelpCard compact />
+          </div>
+        )}
       </div>
 
       {/* ── Footer — strictly action buttons ── */}
       <div
-        className="relative flex items-center justify-between gap-1 border-t border-border/60 px-4 py-2"
+        className="relative flex items-center justify-between gap-1 border-t px-2 py-1"
         onClick={(e) => e.stopPropagation()}
       >
         <Tooltip>
@@ -376,15 +366,15 @@ export function PostCard({
               variant="ghost"
               size="sm"
               className={cn(
-                "h-8 gap-1.5 px-3 text-xs font-medium text-muted-foreground hover:text-rose-600 transition-all duration-200 hover:scale-105",
-                post.viewer_has_liked && "text-rose-600 dark:text-rose-400 font-semibold",
+                "h-10 gap-1.5 px-3 text-sm font-medium text-muted-foreground hover:text-foreground",
+                post.viewer_has_liked && "text-rose-600 hover:text-rose-600 dark:text-rose-400",
               )}
               onClick={onLike ? (event) => onLike(post.id, event) : undefined}
               aria-pressed={post.viewer_has_liked}
               aria-label={post.viewer_has_liked ? "Unlike post" : "Like post"}
             >
-              <Heart className={cn("h-4 w-4 transition-transform", post.viewer_has_liked && "fill-current scale-110")} />
-              <span>{post.likes_count > 0 ? post.likes_count : "Like"}</span>
+              <Heart className={cn("h-4 w-4", post.viewer_has_liked && "fill-current")} />
+              <span className="tabular">{post.likes_count > 0 ? post.likes_count : "Like"}</span>
             </Button>
           </TooltipTrigger>
           <TooltipContent side="top" className="flex items-center gap-1 text-xs font-medium">
@@ -397,7 +387,7 @@ export function PostCard({
             <Button
               variant="ghost"
               size="sm"
-              className="h-8 gap-1.5 px-3 text-xs font-medium text-muted-foreground hover:text-primary transition-all duration-200 hover:scale-105"
+              className="h-10 gap-1.5 px-3 text-sm font-medium text-muted-foreground hover:text-foreground"
               onClick={(event) => {
                 event.stopPropagation();
                 onComment?.(post.id, event);
@@ -405,11 +395,11 @@ export function PostCard({
               aria-label="Comments"
             >
               <MessageCircle className="h-4 w-4" />
-              <span>{post.comments_count > 0 ? `${post.comments_count} Comment${post.comments_count > 1 ? "s" : ""}` : "Comment"}</span>
+              <span className="tabular">{post.comments_count > 0 ? `${post.comments_count} comment${post.comments_count > 1 ? "s" : ""}` : "Comment"}</span>
             </Button>
           </TooltipTrigger>
           <TooltipContent side="top" className="flex items-center gap-1 text-xs font-medium">
-            {post.comments_count > 0 ? `${post.comments_count} Comments` : "Write a comment"}
+            {post.comments_count > 0 ? `${post.comments_count} comments` : "Write a comment"}
           </TooltipContent>
         </Tooltip>
 
@@ -418,7 +408,7 @@ export function PostCard({
             <Button
               variant="ghost"
               size="sm"
-              className="h-8 gap-1.5 px-3 text-xs font-medium text-muted-foreground hover:text-primary transition-all duration-200 hover:scale-105"
+              className="h-10 gap-1.5 px-3 text-sm font-medium text-muted-foreground hover:text-foreground"
               onClick={onShare ? (event) => onShare(post, event) : undefined}
               aria-label="Share post"
             >
@@ -432,6 +422,29 @@ export function PostCard({
         </Tooltip>
       </div>
     </Card>
+
+    {/* Peer concern report confirmation dialog */}
+    <AlertDialog open={showPeerReportDialog} onOpenChange={setShowPeerReportDialog}>
+      <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Flag concern for campus moderators?</AlertDialogTitle>
+          <AlertDialogDescription>
+            If you are worried that this classmate might be going through a crisis or needs support, our team can check in on them discreetly. Your report is completely confidential.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={reportingPeer}>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={handlePeerReport}
+            disabled={reportingPeer}
+            className="bg-primary text-primary-foreground hover:bg-primary/90"
+          >
+            {reportingPeer ? "Submitting..." : "Notify moderation team"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  </>
   );
 }
 

@@ -3,7 +3,6 @@ import { Link, useLocation, useNavigate, useSearchParams } from "react-router-do
 import { useIsomorphicLayoutEffect } from "@/hooks/useIsomorphicLayoutEffect";
 import { toast } from "sonner";
 import { ChevronDown, FileText, Search } from "lucide-react";
-import { motion } from "framer-motion";
 
 import SEOHead from "@/components/SEOHead";
 import { ROUTE_META } from "@/lib/seo/route-meta";
@@ -19,6 +18,7 @@ import { PostCard } from "@/components/community-posts/PostCard";
 import { EditPostModal } from "@/components/community-posts/EditPostModal";
 import { ImageLightbox } from "@/components/community-posts/ImageLightbox";
 import { HorizontalScroller } from "@/components/ui/HorizontalScroller";
+import { WellbeingHelpCard } from "@/components/wellbeing/WellbeingHelpCard";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -146,7 +146,7 @@ const CommunityPosts = () => {
       });
 
       if (!user) {
-        toast.info("Please sign in to post to the campus feed", {
+        toast.info("Sign in to post to the board", {
           description: "Your compose draft will be ready once you sign in.",
         });
       } else {
@@ -193,7 +193,7 @@ const CommunityPosts = () => {
       });
 
       if (error) {
-        toast.error("Failed to load community posts");
+        toast.error("Could not load posts");
       } else if (data) {
         let loadedPosts = data;
         if (offset === 0 && targetPostId && !loadedPosts.some((p) => p.id === targetPostId)) {
@@ -376,7 +376,7 @@ const CommunityPosts = () => {
     const { error, liked } = await togglePostLike(postId);
     if (error) {
       applyLike(wasLiked);
-      toast.error("Failed to update like");
+      toast.error("Could not update like");
     } else if (liked !== !wasLiked) {
       applyLike(liked);
     }
@@ -396,7 +396,7 @@ const CommunityPosts = () => {
     }
 
     await navigator.clipboard.writeText(url);
-    toast.success("Link copied to clipboard");
+    toast.success("Link copied");
   };
 
   const handleDeleteConfirm = async () => {
@@ -407,7 +407,7 @@ const CommunityPosts = () => {
     setIsDeleting(false);
 
     if (error) {
-      toast.error("Failed to delete post");
+      toast.error("Could not delete post");
       return;
     }
 
@@ -446,27 +446,14 @@ const CommunityPosts = () => {
 
 
       <div className="min-h-screen bg-background">
-        {/* Hero header */}
-        <div className="relative overflow-hidden border-b border-border/60 bg-gradient-to-br from-emerald-500/5 via-background to-background">
-          {/* Decorative blobs */}
-          <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-emerald-500/8 blur-3xl" />
-          <div className="pointer-events-none absolute -left-16 bottom-0 h-48 w-48 rounded-full bg-emerald-500/5 blur-2xl" />
-
-          <div className="container mx-auto max-w-5xl px-4 pb-8 pt-28">
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              {/* Pill label */}
-              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">
-                <FileText className="h-3.5 w-3.5" />
-                Posts
-              </div>
-
+        {/* The site header is sticky and in flow, so no navbar offset here;
+            the old pt-28 left an empty band above the heading. */}
+        <div className="border-b">
+          <div className="container mx-auto max-w-5xl px-4 pb-6 pt-8 md:pt-10">
+            <div>
               <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-                <div>
-                  <h1 className="text-3xl font-bold tracking-tight">Posts</h1>
+                <div className="min-w-0">
+                  <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">Posts</h1>
                   <p className="mt-2 max-w-2xl text-base text-muted-foreground">
                     Find hackathon teammates, study help and project partners — anyone can post.
                   </p>
@@ -481,7 +468,7 @@ const CommunityPosts = () => {
                   initialTags={prefilledPost.tags}
                 />
               </div>
-            </motion.div>
+            </div>
           </div>
         </div>
 
@@ -494,7 +481,7 @@ const CommunityPosts = () => {
             <div className="relative mb-3">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Search posts, tags or content..."
+                placeholder="Search posts, tags or content"
                 value={searchTerm}
                 onChange={(event) => setSearchTerm(event.target.value)}
                 className="pl-10"
@@ -523,10 +510,10 @@ const CommunityPosts = () => {
                     onClick={() => selectType(type.value)}
                     aria-pressed={selectedType === type.value}
                     className={cn(
-                      "inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-medium transition-all duration-200 whitespace-nowrap shrink-0",
+                      "inline-flex h-9 items-center gap-1.5 rounded-md border px-3 text-sm font-medium transition-colors duration-150 whitespace-nowrap shrink-0",
                       selectedType === type.value
-                        ? "border-primary bg-primary text-primary-foreground font-semibold shadow-xs"
-                        : "border-border bg-card text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "bg-card text-muted-foreground hover:bg-accent hover:text-foreground",
                     )}
                   >
                     <type.icon className="h-3.5 w-3.5" aria-hidden />
@@ -534,9 +521,9 @@ const CommunityPosts = () => {
                     {type.value !== "all" && count > 0 && (
                       <span
                         className={cn(
-                          "tabular-nums text-2xs",
+                          "tabular text-xs",
                           selectedType === type.value
-                            ? "text-primary-foreground/80"
+                            ? "text-primary/80"
                             : "text-muted-foreground",
                         )}
                       >
@@ -552,7 +539,7 @@ const CommunityPosts = () => {
                   type="button"
                   onClick={() => setShowAllTypes((value) => !value)}
                   aria-expanded={showAllTypes}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-dashed border-border bg-card px-3.5 py-1.5 text-xs font-medium text-muted-foreground transition-all duration-200 hover:bg-accent hover:text-accent-foreground whitespace-nowrap shrink-0"
+                  className="inline-flex h-9 items-center gap-1.5 rounded-md border border-dashed bg-card px-3 text-sm font-medium text-muted-foreground transition-colors duration-150 hover:bg-accent hover:text-foreground whitespace-nowrap shrink-0"
                 >
                   {showAllTypes ? "Fewer" : `More (${hiddenCount})`}
                   <ChevronDown
@@ -570,10 +557,10 @@ const CommunityPosts = () => {
                   onClick={() => setMine((value) => !value)}
                   aria-pressed={mine}
                   className={cn(
-                    "inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-medium transition-all duration-200 whitespace-nowrap shrink-0 sm:ml-auto",
+                    "inline-flex h-9 items-center gap-1.5 rounded-md border px-3 text-sm font-medium transition-colors duration-150 whitespace-nowrap shrink-0 sm:ml-auto",
                     mine
-                      ? "border-primary bg-primary text-primary-foreground font-semibold shadow-xs"
-                      : "border-border bg-card text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "bg-card text-muted-foreground hover:bg-accent hover:text-foreground",
                   )}
                 >
                   Only mine
@@ -604,7 +591,10 @@ const CommunityPosts = () => {
               ))}
             </div>
           ) : posts.length === 0 ? (
-            <div className="rounded-lg border border-dashed px-6 py-16 text-center">
+            <div className="flex flex-col items-center rounded-lg border border-dashed px-6 py-16 text-center">
+              <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-md bg-secondary text-muted-foreground">
+                <FileText className="h-5 w-5" aria-hidden />
+              </div>
               {mine ? (
                 <>
                   <h3 className="mb-1 text-lg font-semibold">You haven't posted yet</h3>
@@ -627,7 +617,7 @@ const CommunityPosts = () => {
                 <>
                   <h3 className="mb-1 text-lg font-semibold">Nothing here yet</h3>
                   <p className="mx-auto max-w-sm text-sm text-muted-foreground">
-                    Be the first to post — ask for a hackathon teammate, study help or share an
+                    Post the first one: ask for a hackathon teammate or study help, or share an
                     announcement.
                   </p>
                 </>
@@ -648,19 +638,24 @@ const CommunityPosts = () => {
             </div>
           ) : (
             <div className="space-y-4">
+              {selectedType === "wellbeing" && (
+                <div className="mb-2">
+                  <WellbeingHelpCard />
+                </div>
+              )}
               {posts.map((post) => (
                 <div
                   key={post.id}
                   id={`post-${post.id}`}
                   className={cn(
-                    "scroll-mt-24 md:scroll-mt-28 rounded-xl transition-all duration-700",
+                    "scroll-mt-24 md:scroll-mt-28 rounded-lg transition-shadow duration-700",
                     highlightedPostId === post.id &&
-                      "ring-2 ring-emerald-500 ring-offset-4 ring-offset-background shadow-xl shadow-emerald-500/10",
+                      "ring-2 ring-primary ring-offset-4 ring-offset-background",
                   )}
                 >
                   <PostCard
                     post={post}
-                    onOpen={(postId) => toggleComments(postId, { stopPropagation: () => {} } as any)}
+                    onOpen={(postId) => toggleComments(postId, { stopPropagation: () => {} } as unknown as React.MouseEvent)}
                     onLike={handleLike}
                     onShare={handleShare}
                     onComment={toggleComments}
@@ -704,9 +699,9 @@ const CommunityPosts = () => {
                   <Button
                     variant="outline"
                     onClick={() => loadPosts(posts.length)}
-                    disabled={loadingMore}
+                    isLoading={loadingMore}
                   >
-                    {loadingMore ? "Loading..." : `Load more (${total - posts.length} left)`}
+                    {loadingMore ? "Loading" : `Load more (${total - posts.length} left)`}
                   </Button>
                 </div>
               )}
@@ -750,7 +745,7 @@ const CommunityPosts = () => {
               disabled={isDeleting}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {isDeleting ? "Deleting..." : "Delete"}
+              {isDeleting ? "Deleting" : "Delete post"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
