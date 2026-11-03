@@ -6,37 +6,37 @@
                             http://www.google.com/schemas/sitemap-image/1.1 http://www.google.com/schemas/sitemap-image/1.1/sitemap-image.xsd">
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/blogs</loc>
-    <lastmod>2026-09-07T01:41:28.929Z</lastmod>
+    <lastmod>2026-11-03T07:06:39.269Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://friendly-learning-srmap.vercel.app/blogs/ather-community-day-acd-26</loc>
+    <lastmod>2026-09-07T02:10:54.818965+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
     <loc>https://friendly-learning-srmap.vercel.app/blogs/friendly-learning-srmap</loc>
-    <lastmod>2026-09-06T03:14:27.052618+00:00</lastmod>
+    <lastmod>2026-09-19T15:54:07.922035+00:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/blogs/quantum-ai-innovation-center-qaic</loc>
-    <lastmod>2026-08-31T16:54:36.471671+00:00</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://friendly-learning-srmap.vercel.app/blogs/ather-community-day-acd-26</loc>
-    <lastmod>2026-08-31T17:04:14.276479+00:00</lastmod>
+    <lastmod>2026-09-19T22:39:00.124788+00:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/blogs/shakti-photon-solutions-journey</loc>
-    <lastmod>2026-09-06T06:49:49.088168+00:00</lastmod>
+    <lastmod>2026-09-19T20:16:29.420953+00:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://friendly-learning-srmap.vercel.app/blogs/refund-process-of-grant</loc>
-    <lastmod>2026-09-02T14:35:29.680155+00:00</lastmod>
+    <lastmod>2026-10-22T08:09:18.43545+00:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
