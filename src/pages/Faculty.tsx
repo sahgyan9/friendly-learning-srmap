@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigationType, useSearchParams } from "react-router-dom";
 import { useIsomorphicLayoutEffect } from "@/hooks/useIsomorphicLayoutEffect";
-import { BookOpen, EyeOff, GraduationCap, Search, SlidersHorizontal, ArrowUpDown, Star, X } from "lucide-react";
-import { motion } from "framer-motion";
+import { EyeOff, GraduationCap, Search, SlidersHorizontal, ArrowUpDown, UserRound, X } from "lucide-react";
 
 import Footer from "@/components/Footer";
 import SEOHead from "@/components/SEOHead";
@@ -26,7 +25,6 @@ import { getOfflineCache, setOfflineCache } from "@/lib/offline/offlineStorage";
 import { useHasSeenFacultyRatings } from "@/hooks/useFeatureAnnouncement";
 import { getBreadcrumbSchema } from "@/lib/structured-data";
 import { PRIMARY_DOMAIN } from "@/lib/constants";
-import { cn } from "@/lib/utils";
 import { matchFacultyDepartment } from "@/utils/user-utils";
 import {
   getFacultyDepartments,
@@ -38,6 +36,8 @@ import {
 } from "@/integrations/supabase/services/faculty";
 
 const PAGE_SIZE = 24;
+
+const FACULTY_GRID = "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4";
 
 const SORT_OPTIONS: { value: FacultySort; label: string }[] = [
   { value: "name", label: "Name (A–Z)" },
@@ -352,72 +352,47 @@ const Faculty = () => {
 
       <div className="min-h-screen bg-background">
 
-        {/* Hero header */}
-        <div className="relative overflow-hidden border-b border-border/60 bg-gradient-to-br from-rose-500/5 via-background to-background">
-          {/* Decorative blobs */}
-          <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-rose-500/8 blur-3xl" />
-          <div className="pointer-events-none absolute -left-16 bottom-0 h-48 w-48 rounded-full bg-rose-500/5 blur-2xl" />
-
-          <div className="container mx-auto px-4 pb-5 pt-20 sm:pt-22">
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              {/* Pill label */}
-              <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-rose-500/20 bg-rose-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-rose-600 dark:text-rose-400">
-                <BookOpen className="h-3.5 w-3.5" />
-                Faculty
-              </div>
-
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-                <div>
-                  <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Faculty Ratings</h1>
-                  <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-                    Honest, anonymous ratings from SRM AP students on teaching quality, grading fairness
-                    and helpfulness. Know what a course is like before you register.
-                  </p>
+        <header className="border-b border-border">
+          <div className="container mx-auto px-4 pb-6 pt-20 sm:pt-24 animate-fade-up">
+            <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">Faculty ratings</h1>
+            <p className="mt-2 max-w-2xl text-sm text-muted-foreground md:text-base">
+              Read what SRM AP students say about teaching, grading and helpfulness before you register, and rate faculty you have taken.
+            </p>
+            <dl className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-muted-foreground">
+              {stats.faculty_count > 0 && (
+                <div className="flex items-baseline gap-1.5">
+                  <dt className="sr-only">Faculty</dt>
+                  <dd className="font-medium text-foreground tabular">{stats.faculty_count}</dd>
+                  <span>faculty</span>
                 </div>
-
-                {/* Anonymous badge */}
-                <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground shadow-sm">
-                  <EyeOff className="h-3.5 w-3.5" />
-                  Ratings are anonymous
-                </span>
-              </div>
-
-              {/* Stats pills */}
-              <div className="mt-3 flex flex-wrap gap-2">
-                {stats.faculty_count > 0 && (
-                  <div className="flex items-center gap-1.5 rounded-full border border-rose-500/20 bg-rose-500/10 px-3 py-0.5 text-xs sm:text-sm">
-                    <BookOpen className="h-3.5 w-3.5 text-rose-600 dark:text-rose-400" />
-                    <strong className="text-rose-600 dark:text-rose-400">{stats.faculty_count}</strong>
-                    <span className="text-muted-foreground">faculty</span>
-                  </div>
-                )}
-                {stats.department_count > 0 && (
-                  <div className="flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-0.5 text-xs sm:text-sm shadow-sm">
-                    <strong className="text-foreground">{stats.department_count}</strong>
-                    <span className="text-muted-foreground">departments</span>
-                  </div>
-                )}
-                <div className="flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-0.5 text-xs sm:text-sm shadow-sm">
-                  <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-                  <strong className="text-foreground">{stats.rating_count}</strong>
-                  <span className="text-muted-foreground">{stats.rating_count === 1 ? "rating" : "ratings"}</span>
+              )}
+              {stats.department_count > 0 && (
+                <div className="flex items-baseline gap-1.5">
+                  <dt className="sr-only">Departments</dt>
+                  <dd className="font-medium text-foreground tabular">{stats.department_count}</dd>
+                  <span>departments</span>
                 </div>
+              )}
+              <div className="flex items-baseline gap-1.5">
+                <dt className="sr-only">Ratings</dt>
+                <dd className="font-medium text-foreground tabular">{stats.rating_count}</dd>
+                <span>{stats.rating_count === 1 ? "rating" : "ratings"}</span>
               </div>
-            </motion.div>
+              <div className="flex items-center gap-1.5">
+                <EyeOff className="h-4 w-4" aria-hidden />
+                <span>Ratings are anonymous</span>
+              </div>
+            </dl>
           </div>
-        </div>
+        </header>
 
-        <div ref={cardsRef} className="container mx-auto px-4 py-4">
+        <div ref={cardsRef} className="container mx-auto px-4 py-6">
           <header className="sr-only">
             <h2>Browse and filter faculty</h2>
           </header>
 
           <div className="mb-4 flex flex-col gap-3 sm:flex-row">
-            <div className="relative flex-1">
+            <div className="relative min-w-0 flex-1">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder="Search by name, department or research interest..."
@@ -430,7 +405,7 @@ const Faculty = () => {
                 <button
                   type="button"
                   onClick={() => setSearch("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  className="absolute right-1.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                   aria-label="Clear search"
                 >
                   <X className="h-4 w-4" />
@@ -440,7 +415,7 @@ const Faculty = () => {
 
             <Select value={department} onValueChange={(value) => updateParam("dept", value, "")}>
               <SelectTrigger className="w-full sm:w-[260px]">
-                <SlidersHorizontal className="mr-2 h-4 w-4 shrink-0" />
+                <SlidersHorizontal className="mr-2 h-4 w-4 shrink-0 text-muted-foreground" />
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -448,7 +423,7 @@ const Faculty = () => {
                 {departments.map((item) => (
                   <SelectItem key={item} value={item}>
                     {item}
-                    {userMatchedDept && item === userMatchedDept ? " (Your Dept)" : ""}
+                    {userMatchedDept && item === userMatchedDept ? " (your department)" : ""}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -469,37 +444,29 @@ const Faculty = () => {
             </Select>
           </div>
 
-          {/* Department smart default notification / quick switch banner */}
+          {/* One line that says which department is applied by default and
+              offers the way out of it, right above the grid it affects. */}
           {userMatchedDept && department === userMatchedDept && (
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-2.5 rounded-lg border border-rose-500/20 bg-rose-500/5 px-4 py-2.5 text-sm">
-              <div className="flex items-center gap-2 text-foreground">
-                <GraduationCap className="h-4 w-4 text-rose-600 dark:text-rose-400 shrink-0" />
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-card px-4 py-2.5 text-sm">
+              <p className="flex min-w-0 items-center gap-2 text-foreground">
+                <GraduationCap className="h-4 w-4 shrink-0 text-muted-foreground" />
                 <span>
-                  Showing <strong>{department}</strong> faculty (your department)
+                  Showing <span className="font-medium">{department}</span>, your department
                 </span>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-7 text-xs border-border bg-background hover:bg-muted"
-                onClick={() => updateParam("dept", "all", "")}
-              >
-                View all departments {stats.faculty_count > 0 ? `(${stats.faculty_count})` : ""}
+              </p>
+              <Button variant="ghost" size="sm" onClick={() => updateParam("dept", "all", "")}>
+                Show all departments
+                {stats.faculty_count > 0 && <span className="text-muted-foreground tabular">({stats.faculty_count})</span>}
               </Button>
             </div>
           )}
 
           {userMatchedDept && department === "all" && (
-            <div className="mb-4 flex items-center justify-between gap-2 rounded-lg border border-border bg-card px-4 py-2 text-xs text-muted-foreground shadow-sm">
-              <span>Viewing all departments</span>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-6 gap-1 px-2 text-xs font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-500/10"
-                onClick={() => updateParam("dept", userMatchedDept, "")}
-              >
-                <GraduationCap className="h-3.5 w-3.5" />
-                Switch to {userMatchedDept} (My Dept)
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-card px-4 py-2.5 text-sm">
+              <span className="text-muted-foreground">Showing all departments</span>
+              <Button variant="ghost" size="sm" onClick={() => updateParam("dept", userMatchedDept, "")}>
+                <GraduationCap />
+                Show {userMatchedDept} only
               </Button>
             </div>
           )}
@@ -510,13 +477,13 @@ const Faculty = () => {
           {interest ? (
             <div className="mb-4 flex flex-wrap items-center gap-2">
               <span className="text-sm text-muted-foreground">Showing faculty who work on</span>
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-rose-500/25 bg-rose-500/10 px-3 py-1 text-sm font-medium text-rose-700 dark:text-rose-300">
+              <span className="inline-flex h-8 items-center gap-1 rounded-md border border-primary bg-primary pl-3 pr-1 text-sm font-medium text-primary-foreground">
                 {interest}
                 <button
                   type="button"
                   onClick={() => updateParam("interest", "", "")}
                   aria-label={`Clear ${interest} filter`}
-                  className="rounded-full p-0.5 transition-colors hover:bg-rose-500/20"
+                  className="flex h-6 w-6 items-center justify-center rounded transition-colors hover:bg-primary-foreground/15"
                 >
                   <X className="h-3 w-3" />
                 </button>
@@ -525,24 +492,17 @@ const Faculty = () => {
           ) : (
             facets.length > 0 && (
               <div className="mb-4">
-                <div className="mb-1.5 flex items-center justify-between">
-                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    Browse by research interest
-                  </p>
-                  <span className="hidden text-2xs text-muted-foreground/70 sm:inline-block">
-                    Swipe to explore ({facets.length})
-                  </span>
-                </div>
+                <p className="mb-1.5 text-sm font-medium text-foreground">Research interest</p>
                 <HorizontalScroller className="flex items-center gap-1.5 py-1 px-0.5" ariaLabel="Research interest filters">
                   {facets.map((facet) => (
                     <button
                       key={facet.interest}
                       type="button"
                       onClick={() => updateParam("interest", facet.interest, "")}
-                      className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-xs whitespace-nowrap transition-colors hover:border-rose-500/30 hover:bg-rose-500/5"
+                      className="inline-flex h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md border border-border bg-card px-3 text-sm transition-colors duration-150 hover:bg-accent hover:text-accent-foreground"
                     >
                       {facet.interest}
-                      <span className="tabular-nums text-muted-foreground">{facet.count}</span>
+                      <span className="text-xs text-muted-foreground tabular">{facet.count}</span>
                     </button>
                   ))}
                 </HorizontalScroller>
@@ -551,34 +511,73 @@ const Faculty = () => {
           )}
 
           {loading ? (
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6">
-              {Array.from({ length: 12 }).map((_, index) => (
-                <div key={index} className="space-y-2">
-                  <Skeleton className="aspect-[4/3] w-full rounded-lg" />
-                  <Skeleton className="h-4 w-3/4" />
-                  <Skeleton className="h-3 w-1/2" />
+            <div className={FACULTY_GRID} aria-busy="true" aria-label="Loading faculty">
+              {Array.from({ length: 8 }).map((_, index) => (
+                <div key={index} className="flex flex-col rounded-lg border border-border bg-card shadow-card">
+                  <div className="flex flex-1 flex-col gap-3 p-4">
+                    <div className="flex items-start gap-3">
+                      <Skeleton className="h-12 w-12 shrink-0 rounded-full" />
+                      <div className="flex-1 space-y-2 pt-0.5">
+                        <Skeleton className="h-4 w-3/4" />
+                        <Skeleton className="h-3.5 w-1/2" />
+                      </div>
+                    </div>
+                    <div className="flex gap-1.5">
+                      <Skeleton className="h-5 w-20 rounded-md" />
+                      <Skeleton className="h-5 w-16 rounded-md" />
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between border-t border-border px-4 py-3">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-9 w-16 rounded-md" />
+                  </div>
                 </div>
               ))}
             </div>
           ) : faculty.length === 0 ? (
-            <div className="rounded-lg border border-dashed py-16 text-center">
-              <h3 className="mb-1 text-lg font-semibold">No faculty found</h3>
-              <p className="mx-auto max-w-md text-sm text-muted-foreground">
-                {search || department !== "all" || interest
-                  ? "Try a different search, department or research interest."
-                  : "The directory hasn't been synced yet. An admin can run the sync-faculty function to pull it from srmap.edu.in."}
-              </p>
+            <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-border px-6 py-14 text-center">
+              <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary">
+                <UserRound className="h-5 w-5 text-muted-foreground" />
+              </span>
+              <div>
+                <h3 className="text-base font-semibold">No faculty found</h3>
+                <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
+                  {search || department !== "all" || interest
+                    ? "Nobody matches this search, department and research interest together."
+                    : "The directory has not been synced yet. An admin can run the sync-faculty function to pull it from srmap.edu.in."}
+                </p>
+              </div>
+              {(search || department !== "all" || interest) && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setSearch("");
+                    const next = new URLSearchParams(searchParams);
+                    next.delete("q");
+                    next.delete("interest");
+                    next.set("dept", "all");
+                    setSearchParams(next, { replace: true });
+                  }}
+                >
+                  Clear filters
+                </Button>
+              )}
             </div>
           ) : (
             <>
-              <div
-                className={cn(
-                  "grid gap-3",
-                  "grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6",
-                )}
-              >
-                {faculty.map((member) => (
-                  <FacultyCard key={member.id} faculty={member} onRate={setRatingTarget} />
+              <p className="mb-3 text-sm text-muted-foreground" aria-live="polite">
+                Showing <span className="tabular">{faculty.length}</span> of <span className="tabular">{total}</span>
+              </p>
+              <div className={FACULTY_GRID}>
+                {faculty.map((member, index) => (
+                  <div
+                    key={member.id}
+                    className="min-w-0 animate-fade-up"
+                    style={index < 6 ? { animationDelay: `${index * 35}ms` } : undefined}
+                  >
+                    <FacultyCard faculty={member} onRate={setRatingTarget} />
+                  </div>
                 ))}
               </div>
 
@@ -587,9 +586,9 @@ const Faculty = () => {
                   <Button
                     variant="outline"
                     onClick={() => loadFaculty(faculty.length)}
-                    disabled={loadingMore}
+                    isLoading={loadingMore}
                   >
-                    {loadingMore ? "Loading..." : `Load more (${total - faculty.length} left)`}
+                    {`Load more (${total - faculty.length} left)`}
                   </Button>
                 </div>
               )}

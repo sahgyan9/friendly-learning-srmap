@@ -136,7 +136,7 @@ const VerifyCertificate = () => {
                 { label: "Mentor since", value: formatMonthYear(certificate.mentor_since) },
               ].map((item) => (
                 <div key={item.label}>
-                  <dt className="text-xs uppercase tracking-wide text-muted-foreground">
+                  <dt className="text-xs text-muted-foreground">
                     {item.label}
                   </dt>
                   <dd className="mt-1 font-semibold tabular-nums">{item.value}</dd>
@@ -146,7 +146,7 @@ const VerifyCertificate = () => {
           </CardContent>
         </Card>
 
-        <div className="overflow-hidden rounded-xl border shadow-sm">
+        <div className="overflow-hidden rounded-xl border border-border shadow-card">
           <MentorCertificate
             data={{
               name: certificate.name,

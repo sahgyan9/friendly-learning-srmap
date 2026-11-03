@@ -7,6 +7,28 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { GraduationCap, Code, BookOpen, Rocket } from "lucide-react";
 
+const STEPS = [
+    {
+        title: "Create your account",
+        body: "Sign up with any email address, or continue with Google. No university email is needed, and it takes under a minute.",
+    },
+    {
+        title: "Complete your profile",
+        body: "Add your skills, courses, interests and academic details so the right people can find you.",
+    },
+    {
+        title: "Connect and collaborate",
+        body: "Find mentors, study partners and hackathon teammates, or help others with what you know.",
+    },
+];
+
+const USES = [
+    { icon: GraduationCap, title: "Get academic help", body: "Mentors and peers for course help, assignment guidance and exam preparation." },
+    { icon: Code, title: "Build hackathon teams", body: "Developers, designers and business students for your next hackathon team." },
+    { icon: BookOpen, title: "Form study groups", body: "Classmates to study with, in a group that keeps the conversation in one place." },
+    { icon: Rocket, title: "Start projects", body: "Collaborators for startup ideas, research projects and side projects." },
+];
+
 const HowItWorks = () => {
     const structuredData = {
         "@context": "https://schema.org",
@@ -43,84 +65,66 @@ const HowItWorks = () => {
                 structuredData={structuredData}
             />
 
-            <div className="min-h-screen">
-                <main className="pt-24 pb-16">
-                    <div className="container px-4 md:px-6">
-                        <div className="max-w-4xl mx-auto">
-                            <header className="text-center mb-12">
-                                <h1 className="text-4xl font-bold mb-6">How Friendly Learning SRMAP Works</h1>
-                                <p className="text-xl text-muted-foreground">
-                                    Connect, collaborate, and succeed with fellow university students in just 3 simple steps
-                                </p>
-                            </header>
+            <div className="min-h-screen bg-background">
+                <main className="container px-4 pb-16 pt-16 md:px-6 md:pt-24">
+                    <div className="mx-auto max-w-4xl">
+                        <header className="max-w-2xl animate-fade-up">
+                            <h1 className="text-3xl font-semibold tracking-tight text-foreground md:text-4xl">
+                                How Friendly Learning works
+                            </h1>
+                            <p className="mt-4 text-lg text-muted-foreground">
+                                Three steps from sign-up to working with the right people at SRM AP.
+                            </p>
+                        </header>
 
-                            <div className="grid md:grid-cols-3 gap-8 mb-12">
-                                <div className="text-center p-6 border rounded-lg">
-                                    <div className="w-16 h-16 bg-primary/10 text-primary rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4">1</div>
-                                    <h3 className="text-xl font-bold mb-3">Create Your Account</h3>
-                                    <p>Sign up with any email address, or continue with Google. No university email needed — it takes under a minute.</p>
-                                </div>
-                                <div className="text-center p-6 border rounded-lg">
-                                    <div className="w-16 h-16 bg-primary/10 text-primary rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4">2</div>
-                                    <h3 className="text-xl font-bold mb-3">Complete Your Profile</h3>
-                                    <p>Add your skills, courses, interests, and academic information to help others find and connect with you.</p>
-                                </div>
-                                <div className="text-center p-6 border rounded-lg">
-                                    <div className="w-16 h-16 bg-primary/10 text-primary rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4">3</div>
-                                    <h3 className="text-xl font-bold mb-3">Connect & Collaborate</h3>
-                                    <p>Find mentors, study partners, hackathon teammates, or help others with your expertise and knowledge.</p>
-                                </div>
-                            </div>
+                        {/* Numbered steps: the sequence is the content, so it is shown as one */}
+                        <ol className="mt-12 grid gap-10 border-t border-border pt-10 md:grid-cols-3 md:gap-12">
+                            {STEPS.map((step, i) => (
+                                <li key={step.title} className="min-w-0">
+                                    <span className="tabular text-4xl font-semibold tracking-tight text-primary">
+                                        {String(i + 1).padStart(2, "0")}
+                                    </span>
+                                    <h2 className="mt-4 text-lg font-semibold text-foreground">{step.title}</h2>
+                                    <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{step.body}</p>
+                                </li>
+                            ))}
+                        </ol>
 
-                            <div className="bg-muted p-8 rounded-lg mb-12">
-                                <h2 className="text-2xl font-bold mb-6">What You Can Do on Friendly Learning SRMAP</h2>
-                                <div className="grid md:grid-cols-2 gap-6">
-                                    <div>
-                                        <h4 className="font-bold mb-2 flex items-center gap-2">
-                                            <GraduationCap className="h-4 w-4 text-primary shrink-0" />
-                                            <span>Find Academic Help</span>
-                                        </h4>
-                                        <p className="text-sm mb-4">Connect with mentors and peers for course help, assignment guidance, and exam preparation.</p>
-
-                                        <h4 className="font-bold mb-2 flex items-center gap-2">
-                                            <Code className="h-4 w-4 text-primary shrink-0" />
-                                            <span>Build Hackathon Teams</span>
-                                        </h4>
-                                        <p className="text-sm mb-4">Find developers, designers, and business minds to create winning hackathon teams.</p>
+                        <section className="mt-16" aria-labelledby="hiw-uses">
+                            <h2 id="hiw-uses" className="text-2xl font-semibold tracking-tight text-foreground">
+                                What students use it for
+                            </h2>
+                            <dl className="mt-6 grid gap-x-10 border-t border-border sm:grid-cols-2">
+                                {USES.map(({ icon: Icon, title, body }) => (
+                                    <div key={title} className="min-w-0 border-b border-border py-6">
+                                        <dt className="flex items-center gap-2 font-semibold text-foreground">
+                                            <Icon className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+                                            {title}
+                                        </dt>
+                                        <dd className="mt-2 text-sm leading-relaxed text-muted-foreground">{body}</dd>
                                     </div>
-                                    <div>
-                                        <h4 className="font-bold mb-2 flex items-center gap-2">
-                                            <BookOpen className="h-4 w-4 text-primary shrink-0" />
-                                            <span>Form Study Groups</span>
-                                        </h4>
-                                        <p className="text-sm mb-4">Connect with classmates for collaborative learning and study sessions.</p>
+                                ))}
+                            </dl>
+                        </section>
 
-                                        <h4 className="font-bold mb-2 flex items-center gap-2">
-                                            <Rocket className="h-4 w-4 text-primary shrink-0" />
-                                            <span>Start Projects</span>
-                                        </h4>
-                                        <p className="text-sm mb-4">Find collaborators for startup ideas, research projects, and innovative solutions.</p>
-                                    </div>
-                                </div>
+                        <section className="mt-16 rounded-xl border border-border bg-card p-6 shadow-card sm:p-8">
+                            <h2 className="text-xl font-semibold tracking-tight text-foreground">Create your account</h2>
+                            <p className="mt-2 text-muted-foreground">
+                                Find the people at SRM AP who can help with what you are working on.
+                            </p>
+                            <div className="mt-6 flex flex-wrap gap-3">
+                                <Button asChild size="lg">
+                                    <Link to="/signup">Sign up</Link>
+                                </Button>
+                                <Button variant="outline" size="lg" asChild>
+                                    <Link to="/mentors">Browse mentors</Link>
+                                </Button>
                             </div>
-
-                            <div className="text-center">
-                                <h2 className="text-2xl font-bold mb-4">Ready to Get Started?</h2>
-                                <p className="mb-6">Find the people at SRM AP who can help with what you're working on</p>
-                                <div className="space-x-4">
-                                    <Button asChild size="lg">
-                                        <Link to="/signup">Join Friendly Learning SRMAP Now</Link>
-                                    </Button>
-                                    <Button variant="outline" size="lg" asChild>
-                                        <Link to="/mentors">Browse Mentors</Link>
-                                    </Button>
-                                </div>
-                                <p className="text-sm text-muted-foreground mt-6">
-                                    Wondering how mentor applications and certificates are checked?{" "}
-                                    <Link to="/how-verification-works" className="text-primary underline underline-offset-2">How verification works</Link>.
-                                </p>
-                            </div>
-                        </div>
+                            <p className="mt-6 text-sm text-muted-foreground">
+                                Wondering how mentor applications and certificates are checked?{" "}
+                                <Link to="/how-verification-works" className="text-primary underline underline-offset-2">How verification works</Link>.
+                            </p>
+                        </section>
                     </div>
                 </main>
                 <Footer />

@@ -75,10 +75,10 @@ const AdminWelcomeEmails = () => {
   return (
     <AdminLayout>
       <div className="space-y-6">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">Welcome emails</h1>
-            <p className="mt-1 text-sm text-muted-foreground">
+        <div className="flex flex-col gap-4 border-b border-border pb-6 sm:flex-row sm:items-end sm:justify-between">
+          <div className="min-w-0">
+            <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">Welcome emails</h1>
+            <p className="mt-2 text-sm text-muted-foreground md:text-base">
               New mentors are approved automatically, so nobody is prompted to welcome them. This is
               the list of who still needs one.
             </p>

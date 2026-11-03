@@ -1,17 +1,27 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, Clock } from "lucide-react";
+import { Clock } from "lucide-react";
 
 import { PRIMARY_DOMAIN } from "@/lib/constants";
 import SEOHead from "@/components/SEOHead";
 import { ROUTE_META } from "@/lib/seo/route-meta";
 import Footer from "@/components/Footer";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { formatBlogDate, getSortedBlogPosts } from "@/data/blog-posts";
+
+const PostMeta = ({ date, minutes }: { date: string; minutes: number }) => (
+    <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground tabular">
+        <time dateTime={date}>{formatBlogDate(date)}</time>
+        <span aria-hidden>·</span>
+        <span className="flex items-center gap-1">
+            <Clock className="h-3.5 w-3.5" aria-hidden />
+            {minutes} min read
+        </span>
+    </div>
+);
 
 const Blog = () => {
     const posts = getSortedBlogPosts();
+    const [featured, ...rest] = posts;
 
     const structuredData = {
         "@context": "https://schema.org",
@@ -44,66 +54,70 @@ const Blog = () => {
                 structuredData={structuredData}
             />
 
-            <div className="min-h-screen">
-                <main className="pt-24 pb-16">
-                    <div className="container px-4 md:px-6">
-                        <div className="mx-auto max-w-3xl">
-                            <header className="mb-12 text-center">
-                                <h1 className="mb-4 text-4xl font-bold tracking-tight">Guides for SRM AP students</h1>
-                                <p className="text-lg text-muted-foreground">
-                                    Short, practical writing on the decisions that actually shape a semester.
-                                </p>
-                            </header>
+            <div className="flex min-h-screen flex-col bg-background">
+                <main className="flex-1 pb-20 pt-24 sm:pt-28">
+                    <div className="container max-w-3xl px-4 md:px-6">
+                        <header className="mb-10 border-b border-border pb-8">
+                            <h1 className="text-3xl font-semibold tracking-tight text-foreground md:text-4xl">
+                                Guides for SRM AP students
+                            </h1>
+                            <p className="mt-2 text-muted-foreground">
+                                Short, practical writing on the decisions that actually shape a semester.
+                            </p>
+                        </header>
 
-                            <div className="mb-16 grid gap-5">
-                                {posts.map((post) => (
-                                    <Card key={post.slug} className="group transition-all hover:-translate-y-0.5 hover:shadow-lg">
-                                        <article className="p-6">
-                                            <div className="mb-3 flex flex-wrap gap-2">
-                                                {post.tags.map((tag) => (
-                                                    <Badge key={tag} variant="secondary" className="font-normal">
-                                                        {tag}
-                                                    </Badge>
-                                                ))}
-                                            </div>
+                        {featured && (
+                            <article className="animate-fade-up">
+                                <Link to={`/blog/${featured.slug}`} className="group block rounded-lg">
+                                    <p className="mb-3 text-sm font-medium text-muted-foreground">
+                                        Latest{featured.tags[0] && <> · <span className="text-primary">{featured.tags[0]}</span></>}
+                                    </p>
+                                    <h2 className="text-2xl font-semibold leading-tight tracking-tight text-foreground underline-offset-4 decoration-foreground/30 group-hover:underline md:text-3xl">
+                                        {featured.title}
+                                    </h2>
+                                    <p className="mt-3 text-lg leading-relaxed text-muted-foreground">{featured.excerpt}</p>
+                                    <PostMeta date={featured.date} minutes={featured.readingMinutes} />
+                                </Link>
+                            </article>
+                        )}
 
-                                            <h2 className="mb-2 text-2xl font-bold leading-snug tracking-tight">
-                                                <Link to={`/blog/${post.slug}`} className="transition-colors group-hover:text-primary">
-                                                    {post.title}
-                                                </Link>
+                        {rest.length > 0 && (
+                            <ul className="mt-10 divide-y divide-border border-t border-border">
+                                {rest.map((post, index) => (
+                                    <li
+                                        key={post.slug}
+                                        className="animate-fade-up"
+                                        style={{ animationDelay: `${(index + 1) * 35}ms`, animationFillMode: "both" }}
+                                    >
+                                        <Link
+                                            to={`/blog/${post.slug}`}
+                                            className="group -mx-3 block rounded-lg px-3 py-6 transition-colors duration-150 hover:bg-accent/60"
+                                        >
+                                            {post.tags.length > 0 && (
+                                                <p className="mb-1.5 text-xs font-medium text-muted-foreground">{post.tags.join(" · ")}</p>
+                                            )}
+                                            <h2 className="text-xl font-semibold leading-snug tracking-tight text-foreground underline-offset-4 decoration-foreground/30 group-hover:underline">
+                                                {post.title}
                                             </h2>
-
-                                            <p className="mb-4 text-muted-foreground">{post.excerpt}</p>
-
-                                            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
-                                                <time dateTime={post.date}>{formatBlogDate(post.date)}</time>
-                                                <span className="flex items-center gap-1.5">
-                                                    <Clock className="h-3.5 w-3.5" aria-hidden />
-                                                    {post.readingMinutes} min read
-                                                </span>
-                                                <Link
-                                                    to={`/blog/${post.slug}`}
-                                                    className="ml-auto flex items-center gap-1 font-medium text-primary"
-                                                >
-                                                    Read
-                                                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-                                                </Link>
-                                            </div>
-                                        </article>
-                                    </Card>
+                                            <p className="mt-1.5 line-clamp-2 text-muted-foreground">{post.excerpt}</p>
+                                            <PostMeta date={post.date} minutes={post.readingMinutes} />
+                                        </Link>
+                                    </li>
                                 ))}
-                            </div>
+                            </ul>
+                        )}
 
-                            <div className="rounded-xl border bg-muted/40 p-8 text-center">
-                                <h2 className="mb-2 text-2xl font-bold">Got a question these don't answer?</h2>
-                                <p className="mb-6 text-muted-foreground">
-                                    Ask it on Posts — every SRM AP student can post and reply.
+                        <aside className="mt-16 flex flex-col gap-4 rounded-lg border border-border bg-card p-6 shadow-card sm:flex-row sm:items-center sm:justify-between">
+                            <div>
+                                <h2 className="font-semibold text-foreground">Got a question these don't answer?</h2>
+                                <p className="mt-1 text-sm text-muted-foreground">
+                                    Ask it on Posts. Every SRM AP student can post and reply.
                                 </p>
-                                <Button asChild size="lg">
-                                    <Link to="/posts">Go to Posts</Link>
-                                </Button>
                             </div>
-                        </div>
+                            <Button asChild className="shrink-0">
+                                <Link to="/posts">Go to Posts</Link>
+                            </Button>
+                        </aside>
                     </div>
                 </main>
                 <Footer />

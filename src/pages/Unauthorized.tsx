@@ -6,32 +6,25 @@ import { ShieldOff } from "lucide-react";
 const Unauthorized = () => {
   return (
     <div className="min-h-screen bg-background">
-
-      <div className="container px-4 md:px-6 pt-24 pb-16">
-        <div className="max-w-md mx-auto text-center py-12">
-          <div className="bg-card p-8 rounded-xl shadow-sm border">
-            <div className="inline-block p-4 bg-destructive/10 rounded-full mb-4">
-              <ShieldOff className="h-8 w-8 text-destructive" />
-            </div>
-            
-            <h1 className="text-2xl font-bold mb-3">Access Denied</h1>
-            
-            <p className="text-muted-foreground mb-6">
-              You don't have permission to access this page. Please contact an administrator if you believe this is an error.
-            </p>
-            
-            <div className="space-y-3">
-              <Button asChild className="w-full">
-                <Link to="/">Go to Home</Link>
-              </Button>
-              
-              <Button variant="outline" asChild className="w-full">
-                <Link to="/contact">Contact Support</Link>
-              </Button>
-            </div>
+      <main className="container px-4 py-24 md:px-6 md:py-32">
+        <div className="mx-auto max-w-md text-center animate-fade-up">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg border border-border bg-secondary text-muted-foreground">
+            <ShieldOff className="h-5 w-5" aria-hidden />
+          </div>
+          <h1 className="mt-5 text-3xl font-semibold tracking-tight text-foreground">You do not have access to this page</h1>
+          <p className="mt-4 text-muted-foreground">
+            This page needs a role your account does not have. If you think that is wrong, contact us and say which page you tried to open.
+          </p>
+          <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+            <Button asChild>
+              <Link to="/">Go to the homepage</Link>
+            </Button>
+            <Button variant="outline" asChild>
+              <Link to="/contact">Contact us</Link>
+            </Button>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 };

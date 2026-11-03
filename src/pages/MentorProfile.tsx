@@ -3,7 +3,8 @@ import { PRIMARY_DOMAIN } from "@/lib/constants";
 import { useState, useEffect } from "react";
 import NoIndex from "@/components/NoIndex";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Loader2, Sparkles } from "lucide-react";
+import { ArrowLeft, UserPlus } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import SEOHead from "@/components/SEOHead";
@@ -82,16 +83,17 @@ const MentorProfile = () => {
   if (loading) {
     return (
       <div className="min-h-screen">
-        <div className="container px-4 md:px-6 pt-24 pb-16 flex justify-center items-center min-h-[60vh]">
-          <motion.div
-            className="flex flex-col items-center"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.3 }}
-          >
-            <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
-            <p className="text-lg text-muted-foreground">Loading mentor profile...</p>
-          </motion.div>
+        <div className="container space-y-6 px-4 pb-16 pt-24 md:px-6" aria-busy="true" aria-label="Loading profile">
+          <Skeleton className="h-9 w-24" />
+          <div className="flex items-start gap-4 rounded-xl border border-border bg-card p-6">
+            <Skeleton className="h-24 w-24 shrink-0 rounded-full" />
+            <div className="flex-1 space-y-3 pt-1">
+              <Skeleton className="h-7 w-1/3" />
+              <Skeleton className="h-4 w-1/4" />
+              <Skeleton className="h-4 w-2/3" />
+            </div>
+          </div>
+          <Skeleton className="h-40 w-full rounded-xl" />
         </div>
       </div>
     );
@@ -109,35 +111,35 @@ const MentorProfile = () => {
           transition={{ duration: 0.3 }}
         >
           <div className="max-w-3xl mx-auto text-center py-12">
-            <h1 className="text-3xl font-bold mb-4">
-              {isCurrentUser ? "You Don't Have a Public Profile Yet" : "Mentor Not Found"}
+            <h1 className="mb-3 text-3xl font-semibold tracking-tight md:text-4xl">
+              {isCurrentUser ? "You do not have a public profile yet" : "Mentor not found"}
             </h1>
             <p className="text-muted-foreground mb-8 max-w-md mx-auto">
               {isCurrentUser
-                ? "You haven't set up or published your public mentor profile yet. Create one in seconds to help classmates and juniors find you for mentorship and projects."
-                : "The mentor profile you're looking for doesn't exist or has been removed."}
+                ? "Set up and publish a profile so classmates and juniors can find you for mentoring and projects."
+                : "This profile does not exist or has been removed."}
             </p>
             <div className="flex items-center justify-center gap-3">
               {isCurrentUser ? (
                 <>
-                  <Button asChild className="gap-2">
+                  <Button asChild>
                     <Link to="/profile/setup">
-                      <Sparkles className="h-4 w-4" />
-                      Set Up Public Profile
+                      <UserPlus />
+                      Set up profile
                     </Link>
                   </Button>
                   <Button asChild variant="outline">
                     <Link to="/mentors">
-                      <ArrowLeft className="mr-2 h-4 w-4" />
-                      Browse Mentors
+                      <ArrowLeft />
+                      Browse mentors
                     </Link>
                   </Button>
                 </>
               ) : (
                 <Button asChild>
                   <Link to="/mentors">
-                    <ArrowLeft className="mr-2 h-4 w-4" />
-                    Back to Mentors
+                    <ArrowLeft />
+                    Back to mentors
                   </Link>
                 </Button>
               )}
@@ -187,15 +189,11 @@ const MentorProfile = () => {
 
       <main className="pt-24 pb-28 lg:pb-16">
         <div className="container px-4 md:px-6">
-          <motion.div
-            className="mb-8"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-          >
+          <div className="mb-6">
             <Button
               variant="ghost"
-              className="px-0 text-muted-foreground hover:bg-transparent"
+              size="sm"
+              className="-ml-2 text-muted-foreground hover:text-foreground"
               onClick={() => {
                 if (window.history.state && window.history.state.idx > 0) {
                   navigate(-1);
@@ -204,10 +202,10 @@ const MentorProfile = () => {
                 }
               }}
             >
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Mentors
+              <ArrowLeft />
+              Mentors
             </Button>
-          </motion.div>
+          </div>
 
           <MentorProfileContent
             mentor={mentor}

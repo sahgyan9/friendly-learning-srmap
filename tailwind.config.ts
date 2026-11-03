@@ -46,6 +46,14 @@ export default {
 					DEFAULT: 'hsl(var(--destructive))',
 					foreground: 'hsl(var(--destructive-foreground))'
 				},
+				success: {
+					DEFAULT: 'hsl(var(--success))',
+					foreground: 'hsl(var(--success-foreground))'
+				},
+				warning: {
+					DEFAULT: 'hsl(var(--warning))',
+					foreground: 'hsl(var(--warning-foreground))'
+				},
 				muted: {
 					DEFAULT: 'hsl(var(--muted))',
 					foreground: 'hsl(var(--muted-foreground))'
@@ -79,6 +87,15 @@ export default {
 				},
 				brand: '#3963C6',
 			},
+			// Two elevation steps only. Cards rest on `card`, things that float
+			// above the page (popovers, dialogs, the intro) use `float`.
+			boxShadow: {
+				card: '0 1px 2px 0 rgb(15 23 42 / 0.04), 0 1px 3px 0 rgb(15 23 42 / 0.06)',
+				float: '0 12px 32px -8px rgb(15 23 42 / 0.18), 0 2px 6px -2px rgb(15 23 42 / 0.08)',
+			},
+			transitionTimingFunction: {
+				'out-quart': 'cubic-bezier(0.25, 1, 0.5, 1)',
+			},
 			borderRadius: {
 				lg: 'var(--radius)',
 				md: 'calc(var(--radius) - 2px)',
@@ -106,11 +123,11 @@ export default {
 					'100%': { opacity: '1' }
 				},
 				'fade-up': {
-					'0%': { opacity: '0', transform: 'translateY(20px)' },
+					'0%': { opacity: '0', transform: 'translateY(8px)' },
 					'100%': { opacity: '1', transform: 'translateY(0)' }
 				},
 				'scale-in': {
-					'0%': { opacity: '0', transform: 'scale(0.9)' },
+					'0%': { opacity: '0', transform: 'scale(0.97)' },
 					'100%': { opacity: '1', transform: 'scale(1)' }
 				},
 				'slide-in-right': {
@@ -145,9 +162,9 @@ export default {
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out',
-				'fade-in': 'fade-in 0.5s ease-out',
-				'fade-up': 'fade-up 0.5s ease-out',
-				'scale-in': 'scale-in 0.3s ease-out',
+				'fade-in': 'fade-in 0.3s cubic-bezier(0.25, 1, 0.5, 1)',
+				'fade-up': 'fade-up 0.4s cubic-bezier(0.25, 1, 0.5, 1) both',
+				'scale-in': 'scale-in 0.2s cubic-bezier(0.25, 1, 0.5, 1)',
 				'slide-in-right': 'slide-in-right 0.5s ease-out',
 				'slide-in-left': 'slide-in-left 0.5s ease-out',
 				'slide-in-bottom': 'slide-in-bottom 0.5s ease-out',

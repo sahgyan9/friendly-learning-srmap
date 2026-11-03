@@ -173,7 +173,7 @@ const OpportunityDetail = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
-        <div className="container mx-auto max-w-3xl px-4 pt-28">
+        <div className="container mx-auto max-w-3xl px-4 pt-8">
           <Skeleton className="h-8 w-2/3" />
           <Skeleton className="mt-3 h-4 w-1/3" />
           <Skeleton className="mt-6 h-32 w-full" />
@@ -186,8 +186,8 @@ const OpportunityDetail = () => {
     return (
       <div className="min-h-screen bg-background">
         <NoIndex />
-        <div className="container mx-auto max-w-3xl px-4 pt-28 text-center">
-          <h1 className="text-2xl font-bold">Opportunity not found</h1>
+        <div className="container mx-auto max-w-3xl px-4 pt-8 text-center">
+          <h1 className="text-2xl font-semibold tracking-tight">Opportunity not found</h1>
           <p className="mt-2 text-muted-foreground">It may have closed or been removed.</p>
           <Button asChild className="mt-4">
             <Link to="/opportunities">See what's open</Link>
@@ -225,7 +225,7 @@ const OpportunityDetail = () => {
       />
 
       <div className="min-h-screen bg-background">
-        <div className="container mx-auto max-w-3xl px-4 pb-12 pt-24">
+        <div className="container mx-auto max-w-3xl px-4 pb-12 pt-8">
           <Link
             to="/opportunities"
             className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
@@ -234,10 +234,10 @@ const OpportunityDetail = () => {
             All opportunities
           </Link>
 
-          <Card className="p-5">
+          <Card className="p-5 sm:p-6">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0">
-                <h1 className="text-2xl font-bold leading-tight">{opportunity.title}</h1>
+                <h1 className="text-3xl font-semibold leading-tight tracking-tight md:text-4xl">{opportunity.title}</h1>
                 <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
                   {opportunity.organiser && <span>{opportunity.organiser}</span>}
                   <span className="inline-flex items-center gap-1">
@@ -251,13 +251,13 @@ const OpportunityDetail = () => {
                   )}
                 </p>
               </div>
-              <span className="rounded-full border border-border bg-muted/60 px-2.5 py-1 text-xs font-medium uppercase tracking-wide">
+              <span className="rounded bg-secondary px-2 py-0.5 text-xs font-medium capitalize text-secondary-foreground">
                 {opportunity.kind}
               </span>
             </div>
 
             {opportunity.register_by && (
-              <p className="mt-4 inline-flex items-center gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm">
+              <p className="tabular mt-4 inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm">
                 <CalendarClock className="h-4 w-4 text-muted-foreground" />
                 {days !== null && days <= 0
                   ? "Registration closes today"
@@ -279,7 +279,7 @@ const OpportunityDetail = () => {
                 {opportunity.tags.map((tag) => (
                   <span
                     key={tag}
-                    className="rounded border border-border bg-muted/50 px-2 py-0.5 text-xs"
+                    className="rounded border px-2 py-0.5 text-xs text-muted-foreground"
                   >
                     {tag}
                   </span>
@@ -288,8 +288,8 @@ const OpportunityDetail = () => {
             )}
 
             <div className="mt-5 flex flex-wrap gap-2">
-              <Button onClick={toggleInterest} disabled={busy} variant={interested ? "outline" : "default"}>
-                <Hand className="mr-1.5 h-4 w-4" />
+              <Button onClick={toggleInterest} isLoading={busy} aria-pressed={interested} variant={interested ? "outline" : "default"}>
+                {interested ? <Check className="h-4 w-4 text-emerald-600" /> : <Hand className="h-4 w-4" />}
                 {interested ? "You're interested" : "I'm interested"}
               </Button>
 
@@ -321,7 +321,7 @@ const OpportunityDetail = () => {
               </Button>
               <Button size="sm" variant="outline" onClick={() => copyLink(shareUrl)}>
                 {linkCopied ? (
-                  <Check className="mr-1.5 h-4 w-4 text-green-600 dark:text-green-500" />
+                  <Check className="mr-1.5 h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                 ) : (
                   <Link2 className="mr-1.5 h-4 w-4" />
                 )}
@@ -332,9 +332,13 @@ const OpportunityDetail = () => {
 
           <section className="mt-8">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-              <h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                <Users className="h-4 w-4" />
-                Teams {teams.length > 0 && `(${openTeams.length} looking for members)`}
+              <h2 className="flex items-baseline gap-2 text-lg font-semibold tracking-tight">
+                Teams
+                {teams.length > 0 && (
+                  <span className="tabular text-sm font-normal text-muted-foreground">
+                    {openTeams.length} looking for members
+                  </span>
+                )}
               </h2>
               <Button
                 size="sm"
@@ -347,16 +351,19 @@ const OpportunityDetail = () => {
             </div>
 
             {teams.length === 0 ? (
-              <div className="rounded-lg border border-dashed py-10 text-center">
+              <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed px-6 py-10 text-center">
+                <div className="flex h-10 w-10 items-center justify-center rounded-md bg-secondary text-muted-foreground">
+                  <Users className="h-5 w-5" />
+                </div>
                 <p className="mx-auto max-w-sm text-sm text-muted-foreground">
                   No teams yet. Starting one creates a private group chat, and anyone who's
                   interested can see what skills you're looking for.
                 </p>
               </div>
             ) : (
-              <div className="grid gap-2 sm:grid-cols-2">
+              <div className="grid gap-3 sm:grid-cols-2">
                 {teams.map((team) => (
-                  <Card key={team.id} className="flex flex-col gap-2 p-3">
+                  <Card key={team.id} className="flex min-w-0 flex-col gap-2 p-4">
                     <div className="flex items-start justify-between gap-2">
                       <span className="font-semibold leading-tight">
                         {team.community?.name ?? "Team"}
@@ -364,10 +371,11 @@ const OpportunityDetail = () => {
                       <span
                         className={
                           team.is_open
-                            ? "shrink-0 rounded px-1.5 py-0.5 text-3xs font-medium text-emerald-700 dark:text-emerald-400"
-                            : "shrink-0 rounded px-1.5 py-0.5 text-3xs font-medium text-muted-foreground"
+                            ? "inline-flex shrink-0 items-center gap-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-400"
+                            : "inline-flex shrink-0 items-center gap-1.5 text-xs font-medium text-muted-foreground"
                         }
                       >
+                        <span aria-hidden className={team.is_open ? "h-1.5 w-1.5 rounded-full bg-emerald-500" : "h-1.5 w-1.5 rounded-full bg-muted-foreground/50"} />
                         {team.is_open ? "Open" : "Full"}
                       </span>
                     </div>
@@ -378,11 +386,11 @@ const OpportunityDetail = () => {
 
                     {team.looking_for.length > 0 && team.is_open && (
                       <div className="flex flex-wrap gap-1">
-                        <span className="text-3xs text-muted-foreground">Needs:</span>
+                        <span className="text-2xs text-muted-foreground">Needs</span>
                         {team.looking_for.map((skill) => (
                           <span
                             key={skill}
-                            className="rounded border border-primary/20 bg-primary/5 px-1.5 py-0.5 text-3xs text-primary"
+                            className="rounded bg-secondary px-1.5 py-0.5 text-2xs text-secondary-foreground"
                           >
                             {skill}
                           </span>
@@ -396,9 +404,9 @@ const OpportunityDetail = () => {
                         {(team.community?.member_count ?? 1) === 1 ? "" : "s"}
                       </span>
                       {team.community?.slug && (
-                        <Button asChild size="sm" variant="ghost" className="h-7 text-xs">
+                        <Button asChild size="sm" variant="ghost">
                           <Link to={`/workspace-groups/${team.community.slug}`}>
-                            <MessageCircle className="mr-1 h-3 w-3" />
+                            <MessageCircle className="h-4 w-4" />
                             Open chat
                           </Link>
                         </Button>
@@ -472,8 +480,8 @@ const OpportunityDetail = () => {
             <Button variant="outline" onClick={() => setShowTeamDialog(false)}>
               Cancel
             </Button>
-            <Button onClick={submitTeam} disabled={busy}>
-              {busy ? "Creating..." : "Create team"}
+            <Button onClick={submitTeam} isLoading={busy} disabled={teamName.trim().length < 3}>
+              Create team
             </Button>
           </DialogFooter>
         </DialogContent>

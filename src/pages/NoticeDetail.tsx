@@ -8,7 +8,7 @@ import {
   FileText,
   Hash,
   Link2,
-  Sparkles,
+  ListChecks,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -16,6 +16,7 @@ import Footer from "@/components/Footer";
 import SEOHead from "@/components/SEOHead";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { CampusBrainIcon } from "@/components/icons/CampusBrainIcon";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/context/AuthContext";
@@ -25,33 +26,36 @@ import {
   type CampusNotice,
 } from "@/integrations/supabase/services/notices";
 
+// Categories are labels, not a legend, so they share one neutral chip.
+const NEUTRAL_CHIP = "border-transparent bg-secondary text-secondary-foreground";
+
 const CATEGORY_CONFIG: Record<
   string,
   { label: string; badgeClass: string }
 > = {
   holiday_change: {
     label: "Holiday Change",
-    badgeClass: "border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400",
+    badgeClass: NEUTRAL_CHIP,
   },
   academic_calendar: {
     label: "Academic Calendar",
-    badgeClass: "border-blue-500/30 bg-blue-500/10 text-blue-600 dark:text-blue-400",
+    badgeClass: NEUTRAL_CHIP,
   },
   exam: {
     label: "Exam",
-    badgeClass: "border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-400",
+    badgeClass: NEUTRAL_CHIP,
   },
   event: {
     label: "Event",
-    badgeClass: "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+    badgeClass: NEUTRAL_CHIP,
   },
   administrative: {
     label: "Administrative",
-    badgeClass: "border-purple-500/30 bg-purple-500/10 text-purple-600 dark:text-purple-400",
+    badgeClass: NEUTRAL_CHIP,
   },
   general: {
     label: "General Notice",
-    badgeClass: "border-slate-500/30 bg-slate-500/10 text-slate-600 dark:text-slate-400",
+    badgeClass: NEUTRAL_CHIP,
   },
 };
 
@@ -130,7 +134,7 @@ const NoticeDetail = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex flex-col">
-        <div className="container mx-auto max-w-3xl px-4 pb-16 pt-24 flex-1">
+        <div className="container mx-auto max-w-3xl px-4 pb-16 pt-8 flex-1">
           <Skeleton className="h-4 w-28 mb-6" />
           <div className="rounded-xl border bg-card p-6 sm:p-8">
             <div className="flex gap-2 mb-4">
@@ -155,11 +159,11 @@ const NoticeDetail = () => {
   if (!notice || (!notice.is_published && !isAdmin)) {
     return (
       <div className="min-h-screen bg-background flex flex-col">
-        <div className="container mx-auto max-w-3xl px-4 pb-16 pt-28 flex-1 text-center">
+        <div className="container mx-auto max-w-3xl px-4 pb-16 pt-8 flex-1 text-center">
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-muted">
             <FileText className="h-7 w-7 text-muted-foreground" />
           </div>
-          <h1 className="mt-4 text-2xl font-bold">Notice not found</h1>
+          <h1 className="mt-4 text-2xl font-semibold tracking-tight">Notice not found</h1>
           <p className="mt-2 text-muted-foreground max-w-md mx-auto">
             This circular may have been removed, unpublished, or the link may be invalid.
           </p>
@@ -206,7 +210,7 @@ const NoticeDetail = () => {
       />
 
       <div className="min-h-screen bg-background flex flex-col">
-        <div className="container mx-auto max-w-3xl px-4 pb-16 pt-24 flex-1">
+        <div className="container mx-auto max-w-3xl px-4 pb-16 pt-8 flex-1">
           <Link
             to="/search"
             className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
@@ -227,13 +231,13 @@ const NoticeDetail = () => {
                 </Badge>
               )}
               {!notice.is_published && (
-                <Badge variant="outline" className="border-amber-500/40 text-amber-600 dark:text-amber-400">
-                  Unpublished Draft (Admin View)
+                <Badge variant="outline" className="border-amber-500/40 text-amber-700 dark:text-amber-400">
+                  Draft, visible to admins only
                 </Badge>
               )}
             </div>
 
-            <h1 className="mt-4 text-2xl sm:text-3xl font-bold leading-tight tracking-tight text-foreground">
+            <h1 className="mt-4 text-3xl md:text-4xl font-semibold leading-tight tracking-tight text-foreground">
               {notice.title}
             </h1>
 
@@ -257,11 +261,11 @@ const NoticeDetail = () => {
             </div>
 
             {notice.summary && (
-              <div className="mt-5 rounded-lg border border-primary/20 bg-primary/5 p-4">
+              <div className="mt-5 rounded-lg border bg-secondary/60 p-4">
                 <div className="flex items-start gap-2.5">
-                  <Sparkles className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                  <ListChecks className="h-4 w-4 text-primary shrink-0 mt-0.5" />
                   <div className="text-sm">
-                    <span className="text-xs font-semibold uppercase tracking-wide text-primary block mb-0.5">
+                    <span className="mb-0.5 block text-sm font-medium text-foreground">
                       Summary
                     </span>
                     <p className="text-foreground/90 leading-relaxed">{notice.summary}</p>
@@ -287,7 +291,7 @@ const NoticeDetail = () => {
                 </Button>
                 <Button size="sm" variant="outline" onClick={() => copyLink(shareUrl)}>
                   {linkCopied ? (
-                    <Check className="mr-1.5 h-4 w-4 text-green-600 dark:text-green-500" />
+                    <Check className="mr-1.5 h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                   ) : (
                     <Link2 className="mr-1.5 h-4 w-4" />
                   )}
@@ -297,8 +301,8 @@ const NoticeDetail = () => {
 
               <Button asChild size="sm" variant="ghost" className="text-xs text-muted-foreground hover:text-foreground">
                 <Link to={`/ask?q=${encodeURIComponent(`What does the notice "${notice.title}" say?`)}`}>
-                  <Sparkles className="mr-1.5 h-3.5 w-3.5 text-primary" />
-                  Ask AI about this
+                  <CampusBrainIcon className="mr-1.5 h-4 w-4 text-primary" />
+                  Ask CampusBrain
                 </Link>
               </Button>
             </div>

@@ -17,7 +17,7 @@ import {
   Search,
   ShieldAlert,
   ShieldCheck,
-  Sparkles,
+  Link2,
   UserCheck,
 } from "lucide-react";
 import { motion } from "framer-motion";
@@ -437,7 +437,7 @@ export default function Attendance() {
           setPortalDialogOpen(true);
         }
       } else {
-        toast.success("SRM Portal synced successfully!");
+        toast.success("SRM portal synced");
         await Promise.all([fetchAttendance(), fetchTimetable(), fetchFinance(), fetchDailyAttendance()]);
       }
     } catch (err) {
@@ -632,7 +632,7 @@ export default function Attendance() {
 
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+                  <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-foreground">
                     SRM Portal
                   </h1>
                   <p className="mt-1 text-xs sm:text-sm text-muted-foreground">
@@ -641,33 +641,28 @@ export default function Attendance() {
                 </div>
 
                 {(records.length > 0 || timetableSlots.length > 0 || feeDues.length > 0) && (
-                  <div className="flex items-center gap-3 bg-card/80 dark:bg-card/60 backdrop-blur-md px-3.5 py-2 rounded-xl border border-border/70 shadow-xs">
+                  <div className="flex items-center gap-3 bg-card px-3.5 py-2 rounded-xl border border-border shadow-card">
                     <div className="flex items-center gap-2.5">
                       {isOnline ? (
                         <>
-                          <span className="relative flex h-2 w-2">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                          </span>
+                          <span className="h-2 w-2 shrink-0 rounded-full bg-green-600" aria-hidden />
                           <div className="flex flex-col">
                             <span className="text-xs font-semibold text-foreground tracking-tight leading-tight">
                               Synced {lastSync ? formatRelativeTime(lastSync) : "Never"}
                             </span>
-                            <span className="text-[10px] text-muted-foreground leading-tight">
+                            <span className="text-3xs text-muted-foreground leading-tight">
                               Auto-syncs Mon–Fri, 5:30 PM IST
                             </span>
                           </div>
                         </>
                       ) : (
                         <>
-                          <span className="relative flex h-2 w-2">
-                            <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
-                          </span>
+                          <span className="h-2 w-2 shrink-0 rounded-full bg-amber-500" aria-hidden />
                           <div className="flex flex-col">
                             <span className="text-xs font-semibold text-amber-600 dark:text-amber-400 tracking-tight leading-tight">
-                              Offline Mode
+                              Offline
                             </span>
-                            <span className="text-[10px] text-muted-foreground leading-tight">
+                            <span className="text-3xs text-muted-foreground leading-tight">
                               Saved {cachedTime ? formatOfflineTime(cachedTime) : (timetableCachedTime ? formatOfflineTime(timetableCachedTime) : (financeCachedTime ? formatOfflineTime(financeCachedTime) : (lastSync ? formatRelativeTime(lastSync) : "locally")))}
                             </span>
                           </div>
@@ -684,11 +679,11 @@ export default function Attendance() {
                         size="sm"
                         onClick={handleManualSync}
                         disabled={isSyncing || !isOnline}
-                        className="h-7 px-2.5 text-xs font-medium hover:bg-muted/80 text-foreground gap-1.5 rounded-lg transition-colors"
+                        className="h-8 px-2.5 text-xs font-medium text-foreground gap-1.5"
                         title={isOnline ? "Fetch latest portal data from SRM portal" : "Connect to internet to sync"}
                       >
-                        <RefreshCw className={`h-3 w-3 text-primary ${isSyncing ? "animate-spin" : ""}`} />
-                        <span>{isSyncing ? "Syncing…" : "Sync"}</span>
+                        <RefreshCw className={`h-3.5 w-3.5 ${isSyncing ? "animate-spin" : ""}`} />
+                        <span>{isSyncing ? "Syncing" : "Sync"}</span>
                       </Button>
                       <button
                         type="button"
@@ -700,7 +695,7 @@ export default function Attendance() {
                           setPortalDialogOpen(true);
                         }}
                         disabled={!isOnline}
-                        className="text-[11px] text-muted-foreground hover:text-foreground px-2 py-1 transition-colors rounded-lg hover:bg-muted/60 disabled:opacity-50"
+                        className="h-8 text-xs text-muted-foreground hover:text-foreground px-2 transition-colors duration-150 rounded-md hover:bg-accent disabled:opacity-50"
                         title="Update portal credentials"
                       >
                         Re-link
@@ -717,70 +712,70 @@ export default function Attendance() {
 
           {/* Global Empty / Not Linked State */}
           {!isLoading && !isTimetableLoading && !isFinanceLoading && records.length === 0 && timetableSlots.length === 0 && feeDues.length === 0 && (
-            <div className="border border-dashed border-border/80 rounded-xl py-14 px-6 text-center max-w-lg mx-auto space-y-4">
-              <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+            <div className="border border-dashed border-border rounded-xl py-14 px-6 text-center max-w-lg mx-auto space-y-4 animate-fade-up">
+              <div className="mx-auto w-12 h-12 rounded-lg bg-secondary flex items-center justify-center text-muted-foreground">
                 <GraduationCap className="h-6 w-6" />
               </div>
               <div className="space-y-1.5">
-                <h2 className="text-lg font-bold text-foreground">No SRM Portal linked yet</h2>
+                <h2 className="text-lg font-semibold text-foreground">Link your SRM portal account</h2>
                 <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                  Connect your SRM AP student portal to see subject-wise attendance, your safe leave buffer above 75%, weekly class timetable, and fee dues with penalty alerts — synced automatically.
+                  Once linked, this page shows attendance per subject, how many classes you can miss and stay above 75%, your weekly timetable and fee dues. It syncs every weekday.
                 </p>
               </div>
               <Button
                 size="default"
                 onClick={() => setPortalDialogOpen(true)}
-                className="gap-2 font-semibold px-5 h-10"
+                className="gap-2 px-5 h-10"
               >
-                <Sparkles className="h-4 w-4" />
-                Link SRM Portal
+                <Link2 className="h-4 w-4" />
+                Link SRM portal
               </Button>
             </div>
           )}
 
           {/* Segmented Tab Switcher */}
           {(records.length > 0 || timetableSlots.length > 0 || feeDues.length > 0 || isLoading || isTimetableLoading || isFinanceLoading) && (
-            <div className="flex items-center gap-1.5 p-1 bg-muted/40 border border-border/60 rounded-xl w-fit mb-6 overflow-x-auto max-w-full scrollbar-none touch-pan-x">
+            <div className="flex items-center gap-1.5 p-1 bg-muted border border-border rounded-lg w-fit mb-6 overflow-x-auto max-w-full scrollbar-none touch-pan-x">
               <button
                 type="button"
                 onClick={() => handleTabChange("attendance")}
                 className={cn(
-                  "flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all whitespace-nowrap",
+                  "flex items-center gap-2 px-3.5 h-9 text-xs font-medium rounded-md transition-colors duration-150 whitespace-nowrap",
                   activePortalTab === "attendance"
-                    ? "bg-card text-foreground shadow-xs border border-border/50"
+                    ? "bg-card text-foreground shadow-card"
                     : "text-muted-foreground hover:text-foreground"
                 )}
               >
                 <UserCheck className="h-3.5 w-3.5" />
-                <span>Attendance & Bunk Calculator</span>
+                <span>Attendance</span>
               </button>
               <button
                 type="button"
                 onClick={() => handleTabChange("timetable")}
                 className={cn(
-                  "flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all whitespace-nowrap",
+                  "flex items-center gap-2 px-3.5 h-9 text-xs font-medium rounded-md transition-colors duration-150 whitespace-nowrap",
                   activePortalTab === "timetable"
-                    ? "bg-card text-foreground shadow-xs border border-border/50"
+                    ? "bg-card text-foreground shadow-card"
                     : "text-muted-foreground hover:text-foreground"
                 )}
               >
                 <Calendar className="h-3.5 w-3.5" />
-                <span>Class Timetable</span>
+                <span>Timetable</span>
               </button>
               <button
                 type="button"
                 onClick={() => handleTabChange("finance")}
                 className={cn(
-                  "flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all whitespace-nowrap",
+                  "flex items-center gap-2 px-3.5 h-9 text-xs font-medium rounded-md transition-colors duration-150 whitespace-nowrap",
                   activePortalTab === "finance"
-                    ? "bg-card text-foreground shadow-xs border border-border/50"
+                    ? "bg-card text-foreground shadow-card"
                     : "text-muted-foreground hover:text-foreground"
                 )}
               >
                 <CreditCard className="h-3.5 w-3.5" />
-                <span>Fee & Finance</span>
+                <span>Fees</span>
                 {feeDues.some((d) => d.to_be_paid_amount > 0) && (
-                  <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse shrink-0" />
+                  <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" aria-label="Fees due" />
                 )}
               </button>
             </div>
@@ -791,13 +786,13 @@ export default function Attendance() {
             <>
               {isLoading && records.length === 0 && (
                 <div className="flex flex-col items-center justify-center gap-2.5 text-muted-foreground text-sm min-h-[240px]">
-                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                  <p className="text-xs">Loading attendance records…</p>
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  <p className="text-xs">Loading attendance</p>
                 </div>
               )}
 
               {!isLoading && records.length === 0 && timetableSlots.length > 0 && (
-                <div className="border border-dashed border-border/80 rounded-xl py-12 px-6 text-center max-w-md mx-auto space-y-3">
+                <div className="border border-dashed border-border rounded-xl py-12 px-6 text-center max-w-md mx-auto space-y-3">
                   <h3 className="text-base font-semibold text-foreground">No attendance records found</h3>
                   <p className="text-xs text-muted-foreground">
                     Click "Sync" above to fetch your latest attendance records from the portal.
@@ -817,7 +812,7 @@ export default function Attendance() {
                       <strong>{criticalCourses.length} subject{criticalCourses.length === 1 ? "" : "s"} below 75%</strong> ({criticalCourses.map((c) => `${c.course_code}: ${c.attendance_percentage}%`).join(", ")})
                     </span>
                   </div>
-                  <span className="text-[11px] font-semibold bg-destructive/20 px-2 py-0.5 rounded-md shrink-0">
+                  <span className="text-2xs font-semibold bg-destructive/20 px-2 py-0.5 rounded-md shrink-0">
                     Needs attention
                   </span>
                 </div>
@@ -834,7 +829,7 @@ export default function Attendance() {
                       <TabsTrigger value="risk" className="text-xs px-2.5 h-7 data-[state=active]:text-destructive">
                         At risk ({criticalCourses.length})
                       </TabsTrigger>
-                      <TabsTrigger value="safe" className="text-xs px-2.5 h-7 data-[state=active]:text-emerald-600 dark:data-[state=active]:text-emerald-400">
+                      <TabsTrigger value="safe" className="text-xs px-2.5 h-7 data-[state=active]:text-green-600 dark:data-[state=active]:text-green-400">
                         Safe ({records.length - criticalCourses.length})
                       </TabsTrigger>
                       {todayCourseStatusMap.size > 0 && (
@@ -870,7 +865,7 @@ export default function Attendance() {
               </div>
 
               {/* Desktop & Tablet Table (compacted for 100% single view without horizontal scroll) */}
-              <div className="hidden sm:block rounded-xl border border-border/60 bg-card overflow-hidden shadow-xs">
+              <div className="hidden sm:block rounded-xl border border-border bg-card overflow-hidden shadow-card">
                 <Table className="w-full">
                   <TableHeader>
                     <TableRow className="border-border/60 hover:bg-transparent bg-muted/20">
@@ -932,7 +927,7 @@ export default function Attendance() {
 
                       const isDanger = pct < 75.0;
                       const isWarning = pct >= 75.0 && pct < 80.0;
-                      const statusColor = isDanger ? "border-l-destructive" : isWarning ? "border-l-amber-500" : "border-l-emerald-500";
+                      const statusColor = isDanger ? "border-l-destructive" : isWarning ? "border-l-amber-500" : "border-l-green-500";
                       const displayedAbsent = isSimulated ? (cond - att) : rec.absent_hours;
                       const normCode = rec.course_code.trim().toUpperCase().replace(/\s+/g, "");
                       const todayStatus = todayCourseStatusMap.get(normCode);
@@ -943,20 +938,20 @@ export default function Attendance() {
                           <TableCell className={`py-3 px-3 align-middle border-l-3 ${statusColor}`}>
                             <div className="pl-1.5 space-y-1">
                               <div className="flex items-center gap-1.5 flex-wrap">
-                                <span className="font-bold text-xs text-foreground tracking-tight">
+                                <span className="font-semibold text-xs text-foreground tracking-tight">
                                   {rec.course_code}
                                 </span>
                                 {rec.slot && /^[A-Z][0-9]?(\+[A-Z][0-9]?)*$/i.test(rec.slot.trim()) && (
-                                  <span className="inline-flex items-center text-[10px] font-semibold text-primary bg-primary/10 px-1.5 py-0.2 rounded border border-primary/20">
+                                  <span className="inline-flex items-center text-3xs font-semibold text-primary bg-primary/10 px-1.5 py-0.2 rounded border border-primary/20">
                                     {rec.slot}
                                   </span>
                                 )}
                                 {todayStatus && (
                                   <span
                                     className={cn(
-                                      "inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-bold uppercase tracking-wider border",
+                                      "inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-3xs font-medium border",
                                       todayStatus.status === "Present"
-                                        ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30"
+                                        ? "bg-green-600/10 text-green-700 dark:text-green-500 border-green-600/30"
                                         : "bg-destructive/15 text-destructive border-destructive/30"
                                     )}
                                     title={`Attendance marked ${todayStatus.status} today (${todayStatus.date})`}
@@ -978,7 +973,7 @@ export default function Attendance() {
                                       {directoryUrl ? (
                                         <Link
                                           to={directoryUrl}
-                                          className="group/fac inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground bg-muted/60 hover:bg-muted px-1.5 py-0.5 rounded border border-border/40 hover:border-primary/40 font-medium transition-all shadow-2xs hover:shadow-xs"
+                                          className="group/fac inline-flex items-center gap-1 text-2xs text-muted-foreground hover:text-foreground bg-muted/60 hover:bg-muted px-1.5 py-0.5 rounded border border-border/40 hover:border-primary/40 font-medium transition-colors duration-150"
                                           title={`Find ${rec.faculty_name} in Faculty Directory`}
                                         >
                                           <UserCheck className="h-3 w-3 text-primary/70 group-hover/fac:text-primary shrink-0 transition-colors" />
@@ -987,7 +982,7 @@ export default function Attendance() {
                                           </span>
                                         </Link>
                                       ) : (
-                                        <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground/90 bg-muted/60 px-1.5 py-0.5 rounded border border-border/40 font-medium">
+                                        <span className="inline-flex items-center gap-1 text-2xs text-muted-foreground/90 bg-muted/60 px-1.5 py-0.5 rounded border border-border/40 font-medium">
                                           <UserCheck className="h-3 w-3 text-primary/70 shrink-0" />
                                           <span className="truncate max-w-[200px]" title={rec.faculty_name}>
                                             {rec.faculty_name}
@@ -1002,7 +997,7 @@ export default function Attendance() {
 
                           {/* 2. Hours */}
                           <TableCell className="py-3 px-2 text-center align-middle text-xs whitespace-nowrap font-mono tabular-nums">
-                            <div className="font-bold text-foreground text-xs sm:text-sm tracking-tight">
+                            <div className="font-semibold text-foreground text-xs sm:text-sm tracking-tight">
                               {att}<span className="font-normal text-muted-foreground text-xs font-sans">/{cond} hrs</span>
                             </div>
                             <div className="text-2xs text-muted-foreground mt-0.5">
@@ -1016,18 +1011,18 @@ export default function Attendance() {
                           <TableCell className="py-3 px-2 text-center align-middle whitespace-nowrap">
                             <div className="flex flex-col items-center gap-1">
                               <span className={`text-xs sm:text-sm font-black tracking-tight ${
-                                isDanger ? "text-destructive" : isWarning ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400"
+                                isDanger ? "text-destructive" : isWarning ? "text-amber-600 dark:text-amber-400" : "text-success"
                               }`}>
                                 {pct}%
                               </span>
                               {isSimulated && (
-                                <span className="text-[10px] text-muted-foreground">was {rec.attendance_percentage}%</span>
+                                <span className="text-3xs text-muted-foreground">was {rec.attendance_percentage}%</span>
                               )}
                               <div className="w-14 sm:w-16">
                                 <Progress
                                   value={Math.min(100, pct)}
                                   className={`h-1.5 bg-muted ${
-                                    isDanger ? "[&>div]:bg-destructive" : isWarning ? "[&>div]:bg-amber-500" : "[&>div]:bg-emerald-500"
+                                    isDanger ? "[&>div]:bg-destructive" : isWarning ? "[&>div]:bg-amber-500" : "[&>div]:bg-green-500"
                                   }`}
                                 />
                               </div>
@@ -1037,15 +1032,15 @@ export default function Attendance() {
                           {/* 4. Margin */}
                           <TableCell className="py-3 px-2 text-center align-middle whitespace-nowrap">
                             {neededForTarget > 0 ? (
-                              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-destructive bg-destructive/10 px-1.5 py-0.5 rounded-md border border-destructive/20">
+                              <span className="inline-flex items-center gap-1 text-2xs font-semibold text-destructive bg-destructive/10 px-1.5 py-0.5 rounded-md border border-destructive/20">
                                 <AlertTriangle className="h-3 w-3" /> Need {neededForTarget} cls
                               </span>
                             ) : safeAllowanceForTarget > 0 ? (
-                              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded-md border border-emerald-500/20">
+                              <span className="inline-flex items-center gap-1 text-2xs font-semibold text-success bg-green-500/10 px-1.5 py-0.5 rounded-md border border-green-500/20">
                                 <ShieldCheck className="h-3 w-3" /> {safeAllowanceForTarget} safe
                               </span>
                             ) : (
-                              <span className="text-[11px] text-muted-foreground font-medium bg-muted/40 px-1.5 py-0.5 rounded-md border border-border/40">
+                              <span className="text-2xs text-muted-foreground font-medium bg-muted/40 px-1.5 py-0.5 rounded-md border border-border/40">
                                 On target
                               </span>
                             )}
@@ -1060,7 +1055,7 @@ export default function Attendance() {
                                     <button
                                       type="button"
                                       onClick={() => adjustSim(rec.course_code, true)}
-                                      className="h-6.5 w-6.5 rounded-md flex items-center justify-center text-emerald-600 bg-emerald-500/10 hover:bg-emerald-500/20 active:scale-95 transition-all border border-emerald-500/20"
+                                      className="h-6.5 w-6.5 rounded-md flex items-center justify-center text-green-600 bg-green-500/10 hover:bg-green-500/20 active:scale-95 transition-all border border-green-500/20"
                                       aria-label="Simulate attending next class"
                                     >
                                       <Plus className="h-3 w-3" />
@@ -1128,7 +1123,7 @@ export default function Attendance() {
 
                   const isDanger = pct < 75.0;
                   const isWarning = pct >= 75.0 && pct < 80.0;
-                  const statusColor = isDanger ? "border-l-destructive" : isWarning ? "border-l-amber-500" : "border-l-emerald-500";
+                  const statusColor = isDanger ? "border-l-destructive" : isWarning ? "border-l-amber-500" : "border-l-green-500";
                   const displayedAbsent = isSimulated ? (cond - att) : rec.absent_hours;
                   const normCode = rec.course_code.trim().toUpperCase().replace(/\s+/g, "");
                   const todayStatus = todayCourseStatusMap.get(normCode);
@@ -1137,27 +1132,27 @@ export default function Attendance() {
                     <div
                       key={`mobile-${rec.id || rec.course_code}`}
                       className={cn(
-                        "rounded-xl border border-border/70 bg-card p-3.5 shadow-xs space-y-2.5 border-l-4",
+                        "rounded-xl border border-border bg-card p-3.5 shadow-card space-y-2.5 border-l-4",
                         statusColor
                       )}
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="space-y-1">
                           <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="font-bold text-xs text-foreground tracking-tight">
+                            <span className="font-semibold text-xs text-foreground tracking-tight">
                               {rec.course_code}
                             </span>
                             {rec.slot && /^[A-Z][0-9]?(\+[A-Z][0-9]?)*$/i.test(rec.slot.trim()) && (
-                              <span className="inline-flex items-center text-[10px] font-semibold text-primary bg-primary/10 px-1.5 py-0.2 rounded border border-primary/20">
+                              <span className="inline-flex items-center text-3xs font-semibold text-primary bg-primary/10 px-1.5 py-0.2 rounded border border-primary/20">
                                 {rec.slot}
                               </span>
                             )}
                             {todayStatus && (
                               <span
                                 className={cn(
-                                  "inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-bold uppercase tracking-wider border",
+                                  "inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-3xs font-medium border",
                                   todayStatus.status === "Present"
-                                    ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30"
+                                    ? "bg-green-600/10 text-green-700 dark:text-green-500 border-green-600/30"
                                     : "bg-destructive/15 text-destructive border-destructive/30"
                                 )}
                               >
@@ -1169,7 +1164,7 @@ export default function Attendance() {
                             {rec.course_name}
                           </div>
                           {rec.faculty_name && (
-                            <div className="text-[11px] text-muted-foreground truncate max-w-[210px]">
+                            <div className="text-2xs text-muted-foreground truncate max-w-[210px]">
                               {rec.faculty_name}
                             </div>
                           )}
@@ -1178,12 +1173,12 @@ export default function Attendance() {
                         <div className="text-right shrink-0">
                           <span className={cn(
                             "text-sm font-black tracking-tight",
-                            isDanger ? "text-destructive" : isWarning ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400"
+                            isDanger ? "text-destructive" : isWarning ? "text-amber-600 dark:text-amber-400" : "text-success"
                           )}>
                             {pct}%
                           </span>
                           {isSimulated && (
-                            <span className="text-[10px] text-muted-foreground block">was {rec.attendance_percentage}%</span>
+                            <span className="text-3xs text-muted-foreground block">was {rec.attendance_percentage}%</span>
                           )}
                         </div>
                       </div>
@@ -1192,29 +1187,29 @@ export default function Attendance() {
                         value={Math.min(100, pct)}
                         className={cn(
                           "h-1.5 bg-muted",
-                          isDanger ? "[&>div]:bg-destructive" : isWarning ? "[&>div]:bg-amber-500" : "[&>div]:bg-emerald-500"
+                          isDanger ? "[&>div]:bg-destructive" : isWarning ? "[&>div]:bg-amber-500" : "[&>div]:bg-green-500"
                         )}
                       />
 
                       <div className="flex items-center justify-between gap-2 pt-1 border-t border-border/50 text-xs">
                         <div className="flex items-center gap-1.5">
                           <span className="font-semibold text-foreground font-mono text-xs">{att}/{cond} hrs</span>
-                          <span className={cn("text-[10px]", displayedAbsent > 0 ? "text-destructive font-medium" : "text-muted-foreground")}>
+                          <span className={cn("text-3xs", displayedAbsent > 0 ? "text-destructive font-medium" : "text-muted-foreground")}>
                             ({displayedAbsent} abs)
                           </span>
                         </div>
 
                         <div className="flex items-center gap-2">
                           {neededForTarget > 0 ? (
-                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-destructive bg-destructive/10 px-1.5 py-0.5 rounded border border-destructive/20">
+                            <span className="inline-flex items-center gap-1 text-3xs font-semibold text-destructive bg-destructive/10 px-1.5 py-0.5 rounded border border-destructive/20">
                               <AlertTriangle className="h-2.5 w-2.5" /> Need {neededForTarget}
                             </span>
                           ) : safeAllowanceForTarget > 0 ? (
-                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
+                            <span className="inline-flex items-center gap-1 text-3xs font-semibold text-success bg-green-500/10 px-1.5 py-0.5 rounded border border-green-500/20">
                               <ShieldCheck className="h-2.5 w-2.5" /> {safeAllowanceForTarget} safe
                             </span>
                           ) : (
-                            <span className="text-[10px] text-muted-foreground font-medium bg-muted/40 px-1.5 py-0.5 rounded border border-border/40">
+                            <span className="text-3xs text-muted-foreground font-medium bg-muted/40 px-1.5 py-0.5 rounded border border-border/40">
                               On target
                             </span>
                           )}
@@ -1223,7 +1218,7 @@ export default function Attendance() {
                             <button
                               type="button"
                               onClick={() => adjustSim(rec.course_code, true)}
-                              className="h-6 w-6 rounded flex items-center justify-center text-emerald-600 bg-emerald-500/10 hover:bg-emerald-500/20 active:scale-95 transition-all border border-emerald-500/20"
+                              className="h-6 w-6 rounded flex items-center justify-center text-green-600 bg-green-500/10 hover:bg-green-500/20 active:scale-95 transition-all border border-green-500/20"
                               aria-label="Simulate +1 Present"
                             >
                               <Plus className="h-3 w-3" />
@@ -1268,7 +1263,7 @@ export default function Attendance() {
               <div className="pt-4">
                 <div className="flex items-center gap-2 mb-2 text-muted-foreground">
                   <Info className="h-3.5 w-3.5" />
-                  <h3 className="text-xs font-semibold uppercase tracking-wide">Regulations & automation</h3>
+                  <h3 className="text-sm font-semibold text-foreground">Rules and automation</h3>
                 </div>
 
                 <div className="divide-y divide-border/60 border-t border-border/60">
@@ -1314,20 +1309,20 @@ export default function Attendance() {
         <>
           {isTimetableLoading && timetableSlots.length === 0 && (
             <div className="flex flex-col items-center justify-center gap-2.5 text-muted-foreground text-sm min-h-[240px]">
-              <Loader2 className="h-6 w-6 animate-spin text-primary" />
-              <p className="text-xs">Loading class timetable…</p>
+              <Loader2 className="h-5 w-5 animate-spin" />
+              <p className="text-xs">Loading timetable</p>
             </div>
           )}
 
           {!isTimetableLoading && timetableSlots.length === 0 && (
-            <div className="border border-dashed border-border/80 rounded-xl py-12 px-6 text-center max-w-md mx-auto space-y-3">
-              <div className="mx-auto w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+            <div className="border border-dashed border-border rounded-xl py-12 px-6 text-center max-w-md mx-auto space-y-3">
+              <div className="mx-auto w-10 h-10 rounded-lg bg-secondary flex items-center justify-center text-muted-foreground">
                 <Calendar className="h-5 w-5" />
               </div>
               <div className="space-y-1">
-                <h3 className="text-base font-semibold text-foreground">No timetable records found</h3>
+                <h3 className="text-base font-semibold text-foreground">No timetable yet</h3>
                 <p className="text-xs text-muted-foreground">
-                  If you recently registered or updated courses on the SRM AP portal, click "Sync" to fetch your weekly schedule.
+                  If you registered or changed courses on the SRM AP portal recently, sync to fetch your weekly schedule.
                 </p>
               </div>
               <Button
@@ -1338,7 +1333,7 @@ export default function Attendance() {
                 className="gap-1.5 text-xs font-medium"
               >
                 <RefreshCw className={`h-3 w-3 ${isSyncing ? "animate-spin" : ""}`} />
-                <span>{isSyncing ? "Syncing…" : "Sync Timetable"}</span>
+                <span>{isSyncing ? "Syncing" : "Sync timetable"}</span>
               </Button>
             </div>
           )}

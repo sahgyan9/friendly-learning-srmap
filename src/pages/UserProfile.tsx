@@ -124,7 +124,7 @@ const UserProfile = () => {
       }
     } catch (error) {
       console.error("Error fetching profile:", error);
-      toast.error("Failed to load profile");
+      toast.error("Could not load your profile. Reload to try again.");
     } finally {
       setIsLoading(false);
     }
@@ -209,10 +209,10 @@ const UserProfile = () => {
         }
       }
 
-      toast.success("Profile updated successfully!");
+      toast.success("Profile saved.");
     } catch (error) {
       console.error("Error updating profile:", error);
-      toast.error("Failed to update profile");
+      toast.error("Could not save your profile. Try again.");
     } finally {
       setIsSaving(false);
     }

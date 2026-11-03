@@ -74,54 +74,47 @@ const Index = () => {
         </div>
       )}
 
-      {/* ── 1. Hero with CampusBrain AI Search & Momentum Metrics ── */}
       <CampusHero />
 
-      {/* ── 2. Main Campus Hub: Section Title + Full-Width Composer + 2-Column Grid ── */}
-      <main className="py-8 md:py-10">
-        <div className="container mx-auto px-4 max-w-6xl">
-          {/* Full-width Centered Section Heading */}
-          <div className="text-center mb-5">
-            <h2 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
-              Campus Feed & Discussion
-            </h2>
+      <main className="py-10 md:py-12">
+        <div className="container mx-auto max-w-6xl px-4">
+          <div className="mb-6">
+            <h2 className="text-2xl font-semibold tracking-tight text-foreground">Campus feed</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Questions, team calls and resources posted by SRM AP students.
+            </p>
           </div>
 
-          {/* Full-width Composer Strip */}
-          <div className="w-full max-w-5xl mx-auto mb-7">
+          <div className="mb-6 w-full">
             <PostComposerStrip
               onPostCreated={() => setFeedKey((k) => k + 1)}
-              className="max-w-none shadow-xs"
+              className="max-w-none"
             />
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
-            {/* Left Column: Live Campus Feed (60-65% width) */}
-            <section className="lg:col-span-7 xl:col-span-8 space-y-4">
+          <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-12 lg:gap-8">
+            <section className="min-w-0 space-y-4 lg:col-span-7 xl:col-span-8" aria-label="Posts">
               <CampusFeedWidget key={feedKey} />
             </section>
 
-            {/* Right Column: Live Campus Sidebar Widgets (35-40% width) */}
-            <aside className="lg:col-span-5 xl:col-span-4 space-y-6">
+            <aside className="min-w-0 space-y-6 lg:col-span-5 xl:col-span-4">
               <CampusSidebarWidgets />
             </aside>
           </div>
         </div>
       </main>
 
-      {/* ── 3. Signed-in Personalized Recommendations (Lazy, non-blocking) ── */}
+      {/* Signed-in only; renders nothing until it has real matches */}
       {user && (
-        <div className="border-t border-border/40 bg-muted/20 py-8">
+        <div className="border-t border-border py-8">
           <div className="container mx-auto px-4 max-w-6xl">
             <RecommendedPeople />
           </div>
         </div>
       )}
 
-      {/* ── 4. Ecosystem Bento (The 3 Core Pillars) ── */}
       <EcosystemBento />
 
-      {/* ── 5. Call To Action ── */}
       <CallToAction />
 
       <Footer />

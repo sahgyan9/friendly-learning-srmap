@@ -126,9 +126,7 @@ const AdminMentorVerification = () => {
 
       setWelcomeStatus(welcome.byId);
     } catch (error) {
-      toast.error("Error", {
-        description: `Failed to load verification data: ${error.message || 'Unknown error'}`,
-      });
+      toast.error(`Failed to load verification data: ${error.message || 'Unknown error'}`);
     } finally {
       setLoading(false);
     }
@@ -140,9 +138,7 @@ const AdminMentorVerification = () => {
 
   const handleStatusUpdate = () => {
     fetchData();
-    toast.success("Success", {
-      description: "Verification status updated successfully",
-    });
+    toast.success("Verification status updated");
   };
 
   const handleFiltersChange = (newFilters: FilterType) => {
@@ -164,8 +160,8 @@ const AdminMentorVerification = () => {
   return (
     <AdminLayout>
       <AdminHeader
-        title="Mentor Verification Management"
-        description="Review and manage mentor verification applications with detailed insights"
+        title="Mentor verification"
+        description="Review mentor applications, check flags, and approve or reject them."
       />
 
       <div className="space-y-6">

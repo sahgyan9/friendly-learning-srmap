@@ -24,8 +24,18 @@ import {
   MarketplacePost 
 } from '@/integrations/supabase/services/marketplace';
 import { toast } from 'sonner';
-import { Edit, Trash2, Plus, Loader2, Eye, RefreshCw } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Edit, Trash2, Plus, Eye, RefreshCw, Inbox } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import MarketplacePostForm from '@/components/marketplace/MarketplacePostForm';
 import AdminLayout from '@/components/admin/AdminLayout';
 import AdminHeader from '@/components/admin/AdminHeader';
@@ -58,8 +68,8 @@ const MarketplaceAdmin = () => {
       setPosts(data);
     } catch (error) {
       console.error('Error loading posts:', error);
-      toast.error('Error', {
-        description: 'Failed to load marketplace posts',
+      toast.error('Could not load posts', {
+        description: 'Refresh the page to try again.',
       });
     } finally {
       setLoading(false);
@@ -81,13 +91,13 @@ const MarketplaceAdmin = () => {
       setIsDeleting(id);
       await deleteMarketplacePost(id);
       setPosts(posts.filter(post => post.id !== id));
-      toast.success('Success', {
-        description: 'Post deleted successfully',
+      toast.success('Post deleted', {
+        description: 'It no longer appears on the events page.',
       });
     } catch (error) {
       console.error('Error deleting post:', error);
-      toast.error('Error', {
-        description: 'Failed to delete post',
+      toast.error('Could not delete post', {
+        description: 'Try again in a moment.',
       });
     } finally {
       setIsDeleting(null);
@@ -125,12 +135,12 @@ const MarketplaceAdmin = () => {
     try {
       setIsSyncingEvents(true);
       const res = await syncSRMAPEvents();
-      toast.success('SRMAP Events Synced', {
-        description: `Successfully synced ${res.synced} events from SRMAP portal.`,
+      toast.success('Events synced', {
+        description: `${res.synced} events updated from the SRM AP portal.`,
       });
     } catch (error) {
       console.error('Error syncing events:', error);
-      toast.error('Sync Failed', {
+      toast.error('Sync failed', {
         description: error instanceof Error ? error.message : 'Failed to sync events from SRMAP.',
       });
     } finally {
@@ -148,29 +158,38 @@ const MarketplaceAdmin = () => {
             <Button
               variant="outline"
               onClick={handleSyncEvents}
-              disabled={isSyncingEvents}
+              isLoading={isSyncingEvents}
             >
-              <RefreshCw className={cn("mr-2 h-4 w-4", isSyncingEvents && "animate-spin")} />
-              {isSyncingEvents ? "Syncing..." : "Sync SRMAP Events"}
+              {!isSyncingEvents && <RefreshCw className="h-4 w-4" />}
+              {isSyncingEvents ? "Syncing" : "Sync events"}
             </Button>
             <Button onClick={handleAddNew}>
-              <Plus className="mr-2 h-4 w-4" />
-              Add New Post
+              <Plus className="h-4 w-4" />
+              New post
             </Button>
           </div>
         }
       />
 
       {loading ? (
-        <div className="flex justify-center items-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <div className="flex flex-col gap-2 rounded-md border p-4" aria-busy="true" aria-label="Loading posts">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="h-10 animate-pulse rounded bg-muted" />
+          ))}
         </div>
       ) : posts.length === 0 ? (
-        <div className="text-center py-12">
-          <p className="text-muted-foreground text-lg">No posts found</p>
-          <p className="text-sm text-muted-foreground mt-2">
-            Click the "Add New Post" button to create your first marketplace post
-          </p>
+        <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed px-6 py-12 text-center">
+          <div className="flex h-10 w-10 items-center justify-center rounded-md bg-secondary text-muted-foreground">
+            <Inbox className="h-5 w-5" />
+          </div>
+          <div>
+            <p className="font-medium">No posts yet</p>
+            <p className="text-sm text-muted-foreground">Create a post to list it on the events page.</p>
+          </div>
+          <Button onClick={handleAddNew}>
+            <Plus className="h-4 w-4" />
+            New post
+          </Button>
         </div>
       ) : (
         <div className="border rounded-md overflow-hidden">
@@ -195,6 +214,7 @@ const MarketplaceAdmin = () => {
                     <Button
                       variant="ghost"
                       size="icon"
+                      aria-label={`View ${post.title}`}
                       onClick={() => handleView(post.id)}
                     >
                       <Eye className="h-4 w-4" />
@@ -202,22 +222,41 @@ const MarketplaceAdmin = () => {
                     <Button
                       variant="ghost"
                       size="icon"
+                      aria-label={`Edit ${post.title}`}
                       onClick={() => handleEdit(post)}
                     >
                       <Edit className="h-4 w-4" />
                     </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleDelete(post.id)}
-                      disabled={isDeleting === post.id}
-                    >
-                      {isDeleting === post.id ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Trash2 className="h-4 w-4" />
-                      )}
-                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          aria-label={`Delete ${post.title}`}
+                          className="text-muted-foreground hover:text-destructive"
+                          isLoading={isDeleting === post.id}
+                        >
+                          {isDeleting !== post.id && <Trash2 className="h-4 w-4" />}
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete this post?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            "{post.title}" will be removed from the events page. This cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            onClick={() => handleDelete(post.id)}
+                          >
+                            Delete post
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </TableCell>
                 </TableRow>
               ))}

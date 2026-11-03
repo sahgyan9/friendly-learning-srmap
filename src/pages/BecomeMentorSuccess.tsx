@@ -1,7 +1,7 @@
 
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { CheckCircle, FolderGit2, Home } from "lucide-react";
+import { CheckCircle, FolderGit2, Home, Loader2 } from "lucide-react";
 
 import { useAuth } from "@/context/AuthContext";
 import { getMentorVerification } from "@/integrations/supabase/services/mentor-verification";
@@ -35,7 +35,7 @@ const BecomeMentorSuccess = () => {
     return (
       <div className="min-h-screen bg-background">
         <div className="min-h-screen flex items-center justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" aria-label="Loading" />
         </div>
       </div>
     );
@@ -45,11 +45,11 @@ const BecomeMentorSuccess = () => {
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-16 md:py-24">
         <div className="max-w-lg mx-auto text-center">
-          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-950/60">
-            <CheckCircle className="h-8 w-8 text-green-600" />
+          <div className="mx-auto mb-6 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-950/60">
+            <CheckCircle className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
           </div>
 
-          <h1 className="text-3xl font-bold text-foreground mb-3">You're a mentor now</h1>
+          <h1 className="mb-3 text-3xl font-semibold tracking-tight text-foreground md:text-4xl">You are a mentor now</h1>
           <p className="text-muted-foreground mb-8">
             Your profile is live. Students looking for help in your department can find and
             message you right away.
@@ -61,16 +61,16 @@ const BecomeMentorSuccess = () => {
             </CardHeader>
             <CardContent className="space-y-3">
               <p className="text-sm text-muted-foreground">
-                Add a project or two to your profile — it's the first thing students look at
+                Add a project or two to your profile. Projects are the first thing students look at
                 when deciding who to message.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 pt-2">
                 <Button onClick={() => navigate(`/mentor/${user.id}`)} className="flex-1">
-                  <FolderGit2 className="h-4 w-4 mr-2" />
+                  <FolderGit2 />
                   Add a project
                 </Button>
                 <Button variant="outline" onClick={() => navigate("/")} className="flex-1">
-                  <Home className="h-4 w-4 mr-2" />
+                  <Home />
                   Go to homepage
                 </Button>
               </div>

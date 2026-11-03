@@ -1,5 +1,5 @@
 import type { ComponentType, SVGProps } from "react";
-import { Rocket, Sparkles, UserCircle } from "lucide-react";
+import { Compass, UserRound, UsersRound } from "lucide-react";
 
 import { EventsIcon } from "@/components/icons/EventsIcon";
 import { FacultyIcon } from "@/components/icons/FacultyIcon";
@@ -9,14 +9,11 @@ import { PostIcon } from "@/components/icons/PostIcon";
 
 export interface WelcomeTourStep {
   icon: ComponentType<SVGProps<SVGSVGElement>>;
+  /** Two or three words; shown on the progress bar and as the step's label. */
+  label: string;
   title: string;
   description: string;
-  /**
-   * Tailwind color name (without shade) used for the step's accent.
-   * Maps to bg-{color}/10, text-{color}-600, border-{color}/20, etc.
-   */
-  accent: string;
-  /** Omitted on the welcome and closing slides, which have nothing to link to yet. */
+  /** Omitted on the welcome slide, which has nothing to link to yet. */
   cta?: { label: string; url: string };
 }
 
@@ -25,71 +22,69 @@ export interface WelcomeTourStep {
  * so the tour is built around the things the platform lets them do, not a
  * feature-by-feature UI walkthrough.
  *
- * Accent colors are intentionally matched to the per-page accent used across
- * the app (emerald → community posts, rose → faculty, amber → communities,
- * violet → marketplace). The welcome and closing slides use the brand primary.
+ * Each step uses the same icon as that section's nav entry, so the tour
+ * teaches the icons people will be looking for afterwards.
  */
 export const WELCOME_TOUR_STEPS: WelcomeTourStep[] = [
   {
-    icon: Sparkles,
-    accent: "indigo",
+    icon: Compass,
+    label: "Welcome",
     title: "Welcome to Friendly Learning SRMAP",
     description:
-      "New to university? You don't have to figure it out alone. Here's what you can do here.",
+      "New to university? Here is where to find people who can help, and what is on around campus. Seven short steps.",
   },
   {
-    icon: UserCircle,
-    accent: "teal",
+    icon: UserRound,
+    label: "Profile",
     title: "Set up your profile",
     description:
-      "Add a photo, a short bio, and your skills so mentors and other students actually recognize you.",
-    cta: { label: "Complete your profile", url: "/profile" },
+      "Add a photo, a short bio and your skills, so mentors and other students know who they are talking to.",
+    cta: { label: "Edit profile", url: "/profile" },
   },
   {
     icon: PostIcon,
-    accent: "emerald",
-    title: "Share what's happening on campus",
+    label: "Posts",
+    title: "Post to the campus board",
     description:
-      "Got news, study wins, or campus moments to celebrate? Share your joy, ask questions, and connect with everyone on campus.",
-    cta: { label: "Browse campus posts", url: "/posts" },
+      "Ask a question, share news or a result, and reply to what other students have posted.",
+    cta: { label: "Open posts", url: "/posts" },
   },
   {
     icon: GroupsIcon,
-    accent: "amber",
-    title: "Your own workspace to collaborate & work",
+    label: "Groups",
+    title: "Work together in groups",
     description:
-      "Create or join dedicated workspace channels — your personal hub to chat, share resources, work on projects, and build together with your team.",
-    cta: { label: "Explore workspaces", url: "/workspace-groups" },
+      "Create or join a group with its own channels for chat, files and project work. Groups can be public or private.",
+    cta: { label: "Browse groups", url: "/workspace-groups" },
   },
   {
     icon: FacultyIcon,
-    accent: "rose",
-    title: "Rate your faculty",
+    label: "Faculty",
+    title: "Read and leave faculty ratings",
     description:
-      "Picking courses? See honest, anonymous ratings on teaching, grading, and helpfulness from students who've taken them.",
-    cta: { label: "Rate faculty", url: "/faculty" },
+      "Choosing courses? See anonymous ratings on teaching, grading and helpfulness from students who took them.",
+    cta: { label: "Browse faculty", url: "/faculty" },
   },
   {
-    icon: Rocket,
-    accent: "violet",
-    title: "Build something together",
-    description: "Find teammates for hackathons, projects, and competitions.",
-    cta: { label: "Find hackathon partners", url: "/opportunities" },
+    icon: UsersRound,
+    label: "Teammates",
+    title: "Find teammates",
+    description: "Look for people to team up with for hackathons, projects and competitions.",
+    cta: { label: "View opportunities", url: "/opportunities" },
   },
   {
     icon: EventsIcon,
-    accent: "sky",
-    title: "See what's happening",
-    description:
-      "Browse fests, workshops, and events happening across university so you never miss out.",
+    label: "Events",
+    title: "See what is on",
+    description: "Fests, workshops and talks across the university, with reminders before the ones you mark.",
     cta: { label: "View events", url: "/events" },
   },
   {
     icon: MentorIcon,
-    accent: "blue",
-    title: "Ask a mentor any doubt",
+    label: "Mentors",
+    title: "Message a mentor",
     description:
-      "Stuck on a course, an assignment, or just how things work here? Message a peer mentor for one-on-one help.",
+      "Stuck on a course, an assignment or how something works here? Senior students answer one-on-one.",
     cta: { label: "Find a mentor", url: "/mentors" },
   },
 ];

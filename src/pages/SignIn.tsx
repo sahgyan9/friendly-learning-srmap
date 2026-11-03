@@ -7,12 +7,11 @@ import { getErrorMessage } from "@/lib/errors";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
-import { motion, AnimatePresence } from "framer-motion";
-import DarkModeToggle from "@/components/DarkModeToggle";
+import AuthShell, { AuthDivider, FieldError } from "@/components/auth/AuthShell";
 import GoogleAuthButton from "@/components/auth/GoogleAuthButton";
 import RoleSelectionModal from "@/components/auth/RoleSelectionModal";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, ArrowRight, Loader2, Info } from "lucide-react";
+import { AlertCircle, ArrowRight, Info } from "lucide-react";
 
 const SignIn = () => {
   const navigate = useNavigate();
@@ -28,6 +27,7 @@ const SignIn = () => {
     type: "invalid_credentials" | "unconfirmed" | "timeout" | "other";
     message: string;
   } | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({});
 
   /**
    * Where to land after signing in.
@@ -75,6 +75,9 @@ const SignIn = () => {
     if (authError) {
       setAuthError(null);
     }
+    if (fieldErrors[name as keyof typeof fieldErrors]) {
+      setFieldErrors((prev) => ({ ...prev, [name]: undefined }));
+    }
     setFormData(prev => ({
       ...prev,
       [name]: value
@@ -94,7 +97,7 @@ const SignIn = () => {
       }
       
       setShowRoleSelection(false);
-      toast.success("Welcome to Friendly Learning!");
+      toast.success("Account set up");
       navigate(destination, { replace: true });
     } catch (error: unknown) {
       toast.error("Error setting up account: " + getErrorMessage(error));
@@ -110,7 +113,10 @@ const SignIn = () => {
     const password = formData.password;
 
     if (!email || !password) {
-      toast.error("Please fill in all fields");
+      setFieldErrors({
+        email: email ? undefined : "Enter the email you signed up with.",
+        password: password ? undefined : "Enter your password.",
+      });
       setIsLoading(false);
       return;
     }
@@ -137,38 +143,33 @@ const SignIn = () => {
             type: "invalid_credentials",
             message: "Invalid email or password.",
           });
-          toast.error("Invalid credentials. If you haven't created an account yet, please sign up.");
         } else if (error.message.includes('Email not confirmed')) {
           setAuthError({
             type: "unconfirmed",
-            message: "Please check your inbox and confirm your email before signing in.",
+            message: "Open the confirmation email we sent you and follow the link, then sign in.",
           });
-          toast.error("Please check your email and click the confirmation link before signing in.");
         } else {
           setAuthError({
             type: "other",
             message: error.message || "Failed to sign in. Please try again.",
           });
-          toast.error(error.message);
         }
       } else if (data?.user) {
-        toast.success("Successfully signed in!");
+        toast.success("Signed in");
         navigate(destination, { replace: true });
       }
     } catch (error: unknown) {
       if (error instanceof Error && error.message === "AUTH_TIMEOUT") {
         setAuthError({
           type: "timeout",
-          message: "Sign-in is taking longer than expected. Please check your internet connection or use Google Sign-In.",
+          message: "The server did not respond within 12 seconds. Check your connection and try again, or use Continue with Google.",
         });
-        toast.error("Sign-in timed out. Please check your connection or try Google Sign-In.");
       } else {
         console.error('Error during sign in:', error);
         setAuthError({
           type: "other",
-          message: "An unexpected error occurred. Please try again.",
+          message: "Something went wrong on our side. Try again in a moment.",
         });
-        toast.error("An unexpected error occurred. Please try again.");
       }
     } finally {
       setIsLoading(false);
@@ -176,175 +177,120 @@ const SignIn = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-background text-foreground">
-      <div className="absolute top-4 right-4">
-        <DarkModeToggle />
-      </div>
-      <div className="flex flex-grow items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <motion.div 
-          className="max-w-md w-full space-y-8"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <div>
-            <Link to="/" className="block text-center text-2xl font-bold text-primary mb-2">
-              <span className="mr-1">Friendly</span>
-              <span className="dark:text-gray-200">Learning</span>
+    <>
+      <AuthShell
+        title="Sign in"
+        description="Use your Google account or the email you registered with."
+        footer={
+          <>
+            No account yet?{" "}
+            <Link to="/signup" className="font-medium text-primary underline-offset-4 hover:underline">
+              Create one
             </Link>
-            <h2 className="mt-6 text-center text-3xl font-extrabold">
-              Sign in to your account
-            </h2>
-            <p className="mt-2 text-center text-sm text-muted-foreground">
-              Or{' '}
-              <Link to="/signup" className="font-medium text-primary hover:text-primary/80">
-                create a new account
-              </Link>
-            </p>
-          </div>
-          
-          <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-            <div className="bg-card text-card-foreground px-4 py-8 shadow sm:rounded-lg sm:px-10">
-              {/* Google button at the top — primary OAuth action */}
-              <GoogleAuthButton 
-                mode="signin" 
-                isLoading={isLoading} 
-                setIsLoading={setIsLoading} 
-                destination={destination}
-              />
+          </>
+        }
+      >
+        <GoogleAuthButton
+          mode="signin"
+          isLoading={isLoading}
+          setIsLoading={setIsLoading}
+          destination={destination}
+        />
 
-              <div className="my-6 relative">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-border"></div>
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-3 bg-card text-muted-foreground">or sign in with email</span>
-                </div>
-              </div>
+        <AuthDivider label="or with email" />
 
-              <form className="space-y-5" onSubmit={handleSubmit}>
-                <AnimatePresence>
-                  {authError && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -6, scale: 0.98 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: -6, scale: 0.98 }}
-                      transition={{ duration: 0.2 }}
+        <form className="space-y-4" onSubmit={handleSubmit} noValidate>
+          {authError && (
+            <Alert variant="destructive" className="animate-fade-in">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>
+                {authError.type === "invalid_credentials"
+                  ? "Email or password is incorrect"
+                  : authError.type === "timeout"
+                  ? "Sign-in timed out"
+                  : authError.type === "unconfirmed"
+                  ? "Confirm your email first"
+                  : "Could not sign in"}
+              </AlertTitle>
+              <AlertDescription className="space-y-3 text-foreground/90">
+                <p>{authError.message}</p>
+
+                {authError.type === "invalid_credentials" && (
+                  <>
+                    <Link
+                      to={`/signup?email=${encodeURIComponent(formData.email.trim())}`}
+                      className="inline-flex items-center gap-1 font-medium text-primary underline-offset-4 hover:underline"
                     >
-                      <Alert variant="destructive" className="border-destructive/30 bg-destructive/10 text-foreground">
-                        <AlertCircle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
-                        <AlertTitle className="text-sm font-semibold text-destructive">
-                          {authError.type === "invalid_credentials"
-                            ? "Account not found or incorrect password"
-                            : authError.type === "timeout"
-                            ? "Sign-In Timed Out"
-                            : authError.type === "unconfirmed"
-                            ? "Email Verification Required"
-                            : "Unable to sign in"}
-                        </AlertTitle>
-                        <AlertDescription className="mt-1 text-xs space-y-2">
-                          <p className="text-foreground/90 leading-relaxed">
-                            {authError.message}
-                          </p>
-
-                          {authError.type === "invalid_credentials" && (
-                            <div className="pt-2 mt-2 border-t border-destructive/20 space-y-2 text-xs">
-                              <div className="flex items-center justify-between flex-wrap gap-1">
-                                <span className="text-muted-foreground">Don't have an account yet?</span>
-                                <Link
-                                  to={`/signup?email=${encodeURIComponent(formData.email.trim())}`}
-                                  className="inline-flex items-center gap-1 font-semibold text-primary hover:underline"
-                                >
-                                  <span>Create account</span>
-                                  <ArrowRight className="h-3 w-3" />
-                                </Link>
-                              </div>
-                              <div className="text-[11px] text-muted-foreground bg-background/80 p-2 rounded border border-border/60 flex items-start gap-1.5">
-                                <Info className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
-                                <div><strong>Signed in with Google before?</strong> If you previously registered using Google, please click <strong>"Continue with Google"</strong> above.</div>
-                              </div>
-                            </div>
-                          )}
-
-                          {authError.type === "timeout" && (
-                            <div className="pt-1 text-[11px] text-muted-foreground">
-                              Please check your connection and try again, or click <strong>"Continue with Google"</strong> above.
-                            </div>
-                          )}
-                        </AlertDescription>
-                      </Alert>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
-                <div>
-                  <Label htmlFor="email-address">Email address</Label>
-                  <Input
-                    id="email-address"
-                    name="email"
-                    type="email"
-                    autoComplete="email"
-                    required
-                    disabled={isLoading}
-                    value={formData.email}
-                    onChange={handleChange}
-                    placeholder="Email address"
-                    className="mt-1"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="password">Password</Label>
-                  <PasswordInput
-                    id="password"
-                    name="password"
-                    autoComplete="current-password"
-                    required
-                    disabled={isLoading}
-                    value={formData.password}
-                    onChange={handleChange}
-                    placeholder="Password"
-                    className="mt-1"
-                  />
-                </div>
-
-                <div className="flex items-center justify-end">
-                  <div className="text-sm">
-                    <Link 
-                      to="/forgot-password" 
-                      className="font-medium text-primary hover:text-primary/80"
-                    >
-                      Forgot your password?
+                      Create an account with this email
+                      <ArrowRight className="h-3.5 w-3.5" />
                     </Link>
-                  </div>
-                </div>
+                    <div className="flex items-start gap-2 rounded-md border border-border bg-background p-2.5 text-xs text-muted-foreground">
+                      <Info className="mt-px h-3.5 w-3.5 shrink-0 text-primary" aria-hidden />
+                      <p>
+                        <span className="font-medium text-foreground">Registered with Google?</span>{" "}
+                        Your account has no password. Use Continue with Google above.
+                      </p>
+                    </div>
+                  </>
+                )}
+              </AlertDescription>
+            </Alert>
+          )}
 
-                <div>
-                  <Button
-                    type="submit"
-                    className="w-full"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? (
-                      <span className="flex items-center justify-center gap-2">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        <span>Signing in...</span>
-                      </span>
-                    ) : (
-                      "Sign in"
-                    )}
-                  </Button>
-                </div>
-              </form>
-            </div>
+          <div>
+            <Label htmlFor="email-address">Email</Label>
+            <Input
+              id="email-address"
+              name="email"
+              type="email"
+              autoComplete="email"
+              required
+              disabled={isLoading}
+              value={formData.email}
+              onChange={handleChange}
+              placeholder="you@srmap.edu.in"
+              className="mt-1.5"
+              aria-invalid={Boolean(fieldErrors.email) || undefined}
+              aria-describedby={fieldErrors.email ? "email-error" : undefined}
+            />
+            <FieldError id="email-error">{fieldErrors.email}</FieldError>
           </div>
-        </motion.div>
-      </div>
+          <div>
+            <div className="flex items-baseline justify-between gap-2">
+              <Label htmlFor="password">Password</Label>
+              <Link
+                to="/forgot-password"
+                className="text-xs font-medium text-primary underline-offset-4 hover:underline"
+              >
+                Forgot password?
+              </Link>
+            </div>
+            <PasswordInput
+              id="password"
+              name="password"
+              autoComplete="current-password"
+              required
+              disabled={isLoading}
+              value={formData.password}
+              onChange={handleChange}
+              className="mt-1.5"
+              aria-invalid={Boolean(fieldErrors.password) || undefined}
+              aria-describedby={fieldErrors.password ? "password-error" : undefined}
+            />
+            <FieldError id="password-error">{fieldErrors.password}</FieldError>
+          </div>
 
-      <RoleSelectionModal 
+          <Button type="submit" className="w-full" isLoading={isLoading}>
+            {isLoading ? "Signing in" : "Sign in"}
+          </Button>
+        </form>
+      </AuthShell>
+
+      <RoleSelectionModal
         isOpen={showRoleSelection}
         onRoleSelect={handleRoleSelect}
       />
-    </div>
+    </>
   );
 };
 

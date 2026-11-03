@@ -113,7 +113,7 @@ const Certificate = () => {
 
       <div className="container mx-auto max-w-5xl px-4 py-12 md:py-16">
         <div className="mb-8 text-center">
-          <h1 className="mb-3 text-3xl font-bold md:text-4xl">
+          <h1 className="mb-3 text-3xl font-semibold tracking-tight md:text-4xl">
             {earned ? "Your mentor certificate" : "The mentor certificate"}
           </h1>
           <p className="mx-auto max-w-2xl text-muted-foreground">
@@ -126,7 +126,7 @@ const Certificate = () => {
         {/* The preview leads. Someone who has just arrived from the homepage has
             no idea what this thing is, and no amount of copy explains it as
             quickly as showing it. Everything about earning it comes after. */}
-        <div className="overflow-hidden rounded-xl border shadow-sm">
+        <div className="overflow-hidden rounded-xl border border-border shadow-card">
           <MentorCertificate ref={svgRef} data={data} />
         </div>
 
@@ -149,7 +149,7 @@ const Certificate = () => {
 
         {!earned && (
           <div className="mt-14">
-            <h2 className="mb-2 text-center text-2xl font-bold">How it's earned</h2>
+            <h2 className="mb-2 text-center text-2xl font-semibold tracking-tight">How it's earned</h2>
             <p className="mx-auto mb-8 max-w-2xl text-center text-muted-foreground">
               There is no application and no button that grants it. It follows
               from helping people, which is the only reason it means anything.

@@ -88,7 +88,7 @@ const YourData = () => {
 
               {/* ── Hero ── */}
               <header className="mb-10">
-                <h1 className="text-4xl font-bold mb-6">Your Data</h1>
+                <h1 className="text-3xl md:text-4xl font-semibold tracking-tight mb-4">Your data</h1>
                 <p className="text-lg text-muted-foreground">
                   A plain accounting of what Friendly Learning SRMAP stores, what's public
                   versus private, and how to have it removed. Friendly Learning SRMAP is an
@@ -103,7 +103,7 @@ const YourData = () => {
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary shrink-0">
                     <Eye className="h-5 w-5" />
                   </div>
-                  <h2 className="text-2xl font-bold">What's public</h2>
+                  <h2 className="text-2xl font-semibold tracking-tight">What's public</h2>
                 </div>
                 <p className="text-lg mb-6">
                   Readable by anyone, signed in or not — this is the content the platform
@@ -127,7 +127,7 @@ const YourData = () => {
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary shrink-0">
                     <EyeOff className="h-5 w-5" />
                   </div>
-                  <h2 className="text-2xl font-bold">What's private</h2>
+                  <h2 className="text-2xl font-semibold tracking-tight">What's private</h2>
                 </div>
                 <p className="text-lg mb-6">
                   Restricted to you, the people you're talking to, or nobody outside an
@@ -150,7 +150,7 @@ const YourData = () => {
 
               {/* ── Search ── */}
               <section className="mb-10">
-                <h2 className="text-2xl font-bold mb-4">What search can and can't see</h2>
+                <h2 className="text-2xl font-semibold tracking-tight mb-4">What search can and can't see</h2>
                 <p className="text-lg mb-4">
                   CampusBrain search only ever looks at what's already public — faculty
                   directory entries, mentor profiles, groups, posts in public groups, and

@@ -1,7 +1,7 @@
 import { PRIMARY_DOMAIN } from "@/lib/constants";
 
 import { Link } from "react-router-dom";
-import { BadgeCheck, IdCard, MessageSquare, ShieldCheck } from "lucide-react";
+import { MessageSquare } from "lucide-react";
 import SEOHead from "@/components/SEOHead";
 import { ROUTE_META } from "@/lib/seo/route-meta";
 import Footer from "@/components/Footer";
@@ -56,15 +56,15 @@ const HowVerificationWorks = () => {
         structuredData={structuredData}
       />
 
-      <div className="min-h-screen">
-        <main className="pt-24 pb-16">
+      <div className="min-h-screen bg-background">
+        <main className="pb-16 pt-16 md:pt-24">
           <div className="container px-4 md:px-6">
-            <div className="max-w-3xl mx-auto">
+            <div className="mx-auto max-w-3xl text-base leading-7 text-foreground [&_section>p]:mb-4">
 
               {/* ── Hero ── */}
-              <header className="mb-10">
-                <h1 className="text-4xl font-bold mb-6">How Verification Works</h1>
-                <p className="text-lg text-muted-foreground">
+              <header className="mb-12 animate-fade-up">
+                <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">How verification works</h1>
+                <p className="mt-4 text-lg text-muted-foreground">
                   Friendly Learning SRMAP is an independent, student-run project — not an
                   admissions office. Here is exactly what gets checked, what doesn't, and
                   why, in plain language.
@@ -72,14 +72,12 @@ const HowVerificationWorks = () => {
               </header>
 
               {/* ── Mentor applications ── */}
-              <section className="mb-10">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary shrink-0">
-                    <ShieldCheck className="h-5 w-5" />
-                  </div>
-                  <h2 className="text-2xl font-bold">Mentor applications: approved instantly, checked afterwards</h2>
+              <section className="mb-12 border-t border-border pt-8">
+                <div className="mb-4 flex items-baseline gap-3">
+                  <span className="tabular shrink-0 text-sm font-semibold text-primary">01</span>
+                  <h2 className="text-xl font-semibold tracking-tight md:text-2xl">Mentor applications: approved instantly, checked afterwards</h2>
                 </div>
-                <p className="text-lg mb-4">
+                <p>
                   Every mentor application is approved the moment it's submitted — nobody
                   waits behind a reviewer's inbox to start helping students. What happens
                   behind that instant approval is a set of automatic checks: is this College
@@ -87,7 +85,7 @@ const HowVerificationWorks = () => {
                   fit the enrollment year encoded in the ID, does the CGPA look like it was
                   typed on the wrong scale.
                 </p>
-                <p className="text-lg mb-4">
+                <p>
                   None of those checks block approval. Anything they flag goes into a queue
                   a human reviews afterwards — an "approve, then flag for review" model,
                   chosen because requiring a reviewer's click first would stall every
@@ -98,20 +96,18 @@ const HowVerificationWorks = () => {
               </section>
 
               {/* ── College ID ── */}
-              <section className="mb-10">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary shrink-0">
-                    <IdCard className="h-5 w-5" />
-                  </div>
-                  <h2 className="text-2xl font-bold">What the College ID upload actually proves</h2>
+              <section className="mb-12 border-t border-border pt-8">
+                <div className="mb-4 flex items-baseline gap-3">
+                  <span className="tabular shrink-0 text-sm font-semibold text-primary">02</span>
+                  <h2 className="text-xl font-semibold tracking-tight md:text-2xl">What the College ID upload actually proves</h2>
                 </div>
-                <p className="text-lg mb-4">
+                <p>
                   It's worth being precise here, because it's easy to overstate. The College
                   ID format check catches typos, not fabrications — it's trivial to type
                   something that merely looks like a valid ID. What the ID genuinely buys,
                   with no human involved, is two things:
                 </p>
-                <ul className="list-disc pl-6 space-y-2 text-lg mb-4">
+                <ul className="mb-4 list-disc space-y-2 pl-6 marker:text-muted-foreground">
                   <li>
                     <strong>One account per enrollment number.</strong> A unique constraint
                     means a second account can't claim an ID already in use — that's the
@@ -123,7 +119,7 @@ const HowVerificationWorks = () => {
                     catching an obviously inconsistent pair.
                   </li>
                 </ul>
-                <p className="text-lg mb-4">
+                <p>
                   <strong>What it does not prove is current enrollment status.</strong> We
                   never verify against a live SRM University-AP student register, and this
                   page never claims we do. Anything that needs stronger confidence than the
@@ -132,14 +128,12 @@ const HowVerificationWorks = () => {
               </section>
 
               {/* ── Certificates ── */}
-              <section className="mb-10">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary shrink-0">
-                    <BadgeCheck className="h-5 w-5" />
-                  </div>
-                  <h2 className="text-2xl font-bold">How the mentor certificate is earned</h2>
+              <section className="mb-12 border-t border-border pt-8">
+                <div className="mb-4 flex items-baseline gap-3">
+                  <span className="tabular shrink-0 text-sm font-semibold text-primary">03</span>
+                  <h2 className="text-xl font-semibold tracking-tight md:text-2xl">How the mentor certificate is earned</h2>
                 </div>
-                <p className="text-lg mb-4">
+                <p>
                   There's no application for the certificate and no button that grants it.
                   It's issued automatically once a mentor has had a genuine two-way exchange
                   with <strong>{MIN_STUDENTS_FOR_CERTIFICATE} different students</strong> —
@@ -147,7 +141,7 @@ const HowVerificationWorks = () => {
                   one back. Opening a chat that's never answered doesn't count toward the
                   number, which is exactly what keeps the figure honest.
                 </p>
-                <p className="text-lg mb-4">
+                <p>
                   Every certificate carries a public verification link. The figures on it —
                   students helped, badges, reviews — are recomputed live from the platform
                   every time that link is opened, so the page is never out of date with what
@@ -166,13 +160,13 @@ const HowVerificationWorks = () => {
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-lg">
-                      <MessageSquare className="h-5 w-5 text-primary" />
+                      <MessageSquare className="h-5 w-5 text-muted-foreground" aria-hidden />
                       Still have a question?
                     </CardTitle>
                     <CardDescription>
                       Friendly Learning SRMAP is an independent student project. It is not
                       affiliated with or endorsed by SRM University-AP, and nothing on this
-                      page is a university credential. If something here doesn't match what
+                      page is a university credential. If something here does not match what
                       you see on the platform, tell us.
                     </CardDescription>
                   </CardHeader>

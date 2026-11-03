@@ -63,9 +63,7 @@ const TeamMembersAdmin = () => {
         }
       } catch (error) {
         console.error("Error loading admin data:", error);
-        toast.error("Error", {
-          description: "Failed to load team members data.",
-        });
+        toast.error("Failed to load team members data.");
       } finally {
         setIsLoading(false);
       }
@@ -103,9 +101,7 @@ const TeamMembersAdmin = () => {
         }
       } catch (error) {
         console.error("Error reloading team members:", error);
-        toast.error("Error", {
-          description: "Failed to reload team members.",
-        });
+        toast.error("Failed to reload team members.");
       }
     };
     
@@ -130,8 +126,8 @@ const TeamMembersAdmin = () => {
   return (
     <AdminLayout>
       <AdminHeader
-        title="Team Members Management"
-        description="Manage team members shown on the about page"
+        title="Team members"
+        description="People listed on the About page."
         action={
           <Button onClick={handleAddMember}>
             <Plus className="mr-2 h-4 w-4" />
@@ -141,8 +137,8 @@ const TeamMembersAdmin = () => {
       />
       
       <AdminCard
-        title="Current Team Members"
-        description="Team members currently displayed on the about page"
+        title="Listed members"
+        description="Members currently shown on the About page."
       >
         {teamMembers.length === 0 ? (
           <div className="text-center py-8">

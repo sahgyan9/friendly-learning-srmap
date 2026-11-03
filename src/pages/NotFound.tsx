@@ -5,7 +5,8 @@ import SEOHead from "@/components/SEOHead";
 import NoIndex from "@/components/NoIndex";
 import StructuredData from "@/components/StructuredData";
 import { Button } from "@/components/ui/button";
-import { FileSearch } from "lucide-react";
+import { Search } from "lucide-react";
+import { OPEN_SEARCH_EVENT } from "@/lib/search/events";
 
 const NotFound = () => {
   const location = useLocation();
@@ -68,32 +69,32 @@ const NotFound = () => {
       <NoIndex />
 
       <div className="min-h-screen bg-background">
-
-        <div className="container mx-auto px-4 py-16">
-          <div className="max-w-md mx-auto text-center py-12">
-            <div className="bg-card p-8 rounded-xl shadow-sm border">
-              <div className="inline-block p-4 bg-primary/10 rounded-full mb-4">
-                <FileSearch className="h-8 w-8 text-primary" />
-              </div>
-
-              <h1 className="text-3xl font-bold mb-3">404: Page Not Found</h1>
-
-              <p className="text-muted-foreground mb-6">
-                The page you're looking for doesn't exist or has been moved.
-              </p>
-
-              <div className="space-y-3">
-                <Button asChild className="w-full">
-                  <Link to="/">Return Home</Link>
-                </Button>
-
-                <Button variant="outline" asChild className="w-full">
-                  <Link to="/contact">Contact Support</Link>
-                </Button>
-              </div>
+        <main className="container mx-auto px-4 py-24 md:py-32">
+          <div className="mx-auto max-w-md text-center animate-fade-up">
+            <p className="tabular text-sm font-semibold text-primary">404</p>
+            <h1 className="mt-3 text-3xl font-semibold tracking-tight text-foreground md:text-4xl">Page not found</h1>
+            <p className="mt-4 text-muted-foreground">
+              Nothing lives at <code className="break-all rounded bg-secondary px-1.5 py-0.5 text-sm text-secondary-foreground">{location.pathname}</code>.
+              The link may be old, or the page may have moved.
+            </p>
+            <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+              <Button asChild>
+                <Link to="/">Go to the homepage</Link>
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => window.dispatchEvent(new CustomEvent(OPEN_SEARCH_EVENT))}
+              >
+                <Search aria-hidden />
+                Search the site
+              </Button>
             </div>
+            <p className="mt-8 text-sm text-muted-foreground">
+              Followed a broken link here?{" "}
+              <Link to="/contact" className="text-primary underline underline-offset-2">Tell us</Link>.
+            </p>
           </div>
-        </div>
+        </main>
       </div>
     </>
   );

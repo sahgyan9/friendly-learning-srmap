@@ -57,6 +57,13 @@ a[href*="lovable.dev"],
     --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
 
+    /* Status colours. Green and amber only ever mean "done/live" and
+       "pending/warning", so they are tokens rather than ad-hoc classes. */
+    --success: 142 72% 29%;
+    --success-foreground: 0 0% 100%;
+    --warning: 32 95% 40%;
+    --warning-foreground: 0 0% 100%;
+
     --border: 214 32% 91%;
     --input: 214 32% 91%;
     --ring: 222 84% 70%;
@@ -79,13 +86,18 @@ a[href*="lovable.dev"],
     --background: 222 47% 11%;
     --foreground: 210 40% 98%;
 
-    --card: 240 10% 8%;
+    /* Cards sit one step above the page, in the same navy family. They used
+       to be zinc 8% on a navy 11% page: darker than the background they sat
+       on, and a different hue, so every card looked like a hole. */
+    --card: 222 40% 14%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 240 10% 8%;
+    --popover: 222 40% 14%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 210 40% 98%;
+    /* Brand blue, lifted for contrast on navy. Near-white primary made every
+       primary button look like a disabled secondary one. */
+    --primary: 221 83% 66%;
     --primary-foreground: 222 47% 11%;
 
     --secondary: 217 33% 18%;
@@ -100,19 +112,23 @@ a[href*="lovable.dev"],
     --destructive: 0 63% 50%;
     --destructive-foreground: 210 40% 98%;
 
+    --success: 142 69% 58%;
+    --success-foreground: 222 47% 11%;
+    --warning: 38 92% 60%;
+    --warning-foreground: 222 47% 11%;
+
     --border: 217 33% 25%;
     --input: 217 33% 25%;
-    --ring: 213 27% 84%;
+    --ring: 221 83% 66%;
 
-    /* Added better sidebar dark mode variables */
-    --sidebar-background: 240 10% 8%;
+    --sidebar-background: 222 47% 10%;
     --sidebar-foreground: 210 40% 98%;
     --sidebar-primary: 210 40% 98%;
     --sidebar-primary-foreground: 240 10% 8%;
-    --sidebar-accent: 240 10% 15%;
+    --sidebar-accent: 217 33% 18%;
     --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 240 10% 20%;
-    --sidebar-ring: 213 27% 84%;
+    --sidebar-border: 217 33% 22%;
+    --sidebar-ring: 221 83% 66%;
   }
 }
 
@@ -124,6 +140,42 @@ a[href*="lovable.dev"],
   body {
     @apply bg-background text-foreground transition-colors duration-300;
     font-feature-settings: "rlig" 1, "calt" 1;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1, h2, h3 {
+    @apply tracking-tight;
+    text-wrap: balance;
+  }
+
+  ::selection {
+    @apply bg-primary/20 text-foreground;
+  }
+
+  /* One visible focus style everywhere, so keyboard users always know where
+     they are. Components that draw their own ring still win via ring-*. */
+  :focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
+
+  /* Pre-paint cover for the first-visit intro; see index.html. */
+  html.intro-pending body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 99;
+    background: hsl(var(--background));
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 
   /* Custom scrollbar */
@@ -167,35 +219,13 @@ a[href*="lovable.dev"],
 }
 
 @layer components {
-  .glass-card {
-    @apply bg-white/80 dark:bg-gray-900/50 backdrop-blur-md border border-white/20 dark:border-white/10 shadow-lg;
-  }
-
   .text-balance {
     text-wrap: balance;
   }
 
-  /* Button animations */
-  .button-hover {
-    @apply hover:scale-105 transition-transform duration-200;
-  }
-
-  .button-tap {
-    @apply active:scale-95 transition-transform duration-200;
-  }
-
-  /* Loading animations */
-  .loading-pulse {
-    @apply animate-pulse;
-  }
-
-  .loading-spin {
-    @apply animate-spin;
-  }
-
-  /* Updated card styles for dark mode */
-  .card-gradient {
-    @apply bg-gradient-to-br from-card to-secondary/80 dark:from-gray-800 dark:to-gray-900 backdrop-blur-sm;
+  /* Numbers that update in place (counts, timers) should not shift width. */
+  .tabular {
+    font-variant-numeric: tabular-nums;
   }
 
   /* Fix for dropdown menus in dark mode */

@@ -22,7 +22,7 @@ const AdminNotices = () => {
     <AdminLayout>
       <AdminHeader
         title="Notices"
-        description="Publish official circulars and notices so they're searchable in Ask AI"
+        description="Publish official circulars. Published notices become searchable in Ask AI."
         action={
           !showCreateForm && (
             <Button onClick={() => setShowCreateForm(true)}>

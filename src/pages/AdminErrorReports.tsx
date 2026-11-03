@@ -8,7 +8,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
@@ -28,9 +27,9 @@ interface ErrorReport {
 }
 
 const STATUS_COLOR: Record<ErrorReport["status"], string> = {
-  new: "bg-red-500",
-  reviewed: "bg-yellow-500",
-  resolved: "bg-green-500",
+  new: "bg-destructive",
+  reviewed: "bg-amber-500",
+  resolved: "bg-green-600",
 };
 
 const AdminErrorReports = () => {
@@ -107,52 +106,55 @@ const AdminErrorReports = () => {
   return (
     <AdminPageWrapper loading={loading}>
       <AdminHeader
-        title="Error Reports"
+        title="Error reports"
         description="Errors students flagged with the 'Report' button on a toast."
       />
 
       <div className="space-y-6">
-        <div className="flex flex-wrap items-center gap-2 sm:gap-4">
-          <Badge variant="outline" className="flex items-center gap-1">
-            <div className="w-2 h-2 bg-red-500 rounded-full" />
-            New: {newCount}
-          </Badge>
-          <Badge variant="outline" className="flex items-center gap-1">
-            <div className="w-2 h-2 bg-yellow-500 rounded-full" />
-            Reviewed: {reviewedCount}
-          </Badge>
-          <Badge variant="outline" className="flex items-center gap-1">
-            <div className="w-2 h-2 bg-green-500 rounded-full" />
-            Resolved: {resolvedCount}
-          </Badge>
-        </div>
+        <dl className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
+          {([
+            ["new", "New", newCount],
+            ["reviewed", "Reviewed", reviewedCount],
+            ["resolved", "Resolved", resolvedCount],
+          ] as const).map(([key, label, count]) => (
+            <div key={key} className="flex items-center gap-2">
+              <span className={`h-2 w-2 rounded-full ${STATUS_COLOR[key]}`} aria-hidden />
+              <dt className="text-muted-foreground">{label}</dt>
+              <dd className="tabular font-medium text-foreground">{count}</dd>
+            </div>
+          ))}
+        </dl>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="space-y-4">
             {reports.length === 0 ? (
               <Card>
                 <CardContent className="text-center py-8">
-                  <AlertTriangle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground">No error reports yet</p>
+                  <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-secondary">
+                    <AlertTriangle className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                  <p className="font-medium text-foreground">No error reports</p>
+                  <p className="mt-1 text-sm text-muted-foreground">Reports appear here when a student taps Report on an error toast.</p>
                 </CardContent>
               </Card>
             ) : (
               reports.map((report) => (
                 <Card
                   key={report.id}
-                  className={`cursor-pointer hover:shadow-md transition-shadow ${selected?.id === report.id ? "ring-2 ring-primary" : ""
+                  className={`cursor-pointer transition-colors duration-150 ${selected?.id === report.id ? "border-primary bg-primary/5" : "hover:border-foreground/20"
                     }`}
                   onClick={() => handleSelect(report)}
                 >
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between gap-2">
                       <CardTitle className="text-base flex items-center gap-2 min-w-0">
-                        <AlertTriangle className="h-4 w-4 flex-shrink-0 text-orange-500" />
+                        <AlertTriangle className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
                         <span className="truncate">{report.message}</span>
                       </CardTitle>
-                      <Badge className={`${STATUS_COLOR[report.status]} text-white text-xs flex-shrink-0`}>
+                      <span className="flex shrink-0 items-center gap-1.5 text-xs font-medium capitalize text-muted-foreground">
+                        <span className={`h-2 w-2 rounded-full ${STATUS_COLOR[report.status]}`} aria-hidden />
                         {report.status}
-                      </Badge>
+                      </span>
                     </div>
                     <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
                       <Globe className="h-3 w-3" />

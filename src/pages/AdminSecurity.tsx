@@ -4,31 +4,29 @@ import AdminLayout from "@/components/admin/AdminLayout";
 import AdminRecoveryManager from "@/components/admin/security/AdminRecoveryManager";
 import SecurityMonitor from "@/components/admin/security/SecurityMonitor";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import { Shield, Key, Activity } from "lucide-react";
+import { Key, Activity } from "lucide-react";
 
 const AdminSecurity = () => {
   return (
     <ProtectedRoute requiredRole="admin">
       <AdminLayout>
         <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight">Security Management</h1>
-              <p className="text-muted-foreground">
-                Manage admin access, recovery codes, and monitor security activities
-              </p>
-            </div>
+          <div className="border-b border-border pb-6">
+            <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">Security</h1>
+            <p className="mt-2 text-sm text-muted-foreground md:text-base">
+              Admin recovery codes and recent security events.
+            </p>
           </div>
 
           <Tabs defaultValue="recovery" className="space-y-4">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-2 sm:inline-flex sm:w-auto">
               <TabsTrigger value="recovery" className="flex items-center gap-2">
                 <Key className="h-4 w-4" />
-                Recovery Codes
+                Recovery codes
               </TabsTrigger>
               <TabsTrigger value="monitor" className="flex items-center gap-2">
                 <Activity className="h-4 w-4" />
-                Security Monitor
+                Activity
               </TabsTrigger>
             </TabsList>
             

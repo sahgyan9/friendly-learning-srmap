@@ -2,6 +2,10 @@ import { PRIMARY_DOMAIN } from "@/lib/constants";
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import Footer from "@/components/Footer";
 import SEOHead from "@/components/SEOHead";
@@ -59,11 +63,11 @@ const Contact = () => {
         } catch {
           // Body was not JSON; fall through to the generic message.
         }
-        throw new Error(serverMessage || "Failed to send message. Please try again.");
+        throw new Error(serverMessage || "Could not send your message. Try again in a minute.");
       }
 
       if (data?.success) {
-        toast.success("Message sent successfully! We'll get back to you soon.");
+        toast.success("Message sent. We will reply to your email.");
         setFormData({
           name: profile?.name || "",
           email: profile?.email || "",
@@ -71,11 +75,11 @@ const Contact = () => {
           message: ""
         });
       } else {
-        throw new Error(data?.error || "Failed to send message. Please try again.");
+        throw new Error(data?.error || "Could not send your message. Try again in a minute.");
       }
     } catch (error) {
       console.error('Error sending contact message:', error);
-      toast.error(error instanceof Error ? error.message : "Failed to send message. Please try again.");
+      toast.error(error instanceof Error ? error.message : "Could not send your message. Try again in a minute.");
     } finally {
       setIsSubmitting(false);
     }
@@ -108,67 +112,76 @@ const Contact = () => {
       />
 
       <div className="min-h-screen bg-background text-foreground">
-
-        <main className="pt-24 pb-16">
+        <main className="pb-16 pt-16 md:pt-24">
           <div className="container px-4 md:px-6">
-            <div className="max-w-3xl mx-auto">
-              <header className="mb-10">
-                <h1 className="text-4xl font-bold mb-6">Contact Us</h1>
-
-                <p className="text-lg mb-4">
-                  Have questions or feedback about our SRM AP mentorship platform? We'd love to hear from you.
-                </p>
-                <p className="text-lg">
+            <div className="mx-auto max-w-2xl">
+              <header className="mb-10 animate-fade-up">
+                <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">Contact us</h1>
+                <p className="mt-4 text-lg text-muted-foreground">
+                  Questions, bug reports or feedback about Friendly Learning.{" "}
                   {isAuthenticated
-                    ? "You're signed in — just send us your message below and we'll reply to your registered email."
-                    : "Fill out the form below and we'll get back to you as soon as possible."}
+                    ? "We will reply to the email on your account."
+                    : "We will reply to the email you enter below."}
                 </p>
               </header>
 
-              <section>
+              <section className="rounded-xl border border-border bg-card p-5 shadow-card sm:p-6">
                 {loading ? (
-                  <p>Loading...</p>
+                  <div className="space-y-5" aria-busy="true">
+                    <div className="space-y-2">
+                      <Skeleton className="h-4 w-20" />
+                      <Skeleton className="h-11 w-full" />
+                    </div>
+                    <div className="space-y-2">
+                      <Skeleton className="h-4 w-20" />
+                      <Skeleton className="h-32 w-full" />
+                    </div>
+                    <Skeleton className="h-11 w-36" />
+                  </div>
                 ) : (
-                  <form onSubmit={handleSubmit} className="space-y-6" role="form" aria-label="Contact form">
+                  <form onSubmit={handleSubmit} className="space-y-5" aria-label="Contact form">
                     {!isAuthenticated && (
                       <>
-                        <div>
-                          <label htmlFor="name" className="block text-sm font-medium mb-2">Full Name *</label>
-                          <input
-                            id="name"
-                            name="name"
-                            type="text"
-                            required
-                            maxLength={100}
-                            value={formData.name}
-                            onChange={handleChange}
-                            className="w-full p-3 border border-input rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary"
-                            placeholder="Enter your full name"
-                            aria-required="true"
-                            disabled={isSubmitting}
-                          />
+                        <div className="grid gap-5 sm:grid-cols-2">
+                          <div className="min-w-0 space-y-2">
+                            <Label htmlFor="name">Full name</Label>
+                            <Input
+                              id="name"
+                              name="name"
+                              type="text"
+                              required
+                              maxLength={100}
+                              autoComplete="name"
+                              value={formData.name}
+                              onChange={handleChange}
+                              className="h-11"
+                              aria-required="true"
+                              disabled={isSubmitting}
+                            />
+                          </div>
+
+                          <div className="min-w-0 space-y-2">
+                            <Label htmlFor="email">Email</Label>
+                            <Input
+                              id="email"
+                              name="email"
+                              type="email"
+                              required
+                              maxLength={254}
+                              autoComplete="email"
+                              value={formData.email}
+                              onChange={handleChange}
+                              className="h-11"
+                              placeholder="you@example.com"
+                              aria-required="true"
+                              disabled={isSubmitting}
+                            />
+                          </div>
                         </div>
 
-                        <div>
-                          <label htmlFor="email" className="block text-sm font-medium mb-2">Email Address *</label>
-                          <input
-                            id="email"
-                            name="email"
-                            type="email"
-                            required
-                            maxLength={254}
-                            value={formData.email}
-                            onChange={handleChange}
-                            className="w-full p-3 border border-input rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary"
-                            placeholder="Enter your email address"
-                            aria-required="true"
-                            disabled={isSubmitting}
-                          />
-                        </div>
-
-                        <div>
-                          <label htmlFor="subject" className="block text-sm font-medium mb-2">Subject *</label>
-                          <input
+                        <div className="space-y-2">
+                          <Label htmlFor="subject">Subject</Label>
+                          <Input
                             id="subject"
                             name="subject"
                             type="text"
@@ -176,8 +189,8 @@ const Contact = () => {
                             maxLength={200}
                             value={formData.subject}
                             onChange={handleChange}
-                            className="w-full p-3 border border-input rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary"
-                            placeholder="What is this regarding?"
+                            className="h-11"
+                            placeholder="What is this about?"
                             aria-required="true"
                             disabled={isSubmitting}
                           />
@@ -186,41 +199,48 @@ const Contact = () => {
                     )}
 
                     {isAuthenticated && (
-                      <div className="p-4 border rounded-md bg-muted/50 text-sm">
-                        <p>
-                          Signed in as <span className="font-medium">{profile?.name}</span> ({profile?.email}).
-                          Your name and email will be attached automatically.
-                        </p>
-                      </div>
+                      <p className="rounded-lg border border-border bg-secondary px-4 py-3 text-sm text-secondary-foreground">
+                        Sending as <span className="font-medium text-foreground">{profile?.name}</span>{" "}
+                        <span className="text-muted-foreground">({profile?.email})</span>
+                      </p>
                     )}
 
-                    <div>
-                      <label htmlFor="message" className="block text-sm font-medium mb-2">Message *</label>
-                      <textarea
+                    <div className="space-y-2">
+                      <div className="flex items-baseline justify-between gap-3">
+                        <Label htmlFor="message">Message</Label>
+                        {/* Counter appears near the limit, where it helps, not before */}
+                        {formData.message.length > 4500 && (
+                          <span
+                            className={`tabular text-xs ${formData.message.length >= 5000 ? "text-destructive" : "text-muted-foreground"}`}
+                            aria-live="polite"
+                          >
+                            {formData.message.length}/5000
+                          </span>
+                        )}
+                      </div>
+                      <Textarea
                         id="message"
                         name="message"
-                        rows={5}
+                        rows={6}
                         required
                         maxLength={5000}
                         value={formData.message}
                         onChange={handleChange}
-                        className="w-full p-3 border border-input rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary"
-                        placeholder="Please describe your question or feedback in detail..."
+                        placeholder="Describe your question or feedback. For bugs, include the page and what you expected to happen."
                         aria-required="true"
                         disabled={isSubmitting}
                       />
                     </div>
 
-                    <div>
-                      <Button
-                        type="submit"
-                        size="lg"
-                        className="w-full md:w-auto"
-                        disabled={isSubmitting}
-                      >
-                        {isSubmitting ? "Sending..." : "Send Message"}
-                      </Button>
-                    </div>
+                    <Button
+                      type="submit"
+                      size="lg"
+                      className="w-full sm:w-auto"
+                      isLoading={isSubmitting}
+                      disabled={!formData.message.trim() || (!isAuthenticated && (!formData.name.trim() || !formData.email.trim() || !formData.subject.trim()))}
+                    >
+                      {isSubmitting ? "Sending" : "Send message"}
+                    </Button>
                   </form>
                 )}
               </section>

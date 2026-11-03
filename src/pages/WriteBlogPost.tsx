@@ -4,27 +4,28 @@ import { toast } from "sonner";
 import {
   ArrowLeft,
   Check,
+  CloudOff,
   Eye,
-  Globe,
   Loader2,
   Maximize2,
   Minimize2,
   Pencil,
-  Send,
+  RotateCw,
   Settings2,
-  Sparkles,
-  X,
 } from "lucide-react";
 
 import Footer from "@/components/Footer";
 import SEOHead from "@/components/SEOHead";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useAuth } from "@/context/AuthContext";
 import { cn } from "@/lib/utils";
 import { getErrorMessage } from "@/lib/errors";
 import { sanitizeBlogHtml } from "@/lib/sanitize-html";
+import { getInitials } from "@/utils/user-utils";
+import { ARTICLE_PROSE, coverImageOf } from "@/components/blog/article-prose";
 import { BlogPostEditor } from "@/components/blog/BlogPostEditor";
 import { BlogCoverPicker } from "@/components/blog/BlogCoverPicker";
 import { BlogSettingsSheet } from "@/components/blog/BlogSettingsSheet";
@@ -86,22 +87,26 @@ export const WriteBlogPost = () => {
   const [contentText, setContentText] = useState(() => initialLocalDraft?.contentText || "");
   const [isPublished, setIsPublished] = useState(false);
 
-  // Creative Mode States
   const [focusMode, setFocusMode] = useState(false);
   const [previewMode, setPreviewMode] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [saveStatus, setSaveStatus] = useState<"saved" | "saving" | "unsaved">("saved");
+  const [submitIntent, setSubmitIntent] = useState<"draft" | "publish" | null>(null);
+  // "idle" until the first edit, so a blank page doesn't claim to be saved.
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [lastSavedAt, setLastSavedAt] = useState<number | null>(() => initialLocalDraft?.updatedAt ?? null);
+  const [saveAttempt, setSaveAttempt] = useState(0);
+  const [now, setNow] = useState(() => Date.now());
 
   const titleTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const subtitleTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const canvasRef = useRef<HTMLDivElement>(null);
   const coverFileInputRef = useRef<HTMLInputElement>(null);
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Auto-resize title input
-  const adjustTitleHeight = () => {
-    if (titleTextareaRef.current) {
-      titleTextareaRef.current.style.height = "auto";
-      titleTextareaRef.current.style.height = `${titleTextareaRef.current.scrollHeight}px`;
-    }
+  const fitToContent = (el: HTMLTextAreaElement | null) => {
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
   };
 
   // Auto-extracted excerpt from first 1-2 paragraphs (clean text)
@@ -127,7 +132,7 @@ export const WriteBlogPost = () => {
   useEffect(() => {
     if (!slugParam) {
       if (initialLocalDraft && (initialLocalDraft.title || initialLocalDraft.contentHtml)) {
-        toast.info("Restored draft from your browser", { duration: 3000 });
+        toast.info("Restored your unsaved draft from this browser", { duration: 3000 });
       }
       return;
     }
@@ -157,10 +162,19 @@ export const WriteBlogPost = () => {
     });
   }, [slugParam, user?.id]);
 
-  // Auto-resize title when title changes
   useEffect(() => {
-    adjustTitleHeight();
-  }, [title]);
+    fitToContent(titleTextareaRef.current);
+  }, [title, previewMode]);
+
+  useEffect(() => {
+    fitToContent(subtitleTextareaRef.current);
+  }, [excerpt, previewMode]);
+
+  // Keeps "Saved 2 min ago" honest without re-rendering on every second.
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 30_000);
+    return () => clearInterval(id);
+  }, []);
 
   // Dual Auto-Save: Saves to localStorage AND syncs draft row to Supabase database (debounced)
   useEffect(() => {
@@ -240,17 +254,21 @@ export const WriteBlogPost = () => {
           }
         }
 
+        setLastSavedAt(Date.now());
+        setNow(Date.now());
         setSaveStatus("saved");
       } catch (err) {
-        console.warn("Auto-save sync warning:", err);
-        setSaveStatus("saved");
+        // The localStorage snapshot above has usually succeeded, but the
+        // server copy hasn't; say so instead of claiming it's saved.
+        console.warn("Auto-save sync failed:", err);
+        setSaveStatus("error");
       }
     }, 1500);
 
     return () => {
       if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     };
-  }, [title, slug, excerpt, tags, coverImageUrl, contentHtml, contentText, user?.id, isEditing, existing?.id, existingDbDraftId]);
+  }, [title, slug, excerpt, tags, coverImageUrl, contentHtml, contentText, user?.id, isEditing, existing?.id, existingDbDraftId, saveAttempt]);
 
   const handleTitleChange = (value: string) => {
     setTitle(value);
@@ -267,7 +285,7 @@ export const WriteBlogPost = () => {
       setPendingCoverFile(null);
       toast.success("Cover image updated");
     } catch (error) {
-      toast.error(getErrorMessage(error, "Failed to upload cover image"));
+      toast.error(getErrorMessage(error, "Couldn't upload the cover image. Try again."));
     } finally {
       setUploadingCover(false);
     }
@@ -291,7 +309,7 @@ export const WriteBlogPost = () => {
 
   const handleSubmit = async (publish: boolean) => {
     if (!user) {
-      toast.error(publish ? "Please sign in to publish your post" : "Please sign in to save your draft");
+      toast.error(publish ? "Sign in to publish your post" : "Sign in to save your draft");
       return;
     }
 
@@ -301,23 +319,24 @@ export const WriteBlogPost = () => {
     const finalTags = deriveFinalTags();
 
     if (publish && !trimmedTitle) {
-      toast.error("Please enter a title for your post");
+      toast.error("Add a title before publishing");
       titleTextareaRef.current?.focus();
       return;
     }
 
     if (publish && !contentText.trim()) {
-      toast.error("Please write some content in your post");
+      toast.error("Write something in the body before publishing");
       return;
     }
 
     if (RESERVED_SLUGS.has(finalSlug.toLowerCase())) {
-      toast.error(`"${finalSlug}" is a reserved URL — please change the slug in settings`);
+      toast.error(`"/blogs/${finalSlug}" is a reserved address. Choose a different URL in Settings.`);
       setSettingsOpen(true);
       return;
     }
 
     setSubmitting(true);
+    setSubmitIntent(publish ? "publish" : "draft");
     try {
       const payload = {
         title: trimmedTitle || "Untitled Draft",
@@ -353,233 +372,232 @@ export const WriteBlogPost = () => {
         navigate("/blogs");
       }
     } catch (error) {
-      toast.error(getErrorMessage(error, `Failed to ${isEditing ? "update" : "publish"} post`));
+      toast.error(getErrorMessage(error, publish ? `Couldn't ${isPublished ? "update" : "publish"} the post. Try again.` : "Couldn't save the draft. Try again."));
     } finally {
       setSubmitting(false);
+      setSubmitIntent(null);
     }
   };
 
   if (loadingExisting) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-3">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-sm text-muted-foreground">Loading your story...</p>
+      <div className="min-h-screen bg-background" aria-busy="true" aria-label="Loading post">
+        <div className="sticky top-16 z-40 h-14 border-b border-border bg-background" />
+        <div className="mx-auto flex w-full max-w-[680px] flex-col gap-4 px-4 py-10 sm:px-6">
+          <Skeleton className="h-8 w-28" />
+          <Skeleton className="h-12 w-4/5" />
+          <Skeleton className="h-6 w-3/5" />
+          <Skeleton className="mt-6 h-10 w-full" />
+          <div className="mt-4 flex flex-col gap-3">
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-11/12" />
+            <Skeleton className="h-4 w-4/5" />
+          </div>
         </div>
       </div>
     );
   }
 
   const safePreviewHtml = sanitizeBlogHtml(contentHtml);
+  const previewCover = coverImageOf(coverImageUrl);
+
+  const missingForPublish = !title.trim()
+    ? "Add a title to publish."
+    : !contentText.trim()
+    ? "Write the body to publish."
+    : null;
+  const authorName = profile?.name || user?.email || "You";
+
+  const focusEditorBody = () => {
+    canvasRef.current?.querySelector<HTMLElement>(".ProseMirror")?.focus();
+  };
 
   return (
     <>
       <SEOHead title={isEditing ? `Edit "${title || "Post"}" | Community Blog` : "Write a Post | Community Blog"} />
 
-      <div className={cn("transition-all", focusMode ? "fixed inset-0 z-50 overflow-y-auto bg-background flex flex-col" : "min-h-screen bg-background flex flex-col")}>
-        {/* Top Floating Word/Notion Action Header */}
-        <header className={cn("z-40 w-full border-b border-border/70 bg-background/95 backdrop-blur-md transition-all", focusMode ? "sticky top-0" : "sticky top-16")}>
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-2">
-            {/* Left: Navigation & Status */}
-            <div className="flex items-center gap-3">
-              <Link
-                to="/blogs"
-                className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors py-1 px-2 rounded-lg hover:bg-muted"
-                title="Back to Community Blog"
-              >
-                <ArrowLeft className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Community Blog</span>
-              </Link>
+      <div className={cn(focusMode ? "fixed inset-0 z-50 flex flex-col overflow-y-auto bg-background" : "flex min-h-screen flex-col bg-background")}>
+        <header className={cn("sticky z-40 w-full border-b border-border bg-background", focusMode ? "top-0" : "top-16")}>
+          <div className="mx-auto flex h-14 max-w-5xl items-center justify-between gap-2 px-3 sm:px-6">
+            <div className="flex min-w-0 items-center gap-1 sm:gap-3">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Link
+                    to="/blogs"
+                    aria-label="Back to Community Blog"
+                    className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-md px-2 text-sm text-muted-foreground transition-colors duration-150 hover:bg-accent hover:text-foreground"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    <span className="hidden lg:inline">Community Blog</span>
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">Back to Community Blog. Your draft is kept.</TooltipContent>
+              </Tooltip>
 
-              <div className="h-4 w-px bg-border hidden sm:block" />
+              <span aria-hidden className="hidden h-4 w-px bg-border sm:block" />
 
-              {/* Live Save Status */}
-              <div className="hidden md:flex items-center gap-1.5 text-[11px] text-muted-foreground select-none">
-                {saveStatus === "saving" ? (
-                  <>
-                    <Loader2 className="h-3 w-3 animate-spin text-primary" />
-                    <span>Saving draft...</span>
-                  </>
-                ) : (
-                  <>
-                    <Check className="h-3 w-3 text-emerald-500" />
-                    <span>Auto-saved</span>
-                  </>
-                )}
-              </div>
+              <SaveIndicator
+                status={saveStatus}
+                lastSavedAt={lastSavedAt}
+                now={now}
+                signedIn={Boolean(user)}
+                onRetry={() => setSaveAttempt((n) => n + 1)}
+              />
             </div>
 
-            {/* Middle: Stats Pill (tablet & desktop) */}
-            <div className="hidden md:flex items-center gap-2">
-              <div className="text-[11px] font-medium text-muted-foreground bg-muted/60 px-2.5 py-1 rounded-full border border-border/50">
-                {wordCount} words · {readingTimeMinutes} min read
-              </div>
-            </div>
+            <div className="flex shrink-0 items-center gap-1 sm:gap-1.5">
+              <span className="mr-2 hidden text-xs text-muted-foreground tabular md:inline">
+                {wordCount.toLocaleString("en-IN")} {wordCount === 1 ? "word" : "words"} · {readingTimeMinutes} min read
+              </span>
 
-            {/* Right: Actions */}
-            <div className="flex items-center gap-1.5 sm:gap-2">
-              {/* Focus / Zen Mode */}
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
                     type="button"
-                    variant={focusMode ? "secondary" : "ghost"}
+                    variant="ghost"
                     size="icon"
-                    className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                    className="hidden h-9 w-9 text-muted-foreground md:inline-flex"
+                    aria-pressed={focusMode}
+                    aria-label={focusMode ? "Exit focus mode" : "Focus mode"}
                     onClick={() => setFocusMode(!focusMode)}
                   >
                     {focusMode ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent side="bottom">
-                  {focusMode ? "Exit Zen Mode" : "Focus Mode (Distraction-Free)"}
+                  {focusMode ? "Exit focus mode" : "Focus mode: hide the site navigation"}
                 </TooltipContent>
               </Tooltip>
 
-              {/* Preview Toggle */}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    type="button"
-                    variant={previewMode ? "secondary" : "ghost"}
-                    size="sm"
-                    className="h-8 text-xs gap-1.5 px-2.5"
-                    onClick={() => setPreviewMode(!previewMode)}
-                  >
-                    {previewMode ? (
-                      <>
-                        <Pencil className="h-3.5 w-3.5 text-primary" />
-                        <span className="hidden sm:inline">Edit</span>
-                      </>
-                    ) : (
-                      <>
-                        <Eye className="h-3.5 w-3.5 text-muted-foreground" />
-                        <span className="hidden sm:inline">Preview</span>
-                      </>
-                    )}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom">
-                  {previewMode ? "Return to editor" : "Preview how readers see your post"}
-                </TooltipContent>
-              </Tooltip>
-
-              {/* Settings Drawer Button */}
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
                     type="button"
                     variant="ghost"
-                    size="sm"
-                    className="h-8 text-xs gap-1.5 px-2 text-muted-foreground hover:text-foreground relative"
+                    size="icon"
+                    className="h-9 w-9 text-muted-foreground"
+                    aria-label="Post settings"
                     onClick={() => setSettingsOpen(true)}
                   >
                     <Settings2 className="h-4 w-4" />
-                    <span className="hidden lg:inline">Settings</span>
-                    {tags.length > 0 && (
-                      <span className="absolute -top-0.5 -right-0.5 flex h-2 w-2 rounded-full bg-primary" />
-                    )}
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent side="bottom">Custom slug, tags, & card preview</TooltipContent>
+                <TooltipContent side="bottom">URL, summary and tags</TooltipContent>
               </Tooltip>
 
-              <div className="h-4 w-px bg-border mx-0.5" />
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-9 gap-1.5 px-2.5"
+                aria-pressed={previewMode}
+                onClick={() => setPreviewMode(!previewMode)}
+              >
+                {previewMode ? <Pencil className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                <span className="hidden sm:inline">{previewMode ? "Edit" : "Preview"}</span>
+              </Button>
 
-              {/* Save Draft */}
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
-                className="h-8 text-xs font-medium"
+                className="hidden h-9 sm:inline-flex"
                 disabled={submitting}
+                isLoading={submitIntent === "draft"}
                 onClick={() => handleSubmit(false)}
               >
-                {submitting ? "Saving..." : "Save Draft"}
+                Save draft
               </Button>
 
-              {/* Publish Button */}
-              <Button
-                type="button"
-                size="sm"
-                className="h-8 text-xs font-semibold gap-1.5 shadow-sm bg-primary hover:bg-primary/90 text-primary-foreground"
-                disabled={submitting}
-                onClick={() => handleSubmit(true)}
-              >
-                {submitting ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  <Sparkles className="h-3.5 w-3.5" />
-                )}
-                <span>{isPublished ? "Update Post" : "Publish"}</span>
-              </Button>
+              {missingForPublish ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    {/* Disabled buttons swallow pointer events, so this span
+                        carries the tooltip explaining what's missing. */}
+                    <span tabIndex={0} className="inline-flex rounded-md">
+                      <Button type="button" size="sm" className="h-9 px-4" disabled>
+                        {isPublished ? "Update" : "Publish"}
+                      </Button>
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">{missingForPublish}</TooltipContent>
+                </Tooltip>
+              ) : (
+                <Button
+                  type="button"
+                  size="sm"
+                  className="h-9 px-4"
+                  disabled={submitting}
+                  isLoading={submitIntent === "publish"}
+                  onClick={() => handleSubmit(true)}
+                >
+                  {isPublished ? "Update" : "Publish"}
+                </Button>
+              )}
             </div>
           </div>
         </header>
 
-        {/* Main Writing Canvas */}
-        <div className="flex-1 w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+        <div ref={canvasRef} className="mx-auto w-full max-w-[680px] flex-1 px-4 pb-16 pt-8 sm:px-6 sm:pt-12">
           {previewMode ? (
-            /* Live Reader Preview Mode */
-            <div className="animate-in fade-in-50 duration-200 space-y-6">
-              <div className="flex items-center justify-between p-3 rounded-xl bg-primary/10 border border-primary/20 text-primary text-xs">
-                <div className="flex items-center gap-2">
-                  <Eye className="h-4 w-4 shrink-0" />
-                  <span>
-                    <strong>Reader Preview Mode:</strong> This is exactly how your article will look once published.
-                  </span>
-                </div>
-                <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setPreviewMode(false)}>
-                  Back to Editing
+            <div className="flex flex-col gap-8 animate-fade-in">
+              <div className="flex items-center justify-between gap-3 rounded-lg border border-border bg-secondary px-4 py-2 text-sm text-secondary-foreground">
+                <span className="flex min-w-0 items-center gap-2">
+                  <Eye className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  <span className="truncate">Preview of the published post</span>
+                </span>
+                <Button size="sm" variant="ghost" className="h-8 shrink-0" onClick={() => setPreviewMode(false)}>
+                  Back to editing
                 </Button>
               </div>
 
-              {/* Preview Article Body */}
-              <article className="space-y-6">
-                {coverImageUrl && (
-                  <div className="w-full h-64 sm:h-80 rounded-2xl overflow-hidden border border-border/60">
-                    {coverImageUrl.startsWith("gradient:") ? (
-                      <div className="w-full h-full" style={{ background: coverImageUrl.replace("gradient:", "") }} />
-                    ) : (
-                      <img src={coverImageUrl} alt="" className="w-full h-full object-cover" />
-                    )}
+              <article className="flex flex-col gap-6">
+                <header className="flex flex-col gap-4">
+                  <h1 className="text-4xl font-semibold leading-[1.15] tracking-tight text-foreground md:text-5xl">
+                    {title.trim() || <span className="text-muted-foreground">Untitled</span>}
+                  </h1>
+                  {excerpt.trim() && (
+                    <p className="text-xl leading-relaxed text-muted-foreground">{excerpt.trim()}</p>
+                  )}
+                  <div className="flex items-center gap-3 border-y border-border py-4 text-sm">
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage src={profile?.profile_image ?? undefined} alt="" />
+                      <AvatarFallback className="text-xs">{getInitials(authorName)}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex min-w-0 flex-col">
+                      <span className="truncate font-medium text-foreground">{authorName}</span>
+                      <span className="text-muted-foreground tabular">
+                        {new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })} · {readingTimeMinutes} min read
+                      </span>
+                    </div>
                   </div>
+                </header>
+
+                {previewCover && (
+                  <figure className="overflow-hidden rounded-lg border border-border">
+                    <img src={previewCover} alt="" className="aspect-[16/9] w-full object-cover" />
+                  </figure>
+                )}
+
+                {safePreviewHtml.trim() ? (
+                  <div className={ARTICLE_PROSE} dangerouslySetInnerHTML={{ __html: safePreviewHtml }} />
+                ) : (
+                  <p className="text-muted-foreground">Nothing in the body yet. Go back to editing to write it.</p>
                 )}
 
                 {tags.length > 0 && (
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-2 border-t border-border pt-6">
                     {tags.map((tag) => (
-                      <Badge key={tag} variant="secondary" className="font-normal">
+                      <span key={tag} className="rounded-md bg-secondary px-2.5 py-1 text-xs font-medium text-secondary-foreground">
                         {tag}
-                      </Badge>
+                      </span>
                     ))}
                   </div>
                 )}
-
-                <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-foreground leading-tight">
-                  {title.trim() || "Untitled Post"}
-                </h1>
-
-                <div className="flex items-center gap-3 border-b border-border pb-6 text-sm text-muted-foreground">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-foreground">{profile?.name || user?.email || "You"}</span>
-                    <span>·</span>
-                    <span>{new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>
-                    <span>·</span>
-                    <span>{readingTimeMinutes} min read</span>
-                  </div>
-                </div>
-
-                <div
-                  className="prose prose-base sm:prose-lg dark:prose-invert max-w-none prose-headings:font-bold prose-a:text-primary leading-relaxed"
-                  dangerouslySetInnerHTML={{ __html: safePreviewHtml || "<p className='text-muted-foreground italic'>No content written yet...</p>" }}
-                />
               </article>
             </div>
           ) : (
-            /* Standard Write-First Canvas */
-            <div className="space-y-6">
-              {/* Notion-Style Cover Banner */}
+            <div className="flex flex-col">
               <BlogCoverPicker
                 coverUrl={coverImageUrl}
                 onSelectCover={setCoverImageUrl}
@@ -599,27 +617,52 @@ export const WriteBlogPost = () => {
                 }}
               />
 
-              {/* Large Borderless Document Title */}
-              <div className="pt-2">
-                <textarea
-                  ref={titleTextareaRef}
-                  value={title}
-                  onChange={(e) => handleTitleChange(e.target.value)}
-                  placeholder="Untitled story..."
-                  rows={1}
-                  className="w-full resize-none overflow-hidden bg-transparent text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-foreground placeholder:text-muted-foreground/30 border-0 focus:outline-none focus:ring-0 p-0 leading-tight"
-                />
-              </div>
+              <textarea
+                ref={titleTextareaRef}
+                value={title}
+                onChange={(e) => handleTitleChange(e.target.value)}
+                onKeyDown={(e) => {
+                  // A title is one line; Enter moves on to the subtitle.
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    subtitleTextareaRef.current?.focus();
+                  }
+                }}
+                placeholder="Title"
+                aria-label="Title"
+                rows={1}
+                className="mt-6 w-full resize-none overflow-hidden border-0 bg-transparent p-0 text-4xl font-semibold leading-[1.15] tracking-tight text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-0 focus-visible:outline-none md:text-5xl"
+              />
 
-              {/* Word-Style TipTap Editor */}
-              <div className="pt-2">
+              <textarea
+                ref={subtitleTextareaRef}
+                value={excerpt}
+                onChange={(e) => setExcerpt(e.target.value.replace(/\n/g, " "))}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    focusEditorBody();
+                  }
+                }}
+                maxLength={SUBTITLE_MAX}
+                placeholder="Add a subtitle (optional)"
+                aria-label="Subtitle"
+                aria-describedby="subtitle-hint"
+                rows={1}
+                className="mt-3 w-full resize-none overflow-hidden border-0 bg-transparent p-0 text-xl leading-relaxed text-muted-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-0 focus-visible:outline-none"
+              />
+              <p id="subtitle-hint" className="mt-1 flex h-4 justify-end text-2xs text-muted-foreground tabular">
+                {excerpt.length > SUBTITLE_MAX - 40 && `${excerpt.length}/${SUBTITLE_MAX}`}
+              </p>
+
+              <div className="mt-4">
                 <BlogPostEditor
                   content={contentHtml}
                   onChange={(html, text) => {
                     setContentHtml(html);
                     setContentText(text);
                   }}
-                  placeholder="Start typing your story freely..."
+                  placeholder="Tell your story…"
                   focusMode={focusMode}
                 />
               </div>
@@ -630,7 +673,6 @@ export const WriteBlogPost = () => {
         {!focusMode && <Footer />}
       </div>
 
-      {/* Slide-out Post Settings Sheet (Optional for power users) */}
       <BlogSettingsSheet
         open={settingsOpen}
         onOpenChange={setSettingsOpen}
@@ -648,7 +690,6 @@ export const WriteBlogPost = () => {
         autoExcerpt={autoExcerpt}
       />
 
-      {/* Image Crop Dialog for Cover */}
       <BlogImageCropDialog
         file={pendingCoverFile}
         saving={uploadingCover}
@@ -656,6 +697,77 @@ export const WriteBlogPost = () => {
         onCropped={handleCoverCropped}
       />
     </>
+  );
+};
+
+/** The subtitle doubles as the post's summary on cards and in search results. */
+const SUBTITLE_MAX = 240;
+
+const savedAgo = (ts: number, now: number) => {
+  const seconds = Math.max(0, (now - ts) / 1000);
+  if (seconds < 45) return "Saved just now";
+  const minutes = Math.round(seconds / 60);
+  if (minutes < 60) return `Saved ${minutes} min ago`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `Saved ${hours} h ago`;
+  return `Saved ${new Date(ts).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}`;
+};
+
+interface SaveIndicatorProps {
+  status: "idle" | "saving" | "saved" | "error";
+  lastSavedAt: number | null;
+  now: number;
+  signedIn: boolean;
+  onRetry: () => void;
+}
+
+/** Live autosave state; a polite live region so screen readers hear failures. */
+const SaveIndicator = ({ status, lastSavedAt, now, signedIn, onRetry }: SaveIndicatorProps) => {
+  if (status === "error") {
+    return (
+      <span role="status" aria-live="polite" className="flex min-w-0 items-center gap-1.5 text-xs text-destructive">
+        <CloudOff className="h-3.5 w-3.5 shrink-0" />
+        <span className="truncate">Not saved</span>
+        <button
+          type="button"
+          onClick={onRetry}
+          className="inline-flex h-8 cursor-pointer items-center gap-1 rounded-md px-1.5 font-medium underline-offset-4 hover:underline"
+        >
+          <RotateCw className="h-3 w-3" />
+          Retry
+        </button>
+      </span>
+    );
+  }
+
+  let label: string;
+  if (status === "saving") label = "Saving…";
+  else if (lastSavedAt) label = savedAgo(lastSavedAt, now);
+  else label = "Draft";
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span
+          role="status"
+          aria-live="polite"
+          tabIndex={0}
+          className="flex min-w-0 items-center gap-1.5 rounded-md px-1 text-xs text-muted-foreground tabular"
+        >
+          {status === "saving" ? (
+            <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin" />
+          ) : lastSavedAt ? (
+            <Check className="h-3.5 w-3.5 shrink-0" />
+          ) : null}
+          <span className="truncate">{label}</span>
+        </span>
+      </TooltipTrigger>
+      <TooltipContent side="bottom">
+        {signedIn
+          ? "Changes save to your account automatically as you write."
+          : "Changes save in this browser. Sign in to keep them across devices."}
+      </TooltipContent>
+    </Tooltip>
   );
 };
 

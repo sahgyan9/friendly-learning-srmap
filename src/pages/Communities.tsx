@@ -1,11 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { Compass, LayoutGrid, List, Plus, Sparkles, Users, Zap } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { Plus } from "lucide-react";
 
 import SEOHead from "@/components/SEOHead";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { CreateCommunityModal } from "@/components/workspace-groups/CreateCommunityModal";
 import MyInvites from "@/components/workspace-groups/MyInvites";
 import { MyCommunitiesHub } from "@/components/workspace-groups/MyCommunitiesHub";
@@ -139,106 +137,76 @@ const Communities = () => {
         ])}
       />
 
-      {/* Hero Header with Brand Aesthetics */}
-      <div className="relative overflow-hidden border-b border-border/60 bg-gradient-to-br from-amber-500/8 via-background to-background">
-        <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-amber-500/10 blur-3xl" />
-        <div className="pointer-events-none absolute -left-16 bottom-0 h-48 w-48 rounded-full bg-amber-500/6 blur-2xl" />
-
-        <div className="container mx-auto max-w-6xl px-4 pb-6 pt-24 md:pt-28">
-          <motion.div
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
-          >
-            {/* Pill label */}
-            <div className="mb-3.5 inline-flex items-center gap-2 rounded-full border border-amber-500/25 bg-amber-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-amber-700 dark:text-amber-400">
-              <Users className="h-3.5 w-3.5" />
-              05 — Campus Communities & Workspaces
+      {/* The site header is sticky and in flow, so no navbar offset here. */}
+      <div className="border-b">
+        <div className="container mx-auto max-w-6xl px-4 pt-8 md:pt-10">
+          <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+            <div className="min-w-0">
+              <h1 className="text-3xl font-semibold tracking-tight text-foreground md:text-4xl">
+                Communities
+              </h1>
+              <p className="mt-2 max-w-2xl text-base text-muted-foreground">
+                Clubs, project teams and study circles at SRM AP. Join one to chat and share files with its members.
+              </p>
             </div>
 
-            <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-              <div>
-                <h1 className="text-3xl font-bold tracking-tight text-foreground md:text-4xl">
-                  {activeView === "my-communities" && user
-                    ? "My Communities & Hub"
-                    : "Discover Campus Communities"}
-                </h1>
-                <p className="mt-2 max-w-2xl text-sm md:text-base text-muted-foreground leading-relaxed">
-                  Step inside dedicated student rooms—hackathon teams, project labs, clubs, and study circles.
-                  Chat in real time, share project resources, and collaborate with peers across SRM AP.
-                </p>
-              </div>
+            {user ? (
+              <Button onClick={() => setCreateOpen(true)} className="shrink-0">
+                <Plus className="h-4 w-4" />
+                Start a group
+              </Button>
+            ) : (
+              <Button asChild variant="outline" className="shrink-0">
+                <Link to="/signin">Sign in to start a group</Link>
+              </Button>
+            )}
+          </div>
 
-              {user ? (
-                <Button onClick={() => setCreateOpen(true)} size="lg" className="shrink-0 gap-1.5 shadow-sm">
-                  <Plus className="h-4 w-4" />
-                  Start a group
-                </Button>
-              ) : (
-                <Button asChild size="lg" variant="outline" className="shrink-0">
-                  <Link to="/signin">Sign in to start a group</Link>
-                </Button>
-              )}
-            </div>
-
-            {/* Segmented Mode Navigation Bar */}
-            <div className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-border/60 pt-4">
-              <div className="inline-flex rounded-xl border border-border/80 bg-muted/40 p-1 backdrop-blur-xs">
-                {user && (
-                  <button
-                    type="button"
-                    onClick={() => handleSwitchView("my-communities")}
-                    className={cn(
-                      "flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-semibold transition-all duration-200",
-                      activeView === "my-communities"
-                        ? "bg-card text-foreground shadow-xs font-bold"
-                        : "text-muted-foreground hover:text-foreground",
-                    )}
-                  >
-                    <Users className="h-3.5 w-3.5 text-primary" />
-                    <span>My Communities</span>
-                    <Badge
-                      variant="secondary"
-                      className={cn(
-                        "h-5 px-1.5 py-0 text-3xs font-bold rounded-full",
-                        activeView === "my-communities"
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted text-muted-foreground",
-                      )}
-                    >
-                      {myCommunities.length}
-                    </Badge>
-                  </button>
+          <div className="mt-6 flex gap-6" role="tablist" aria-label="Community views">
+            {user && (
+              <button
+                type="button"
+                role="tab"
+                aria-selected={activeView === "my-communities"}
+                onClick={() => handleSwitchView("my-communities")}
+                className={cn(
+                  "-mb-px inline-flex h-11 items-center gap-2 border-b-2 text-sm font-medium transition-colors duration-150",
+                  activeView === "my-communities"
+                    ? "border-primary text-foreground"
+                    : "border-transparent text-muted-foreground hover:text-foreground",
                 )}
+              >
+                Your communities
+                <span className={cn(
+                  "tabular rounded px-1.5 text-xs",
+                  activeView === "my-communities" ? "bg-primary/10 text-primary" : "bg-secondary text-muted-foreground",
+                )}>
+                  {myCommunities.length}
+                </span>
+              </button>
+            )}
 
-                <button
-                  type="button"
-                  onClick={() => handleSwitchView("discover")}
-                  className={cn(
-                    "flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-semibold transition-all duration-200",
-                    activeView === "discover"
-                      ? "bg-card text-foreground shadow-xs font-bold"
-                      : "text-muted-foreground hover:text-foreground",
-                  )}
-                >
-                  <Compass className="h-3.5 w-3.5 text-amber-500" />
-                  <span>Discover & Explore</span>
-                  <Badge
-                    variant="outline"
-                    className="h-5 px-1.5 py-0 text-3xs text-muted-foreground rounded-full"
-                  >
-                    {allCommunities.length}
-                  </Badge>
-                </button>
-              </div>
-
-              {/* Status summary pill */}
-              <div className="hidden sm:flex items-center gap-2 text-xs text-muted-foreground">
-                <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span>Live Campus Spaces</span>
-              </div>
-            </div>
-          </motion.div>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeView === "discover"}
+              onClick={() => handleSwitchView("discover")}
+              className={cn(
+                "-mb-px inline-flex h-11 items-center gap-2 border-b-2 text-sm font-medium transition-colors duration-150",
+                activeView === "discover"
+                  ? "border-primary text-foreground"
+                  : "border-transparent text-muted-foreground hover:text-foreground",
+              )}
+            >
+              Discover
+              <span className={cn(
+                "tabular rounded px-1.5 text-xs",
+                activeView === "discover" ? "bg-primary/10 text-primary" : "bg-secondary text-muted-foreground",
+              )}>
+                {allCommunities.length}
+              </span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -257,30 +225,17 @@ const Communities = () => {
         )}
 
         {/* View Routing */}
-        <AnimatePresence mode="wait">
-          {activeView === "my-communities" && user ? (
-            <motion.div
-              key="my-communities"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.2 }}
-            >
+        {activeView === "my-communities" && user ? (
+            <div key="my-communities" className="animate-fade-in">
               <MyCommunitiesHub
                 myCommunities={myCommunities}
                 onMembershipChange={applyMembership}
                 onExploreDiscovery={() => handleSwitchView("discover")}
                 onStartGroup={() => setCreateOpen(true)}
               />
-            </motion.div>
+            </div>
           ) : (
-            <motion.div
-              key="discover"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.2 }}
-            >
+            <div key="discover" className="animate-fade-in">
               <CommunityDiscoveryView
                 communities={allCommunities}
                 loading={loading}
@@ -295,9 +250,8 @@ const Communities = () => {
                 onStartGroup={() => setCreateOpen(true)}
                 isUserSignedIn={Boolean(user)}
               />
-            </motion.div>
+            </div>
           )}
-        </AnimatePresence>
       </div>
 
       {/* Create Community Modal */}

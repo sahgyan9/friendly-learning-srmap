@@ -6,18 +6,19 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { motion } from "framer-motion";
-import DarkModeToggle from "@/components/DarkModeToggle";
+import { MailCheck } from "lucide-react";
+import AuthShell, { FieldError } from "@/components/auth/AuthShell";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
+  const [emailError, setEmailError] = useState<string>();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) {
-      toast.error("Please enter your email address");
+      setEmailError("Enter the email you signed up with.");
       return;
     }
 
@@ -29,135 +30,86 @@ const ForgotPassword = () => {
       });
 
       if (error) {
-        toast.error(error.message || "Failed to send reset email");
+        toast.error(error.message || "Could not send the reset email");
       } else {
         setEmailSent(true);
-        toast.success("Password reset email sent! Check your inbox.");
+        toast.success("Reset email sent");
       }
     } catch (error: unknown) {
-      toast.error("An unexpected error occurred");
+      toast.error("Could not send the reset email. Try again.");
     } finally {
       setIsLoading(false);
     }
   };
 
+  const backToSignIn = (
+    <Link to="/signin" className="font-medium text-primary underline-offset-4 hover:underline">
+      Back to sign in
+    </Link>
+  );
+
   if (emailSent) {
     return (
-      <div className="min-h-screen flex flex-col bg-background text-foreground">
-        <div className="absolute top-4 right-4">
-          <DarkModeToggle />
-        </div>
-        <div className="flex flex-grow items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-          <motion.div 
-            className="max-w-md w-full space-y-8"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            <div className="text-center">
-              <Link to="/" className="block text-2xl font-bold text-primary mb-2">
-                <span className="mr-1">Friendly</span>
-                <span className="dark:text-gray-200">Learning</span>
-              </Link>
-              <h2 className="mt-6 text-3xl font-extrabold">
-                Check your email
-              </h2>
-              <p className="mt-2 text-sm text-muted-foreground">
-                We've sent a password reset link to {email}
-              </p>
+      <AuthShell
+        title="Check your email"
+        description={
+          <>
+            We sent a reset link to <span className="font-medium text-foreground">{email}</span>.
+          </>
+        }
+        footer={backToSignIn}
+      >
+        <div className="space-y-4">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-secondary">
+              <MailCheck className="h-5 w-5 text-muted-foreground" />
             </div>
-            
-            <div className="bg-card text-card-foreground px-4 py-8 shadow sm:rounded-lg sm:px-10">
-              <div className="space-y-4">
-                <p className="text-center text-sm text-muted-foreground">
-                  Click the link in your email to reset your password. If you don't see the email, check your spam folder.
-                </p>
-                <div className="flex flex-col space-y-2">
-                  <Button
-                    onClick={() => setEmailSent(false)}
-                    variant="outline"
-                    className="w-full"
-                  >
-                    Send another email
-                  </Button>
-                  <Link to="/signin">
-                    <Button variant="ghost" className="w-full">
-                      Back to sign in
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </motion.div>
+            <p className="text-sm text-muted-foreground">
+              Open the link in that email to choose a new password. It can take a minute to arrive;
+              check your spam folder if it does not.
+            </p>
+          </div>
+          <Button onClick={() => setEmailSent(false)} variant="outline" className="w-full">
+            Send another email
+          </Button>
         </div>
-      </div>
+      </AuthShell>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-background text-foreground">
-      <div className="absolute top-4 right-4">
-        <DarkModeToggle />
-      </div>
-      <div className="flex flex-grow items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <motion.div 
-          className="max-w-md w-full space-y-8"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <div>
-            <Link to="/" className="block text-center text-2xl font-bold text-primary mb-2">
-              <span className="mr-1">Friendly</span>
-              <span className="dark:text-gray-200">Learning</span>
-            </Link>
-            <h2 className="mt-6 text-center text-3xl font-extrabold">
-              Forgot your password?
-            </h2>
-            <p className="mt-2 text-center text-sm text-muted-foreground">
-              Enter your email address and we'll send you a link to reset your password.
-            </p>
-          </div>
-          
-          <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-            <div className="bg-card text-card-foreground px-4 py-8 shadow sm:rounded-lg sm:px-10">
-              <form className="space-y-6" onSubmit={handleSubmit}>
-                <div>
-                  <Label htmlFor="email">Email address</Label>
-                  <Input
-                    id="email"
-                    name="email"
-                    type="email"
-                    autoComplete="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Enter your email address"
-                    className="mt-1"
-                  />
-                </div>
+    <AuthShell
+      title="Reset your password"
+      description="Enter your email and we will send you a link to set a new password."
+      footer={backToSignIn}
+    >
+      <form className="space-y-4" onSubmit={handleSubmit} noValidate>
+        <div>
+          <Label htmlFor="email">Email</Label>
+          <Input
+            id="email"
+            name="email"
+            type="email"
+            autoComplete="email"
+            required
+            value={email}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              if (emailError) setEmailError(undefined);
+            }}
+            placeholder="you@srmap.edu.in"
+            className="mt-1.5"
+            aria-invalid={Boolean(emailError) || undefined}
+            aria-describedby={emailError ? "email-error" : undefined}
+          />
+          <FieldError id="email-error">{emailError}</FieldError>
+        </div>
 
-                <div>
-                  <Button
-                    type="submit"
-                    className="w-full"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? "Sending..." : "Send reset link"}
-                  </Button>
-                </div>
-              </form>
-              
-              <div className="mt-6 text-center">
-                <Link to="/signin" className="text-sm text-primary hover:text-primary/80">
-                  Back to sign in
-                </Link>
-              </div>
-            </div>
-          </div>
-        </motion.div>
-      </div>
-    </div>
+        <Button type="submit" className="w-full" isLoading={isLoading}>
+          {isLoading ? "Sending" : "Send reset link"}
+        </Button>
+      </form>
+    </AuthShell>
   );
 };
 

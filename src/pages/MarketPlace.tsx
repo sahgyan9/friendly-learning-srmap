@@ -2,8 +2,7 @@ import { PRIMARY_DOMAIN } from "@/lib/constants";
 import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Input } from "@/components/ui/input";
-import { Search, Plus, Loader2, Sparkles, RefreshCw } from "lucide-react";
-import { motion } from "framer-motion";
+import { Search, RefreshCw, Settings2, AlertCircle, CalendarX, ExternalLink, type LucideIcon } from "lucide-react";
 import { SRMAPEventCard } from "@/components/marketplace/SRMAPEventCard";
 import { YourEventsStrip } from "@/components/marketplace/YourEventsStrip";
 import { useSRMAPEvents, type SRMAPEvent } from "@/hooks/useSRMAPEvents";
@@ -22,6 +21,31 @@ import { getBreadcrumbSchema } from "@/lib/structured-data";
 import { parseEventDate } from "@/lib/calendar-utils";
 
 type EventTab = "all" | "mine" | "past";
+
+function EmptyState({
+    icon: Icon,
+    title,
+    description,
+    action,
+}: {
+    icon: LucideIcon;
+    title: string;
+    description: string;
+    action?: React.ReactNode;
+}) {
+    return (
+        <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed px-6 py-14 text-center">
+            <div className="flex h-10 w-10 items-center justify-center rounded-md bg-secondary text-muted-foreground">
+                <Icon className="h-5 w-5" aria-hidden />
+            </div>
+            <div className="flex max-w-md flex-col gap-1">
+                <p className="font-medium text-foreground">{title}</p>
+                <p className="text-sm text-muted-foreground">{description}</p>
+            </div>
+            {action}
+        </div>
+    );
+}
 
 const MarketPlace = () => {
     const [searchQuery, setSearchQuery] = useState('');
@@ -58,13 +82,13 @@ const MarketPlace = () => {
         try {
             setIsSyncing(true);
             const res = await syncSRMAPEvents();
-            toast.success('SRMAP Events Synced', {
-                description: `Successfully synced ${res.synced} events.`,
+            toast.success('Events synced', {
+                description: `${res.synced} events updated from the SRM AP feed.`,
             });
             refetch();
         } catch (error) {
             console.error('Error syncing events:', error);
-            toast.error('Sync Failed', {
+            toast.error('Sync failed', {
                 description: error instanceof Error ? error.message : 'Failed to sync events.',
             });
         } finally {
@@ -112,17 +136,21 @@ const MarketPlace = () => {
         : tabEvents;
 
     const tabs: { id: EventTab; label: string; count: number }[] = [
-        { id: "all", label: "All Events", count: currentEvents.length },
+        { id: "all", label: "Upcoming", count: currentEvents.length },
         ...(user ? [{ id: "mine" as const, label: "My RSVPs", count: myEvents.length }] : []),
         { id: "past", label: "Past", count: pastEvents.length },
     ];
 
+    const emptyTitle =
+        activeTab === "mine" ? "No RSVPs yet" : activeTab === "past" ? "No past events" : "No current events";
     const emptyMessage =
         activeTab === "mine"
-            ? "You haven't RSVP'd to anything yet. Hit Going or Interested on an event to pin it here."
+            ? "Select Going or Interested on an event to pin it here and get reminders."
             : activeTab === "past"
-                ? "No past events in the archive yet."
-                : "No current university events found";
+                ? "Events move here after they end."
+                : "There are no upcoming university events right now.";
+
+    const showTabs = !srmapLoading && !srmapError && srmapEvents.length > 0;
 
     return (
         <>
@@ -139,138 +167,148 @@ const MarketPlace = () => {
             ])} />
 
             <div className="min-h-screen bg-background">
-                {/* Hero header */}
-                <div className="relative overflow-hidden border-b border-border/60 bg-gradient-to-br from-violet-500/5 via-background to-background">
-                  {/* Decorative blobs */}
-                  <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-violet-500/8 blur-3xl" />
-                  <div className="pointer-events-none absolute -left-16 bottom-0 h-48 w-48 rounded-full bg-violet-500/5 blur-2xl" />
-
-                  <div className="container mx-auto px-4 pb-8 pt-28">
-                    <motion.div
-                      initial={{ opacity: 0, y: 16 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.5 }}
-                    >
-                      <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-                        <div>
-                          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">University Events</h1>
-                          <p className="mt-2 max-w-2xl text-base text-muted-foreground">
-                            Official SRMAP events — stay updated with everything happening on campus.
-                          </p>
+                {/* The site header is sticky (in flow), so this block needs no
+                    navbar offset; the pt-28 left over from the old fixed navbar
+                    is what rendered an empty band above the heading. */}
+                <div className="border-b">
+                    <div className="container mx-auto flex flex-col gap-4 px-4 pb-6 pt-8 sm:flex-row sm:items-end sm:justify-between md:pt-10">
+                        <div className="min-w-0">
+                            <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">University Events</h1>
+                            <p className="mt-2 max-w-2xl text-base text-muted-foreground">
+                                Official SRM AP events. RSVP to get reminders and keep them pinned here.
+                            </p>
                         </div>
-
-                        {/* Live badge */}
-                        <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1.5 text-xs font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">
-                          <Sparkles className="h-3 w-3" />
-                          Live
-                        </span>
-                      </div>
-                    </motion.div>
-                  </div>
+                        {isAdmin && (
+                            <div className="flex shrink-0 flex-wrap items-center gap-2">
+                                <Button variant="outline" onClick={handleSyncEvents} isLoading={isSyncing}>
+                                    {!isSyncing && <RefreshCw className="h-4 w-4" />}
+                                    {isSyncing ? "Syncing" : "Sync events"}
+                                </Button>
+                                <Button variant="ghost" asChild>
+                                    <Link to="/admin">
+                                        <Settings2 className="h-4 w-4" />
+                                        Admin panel
+                                    </Link>
+                                </Button>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
-                <div className="container mx-auto px-4 py-8">
-                    <div className="mb-8">
-                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-                            <div className="flex-1 w-full sm:w-auto">
-                                <div className="relative">
-                                    <Input
-                                        type="text"
-                                        placeholder="Search events..."
-                                        value={searchQuery}
-                                        onChange={(e) => setSearchQuery(e.target.value)}
-                                        className="pl-10 w-full"
-                                    />
-                                    <Search className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
-                                </div>
+                <div className="container mx-auto flex flex-col gap-6 px-4 py-8">
+                    {/* Pinned "Your Events" ribbon — only when the student has live
+                        or upcoming RSVPs. */}
+                    {!srmapLoading && myEvents.length > 0 && (
+                        <YourEventsStrip events={myEvents} rsvps={rsvps} />
+                    )}
+
+                    <div className={cn(
+                        "flex flex-col-reverse gap-3 sm:flex-row sm:items-end sm:justify-between",
+                        showTabs && "border-b",
+                    )}>
+                        {/* Category tabs (Workshops, Hackathons...) are deliberately
+                            absent: the upstream feed rarely carries enough of any one
+                            category to fill one. */}
+                        {showTabs ? (
+                            <div className="-mb-px flex gap-6 overflow-x-auto" role="tablist" aria-label="Event filters">
+                                {tabs.map(tab => {
+                                    const selected = activeTab === tab.id;
+                                    return (
+                                        <button
+                                            key={tab.id}
+                                            type="button"
+                                            role="tab"
+                                            aria-selected={selected}
+                                            onClick={() => setActiveTab(tab.id)}
+                                            className={cn(
+                                                "inline-flex h-11 shrink-0 items-center gap-2 border-b-2 text-sm font-medium transition-colors duration-150",
+                                                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                                                selected
+                                                    ? "border-primary text-foreground"
+                                                    : "border-transparent text-muted-foreground hover:text-foreground",
+                                            )}
+                                        >
+                                            {tab.label}
+                                            <span className={cn(
+                                                "tabular rounded px-1.5 text-xs",
+                                                selected ? "bg-primary/10 text-primary" : "bg-secondary text-muted-foreground",
+                                            )}>
+                                                {tab.count}
+                                            </span>
+                                        </button>
+                                    );
+                                })}
                             </div>
-                            {isAdmin && (
-                                <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-                                    <Button
-                                        variant="outline"
-                                        onClick={handleSyncEvents}
-                                        disabled={isSyncing}
-                                        className="w-full sm:w-auto"
-                                    >
-                                        <RefreshCw className={cn("mr-2 h-4 w-4", isSyncing && "animate-spin")} />
-                                        {isSyncing ? "Syncing..." : "Sync Events"}
-                                    </Button>
-                                    <Link to="/admin" className="w-full sm:w-auto">
-                                        <Button variant="outline" className="w-full sm:w-auto">
-                                            <Plus className="mr-2 h-4 w-4" />
-                                            Admin Panel
-                                        </Button>
-                                    </Link>
-                                </div>
-                            )}
+                        ) : <span />}
+
+                        <div className={cn("relative w-full sm:max-w-xs", showTabs && "sm:pb-2")}>
+                            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground sm:top-[calc(50%-4px)]" aria-hidden />
+                            <Input
+                                type="search"
+                                placeholder="Search events"
+                                aria-label="Search events"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-full pl-9"
+                            />
                         </div>
+                    </div>
 
-                        {/* Pinned "Your Events" ribbon — only when the student has live
-                            or upcoming RSVPs. */}
-                        {!srmapLoading && myEvents.length > 0 && (
-                            <YourEventsStrip events={myEvents} rsvps={rsvps} />
-                        )}
-
-                        {/* Tabs. Category tabs (Workshops, Hackathons...) are
-                            deliberately absent: the upstream feed rarely carries
-                            enough of any one category to fill one. */}
-                        {!srmapLoading && !srmapError && srmapEvents.length > 0 && (
-                            <div className="mb-6 flex flex-wrap gap-2" role="tablist" aria-label="Event filters">
-                                {tabs.map(tab => (
-                                    <button
-                                        key={tab.id}
-                                        type="button"
-                                        role="tab"
-                                        aria-selected={activeTab === tab.id}
-                                        onClick={() => setActiveTab(tab.id)}
-                                        className={cn(
-                                            "inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors",
-                                            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                                            activeTab === tab.id
-                                                ? "border-violet-500/40 bg-violet-500/12 text-violet-700 dark:text-violet-300"
-                                                : "border-border/60 text-muted-foreground hover:border-violet-500/30 hover:bg-violet-500/8",
-                                        )}
-                                    >
-                                        {tab.label}
-                                        <span className={cn(
-                                            "rounded-full px-1.5 py-0.5 text-2xs font-semibold",
-                                            activeTab === tab.id ? "bg-violet-500/20" : "bg-muted",
-                                        )}>
-                                            {tab.count}
-                                        </span>
-                                    </button>
-                                ))}
-                            </div>
-                        )}
-
-                        {srmapLoading ? (
-                            <div className="flex justify-center items-center h-64">
-                                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                            </div>
-                        ) : srmapError ? (
-                            <div className="text-center py-12">
-                                <p className="text-lg text-muted-foreground">{srmapError}</p>
-                                <p className="text-sm text-muted-foreground mt-2">
-                                    <a href="https://events.srmap.edu.in/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
-                                        Visit SRMAP Events directly
-                                    </a>
-                                </p>
-                            </div>
-                        ) : srmapEvents.length === 0 ? (
-                            <div className="text-center py-12">
-                                <p className="text-lg text-muted-foreground">No current university events found</p>
-                            </div>
-                        ) : filteredEvents.length === 0 ? (
-                            <div className="text-center py-12">
-                                <p className="mx-auto max-w-md text-lg text-muted-foreground">
-                                    {query ? "No events match your search" : emptyMessage}
-                                </p>
-                            </div>
-                        ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {filteredEvents.map(event => (
+                    {srmapLoading ? (
+                        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3" aria-busy="true" aria-label="Loading events">
+                            {Array.from({ length: 6 }).map((_, i) => (
+                                <div key={i} className="overflow-hidden rounded-lg border bg-card shadow-card">
+                                    <div className="aspect-video animate-pulse bg-muted" />
+                                    <div className="flex flex-col gap-3 p-5">
+                                        <div className="h-3 w-24 animate-pulse rounded bg-muted" />
+                                        <div className="h-5 w-4/5 animate-pulse rounded bg-muted" />
+                                        <div className="h-4 w-1/2 animate-pulse rounded bg-muted" />
+                                        <div className="h-10 w-full animate-pulse rounded-md bg-muted" />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : srmapError ? (
+                        <EmptyState
+                            icon={AlertCircle}
+                            title="Events could not be loaded"
+                            description={srmapError}
+                            action={
+                                <div className="flex flex-wrap justify-center gap-2">
+                                    <Button onClick={() => refetch()}>Retry</Button>
+                                    <Button variant="outline" asChild>
+                                        <a href="https://events.srmap.edu.in/" target="_blank" rel="noopener noreferrer">
+                                            Open SRM AP events site
+                                            <ExternalLink className="h-4 w-4" />
+                                        </a>
+                                    </Button>
+                                </div>
+                            }
+                        />
+                    ) : srmapEvents.length === 0 ? (
+                        <EmptyState
+                            icon={CalendarX}
+                            title="No events published"
+                            description="The university has not listed any current events. Check back later."
+                        />
+                    ) : filteredEvents.length === 0 ? (
+                        <EmptyState
+                            icon={query ? Search : CalendarX}
+                            title={query ? "No events match your search" : emptyTitle}
+                            description={query ? "Try a shorter term or a department name." : emptyMessage}
+                            action={query ? (
+                                <Button variant="outline" onClick={() => setSearchQuery("")}>Clear search</Button>
+                            ) : undefined}
+                        />
+                    ) : (
+                        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                            {filteredEvents.map((event, i) => (
+                                <div
+                                    key={event.id}
+                                    className="flex min-w-0 animate-fade-up [&>*]:flex-1"
+                                    style={i < 6 ? { animationDelay: `${i * 35}ms`, animationFillMode: "both" } : undefined}
+                                >
                                     <SRMAPEventCard
-                                        key={event.id}
                                         event={event}
                                         rsvpStatus={rsvps[event.id] ?? null}
                                         onRsvp={(id, status) => toggleRSVP(id, status, {
@@ -280,10 +318,10 @@ const MarketPlace = () => {
                                         })}
                                         rsvpPending={pendingEventId === event.id}
                                     />
-                                ))}
-                            </div>
-                        )}
-                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
             </div>
         </>

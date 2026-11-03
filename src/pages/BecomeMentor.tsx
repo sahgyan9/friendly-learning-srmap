@@ -7,9 +7,8 @@ import MentorFormHeader from "@/components/mentors/MentorFormHeader";
 import MentorWelcome from "@/components/mentors/MentorWelcome";
 import { getMentorVerification, canEditApplication } from "@/integrations/supabase/services/mentor-verification";
 import { toast } from "sonner";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, Edit, FileText, Clock, CheckCircle, XCircle, Info } from "lucide-react";
+import { AlertTriangle, Edit, FileText, Clock, CheckCircle, XCircle, Info, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
@@ -104,9 +103,9 @@ const BecomeMentor = () => {
       case 'pending':
         return {
           icon: <Clock className="h-6 w-6 text-amber-600" />,
-          badge: <Badge variant="outline" className="bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950/60 dark:text-amber-200 dark:border-amber-800">Under Review</Badge>,
-          title: "Application Under Review",
-          description: "Your mentor application is currently being reviewed by our team.",
+          badge: <Badge variant="outline" className="bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950/60 dark:text-amber-200 dark:border-amber-800">Under review</Badge>,
+          title: "Application under review",
+          description: "Your mentor application is being reviewed.",
           cardClass: "border-amber-200 bg-amber-50 dark:bg-amber-900/20"
         };
       case 'approved':
@@ -120,9 +119,9 @@ const BecomeMentor = () => {
       case 'rejected':
         return {
           icon: <XCircle className="h-6 w-6 text-red-600" />,
-          badge: <Badge variant="outline" className="bg-red-50 text-red-800 border-red-200 dark:bg-red-950/60 dark:text-red-200 dark:border-red-800">Needs Attention</Badge>,
-          title: "Application Needs Updates",
-          description: "Your mentor application needs some improvements before it can be approved.",
+          badge: <Badge variant="outline" className="bg-red-50 text-red-800 border-red-200 dark:bg-red-950/60 dark:text-red-200 dark:border-red-800">Needs changes</Badge>,
+          title: "Application needs changes",
+          description: "Your mentor application needs changes before it can be approved.",
           cardClass: "border-red-200 bg-red-50 dark:bg-red-900/20"
         };
       default:
@@ -134,7 +133,7 @@ const BecomeMentor = () => {
     return (
       <div className="min-h-screen bg-background">
         <div className="min-h-screen flex items-center justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" aria-label="Loading" />
         </div>
       </div>
     );
@@ -145,8 +144,8 @@ const BecomeMentor = () => {
       <div className="min-h-screen bg-background">
         <div className="min-h-screen flex items-center justify-center">
           <div className="text-center">
-            <h2 className="text-2xl font-bold mb-4">Please sign in to continue</h2>
-            <p className="text-muted-foreground">You need to be logged in to become a mentor.</p>
+            <h1 className="mb-2 text-2xl font-semibold tracking-tight">Sign in to continue</h1>
+            <p className="text-muted-foreground">You need an account to become a mentor.</p>
           </div>
         </div>
       </div>
@@ -165,61 +164,53 @@ const BecomeMentor = () => {
                 time afterwards. Heading it "Application Status" told someone who
                 is already listed that they were still in a queue. */}
             <div className="text-center mb-8">
-              <h1 className="text-3xl font-bold text-foreground mb-4">
+              <h1 className="mb-2 text-3xl font-semibold tracking-tight text-foreground md:text-4xl">
                 {existingApplication.status === 'approved' ? 'Your mentor profile' : 'Mentor application status'}
               </h1>
               <p className="text-muted-foreground">
                 {existingApplication.status === 'approved'
-                  ? "You're listed as a mentor at SRM AP"
-                  : "Here's the current status of your mentor application"}
+                  ? "You are listed as a mentor at SRM AP."
+                  : "The current status of your mentor application."}
               </p>
             </div>
 
-            <Card className={`mb-6 ${statusDisplay?.cardClass}`}>
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <span className="flex items-center space-x-3">
-                    {statusDisplay?.icon}
-                    <div>
-                      <h3 className="text-xl font-semibold">{statusDisplay?.title}</h3>
-                      <p className="text-sm text-muted-foreground mt-1">{statusDisplay?.description}</p>
-                    </div>
-                  </span>
-                  {statusDisplay?.badge}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
+            <section className="mb-6 rounded-xl border border-border bg-card p-5 shadow-card md:p-6">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex min-w-0 items-start gap-3">
+                  <span className="mt-0.5 shrink-0 [&_svg]:h-5 [&_svg]:w-5">{statusDisplay?.icon}</span>
+                  <div className="min-w-0">
+                    <h2 className="text-lg font-semibold tracking-tight">{statusDisplay?.title}</h2>
+                    <p className="mt-1 text-sm text-muted-foreground">{statusDisplay?.description}</p>
+                  </div>
+                </div>
+                <span className="shrink-0">{statusDisplay?.badge}</span>
+              </div>
+
+              <div className="mt-5 border-t border-border pt-5">
                 {existingApplication.status === 'pending' && (
                   <div className="space-y-4">
-                    <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border">
-                      <p className="text-sm text-gray-700 dark:text-gray-300">
-                        Your application was submitted on {new Date(existingApplication.submitted_at).toLocaleDateString()}. 
-                        Our team is reviewing your submission. You can check your account settings anytime.
-                      </p>
-                    </div>
-                    <div className="flex justify-center space-x-4">
-                      <Button onClick={() => navigate('/profile')} variant="outline">
-                        <FileText className="h-4 w-4 mr-2" />
-                        View Account Settings
-                      </Button>
-                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Submitted on <span className="tabular text-foreground">{new Date(existingApplication.submitted_at).toLocaleDateString()}</span>.
+                      You will be notified when it has been reviewed.
+                    </p>
+                    <Button onClick={() => navigate('/profile')} variant="outline">
+                      <FileText />
+                      Account settings
+                    </Button>
                   </div>
                 )}
 
                 {existingApplication.status === 'approved' && (
                   <div className="space-y-4">
-                    <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border">
-                      <p className="text-sm text-gray-700 dark:text-gray-300">
-                        Your campus profile is live. Students and peers can find you in search, browse your skills, and message you.
-                      </p>
-                    </div>
-                    <div className="flex justify-center space-x-4">
+                    <p className="text-sm text-muted-foreground">
+                      Students and peers can find you in search, browse your skills, and message you.
+                    </p>
+                    <div className="flex flex-wrap gap-2">
                       <Button onClick={() => navigate(`/mentor/${user.id}`)}>
-                        <FileText className="h-4 w-4 mr-2" />
-                        View Public Profile
+                        View public profile
                       </Button>
                       <Button onClick={() => navigate('/profile')} variant="outline">
-                        Edit Settings
+                        Edit settings
                       </Button>
                     </div>
                   </div>
@@ -228,37 +219,28 @@ const BecomeMentor = () => {
                 {existingApplication.status === 'rejected' && (
                   <div className="space-y-4">
                     {existingApplication.rejection_reason && (
-                      <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-red-200">
-                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
-                          Admin Feedback:
-                        </p>
-                        <p className="text-sm text-gray-700 dark:text-gray-300">
-                          {existingApplication.rejection_reason}
-                        </p>
+                      <div className="rounded-lg border border-border p-4">
+                        <p className="text-xs font-medium text-muted-foreground">Feedback from the reviewer</p>
+                        <p className="mt-1 text-sm text-foreground">{existingApplication.rejection_reason}</p>
                       </div>
                     )}
-                    
-                    <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200">
-                      <p className="flex items-start gap-2 text-sm text-blue-700 dark:text-blue-300">
-                        <Info className="h-4 w-4 text-blue-600 shrink-0 mt-0.5" />
-                        <span><strong>Good news:</strong> Your previous information has been saved. You can edit your application and make the suggested improvements.</span>
-                      </p>
-                    </div>
-
-                    <div className="flex justify-center space-x-4">
-                      <Button onClick={() => setEditMode(true)} size="lg">
-                        <Edit className="h-4 w-4 mr-2" />
-                        Edit & Resubmit Application
+                    <p className="flex items-start gap-2 text-sm text-muted-foreground">
+                      <Info className="mt-0.5 h-4 w-4 shrink-0" />
+                      Your previous answers are saved, so you only need to change what the feedback asks for.
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      <Button onClick={() => setEditMode(true)}>
+                        <Edit />
+                        Edit and resubmit
                       </Button>
                       <Button onClick={() => navigate('/profile')} variant="outline">
-                        <FileText className="h-4 w-4 mr-2" />
-                        View Profile
+                        View profile
                       </Button>
                     </div>
                   </div>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </section>
           </div>
         </div>
       </div>
@@ -270,45 +252,29 @@ const BecomeMentor = () => {
     return (
       <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-16 md:py-24">
-          {/* Edit Mode Header */}
-          <Card className="mb-6 border-amber-200 bg-amber-50 dark:bg-amber-900/20">
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2 text-amber-800 dark:text-amber-200">
-                <Edit className="h-5 w-5" />
-                <span>Edit Mentor Application</span>
-                <Badge variant="outline" className="bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300">
-                  Previously Rejected
-                </Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-start space-x-3">
-                <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5" />
-                <div className="space-y-2">
-                  <p className="text-amber-700 dark:text-amber-300">
-                    Your previous mentor application was rejected. You can now make changes and resubmit your application.
-                  </p>
-                  {existingApplication.rejection_reason && (
-                    <div className="bg-white dark:bg-gray-800 p-3 rounded border">
-                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">
-                        Admin Feedback:
-                      </p>
-                      <p className="text-sm text-gray-700 dark:text-gray-300">
-                        {existingApplication.rejection_reason}
-                      </p>
-                    </div>
-                  )}
-                  <p className="text-xs text-amber-600 dark:text-amber-400">
-                    Make the necessary changes based on the feedback above and resubmit your application.
+          <div className="mx-auto mb-6 max-w-4xl rounded-xl border border-amber-500/40 bg-amber-50 p-5 dark:bg-amber-950/20">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
+              <div className="min-w-0 space-y-3">
+                <div>
+                  <h2 className="text-base font-semibold text-foreground">Your previous application was not approved</h2>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Change what the reviewer asked for below and resubmit.
                   </p>
                 </div>
+                {existingApplication.rejection_reason && (
+                  <div className="rounded-lg border border-border bg-card p-3">
+                    <p className="text-xs font-medium text-muted-foreground">Feedback from the reviewer</p>
+                    <p className="mt-1 text-sm text-foreground">{existingApplication.rejection_reason}</p>
+                  </div>
+                )}
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
           <MentorFormHeader 
-            title="Update Mentor Application"
-            description="Make the necessary changes based on the admin feedback and resubmit your application."
+            title="Update your mentor application"
+            description="Edit your answers and resubmit for review."
           />
 
           <div className="max-w-4xl mx-auto">

@@ -55,7 +55,7 @@ import {
   TrendingUp, 
   ExternalLink, 
   MessageSquare, 
-  Sparkles, 
+  ListChecks, 
   User, 
   UserCheck, 
   Globe, 
@@ -222,14 +222,10 @@ export default function AdminAIFeedback() {
 
   const getRoleBadgeVariant = (role: string) => {
     switch (role?.toLowerCase()) {
+      // Role is shown as text; only admin gets the brand tint so staff
+      // searches stand out from student traffic in the log.
       case "admin":
-        return "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20";
-      case "mentor":
-        return "bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-500/20";
-      case "alumni":
-        return "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20";
-      case "student":
-        return "bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/20";
+        return "bg-primary/10 text-primary border-primary/20";
       default:
         return "bg-muted text-muted-foreground border-border";
     }
@@ -237,49 +233,43 @@ export default function AdminAIFeedback() {
 
   return (
     <AdminPageWrapper>
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-        <AdminHeader
-          title="CampusBrain Search Logs & User Attribution"
-          description="Monitor real student search queries, see which students searched for specific campus topics, and evaluate AI Overview feedback."
-        />
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={fetchData}
-          disabled={loading}
-          className="self-start sm:self-center gap-1.5 shrink-0"
-        >
-          <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-          Refresh Data
-        </Button>
-      </div>
+      <AdminHeader
+        title="CampusBrain search logs"
+        description="Search queries, who ran them, and how students rated the AI overview."
+        action={
+          <Button variant="outline" size="sm" onClick={fetchData} disabled={loading} className="gap-1.5">
+            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+            Refresh
+          </Button>
+        }
+      />
 
       {/* KPI Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <Card className="bg-card/60 backdrop-blur-xl border-border/60">
+        <Card className="shadow-card">
           <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-semibold text-muted-foreground flex items-center justify-between">
-              <span>Total Search Runs</span>
-              <Search className="h-4 w-4 text-primary" />
+            <CardTitle className="text-xs font-medium text-muted-foreground flex items-center justify-between">
+              <span>Searches</span>
+              <Search className="h-4 w-4" />
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-foreground">{totalSearchHits}</div>
+            <div className="text-2xl font-semibold tabular text-foreground">{totalSearchHits}</div>
             <p className="text-xs text-muted-foreground mt-0.5">
               {totalUniqueQueries} distinct campus topics
             </p>
           </CardContent>
         </Card>
 
-        <Card className="bg-card/60 backdrop-blur-xl border-border/60">
+        <Card className="shadow-card">
           <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-semibold text-muted-foreground flex items-center justify-between">
-              <span>User Attribution</span>
-              <UserCheck className="h-4 w-4 text-violet-500" />
+            <CardTitle className="text-xs font-medium text-muted-foreground flex items-center justify-between">
+              <span>Signed-in searches</span>
+              <UserCheck className="h-4 w-4" />
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-foreground">
+            <div className="text-2xl font-semibold tabular text-foreground">
               {authenticatedSearches} <span className="text-xs font-normal text-muted-foreground">/ {totalSearchHits}</span>
             </div>
             <p className="text-xs text-muted-foreground mt-0.5">
@@ -288,28 +278,28 @@ export default function AdminAIFeedback() {
           </CardContent>
         </Card>
 
-        <Card className="bg-card/60 backdrop-blur-xl border-border/60">
+        <Card className="shadow-card">
           <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-semibold text-muted-foreground flex items-center justify-between">
-              <span>Active Student Searchers</span>
-              <Users className="h-4 w-4 text-sky-500" />
+            <CardTitle className="text-xs font-medium text-muted-foreground flex items-center justify-between">
+              <span>Students searching</span>
+              <Users className="h-4 w-4" />
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-sky-600 dark:text-sky-400">{uniqueSearchers}</div>
+            <div className="text-2xl font-semibold tabular text-foreground">{uniqueSearchers}</div>
             <p className="text-xs text-muted-foreground mt-0.5">Distinct signed-in students</p>
           </CardContent>
         </Card>
 
-        <Card className="bg-card/60 backdrop-blur-xl border-border/60">
+        <Card className="shadow-card">
           <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-semibold text-muted-foreground flex items-center justify-between">
-              <span>AI Overview Rating</span>
-              <ThumbsUp className="h-4 w-4 text-emerald-500" />
+            <CardTitle className="text-xs font-medium text-muted-foreground flex items-center justify-between">
+              <span>Overview rated helpful</span>
+              <ThumbsUp className="h-4 w-4" />
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{helpfulPercentage}%</div>
+            <div className="text-2xl font-semibold tabular text-foreground">{helpfulPercentage}%</div>
             <p className="text-xs text-muted-foreground mt-0.5">{helpfulCount} helpful of {totalFeedbacks} ratings</p>
           </CardContent>
         </Card>
@@ -318,18 +308,18 @@ export default function AdminAIFeedback() {
       {/* Main Tabs Container */}
       <Tabs defaultValue="user-logs" className="space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <TabsList className="bg-muted/80 p-1">
+          <TabsList>
             <TabsTrigger value="user-logs" className="gap-2 text-xs sm:text-sm">
               <UserCheck className="h-4 w-4" />
-              Student Search Logs ({searchLogs.length})
+              Search log ({searchLogs.length})
             </TabsTrigger>
             <TabsTrigger value="topics" className="gap-2 text-xs sm:text-sm">
               <Layers className="h-4 w-4" />
-              Topic Cache ({totalUniqueQueries})
+              Topic cache ({totalUniqueQueries})
             </TabsTrigger>
             <TabsTrigger value="feedback" className="gap-2 text-xs sm:text-sm">
               <BrainCircuit className="h-4 w-4" />
-              AI Overview Feedback ({totalFeedbacks})
+              Overview feedback ({totalFeedbacks})
             </TabsTrigger>
           </TabsList>
 
@@ -347,15 +337,15 @@ export default function AdminAIFeedback() {
 
         {/* Tab 1: Search Logs with User Attribution */}
         <TabsContent value="user-logs">
-          <Card className="bg-card/70 backdrop-blur-xl border-border/60 shadow-xs">
+          <Card className="shadow-card">
             <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3">
               <div>
                 <CardTitle className="text-base flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-primary" />
-                  Live Search Log & User Attribution
+                  <ListChecks className="h-4 w-4 text-muted-foreground" />
+                  Search log
                 </CardTitle>
                 <CardDescription className="text-xs">
-                  Review search queries with full user identity attribution for signed-in students and guest tracking.
+                  Every query, newest first, with the account that ran it. Guests are listed as anonymous.
                 </CardDescription>
               </div>
 
@@ -399,13 +389,13 @@ export default function AdminAIFeedback() {
             </CardHeader>
 
             <CardContent>
-              <div className="rounded-md border border-border/60 overflow-hidden">
+              <div className="rounded-md border border-border overflow-hidden">
                 <Table>
                   <TableHeader className="bg-muted/50">
                     <TableRow>
-                      <TableHead className="w-[260px]">Student / User</TableHead>
-                      <TableHead className="w-[280px]">CampusBrain Query</TableHead>
-                      <TableHead className="w-[110px] text-center">Results</TableHead>
+                      <TableHead className="w-[260px]">User</TableHead>
+                      <TableHead className="w-[280px]">Query</TableHead>
+                      <TableHead className="w-[110px] text-right">Results</TableHead>
                       <TableHead className="w-[160px]">Time</TableHead>
                       <TableHead className="w-[140px] text-right">Actions</TableHead>
                     </TableRow>
@@ -414,7 +404,7 @@ export default function AdminAIFeedback() {
                     {loading ? (
                       <TableRow>
                         <TableCell colSpan={5} className="text-center py-8 text-muted-foreground text-sm">
-                          Loading search logs...
+                          Loading search log
                         </TableCell>
                       </TableRow>
                     ) : filteredSearchLogs.length === 0 ? (
@@ -458,7 +448,7 @@ export default function AdminAIFeedback() {
                                     >
                                       {item.user_name}
                                     </Link>
-                                    <span className={`inline-flex items-center px-1.5 py-0 text-3xs font-semibold rounded border uppercase tracking-wider ${getRoleBadgeVariant(item.user_role)}`}>
+                                    <span className={`inline-flex items-center px-1.5 py-0 text-3xs font-semibold rounded border capitalize ${getRoleBadgeVariant(item.user_role)}`}>
                                       {item.user_role}
                                     </span>
                                   </div>
@@ -478,15 +468,15 @@ export default function AdminAIFeedback() {
                           </TableCell>
 
                           {/* Results Count Column */}
-                          <TableCell className="text-center">
+                          <TableCell className="text-right tabular text-sm">
                             {item.result_count === 0 ? (
-                              <Badge variant="destructive" className="text-2xs px-2 py-0.5 font-mono">
-                                0 results
-                              </Badge>
+                              <span className="inline-flex items-center gap-1.5 font-medium text-destructive">
+                                <span className="h-1.5 w-1.5 rounded-full bg-destructive" aria-hidden />
+                                0
+                                <span className="sr-only">results</span>
+                              </span>
                             ) : (
-                              <Badge variant="secondary" className="text-2xs px-2 py-0.5 font-mono">
-                                {item.result_count} {item.result_count === 1 ? 'result' : 'results'}
-                              </Badge>
+                              item.result_count
                             )}
                           </TableCell>
 
@@ -560,7 +550,7 @@ export default function AdminAIFeedback() {
 
         {/* Tab 2: Aggregated Topic Cache */}
         <TabsContent value="topics">
-          <Card className="bg-card/70 backdrop-blur-xl border-border/60 shadow-xs">
+          <Card className="shadow-card">
             <CardHeader className="flex flex-row items-center justify-between pb-3">
               <div>
                 <CardTitle className="text-base flex items-center gap-2">
@@ -593,14 +583,14 @@ export default function AdminAIFeedback() {
             </CardHeader>
 
             <CardContent>
-              <div className="rounded-md border border-border/60 overflow-hidden">
+              <div className="rounded-md border border-border overflow-hidden">
                 <Table>
                   <TableHeader className="bg-muted/50">
                     <TableRow>
-                      <TableHead className="w-[340px]">Campus Topic</TableHead>
-                      <TableHead className="w-[100px] text-center">Searches</TableHead>
-                      <TableHead className="w-[160px]">Last Searched</TableHead>
-                      <TableHead className="w-[160px]">First Discovered</TableHead>
+                      <TableHead className="w-[340px]">Topic</TableHead>
+                      <TableHead className="w-[100px] text-right">Searches</TableHead>
+                      <TableHead className="w-[160px]">Last searched</TableHead>
+                      <TableHead className="w-[160px]">First seen</TableHead>
                       <TableHead className="w-[140px] text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -625,13 +615,8 @@ export default function AdminAIFeedback() {
                               "{item.query_text}"
                             </span>
                           </TableCell>
-                          <TableCell className="text-center">
-                            <Badge 
-                              variant={item.hit_count > 3 ? "default" : "secondary"}
-                              className="text-2xs font-mono px-2 py-0.5"
-                            >
-                              {item.hit_count} {item.hit_count === 1 ? 'hit' : 'hits'}
-                            </Badge>
+                          <TableCell className="text-right tabular text-sm font-medium">
+                            {item.hit_count}
                           </TableCell>
                           <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
                             {formatDistanceToNow(new Date(item.last_used_at || item.created_at), { addSuffix: true })}
@@ -690,7 +675,7 @@ export default function AdminAIFeedback() {
 
         {/* Tab 3: AI Overview Feedback Log */}
         <TabsContent value="feedback">
-          <Card className="bg-card/70 backdrop-blur-xl border-border/60 shadow-xs">
+          <Card className="shadow-card">
             <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3">
               <div>
                 <CardTitle className="text-base flex items-center gap-2">
@@ -739,7 +724,7 @@ export default function AdminAIFeedback() {
             </CardHeader>
 
             <CardContent>
-              <div className="rounded-md border border-border/60 overflow-hidden">
+              <div className="rounded-md border border-border overflow-hidden">
                 <Table>
                   <TableHeader className="bg-muted/50">
                     <TableRow>
@@ -780,11 +765,11 @@ export default function AdminAIFeedback() {
                           </TableCell>
                           <TableCell className="text-center">
                             {item.is_helpful ? (
-                              <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-400">
+                              <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-green-600/10 text-green-700 dark:text-green-500">
                                 <ThumbsUp className="h-3.5 w-3.5" />
                               </span>
                             ) : (
-                              <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-rose-100 text-rose-600 dark:bg-rose-900/40 dark:text-rose-400">
+                              <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-destructive/10 text-destructive">
                                 <ThumbsDown className="h-3.5 w-3.5" />
                               </span>
                             )}

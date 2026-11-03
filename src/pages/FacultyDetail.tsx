@@ -70,14 +70,14 @@ const FacultyDetail = () => {
       <div className="min-h-screen bg-background">
         <div className="container mx-auto max-w-5xl space-y-6 px-4 py-8 pt-24">
           <Skeleton className="h-8 w-28" />
-          <Skeleton className="h-56 w-full rounded-2xl" />
+          <Skeleton className="h-56 w-full rounded-xl" />
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <Skeleton className="h-20 w-full rounded-xl" />
             <Skeleton className="h-20 w-full rounded-xl" />
             <Skeleton className="h-20 w-full rounded-xl" />
             <Skeleton className="h-20 w-full rounded-xl" />
           </div>
-          <Skeleton className="h-40 w-full rounded-2xl" />
+          <Skeleton className="h-40 w-full rounded-xl" />
         </div>
       </div>
     );
@@ -140,7 +140,7 @@ const FacultyDetail = () => {
             }}
           >
             <ArrowLeft className="h-4 w-4" />
-            All faculty directory
+            Faculty
           </Button>
 
           <motion.div

@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { CalendarClock, Users, Globe, MapPin, Trophy, ExternalLink } from "lucide-react";
+import { CalendarClock, Users, Globe, MapPin, ExternalLink, Search, Trophy } from "lucide-react";
 
 import Footer from "@/components/Footer";
 import PostOpportunityDialog from "@/components/opportunities/PostOpportunityDialog";
 import SEOHead from "@/components/SEOHead";
 import StructuredData from "@/components/StructuredData";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/context/AuthContext";
@@ -43,31 +44,33 @@ function Deadline({ registerBy }: { registerBy: string | null }) {
 
 function OpportunityCard({ opportunity }: { opportunity: Opportunity }) {
   return (
-    <Card className="group flex flex-col gap-2 p-4 transition-colors hover:border-primary/30">
+    <Card className="relative flex min-w-0 flex-col gap-3 p-5 transition-colors duration-150 hover:border-foreground/20">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
+            {/* The title link's ::after covers the card, so the whole card is
+                the hit target while the markup stays one link. */}
             <Link
               to={`/opportunities/${opportunity.slug}`}
-              className="font-semibold leading-tight hover:underline"
+              className="font-semibold leading-tight underline-offset-4 after:absolute after:inset-0 after:rounded-lg hover:underline focus-visible:outline-none focus-visible:underline"
             >
               {opportunity.title}
             </Link>
             {opportunity.is_fresh && (
-              <span className="shrink-0 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 px-1.5 py-0.5 text-4xs font-bold uppercase tracking-wider">
+              <span className="shrink-0 rounded bg-primary/10 px-1.5 py-0.5 text-2xs font-medium text-primary">
                 New
               </span>
             )}
           </div>
-          <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
+          <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-sm text-muted-foreground">
             {opportunity.organiser && <span>{opportunity.organiser}</span>}
             <span className="inline-flex items-center gap-1">
-              {opportunity.is_online ? <Globe className="h-3 w-3" /> : <MapPin className="h-3 w-3" />}
+              {opportunity.is_online ? <Globe className="h-3.5 w-3.5" /> : <MapPin className="h-3.5 w-3.5" />}
               {opportunity.is_online ? "Online" : opportunity.location ?? "On campus"}
             </span>
           </p>
         </div>
-        <span className="shrink-0 rounded-full border border-border bg-muted/60 px-2 py-0.5 text-3xs font-medium uppercase tracking-wide">
+        <span className="shrink-0 rounded bg-secondary px-2 py-0.5 text-xs font-medium capitalize text-secondary-foreground">
           {opportunity.kind}
         </span>
       </div>
@@ -77,18 +80,18 @@ function OpportunityCard({ opportunity }: { opportunity: Opportunity }) {
           {opportunity.tags.slice(0, 4).map((tag) => (
             <span
               key={tag}
-              className="max-w-[14rem] truncate rounded border border-border bg-muted/50 px-1.5 py-0.5 text-3xs"
+              className="max-w-[14rem] truncate rounded border px-1.5 py-0.5 text-2xs text-muted-foreground"
             >
               {tag}
             </span>
           ))}
           {opportunity.tags.length > 4 && (
-            <span className="text-3xs text-muted-foreground">+{opportunity.tags.length - 4}</span>
+            <span className="text-2xs text-muted-foreground">+{opportunity.tags.length - 4}</span>
           )}
         </div>
       )}
 
-      <div className="mt-auto flex flex-wrap items-center gap-x-4 gap-y-1 pt-1 text-xs">
+      <div className="mt-auto flex flex-wrap items-center gap-x-4 gap-y-1 border-t pt-3 text-xs">
         <span className="inline-flex items-center gap-1.5">
           <CalendarClock className="h-3.5 w-3.5 text-muted-foreground" />
           <Deadline registerBy={opportunity.register_by} />
@@ -162,19 +165,13 @@ const Opportunities = () => {
       />
 
       <div className="min-h-screen bg-background">
-        <div className="relative overflow-hidden border-b border-border/60 bg-gradient-to-br from-primary/5 via-background to-background">
-          <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-primary/10 blur-3xl" />
-
-          <div className="container mx-auto max-w-5xl px-4 pb-8 pt-28">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-primary">
-              <Trophy className="h-3.5 w-3.5" />
-              Opportunities
-            </div>
-
+        {/* Header is sticky and in flow; no navbar offset needed here. */}
+        <div className="border-b">
+          <div className="container mx-auto max-w-5xl px-4 pb-6 pt-8 md:pt-10">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="min-w-0">
-                <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-                  Find something to enter — and someone to enter it with.
+                <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">
+                  Opportunities
                 </h1>
                 <p className="mt-2 max-w-2xl text-base text-muted-foreground">
                   Hackathons and competitions open to SRM AP students. Register on the organiser's
@@ -196,25 +193,28 @@ const Opportunities = () => {
 
             {/* Search and Filters */}
             <div className="mt-6 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-              <div className="relative flex-1">
-                <input
-                  type="text"
+              <div className="relative min-w-0 flex-1">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
+                <Input
+                  type="search"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search hackathons by name, organiser, tags (e.g. AI, SIH, Web)…"
-                  className="w-full h-10 rounded-xl border border-border/60 bg-card/80 px-3.5 text-sm placeholder:text-muted-foreground/60 focus:outline-none focus:border-primary/50 transition-colors"
+                  aria-label="Search opportunities"
+                  placeholder="Search by name, organiser or tag (AI, SIH, Web)"
+                  className="pl-9"
                 />
               </div>
 
-              <div className="flex flex-wrap gap-1.5">
+              <div className="flex flex-wrap gap-1.5" role="group" aria-label="Filter by type">
                 <button
                   type="button"
+                  aria-pressed={kind === "all"}
                   onClick={() => setKind("all")}
                   className={cn(
-                    "rounded-full border px-3 py-1 text-xs transition-colors",
+                    "h-9 rounded-md border px-3 text-sm transition-colors duration-150",
                     kind === "all"
-                      ? "border-primary/30 bg-primary/10 font-medium text-primary"
-                      : "border-border bg-card hover:border-primary/30",
+                      ? "border-primary bg-primary/10 font-medium text-primary"
+                      : "bg-card text-muted-foreground hover:bg-accent hover:text-foreground",
                   )}
                 >
                   All
@@ -223,12 +223,13 @@ const Opportunities = () => {
                   <button
                     key={option.value}
                     type="button"
+                    aria-pressed={kind === option.value}
                     onClick={() => setKind(option.value)}
                     className={cn(
-                      "rounded-full border px-3 py-1 text-xs transition-colors",
+                      "h-9 rounded-md border px-3 text-sm transition-colors duration-150",
                       kind === option.value
-                        ? "border-primary/30 bg-primary/10 font-medium text-primary"
-                        : "border-border bg-card hover:border-primary/30",
+                        ? "border-primary bg-primary/10 font-medium text-primary"
+                        : "bg-card text-muted-foreground hover:bg-accent hover:text-foreground",
                     )}
                   >
                     {option.label}
@@ -241,13 +242,16 @@ const Opportunities = () => {
 
         <div className="container mx-auto max-w-5xl px-4 py-8">
           {loading ? (
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-2">
               {Array.from({ length: 4 }).map((_, index) => (
-                <Skeleton key={index} className="h-36 w-full rounded-xl" />
+                <Skeleton key={index} className="h-40 w-full rounded-lg" />
               ))}
             </div>
           ) : items.length === 0 ? (
-            <div className="rounded-lg border border-dashed py-16 text-center">
+            <div className="flex flex-col items-center rounded-lg border border-dashed px-6 py-16 text-center">
+              <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-md bg-secondary text-muted-foreground">
+                <Trophy className="h-5 w-5" />
+              </div>
               <h2 className="mb-1 text-lg font-semibold">Nothing open right now</h2>
               <p className="mx-auto mb-4 max-w-md text-sm text-muted-foreground">
                 {kind === "all"
@@ -265,9 +269,15 @@ const Opportunities = () => {
               </div>
             </div>
           ) : (
-            <div className="grid gap-3 sm:grid-cols-2">
-              {items.map((opportunity) => (
-                <OpportunityCard key={opportunity.id} opportunity={opportunity} />
+            <div className="grid gap-4 sm:grid-cols-2">
+              {items.map((opportunity, i) => (
+                <div
+                  key={opportunity.id}
+                  className="flex min-w-0 animate-fade-up [&>*]:flex-1"
+                  style={i < 6 ? { animationDelay: `${i * 35}ms`, animationFillMode: "both" } : undefined}
+                >
+                  <OpportunityCard opportunity={opportunity} />
+                </div>
               ))}
             </div>
           )}

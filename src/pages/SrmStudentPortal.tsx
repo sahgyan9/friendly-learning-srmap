@@ -4,7 +4,7 @@ import SEOHead from "@/components/SEOHead";
 import { ROUTE_META } from "@/lib/seo/route-meta";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, Target, Bell, Lock } from "lucide-react";
+import { RefreshCw, Target, Bell, Lock, ChevronRight } from "lucide-react";
 
 /**
  * Public landing page for students searching for the SRM AP student portal.
@@ -65,49 +65,49 @@ const SrmStudentPortal = () => {
           <div className="container px-4 md:px-6">
             <div className="max-w-4xl mx-auto">
               <header className="text-center mb-12">
-                <h1 className="text-4xl font-bold mb-6">
+                <h1 className="text-3xl md:text-4xl font-semibold tracking-tight mb-4">
                   SRM AP Student Portal — Attendance, Auto-Synced
                 </h1>
-                <p className="text-xl text-muted-foreground">
+                <p className="text-lg text-muted-foreground">
                   Stop opening the SRM AP student portal every day just to check attendance.
                   Link your account once and Friendly Learning SRMAP handles the daily syncing
                   for you.
                 </p>
               </header>
 
-              <div className="grid md:grid-cols-2 gap-8 mb-12">
-                <div className="p-6 border rounded-lg bg-card">
-                  <h3 className="text-xl font-bold mb-3 flex items-center gap-2.5">
+              <div className="grid md:grid-cols-2 gap-4 mb-12">
+                <div className="p-5 border border-border rounded-xl bg-card">
+                  <h3 className="text-base font-semibold mb-2 flex items-center gap-2.5">
                     <RefreshCw className="h-5 w-5 text-primary shrink-0" />
-                    <span>Auto-Synced, No Repeat Logins</span>
+                    <span>Synced daily, no repeat logins</span>
                   </h3>
                   <p className="text-muted-foreground">Link once, and we pull fresh attendance from the SRM AP student portal every weekday at 5:30 PM IST — no signing in and clicking through the portal's report each time.</p>
                 </div>
-                <div className="p-6 border rounded-lg bg-card">
-                  <h3 className="text-xl font-bold mb-3 flex items-center gap-2.5">
+                <div className="p-5 border border-border rounded-xl bg-card">
+                  <h3 className="text-base font-semibold mb-2 flex items-center gap-2.5">
                     <Target className="h-5 w-5 text-primary shrink-0" />
-                    <span>75% Eligibility Tracking</span>
+                    <span>75% eligibility tracking</span>
                   </h3>
                   <p className="text-muted-foreground">Every course shows your live attendance percentage against the mandatory 75% examination eligibility rule, with a safe-bunk or classes-needed count next to it.</p>
                 </div>
-                <div className="p-6 border rounded-lg bg-card">
-                  <h3 className="text-xl font-bold mb-3 flex items-center gap-2.5">
+                <div className="p-5 border border-border rounded-xl bg-card">
+                  <h3 className="text-base font-semibold mb-2 flex items-center gap-2.5">
                     <Bell className="h-5 w-5 text-primary shrink-0" />
-                    <span>Shortage Alerts</span>
+                    <span>Shortage alerts</span>
                   </h3>
                   <p className="text-muted-foreground">If a course drops below 75%, you get notified the same evening — before it turns into a surprise at exam registration.</p>
                 </div>
-                <div className="p-6 border rounded-lg bg-card">
-                  <h3 className="text-xl font-bold mb-3 flex items-center gap-2.5">
+                <div className="p-5 border border-border rounded-xl bg-card">
+                  <h3 className="text-base font-semibold mb-2 flex items-center gap-2.5">
                     <Lock className="h-5 w-5 text-primary shrink-0" />
-                    <span>Encrypted Credentials</span>
+                    <span>Encrypted credentials</span>
                   </h3>
                   <p className="text-muted-foreground">Your portal password is stored with AES-256-GCM encryption, never logged in plaintext, and used only to fetch your own attendance.</p>
                 </div>
               </div>
 
-              <div className="bg-muted p-8 rounded-lg mb-12">
-                <h2 className="text-2xl font-bold mb-4">How Portal Attendance Sync Works</h2>
+              <div className="border border-border bg-card p-6 sm:p-8 rounded-xl mb-12">
+                <h2 className="text-2xl font-semibold tracking-tight mb-4">How attendance sync works</h2>
                 <ol className="list-decimal list-inside space-y-3">
                   <li>Sign up free with your SRM AP email</li>
                   <li>Open Attendance and link your SRM AP student portal (register number + portal password)</li>
@@ -118,27 +118,27 @@ const SrmStudentPortal = () => {
               </div>
 
               <div className="text-center mb-16">
-                <h2 className="text-2xl font-bold mb-4">Check Your Attendance Without the Portal Hassle</h2>
-                <p className="mb-6">Free for every SRM AP student.</p>
-                <div className="space-x-4">
+                <h2 className="text-2xl font-semibold tracking-tight mb-2">Check attendance without opening the portal</h2>
+                <p className="mb-6 text-muted-foreground">Free for every SRM AP student.</p>
+                <div className="flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
                   <Button asChild size="lg">
-                    <Link to="/signup">Link Your Portal — Sign Up Free</Link>
+                    <Link to="/signup">Sign up and link your portal</Link>
                   </Button>
                   <Button variant="outline" size="lg" asChild>
-                    <Link to="/signin">Already Have an Account? Sign In</Link>
+                    <Link to="/signin">Sign in</Link>
                   </Button>
                 </div>
               </div>
 
               {/* FAQ */}
               <div className="mb-4">
-                <h2 className="text-2xl font-bold mb-6 text-center">Frequently Asked Questions</h2>
+                <h2 className="text-2xl font-semibold tracking-tight mb-6 text-center">Frequently asked questions</h2>
                 <div className="divide-y divide-border border-t border-border">
                   {faqs.map((f) => (
                     <details key={f.q} className="group py-4">
                       <summary className="font-semibold cursor-pointer select-none list-none flex items-center justify-between gap-2">
                         <span>{f.q}</span>
-                        <span className="text-muted-foreground transition-transform group-open:rotate-90 shrink-0">›</span>
+                        <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform duration-150 group-open:rotate-90 shrink-0" aria-hidden />
                       </summary>
                       <p className="mt-2 text-muted-foreground leading-relaxed">{f.a}</p>
                     </details>

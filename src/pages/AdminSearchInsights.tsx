@@ -1,3 +1,4 @@
+import { Skeleton } from "@/components/ui/skeleton";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
@@ -127,7 +128,7 @@ export default function AdminSearchInsights() {
   return (
     <AdminPageWrapper>
       <AdminHeader
-        title="Search Insights"
+        title="Search insights"
         description="What students searched for, and where search failed them."
         action={
           <Button variant="outline" onClick={() => void fetchData()} disabled={loading} className="gap-1.5">
@@ -143,14 +144,14 @@ export default function AdminSearchInsights() {
           label="Searches run"
           value={totalSearches}
           hint={`${rows.length} distinct queries`}
-          tone="text-blue-600 dark:text-blue-400"
+          tone="text-muted-foreground"
         />
         <SummaryCard
           icon={SearchX}
           label="Found nothing"
           value={zeroResult.length}
           hint="Queries that returned no results"
-          tone="text-rose-600 dark:text-rose-400"
+          tone="text-destructive"
         />
         <SummaryCard
           icon={MousePointerClick}
@@ -188,17 +189,17 @@ export default function AdminSearchInsights() {
               <TabsTrigger value="zero" className="gap-1.5">
                 <SearchX className="h-3.5 w-3.5" />
                 Found nothing
-                <Badge variant="secondary" className="ml-1 tabular-nums">{zeroResult.length}</Badge>
+                <Badge variant="secondary" className="ml-1 tabular">{zeroResult.length}</Badge>
               </TabsTrigger>
               <TabsTrigger value="noclick" className="gap-1.5">
                 <MousePointerClick className="h-3.5 w-3.5" />
                 Nothing clicked
-                <Badge variant="secondary" className="ml-1 tabular-nums">{noClick.length}</Badge>
+                <Badge variant="secondary" className="ml-1 tabular">{noClick.length}</Badge>
               </TabsTrigger>
               <TabsTrigger value="top" className="gap-1.5">
                 <TrendingUp className="h-3.5 w-3.5" />
                 Most searched
-                <Badge variant="secondary" className="ml-1 tabular-nums">{topSearches.length}</Badge>
+                <Badge variant="secondary" className="ml-1 tabular">{topSearches.length}</Badge>
               </TabsTrigger>
             </TabsList>
 
@@ -257,7 +258,7 @@ function SummaryCard({
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="text-sm text-muted-foreground">{label}</p>
-            <p className="text-3xl font-bold tabular-nums mt-1">{value.toLocaleString()}</p>
+            <p className="text-3xl font-semibold tracking-tight tabular mt-1">{value.toLocaleString()}</p>
             <p className="text-xs text-muted-foreground mt-1">{hint}</p>
           </div>
           <Icon className={`h-5 w-5 shrink-0 ${tone}`} />
@@ -281,13 +282,19 @@ function QueryTable({
   highlight: "zero" | "noclick" | "none";
 }) {
   if (loading) {
-    return <p className="text-sm text-muted-foreground py-8 text-center">Loading…</p>;
+    return (
+      <div className="space-y-2 py-4" role="status" aria-label="Loading queries">
+        {[0, 1, 2, 3, 4].map((i) => (
+          <Skeleton key={i} className="h-10" />
+        ))}
+      </div>
+    );
   }
 
   if (rows.length === 0) {
     return (
       <div className="flex flex-col items-center text-center py-12 px-6">
-        <div className="h-11 w-11 rounded-full bg-muted flex items-center justify-center mb-3">
+        <div className="h-10 w-10 rounded-lg bg-secondary flex items-center justify-center mb-3">
           <AlertCircle className="h-5 w-5 text-muted-foreground" />
         </div>
         <p className="font-medium">{emptyTitle}</p>
@@ -313,16 +320,19 @@ function QueryTable({
           {rows.map((row) => (
             <TableRow key={row.query_hash}>
               <TableCell className="font-medium max-w-md truncate">{row.query_text}</TableCell>
-              <TableCell className="text-right tabular-nums">{row.search_count}</TableCell>
+              <TableCell className="text-right tabular">{row.search_count}</TableCell>
               {highlight === "zero" && (
-                <TableCell className="text-right tabular-nums">
-                  <Badge variant="destructive">{row.zero_result_count}</Badge>
+                <TableCell className="text-right tabular">
+                  <span className="inline-flex items-center gap-1.5 font-medium text-destructive">
+                    <span className="h-1.5 w-1.5 rounded-full bg-destructive" aria-hidden />
+                    {row.zero_result_count}
+                  </span>
                 </TableCell>
               )}
               {highlight !== "zero" && (
-                <TableCell className="text-right tabular-nums">
+                <TableCell className="text-right tabular">
                   {row.click_count === 0 ? (
-                    <Badge variant="secondary">0</Badge>
+                    <span className="font-medium text-amber-600 dark:text-amber-400">0</span>
                   ) : (
                     row.click_count
                   )}
@@ -337,8 +347,9 @@ function QueryTable({
                   to={`/search?q=${encodeURIComponent(row.query_text)}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="text-muted-foreground hover:text-foreground"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors duration-150 hover:bg-accent hover:text-foreground"
                   title="Run this search"
+                  aria-label={`Run search for ${row.query_text}`}
                 >
                   <ExternalLink className="h-4 w-4" />
                 </Link>

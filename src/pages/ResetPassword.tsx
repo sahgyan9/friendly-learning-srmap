@@ -6,8 +6,8 @@ import { Button } from "@/components/ui/button";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { motion } from "framer-motion";
-import DarkModeToggle from "@/components/DarkModeToggle";
+import { Loader2 } from "lucide-react";
+import AuthShell, { FieldError } from "@/components/auth/AuthShell";
 
 const ResetPassword = () => {
   const navigate = useNavigate();
@@ -17,6 +17,7 @@ const ResetPassword = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isValidSession, setIsValidSession] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
+  const [fieldErrors, setFieldErrors] = useState<{ password?: string; confirmPassword?: string }>({});
 
   useEffect(() => {
     const checkSession = async () => {
@@ -26,7 +27,7 @@ const ResetPassword = () => {
         
         if (error) {
           console.error("Session error:", error);
-          toast.error("Invalid or expired reset link. Please request a new one.");
+          toast.error("This reset link is invalid or has expired. Request a new one.");
           navigate("/forgot-password");
           return;
         }
@@ -44,7 +45,7 @@ const ResetPassword = () => {
           }
 
           if (!accessToken) {
-            toast.error("Invalid or expired reset link. Please request a new one.");
+            toast.error("This reset link is invalid or has expired. Request a new one.");
             navigate("/forgot-password");
             return;
           }
@@ -53,7 +54,7 @@ const ResetPassword = () => {
         }
       } catch (error) {
         console.error("Error checking session:", error);
-        toast.error("Something went wrong. Please try again.");
+        toast.error("Could not check the reset link. Request a new one.");
         navigate("/forgot-password");
       } finally {
         setIsChecking(false);
@@ -66,18 +67,20 @@ const ResetPassword = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!password || !confirmPassword) {
-      toast.error("Please fill in both password fields.");
-      return;
-    }
-    
-    if (password !== confirmPassword) {
-      toast.error("Passwords do not match.");
-      return;
-    }
-
-    if (password.length < 6) {
-      toast.error("Password must be at least 6 characters long.");
+    const nextErrors = {
+      password: !password
+        ? "Enter a new password."
+        : password.length < 6
+        ? "Use at least 6 characters."
+        : undefined,
+      confirmPassword: !confirmPassword
+        ? "Enter the password again."
+        : password !== confirmPassword
+        ? "The two passwords do not match."
+        : undefined,
+    };
+    if (nextErrors.password || nextErrors.confirmPassword) {
+      setFieldErrors(nextErrors);
       return;
     }
 
@@ -91,12 +94,12 @@ const ResetPassword = () => {
       if (error) {
         toast.error(error.message || "Failed to reset password");
       } else {
-        toast.success("Password reset successful! Please sign in with your new password.");
+        toast.success("Password changed. Sign in with your new password.");
         navigate("/signin");
       }
     } catch (error: unknown) {
       console.error("Password reset error:", error);
-      toast.error("An unexpected error occurred. Please try again.");
+      toast.error("Could not change the password. Try again.");
     } finally {
       setIsLoading(false);
     }
@@ -104,10 +107,10 @@ const ResetPassword = () => {
 
   if (isChecking) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Verifying reset link...</p>
+      <div className="flex min-h-screen items-center justify-center bg-background" role="status">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          Checking reset link
         </div>
       </div>
     );
@@ -117,84 +120,58 @@ const ResetPassword = () => {
     return null; // This will be handled by the redirect in useEffect
   }
 
-  return (
-    <div className="min-h-screen flex flex-col bg-background text-foreground">
-      <div className="absolute top-4 right-4">
-        <DarkModeToggle />
-      </div>
-      <div className="flex flex-grow items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <motion.div 
-          className="max-w-md w-full space-y-8"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <div>
-            <h2 className="mt-6 text-center text-3xl font-extrabold">
-              Reset Your Password
-            </h2>
-            <p className="mt-2 text-center text-sm text-muted-foreground">
-              Enter your new password below
-            </p>
-          </div>
-          
-          <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-            <div className="bg-card text-card-foreground px-4 py-8 shadow sm:rounded-lg sm:px-10">
-              <form className="space-y-6" onSubmit={handleSubmit}>
-                <div>
-                  <Label htmlFor="password">New Password</Label>
-                  <PasswordInput
-                    id="password"
-                    name="password"
-                    autoComplete="new-password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Enter new password"
-                    className="mt-1"
-                    minLength={6}
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="confirmPassword">Confirm New Password</Label>
-                  <PasswordInput
-                    id="confirmPassword"
-                    name="confirmPassword"
-                    autoComplete="new-password"
-                    required
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="Confirm new password"
-                    className="mt-1"
-                    minLength={6}
-                  />
-                </div>
+  const clearError = (field: "password" | "confirmPassword") => {
+    if (fieldErrors[field]) setFieldErrors((prev) => ({ ...prev, [field]: undefined }));
+  };
 
-                <div>
-                  <Button
-                    type="submit"
-                    className="w-full"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? "Resetting..." : "Reset Password"}
-                  </Button>
-                </div>
-              </form>
-              
-              <div className="mt-6 text-center">
-                <button
-                  onClick={() => navigate("/signin")}
-                  className="text-sm text-primary hover:text-primary/80"
-                >
-                  Back to sign in
-                </button>
-              </div>
-            </div>
-          </div>
-        </motion.div>
-      </div>
-    </div>
+  return (
+    <AuthShell
+      title="Set a new password"
+      description="Choose a password with at least 6 characters."
+    >
+      <form className="space-y-4" onSubmit={handleSubmit} noValidate>
+        <div>
+          <Label htmlFor="password">New password</Label>
+          <PasswordInput
+            id="password"
+            name="password"
+            autoComplete="new-password"
+            required
+            value={password}
+            onChange={(e) => {
+              setPassword(e.target.value);
+              clearError("password");
+            }}
+            className="mt-1.5"
+            aria-invalid={Boolean(fieldErrors.password) || undefined}
+            aria-describedby={fieldErrors.password ? "password-error" : undefined}
+          />
+          <FieldError id="password-error">{fieldErrors.password}</FieldError>
+        </div>
+        <div>
+          <Label htmlFor="confirmPassword">Confirm new password</Label>
+          <PasswordInput
+            id="confirmPassword"
+            name="confirmPassword"
+            autoComplete="new-password"
+            required
+            value={confirmPassword}
+            onChange={(e) => {
+              setConfirmPassword(e.target.value);
+              clearError("confirmPassword");
+            }}
+            className="mt-1.5"
+            aria-invalid={Boolean(fieldErrors.confirmPassword) || undefined}
+            aria-describedby={fieldErrors.confirmPassword ? "confirm-error" : undefined}
+          />
+          <FieldError id="confirm-error">{fieldErrors.confirmPassword}</FieldError>
+        </div>
+
+        <Button type="submit" className="w-full" isLoading={isLoading}>
+          {isLoading ? "Saving" : "Save new password"}
+        </Button>
+      </form>
+    </AuthShell>
   );
 };
 

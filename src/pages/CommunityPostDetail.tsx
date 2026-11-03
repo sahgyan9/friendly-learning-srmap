@@ -16,7 +16,17 @@ import { ImageLightbox } from "@/components/community-posts/ImageLightbox";
 import { InlineComments } from "@/components/community-posts/InlineComments";
 import { PostImageGallery } from "@/components/community-posts/PostImageGallery";
 import { LinkifiedText } from "@/components/common/LinkifiedText";
-import { CardAccentBorder } from "@/components/ui/CardAccentBorder";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import {
   AwaitingReplyBadge,
   PostStatusBadge,
@@ -25,17 +35,6 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import { getBreadcrumbSchema } from "@/lib/structured-data";
 
-/** Maps post_type directly to a CardAccentBorder gradient key. */
-const POST_TYPE_GRADIENT: Record<string, string> = {
-  hackathon: "amber",
-  "study-help": "sky",
-  project: "violet",
-  research: "emerald",
-  "problem-solving": "rose",
-  achievement: "gold",
-  announcement: "orange",
-  general: "muted",
-};
 import { PRIMARY_DOMAIN } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { getInitials } from "@/utils/user-utils";
@@ -95,7 +94,7 @@ const CommunityPostDetail = () => {
 
     const { error, liked } = await togglePostLike(post.id);
     if (error) {
-      toast.error("Failed to update like");
+      toast.error("Could not update like");
       return;
     }
 
@@ -119,7 +118,7 @@ const CommunityPostDetail = () => {
     }
 
     await navigator.clipboard.writeText(url);
-    toast.success("Link copied to clipboard");
+    toast.success("Link copied");
   };
 
   /** Message the author — available for every author now, not only mentors. */
@@ -132,7 +131,7 @@ const CommunityPostDetail = () => {
 
     const { data: conversation, error } = await getOrCreateConversation(user.id, post.author.id);
     if (error || !conversation) {
-      toast.error("Failed to start conversation");
+      toast.error("Could not start conversation");
       return;
     }
 
@@ -144,12 +143,12 @@ const CommunityPostDetail = () => {
 
     const { error } = await updateCommunityPost(post.id, { status });
     if (error) {
-      toast.error("Failed to update status");
+      toast.error("Could not update status");
       return;
     }
 
     setPost({ ...post, status });
-    toast.success(status === "fulfilled" ? "Marked as fulfilled." : `Marked as ${status}`);
+    toast.success(`Marked as ${status}`);
   };
 
   const handleDelete = async () => {
@@ -157,7 +156,7 @@ const CommunityPostDetail = () => {
 
     const { error } = await deleteCommunityPost(post.id);
     if (error) {
-      toast.error("Failed to delete post");
+      toast.error("Could not delete post");
       return;
     }
 
@@ -209,7 +208,7 @@ const CommunityPostDetail = () => {
       />
 
       <div className="min-h-screen bg-background">
-        <div className="container mx-auto max-w-3xl px-4 pt-28 pb-10">
+        <div className="container mx-auto max-w-3xl px-4 pt-8 pb-10">
           <Button
             variant="ghost"
             size="sm"
@@ -227,23 +226,21 @@ const CommunityPostDetail = () => {
           </Button>
 
           <Card className="relative overflow-hidden">
-            {/* Accent border colour tracks the post type — same as the feed cards */}
-            <CardAccentBorder gradient={(POST_TYPE_GRADIENT[post.post_type] ?? 'muted') as any} />
             <CardHeader>
               <div className="flex flex-wrap items-start justify-between gap-4">
                 {/* Author — larger, more prominent on the detail page */}
                 <div className="flex items-center gap-4">
                   <Avatar
                     className={cn(
-                      "h-16 w-16 ring-2 ring-primary/20 shrink-0 transition-all duration-200",
-                      post.author.is_mentor && "cursor-pointer hover:ring-primary/50 hover:scale-105",
+                      "h-14 w-14 shrink-0 border transition-colors duration-150",
+                      post.author.is_mentor && "cursor-pointer hover:border-foreground/30",
                     )}
                     onClick={() => {
                       if (post.author.is_mentor) navigate(`/mentor/${post.author.id}`);
                     }}
                   >
                     <AvatarImage src={post.author.profile_image ?? undefined} alt={post.author.name} />
-                    <AvatarFallback className="bg-primary/10 text-lg font-semibold text-primary">
+                    <AvatarFallback className="bg-secondary text-lg font-medium text-secondary-foreground">
                       {getInitials(post.author.name)}
                     </AvatarFallback>
                   </Avatar>
@@ -251,7 +248,7 @@ const CommunityPostDetail = () => {
                     <div className="flex items-center gap-1.5">
                       <h2
                         className={cn(
-                          "text-lg font-semibold leading-tight",
+                          "text-base font-semibold leading-tight",
                           post.author.is_mentor && "cursor-pointer hover:text-primary hover:underline transition-colors",
                         )}
                         onClick={() => {
@@ -287,7 +284,7 @@ const CommunityPostDetail = () => {
 
             <CardContent className="space-y-5">
               <div>
-                <h1 className="mb-3 text-2xl font-bold leading-tight">{post.title}</h1>
+                <h1 className="mb-3 text-3xl font-semibold leading-tight tracking-tight md:text-4xl">{post.title}</h1>
                 {/* Capped at ~65 characters a line, same reasoning as PostCard.
                     This is the page where someone reads the whole thing, so it
                     matters more here than in the feed. */}
@@ -309,7 +306,7 @@ const CommunityPostDetail = () => {
               {post.tags && post.tags.length > 0 && (
                 <div className="flex flex-wrap gap-2">
                   {post.tags.map((tag) => (
-                    <Badge key={tag} variant="outline" className="font-normal">
+                    <Badge key={tag} variant="outline" className="font-normal text-muted-foreground">
                       #{tag}
                     </Badge>
                   ))}
@@ -325,12 +322,13 @@ const CommunityPostDetail = () => {
                   className={cn("gap-1.5", post.viewer_has_liked && "text-rose-600 dark:text-rose-400")}
                 >
                   <Heart className={cn("h-4 w-4", post.viewer_has_liked && "fill-current")} />
-                  {post.likes_count}
+                  <span className="tabular">{post.likes_count}</span>
                 </Button>
 
                 <span className="flex items-center gap-1.5 px-2 text-sm text-muted-foreground">
-                  <MessageCircle className="h-4 w-4" />
-                  {post.comments_count}
+                  <MessageCircle className="h-4 w-4" aria-hidden />
+                  <span className="tabular">{post.comments_count}</span>
+                  <span className="sr-only">replies</span>
                 </span>
 
                 <Button variant="ghost" size="sm" onClick={handleShare} className="gap-1.5">
@@ -348,10 +346,10 @@ const CommunityPostDetail = () => {
               {/* Author controls. Letting an author close a filled request is what
                   keeps the board from silting up with stale asks. */}
               {post.viewer_is_author && (
-                <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-muted/40 p-3">
-                  <span className="mr-1 text-sm font-medium">Your post:</span>
+                <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-secondary/50 p-3">
+                  <span className="mr-1 text-sm font-medium">Your post</span>
                   <Button size="sm" variant="outline" onClick={() => setShowEditModal(true)}>
-                    <Pencil className="mr-1.5 h-3.5 w-3.5" />
+                    <Pencil className="h-4 w-4" />
                     Edit
                   </Button>
                   {POST_STATUSES.map((status) => (
@@ -359,20 +357,41 @@ const CommunityPostDetail = () => {
                       key={status.value}
                       size="sm"
                       variant={post.status === status.value ? "default" : "outline"}
+                      aria-pressed={post.status === status.value}
                       onClick={() => handleStatusChange(status.value)}
                     >
                       {status.label}
                     </Button>
                   ))}
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="ml-auto gap-1.5 text-destructive hover:text-destructive"
-                    onClick={handleDelete}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    Delete
-                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="ml-auto text-destructive hover:bg-destructive/10 hover:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        Delete
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete this post?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          "{post.title}" and its replies will be permanently removed. This cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={handleDelete}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          Delete post
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
               )}
             </CardContent>
@@ -384,7 +403,7 @@ const CommunityPostDetail = () => {
                 <MessageCircle className="h-4 w-4 text-muted-foreground" />
                 Replies
                 {post.comments_count > 0 && (
-                  <span className="text-sm font-normal text-muted-foreground">({post.comments_count})</span>
+                  <span className="tabular text-sm font-normal text-muted-foreground">{post.comments_count}</span>
                 )}
               </h2>
               <InlineComments

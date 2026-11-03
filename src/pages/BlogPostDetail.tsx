@@ -2,24 +2,13 @@ import { useEffect, useMemo, useState } from "react";
 import NoIndex from "@/components/NoIndex";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { motion, useScroll, useSpring } from "framer-motion";
-import {
-  ArrowLeft,
-  BookOpen,
-  Check,
-  Eye,
-  Pencil,
-  Share2,
-  Sparkles,
-  Trash2,
-} from "lucide-react";
+import { ArrowLeft, Check, Eye, EyeOff, FileX, Pencil, Share2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import "katex/dist/katex.min.css";
 
 import Footer from "@/components/Footer";
 import SEOHead from "@/components/SEOHead";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -32,6 +21,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { CampusBrainIcon } from "@/components/icons/CampusBrainIcon";
+import { ARTICLE_PROSE, coverImageOf, readingMinutes } from "@/components/blog/article-prose";
+import { cn } from "@/lib/utils";
 import { PRIMARY_DOMAIN } from "@/lib/constants";
 import { sanitizeBlogHtml } from "@/lib/sanitize-html";
 import { getErrorMessage } from "@/lib/errors";
@@ -49,7 +41,6 @@ const BlogPostDetail = () => {
   const [deleting, setDeleting] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  // Top Reading Progress Bar
   const { scrollYProgress } = useScroll();
   const scaleX = useSpring(scrollYProgress, {
     stiffness: 100,
@@ -65,11 +56,7 @@ const BlogPostDetail = () => {
 
   const canManage = post && user && (user.id === post.author_id || isAdmin);
 
-  const readingTimeMinutes = useMemo(() => {
-    if (!post?.content_text) return 1;
-    const words = post.content_text.split(/\s+/).filter(Boolean).length;
-    return Math.max(1, Math.ceil(words / 200));
-  }, [post?.content_text]);
+  const readingTimeMinutes = useMemo(() => readingMinutes(post?.content_text), [post?.content_text]);
 
   const handleShare = async () => {
     const url = window.location.href;
@@ -88,10 +75,10 @@ const BlogPostDetail = () => {
     try {
       await navigator.clipboard.writeText(url);
       setCopied(true);
-      toast.success("Link copied to clipboard!");
+      toast.success("Link copied");
       setTimeout(() => setCopied(false), 2000);
     } catch (e) {
-      toast.error("Failed to copy link");
+      toast.error("Couldn't copy the link. Copy it from the address bar.");
     }
   };
 
@@ -103,7 +90,7 @@ const BlogPostDetail = () => {
       toast.success("Post deleted");
       navigate("/blogs");
     } catch (error) {
-      toast.error(getErrorMessage(error, "Failed to delete post"));
+      toast.error(getErrorMessage(error, "Couldn't delete the post. Try again."));
     } finally {
       setDeleting(false);
       setConfirmDelete(false);
@@ -112,20 +99,24 @@ const BlogPostDetail = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
-        <div className="container mx-auto max-w-4xl px-4 pb-16 pt-24 flex-1">
-          <Skeleton className="h-4 w-28 mb-6" />
-          <Skeleton className="h-64 w-full mb-8 rounded-2xl" />
-          <Skeleton className="h-10 w-4/5 mb-4" />
-          <div className="flex items-center gap-3 mb-8">
+      <div className="flex min-h-screen flex-col bg-background">
+        <div className="mx-auto w-full max-w-[680px] flex-1 px-4 pb-16 pt-24 sm:px-6" aria-busy="true" aria-label="Loading post">
+          <Skeleton className="mb-10 h-5 w-32" />
+          <Skeleton className="mb-3 h-11 w-full" />
+          <Skeleton className="mb-6 h-11 w-3/4" />
+          <Skeleton className="mb-8 h-6 w-5/6" />
+          <div className="mb-8 flex items-center gap-3 border-y border-border py-4">
             <Skeleton className="h-10 w-10 rounded-full" />
-            <Skeleton className="h-4 w-40" />
+            <div className="flex flex-col gap-2">
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-3 w-44" />
+            </div>
           </div>
-          <div className="space-y-4">
+          <div className="flex flex-col gap-3">
             <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-5/6" />
-            <Skeleton className="h-4 w-4/6" />
+            <Skeleton className="h-4 w-11/12" />
             <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-2/3" />
           </div>
         </div>
         <Footer />
@@ -135,22 +126,22 @@ const BlogPostDetail = () => {
 
   if (!post) {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
+      <div className="flex min-h-screen flex-col bg-background">
         <NoIndex />
-        <div className="container mx-auto max-w-2xl px-4 pb-16 pt-32 flex-1 text-center">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-muted text-muted-foreground mb-4">
-            <BookOpen className="h-8 w-8" />
+        <div className="mx-auto flex w-full max-w-md flex-1 flex-col items-center px-4 pb-16 pt-32 text-center">
+          <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+            <FileX className="h-6 w-6" />
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Story Not Found</h1>
-          <p className="mt-2 text-muted-foreground max-w-md mx-auto">
-            This post may have been removed, unpublished, or the link is incorrect.
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Post not found</h1>
+          <p className="mt-2 text-muted-foreground">
+            It may have been unpublished or deleted, or the link has a typo.
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             <Button asChild>
-              <Link to="/blogs">Browse Community Stories</Link>
+              <Link to="/blogs">Browse the Community Blog</Link>
             </Button>
             <Button asChild variant="outline">
-              <Link to="/">Back to Home</Link>
+              <Link to="/">Home</Link>
             </Button>
           </div>
         </div>
@@ -165,8 +156,13 @@ const BlogPostDetail = () => {
     ? new Date(post.published_at).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })
     : null;
 
-  const isGradient = post.cover_image_url?.startsWith("gradient:") ?? false;
-  const gradientStyle = isGradient ? post.cover_image_url?.replace("gradient:", "") : null;
+  const coverImage = coverImageOf(post.cover_image_url);
+  const authorName = post.author_name ?? "SRM AP student";
+  // Posts published without a subtitle store their opening lines as the
+  // excerpt; showing that above the body would print the same text twice.
+  const squash = (text: string) => text.replace(/\s+/g, " ").trim();
+  const excerptStem = squash(post.excerpt ?? "").replace(/\.{3}$/, "");
+  const subtitle = excerptStem && !squash(post.content_text).startsWith(excerptStem) ? post.excerpt : null;
 
   return (
     <>
@@ -174,154 +170,137 @@ const BlogPostDetail = () => {
         title={`${post.title} | Community Blog`}
         description={post.excerpt || post.content_text.slice(0, 155).trim() || `${post.title} — a community blog post on Friendly Learning SRMAP.`}
         canonical={shareUrl}
-        ogImage={!isGradient ? post.cover_image_url ?? undefined : undefined}
+        ogImage={coverImage ?? undefined}
         ogType="article"
       />
 
-      {/* Fixed Reading Progress Bar at Top */}
+      {/* Reading progress: tracks scroll position, so it moves only when the reader does. */}
       <motion.div
-        className="fixed top-0 left-0 right-0 h-1 bg-primary z-50 origin-left"
+        aria-hidden
+        className="fixed left-0 right-0 top-0 z-50 h-0.5 origin-left bg-primary"
         style={{ scaleX }}
       />
 
-      <div className="min-h-screen bg-background flex flex-col">
-        <div className="flex-1 w-full container mx-auto px-4 sm:px-6 lg:px-8 pt-20 sm:pt-24 pb-16">
-          {/* Top Bar Actions */}
-          <div className="mb-6 flex items-center justify-between gap-4">
+      <div className="flex min-h-screen flex-col bg-background">
+        <div className="mx-auto w-full max-w-[680px] flex-1 px-4 pb-20 pt-20 sm:px-6 sm:pt-24">
+          <nav className="mb-10 flex items-center justify-between gap-3">
             <Link
               to="/blogs"
-              className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-medium text-muted-foreground hover:text-foreground transition-colors py-1 px-2.5 rounded-lg hover:bg-muted"
+              className="-ml-2 inline-flex h-9 items-center gap-1.5 rounded-md px-2 text-sm text-muted-foreground transition-colors duration-150 hover:bg-accent hover:text-foreground"
             >
               <ArrowLeft className="h-4 w-4" />
-              Back to Community Blog
+              Community Blog
             </Link>
 
-            <div className="flex items-center gap-2">
-              <Button
-                size="sm"
-                variant="outline"
-                className="h-8 text-xs gap-1.5"
-                onClick={handleShare}
-                title="Share this story"
-              >
-                {copied ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Share2 className="h-3.5 w-3.5" />}
+            <div className="flex items-center gap-1">
+              <Button size="sm" variant="ghost" className="h-9 gap-1.5" onClick={handleShare} aria-label="Share this post">
+                {copied ? <Check className="h-4 w-4" /> : <Share2 className="h-4 w-4" />}
                 <span className="hidden sm:inline">{copied ? "Copied" : "Share"}</span>
               </Button>
 
               {canManage && (
                 <>
-                  <Button asChild size="sm" variant="outline" className="h-8 text-xs gap-1.5">
+                  <Button asChild size="sm" variant="ghost" className="h-9 gap-1.5">
                     <Link to={`/blogs/${post.slug}/edit`}>
-                      <Pencil className="h-3.5 w-3.5" />
-                      Edit
+                      <Pencil className="h-4 w-4" />
+                      <span className="hidden sm:inline">Edit</span>
                     </Link>
                   </Button>
+                  <span aria-hidden className="mx-1 h-5 w-px bg-border" />
                   <Button
                     size="sm"
-                    variant="outline"
-                    className="h-8 text-xs text-destructive hover:text-destructive hover:bg-destructive/10 gap-1.5"
+                    variant="ghost"
+                    className="h-9 gap-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                     onClick={() => setConfirmDelete(true)}
+                    aria-label="Delete post"
                   >
-                    <Trash2 className="h-3.5 w-3.5" />
-                    Delete
+                    <Trash2 className="h-4 w-4" />
+                    <span className="hidden sm:inline">Delete</span>
                   </Button>
                 </>
               )}
             </div>
-          </div>
+          </nav>
 
           {!post.is_published && (
-            <Badge variant="outline" className="mb-6 border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400">
-              Unpublished Draft — only you and admins can see this
-            </Badge>
+            <div className="mb-8 flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-800 dark:text-amber-300">
+              <EyeOff className="mt-0.5 h-4 w-4 shrink-0" />
+              <span>Draft. Only you and admins can see this post until it is published.</span>
+            </div>
           )}
 
-          {/* Article Container */}
-          <article className="space-y-8">
-            {/* Cover Banner */}
-            {post.cover_image_url && (
-              <div className="w-full h-56 sm:h-80 md:h-96 rounded-2xl overflow-hidden border border-border/60 shadow-sm">
-                {isGradient ? (
-                  <div className="w-full h-full" style={{ background: gradientStyle || "" }} />
-                ) : (
-                  <img
-                    src={post.cover_image_url}
-                    alt=""
-                    className="w-full h-full object-cover"
-                  />
-                )}
-              </div>
-            )}
+          <article className="animate-fade-up">
+            <header className="flex flex-col gap-5">
+              {post.tags[0] && (
+                <p className="text-sm font-medium text-primary">{post.tags[0]}</p>
+              )}
+              <h1 className="text-4xl font-semibold leading-[1.15] tracking-tight text-foreground md:text-5xl">
+                {post.title}
+              </h1>
+              {subtitle && <p className="text-xl leading-relaxed text-muted-foreground">{subtitle}</p>}
 
-            {/* Tags */}
-            {post.tags.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {post.tags.map((tag) => (
-                  <Badge key={tag} variant="secondary" className="font-normal text-xs px-3 py-1 bg-secondary/80">
-                    {tag}
-                  </Badge>
-                ))}
-              </div>
-            )}
-
-            {/* Article Title */}
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-foreground leading-tight">
-              {post.title}
-            </h1>
-
-            {/* Author Meta Bar */}
-            <div className="flex flex-wrap items-center justify-between gap-4 border-b border-t border-border/80 py-4">
-              <div className="flex items-center gap-3">
-                <Avatar className="h-11 w-11 border border-border">
-                  <AvatarImage src={post.author_image ?? undefined} alt="" />
-                  <AvatarFallback className="font-semibold text-xs">
-                    {getInitials(post.author_name ?? "Student")}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <p className="font-semibold text-sm text-foreground">
-                    {post.author_name ?? "SRMAP Student"}
-                  </p>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    {publishedDate && <span>{publishedDate}</span>}
-                    <span>·</span>
-                    <span>{readingTimeMinutes} min read</span>
+              <div className="mt-2 flex items-center justify-between gap-4 border-y border-border py-4">
+                <div className="flex min-w-0 items-center gap-3">
+                  <Avatar className="h-10 w-10">
+                    <AvatarImage src={post.author_image ?? undefined} alt="" />
+                    <AvatarFallback className="text-xs font-medium">{getInitials(authorName)}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex min-w-0 flex-col text-sm">
+                    <span className="truncate font-medium text-foreground">{authorName}</span>
+                    <span className="text-muted-foreground tabular">
+                      {publishedDate && (
+                        <time dateTime={post.published_at ?? undefined}>{publishedDate}</time>
+                      )}
+                      {publishedDate && " · "}
+                      {readingTimeMinutes} min read
+                    </span>
                   </div>
                 </div>
-              </div>
 
-              {post.view_count > 0 && (
-                <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/40 px-3 py-1.5 rounded-full border border-border/50">
-                  <Eye className="h-3.5 w-3.5" />
-                  <span>{post.view_count} views</span>
+                {post.view_count > 0 && (
+                  <span className="flex shrink-0 items-center gap-1.5 text-sm text-muted-foreground tabular">
+                    <Eye className="h-4 w-4" aria-hidden />
+                    {post.view_count.toLocaleString("en-IN")}
+                    <span className="sr-only">views</span>
+                  </span>
+                )}
+              </div>
+            </header>
+
+            {coverImage && (
+              <figure className="my-10 overflow-hidden rounded-lg border border-border bg-muted md:-mx-12">
+                <img src={coverImage} alt="" className="aspect-[16/9] w-full object-cover" />
+              </figure>
+            )}
+
+            <div className={cn(ARTICLE_PROSE, coverImage ? "mt-0" : "mt-10", "flow-root")} dangerouslySetInnerHTML={{ __html: safeHtml }} />
+
+            {post.tags.length > 0 && (
+              <ul className="mt-12 flex flex-wrap gap-2" aria-label="Tags">
+                {post.tags.map((tag) => (
+                  <li key={tag}>
+                    <span className="inline-flex rounded-md bg-secondary px-2.5 py-1 text-xs font-medium text-secondary-foreground">
+                      {tag}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            <aside className="mt-12 flex flex-col gap-4 border-t border-border pt-8 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-start gap-3">
+                <CampusBrainIcon className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                <div>
+                  <h2 className="text-sm font-semibold text-foreground">Questions about this topic?</h2>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    CampusBrain can point you to related courses, faculty and resources at SRM AP.
+                  </p>
                 </div>
-              )}
-            </div>
-
-            {/* Article Content */}
-            <div
-              className="prose prose-base sm:prose-lg dark:prose-invert max-w-none pt-2 leading-relaxed prose-headings:font-bold prose-headings:tracking-tight prose-a:text-primary prose-a:underline-offset-4 prose-blockquote:border-l-4 prose-blockquote:border-primary/60 prose-blockquote:bg-muted/30 prose-blockquote:py-2 prose-blockquote:px-5 prose-blockquote:rounded-r-xl prose-img:rounded-2xl"
-              dangerouslySetInnerHTML={{ __html: safeHtml }}
-            />
-
-            {/* Ask AI Footer */}
-            <div className="mt-12 flex flex-col sm:flex-row items-center justify-between gap-4 rounded-2xl border border-primary/20 bg-primary/5 p-6">
-              <div>
-                <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-primary" />
-                  Have questions about this story or topic?
-                </h4>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Ask CampusBrain AI to explore related concepts, courses, or faculty mentors at SRM AP.
-                </p>
               </div>
-              <Button asChild size="sm" className="shadow-xs shrink-0">
-                <Link to={`/search?q=${encodeURIComponent(`Tell me about "${post.title}"`)}`}>
-                  <Sparkles className="mr-1.5 h-3.5 w-3.5" />
-                  Ask AI
-                </Link>
+              <Button asChild variant="outline" size="sm" className="h-9 shrink-0">
+                <Link to={`/search?q=${encodeURIComponent(`Tell me about "${post.title}"`)}`}>Ask CampusBrain</Link>
               </Button>
-            </div>
+            </aside>
           </article>
         </div>
 
@@ -331,9 +310,9 @@ const BlogPostDetail = () => {
       <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete this story?</AlertDialogTitle>
+            <AlertDialogTitle>Delete this post?</AlertDialogTitle>
             <AlertDialogDescription>
-              This cannot be undone. The story will be permanently removed from the Community Blog.
+              "{post.title}" will be removed from the Community Blog. This can't be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -343,7 +322,7 @@ const BlogPostDetail = () => {
               disabled={deleting}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Delete
+              {deleting ? "Deleting…" : "Delete post"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

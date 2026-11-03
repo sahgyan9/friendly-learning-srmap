@@ -122,7 +122,7 @@ const OberleafLanding: React.FC = () => {
       {/* Clean Hero Landing (Clean initial viewport above the fold) */}
       <section className="min-h-[calc(100vh-4rem)] min-h-[calc(100dvh-4rem)] flex flex-col items-center justify-center text-center px-4 md:px-6 relative py-12">
         <div className="max-w-3xl mx-auto space-y-6 my-auto">
-          <div className="w-20 h-20 mx-auto rounded-2xl p-2 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 shadow-md flex items-center justify-center">
+          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-xl border border-border bg-card p-2 shadow-card">
             <img
               src="/downloads/oberleaf-icon.svg"
               alt="Oberleaf Logo"
@@ -134,8 +134,9 @@ const OberleafLanding: React.FC = () => {
             />
           </div>
 
-          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight font-serif">
-            Ober<span className="text-emerald-600 dark:text-emerald-400 italic">leaf</span>
+          {/* The green "leaf" is the product's own wordmark, not a UI accent */}
+          <h1 className="font-serif text-4xl font-semibold tracking-tight md:text-5xl">
+            Ober<span className="italic text-emerald-600 dark:text-emerald-400">leaf</span>
           </h1>
 
           {/* The hero used to be a logo, the product name and a download button
@@ -161,28 +162,22 @@ const OberleafLanding: React.FC = () => {
               and the extracted bundle ships install.ps1 alongside the launcher,
               so setup never has to fetch and run a remote script.
             */}
-            <a
-              href="/downloads/Oberleaf-Setup.zip"
-              download="Oberleaf-Setup.zip"
-              onClick={handleDownloadClick("setup_zip")}
-              className="w-full sm:w-auto"
-            >
-              <Button size="lg" className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-8 py-6 text-base rounded-xl shadow-lg hover:shadow-emerald-600/25 transition flex items-center justify-center space-x-2">
-                <FileArchive className="w-5 h-5 mr-2" />
-                <span>Download for Windows (.zip)</span>
-              </Button>
-            </a>
+            <Button asChild size="lg" className="h-12 w-full px-6 text-base sm:w-auto">
+              <a
+                href="/downloads/Oberleaf-Setup.zip"
+                download="Oberleaf-Setup.zip"
+                onClick={handleDownloadClick("setup_zip")}
+              >
+                <FileArchive aria-hidden />
+                Download for Windows (.zip)
+              </a>
+            </Button>
 
-            <a
-              href="https://github.com/sahgyan9/Oberleaf"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full sm:w-auto"
-            >
-              <Button variant="outline" size="lg" className="w-full py-6 text-base rounded-xl">
+            <Button asChild variant="outline" size="lg" className="h-12 w-full px-6 text-base sm:w-auto">
+              <a href="https://github.com/sahgyan9/Oberleaf" target="_blank" rel="noopener noreferrer">
                 View on GitHub
-              </Button>
-            </a>
+              </a>
+            </Button>
           </div>
 
           <p className="text-xs text-muted-foreground">
@@ -199,12 +194,12 @@ const OberleafLanding: React.FC = () => {
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-2 text-xs text-muted-foreground">
-            <span>Supports Windows 10 & 11 • Automatic package resolution via <code className="bg-muted px-1 py-0.5 rounded">winget</code></span>
+            <span>Windows 10 and 11 &middot; Dependencies installed with <code className="rounded bg-muted px-1 py-0.5">winget</code></span>
             {stats && stats.total_downloads > 0 && (
               <>
-                <span>•</span>
-                <span className="inline-flex items-center gap-1 font-semibold text-emerald-600 dark:text-emerald-400">
-                  <Download className="w-3.5 h-3.5" />
+                <span aria-hidden>&middot;</span>
+                <span className="tabular inline-flex items-center gap-1 font-medium text-foreground">
+                  <Download className="h-3.5 w-3.5" aria-hidden />
                   {stats.total_downloads} {stats.total_downloads === 1 ? "download" : "downloads"}
                 </span>
               </>
@@ -216,9 +211,10 @@ const OberleafLanding: React.FC = () => {
         <a
           href="#setup-guide"
           aria-label="Scroll to setup guide"
-          className="mt-auto pt-6 flex flex-col items-center gap-1 text-xs text-muted-foreground/60 hover:text-foreground transition-colors cursor-pointer"
+          className="mt-auto flex cursor-pointer flex-col items-center gap-1 pt-6 text-xs text-muted-foreground transition-colors hover:text-foreground"
         >
-          <ChevronDown className="w-4 h-4 animate-bounce" />
+          Setup guide
+          <ChevronDown className="h-4 w-4" aria-hidden />
         </a>
       </section>
 
@@ -226,67 +222,61 @@ const OberleafLanding: React.FC = () => {
       <section id="setup-guide" className="pb-16 pt-8 scroll-mt-20">
         <div className="container px-4 md:px-6 max-w-5xl mx-auto space-y-16">
           {/* Quick 3-Step Setup Guide */}
-          <div className="border border-border/80 rounded-2xl p-6 md:p-8 bg-card/60 backdrop-blur-xs shadow-sm">
-            <h2 className="text-2xl font-bold text-center mb-8 font-serif">
-              Simple 1-Click Installation
+          <div className="rounded-xl border border-border bg-card p-6 shadow-card md:p-8">
+            <h2 className="mb-8 font-serif text-2xl font-semibold">
+              Install in three steps
             </h2>
 
-            <div className="grid md:grid-cols-3 gap-6">
-              <div className="p-5 rounded-xl border border-border bg-background/50 space-y-3">
-                <div className="w-10 h-10 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-lg">
-                  1
-                </div>
-                <h3 className="font-semibold text-base">Download & Extract</h3>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  Grab <code className="text-emerald-600 dark:text-emerald-400">Oberleaf-Setup.zip</code> above, then right-click it and choose <strong>Extract All</strong>. Keep both files in the same folder.
+            <ol className="grid gap-6 md:grid-cols-3">
+              <li className="min-w-0 space-y-2 border-t-2 border-foreground pt-4">
+                <span className="tabular text-sm font-medium text-muted-foreground">01</span>
+                <h3 className="text-base font-semibold">Download and extract</h3>
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  Grab <code className="rounded bg-muted px-1 py-0.5 text-foreground">Oberleaf-Setup.zip</code> above, then right-click it and choose <strong>Extract All</strong>. Keep both files in the same folder.
                 </p>
-              </div>
+              </li>
 
-              <div className="p-5 rounded-xl border border-border bg-background/50 space-y-3">
-                <div className="w-10 h-10 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-lg">
-                  2
-                </div>
-                <h3 className="font-semibold text-base">Run the Setup</h3>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  Double-click <code className="text-emerald-600 dark:text-emerald-400">Oberleaf-Setup.bat</code>. The interactive wizard lets you customize your installation folder and shortcut preferences, and displays live progress as components configure.
+              <li className="min-w-0 space-y-2 border-t-2 border-foreground pt-4">
+                <span className="tabular text-sm font-medium text-muted-foreground">02</span>
+                <h3 className="text-base font-semibold">Run setup</h3>
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  Double-click <code className="rounded bg-muted px-1 py-0.5 text-foreground">Oberleaf-Setup.bat</code>. The interactive wizard lets you customize your installation folder and shortcut preferences, and displays live progress as components configure.
                 </p>
-              </div>
+              </li>
 
-              <div className="p-5 rounded-xl border border-border bg-background/50 space-y-3">
-                <div className="w-10 h-10 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-lg">
-                  3
-                </div>
-                <h3 className="font-semibold text-base">Write & Compile</h3>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  Oberleaf opens ready to write. Projects are kept safe in <code className="text-emerald-600 dark:text-emerald-400">Documents\Oberleaf Projects</code> with 1-click Explorer reveal, live daemon status, and clean uninstallation in Windows Settings.
+              <li className="min-w-0 space-y-2 border-t-2 border-foreground pt-4">
+                <span className="tabular text-sm font-medium text-muted-foreground">03</span>
+                <h3 className="text-base font-semibold">Write and compile</h3>
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  Oberleaf opens ready to write. Projects are kept safe in <code className="rounded bg-muted px-1 py-0.5 text-foreground">Documents\Oberleaf Projects</code> with 1-click Explorer reveal, live daemon status, and clean uninstallation in Windows Settings.
                 </p>
-              </div>
-            </div>
+              </li>
+            </ol>
           </div>
 
           {/* Already installed? The app self-updates from GitHub, but nothing on
               this page said so, and students who installed weeks ago had no way
               to know newer fixes existed or how to pull them in. */}
-          <div id="updating" className="border border-border/80 rounded-2xl p-6 md:p-8 bg-card/60 space-y-5 scroll-mt-20">
+          <div id="updating" className="scroll-mt-20 space-y-5 rounded-xl border border-border bg-card p-6 md:p-8">
             <div className="flex items-center gap-2">
-              <RefreshCw className="w-5 h-5 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
-              <h2 className="text-xl font-bold font-serif">Already installed? You are already covered.</h2>
+              <RefreshCw className="h-5 w-5 flex-shrink-0 text-muted-foreground" aria-hidden />
+              <h2 className="font-serif text-xl font-semibold">Already installed? Updates are automatic</h2>
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed">
               Oberleaf checks GitHub for a newer version a couple of seconds after it
               starts and offers the update in a dialog. Accepting it stashes anything
               you changed locally, pulls the latest code and reinstalls dependencies.
               Your work lives in{" "}
-              <code className="text-emerald-600 dark:text-emerald-400">Documents\Oberleaf Projects</code>{" "}
+              <code className="rounded bg-muted px-1 py-0.5 text-foreground">Documents\Oberleaf Projects</code>{" "}
               and is never touched by an update. Re-downloading the installer is only
               necessary if the app will not start at all.
             </p>
 
             <div className="space-y-3">
               <h3 className="text-sm font-semibold">Recently shipped</h3>
-              <ul className="space-y-2.5 text-xs text-muted-foreground leading-relaxed">
+              <ul className="space-y-2.5 text-sm leading-relaxed text-muted-foreground">
                 <li className="flex gap-2">
-                  <span className="text-emerald-600 dark:text-emerald-400 flex-shrink-0">&bull;</span>
+                  <span className="flex-shrink-0 text-muted-foreground" aria-hidden>&bull;</span>
                   <span>
                     <strong className="text-foreground">Errors that point at the right line.</strong>{" "}
                     TeX reports a fault where it finally gave up, not where you made the
@@ -297,7 +287,7 @@ const OberleafLanding: React.FC = () => {
                   </span>
                 </li>
                 <li className="flex gap-2">
-                  <span className="text-emerald-600 dark:text-emerald-400 flex-shrink-0">&bull;</span>
+                  <span className="flex-shrink-0 text-muted-foreground" aria-hidden>&bull;</span>
                   <span>
                     <strong className="text-foreground">Font maps checked on first run.</strong>{" "}
                     A fresh MiKTeX install can leave pdfTeX's font table unbuilt, which
@@ -307,7 +297,7 @@ const OberleafLanding: React.FC = () => {
                   </span>
                 </li>
                 <li className="flex gap-2">
-                  <span className="text-emerald-600 dark:text-emerald-400 flex-shrink-0">&bull;</span>
+                  <span className="flex-shrink-0 text-muted-foreground" aria-hidden>&bull;</span>
                   <span>
                     <strong className="text-foreground">No more phantom errors.</strong>{" "}
                     A previous run's log could survive into the next compile, so a mistake
@@ -316,7 +306,7 @@ const OberleafLanding: React.FC = () => {
                   </span>
                 </li>
                 <li className="flex gap-2">
-                  <span className="text-emerald-600 dark:text-emerald-400 flex-shrink-0">&bull;</span>
+                  <span className="flex-shrink-0 text-muted-foreground" aria-hidden>&bull;</span>
                   <span>
                     <strong className="text-foreground">Safer sharing and safer saves.</strong>{" "}
                     Invite links now carry a per-session token, so a shared workspace is
@@ -331,73 +321,61 @@ const OberleafLanding: React.FC = () => {
 
           {/* Feature Highlights Grid */}
           <div className="space-y-8">
-            <div className="text-center space-y-2">
-              <h2 className="text-2xl md:text-3xl font-bold font-serif">
-                Why SRM AP Scholars Choose Oberleaf
+            <div className="space-y-2">
+              <h2 className="font-serif text-2xl font-semibold md:text-3xl">
+                Why use Oberleaf
               </h2>
-              <p className="text-sm text-muted-foreground">
-                Eliminate the frustrations of cloud compile quotas and slow remote queues.
+              <p className="text-muted-foreground">
+                No cloud compile quotas and no remote queue.
               </p>
             </div>
 
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              <div className="p-6 rounded-xl border border-border bg-card space-y-3">
-                <div className="w-10 h-10 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center">
-                  <Clock className="w-5 h-5" />
-                </div>
-                <h3 className="font-semibold text-base">No Compute Timeouts</h3>
-                <p className="text-xs text-muted-foreground leading-relaxed">
+              <div className="space-y-3 rounded-xl border border-border bg-card p-6">
+                <Clock className="h-5 w-5 text-muted-foreground" aria-hidden />
+                <h3 className="text-base font-semibold">No compile timeouts</h3>
+                <p className="text-sm leading-relaxed text-muted-foreground">
                   Cloud Overleaf cuts you off after 60 seconds on free accounts. Oberleaf runs locally on your CPU with zero timeout limits.
                 </p>
               </div>
 
-              <div className="p-6 rounded-xl border border-border bg-card space-y-3">
-                <div className="w-10 h-10 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-                  <Zap className="w-5 h-5" />
-                </div>
-                <h3 className="font-semibold text-base">Instant Equation Preview</h3>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  KaTeX live math tooltip renders math equations immediately beneath your cursor with 0ms latency as you type.
+              <div className="space-y-3 rounded-xl border border-border bg-card p-6">
+                <Zap className="h-5 w-5 text-muted-foreground" aria-hidden />
+                <h3 className="text-base font-semibold">Instant equation preview</h3>
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  A KaTeX preview renders each equation beneath your cursor as you type.
                 </p>
               </div>
 
-              <div className="p-6 rounded-xl border border-border bg-card space-y-3">
-                <div className="w-10 h-10 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
-                  <Shield className="w-5 h-5" />
-                </div>
-                <h3 className="font-semibold text-base">100% Offline & Private</h3>
-                <p className="text-xs text-muted-foreground leading-relaxed">
+              <div className="space-y-3 rounded-xl border border-border bg-card p-6">
+                <Shield className="h-5 w-5 text-muted-foreground" aria-hidden />
+                <h3 className="text-base font-semibold">Offline and private</h3>
+                <p className="text-sm leading-relaxed text-muted-foreground">
                   Your research papers, patents, and sensitive data stay on your laptop. Write on flights, trains, or during hostel Wi-Fi downtime.
                 </p>
               </div>
 
-              <div className="p-6 rounded-xl border border-border bg-card space-y-3">
-                <div className="w-10 h-10 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center">
-                  <Cpu className="w-5 h-5" />
-                </div>
-                <h3 className="font-semibold text-base">Sub-Second Compilation</h3>
-                <p className="text-xs text-muted-foreground leading-relaxed">
+              <div className="space-y-3 rounded-xl border border-border bg-card p-6">
+                <Cpu className="h-5 w-5 text-muted-foreground" aria-hidden />
+                <h3 className="text-base font-semibold">Sub-second compilation</h3>
+                <p className="text-sm leading-relaxed text-muted-foreground">
                   Compiles standard 1–2 page papers in under 1 second using your machine's multi-core CPU and native SSD cache.
                 </p>
               </div>
 
-              <div className="p-6 rounded-xl border border-border bg-card space-y-3">
-                <div className="w-10 h-10 rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center">
-                  <Laptop className="w-5 h-5" />
-                </div>
-                <h3 className="font-semibold text-base">Desktop & Explorer Integration</h3>
-                <p className="text-xs text-muted-foreground leading-relaxed">
+              <div className="space-y-3 rounded-xl border border-border bg-card p-6">
+                <Laptop className="h-5 w-5 text-muted-foreground" aria-hidden />
+                <h3 className="text-base font-semibold">Desktop and Explorer integration</h3>
+                <p className="text-sm leading-relaxed text-muted-foreground">
                   1-click desktop and start menu shortcuts, live bottom status bar with daemon/compiler telemetry, and instant reveal in Windows File Explorer.
                 </p>
               </div>
 
-              <div className="p-6 rounded-xl border border-border bg-card space-y-3">
-                <div className="w-10 h-10 rounded-lg bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 flex items-center justify-center">
-                  <FileText className="w-5 h-5" />
-                </div>
-                <h3 className="font-semibold text-base">Overleaf Compatibility</h3>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  Import and export your Overleaf `.zip` projects seamlessly. Includes IEEE conference and thesis templates out of the box.
+              <div className="space-y-3 rounded-xl border border-border bg-card p-6">
+                <FileText className="h-5 w-5 text-muted-foreground" aria-hidden />
+                <h3 className="text-base font-semibold">Overleaf compatibility</h3>
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  Import and export your Overleaf .zip projects. Includes IEEE conference and thesis templates out of the box.
                 </p>
               </div>
             </div>
@@ -405,10 +383,10 @@ const OberleafLanding: React.FC = () => {
 
           {/* Troubleshooting — Windows blocks unsigned installers by default,
               and students hit this before they ever reach the app. */}
-          <div id="troubleshooting" className="border border-amber-500/30 rounded-2xl p-6 md:p-8 bg-amber-500/5 space-y-6 scroll-mt-20">
+          <div id="troubleshooting" className="scroll-mt-20 space-y-6 rounded-xl border border-amber-500/30 bg-amber-500/5 p-6 md:p-8">
             <div className="flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0" />
-              <h2 className="text-xl font-bold font-serif">Blocked by Windows or your antivirus?</h2>
+              <AlertTriangle className="h-5 w-5 flex-shrink-0 text-amber-600 dark:text-amber-400" aria-hidden />
+              <h2 className="font-serif text-xl font-semibold">Blocked by Windows or your antivirus?</h2>
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed">
               Oberleaf is free and open source, so it is not code-signed &mdash; a signing
@@ -428,26 +406,26 @@ const OberleafLanding: React.FC = () => {
             </p>
 
             <div className="space-y-4">
-              <div className="p-4 rounded-xl border border-border bg-background/60 space-y-1.5">
-                <h3 className="font-semibold text-sm">"Windows protected your PC" (blue box)</h3>
-                <p className="text-xs text-muted-foreground leading-relaxed">
+              <div className="space-y-1.5 rounded-lg border border-border bg-background p-4">
+                <h3 className="text-sm font-semibold">"Windows protected your PC" (blue box)</h3>
+                <p className="text-sm leading-relaxed text-muted-foreground">
                   Click <strong>More info</strong>, then <strong>Run anyway</strong>. This is
                   SmartScreen reacting to a new file, not a virus detection.
                 </p>
               </div>
 
-              <div className="p-4 rounded-xl border border-border bg-background/60 space-y-1.5">
-                <h3 className="font-semibold text-sm">The browser refuses to save the .bat file</h3>
-                <p className="text-xs text-muted-foreground leading-relaxed">
+              <div className="space-y-1.5 rounded-lg border border-border bg-background p-4">
+                <h3 className="text-sm font-semibold">The browser refuses to save the .bat file</h3>
+                <p className="text-sm leading-relaxed text-muted-foreground">
                   Chrome and Edge block <code>.bat</code> downloads by default. Use the{" "}
                   <strong>.zip</strong> button above instead &mdash; it contains the same two
                   files and downloads without complaint.
                 </p>
               </div>
 
-              <div className="p-4 rounded-xl border border-border bg-background/60 space-y-1.5">
-                <h3 className="font-semibold text-sm">Antivirus quarantined the file</h3>
-                <p className="text-xs text-muted-foreground leading-relaxed">
+              <div className="space-y-1.5 rounded-lg border border-border bg-background p-4">
+                <h3 className="text-sm font-semibold">Antivirus quarantined the file</h3>
+                <p className="text-sm leading-relaxed text-muted-foreground">
                   Some scanners flag any script that installs software. In Windows Security
                   open <strong>Protection history</strong>, find the Oberleaf entry and choose{" "}
                   <strong>Allow on device</strong>, then run setup again. If your college
@@ -456,9 +434,9 @@ const OberleafLanding: React.FC = () => {
                 </p>
               </div>
 
-              <div className="p-4 rounded-xl border border-border bg-background/60 space-y-1.5">
-                <h3 className="font-semibold text-sm">The window closed instantly</h3>
-                <p className="text-xs text-muted-foreground leading-relaxed">
+              <div className="space-y-1.5 rounded-lg border border-border bg-background p-4">
+                <h3 className="text-sm font-semibold">The window closed instantly</h3>
+                <p className="text-sm leading-relaxed text-muted-foreground">
                   Fixed &mdash; the setup window now stays open until you close it and prints
                   the reason for any failure. If you are still seeing this, you are running an
                   old copy: download it again from the button above. Every run also writes a
@@ -467,9 +445,9 @@ const OberleafLanding: React.FC = () => {
                 </p>
               </div>
 
-              <div className="p-4 rounded-xl border border-border bg-background/60 space-y-1.5">
-                <h3 className="font-semibold text-sm">Installs fail with a permissions error</h3>
-                <p className="text-xs text-muted-foreground leading-relaxed">
+              <div className="space-y-1.5 rounded-lg border border-border bg-background p-4">
+                <h3 className="text-sm font-semibold">Installs fail with a permissions error</h3>
+                <p className="text-sm leading-relaxed text-muted-foreground">
                   Right-click <code>Oberleaf-Setup.bat</code> and choose{" "}
                   <strong>Run as administrator</strong>. Without it, Git, Node.js and MiKTeX
                   are installed for your user account only, which some managed machines
@@ -480,23 +458,24 @@ const OberleafLanding: React.FC = () => {
           </div>
 
           {/* Alternative: PowerShell Command for Advanced Users */}
-          <div className="border border-border rounded-xl p-6 bg-muted/40 space-y-3">
-            <div className="flex items-center space-x-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              <Terminal className="w-4 h-4" />
-              <span>Alternative: Run in PowerShell</span>
-            </div>
-            <div className="flex items-center justify-between gap-3 p-3 rounded-lg bg-stone-900 text-stone-100 font-mono text-xs">
+          <div className="space-y-3 rounded-xl border border-border bg-card p-6">
+            <h2 className="flex items-center gap-2 text-sm font-semibold text-foreground">
+              <Terminal className="h-4 w-4 text-muted-foreground" aria-hidden />
+              Or install from PowerShell
+            </h2>
+            <div className="flex min-w-0 items-center justify-between gap-3 rounded-lg bg-stone-900 p-3 font-mono text-xs text-stone-100">
               {/* `truncate` here beat the container's horizontal scroll, so the
                   command was permanently cut off and unreadable. */}
-              <span className="overflow-x-auto whitespace-nowrap py-1">{oneLinerCommand}</span>
+              <span className="min-w-0 overflow-x-auto whitespace-nowrap py-1">{oneLinerCommand}</span>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={handleCopy}
-                className="text-stone-300 hover:text-white hover:bg-stone-800 flex-shrink-0 h-8 px-2"
+                className="h-8 flex-shrink-0 px-2 font-sans text-xs text-stone-300 hover:bg-stone-800 hover:text-white"
+                aria-live="polite"
               >
-                {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
-                <span className="ml-1.5 text-[11px]">{copied ? 'Copied' : 'Copy'}</span>
+                {copied ? <Check className="text-green-400" aria-hidden /> : <Copy aria-hidden />}
+                {copied ? 'Copied' : 'Copy'}
               </Button>
             </div>
             {copyFailed && (

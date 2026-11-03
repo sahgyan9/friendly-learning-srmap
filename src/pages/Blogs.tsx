@@ -1,34 +1,32 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
-import {
-  BookOpen,
-  Clock,
-  Eye,
-  FileText,
-  PenLine,
-  Pencil,
-  Search,
-  Sparkles,
-  Trash2,
-} from "lucide-react";
+import { Eye, FileText, PenLine, Pencil, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { PRIMARY_DOMAIN } from "@/lib/constants";
 import SEOHead from "@/components/SEOHead";
 import Footer from "@/components/Footer";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { CardAccentBorder } from "@/components/ui/CardAccentBorder";
 import { HorizontalScroller } from "@/components/ui/HorizontalScroller";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useAuth } from "@/context/AuthContext";
 import { useBlogPosts, useMyBlogPosts } from "@/hooks/useBlogPosts";
 import { getInitials } from "@/utils/user-utils";
-import { deleteBlogPost } from "@/integrations/supabase/services/blog-posts";
+import { cn } from "@/lib/utils";
+import { coverImageOf } from "@/components/blog/article-prose";
+import { deleteBlogPost, type BlogPostSummary } from "@/integrations/supabase/services/blog-posts";
 
 const BLOG_CATEGORIES = [
   "All",
@@ -40,6 +38,8 @@ const BLOG_CATEGORIES = [
   "Projects",
   "Research",
 ];
+
+const LOCAL_DRAFT_KEY = "fl_blog_draft_new";
 
 const formatDate = (iso: string | null) =>
   iso ? new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "";
@@ -54,17 +54,125 @@ interface LocalDraftInfo {
   dbDraftId?: string;
 }
 
+/** Stagger only the first few rows; later ones appear with the batch. */
+const stagger = (index: number) =>
+  index < 6 ? { className: "animate-fade-up", style: { animationDelay: `${index * 35}ms`, animationFillMode: "both" as const } } : {};
+
+/**
+ * Stands in for a missing cover: the title's first letter set large on a
+ * neutral surface, so a post without a photo still has a recognisable mark.
+ */
+const CoverFallback = ({ title, className }: { title: string; className?: string }) => (
+  <div aria-hidden className={cn("flex items-center justify-center bg-muted", className)}>
+    <span className="select-none font-semibold leading-none tracking-tight text-muted-foreground/40">
+      {(title.trim().charAt(0) || "·").toUpperCase()}
+    </span>
+  </div>
+);
+
+const Byline = ({ post }: { post: BlogPostSummary }) => (
+  <div className="flex min-w-0 items-center gap-2 text-sm text-muted-foreground">
+    <Avatar className="h-6 w-6 shrink-0">
+      <AvatarImage src={post.author_image ?? undefined} alt="" />
+      <AvatarFallback className="text-3xs">{getInitials(post.author_name ?? "Student")}</AvatarFallback>
+    </Avatar>
+    <span className="truncate font-medium text-foreground">{post.author_name ?? "Student"}</span>
+    {post.published_at && (
+      <>
+        <span aria-hidden>·</span>
+        <time dateTime={post.published_at} className="shrink-0 tabular">
+          {formatDate(post.published_at)}
+        </time>
+      </>
+    )}
+    {post.view_count > 0 && (
+      <span className="hidden shrink-0 items-center gap-1 tabular sm:flex">
+        <span aria-hidden>·</span>
+        <Eye className="h-3.5 w-3.5" aria-hidden />
+        {post.view_count.toLocaleString("en-IN")}
+        <span className="sr-only">views</span>
+      </span>
+    )}
+  </div>
+);
+
+const FeaturedPost = ({ post }: { post: BlogPostSummary }) => {
+  const cover = coverImageOf(post.cover_image_url);
+  return (
+    <Link
+      to={`/blogs/${post.slug}`}
+      className="group grid min-w-0 gap-6 rounded-xl md:grid-cols-[1.15fr_1fr] md:items-center md:gap-10 animate-fade-up"
+    >
+      <div className="overflow-hidden rounded-lg border border-border">
+        {cover ? (
+          <img src={cover} alt="" className="aspect-[16/10] w-full object-cover" />
+        ) : (
+          <CoverFallback title={post.title} className="aspect-[16/10] w-full text-8xl" />
+        )}
+      </div>
+      <div className="flex min-w-0 flex-col gap-3">
+        <p className="text-sm font-medium text-muted-foreground">
+          Latest{post.tags[0] ? <> · <span className="text-primary">{post.tags[0]}</span></> : null}
+        </p>
+        <h2 className="text-2xl font-semibold leading-tight tracking-tight text-foreground underline-offset-4 decoration-foreground/30 group-hover:underline md:text-3xl">
+          {post.title}
+        </h2>
+        {post.excerpt && <p className="line-clamp-3 leading-relaxed text-muted-foreground">{post.excerpt}</p>}
+        <div className="mt-1">
+          <Byline post={post} />
+        </div>
+      </div>
+    </Link>
+  );
+};
+
+const PostRow = ({ post, index }: { post: BlogPostSummary; index: number }) => {
+  const cover = coverImageOf(post.cover_image_url);
+  const motion = stagger(index);
+  return (
+    <li className={motion.className} style={motion.style}>
+      <Link
+        to={`/blogs/${post.slug}`}
+        className="group -mx-3 flex min-w-0 items-start gap-4 rounded-lg px-3 py-6 transition-colors duration-150 hover:bg-accent/60 sm:gap-6"
+      >
+        <div className="flex min-w-0 flex-1 flex-col gap-2">
+          {post.tags.length > 0 && (
+            <p className="truncate text-xs font-medium text-muted-foreground">{post.tags.slice(0, 3).join(" · ")}</p>
+          )}
+          <h3 className="text-lg font-semibold leading-snug tracking-tight text-foreground underline-offset-4 decoration-foreground/30 group-hover:underline sm:text-xl">
+            {post.title}
+          </h3>
+          {post.excerpt && (
+            <p className="line-clamp-2 text-sm leading-relaxed text-muted-foreground">{post.excerpt}</p>
+          )}
+          <div className="mt-1">
+            <Byline post={post} />
+          </div>
+        </div>
+        <div className="h-20 w-20 shrink-0 overflow-hidden rounded-md border border-border sm:h-28 sm:w-36">
+          {cover ? (
+            <img src={cover} alt="" loading="lazy" className="h-full w-full object-cover" />
+          ) : (
+            <CoverFallback title={post.title} className="h-full w-full text-4xl" />
+          )}
+        </div>
+      </Link>
+    </li>
+  );
+};
+
 const Blogs = () => {
   const { user } = useAuth();
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [activeTab, setActiveTab] = useState<"community" | "my_stories">("community");
   const [localDraft, setLocalDraft] = useState<LocalDraftInfo | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<{ id: string; title: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
-  // Check local draft in browser
   useEffect(() => {
     try {
-      const raw = localStorage.getItem("fl_blog_draft_new");
+      const raw = localStorage.getItem(LOCAL_DRAFT_KEY);
       if (raw) {
         const parsed = JSON.parse(raw);
         if (parsed.title?.trim() || parsed.contentHtml?.trim()) {
@@ -72,7 +180,7 @@ const Blogs = () => {
         }
       }
     } catch {
-      // ignore
+      // A corrupt or blocked localStorage entry just means no draft banner.
     }
   }, []);
 
@@ -86,29 +194,44 @@ const Blogs = () => {
   const { posts: myPosts, loading: myPostsLoading, refetch: refetchMyPosts } = useMyBlogPosts();
 
   const handleDiscardLocalDraft = () => {
-    localStorage.removeItem("fl_blog_draft_new");
+    const raw = localStorage.getItem(LOCAL_DRAFT_KEY);
+    const discarded = localDraft;
+    localStorage.removeItem(LOCAL_DRAFT_KEY);
     setLocalDraft(null);
-    toast.success("Local draft discarded");
+    // Cheap to undo, so offer that instead of a confirmation step.
+    toast("Browser draft discarded", {
+      action: raw
+        ? {
+            label: "Undo",
+            onClick: () => {
+              localStorage.setItem(LOCAL_DRAFT_KEY, raw);
+              setLocalDraft(discarded);
+            },
+          }
+        : undefined,
+    });
   };
 
-  const handleDeletePost = async (id: string, e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleDeletePost = async () => {
+    if (!pendingDelete) return;
+    setDeleting(true);
     try {
-      await deleteBlogPost(id);
+      await deleteBlogPost(pendingDelete.id);
       toast.success("Post deleted");
       refetchMyPosts();
     } catch {
-      toast.error("Failed to delete post");
+      toast.error("Couldn't delete the post. Try again.");
+    } finally {
+      setDeleting(false);
+      setPendingDelete(null);
     }
   };
 
-  const myDrafts = myPosts.filter((p) => !p.is_published);
-  const myPublished = myPosts.filter((p) => p.is_published);
-
-  // Determine active draft banner to highlight
   const hasActiveLocalDraft = Boolean(localDraft && (localDraft.title?.trim() || localDraft.contentHtml?.trim()));
-  const latestDbDraft = myDrafts[0];
+  const latestDbDraft = myPosts.find((p) => !p.is_published);
+  const isFiltered = Boolean(search.trim()) || selectedCategory !== "All";
+  const [featured, ...rest] = posts;
+  const listPosts = isFiltered ? posts : rest;
 
   return (
     <>
@@ -118,253 +241,222 @@ const Blogs = () => {
         canonical={`${PRIMARY_DOMAIN}/blogs`}
       />
 
-      <div className="min-h-screen flex flex-col bg-background">
-        {/* Standard Brand Hero Header */}
-        <div className="relative overflow-hidden border-b border-border/60 bg-gradient-to-br from-emerald-500/5 via-background to-background">
-          <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-emerald-500/8 blur-3xl" />
-          <div className="pointer-events-none absolute -left-16 bottom-0 h-48 w-48 rounded-full bg-primary/5 blur-2xl" />
-
-          <div className="container mx-auto px-4 pb-6 pt-20 sm:pt-24">
-            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
-              {/* Pill label */}
-              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">
-                <PenLine className="h-3.5 w-3.5" />
-                Community Blog
+      <div className="flex min-h-screen flex-col bg-background">
+        <header className="border-b border-border">
+          <div className="container mx-auto max-w-5xl px-4 pt-24 sm:pt-28">
+            <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+              <div className="min-w-0">
+                <h1 className="text-3xl font-semibold tracking-tight text-foreground md:text-4xl">Community Blog</h1>
+                <p className="mt-2 max-w-2xl text-muted-foreground">
+                  Writing by SRM AP students and mentors: hackathon recaps, project write-ups, course notes and campus life.
+                </p>
               </div>
-
-              <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-                <div>
-                  <h1 className="text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl text-foreground">
-                    Stories & Insights from Campus
-                  </h1>
-                  <p className="mt-2 max-w-2xl text-base text-muted-foreground">
-                    Written by SRM AP students and mentors. Share hackathon recaps, project walkthroughs, exam strategies, and honest campus experiences.
-                  </p>
-                </div>
-
-                <div className="shrink-0 flex items-center gap-3">
-                  <Button asChild size="lg" className="shadow-md font-semibold gap-2">
-                    <Link to="/blogs/write">
-                      <PenLine className="h-4 w-4" />
-                      {user ? "Write a Story" : "Sign in to Write"}
-                    </Link>
-                  </Button>
-                </div>
-              </div>
-
-              {/* Segmented Tab Bar for signed-in authors */}
-              {user && (
-                <div className="mt-8 flex items-center gap-2 border-b border-border/60 pb-px">
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab("community")}
-                    className={`flex items-center gap-2 pb-3 px-1 text-sm font-medium border-b-2 transition-colors cursor-pointer ${
-                      activeTab === "community"
-                        ? "border-primary text-primary font-semibold"
-                        : "border-transparent text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    <BookOpen className="h-4 w-4" />
-                    <span>Community Stories</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab("my_stories")}
-                    className={`flex items-center gap-2 pb-3 px-1 text-sm font-medium border-b-2 transition-colors cursor-pointer ${
-                      activeTab === "my_stories"
-                        ? "border-primary text-primary font-semibold"
-                        : "border-transparent text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    <FileText className="h-4 w-4" />
-                    <span>My Stories & Drafts</span>
-                    {myPosts.length > 0 && (
-                      <span className="ml-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary font-bold">
-                        {myPosts.length}
-                      </span>
-                    )}
-                  </button>
-                </div>
-              )}
-            </motion.div>
-          </div>
-        </div>
-
-        {/* Main Content Area */}
-        <div className="flex-1 container mx-auto px-4 py-8">
-          {/* Active In-Progress Draft Banner (Appears if user has a draft) */}
-          {(hasActiveLocalDraft || latestDbDraft) && (
-            <div className="mb-8 rounded-2xl border border-primary/30 bg-gradient-to-r from-primary/10 via-emerald-500/5 to-transparent p-4 sm:p-5 shadow-sm">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="flex items-start sm:items-center gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/20 text-primary">
-                    <Pencil className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-xs font-semibold uppercase tracking-wider text-primary">
-                        {hasActiveLocalDraft ? "Draft in Progress (Cloud & Browser)" : "Saved Cloud Draft"}
-                      </span>
-                      <span className="text-xs text-muted-foreground">· Auto-saved</span>
-                    </div>
-                    <h3 className="text-base font-bold text-foreground line-clamp-1 mt-0.5">
-                      {localDraft?.title?.trim() || latestDbDraft?.title || "Untitled story"}
-                    </h3>
-                    <p className="text-xs text-muted-foreground line-clamp-1">
-                      {localDraft?.excerpt || latestDbDraft?.excerpt || "Continue from where you left off..."}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
-                  {hasActiveLocalDraft && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 text-xs text-muted-foreground hover:text-destructive"
-                      onClick={handleDiscardLocalDraft}
-                    >
-                      Discard
-                    </Button>
-                  )}
-                  <Button asChild size="sm" className="h-8 text-xs font-semibold gap-1.5 shadow-sm">
-                    <Link to={latestDbDraft && !hasActiveLocalDraft ? `/blogs/${latestDbDraft.slug}/edit` : "/blogs/write"}>
-                      <Pencil className="h-3.5 w-3.5" />
-                      Resume Writing
-                    </Link>
-                  </Button>
-                </div>
-              </div>
+              <Button asChild className="shrink-0 gap-2 self-start md:self-auto">
+                <Link to="/blogs/write">
+                  <PenLine className="h-4 w-4" />
+                  {user ? "Write a post" : "Sign in to write"}
+                </Link>
+              </Button>
             </div>
-          )}
 
-          {activeTab === "my_stories" ? (
-            /* My Stories & Drafts Management Tab */
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-xl font-bold text-foreground">Your Stories & Drafts</h2>
-                  <p className="text-xs text-muted-foreground">
-                    Manage your published posts and resume in-progress drafts.
-                  </p>
+            {user ? (
+              <div role="tablist" aria-label="Blog views" className="mt-8 flex items-center gap-6">
+                {(
+                  [
+                    { id: "community", label: "All posts" },
+                    { id: "my_stories", label: "Your posts" },
+                  ] as const
+                ).map((tab) => {
+                  const active = activeTab === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      role="tab"
+                      aria-selected={active}
+                      onClick={() => setActiveTab(tab.id)}
+                      className={cn(
+                        "-mb-px flex h-11 cursor-pointer items-center gap-2 border-b-2 text-sm font-medium transition-colors duration-150",
+                        active
+                          ? "border-foreground text-foreground"
+                          : "border-transparent text-muted-foreground hover:text-foreground",
+                      )}
+                    >
+                      {tab.label}
+                      {tab.id === "my_stories" && myPosts.length > 0 && (
+                        <span className="rounded bg-secondary px-1.5 py-0.5 text-xs text-secondary-foreground tabular">
+                          {myPosts.length}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="h-8" />
+            )}
+          </div>
+        </header>
+
+        <main className="container mx-auto max-w-5xl flex-1 px-4 py-8">
+          {(hasActiveLocalDraft || latestDbDraft) && (
+            <section
+              aria-label="Unfinished draft"
+              className="mb-10 flex flex-col gap-4 rounded-lg border border-border bg-card p-4 shadow-card sm:flex-row sm:items-center sm:justify-between sm:p-5"
+            >
+              <div className="flex min-w-0 items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+                  <Pencil className="h-4 w-4" />
                 </div>
-                <Button asChild size="sm">
-                  <Link to="/blogs/write">
-                    <PenLine className="h-3.5 w-3.5 mr-1.5" />
-                    New Post
+                <div className="min-w-0">
+                  <p className="text-xs text-muted-foreground">
+                    {hasActiveLocalDraft ? "Unfinished draft" : "Saved draft"}
+                    {localDraft?.updatedAt && hasActiveLocalDraft && (
+                      <span className="tabular"> · edited {formatDate(new Date(localDraft.updatedAt).toISOString())}</span>
+                    )}
+                  </p>
+                  <h2 className="mt-0.5 truncate font-semibold text-foreground">
+                    {localDraft?.title?.trim() || latestDbDraft?.title || "Untitled"}
+                  </h2>
+                  {(localDraft?.excerpt || latestDbDraft?.excerpt) && (
+                    <p className="truncate text-sm text-muted-foreground">
+                      {localDraft?.excerpt || latestDbDraft?.excerpt}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex shrink-0 items-center gap-2 self-end sm:self-center">
+                {hasActiveLocalDraft && (
+                  <Button type="button" variant="ghost" size="sm" className="h-9" onClick={handleDiscardLocalDraft}>
+                    Discard
+                  </Button>
+                )}
+                <Button asChild size="sm" className="h-9">
+                  <Link to={latestDbDraft && !hasActiveLocalDraft ? `/blogs/${latestDbDraft.slug}/edit` : "/blogs/write"}>
+                    Continue writing
                   </Link>
                 </Button>
               </div>
+            </section>
+          )}
+
+          {activeTab === "my_stories" ? (
+            <section aria-labelledby="your-posts-heading" className="flex flex-col gap-4">
+              <div className="flex items-end justify-between gap-4">
+                <div>
+                  <h2 id="your-posts-heading" className="text-xl font-semibold tracking-tight text-foreground">
+                    Your posts
+                  </h2>
+                  <p className="text-sm text-muted-foreground">Published posts and drafts. Drafts are visible only to you.</p>
+                </div>
+              </div>
 
               {myPostsLoading ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <ul className="divide-y divide-border border-y border-border">
                   {[0, 1, 2].map((i) => (
-                    <Card key={i} className="p-4">
-                      <Skeleton className="h-6 w-3/4 mb-2" />
-                      <Skeleton className="h-4 w-1/2" />
-                    </Card>
+                    <li key={i} className="flex items-center gap-4 py-4">
+                      <div className="flex flex-1 flex-col gap-2">
+                        <Skeleton className="h-5 w-2/3" />
+                        <Skeleton className="h-4 w-40" />
+                      </div>
+                      <Skeleton className="h-9 w-20" />
+                    </li>
                   ))}
-                </div>
+                </ul>
               ) : myPosts.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-border bg-muted/20 p-10 text-center">
-                  <FileText className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
-                  <h3 className="text-base font-bold text-foreground">No stories written yet</h3>
-                  <p className="text-xs text-muted-foreground mt-1 mb-4">
-                    Share your hackathon recap, project walkthrough, or campus thoughts with fellow students.
+                <div className="flex flex-col items-center rounded-lg border border-dashed border-border px-6 py-12 text-center">
+                  <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-md bg-muted text-muted-foreground">
+                    <FileText className="h-5 w-5" />
+                  </div>
+                  <h3 className="font-semibold text-foreground">You haven't written anything yet</h3>
+                  <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+                    A hackathon recap, a project walkthrough or a note on a course you've taken is a good first post.
                   </p>
-                  <Button asChild size="sm">
-                    <Link to="/blogs/write">Write Your First Story</Link>
+                  <Button asChild size="sm" className="mt-5">
+                    <Link to="/blogs/write">Write a post</Link>
                   </Button>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {myPosts.map((post) => (
-                    <Card
-                      key={post.id}
-                      className="p-5 flex flex-col justify-between rounded-2xl border border-border/80 bg-card hover:border-primary/40 transition-all shadow-xs"
-                    >
-                      <div>
-                        <div className="flex items-center justify-between gap-2 mb-2">
-                          <Badge
-                            variant={post.is_published ? "default" : "secondary"}
-                            className={
-                              post.is_published
-                                ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30"
-                                : "bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30"
-                            }
+                <ul className="divide-y divide-border border-y border-border">
+                  {myPosts.map((post, index) => {
+                    const motion = stagger(index);
+                    return (
+                      <li
+                        key={post.id}
+                        className={cn("flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between", motion.className)}
+                        style={motion.style}
+                      >
+                        <div className="min-w-0">
+                          <Link
+                            to={post.is_published ? `/blogs/${post.slug}` : `/blogs/${post.slug}/edit`}
+                            className="line-clamp-2 font-semibold text-foreground underline-offset-4 hover:underline"
                           >
-                            {post.is_published ? "Published" : "Draft"}
-                          </Badge>
-                          <span className="text-[11px] text-muted-foreground">
-                            {formatDate(post.updated_at || post.created_at)}
-                          </span>
-                        </div>
-
-                        <h3 className="text-base font-bold text-foreground line-clamp-2 hover:text-primary transition-colors">
-                          <Link to={post.is_published ? `/blogs/${post.slug}` : `/blogs/${post.slug}/edit`}>
                             {post.title}
                           </Link>
-                        </h3>
-
-                        {post.excerpt && (
-                          <p className="mt-1 text-xs text-muted-foreground line-clamp-2 leading-relaxed">
-                            {post.excerpt}
-                          </p>
-                        )}
-                      </div>
-
-                      <div className="mt-4 pt-3 flex items-center justify-between border-t border-border/60 text-xs">
-                        <div className="flex items-center gap-3 text-muted-foreground">
-                          {post.is_published && (
-                            <span className="flex items-center gap-1">
-                              <Eye className="h-3.5 w-3.5" />
-                              {post.view_count} views
+                          <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
+                            <span
+                              className={cn(
+                                "rounded px-1.5 py-0.5 text-xs font-medium",
+                                post.is_published
+                                  ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+                                  : "bg-amber-500/10 text-amber-700 dark:text-amber-400",
+                              )}
+                            >
+                              {post.is_published ? "Published" : "Draft"}
                             </span>
-                          )}
+                            <span className="tabular">
+                              {post.is_published ? "" : "Edited "}
+                              {formatDate(post.is_published ? post.published_at || post.created_at : post.updated_at || post.created_at)}
+                            </span>
+                            {post.is_published && (
+                              <span className="flex items-center gap-1 tabular">
+                                <span aria-hidden>·</span>
+                                {post.view_count.toLocaleString("en-IN")} {post.view_count === 1 ? "view" : "views"}
+                              </span>
+                            )}
+                          </div>
                         </div>
 
-                        <div className="flex items-center gap-2">
-                          <Button asChild size="sm" variant="outline" className="h-7 text-xs">
+                        <div className="flex shrink-0 items-center gap-1">
+                          <Button asChild size="sm" variant="outline" className="h-9 gap-1.5">
                             <Link to={`/blogs/${post.slug}/edit`}>
-                              <Pencil className="h-3 w-3 mr-1" />
+                              <Pencil className="h-3.5 w-3.5" />
                               Edit
                             </Link>
                           </Button>
                           <Button
-                            size="sm"
+                            size="icon"
                             variant="ghost"
-                            className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
-                            onClick={(e) => handleDeletePost(post.id, e)}
-                            title="Delete"
+                            className="h-9 w-9 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                            onClick={() => setPendingDelete({ id: post.id, title: post.title })}
+                            aria-label={`Delete "${post.title}"`}
                           >
-                            <Trash2 className="h-3.5 w-3.5" />
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
-                      </div>
-                    </Card>
-                  ))}
-                </div>
+                      </li>
+                    );
+                  })}
+                </ul>
               )}
-            </div>
+            </section>
           ) : (
-            /* Community Feed View */
             <>
-              {/* Search and Category Filter Strip */}
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 mb-8">
-                {/* Search Input */}
-                <div className="relative w-full sm:w-80 shrink-0">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <div className="mb-10 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div className="relative w-full md:w-72 md:shrink-0">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
                   <Input
+                    type="search"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Search stories, topics, authors..."
-                    className="pl-9 h-10 bg-background/80"
+                    placeholder="Search posts"
+                    aria-label="Search posts"
+                    className="h-10 pl-9"
                   />
                 </div>
 
-                {/* Category Filter Pills */}
-                <HorizontalScroller ariaLabel="Community blog categories" className="pb-1">
+                <HorizontalScroller ariaLabel="Filter by topic" className="min-w-0">
                   <div className="flex items-center gap-1.5">
                     {BLOG_CATEGORIES.map((cat) => {
                       const active = selectedCategory === cat;
@@ -372,12 +464,14 @@ const Blogs = () => {
                         <button
                           key={cat}
                           type="button"
+                          aria-pressed={active}
                           onClick={() => setSelectedCategory(cat)}
-                          className={`text-xs px-3.5 py-1.5 rounded-full font-medium transition-all whitespace-nowrap cursor-pointer ${
+                          className={cn(
+                            "h-9 cursor-pointer whitespace-nowrap rounded-md border px-3 text-sm font-medium transition-colors duration-150",
                             active
-                              ? "bg-primary text-primary-foreground shadow-xs font-semibold"
-                              : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground border border-border/40"
-                          }`}
+                              ? "border-primary bg-primary text-primary-foreground"
+                              : "border-border bg-background text-muted-foreground hover:border-foreground/20 hover:text-foreground",
+                          )}
                         >
                           {cat}
                         </button>
@@ -387,143 +481,114 @@ const Blogs = () => {
                 </HorizontalScroller>
               </div>
 
-              {/* Posts Grid */}
               {loading ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {[0, 1, 2, 3, 4, 5].map((i) => (
-                    <Card key={i} className="p-5 overflow-hidden">
-                      <Skeleton className="h-40 w-full mb-4 rounded-lg" />
-                      <Skeleton className="h-4 w-24 mb-3" />
-                      <Skeleton className="h-6 w-4/5 mb-2" />
-                      <Skeleton className="h-4 w-full mb-4" />
-                      <div className="flex items-center gap-2 pt-2 border-t">
-                        <Skeleton className="h-6 w-6 rounded-full" />
+                <div className="flex flex-col gap-10" aria-busy="true" aria-label="Loading posts">
+                  {!isFiltered && (
+                    <div className="grid gap-6 md:grid-cols-[1.15fr_1fr] md:items-center md:gap-10">
+                      <Skeleton className="aspect-[16/10] w-full rounded-lg" />
+                      <div className="flex flex-col gap-3">
                         <Skeleton className="h-4 w-28" />
+                        <Skeleton className="h-8 w-full" />
+                        <Skeleton className="h-8 w-3/4" />
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-5 w-48" />
                       </div>
-                    </Card>
-                  ))}
+                    </div>
+                  )}
+                  <ul className="divide-y divide-border">
+                    {[0, 1, 2, 3].map((i) => (
+                      <li key={i} className="flex gap-6 py-6">
+                        <div className="flex flex-1 flex-col gap-2">
+                          <Skeleton className="h-3 w-24" />
+                          <Skeleton className="h-6 w-4/5" />
+                          <Skeleton className="h-4 w-full" />
+                          <Skeleton className="h-5 w-44" />
+                        </div>
+                        <Skeleton className="h-20 w-20 rounded-md sm:h-28 sm:w-36" />
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               ) : posts.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-border bg-muted/20 p-12 text-center max-w-lg mx-auto my-8">
-                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary mb-4">
-                    <BookOpen className="h-6 w-6" />
+                <div className="mx-auto flex max-w-md flex-col items-center py-16 text-center">
+                  <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-md bg-muted text-muted-foreground">
+                    {isFiltered ? <Search className="h-5 w-5" /> : <FileText className="h-5 w-5" />}
                   </div>
-                  <h3 className="text-lg font-bold text-foreground mb-1">
-                    {search || selectedCategory !== "All" ? "No stories found" : "No stories published yet"}
-                  </h3>
-                  <p className="text-sm text-muted-foreground mb-6">
-                    {search || selectedCategory !== "All"
-                      ? "Try adjusting your search terms or filter category."
-                      : "Be the first SRM AP student or mentor to share your thoughts with the community."}
+                  <h2 className="font-semibold text-foreground">
+                    {isFiltered ? "No posts match" : "No posts yet"}
+                  </h2>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {isFiltered
+                      ? "Try a different search or topic."
+                      : "Nobody has published here yet. Your post would be the first."}
                   </p>
-                  <Button asChild>
-                    <Link to="/blogs/write">
-                      <PenLine className="mr-2 h-4 w-4" />
-                      Write the First Story
-                    </Link>
-                  </Button>
+                  {isFiltered ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mt-5"
+                      onClick={() => {
+                        setSearch("");
+                        setSelectedCategory("All");
+                      }}
+                    >
+                      Clear filters
+                    </Button>
+                  ) : (
+                    <Button asChild size="sm" className="mt-5">
+                      <Link to="/blogs/write">Write a post</Link>
+                    </Button>
+                  )}
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {posts.map((post) => {
-                    const isGradient = post.cover_image_url?.startsWith("gradient:") ?? false;
-                    const gradientStyle = isGradient ? post.cover_image_url?.replace("gradient:", "") : null;
-
-                    return (
-                      <Card
-                        key={post.id}
-                        className="group relative flex flex-col overflow-hidden rounded-2xl border border-border/80 bg-card transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-primary/40"
-                      >
-                        {/* Top Accent Gradient Line */}
-                        <CardAccentBorder gradient="emerald" />
-
-                        {/* Card Hover Glow Overlay */}
-                        <div className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-primary/4 to-transparent" />
-
-                        <Link to={`/blogs/${post.slug}`} className="flex flex-col h-full">
-                          {/* Cover Banner */}
-                          {post.cover_image_url && (
-                            <div className="relative h-44 w-full overflow-hidden bg-muted">
-                              {isGradient ? (
-                                <div className="h-full w-full" style={{ background: gradientStyle || "" }} />
-                              ) : (
-                                <img
-                                  src={post.cover_image_url}
-                                  alt=""
-                                  loading="lazy"
-                                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                                />
-                              )}
-                            </div>
-                          )}
-
-                          {/* Content Details */}
-                          <div className="flex-1 p-5 flex flex-col">
-                            {/* Tags */}
-                            {post.tags.length > 0 && (
-                              <div className="mb-2.5 flex flex-wrap gap-1.5">
-                                {post.tags.slice(0, 3).map((tag) => (
-                                  <Badge
-                                    key={tag}
-                                    variant="secondary"
-                                    className="text-[11px] font-normal bg-secondary/80 text-foreground/80 hover:bg-secondary"
-                                  >
-                                    {tag}
-                                  </Badge>
-                                ))}
-                              </div>
-                            )}
-
-                            {/* Title */}
-                            <h2 className="mb-2 text-lg font-bold leading-snug tracking-tight text-foreground transition-colors group-hover:text-primary line-clamp-2">
-                              {post.title}
-                            </h2>
-
-                            {/* Excerpt */}
-                            {post.excerpt && (
-                              <p className="mb-4 line-clamp-2 text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                                {post.excerpt}
-                              </p>
-                            )}
-
-                            {/* Footer Meta */}
-                            <div className="mt-auto pt-3 flex items-center justify-between border-t border-border/60 text-xs text-muted-foreground">
-                              <div className="flex items-center gap-2">
-                                <Avatar className="h-6 w-6">
-                                  <AvatarImage src={post.author_image ?? undefined} alt="" />
-                                  <AvatarFallback className="text-[10px]">
-                                    {getInitials(post.author_name ?? "Student")}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <span className="font-medium text-foreground truncate max-w-[110px]">
-                                  {post.author_name ?? "Student"}
-                                </span>
-                              </div>
-
-                              <div className="flex items-center gap-2">
-                                <time dateTime={post.published_at ?? undefined}>{formatDate(post.published_at)}</time>
-                                {post.view_count > 0 && (
-                                  <span className="flex items-center gap-1">
-                                    <span>·</span>
-                                    <Eye className="h-3 w-3" />
-                                    {post.view_count}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        </Link>
-                      </Card>
-                    );
-                  })}
+                <div className="flex flex-col gap-8">
+                  {!isFiltered && featured && <FeaturedPost post={featured} />}
+                  {listPosts.length > 0 && (
+                    <section aria-label={isFiltered ? "Results" : "More posts"}>
+                      {!isFiltered && (
+                        <h2 className="border-b border-border pb-3 text-sm font-medium text-muted-foreground">
+                          More posts
+                        </h2>
+                      )}
+                      <ul className="divide-y divide-border">
+                        {listPosts.map((post, index) => (
+                          <PostRow key={post.id} post={post} index={index} />
+                        ))}
+                      </ul>
+                    </section>
+                  )}
                 </div>
               )}
             </>
           )}
-        </div>
+        </main>
 
         <Footer />
       </div>
+
+      <AlertDialog open={Boolean(pendingDelete)} onOpenChange={(open) => !open && !deleting && setPendingDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this post?</AlertDialogTitle>
+            <AlertDialogDescription>
+              "{pendingDelete?.title}" will be removed for good, including from the Community Blog if it's published.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleDeletePost();
+              }}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? "Deleting…" : "Delete post"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };

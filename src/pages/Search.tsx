@@ -3,16 +3,11 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   ArrowLeft,
   BookOpen,
-  Loader2,
   Search,
   Trophy,
   X,
   ChevronRight,
-  Star,
   Users2,
-  Sparkles,
-  SlidersHorizontal,
-  Compass,
   Filter,
   FileText,
 } from "lucide-react";
@@ -28,6 +23,7 @@ import { FeaturedKnowledgeCard } from "@/components/search/FeaturedKnowledgeCard
 import { RelatedSearches } from "@/components/search/RelatedSearches";
 import { CampusAIOverview } from "@/components/search/CampusAIOverview";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import {
   parseSearchParams,
@@ -66,55 +62,47 @@ const MIN_FACULTY_RELEVANCE_ALL = MIN_FACULTY_RELEVANCE;
 
 const TAB_META: Record<
   SearchTab,
-  { icon: React.ElementType; emptyLine1: string; emptyLine2: string; color: string }
+  { icon: React.ElementType; emptyLine1: string; emptyLine2: string }
 > = {
   all: {
     icon: Search,
     emptyLine1: "No results found",
     emptyLine2: "Try different keywords or check spelling",
-    color: "text-primary",
   },
   mentors: {
     icon: MentorIcon,
     emptyLine1: "No mentors matched",
     emptyLine2: "Try searching by name, department or skill",
-    color: "text-violet-500",
   },
   faculty: {
     icon: FacultyIcon,
     emptyLine1: "No faculty matched",
     emptyLine2: "Try a name, department or subject",
-    color: "text-rose-500",
   },
   opportunities: {
     icon: Trophy,
     emptyLine1: "No opportunities matched",
     emptyLine2: "Try hackathons, competitions or internships",
-    color: "text-amber-500",
   },
   communities: {
     icon: GroupsIcon,
     emptyLine1: "No groups matched",
     emptyLine2: "Try a topic or group type",
-    color: "text-emerald-500",
   },
   posts: {
     icon: PostIcon,
     emptyLine1: "No posts matched",
     emptyLine2: "Try a topic, keyword or author name",
-    color: "text-amber-500",
   },
   documents: {
     icon: FileText,
     emptyLine1: "No documents or policies matched",
     emptyLine2: "Try keywords from Code of Conduct or Academic Calendar",
-    color: "text-sky-500",
   },
   blog: {
     icon: BookOpen,
     emptyLine1: "No blog articles matched",
     emptyLine2: "Try a topic or tag",
-    color: "text-slate-500",
   },
 };
 
@@ -260,7 +248,7 @@ export default function SearchPage() {
           the very top instead of leaving a blank 64px gap. */}
       <div
         className={cn(
-          "sticky z-20 border-b border-border/50 bg-background/95 backdrop-blur-xl transition-[top] duration-300 ease-in-out",
+          "sticky z-20 border-b border-border bg-background transition-[top] duration-300 ease-in-out",
           siteHeaderCollapsed ? "top-0" : "top-16",
         )}
       >
@@ -268,21 +256,17 @@ export default function SearchPage() {
           {/* Search bar row */}
           <div className="flex items-center gap-2 sm:gap-3">
             <button
+              type="button"
               onClick={() => navigate(-1)}
-              className="shrink-0 flex items-center justify-center h-10 w-10 sm:h-11 sm:w-11 rounded-xl border border-border/50 bg-card/60 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-border bg-card text-muted-foreground transition-colors duration-150 hover:bg-accent hover:text-foreground sm:h-11 sm:w-11"
               aria-label="Go back"
             >
               <ArrowLeft className="h-4 w-4" />
             </button>
             <div
-              className={cn(
-                "relative flex-1 flex items-center rounded-xl border px-3 transition-all shadow-2xs",
-                isAiMode
-                  ? "border-violet-500/50 bg-gradient-to-r from-violet-500/[0.08] via-purple-500/[0.04] to-transparent ring-2 ring-violet-500/20 shadow-sm shadow-violet-500/10 focus-within:border-violet-500/70 focus-within:bg-card text-foreground"
-                  : "border-border/60 bg-card/60 focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/20 focus-within:bg-card text-foreground",
-              )}
+              className="relative flex min-w-0 flex-1 items-center rounded-lg border border-border bg-card px-3 text-foreground transition-colors duration-150 focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/15"
             >
-              <Search className="h-4 w-4 text-muted-foreground/60 shrink-0 pointer-events-none mr-2 sm:mr-2.5" />
+              <Search className="pointer-events-none mr-2 h-4 w-4 shrink-0 text-muted-foreground sm:mr-2.5" />
               <input
                 ref={inputRef}
                 type="text"
@@ -298,76 +282,73 @@ export default function SearchPage() {
                 }}
                 placeholder={
                   isAiMode
-                    ? 'Ask CampusBrain: "Computer Science faculty" or "Web Dev mentors…"'
-                    : "Search mentors, faculty, hackathons, groups, posts…"
+                    ? "Search or ask a question"
+                    : "Search mentors, faculty, hackathons, groups, posts"
                 }
-                className="w-full h-10 sm:h-11 flex-1 min-w-0 bg-transparent text-base md:text-sm text-foreground placeholder:text-muted-foreground/50 border-none outline-none focus:outline-none focus:ring-0 p-0 [&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden"
+                className="w-full h-10 sm:h-11 flex-1 min-w-0 bg-transparent text-base md:text-sm text-foreground placeholder:text-muted-foreground border-none outline-none focus:outline-none focus:ring-0 p-0 [&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden"
                 aria-label="Search query"
                 autoFocus={!q}
               />
-              <div className="flex items-center gap-1 sm:gap-1.5 shrink-0 ml-1.5">
+              <div className="ml-1.5 flex shrink-0 items-center gap-1 sm:gap-1.5">
                 {localQ && (
                   <button
+                    type="button"
                     onClick={() => {
                       setLocalQ("");
                       inputRef.current?.focus();
                     }}
-                    className="p-1 rounded-md text-muted-foreground/60 hover:text-foreground hover:bg-accent transition-colors"
+                    className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                     aria-label="Clear search"
                   >
                     <X className="h-3.5 w-3.5" />
                   </button>
                 )}
+                {/* Toggles the CampusBrain answer above the results; aria-pressed carries the state */}
                 <button
                   type="button"
                   onClick={() => setIsAiMode((prev) => !prev)}
+                  aria-pressed={isAiMode}
                   className={cn(
-                    "flex items-center gap-1 rounded-lg px-2 sm:px-2.5 py-1 text-xs font-medium transition-all duration-200 cursor-pointer select-none",
+                    "flex h-7 cursor-pointer select-none items-center gap-1.5 rounded-md border px-2 text-xs font-medium transition-colors duration-150",
                     isAiMode
-                      ? "bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-xs ring-1 ring-violet-400/40"
-                      : "border border-border/60 bg-muted/40 text-muted-foreground hover:text-foreground hover:bg-accent",
+                      ? "border-primary/30 bg-primary/10 text-primary"
+                      : "border-border bg-secondary text-muted-foreground hover:text-foreground",
                   )}
-                  title="Toggle AI Mode (Press Tab)"
+                  title={isAiMode ? "Hide CampusBrain answer (Tab)" : "Show CampusBrain answer (Tab)"}
                 >
-                  <CampusBrainIcon className={cn("h-3.5 w-3.5", isAiMode ? "text-violet-200" : "text-violet-500")} />
-                  <span className="hidden sm:inline text-2xs">{isAiMode ? "AI Active" : "AI Mode"}</span>
+                  <CampusBrainIcon animate={false} className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Answer</span>
                 </button>
               </div>
             </div>
-            <Button onClick={() => submitSearch(localQ)} size="sm" className="shrink-0 h-10 sm:h-11 px-3.5 sm:px-5 rounded-xl font-medium text-xs sm:text-sm">
+            <Button onClick={() => submitSearch(localQ)} disabled={!localQ.trim()} className="h-10 shrink-0 px-4 sm:h-11 sm:px-5">
               Search
             </Button>
           </div>
 
           {/* Google Tabs Strip */}
           {q && (
-            <div className="flex items-center gap-1.5 mt-3 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden pt-1">
+            <div role="tablist" aria-label="Result categories" className="-mb-3 mt-3 flex items-center gap-1 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
               {SEARCH_TABS.map((t) => {
                 const count = t === "all" ? null : results.counts[t];
                 const active = tab === t;
                 return (
                   <button
                     key={t}
+                    type="button"
+                    role="tab"
+                    aria-selected={active}
                     onClick={() => setTab(t)}
                     className={cn(
-                      "flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs sm:text-sm font-medium transition-all duration-150",
+                      "flex h-10 shrink-0 items-center gap-1.5 border-b-2 px-3 text-sm font-medium transition-colors duration-150",
                       active
-                        ? "bg-primary text-primary-foreground shadow-sm font-semibold"
-                        : "text-muted-foreground hover:text-foreground hover:bg-accent/60",
+                        ? "border-primary text-foreground"
+                        : "border-transparent text-muted-foreground hover:text-foreground",
                     )}
                   >
                     <span>{TAB_LABELS[t]}</span>
                     {typeof count === "number" && count >= 0 && (
-                      <span
-                        className={cn(
-                          "ml-0.5 rounded-full px-1.5 py-0.2 text-2xs font-semibold",
-                          active
-                            ? "bg-primary-foreground/20 text-primary-foreground"
-                            : "bg-muted text-muted-foreground",
-                        )}
-                      >
-                        {count}
-                      </span>
+                      <span className="tabular text-xs text-muted-foreground">{count}</span>
                     )}
                   </button>
                 );
@@ -381,17 +362,21 @@ export default function SearchPage() {
       <div className="container mx-auto max-w-6xl px-4 sm:px-6 py-6">
         {/* No query yet — landing prompt */}
         {!q && (
-          <div className="mt-8">
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
-              Popular searches
+          <div className="mt-6 max-w-2xl animate-fade-up">
+            <h1 className="text-3xl font-semibold tracking-tight text-foreground md:text-4xl">Search</h1>
+            <p className="mt-2 text-muted-foreground">
+              Find mentors, faculty, hackathons, groups and posts, or ask CampusBrain a question about campus.
             </p>
+            <h2 className="mb-3 mt-8 text-sm font-medium text-foreground">Popular searches</h2>
             <div className="flex flex-wrap gap-2">
               {["Machine Learning faculty", "Python mentors", "SIH Hackathon teams", "DSA questions", "Electives guide"].map((suggestion, idx) => (
                 <button
                   key={idx}
+                  type="button"
                   onClick={() => submitSearch(suggestion)}
-                  className="rounded-xl border border-border/60 bg-card/60 px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:border-primary/40 hover:bg-accent transition-colors"
+                  className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-card px-3 text-sm text-foreground transition-colors duration-150 hover:border-foreground/20 hover:bg-accent"
                 >
+                  <Search className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />
                   {suggestion}
                 </button>
               ))}
@@ -399,33 +384,51 @@ export default function SearchPage() {
           </div>
         )}
 
-        {/* Loading state with dynamic CampusBrain thinking status */}
+        {/* Loading: a skeleton in the shape of the results, so nothing jumps when they land */}
         {q && isPageLoading && (
-          <CampusThinkingStatus
-            className="py-16"
-            iconSize="h-9 w-9"
-            textSize="text-sm sm:text-base"
-            phrases={[
-              "Searching across SRM-AP with CampusBrain…",
-              "Finding matched mentors, faculty & groups…",
-              "Analyzing relevant courses & research areas…",
-              "Synthesizing campus knowledge & insights…",
-              "Connecting peer opportunities…",
-              "Structuring recommendations…",
-            ]}
-          />
+          <div className="space-y-6" aria-busy="true">
+            <CampusThinkingStatus
+              phrases={
+                isAiOverviewLoading
+                  ? ["Searching campus records", "Reading sources", "Writing the CampusBrain answer"]
+                  : ["Searching campus records"]
+              }
+            />
+            {isAiOverviewLoading && (
+              <div className="space-y-3 rounded-xl border border-border bg-card p-5 shadow-card">
+                <Skeleton className="h-4 w-40" />
+                <Skeleton className="h-5 w-2/3" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-5/6" />
+              </div>
+            )}
+            <div className="space-y-3">
+              <Skeleton className="h-4 w-32" />
+              {[0, 1, 2, 3].map((i) => (
+                <div key={i} className="flex gap-3 rounded-xl border border-border bg-card p-4">
+                  <Skeleton className="h-10 w-10 shrink-0 rounded-full" />
+                  <div className="min-w-0 flex-1 space-y-2">
+                    <Skeleton className="h-4 w-1/2" />
+                    <Skeleton className="h-3 w-1/3" />
+                    <Skeleton className="h-3 w-full" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         )}
 
         {/* Typo / Did You Mean Suggestion */}
         {q && !isPageLoading && results.suggestedCorrection && results.suggestedCorrection.toLowerCase() !== q.toLowerCase() && (
           <div className="mb-4 flex items-center gap-1.5 text-xs sm:text-sm text-muted-foreground">
             <span>
-              Did you mean:{" "}
+              Did you mean{" "}
               <button
+                type="button"
                 onClick={() => submitSearch(results.suggestedCorrection!)}
-                className="font-semibold text-primary hover:underline cursor-pointer"
+                className="cursor-pointer font-medium text-primary underline-offset-2 hover:underline"
               >
-                "{results.suggestedCorrection}"
+                {results.suggestedCorrection}
               </button>
               ?
             </span>
@@ -434,12 +437,23 @@ export default function SearchPage() {
 
         {/* Empty state */}
         {isEmpty && (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-muted/50 text-muted-foreground mb-4 border border-border/50">
-              <Search className="h-6 w-6 opacity-40" />
+          <div className="flex flex-col items-center justify-center py-20 text-center animate-fade-up">
+            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg border border-border bg-secondary text-muted-foreground">
+              <Search className="h-5 w-5" aria-hidden />
             </div>
-            <p className="font-semibold text-foreground mb-1">Nothing matched "{q}"</p>
-            <p className="text-sm text-muted-foreground max-w-xs">{TAB_META[tab].emptyLine2}</p>
+            <p className="mb-1 font-medium text-foreground">
+              {TAB_META[tab].emptyLine1} for &ldquo;{q}&rdquo;
+            </p>
+            <p className="max-w-xs text-sm text-muted-foreground">{TAB_META[tab].emptyLine2}</p>
+            {tab !== "all" ? (
+              <Button variant="outline" className="mt-5" onClick={() => setTab("all")}>
+                Search all categories
+              </Button>
+            ) : (
+              <Button variant="outline" className="mt-5" onClick={() => inputRef.current?.focus()}>
+                Edit search
+              </Button>
+            )}
           </div>
         )}
 
@@ -447,12 +461,10 @@ export default function SearchPage() {
         {q && !isPageLoading && !isEmpty && (
           <div className="space-y-6">
             {/* Top result info / count metadata */}
-            <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <p>
-                About <strong className="text-foreground">{tab === "all" ? totalAcrossAll : results.total}</strong> results for{" "}
-                <strong className="text-foreground">"{q}"</strong>
-              </p>
-            </div>
+            <p className="text-sm text-muted-foreground">
+              <span className="tabular font-medium text-foreground">{tab === "all" ? totalAcrossAll : results.total}</span> results for{" "}
+              <span className="font-medium text-foreground">&ldquo;{q}&rdquo;</span>
+            </p>
 
             {/* Campus AI Overview (Google SGE Style) */}
             {tab === "all" && isAiMode && (
@@ -494,25 +506,22 @@ export default function SearchPage() {
 
                 return (
                   <section key={categoryTab} className="space-y-3 pt-2">
-                    <div className="flex items-center justify-between border-b border-border/30 pb-2">
-                      <div className="flex items-center gap-2">
-                        <Icon className={cn("h-4 w-4", meta.color)} />
-                        <h2 className="text-xs font-bold uppercase tracking-wider text-foreground/80">
-                          {title}
-                        </h2>
+                    <div className="flex items-center justify-between gap-3 border-b border-border pb-2">
+                      <div className="flex min-w-0 items-center gap-2">
+                        <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
+                        <h2 className="truncate text-sm font-semibold text-foreground">{title}</h2>
                         {count > 0 && (
-                          <span className="rounded-full bg-muted px-2 py-0.5 text-3xs font-semibold text-muted-foreground tabular-nums">
-                            {count}
-                          </span>
+                          <span className="tabular text-xs text-muted-foreground">{count}</span>
                         )}
                       </div>
                       {count > items.length && (
                         <button
+                          type="button"
                           onClick={() => setTab(categoryTab)}
-                          className="flex items-center gap-1 text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline group"
+                          className="flex shrink-0 items-center gap-0.5 text-xs font-medium text-primary underline-offset-2 hover:underline"
                         >
-                          <span>See all {count} {title.toLowerCase()}</span>
-                          <ChevronRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
+                          See all <span className="tabular">{count}</span>
+                          <ChevronRight className="h-3.5 w-3.5" aria-hidden />
                         </button>
                       )}
                     </div>
@@ -537,49 +546,49 @@ export default function SearchPage() {
                 (item) => (item.relevanceScore ?? 0) > MIN_FACULTY_RELEVANCE_ALL,
               );
               const facultySection = renderSection(
-                "Faculty & Research",
+                "Faculty and research",
                 "faculty",
                 relevantFacultyForAll,
                 results.counts.faculty,
               );
 
               const mentorsSection = renderSection(
-                "Senior Mentors",
+                "Senior mentors",
                 "mentors",
                 results.mentors,
                 results.counts.mentors,
               );
 
               const oppSection = renderSection(
-                "Hackathons & Competitions",
+                "Hackathons and competitions",
                 "opportunities",
                 results.opportunities,
                 results.counts.opportunities,
               );
 
               const communitySection = renderSection(
-                "Student Groups",
+                "Student groups",
                 "communities",
                 results.communities,
                 results.counts.communities,
               );
 
               const postSection = renderSection(
-                "Campus Posts & Discussions",
+                "Posts and discussions",
                 "posts",
                 results.posts,
                 results.counts.posts,
               );
 
               const documentsSection = renderSection(
-                "Campus Documents & Guidelines",
+                "Documents and guidelines",
                 "documents",
                 results.documents,
                 results.counts.documents,
               );
 
               const blogSection = renderSection(
-                "Campus Guides",
+                "Campus guides",
                 "blog",
                 results.blog,
                 results.counts.blog,
@@ -587,16 +596,10 @@ export default function SearchPage() {
 
               const studentsSection = results.students.length > 0 ? (
                 <section key="students" className="space-y-3 pt-2">
-                  <div className="flex items-center justify-between border-b border-border/30 pb-2">
-                    <div className="flex items-center gap-2">
-                      <Users2 className="h-4 w-4 text-indigo-500" />
-                      <h2 className="text-xs font-bold uppercase tracking-wider text-foreground/80">
-                        Student Profiles
-                      </h2>
-                      <span className="rounded-full bg-muted px-2 py-0.5 text-3xs font-semibold text-muted-foreground tabular-nums">
-                        {results.students.length}
-                      </span>
-                    </div>
+                  <div className="flex items-center gap-2 border-b border-border pb-2">
+                    <Users2 className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    <h2 className="text-sm font-semibold text-foreground">Student profiles</h2>
+                    <span className="tabular text-xs text-muted-foreground">{results.students.length}</span>
                   </div>
 
                   <div className="space-y-3">
@@ -641,29 +644,33 @@ export default function SearchPage() {
                 {/* Sub-filter chips (e.g. Department filter for faculty/mentors) */}
                 {(tab === "faculty" || tab === "mentors") && (
                   <div className="flex items-center gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none]">
-                    <span className="text-xs font-medium text-muted-foreground shrink-0 mr-1 flex items-center gap-1">
-                      <Filter className="h-3 w-3" /> Filter:
+                    <span className="mr-1 flex shrink-0 items-center gap-1 text-xs font-medium text-muted-foreground">
+                      <Filter className="h-3.5 w-3.5" aria-hidden /> Department
                     </span>
                     <button
+                      type="button"
+                      aria-pressed={!departmentFilter}
                       onClick={() => setDepartmentFilter(null)}
                       className={cn(
-                        "rounded-lg px-2.5 py-1 text-xs font-medium transition-colors shrink-0",
+                        "h-8 shrink-0 rounded-md border px-2.5 text-xs font-medium transition-colors duration-150",
                         !departmentFilter
-                          ? "bg-primary text-primary-foreground font-semibold"
-                          : "bg-muted/60 text-muted-foreground hover:bg-accent hover:text-foreground",
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-border text-muted-foreground hover:border-foreground/20 hover:text-foreground",
                       )}
                     >
-                      All Departments
+                      All departments
                     </button>
                     {POPULAR_DEPARTMENTS.map((dept) => (
                       <button
                         key={dept.code}
+                        type="button"
+                        aria-pressed={departmentFilter === dept.label}
                         onClick={() => setDepartmentFilter(dept.label)}
                         className={cn(
-                          "rounded-lg px-2.5 py-1 text-xs font-medium transition-colors shrink-0",
+                          "h-8 shrink-0 rounded-md border px-2.5 text-xs font-medium transition-colors duration-150",
                           departmentFilter === dept.label
-                            ? "bg-primary text-primary-foreground font-semibold"
-                            : "bg-muted/60 text-muted-foreground hover:bg-accent hover:text-foreground",
+                            ? "border-primary bg-primary text-primary-foreground"
+                            : "border-border text-muted-foreground hover:border-foreground/20 hover:text-foreground",
                         )}
                       >
                         {dept.label}
@@ -683,9 +690,10 @@ export default function SearchPage() {
                     <Button
                       variant="outline"
                       onClick={() => setOffset((prev) => prev + 20)}
-                      className="rounded-xl px-6"
+                      isLoading={results.loading}
+                      className="px-6"
                     >
-                      Load More Results
+                      Load more results
                     </Button>
                   </div>
                 )}

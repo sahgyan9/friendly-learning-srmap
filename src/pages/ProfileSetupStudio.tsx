@@ -2,9 +2,10 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Sparkles,
+  PenLine,
   ArrowLeft,
-  CheckCircle2,
+  Circle,
+  FileUp,
   FileText,
   GraduationCap,
   Plus,
@@ -13,17 +14,12 @@ import {
   Loader2,
   Check,
   ShieldCheck,
-  Zap,
   Target,
-  MessageSquareCode,
-  Users,
   AlertCircle,
-  UserRound,
-  FolderGit2,
-  Briefcase,
   ExternalLink,
   RotateCcw,
   MessageSquare,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -291,7 +287,7 @@ export default function ProfileSetupStudio() {
     if (!hasUnsavedChanges) return;
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       e.preventDefault();
-      e.returnValue = "You have unsaved changes. Please save before leaving!";
+      e.returnValue = "You have unsaved changes.";
       return e.returnValue;
     };
     window.addEventListener("beforeunload", handleBeforeUnload);
@@ -426,7 +422,7 @@ export default function ProfileSetupStudio() {
               JSON.stringify(parsedDraft) !== JSON.stringify(initialSnapshot)
             ) {
               stateToSet = { ...initialSnapshot, ...parsedDraft };
-              toast.info("Restored unsaved profile draft from your previous session");
+              toast.info("Restored your unsaved draft from the last session.");
             }
           }
         } catch {}
@@ -524,13 +520,13 @@ export default function ProfileSetupStudio() {
       ...prev,
       [key]: baselineState[key],
     }));
-    toast.success(`Restored ${label} to your previously saved version`);
+    toast.success(`${label} restored to the saved version.`);
   };
 
   // One-click AI Auto-Draft for all sections
   const handleAutoDraftAll = () => {
     if (state.skills.length === 0 && !state.department.trim()) {
-      toast.info("Please enter your department and at least 1-2 skills, or import your resume first so AI has context.");
+      toast.info("Add your department and at least 2 skills, or import your resume, before drafting.");
       return;
     }
     const drafts = generateSmartDrafts(
@@ -547,24 +543,24 @@ export default function ProfileSetupStudio() {
       ask_me_anything: drafts.ask_me_anything.length > 0 ? drafts.ask_me_anything : prev.ask_me_anything,
       ideal_mentees: drafts.ideal_mentees.length > 0 ? drafts.ideal_mentees : prev.ideal_mentees,
     }));
-    toast.success("Summary fields drafted for Tagline, Outcomes, AMA, and Target Students.");
+    toast.success("Drafted tagline, outcomes, topics and who you help. Review them before publishing.");
   };
 
   const handleSuggestTagline = () => {
     if (state.skills.length === 0 && !state.department.trim()) {
-      toast.info("Please enter your department or at least 1 skill first.");
+      toast.info("Add your department or at least 1 skill first.");
       return;
     }
     const drafts = generateSmartDrafts(state.skills, state.department, state.name);
     if (drafts.tagline) {
       setState((prev) => ({ ...prev, tagline: drafts.tagline }));
-      toast.success("Tagline drafted from listed skills.");
+      toast.success("Tagline drafted from your skills.");
     }
   };
 
   const handleSuggestOutcomes = () => {
     if (state.skills.length === 0 && !state.department.trim()) {
-      toast.info("Please enter your department or at least 1 skill first.");
+      toast.info("Add your department or at least 1 skill first.");
       return;
     }
     const drafts = generateSmartDrafts(state.skills, state.department, state.name);
@@ -576,25 +572,25 @@ export default function ProfileSetupStudio() {
 
   const handleSuggestAma = () => {
     if (state.skills.length === 0 && !state.department.trim()) {
-      toast.info("Please enter your department or at least 1 skill first.");
+      toast.info("Add your department or at least 1 skill first.");
       return;
     }
     const drafts = generateSmartDrafts(state.skills, state.department, state.name);
     if (drafts.ask_me_anything.length > 0) {
       setState((prev) => ({ ...prev, ask_me_anything: drafts.ask_me_anything }));
-      toast.success("AMA topics drafted.");
+      toast.success("Topics drafted.");
     }
   };
 
   const handleSuggestIdealMentees = () => {
     if (state.skills.length === 0 && !state.department.trim()) {
-      toast.info("Please enter your department or at least 1 skill first.");
+      toast.info("Add your department or at least 1 skill first.");
       return;
     }
     const drafts = generateSmartDrafts(state.skills, state.department, state.name);
     if (drafts.ideal_mentees.length > 0) {
       setState((prev) => ({ ...prev, ideal_mentees: drafts.ideal_mentees }));
-      toast.success("Target students drafted.");
+      toast.success("Drafted who you help.");
     }
   };
 
@@ -689,7 +685,7 @@ export default function ProfileSetupStudio() {
       };
     });
 
-    toast.success("Resume parsed! Skills, projects, and bio populated.");
+    toast.success("Resume imported. Skills, projects and bio filled in.");
     setNudgeReason("resume");
   };
 
@@ -698,7 +694,7 @@ export default function ProfileSetupStudio() {
       ...prev,
       ...updates,
     }));
-    toast.success("Resume updates merged! You can edit any field or revert individual sections anytime before saving.");
+    toast.success("Resume changes merged. Edit or revert any section before saving.");
     setNudgeReason("resume");
   };
 
@@ -735,11 +731,11 @@ export default function ProfileSetupStudio() {
     const title = newProjectTitle.trim();
     const desc = newProjectDesc.trim();
     if (!title) {
-      toast.error("Please enter a project title");
+      toast.error("Enter a project title.");
       return;
     }
     if (state.projects.length >= 6) {
-      toast.info("Maximum 6 projects allowed on your profile");
+      toast.info("You can list up to 6 projects.");
       return;
     }
 
@@ -762,7 +758,7 @@ export default function ProfileSetupStudio() {
     setNewProjectDesc("");
     setNewProjectLink("");
     setShowAddProject(false);
-    toast.success("Project added!");
+    toast.success("Project added.");
   };
 
   const handleRemoveProject = (id: string) => {
@@ -776,11 +772,11 @@ export default function ProfileSetupStudio() {
   const handleAddExperience = () => {
     const title = newExpTitle.trim();
     if (!title) {
-      toast.error("Please enter a role or achievement title");
+      toast.error("Enter a role or achievement.");
       return;
     }
     if (state.experiences.length >= 6) {
-      toast.info("Maximum 6 experiences allowed on your profile");
+      toast.info("You can list up to 6 experiences.");
       return;
     }
 
@@ -796,7 +792,7 @@ export default function ProfileSetupStudio() {
     setNewExpOrg("");
     setNewExpPeriod("");
     setShowAddExp(false);
-    toast.success("Experience added!");
+    toast.success("Experience added.");
   };
 
   const handleRemoveExperience = (id: string) => {
@@ -884,6 +880,14 @@ export default function ProfileSetupStudio() {
     } as any);
   }, [state, user, profile]);
 
+  // Field errors appear once a field has been left or a publish was attempted,
+  // not the moment the page opens with empty inputs.
+  const [touchedFields, setTouchedFields] = useState<Record<string, boolean>>({});
+  const [publishAttempted, setPublishAttempted] = useState(false);
+  const showFieldError = (field: string) => publishAttempted || Boolean(touchedFields[field]);
+  const markFieldTouched = (field: string) =>
+    setTouchedFields((prev) => (prev[field] ? prev : { ...prev, [field]: true }));
+
   // Validation requirements for publishing
   const hasName = Boolean(state.name.trim());
   const hasDepartment = Boolean(state.department.trim());
@@ -892,12 +896,12 @@ export default function ProfileSetupStudio() {
 
   const missingRequirements = useMemo(() => {
     const missing: string[] = [];
-    if (!hasName) missing.push("Full Name");
-    if (!hasDepartment) missing.push("Department / Major");
+    if (!hasName) missing.push("Full name");
+    if (!hasDepartment) missing.push("Department");
     if (state.skills.length === 0) {
-      missing.push("At least 2 skills (0 added)");
+      missing.push("2 skills");
     } else if (state.skills.length < 2) {
-      missing.push("At least 2 skills (1 added)");
+      missing.push("1 more skill");
     }
     return missing;
   }, [hasName, hasDepartment, state.skills]);
@@ -905,15 +909,16 @@ export default function ProfileSetupStudio() {
   // Completeness score
   const completeness = useMemo(() => {
     const checks = [
-      { label: "Photo / Avatar", done: Boolean(profile?.profile_image) },
-      { label: "Tagline / Bio", done: Boolean(state.tagline?.trim() || state.bio?.trim()) },
-      { label: "Skills (2+)", done: state.skills.length >= 2 },
-      { label: "Projects / Experience", done: state.projects.length > 0 || state.experiences.length > 0 },
+      { label: "Photo", section: "section-basic-info", done: Boolean(profile?.profile_image) },
+      { label: "Tagline or bio", section: "section-tagline", done: Boolean(state.tagline?.trim() || state.bio?.trim()) },
+      { label: "2+ skills", section: "section-skills", done: state.skills.length >= 2 },
+      { label: "Projects or experience", section: "section-projects", done: state.projects.length > 0 || state.experiences.length > 0 },
       {
-        label: "Outcomes / Topics",
+        label: "Outcomes or topics",
+        section: "section-outcomes",
         done: state.outcomes.length > 0 || state.ask_me_anything.length > 0,
       },
-      { label: "Target Students", done: state.ideal_mentees.length > 0 },
+      { label: "Who you help", section: "section-ideal", done: state.ideal_mentees.length > 0 },
     ];
     const doneCount = checks.filter((c) => c.done).length;
     const score = Math.round((doneCount / checks.length) * 100);
@@ -922,25 +927,26 @@ export default function ProfileSetupStudio() {
 
   // Save and Publish Handler
   const handlePublish = async () => {
+    setPublishAttempted(true);
     if (!user) {
-      toast.error("Please sign in first");
+      toast.error("Sign in to save your profile.");
       return;
     }
 
     if (!state.name.trim()) {
-      toast.error("Please enter your full name");
+      toast.error("Enter your full name.");
       document.getElementById("section-basic-info")?.scrollIntoView({ behavior: "smooth" });
       return;
     }
 
     if (!state.department.trim()) {
-      toast.error("Please enter your department / major");
+      toast.error("Enter your department or major.");
       document.getElementById("section-basic-info")?.scrollIntoView({ behavior: "smooth" });
       return;
     }
 
     if (state.skills.length < 2) {
-      toast.error("Please add at least 2 skills (or import your resume) so classmates can find you");
+      toast.error("Add at least 2 skills, or import your resume, so classmates can find you.");
       document.getElementById("section-skills")?.scrollIntoView({ behavior: "smooth" });
       return;
     }
@@ -1045,7 +1051,7 @@ export default function ProfileSetupStudio() {
       return true;
     } catch (err: any) {
       console.error("Error publishing profile:", err);
-      toast.error(err?.message || "Failed to save profile. Please try again.", { id: toastId });
+      toast.error(err?.message || "Could not save your profile. Try again.", { id: toastId });
       return false;
     } finally {
       setIsSaving(false);
@@ -1084,85 +1090,60 @@ export default function ProfileSetupStudio() {
     return (
       <div className="min-h-screen flex items-center justify-center pt-20">
         <div className="flex flex-col items-center gap-3">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-sm text-muted-foreground">Opening Profile Studio...</p>
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          <p className="text-sm text-muted-foreground">Loading your profile</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-muted/20 pb-24 pt-20">
+    <div className="min-h-screen bg-background pb-24 pt-20">
       <SEOHead
         title={isPublished ? "Profile Studio | Friendly Learning SRMAP" : "Profile Setup Studio | Friendly Learning SRMAP"}
         description="Review, polish, and publish your campus profile."
       />
 
-      {/* Top Sticky Header */}
-      <header className="sticky top-16 z-30 border-b border-border/80 bg-background/95 backdrop-blur-md px-4 py-3 sm:px-6 shadow-xs">
-        <div className="mx-auto flex max-w-4xl items-center justify-between gap-4">
-          <div className="flex items-center gap-3 min-w-0">
+      {/* Sticky so the progress row stays visible while scrolling through the
+          sections it describes. It overlays content, hence the translucency. */}
+      <header className="sticky top-16 z-30 border-b border-border bg-background/95 px-4 py-3 backdrop-blur sm:px-6">
+        <div className="mx-auto flex max-w-4xl items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-2">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => handleRequestExit()}
-              className="gap-1.5 text-muted-foreground hover:text-foreground shrink-0"
+              className="shrink-0 text-muted-foreground hover:text-foreground"
+              aria-label={isPublished ? "Back to profile" : "Exit"}
             >
-              <ArrowLeft className="h-4 w-4" />
-              <span className="hidden sm:inline">
-                {isPublished ? "Back to Profile" : "Exit"}
-              </span>
+              <ArrowLeft />
+              <span className="hidden sm:inline">{isPublished ? "Profile" : "Exit"}</span>
             </Button>
-            <div className="h-4 w-px bg-border hidden sm:block" />
             <div className="min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-sm sm:text-base font-bold text-foreground flex items-center gap-1.5 truncate">
-                  <Sparkles className="h-4 w-4 text-primary shrink-0" />
-                  {isPublished ? "Profile Studio" : "Profile Setup Studio"}
-                </h1>
-                {hasUnsavedChanges && (
-                  <Badge
-                    variant="outline"
-                    className="bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/30 text-2xs gap-1 font-bold animate-pulse"
-                  >
-                    <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
-                    Unsaved Changes
-                  </Badge>
-                )}
-                {isPublished ? (
-                  <Badge variant="outline" className="bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-300 text-2xs gap-1 font-semibold">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                    Live on Campus
-                  </Badge>
-                ) : (
-                  <Badge
-                    variant="outline"
-                    className={`text-2xs font-semibold ${
-                      canPublish
-                        ? "bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-950/60 dark:text-emerald-300"
-                        : "bg-muted text-muted-foreground border-border"
-                    }`}
-                  >
-                    {canPublish
-                      ? `${completeness.score}% · Ready to publish`
-                      : `${completeness.score}% · ${missingRequirements.length} required left`}
-                  </Badge>
-                )}
-              </div>
+              <h1 className="truncate text-base font-semibold tracking-tight text-foreground">
+                {isPublished ? "Edit profile" : "Set up your profile"}
+              </h1>
+              <p className="truncate text-xs text-muted-foreground">
+                {hasUnsavedChanges
+                  ? "Unsaved changes"
+                  : isPublished
+                  ? "Published"
+                  : canPublish
+                  ? "Ready to publish"
+                  : `${missingRequirements.length} required ${missingRequirements.length === 1 ? "item" : "items"} left`}
+              </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
-            {/* Quick Preview Modal Trigger */}
+          <div className="flex shrink-0 items-center gap-2">
             <Button
               variant="outline"
               size="sm"
               onClick={() => setPreviewModalOpen(true)}
-              className="gap-1.5 text-xs font-semibold"
-              title="Preview how students see your card on campus"
+              aria-label="Preview card"
             >
-              <Eye className="h-3.5 w-3.5 text-muted-foreground" />
-              <span className="hidden sm:inline">Preview Card</span>
+              <Eye />
+              <span className="hidden sm:inline">Preview</span>
             </Button>
 
             {!(nudgeReason && state.courses.length === 0) && (
@@ -1170,37 +1151,54 @@ export default function ProfileSetupStudio() {
                 variant="outline"
                 size="sm"
                 onClick={() => setPortalDialogOpen(true)}
-                className="hidden md:flex gap-1.5 text-xs font-medium"
+                className="hidden md:inline-flex"
               >
-                <GraduationCap className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
-                {state.courses.length > 0 ? `SRM Portal (${state.courses.length})` : "Link Portal"}
+                <GraduationCap />
+                {state.courses.length > 0 ? `SRM portal (${state.courses.length})` : "Link portal"}
               </Button>
             )}
 
             <Button
               onClick={handlePublish}
+              isLoading={isSaving}
               disabled={isSaving || (!isPublished && !canPublish)}
               size="sm"
-              className={`gap-1.5 font-bold shadow-sm px-4 ${
-                !isPublished && !canPublish
-                  ? "bg-muted text-muted-foreground hover:bg-muted cursor-not-allowed opacity-75"
-                  : "bg-primary hover:bg-primary/90 text-primary-foreground"
-              }`}
+              title={!isPublished && !canPublish ? `Required: ${missingRequirements.join(", ")}` : undefined}
             >
-              {isSaving ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Check className="h-4 w-4 stroke-[3]" />
-              )}
-              <span>
-                {isPublished
-                  ? "Save Changes"
-                  : canPublish
-                  ? "Publish Profile"
-                  : "Complete Info"}
-              </span>
+              {!isSaving && <Check />}
+              {isPublished ? "Save" : "Publish"}
             </Button>
           </div>
+        </div>
+
+        {/* Progress, labelled. Each item jumps to the section that completes it. */}
+        <div className="mx-auto mt-3 flex max-w-4xl items-center gap-3">
+          <span className="shrink-0 text-xs font-medium text-foreground tabular">
+            {completeness.checks.filter((c) => c.done).length}/{completeness.checks.length}
+          </span>
+          <ol className="flex min-w-0 flex-1 gap-1.5 overflow-x-auto [scrollbar-width:none]" aria-label="Profile progress">
+            {completeness.checks.map((check) => (
+              <li key={check.label} className="shrink-0">
+                <button
+                  type="button"
+                  onClick={() => document.getElementById(check.section)?.scrollIntoView({ behavior: "smooth", block: "start" })}
+                  className={cn(
+                    "inline-flex h-7 items-center gap-1 rounded-md border px-2 text-xs transition-colors duration-150",
+                    check.done
+                      ? "border-transparent bg-secondary text-foreground"
+                      : "border-border bg-card text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+                  )}
+                >
+                  {check.done ? (
+                    <Check className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" aria-label="Done" />
+                  ) : (
+                    <Circle className="h-3.5 w-3.5" aria-label="Not done" />
+                  )}
+                  {check.label}
+                </button>
+              </li>
+            ))}
+          </ol>
         </div>
       </header>
 
@@ -1208,22 +1206,15 @@ export default function ProfileSetupStudio() {
       <main className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
         {/* Unapplied Resume Recovery Banner (Shown when user returns after background parsing) */}
         {unappliedResume && (
-          <section className="rounded-2xl border border-primary/40 bg-gradient-to-r from-primary/10 via-indigo-500/10 to-purple-500/10 p-4 sm:p-5 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-in fade-in slide-in-from-top-2">
-            <div className="flex items-start gap-3.5">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-xs ring-4 ring-primary/10">
-                <Sparkles className="h-5 w-5 animate-pulse" />
-              </div>
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-extrabold text-sm sm:text-base text-foreground">
-                    Resume Parsed While You Were Away!
-                  </span>
-                  <span className="text-2xs font-semibold text-primary px-2.5 py-0.5 rounded-full bg-primary/15 border border-primary/20">
-                    {unappliedResume.fileName}
-                  </span>
-                </div>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  Gemini AI finished extracting your skills, projects, work experience & bio. Review the extracted data to merge with your profile.
+          <section className="flex flex-col items-start justify-between gap-4 rounded-xl border border-primary/30 bg-card p-4 shadow-card sm:flex-row sm:items-center sm:p-5 animate-fade-up">
+            <div className="flex min-w-0 items-start gap-3">
+              <FileText className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+              <div className="min-w-0 space-y-1">
+                <p className="text-sm font-semibold text-foreground">
+                  Your resume finished importing
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Skills, projects, experience and bio were read from <span className="font-medium text-foreground">{unappliedResume.fileName}</span>. Review them before they are merged.
                 </p>
               </div>
             </div>
@@ -1231,7 +1222,6 @@ export default function ProfileSetupStudio() {
               <Button
                 variant="outline"
                 size="sm"
-                className="h-8 text-xs text-muted-foreground hover:text-foreground"
                 onClick={() => {
                   markParsingSessionApplied();
                   setUnappliedResume(null);
@@ -1241,7 +1231,6 @@ export default function ProfileSetupStudio() {
               </Button>
               <Button
                 size="sm"
-                className="h-8 text-xs font-bold gap-1.5 shadow-sm"
                 onClick={() => {
                   const resumeData = unappliedResume.data;
                   markParsingSessionApplied();
@@ -1249,49 +1238,35 @@ export default function ProfileSetupStudio() {
                   handlePdfImported(resumeData);
                 }}
               >
-                <Sparkles className="h-3.5 w-3.5" />
-                Review & Apply Draft
+                Review changes
               </Button>
             </div>
           </section>
         )}
 
-        {/* Sleek AI Fast-Track Banner (Compact & Non-Intrusive) */}
-        <section className="rounded-2xl border border-primary/25 bg-gradient-to-r from-primary/10 via-indigo-500/5 to-purple-500/10 p-4 sm:p-5 shadow-xs">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex items-start gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-xs">
-                <Sparkles className="h-5 w-5" />
-              </div>
-              <div className="space-y-0.5">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-extrabold text-sm sm:text-base text-foreground">
-                    {isPublished ? "Update Profile with AI" : "Fast-Track Your Profile with AI"}
-                  </span>
-                  <span className="text-2xs font-bold text-primary px-2 py-0.5 rounded-md bg-primary/15 uppercase tracking-wider">
-                    AI Auto-Fill
-                  </span>
-                </div>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  Upload your resume (PDF or .docx) to auto-extract skills, projects, experience, headline, and bio in ~5 seconds — or customize the sections below directly.
+        <section className="rounded-xl border border-border bg-card p-4 shadow-card sm:p-5">
+          <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+            <div className="flex min-w-0 items-start gap-3">
+              <FileUp className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" />
+              <div className="min-w-0 space-y-0.5">
+                <p className="text-sm font-semibold text-foreground">
+                  {isPublished ? "Update from your resume" : "Fill this in from your resume"}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Upload a PDF or .docx to fill in skills, projects, experience, tagline and bio. You review everything before it is saved.
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2 shrink-0 self-start sm:self-center">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleAutoDraftAll}
-                className="gap-1.5 text-xs font-semibold bg-background/80 hover:bg-background"
-              >
-                <Sparkles className="h-3.5 w-3.5 text-primary" />
-                AI Auto-Draft
+            <div className="flex shrink-0 flex-wrap items-center gap-2 self-start sm:self-center">
+              <Button variant="outline" size="sm" onClick={handleAutoDraftAll}>
+                <PenLine />
+                Draft summary
               </Button>
               <ResumePdfImport
                 variant="button"
                 onImported={handlePdfImported}
-                buttonLabel={isPublished ? "Re-upload Resume" : "Upload Resume"}
+                buttonLabel={isPublished ? "Re-upload resume" : "Upload resume"}
               />
             </div>
           </div>
@@ -1305,21 +1280,19 @@ export default function ProfileSetupStudio() {
               animate={{ opacity: 1, height: "auto", marginBottom: 24 }}
               exit={{ opacity: 0, height: 0, marginBottom: 0 }}
               transition={{ duration: 0.25 }}
-              className="overflow-hidden rounded-2xl border border-emerald-500/25 bg-emerald-500/5"
+              className="overflow-hidden rounded-xl border border-border bg-card shadow-card"
             >
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 sm:p-5">
                 <div className="flex items-start gap-3">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
-                    <GraduationCap className="h-5 w-5" />
-                  </div>
+                  <GraduationCap className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" />
                   <div>
                     <p className="text-sm font-semibold text-foreground">
                       {nudgeReason === "resume"
-                        ? "Resume added! One more thing — link your SRM Portal?"
-                        : "Want your verified coursework on your profile too?"}
+                        ? "Resume added. Link your SRM portal as well?"
+                        : "Add your coursework from the SRM portal"}
                     </p>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      We'll pull in your coursework so classmates can find you by course code too. Takes about 10 seconds, and your CGPA stays private.
+                      Classmates can then find you by course code. It takes about 10 seconds, and your CGPA stays private.
                     </p>
                   </div>
                 </div>
@@ -1328,17 +1301,15 @@ export default function ProfileSetupStudio() {
                     size="sm"
                     variant="ghost"
                     onClick={handleDismissPortalNudge}
-                    className="text-xs text-muted-foreground"
                   >
                     Ask me later
                   </Button>
                   <Button
                     size="sm"
                     onClick={() => setPortalDialogOpen(true)}
-                    className="gap-1.5 text-xs font-semibold"
                   >
-                    <GraduationCap className="h-3.5 w-3.5" />
-                    Link Portal
+                    <GraduationCap />
+                    Link portal
                   </Button>
                 </div>
               </div>
@@ -1347,29 +1318,30 @@ export default function ProfileSetupStudio() {
         </AnimatePresence>
 
         {/* 1. Basic Identity */}
-        <div id="section-basic-info" className="rounded-2xl border border-border/80 bg-card p-5 sm:p-6 shadow-xs space-y-4">
-          <div className="flex items-center justify-between border-b border-border/60 pb-3">
+        <div id="section-basic-info" className="scroll-mt-44 rounded-xl border border-border bg-card p-5 sm:p-6 shadow-card space-y-4">
+          <div className="flex items-center justify-between border-b border-border pb-3">
             <div className="flex items-center gap-2">
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 text-primary font-bold text-xs">
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-secondary text-xs font-semibold text-secondary-foreground tabular">
                 1
               </div>
               <div>
-                <h3 className="text-sm sm:text-base font-bold text-foreground">Basic Information</h3>
+                <h3 className="text-base font-semibold text-foreground">Basic information</h3>
                 <p className="text-xs text-muted-foreground">How peers and professors identify you on campus</p>
               </div>
             </div>
 
             {/* Availability Switch */}
-            <div className="flex items-center gap-2 bg-muted/40 px-3 py-1.5 rounded-xl border border-border/50">
-              <span className="inline-flex items-center gap-1.5 text-2xs font-semibold text-foreground">
+            <label className="flex items-center gap-2 rounded-md border border-border px-3 py-1.5">
+              <span className="inline-flex items-center gap-1.5 text-xs font-medium text-foreground">
                 <span className={cn("h-2 w-2 rounded-full", state.isAvailable ? "bg-emerald-500" : "bg-amber-500")} />
                 {state.isAvailable ? "Available" : "Paused"}
               </span>
               <Switch
                 checked={state.isAvailable}
                 onCheckedChange={(checked) => setState({ ...state, isAvailable: checked })}
+                aria-label="Available for messages"
               />
-            </div>
+            </label>
           </div>
 
           <ProfileAvatarUploader
@@ -1382,37 +1354,49 @@ export default function ProfileSetupStudio() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
             <div className="space-y-1.5">
-              <label className="font-semibold text-foreground flex items-center justify-between">
-                <span>Full Name <span className="text-destructive">*</span></span>
-                {!state.name.trim() && <span className="text-xs text-destructive">Required</span>}
+              <label htmlFor="studio-name" className="text-sm font-medium text-foreground">
+                Full name <span className="text-destructive" aria-hidden>*</span>
               </label>
               <Input
+                id="studio-name"
                 value={state.name}
                 onChange={(e) => setState({ ...state, name: e.target.value })}
+                onBlur={() => markFieldTouched("name")}
                 placeholder="e.g. Usha Shah"
-                className="text-sm"
+                aria-invalid={showFieldError("name") && !hasName}
+                aria-describedby={showFieldError("name") && !hasName ? "studio-name-error" : undefined}
+                className={cn("text-sm", showFieldError("name") && !hasName && "border-destructive focus-visible:ring-destructive")}
               />
+              {showFieldError("name") && !hasName && (
+                <p id="studio-name-error" className="text-xs text-destructive">Enter your full name.</p>
+              )}
             </div>
             <div className="space-y-1.5">
-              <label className="font-semibold text-foreground flex items-center justify-between">
-                <span>Department / Major <span className="text-destructive">*</span></span>
-                {!state.department.trim() && <span className="text-xs text-destructive">Required</span>}
+              <label htmlFor="studio-department" className="text-sm font-medium text-foreground">
+                Department or major <span className="text-destructive" aria-hidden>*</span>
               </label>
               <Input
+                id="studio-department"
                 value={state.department}
                 onChange={(e) => setState({ ...state, department: e.target.value })}
-                placeholder="e.g. Computer Science, Physics, Mechanical..."
-                className="text-sm"
+                onBlur={() => markFieldTouched("department")}
+                placeholder="e.g. Computer Science, Physics, Mechanical"
+                aria-invalid={showFieldError("department") && !hasDepartment}
+                aria-describedby={showFieldError("department") && !hasDepartment ? "studio-department-error" : undefined}
+                className={cn("text-sm", showFieldError("department") && !hasDepartment && "border-destructive focus-visible:ring-destructive")}
               />
+              {showFieldError("department") && !hasDepartment && (
+                <p id="studio-department-error" className="text-xs text-destructive">Enter your department or major.</p>
+              )}
             </div>
             <div className="space-y-1.5">
-              <label className="font-semibold text-foreground">Year of Studies</label>
+              <label className="text-sm font-medium text-foreground">Year of study</label>
               <select
                 value={state.year_of_studies}
                 onChange={(e) => setState({ ...state, year_of_studies: e.target.value })}
                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus:outline-hidden focus:ring-2 focus:ring-ring"
               >
-                <option value="">Select Year of Study</option>
+                <option value="">Select year</option>
                 <option value="1st Year">1st Year</option>
                 <option value="2nd Year">2nd Year</option>
                 <option value="3rd Year">3rd Year</option>
@@ -1422,7 +1406,7 @@ export default function ProfileSetupStudio() {
               </select>
             </div>
             <div className="space-y-1.5">
-              <label className="font-semibold text-foreground">University / Location</label>
+              <label className="text-sm font-medium text-foreground">University</label>
               <Input
                 value={state.university}
                 onChange={(e) => setState({ ...state, university: e.target.value })}
@@ -1434,20 +1418,17 @@ export default function ProfileSetupStudio() {
         </div>
 
         {/* 2. One-Line Tagline Headline */}
-        <div className="rounded-2xl border border-border/80 bg-card p-5 sm:p-6 shadow-xs space-y-3">
-          <div className="flex items-center justify-between border-b border-border/60 pb-3">
+        <div id="section-tagline" className="scroll-mt-44 rounded-xl border border-border bg-card p-5 sm:p-6 shadow-card space-y-3">
+          <div className="flex items-center justify-between border-b border-border pb-3">
             <div className="flex items-center gap-2">
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-bold text-xs">
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-secondary text-xs font-semibold text-secondary-foreground tabular">
                 2
               </div>
               <div>
-                <h3 className="text-sm sm:text-base font-bold text-foreground flex items-center gap-1.5">
-                  One-Line Tagline
-                  <Badge variant="secondary" className="text-2xs font-semibold bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
-                    High Visibility
-                  </Badge>
+                <h3 className="text-base font-semibold text-foreground flex items-center gap-1.5">
+                  Tagline
                 </h3>
-                <p className="text-xs text-muted-foreground">Appears below your name across CampusBrain search results</p>
+                <p className="text-xs text-muted-foreground">One line shown under your name in search results</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -1455,10 +1436,10 @@ export default function ProfileSetupStudio() {
                 <button
                   type="button"
                   onClick={() => handleRevertSection("tagline", "Tagline")}
-                  className="text-2xs font-semibold text-muted-foreground hover:text-foreground flex items-center gap-1 bg-muted/60 hover:bg-muted px-2 py-0.5 rounded-md transition-colors"
+                  className="inline-flex h-8 items-center gap-1 rounded-md px-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                   title="Restore to previous saved tagline"
                 >
-                  <RotateCcw className="h-2.5 w-2.5" />
+                  <RotateCcw className="h-3.5 w-3.5" />
                   Revert to saved
                 </button>
               )}
@@ -1466,10 +1447,10 @@ export default function ProfileSetupStudio() {
                 variant="ghost"
                 size="sm"
                 onClick={handleSuggestTagline}
-                className="gap-1 text-2xs font-semibold text-primary hover:text-primary hover:bg-primary/10 h-7 px-2"
+                className="text-muted-foreground hover:text-foreground"
               >
-                <Sparkles className="h-3 w-3" />
-                AI Suggest
+                <PenLine />
+                Draft
               </Button>
             </div>
           </div>
@@ -1484,7 +1465,7 @@ export default function ProfileSetupStudio() {
             />
             <div className="flex items-center justify-between text-2xs text-muted-foreground pt-0.5">
               <div className="flex flex-wrap items-center gap-1.5">
-                <span className="font-semibold">Quick Ideas:</span>
+                <span className="font-medium">Examples:</span>
                 <button
                   type="button"
                   onClick={() =>
@@ -1523,18 +1504,18 @@ export default function ProfileSetupStudio() {
         </div>
 
         {/* 3. Skills & Expertise */}
-        <div id="section-skills" className="rounded-2xl border border-border/80 bg-card p-5 sm:p-6 shadow-xs space-y-4">
-          <div className="flex items-center justify-between border-b border-border/60 pb-3">
+        <div id="section-skills" className="scroll-mt-44 rounded-xl border border-border bg-card p-5 sm:p-6 shadow-card space-y-4">
+          <div className="flex items-center justify-between border-b border-border pb-3">
             <div className="flex items-center gap-2">
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold text-xs">
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-secondary text-xs font-semibold text-secondary-foreground tabular">
                 3
               </div>
               <div>
-                <h3 className="text-sm sm:text-base font-bold text-foreground flex items-center gap-2">
-                  Skills & Expertise
-                  <span className="text-destructive text-xs">*</span>
+                <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
+                  Skills
+                  <span className="text-destructive text-xs" aria-hidden>*</span>
                 </h3>
-                <p className="text-xs text-muted-foreground">Classmates will discover you when searching these topics (min 2 needed)</p>
+                <p className="text-xs text-muted-foreground">Classmates find you by these. Add at least 2.</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -1542,41 +1523,41 @@ export default function ProfileSetupStudio() {
                 <button
                   type="button"
                   onClick={() => handleRevertSection("skills", "Skills")}
-                  className="text-2xs font-semibold text-muted-foreground hover:text-foreground flex items-center gap-1 bg-muted/60 hover:bg-muted px-2 py-0.5 rounded-md transition-colors"
+                  className="inline-flex h-8 items-center gap-1 rounded-md px-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                   title="Restore to previous saved skills"
                 >
-                  <RotateCcw className="h-2.5 w-2.5" />
+                  <RotateCcw className="h-3.5 w-3.5" />
                   Revert skills
                 </button>
               )}
-              <span className={`text-2xs font-semibold ${
-                state.skills.length >= 2 ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"
+              <span className={`text-xs tabular ${
+                state.skills.length >= 2 ? "text-muted-foreground" : showFieldError("skills") ? "text-destructive" : "text-muted-foreground"
               }`}>
-                {state.skills.length} added {state.skills.length < 2 && "(min 2 needed)"}
+                {state.skills.length} added
               </span>
             </div>
           </div>
 
           {/* Skill Pills */}
-          <div className="flex flex-wrap gap-1.5 min-h-[42px] p-2.5 rounded-xl bg-muted/40 border border-border/60">
+          <div className="flex min-h-[42px] flex-wrap gap-1.5 rounded-lg border border-border bg-muted/40 p-2.5">
             {state.skills.length === 0 ? (
-              <span className="text-xs text-muted-foreground italic py-1 px-2">
-                No skills added yet. Add a few below, click quick suggestions, or import your resume!
+              <span className="px-2 py-1 text-sm text-muted-foreground">
+                No skills yet. Type them below, pick from the list, or import your resume.
               </span>
             ) : (
               state.skills.map((skill) => (
                 <span
                   key={skill}
-                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-background text-foreground border border-border shadow-2xs hover:border-destructive/40 transition-colors group"
+                  className="inline-flex items-center gap-1 rounded-md border border-border bg-card py-0.5 pl-2.5 pr-1 text-xs font-medium text-foreground"
                 >
                   {skill}
                   <button
                     type="button"
                     onClick={() => handleRemoveSkill(skill)}
                     aria-label={`Remove ${skill}`}
-                    className="text-muted-foreground hover:text-destructive transition-colors ml-0.5"
+                    className="flex h-6 w-6 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-accent hover:text-destructive"
                   >
-                    <Trash2 className="h-3 w-3" />
+                    <X className="h-3.5 w-3.5" />
                   </button>
                 </span>
               ))
@@ -1588,6 +1569,8 @@ export default function ProfileSetupStudio() {
             <Input
               value={newSkillInput}
               onChange={(e) => setNewSkillInput(e.target.value)}
+              onBlur={() => markFieldTouched("skills")}
+              aria-label="Add skills"
               onKeyDown={(e) => {
                 if (e.key === "Enter" || e.key === ",") {
                   e.preventDefault();
@@ -1601,7 +1584,7 @@ export default function ProfileSetupStudio() {
                   handleAddSkillsFromInput(text);
                 }
               }}
-              placeholder="Type skills (comma-separated, e.g. Python, React, Machine Learning) & press Enter..."
+              placeholder="Python, React, Machine Learning (press Enter)"
               className="text-sm"
             />
             <Button
@@ -1609,17 +1592,23 @@ export default function ProfileSetupStudio() {
               variant="secondary"
               size="sm"
               onClick={() => handleAddSkillsFromInput(newSkillInput)}
-              className="gap-1 font-semibold shrink-0"
+              className="shrink-0"
+              disabled={!newSkillInput.trim()}
             >
-              <Plus className="h-4 w-4" />
+              <Plus />
               Add
             </Button>
           </div>
+          {showFieldError("skills") && state.skills.length < 2 && (
+            <p className="text-xs text-destructive">
+              Add {2 - state.skills.length} more {2 - state.skills.length === 1 ? "skill" : "skills"} to publish.
+            </p>
+          )}
 
           {/* Popular Skill Suggestions */}
           <div className="space-y-1.5 pt-1">
-            <span className="text-2xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Popular at SRM AP:
+            <span className="text-xs font-medium text-muted-foreground">
+              Popular at SRM AP
             </span>
             <div className="flex flex-wrap gap-1.5">
               {POPULAR_SKILLS.filter((s) => !state.skills.includes(s)).slice(0, 8).map((skill) => (
@@ -1627,9 +1616,9 @@ export default function ProfileSetupStudio() {
                   key={skill}
                   type="button"
                   onClick={() => handleQuickAddSkill(skill)}
-                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-2xs font-medium bg-muted/60 hover:bg-primary/10 hover:text-primary hover:border-primary/30 border border-border/50 text-muted-foreground transition-all"
+                  className="inline-flex h-7 items-center gap-1 rounded-md border border-border bg-card px-2 text-xs text-muted-foreground transition-colors duration-150 hover:bg-accent hover:text-foreground"
                 >
-                  <Plus className="h-2.5 w-2.5" />
+                  <Plus className="h-3 w-3" />
                   {skill}
                 </button>
               ))}
@@ -1638,16 +1627,15 @@ export default function ProfileSetupStudio() {
         </div>
 
         {/* 4. Featured Projects */}
-        <div id="section-projects" className="rounded-2xl border border-border/80 bg-card p-5 sm:p-6 shadow-xs space-y-4">
-          <div className="flex items-center justify-between border-b border-border/60 pb-3">
+        <div id="section-projects" className="scroll-mt-44 rounded-xl border border-border bg-card p-5 sm:p-6 shadow-card space-y-4">
+          <div className="flex items-center justify-between border-b border-border pb-3">
             <div className="flex items-center gap-2">
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 font-bold text-xs">
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-secondary text-xs font-semibold text-secondary-foreground tabular">
                 4
               </div>
               <div>
-                <h3 className="text-sm sm:text-base font-bold text-foreground flex items-center gap-1.5">
-                  <FolderGit2 className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                  Featured Projects
+                <h3 className="text-base font-semibold text-foreground flex items-center gap-1.5">
+                  Projects
                   <span className="text-xs font-normal text-muted-foreground">({state.projects.length}/6)</span>
                 </h3>
                 <p className="text-xs text-muted-foreground">Showcase key projects from hackathons, courses, or personal research</p>
@@ -1659,10 +1647,10 @@ export default function ProfileSetupStudio() {
                 <button
                   type="button"
                   onClick={() => handleRevertSection("projects", "Projects")}
-                  className="text-2xs font-semibold text-muted-foreground hover:text-foreground flex items-center gap-1 bg-muted/60 hover:bg-muted px-2 py-0.5 rounded-md transition-colors"
+                  className="inline-flex h-8 items-center gap-1 rounded-md px-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                   title="Restore to previously saved projects"
                 >
-                  <RotateCcw className="h-2.5 w-2.5" />
+                  <RotateCcw className="h-3.5 w-3.5" />
                   Revert projects
                 </button>
               )}
@@ -1683,7 +1671,7 @@ export default function ProfileSetupStudio() {
           {/* Project List */}
           <div className="space-y-2.5">
             {state.projects.length === 0 && !showAddProject ? (
-              <div className="rounded-xl border border-dashed border-border/80 p-4 text-center space-y-2 bg-muted/20">
+              <div className="rounded-xl border border-dashed border-border p-4 text-center space-y-2 bg-muted/20">
                 <p className="text-xs text-muted-foreground">
                   No projects added yet. Import your resume to auto-fill or add one manually!
                 </p>
@@ -1694,7 +1682,7 @@ export default function ProfileSetupStudio() {
                   className="gap-1 text-xs font-semibold"
                 >
                   <Plus className="h-3.5 w-3.5" />
-                  Add First Project
+                  Add a project
                 </Button>
               </div>
             ) : (
@@ -1702,11 +1690,11 @@ export default function ProfileSetupStudio() {
                 {state.projects.map((proj) => (
                   <div
                     key={proj.id}
-                    className="flex flex-col justify-between rounded-xl border border-border/70 bg-background/60 p-3.5 space-y-2 hover:border-blue-500/30 transition-all"
+                    className="flex flex-col justify-between rounded-lg border border-border bg-card p-3.5 space-y-2 transition-colors"
                   >
                     <div className="space-y-1">
                       <div className="flex items-start justify-between gap-2">
-                        <h4 className="text-xs sm:text-sm font-bold text-foreground truncate">
+                        <h4 className="text-xs sm:text-sm font-semibold text-foreground truncate">
                           {proj.title}
                         </h4>
                         <button
@@ -1728,7 +1716,7 @@ export default function ProfileSetupStudio() {
                         href={proj.link}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 text-2xs text-primary font-medium hover:underline truncate pt-1 border-t border-border/40"
+                        className="inline-flex items-center gap-1 text-2xs text-primary font-medium hover:underline truncate pt-1 border-t border-border"
                       >
                         <ExternalLink className="h-3 w-3 shrink-0" />
                         <span className="truncate">{proj.link}</span>
@@ -1741,9 +1729,9 @@ export default function ProfileSetupStudio() {
 
             {/* Add Project Form Drawer / Inset */}
             {showAddProject && (
-              <div className="rounded-xl border border-primary/30 bg-primary/5 p-4 space-y-3">
+              <div className="rounded-lg border border-border bg-muted/40 p-4 space-y-3">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-bold text-foreground">Add New Project</h4>
+                  <h4 className="text-xs font-semibold text-foreground">New project</h4>
                   <button
                     type="button"
                     onClick={() => setShowAddProject(false)}
@@ -1787,10 +1775,10 @@ export default function ProfileSetupStudio() {
                     type="button"
                     size="sm"
                     onClick={handleAddProject}
-                    className="text-xs font-bold gap-1"
+                    disabled={!newProjectTitle.trim()}
                   >
                     <Plus className="h-3.5 w-3.5" />
-                    Save Project
+                    Add project
                   </Button>
                 </div>
               </div>
@@ -1799,16 +1787,15 @@ export default function ProfileSetupStudio() {
         </div>
 
         {/* 5. Experience & Leadership */}
-        <div id="section-experience" className="rounded-2xl border border-border/80 bg-card p-5 sm:p-6 shadow-xs space-y-4">
-          <div className="flex items-center justify-between border-b border-border/60 pb-3">
+        <div id="section-experience" className="scroll-mt-44 rounded-xl border border-border bg-card p-5 sm:p-6 shadow-card space-y-4">
+          <div className="flex items-center justify-between border-b border-border pb-3">
             <div className="flex items-center gap-2">
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold text-xs">
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-secondary text-xs font-semibold text-secondary-foreground tabular">
                 5
               </div>
               <div>
-                <h3 className="text-sm sm:text-base font-bold text-foreground flex items-center gap-1.5">
-                  <Briefcase className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                  Experience & Leadership
+                <h3 className="text-base font-semibold text-foreground flex items-center gap-1.5">
+                  Experience and leadership
                   <span className="text-xs font-normal text-muted-foreground">({state.experiences.length}/6)</span>
                 </h3>
                 <p className="text-xs text-muted-foreground">Internships, club positions, research labs, or teaching assistance</p>
@@ -1820,10 +1807,10 @@ export default function ProfileSetupStudio() {
                 <button
                   type="button"
                   onClick={() => handleRevertSection("experiences", "Experience")}
-                  className="text-2xs font-semibold text-muted-foreground hover:text-foreground flex items-center gap-1 bg-muted/60 hover:bg-muted px-2 py-0.5 rounded-md transition-colors"
+                  className="inline-flex h-8 items-center gap-1 rounded-md px-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                   title="Restore to previously saved experience entries"
                 >
-                  <RotateCcw className="h-2.5 w-2.5" />
+                  <RotateCcw className="h-3.5 w-3.5" />
                   Revert experience
                 </button>
               )}
@@ -1844,7 +1831,7 @@ export default function ProfileSetupStudio() {
           {/* Experience List */}
           <div className="space-y-2.5">
             {state.experiences.length === 0 && !showAddExp ? (
-              <div className="rounded-xl border border-dashed border-border/80 p-4 text-center space-y-2 bg-muted/20">
+              <div className="rounded-xl border border-dashed border-border p-4 text-center space-y-2 bg-muted/20">
                 <p className="text-xs text-muted-foreground">
                   No experience entries added yet. Import your resume to auto-fill or add one manually!
                 </p>
@@ -1855,7 +1842,7 @@ export default function ProfileSetupStudio() {
                   className="gap-1 text-xs font-semibold"
                 >
                   <Plus className="h-3.5 w-3.5" />
-                  Add First Experience
+                  Add an experience
                 </Button>
               </div>
             ) : (
@@ -1863,10 +1850,10 @@ export default function ProfileSetupStudio() {
                 {state.experiences.map((exp) => (
                   <div
                     key={exp.id}
-                    className="flex items-start justify-between gap-2.5 rounded-xl border border-border/70 bg-background/60 p-3.5 hover:border-amber-500/30 transition-all"
+                    className="flex items-start justify-between gap-2.5 rounded-lg border border-border bg-card p-3.5 transition-colors"
                   >
                     <div className="space-y-0.5 min-w-0">
-                      <h4 className="text-xs sm:text-sm font-bold text-foreground truncate">
+                      <h4 className="text-xs sm:text-sm font-semibold text-foreground truncate">
                         {exp.title}
                       </h4>
                       {exp.organization && (
@@ -1895,9 +1882,9 @@ export default function ProfileSetupStudio() {
 
             {/* Add Experience Form Inset */}
             {showAddExp && (
-              <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 space-y-3">
+              <div className="rounded-lg border border-border bg-muted/40 p-4 space-y-3">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-bold text-foreground">Add Experience / Role</h4>
+                  <h4 className="text-xs font-semibold text-foreground">New role or achievement</h4>
                   <button
                     type="button"
                     onClick={() => setShowAddExp(false)}
@@ -1940,10 +1927,10 @@ export default function ProfileSetupStudio() {
                     type="button"
                     size="sm"
                     onClick={handleAddExperience}
-                    className="text-xs font-bold gap-1"
+                    disabled={!newExpTitle.trim()}
                   >
                     <Plus className="h-3.5 w-3.5" />
-                    Save Experience
+                    Add experience
                   </Button>
                 </div>
               </div>
@@ -1952,16 +1939,15 @@ export default function ProfileSetupStudio() {
         </div>
 
         {/* 6. What I Can Help You Achieve (Outcomes) */}
-        <div className="rounded-2xl border border-border/80 bg-card p-5 sm:p-6 shadow-xs space-y-4">
-          <div className="flex items-center justify-between border-b border-border/60 pb-3">
+        <div id="section-outcomes" className="scroll-mt-44 rounded-xl border border-border bg-card p-5 sm:p-6 shadow-card space-y-4">
+          <div className="flex items-center justify-between border-b border-border pb-3">
             <div className="flex items-center gap-2">
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400 font-bold text-xs">
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-secondary text-xs font-semibold text-secondary-foreground tabular">
                 6
               </div>
               <div>
-                <h3 className="text-sm sm:text-base font-bold text-foreground flex items-center gap-1.5">
-                  <Target className="h-4 w-4 text-teal-600 dark:text-teal-400" />
-                  What I Can Help You Achieve
+                <h3 className="text-base font-semibold text-foreground flex items-center gap-1.5">
+                  What students get from you
                 </h3>
                 <p className="text-xs text-muted-foreground">Concrete results students walk away with after connecting with you</p>
               </div>
@@ -1971,10 +1957,10 @@ export default function ProfileSetupStudio() {
                 <button
                   type="button"
                   onClick={() => handleRevertSection("outcomes", "Outcomes")}
-                  className="text-2xs font-semibold text-muted-foreground hover:text-foreground flex items-center gap-1 bg-muted/60 hover:bg-muted px-2 py-0.5 rounded-md transition-colors"
+                  className="inline-flex h-8 items-center gap-1 rounded-md px-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                   title="Restore to previously saved outcomes"
                 >
-                  <RotateCcw className="h-2.5 w-2.5" />
+                  <RotateCcw className="h-3.5 w-3.5" />
                   Revert outcomes
                 </button>
               )}
@@ -1982,27 +1968,27 @@ export default function ProfileSetupStudio() {
                 variant="ghost"
                 size="sm"
                 onClick={handleSuggestOutcomes}
-                className="gap-1 text-2xs font-semibold text-teal-600 hover:text-teal-700 hover:bg-teal-500/10 h-7 px-2"
+                className="text-muted-foreground hover:text-foreground"
               >
-                <Sparkles className="h-3 w-3" />
-                AI Suggest
+                <PenLine />
+                Draft
               </Button>
             </div>
           </div>
 
           <div className="space-y-2">
             {state.outcomes.length === 0 ? (
-              <p className="text-xs text-muted-foreground italic py-1">
+              <p className="py-1 text-sm text-muted-foreground">
                 No outcomes added yet. Click &ldquo;AI Suggest&rdquo; above to auto-generate!
               </p>
             ) : (
               state.outcomes.map((outcome, idx) => (
                 <div
                   key={idx}
-                  className="flex items-center justify-between gap-3 p-2.5 rounded-xl border border-border/60 bg-muted/20 text-xs text-foreground"
+                  className="flex items-center justify-between gap-3 p-2.5 rounded-xl border border-border bg-muted/20 text-xs text-foreground"
                 >
                   <span className="flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+                    <Check className="h-4 w-4 shrink-0 text-primary" />
                     {outcome}
                   </span>
                   <button
@@ -2037,23 +2023,22 @@ export default function ProfileSetupStudio() {
                 className="shrink-0 gap-1 text-xs"
               >
                 <Plus className="h-3.5 w-3.5" />
-                Add Outcome
+                Add outcome
               </Button>
             </div>
           </div>
         </div>
 
         {/* 7. Ask Me Anything Topics */}
-        <div className="rounded-2xl border border-border/80 bg-card p-5 sm:p-6 shadow-xs space-y-4">
-          <div className="flex items-center justify-between border-b border-border/60 pb-3">
+        <div className="rounded-xl border border-border bg-card p-5 sm:p-6 shadow-card space-y-4">
+          <div className="flex items-center justify-between border-b border-border pb-3">
             <div className="flex items-center gap-2">
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-sky-500/10 text-sky-600 dark:text-sky-400 font-bold text-xs">
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-secondary text-xs font-semibold text-secondary-foreground tabular">
                 7
               </div>
               <div>
-                <h3 className="text-sm sm:text-base font-bold text-foreground flex items-center gap-1.5">
-                  <MessageSquareCode className="h-4 w-4 text-sky-600 dark:text-sky-400" />
-                  Ask Me Anything Topics
+                <h3 className="text-base font-semibold text-foreground flex items-center gap-1.5">
+                  Topics to ask you about
                 </h3>
                 <p className="text-xs text-muted-foreground">Conversational prompts for peers reaching out</p>
               </div>
@@ -2063,10 +2048,10 @@ export default function ProfileSetupStudio() {
                 <button
                   type="button"
                   onClick={() => handleRevertSection("ask_me_anything", "AMA Topics")}
-                  className="text-2xs font-semibold text-muted-foreground hover:text-foreground flex items-center gap-1 bg-muted/60 hover:bg-muted px-2 py-0.5 rounded-md transition-colors"
+                  className="inline-flex h-8 items-center gap-1 rounded-md px-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                   title="Restore to previously saved AMA topics"
                 >
-                  <RotateCcw className="h-2.5 w-2.5" />
+                  <RotateCcw className="h-3.5 w-3.5" />
                   Revert AMA
                 </button>
               )}
@@ -2074,33 +2059,34 @@ export default function ProfileSetupStudio() {
                 variant="ghost"
                 size="sm"
                 onClick={handleSuggestAma}
-                className="gap-1 text-2xs font-semibold text-sky-600 hover:text-sky-700 hover:bg-sky-500/10 h-7 px-2"
+                className="text-muted-foreground hover:text-foreground"
               >
-                <Sparkles className="h-3 w-3" />
-                AI Suggest
+                <PenLine />
+                Draft
               </Button>
             </div>
           </div>
 
           <div className="flex flex-wrap gap-2">
             {state.ask_me_anything.length === 0 ? (
-              <p className="text-xs text-muted-foreground italic py-1">
-                No AMA topics added yet. Click &ldquo;AI Suggest&rdquo; above!
+              <p className="py-1 text-sm text-muted-foreground">
+                No AMA topics added yet. Use Draft above, or add one below.
               </p>
             ) : (
               state.ask_me_anything.map((item, idx) => (
                 <span
                   key={idx}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-sky-50 dark:bg-sky-950/60 text-sky-800 dark:text-sky-200 border border-sky-200/60 dark:border-sky-800/60"
+                  className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card py-0.5 pl-2.5 pr-1 text-xs font-medium text-foreground"
                 >
-                  <MessageSquare className="h-3 w-3 text-sky-600 dark:text-sky-400 shrink-0" />
+                  <MessageSquare className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                   {item.topic}
                   <button
                     type="button"
                     onClick={() => handleRemoveAma(idx)}
-                    className="text-sky-600 hover:text-destructive transition-colors ml-1"
+                    aria-label={`Remove ${item.topic}`}
+                    className="flex h-6 w-6 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-accent hover:text-destructive"
                   >
-                    <Trash2 className="h-3 w-3" />
+                    <X className="h-3.5 w-3.5" />
                   </button>
                 </span>
               ))
@@ -2128,22 +2114,21 @@ export default function ProfileSetupStudio() {
               className="shrink-0 gap-1 text-xs"
             >
               <Plus className="h-3.5 w-3.5" />
-              Add Topic
+              Add topic
             </Button>
           </div>
         </div>
 
         {/* 8. Perfect If You Are... (Ideal Mentees) */}
-        <div className="rounded-2xl border border-border/80 bg-card p-5 sm:p-6 shadow-xs space-y-4">
-          <div className="flex items-center justify-between border-b border-border/60 pb-3">
+        <div id="section-ideal" className="scroll-mt-44 rounded-xl border border-border bg-card p-5 sm:p-6 shadow-card space-y-4">
+          <div className="flex items-center justify-between border-b border-border pb-3">
             <div className="flex items-center gap-2">
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400 font-bold text-xs">
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-secondary text-xs font-semibold text-secondary-foreground tabular">
                 8
               </div>
               <div>
-                <h3 className="text-sm sm:text-base font-bold text-foreground flex items-center gap-1.5">
-                  <Users className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-                  Perfect If You Are... (Target Students)
+                <h3 className="text-base font-semibold text-foreground flex items-center gap-1.5">
+                  Who you can help
                 </h3>
                 <p className="text-xs text-muted-foreground">Helps juniors know immediately if you are the right collaborator</p>
               </div>
@@ -2152,11 +2137,11 @@ export default function ProfileSetupStudio() {
               {isSectionModified("ideal_mentees") && (
                 <button
                   type="button"
-                  onClick={() => handleRevertSection("ideal_mentees", "Target Students")}
-                  className="text-2xs font-semibold text-muted-foreground hover:text-foreground flex items-center gap-1 bg-muted/60 hover:bg-muted px-2 py-0.5 rounded-md transition-colors"
+                  onClick={() => handleRevertSection("ideal_mentees", "Who you help")}
+                  className="inline-flex h-8 items-center gap-1 rounded-md px-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                   title="Restore to previously saved target students"
                 >
-                  <RotateCcw className="h-2.5 w-2.5" />
+                  <RotateCcw className="h-3.5 w-3.5" />
                   Revert target students
                 </button>
               )}
@@ -2164,27 +2149,27 @@ export default function ProfileSetupStudio() {
                 variant="ghost"
                 size="sm"
                 onClick={handleSuggestIdealMentees}
-                className="gap-1 text-2xs font-semibold text-purple-600 hover:text-purple-700 hover:bg-purple-500/10 h-7 px-2"
+                className="text-muted-foreground hover:text-foreground"
               >
-                <Sparkles className="h-3 w-3" />
-                AI Suggest
+                <PenLine />
+                Draft
               </Button>
             </div>
           </div>
 
           <div className="space-y-2">
             {state.ideal_mentees.length === 0 ? (
-              <p className="text-xs text-muted-foreground italic py-1">
-                No target descriptions added yet. Click &ldquo;AI Suggest&rdquo; above!
+              <p className="py-1 text-sm text-muted-foreground">
+                No target descriptions added yet. Use Draft above, or add one below.
               </p>
             ) : (
               state.ideal_mentees.map((mentee, idx) => (
                 <div
                   key={idx}
-                  className="flex items-center justify-between gap-3 p-2.5 rounded-xl border border-border/60 bg-muted/20 text-xs text-foreground"
+                  className="flex items-center justify-between gap-3 p-2.5 rounded-xl border border-border bg-muted/20 text-xs text-foreground"
                 >
                   <span className="flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-purple-500 shrink-0" />
+                    <Check className="h-4 w-4 shrink-0 text-primary" />
                     {mentee}
                   </span>
                   <button
@@ -2226,14 +2211,14 @@ export default function ProfileSetupStudio() {
         </div>
 
         {/* 9. Bio & Social Links */}
-        <div className="rounded-2xl border border-border/80 bg-card p-5 sm:p-6 shadow-xs space-y-4">
-          <div className="flex items-center justify-between border-b border-border/60 pb-3">
+        <div className="rounded-xl border border-border bg-card p-5 sm:p-6 shadow-card space-y-4">
+          <div className="flex items-center justify-between border-b border-border pb-3">
             <div className="flex items-center gap-2">
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold text-xs">
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-secondary text-xs font-semibold text-secondary-foreground tabular">
                 9
               </div>
               <div>
-                <h3 className="text-sm sm:text-base font-bold text-foreground">Bio & Social Profiles</h3>
+                <h3 className="text-base font-semibold text-foreground">Bio and links</h3>
                 <p className="text-xs text-muted-foreground">Share your background and connect links</p>
               </div>
             </div>
@@ -2241,10 +2226,10 @@ export default function ProfileSetupStudio() {
               <button
                 type="button"
                 onClick={() => handleRevertSection("bio", "Bio")}
-                className="text-2xs font-semibold text-muted-foreground hover:text-foreground flex items-center gap-1 bg-muted/60 hover:bg-muted px-2 py-0.5 rounded-md transition-colors"
+                className="inline-flex h-8 items-center gap-1 rounded-md px-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                 title="Restore to previous saved bio"
               >
-                <RotateCcw className="h-2.5 w-2.5" />
+                <RotateCcw className="h-3.5 w-3.5" />
                 Revert bio
               </button>
             )}
@@ -2252,7 +2237,7 @@ export default function ProfileSetupStudio() {
 
           <div className="space-y-3 text-xs">
             <div className="space-y-1.5">
-              <label className="font-semibold text-foreground">Short Bio (2-3 sentences)</label>
+              <label className="text-sm font-medium text-foreground">Short bio (2 to 3 sentences)</label>
               <Textarea
                 value={state.bio}
                 onChange={(e) => setState({ ...state, bio: e.target.value })}
@@ -2262,7 +2247,7 @@ export default function ProfileSetupStudio() {
               />
             </div>
             <div className="space-y-1.5">
-              <label className="font-semibold text-foreground">LinkedIn Profile URL</label>
+              <label className="text-sm font-medium text-foreground">LinkedIn URL</label>
               <Input
                 value={state.linkedin_url}
                 onChange={(e) => setState({ ...state, linkedin_url: e.target.value })}
@@ -2274,11 +2259,11 @@ export default function ProfileSetupStudio() {
         </div>
 
         {/* 10. Privacy & CampusBrain AI Discovery Consent */}
-        <div className="rounded-2xl border border-primary/20 bg-primary/5 p-5 shadow-xs flex items-center justify-between gap-4">
+        <label className="flex cursor-pointer items-center justify-between gap-4 rounded-xl border border-border bg-card p-5 shadow-card">
           <div className="space-y-1">
-            <h4 className="text-xs sm:text-sm font-bold text-foreground flex items-center gap-1.5">
-              <ShieldCheck className="h-4 w-4 text-primary" />
-              CampusBrain AI Search Discovery
+            <h4 className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
+              <ShieldCheck className="h-4 w-4 text-muted-foreground" />
+              Show me in search
             </h4>
             <p className="text-xs text-muted-foreground">
               Allow fellow SRM AP students to discover you when searching for your skills, projects, department, or courses.
@@ -2288,21 +2273,21 @@ export default function ProfileSetupStudio() {
             checked={state.isDiscoverable}
             onCheckedChange={(checked) => setState({ ...state, isDiscoverable: checked })}
           />
-        </div>
+        </label>
 
         {/* Missing requirements & Final Save/Publish Bar */}
-        <div className="rounded-2xl border border-border/80 bg-card p-5 sm:p-6 shadow-md space-y-4">
+        <div className="rounded-xl border border-border bg-card p-5 sm:p-6 shadow-card space-y-4">
           {!isPublished && !canPublish && (
-            <div className="rounded-xl bg-amber-500/10 border border-amber-500/30 p-3 text-xs text-amber-900 dark:text-amber-200 space-y-1.5">
-              <div className="font-bold flex items-center gap-1.5">
-                <AlertCircle className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
-                Required before publishing:
+            <div className="space-y-1.5 rounded-lg border border-amber-500/40 bg-amber-50 p-3 text-sm dark:bg-amber-950/20" role="status">
+              <div className="flex items-center gap-1.5 font-medium text-foreground">
+                <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                Required before publishing
               </div>
-              <ul className="list-disc list-inside text-2xs space-y-0.5 text-muted-foreground pl-1">
+              <ul className="list-inside list-disc space-y-0.5 pl-1 text-muted-foreground">
                 {!hasName && <li>Enter your full name</li>}
-                {!hasDepartment && <li>Enter your department / major</li>}
+                {!hasDepartment && <li>Enter your department or major</li>}
                 {state.skills.length < 2 && (
-                  <li>Add at least 2 skills (currently {state.skills.length}) or import resume</li>
+                  <li>Add at least 2 skills (you have {state.skills.length}), or import your resume</li>
                 )}
               </ul>
             </div>
@@ -2310,49 +2295,29 @@ export default function ProfileSetupStudio() {
 
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-1">
             <div className="space-y-0.5">
-              <p className="text-sm font-bold text-foreground">
-                {isPublished ? "Ready to save your profile changes?" : "Ready to publish your campus profile?"}
+              <p className="text-sm font-semibold text-foreground">
+                {isPublished ? "Save your changes" : "Publish your profile"}
               </p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-sm text-muted-foreground">
                 {isPublished
-                  ? "Changes take effect live across CampusBrain search immediately."
-                  : "Classmates and juniors will be able to discover your skills and connect."}
+                  ? "Changes appear in search as soon as they are saved."
+                  : "Classmates and juniors can then find you by skill and message you."}
               </p>
             </div>
 
             <div className="flex items-center gap-2.5">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPreviewModalOpen(true)}
-                className="gap-1.5 text-xs font-semibold"
-              >
-                <Eye className="h-3.5 w-3.5 text-muted-foreground" />
-                Preview Card
+              <Button variant="outline" onClick={() => setPreviewModalOpen(true)}>
+                <Eye />
+                Preview
               </Button>
 
               <Button
                 onClick={handlePublish}
+                isLoading={isSaving}
                 disabled={isSaving || (!isPublished && !canPublish)}
-                size="sm"
-                className={`gap-1.5 font-bold shadow-md px-5 py-2.5 text-sm ${
-                  !isPublished && !canPublish
-                    ? "bg-muted text-muted-foreground hover:bg-muted cursor-not-allowed opacity-80"
-                    : "bg-primary hover:bg-primary/90 text-primary-foreground"
-                }`}
               >
-                {isSaving ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Check className="h-4 w-4 stroke-[3]" />
-                )}
-                <span>
-                  {isPublished
-                    ? "Save Profile Changes"
-                    : canPublish
-                    ? "Publish Campus Profile"
-                    : "Complete Required Info"}
-                </span>
+                {!isSaving && <Check />}
+                {isPublished ? "Save changes" : "Publish profile"}
               </Button>
             </div>
           </div>
@@ -2372,70 +2337,64 @@ export default function ProfileSetupStudio() {
       <Dialog open={previewModalOpen} onOpenChange={setPreviewModalOpen}>
         <DialogContent className="max-w-xl sm:max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-base font-bold">
-              <Eye className="h-4 w-4 text-primary" />
-              Live Campus Card Preview
+            <DialogTitle className="text-lg font-semibold tracking-tight">
+              Card preview
             </DialogTitle>
-            <DialogDescription className="text-xs text-muted-foreground">
-              This is how your profile appears to fellow SRM AP students across search and mentor discovery.
+            <DialogDescription className="text-sm text-muted-foreground">
+              How your profile appears to other SRM AP students in search and the mentor directory.
             </DialogDescription>
           </DialogHeader>
 
           <div className="mt-3 space-y-4">
             {/* Header snippet */}
-            <div className="rounded-xl border border-border/60 bg-muted/30 p-4 space-y-3">
+            <div className="rounded-lg border border-border p-4 space-y-3">
               <div className="flex items-start gap-3.5">
                 <MentorAvatar
                   name={previewMentor.name}
                   src={previewMentor.profile_image}
                   seed={previewMentor.id}
-                  className="h-14 w-14 rounded-xl shadow-xs object-cover"
-                  fallbackClassName="rounded-xl text-lg font-bold"
+                  className="h-12 w-12"
+                  fallbackClassName="text-base"
                 />
                 <div className="space-y-1 min-w-0 flex-1">
-                  <h4 className="text-base font-extrabold text-foreground truncate">
-                    {previewMentor.name || "Your Name"}
+                  <h4 className="truncate text-base font-semibold text-foreground">
+                    {previewMentor.name || "Your name"}
                   </h4>
-                  <p className="text-xs text-muted-foreground flex flex-wrap items-center gap-1">
-                    <span className="font-semibold text-foreground/90">{state.department || "(Your Department)"}</span>
-                    <span>•</span>
-                    <span>{state.year_of_studies || "(Select Year)"}</span>
-                    <span>•</span>
-                    <span className="text-primary font-medium">{state.university}</span>
+                  <p className="text-sm text-muted-foreground">
+                    {[state.department || "Department", state.year_of_studies || "Year", state.university].filter(Boolean).join(" · ")}
                   </p>
                   {state.tagline ? (
-                    <p className="text-xs italic text-foreground/90 pt-0.5 line-clamp-2">
-                      &ldquo;{state.tagline}&rdquo;
+                    <p className="line-clamp-2 pt-0.5 text-sm text-foreground">
+                      {state.tagline}
                     </p>
                   ) : (
-                    <p className="text-xs italic text-muted-foreground pt-0.5">
-                      (Add a one-line tagline in Studio)
+                    <p className="pt-0.5 text-sm text-muted-foreground">
+                      No tagline yet
                     </p>
                   )}
                 </div>
               </div>
 
-              <div className="pt-2 border-t border-border/40 flex items-center justify-between gap-2 text-xs">
+              <div className="flex items-center justify-between gap-2 border-t border-border pt-2 text-xs">
                 <span className="flex items-center gap-1.5 text-muted-foreground">
                   <span className={`h-2 w-2 rounded-full ${state.isAvailable ? "bg-emerald-500" : "bg-amber-500"}`} />
-                  {state.isAvailable ? "Available to help peers" : "Temporarily paused"}
+                  {state.isAvailable ? "Available" : "Paused"}
                 </span>
-                <span className="text-2xs font-semibold text-muted-foreground">SRM AP Campus</span>
               </div>
             </div>
 
             {/* Skills */}
             <div className="space-y-1.5">
-              <div className="text-xs font-bold text-foreground">Skills</div>
+              <div className="text-sm font-medium text-foreground">Skills</div>
               <div className="flex flex-wrap gap-1">
                 {state.skills.length === 0 ? (
-                  <span className="text-2xs text-muted-foreground italic">No skills added</span>
+                  <span className="text-sm text-muted-foreground">No skills added</span>
                 ) : (
                   state.skills.map((s) => (
                     <Badge
                       key={s}
                       variant="secondary"
-                      className="text-2xs font-semibold px-2 py-0.5 bg-indigo-50 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-200"
+                      className="px-2 py-0.5 text-xs font-normal"
                     >
                       {s}
                     </Badge>
@@ -2447,14 +2406,13 @@ export default function ProfileSetupStudio() {
             {/* Projects Snippet */}
             {state.projects.length > 0 && (
               <div className="space-y-1.5">
-                <div className="text-xs font-bold text-foreground flex items-center gap-1">
-                  <FolderGit2 className="h-3.5 w-3.5 text-blue-600" />
-                  Projects ({state.projects.length})
+                <div className="text-sm font-medium text-foreground">
+                  Projects <span className="text-muted-foreground tabular">{state.projects.length}</span>
                 </div>
                 <div className="space-y-1.5">
                   {state.projects.map((p) => (
-                    <div key={p.id} className="p-2.5 rounded-lg border border-border/60 bg-background text-xs space-y-0.5">
-                      <div className="font-bold text-foreground">{p.title}</div>
+                    <div key={p.id} className="space-y-0.5 rounded-lg border border-border p-2.5 text-xs">
+                      <div className="font-medium text-foreground">{p.title}</div>
                       <div className="text-2xs text-muted-foreground line-clamp-2">{p.description}</div>
                     </div>
                   ))}
@@ -2465,14 +2423,13 @@ export default function ProfileSetupStudio() {
             {/* Outcomes Snippet */}
             {state.outcomes.length > 0 && (
               <div className="space-y-1.5">
-                <div className="text-xs font-bold text-foreground flex items-center gap-1">
-                  <Target className="h-3.5 w-3.5 text-teal-600" />
-                  What I can help you achieve
+                <div className="text-sm font-medium text-foreground">
+                  What students get from you
                 </div>
                 <div className="space-y-1">
                   {state.outcomes.map((o, idx) => (
                     <div key={idx} className="flex items-start gap-1.5 text-2xs text-foreground/90">
-                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0 mt-0.5" />
+                      <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
                       <span>{o}</span>
                     </div>
                   ))}
@@ -2487,44 +2444,41 @@ export default function ProfileSetupStudio() {
       <Dialog open={showExitConfirmDialog} onOpenChange={setShowExitConfirmDialog}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 font-bold text-xs uppercase tracking-wider">
-              <AlertCircle className="h-4 w-4" />
-              Unsaved Profile Changes
-            </div>
-            <DialogTitle className="text-lg font-extrabold text-foreground">
-              You have unsaved changes — Please save before leaving!
+            <DialogTitle className="text-lg font-semibold tracking-tight text-foreground">
+              Leave without saving?
             </DialogTitle>
-            <DialogDescription className="text-xs text-muted-foreground leading-relaxed">
-              You have updated your profile details (skills, projects, experience, or resume draft). If you leave without saving, these changes will not be committed to your live campus profile.
+            <DialogDescription className="text-sm leading-relaxed text-muted-foreground">
+              Your edits to skills, projects, experience or the resume draft have not been saved. If you leave now, your public profile keeps its previous version.
             </DialogDescription>
           </DialogHeader>
 
-          <div className="flex flex-col sm:flex-row items-center justify-end gap-2 pt-3 border-t border-border/60">
+          {/* Discard sits apart on the left so it is not hit by reflex. */}
+          <div className="flex flex-col-reverse gap-2 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-between">
             <Button
               variant="ghost"
-              size="sm"
               onClick={handleDiscardAndExit}
-              className="w-full sm:w-auto text-xs text-destructive hover:bg-destructive/10"
+              className="w-full text-destructive hover:bg-destructive/10 hover:text-destructive sm:w-auto"
             >
-              Discard & Leave
+              Discard changes
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowExitConfirmDialog(false)}
-              className="w-full sm:w-auto text-xs"
-            >
-              Keep Editing
-            </Button>
-            <Button
-              size="sm"
-              onClick={handleSaveAndExit}
-              disabled={isSaving || (!isPublished && !canPublish)}
-              className="w-full sm:w-auto text-xs font-bold gap-1.5 bg-primary text-primary-foreground shadow-sm"
-            >
-              {isSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5 stroke-[3]" />}
-              Save Changes & Exit
-            </Button>
+            <div className="flex flex-col-reverse gap-2 sm:flex-row">
+              <Button
+                variant="outline"
+                onClick={() => setShowExitConfirmDialog(false)}
+                className="w-full sm:w-auto"
+              >
+                Keep editing
+              </Button>
+              <Button
+                onClick={handleSaveAndExit}
+                isLoading={isSaving}
+                disabled={isSaving || (!isPublished && !canPublish)}
+                className="w-full sm:w-auto"
+              >
+                {!isSaving && <Check />}
+                Save and leave
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
@@ -2547,7 +2501,7 @@ export default function ProfileSetupStudio() {
             });
           }
           setNudgeReason(null);
-          toast.success("SRM Portal courses and academic details linked!");
+          toast.success("SRM portal linked. Courses and academic details added.");
         }}
       />
 

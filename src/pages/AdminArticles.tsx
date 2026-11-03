@@ -24,8 +24,8 @@ const AdminArticles = () => {
   return (
     <AdminLayout>
       <AdminHeader
-        title="Knowledge Articles"
-        description="Write and format reference content yourself — it's searchable in Ask AI shortly after publishing"
+        title="Knowledge articles"
+        description="Write reference articles. Published articles become searchable in Ask AI within a few minutes."
         action={
           view.mode === "list" && (
             <Button onClick={() => setView({ mode: "create" })}>

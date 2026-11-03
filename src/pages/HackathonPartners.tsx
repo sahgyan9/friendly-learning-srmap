@@ -35,46 +35,46 @@ const HackathonPartners = () => {
             />
 
             <div className="min-h-screen">
-                <main className="pt-24 pb-16">
+                <main className="pt-8 pb-16 md:pt-10">
                     <div className="container px-4 md:px-6">
                         <div className="max-w-4xl mx-auto">
-                            <header className="text-center mb-12">
-                                <h1 className="text-4xl font-bold mb-6">Find Hackathon Partners at Your University</h1>
-                                <p className="text-xl text-muted-foreground">
-                                    Build winning hackathon teams with Friendly Learning SRMAP's skill-based matching
+                            <header className="mb-10">
+                                <h1 className="text-3xl md:text-4xl font-semibold tracking-tight mb-3">Find hackathon partners at SRM AP</h1>
+                                <p className="text-lg text-muted-foreground">
+                                    Find developers, designers and business students to enter a hackathon with.
                                 </p>
                             </header>
 
-                            <div className="grid md:grid-cols-3 gap-8 mb-12">
-                                <div className="text-center p-6 border rounded-lg bg-card">
-                                    <div className="w-12 h-12 mx-auto rounded-xl bg-primary/10 flex items-center justify-center text-primary mb-4">
-                                        <Code className="w-6 h-6" />
+                            <div className="grid md:grid-cols-3 gap-6 mb-10">
+                                <div className="p-6 border rounded-lg bg-card shadow-card">
+                                    <div className="w-10 h-10 rounded-md bg-secondary flex items-center justify-center text-foreground mb-4">
+                                        <Code className="w-5 h-5" />
                                     </div>
-                                    <h3 className="text-xl font-bold mb-3">Find Developers</h3>
+                                    <h3 className="text-base font-semibold mb-2">Find Developers</h3>
                                     <p className="text-sm text-muted-foreground leading-relaxed">Connect with skilled programmers who know the languages and frameworks you need</p>
                                 </div>
-                                <div className="text-center p-6 border rounded-lg bg-card">
-                                    <div className="w-12 h-12 mx-auto rounded-xl bg-purple-500/10 dark:bg-purple-900/30 flex items-center justify-center text-purple-600 dark:text-purple-400 mb-4">
-                                        <Palette className="w-6 h-6" />
+                                <div className="p-6 border rounded-lg bg-card shadow-card">
+                                    <div className="w-10 h-10 rounded-md bg-secondary flex items-center justify-center text-foreground mb-4">
+                                        <Palette className="w-5 h-5" />
                                     </div>
-                                    <h3 className="text-xl font-bold mb-3">Find Designers</h3>
+                                    <h3 className="text-base font-semibold mb-2">Find Designers</h3>
                                     <p className="text-sm text-muted-foreground leading-relaxed">Team up with UI/UX designers and graphic designers to make your project stand out</p>
                                 </div>
-                                <div className="text-center p-6 border rounded-lg bg-card">
-                                    <div className="w-12 h-12 mx-auto rounded-xl bg-blue-500/10 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 mb-4">
-                                        <BarChart3 className="w-6 h-6" />
+                                <div className="p-6 border rounded-lg bg-card shadow-card">
+                                    <div className="w-10 h-10 rounded-md bg-secondary flex items-center justify-center text-foreground mb-4">
+                                        <BarChart3 className="w-5 h-5" />
                                     </div>
-                                    <h3 className="text-xl font-bold mb-3">Find Business Minds</h3>
+                                    <h3 className="text-base font-semibold mb-2">Find Business Minds</h3>
                                     <p className="text-sm text-muted-foreground leading-relaxed">Partner with students skilled in business strategy, marketing, and pitch development</p>
                                 </div>
                             </div>
 
-                            <div className="bg-muted p-8 rounded-lg mb-12">
-                                <h2 className="text-2xl font-bold mb-6">Popular Hackathon Skills on Friendly Learning SRMAP</h2>
+                            <div className="border p-6 md:p-8 rounded-lg mb-10">
+                                <h2 className="text-xl font-semibold tracking-tight mb-5">Skills students list most often</h2>
                                 <div className="grid md:grid-cols-2 gap-4">
                                     <div>
-                                        <h4 className="font-bold mb-2">Technical Skills</h4>
-                                        <ul className="list-disc list-inside space-y-1 text-sm">
+                                        <h3 className="font-medium mb-2">Technical</h3>
+                                        <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
                                             <li>Frontend Development (React, Vue, Angular)</li>
                                             <li>Backend Development (Node.js, Python, Java)</li>
                                             <li>Mobile Development (React Native, Flutter)</li>
@@ -83,8 +83,8 @@ const HackathonPartners = () => {
                                         </ul>
                                     </div>
                                     <div>
-                                        <h4 className="font-bold mb-2">Creative & Business Skills</h4>
-                                        <ul className="list-disc list-inside space-y-1 text-sm">
+                                        <h3 className="font-medium mb-2">Creative and business</h3>
+                                        <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
                                             <li>UI/UX Design</li>
                                             <li>Graphic Design</li>
                                             <li>Business Strategy</li>
@@ -95,19 +95,21 @@ const HackathonPartners = () => {
                                 </div>
                             </div>
 
-                            <div className="text-center">
-                                <h2 className="text-2xl font-bold mb-4">Ready to Build Your Dream Team?</h2>
-                                <p className="mb-6">Join Friendly Learning SRMAP and connect with talented students for your next hackathon</p>
-                                <div className="space-x-4">
+                            <div className="flex flex-col gap-4 border-t pt-8 sm:flex-row sm:items-center sm:justify-between">
+                                <div>
+                                <h2 className="text-xl font-semibold tracking-tight">Start a team</h2>
+                                <p className="text-sm text-muted-foreground">Browse open hackathons and see who else wants to enter. No account needed to look.</p>
+                                </div>
+                                <div className="flex flex-wrap gap-2">
                                     {/* Was /signup, which asked people to make an account before
                                         showing them anything. /opportunities is the thing this page
                                         has always advertised, and it is now real — teams, skills
                                         wanted, and a group chat. Browsing needs no account. */}
-                                    <Button asChild size="lg">
-                                        <Link to="/opportunities">Find Hackathon Partners</Link>
+                                    <Button asChild>
+                                        <Link to="/opportunities">Browse hackathons</Link>
                                     </Button>
-                                    <Button variant="outline" size="lg" asChild>
-                                        <Link to="/mentors">Browse Skills</Link>
+                                    <Button variant="outline" asChild>
+                                        <Link to="/mentors">Browse students by skill</Link>
                                     </Button>
                                 </div>
                             </div>

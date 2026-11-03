@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Link, useSearchParams, useNavigate, useParams } from "react-router-dom";
-import { MessageCircleMore } from "lucide-react";
+import { MessageCircleMore, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
 import MessagesLayout from "@/components/messages/MessagesLayout";
@@ -52,7 +52,7 @@ const Messages = () => {
         toast.error('Failed to start conversation');
         navigate('/messages', { replace: true });
       } else {
-        toast.success('Conversation ready!');
+        toast.success('Conversation opened');
         navigate(`/messages/${conversation.id}`, { replace: true });
       }
     } catch (error) {
@@ -68,16 +68,16 @@ const Messages = () => {
     return (
       <div className="container mx-auto min-h-screen bg-background flex flex-col items-center justify-center gap-6 px-4">
         <motion.div
-          initial={{ opacity: 0, y: 16 }}
+          initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
+          transition={{ duration: 0.3, ease: [0.25, 1, 0.5, 1] }}
           className="text-center"
         >
-          <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 ring-1 ring-primary/20">
-            <MessageCircleMore className="h-8 w-8 text-primary" />
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-secondary">
+            <MessageCircleMore className="h-6 w-6 text-muted-foreground" />
           </div>
-          <h1 className="text-2xl font-bold tracking-tight">Messages</h1>
-          <p className="mt-2 text-muted-foreground">Sign in to view your conversations.</p>
+          <h1 className="text-2xl font-semibold tracking-tight">Messages</h1>
+          <p className="mt-2 text-muted-foreground">Sign in to message mentors and classmates.</p>
           <Button asChild className="mt-6">
             <Link to="/signin">Sign in</Link>
           </Button>
@@ -91,8 +91,8 @@ const Messages = () => {
       {isInitializingConversation ? (
         <div className="container mx-auto flex flex-1 items-center justify-center">
           <div className="text-center">
-            <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-            <p className="text-muted-foreground text-sm">Starting conversation…</p>
+            <Loader2 className="mx-auto mb-3 h-5 w-5 animate-spin text-muted-foreground" />
+            <p className="text-muted-foreground text-sm">Opening conversation</p>
           </div>
         </div>
       ) : (

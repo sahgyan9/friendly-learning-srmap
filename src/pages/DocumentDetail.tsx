@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, FileText, Sparkles } from "lucide-react";
+import { ArrowLeft, FileText } from "lucide-react";
 
 import Footer from "@/components/Footer";
 import SEOHead from "@/components/SEOHead";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { CampusBrainIcon } from "@/components/icons/CampusBrainIcon";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PRIMARY_DOMAIN } from "@/lib/constants";
@@ -38,7 +39,7 @@ const DocumentDetail = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex flex-col">
-        <div className="container mx-auto max-w-3xl px-4 pb-16 pt-24 flex-1">
+        <div className="container mx-auto max-w-3xl px-4 pb-16 pt-8 flex-1">
           <Skeleton className="h-4 w-28 mb-6" />
           <div className="rounded-xl border bg-card p-6 sm:p-8">
             <Skeleton className="h-6 w-32 rounded-full mb-4" />
@@ -58,11 +59,11 @@ const DocumentDetail = () => {
   if (!sections || sections.length === 0) {
     return (
       <div className="min-h-screen bg-background flex flex-col">
-        <div className="container mx-auto max-w-3xl px-4 pb-16 pt-28 flex-1 text-center">
+        <div className="container mx-auto max-w-3xl px-4 pb-16 pt-8 flex-1 text-center">
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-muted">
             <FileText className="h-7 w-7 text-muted-foreground" />
           </div>
-          <h1 className="mt-4 text-2xl font-bold">Document not found</h1>
+          <h1 className="mt-4 text-2xl font-semibold tracking-tight">Document not found</h1>
           <p className="mt-2 text-muted-foreground max-w-md mx-auto">
             This document may have been removed, unpublished, or the link may be invalid.
           </p>
@@ -95,7 +96,7 @@ const DocumentDetail = () => {
       />
 
       <div className="min-h-screen bg-background flex flex-col">
-        <div className="container mx-auto max-w-3xl px-4 pb-16 pt-24 flex-1">
+        <div className="container mx-auto max-w-3xl px-4 pb-16 pt-8 flex-1">
           <Link
             to="/search"
             className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
@@ -116,7 +117,7 @@ const DocumentDetail = () => {
               )}
             </div>
 
-            <h1 className="mt-4 text-2xl sm:text-3xl font-bold leading-tight tracking-tight text-foreground">
+            <h1 className="mt-4 text-3xl md:text-4xl font-semibold leading-tight tracking-tight text-foreground">
               {document_title}
             </h1>
 
@@ -147,8 +148,8 @@ const DocumentDetail = () => {
             <div className="mt-8 flex items-center justify-end border-t border-border pt-4">
               <Button asChild size="sm" variant="ghost" className="text-xs text-muted-foreground hover:text-foreground">
                 <Link to={`/search?q=${encodeURIComponent(`What does "${document_title}" say?`)}`}>
-                  <Sparkles className="mr-1.5 h-3.5 w-3.5 text-primary" />
-                  Ask AI about this
+                  <CampusBrainIcon className="mr-1.5 h-4 w-4 text-primary" />
+                  Ask CampusBrain
                 </Link>
               </Button>
             </div>

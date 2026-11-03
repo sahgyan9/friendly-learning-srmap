@@ -18,23 +18,19 @@ const AdminBadges = () => {
   const handleBadgeCreated = () => {
     setShowCreateForm(false);
     refetch();
-    toast.success("Success", {
-      description: "Badge type created successfully",
-    });
+    toast.success("Badge type created");
   };
 
   const handleBadgeAwarded = () => {
     setShowAwardModal(false);
-    toast.success("Success", {
-      description: "Badge awarded successfully",
-    });
+    toast.success("Badge awarded");
   };
 
   return (
     <AdminLayout>
       <AdminHeader
-        title="Badge Management"
-        description="Create, manage, and award badges to users"
+        title="Badges"
+        description="Create badge types and award them to students and mentors."
         action={
           // w-full + flex-wrap: two nowrap buttons side by side don't fit a
           // 360px admin column. flex-wrap alone does not force a wrap here —

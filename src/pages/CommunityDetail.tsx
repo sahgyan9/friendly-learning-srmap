@@ -5,7 +5,6 @@ import { toast } from "sonner";
 import {
   FolderGit2,
   Hash,
-  Loader2,
   Lock,
   MessageSquare,
   Plus,
@@ -302,7 +301,7 @@ const CommunityDetail = () => {
       return;
     }
 
-    toast.success(`You're in — welcome to ${community.name}`, {
+    toast.success(`Joined ${community.name}`, {
       description: "You can post here now.",
     });
     load();
@@ -331,7 +330,7 @@ const CommunityDetail = () => {
       return;
     }
 
-    toast.success(`You're in — welcome to ${community.name}`);
+    toast.success(`Joined ${community.name}`);
     load();
   };
 
@@ -347,7 +346,7 @@ const CommunityDetail = () => {
       return;
     }
 
-    toast.success("You've left the group");
+    toast.success(`Left ${community.name}`);
     load();
   };
 
@@ -395,8 +394,11 @@ const CommunityDetail = () => {
     return (
       <div className="min-h-screen bg-background">
         <div className="container mx-auto max-w-6xl px-4 py-12">
-          <Skeleton className="mb-4 h-40 w-full rounded-xl" />
-          <Skeleton className="h-64 w-full rounded-xl" />
+          <Skeleton className="mb-4 h-24 w-full rounded-lg" />
+          <div className="grid gap-4 md:grid-cols-[240px_1fr]">
+            <Skeleton className="hidden h-64 w-full rounded-lg md:block" />
+            <Skeleton className="h-[460px] w-full rounded-lg" />
+          </div>
         </div>
       </div>
     );
@@ -407,7 +409,7 @@ const CommunityDetail = () => {
       <div className="min-h-screen bg-background">
         <NoIndex />
         <div className="container mx-auto max-w-2xl px-4 py-24 text-center">
-          <h1 className="mb-3 text-2xl font-bold">That group doesn't exist</h1>
+          <h1 className="mb-3 text-2xl font-semibold tracking-tight">That group doesn't exist</h1>
           <p className="mb-6 text-muted-foreground">
             It may have been removed, or the link may be wrong.
           </p>
@@ -479,10 +481,10 @@ const CommunityDetail = () => {
         {community.viewer_can_view === false ? (
           <Card>
             <CardContent className="flex flex-col items-center gap-3 py-16 text-center">
-              <span className="flex h-12 w-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
-                <Lock className="h-6 w-6" />
+              <span className="flex h-10 w-10 items-center justify-center rounded-md bg-secondary text-muted-foreground">
+                <Lock className="h-5 w-5" />
               </span>
-              <p className="text-lg font-semibold">This workspace is invite only</p>
+              <p className="text-lg font-semibold">This group is invite only</p>
 
               {community.viewer_has_requested ? (
                 <p className="max-w-sm text-sm text-muted-foreground">
@@ -561,9 +563,9 @@ const CommunityDetail = () => {
               {activeTab === "posts" && (
                 <div className="space-y-4">
                   {community.viewer_can_post && (
-                    <div className="flex justify-between items-center rounded-xl border border-border/60 bg-card p-4">
+                    <div className="flex items-center justify-between gap-4 rounded-lg border bg-card p-4 shadow-card">
                       <div>
-                        <h3 className="font-semibold text-sm">Post in #{community.name}</h3>
+                        <h3 className="text-sm font-semibold">Post in {community.name}</h3>
                         <p className="text-xs text-muted-foreground">Share project updates, resources, or code snippets with group members.</p>
                       </div>
                       <Button onClick={() => setCreateOpen(true)} size="sm">
@@ -585,8 +587,8 @@ const CommunityDetail = () => {
                   ) : (
                     <Card>
                       <CardContent className="flex flex-col items-center gap-3 py-14 text-center">
-                        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
-                          <MessageSquare className="h-6 w-6" />
+                        <span className="flex h-10 w-10 items-center justify-center rounded-md bg-secondary text-muted-foreground">
+                          <MessageSquare className="h-5 w-5" />
                         </span>
                         <p className="font-medium">Nothing posted here yet</p>
                         <p className="max-w-sm text-sm text-muted-foreground">
@@ -685,10 +687,10 @@ const CommunityDetail = () => {
                 handleConfirmDeleteChannel();
               }}
               disabled={deletingChannel}
+              aria-busy={deletingChannel}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {deletingChannel && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Remove channel
+              {deletingChannel ? "Removing" : "Remove channel"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
