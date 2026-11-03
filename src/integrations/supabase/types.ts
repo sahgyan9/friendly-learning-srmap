@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "12.2.3 (519615d)"
+    PostgrestVersion: "12.2.3"
   }
   graphql_public: {
     Tables: {
@@ -1123,8 +1123,10 @@ export type Database = {
           community_id: string | null
           content: string
           created_at: string
+          distress_flagged: boolean
           id: string
           image_url: string | null
+          is_anonymous: boolean
           likes_count: number
           mentor_id: string | null
           post_type: string
@@ -1139,8 +1141,10 @@ export type Database = {
           community_id?: string | null
           content: string
           created_at?: string
+          distress_flagged?: boolean
           id?: string
           image_url?: string | null
+          is_anonymous?: boolean
           likes_count?: number
           mentor_id?: string | null
           post_type?: string
@@ -1155,8 +1159,10 @@ export type Database = {
           community_id?: string | null
           content?: string
           created_at?: string
+          distress_flagged?: boolean
           id?: string
           image_url?: string | null
+          is_anonymous?: boolean
           likes_count?: number
           mentor_id?: string | null
           post_type?: string
@@ -1371,6 +1377,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      distress_keywords: {
+        Row: {
+          created_at: string
+          id: number
+          language: string
+          phrase: string
+          severity: string
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          language?: string
+          phrase: string
+          severity?: string
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          language?: string
+          phrase?: string
+          severity?: string
+        }
+        Relationships: []
       }
       email_queue: {
         Row: {
@@ -2237,6 +2267,66 @@ export type Database = {
           },
         ]
       }
+      moderation_queue: {
+        Row: {
+          action_taken_at: string | null
+          action_taken_by: string | null
+          admin_notes: string | null
+          author_id: string | null
+          author_reveal_reason: string | null
+          author_revealed: boolean
+          author_revealed_at: string | null
+          author_revealed_by: string | null
+          content_id: string
+          content_type: string
+          created_at: string
+          id: string
+          matched_phrase: string | null
+          reported_by: string | null
+          source: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          action_taken_at?: string | null
+          action_taken_by?: string | null
+          admin_notes?: string | null
+          author_id?: string | null
+          author_reveal_reason?: string | null
+          author_revealed?: boolean
+          author_revealed_at?: string | null
+          author_revealed_by?: string | null
+          content_id: string
+          content_type: string
+          created_at?: string
+          id?: string
+          matched_phrase?: string | null
+          reported_by?: string | null
+          source: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          action_taken_at?: string | null
+          action_taken_by?: string | null
+          admin_notes?: string | null
+          author_id?: string | null
+          author_reveal_reason?: string | null
+          author_revealed?: boolean
+          author_revealed_at?: string | null
+          author_revealed_by?: string | null
+          content_id?: string
+          content_type?: string
+          created_at?: string
+          id?: string
+          matched_phrase?: string | null
+          reported_by?: string | null
+          source?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           content: string | null
@@ -2502,7 +2592,9 @@ export type Database = {
         Row: {
           content: string
           created_at: string
+          distress_flagged: boolean
           id: string
+          is_anonymous: boolean
           post_id: string
           updated_at: string
           user_id: string
@@ -2510,7 +2602,9 @@ export type Database = {
         Insert: {
           content: string
           created_at?: string
+          distress_flagged?: boolean
           id?: string
+          is_anonymous?: boolean
           post_id: string
           updated_at?: string
           user_id: string
@@ -2518,7 +2612,9 @@ export type Database = {
         Update: {
           content?: string
           created_at?: string
+          distress_flagged?: boolean
           id?: string
+          is_anonymous?: boolean
           post_id?: string
           updated_at?: string
           user_id?: string
@@ -3755,6 +3851,7 @@ export type Database = {
         Args: { p_end_date: string; p_start_date: string }
         Returns: boolean
       }
+      find_distress_phrase: { Args: { p_text: string }; Returns: string }
       generate_session_code: { Args: never; Returns: string }
       get_admin_search_logs: {
         Args: {
@@ -3919,6 +4016,7 @@ export type Database = {
           created_at: string
           id: string
           image_url: string
+          is_anonymous: boolean
           likes_count: number
           post_type: string
           status: string
@@ -3928,6 +4026,7 @@ export type Database = {
           updated_at: string
           viewer_has_liked: boolean
           viewer_is_author: boolean
+          viewer_post_flagged: boolean
         }[]
       }
       get_community_members: {
@@ -3958,6 +4057,7 @@ export type Database = {
           created_at: string
           id: string
           image_url: string
+          is_anonymous: boolean
           likes_count: number
           post_type: string
           status: string
@@ -3966,6 +4066,7 @@ export type Database = {
           updated_at: string
           viewer_has_liked: boolean
           viewer_is_author: boolean
+          viewer_post_flagged: boolean
         }[]
       }
       get_conversation: {
@@ -4123,6 +4224,36 @@ export type Database = {
           upcoming_interested_count: number
         }[]
       }
+      get_moderation_queue: {
+        Args: never
+        Returns: {
+          action_taken_at: string
+          action_taken_by_name: string
+          admin_notes: string
+          author_college_id: string
+          author_department: string
+          author_email: string
+          author_id: string
+          author_name: string
+          author_reveal_reason: string
+          author_revealed: boolean
+          author_revealed_at: string
+          author_revealed_by_name: string
+          content_id: string
+          content_snippet: string
+          content_title: string
+          content_type: string
+          created_at: string
+          id: string
+          is_anonymous: boolean
+          matched_phrase: string
+          reported_by_id: string
+          reported_by_name: string
+          source: string
+          status: string
+          updated_at: string
+        }[]
+      }
       get_my_blog_posts: {
         Args: never
         Returns: {
@@ -4147,6 +4278,7 @@ export type Database = {
           content: string
           created_at: string
           id: string
+          is_anonymous: boolean
           updated_at: string
           viewer_is_author: boolean
         }[]
@@ -4673,6 +4805,10 @@ export type Database = {
         Args: { p_query: string; p_result_url?: string }
         Returns: undefined
       }
+      report_peer_concern: {
+        Args: { p_content_id: string; p_content_type: string; p_note?: string }
+        Returns: Json
+      }
       request_to_join_community: {
         Args: { p_community_id: string; p_message?: string }
         Returns: string
@@ -4682,6 +4818,10 @@ export type Database = {
         Returns: undefined
       }
       resume_expired_mentor_availability: { Args: never; Returns: number }
+      reveal_moderation_author: {
+        Args: { p_queue_id: string; p_reason: string }
+        Returns: Json
+      }
       search_campus_users: {
         Args: { p_limit?: number; p_query?: string }
         Returns: {
@@ -4794,6 +4934,10 @@ export type Database = {
         Returns: undefined
       }
       update_mentor_rating: { Args: { mentor_id: string }; Returns: undefined }
+      update_moderation_status: {
+        Args: { p_notes?: string; p_queue_id: string; p_status: string }
+        Returns: undefined
+      }
       update_typing_indicator: {
         Args: {
           p_conversation_id: string
