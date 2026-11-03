@@ -1,11 +1,8 @@
 import React, { useMemo } from "react";
 import { Link } from "react-router-dom";
 import {
-  BookOpen,
   ChevronDown,
   Compass,
-  Drama,
-  Flame,
   LayoutGrid,
   List,
   MessagesSquare,
@@ -15,7 +12,6 @@ import {
   Users,
   Wrench,
   X,
-  Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -110,13 +106,13 @@ export function CommunityDiscoveryView({
       {/* Search & Category Filter Strip */}
       <div className="space-y-3">
         <div className="flex gap-2 items-center">
-          <div className="relative flex-1">
-            <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+          <div className="relative min-w-0 flex-1">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
             <Input
               value={search}
               onChange={(e) => onSearchChange(e.target.value)}
-              placeholder="Search by name, topics, project tags (e.g. SIH, robotics, web dev)..."
-              className="pl-11 pr-10 h-11 bg-card/80 text-sm shadow-2xs"
+              placeholder="Search by name or topic (SIH, robotics, web dev)"
+              className="h-10 pl-10 pr-10"
               aria-label="Search groups"
             />
             {search && (
@@ -132,29 +128,31 @@ export function CommunityDiscoveryView({
           </div>
 
           {/* View Mode Toggle: Rows vs Grid */}
-          <div className="flex items-center rounded-lg border border-border bg-card p-1 shrink-0 h-11">
+          <div className="flex h-10 shrink-0 items-center rounded-md border bg-card p-1">
             <button
               type="button"
               onClick={() => onViewModeChange("rows")}
-              title="List / Rows view"
+              title="List view"
+              aria-pressed={viewMode === "rows"}
               className={cn(
-                "flex items-center justify-center rounded-md px-2.5 py-1.5 text-xs transition-colors h-8",
+                "flex h-8 items-center justify-center rounded px-2.5 text-xs transition-colors duration-150",
                 viewMode === "rows"
-                  ? "bg-primary text-primary-foreground font-semibold shadow-xs"
+                  ? "bg-secondary font-medium text-foreground"
                   : "text-muted-foreground hover:text-foreground",
               )}
             >
               <List className="h-4 w-4 mr-1 sm:mr-1.5" />
-              <span className="hidden sm:inline">Rows</span>
+              <span className="hidden sm:inline">List</span>
             </button>
             <button
               type="button"
               onClick={() => onViewModeChange("grid")}
               title="Grid view"
+              aria-pressed={viewMode === "grid"}
               className={cn(
-                "flex items-center justify-center rounded-md px-2.5 py-1.5 text-xs transition-colors h-8",
+                "flex h-8 items-center justify-center rounded px-2.5 text-xs transition-colors duration-150",
                 viewMode === "grid"
-                  ? "bg-primary text-primary-foreground font-semibold shadow-xs"
+                  ? "bg-secondary font-medium text-foreground"
                   : "text-muted-foreground hover:text-foreground",
               )}
             >
@@ -171,14 +169,14 @@ export function CommunityDiscoveryView({
             onClick={() => onKindChange("all")}
             aria-pressed={kind === "all"}
             className={cn(
-              "inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-medium transition-all duration-200 whitespace-nowrap shrink-0 shadow-2xs",
+              "inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md border px-3 text-sm transition-colors duration-150",
               kind === "all"
-                ? "border-primary bg-primary text-primary-foreground font-semibold shadow-xs"
-                : "border-border bg-card text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+                ? "border-primary bg-primary/10 font-medium text-primary"
+                : "bg-card text-muted-foreground hover:bg-accent hover:text-foreground",
             )}
           >
-            <Compass className="h-3.5 w-3.5" />
-            All categories
+            <Compass className="h-4 w-4" />
+            All
           </button>
 
           {visibleKinds.map((option) => {
@@ -192,21 +190,16 @@ export function CommunityDiscoveryView({
                 onClick={() => onKindChange(option.value)}
                 aria-pressed={active}
                 className={cn(
-                  "inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-medium transition-all duration-200 whitespace-nowrap shrink-0 shadow-2xs",
+                  "inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md border px-3 text-sm transition-colors duration-150",
                   active
-                    ? "border-primary bg-primary text-primary-foreground font-semibold shadow-xs"
-                    : "border-border bg-card text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+                    ? "border-primary bg-primary/10 font-medium text-primary"
+                    : "bg-card text-muted-foreground hover:bg-accent hover:text-foreground",
                 )}
               >
-                <option.icon className="h-3.5 w-3.5" aria-hidden />
+                <option.icon className="h-4 w-4" aria-hidden />
                 {option.label}
                 {count > 0 && (
-                  <span
-                    className={cn(
-                      "tabular-nums text-2xs px-1 rounded-full",
-                      active ? "bg-primary-foreground/20 text-primary-foreground" : "text-muted-foreground bg-muted",
-                    )}
-                  >
+                  <span className="tabular text-xs text-muted-foreground">
                     {count}
                   </span>
                 )}
@@ -219,7 +212,7 @@ export function CommunityDiscoveryView({
               type="button"
               onClick={() => setShowAllKinds((value) => !value)}
               aria-expanded={showAllKinds}
-              className="inline-flex items-center gap-1.5 rounded-full border border-dashed border-border bg-card px-3.5 py-1.5 text-xs font-medium text-muted-foreground transition-all duration-200 hover:bg-accent hover:text-accent-foreground whitespace-nowrap shrink-0"
+              className="inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md border border-dashed bg-card px-3 text-sm text-muted-foreground transition-colors duration-150 hover:bg-accent hover:text-foreground"
             >
               {showAllKinds ? "Fewer" : `More (${hiddenCount})`}
               <ChevronDown
@@ -235,7 +228,7 @@ export function CommunityDiscoveryView({
       {loading ? (
         <div className={viewMode === "grid" ? "grid gap-4 sm:grid-cols-2 lg:grid-cols-3" : "space-y-3"}>
           {Array.from({ length: 6 }).map((_, index) => (
-            <Skeleton key={index} className={viewMode === "grid" ? "h-52 w-full rounded-2xl" : "h-24 w-full rounded-2xl"} />
+            <Skeleton key={index} className={viewMode === "grid" ? "h-52 w-full rounded-lg" : "h-24 w-full rounded-lg"} />
           ))}
         </div>
       ) : communities.length > 0 ? (
@@ -245,14 +238,9 @@ export function CommunityDiscoveryView({
             {/* 1. Active Today */}
             {activeToday.length > 0 && (
               <div className="space-y-3">
-                <div className="flex items-center justify-between px-1">
-                  <div className="flex items-center gap-2">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400">
-                      <Flame className="h-4 w-4" />
-                    </span>
-                    <h3 className="text-base font-bold text-foreground">Active Today on Campus</h3>
-                  </div>
-                  <span className="text-xs text-muted-foreground">Recent discussions</span>
+                <div className="flex items-baseline justify-between gap-3">
+                  <h3 className="text-lg font-semibold tracking-tight text-foreground">Active today</h3>
+                  <span className="text-sm text-muted-foreground">Recent discussions</span>
                 </div>
 
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -270,19 +258,14 @@ export function CommunityDiscoveryView({
             {/* 2. Hackathons & Projects */}
             {hackathonTeams.length > 0 && (
               <div className="space-y-3">
-                <div className="flex items-center justify-between px-1">
-                  <div className="flex items-center gap-2">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400">
-                      <Zap className="h-4 w-4" />
-                    </span>
-                    <h3 className="text-base font-bold text-foreground">Hackathon Teams & Project Labs</h3>
-                  </div>
+                <div className="flex items-baseline justify-between gap-3">
+                  <h3 className="text-lg font-semibold tracking-tight text-foreground">Hackathon teams and project labs</h3>
                   <button
                     type="button"
                     onClick={() => onKindChange("hackathon")}
-                    className="text-xs font-semibold text-primary hover:underline"
+                    className="shrink-0 text-sm font-medium text-primary underline-offset-4 hover:underline"
                   >
-                    View all hackathons →
+                    View all
                   </button>
                 </div>
 
@@ -301,19 +284,14 @@ export function CommunityDiscoveryView({
             {/* 3. Study Circles */}
             {studyCircles.length > 0 && (
               <div className="space-y-3">
-                <div className="flex items-center justify-between px-1">
-                  <div className="flex items-center gap-2">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                      <BookOpen className="h-4 w-4" />
-                    </span>
-                    <h3 className="text-base font-bold text-foreground">Study Groups & Research Labs</h3>
-                  </div>
+                <div className="flex items-baseline justify-between gap-3">
+                  <h3 className="text-lg font-semibold tracking-tight text-foreground">Study groups and research labs</h3>
                   <button
                     type="button"
                     onClick={() => onKindChange("study")}
-                    className="text-xs font-semibold text-primary hover:underline"
+                    className="shrink-0 text-sm font-medium text-primary underline-offset-4 hover:underline"
                   >
-                    View all study rooms →
+                    View all
                   </button>
                 </div>
 
@@ -332,19 +310,14 @@ export function CommunityDiscoveryView({
             {/* 4. Clubs & Societies */}
             {clubs.length > 0 && (
               <div className="space-y-3">
-                <div className="flex items-center justify-between px-1">
-                  <div className="flex items-center gap-2">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400">
-                      <Drama className="h-4 w-4" />
-                    </span>
-                    <h3 className="text-base font-bold text-foreground">Clubs & Student Societies</h3>
-                  </div>
+                <div className="flex items-baseline justify-between gap-3">
+                  <h3 className="text-lg font-semibold tracking-tight text-foreground">Clubs and societies</h3>
                   <button
                     type="button"
                     onClick={() => onKindChange("club")}
-                    className="text-xs font-semibold text-primary hover:underline"
+                    className="shrink-0 text-sm font-medium text-primary underline-offset-4 hover:underline"
                   >
-                    View all clubs →
+                    View all
                   </button>
                 </div>
 
@@ -385,17 +358,17 @@ export function CommunityDiscoveryView({
         )
       ) : (
         /* Empty State */
-        <Card className="border-border/80 bg-card/60">
+        <Card className="border-dashed shadow-none">
           <CardContent className="flex flex-col items-center gap-4 py-16 text-center">
-            <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-              <Users className="h-7 w-7" />
+            <span className="flex h-10 w-10 items-center justify-center rounded-md bg-secondary text-muted-foreground">
+              <Users className="h-5 w-5" />
             </span>
 
             {search.trim().length > 0 || kind !== "all" ? (
               <div className="space-y-2 max-w-md">
-                <h3 className="text-lg font-bold">No communities match your search</h3>
+                <h3 className="text-lg font-semibold">No communities match</h3>
                 <p className="text-sm text-muted-foreground">
-                  Try searching with different keywords, select "All categories", or start a new group.
+                  Try other keywords, clear the category filter, or start the group yourself.
                 </p>
                 <div className="flex items-center justify-center gap-3 pt-3">
                   <Button
@@ -410,7 +383,7 @@ export function CommunityDiscoveryView({
                   {isUserSignedIn ? (
                     <Button onClick={onStartGroup} className="gap-1.5">
                       <Plus className="h-4 w-4" />
-                      Start this group
+                      Start a group
                     </Button>
                   ) : (
                     <Button asChild>
@@ -421,9 +394,9 @@ export function CommunityDiscoveryView({
               </div>
             ) : (
               <div className="space-y-2 max-w-md">
-                <h3 className="text-lg font-bold">No groups found</h3>
+                <h3 className="text-lg font-semibold">No groups yet</h3>
                 <p className="text-sm text-muted-foreground">
-                  Be the first to start a group for your batch, department, or hackathon team.
+                  Start a group for your batch, department or hackathon team.
                 </p>
                 {isUserSignedIn ? (
                   <Button onClick={onStartGroup} className="mt-2 gap-1.5">

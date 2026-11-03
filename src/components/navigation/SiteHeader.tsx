@@ -23,7 +23,6 @@ import { cn } from "@/lib/utils";
 import {
   PRIMARY_NAV,
   ROUTE_ACCENT,
-  accentFor,
   isActivePath,
   pathShowsDock,
 } from "./nav-config";
@@ -47,7 +46,6 @@ import {
 export function SiteHeader() {
   const { user, profile } = useAuth();
   const location = useLocation();
-  const accent = accentFor(location.pathname);
   // Whether the bottom dock is carrying messages and notifications on this
   // route — see the account cluster below.
   const dockShown = pathShowsDock(location.pathname);
@@ -109,7 +107,6 @@ export function SiteHeader() {
           "sticky top-0 z-50 overflow-hidden bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/75 transition-all duration-300 ease-in-out",
           headerCollapsed ? "max-h-0" : "max-h-16 border-b",
           isMobileChatThread && "hidden md:block",
-          accent.border,
         )}
       >
         <div className="flex h-16 items-center gap-2 px-3 sm:px-4">
@@ -134,9 +131,10 @@ export function SiteHeader() {
             </div>
           </div>
 
-          {/* Centre: the primary nav as icons only. Labels for these live in
-              the rail; here they are tooltips and aria-labels, which is the
-              whole reason this block fits in one row. */}
+          {/* Centre: the primary nav, icon over a short label. Icons alone
+              asked people to hover each one to learn what it was; a
+              one-word label under each costs no extra height in a 64px bar
+              and makes every destination readable at a glance. */}
           <nav aria-label="Primary" className="hidden shrink-0 items-center lg:flex">
             <ul className="flex items-center">
               {centreNav.map((item) => {
@@ -160,17 +158,14 @@ export function SiteHeader() {
                               a block that touches the header's own border. */}
                           <span
                             className={cn(
-                              "flex h-11 w-full items-center justify-center rounded-lg transition-colors",
-                              active ? itemAccent.pill : "hover:bg-muted",
+                              "flex h-12 w-full flex-col items-center justify-center gap-0.5 rounded-lg transition-colors",
+                              active ? itemAccent.text : "text-muted-foreground hover:bg-muted hover:text-foreground",
                             )}
                           >
-                            <Icon
-                              className={cn(
-                                "h-6 w-6 transition-colors",
-                                active ? itemAccent.text : "text-muted-foreground",
-                              )}
-                              aria-hidden
-                            />
+                            <Icon className="h-5 w-5" aria-hidden />
+                            <span className={cn("text-3xs leading-none", active ? "font-semibold" : "font-medium")}>
+                              {item.name}
+                            </span>
                           </span>
 
                           {highlighted && (

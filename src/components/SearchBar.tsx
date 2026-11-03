@@ -66,9 +66,7 @@ const SearchBar = ({ onSearch, onGeminiSearch }: SearchBarProps) => {
 
   const handleGeminiSearch = async () => {
     if (!query.trim()) {
-      toast.error("Empty search", {
-        description: "Please enter a search query first",
-      });
+      toast.error("Type what you are looking for first.");
       return;
     }
 
@@ -81,14 +79,14 @@ const SearchBar = ({ onSearch, onGeminiSearch }: SearchBarProps) => {
       if (error) {
         console.error("Semantic search error:", error);
         toast.error("Search failed", {
-          description: "Couldn't connect to AI search. Please try again.",
+          description: "Could not reach the search service. Try again.",
         });
         return;
       }
 
       if (data.error) {
         console.error("AI search error:", data.error);
-        toast.error("AI search error", {
+        toast.error("Search failed", {
           description: data.error,
         });
         return;
@@ -109,9 +107,7 @@ const SearchBar = ({ onSearch, onGeminiSearch }: SearchBarProps) => {
             (a, b) => (idOrder.get(a.id) ?? 999) - (idOrder.get(b.id) ?? 999)
           );
           onGeminiSearch(sortedMentors);
-          toast.success("AI Search Results", {
-            description: `Found ${sortedMentors.length} mentors matching your request`,
-          });
+          toast.success(`${sortedMentors.length} ${sortedMentors.length === 1 ? "mentor matches" : "mentors match"} your search`);
           return;
         }
       }
@@ -123,7 +119,7 @@ const SearchBar = ({ onSearch, onGeminiSearch }: SearchBarProps) => {
     } catch (err) {
       console.error("Error during AI search:", err);
       toast.error("Search error", {
-        description: "An unexpected error occurred. Please try again.",
+        description: "Something went wrong on our side. Try again.",
       });
     } finally {
       setIsGeminiSearching(false);
@@ -134,7 +130,7 @@ const SearchBar = ({ onSearch, onGeminiSearch }: SearchBarProps) => {
     <div className="w-full mb-4">
       <form 
         onSubmit={handleSubmit}
-        className="relative flex items-center transition-all duration-300 group"
+        className="relative flex items-center"
       >
         <SearchInput
           value={query}

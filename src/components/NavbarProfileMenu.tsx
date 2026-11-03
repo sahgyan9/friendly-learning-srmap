@@ -8,7 +8,7 @@ import {
   Settings,
   ShieldCheck,
   Smartphone,
-  Sparkles,
+  UserPlus,
   User,
   X,
   type LucideIcon,
@@ -174,7 +174,7 @@ const NavbarProfileMenu = ({ variant = "dropdown" }: { variant?: "dropdown" | "s
     } else {
       const accepted = await promptInstall();
       if (accepted) {
-        toast.success("App installed!");
+        toast.success("Friendly Learning installed");
       } else {
         toast.info("Look for the install icon (⊕) in your browser address bar or menu (⋮) → 'Install Friendly Learning'");
       }
@@ -183,29 +183,28 @@ const NavbarProfileMenu = ({ variant = "dropdown" }: { variant?: "dropdown" | "s
 
   const primaryEntries: AccountMenuEntry[] = [
     isRealMentor
-      ? { key: "public-profile", icon: User, label: "My Public Profile", to: `/mentor/${mentorSlug || user.id}` }
+      ? { key: "public-profile", icon: User, label: "My public profile", to: `/mentor/${mentorSlug || user.id}` }
       : {
           key: "setup-profile",
-          icon: Sparkles,
-          label: "Set Up Public Profile",
+          icon: UserPlus,
+          label: "Set up public profile",
           to: "/profile/setup",
           itemClassName: "text-primary focus:text-primary font-medium",
           badge: (
-            <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-semibold">
-              10s
+            <span className="text-2xs text-muted-foreground tabular">
+              1 min
             </span>
           ),
         },
     { key: "srm-portal", icon: CalendarCheck2, iconClassName: "text-primary", label: "SRM Portal", to: "/srmportal" },
-    { key: "settings", icon: Settings, label: "Account Settings", to: "/profile" },
+    { key: "settings", icon: Settings, label: "Account settings", to: "/profile" },
     ...(isAdmin
       ? [
           {
             key: "admin",
             icon: ShieldCheck,
-            label: "Admin Dashboard",
+            label: "Admin console",
             to: "/admin",
-            itemClassName: "text-violet-600 dark:text-violet-400 focus:text-violet-600",
           } satisfies AccountMenuEntry,
         ]
       : []),
@@ -214,8 +213,7 @@ const NavbarProfileMenu = ({ variant = "dropdown" }: { variant?: "dropdown" | "s
           {
             key: "certificate",
             icon: Award,
-            iconClassName: "text-amber-500",
-            label: "My Certificate",
+            label: "My certificate",
             to: "/certificate",
           } satisfies AccountMenuEntry,
         ]
@@ -228,12 +226,12 @@ const NavbarProfileMenu = ({ variant = "dropdown" }: { variant?: "dropdown" | "s
             label: "Install Friendly Learning",
             onClick: handleInstallClick,
             itemClassName: cn(
-              "text-primary focus:text-primary font-medium transition-all duration-300",
-              isHighlightingInstall && "bg-primary/15 ring-1 ring-primary/40 font-semibold rounded-md animate-pulse",
+              "text-primary focus:text-primary font-medium transition-colors duration-150",
+              isHighlightingInstall && "bg-primary/10 ring-1 ring-primary/40 rounded-md",
             ),
             badge: isHighlightingInstall ? (
-              <span className="text-[10px] bg-primary text-primary-foreground font-semibold px-1.5 py-0.5 rounded-full shadow-xs">
-                Here!
+              <span className="text-2xs bg-primary text-primary-foreground font-medium px-1.5 py-0.5 rounded">
+                Install
               </span>
             ) : undefined,
           } satisfies AccountMenuEntry,
@@ -247,7 +245,7 @@ const NavbarProfileMenu = ({ variant = "dropdown" }: { variant?: "dropdown" | "s
     icon: LogOut,
     label: "Sign out",
     onClick: () => { close(); signOut(); },
-    itemClassName: "text-red-500 focus:text-red-500",
+    itemClassName: "text-destructive focus:text-destructive",
   };
 
   const trigger = (
@@ -255,8 +253,8 @@ const NavbarProfileMenu = ({ variant = "dropdown" }: { variant?: "dropdown" | "s
       variant="ghost"
       size="sm"
       className={cn(
-        "rounded-full p-0 h-10 w-10 transition-all duration-300",
-        isHighlightingInstall && "ring-2 ring-primary ring-offset-2 ring-offset-background animate-pulse"
+        "rounded-full p-0 h-10 w-10",
+        isHighlightingInstall && "ring-2 ring-primary ring-offset-2 ring-offset-background"
       )}
     >
       <Avatar>
@@ -278,9 +276,9 @@ const NavbarProfileMenu = ({ variant = "dropdown" }: { variant?: "dropdown" | "s
           ref={swipe.scrollerRef}
           style={swipe.style}
           {...swipe.handlers}
-          className="rounded-t-3xl max-h-[85vh] overflow-y-auto overscroll-contain p-0 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] border-t border-border/80 bg-background/95 backdrop-blur-xl"
+          className="rounded-t-xl max-h-[85vh] overflow-y-auto overscroll-contain p-0 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] border-t border-border bg-background"
         >
-          <div className="sticky top-0 z-10 flex flex-col items-center pt-3 pb-2 bg-background/95 backdrop-blur">
+          <div className="sticky top-0 z-10 flex flex-col items-center pt-3 pb-2 bg-background">
             <div className="h-1.5 w-12 rounded-full bg-muted-foreground/25 mb-2" />
             <div className="flex w-full items-center justify-between px-5">
               <div className="min-w-0">

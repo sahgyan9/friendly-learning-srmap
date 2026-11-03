@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { Check, Loader2, Pencil, X } from "lucide-react";
+import { Check, Pencil } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -76,13 +76,13 @@ function EditableSection<T>({
   return (
     <section
       className={cn(
-        "rounded-xl border border-border bg-card p-5 shadow-sm transition-colors",
-        editing && "border-primary/40 ring-1 ring-primary/20",
+        "rounded-xl border border-border bg-card p-5 shadow-card transition-colors duration-150 md:p-6",
+        editing && "border-primary/40",
         className,
       )}
     >
       <div className="mb-3 flex items-center justify-between gap-2">
-        <h2 className="flex items-center gap-2 text-base font-semibold text-foreground">
+        <h2 className="flex items-center gap-2 text-lg font-semibold tracking-tight text-foreground">
           {icon}
           {title}
         </h2>
@@ -90,15 +90,10 @@ function EditableSection<T>({
         {editing ? (
           <div className="flex items-center gap-1">
             <Button variant="ghost" size="sm" onClick={cancel} disabled={saving}>
-              <X className="mr-1 h-4 w-4" />
               Cancel
             </Button>
-            <Button size="sm" onClick={save} disabled={saving}>
-              {saving ? (
-                <Loader2 className="mr-1 h-4 w-4 animate-spin" />
-              ) : (
-                <Check className="mr-1 h-4 w-4" />
-              )}
+            <Button size="sm" onClick={save} isLoading={saving}>
+              {!saving && <Check />}
               Save
             </Button>
           </div>
@@ -113,7 +108,8 @@ function EditableSection<T>({
                 aria-label={`Edit ${title.toLowerCase()}`}
                 className="text-muted-foreground hover:text-foreground"
               >
-                <Pencil className="h-4 w-4" />
+                <Pencil />
+                Edit
               </Button>
             )}
           </div>

@@ -37,7 +37,7 @@ const AvailabilityBanner = ({ mentor, isOwnProfile, onResumed }: AvailabilityBan
     setResuming(false);
 
     if (error) {
-      toast.error(error.message || "Could not resume. Please try again.");
+      toast.error(error.message || "Could not resume. Try again.");
       return;
     }
 

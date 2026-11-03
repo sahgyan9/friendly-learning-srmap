@@ -152,8 +152,8 @@ export const SwipeableMessage: React.FC<SwipeableMessageProps> = ({
             className={cn(
               "flex h-7 w-7 items-center justify-center rounded-full transition-all duration-150",
               isTriggered
-                ? "bg-primary text-primary-foreground scale-110 shadow-md shadow-primary/30"
-                : "bg-muted/90 text-muted-foreground border border-border/80 shadow-xs"
+                ? "bg-primary text-primary-foreground"
+                : "bg-muted text-muted-foreground border border-border"
             )}
           >
             <Reply className="h-3.5 w-3.5" />

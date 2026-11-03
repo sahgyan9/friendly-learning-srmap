@@ -1,40 +1,38 @@
 import React, { useEffect, useState } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { CampusBrainIcon } from "@/components/icons/CampusBrainIcon";
+import { Loader2 } from "lucide-react";
+import { useReducedMotion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
+// Each phrase names a step the pipeline actually performs, so the line reads
+// as progress rather than personality.
 const DEFAULT_THINKING_PHRASES = [
-  "Thinking…",
-  "Crystallizing insights…",
-  "Synthesizing campus knowledge…",
-  "Connecting faculty & mentors…",
-  "Analyzing courses & skills…",
-  "Picturing possibilities…",
-  "Structuring recommendations…",
-  "Mapping peer discussions…",
-  "Refining overview…",
+  "Searching campus records",
+  "Reading mentor and faculty profiles",
+  "Checking posts and documents",
+  "Writing the answer",
 ];
 
 interface CampusThinkingStatusProps {
   className?: string;
   phrases?: string[];
   layout?: "horizontal" | "vertical";
+  /** Kept for call-site compatibility; the spinner is always 16px. */
   iconSize?: string;
   textSize?: string;
   intervalMs?: number;
 }
 
 /**
- * Animated dynamic AI reasoning indicator.
- * Displays the fast-calculating CampusBrain neural icon alongside smoothly
- * rotating thinking phrases with a glistening white/silver shimmer text animation.
+ * Loading status line for CampusBrain answers: a spinner and the step in
+ * progress. The step advances while the request runs and stops on the last
+ * phrase instead of looping, so a slow answer does not look like it started
+ * over.
  */
 export const CampusThinkingStatus: React.FC<CampusThinkingStatusProps> = ({
   className,
   phrases = DEFAULT_THINKING_PHRASES,
-  layout = "vertical",
-  iconSize = "h-7 w-7",
-  textSize = "text-xs",
+  layout = "horizontal",
+  textSize = "text-sm",
   intervalMs = 1800,
 }) => {
   const [index, setIndex] = useState(0);
@@ -43,49 +41,25 @@ export const CampusThinkingStatus: React.FC<CampusThinkingStatusProps> = ({
   useEffect(() => {
     if (reduceMotion || phrases.length <= 1) return;
     const interval = setInterval(() => {
-      setIndex((prev) => (prev + 1) % phrases.length);
+      setIndex((prev) => Math.min(prev + 1, phrases.length - 1));
     }, intervalMs);
     return () => clearInterval(interval);
   }, [phrases.length, intervalMs, reduceMotion]);
 
-  const currentText = phrases[index % phrases.length];
+  const currentText = phrases[Math.min(index, phrases.length - 1)];
 
   return (
     <div
       className={cn(
-        "flex items-center justify-center select-none",
-        layout === "vertical" ? "flex-col gap-3 py-6" : "flex-row gap-2.5 py-1",
+        "flex select-none items-center text-muted-foreground",
+        layout === "vertical" ? "flex-col justify-center gap-2 py-6 text-center" : "flex-row gap-2",
         className,
       )}
       role="status"
       aria-live="polite"
     >
-      {/* Dynamic Animated Icon with soft ambient aura */}
-      <div className="relative flex items-center justify-center shrink-0">
-        <div className="absolute -inset-2 rounded-full bg-violet-500/20 dark:bg-violet-400/25 blur-md animate-pulse" />
-        <CampusBrainIcon speed="fast" className={cn("relative text-violet-600 dark:text-violet-400", iconSize)} />
-      </div>
-
-      {/* Rotating Shimmer Text */}
-      <div className={cn("relative min-h-[1.25rem] flex items-center justify-center overflow-hidden", layout === "vertical" ? "text-center" : "text-left")}>
-        <AnimatePresence mode="wait" initial={false}>
-          <motion.span
-            key={currentText}
-            initial={{ opacity: 0, y: 5 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -5 }}
-            transition={{ duration: 0.28, ease: "easeOut" }}
-            className={cn(
-              "font-medium tracking-wide",
-              textSize,
-              "bg-gradient-to-r from-violet-600 via-purple-700 to-indigo-600 dark:from-violet-300 dark:via-white dark:to-purple-200 bg-clip-text text-transparent",
-              "animate-pulse drop-shadow-2xs",
-            )}
-          >
-            {currentText}
-          </motion.span>
-        </AnimatePresence>
-      </div>
+      <Loader2 className="h-4 w-4 shrink-0 animate-spin" aria-hidden />
+      <span className={cn("font-medium", textSize)}>{currentText}&hellip;</span>
     </div>
   );
 };

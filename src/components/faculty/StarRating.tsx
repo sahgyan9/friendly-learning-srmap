@@ -78,7 +78,7 @@ export function StarInput({ value, onChange, label, hint, disabled }: StarInputP
             disabled={disabled}
             onClick={() => onChange(star)}
             className={cn(
-              "rounded p-1 transition-transform hover:scale-110",
+              "rounded-md p-1 transition-colors duration-150 hover:bg-accent",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
               disabled && "pointer-events-none opacity-50",
             )}

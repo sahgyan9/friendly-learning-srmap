@@ -75,7 +75,7 @@ export function MathEquationDialog({
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>{mode === "edit" ? "Edit equation" : "Insert equation"}</DialogTitle>
-          <DialogDescription>Write LaTeX — the preview below updates as you type.</DialogDescription>
+          <DialogDescription>Write LaTeX. The preview below updates as you type.</DialogDescription>
         </DialogHeader>
 
         <Textarea
@@ -107,7 +107,7 @@ export function MathEquationDialog({
             Cancel
           </Button>
           <Button onClick={() => onConfirm(latex.trim(), displayMode)} disabled={!latex.trim()}>
-            {mode === "edit" ? "Save Equation" : "Insert"}
+            {mode === "edit" ? "Save equation" : "Insert equation"}
           </Button>
         </DialogFooter>
       </DialogContent>

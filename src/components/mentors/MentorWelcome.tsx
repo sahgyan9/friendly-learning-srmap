@@ -28,23 +28,22 @@ interface MentorWelcomeProps {
 const MentorWelcome = ({ name, onStart, onLeave }: MentorWelcomeProps) => (
   <div className="mx-auto max-w-4xl">
     <div className="mb-10 text-center">
-      <span className="mb-5 inline-flex items-center gap-1.5 rounded-full border bg-muted/50 px-3 py-1 text-xs font-medium text-muted-foreground">
-        <Clock className="h-3.5 w-3.5" />
-        About 3 minutes
-      </span>
-
-      <h1 className="mb-4 text-3xl font-bold tracking-tight md:text-4xl">
-        Let's make you a mentor
+      <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">
+        Become a mentor
       </h1>
-      <p className="mx-auto max-w-xl text-muted-foreground">
-        Set up your profile and it goes live the moment you're done — no waiting, no approval
-        queue. Students looking for help in your department can find you straight away.
+      <p className="mx-auto mt-3 max-w-xl text-muted-foreground">
+        Your profile goes live as soon as you finish, with no approval queue. Students looking
+        for help in your department can find you straight away.
+      </p>
+      <p className="mt-3 inline-flex items-center gap-1.5 text-sm text-muted-foreground">
+        <Clock className="h-4 w-4" />
+        Takes about 3 minutes
       </p>
 
       <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
         <Button size="lg" onClick={onStart} className="w-full sm:w-auto sm:min-w-56">
           Set up my profile
-          <ArrowRight className="ml-2 h-4 w-4" />
+          <ArrowRight />
         </Button>
         <Button size="lg" variant="ghost" onClick={onLeave} className="w-full sm:w-auto">
           Not right now
@@ -56,20 +55,16 @@ const MentorWelcome = ({ name, onStart, onLeave }: MentorWelcomeProps) => (
         them; with two, a half-width card beside the full-width featured one
         would just leave a hole. */}
     <div className="mb-8 grid gap-4">
-      {MENTOR_BENEFITS.map(({ icon: Icon, title, body, accent, featured }) => (
-        <Card key={title} className={`bg-gradient-to-br ${accent.card}`}>
+      {/* The data file carries per-benefit accent colours; they are ignored
+          here so the page stays on the neutral + brand palette. */}
+      {MENTOR_BENEFITS.map(({ icon: Icon, title, body, featured }) => (
+        <Card key={title}>
           <CardContent className={`flex gap-4 ${featured ? "p-6" : "p-5"}`}>
-            <span
-              className={`flex shrink-0 items-center justify-center rounded-lg ${accent.chip} ${
-                featured ? "h-12 w-12" : "h-9 w-9"
-              }`}
-            >
-              <Icon className={featured ? "h-6 w-6" : "h-4 w-4"} />
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-secondary">
+              <Icon className="h-5 w-5 text-foreground" />
             </span>
             <div className="space-y-1">
-              <h2
-                className={`font-semibold leading-snug ${accent.title} ${featured ? "text-lg" : ""}`}
-              >
+              <h2 className={`font-semibold leading-snug text-foreground ${featured ? "text-lg" : ""}`}>
                 {title}
               </h2>
               <p className="text-sm leading-relaxed text-muted-foreground">{body}</p>
@@ -83,13 +78,13 @@ const MentorWelcome = ({ name, onStart, onLeave }: MentorWelcomeProps) => (
       <CertificatePreview name={name} />
     </div>
 
-    <div className="rounded-xl border bg-muted/30 p-6 text-center">
+    <div className="rounded-xl border border-border bg-card p-6 text-center">
       <p className="mb-4 text-sm text-muted-foreground">
-        Three short steps — who you are, where you study, and what you can help with.
+        Three short steps: who you are, where you study, and what you can help with.
       </p>
       <Button size="lg" onClick={onStart} className="w-full sm:w-auto sm:min-w-56">
         Set up my profile
-        <ArrowRight className="ml-2 h-4 w-4" />
+        <ArrowRight />
       </Button>
     </div>
   </div>

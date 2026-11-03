@@ -1,6 +1,7 @@
+import { Skeleton } from "@/components/ui/skeleton";
+import AdminHeader from "./AdminHeader";
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
@@ -115,46 +116,45 @@ const ContactMessagesAdmin = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'unread': return 'bg-red-500';
-      case 'read': return 'bg-yellow-500';
-      case 'responded': return 'bg-green-500';
-      default: return 'bg-gray-500';
+      case 'unread': return 'bg-primary';
+      case 'read': return 'bg-amber-500';
+      case 'responded': return 'bg-green-600';
+      default: return 'bg-muted-foreground';
     }
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-8">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p>Loading contact messages...</p>
-        </div>
+      <div className="space-y-3" role="status" aria-label="Loading contact messages">
+        <Skeleton className="h-9 w-64" />
+        {[0, 1, 2, 3].map((i) => (
+          <Skeleton key={i} className="h-28 rounded-xl" />
+        ))}
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      {/* Stacks below `sm` — three nowrap badges next to the heading do not
-          fit in a 360px admin column (see AdminWelcomeEmails for the same
-          flex-col/sm:flex-row idiom used elsewhere in /admin). */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h2 className="text-2xl font-bold">Contact Messages</h2>
-        <div className="flex flex-wrap items-center gap-2 sm:gap-4">
-          <Badge variant="outline" className="flex items-center gap-1">
-            <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-            Unread: {messages.filter(m => m.status === 'unread').length}
-          </Badge>
-          <Badge variant="outline" className="flex items-center gap-1">
-            <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-            Read: {messages.filter(m => m.status === 'read').length}
-          </Badge>
-          <Badge variant="outline" className="flex items-center gap-1">
-            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-            Responded: {messages.filter(m => m.status === 'responded').length}
-          </Badge>
-        </div>
-      </div>
+      <AdminHeader
+        title="Contact messages"
+        description="Messages sent through the Contact page. Opening one marks it as read."
+      />
+      <dl className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
+        {([
+          ["unread", "Unread"],
+          ["read", "Read"],
+          ["responded", "Responded"],
+        ] as const).map(([key, label]) => (
+          <div key={key} className="flex items-center gap-2">
+            <span className={`h-2 w-2 rounded-full ${getStatusColor(key)}`} aria-hidden />
+            <dt className="text-muted-foreground">{label}</dt>
+            <dd className="tabular font-medium text-foreground">
+              {messages.filter((m) => m.status === key).length}
+            </dd>
+          </div>
+        ))}
+      </dl>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Messages List */}
@@ -162,27 +162,33 @@ const ContactMessagesAdmin = () => {
           {messages.length === 0 ? (
             <Card>
               <CardContent className="text-center py-8">
-                <Mail className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground">No contact messages yet</p>
+                <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-secondary">
+                  <Mail className="h-5 w-5 text-muted-foreground" />
+                </div>
+                <p className="font-medium text-foreground">No messages</p>
+                <p className="mt-1 text-sm text-muted-foreground">Messages from the Contact page appear here.</p>
               </CardContent>
             </Card>
           ) : (
             messages.map((message) => (
               <Card
                 key={message.id}
-                className={`cursor-pointer hover:shadow-md transition-shadow ${selectedMessage?.id === message.id ? 'ring-2 ring-primary' : ''
+                className={`cursor-pointer transition-colors duration-150 ${selectedMessage?.id === message.id ? 'border-primary bg-primary/5' : 'hover:border-foreground/20'
                   }`}
                 onClick={() => handleViewMessage(message)}
               >
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <CardTitle className="text-lg flex items-center gap-2">
-                        <User className="h-4 w-4" />
-                        {message.name}
-                        <Badge className={`${getStatusColor(message.status)} text-white text-xs`}>
+                    <div className="min-w-0 flex-1">
+                      <CardTitle className="text-base flex flex-wrap items-center gap-x-3 gap-y-1">
+                        <span className="flex items-center gap-2">
+                          <User className="h-4 w-4 text-muted-foreground" />
+                          {message.name}
+                        </span>
+                        <span className="flex items-center gap-1.5 text-xs font-medium capitalize text-muted-foreground">
+                          <span className={`h-2 w-2 rounded-full ${getStatusColor(message.status)}`} aria-hidden />
                           {message.status}
-                        </Badge>
+                        </span>
                       </CardTitle>
                       <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
                         <Mail className="h-3 w-3" />
@@ -263,7 +269,7 @@ const ContactMessagesAdmin = () => {
                       contactMessage={selectedMessage}
                       onResponseSent={() => {
                         fetchContactMessages();
-                        toast.success('Response sent successfully!');
+                        toast.success('Response sent');
                       }}
                     />
                     <Button

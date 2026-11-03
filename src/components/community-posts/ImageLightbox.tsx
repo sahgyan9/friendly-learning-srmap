@@ -74,7 +74,7 @@ export function ImageLightbox({
         {/* Backdrop — tapping anywhere on the dark screen closes the lightbox */}
         <DialogOverlay
           onClick={onClose}
-          className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md cursor-pointer"
+          className="fixed inset-0 z-50 bg-black/90 cursor-pointer"
         />
 
         <DialogPrimitive.Content
@@ -95,7 +95,7 @@ export function ImageLightbox({
                   e.stopPropagation();
                   onClose();
                 }}
-                className="absolute right-3 top-3 z-50 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-black shadow-xl backdrop-blur-md transition-all hover:bg-white hover:scale-110 active:scale-95 focus:outline-none cursor-pointer"
+                className="absolute right-3 top-3 z-50 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-black shadow-float transition-colors duration-150 hover:bg-white active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white cursor-pointer"
                 aria-label="Close image viewer"
               >
                 <X className="h-5 w-5 stroke-[2.5]" />
@@ -115,7 +115,7 @@ export function ImageLightbox({
                   {/* Left Arrow Button */}
                   <button
                     type="button"
-                    className="absolute left-3 top-1/2 -translate-y-1/2 z-50 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-black shadow-xl backdrop-blur-md transition-all hover:bg-white hover:scale-110 active:scale-95 focus:outline-none cursor-pointer"
+                    className="absolute left-3 top-1/2 -translate-y-1/2 z-50 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-black shadow-float transition-colors duration-150 hover:bg-white active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white cursor-pointer"
                     onClick={handlePrev}
                     aria-label="Previous image"
                   >
@@ -125,7 +125,7 @@ export function ImageLightbox({
                   {/* Right Arrow Button */}
                   <button
                     type="button"
-                    className="absolute right-3 top-1/2 -translate-y-1/2 z-50 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-black shadow-xl backdrop-blur-md transition-all hover:bg-white hover:scale-110 active:scale-95 focus:outline-none cursor-pointer"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 z-50 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-black shadow-float transition-colors duration-150 hover:bg-white active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white cursor-pointer"
                     onClick={handleNext}
                     aria-label="Next image"
                   >
@@ -133,7 +133,7 @@ export function ImageLightbox({
                   </button>
 
                   {/* Counter Pill */}
-                  <div className="mt-3 flex items-center gap-2 rounded-full bg-black/80 px-3.5 py-1 text-xs font-semibold text-white backdrop-blur-md shadow-lg border border-white/10 select-none">
+                  <div className="mt-3 flex items-center gap-2 tabular rounded-md bg-black/80 px-3 py-1 text-xs font-medium text-white select-none">
                     <span>
                       {currentIndex + 1} / {imageList.length}
                     </span>

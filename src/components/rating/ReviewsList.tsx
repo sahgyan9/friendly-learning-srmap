@@ -81,10 +81,10 @@ const ReviewsList = ({ mentorId }: ReviewsListProps) => {
 
   if (reviews.length === 0) {
     return (
-      <div className="text-center py-8">
-        <p className="text-muted-foreground">No reviews yet</p>
-        <p className="text-sm text-muted-foreground mt-1">
-          Be the first to share your experience with this mentor
+      <div className="py-6 text-center">
+        <p className="text-sm font-medium text-foreground">No reviews yet</p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Reviews from students who have talked to this mentor appear here.
         </p>
       </div>
     );
@@ -101,29 +101,29 @@ const ReviewsList = ({ mentorId }: ReviewsListProps) => {
                 <AvatarFallback>{getInitials(review.reviewer_name)}</AvatarFallback>
               </Avatar>
               
-              <div className="flex-1 space-y-2">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-medium">{review.reviewer_name}</h4>
-                  <span className="text-sm text-muted-foreground">
+              <div className="min-w-0 flex-1 space-y-1.5">
+                <div className="flex items-baseline justify-between gap-3">
+                  <h4 className="truncate text-sm font-medium">{review.reviewer_name}</h4>
+                  <span className="shrink-0 text-xs text-muted-foreground tabular">
                     {formatDate(review.created_at)}
                   </span>
                 </div>
                 
-                <div className="flex items-center space-x-1">
+                <div className="flex items-center gap-0.5" role="img" aria-label={`${review.rating} out of 5`}>
                   {[1, 2, 3, 4, 5].map((star) => (
                     <Star
                       key={star}
                       className={`h-4 w-4 ${
                         star <= review.rating
-                          ? "fill-yellow-400 text-yellow-400"
-                          : "text-muted-foreground"
+                          ? "fill-amber-400 text-amber-400"
+                          : "text-muted-foreground/40"
                       }`}
                     />
                   ))}
                 </div>
                 
                 {review.review_text && (
-                  <p className="text-foreground leading-relaxed">
+                  <p className="text-sm leading-relaxed text-foreground">
                     {review.review_text}
                   </p>
                 )}

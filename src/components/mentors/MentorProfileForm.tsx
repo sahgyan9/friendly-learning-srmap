@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { ArrowLeft, ArrowRight, GraduationCap, Sparkles, UserRound } from "lucide-react";
+import { ArrowLeft, ArrowRight, GraduationCap, HandHelping, UserRound } from "lucide-react";
 import { useMentorForm, MentorFormData } from "@/hooks/useMentorForm";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -145,7 +145,7 @@ const MentorProfileForm = ({ userId, initialData, isEditMode = false }: MentorPr
       disabled={isSubmitting}
       onClick={() => goToStep(step - 1)}
     >
-      <ArrowLeft className="mr-2 h-4 w-4" />
+      <ArrowLeft />
       Back
     </Button>
   );
@@ -154,7 +154,7 @@ const MentorProfileForm = ({ userId, initialData, isEditMode = false }: MentorPr
     <form onSubmit={onFormSubmit} className="space-y-6" noValidate>
       {/* Sticky so the applicant can see the effect of filling a field without
           scrolling back to the top of a form that runs past one screen. */}
-      <div className="sticky top-24 z-10 rounded-lg border bg-background/95 p-4 shadow-sm backdrop-blur">
+      <div className="sticky top-24 z-10 rounded-lg border border-border bg-background/95 p-4 shadow-card backdrop-blur">
         <div className="mb-2 flex items-center justify-between gap-3 text-sm">
           <span className="truncate font-medium">
             {stepped
@@ -163,7 +163,7 @@ const MentorProfileForm = ({ userId, initialData, isEditMode = false }: MentorPr
           </span>
           <span className="shrink-0 tabular-nums text-muted-foreground">{completion}%</span>
         </div>
-        <Progress value={completion} className="h-2" />
+        <Progress value={completion} className="h-1.5" aria-label="Application progress" />
       </div>
 
       {showSection(0) && (
@@ -212,7 +212,7 @@ const MentorProfileForm = ({ userId, initialData, isEditMode = false }: MentorPr
 
       {showSection(2) && (
         <Section
-          icon={<Sparkles className="h-4 w-4" />}
+          icon={<HandHelping className="h-4 w-4" />}
           title="What you can help with"
           description="The part students actually read when choosing a mentor."
         >
@@ -253,7 +253,7 @@ const MentorProfileForm = ({ userId, initialData, isEditMode = false }: MentorPr
             {backButton || <MentorFormCancel isSubmitting={isSubmitting} isDirty={isDirty} />}
             <Button type="button" size="lg" onClick={goNext} className="sm:min-w-52">
               Next
-              <ArrowRight className="ml-2 h-4 w-4" />
+              <ArrowRight />
             </Button>
           </div>
           <p className="text-xs text-muted-foreground sm:text-right">

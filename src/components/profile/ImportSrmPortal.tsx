@@ -205,7 +205,7 @@ export const ImportSrmPortalDialog = ({
       toast.success(next ? "Courses are now visible on your public profile" : "Courses removed from your public profile");
     } catch (err: unknown) {
       console.error("Error toggling courses on profile:", err);
-      toast.error("Failed to update your profile");
+      toast.error("Could not update your profile. Try again.");
     } finally {
       setTogglingCourses(false);
     }
@@ -286,12 +286,12 @@ export const ImportSrmPortalDialog = ({
 
       toast.success(
         publishCoursesChoice
-          ? "SRM Portal linked & coursework published to profile!"
-          : "SRM Portal linked successfully!"
+          ? "SRM portal linked. Coursework added to your profile."
+          : "SRM portal linked."
       );
     } catch (err: unknown) {
       console.error("Error applying imported data to profile:", err);
-      toast.error("Failed to update profile values");
+      toast.error("Could not update your profile. Try again.");
     } finally {
       setApplyingToProfile(false);
     }
@@ -356,24 +356,24 @@ export const ImportSrmPortalDialog = ({
         {successResult ? (
           <div className="space-y-4 py-1">
             <div className="flex flex-col items-center text-center space-y-1.5">
-              <div className="h-11 w-11 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-500 animate-in zoom-in-95">
+              <div className="h-10 w-10 rounded-full bg-emerald-100 dark:bg-emerald-950/60 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
                 <CheckCircle2 className="h-5 w-5" />
               </div>
-              <DialogTitle className="text-lg sm:text-xl font-bold">SRM Portal Linked!</DialogTitle>
+              <DialogTitle className="text-lg font-semibold">SRM portal linked</DialogTitle>
               <DialogDescription className="text-xs text-muted-foreground max-w-xs">
                 We verified your coursework and academic standing from student.srmap.edu.in.
-                We'll keep this refreshed automatically in the background.
+                It refreshes automatically in the background.
               </DialogDescription>
             </div>
 
             {/* Imported Metrics Card */}
-            <div className="rounded-xl border border-border bg-card/80 p-3.5 space-y-2.5 shadow-sm">
+            <div className="rounded-lg border border-border bg-card p-3.5 space-y-2.5">
               <div className="flex items-center justify-between pb-2 border-b border-border">
-                <span className="text-2xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  Summary of Imported Data
+                <span className="text-xs font-medium text-muted-foreground">
+                  Imported
                 </span>
                 <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 text-3xs gap-1 font-normal">
-                  <ShieldCheck className="h-3 w-3" /> Verified SRM AP
+                  <ShieldCheck className="h-3 w-3" /> SRM AP
                 </Badge>
               </div>
 
@@ -652,11 +652,11 @@ const ImportSrmPortal = ({ onProfileUpdate }: ImportSrmPortalProps) => {
           .eq("id", user.id);
       }
 
-      toast.success("Profile updated with imported SRM department & CGPA!");
+      toast.success("Profile updated with your SRM department and CGPA.");
       onProfileUpdate?.();
     } catch (err: unknown) {
       console.error("Error applying imported data to profile:", err);
-      toast.error("Failed to update profile values");
+      toast.error("Could not update your profile. Try again.");
     } finally {
       setApplyingToProfile(false);
     }
@@ -673,7 +673,7 @@ const ImportSrmPortal = ({ onProfileUpdate }: ImportSrmPortalProps) => {
       toast.success(next ? "Courses are now visible on your public profile" : "Courses removed from your public profile");
     } catch (err: unknown) {
       console.error("Error toggling courses on profile:", err);
-      toast.error("Failed to update your profile");
+      toast.error("Could not update your profile. Try again.");
     } finally {
       setTogglingCourses(false);
     }
@@ -681,16 +681,16 @@ const ImportSrmPortal = ({ onProfileUpdate }: ImportSrmPortalProps) => {
 
   return (
     <>
-      <div className="rounded-xl border border-primary/20 bg-gradient-to-r from-primary/5 via-primary/10 to-background p-4 sm:p-5 shadow-sm transition-all">
+      <div className="rounded-xl border border-border bg-card p-4 sm:p-5 shadow-card">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div className="flex items-start gap-3.5">
-            <div className="rounded-xl bg-primary/15 p-2.5 text-primary shrink-0 border border-primary/20">
-              <GraduationCap className="h-6 w-6" />
+            <div className="rounded-lg bg-secondary p-2 text-muted-foreground shrink-0">
+              <GraduationCap className="h-5 w-5" />
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <h3 className="font-semibold text-sm sm:text-base text-foreground">
-                  SRM Portal Sync
+                  SRM portal
                 </h3>
                 {isLinked && record?.sync_status === "success" && (
                   <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 text-3xs gap-1 font-normal">
@@ -718,21 +718,21 @@ const ImportSrmPortal = ({ onProfileUpdate }: ImportSrmPortalProps) => {
                       {record.subjects?.length ? `${record.subjects.length} subjects` : "0 subjects"}
                     </span>
                     {record.cgpa != null && (
-                      <Badge variant="secondary" className="text-3xs gap-1 font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20">
+                      <Badge variant="secondary" className="text-3xs gap-1 font-medium tabular">
                         <ShieldCheck className="h-3 w-3" /> {record.cgpa.toFixed(2)} CGPA
                       </Badge>
                     )}
                   </div>
                   {record.last_synced_at && (
                     <p className="text-2xs text-muted-foreground">
-                      This updates automatically — last refreshed {formatRelativeTime(record.last_synced_at)}
+                      Updates automatically. Last refreshed {formatRelativeTime(record.last_synced_at)}
                     </p>
                   )}
                 </div>
               ) : (
                 <p className="text-xs text-muted-foreground mt-1 max-w-lg">
-                  Link your SRM portal once and we'll keep your verified coursework, branch, current
-                  semester, and CGPA current automatically from student.srmap.edu.in — no more manual re-imports.
+                  Link your SRM portal once to keep your coursework, branch, semester and CGPA up to
+                  date from student.srmap.edu.in.
                 </p>
               )}
             </div>

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Loader2, ZoomIn, ZoomOut } from "lucide-react";
+import { ZoomIn, ZoomOut } from "lucide-react";
 
 import {
   Dialog,
@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
-import { cn } from "@/lib/utils";
 
 /**
  * Free-aspect crop for a blog cover/body image — the same pan-and-zoom-over-
@@ -218,7 +217,7 @@ export function BlogImageCropDialog({ file, onCancel, onCropped, saving }: BlogI
           )}
           <div
             aria-hidden
-            className={cn("pointer-events-none absolute inset-0 rounded-lg border-2 border-white/70")}
+            className="pointer-events-none absolute inset-0 rounded-lg border-2 border-white/70"
           />
         </div>
 
@@ -240,9 +239,8 @@ export function BlogImageCropDialog({ file, onCancel, onCropped, saving }: BlogI
           <Button variant="outline" onClick={onCancel} disabled={saving}>
             Cancel
           </Button>
-          <Button onClick={confirm} disabled={!natural || saving}>
-            {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Use this image
+          <Button onClick={confirm} disabled={!natural} isLoading={saving}>
+            {saving ? "Uploading…" : "Use this image"}
           </Button>
         </DialogFooter>
       </DialogContent>

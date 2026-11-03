@@ -10,9 +10,8 @@ import {
   X,
   BookOpen,
   Loader2,
-  Sparkles,
   History as HistoryIcon,
-  Flame,
+  TrendingUp,
   PenLine,
 } from "lucide-react";
 
@@ -53,85 +52,16 @@ import { getInitials } from "@/utils/user-utils";
 import { cn } from "@/lib/utils";
 
 /**
- * Color themes for suggestion destination icons.
+ * One neutral tile for every row icon. Colour-coding each destination meant
+ * nothing a user could learn; the icon shape and the label already say what
+ * the row is.
  */
-const DESTINATION_THEMES: Record<string, { bg: string; text: string; border: string }> = {
-  mentors: {
-    bg: "bg-violet-500/10 dark:bg-violet-500/20",
-    text: "text-violet-600 dark:text-violet-400",
-    border: "border-violet-500/20 dark:border-violet-500/30",
-  },
-  faculty: {
-    bg: "bg-rose-500/10 dark:bg-rose-500/20",
-    text: "text-rose-600 dark:text-rose-400",
-    border: "border-rose-500/20 dark:border-rose-500/30",
-  },
-  opportunities: {
-    bg: "bg-amber-500/10 dark:bg-amber-500/20",
-    text: "text-amber-600 dark:text-amber-400",
-    border: "border-amber-500/20 dark:border-amber-500/30",
-  },
-  posts: {
-    bg: "bg-amber-500/10 dark:bg-amber-500/20",
-    text: "text-amber-600 dark:text-amber-400",
-    border: "border-amber-500/20 dark:border-amber-500/30",
-  },
-  communities: {
-    bg: "bg-emerald-500/10 dark:bg-emerald-500/20",
-    text: "text-emerald-600 dark:text-emerald-400",
-    border: "border-emerald-500/20 dark:border-emerald-500/30",
-  },
-  events: {
-    bg: "bg-pink-500/10 dark:bg-pink-500/20",
-    text: "text-pink-600 dark:text-pink-400",
-    border: "border-pink-500/20 dark:border-pink-500/30",
-  },
-  "hackathon-partners": {
-    bg: "bg-amber-500/10 dark:bg-amber-500/20",
-    text: "text-amber-600 dark:text-amber-400",
-    border: "border-amber-500/20 dark:border-amber-500/30",
-  },
-  "study-partners": {
-    bg: "bg-blue-500/10 dark:bg-blue-500/20",
-    text: "text-blue-600 dark:text-blue-400",
-    border: "border-blue-500/20 dark:border-blue-500/30",
-  },
-  "become-mentor": {
-    bg: "bg-indigo-500/10 dark:bg-indigo-500/20",
-    text: "text-indigo-600 dark:text-indigo-400",
-    border: "border-indigo-500/20 dark:border-indigo-500/30",
-  },
-  guides: {
-    bg: "bg-cyan-500/10 dark:bg-cyan-500/20",
-    text: "text-cyan-600 dark:text-cyan-400",
-    border: "border-cyan-500/20 dark:border-cyan-500/30",
-  },
-  "how-it-works": {
-    bg: "bg-cyan-500/10 dark:bg-cyan-500/20",
-    text: "text-cyan-600 dark:text-cyan-400",
-    border: "border-cyan-500/20 dark:border-cyan-500/30",
-  },
-  contact: {
-    bg: "bg-orange-500/10 dark:bg-orange-500/20",
-    text: "text-orange-600 dark:text-orange-400",
-    border: "border-orange-500/20 dark:border-orange-500/30",
-  },
-  "toggle-theme": {
-    bg: "bg-purple-500/10 dark:bg-purple-500/20",
-    text: "text-purple-600 dark:text-purple-400",
-    border: "border-purple-500/20 dark:border-purple-500/30",
-  },
-  messages: {
-    bg: "bg-sky-500/10 dark:bg-sky-500/20",
-    text: "text-sky-600 dark:text-sky-400",
-    border: "border-sky-500/20 dark:border-sky-500/30",
-  },
-  profile: {
-    bg: "bg-blue-500/10 dark:bg-blue-500/20",
-    text: "text-blue-600 dark:text-blue-400",
-    border: "border-blue-500/20 dark:border-blue-500/30",
-  },
-};
+const ICON_TILE =
+  "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border bg-secondary text-muted-foreground transition-colors duration-150 group-data-[selected=true]:border-primary/30 group-data-[selected=true]:text-primary";
+
+/** Shared row anatomy, so keyboard selection reads the same in every group. */
+const ROW =
+  "group my-0.5 flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 transition-colors duration-150 data-[selected=true]:bg-accent";
 
 const CATEGORY_PILLS = [
   { id: "all", label: "All", to: "/search", icon: Search },
@@ -294,41 +224,25 @@ const SiteSearch = () => {
 
   const renderDestination = (destination: SearchDestination) => {
     const Icon = iconFor(destination);
-    const themeStyle = DESTINATION_THEMES[destination.id] || {
-      bg: "bg-primary/10",
-      text: "text-primary",
-      border: "border-primary/20",
-    };
-
     return (
       <CommandItem
         key={destination.id}
         value={destination.id}
         onSelect={() => runDestination(destination)}
-        className={cn(
-          "group flex items-center gap-3 rounded-xl px-3 py-2.5 my-0.5 transition-all duration-200 cursor-pointer",
-          "data-[selected=true]:bg-accent/80 data-[selected=true]:shadow-sm data-[selected=true]:scale-[1.008]",
-        )}
+        className={ROW}
       >
-        <span
-          className={cn(
-            "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border transition-all duration-200 group-data-[selected=true]:scale-110 group-data-[selected=true]:shadow-xs",
-            themeStyle.bg,
-            themeStyle.text,
-            themeStyle.border,
-          )}
-        >
+        <span className={ICON_TILE}>
           <Icon className="h-4 w-4" />
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block truncate font-medium text-sm text-foreground/90 group-data-[selected=true]:text-foreground group-data-[selected=true]:font-semibold">
+          <span className="block truncate text-sm font-medium text-foreground">
             {labelFor(destination)}
           </span>
-          <span className="block truncate text-xs text-muted-foreground/80 group-data-[selected=true]:text-muted-foreground">
+          <span className="block truncate text-xs text-muted-foreground">
             {destination.hint}
           </span>
         </span>
-        <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/40 opacity-0 group-data-[selected=true]:opacity-100 group-data-[selected=true]:translate-x-0.5 transition-all duration-200" />
+        <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground opacity-0 transition-opacity duration-150 group-data-[selected=true]:opacity-100" aria-hidden />
       </CommandItem>
     );
   };
@@ -351,21 +265,6 @@ const SiteSearch = () => {
         ? PenLine
         : BookOpen;
 
-    const iconStyle =
-      hit.kind === "faculty"
-        ? "border-rose-500/20 bg-rose-500/10 text-rose-600 dark:text-rose-400"
-        : hit.kind === "mentor"
-        ? "border-violet-500/20 bg-violet-500/10 text-violet-600 dark:text-violet-400"
-        : hit.kind === "opportunity"
-        ? "border-amber-500/20 bg-amber-500/10 text-amber-600 dark:text-amber-400"
-        : hit.kind === "community"
-        ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-        : hit.kind === "post"
-        ? "border-amber-500/20 bg-amber-500/10 text-amber-600 dark:text-amber-400"
-        : hit.kind === "blog_post"
-        ? "border-indigo-500/20 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400"
-        : "border-slate-500/20 bg-slate-500/10 text-slate-600 dark:text-slate-400";
-
     return (
       <CommandItem
         key={hit.id}
@@ -374,36 +273,33 @@ const SiteSearch = () => {
           if (user && query.trim()) recordSearchHistory(query.trim(), hit.to);
           goTo(hit.to);
         }}
-        className={cn(
-          "group flex items-center gap-3 rounded-xl px-3 py-2 my-0.5 transition-all duration-150 cursor-pointer",
-          "data-[selected=true]:bg-accent/80 data-[selected=true]:shadow-xs",
-        )}
+        className={ROW}
       >
         {isPerson ? (
-          <Avatar className="h-8 w-8 shrink-0 border border-border/50">
+          <Avatar className="h-8 w-8 shrink-0 border border-border">
             <AvatarImage src={hit.image ?? undefined} alt="" />
             <AvatarFallback className="text-xs font-medium">{getInitials(hit.title)}</AvatarFallback>
           </Avatar>
         ) : hit.image ? (
-          <img src={hit.image} alt="" loading="lazy" decoding="async" className="h-8 w-8 shrink-0 rounded-lg object-cover border border-border/50" />
+          <img src={hit.image} alt="" loading="lazy" decoding="async" className="h-8 w-8 shrink-0 rounded-lg border border-border object-cover" />
         ) : (
-          <span className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border", iconStyle)}>
-            <HitIcon className="h-3.5 w-3.5" />
+          <span className={ICON_TILE}>
+            <HitIcon className="h-4 w-4" />
           </span>
         )}
 
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
-            <span className="truncate font-medium text-sm text-foreground/90 group-data-[selected=true]:text-foreground">
+            <span className="truncate text-sm font-medium text-foreground">
               {hit.title}
             </span>
-            <span className="shrink-0 rounded bg-muted/60 px-1.5 py-0.2 text-4xs font-semibold uppercase text-muted-foreground">
-              {hit.kind}
+            <span className="shrink-0 rounded border border-border px-1.5 text-3xs font-medium capitalize text-muted-foreground">
+              {hit.kind.replace("_", " ")}
             </span>
           </div>
           <p className="truncate text-xs text-muted-foreground">{hit.subtitle}</p>
         </div>
-        <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/30 opacity-0 group-data-[selected=true]:opacity-100 group-data-[selected=true]:translate-x-0.5 transition-all duration-150" />
+        <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground opacity-0 transition-opacity duration-150 group-data-[selected=true]:opacity-100" aria-hidden />
       </CommandItem>
     );
   };
@@ -412,33 +308,22 @@ const SiteSearch = () => {
 
   return (
     <>
-      <div className="group relative">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -inset-0.5 rounded-xl bg-primary/20 opacity-0 blur-xs transition-opacity duration-300 group-hover:opacity-75"
-        />
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          aria-label="Search CampusBrain"
-          className={cn(
-            "relative flex h-9 items-center gap-2 rounded-xl border border-primary/25 bg-background text-xs font-normal text-muted-foreground transition-all duration-200 shadow-xs select-none",
-            "hover:border-primary/45 hover:bg-muted/30 hover:text-foreground",
-            "w-9 justify-center p-0 sm:w-44 sm:justify-start sm:px-2 md:w-48 lg:w-52",
-          )}
-        >
-          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground shadow-xs shadow-primary/25">
-            <Search className="h-3.5 w-3.5" aria-hidden />
-          </span>
-          <span className="hidden sm:inline truncate text-xs text-muted-foreground group-hover:text-foreground">
-            Ask CampusBrain…
-          </span>
-          <span className="ml-auto hidden sm:flex shrink-0 items-center rounded-md border border-primary/25 bg-primary/10 px-1.5 py-0.5 text-3xs font-semibold text-primary shadow-2xs">
-            <span className="hidden md:inline">AI Mode</span>
-            <span className="md:hidden">AI</span>
-          </span>
-        </button>
-      </div>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        aria-label="Search Friendly Learning"
+        className={cn(
+          "flex h-9 select-none items-center gap-2 rounded-lg border border-border bg-background text-sm text-muted-foreground transition-colors duration-150",
+          "hover:border-foreground/20 hover:text-foreground",
+          "w-9 justify-center p-0 sm:w-44 sm:justify-start sm:px-2.5 md:w-48 lg:w-56",
+        )}
+      >
+        <Search className="h-4 w-4 shrink-0" aria-hidden />
+        <span className="hidden truncate sm:inline">Search</span>
+        <kbd className="ml-auto hidden shrink-0 items-center rounded border border-border bg-muted px-1.5 font-sans text-3xs font-medium text-muted-foreground sm:inline-flex">
+          {isMac ? "\u2318" : "Ctrl"} D
+        </kbd>
+      </button>
 
       <Dialog
         open={open}
@@ -460,32 +345,30 @@ const SiteSearch = () => {
           }}
           className={cn(
             "top-[8%] max-h-[85vh] translate-y-0 gap-0 overflow-hidden p-0 sm:top-[10%] sm:max-w-xl",
-            "border border-white/10 dark:border-white/15 bg-card/95 dark:bg-[#0c1017]/95 backdrop-blur-2xl shadow-2xl rounded-2xl",
+            "rounded-xl border border-border bg-popover shadow-float",
             "[&>button:last-child]:top-3.5 [&>button:last-child]:right-3.5 [&>button:last-child]:rounded-lg [&>button:last-child]:p-1.5 [&>button:last-child]:text-muted-foreground/70 hover:[&>button:last-child]:text-foreground hover:[&>button:last-child]:bg-accent transition-colors",
           )}
         >
           <DialogTitle className="sr-only">Search Friendly Learning</DialogTitle>
           <DialogDescription className="sr-only">
-            Search for mentors, faculty, hackathons, groups, posts and pages with CampusBrain AI.
+            Search mentors, faculty, hackathons, groups, posts and pages, or ask CampusBrain a question.
           </DialogDescription>
 
           <Command shouldFilter={false} className="rounded-none bg-transparent">
-            {/* Input section with rounded rectangle container & border glow */}
-            <div className="p-3 pr-11 sm:p-4 sm:pr-12 pb-3 border-b border-border/30 bg-muted/10">
+            <div className="border-b border-border p-3 pr-11 sm:p-4 sm:pr-12">
               <div
                 className={cn(
-                  "relative flex items-center rounded-xl px-3 py-1 transition-all duration-300",
-                  "border bg-background/80 dark:bg-[#111722]/80 backdrop-blur-md shadow-xs",
+                  "relative flex items-center rounded-lg border bg-background px-3 transition-colors duration-150",
                   isAiMode
-                    ? "border-violet-500/50 bg-gradient-to-r from-violet-500/[0.08] via-purple-500/[0.04] to-transparent ring-2 ring-violet-500/20 shadow-md shadow-violet-500/10"
-                    : "border-border/60 focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/20 focus-within:bg-background",
+                    ? "border-primary/50 ring-2 ring-primary/15"
+                    : "border-border focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/15",
                 )}
                 cmdk-input-wrapper=""
               >
                 {isAiMode ? (
-                  <CampusBrainIcon speed={liveLoading ? "fast" : "normal"} className="mr-2.5 h-5 w-5 text-violet-500 dark:text-violet-400 shrink-0 pointer-events-none" />
+                  <CampusBrainIcon animate={false} className="pointer-events-none mr-2.5 h-4 w-4 shrink-0 text-primary" />
                 ) : (
-                  <Search className="mr-2.5 h-4 w-4 text-muted-foreground/70 shrink-0 pointer-events-none" />
+                  <Search className="pointer-events-none mr-2.5 h-4 w-4 shrink-0 text-muted-foreground" />
                 )}
                 <input
                   autoFocus
@@ -493,10 +376,10 @@ const SiteSearch = () => {
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder={
                     isAiMode
-                      ? 'Ask CampusBrain: "Computer Science faculty" or "Web Dev mentors…"'
+                      ? "Ask a question, e.g. Which faculty work on machine learning?"
                       : "Search mentors, faculty, hackathons, groups…"
                   }
-                  className="h-10 sm:h-11 flex-1 min-w-0 bg-transparent text-base md:text-sm text-foreground placeholder:text-muted-foreground/50 border-none outline-none focus:outline-none focus:ring-0"
+                  className="h-11 min-w-0 flex-1 border-none bg-transparent text-base text-foreground outline-none placeholder:text-muted-foreground focus:outline-none focus:ring-0 md:text-sm"
                   onKeyDown={(e) => {
                     if (e.key === "Tab" && !e.shiftKey) {
                       e.preventDefault();
@@ -510,48 +393,53 @@ const SiteSearch = () => {
                     }
                   }}
                 />
-                {liveLoading && <CampusBrainIcon speed="fast" className="mr-2 h-4 w-4 text-violet-500 dark:text-violet-400 shrink-0" />}
+                {liveLoading && (
+                  <Loader2 className="mr-2 h-4 w-4 shrink-0 animate-spin text-muted-foreground" aria-label="Searching" />
+                )}
                 {query && (
                   <button
+                    type="button"
                     onClick={() => setQuery("")}
-                    className="shrink-0 p-1 mr-1 rounded-md text-muted-foreground/70 hover:text-foreground hover:bg-accent transition-colors"
-                    title="Clear query"
+                    className="mr-1 shrink-0 rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                    aria-label="Clear query"
                   >
                     <X className="h-3.5 w-3.5" />
                   </button>
                 )}
 
-                {/* In-box AI Mode Toggle Button */}
+                {/* A toggle, not a mode banner: aria-pressed carries the state */}
                 <button
                   type="button"
                   onClick={() => setIsAiMode((prev) => !prev)}
+                  aria-pressed={isAiMode}
                   className={cn(
-                    "shrink-0 flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-all duration-200 cursor-pointer select-none",
+                    "flex h-7 shrink-0 cursor-pointer select-none items-center gap-1.5 rounded-md border px-2 text-xs font-medium transition-colors duration-150",
                     isAiMode
-                      ? "bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-sm shadow-violet-500/25 ring-1 ring-violet-400/40"
-                      : "border border-border/60 bg-muted/50 text-muted-foreground hover:text-foreground hover:bg-accent hover:border-border",
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-border bg-secondary text-muted-foreground hover:text-foreground",
                   )}
-                  title="Toggle AI Mode (Press Tab)"
+                  title="Ask CampusBrain (Tab)"
                 >
-                  <CampusBrainIcon className={cn("h-3.5 w-3.5", isAiMode ? "text-violet-200" : "text-violet-500")} />
-                  <span className="hidden sm:inline">{isAiMode ? "AI Active" : "AI Mode"}</span>
+                  <CampusBrainIcon animate={false} className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Ask</span>
                 </button>
               </div>
             </div>
 
             {/* Quick Category Filter Bar */}
             {!searching && (
-              <div className="flex items-center gap-1.5 px-4 py-2 border-b border-border/30 bg-muted/10 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-                <span className="text-2xs font-medium text-muted-foreground/70 shrink-0 mr-1">Jump to:</span>
+              <div className="flex items-center gap-1.5 border-b border-border px-4 py-2 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+                <span className="mr-1 shrink-0 text-2xs font-medium text-muted-foreground">Go to</span>
                 {CATEGORY_PILLS.map((cat) => {
                   const Icon = cat.icon;
                   return (
                     <button
                       key={cat.id}
+                      type="button"
                       onClick={() => goTo(cat.to)}
-                      className="flex shrink-0 items-center gap-1.5 rounded-lg border border-border/50 bg-background/60 hover:bg-accent hover:border-border px-2.5 py-1 text-xs text-muted-foreground hover:text-foreground transition-all duration-150 shadow-2xs"
+                      className="flex h-7 shrink-0 items-center gap-1.5 rounded-md border border-border px-2.5 text-xs text-muted-foreground transition-colors duration-150 hover:border-foreground/20 hover:text-foreground"
                     >
-                      <Icon className="h-3 w-3 text-muted-foreground" />
+                      <Icon className="h-3.5 w-3.5" />
                       <span>{cat.label}</span>
                     </button>
                   );
@@ -577,14 +465,11 @@ const SiteSearch = () => {
                     <CommandGroup
                       heading={
                         <div className="flex items-center justify-between">
-                          <span className="flex items-center gap-1.5 font-semibold text-xs text-foreground/90">
-                            <HistoryIcon className="h-3.5 w-3.5 text-primary" />
-                            Recent Searches
-                          </span>
+                          <span className="text-xs font-medium text-muted-foreground">Recent searches</span>
                           <button
                             type="button"
                             onClick={clearHistory}
-                            className="text-3xs text-muted-foreground font-normal hover:text-foreground transition-colors cursor-pointer"
+                            className="cursor-pointer text-xs font-normal text-muted-foreground underline-offset-2 transition-colors hover:text-foreground hover:underline"
                           >
                             Clear
                           </button>
@@ -596,22 +481,20 @@ const SiteSearch = () => {
                           key={`history-${entry.query}`}
                           value={`history-${entry.query}`}
                           onSelect={() => runHistoryEntry(entry)}
-                          className={cn(
-                            "group flex items-center gap-3 rounded-xl px-3 py-2 my-0.5 transition-all duration-150 cursor-pointer",
-                            "data-[selected=true]:bg-accent/80 data-[selected=true]:shadow-xs hover:bg-accent/50",
-                          )}
+                          className={ROW}
                         >
-                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border/50 bg-muted/40 text-muted-foreground">
-                            <HistoryIcon className="h-3.5 w-3.5" />
+                          <span className={ICON_TILE}>
+                            <HistoryIcon className="h-4 w-4" />
                           </span>
-                          <span className="min-w-0 flex-1 truncate text-sm text-foreground/90 group-data-[selected=true]:text-foreground">
+                          <span className="min-w-0 flex-1 truncate text-sm text-foreground">
                             {entry.query}
                           </span>
+                          {/* Always visible: a hover-only control does not exist on touch screens */}
                           <button
                             type="button"
                             onClick={(e) => removeHistoryEntry(entry.query, e)}
-                            className="shrink-0 rounded-md p-1 text-muted-foreground/50 opacity-0 group-hover:opacity-100 hover:text-foreground hover:bg-accent transition-all"
-                            title="Remove from history"
+                            className="shrink-0 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
+                            aria-label={`Remove ${entry.query} from history`}
                           >
                             <X className="h-3.5 w-3.5" />
                           </button>
@@ -623,10 +506,7 @@ const SiteSearch = () => {
                   {trending.length > 0 && (
                     <CommandGroup
                       heading={
-                        <span className="flex items-center gap-1.5 font-semibold text-xs text-foreground/90">
-                          <Flame className="h-3.5 w-3.5 text-orange-500" />
-                          Trending Now
-                        </span>
+                        <span className="text-xs font-medium text-muted-foreground">Trending on campus</span>
                       }
                     >
                       {trending.map((entry) => (
@@ -638,15 +518,12 @@ const SiteSearch = () => {
                             close();
                             navigate(buildSearchUrl(entry.query, "all"));
                           }}
-                          className={cn(
-                            "group flex items-center gap-3 rounded-xl px-3 py-2 my-0.5 transition-all duration-150 cursor-pointer",
-                            "data-[selected=true]:bg-accent/80 data-[selected=true]:shadow-xs hover:bg-accent/50",
-                          )}
+                          className={ROW}
                         >
-                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-orange-500/20 bg-orange-500/10 text-orange-500">
-                            <Flame className="h-3.5 w-3.5" />
+                          <span className={ICON_TILE}>
+                            <TrendingUp className="h-4 w-4" />
                           </span>
-                          <span className="min-w-0 flex-1 truncate text-sm text-foreground/90 group-data-[selected=true]:text-foreground">
+                          <span className="min-w-0 flex-1 truncate text-sm text-foreground">
                             {entry.query}
                           </span>
                         </CommandItem>
@@ -656,13 +533,7 @@ const SiteSearch = () => {
 
                   <CommandGroup
                     heading={
-                      <div className="flex items-center justify-between">
-                        <span className="flex items-center gap-1.5 font-semibold text-xs text-foreground/90">
-                          <Sparkles className="h-3.5 w-3.5 text-primary" />
-                          Suggested Searches
-                        </span>
-                        <span className="text-3xs text-muted-foreground font-normal">Popular across SRM-AP</span>
-                      </div>
+                      <span className="text-xs font-medium text-muted-foreground">Suggested searches</span>
                     }
                   >
                     {SEARCH_SUGGESTIONS.map((item, idx) => {
@@ -677,13 +548,6 @@ const SiteSearch = () => {
                           ? GroupsIcon
                           : BookOpen;
 
-                      const themeStyle =
-                        DESTINATION_THEMES[item.category] || {
-                          bg: "bg-primary/10",
-                          text: "text-primary",
-                          border: "border-primary/20",
-                        };
-
                       return (
                         <CommandItem
                           key={idx}
@@ -694,58 +558,43 @@ const SiteSearch = () => {
                             close();
                             navigate(buildSearchUrl(item.query, "all"));
                           }}
-                          className={cn(
-                            "group flex items-center gap-3 rounded-xl px-3 py-2.5 my-1 transition-all duration-150 cursor-pointer",
-                            "data-[selected=true]:bg-accent/80 data-[selected=true]:shadow-xs hover:bg-accent/50",
-                          )}
+                          className={ROW}
                         >
-                          <span
-                            className={cn(
-                              "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border transition-all duration-200 group-data-[selected=true]:scale-105",
-                              themeStyle.bg,
-                              themeStyle.text,
-                              themeStyle.border,
-                            )}
-                          >
+                          <span className={ICON_TILE}>
                             <Icon className="h-4 w-4" />
                           </span>
                           <span className="min-w-0 flex-1">
-                            <span className="flex items-center gap-2">
-                              <span className="block truncate font-medium text-sm text-foreground/90 group-data-[selected=true]:text-foreground">
-                                {item.label}
-                              </span>
-                              <span className="hidden sm:inline-block shrink-0 rounded bg-muted/60 px-1.5 py-0.2 text-4xs font-semibold uppercase tracking-wider text-muted-foreground">
-                                {item.category === "guides" ? "Guide" : item.category}
-                              </span>
+                            <span className="block truncate text-sm font-medium text-foreground">
+                              {item.label}
                             </span>
-                            <span className="block truncate text-xs text-muted-foreground/75 mt-0.5">
+                            <span className="block truncate text-xs text-muted-foreground">
                               {item.subtitle}
                             </span>
                           </span>
-                          <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/30 opacity-0 group-data-[selected=true]:opacity-100 group-data-[selected=true]:translate-x-0.5 transition-all" />
+                          <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground opacity-0 transition-opacity duration-150 group-data-[selected=true]:opacity-100" aria-hidden />
                         </CommandItem>
                       );
                     })}
                   </CommandGroup>
 
                   {/* Compact Quick Actions */}
-                  <CommandGroup heading="Quick Actions">
+                  <CommandGroup heading="Quick actions">
                     <div className="grid grid-cols-2 gap-1.5 px-1 py-0.5">
                       <CommandItem
                         value="action-theme-toggle"
                         onSelect={() => setThemeState(toggleTheme())}
-                        className="flex items-center gap-2.5 rounded-lg border border-border/40 bg-card/40 hover:bg-accent/60 p-2 text-xs text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
+                        className="flex cursor-pointer items-center gap-2.5 rounded-lg border border-border p-2 text-xs text-muted-foreground transition-colors duration-150 hover:text-foreground data-[selected=true]:bg-accent data-[selected=true]:text-foreground"
                       >
-                        {theme === "dark" ? <Sun className="h-3.5 w-3.5 text-amber-500" /> : <Moon className="h-3.5 w-3.5 text-indigo-500" />}
-                        <span className="truncate">{theme === "dark" ? "Light Theme" : "Dark Theme"}</span>
+                        {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                        <span className="truncate">{theme === "dark" ? "Light theme" : "Dark theme"}</span>
                       </CommandItem>
                       <CommandItem
                         value="action-how-it-works"
                         onSelect={() => goTo("/how-it-works")}
-                        className="flex items-center gap-2.5 rounded-lg border border-border/40 bg-card/40 hover:bg-accent/60 p-2 text-xs text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
+                        className="flex cursor-pointer items-center gap-2.5 rounded-lg border border-border p-2 text-xs text-muted-foreground transition-colors duration-150 hover:text-foreground data-[selected=true]:bg-accent data-[selected=true]:text-foreground"
                       >
-                        <BookOpen className="h-3.5 w-3.5 text-cyan-500" />
-                        <span className="truncate">How it Works</span>
+                        <BookOpen className="h-4 w-4" />
+                        <span className="truncate">How it works</span>
                       </CommandItem>
                     </div>
                   </CommandGroup>
@@ -754,39 +603,27 @@ const SiteSearch = () => {
 
               {/* Active Search Top Result */}
               {searching && (
-                <CommandGroup heading={isAiMode ? "CampusBrain AI Search" : "Full Search"}>
+                <CommandGroup heading={isAiMode ? "Ask CampusBrain" : "Full search"}>
                   <CommandItem
                     value="search-platform-action"
                     onSelect={goToSearch}
-                    className={cn(
-                      "group flex items-center gap-3 rounded-xl px-3 py-2.5 my-1 transition-all duration-200 cursor-pointer",
-                      isAiMode
-                        ? "border border-violet-500/30 bg-gradient-to-r from-violet-500/10 via-purple-500/5 to-transparent data-[selected=true]:bg-violet-500/20 data-[selected=true]:border-violet-500/50"
-                        : "data-[selected=true]:bg-accent/80 data-[selected=true]:shadow-sm data-[selected=true]:scale-[1.008]",
-                    )}
+                    className={cn(ROW, "py-2.5")}
                   >
-                    <span
-                      className={cn(
-                        "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border",
-                        isAiMode
-                          ? "border-violet-500/40 bg-violet-500/20 text-violet-500 dark:text-violet-300"
-                          : "bg-primary/10 text-primary border-primary/20",
-                      )}
-                    >
-                      {isAiMode ? <CampusBrainIcon className="h-5 w-5" /> : <Search className="h-4 w-4" />}
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                      {isAiMode ? <CampusBrainIcon animate={false} className="h-4 w-4" /> : <Search className="h-4 w-4" />}
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className="block font-semibold text-sm text-foreground leading-snug">
-                        {isAiMode ? "Ask CampusBrain: " : "See all results for "}
-                        "<span className={isAiMode ? "text-violet-500 dark:text-violet-400 break-all font-bold" : "text-primary break-all"}>{query.trim()}</span>"
+                      <span className="block text-sm font-medium leading-snug text-foreground">
+                        {isAiMode ? "Ask CampusBrain " : "See all results for "}
+                        <span className="break-all font-semibold">&ldquo;{query.trim()}&rdquo;</span>
                       </span>
                       <span className="block truncate text-xs text-muted-foreground">
                         {isAiMode
-                          ? "Press Enter to generate AI summary, ratings synthesis & match insights"
-                          : "Press Enter to view complete results across all categories"}
+                          ? "An answer with cited sources from mentors, faculty and posts"
+                          : "Results across every category"}
                       </span>
                     </span>
-                    <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/40 opacity-0 group-data-[selected=true]:opacity-100 group-data-[selected=true]:translate-x-0.5 transition-all duration-200" />
+                    <kbd className="hidden shrink-0 rounded border border-border bg-muted px-1.5 font-sans text-3xs text-muted-foreground sm:inline">Enter</kbd>
                   </CommandItem>
                 </CommandGroup>
               )}
@@ -823,28 +660,28 @@ const SiteSearch = () => {
               )}
 
               {searching && liveResults.related.length > 0 && (
-                <CommandGroup heading="Closest Matches (AI)">
+                <CommandGroup heading="Related matches">
                   {liveResults.related.map(renderHit)}
                 </CommandGroup>
               )}
 
               {searching && ranked.length > 0 && (
-                <CommandGroup heading="Pages & Quick Links">
+                <CommandGroup heading="Pages">
                   {ranked.map((entry) => renderDestination(entry.destination))}
                 </CommandGroup>
               )}
             </CommandList>
 
             {/* Keyboard shortcut footer */}
-            <div className="flex items-center justify-between border-t border-border/40 bg-muted/20 px-4 py-2.5 text-2xs text-muted-foreground/80">
+            <div className="flex items-center justify-between border-t border-border bg-muted/40 px-4 py-2.5 text-2xs text-muted-foreground">
               <div className="flex items-center gap-3">
                 <span className="flex items-center gap-1">
-                  <kbd className="rounded-sm bg-background px-1.5 py-0.5 font-mono text-3xs font-medium border border-border/60 shadow-2xs">↑</kbd>
-                  <kbd className="rounded-sm bg-background px-1.5 py-0.5 font-mono text-3xs font-medium border border-border/60 shadow-2xs">↓</kbd>
+                  <kbd className="rounded border border-border bg-background px-1.5 py-0.5 font-sans text-3xs font-medium">↑</kbd>
+                  <kbd className="rounded border border-border bg-background px-1.5 py-0.5 font-sans text-3xs font-medium">↓</kbd>
                   <span className="ml-0.5">Navigate</span>
                 </span>
                 <span className="flex items-center gap-1">
-                  <kbd className="rounded-sm bg-background px-1.5 py-0.5 font-mono text-3xs font-medium border border-border/60 shadow-2xs">↵</kbd>
+                  <kbd className="rounded border border-border bg-background px-1.5 py-0.5 font-sans text-3xs font-medium">↵</kbd>
                   <span className="ml-0.5">Select</span>
                 </span>
                 <button
@@ -852,28 +689,24 @@ const SiteSearch = () => {
                   onClick={() => setIsAiMode((prev) => !prev)}
                   className="flex items-center gap-1 hover:text-foreground transition-colors cursor-pointer"
                 >
-                  <kbd className="rounded-sm bg-background px-1.5 py-0.5 font-mono text-3xs font-medium border border-border/60 shadow-2xs">Tab</kbd>
-                  <span className="ml-0.5">{isAiMode ? "Standard" : "AI Mode"}</span>
+                  <kbd className="rounded border border-border bg-background px-1.5 py-0.5 font-sans text-3xs font-medium">Tab</kbd>
+                  <span className="ml-0.5">{isAiMode ? "Search" : "Ask"}</span>
                 </button>
                 <span className="flex items-center gap-1">
-                  <kbd className="rounded-sm bg-background px-1.5 py-0.5 font-mono text-3xs font-medium border border-border/60 shadow-2xs">Esc</kbd>
+                  <kbd className="rounded border border-border bg-background px-1.5 py-0.5 font-sans text-3xs font-medium">Esc</kbd>
                   <span className="ml-0.5">Close</span>
                 </span>
               </div>
               {searching ? (
                 <button
+                  type="button"
                   onClick={goToSearch}
-                  className="hidden sm:flex items-center gap-1 text-3xs text-primary/70 hover:text-primary transition-colors group"
+                  className="hidden items-center gap-1 text-2xs font-medium text-primary underline-offset-2 hover:underline sm:flex"
                 >
-                  <span>See all results</span>
-                  <ChevronRight className="h-3 w-3 group-hover:translate-x-0.5 transition-transform" />
+                  See all results
+                  <ChevronRight className="h-3 w-3" aria-hidden />
                 </button>
-              ) : (
-                <div className="hidden sm:flex items-center gap-1.5 text-3xs text-muted-foreground/60">
-                  <CampusBrainIcon className="h-3.5 w-3.5 text-violet-500" />
-                  <span className="font-semibold text-foreground/80">CampusBrain</span> AI
-                </div>
-              )}
+              ) : null}
             </div>
           </Command>
         </DialogContent>

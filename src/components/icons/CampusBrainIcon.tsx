@@ -10,17 +10,20 @@ interface CampusBrainIconProps extends React.SVGProps<SVGSVGElement> {
 /**
  * Animated CampusBrain Neural Orbit / Synapse Icon.
  *
- * Features:
- * - Ambient relaxed state by default (`speed="normal"`: 8s orbit, 2.6s gentle breath).
- * - High-speed rigorous calculation state (`speed="fast"`: 2.0s rapid orbit, 0.85s snappy firing) when processing search queries or generating AI overviews.
+ * Still by default. Motion is reserved for "working" (`speed="fast"`), so
+ * that when the mark moves it means something: a search or overview is in
+ * flight. An icon that spins all the time teaches people to ignore it, and
+ * then it can no longer tell them the system is busy. Pass `animate` to
+ * override either way.
  */
 export const CampusBrainIcon: React.FC<CampusBrainIconProps> = ({
   className = "h-5 w-5",
-  animate = true,
+  animate: animateProp,
   speed = "normal",
   ...props
 }) => {
   const isFast = speed === "fast";
+  const animate = animateProp ?? isFast;
 
   return (
     <svg
@@ -55,11 +58,9 @@ export const CampusBrainIcon: React.FC<CampusBrainIconProps> = ({
           @keyframes cm-core-pulse {
             0%, 100% {
               transform: scale(0.85);
-              filter: drop-shadow(0 0 1px currentColor);
             }
             50% {
               transform: scale(1.22);
-              filter: drop-shadow(0 0 5px currentColor);
             }
           }
           @keyframes cm-beam-flow {

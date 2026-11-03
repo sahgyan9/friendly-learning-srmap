@@ -1,17 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import {
-  Star,
-  MapPin,
-  Sparkles,
-  ExternalLink,
-  MessageSquare,
-  Award,
-  BookOpen,
-  ArrowRight,
-  GraduationCap,
-  Building,
-} from "lucide-react";
+import { Star, MapPin, ArrowRight, GraduationCap, Building } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { getInitials } from "@/utils/user-utils";
@@ -56,66 +45,45 @@ export const FeaturedKnowledgeCard: React.FC<FeaturedKnowledgeCardProps> = ({
     : [];
 
   return (
-    <div
-      className={cn(
-        "relative overflow-hidden rounded-2xl border border-primary/25 bg-gradient-to-br from-primary/[0.07] via-card to-background p-5 sm:p-6 shadow-sm",
-        className,
-      )}
+    <section
+      aria-label={`Best match: ${item.title}`}
+      className={cn("rounded-xl border border-border bg-card p-5 shadow-card sm:p-6", className)}
     >
-      {/* Decorative gradient orb */}
-      <div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-primary/10 blur-xl" />
+      <p className="mb-4 text-xs font-medium text-muted-foreground">
+        {isFaculty ? "Best match \u00b7 Faculty" : isMentor ? "Best match \u00b7 Senior mentor" : "Best match"}
+      </p>
 
-      {/* Header with Knowledge Tag */}
-      <div className="flex items-center justify-between gap-2 mb-4">
-        <div className="flex items-center gap-2">
-          <span className="flex h-6 w-6 items-center justify-center rounded-md bg-primary/20 text-primary">
-            <Sparkles className="h-3.5 w-3.5" />
-          </span>
-          <span className="text-2xs font-bold uppercase tracking-wider text-primary">
-            {isFaculty ? "Campus Faculty Knowledge Panel" : isMentor ? "Top Mentor Profile" : "Featured Campus Entity"}
-          </span>
-        </div>
-        <span className="rounded-full bg-primary/10 border border-primary/20 px-2 py-0.5 text-3xs font-semibold text-primary">
-          Top Match
-        </span>
-      </div>
-
-      {/* Profile Row */}
+      {/* Identity */}
       <div className="flex items-start gap-4">
-        <Avatar className="h-16 w-16 sm:h-20 sm:w-20 shrink-0 rounded-2xl border-2 border-primary/20 shadow-md">
+        <Avatar className="h-16 w-16 shrink-0 rounded-xl border border-border sm:h-20 sm:w-20">
           <AvatarImage src={item.image ?? undefined} alt={item.title} className="object-cover" />
-          <AvatarFallback className="text-base sm:text-lg font-bold bg-primary/10 text-primary">
+          <AvatarFallback className="rounded-xl bg-secondary text-base font-semibold text-secondary-foreground sm:text-lg">
             {getInitials(item.title)}
           </AvatarFallback>
         </Avatar>
 
         <div className="min-w-0 flex-1">
-          <h3 className="text-lg sm:text-xl font-bold text-foreground leading-tight">
+          <h3 className="text-xl font-semibold leading-tight tracking-tight text-foreground">
             {item.title}
           </h3>
 
           {designation && (
-            <p className="text-xs sm:text-sm font-medium text-foreground/80 mt-0.5">
-              {designation}
-            </p>
+            <p className="mt-1 text-sm text-foreground">{designation}</p>
           )}
 
           {department && (
-            <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
-              <Building className="h-3 w-3 shrink-0" />
-              <span>{department}</span>
+            <p className="mt-0.5 flex items-center gap-1.5 text-sm text-muted-foreground">
+              <Building className="h-3.5 w-3.5 shrink-0" aria-hidden />
+              <span className="min-w-0 truncate">{department}</span>
             </p>
           )}
 
-          {/* Rating */}
           {typeof rating === "number" && rating > 0 && (
-            <div className="flex items-center gap-1.5 mt-2">
-              <div className="flex items-center text-amber-400">
-                <Star className="h-4 w-4 fill-amber-400" />
-              </div>
-              <span className="text-sm font-bold text-foreground">{rating.toFixed(1)}</span>
+            <div className="mt-2 flex items-center gap-1.5 text-sm">
+              <Star className="h-4 w-4 fill-amber-400 text-amber-400" aria-hidden />
+              <span className="tabular font-semibold text-foreground">{rating.toFixed(1)}</span>
               {typeof ratingCount === "number" && (
-                <span className="text-xs text-muted-foreground">
+                <span className="tabular text-xs text-muted-foreground">
                   ({ratingCount} {isFaculty ? "student reviews" : "mentorship sessions"})
                 </span>
               )}
@@ -124,36 +92,37 @@ export const FeaturedKnowledgeCard: React.FC<FeaturedKnowledgeCardProps> = ({
         </div>
       </div>
 
-      {/* Bio / Excerpt */}
       {item.snippet && (
-        <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed mt-3.5 line-clamp-3">
+        <p className="mt-4 line-clamp-3 text-sm leading-relaxed text-muted-foreground">
           {decodeHtmlEntities(item.snippet)}
         </p>
       )}
 
-      {/* Meta attributes */}
-      <div className="space-y-1.5 mt-3 pt-3 border-t border-border/40 text-xs text-muted-foreground">
-        {officeLocation && (
-          <div className="flex items-center gap-1.5">
-            <MapPin className="h-3.5 w-3.5 text-primary shrink-0" />
-            <span>Office: <strong className="text-foreground">{officeLocation}</strong></span>
-          </div>
-        )}
-        {school && (
-          <div className="flex items-center gap-1.5">
-            <GraduationCap className="h-3.5 w-3.5 text-primary shrink-0" />
-            <span>School: <strong className="text-foreground">{school}</strong></span>
-          </div>
-        )}
-      </div>
+      {(officeLocation || school) && (
+        <dl className="mt-4 grid gap-2 border-t border-border pt-4 text-sm sm:grid-cols-2">
+          {officeLocation && (
+            <div className="flex min-w-0 items-center gap-2">
+              <MapPin className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+              <dt className="text-muted-foreground">Office</dt>
+              <dd className="min-w-0 truncate font-medium text-foreground">{officeLocation}</dd>
+            </div>
+          )}
+          {school && (
+            <div className="flex min-w-0 items-center gap-2">
+              <GraduationCap className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+              <dt className="text-muted-foreground">School</dt>
+              <dd className="min-w-0 truncate font-medium text-foreground">{school}</dd>
+            </div>
+          )}
+        </dl>
+      )}
 
-      {/* Tag cloud */}
       {(interests.length > 0 || skills.length > 0) && (
-        <div className="flex flex-wrap items-center gap-1.5 mt-3 pt-2">
+        <div className="mt-4 flex flex-wrap items-center gap-1.5">
           {(interests.length > 0 ? interests : skills).slice(0, 5).map((t, idx) => (
             <span
               key={idx}
-              className="rounded-lg bg-background/80 border border-border/60 px-2 py-0.5 text-2xs text-muted-foreground shadow-2xs"
+              className="rounded bg-secondary px-2 py-0.5 text-xs text-secondary-foreground"
             >
               {t}
             </span>
@@ -161,32 +130,27 @@ export const FeaturedKnowledgeCard: React.FC<FeaturedKnowledgeCardProps> = ({
         </div>
       )}
 
-      {/* Action Buttons */}
-      <div className="flex flex-wrap items-center gap-2 mt-4 pt-3 border-t border-border/40">
-        <Button asChild size="sm" className="rounded-xl font-medium">
+      <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-border pt-4">
+        <Button asChild size="sm">
           <Link to={item.to}>
-            <span>View Full Profile</span>
-            <ArrowRight className="h-3.5 w-3.5 ml-1" />
+            View profile
+            <ArrowRight aria-hidden />
           </Link>
         </Button>
 
         {isFaculty && (
-          <Button asChild variant="outline" size="sm" className="rounded-xl">
-            <Link to={`${item.to}#reviews`}>
-              <span>Rate / Review</span>
-            </Link>
+          <Button asChild variant="outline" size="sm">
+            <Link to={`${item.to}#reviews`}>Write a review</Link>
           </Button>
         )}
 
         {isMentor && (
-          <Button asChild variant="outline" size="sm" className="rounded-xl">
-            <Link to={`${item.to}#skills`}>
-              <span>Skills & Projects</span>
-            </Link>
+          <Button asChild variant="outline" size="sm">
+            <Link to={`${item.to}#skills`}>Skills and projects</Link>
           </Button>
         )}
       </div>
-    </div>
+    </section>
   );
 };
 

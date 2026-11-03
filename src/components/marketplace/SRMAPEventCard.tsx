@@ -1,12 +1,11 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Calendar, GraduationCap, ArrowRight, Sparkles, MapPin, ExternalLink, Share2, Check, Star, Loader2, Bell } from "lucide-react";
+import { Calendar, ArrowRight, MapPin, ExternalLink, Share2, Check, Star, Loader2, Bell } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { CardAccentBorder } from "@/components/ui/CardAccentBorder";
+import { buttonVariants } from "@/components/ui/button";
 import { getOptimizedImageUrl } from "@/lib/image/imageUrl";
 import { EventShareModal } from "@/components/events/EventShareModal";
+import { EventDateCover, EventStatus } from "@/components/marketplace/EventStatus";
 import { parseEventDate } from "@/lib/calendar-utils";
 import type { SRMAPEvent } from "@/hooks/useSRMAPEvents";
 import type { EventAttendanceStatus } from "@/integrations/supabase/services/event-attendees";
@@ -30,6 +29,7 @@ export function SRMAPEventCard({ event, rsvpStatus = null, onRsvp, rsvpPending =
   const now = new Date();
   const isLive = now >= start && now <= end;
   const hasEnded = now > end;
+  const registrationOpen = Boolean(event.registrationUrl) && !hasEnded;
 
   const [proxyFailed, setProxyFailed] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -54,34 +54,67 @@ export function SRMAPEventCard({ event, rsvpStatus = null, onRsvp, rsvpPending =
       ? formattedStartDate
       : `${formattedStartDate} – ${formattedEndDate}`;
 
+  const showDepartment = Boolean(event.department) && event.department !== "SRMAP";
+
+  const rsvpButton = (status: EventAttendanceStatus, label: string) => {
+    const selected = rsvpStatus === status;
+    const Icon = status === "going" ? Check : Star;
+    return (
+      <button
+        type="button"
+        disabled={rsvpPending}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onRsvp?.(event.id, status);
+        }}
+        aria-pressed={selected}
+        title={selected ? `Marked ${label.toLowerCase()}. Select again to remove.` : undefined}
+        className={cn(
+          "inline-flex h-10 flex-1 items-center justify-center gap-1.5 text-sm font-medium transition-colors duration-150",
+          "focus-visible:relative focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+          "disabled:cursor-wait",
+          selected
+            ? status === "going"
+              ? "bg-emerald-600 text-white hover:bg-emerald-600/90"
+              : "bg-primary text-primary-foreground hover:bg-primary/90"
+            : "bg-card text-foreground hover:bg-accent",
+        )}
+      >
+        {rsvpPending && selected ? (
+          <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+        ) : (
+          <Icon className={cn("h-4 w-4", selected && status === "interested" && "fill-current")} aria-hidden />
+        )}
+        {label}
+      </button>
+    );
+  };
+
   return (
-    <Card
+    <article
       className={cn(
-        "group relative flex flex-col overflow-hidden transition-all duration-300",
-        "hover:-translate-y-0.5 hover:shadow-lg hover:border-violet-500/30",
-        isLive && "ring-2 ring-violet-500/40",
-        // An RSVP'd event outranks "live" for the border -- it is the one
-        // signal the student is scanning for in a grid of 18 cards.
-        rsvpStatus === "going" && "ring-2 ring-emerald-500/50",
-        rsvpStatus === "interested" && "ring-2 ring-amber-500/50",
-        hasEnded && "opacity-70",
+        "group relative flex min-w-0 flex-col overflow-hidden rounded-lg border bg-card text-card-foreground shadow-card",
+        "transition-colors duration-150 hover:border-foreground/20",
+        // The student's own RSVP is the signal they scan a full grid for, so
+        // it gets the border; going = confirmed (green), interested = selected (blue).
+        rsvpStatus === "going" && "border-emerald-600/40 hover:border-emerald-600/60",
+        rsvpStatus === "interested" && "border-primary/40 hover:border-primary/60",
       )}
     >
-      {/* Solid full-width accent border — violet for Events */}
-      <CardAccentBorder gradient={isLive ? "violet" : hasEnded ? "muted" : "violet"} />
-
-      {/* Hover glow — Events brand colour (violet) */}
-      <div className="pointer-events-none absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-violet-500/5 to-transparent" />
-
-      {/* Cover image (links to event detail) */}
-      <Link to={`/events/${event.id}`} className="relative block aspect-video w-full overflow-hidden bg-muted">
+      <Link
+        to={`/events/${event.id}`}
+        tabIndex={-1}
+        aria-hidden
+        className={cn("relative block aspect-video w-full overflow-hidden border-b bg-muted", hasEnded && "opacity-70")}
+      >
         {imageSrc ? (
           <>
             <img
               src={imageSrc}
               alt=""
               className={cn(
-                "h-full w-full object-cover transition-all duration-500 group-hover:scale-105",
+                "h-full w-full object-cover transition-opacity duration-300",
                 imageLoaded ? "opacity-100" : "opacity-0",
               )}
               loading="lazy"
@@ -89,228 +122,112 @@ export function SRMAPEventCard({ event, rsvpStatus = null, onRsvp, rsvpPending =
               onLoad={() => setImageLoaded(true)}
               onError={() => setProxyFailed(true)}
             />
-            {!imageLoaded && (
-              <div className="absolute inset-0 animate-pulse bg-muted-foreground/10" />
-            )}
+            {!imageLoaded && <div className="absolute inset-0 animate-pulse bg-muted-foreground/10" />}
           </>
         ) : (
-          <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-violet-500/10 to-violet-500/5">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-500/10">
-              <GraduationCap className="h-7 w-7 text-violet-500/50" aria-hidden />
-            </div>
-          </div>
+          <EventDateCover start={start} eventType={event.eventType} />
         )}
-
-        {/* Status badges on image */}
-        {isLive && (
-          <span className="absolute right-2 top-2 inline-flex items-center gap-1.5 rounded-full bg-violet-600 px-2.5 py-1 text-2xs font-semibold text-white shadow-md">
-            <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-white" />
-            </span>
-            Live now
-          </span>
-        )}
-        {hasEnded && (
-          <span className="absolute right-2 top-2 rounded-full bg-background/90 px-2.5 py-1 text-2xs font-medium text-muted-foreground shadow-sm backdrop-blur">
-            Ended
-          </span>
-        )}
-
-        {/* Registration available badge */}
-        {event.registrationUrl && !hasEnded && (
-          <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-violet-950/80 px-2 py-0.5 text-3xs font-medium text-violet-200 backdrop-blur border border-violet-500/30">
-            <Sparkles className="h-2.5 w-2.5" />
-            Registration Open
-          </span>
-        )}
-
-        {/* Quick share button overlay */}
-        <button
-          type="button"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            setIsShareModalOpen(true);
-          }}
-          className="absolute bottom-2 right-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-background/85 text-foreground backdrop-blur shadow-sm hover:bg-background hover:text-violet-600 transition-all opacity-85 sm:opacity-0 group-hover:opacity-100 border border-border/50"
-          title="Share event"
-          aria-label="Share event"
-        >
-          <Share2 className="h-3.5 w-3.5" />
-        </button>
       </Link>
 
-      {/* Header */}
-      <CardHeader className="relative gap-2 pb-2 pt-4">
-        {/* Department + type pills */}
-        {(event.department !== "SRMAP" || event.eventType) && (
-          <div className="flex flex-wrap gap-1.5">
-            {event.department && event.department !== "SRMAP" && (
-              <Badge
-                variant="outline"
-                className="text-2xs font-medium bg-violet-500/8 text-violet-600 dark:text-violet-400 border-violet-500/20"
-              >
-                {event.department}
-              </Badge>
-            )}
-            {event.eventType && (
-              <Badge
-                variant="outline"
-                className="text-2xs font-normal text-muted-foreground"
-              >
-                {event.eventType}
-              </Badge>
+      <div className="flex flex-1 flex-col gap-3 p-5">
+        {(isLive || hasEnded || registrationOpen || showDepartment) && (
+          <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
+            {isLive ? (
+              <EventStatus tone="live">Live now</EventStatus>
+            ) : hasEnded ? (
+              <EventStatus tone="ended">Ended</EventStatus>
+            ) : registrationOpen ? (
+              <EventStatus tone="open">Registration open</EventStatus>
+            ) : null}
+            {showDepartment && (
+              <span className="min-w-0 truncate text-xs text-muted-foreground">{event.department}</span>
             )}
           </div>
         )}
 
-        <Link to={`/events/${event.id}`}>
-          <h3 className="line-clamp-2 text-base font-semibold leading-snug tracking-tight transition-colors duration-200 group-hover:text-violet-600 dark:group-hover:text-violet-400">
+        <h3 className="line-clamp-2 text-base font-semibold leading-snug tracking-tight">
+          <Link
+            to={`/events/${event.id}`}
+            className="transition-colors duration-150 hover:text-primary focus-visible:outline-none focus-visible:underline"
+          >
             {event.title}
-          </h3>
-        </Link>
-      </CardHeader>
+          </Link>
+        </h3>
 
-      {/* Excerpt */}
-      <CardContent className="relative flex-1 pb-3 pt-0">
-        {event.venue && (
-          <p className="flex items-center gap-1 text-xs text-muted-foreground/80 mb-2 truncate">
-            <MapPin className="h-3 w-3 shrink-0 text-violet-500/70" />
-            <span>{event.venue}</span>
-          </p>
-        )}
-        {event.excerpt && (
-          <p className="line-clamp-2 text-sm leading-relaxed text-muted-foreground">
-            {event.excerpt}
-          </p>
-        )}
-      </CardContent>
-
-      {/* Quick RSVP — only on surfaces that pass a handler (the events page) */}
-      {onRsvp && !hasEnded && (
-        <div className="relative flex flex-col gap-1.5 px-6 pb-3">
-          <div className="flex items-center gap-1.5 w-full">
-            <button
-              type="button"
-              disabled={rsvpPending}
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onRsvp(event.id, "going");
-              }}
-              aria-pressed={rsvpStatus === "going"}
-              className={cn(
-                "inline-flex flex-1 items-center justify-center gap-1.5 rounded-md border px-2 py-1.5 text-xs font-semibold transition-colors",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60",
-                rsvpStatus === "going"
-                  ? "border-emerald-500/40 bg-emerald-500/12 text-emerald-700 dark:text-emerald-400"
-                  : "border-border/60 text-muted-foreground hover:border-emerald-500/30 hover:bg-emerald-500/8 hover:text-emerald-700 dark:hover:text-emerald-400",
-              )}
-            >
-              {rsvpPending && rsvpStatus === "going" ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
-              ) : (
-                <Check className="h-3.5 w-3.5" aria-hidden />
-              )}
-              Going
-            </button>
-
-            <button
-              type="button"
-              disabled={rsvpPending}
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onRsvp(event.id, "interested");
-              }}
-              aria-pressed={rsvpStatus === "interested"}
-              className={cn(
-                "inline-flex flex-1 items-center justify-center gap-1.5 rounded-md border px-2 py-1.5 text-xs font-semibold transition-colors",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60",
-                rsvpStatus === "interested"
-                  ? "border-amber-500/40 bg-amber-500/12 text-amber-700 dark:text-amber-400"
-                  : "border-border/60 text-muted-foreground hover:border-amber-500/30 hover:bg-amber-500/8 hover:text-amber-700 dark:hover:text-amber-400",
-              )}
-            >
-              {rsvpPending && rsvpStatus === "interested" ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
-              ) : (
-                <Star className="h-3.5 w-3.5" aria-hidden />
-              )}
-              Interested
-            </button>
+        <dl className="flex min-w-0 flex-col gap-1 text-sm text-muted-foreground">
+          <div className="flex min-w-0 items-center gap-2">
+            <dt className="sr-only">Date</dt>
+            <Calendar className="h-4 w-4 shrink-0" aria-hidden />
+            <dd className="tabular truncate">{formattedDate}</dd>
           </div>
-
-          {rsvpStatus && (
-            <div className="flex items-center gap-1.5 text-2xs font-medium text-muted-foreground">
-              <Bell className="h-3 w-3 text-violet-500 shrink-0" />
-              <span>Reminders active (24h &amp; 2h before)</span>
+          {event.venue && (
+            <div className="flex min-w-0 items-center gap-2">
+              <dt className="sr-only">Venue</dt>
+              <MapPin className="h-4 w-4 shrink-0" aria-hidden />
+              <dd className="truncate">{event.venue}</dd>
             </div>
           )}
-        </div>
-      )}
+        </dl>
 
-      {/* Footer — date + Action CTA */}
-      <CardFooter className="relative mt-auto flex items-center justify-between gap-3 border-t border-border/60 pt-3">
-        <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <Calendar className="h-3.5 w-3.5 shrink-0" aria-hidden />
-          {formattedDate}
-        </span>
+        {event.excerpt && (
+          <p className="line-clamp-2 text-sm leading-relaxed text-muted-foreground">{event.excerpt}</p>
+        )}
 
-        <div className="flex items-center gap-1.5">
-          <button
-            type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setIsShareModalOpen(true);
-            }}
-            className="inline-flex items-center justify-center h-7 w-7 rounded-md text-muted-foreground hover:text-violet-600 hover:bg-violet-500/10 transition-colors"
-            title="Share event"
-            aria-label="Share event"
+        {/* Quick RSVP — only on surfaces that pass a handler (the events page) */}
+        {onRsvp && !hasEnded && (
+          <div className="mt-auto flex flex-col gap-2 pt-1">
+            <div
+              role="group"
+              aria-label="Your RSVP"
+              className="flex divide-x overflow-hidden rounded-md border"
+            >
+              {rsvpButton("going", "Going")}
+              {rsvpButton("interested", "Interested")}
+            </div>
+            {rsvpStatus && (
+              <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Bell className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                Reminders 24 h and 2 h before
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+
+      <div className="mt-auto flex items-center justify-between gap-2 border-t px-5 py-3">
+        <button
+          type="button"
+          onClick={() => setIsShareModalOpen(true)}
+          className={cn(buttonVariants({ variant: "ghost", size: "icon" }), "-ml-2 text-muted-foreground")}
+          aria-label="Share event"
+          title="Share event"
+        >
+          <Share2 className="h-4 w-4" />
+        </button>
+
+        {registrationOpen ? (
+          <a
+            href={event.registrationUrl ?? undefined}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={buttonVariants({ size: "sm" })}
           >
-            <Share2 className="h-3.5 w-3.5" />
-          </button>
+            Register
+            <ExternalLink className="h-3.5 w-3.5" aria-hidden />
+          </a>
+        ) : (
+          <Link to={`/events/${event.id}`} className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "-mr-2")}>
+            View event
+            <ArrowRight className="h-4 w-4" aria-hidden />
+          </Link>
+        )}
+      </div>
 
-          {event.registrationUrl && !hasEnded ? (
-            <a
-              href={event.registrationUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={cn(
-                "inline-flex shrink-0 items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold",
-                "bg-violet-600 hover:bg-violet-700 text-white shadow-xs transition-all duration-200",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-              )}
-              onClick={(e) => e.stopPropagation()}
-            >
-              Register
-              <ExternalLink className="h-3 w-3" />
-            </a>
-          ) : (
-            <Link
-              to={`/events/${event.id}`}
-              className={cn(
-                "inline-flex shrink-0 items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-semibold",
-                "text-violet-600 dark:text-violet-400 transition-all duration-200",
-                "hover:bg-violet-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                "group-hover:gap-2",
-              )}
-            >
-              View details
-              <ArrowRight className="h-3 w-3 transition-transform duration-200 group-hover:translate-x-0.5" />
-            </Link>
-          )}
-        </div>
-      </CardFooter>
-
-      {/* Universal Campus Event Share Modal */}
       <EventShareModal
         event={event}
         isOpen={isShareModalOpen}
         onClose={() => setIsShareModalOpen(false)}
       />
-    </Card>
+    </article>
   );
 }

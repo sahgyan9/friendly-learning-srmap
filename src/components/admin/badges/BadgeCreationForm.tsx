@@ -29,9 +29,7 @@ const BadgeCreationForm = ({ onCancel, onSuccess }: BadgeCreationFormProps) => {
     e.preventDefault();
 
     if (!formData.name.trim()) {
-      toast.error("Error", {
-        description: "Badge name is required",
-      });
+      toast.error("Badge name is required");
       return;
     }
 
@@ -92,13 +90,17 @@ const BadgeCreationForm = ({ onCancel, onSuccess }: BadgeCreationFormProps) => {
           </div>
 
           <div>
-            <Label htmlFor="icon">Icon (Emoji)</Label>
+            <Label htmlFor="icon">Icon</Label>
             <Input
               id="icon"
               value={formData.icon}
               onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
-              placeholder="🏆"
+              placeholder="One emoji, e.g. a trophy"
+              aria-describedby="icon-hint"
             />
+            <p id="icon-hint" className="mt-1.5 text-xs text-muted-foreground">
+              Shown next to the badge name. Paste a single emoji.
+            </p>
           </div>
 
           <div>

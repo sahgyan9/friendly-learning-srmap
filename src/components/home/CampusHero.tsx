@@ -1,37 +1,37 @@
-import { motion } from "framer-motion";
 import AskBox from "@/components/search/AskBox";
+import { CampusBrainIcon } from "@/components/icons/CampusBrainIcon";
 
+/**
+ * Homepage hero. The search box is the one primary action on the page, so the
+ * heading says what it finds and everything else stays out of its way.
+ */
 export const CampusHero = () => {
   return (
-    <section className="relative overflow-hidden pt-10 pb-8 md:pt-14 md:pb-10 border-b border-border/60 bg-gradient-to-b from-muted/30 via-background to-background">
-      {/* Decorative ambient background glows */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-full overflow-hidden pointer-events-none -z-10">
-        <div className="absolute -top-24 left-1/3 w-96 h-96 bg-primary/10 rounded-full blur-3xl opacity-50" />
-        <div className="absolute top-12 right-1/3 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl opacity-40" />
-      </div>
+    <section className="border-b border-border bg-background">
+      <div className="container mx-auto max-w-3xl px-4 pb-12 pt-12 text-center md:pb-16 md:pt-20">
+        <p className="inline-flex items-center gap-1.5 text-sm font-medium text-primary animate-fade-up">
+          <CampusBrainIcon animate={false} className="h-4 w-4" />
+          CampusBrain search
+        </p>
 
-      <div className="container mx-auto px-4 max-w-4xl">
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="text-center"
+        <h1
+          className="mx-auto mt-4 max-w-2xl text-balance text-3xl font-semibold tracking-tight text-foreground animate-fade-up sm:text-4xl md:text-5xl md:leading-[1.08]"
+          style={{ animationDelay: "40ms" }}
         >
-          {/* Brand Heading */}
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-foreground mb-6 inline-flex items-start justify-center">
-            <span>CampusBrain</span>
-            <sup className="text-xs sm:text-sm font-semibold text-muted-foreground/80 ml-0.5 mt-0.5 sm:mt-1 select-none">
-              TM
-            </sup>
-          </h1>
+          Find the right people and answers on campus
+        </h1>
 
-          {/* Central Search Box */}
-          <div className="max-w-2xl mx-auto">
-            <AskBox />
-          </div>
-        </motion.div>
+        <p
+          className="mx-auto mt-4 max-w-xl text-pretty text-base text-muted-foreground animate-fade-up md:text-lg"
+          style={{ animationDelay: "80ms" }}
+        >
+          Search mentors, faculty, groups and posts at SRM AP, or ask a question and get an answer that cites its sources.
+        </p>
+
+        <div className="mt-8 animate-fade-up" style={{ animationDelay: "120ms" }}>
+          <AskBox />
+        </div>
       </div>
     </section>
   );
 };
-

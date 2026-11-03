@@ -42,7 +42,8 @@ const DAYS = [
   { key: "Saturday", short: "Sat" },
 ];
 
-// Consistent course styling palette matching the dark studio theme
+// Per-course colours are a legend: the same hue marks a course in the
+// matrix, the mobile list and the faculty directory, so they stay distinct.
 const COURSE_COLORS: Record<string, { badge: string; text: string; border: string }> = {
   default: {
     badge: "bg-amber-500/10 dark:bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30",
@@ -281,10 +282,10 @@ export default function WeeklyMatrixTable({
                     key={slot.id || `${slot.day_name}-${slot.hour}`}
                     onClick={() => onSelectCourse?.(slot.course_code)}
                     className={cn(
-                      "p-3.5 rounded-xl border bg-card transition-all cursor-pointer shadow-2xs hover:shadow-xs",
+                      "p-3.5 rounded-xl border bg-card transition-colors duration-150 cursor-pointer",
                       isSelected
-                        ? "border-primary ring-1 ring-primary/40 bg-primary/5"
-                        : "border-border/70 hover:border-border"
+                        ? "border-primary bg-primary/5"
+                        : "border-border hover:border-foreground/20"
                     )}
                   >
                     <div className="flex items-start justify-between gap-3">
@@ -298,7 +299,7 @@ export default function WeeklyMatrixTable({
                           {slot.course_code}
                         </span>
                         {slot.is_lab && (
-                          <span className="inline-flex items-center text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
+                          <span className="inline-flex items-center text-3xs font-medium text-secondary-foreground bg-secondary px-1.5 py-0.5 rounded">
                             Lab
                           </span>
                         )}
@@ -348,7 +349,7 @@ export default function WeeklyMatrixTable({
 
       {/* MODE 2: Compact Weekly Matrix Grid (Zero Horizontal Scroll on Desktop) */}
       {viewMode === "week" && (
-        <div className="relative rounded-xl border border-border/70 bg-card/60 shadow-xs overflow-x-auto">
+        <div className="relative rounded-xl border border-border bg-card shadow-card overflow-x-auto">
           <table className="w-full text-sm text-left border-collapse table-fixed min-w-[640px] sm:min-w-0">
             <thead>
               <tr className="border-b border-border/80 bg-muted/40 text-xs font-semibold text-muted-foreground">
@@ -393,7 +394,7 @@ export default function WeeklyMatrixTable({
                       <div className="flex flex-col items-center">
                         <span className="text-xs">{day.short}</span>
                         {isToday && (
-                          <span className="text-[9px] font-bold text-primary uppercase tracking-wider">
+                          <span className="text-3xs font-medium text-primary">
                             Today
                           </span>
                         )}
@@ -432,9 +433,9 @@ export default function WeeklyMatrixTable({
                                   type="button"
                                   onClick={() => onSelectCourse?.(slot.course_code)}
                                   className={cn(
-                                    "w-full text-center py-1.5 px-0.5 rounded-md transition-all border",
+                                    "w-full text-center py-1.5 px-0.5 rounded-md transition-[filter] duration-150 border",
                                     palette.badge,
-                                    "hover:brightness-110 active:scale-95 focus:outline-none focus:ring-1 focus:ring-primary/40"
+                                    "hover:brightness-95 dark:hover:brightness-110 active:scale-[0.98]"
                                   )}
                                 >
                                   <div className="font-bold text-xs tracking-tight truncate">
@@ -471,7 +472,7 @@ export default function WeeklyMatrixTable({
                                     </div>
                                   )}
                                   {slot.is_lab && (
-                                    <div className="mt-1 pt-1 border-t border-border/50 text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
+                                    <div className="mt-1 pt-1 border-t border-border/50 text-3xs font-medium text-muted-foreground">
                                       Practical / Laboratory Session
                                     </div>
                                   )}

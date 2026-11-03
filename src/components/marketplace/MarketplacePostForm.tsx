@@ -23,7 +23,7 @@ import {
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { Loader2, Upload, X } from "lucide-react";
+import { Upload, X } from "lucide-react";
 import { 
   createMarketplacePost, 
   updateMarketplacePost,
@@ -119,15 +119,15 @@ const MarketplacePostForm = ({ post, onComplete }: MarketplacePostFormProps) => 
         // Update existing post
         await updateMarketplacePost(post.id, postData);
 
-        toast.success("Success", {
-          description: "Post updated successfully!",
+        toast.success("Post updated", {
+          description: "Changes are live on the events page.",
         });
       } else {
         // Create new post
         await createMarketplacePost(postData);
 
-        toast.success("Success", {
-          description: "Post created successfully!",
+        toast.success("Post created", {
+          description: "It now appears on the events page.",
         });
       }
 
@@ -181,17 +181,14 @@ const MarketplacePostForm = ({ post, onComplete }: MarketplacePostFormProps) => 
               type="button"
               variant="outline"
               onClick={() => document.getElementById("image")?.click()}
-              disabled={isUploading}
+              isLoading={isUploading}
             >
               {isUploading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Uploading...
-                </>
+                "Uploading"
               ) : (
                 <>
                   <Upload className="mr-2 h-4 w-4" />
-                  {imagePreview ? "Change Image" : "Upload Image"}
+                  {imagePreview ? "Change image" : "Upload image"}
                 </>
               )}
             </Button>
@@ -316,16 +313,10 @@ const MarketplacePostForm = ({ post, onComplete }: MarketplacePostFormProps) => 
           </Button>
           <Button 
             type="submit" 
-            disabled={isSubmitting || isUploading}
+            isLoading={isSubmitting}
+            disabled={isUploading}
           >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {post ? "Updating..." : "Creating..."}
-              </>
-            ) : (
-              post ? "Update Post" : "Create Post"
-            )}
+            {isSubmitting ? (post ? "Saving" : "Creating") : post ? "Save changes" : "Create post"}
           </Button>
         </div>
       </form>

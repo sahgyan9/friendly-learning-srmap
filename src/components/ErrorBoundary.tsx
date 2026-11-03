@@ -87,19 +87,19 @@ class ErrorBoundary extends Component<Props, State> {
             // Default error UI
             return (
                 <div className="min-h-screen flex items-center justify-center bg-background p-4">
-                    <div className="max-w-md w-full text-center space-y-6">
+                    <div className="max-w-md w-full text-center space-y-6 animate-fade-up">
                         <div className="flex justify-center">
-                            <div className="p-4 rounded-full bg-destructive/10">
-                                <AlertTriangle className="h-12 w-12 text-destructive" />
+                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-secondary">
+                                <AlertTriangle className="h-6 w-6 text-destructive" />
                             </div>
                         </div>
 
                         <div className="space-y-2">
-                            <h1 className="text-2xl font-bold text-foreground">
+                            <h1 className="text-2xl font-semibold tracking-tight text-foreground">
                                 Something went wrong
                             </h1>
                             <p className="text-muted-foreground">
-                                We apologize for the inconvenience. An unexpected error occurred.
+                                This page hit an error and could not finish loading. Reloading usually fixes it; your saved data is not affected.
                             </p>
                         </div>
 
@@ -114,20 +114,20 @@ class ErrorBoundary extends Component<Props, State> {
                         <div className="flex flex-col sm:flex-row gap-3 justify-center">
                             <Button onClick={this.handleRefresh} variant="default">
                                 <RefreshCw className="h-4 w-4 mr-2" />
-                                Refresh Page
+                                Reload page
                             </Button>
                             <Button variant="outline" asChild>
                                 <a href="/">
                                     <Home className="h-4 w-4 mr-2" />
-                                    Go to Home
+                                    Go to home
                                 </a>
                             </Button>
                         </div>
 
                         <p className="text-sm text-muted-foreground">
-                            If this problem persists, please{" "}
+                            If it keeps happening,{" "}
                             <a href="/contact" className="text-primary hover:underline">
-                                contact support
+                                tell us what you were doing
                             </a>
                         </p>
                     </div>

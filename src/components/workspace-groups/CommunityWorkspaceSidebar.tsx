@@ -1,8 +1,6 @@
 import React from "react";
-import { FolderGit2, Hash, MessageSquare, Plus, Sparkles, Trash2, UserCheck, Users } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { ChevronRight, FolderGit2, Hash, MessageSquare, Plus, Trash2, UserCheck, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { formatRelativeTime } from "@/utils/date-utils";
 import { type Community } from "@/integrations/supabase/services/communities";
 import {
   MAX_CHANNELS,
@@ -73,34 +71,10 @@ export function CommunityWorkspaceSidebar({
 
   return (
     <div className="space-y-4">
-      {/* Today's Activity Pulse Card (Commented out)
-      <div className="rounded-xl border border-amber-500/20 bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-transparent p-4">
-        <div className="flex items-center gap-2 text-xs font-semibold text-amber-600 dark:text-amber-400 mb-2">
-          <Sparkles className="h-4 w-4" />
-          <span>Today's Activity</span>
-        </div>
-        <div className="space-y-1.5 text-xs text-muted-foreground">
-          <div className="flex items-center justify-between">
-            <span>Members</span>
-            <span className="font-semibold text-foreground">{community.member_count} active</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span>Discussions</span>
-            <span className="font-semibold text-foreground">{community.post_count} posts</span>
-          </div>
-          <div className="flex items-center gap-1.5 pt-1 text-2xs text-emerald-600 dark:text-emerald-400 font-medium">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span>Active {formatRelativeTime(community.last_activity_at)}</span>
-          </div>
-        </div>
-      </div>
-      */}
-
-      {/* Navigation Channels */}
-      <div className="rounded-xl border border-border/60 bg-card p-3 space-y-1">
-        <div className="flex items-center justify-between gap-2 px-3 py-1.5">
-          <span className="text-2xs font-bold uppercase tracking-wider text-muted-foreground">
-            Workspace Channels
+      <nav aria-label="Channels" className="space-y-1 rounded-lg border bg-card p-2 shadow-card">
+        <div className="flex items-center justify-between gap-2 px-2.5 py-1.5">
+          <span className="text-sm font-medium text-muted-foreground">
+            Channels
           </span>
 
           {/* Owner-only. Disabled rather than hidden at the cap, so the reason
@@ -116,9 +90,9 @@ export function CommunityWorkspaceSidebar({
                   : "Add a channel"
               }
               aria-label="Add a channel"
-              className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-border/70 text-muted-foreground transition-colors hover:border-primary/40 hover:bg-primary/5 hover:text-primary disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-border/70 disabled:hover:bg-transparent disabled:hover:text-muted-foreground"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors duration-150 hover:bg-accent hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
             >
-              <Plus className="h-3.5 w-3.5" />
+              <Plus className="h-4 w-4" />
             </button>
           )}
         </div>
@@ -132,38 +106,28 @@ export function CommunityWorkspaceSidebar({
               key={view.id}
               type="button"
               onClick={() => onSelectTab(view.id)}
+              aria-current={isActive ? "page" : undefined}
               className={cn(
-                "flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-colors",
+                "flex h-10 w-full items-center justify-between rounded-md px-2.5 text-left text-sm font-medium transition-colors duration-150",
                 isActive
-                  ? "bg-primary text-primary-foreground font-semibold shadow-xs"
-                  : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                  ? "bg-primary/10 text-primary"
+                  : "text-muted-foreground hover:bg-accent hover:text-foreground"
               )}
             >
               <div className="flex items-center gap-2.5 min-w-0">
-                <Icon className={cn("h-4 w-4 shrink-0", isActive ? "text-primary-foreground" : "text-muted-foreground")} />
-                <span className="truncate">#{view.label}</span>
+                <Icon className="h-4 w-4 shrink-0" />
+                <span className="truncate">{view.label}</span>
               </div>
 
               {view.badge ? (
-                <Badge
-                  variant="secondary"
-                  className={cn(
-                    "text-3xs px-1.5 py-0 h-4 font-semibold",
-                    isActive ? "bg-primary-foreground/20 text-primary-foreground" : "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
-                  )}
-                >
+                <span className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+                  <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                   {view.badge}
-                </Badge>
+                </span>
               ) : view.count !== undefined && view.count > 0 ? (
-                <Badge
-                  variant="secondary"
-                  className={cn(
-                    "text-3xs px-1.5 py-0 h-4",
-                    isActive ? "bg-primary-foreground/20 text-primary-foreground" : "bg-muted text-muted-foreground"
-                  )}
-                >
+                <span className="tabular text-xs text-muted-foreground">
                   {view.count}
-                </Badge>
+                </span>
               ) : null}
             </button>
           );
@@ -173,7 +137,7 @@ export function CommunityWorkspaceSidebar({
             into them: these are rooms someone chose to make, and the separator
             is what keeps a group with none looking exactly as it did before. */}
         {channels.length > 0 && (
-          <div className="!mt-2 space-y-1 border-t border-border/50 pt-2">
+          <div className="!mt-2 space-y-1 border-t pt-2">
             {channels.map((channel) => {
               const id = channelTabId(channel.slug);
               const isActive = activeTab === id;
@@ -184,40 +148,24 @@ export function CommunityWorkspaceSidebar({
                     type="button"
                     onClick={() => onSelectTab(id)}
                     title={channel.topic ?? undefined}
+                    aria-current={isActive ? "page" : undefined}
                     className={cn(
-                      "flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-colors",
+                      "flex h-10 w-full items-center justify-between rounded-md px-2.5 text-left text-sm font-medium transition-colors duration-150",
+                      canManageChannels && "pr-11 [@media(hover:hover)]:pr-2.5 [@media(hover:hover)]:group-hover/channel:pr-11",
                       isActive
-                        ? "bg-primary text-primary-foreground font-semibold shadow-xs"
-                        : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                        ? "bg-primary/10 text-primary"
+                        : "text-muted-foreground hover:bg-accent hover:text-foreground"
                     )}
                   >
                     <div className="flex min-w-0 items-center gap-2.5">
-                      <Hash
-                        className={cn(
-                          "h-4 w-4 shrink-0",
-                          isActive ? "text-primary-foreground" : "text-muted-foreground"
-                        )}
-                      />
-                      {/* The literal # matches the built-in rows above, which
-                          carry it in their label text alongside the icon. */}
-                      <span className="truncate">#{channel.slug}</span>
+                      <Hash className="h-4 w-4 shrink-0" />
+                      <span className="truncate">{channel.slug}</span>
                     </div>
 
-                    {/* The count shifts left on hover so the remove control has
-                        somewhere to sit without covering it. */}
                     {channel.messageCount > 0 && (
-                      <Badge
-                        variant="secondary"
-                        className={cn(
-                          "h-4 px-1.5 py-0 text-3xs transition-transform",
-                          canManageChannels && "group-hover/channel:-translate-x-6",
-                          isActive
-                            ? "bg-primary-foreground/20 text-primary-foreground"
-                            : "bg-muted text-muted-foreground"
-                        )}
-                      >
+                      <span className="tabular text-xs text-muted-foreground">
                         {channel.messageCount}
-                      </Badge>
+                      </span>
                     )}
                   </button>
 
@@ -228,10 +176,10 @@ export function CommunityWorkspaceSidebar({
                       aria-label={`Remove #${channel.slug}`}
                       title={`Remove #${channel.slug}`}
                       className={cn(
-                        "absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md opacity-0 transition-opacity focus:opacity-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring group-hover/channel:opacity-100",
-                        isActive
-                          ? "text-primary-foreground hover:bg-primary-foreground/20"
-                          : "text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                        // Always visible on touch screens; revealed on hover only
+                        // where hover exists, so phones are not left without it.
+                        "absolute right-1 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground transition-opacity duration-150 hover:bg-destructive/10 hover:text-destructive focus:opacity-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                        "[@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover/channel:opacity-100",
                       )}
                     >
                       <Trash2 className="h-3.5 w-3.5" />
@@ -246,27 +194,27 @@ export function CommunityWorkspaceSidebar({
         {/* Said once, to the one person who can act on it, and only while the
             group has no channels of its own. */}
         {canManageChannels && channels.length === 0 && (
-          <p className="px-3 pb-1 pt-2 text-2xs leading-relaxed text-muted-foreground">
+          <p className="px-2.5 pb-1 pt-2 text-xs leading-relaxed text-muted-foreground">
             Add a channel when one topic keeps interrupting another — a room for
             resources, or one for announcements.
           </p>
         )}
 
         {/* Compact member row — inside the channel card */}
-        <div className="!mt-2 border-t border-border/50 pt-2">
+        <div className="!mt-2 border-t pt-2">
           <button
             type="button"
             onClick={onOpenMembersDrawer}
-            className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-xs text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+            className="flex h-10 w-full items-center justify-between rounded-md px-2.5 text-sm text-muted-foreground transition-colors duration-150 hover:bg-accent hover:text-foreground"
           >
-            <div className="flex items-center gap-2">
-              <Users className="h-3.5 w-3.5 text-primary" />
-              <span className="font-medium text-foreground">{community.member_count} {community.member_count === 1 ? "member" : "members"}</span>
+            <div className="flex items-center gap-2.5">
+              <Users className="h-4 w-4" />
+              <span className="tabular font-medium text-foreground">{community.member_count} {community.member_count === 1 ? "member" : "members"}</span>
             </div>
-            <span className="text-primary font-semibold text-2xs">Directory →</span>
+            <ChevronRight className="h-4 w-4" aria-hidden />
           </button>
         </div>
-      </div>
+      </nav>
     </div>
   );
 }

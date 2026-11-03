@@ -1,5 +1,6 @@
 import { useMemo } from "react";
-import { Clock, MapPin, CheckCircle2, AlertCircle, Sparkles } from "lucide-react";
+import { MapPin, CheckCircle2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { TimetableSlot } from "./WeeklyMatrixTable";
 
 interface ActiveScheduleBannerProps {
@@ -68,67 +69,35 @@ export default function ActiveScheduleBanner({ slots }: ActiveScheduleBannerProp
 
   if (!scheduleStatus) return null;
 
-  if (scheduleStatus.type === "ongoing" && scheduleStatus.slot) {
+  if ((scheduleStatus.type === "ongoing" || scheduleStatus.type === "upcoming") && scheduleStatus.slot) {
     const s = scheduleStatus.slot;
+    const ongoing = scheduleStatus.type === "ongoing";
     return (
-      <div className="mb-6 p-4 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-foreground shadow-sm">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-start gap-3">
-            <div className="p-2 rounded-lg bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 mt-0.5 sm:mt-0">
-              <Clock className="w-5 h-5 animate-pulse" />
-            </div>
-            <div>
-              <div className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-                <span>Class in Session</span>
-                <span className="text-muted-foreground">•</span>
-                <span>Ends at {scheduleStatus.endTime}</span>
-              </div>
-              <h4 className="text-base font-bold text-foreground mt-0.5">
-                {s.course_code}: {s.course_name}
-              </h4>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                {s.faculty_name ? `Instructor: ${s.faculty_name}` : "Faculty scheduled"}
-              </p>
-            </div>
+      <div className="mb-6 rounded-xl border border-border bg-card p-4 shadow-card">
+        <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+          <div className="min-w-0">
+            <p className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+              <span
+                className={cn("h-2 w-2 shrink-0 rounded-full", ongoing ? "bg-green-600" : "bg-primary")}
+                aria-hidden
+              />
+              <span className="text-foreground">{ongoing ? "In session" : "Next today"}</span>
+              <span aria-hidden>·</span>
+              <span className="tabular">
+                {ongoing ? `Ends ${scheduleStatus.endTime}` : `Starts ${scheduleStatus.startTime}`}
+              </span>
+            </p>
+            <h4 className="mt-1 text-base font-semibold text-foreground">
+              <span className="tabular">{s.course_code}</span>: {s.course_name}
+            </h4>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              {s.faculty_name ? `Instructor: ${s.faculty_name}` : "Faculty scheduled"}
+            </p>
           </div>
           {s.room_number && (
-            <div className="self-start sm:self-center px-3.5 py-1.5 rounded-lg bg-background/80 border border-emerald-500/30 flex items-center gap-1.5 text-sm font-mono font-semibold">
-              <MapPin className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-              <span>Room {s.room_number}</span>
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  if (scheduleStatus.type === "upcoming" && scheduleStatus.slot) {
-    const s = scheduleStatus.slot;
-    return (
-      <div className="mb-6 p-4 rounded-xl border border-sky-500/30 bg-sky-500/10 text-foreground shadow-sm">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-start gap-3">
-            <div className="p-2 rounded-lg bg-sky-500/20 text-sky-600 dark:text-sky-400 mt-0.5 sm:mt-0">
-              <Clock className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-sky-600 dark:text-sky-400">
-                <span>Next Up Today</span>
-                <span className="text-muted-foreground">•</span>
-                <span>Starts at {scheduleStatus.startTime}</span>
-              </div>
-              <h4 className="text-base font-bold text-foreground mt-0.5">
-                {s.course_code}: {s.course_name}
-              </h4>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                {s.faculty_name ? `Instructor: ${s.faculty_name}` : "Faculty scheduled"}
-              </p>
-            </div>
-          </div>
-          {s.room_number && (
-            <div className="self-start sm:self-center px-3.5 py-1.5 rounded-lg bg-background/80 border border-sky-500/30 flex items-center gap-1.5 text-sm font-mono font-semibold">
-              <MapPin className="w-4 h-4 text-sky-600 dark:text-sky-400" />
-              <span>Room {s.room_number}</span>
+            <div className="flex items-center gap-1.5 self-start rounded-md bg-secondary px-3 py-1.5 text-sm font-medium text-secondary-foreground sm:self-center">
+              <MapPin className="h-4 w-4 text-muted-foreground" />
+              <span className="tabular">Room {s.room_number}</span>
             </div>
           )}
         </div>
@@ -137,8 +106,8 @@ export default function ActiveScheduleBanner({ slots }: ActiveScheduleBannerProp
   }
 
   return (
-    <div className="mb-6 py-2.5 px-4 rounded-xl border border-border/60 bg-muted/30 text-xs text-muted-foreground flex items-center gap-2">
-      <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
+    <div className="mb-6 py-2.5 px-4 rounded-xl border border-border bg-card text-xs text-muted-foreground flex items-center gap-2">
+      <CheckCircle2 className="h-4 w-4 shrink-0 text-muted-foreground" />
       <span>{scheduleStatus.message}</span>
     </div>
   );

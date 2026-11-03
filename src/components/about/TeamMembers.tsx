@@ -2,9 +2,8 @@ import { useEffect, useState } from 'react';
 import { getTeamMembers, TeamMember } from '@/integrations/supabase/services/team-members';
 import { toast } from 'sonner';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Card, CardContent } from '@/components/ui/card';
 import { Mail } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface TeamMembersProps {
   teamMembers?: TeamMember[];
@@ -35,9 +34,7 @@ const TeamMembers = ({ teamMembers, isAdmin, onEdit, onMembersUpdated }: TeamMem
         setMembers(data || []);
       } catch (err) {
         console.error('Error loading team members:', err);
-        toast.error('Error', {
-          description: 'Failed to load team members.',
-        });
+        toast.error('Could not load team members.');
       } finally {
         setIsLoading(false);
       }
@@ -46,109 +43,80 @@ const TeamMembers = ({ teamMembers, isAdmin, onEdit, onMembersUpdated }: TeamMem
     loadTeamMembers();
   }, [teamMembers]);
 
-  // Animation variants
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1
-      }
-    }
-  };
-  
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: { 
-      y: 0, 
-      opacity: 1,
-      transition: { duration: 0.5 }
-    }
-  };
+  const heading = (
+    <div className="mb-8 max-w-2xl">
+      <h2 className="text-2xl font-semibold tracking-tight text-foreground md:text-3xl">The team</h2>
+      <p className="mt-2 text-muted-foreground">The students who build and run Friendly Learning.</p>
+    </div>
+  );
 
   if (isLoading) {
     return (
-      <div className="py-12">
-        <div className="container px-4 md:px-6">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold">Our Team</h2>
-            <p className="text-muted-foreground mt-2">Loading team members...</p>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-8">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="animate-pulse">
-                <div className="flex flex-col items-center">
-                  <div className="w-32 h-32 rounded-full bg-slate-200 dark:bg-slate-700"></div>
-                  <div className="h-6 bg-slate-200 dark:bg-slate-700 rounded w-24 mt-4"></div>
-                  <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-32 mt-2"></div>
+      <section className="border-t border-border py-16" aria-busy="true">
+        <div className="container mx-auto max-w-4xl px-4 md:px-6">
+          {heading}
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="flex items-center gap-4">
+                <Skeleton className="h-16 w-16 shrink-0 rounded-full" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-3 w-24" />
                 </div>
               </div>
             ))}
           </div>
         </div>
-      </div>
+      </section>
     );
   }
 
   if (members.length === 0) {
     return (
-      <div className="py-12">
-        <div className="container px-4 md:px-6">
-          <div className="text-center">
-            <h2 className="text-3xl font-bold">Our Team</h2>
-            <p className="text-muted-foreground mt-2">Our dedicated professionals working to improve education.</p>
-          </div>
-          <div className="text-center py-16">
-            <p className="text-muted-foreground">Team member information will be available soon.</p>
-          </div>
+      <section className="border-t border-border py-16">
+        <div className="container mx-auto max-w-4xl px-4 md:px-6">
+          {heading}
+          <p className="text-sm text-muted-foreground">Team profiles have not been added yet.</p>
         </div>
-      </div>
+      </section>
     );
   }
 
   return (
-    <div className="py-12">
-      <div className="container px-4 md:px-6">
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold">Our Team</h2>
-          <p className="text-muted-foreground mt-2">Meet the dedicated professionals behind Friendly Learning.</p>
-        </div>
-        
-        <motion.div 
-          className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-8"
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-        >
-          {members.map((member) => (
-            <motion.div key={member.id} variants={itemVariants}>
-              <Card className="overflow-hidden hover:shadow-lg transition-shadow">
-                <CardContent className="p-6 flex flex-col items-center text-center">
-                  <Avatar className="w-32 h-32 mb-4">
-                    <AvatarImage src={member.image_url || ''} alt={member.name} />
-                    <AvatarFallback className="text-2xl bg-primary/10">
-                      {member.name.split(' ').map(n => n[0]).join('')}
-                    </AvatarFallback>
-                  </Avatar>
-                  
-                  <h3 className="text-xl font-semibold">{member.name}</h3>
-                  <p className="text-muted-foreground mb-2">{member.position}</p>
-                  
-                  {member.email && (
-                    <div className="flex items-center text-sm mt-2">
-                      <Mail className="w-4 h-4 mr-1 text-muted-foreground" />
-                      <a href={`mailto:${member.email}`} className="text-primary hover:underline">
-                        {member.email}
-                      </a>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </motion.div>
+    <section className="border-t border-border py-16">
+      <div className="container mx-auto max-w-4xl px-4 md:px-6">
+        {heading}
+        <ul className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
+          {members.map((member, i) => (
+            <li
+              key={member.id}
+              className="flex min-w-0 items-center gap-4 animate-fade-up"
+              style={{ animationDelay: `${Math.min(i, 5) * 35}ms` }}
+            >
+              <Avatar className="h-16 w-16 shrink-0 border border-border">
+                <AvatarImage src={member.image_url || ''} alt={member.name} className="object-cover" />
+                <AvatarFallback className="bg-secondary text-lg font-medium text-secondary-foreground">
+                  {member.name.split(' ').map(n => n[0]).join('')}
+                </AvatarFallback>
+              </Avatar>
+              <div className="min-w-0">
+                <h3 className="truncate font-semibold text-foreground">{member.name}</h3>
+                <p className="truncate text-sm text-muted-foreground">{member.position}</p>
+                {member.email && (
+                  <a
+                    href={`mailto:${member.email}`}
+                    className="mt-1 inline-flex max-w-full items-center gap-1.5 text-sm text-primary underline-offset-2 hover:underline"
+                  >
+                    <Mail className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                    <span className="truncate">{member.email}</span>
+                  </a>
+                )}
+              </div>
+            </li>
           ))}
-        </motion.div>
+        </ul>
       </div>
-    </div>
+    </section>
   );
 };
 

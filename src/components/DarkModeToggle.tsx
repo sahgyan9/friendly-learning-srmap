@@ -24,7 +24,7 @@ const DarkModeToggle = () => (
     className="relative h-10 w-10 rounded-full border border-input"
   >
     <Sun className="h-5 w-5 rotate-0 scale-100 transition-transform duration-300 dark:-rotate-90 dark:scale-0" />
-    <Moon className="absolute h-5 w-5 rotate-90 scale-0 text-yellow-300 transition-transform duration-300 dark:rotate-0 dark:scale-100" />
+    <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-transform duration-300 dark:rotate-0 dark:scale-100" />
 
     {/* Exactly one of these is in the accessibility tree at a time, and the
         label names the action rather than the current state. */}

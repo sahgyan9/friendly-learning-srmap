@@ -60,7 +60,7 @@ const CertificatePreview = ({ name, defaultOpen = true }: CertificatePreviewProp
 
         {open && (
           <div className="space-y-3">
-            <div className="overflow-hidden rounded-lg border shadow-sm">
+            <div className="overflow-hidden rounded-lg border shadow-card">
               <MentorCertificate data={data} />
             </div>
             <p className="text-xs text-muted-foreground">

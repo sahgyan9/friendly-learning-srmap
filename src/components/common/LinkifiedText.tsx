@@ -181,7 +181,7 @@ function renderWithLinks(text: string, onLinkClick: (url: string) => void) {
         <a
           key={key++}
           href={withProtocol(url)}
-          className="text-blue-600 underline decoration-blue-600/40 underline-offset-2 hover:decoration-blue-600 dark:text-blue-400"
+          className="text-primary underline decoration-primary/40 underline-offset-2 hover:decoration-primary"
           onClick={(event) => {
             event.preventDefault();
             event.stopPropagation();
@@ -239,7 +239,7 @@ export function LinkifiedText({ text, className }: LinkifiedTextProps) {
                 setPendingUrl(null);
               }}
             >
-              Continue
+              Open link
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

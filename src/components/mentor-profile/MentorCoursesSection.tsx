@@ -1,6 +1,3 @@
-import { motion } from "framer-motion";
-import { BookOpen } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { EnhancedMentor } from "@/utils/mentor-enhancements";
 
 interface MentorCoursesSectionProps {
@@ -15,33 +12,20 @@ export default function MentorCoursesSection({ mentor }: MentorCoursesSectionPro
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 15 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      className="rounded-2xl border border-border/80 bg-card p-6 shadow-sm"
-    >
-      <div className="flex items-center gap-2 mb-4">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-500">
-          <BookOpen className="h-4 w-4" />
-        </div>
-        <div>
-          <h2 className="text-lg font-bold text-foreground">Courses Taken</h2>
-          <p className="text-xs text-muted-foreground">Verified coursework from SRM AP</p>
-        </div>
-      </div>
+    <section className="rounded-xl border border-border bg-card p-5 shadow-card md:p-6">
+      <h2 className="text-lg font-semibold tracking-tight text-foreground">Courses taken</h2>
+      <p className="mt-1 text-sm text-muted-foreground">Coursework completed at SRM AP</p>
 
-      <div className={`flex flex-wrap gap-1.5 ${courses.length > 24 ? "max-h-64 overflow-y-auto pr-1" : ""}`}>
+      <ul className={`mt-4 flex flex-wrap gap-1.5 ${courses.length > 24 ? "max-h-64 overflow-y-auto pr-1" : ""}`}>
         {courses.map((course) => (
-          <Badge
+          <li
             key={course.code}
-            variant="secondary"
-            className="bg-emerald-50/80 text-emerald-900 dark:bg-emerald-950/80 dark:text-emerald-200 border border-emerald-200/50 dark:border-emerald-800/50 font-medium text-xs px-2.5 py-1"
+            className="rounded-md border border-border px-2 py-0.5 text-xs text-foreground"
           >
-            {course.code} · {course.name}
-          </Badge>
+            <span className="font-mono text-muted-foreground">{course.code}</span> {course.name}
+          </li>
         ))}
-      </div>
-    </motion.div>
+      </ul>
+    </section>
   );
 }

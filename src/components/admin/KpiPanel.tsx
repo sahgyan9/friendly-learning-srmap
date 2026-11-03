@@ -14,6 +14,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
 // Shape of the jsonb returned by admin_kpi_metrics()
@@ -64,7 +65,7 @@ const KpiTile = ({ icon: Icon, title, stats }: KpiTileData) => (
         {stats.map((s) => (
           <div key={s.label} className="flex items-center justify-between gap-2 text-sm">
             <dt className="text-muted-foreground">{s.label}</dt>
-            <dd className="tabular-nums font-medium">{s.value}</dd>
+            <dd className="tabular text-right font-medium">{s.value}</dd>
           </div>
         ))}
       </dl>
@@ -185,9 +186,9 @@ const KpiPanel = () => {
     <section className="mb-6">
       <div className="mb-3 flex items-center justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Launch KPIs</h2>
+          <h2 className="text-base font-semibold text-foreground">Launch KPIs</h2>
           <p className="text-xs text-muted-foreground">
-            Real-time database metrics across signups, app installs, search, and interactions.
+            Counts from the database for signups, installs, search and activity.
           </p>
         </div>
         <Button
@@ -206,11 +207,18 @@ const KpiPanel = () => {
       {loading ? (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {[0, 1, 2, 3, 4, 5, 6].map((i) => (
-            <Card key={i} className="h-28 animate-pulse" />
+            <Skeleton key={i} className="h-28 rounded-xl" />
           ))}
         </div>
       ) : error || !metrics ? (
-        <p className="text-sm text-muted-foreground">KPI data unavailable</p>
+        <div className="flex flex-col items-start gap-3 rounded-xl border border-border bg-card p-4 text-sm sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-muted-foreground">
+            Could not load KPI metrics. The database query failed or timed out.
+          </p>
+          <Button type="button" variant="outline" size="sm" onClick={() => fetchMetrics(true)} isLoading={refreshing}>
+            Retry
+          </Button>
+        </div>
       ) : (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {tiles.map(({ key, ...tile }) => (

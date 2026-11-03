@@ -1,8 +1,5 @@
 import { Link } from "react-router-dom";
-import { BookOpen, Search, ArrowRight, CheckCircle2, Sparkles } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import { CardAccentBorder } from "@/components/ui/CardAccentBorder";
-import { Badge } from "@/components/ui/badge";
+import { ArrowRight } from "lucide-react";
 
 interface FacultyResearchShowcaseProps {
   interests: string[];
@@ -20,22 +17,16 @@ export default function FacultyResearchShowcase({
 
   if (allInterests.length === 0 && extraDetails.length === 0) {
     return (
-      <Card className="relative overflow-hidden shadow-xs">
-        <CardAccentBorder gradient="rose" />
-        <CardContent className="p-6">
-          <div className="flex items-center gap-2 mb-2">
-            <BookOpen className="h-5 w-5 text-rose-600 dark:text-rose-400" />
-            <h2 className="text-base font-bold text-foreground">Academic Focus & Research</h2>
-          </div>
-          <p className="text-sm text-muted-foreground">
-            Specializes in teaching and research within the {department} department.
-          </p>
-        </CardContent>
-      </Card>
+      <section className="rounded-xl border border-border bg-card p-5 shadow-card md:p-6">
+        <h2 className="text-lg font-semibold tracking-tight">Research</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          No research areas listed. Teaches and researches in the {department} department.
+        </p>
+      </section>
     );
   }
 
-  // Separate concise domain tags from detailed research statements
+  // Short entries read as keywords; long ones are sentences describing a project.
   const conciseTags = allInterests.filter((item) => item.length <= 40);
   const detailedStatements = Array.from(
     new Set([
@@ -45,81 +36,49 @@ export default function FacultyResearchShowcase({
   );
 
   return (
-    <Card className="relative overflow-hidden shadow-xs">
-      <CardAccentBorder gradient="rose" />
-      <CardContent className="p-6 space-y-5">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <div className="rounded-lg bg-rose-500/10 p-2 text-rose-600 dark:text-rose-400">
-              <BookOpen className="h-5 w-5" />
-            </div>
-            <div>
-              <h2 className="text-base font-bold text-foreground">
-                Research Areas & Specializations
-              </h2>
-              <p className="text-xs text-muted-foreground">
-                Topics, specializations, and focus areas
-              </p>
-            </div>
-          </div>
+    <section className="space-y-5 rounded-xl border border-border bg-card p-5 shadow-card md:p-6">
+      <div>
+        <h2 className="text-lg font-semibold tracking-tight">Research</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Select an area to see other faculty who work on it.
+        </p>
+      </div>
 
-          <Badge variant="outline" className="self-start sm:self-auto text-xs font-normal">
-            {conciseTags.length > 0 ? `${conciseTags.length} tags` : `${interests.length} topics`}
-          </Badge>
+      {conciseTags.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {conciseTags.map((interest) => (
+            <Link
+              key={interest}
+              to={`/faculty?interest=${encodeURIComponent(interest)}`}
+              className="inline-flex h-8 items-center rounded-md border border-border bg-card px-3 text-sm text-foreground transition-colors duration-150 hover:border-foreground/20 hover:bg-accent"
+            >
+              {interest}
+            </Link>
+          ))}
         </div>
+      )}
 
-        {/* Detailed Research Statements / Focus Areas (if present) */}
-        {detailedStatements.length > 0 && (
-          <div className="space-y-2.5 rounded-xl border border-border/70 bg-muted/20 p-4">
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
-              <Sparkles className="h-3.5 w-3.5 text-rose-500" />
-              <span>Key Research Projects & Focus Areas</span>
-            </div>
-            <ul className="space-y-2 text-xs md:text-sm text-foreground/90 leading-relaxed">
-              {detailedStatements.map((statement, idx) => (
-                <li key={idx} className="flex items-start gap-2">
-                  <CheckCircle2 className="h-4 w-4 shrink-0 text-rose-500 mt-0.5" />
-                  <span>{statement}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        {/* Concise Domain Chips */}
-        {conciseTags.length > 0 && (
-          <div className="space-y-2">
-            <p className="text-xs font-medium text-muted-foreground">
-              Domain keywords (click to see other faculty in this domain):
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {conciseTags.map((interest) => (
-                <Link
-                  key={interest}
-                  to={`/faculty?interest=${encodeURIComponent(interest)}`}
-                  className="group inline-flex items-center gap-1.5 rounded-full border border-rose-500/25 bg-rose-500/5 px-3 py-1.5 text-xs font-medium text-rose-700 transition-all hover:border-rose-500/40 hover:bg-rose-500/10 dark:text-rose-300 dark:hover:bg-rose-500/20"
-                >
-                  <span>{interest}</span>
-                  <Search className="h-3 w-3 opacity-50 group-hover:opacity-100 transition-opacity" />
-                </Link>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Department Link Callout */}
-        <div className="rounded-xl border border-border/60 bg-muted/30 p-3 text-xs text-muted-foreground flex items-center justify-between">
-          <span>Looking for Research Projects, UROP, or BTP guidance in these domains?</span>
-          <Link
-            to={`/faculty?dept=${encodeURIComponent(department)}`}
-            className="font-medium text-rose-600 dark:text-rose-400 hover:underline inline-flex items-center gap-1 shrink-0 ml-2"
-          >
-            Explore Department
-            <ArrowRight className="h-3 w-3" />
-          </Link>
+      {detailedStatements.length > 0 && (
+        <div className="border-t border-border pt-4">
+          <h3 className="text-sm font-medium text-foreground">Projects and focus areas</h3>
+          <ul className="mt-2 list-disc space-y-1.5 pl-5 text-sm leading-relaxed text-foreground/90 marker:text-muted-foreground">
+            {detailedStatements.map((statement, idx) => (
+              <li key={idx}>{statement}</li>
+            ))}
+          </ul>
         </div>
-      </CardContent>
-    </Card>
+      )}
+
+      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border pt-4 text-sm">
+        <span className="text-muted-foreground">Looking for a UROP or BTP guide in this area?</span>
+        <Link
+          to={`/faculty?dept=${encodeURIComponent(department)}`}
+          className="inline-flex items-center gap-1 font-medium text-primary underline-offset-4 hover:underline"
+        >
+          Browse {department}
+          <ArrowRight className="h-4 w-4" />
+        </Link>
+      </div>
+    </section>
   );
 }

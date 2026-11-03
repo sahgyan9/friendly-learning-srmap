@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, BookOpen, Code, Compass, Palette, Plus, Sparkles, Users, Zap } from "lucide-react";
+import { ArrowRight, BookOpen, Code, Compass, LayoutGrid, Palette, Plus, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CommunityCard } from "@/components/workspace-groups/CommunityCard";
 import type { Community } from "@/integrations/supabase/services/communities";
@@ -26,15 +26,15 @@ interface InterestFilter {
 const INTEREST_TAGS: InterestFilter[] = [
   {
     id: "all",
-    label: "All Recommendations",
-    categoryName: "Starter",
-    icon: Sparkles,
+    label: "All",
+    categoryName: "Suggested",
+    icon: LayoutGrid,
   },
   {
     id: "hackathons",
     label: "Hackathons & SIH",
     categoryName: "Hackathon & SIH",
-    icon: Zap,
+    icon: Trophy,
     kinds: ["hackathon", "project"],
     keywords: ["hackathon", "hackthon", "sih", "teammate", "team", "competition", "dev"],
   },
@@ -108,73 +108,49 @@ export function CommunityOnboardingHero({
   }, [communities, selectedTag, currentTag]);
 
   return (
-    <div className="relative overflow-hidden rounded-3xl border border-amber-500/25 bg-gradient-to-br from-amber-500/10 via-background to-background p-6 md:p-10 shadow-sm mb-10">
-      {/* Decorative ambient glows */}
-      <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-amber-500/15 blur-3xl" />
-      <div className="pointer-events-none absolute -left-16 bottom-0 h-52 w-52 rounded-full bg-amber-500/10 blur-2xl" />
-
-      <div className="relative z-10 max-w-3xl space-y-4">
-        <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/25 bg-amber-500/15 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-amber-700 dark:text-amber-300">
-          <Sparkles className="h-3.5 w-3.5" />
-          First-Time Community Guide
-        </div>
-
-        <h2 className="text-3xl font-bold tracking-tight text-foreground md:text-4xl">
-          Find your people at SRM AP.
+    <section aria-labelledby="community-onboarding" className="mb-10 rounded-xl border bg-card p-6 shadow-card md:p-8">
+      <div className="max-w-3xl">
+        <h2 id="community-onboarding" className="text-2xl font-semibold tracking-tight text-foreground">
+          Find a group to join
         </h2>
-
-        <p className="text-base text-muted-foreground leading-relaxed max-w-2xl">
-          Whether you're gearing up for your first hackathon, preparing for interviews,
-          joining a research lab, or starting a study room—discover student groups built for you.
+        <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+          Hackathon teams, interview prep, research labs and study rooms. Pick an interest to narrow the list.
         </p>
 
-        {/* Quick Interest Tags */}
-        <div className="pt-2">
-          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2.5">
-            Filter by your interest:
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {INTEREST_TAGS.map((tag) => {
-              const active = selectedTag === tag.id;
-              return (
-                <button
-                  key={tag.id}
-                  type="button"
-                  onClick={() => setSelectedTag(tag.id)}
-                  className={cn(
-                    "inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-medium transition-all duration-200 shadow-2xs",
-                    active
-                      ? "bg-primary text-primary-foreground font-semibold shadow-xs scale-105"
-                      : "border border-border/80 bg-card/80 text-muted-foreground hover:bg-accent hover:text-foreground hover:border-primary/40",
-                  )}
-                >
-                  <tag.icon className="h-3.5 w-3.5" />
-                  <span>{tag.label}</span>
-                </button>
-              );
-            })}
-          </div>
+        <div className="mt-5 flex flex-wrap gap-2" role="group" aria-label="Filter by interest">
+          {INTEREST_TAGS.map((tag) => {
+            const active = selectedTag === tag.id;
+            return (
+              <button
+                key={tag.id}
+                type="button"
+                aria-pressed={active}
+                onClick={() => setSelectedTag(tag.id)}
+                className={cn(
+                  "inline-flex h-9 items-center gap-1.5 rounded-md border px-3 text-sm transition-colors duration-150",
+                  active
+                    ? "border-primary bg-primary/10 font-medium text-primary"
+                    : "bg-card text-muted-foreground hover:bg-accent hover:text-foreground",
+                )}
+              >
+                <tag.icon className="h-4 w-4" />
+                <span>{tag.label}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {/* Recommended Starter Cards */}
-      <div className="relative z-10 mt-8">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <Users className="h-4 w-4 text-primary" />
-            <span className="text-sm font-semibold text-foreground">
-              {currentTag.categoryName} Communities ({filteredCommunities.length})
-            </span>
-          </div>
+      <div className="mt-8">
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <h3 className="text-sm font-medium text-foreground">
+            {currentTag.categoryName} communities{" "}
+            <span className="tabular font-normal text-muted-foreground">{filteredCommunities.length}</span>
+          </h3>
 
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onExploreAll}
-            className="text-xs font-semibold text-primary hover:text-primary hover:bg-primary/10 gap-1"
-          >
-            <span>Browse all categories</span>
-            <ArrowRight className="h-3.5 w-3.5" />
+          <Button variant="ghost" size="sm" onClick={onExploreAll}>
+            Browse all
+            <ArrowRight className="h-4 w-4" />
           </Button>
         </div>
 
@@ -189,63 +165,54 @@ export function CommunityOnboardingHero({
             ))}
           </div>
         ) : (
-          <div className="rounded-2xl border border-dashed border-border/80 bg-card/50 p-8 text-center space-y-3">
-            <p className="text-sm font-medium text-foreground">
-              No {currentTag.categoryName.toLowerCase()} communities found yet.
-            </p>
-            <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-              Be the first to start a group for your batch, hackathon team, or study circle!
-            </p>
-            <div className="flex items-center justify-center gap-2.5 pt-2">
-              <Button size="sm" onClick={onStartGroup} className="gap-1.5 font-semibold text-xs">
-                <Plus className="h-3.5 w-3.5" />
-                Start {currentTag.categoryName} group
+          <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed p-8 text-center">
+            <div>
+              <p className="text-sm font-medium text-foreground">
+                No {currentTag.categoryName.toLowerCase()} communities yet
+              </p>
+              <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
+                Start one for your batch, hackathon team or study circle.
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <Button size="sm" onClick={onStartGroup}>
+                <Plus className="h-4 w-4" />
+                Start a group
               </Button>
-              <Button size="sm" variant="outline" onClick={() => setSelectedTag("all")} className="text-xs">
+              <Button size="sm" variant="outline" onClick={() => setSelectedTag("all")}>
                 Show all communities
               </Button>
             </div>
           </div>
         )}
 
-        {/* Footer CTAs */}
-        <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4 rounded-2xl border border-border/60 bg-card/70 p-4 backdrop-blur-xs">
-          <div className="flex items-center gap-3">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400">
-              <Zap className="h-5 w-5" />
-            </span>
-            <div>
-              <p className="text-sm font-semibold text-foreground">Want to start your own crew?</p>
-              <p className="text-xs text-muted-foreground">
-                Create a study room, hackathon team, or lab circle in under 30 seconds.
-              </p>
-            </div>
+        <div className="mt-8 flex flex-col items-start justify-between gap-4 border-t pt-6 sm:flex-row sm:items-center">
+          <div>
+            <p className="text-sm font-medium text-foreground">Start your own group</p>
+            <p className="text-sm text-muted-foreground">
+              A study room, hackathon team or lab circle takes under a minute to set up.
+            </p>
           </div>
 
-          <div className="flex items-center gap-2.5 shrink-0 w-full sm:w-auto">
+          <div className="flex w-full shrink-0 items-center gap-2 sm:w-auto">
             {user ? (
-              <Button onClick={onStartGroup} size="sm" className="w-full sm:w-auto gap-1.5">
+              <Button onClick={onStartGroup} className="flex-1 sm:flex-none">
                 <Plus className="h-4 w-4" />
                 Start a group
               </Button>
             ) : (
-              <Button asChild size="sm" variant="outline" className="w-full sm:w-auto">
+              <Button asChild variant="outline" className="flex-1 sm:flex-none">
                 <Link to="/signin">Sign in to start a group</Link>
               </Button>
             )}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onExploreAll}
-              className="w-full sm:w-auto gap-1.5"
-            >
+            <Button variant="ghost" onClick={onExploreAll} className="flex-1 sm:flex-none">
               <Compass className="h-4 w-4" />
-              Discover all
+              Discover
             </Button>
           </div>
         </div>
       </div>
-    </div>
+    </section>
   );
 }
 

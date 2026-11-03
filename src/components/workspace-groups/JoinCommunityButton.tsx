@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Check, Clock, Loader2, Lock, UserPlus } from "lucide-react";
+import { Check, Clock, Lock, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -43,11 +43,11 @@ export function JoinCommunityButton({
     return (
       <span
         className={cn(
-          "inline-flex items-center justify-center gap-1 rounded-lg border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-400",
+          "inline-flex items-center justify-center gap-1 text-xs font-medium text-emerald-700 dark:text-emerald-400",
           className,
         )}
       >
-        <Check className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+        <Check className="h-3.5 w-3.5" />
         {community.viewer_is_owner ? "Owner" : "Joined"}
       </span>
     );
@@ -66,7 +66,7 @@ export function JoinCommunityButton({
         asChild
         size={size}
         variant="outline"
-        className={cn("h-8 px-3 text-xs font-semibold rounded-lg hover:border-primary/50", className)}
+        className={cn("h-9 px-3", className)}
       >
         <Link to={`/signin?next=/workspace-groups/${community.slug}`}>
           {isPrivate ? "Request" : "Join"}
@@ -78,7 +78,7 @@ export function JoinCommunityButton({
   // Invited state
   if (community.viewer_has_invite) {
     return (
-      <Button asChild size={size} className={cn("h-8 px-3 text-xs font-semibold rounded-lg", className)}>
+      <Button asChild size={size} className={cn("h-9 px-3", className)}>
         <Link to={`/workspace-groups/${community.slug}`}>Accept</Link>
       </Button>
     );
@@ -87,8 +87,8 @@ export function JoinCommunityButton({
   // Requested state
   if (community.viewer_has_requested) {
     return (
-      <Button size={size} variant="outline" disabled className={cn("h-8 px-3 text-xs font-medium rounded-lg opacity-70", className)}>
-        <Clock className="mr-1 h-3 w-3" />
+      <Button size={size} variant="outline" disabled className={cn("h-9 px-3", className)}>
+        <Clock className="h-4 w-4" />
         Requested
       </Button>
     );
@@ -127,7 +127,7 @@ export function JoinCommunityButton({
       viewer_is_member: true,
       member_count: community.member_count + 1,
     });
-    toast.success(`You're in — ${community.name}`, {
+    toast.success(`Joined ${community.name}`, {
       description: "You can post in the group now.",
     });
   };
@@ -135,17 +135,12 @@ export function JoinCommunityButton({
   return (
     <Button
       size={size}
+      variant="outline"
       onClick={handleJoin}
-      disabled={busy}
-      className={cn("h-8 px-3 text-xs font-semibold rounded-lg", className)}
+      isLoading={busy}
+      className={cn("h-9 px-3", className)}
     >
-      {busy ? (
-        <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-      ) : isPrivate ? (
-        <Lock className="mr-1 h-3 w-3" />
-      ) : (
-        <UserPlus className="mr-1 h-3 w-3" />
-      )}
+      {busy ? null : isPrivate ? <Lock className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}
       {isPrivate ? "Request" : "Join"}
     </Button>
   );

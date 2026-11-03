@@ -276,7 +276,7 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
     setIsDeleting(false);
 
     if (error) {
-      toast.error(error.message || "Could not delete message. (30m limit)");
+      toast.error(error.message || "Could not delete the message. Messages can be deleted for 30 minutes.");
       return;
     }
 
@@ -290,16 +290,16 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
     if (!content) return;
 
     if (typeof navigator !== "undefined" && !navigator.onLine) {
-      toast.error("You are currently offline. Connect to internet to send group messages.");
+      toast.error("You are offline. Messages send once you reconnect to the internet.");
       return;
     }
 
     if (!user) {
-      toast.error("Please sign in to send messages");
+      toast.error("Sign in to send messages");
       return;
     }
     if (!canPost) {
-      toast.error("You must join this group to post messages");
+      toast.error("Join this group to post messages");
       return;
     }
 
@@ -312,7 +312,7 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
 
       if (error) {
         setInputText(content);
-        toast.error(error.message || "Could not edit that message (only editable within 30m)");
+        toast.error(error.message || "Could not edit the message. Messages can be edited for 30 minutes.");
         return;
       }
 
@@ -367,13 +367,13 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
     try {
       await navigator.clipboard.writeText(content);
       setCopiedMessageId(id);
-      toast.success("Message copied to clipboard");
+      toast.success("Message copied");
       setTimeout(() => {
         setCopiedMessageId((cur) => (cur === id ? null : cur));
       }, 1800);
     } catch (err) {
       console.error("Failed to copy message:", err);
-      toast.error("Failed to copy message");
+      toast.error("Could not copy the message");
     }
   };
 
@@ -422,8 +422,16 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
       {/* Stream */}
       <div ref={messagesContainerRef} className="flex-1 overflow-y-auto px-2 py-3">
         {loading ? (
-          <div className="flex h-full items-center justify-center text-muted-foreground">
-            <Loader2 className="h-5 w-5 animate-spin" />
+          <div className="flex flex-col gap-4 px-2 py-2" aria-busy="true" aria-label="Loading messages">
+            {[60, 40, 75, 50].map((width, i) => (
+              <div key={i} className="flex items-start gap-2.5">
+                <div className="h-8 w-8 shrink-0 animate-pulse rounded-full bg-muted" />
+                <div className="flex flex-1 flex-col gap-1.5">
+                  <div className="h-3 w-24 animate-pulse rounded bg-muted" />
+                  <div className="h-4 animate-pulse rounded bg-muted" style={{ width: `${width}%` }} />
+                </div>
+              </div>
+            ))}
           </div>
         ) : unreadable && items.length === 0 ? (
           /* Not empty — closed. Saying "nobody's said anything" to someone who
@@ -507,7 +515,7 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
                 <div className="mb-1.5 flex items-center gap-2">
                   <Avatar className="h-6 w-6 shrink-0 border">
                     <AvatarImage src={item.post.author.profile_image ?? undefined} alt="" />
-                    <AvatarFallback className="text-3xs font-bold">
+                    <AvatarFallback className="text-3xs font-semibold">
                       {getInitials(item.post.author.name)}
                     </AvatarFallback>
                   </Avatar>
@@ -557,12 +565,12 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
                       id={`group-msg-${item.message.id}`}
                       className={cn(
                         "group relative mt-3 flex gap-2.5 rounded-lg px-2 py-1 transition-all duration-300 hover:bg-muted/30",
-                        highlightedMessageId === item.message.id && "ring-2 ring-primary ring-offset-2 ring-offset-background animate-pulse bg-primary/5",
+                        highlightedMessageId === item.message.id && "ring-2 ring-primary ring-offset-2 ring-offset-background bg-primary/5",
                       )}
                     >
                       <Avatar className="mt-0.5 h-8 w-8 shrink-0 border">
                         <AvatarImage src={item.message.senderAvatar ?? undefined} />
-                        <AvatarFallback className="text-xs font-bold">
+                        <AvatarFallback className="text-xs font-semibold">
                           {getInitials(item.message.senderName)}
                         </AvatarFallback>
                       </Avatar>
@@ -649,12 +657,12 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
                             );
                           })}
 
-                          <div className="ml-2 flex items-center gap-0.5 rounded-full border bg-background px-1 py-0.5 opacity-0 shadow-xs transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+                          <div className="ml-2 flex items-center gap-0.5 rounded-full border bg-background px-1 py-0.5 shadow-xs transition-opacity duration-150 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:focus-within:opacity-100">
                             {canPost && QUICK_EMOJIS.slice(0, 4).map((emoji) => (
                               <button
                                 key={emoji}
                                 onClick={() => handleToggleReaction(item.message.id, emoji)}
-                                className="px-0.5 text-xs transition-transform hover:scale-125"
+                                className="rounded px-0.5 text-xs transition-colors duration-150 hover:bg-accent"
                                 title={`React with ${emoji}`}
                               >
                                 {emoji}
@@ -676,7 +684,7 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
                             <button
                               onClick={() => handleCopyMessage(item.message.content, item.message.id)}
                               className="px-1 text-3xs font-medium text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-0.5"
-                              title={isCopied ? "Copied!" : "Copy message"}
+                              title={isCopied ? "Copied" : "Copy message"}
                             >
                               {isCopied ? (
                                 <Check className="h-3 w-3 text-emerald-500" />
@@ -728,7 +736,7 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
                       id={`group-msg-${item.message.id}`}
                       className={cn(
                         "group relative flex gap-2.5 rounded-lg px-2 py-0.5 transition-all duration-300 hover:bg-muted/30",
-                        highlightedMessageId === item.message.id && "ring-2 ring-primary ring-offset-2 ring-offset-background animate-pulse bg-primary/5",
+                        highlightedMessageId === item.message.id && "ring-2 ring-primary ring-offset-2 ring-offset-background bg-primary/5",
                       )}
                     >
                       {/* Spacer matching avatar width so message body aligns */}
@@ -802,12 +810,12 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
                             );
                           })}
 
-                          <div className="ml-2 flex items-center gap-0.5 rounded-full border bg-background px-1 py-0.5 opacity-0 shadow-xs transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+                          <div className="ml-2 flex items-center gap-0.5 rounded-full border bg-background px-1 py-0.5 shadow-xs transition-opacity duration-150 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:focus-within:opacity-100">
                             {canPost && QUICK_EMOJIS.slice(0, 4).map((emoji) => (
                               <button
                                 key={emoji}
                                 onClick={() => handleToggleReaction(item.message.id, emoji)}
-                                className="px-0.5 text-xs transition-transform hover:scale-125"
+                                className="rounded px-0.5 text-xs transition-colors duration-150 hover:bg-accent"
                                 title={`React with ${emoji}`}
                               >
                                 {emoji}
@@ -829,7 +837,7 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
                             <button
                               onClick={() => handleCopyMessage(item.message.content, item.message.id)}
                               className="px-1 text-3xs font-medium text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-0.5"
-                              title={isCopied ? "Copied!" : "Copy message"}
+                              title={isCopied ? "Copied" : "Copy message"}
                             >
                               {isCopied ? (
                                 <Check className="h-3 w-3 text-emerald-500" />
@@ -872,15 +880,15 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
 
       {/* Editing banner */}
       {editingMessage && (
-        <div className="flex items-center justify-between border-t border-amber-500/20 bg-amber-500/10 px-4 py-1.5 text-xs text-foreground">
+        <div className="flex items-center justify-between border-t bg-secondary px-4 py-1.5 text-xs text-foreground">
           <span className="flex items-center gap-1.5 truncate">
-            <Pencil className="h-3.5 w-3.5 text-amber-500 shrink-0" />
-            <span className="font-semibold text-amber-500">Editing message:</span>
+            <Pencil className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+            <span className="font-medium">Editing message</span>
             <span className="truncate text-muted-foreground/90">
               "{editingMessage.content.slice(0, 40)}{editingMessage.content.length > 40 ? "…" : ""}"
             </span>
           </span>
-          <button onClick={handleCancelEdit} className="text-xs font-bold hover:underline">
+          <button onClick={handleCancelEdit} className="h-8 rounded px-2 text-xs font-medium hover:bg-accent">
             Cancel
           </button>
         </div>
@@ -888,14 +896,14 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
 
       {/* Reply banner */}
       {!editingMessage && replyingTo && (
-        <div className="flex items-center justify-between border-t border-primary/20 bg-primary/5 px-4 py-1.5 text-xs text-foreground">
+        <div className="flex items-center justify-between border-t bg-secondary px-4 py-1.5 text-xs text-foreground">
           <span className="flex items-center gap-1.5 truncate">
             <CornerDownRight className="h-3.5 w-3.5" /> Replying to{" "}
             <strong className="font-semibold">{replyingTo.senderName}</strong>: "
             {replyingTo.content.slice(0, 40)}
             {replyingTo.content.length > 40 ? "…" : ""}"
           </span>
-          <button onClick={() => setReplyingTo(null)} className="text-xs font-bold hover:underline">
+          <button onClick={() => setReplyingTo(null)} className="h-8 rounded px-2 text-xs font-medium hover:bg-accent">
             Cancel
           </button>
         </div>
@@ -962,7 +970,7 @@ export const CommunityGroupChat: React.FC<CommunityGroupChatProps> = ({
               onPointerDown={(e) => e.preventDefault()}
               onMouseDown={(e) => e.preventDefault()}
               disabled={!inputText.trim() || sending}
-              className={cn("h-10 w-10 shrink-0", editingMessage && "bg-amber-500 hover:bg-amber-600 text-white")}
+              className="h-10 w-10 shrink-0"
               aria-label={editingMessage ? "Save edited message" : "Send message"}
               title={editingMessage ? "Save changes (Enter)" : "Send message (Enter)"}
             >

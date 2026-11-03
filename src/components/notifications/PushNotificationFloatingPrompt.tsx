@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { BellRing, X } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
 
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
@@ -74,55 +73,41 @@ export function PushNotificationFloatingPrompt() {
   };
 
   return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0, y: 30, scale: 0.95 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={{ opacity: 0, y: 20, scale: 0.95 }}
-        transition={{ duration: 0.25, ease: "easeOut" }}
-        className="fixed bottom-24 right-4 z-40 w-[calc(100vw-2rem)] max-w-sm rounded-2xl border border-primary/25 bg-card/95 backdrop-blur-md p-4 shadow-xl shadow-primary/5 sm:right-6 lg:bottom-6"
-      >
-        <div className="flex items-start gap-3">
-          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/20">
-            <BellRing className="h-4.5 w-4.5 animate-pulse" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-foreground">
-              Turn on push alerts
-            </p>
-            <p className="mt-0.5 text-xs text-muted-foreground leading-relaxed">
-              Never miss mentor replies, messages, and campus opportunities on this device.
-            </p>
-            <div className="mt-3 flex items-center gap-2">
-              <Button
-                size="sm"
-                onClick={handleEnable}
-                disabled={pushLoading}
-                className="h-8 px-3 text-xs font-semibold shadow-sm"
-              >
-                {pushLoading ? "Enabling..." : "Enable Alerts"}
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleDismiss}
-                className="h-8 px-2.5 text-xs text-muted-foreground hover:text-foreground"
-              >
-                Maybe later
-              </Button>
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={handleDismiss}
-            aria-label="Dismiss notification prompt"
-            className="flex-shrink-0 rounded-full p-1 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-          >
-            <X className="h-4 w-4" />
-          </button>
+    <div
+      role="dialog"
+      aria-labelledby="push-prompt-title"
+      className="fixed bottom-24 right-4 z-40 w-[calc(100vw-2rem)] max-w-sm animate-fade-up rounded-lg border bg-card p-4 shadow-float sm:right-6 lg:bottom-6"
+    >
+      <div className="flex items-start gap-3">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-secondary text-foreground">
+          <BellRing className="h-4 w-4" aria-hidden />
         </div>
-      </motion.div>
-    </AnimatePresence>
+        <div className="min-w-0 flex-1">
+          <p id="push-prompt-title" className="text-sm font-semibold text-foreground">
+            Turn on push alerts
+          </p>
+          <p className="mt-0.5 text-sm leading-relaxed text-muted-foreground">
+            Get mentor replies, messages and event reminders on this device, even with the tab closed.
+          </p>
+          <div className="mt-3 flex items-center gap-2">
+            <Button size="sm" onClick={handleEnable} isLoading={pushLoading}>
+              Turn on
+            </Button>
+            <Button variant="ghost" size="sm" onClick={handleDismiss} className="text-muted-foreground hover:text-foreground">
+              Not now
+            </Button>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={handleDismiss}
+          aria-label="Dismiss"
+          className="-mr-1 -mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors duration-150 hover:bg-accent hover:text-foreground"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      </div>
+    </div>
   );
 }
 

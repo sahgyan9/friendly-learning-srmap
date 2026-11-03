@@ -26,49 +26,37 @@ export default function PostPublishPortalModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader className="space-y-2">
-          <div className="flex items-center gap-2.5">
-            <div className="h-9 w-9 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0">
-              <GraduationCap className="h-5 w-5" />
-            </div>
-            <div>
-              <DialogTitle className="text-base sm:text-lg font-bold">Link your SRM portal</DialogTitle>
-            </div>
-          </div>
+          <DialogTitle className="text-lg font-semibold tracking-tight">Your profile is published</DialogTitle>
           <DialogDescription className="pt-1 text-xs sm:text-sm text-muted-foreground leading-relaxed">
-            Your profile is live! Link your SRM student portal to automatically sync your verified coursework and earn the Verified Student badge. Takes ~15 seconds.
+            Link your SRM student portal to add your coursework automatically and get the Verified Student badge. It takes about 15 seconds.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="rounded-lg border border-border/70 bg-muted/30 p-3 space-y-2 text-xs text-muted-foreground">
-          <div className="flex items-center gap-1.5 text-foreground font-medium text-xs">
-            <ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-            <span>Why link your portal?</span>
-          </div>
-          <ul className="space-y-1 text-2xs sm:text-xs text-muted-foreground pl-1">
-            <li>• Auto-imports your course codes (e.g. CSE201, PHY101)</li>
-            <li>• Helps juniors find and message you for courses you've taken</li>
-            <li>• Your CGPA, marks, and portal password remain completely private</li>
-          </ul>
-        </div>
+        <ul className="list-disc space-y-1.5 rounded-lg border border-border p-3 pl-7 text-sm text-muted-foreground marker:text-muted-foreground/60">
+          <li>Imports your course codes, such as CSE201 or PHY101</li>
+          <li>Lets juniors find you for courses you have taken</li>
+          <li className="flex items-start gap-1.5">
+            Your CGPA, marks and portal password stay private
+            <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+          </li>
+        </ul>
 
         <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-2">
           <Button
             type="button"
             variant="outline"
-            size="sm"
-            className="w-full sm:w-auto text-xs"
+            className="w-full sm:w-auto"
             onClick={onViewProfile}
           >
-            Skip & view profile
+            Skip and view profile
           </Button>
           <Button
             type="button"
-            size="sm"
-            className="w-full sm:w-auto gap-1.5 text-xs font-semibold"
+            className="w-full sm:w-auto"
             onClick={onLinkPortal}
           >
-            <GraduationCap className="h-4 w-4" />
-            Link portal now
+            <GraduationCap />
+            Link portal
           </Button>
         </div>
       </DialogContent>

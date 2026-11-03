@@ -67,7 +67,7 @@ const AvailabilityControl = ({
     setSaving(null);
 
     if (error) {
-      toast.error(error.message || "Could not save that. Please try again.");
+      toast.error(error.message || "Could not save that. Try again.");
       return;
     }
 

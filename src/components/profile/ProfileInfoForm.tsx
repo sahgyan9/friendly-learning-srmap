@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { GraduationCap, Loader2, User, Sparkles, Bell, BellRing, Smartphone, Send, CheckCircle2, Star } from "lucide-react";
+import { GraduationCap, Loader2, User, FileUp, Bell, BellRing, Smartphone, Send, CheckCircle2, Check } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -97,11 +97,10 @@ export function ProfileInfoForm({
               type="button"
               variant="outline"
               size="sm"
-              className="gap-1.5 text-xs text-primary border-primary/30 bg-primary/5 hover:bg-primary/10"
             >
               <Link to="/profile/setup">
-                <Sparkles className="h-3.5 w-3.5" />
-                1-Click PDF & Portal Import
+                <FileUp />
+                Import from resume or portal
               </Link>
             </Button>
           </div>
@@ -110,37 +109,37 @@ export function ProfileInfoForm({
           <form onSubmit={onSubmit} className="space-y-4">
             {/* Account Standing Badge */}
             <div className="p-3 bg-muted/60 rounded-lg flex items-center justify-between">
-              <span className="text-sm font-medium text-foreground">Campus Standing</span>
+              <span className="text-sm font-medium text-foreground">Account type</span>
               <div className="flex items-center gap-1.5 flex-wrap justify-end">
                 {profile.verification_status === "rejected" ? (
                   <Badge
                     variant="outline"
                     className="bg-destructive/10 text-destructive border-destructive/30 font-medium text-xs px-2.5 py-0.5"
                   >
-                    Action Required
+                    Needs action
                   </Badge>
                 ) : profile.email?.toLowerCase().endsWith("@srmap.edu.in") || profile.verification_status === "verified" ? (
                   <Badge
                     variant="outline"
                     className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30 font-medium text-xs px-2.5 py-0.5"
                   >
-                    ✓ SRM AP Student
+                    <Check className="mr-1 h-3 w-3" />
+                    SRM AP student
                   </Badge>
                 ) : (
                   <Badge
                     variant="outline"
                     className="bg-muted text-muted-foreground font-medium text-xs px-2.5 py-0.5"
                   >
-                    Guest Account
+                    Guest account
                   </Badge>
                 )}
                 {showMentorFields && (
                   <Badge
                     variant="outline"
-                    className="bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/30 font-medium text-xs px-2.5 py-0.5 inline-flex items-center"
+                    className="bg-primary/10 text-primary border-primary/20 font-medium text-xs px-2.5 py-0.5 inline-flex items-center"
                   >
-                    <Star className="h-3 w-3 mr-1 fill-amber-500 text-amber-500" />
-                    <span>Peer Mentor</span>
+                    <span>Peer mentor</span>
                   </Badge>
                 )}
               </div>

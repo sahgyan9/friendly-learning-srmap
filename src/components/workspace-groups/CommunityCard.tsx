@@ -27,12 +27,12 @@ export function CommunityCard({ community, onMembershipChange }: CommunityCardPr
   const isPrivate = community.visibility === "private";
 
   return (
-    <article className="group relative flex flex-col justify-between h-full rounded-2xl border border-border/70 bg-card p-4.5 sm:p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md cursor-pointer">
+    <article className="group relative flex h-full min-w-0 flex-col justify-between rounded-lg border bg-card p-5 shadow-card transition-colors duration-150 hover:border-foreground/20">
       {/* Upper Area: Clickable Destination */}
       <Link
         to={`/workspace-groups/${community.slug}`}
         aria-label={`Open ${community.name}`}
-        className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-xl"
+        className="block rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         {/* Header & Body: Avatar + Content Column (Title, Type, and Description aligned) */}
         <div className="flex items-start gap-3.5">
@@ -40,19 +40,19 @@ export function CommunityCard({ community, onMembershipChange }: CommunityCardPr
             kind={community.kind}
             name={community.name}
             coverImage={community.cover_image}
-            className="h-11 w-11 shrink-0 rounded-xl ring-1 ring-border/80 bg-muted/60 transition-transform duration-200 group-hover:scale-105"
+            className="h-11 w-11 shrink-0 rounded-lg border bg-muted"
             iconClassName="h-5 w-5 text-muted-foreground"
           />
 
           <div className="min-w-0 flex-1 space-y-1">
-            <h3 className="truncate font-bold text-base leading-tight text-foreground transition-colors duration-200 group-hover:text-primary">
+            <h3 className="truncate text-base font-semibold leading-tight text-foreground underline-offset-4 group-hover:underline">
               {community.name}
             </h3>
 
             {/* Subtle secondary type & privacy metadata */}
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium">
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <span>{kind.label}</span>
-              <span aria-hidden className="text-border">·</span>
+              <span aria-hidden>·</span>
               {isPrivate ? (
                 <span className="inline-flex items-center gap-1 text-muted-foreground">
                   <Lock className="h-3 w-3" />
@@ -64,21 +64,22 @@ export function CommunityCard({ community, onMembershipChange }: CommunityCardPr
             </div>
 
             {/* Concise 2-line Purpose Description - perfectly aligned with title & category */}
-            <p className="pt-0.5 line-clamp-2 text-xs leading-relaxed text-muted-foreground min-h-[2.5rem]">
-              {community.description || "Campus group for collaboration and discussions."}
+            <p className="line-clamp-2 min-h-[2.5rem] pt-1 text-sm leading-relaxed text-muted-foreground">
+              {community.description || "No description yet."}
             </p>
           </div>
         </div>
       </Link>
 
       {/* Footer: Social Proof + Action CTA */}
-      <div className="mt-4 flex items-center justify-between gap-2 border-t border-border/50 pt-3.5 text-xs text-muted-foreground">
+      <div className="mt-4 flex items-center justify-between gap-2 border-t pt-3.5 text-xs text-muted-foreground">
         <Link
           to={`/workspace-groups/${community.slug}`}
-          className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors min-w-0 truncate"
+          tabIndex={-1}
+          className="tabular flex min-w-0 items-center gap-1.5 truncate text-xs text-muted-foreground"
         >
           <span>{community.member_count} {community.member_count === 1 ? "member" : "members"}</span>
-          <span aria-hidden className="text-border">·</span>
+          <span aria-hidden>·</span>
           <span className="truncate">Active {formatRelativeTime(community.last_activity_at)}</span>
         </Link>
 

@@ -1,6 +1,4 @@
-
-import { useState, useEffect } from "react";
-import { Search, XCircle } from "lucide-react";
+import { Search, X } from "lucide-react";
 
 interface SearchInputProps {
   value: string;
@@ -9,44 +7,30 @@ interface SearchInputProps {
 }
 
 const SearchInput = ({ value, onChange, onClear }: SearchInputProps) => {
-  const [placeholderIndex, setPlaceholderIndex] = useState(0);
-  
-  const placeholders = [
-    "Search for mentors...",
-    "Who can help me with Python?",
-    "Find a mentor for Data Structures",
-    "Looking for help with Circuit Design",
-  ];
-
-  // Rotate through placeholders
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setPlaceholderIndex((prev) => (prev + 1) % placeholders.length);
-    }, 4000);
-    return () => clearInterval(interval);
-  }, [placeholders.length]);
-
   return (
-    <div className="relative flex-1">
-      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500">
-        <Search className="h-5 w-5" />
-      </div>
-      
+    <div className="relative min-w-0 flex-1">
+      <Search
+        className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+        aria-hidden
+      />
+
       <input
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholders[placeholderIndex]}
-        className="w-full pl-12 pr-12 py-3.5 rounded-xl bg-card border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 shadow-sm transition-all duration-200 placeholder:text-gray-400 dark:placeholder:text-gray-500 text-base md:text-sm"
+        placeholder="Search mentors by name, subject or skill"
+        aria-label="Search mentors"
+        className="h-11 w-full rounded-lg border border-input bg-card pl-10 pr-10 text-base text-foreground transition-colors duration-150 placeholder:text-muted-foreground focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/15 md:text-sm"
       />
-      
+
       {value && (
         <button
           type="button"
           onClick={onClear}
-          className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+          aria-label="Clear search"
+          className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
         >
-          <XCircle className="h-5 w-5" />
+          <X className="h-4 w-4" />
         </button>
       )}
     </div>

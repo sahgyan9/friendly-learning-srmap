@@ -1,5 +1,4 @@
 import { motion } from "framer-motion";
-import { Eye, Award } from "lucide-react";
 import AvailabilityBanner from "./AvailabilityBanner";
 import MentorHeroHeader from "./MentorHeroHeader";
 import SmartMatchBanner from "./SmartMatchBanner";
@@ -123,18 +122,10 @@ const MentorProfileContent = ({
       <MentorProjectsSection mentor={mentor} isOwnProfile={isOwnProfile} onMentorUpdated={onMentorUpdated} />
 
       {/* Badges Section */}
-      <motion.section
-        className="rounded-2xl border border-border/80 bg-card p-6 shadow-sm"
-        initial={{ opacity: 0, y: 15 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-      >
-        <h2 className="mb-4 flex items-center gap-2 text-lg font-bold text-foreground">
-          <Award className="h-5 w-5 text-primary" />
-          Badges & Platform Achievements
-        </h2>
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold tracking-tight text-foreground">Badges</h2>
         <BadgeDisplay userId={mentor.id} />
-      </motion.section>
+      </section>
 
       {/* SECTION 8: REVIEWS & TESTIMONIAL HIGHLIGHTS */}
       <MentorReviewHighlights

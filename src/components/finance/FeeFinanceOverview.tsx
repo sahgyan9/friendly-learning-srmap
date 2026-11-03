@@ -22,6 +22,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Database } from "@/integrations/supabase/types";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
 export type StudentFeeDue = Database["public"]["Tables"]["student_fee_dues"]["Row"];
@@ -67,12 +68,12 @@ export default function FeeFinanceOverview({
 
   if (isLoading && dues.length === 0 && paidHistory.length === 0) {
     return (
-      <div className="space-y-6 animate-pulse">
+      <div className="space-y-6" role="status" aria-label="Loading fees">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="h-44 rounded-xl bg-muted/50 border border-border/60" />
-          <div className="h-44 rounded-xl bg-muted/50 border border-border/60" />
+          <Skeleton className="h-44 rounded-xl" />
+          <Skeleton className="h-44 rounded-xl" />
         </div>
-        <div className="h-64 rounded-xl bg-muted/50 border border-border/60" />
+        <Skeleton className="h-64 rounded-xl" />
       </div>
     );
   }
@@ -82,14 +83,14 @@ export default function FeeFinanceOverview({
       {/* Top Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Outstanding Total Card */}
-        <div className="bg-card border border-border/70 rounded-xl p-5 sm:p-6 shadow-xs relative overflow-hidden">
+        <div className="bg-card border border-border rounded-xl p-5 sm:p-6 shadow-xs relative overflow-hidden">
           <div className="flex items-start justify-between gap-3">
             <div className="space-y-1">
-              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Outstanding Balance
+              <span className="text-sm font-medium text-muted-foreground">
+                Outstanding balance
               </span>
               <div className="flex items-baseline gap-2">
-                <span className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground font-mono">
+                <span className="text-3xl sm:text-4xl font-semibold tracking-tight text-foreground tabular">
                   {formatINR(totalToBePaid)}
                 </span>
               </div>
@@ -97,17 +98,17 @@ export default function FeeFinanceOverview({
 
             <div
               className={cn(
-                "p-2.5 rounded-xl border",
+                "p-2.5 rounded-lg bg-secondary",
                 totalToBePaid > 0
-                  ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
-                  : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+                  ? "text-amber-600 dark:text-amber-400"
+                  : "text-success"
               )}
             >
               <CreditCard className="h-5 w-5" />
             </div>
           </div>
 
-          <div className="mt-4 pt-4 border-t border-border/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="mt-4 pt-4 border-t border-border flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               {totalToBePaid > 0 ? (
                 <>
@@ -115,7 +116,7 @@ export default function FeeFinanceOverview({
                     variant="outline"
                     className="border-amber-500/30 text-amber-600 dark:text-amber-400 bg-amber-500/5 text-xs font-medium"
                   >
-                    Payment Pending
+                    Payment pending
                   </Badge>
                   {hasFine && (
                     <Badge
@@ -123,17 +124,17 @@ export default function FeeFinanceOverview({
                       className="text-xs font-medium gap-1"
                     >
                       <ShieldAlert className="h-3 w-3" />
-                      Fine Included
+                      Fine included
                     </Badge>
                   )}
                 </>
               ) : (
                 <Badge
                   variant="outline"
-                  className="border-emerald-500/30 text-emerald-600 dark:text-emerald-400 bg-emerald-500/5 text-xs font-medium gap-1"
+                  className="border-emerald-500/30 text-success bg-emerald-500/5 text-xs font-medium gap-1"
                 >
                   <CheckCircle2 className="h-3 w-3" />
-                  All Dues Cleared
+                  All dues cleared
                 </Badge>
               )}
             </div>
@@ -141,7 +142,7 @@ export default function FeeFinanceOverview({
             <Button
               asChild
               size="sm"
-              className="h-8 text-xs font-medium gap-1.5 shadow-xs"
+              className="h-9 text-xs gap-1.5"
             >
               <a
                 href={portalPaymentUrl}
@@ -158,12 +159,12 @@ export default function FeeFinanceOverview({
         {/* Advisory / Fine Penalty Notice Card */}
         <div
           className={cn(
-            "rounded-xl p-5 sm:p-6 border shadow-xs flex flex-col justify-between",
+            "rounded-xl p-5 sm:p-6 border shadow-card flex flex-col justify-between",
             totalToBePaid > 0
               ? hasFine
                 ? "bg-destructive/5 border-destructive/30 text-destructive-foreground"
                 : "bg-amber-500/5 border-amber-500/30 text-foreground"
-              : "bg-muted/30 border-border/60 text-foreground"
+              : "bg-card border-border text-foreground"
           )}
         >
           <div className="space-y-2">
@@ -172,23 +173,23 @@ export default function FeeFinanceOverview({
                 hasFine ? (
                   <>
                     <ShieldAlert className="h-4 w-4 text-destructive shrink-0" />
-                    <span className="text-destructive font-bold">
-                      Penalty of Fine Imposed
+                    <span className="text-destructive font-semibold">
+                      Fine applied
                     </span>
                   </>
                 ) : (
                   <>
                     <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />
                     <span className="text-amber-800 dark:text-amber-300 font-semibold">
-                      Payment Notice
+                      Payment due
                     </span>
                   </>
                 )
               ) : (
                 <>
-                  <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                  <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
                   <span className="text-foreground font-semibold">
-                    Fee Status Clear
+                    No fees due
                   </span>
                 </>
               )}
@@ -197,12 +198,12 @@ export default function FeeFinanceOverview({
             <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
               {totalToBePaid > 0 ? (
                 hasFine ? (
-                  "A fine has been levied on your account. Please clear your dues immediately on the SRM portal to avoid further administrative penalties."
+                  "A fine has been added to your account. Pay your dues on the SRM portal to stop further fines."
                 ) : (
-                  "Please pay on time to avoid Penalty of Fine. SRM University-AP levies penalty fines on overdue tuition, exam, and hostel charges once the payment deadline passes."
+                  "Pay before the deadline to avoid a fine. SRM University-AP adds fines to overdue tuition, exam and hostel charges once the deadline passes."
                 )
               ) : (
-                "No outstanding fees or fines are pending on your SRM portal account. You will automatically receive in-app and web push notifications whenever a new fee or fine is raised."
+                "Your SRM portal account has no outstanding fees or fines. You will get a notification when a new fee or fine is raised."
               )}
             </p>
           </div>
@@ -210,14 +211,14 @@ export default function FeeFinanceOverview({
           <div className="mt-4 pt-3 border-t border-border/40 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-muted-foreground">
             <div className="flex items-center justify-between sm:justify-start gap-2">
               <span>Historical total paid:</span>
-              <span className="font-mono font-medium text-foreground">
+              <span className="tabular font-medium text-foreground">
                 {formatINR(totalLifetimePaid)}
               </span>
             </div>
             {totalConcessions > 0 && (
               <div className="flex items-center justify-between sm:justify-end gap-1.5 text-[11px]">
-                <span className="text-muted-foreground">Scholarship Concessions:</span>
-                <span className="font-mono font-medium text-emerald-600 dark:text-emerald-400">
+                <span className="text-muted-foreground">Scholarship concessions:</span>
+                <span className="tabular font-medium text-success">
                   {formatINR(totalConcessions)}
                 </span>
               </div>
@@ -227,16 +228,16 @@ export default function FeeFinanceOverview({
       </div>
 
       {/* Active Dues Section */}
-      <div className="bg-card border border-border/70 rounded-xl overflow-hidden shadow-xs">
-        <div className="px-5 py-4 border-b border-border/60 flex items-center justify-between">
+      <div className="bg-card border border-border rounded-xl overflow-hidden shadow-card">
+        <div className="px-5 py-4 border-b border-border flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Receipt className="h-4 w-4 text-primary" />
-            <h2 className="text-sm font-bold text-foreground">
-              Active Fee Dues ({dues.length})
+            <Receipt className="h-4 w-4 text-muted-foreground" />
+            <h2 className="text-sm font-semibold text-foreground">
+              Fees due <span className="tabular text-muted-foreground">({dues.length})</span>
             </h2>
           </div>
           {dues.length > 0 && (
-            <span className="text-xs font-mono font-semibold text-muted-foreground">
+            <span className="text-xs tabular font-semibold text-muted-foreground">
               Total: {formatINR(totalToBePaid)}
             </span>
           )}
@@ -244,21 +245,21 @@ export default function FeeFinanceOverview({
 
         {dues.length === 0 ? (
           <div className="py-12 px-4 text-center space-y-2">
-            <div className="w-10 h-10 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto">
+            <div className="w-10 h-10 rounded-lg bg-secondary text-muted-foreground flex items-center justify-center mx-auto">
               <CheckCircle2 className="h-5 w-5" />
             </div>
             <p className="text-sm font-semibold text-foreground">
-              No Pending Fee Dues
+              No fees due
             </p>
             <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-              Your account has no unpaid heads listed in the SRM student portal transaction ledger.
+              The SRM student portal lists no unpaid fees for your account.
             </p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <Table>
               <TableHeader className="bg-muted/40">
-                <TableRow className="border-border/60 hover:bg-transparent">
+                <TableRow className="border-border hover:bg-transparent">
                   <TableHead className="text-xs font-semibold text-muted-foreground">
                     Fee Category
                   </TableHead>
@@ -283,7 +284,7 @@ export default function FeeFinanceOverview({
                 {dues.map((due) => (
                   <TableRow
                     key={due.id}
-                    className="border-border/60 hover:bg-muted/30 transition-colors"
+                    className="border-border hover:bg-muted/30 transition-colors"
                   >
                     <TableCell className="font-medium text-xs text-foreground">
                       {due.fee_category}
@@ -301,13 +302,13 @@ export default function FeeFinanceOverview({
                         )}
                       </div>
                     </TableCell>
-                    <TableCell className="text-xs font-mono text-right text-muted-foreground">
+                    <TableCell className="text-xs tabular text-right text-muted-foreground">
                       {formatINR(Number(due.due_amount) || 0)}
                     </TableCell>
-                    <TableCell className="text-xs font-mono text-right text-muted-foreground">
+                    <TableCell className="text-xs tabular text-right text-muted-foreground">
                       {formatINR(Number(due.collected_amount) || 0)}
                     </TableCell>
-                    <TableCell className="text-xs font-mono font-bold text-right text-foreground">
+                    <TableCell className="text-xs tabular font-semibold text-right text-foreground">
                       {formatINR(Number(due.to_be_paid_amount) || 0)}
                     </TableCell>
                     <TableCell className="text-center">
@@ -332,15 +333,15 @@ export default function FeeFinanceOverview({
       </div>
 
       {/* Historical Payments Section */}
-      <div className="bg-card border border-border/70 rounded-xl overflow-hidden shadow-xs">
+      <div className="bg-card border border-border rounded-xl overflow-hidden shadow-card">
         <button
           type="button"
           onClick={() => setShowHistory((prev) => !prev)}
-          className="w-full px-5 py-4 border-b border-border/60 flex items-center justify-between hover:bg-muted/20 transition-colors text-left"
+          className="w-full px-5 py-4 border-b border-border flex items-center justify-between hover:bg-muted/20 transition-colors text-left"
         >
           <div className="flex items-center gap-2">
             <History className="h-4 w-4 text-muted-foreground" />
-            <h2 className="text-sm font-bold text-foreground">
+            <h2 className="text-sm font-semibold text-foreground">
               Payment History & Receipts ({paidHistory.length})
             </h2>
           </div>
@@ -373,7 +374,7 @@ export default function FeeFinanceOverview({
                 <div className="overflow-x-auto">
                   <Table>
                     <TableHeader className="bg-muted/40">
-                      <TableRow className="border-border/60 hover:bg-transparent">
+                      <TableRow className="border-border hover:bg-transparent">
                         <TableHead className="text-xs font-semibold text-muted-foreground">
                           Academic Year
                         </TableHead>
@@ -404,7 +405,7 @@ export default function FeeFinanceOverview({
                           <TableRow
                             key={item.id}
                             className={cn(
-                              "border-border/60 hover:bg-muted/30 transition-colors text-xs",
+                              "border-border hover:bg-muted/30 transition-colors text-xs",
                               isConcession && "bg-muted/15"
                             )}
                           >
@@ -417,14 +418,14 @@ export default function FeeFinanceOverview({
                                 {isConcession && (
                                   <Badge
                                     variant="outline"
-                                    className="text-[10px] px-1.5 py-0 border-emerald-500/30 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 shrink-0 font-medium"
+                                    className="text-[10px] px-1.5 py-0 border-green-600/30 text-green-700 dark:text-green-500 shrink-0 font-medium"
                                   >
                                     Waiver
                                   </Badge>
                                 )}
                               </div>
                             </TableCell>
-                            <TableCell className="font-mono text-muted-foreground max-w-[140px] truncate" title={item.receipt_number}>
+                            <TableCell className="tabular text-muted-foreground max-w-[140px] truncate" title={item.receipt_number}>
                               {item.receipt_number || "—"}
                             </TableCell>
                             <TableCell className="text-muted-foreground whitespace-nowrap">
@@ -433,9 +434,9 @@ export default function FeeFinanceOverview({
                             <TableCell className="text-muted-foreground max-w-[120px] truncate" title={item.payment_mode || ""}>
                               {item.payment_mode || "—"}
                             </TableCell>
-                            <TableCell className="font-mono font-medium text-right whitespace-nowrap">
+                            <TableCell className="tabular font-medium text-right whitespace-nowrap">
                               {isConcession ? (
-                                <span className="text-emerald-600 dark:text-emerald-400 font-semibold" title={`Institutional waiver credit: ${formatINR(Number(item.amount))}`}>
+                                <span className="text-success font-semibold" title={`Institutional waiver credit: ${formatINR(Number(item.amount))}`}>
                                   {formatINR(Number(item.amount))}
                                 </span>
                               ) : (
@@ -444,13 +445,13 @@ export default function FeeFinanceOverview({
                                 </span>
                               )}
                             </TableCell>
-                            <TableCell className="font-mono text-right text-muted-foreground whitespace-nowrap">
+                            <TableCell className="tabular text-right text-muted-foreground whitespace-nowrap">
                               {Number(item.balance_due) > 0 ? (
                                 <span className="text-destructive font-semibold">
                                   {formatINR(Number(item.balance_due))}
                                 </span>
                               ) : (
-                                <span className="text-emerald-600 dark:text-emerald-400">
+                                <span className="text-success">
                                   ₹0
                                 </span>
                               )}

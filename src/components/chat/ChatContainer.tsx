@@ -5,7 +5,7 @@ import MessageList from "./MessageList";
 import ChatHeader from "./ChatHeader";
 import MessageInput from "./MessageInput";
 import SearchInput from "./SearchInput";
-import { MessageCircleMore, Sparkles, SquarePen } from "lucide-react";
+import { MessageCircleMore, SquarePen } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { NewConversationModal } from "./NewConversationModal";
 import { getOrCreateConversation } from "@/integrations/supabase/services/chat/conversation.service";
@@ -270,32 +270,28 @@ const ChatContainer = ({
   };
 
   return (
-    /* Glassmorphic card on desktop, full-viewport fluid on mobile */
+    /* Bordered panel on desktop, full-viewport on mobile */
     <div
       ref={heightRef}
       className={cn(
-        "relative flex overflow-hidden transition-all duration-150",
+        "relative flex overflow-hidden",
         isMobile && showChat
           ? "fixed inset-0 z-[60] h-full w-full rounded-none border-0 bg-background"
-          : "min-h-[28rem] rounded-2xl border border-border/80 bg-card/90 shadow-xl shadow-black/5 backdrop-blur-xl dark:border-white/10 dark:bg-card/50 dark:shadow-2xl dark:shadow-black/40",
+          : "min-h-[28rem] rounded-xl border border-border bg-card shadow-card",
       )}
       style={{
         height: availableHeight != null ? `${availableHeight}px` : isMobile ? "100dvh" : "calc(100dvh - 5rem)",
       }}
     >
-      {/* Subtle radial glows behind the panel */}
-      <div className="pointer-events-none absolute -right-32 -top-32 h-64 w-64 rounded-full bg-primary/6 blur-3xl" />
-      <div className="pointer-events-none absolute -left-24 bottom-0 h-48 w-48 rounded-full bg-primary/4 blur-3xl" />
-
       {/* Sidebar */}
       {showList && (
         <aside
-          className={`relative flex flex-col border-r border-border/70 bg-background/50 backdrop-blur-md dark:border-white/8 dark:bg-background/40 ${
+          className={`relative flex flex-col border-r border-border bg-card ${
             isMobile ? "w-full" : "w-80 shrink-0 lg:w-96"
           }`}
         >
           {/* Sidebar header */}
-          <div className="border-b border-border/70 p-3 dark:border-white/8">
+          <div className="border-b border-border p-3">
             <div className="mb-2 flex items-center justify-between gap-2 px-1">
               <div className="flex items-center gap-2">
                 <MessageCircleMore className="h-4 w-4 text-primary" />
@@ -363,7 +359,7 @@ const ChatContainer = ({
 
       {/* Main chat area */}
       {showChat ? (
-        <section className="flex min-w-0 flex-1 flex-col bg-background/20 backdrop-blur-sm">
+        <section className="flex min-w-0 flex-1 flex-col bg-background">
           <ChatHeader
             conversation={currentConversation}
             getOtherUser={getOtherUser}
@@ -405,13 +401,13 @@ const ChatContainer = ({
         </section>
       ) : (
         !isMobile && (
-          <div className="flex flex-1 flex-col items-center justify-center bg-background/10 p-6">
+          <div className="flex flex-1 flex-col items-center justify-center bg-background p-6">
             <div className="max-w-xs text-center">
-              <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 ring-1 ring-primary/20 shadow-lg shadow-primary/10">
-                <Sparkles className="h-7 w-7 text-primary" aria-hidden />
+              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-secondary">
+                <MessageCircleMore className="h-6 w-6 text-muted-foreground" aria-hidden />
               </div>
-              <h3 className="mb-2 text-base font-semibold">Your conversations</h3>
-              <p className="text-sm text-muted-foreground/70">
+              <h3 className="mb-2 text-base font-semibold">No conversation open</h3>
+              <p className="text-sm text-muted-foreground">
                 Pick a conversation on the left, or message a mentor directly from their profile.
               </p>
             </div>

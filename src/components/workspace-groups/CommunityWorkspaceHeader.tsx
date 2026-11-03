@@ -5,7 +5,7 @@ import {
   ArrowLeft,
   Check,
   Globe,
-  Loader2,
+  Plus,
   Lock,
   LogIn,
   LogOut,
@@ -17,7 +17,6 @@ import {
   Users,
 } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CommunityAvatar } from "@/components/workspace-groups/CommunityAvatar";
 import { InviteLinkButton } from "@/components/workspace-groups/InviteLinkButton";
@@ -41,7 +40,6 @@ import {
 } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import { getCommunityKindMeta, type Community } from "@/integrations/supabase/services/communities";
-import { getKindStyle } from "@/integrations/supabase/services/community-kind-styles";
 
 interface CommunityWorkspaceHeaderProps {
   community: Community;
@@ -73,16 +71,15 @@ export function CommunityWorkspaceHeader({
   onOpenMembersDrawer,
 }: CommunityWorkspaceHeaderProps) {
   const kind = getCommunityKindMeta(community.kind);
-  const style = getKindStyle(community.kind);
   const [infoOpen, setInfoOpen] = useState(false);
 
   /** Primary CTA shown inline in the compact header */
   const renderPrimaryAction = () => {
     if (community.viewer_is_owner) {
       return (
-        <Badge variant="outline" className="h-8 items-center px-3 border-amber-500/30 text-amber-600 dark:text-amber-400 text-xs shrink-0">
-          Owner
-        </Badge>
+        <span className="shrink-0 text-xs font-medium text-muted-foreground">
+          You own this group
+        </span>
       );
     }
     if (community.viewer_is_member) return null; // invite link is in the sheet
@@ -90,8 +87,8 @@ export function CommunityWorkspaceHeader({
     if (community.visibility === "private") {
       if (community.viewer_has_invite) {
         return (
-          <Button size="sm" onClick={onAcceptInvite} disabled={working} className="shrink-0">
-            {working ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Check className="mr-1.5 h-3.5 w-3.5" />}
+          <Button size="sm" onClick={onAcceptInvite} isLoading={working} className="shrink-0">
+            {!working && <Check className="h-4 w-4" />}
             Accept invite
           </Button>
         );
@@ -100,38 +97,27 @@ export function CommunityWorkspaceHeader({
         return <Button variant="outline" size="sm" disabled className="shrink-0">Requested</Button>;
       }
       return (
-        <Button size="sm" onClick={onRequestJoin} disabled={working} className="shrink-0">
-          <UserPlus className="mr-1.5 h-3.5 w-3.5" />
+        <Button size="sm" onClick={onRequestJoin} isLoading={working} className="shrink-0">
+          {!working && <UserPlus className="h-4 w-4" />}
           Request to join
         </Button>
       );
     }
     return (
-      <Button size="sm" onClick={onJoin} disabled={working} className="shrink-0">
-        {working ? (
-          <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-        ) : user ? (
-          <Check className="mr-1.5 h-3.5 w-3.5" />
-        ) : (
-          <LogIn className="mr-1.5 h-3.5 w-3.5" />
-        )}
-        {user ? "Join room" : "Sign in to join"}
+      <Button size="sm" onClick={onJoin} isLoading={working} className="shrink-0">
+        {working ? null : user ? <Plus className="h-4 w-4" /> : <LogIn className="h-4 w-4" />}
+        {user ? "Join group" : "Sign in to join"}
       </Button>
     );
   };
 
   return (
     <>
-      {/* â”€â”€ Compact workspace header â”€â”€ */}
-      <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm mb-4">
-        {/* Decorative ambient glow */}
-        <div className={`pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full opacity-20 blur-3xl bg-gradient-to-br ${style.hoverGlow}`} />
-
-        <div className="relative px-4 pt-3 pb-4">
-          {/* Row 1: back Â· avatar Â· kind badge Â· name Â· lock/globe Â· â‹¯ */}
-          <div className="flex items-center gap-2 mb-2">
-            <Button asChild variant="ghost" size="icon" className="h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground -ml-1">
-              <Link to="/workspace-groups" aria-label="Back to all workspaces">
+      <div className="mb-4 rounded-lg border bg-card shadow-card">
+        <div className="px-4 pb-4 pt-3">
+          <div className="mb-2 flex items-center gap-2">
+            <Button asChild variant="ghost" size="icon" className="-ml-2 h-9 w-9 shrink-0 text-muted-foreground hover:text-foreground">
+              <Link to="/workspace-groups" aria-label="Back to all communities">
                 <ArrowLeft className="h-4 w-4" />
               </Link>
             </Button>
@@ -141,55 +127,48 @@ export function CommunityWorkspaceHeader({
                 kind={community.kind}
                 name={community.name}
                 coverImage={community.cover_image}
-                className={`h-7 w-7 shrink-0 rounded-lg ring-1 ring-border ${style.avatarRing}`}
-                iconClassName="h-3.5 w-3.5"
+                className="h-8 w-8 shrink-0 rounded-md border"
+                iconClassName="h-4 w-4"
               />
-              <Badge variant="secondary" className={`gap-1 shrink-0 text-3xs py-0 h-5 ${style.pill}`}>
-                <kind.icon className="h-2.5 w-2.5" aria-hidden />
-                {kind.label}
-              </Badge>
-              <h1 className="truncate text-base font-bold tracking-tight text-foreground">
+              <h1 className="truncate text-lg font-semibold tracking-tight text-foreground">
                 {community.name}
               </h1>
               {community.visibility === "private" ? (
-                <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-label="Invite only" />
+                <Lock className="h-4 w-4 shrink-0 text-muted-foreground" aria-label="Invite only" />
               ) : (
-                <Globe className="h-3.5 w-3.5 shrink-0 text-green-600 dark:text-green-400" aria-label="Open room" />
+                <Globe className="h-4 w-4 shrink-0 text-muted-foreground" aria-label="Open group" />
               )}
+              <span className="hidden shrink-0 items-center gap-1 rounded bg-secondary px-1.5 py-0.5 text-xs text-secondary-foreground sm:inline-flex">
+                <kind.icon className="h-3 w-3" aria-hidden />
+                {kind.label}
+              </span>
             </div>
 
-            {/* â‹¯ info/management sheet trigger */}
             <button
               type="button"
               onClick={() => setInfoOpen(true)}
-              aria-label="Workspace info and settings"
-              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+              aria-label="Group info and settings"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors duration-150 hover:bg-accent hover:text-foreground"
             >
               <MoreHorizontal className="h-4 w-4" />
             </button>
           </div>
 
-          {/* Row 2: description Â· stats Â· primary action */}
-          <div className="flex items-center gap-3 pl-8">
+          <div className="flex items-center gap-3 sm:pl-9">
             <div className="min-w-0 flex-1 overflow-hidden">
-              <p className="truncate text-xs text-muted-foreground leading-relaxed">
+              <p className="truncate text-sm text-muted-foreground">
                 {community.description}
               </p>
-              <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-2xs text-muted-foreground">
+              <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
                 <button
                   type="button"
                   onClick={onOpenMembersDrawer}
-                  className="inline-flex items-center gap-1 font-medium text-foreground hover:text-primary transition-colors"
+                  className="tabular inline-flex items-center gap-1 font-medium text-foreground underline-offset-4 transition-colors hover:underline"
                 >
-                  <Users className="h-3 w-3" />
+                  <Users className="h-3.5 w-3.5" />
                   {community.member_count} {community.member_count === 1 ? "member" : "members"}
                 </button>
-                <span className="flex items-center gap-1">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  <span className="text-emerald-600 dark:text-emerald-400">
-                    Active {formatRelativeTime(community.last_activity_at)}
-                  </span>
-                </span>
+                <span>Active {formatRelativeTime(community.last_activity_at)}</span>
               </div>
             </div>
 
@@ -202,7 +181,7 @@ export function CommunityWorkspaceHeader({
       <Sheet open={infoOpen} onOpenChange={setInfoOpen}>
         <SheetContent
           side="bottom"
-          className="rounded-t-3xl max-h-[85vh] overflow-y-auto overscroll-contain p-0 pb-[calc(2.5rem+env(safe-area-inset-bottom,0px))] md:max-w-lg md:mx-auto md:bottom-6 md:rounded-2xl md:border md:shadow-2xl md:inset-x-auto md:left-1/2 md:-translate-x-1/2"
+          className="rounded-t-xl max-h-[85vh] overflow-y-auto overscroll-contain p-0 pb-[calc(2.5rem+env(safe-area-inset-bottom,0px))] md:max-w-lg md:mx-auto md:bottom-6 md:rounded-xl md:border md:shadow-float md:inset-x-auto md:left-1/2 md:-translate-x-1/2"
         >
           {/* Drag handle */}
           <div className="flex flex-col items-center pt-3 pb-2">
@@ -215,13 +194,13 @@ export function CommunityWorkspaceHeader({
                 kind={community.kind}
                 name={community.name}
                 coverImage={community.cover_image}
-                className={`h-10 w-10 shrink-0 rounded-xl ring-2 ring-border ${style.avatarRing}`}
+                className="h-10 w-10 shrink-0 rounded-lg border"
                 iconClassName="h-5 w-5"
               />
               <div>
-                <SheetTitle className="text-base font-bold leading-tight">{community.name}</SheetTitle>
+                <SheetTitle className="text-base font-semibold leading-tight">{community.name}</SheetTitle>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  {community.visibility === "private" ? "Invite-only workspace" : "Open workspace"}
+                  {community.visibility === "private" ? "Invite-only group" : "Open group"}
                 </p>
               </div>
             </div>
@@ -232,25 +211,25 @@ export function CommunityWorkspaceHeader({
 
             {/* Full description */}
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">About</p>
+              <p className="mb-1 text-sm font-medium text-muted-foreground">About</p>
               <p className="text-sm text-foreground leading-relaxed">{community.description}</p>
             </div>
 
             {/* Stats row */}
             <div className="flex gap-6 text-sm">
               <div>
-                <p className="font-semibold text-foreground">{community.member_count}</p>
+                <p className="tabular font-semibold text-foreground">{community.member_count}</p>
                 <p className="text-xs text-muted-foreground">Members</p>
               </div>
               <div>
-                <p className="font-semibold text-foreground">{community.post_count}</p>
+                <p className="tabular font-semibold text-foreground">{community.post_count}</p>
                 <p className="text-xs text-muted-foreground">Discussions</p>
               </div>
             </div>
 
             {/* Owner */}
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Run by</p>
+              <p className="mb-1 text-sm font-medium text-muted-foreground">Run by</p>
               {community.owner.is_mentor ? (
                 <Link
                   to={`/mentor/${community.owner.id}`}
@@ -289,11 +268,11 @@ export function CommunityWorkspaceHeader({
                 <>
                   <Button
                     variant="outline"
-                    className="w-full justify-start gap-2 hover:bg-muted/80 transition-colors"
+                    className="w-full justify-start gap-2"
                     onClick={() => { setInfoOpen(false); onOpenEdit(); }}
                   >
                     <Pencil className="h-4 w-4" />
-                    Edit workspace
+                    Edit group
                   </Button>
 
                   <AlertDialog>
@@ -303,14 +282,14 @@ export function CommunityWorkspaceHeader({
                         className="w-full justify-start gap-2 text-destructive border-destructive/30 hover:border-destructive/60 hover:bg-destructive/10 hover:text-destructive active:bg-destructive/15 transition-colors"
                       >
                         <Trash2 className="h-4 w-4" />
-                        Delete workspace
+                        Delete group
                       </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                       <AlertDialogHeader>
                         <AlertDialogTitle>Delete {community.name}?</AlertDialogTitle>
                         <AlertDialogDescription>
-                          This permanently deletes the workspace—its posts, chat history and member
+                          This permanently deletes the group. Its posts, chat history and member
                           list all go with it. This cannot be undone.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
@@ -321,7 +300,7 @@ export function CommunityWorkspaceHeader({
                           disabled={deleting}
                           className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                         >
-                          {deleting ? "Deleting..." : "Delete workspace"}
+                          {deleting ? "Deleting" : "Delete group"}
                         </AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>
@@ -338,7 +317,7 @@ export function CommunityWorkspaceHeader({
                       disabled={working}
                     >
                       <LogOut className="h-4 w-4" />
-                      Leave workspace
+                      Leave group
                     </Button>
                   </AlertDialogTrigger>
                   <AlertDialogContent>
@@ -356,7 +335,7 @@ export function CommunityWorkspaceHeader({
                         disabled={working}
                         className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                       >
-                        {working ? "Leaving..." : "Leave workspace"}
+                        {working ? "Leaving" : "Leave group"}
                       </AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>

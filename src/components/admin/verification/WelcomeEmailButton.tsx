@@ -90,7 +90,7 @@ const WelcomeEmailButton = ({
   const copyText = async () => {
     try {
       await navigator.clipboard.writeText(`To: ${mentorEmail ?? ""}\nSubject: ${subject}\n\n${body}`);
-      toast.success("Copied plain text email format!");
+      toast.success("Plain-text email copied");
     } catch {
       toast.error("Could not copy plain text. Please select manually.");
     }
@@ -243,7 +243,7 @@ const WelcomeEmailButton = ({
           </TabsContent>
 
           <TabsContent value="preview" className="mt-4">
-            <div className="overflow-hidden rounded-xl border bg-slate-100 p-2 dark:bg-slate-900">
+            <div className="overflow-hidden rounded-xl border border-border bg-muted p-2">
               <iframe
                 title="Email Preview"
                 srcDoc={html}

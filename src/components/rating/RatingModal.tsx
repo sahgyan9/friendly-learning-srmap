@@ -8,8 +8,19 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { Star, Trash2, Loader2, LogIn } from "lucide-react";
+import { Star, Trash2, LogIn } from "lucide-react";
 import { toast } from "sonner";
 import { getErrorField, getErrorMessage } from "@/lib/errors";
 import { supabase } from "@/integrations/supabase/client";
@@ -89,7 +100,7 @@ const RatingModal = ({
 
   const handleSubmit = async () => {
     if (rating === 0) {
-      toast.error("Please select a rating of 1 to 5 stars");
+      toast.error("Choose a rating from 1 to 5 stars.");
       return;
     }
 
@@ -118,7 +129,7 @@ const RatingModal = ({
           .eq("reviewer_id", user.id);
 
         if (error) throw error;
-        toast.success("Your review has been updated!");
+        toast.success("Review updated.");
       } else {
         // Insert new review
         const { error } = await supabase
@@ -131,7 +142,7 @@ const RatingModal = ({
           });
 
         if (error) throw error;
-        toast.success("Thank you for rating this mentor!");
+        toast.success("Review posted.");
       }
 
       onRatingSubmitted?.();
@@ -142,9 +153,9 @@ const RatingModal = ({
       if (getErrorField(error, "code") === "23505") {
         toast.error("You have already reviewed this mentor");
       } else if (message) {
-        toast.error(`Failed to submit review: ${message}`);
+        toast.error(`Could not post your review: ${message}`);
       } else {
-        toast.error("Failed to submit review. Please try again.");
+        toast.error("Could not post your review. Try again.");
       }
     } finally {
       setIsSubmitting(false);
@@ -164,7 +175,7 @@ const RatingModal = ({
 
       if (error) throw error;
 
-      toast.success("Your review was removed");
+      toast.success("Review removed.");
       setRating(0);
       setReviewText("");
       setReviewId(null);
@@ -172,7 +183,7 @@ const RatingModal = ({
       onClose();
     } catch (error) {
       console.error("Error deleting review:", error);
-      toast.error("Could not remove your review. Please try again.");
+      toast.error("Could not remove your review. Try again.");
     } finally {
       setIsDeleting(false);
     }
@@ -184,7 +195,7 @@ const RatingModal = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{isEditing ? "Edit Your Review" : "Rate Your Experience"}</DialogTitle>
+          <DialogTitle>{isEditing ? "Edit your review" : "Review this mentor"}</DialogTitle>
           <DialogDescription>
             {isEditing
               ? "Update your rating and feedback for this mentor."
@@ -193,7 +204,7 @@ const RatingModal = ({
         </DialogHeader>
 
         {/* Mentor Info */}
-        <div className="flex items-center space-x-3 rounded-lg border bg-muted/30 p-3">
+        <div className="flex items-center gap-3 rounded-lg border border-border p-3">
           <Avatar className="h-12 w-12">
             <AvatarImage src={mentorImage} alt={mentorName} />
             <AvatarFallback>{getInitials(mentorName, "M")}</AvatarFallback>
@@ -210,8 +221,8 @@ const RatingModal = ({
               Sign in with your student account to rate this mentor and share your experience with
               classmates.
             </p>
-            <Button onClick={handleSignIn} className="w-full gap-2 font-semibold">
-              <LogIn className="h-4 w-4" />
+            <Button onClick={handleSignIn} className="w-full">
+              <LogIn />
               Sign in to rate
             </Button>
           </div>
@@ -219,7 +230,7 @@ const RatingModal = ({
           <div className="flex flex-col items-center space-y-5 pt-1">
             {/* Star Rating */}
             <div className="flex flex-col items-center gap-1.5">
-              <div className="flex space-x-1.5">
+              <div className="flex gap-1" role="radiogroup" aria-label="Rating">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <button
                     key={star}
@@ -227,8 +238,10 @@ const RatingModal = ({
                     onClick={() => setRating(star)}
                     onMouseEnter={() => setHoverRating(star)}
                     onMouseLeave={() => setHoverRating(0)}
-                    aria-label={`Rate ${star} star${star > 1 ? "s" : ""}`}
-                    className="p-1 rounded-md transition-transform hover:scale-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                    role="radio"
+                    aria-checked={rating === star}
+                    aria-label={`${star} star${star > 1 ? "s" : ""}`}
+                    className="rounded-md p-1 transition-colors duration-150 hover:bg-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     <Star
                       className={`h-8 w-8 transition-colors ${
@@ -240,7 +253,7 @@ const RatingModal = ({
                   </button>
                 ))}
               </div>
-              <span className="text-xs font-medium text-muted-foreground">
+              <span className="text-sm text-muted-foreground" aria-live="polite">
                 {rating === 1
                   ? "Needs improvement"
                   : rating === 2
@@ -250,8 +263,8 @@ const RatingModal = ({
                   : rating === 4
                   ? "Very good"
                   : rating === 5
-                  ? "Excellent mentor!"
-                  : "Tap a star to rate"}
+                  ? "Excellent"
+                  : "Select a star to rate"}
               </span>
             </div>
 
@@ -269,29 +282,46 @@ const RatingModal = ({
                 maxLength={500}
                 className="resize-none text-sm"
               />
-              <p className="text-right text-2xs text-muted-foreground">
-                {reviewText.length}/500 characters
+              <p className={`text-right text-xs tabular ${reviewText.length >= 450 ? "text-foreground" : "text-muted-foreground"}`}>
+                {reviewText.length}/500
               </p>
             </div>
 
             {/* Action Buttons */}
             <div className="flex items-center gap-2.5 w-full pt-1">
               {isEditing && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  onClick={handleDelete}
-                  disabled={isSubmitting || isDeleting}
-                  className="text-destructive hover:bg-destructive/10 hover:text-destructive flex-shrink-0"
-                  aria-label="Delete review"
-                >
-                  {isDeleting ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Trash2 className="h-4 w-4" />
-                  )}
-                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      isLoading={isDeleting}
+                      disabled={isSubmitting || isDeleting}
+                      className="shrink-0 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                      aria-label="Delete review"
+                    >
+                      {!isDeleting && <Trash2 />}
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Delete your review?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Your rating and comment for {mentorName} will be removed. This cannot be undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Keep review</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={handleDelete}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      >
+                        Delete
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               )}
 
               <Button
@@ -307,19 +337,11 @@ const RatingModal = ({
               <Button
                 type="button"
                 onClick={handleSubmit}
+                isLoading={isSubmitting}
                 disabled={isSubmitting || isDeleting || rating === 0}
-                className="flex-1 font-semibold"
+                className="flex-1"
               >
-                {isSubmitting ? (
-                  <span className="flex items-center gap-1.5">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Saving...
-                  </span>
-                ) : isEditing ? (
-                  "Update Review"
-                ) : (
-                  "Submit Review"
-                )}
+                {isEditing ? "Update review" : "Post review"}
               </Button>
             </div>
           </div>

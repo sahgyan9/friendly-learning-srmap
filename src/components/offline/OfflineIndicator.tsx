@@ -40,17 +40,14 @@ export function OfflineIndicator() {
               <div
                 role="status"
                 aria-live="polite"
-                className="flex h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-slate-700/50 bg-slate-900/90 px-2 sm:px-2.5 text-xs font-medium text-slate-100 shadow-xs dark:bg-slate-800/95"
+                className="flex h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-border bg-card px-2 sm:px-2.5 text-xs font-medium text-foreground"
               >
-                <span className="relative flex h-2 w-2 shrink-0">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
-                </span>
-                <WifiOff className="h-3.5 w-3.5 shrink-0 text-amber-400" aria-hidden />
-                <span className="sr-only sm:not-sr-only sm:inline">Offline mode • Showing saved data</span>
+                <span className="h-2 w-2 shrink-0 rounded-full bg-amber-500" aria-hidden />
+                <WifiOff className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
+                <span className="sr-only sm:not-sr-only sm:inline">Offline · showing saved data</span>
               </div>
             </TooltipTrigger>
-            <TooltipContent side="bottom">Offline mode • Showing saved data</TooltipContent>
+            <TooltipContent side="bottom">Offline · showing saved data</TooltipContent>
           </Tooltip>
         </motion.div>
       )}
@@ -67,10 +64,11 @@ export function OfflineIndicator() {
           <div
             role="status"
             aria-live="polite"
-            className="flex h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-emerald-700/50 bg-emerald-900/90 px-2 sm:px-2.5 text-xs font-medium text-emerald-100 shadow-xs dark:bg-emerald-950/95"
+            className="flex h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-border bg-card px-2 sm:px-2.5 text-xs font-medium text-foreground"
           >
-            <Wifi className="h-3.5 w-3.5 shrink-0 text-emerald-400" aria-hidden />
-            <span className="sr-only sm:not-sr-only sm:inline">Back online • Reconnected</span>
+            <span className="h-2 w-2 shrink-0 rounded-full bg-green-600" aria-hidden />
+            <Wifi className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
+            <span className="sr-only sm:not-sr-only sm:inline">Back online</span>
           </div>
         </motion.div>
       )}

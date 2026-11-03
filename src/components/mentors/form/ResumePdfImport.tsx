@@ -111,7 +111,7 @@ const ResumePdfImport = ({
       lowerName.endsWith(".docx");
 
     if (!isPdf && !isDocx) {
-      toast.error("Please upload a PDF or Word (.docx) document");
+      toast.error("Upload a PDF or Word (.docx) file.");
       return;
     }
     if (file.size > MAX_SIZE_MB * 1024 * 1024) {
@@ -140,7 +140,7 @@ const ResumePdfImport = ({
       if (fileType === "docx") {
         if (!extractedText || extractedText.length < 20) {
           throw new Error(
-            "Could not extract readable text from this Word document. Please ensure it has text or export to PDF."
+            "Could not extract readable text from this Word document. Check that it contains text, or export it to PDF."
           );
         }
         body = { pdfText: extractedText, mimeType: "text/plain", fields };
@@ -210,7 +210,7 @@ const ResumePdfImport = ({
           msg.includes("FunctionsFetchError")
         ) {
           msg =
-            "Connection to the AI resume parser was interrupted or timed out. Please check your internet connection and try again.";
+            "Connection to the AI resume parser was interrupted or timed out. Check your connection and try again.";
         }
         throw new Error(msg);
       }
@@ -364,12 +364,12 @@ const ResumePdfImport = ({
             size="sm"
             onClick={() => inputRef.current?.click()}
             disabled={isLoading}
-            className={`shrink-0 gap-1.5 font-bold ${className}`}
+            className={`shrink-0 ${className}`}
           >
             {isLoading ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Parsing...
+                Reading file
               </>
             ) : (
               <>
@@ -381,17 +381,17 @@ const ResumePdfImport = ({
         </>
       ) : (
         <div
-          className={`rounded-lg border border-dashed border-primary/40 bg-primary/5 p-4 ${className}`}
+          className={`rounded-lg border border-dashed border-border bg-card p-4 ${className}`}
         >
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="flex items-start gap-3">
-              <div className="rounded-md bg-primary/10 p-2">
-                <FileText className="h-5 w-5 text-primary" />
+              <div className="rounded-md bg-secondary p-2">
+                <FileText className="h-5 w-5 text-muted-foreground" />
               </div>
               <div>
                 <p className="font-medium text-sm">Import from your resume (PDF or Word .docx)</p>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Upload your resume PDF or Word document and we'll auto-fill the form.
+                  Upload a PDF or Word document to fill in this form. You can edit everything afterwards.
                   <br />
                   <span className="opacity-80">
                     Supports LinkedIn PDF exports and standard .docx / .pdf resumes.
@@ -414,12 +414,12 @@ const ResumePdfImport = ({
               size="sm"
               onClick={() => inputRef.current?.click()}
               disabled={isLoading}
-              className="shrink-0 gap-1.5 font-bold"
+              className="shrink-0"
             >
               {isLoading ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Parsing...
+                  Reading file
                 </>
               ) : (
                 <>

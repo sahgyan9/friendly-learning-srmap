@@ -1,8 +1,5 @@
-import { Sparkles, BarChart3, Tag, MessageSquareHeart } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import { CardAccentBorder } from "@/components/ui/CardAccentBorder";
+import { MessageSquare, Star } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
 import {
   Faculty,
   RATING_CRITERIA,
@@ -20,6 +17,8 @@ const CRITERION_AVERAGES: Record<string, (faculty: Faculty) => number> = {
   helpfulness: (faculty) => faculty.avg_helpfulness,
 };
 
+const SECTION = "rounded-xl border border-border bg-card p-5 shadow-card md:p-6";
+
 export default function FacultyStudentSentimentCard({
   faculty,
   tagCounts,
@@ -29,114 +28,87 @@ export default function FacultyStudentSentimentCard({
 
   if (!hasRatings) {
     return (
-      <Card className="relative overflow-hidden shadow-xs">
-        <CardAccentBorder gradient="rose" />
-        <CardContent className="p-6 text-center space-y-3">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-500/10 text-rose-600 dark:text-rose-400">
-            <MessageSquareHeart className="h-6 w-6" />
-          </div>
-          <h2 className="text-base font-bold text-foreground">Student Experience & Feedback</h2>
-          <p className="text-sm text-muted-foreground max-w-md mx-auto">
-            No anonymous student ratings have been submitted for this faculty yet. Ratings help fellow students understand teaching styles and course expectations.
+      <section className={`${SECTION} flex flex-col items-center gap-3 text-center`}>
+        <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary">
+          <MessageSquare className="h-5 w-5 text-muted-foreground" />
+        </span>
+        <div>
+          <h2 className="text-lg font-semibold tracking-tight">No student ratings yet</h2>
+          <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
+            If you have taken a course with this faculty, an anonymous rating tells the next batch what to expect.
           </p>
-        </CardContent>
-      </Card>
+        </div>
+      </section>
     );
   }
 
   return (
     <div className="grid gap-6 md:grid-cols-2">
-      {/* Criteria Breakdown */}
-      <Card className="relative overflow-hidden shadow-xs">
-        <CardAccentBorder gradient="rose" />
-        <CardContent className="p-6 space-y-4">
-          <div className="flex items-center gap-2">
-            <div className="rounded-lg bg-rose-500/10 p-2 text-rose-600 dark:text-rose-400">
-              <BarChart3 className="h-5 w-5" />
-            </div>
-            <div>
-              <h2 className="text-base font-bold text-foreground">Evaluation Criteria</h2>
-              <p className="text-xs text-muted-foreground">
-                Averages across {faculty.rating_count} anonymous student reviews
-              </p>
-            </div>
-          </div>
+      <section className={`${SECTION} space-y-4`}>
+        <div>
+          <h2 className="text-lg font-semibold tracking-tight">Ratings by criterion</h2>
+          <p className="mt-1 text-sm text-muted-foreground tabular">
+            Averages across {faculty.rating_count} anonymous {faculty.rating_count === 1 ? "rating" : "ratings"}
+          </p>
+        </div>
 
-          <div className="space-y-3 pt-1">
-            {RATING_CRITERIA.map((criterion) => {
-              const value = Number(CRITERION_AVERAGES[criterion.key](faculty) || 0);
-              const percentage = (value / 5) * 100;
-              return (
-                <div key={criterion.key} className="space-y-1.5">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-medium text-foreground">{criterion.label}</span>
-                    <span className="font-bold tabular-nums text-foreground">
-                      {value.toFixed(1)} / 5.0
-                    </span>
-                  </div>
-                  <Progress value={percentage} className="h-2" />
-                  <p className="text-2xs text-muted-foreground">{criterion.hint}</p>
+        <div className="space-y-4">
+          {RATING_CRITERIA.map((criterion) => {
+            const value = Number(CRITERION_AVERAGES[criterion.key](faculty) || 0);
+            const percentage = (value / 5) * 100;
+            return (
+              <div key={criterion.key} className="space-y-1.5">
+                <div className="flex items-baseline justify-between gap-3 text-sm">
+                  <span className="font-medium text-foreground">{criterion.label}</span>
+                  <span className="font-semibold text-foreground tabular">{value.toFixed(1)}</span>
                 </div>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Score Distribution & Consensus Tags */}
-      <Card className="relative overflow-hidden shadow-xs">
-        <CardAccentBorder gradient="rose" />
-        <CardContent className="p-6 space-y-4">
-          <div className="flex items-center gap-2">
-            <div className="rounded-lg bg-amber-500/10 p-2 text-amber-600 dark:text-amber-400">
-              <Sparkles className="h-5 w-5" />
-            </div>
-            <div>
-              <h2 className="text-base font-bold text-foreground">Student Consensus & Tags</h2>
-              <p className="text-xs text-muted-foreground">What students frequently highlight</p>
-            </div>
-          </div>
-
-          {/* Rating Distribution */}
-          <div className="space-y-1.5 pt-1">
-            {distribution.map(({ star, count }) => {
-              const share = faculty.rating_count > 0 ? (count / faculty.rating_count) * 100 : 0;
-              return (
-                <div key={star} className="flex items-center gap-2 text-xs">
-                  <span className="w-8 shrink-0 font-medium text-muted-foreground">
-                    {star} ★
-                  </span>
-                  <Progress value={share} className="h-1.5 flex-1" />
-                  <span className="w-8 shrink-0 text-right tabular-nums text-muted-foreground text-2xs">
-                    {count}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Tag Cloud */}
-          {tagCounts.length > 0 && (
-            <div className="pt-2 border-t border-border/60">
-              <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground mb-2">
-                <Tag className="h-3.5 w-3.5" />
-                <span>Common Feedback Tags</span>
+                <Progress value={percentage} className="h-1.5" aria-label={`${criterion.label}: ${value.toFixed(1)} out of 5`} />
+                <p className="text-xs text-muted-foreground">{criterion.hint}</p>
               </div>
-              <div className="flex flex-wrap gap-1.5">
-                {tagCounts.map(({ tag, count }) => (
-                  <Badge
-                    key={tag}
-                    variant="secondary"
-                    className="text-xs font-normal py-1 px-2.5 bg-muted/60"
-                  >
-                    {tag} <span className="ml-1 text-muted-foreground text-3xs">({count})</span>
-                  </Badge>
-                ))}
+            );
+          })}
+        </div>
+      </section>
+
+      <section className={`${SECTION} space-y-4`}>
+        <div>
+          <h2 className="text-lg font-semibold tracking-tight">Rating distribution</h2>
+          <p className="mt-1 text-sm text-muted-foreground">How many students gave each overall score</p>
+        </div>
+
+        <div className="space-y-2">
+          {distribution.map(({ star, count }) => {
+            const share = faculty.rating_count > 0 ? (count / faculty.rating_count) * 100 : 0;
+            return (
+              <div key={star} className="flex items-center gap-3 text-sm">
+                <span className="flex w-8 shrink-0 items-center gap-1 text-muted-foreground tabular">
+                  {star}
+                  <Star className="h-3.5 w-3.5" aria-label="stars" />
+                </span>
+                <Progress value={share} className="h-1.5 flex-1" />
+                <span className="w-8 shrink-0 text-right text-xs text-muted-foreground tabular">{count}</span>
               </div>
+            );
+          })}
+        </div>
+
+        {tagCounts.length > 0 && (
+          <div className="border-t border-border pt-4">
+            <h3 className="text-sm font-medium text-foreground">What students mention</h3>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {tagCounts.map(({ tag, count }) => (
+                <span
+                  key={tag}
+                  className="inline-flex items-center gap-1.5 rounded-md bg-secondary px-2 py-0.5 text-xs text-secondary-foreground"
+                >
+                  {tag}
+                  <span className="text-muted-foreground tabular">{count}</span>
+                </span>
+              ))}
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </div>
+        )}
+      </section>
     </div>
   );
 }

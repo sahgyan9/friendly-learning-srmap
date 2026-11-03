@@ -10,13 +10,22 @@ import {
   Trash2,
   Video,
   Pin,
-  Loader2,
   BookOpen,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -47,6 +56,10 @@ interface CommunityResourcesTabProps {
   viewerName?: string;
 }
 
+// Resource types are told apart by icon and label; colour stays neutral
+// because it would not mean anything here.
+const NEUTRAL_KIND = "bg-secondary text-secondary-foreground";
+
 const KIND_META: Record<
   ResourceKind,
   { label: string; icon: React.ComponentType<{ className?: string }>; color: string }
@@ -59,27 +72,27 @@ const KIND_META: Record<
   github: {
     label: "GitHub / Repo",
     icon: FolderGit2,
-    color: "bg-slate-500/10 text-slate-700 dark:text-slate-300 border-slate-500/30",
+    color: NEUTRAL_KIND,
   },
   document: {
     label: "Document / PDF",
     icon: FileText,
-    color: "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/30",
+    color: NEUTRAL_KIND,
   },
   notes: {
     label: "Notes & Roadmap",
     icon: BookOpen,
-    color: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30",
+    color: NEUTRAL_KIND,
   },
   video: {
     label: "Video Recording",
     icon: Video,
-    color: "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/30",
+    color: NEUTRAL_KIND,
   },
   link: {
     label: "Web Link",
     icon: Link2,
-    color: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30",
+    color: NEUTRAL_KIND,
   },
 };
 
@@ -126,7 +139,7 @@ export function CommunityResourcesTab({
   const handleAddResource = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !url.trim()) {
-      toast.error("Please enter a title and a valid URL");
+      toast.error("Add a title and a valid URL");
       return;
     }
 
@@ -142,7 +155,7 @@ export function CommunityResourcesTab({
       });
 
       setResources((prev) => [created, ...prev]);
-      toast.success("Resource shared with the workspace");
+      toast.success("Resource shared with the group");
       setTitle("");
       setUrl("");
       setDescription("");
@@ -168,16 +181,16 @@ export function CommunityResourcesTab({
   return (
     <div className="space-y-6">
       {/* Header Bar */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 rounded-2xl border border-border/70 bg-card p-5">
+      <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-          <h2 className="text-lg font-bold text-foreground">Workspace Resources & Materials</h2>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Shared GitHub repos, Google Drive folders, study notes, and syllabus links for #{communityName}.
+          <h2 className="text-lg font-semibold tracking-tight text-foreground">Resources</h2>
+          <p className="mt-0.5 text-sm text-muted-foreground">
+            Repos, Drive folders, notes and syllabus links shared in {communityName}.
           </p>
         </div>
 
         {canShare && (
-          <Button onClick={() => setModalOpen(true)} size="sm" className="gap-1.5 shrink-0">
+          <Button onClick={() => setModalOpen(true)} size="sm" className="shrink-0">
             <Plus className="h-4 w-4" />
             Share a resource
           </Button>
@@ -186,9 +199,9 @@ export function CommunityResourcesTab({
 
       {/* Resources List */}
       {loading ? (
-        <div className="space-y-3">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="h-24 w-full rounded-xl bg-muted/40 animate-pulse" />
+        <div className="grid gap-3 sm:grid-cols-2">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="h-32 w-full rounded-lg bg-muted animate-pulse" />
           ))}
         </div>
       ) : resources.length > 0 ? (
@@ -200,63 +213,84 @@ export function CommunityResourcesTab({
             return (
               <div
                 key={res.id}
-                className="group relative flex flex-col justify-between rounded-xl border border-border/70 bg-card p-4 transition-all duration-200 hover:border-primary/40 hover:shadow-xs"
+                className="relative flex min-w-0 flex-col justify-between rounded-lg border bg-card p-4 shadow-card"
               >
                 <div className="space-y-2">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2">
-                      <span className={cn("flex h-8 w-8 items-center justify-center rounded-lg border", meta.color)}>
+                      <span className={cn("flex h-8 w-8 items-center justify-center rounded-md", meta.color)}>
                         <Icon className="h-4 w-4" />
                       </span>
-                      <span className="text-2xs font-semibold text-muted-foreground uppercase tracking-wider">
+                      <span className="text-xs text-muted-foreground">
                         {meta.label}
                       </span>
                     </div>
 
                     {res.isPinned && (
-                      <Badge variant="outline" className="gap-1 text-3xs font-medium border-amber-500/40 text-amber-600 dark:text-amber-400 bg-amber-500/5">
-                        <Pin className="h-2.5 w-2.5 fill-current" />
+                      <span className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground">
+                        <Pin className="h-3 w-3 fill-current" />
                         Pinned
-                      </Badge>
+                      </span>
                     )}
                   </div>
 
-                  <h3 className="font-bold text-sm text-foreground group-hover:text-primary transition-colors leading-snug line-clamp-2">
+                  <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-foreground">
                     {res.title}
                   </h3>
 
                   {res.description && (
-                    <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                    <p className="line-clamp-2 text-sm leading-relaxed text-muted-foreground">
                       {res.description}
                     </p>
                   )}
                 </div>
 
-                <div className="flex items-center justify-between gap-2 pt-4 mt-2 border-t border-border/50 text-2xs text-muted-foreground">
-                  <span className="truncate">
+                <div className="mt-3 flex items-center justify-between gap-2 border-t pt-3 text-xs text-muted-foreground">
+                  <span className="min-w-0 truncate">
                     Added by <strong className="font-medium text-foreground">{res.addedByName}</strong> · {formatRelativeTime(res.createdAt)}
                   </span>
 
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex shrink-0 items-center gap-1">
                     {isOwner && (
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(res.id, res.title)}
-                        title="Remove resource"
-                        className="text-muted-foreground hover:text-destructive transition-colors p-1"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <button
+                            type="button"
+                            aria-label={`Remove ${res.title}`}
+                            title="Remove resource"
+                            className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors duration-150 hover:bg-destructive/10 hover:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Remove this resource?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              "{res.title}" will be removed for everyone in the group. The link itself is not affected.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              onClick={() => handleDelete(res.id, res.title)}
+                            >
+                              Remove
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     )}
 
                     <a
                       href={res.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 font-semibold text-primary hover:underline"
+                      className="inline-flex h-8 items-center gap-1 rounded-md px-2 font-medium text-primary transition-colors duration-150 hover:bg-accent"
                     >
-                      <span>Open</span>
-                      <ExternalLink className="h-3 w-3" />
+                      Open
+                      <ExternalLink className="h-3.5 w-3.5" />
                     </a>
                   </div>
                 </div>
@@ -265,23 +299,23 @@ export function CommunityResourcesTab({
           })}
         </div>
       ) : (
-        <Card className="border-dashed border-2 border-border/80 bg-card/60">
+        <Card className="border-dashed shadow-none">
           <CardContent className="flex flex-col items-center gap-3 py-14 text-center">
-            <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-              <FolderGit2 className="h-6 w-6" />
+            <span className="flex h-10 w-10 items-center justify-center rounded-md bg-secondary text-muted-foreground">
+              <FolderGit2 className="h-5 w-5" />
             </span>
             <div className="space-y-1 max-w-sm">
-              <h3 className="text-base font-bold">No resources shared yet</h3>
-              <p className="text-xs text-muted-foreground leading-relaxed">
+              <h3 className="text-base font-semibold">No resources shared yet</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
                 {canShare
-                  ? "Share Google Drive links, GitHub repositories, lecture notes, and useful materials with group members."
-                  : "Join this group to access and share resources."}
+                  ? "Share Drive links, GitHub repositories and lecture notes with the group."
+                  : "Join this group to see and share resources."}
               </p>
             </div>
             {canShare && (
-              <Button onClick={() => setModalOpen(true)} size="sm" className="mt-2 gap-1.5">
+              <Button onClick={() => setModalOpen(true)} size="sm" className="mt-2">
                 <Plus className="h-4 w-4" />
-                Share the first resource
+                Share a resource
               </Button>
             )}
           </CardContent>
@@ -292,9 +326,9 @@ export function CommunityResourcesTab({
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Share a Resource</DialogTitle>
+            <DialogTitle>Share a resource</DialogTitle>
             <DialogDescription>
-              Add a link, repository, or document for everyone in #{communityName}.
+              Add a link, repository or document for everyone in {communityName}.
             </DialogDescription>
           </DialogHeader>
 
@@ -365,8 +399,7 @@ export function CommunityResourcesTab({
               <Button type="button" variant="outline" onClick={() => setModalOpen(false)}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={submitting} className="gap-1.5">
-                {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
+              <Button type="submit" isLoading={submitting}>
                 Share with group
               </Button>
             </div>

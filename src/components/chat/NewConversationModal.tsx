@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Search, Loader2, UserPlus, GraduationCap, MessageSquare, AlertCircle, Sparkles } from "lucide-react";
+import { Search, Loader2, UserPlus, GraduationCap, MessageSquare, AlertCircle, Users } from "lucide-react";
 import type { CampusUserResult } from "@/integrations/supabase/services/chat/user.service";
 import { getOrCreateConversation } from "@/integrations/supabase/services/chat/conversation.service";
 import { getInitials, getBadgeVariant } from "@/utils/user-utils";
@@ -75,14 +75,14 @@ export const NewConversationModal: React.FC<NewConversationModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-md p-0 overflow-hidden border-border/80 bg-card/95 backdrop-blur-xl">
+      <DialogContent className="sm:max-w-md p-0 overflow-hidden">
         <DialogHeader className="p-5 pb-3 border-b border-border/60">
           <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-secondary text-secondary-foreground">
               <UserPlus className="h-4 w-4" />
             </div>
             <div>
-              <DialogTitle className="text-base font-semibold">New Message</DialogTitle>
+              <DialogTitle className="text-base font-semibold">New message</DialogTitle>
               <DialogDescription className="text-xs text-muted-foreground">
                 Search students, mentors, and peers across SRM AP
               </DialogDescription>
@@ -91,7 +91,7 @@ export const NewConversationModal: React.FC<NewConversationModalProps> = ({
         </DialogHeader>
 
         {/* Search Bar */}
-        <div className="p-4 border-b border-border/60 bg-muted/20">
+        <div className="p-4 border-b border-border">
           <div className="relative flex items-center">
             <Search className="absolute left-3 h-4 w-4 text-muted-foreground" />
             <Input
@@ -99,7 +99,7 @@ export const NewConversationModal: React.FC<NewConversationModalProps> = ({
               placeholder="Search by name, department, or keyword..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 text-sm h-9 bg-background/80"
+              className="h-10 pl-9 text-sm"
               autoFocus
             />
             {isLoading && (
@@ -112,15 +112,15 @@ export const NewConversationModal: React.FC<NewConversationModalProps> = ({
         <div className="max-h-80 overflow-y-auto p-2 divide-y divide-border/40">
           {isLoading && results.length === 0 ? (
             <div className="py-10 text-center text-xs text-muted-foreground flex flex-col items-center gap-2">
-              <Loader2 className="h-5 w-5 animate-spin text-primary" />
+              <Loader2 className="h-5 w-5 animate-spin" />
               <span>Searching campus directory...</span>
             </div>
           ) : results.length > 0 ? (
             <>
               {!searchQuery.trim() && (
-                <div className="px-3 py-1.5 text-3xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                  <Sparkles className="h-3 w-3 text-primary" />
-                  <span>Suggested Campus Members</span>
+                <div className="px-3 py-1.5 text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                  <Users className="h-3 w-3" />
+                  <span>Campus members</span>
                 </div>
               )}
               {results.map((user) => {
@@ -129,18 +129,18 @@ export const NewConversationModal: React.FC<NewConversationModalProps> = ({
                   <div
                     key={user.id}
                     onClick={() => !isConnecting && handleStartChat(user)}
-                    className="flex items-center justify-between gap-3 p-2.5 rounded-xl hover:bg-muted/50 transition-colors cursor-pointer group"
+                    className="flex items-center justify-between gap-3 p-2.5 rounded-lg hover:bg-accent transition-colors duration-150 cursor-pointer group"
                   >
                     <div className="flex items-center gap-3 min-w-0">
-                      <Avatar className="h-10 w-10 shrink-0 border border-border/60 group-hover:ring-1 group-hover:ring-primary/40 transition-all">
+                      <Avatar className="h-10 w-10 shrink-0">
                         <AvatarImage src={user.profile_image || undefined} alt={user.name} />
-                        <AvatarFallback className="text-xs font-semibold bg-primary/15 text-primary">
+                        <AvatarFallback className="text-xs font-semibold bg-secondary text-secondary-foreground">
                           {getInitials(user.name)}
                         </AvatarFallback>
                       </Avatar>
                       <div className="min-w-0">
                         <div className="flex items-center gap-1.5">
-                          <p className="text-sm font-semibold truncate text-foreground group-hover:text-primary transition-colors">
+                          <p className="text-sm font-semibold truncate text-foreground">
                             {user.name}
                           </p>
                           {user.badge && (
@@ -163,18 +163,15 @@ export const NewConversationModal: React.FC<NewConversationModalProps> = ({
 
                     <Button
                       size="sm"
-                      className="shrink-0 text-xs h-8 gap-1.5 rounded-lg px-3 bg-primary hover:bg-primary/90"
-                      disabled={isConnecting}
+                      variant="outline"
+                      className="shrink-0 text-xs h-8 gap-1.5 px-3"
+                      isLoading={isConnecting}
                       onClick={(e) => {
                         e.stopPropagation();
                         handleStartChat(user);
                       }}
                     >
-                      {isConnecting ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      ) : (
-                        <MessageSquare className="h-3.5 w-3.5" />
-                      )}
+                      {!isConnecting && <MessageSquare className="h-3.5 w-3.5" />}
                       Chat
                     </Button>
                   </div>
@@ -183,12 +180,12 @@ export const NewConversationModal: React.FC<NewConversationModalProps> = ({
             </>
           ) : (
             <div className="py-10 text-center text-muted-foreground space-y-2 px-4">
-              <AlertCircle className="h-6 w-6 mx-auto opacity-60 text-muted-foreground" />
+              <AlertCircle className="h-6 w-6 mx-auto text-muted-foreground" />
               <p className="text-xs">
                 No students or mentors found for "<strong>{searchQuery}</strong>"
               </p>
-              <p className="text-2xs text-muted-foreground/80">
-                Try searching by first name or department
+              <p className="text-2xs text-muted-foreground">
+                Try a first name or a department
               </p>
             </div>
           )}

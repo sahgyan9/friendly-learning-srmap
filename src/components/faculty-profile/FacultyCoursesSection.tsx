@@ -1,7 +1,3 @@
-import { BookMarked, Layers } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import { CardAccentBorder } from "@/components/ui/CardAccentBorder";
-import { Badge } from "@/components/ui/badge";
 import { FacultyReview } from "@/integrations/supabase/services/faculty";
 
 interface FacultyCoursesSectionProps {
@@ -11,7 +7,6 @@ interface FacultyCoursesSectionProps {
 
 export default function FacultyCoursesSection({
   reviews,
-  department,
 }: FacultyCoursesSectionProps) {
   // Aggregate distinct course codes mentioned in reviews
   const courseCounts = reviews.reduce<Record<string, number>>((acc, rev) => {
@@ -32,38 +27,25 @@ export default function FacultyCoursesSection({
   }
 
   return (
-    <Card className="relative overflow-hidden shadow-xs">
-      <CardAccentBorder gradient="rose" />
-      <CardContent className="p-6 space-y-4">
-        <div className="flex items-center gap-2">
-          <div className="rounded-lg bg-rose-500/10 p-2 text-rose-600 dark:text-rose-400">
-            <BookMarked className="h-5 w-5" />
-          </div>
-          <div>
-            <h2 className="text-base font-bold text-foreground">Courses & Subjects Taught</h2>
-            <p className="text-xs text-muted-foreground">
-              Courses tagged by students in their verified reviews
-            </p>
-          </div>
-        </div>
+    <section className="space-y-4 rounded-xl border border-border bg-card p-5 shadow-card md:p-6">
+      <div>
+        <h2 className="text-lg font-semibold tracking-tight">Courses</h2>
+        <p className="mt-1 text-sm text-muted-foreground">Course codes students named in their ratings</p>
+      </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 pt-1">
-          {courses.map(({ code, count }) => (
-            <div
-              key={code}
-              className="flex items-center justify-between rounded-xl border border-border/80 bg-muted/30 p-3"
-            >
-              <div className="flex items-center gap-2">
-                <Layers className="h-4 w-4 text-primary" />
-                <span className="text-sm font-bold text-foreground">{code}</span>
-              </div>
-              <Badge variant="secondary" className="text-3xs font-normal">
-                {count} {count === 1 ? "review" : "reviews"}
-              </Badge>
-            </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+      <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
+        {courses.map(({ code, count }) => (
+          <li
+            key={code}
+            className="flex min-w-0 items-baseline justify-between gap-2 rounded-lg border border-border px-3 py-2.5"
+          >
+            <span className="truncate font-mono text-sm font-medium text-foreground">{code}</span>
+            <span className="shrink-0 text-xs text-muted-foreground tabular">
+              {count} {count === 1 ? "rating" : "ratings"}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }

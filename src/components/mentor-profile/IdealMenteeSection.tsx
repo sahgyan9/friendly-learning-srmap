@@ -1,5 +1,4 @@
-import { motion } from "framer-motion";
-import { UserCheck } from "lucide-react";
+import { Check } from "lucide-react";
 import { toast } from "sonner";
 
 import EditableSection from "./EditableSection";
@@ -36,31 +35,20 @@ export default function IdealMenteeSection({
     const cleaned = next.map((s) => s.trim()).filter(Boolean);
     const { data, error } = await updateMentorSummary(mentor.id, { ideal_mentees: cleaned });
     if (error || !data) {
-      toast.error("Could not save. Please try again.");
+      toast.error("Could not save. Try again.");
       return false;
     }
     onMentorUpdated(data as unknown as Mentor);
-    toast.success("Saved — this section is yours now and won't be regenerated.");
+    toast.success("Saved. This section will not be regenerated.");
     return true;
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 15 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-    >
-      <EditableSection<string[]>
+    <EditableSection<string[]>
         editable={isOwnProfile}
-        title="Perfect if you are..."
-        icon={
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
-            <UserCheck className="h-4 w-4" />
-          </div>
-        }
+        title="A good fit if you are"
         value={criteria}
         onSave={save}
-        className="border-primary/20 bg-gradient-to-br from-primary/5 via-card to-card"
         renderEditor={(draft, setDraft) => (
           <StringListEditor
             items={draft}
@@ -74,30 +62,19 @@ export default function IdealMenteeSection({
         )}
       >
         {criteria.length === 0 ? (
-          <p className="text-sm italic text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             Describe who you are the right person to help, so students can self-select.
           </p>
         ) : (
-          <>
-            <p className="mb-3 text-xs text-muted-foreground">
-              Self-select if this mentor&rsquo;s guidance aligns with your goals
-            </p>
-            <div className="grid grid-cols-1 gap-3 pt-1 sm:grid-cols-2">
-              {criteria.map((criterion, idx) => (
-                <div
-                  key={idx}
-                  className="flex items-center gap-3 rounded-xl border border-primary/15 bg-background/80 p-3.5 shadow-2xs transition-colors hover:border-primary/40"
-                >
-                  <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
-                    ✓
-                  </div>
-                  <span className="text-sm font-medium text-foreground">{criterion}</span>
-                </div>
-              ))}
-            </div>
-          </>
+          <ul className="grid grid-cols-1 gap-x-6 gap-y-2.5 sm:grid-cols-2">
+            {criteria.map((criterion, idx) => (
+              <li key={idx} className="flex items-start gap-2.5 text-sm leading-snug text-foreground">
+                <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden />
+                {criterion}
+              </li>
+            ))}
+          </ul>
         )}
       </EditableSection>
-    </motion.div>
   );
 }

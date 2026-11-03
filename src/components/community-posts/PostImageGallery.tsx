@@ -70,7 +70,7 @@ export function PostImageGallery({
         {count > 1 && (
           <>
             {/* Top Right Counter Badge (1/4) */}
-            <span className="absolute top-2 right-2 rounded-full bg-black/80 px-2.5 py-0.5 text-xs font-semibold text-white backdrop-blur-md shadow-md">
+            <span className="absolute top-2 right-2 tabular rounded-md bg-black/75 px-2 py-0.5 text-xs font-medium text-white">
               {activeSlide + 1}/{count}
             </span>
 
@@ -79,10 +79,10 @@ export function PostImageGallery({
               <button
                 type="button"
                 onClick={handlePrevSlide}
-                className="absolute left-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-black shadow-lg transition-all hover:bg-white hover:scale-110 active:scale-95 focus:outline-none"
+                className="absolute left-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-black shadow-float transition-colors duration-150 hover:bg-white active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 aria-label="Previous image"
               >
-                <ChevronLeft className="h-5 w-5 stroke-[2.5]" />
+                <ChevronLeft className="h-5 w-5 stroke-2" />
               </button>
             )}
 
@@ -91,10 +91,10 @@ export function PostImageGallery({
               <button
                 type="button"
                 onClick={handleNextSlide}
-                className="absolute right-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-black shadow-lg transition-all hover:bg-white hover:scale-110 active:scale-95 focus:outline-none"
+                className="absolute right-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-black shadow-float transition-colors duration-150 hover:bg-white active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 aria-label="Next image"
               >
-                <ChevronRight className="h-5 w-5 stroke-[2.5]" />
+                <ChevronRight className="h-5 w-5 stroke-2" />
               </button>
             )}
           </>
@@ -124,7 +124,7 @@ export function PostImageGallery({
           />
           <span
             aria-hidden
-            className="absolute bottom-3 right-3 rounded-lg bg-black/60 p-2 text-white opacity-80 backdrop-blur-sm transition-opacity group-hover/img:opacity-100"
+            className="absolute bottom-3 right-3 rounded-md bg-black/60 p-2 text-white opacity-80 transition-opacity group-hover/img:opacity-100"
           >
             <Maximize2 className="h-4 w-4" />
           </span>
@@ -152,7 +152,7 @@ export function PostImageGallery({
               src={src}
               alt=""
               loading="lazy"
-              className="h-full w-full object-contain transition-transform duration-300 group-hover/img:scale-105"
+              className="h-full w-full object-contain transition-opacity duration-150 group-hover/img:opacity-90"
             />
           </button>
         ))}
@@ -199,7 +199,7 @@ export function PostImageGallery({
                 src={src}
                 alt=""
                 loading="lazy"
-                className="h-full w-full object-cover object-top transition-transform duration-300 group-hover/img:scale-105"
+                className="h-full w-full object-cover object-top transition-opacity duration-150 group-hover/img:opacity-90"
               />
             </button>
           ))}
@@ -253,10 +253,10 @@ export function PostImageGallery({
                 src={src}
                 alt=""
                 loading="lazy"
-                className="h-full w-full object-cover object-top transition-transform duration-300 group-hover/img:scale-105"
+                className="h-full w-full object-cover object-top transition-opacity duration-150 group-hover/img:opacity-90"
               />
               {hasMore && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/65 font-bold text-white text-xl sm:text-2xl backdrop-blur-[2px] transition-bg group-hover/img:bg-black/75">
+                <div className="absolute inset-0 flex items-center justify-center tabular bg-black/65 font-semibold text-white text-xl sm:text-2xl transition-colors duration-150 group-hover/img:bg-black/75">
                   +{remainingCount + 1}
                 </div>
               )}

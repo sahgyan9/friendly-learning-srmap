@@ -94,7 +94,7 @@ export function PWAInstallBanner() {
     if (isInstallable) {
       const accepted = await promptInstall();
       if (accepted) {
-        toast.success("Thank you for installing Friendly Learning SRMAP!");
+        toast.success("Friendly Learning installed");
         markSeen();
       } else {
         handleDismiss();
@@ -109,36 +109,33 @@ export function PWAInstallBanner() {
     <>
       <AnimatePresence>
         <motion.div
-          initial={{ opacity: 0, y: 30, scale: 0.95 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 20, scale: 0.95 }}
-          transition={{ duration: 0.25, ease: "easeOut" }}
-          className="fixed bottom-24 right-4 z-40 w-[calc(100vw-2rem)] max-w-sm rounded-2xl border border-primary/25 bg-card/95 backdrop-blur-md p-4 shadow-xl shadow-primary/5 sm:right-6 lg:bottom-6"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 8 }}
+          transition={{ duration: 0.2, ease: [0.25, 1, 0.5, 1] }}
+          className="fixed bottom-24 right-4 z-40 w-[calc(100vw-2rem)] max-w-sm rounded-xl border border-border bg-card p-4 shadow-float sm:right-6 lg:bottom-6"
         >
           <div className="flex items-start gap-3">
-            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/20">
-              <Smartphone className="h-5 w-5 animate-pulse" />
+            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-secondary text-secondary-foreground">
+              <Smartphone className="h-5 w-5" />
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5">
                 <p className="text-sm font-semibold text-foreground">
                   Install Friendly Learning
                 </p>
-                <span className="rounded-full bg-primary/15 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
-                  App
-                </span>
               </div>
               <p className="mt-0.5 text-xs text-muted-foreground leading-relaxed">
-                Add to your home screen or desktop for fast fullscreen access & instant alerts.
+                Add it to your home screen or desktop to open it full screen and get notifications.
               </p>
               <div className="mt-3 flex items-center gap-2">
                 <Button
                   size="sm"
                   onClick={handleInstallClick}
-                  className="h-8 px-3 text-xs font-semibold shadow-sm gap-1.5"
+                  className="h-8 px-3 text-xs gap-1.5"
                 >
                   <Download className="h-3.5 w-3.5" />
-                  {isIOS ? "Add to Home Screen" : "Install App"}
+                  {isIOS ? "Add to Home Screen" : "Install"}
                 </Button>
                 <Button
                   variant="ghost"

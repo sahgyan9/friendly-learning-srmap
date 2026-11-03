@@ -37,7 +37,7 @@ export function ProfileAvatarUploader({
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
-      toast.error("Please upload an image file");
+      toast.error("Choose an image file (JPG, PNG or GIF).");
       return;
     }
 
@@ -83,7 +83,7 @@ export function ProfileAvatarUploader({
 
       onImageUpdated(imageUrl);
       setPendingImage(null);
-      toast.success("Profile picture updated successfully!");
+      toast.success("Profile picture updated.");
 
       if (previousImageUrl) {
         const oldPath = storagePathFromPublicUrl("profiles", previousImageUrl);
@@ -94,7 +94,7 @@ export function ProfileAvatarUploader({
       }
     } catch (error: unknown) {
       console.error("Error uploading image:", error);
-      toast.error(getErrorMessage(error, "Failed to upload image"));
+      toast.error(getErrorMessage(error, "Could not upload the image. Try again."));
     } finally {
       setIsUploading(false);
     }

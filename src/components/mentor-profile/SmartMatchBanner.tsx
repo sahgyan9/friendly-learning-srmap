@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
-import { Check, Loader2, Pencil, Sparkles, X } from "lucide-react";
+import { Check, Pencil } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -71,115 +70,79 @@ export default function SmartMatchBanner({ mentor, isOwnProfile, onMentorUpdated
       });
       setSaving(false);
       if (error || !data) {
-        toast.error("Could not save. Please try again.");
+        toast.error("Could not save. Try again.");
         return;
       }
       onMentorUpdated(data as unknown as Mentor);
-      toast.success("Saved — this section is yours now and won't be regenerated.");
+      toast.success("Saved. This section will not be regenerated.");
     } else {
       const { data, error } = await updateMentorFields(mentor.id, { skills: cleaned });
       setSaving(false);
       if (error || !data) {
-        toast.error("Could not save your skills. Please try again.");
+        toast.error("Could not save your skills. Try again.");
         return;
       }
       onMentorUpdated({ ...mentor, skills: cleaned } as unknown as Mentor);
-      toast.success("Skills updated");
+      toast.success("Skills saved.");
     }
 
     setEditing(false);
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.98 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.3 }}
-      className="relative overflow-hidden rounded-2xl border border-emerald-500/30 bg-gradient-to-r from-emerald-500/10 via-teal-500/5 to-transparent p-5 shadow-sm"
-    >
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="flex w-full items-start gap-3.5">
-          <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-500 shadow-xs">
-            <Sparkles className="h-5 w-5" />
-          </div>
+    <section className="rounded-xl border border-border bg-card p-5 shadow-card md:p-6">
+      <div className="flex items-center justify-between gap-2">
+        <h2 className="text-sm font-medium text-muted-foreground">Specializes in</h2>
+        {isOwnProfile && !editing && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={start}
+            aria-label="Edit specializes in"
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <Pencil />
+            Edit
+          </Button>
+        )}
+      </div>
 
-          <div className="w-full min-w-0 space-y-1">
-            <div className="flex items-center justify-between gap-1.5">
-              <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-                Specializes in
-              </span>
+      {editing ? (
+        <div className="space-y-3 pt-2">
+          {usingTopics ? (
+            <StringListEditor
+              items={draft}
+              onChange={setDraft}
+              maxItems={8}
+              maxLength={40}
+              placeholder="RAG Pipelines"
+              addLabel="Add a topic"
+              hint="These are the topics from your &ldquo;Ask me anything about&rdquo; section further down. Editing here updates that section too."
+            />
+          ) : (
+            <SkillsEditor skills={draft} onChange={setDraft} />
+          )}
 
-              {isOwnProfile && !editing && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={start}
-                  aria-label="Edit specializes in"
-                  className="h-7 px-2 text-emerald-700/70 hover:text-emerald-700 dark:text-emerald-300/70 dark:hover:text-emerald-300"
-                >
-                  <Pencil className="h-3.5 w-3.5" />
-                </Button>
-              )}
-            </div>
-
-            {editing ? (
-              <div className="space-y-3 pt-1">
-                {usingTopics ? (
-                  <StringListEditor
-                    items={draft}
-                    onChange={setDraft}
-                    maxItems={8}
-                    maxLength={40}
-                    placeholder="RAG Pipelines"
-                    addLabel="Add a topic"
-                    hint="These are the topics from your &ldquo;Ask me anything about&rdquo; section further down — editing here updates that section too."
-                  />
-                ) : (
-                  <SkillsEditor skills={draft} onChange={setDraft} />
-                )}
-
-                <div className="flex items-center gap-1">
-                  <Button variant="ghost" size="sm" onClick={cancel} disabled={saving}>
-                    <X className="mr-1 h-4 w-4" />
-                    Cancel
-                  </Button>
-                  <Button size="sm" onClick={save} disabled={saving}>
-                    {saving ? (
-                      <Loader2 className="mr-1 h-4 w-4 animate-spin" />
-                    ) : (
-                      <Check className="mr-1 h-4 w-4" />
-                    )}
-                    Save
-                  </Button>
-                </div>
-              </div>
-            ) : topSkills.length === 0 ? (
-              <p className="text-sm italic text-muted-foreground">
-                Add a few skills so students immediately see what you specialize in.
-              </p>
-            ) : (
-              <>
-                <p className="text-sm font-semibold text-foreground">
-                  {mentor.name?.split(" ")[0] || "This mentor"} can help with{" "}
-                  {topSkills.join(", ")}.
-                </p>
-
-                <div className="flex flex-wrap items-center gap-2 pt-1">
-                  {topSkills.map((sk) => (
-                    <span
-                      key={sk}
-                      className="flex items-center gap-1 text-xs font-medium text-emerald-700 dark:text-emerald-300 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20"
-                    >
-                      <Check className="h-3 w-3 stroke-[3]" />
-                      {sk}
-                    </span>
-                  ))}
-                </div>
-              </>
-            )}
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="sm" onClick={cancel} disabled={saving}>
+              Cancel
+            </Button>
+            <Button size="sm" onClick={save} isLoading={saving}>
+              {!saving && <Check />}
+              Save
+            </Button>
           </div>
         </div>
-      </div>
-    </motion.div>
+      ) : topSkills.length === 0 ? (
+        <p className="mt-1 text-sm text-muted-foreground">
+          Add a few skills so students see what you specialize in.
+        </p>
+      ) : (
+        <p className="mt-1 text-base text-foreground">
+          {mentor.name?.split(" ")[0] || "This mentor"} can help with{" "}
+          <span className="font-semibold">{topSkills.join(", ")}</span>.
+        </p>
+      )}
+    </section>
   );
 }

@@ -2,15 +2,19 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { CampusBrainIcon } from "@/components/icons/CampusBrainIcon";
 import { CampusThinkingStatus } from "@/components/search/CampusThinkingStatus";
-import { HorizontalScroller } from "@/components/ui/HorizontalScroller";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { FacultyIcon } from "@/components/icons/FacultyIcon";
 import { MentorIcon } from "@/components/icons/MentorIcon";
 import { GroupsIcon } from "@/components/icons/GroupsIcon";
 import {
-  Sparkles,
+  AlertCircle,
+  Check,
   ChevronDown,
+  ChevronRight,
   ChevronUp,
-  ArrowRight,
+  Link2,
+  RotateCw,
   Trophy,
   ThumbsUp,
   ThumbsDown,
@@ -78,88 +82,41 @@ export const CampusAIOverview: React.FC<CampusAIOverviewProps> = ({
   const hasVoted = isControlled ? propHasVoted ?? null : internalHook.hasVoted;
   const isVoting = isControlled ? propIsVoting ?? false : internalHook.isVoting;
 
-  const renderBadgeIcon = (type: AIEntityBadge["type"]) => {
+  // Source types are told apart by icon shape and label. They share one neutral
+  // colour: a rainbow of source chips reads as decoration, not as provenance.
+  const renderBadgeIcon = (type: string) => {
+    const cls = "h-3.5 w-3.5 text-muted-foreground";
     switch (type) {
       case "faculty":
-        return <FacultyIcon className="h-3.5 w-3.5 text-rose-500" />;
+        return <FacultyIcon className={cls} />;
       case "mentor":
-        return <MentorIcon className="h-3.5 w-3.5 text-violet-500" />;
+        return <MentorIcon className={cls} />;
       case "opportunity":
-        return <Trophy className="h-3.5 w-3.5 text-amber-500" />;
+        return <Trophy className={cls} />;
       case "community":
-        return <GroupsIcon className="h-3.5 w-3.5 text-emerald-500" />;
+        return <GroupsIcon className={cls} />;
       case "document":
-        return <FileText className="h-3.5 w-3.5 text-blue-500" />;
+        return <FileText className={cls} />;
       case "notice":
-        return <Megaphone className="h-3.5 w-3.5 text-orange-500" />;
+        return <Megaphone className={cls} />;
       default:
-        return <CampusBrainIcon className="h-3.5 w-3.5 text-primary" />;
+        return <Link2 className={cls} />;
     }
   };
 
-  const getEntityMeta = (url: string, defaultName?: string) => {
-    if (url.includes("/mentor/")) {
-      return {
-        type: "mentor" as const,
-        label: "Senior Mentor",
-        icon: <MentorIcon className="h-3.5 w-3.5 text-violet-500" />,
-        badgeColor: "bg-violet-500/10 text-violet-700 dark:text-violet-300 border-violet-500/20",
-      };
-    }
-    if (url.includes("/faculty/")) {
-      return {
-        type: "faculty" as const,
-        label: "Faculty",
-        icon: <FacultyIcon className="h-3.5 w-3.5 text-rose-500" />,
-        badgeColor: "bg-rose-500/10 text-rose-700 dark:text-rose-300 border-rose-500/20",
-      };
-    }
-    if (url.includes("/opportunities/")) {
-      return {
-        type: "opportunity" as const,
-        label: "Opportunity",
-        icon: <Trophy className="h-3.5 w-3.5 text-amber-500" />,
-        badgeColor: "bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/20",
-      };
-    }
+  const getEntityMeta = (url: string) => {
+    if (url.includes("/mentor/")) return { type: "mentor" as const, label: "Senior mentor" };
+    if (url.includes("/faculty/")) return { type: "faculty" as const, label: "Faculty" };
+    if (url.includes("/opportunities/")) return { type: "opportunity" as const, label: "Opportunity" };
     if (url.includes("/workspace-groups/") || url.includes("/communities/")) {
-      return {
-        type: "community" as const,
-        label: "Student Group",
-        icon: <GroupsIcon className="h-3.5 w-3.5 text-emerald-500" />,
-        badgeColor: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/20",
-      };
+      return { type: "community" as const, label: "Student group" };
     }
     if (url.includes("/documents/") || url.includes("academic-calendar") || url.includes("code-of-conduct")) {
-      return {
-        type: "document" as const,
-        label: "Campus Guideline",
-        icon: <FileText className="h-3.5 w-3.5 text-blue-500" />,
-        badgeColor: "bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/20",
-      };
+      return { type: "document" as const, label: "Campus guideline" };
     }
-    if (url.includes("/articles/")) {
-      return {
-        type: "document" as const,
-        label: "Knowledge Article",
-        icon: <FileText className="h-3.5 w-3.5 text-blue-500" />,
-        badgeColor: "bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/20",
-      };
-    }
-    if (url.includes("/notices/")) {
-      return {
-        type: "notice" as const,
-        label: "Official Notice",
-        icon: <Megaphone className="h-3.5 w-3.5 text-orange-500" />,
-        badgeColor: "bg-orange-500/10 text-orange-700 dark:text-orange-300 border-orange-500/20",
-      };
-    }
-    return {
-      type: "post" as const,
-      label: "Resource",
-      icon: <CampusBrainIcon className="h-3.5 w-3.5 text-primary" />,
-      badgeColor: "bg-primary/10 text-primary border-primary/20",
-    };
+    if (url.includes("/articles/")) return { type: "document" as const, label: "Article" };
+    if (url.includes("/notices/")) return { type: "notice" as const, label: "Official notice" };
+    return { type: "post" as const, label: "Campus resource" };
   };
 
   // Helper to sanitize model text, fixing detached punctuation and excess spaces
@@ -198,7 +155,7 @@ export const CampusAIOverview: React.FC<CampusAIOverviewProps> = ({
       // Italic text
       if (part.startsWith("*") && part.endsWith("*") && !part.startsWith("**")) {
         return (
-          <em key={index} className="italic text-foreground/90">
+          <em key={index} className="italic">
             {part.slice(1, -1)}
           </em>
         );
@@ -216,10 +173,10 @@ export const CampusAIOverview: React.FC<CampusAIOverviewProps> = ({
                 const linkContent = (
                   <span
                     className={cn(
-                      "inline-flex items-center justify-center min-w-[1.15rem] h-4 px-1 rounded border text-3xs font-bold transition-all shadow-2xs cursor-pointer",
+                      "tabular inline-flex h-4 min-w-[1.1rem] cursor-pointer items-center justify-center rounded px-1 text-3xs font-semibold transition-colors duration-150",
                       isActive
-                        ? "bg-primary text-primary-foreground border-primary scale-110 shadow-xs ring-2 ring-primary/30"
-                        : "border-primary/30 bg-primary/10 text-primary hover:bg-primary/20 hover:border-primary/50"
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-secondary text-secondary-foreground hover:bg-primary/15 hover:text-primary"
                     )}
                   >
                     {id}
@@ -279,12 +236,12 @@ export const CampusAIOverview: React.FC<CampusAIOverviewProps> = ({
       })
       .map((c) => {
         const badge = badgeMap.get(c.url.toLowerCase()) || badgeMap.get(c.text.toLowerCase());
-        const meta = getEntityMeta(c.url, c.text);
+        const meta = getEntityMeta(c.url);
         return {
           id: c.id,
           text: c.text,
           url: c.url,
-          detail: badge?.detail || (meta.type === "mentor" ? "Senior Mentor · Available for 1-on-1 Help" : undefined),
+          detail: badge?.detail || (meta.type === "mentor" ? "Available for 1-on-1 help" : undefined),
           ...meta,
         };
       });
@@ -305,22 +262,17 @@ export const CampusAIOverview: React.FC<CampusAIOverviewProps> = ({
     });
   }, [overview]);
 
+  const shell = cn("rounded-xl border border-border bg-card shadow-card", className);
+
   if (isFeatureEnabled === false && query.trim().length >= 3) {
     return (
-      <div
-        className={cn(
-          "relative overflow-hidden rounded-2xl border border-border/40 bg-card/40 p-4 backdrop-blur-xl transition-all duration-300",
-          className,
-        )}
-      >
-        <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-primary/20 bg-primary/10 text-primary">
-            <CampusBrainIcon className="h-4 w-4 opacity-50" />
-          </div>
-          <div>
-            <h3 className="text-sm font-semibold text-foreground">AI Overview is taking a break</h3>
-            <p className="text-xs text-muted-foreground">This feature is temporarily disabled for maintenance. Check back soon!</p>
-          </div>
+      <div className={cn(shell, "flex items-start gap-3 p-4")}>
+        <CampusBrainIcon animate={false} className="mt-0.5 h-4 w-4 text-muted-foreground" />
+        <div className="min-w-0">
+          <h3 className="text-sm font-medium text-foreground">CampusBrain answers are paused</h3>
+          <p className="text-sm text-muted-foreground">
+            Answers are off while we do maintenance. The search results below are not affected.
+          </p>
         </div>
       </div>
     );
@@ -332,235 +284,209 @@ export const CampusAIOverview: React.FC<CampusAIOverviewProps> = ({
 
   if (error && !overview) {
     return (
-      <div
-        className={cn(
-          "relative overflow-hidden rounded-2xl border border-border/40 bg-card/40 p-4 backdrop-blur-xl transition-all duration-300",
-          className,
-        )}
-      >
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <CampusBrainIcon className="h-4 w-4 text-primary/60" />
-            <span>Campus AI Overview could not generate at this moment.</span>
+      <div className={cn(shell, "flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between")} role="alert">
+        <div className="flex min-w-0 items-start gap-3">
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" aria-hidden />
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-foreground">CampusBrain could not write an answer</p>
+            <p className="text-sm text-muted-foreground">The search results below are still complete.</p>
           </div>
-          <button
-            onClick={handleRetry}
-            className="rounded-lg border border-primary/20 bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary/20 transition-colors"
-          >
-            Try Again
-          </button>
         </div>
+        <Button variant="outline" size="sm" onClick={handleRetry} className="shrink-0 self-start sm:self-auto">
+          <RotateCw aria-hidden />
+          Retry
+        </Button>
       </div>
     );
   }
 
-  return (
-    <div
-      className={cn(
-        "relative overflow-hidden rounded-2xl border border-primary/25 border-l-4 border-l-primary bg-card/95 p-5 sm:p-6 sm:px-7 backdrop-blur-xl shadow-xs transition-all duration-300 ring-1 ring-primary/5",
-        className,
-      )}
-    >
-      {/* Subtle top accent gradient */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-blue-600 via-indigo-500 to-violet-500 opacity-80" />
+  const isGroundedInDocuments = citedSources.some(
+    (s) => s.type === "document" || s.type === "notice",
+  );
 
-      {/* Header bar */}
-      <div className="flex items-center justify-between gap-2 pb-3 border-b border-border/40">
-        <div className="flex items-center gap-2.5">
-          <span className="flex h-7 w-7 items-center justify-center rounded-lg border border-primary/30 bg-primary/15 text-primary shadow-2xs">
-            <Sparkles className="h-4 w-4" />
-          </span>
-          <h2 className="text-xs font-bold uppercase tracking-wider text-foreground">
-            Campus AI Overview
+  return (
+    <section className={shell} aria-labelledby="campus-answer-heading" aria-busy={loading && !overview}>
+      {/* Header: what this is and how many sources it rests on */}
+      <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3 sm:px-5">
+        <div className="flex min-w-0 items-center gap-2">
+          <CampusBrainIcon animate={false} className="h-4 w-4 text-primary" />
+          <h2 id="campus-answer-heading" className="text-sm font-semibold text-foreground">
+            CampusBrain answer
           </h2>
+          {citedSources.length > 0 && (
+            <span className="tabular truncate text-xs text-muted-foreground">
+              &middot; {citedSources.length} {citedSources.length === 1 ? "source" : "sources"}
+            </span>
+          )}
         </div>
 
-        <button
+        <Button
+          variant="ghost"
+          size="sm"
           onClick={() => setCollapsed(!collapsed)}
-          className="flex h-7 w-7 items-center justify-center rounded-lg border border-border/50 bg-background/50 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors cursor-pointer"
-          aria-label={collapsed ? "Expand AI Overview" : "Collapse AI Overview"}
+          className="h-8 shrink-0 gap-1 px-2 text-xs text-muted-foreground"
+          aria-expanded={!collapsed}
         >
-          {collapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
-        </button>
+          {collapsed ? "Show" : "Hide"}
+          {collapsed ? <ChevronDown aria-hidden /> : <ChevronUp aria-hidden />}
+        </Button>
       </div>
 
-      {/* Body content */}
       {!collapsed && (
-        <div className="mt-4 space-y-4 animate-in fade-in-50 duration-200">
+        <div className="space-y-5 px-4 py-4 sm:px-5 sm:py-5">
           {loading && !overview ? (
-            <CampusThinkingStatus
-              className="py-6"
-              iconSize="h-8 w-8"
-              textSize="text-sm"
-              phrases={[
-                "Synthesizing campus knowledge…",
-                "Connecting faculty & student mentors…",
-                "Crystallizing insights…",
-                "Structuring recommendations…",
-              ]}
-            />
+            <div className="space-y-5">
+              <CampusThinkingStatus />
+              {/* Skeleton mirrors the answer: lead line, paragraph, then source rows */}
+              <div className="space-y-2.5">
+                <Skeleton className="h-5 w-2/3" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-4/5" />
+              </div>
+              <div className="grid gap-2 border-t border-border pt-4 sm:grid-cols-2">
+                <Skeleton className="h-12 w-full rounded-lg" />
+                <Skeleton className="h-12 w-full rounded-lg" />
+              </div>
+            </div>
           ) : overview ? (
             <>
-              {/* Hero Verdict Pill / Callout if available */}
-              {overview.verdict && (
-                <div className="inline-flex items-center gap-2.5 rounded-xl border border-primary/25 bg-gradient-to-r from-primary/15 via-primary/8 to-transparent px-4 py-2 text-xs sm:text-[13.5px] font-semibold text-foreground shadow-2xs">
-                  <span className="flex h-2 w-2 rounded-full bg-primary ring-4 ring-primary/20 animate-pulse shrink-0" />
-                  <span className="tracking-tight">{overview.verdict}</span>
-                </div>
-              )}
+              <div className="space-y-3 animate-fade-in">
+                {overview.verdict && (
+                  <p className="text-base font-semibold leading-snug tracking-tight text-foreground">
+                    {overview.verdict}
+                  </p>
+                )}
 
-              {/* Main summary text */}
-              <div className="text-[14.5px] sm:text-[15px] leading-[1.8] text-foreground font-normal max-w-4xl tracking-[-0.005em]">
-                {renderFormattedText(overview.summary, overview.citations)}
+                <div className="max-w-3xl text-[15px] leading-7 text-foreground">
+                  {renderFormattedText(overview.summary, overview.citations)}
+                </div>
+
+                {distinctKeyInsights.length > 0 && (
+                  <ul className="max-w-3xl space-y-2 pt-1">
+                    {distinctKeyInsights.map((insight, idx) => (
+                      <li key={idx} className="flex items-start gap-2.5 text-sm leading-6 text-foreground">
+                        <Check className="mt-1 h-4 w-4 shrink-0 text-primary" aria-hidden />
+                        <span className="min-w-0 flex-1">{renderFormattedText(insight, overview.citations)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
 
-              {/* Key Insights structured micro-cards */}
-              {distinctKeyInsights.length > 0 && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
-                  {distinctKeyInsights.map((insight, idx) => (
-                    <div
-                      key={idx}
-                      className="flex items-start gap-2.5 rounded-xl border border-border/60 bg-muted/30 dark:bg-card/60 p-3 text-xs sm:text-[13px] text-foreground/90 shadow-2xs hover:border-primary/30 transition-colors"
-                    >
-                      <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary text-3xs font-bold">
-                        ✓
-                      </span>
-                      <div className="flex-1 leading-relaxed">
-                        {renderFormattedText(insight, overview.citations)}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* ── Cited Campus Sources (Google SGE / Perplexity Style) ── */}
+              {/* Sources: numbered to match the inline markers, each one a link to the record */}
               {citedSources.length > 0 && (
-                <div className="space-y-2.5 pt-3 border-t border-border/40">
-                  <div className="flex items-center justify-between">
-                    <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-foreground/80">
-                      <Sparkles className="h-3.5 w-3.5 text-primary" />
-                      Cited Campus Sources ({citedSources.length})
-                    </span>
-                    <span className="text-2xs text-muted-foreground hidden sm:inline">
-                      Directly referenced in AI synthesis
-                    </span>
-                  </div>
-
-                  <HorizontalScroller
-                    className="flex items-stretch gap-2 pb-0.5"
-                    ariaLabel="Cited campus sources"
-                    fadeFrom="from-card"
-                  >
+                <div className="space-y-2 border-t border-border pt-4">
+                  <h3 className="text-xs font-medium text-muted-foreground">Sources</h3>
+                  <ol className="grid gap-2 sm:grid-cols-2">
                     {citedSources.map((source) => {
                       const isActive = activeCitationId === source.id;
                       return (
-                        <Link
-                          key={source.id}
-                          to={source.url}
-                          onMouseEnter={() => setActiveCitationId(source.id)}
-                          onMouseLeave={() => setActiveCitationId(null)}
-                          className={cn(
-                            "group relative flex w-[230px] shrink-0 items-start gap-1.5 rounded-xl border p-2 backdrop-blur-md transition-all duration-200 text-left shadow-2xs",
-                            isActive
-                              ? "border-primary bg-primary/15 ring-2 ring-primary/20 shadow-sm"
-                              : "border-border/60 bg-card/80 hover:border-primary/50 hover:bg-accent/50"
-                          )}
-                        >
-                          <span className={cn(
-                            "inline-flex shrink-0 items-center justify-center h-5 px-1.5 rounded-md text-3xs font-bold border transition-colors",
-                            isActive
-                              ? "bg-primary text-primary-foreground border-primary"
-                              : "bg-primary/10 text-primary border-primary/20"
-                          )}>
-                            [{source.id}]
-                          </span>
-
-                          <div className="min-w-0 flex-1">
-                            <h4 className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-1">
-                              {source.text}
-                            </h4>
-                            <p className="text-2xs text-muted-foreground/80 line-clamp-1">
-                              {source.label}{source.detail ? ` · ${source.detail}` : ""}
-                            </p>
-                          </div>
-
-                          <ArrowRight className="mt-0.5 h-3 w-3 shrink-0 text-muted-foreground/50 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
-                        </Link>
+                        <li key={source.id} className="min-w-0">
+                          <Link
+                            to={source.url}
+                            onMouseEnter={() => setActiveCitationId(source.id)}
+                            onMouseLeave={() => setActiveCitationId(null)}
+                            onFocus={() => setActiveCitationId(source.id)}
+                            onBlur={() => setActiveCitationId(null)}
+                            className={cn(
+                              "group flex min-h-[48px] items-start gap-2.5 rounded-lg border px-3 py-2 text-left transition-colors duration-150",
+                              isActive
+                                ? "border-primary/40 bg-primary/5"
+                                : "border-border hover:border-foreground/20 hover:bg-accent",
+                            )}
+                          >
+                            <span
+                              className={cn(
+                                "tabular mt-0.5 inline-flex h-5 min-w-[1.25rem] shrink-0 items-center justify-center rounded px-1 text-3xs font-semibold transition-colors duration-150",
+                                isActive ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground",
+                              )}
+                            >
+                              {source.id}
+                            </span>
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate text-sm font-medium text-foreground group-hover:underline group-hover:underline-offset-2">
+                                {source.text}
+                              </span>
+                              <span className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
+                                {renderBadgeIcon(source.type)}
+                                <span className="truncate">
+                                  {source.label}
+                                  {source.detail ? ` · ${source.detail}` : ""}
+                                </span>
+                              </span>
+                            </span>
+                          </Link>
+                        </li>
                       );
                     })}
-                  </HorizontalScroller>
+                  </ol>
                 </div>
               )}
 
-              {/* Quick Action Badges (if different from citations) */}
+              {/* Without citations, the model's suggested records are the next best provenance */}
               {overview.badges && overview.badges.length > 0 && citedSources.length === 0 && (
-                <div className="flex flex-wrap items-center gap-2 pt-1">
-                  <span className="text-2xs font-medium text-muted-foreground shrink-0">
-                    Top Suggestions:
-                  </span>
-                  {overview.badges.map((badge, index) => (
-                    <Link
-                      key={badge.id || index}
-                      to={badge.to}
-                      className="group inline-flex items-center gap-1.5 rounded-xl border border-border/60 bg-background/70 px-2.5 py-1 text-xs font-medium text-foreground/90 hover:border-primary/40 hover:bg-accent/80 hover:text-foreground transition-all duration-150 shadow-2xs"
-                    >
-                      {renderBadgeIcon(badge.type)}
-                      <span>{badge.name}</span>
-                      <ArrowRight className="h-3 w-3 text-muted-foreground/50 group-hover:text-primary group-hover:translate-x-0.5 transition-all shrink-0" />
-                    </Link>
-                  ))}
+                <div className="space-y-2 border-t border-border pt-4">
+                  <h3 className="text-xs font-medium text-muted-foreground">Mentioned in this answer</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {overview.badges.map((badge, index) => (
+                      <Link
+                        key={badge.id || index}
+                        to={badge.to}
+                        className="inline-flex h-8 items-center gap-1.5 rounded-md border border-border px-2.5 text-xs font-medium text-foreground transition-colors duration-150 hover:border-foreground/20 hover:bg-accent"
+                      >
+                        {renderBadgeIcon(badge.type)}
+                        <span className="truncate">{badge.name}</span>
+                        <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
+                      </Link>
+                    ))}
+                  </div>
                 </div>
               )}
 
-              {/* Integrated Grounding & Action Footer Bar */}
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-t border-border/40 pt-3 text-2xs text-muted-foreground">
-                <div className="flex items-center gap-2 flex-wrap">
-                  {citedSources.some((s) => s.type === "document" || s.type === "notice" || s.url?.includes("/documents/") || s.url?.includes("/notices/")) ? (
-                    <span className="inline-flex items-center gap-1.5 font-medium text-blue-600 dark:text-blue-400">
-                      <FileText className="h-3 w-3" />
-                      Grounded in SRM AP AY 2026-27 Documents (Always verify circulars with ERP)
-                    </span>
-                  ) : overview.actionRecommendation ? (
-                    <span>{overview.actionRecommendation}</span>
-                  ) : (
-                    <span>Synthesized from SRM AP campus records</span>
-                  )}
-                </div>
+              {/* Provenance note and feedback */}
+              <div className="flex flex-col gap-3 border-t border-border pt-3 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-xs leading-5 text-muted-foreground">
+                  {isGroundedInDocuments
+                    ? "Based on SRM AP documents for AY 2026-27. Confirm circulars on the ERP before acting on them."
+                    : overview.actionRecommendation
+                      ? overview.actionRecommendation
+                      : "Generated from Friendly Learning campus records. Check the sources before relying on it."}
+                </p>
 
-                <div className="flex items-center gap-1 self-end sm:self-auto shrink-0">
-                  <button
+                <div className="flex shrink-0 items-center gap-1 self-end sm:self-auto">
+                  <span className="mr-1 text-xs text-muted-foreground">Helpful?</span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     onClick={() => handleFeedback('up')}
                     disabled={isVoting}
-                    className={cn(
-                      "p-1.5 rounded-md transition-colors",
-                      hasVoted === 'up' ? "bg-primary/20 text-primary" : "text-muted-foreground hover:bg-accent hover:text-foreground disabled:opacity-50"
-                    )}
-                    title={hasVoted === 'up' ? "Undo positive rating" : "Good response"}
-                    aria-label={hasVoted === 'up' ? "Undo positive rating" : "Good response"}
+                    className={cn("h-8 w-8", hasVoted === 'up' ? "bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary" : "text-muted-foreground")}
+                    title={hasVoted === 'up' ? "Undo positive rating" : "Yes, this helped"}
+                    aria-label={hasVoted === 'up' ? "Undo positive rating" : "Yes, this helped"}
                     aria-pressed={hasVoted === 'up'}
                   >
                     <ThumbsUp className="h-3.5 w-3.5" />
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     onClick={() => handleFeedback('down')}
                     disabled={isVoting}
-                    className={cn(
-                      "p-1.5 rounded-md transition-colors",
-                      hasVoted === 'down' ? "bg-destructive/20 text-destructive" : "text-muted-foreground hover:bg-accent hover:text-foreground disabled:opacity-50"
-                    )}
-                    title={hasVoted === 'down' ? "Undo negative rating" : "Bad response"}
-                    aria-label={hasVoted === 'down' ? "Undo negative rating" : "Bad response"}
+                    className={cn("h-8 w-8", hasVoted === 'down' ? "bg-destructive/10 text-destructive hover:bg-destructive/15 hover:text-destructive" : "text-muted-foreground")}
+                    title={hasVoted === 'down' ? "Undo negative rating" : "No, this was not helpful"}
+                    aria-label={hasVoted === 'down' ? "Undo negative rating" : "No, this was not helpful"}
                     aria-pressed={hasVoted === 'down'}
                   >
                     <ThumbsDown className="h-3.5 w-3.5" />
-                  </button>
+                  </Button>
                 </div>
               </div>
             </>
           ) : null}
         </div>
       )}
-    </div>
+    </section>
   );
 };
 

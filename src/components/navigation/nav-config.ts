@@ -71,81 +71,29 @@ export const SECONDARY_NAV: NavItem[] = [
 ];
 
 /**
- * Per-route accent palette.
- * Each entry has Tailwind classes for: pill bg, text, dot, and border.
+ * Active-state styling for nav entries.
+ *
+ * One accent for every section. Each route used to carry its own hue (amber
+ * Groups, violet Events, rose Faculty…), so the "you are here" signal changed
+ * colour on every page and colour stopped meaning anything else. Brand blue
+ * marks the current section everywhere; green, amber and red stay free to
+ * mean live, pending and error.
+ *
+ * `--primary` is brand blue in both themes now, so the token works in dark
+ * mode too (it used to resolve to near-white there).
  */
-export const ROUTE_ACCENT: Record<string, {
-  pill: string;      // active pill bg
-  text: string;      // active link text
-  dot: string;       // "new" dot colour
-  border: string;    // bottom accent border
-}> = {
-  "/oberleaf": {
-    pill: "bg-emerald-500/10",
-    text: "text-emerald-600 dark:text-emerald-400",
-    dot: "bg-emerald-500",
-    border: "border-emerald-500/40",
-  },
-  // Explicit blue rather than `primary`. In dark mode `--primary` resolves to
-  // `210 40% 98%` — very nearly white — so `text-primary` gave the active Home
-  // entry a white glyph on a white-tinted pill, which reads as "disabled", not
-  // "you are here". Every other entry below already names its colour outright;
-  // these two were the odd ones out and the only two that broke in the dark.
-  "/": {
-    pill: "bg-blue-500/10",
-    text: "text-blue-600 dark:text-blue-400",
-    dot: "bg-blue-500",
-    border: "border-blue-500/40",
-  },
-  "/workspace-groups": {
-    pill: "bg-amber-500/10",
-    text: "text-amber-600 dark:text-amber-400",
-    dot: "bg-amber-500",
-    border: "border-amber-500/40",
-  },
-  "/posts": {
-    pill: "bg-emerald-500/10",
-    text: "text-emerald-600 dark:text-emerald-400",
-    dot: "bg-emerald-500",
-    border: "border-emerald-500/40",
-  },
-  "/events": {
-    pill: "bg-violet-500/10",
-    text: "text-violet-600 dark:text-violet-400",
-    dot: "bg-violet-500",
-    border: "border-violet-500/40",
-  },
-  "/messages": {
-    pill: "bg-sky-500/10",
-    text: "text-sky-600 dark:text-sky-400",
-    dot: "bg-sky-500",
-    border: "border-sky-500/40",
-  },
-  "/faculty": {
-    pill: "bg-rose-500/10",
-    text: "text-rose-600 dark:text-rose-400",
-    dot: "bg-rose-500",
-    border: "border-rose-500/40",
-  },
-  "/mentors": {
-    pill: "bg-blue-500/10",
-    text: "text-blue-600 dark:text-blue-400",
-    dot: "bg-blue-500",
-    border: "border-blue-500/40",
-  },
-  "/attendance": {
-    pill: "bg-emerald-500/10",
-    text: "text-emerald-600 dark:text-emerald-400",
-    dot: "bg-emerald-500",
-    border: "border-emerald-500/40",
-  },
-  "/srmportal": {
-    pill: "bg-emerald-500/10",
-    text: "text-emerald-600 dark:text-emerald-400",
-    dot: "bg-emerald-500",
-    border: "border-emerald-500/40",
-  },
+const ACTIVE_ACCENT = {
+  pill: "bg-primary/10",
+  text: "text-primary",
+  dot: "bg-primary",
+  border: "border-primary/50",
 };
+
+export const ROUTE_ACCENT: Record<string, typeof ACTIVE_ACCENT> = Object.fromEntries(
+  ["/", "/workspace-groups", "/posts", "/events", "/messages", "/faculty", "/mentors", "/oberleaf", "/attendance", "/srmportal"].map(
+    (route) => [route, ACTIVE_ACCENT],
+  ),
+);
 
 /** Matches the most specific accent prefix for a path, falling back to the primary. */
 export function accentFor(pathname: string) {

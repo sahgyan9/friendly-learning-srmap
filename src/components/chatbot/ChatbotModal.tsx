@@ -10,7 +10,7 @@ import {
   User,
   Loader2,
   HelpCircle,
-  Sparkles,
+  Wallet,
   UserCheck,
   GraduationCap,
   Users,
@@ -32,73 +32,61 @@ import { isEmojiOnly, getEmojiCount, getEmojiFontSizeClass } from "@/utils/emoji
 const CATEGORIES = [
   {
     label: "Platform",
-    accentClass: "bg-blue-500",
     questions: [
       {
         id: "about-platform",
         icon: HelpCircle,
         question: "What is Friendly Learning and how does it work?",
-        iconClass: "text-blue-500",
       },
       {
         id: "free-access",
-        icon: Sparkles,
+        icon: Wallet,
         question: "Is Friendly Learning free to use for SRM AP students?",
-        iconClass: "text-blue-500",
       },
     ],
   },
   {
-    label: "Mentors & Faculty",
-    accentClass: "bg-emerald-500",
+    label: "Mentors and faculty",
     questions: [
       {
         id: "find-mentor",
         icon: UserCheck,
         question: "Find me a mentor for web development or DSA",
-        iconClass: "text-emerald-500",
       },
       {
         id: "find-faculty",
         icon: GraduationCap,
         question: "How do I find faculty for research projects?",
-        iconClass: "text-emerald-500",
       },
       {
         id: "mentor-vs-faculty",
         icon: Users,
         question: "What's the difference between a Mentor and Faculty?",
-        iconClass: "text-emerald-500",
       },
     ],
   },
   {
     label: "Certificates",
-    accentClass: "bg-violet-500",
     questions: [
       {
         id: "mentor-certificate",
         icon: Award,
         question: "Why become a mentor & how do I earn a certificate?",
-        iconClass: "text-violet-500",
       },
       {
         id: "verify-certificate",
         icon: ShieldCheck,
         question: "How do I verify a mentor certificate?",
-        iconClass: "text-violet-500",
       },
     ],
   },
   {
     label: "Opportunities",
-    accentClass: "bg-amber-500",
     questions: [
       {
         id: "opportunities",
         icon: Rocket,
         question: "Where can I find hackathons, internships, or events?",
-        iconClass: "text-amber-500",
       },
     ],
   },
@@ -106,9 +94,9 @@ const CATEGORIES = [
 
 // Flat list used for the post-conversation suggestion chips (show 4 most useful)
 const SUGGESTED_CHIPS = [
-  { id: "find-mentor", label: "Find Mentor", icon: UserCheck, question: "Find me a mentor for web development or DSA" },
-  { id: "find-faculty", label: "Find Faculty", icon: GraduationCap, question: "How do I find faculty for research projects?" },
-  { id: "mentor-certificate", label: "Earn Certificate", icon: Award, question: "Why become a mentor & how do I earn a certificate?" },
+  { id: "find-mentor", label: "Find a mentor", icon: UserCheck, question: "Find me a mentor for web development or DSA" },
+  { id: "find-faculty", label: "Find faculty", icon: GraduationCap, question: "How do I find faculty for research projects?" },
+  { id: "mentor-certificate", label: "Mentor certificate", icon: Award, question: "Why become a mentor & how do I earn a certificate?" },
   { id: "opportunities", label: "Opportunities", icon: Rocket, question: "Where can I find hackathons, internships, or events?" },
 ];
 
@@ -317,12 +305,12 @@ const ChatbotModal = ({ isOpen, onClose }: ChatbotModalProps) => {
       <DialogContent className="sm:max-w-[580px] h-[80vh] flex flex-col p-0 overflow-hidden gap-0">
 
         {/* ── Header ── */}
-        <DialogHeader className="flex-none flex-row items-center justify-between pl-5 pr-12 py-4 border-b border-border/60 space-y-0">
+        <DialogHeader className="flex-none flex-row items-center justify-between space-y-0 border-b border-border py-4 pl-5 pr-12">
           <DialogTitle className="flex items-center gap-2.5 text-sm font-semibold">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-600 text-white">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg border border-border bg-secondary text-muted-foreground">
               <Bot className="h-4 w-4" />
             </div>
-            AI Assistant
+            Assistant
           </DialogTitle>
           {hasMessages && (
             <Button
@@ -330,7 +318,7 @@ const ChatbotModal = ({ isOpen, onClose }: ChatbotModalProps) => {
               disabled={isLoading}
               variant="ghost"
               size="sm"
-              className="h-7 gap-1.5 rounded-full px-2.5 text-xs text-muted-foreground hover:text-foreground"
+              className="h-8 gap-1.5 px-2.5 text-xs text-muted-foreground hover:text-foreground"
             >
               <SquarePen className="h-3.5 w-3.5" />
               New chat
@@ -353,12 +341,12 @@ const ChatbotModal = ({ isOpen, onClose }: ChatbotModalProps) => {
             >
               {/* Greeting */}
               <div className="mb-5 text-center">
-                <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-600 text-white">
+                <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-secondary text-muted-foreground">
                   <Bot className="h-5 w-5" />
                 </div>
-                <h3 className="text-base font-semibold text-foreground">How can I help?</h3>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Pick a question to fill the input, then send — or type your own.
+                <h3 className="text-base font-semibold text-foreground">Ask about Friendly Learning</h3>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Pick a question to fill the input, or type your own.
                 </p>
               </div>
 
@@ -367,12 +355,7 @@ const ChatbotModal = ({ isOpen, onClose }: ChatbotModalProps) => {
                 {CATEGORIES.map((cat) => (
                   <div key={cat.label}>
                     {/* Category header */}
-                    <div className="mb-2 flex items-center gap-2">
-                      <div className={`h-2.5 w-2.5 rounded-full ${cat.accentClass}`} />
-                      <span className="text-2xs font-semibold uppercase tracking-widest text-muted-foreground">
-                        {cat.label}
-                      </span>
-                    </div>
+                    <h4 className="mb-2 text-xs font-medium text-muted-foreground">{cat.label}</h4>
 
                     {/* Question rows */}
                     <div className="space-y-1">
@@ -383,10 +366,10 @@ const ChatbotModal = ({ isOpen, onClose }: ChatbotModalProps) => {
                             key={q.id}
                             type="button"
                             onClick={() => handleSelectQuestion(q.question)}
-                            className="group flex w-full items-center gap-3 rounded-lg border border-border/60 bg-muted/30 px-3 py-2.5 text-left transition-all duration-150 hover:border-blue-500/40 hover:bg-blue-50/40 dark:hover:bg-blue-950/20"
+                            className="flex min-h-[40px] w-full items-center gap-3 rounded-lg border border-border px-3 py-2 text-left transition-colors duration-150 hover:border-foreground/20 hover:bg-accent"
                           >
-                            <Icon className={`h-3.5 w-3.5 shrink-0 ${q.iconClass} opacity-70 group-hover:opacity-100`} />
-                            <span className="flex-1 text-[13px] text-foreground/80 group-hover:text-foreground">
+                            <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
+                            <span className="flex-1 text-sm text-foreground">
                               {q.question}
                             </span>
                           </button>
@@ -402,8 +385,8 @@ const ChatbotModal = ({ isOpen, onClose }: ChatbotModalProps) => {
           {/* Loading history */}
           {isLoadingHistory && (
             <div className="flex flex-col items-center justify-center gap-2 py-16">
-              <Loader2 className="h-5 w-5 animate-spin text-blue-500" />
-              <p className="text-xs text-muted-foreground">Loading conversation…</p>
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">Loading conversation…</p>
             </div>
           )}
 
@@ -425,7 +408,7 @@ const ChatbotModal = ({ isOpen, onClose }: ChatbotModalProps) => {
                       className={`flex gap-2.5 ${message.type === "user" ? "justify-end" : "justify-start"}`}
                     >
                       {message.type === "ai" && (
-                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white">
+                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-border bg-secondary text-muted-foreground">
                           <Bot className="h-3.5 w-3.5" />
                         </div>
                       )}
@@ -435,9 +418,9 @@ const ChatbotModal = ({ isOpen, onClose }: ChatbotModalProps) => {
                           className={
                             isEmoji
                               ? `p-1 bg-transparent border-none shadow-none ${getEmojiFontSizeClass(emojiCount)}`
-                              : `rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${
+                              : `rounded-xl px-3.5 py-2.5 text-sm leading-relaxed ${
                                   message.type === "user"
-                                    ? "rounded-tr-sm bg-blue-600 text-white"
+                                    ? "rounded-tr-sm bg-primary text-primary-foreground"
                                     : "rounded-tl-sm bg-muted text-foreground"
                                 }`
                           }
@@ -465,7 +448,7 @@ const ChatbotModal = ({ isOpen, onClose }: ChatbotModalProps) => {
                     {/* Mentor cards */}
                     {message.mentorSuggestions && message.mentorSuggestions.length > 0 && (
                       <div className="space-y-1.5">
-                        <p className="text-xs text-muted-foreground">Mentors who might help:</p>
+                        <p className="text-xs text-muted-foreground">Mentors who might help</p>
                         {message.mentorSuggestions.map((mentor) => (
                           <MentorSuggestionCard key={mentor.id} mentor={mentor} onConnect={() => handleMentorConnect(mentor)} />
                         ))}
@@ -475,13 +458,13 @@ const ChatbotModal = ({ isOpen, onClose }: ChatbotModalProps) => {
                     {/* Faculty cards */}
                     {message.facultySuggestions && message.facultySuggestions.length > 0 && (
                       <div className="space-y-1.5">
-                        <p className="text-xs text-muted-foreground">Lecturers whose research lines up:</p>
+                        <p className="text-xs text-muted-foreground">Faculty with related research</p>
                         {message.facultySuggestions.map((faculty) => (
                           <button
                             key={faculty.id}
                             type="button"
                             onClick={() => { onClose(); navigate(faculty.path); }}
-                            className="flex w-full items-start gap-2.5 rounded-lg border border-border bg-card p-2.5 text-left transition-colors hover:border-primary/40"
+                            className="flex w-full items-start gap-2.5 rounded-lg border border-border bg-card p-2.5 text-left transition-colors duration-150 hover:border-foreground/20 hover:bg-accent"
                           >
                             {faculty.image_url ? (
                               <img src={faculty.image_url} alt="" loading="lazy" className="h-9 w-9 shrink-0 rounded-full object-cover" />
@@ -505,7 +488,7 @@ const ChatbotModal = ({ isOpen, onClose }: ChatbotModalProps) => {
                         for a plain student to link to. */}
                     {message.studentSuggestions && message.studentSuggestions.length > 0 && (
                       <div className="space-y-1.5">
-                        <p className="text-xs text-muted-foreground">Students into this too:</p>
+                        <p className="text-xs text-muted-foreground">Students with the same interests</p>
                         {message.studentSuggestions.map((student) => (
                           <div
                             key={student.id}
@@ -543,10 +526,11 @@ const ChatbotModal = ({ isOpen, onClose }: ChatbotModalProps) => {
               {/* AI typing indicator */}
               {isLoading && (
                 <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="flex gap-2.5">
-                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white">
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-border bg-secondary text-muted-foreground">
                     <Bot className="h-3.5 w-3.5" />
                   </div>
-                  <div className="flex items-center gap-1 rounded-2xl rounded-tl-sm bg-muted px-4 py-3">
+                  {/* Typing dots run only while a reply is pending */}
+                  <div className="flex items-center gap-1 rounded-xl rounded-tl-sm bg-muted px-4 py-3" role="status" aria-label="Assistant is replying">
                     <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-muted-foreground/60 [animation-delay:0ms]" />
                     <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-muted-foreground/60 [animation-delay:150ms]" />
                     <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-muted-foreground/60 [animation-delay:300ms]" />
@@ -560,7 +544,7 @@ const ChatbotModal = ({ isOpen, onClose }: ChatbotModalProps) => {
         </div>
 
         {/* ── Input footer ── */}
-        <div className="flex-none border-t border-border/60 px-4 pb-4 pt-3">
+        <div className="flex-none border-t border-border px-4 pb-4 pt-3">
 
           {/* Suggestion chips — only shown once conversation has started */}
           <AnimatePresence>
@@ -580,9 +564,9 @@ const ChatbotModal = ({ isOpen, onClose }: ChatbotModalProps) => {
                       type="button"
                       onClick={() => handleSelectQuestion(chip.question)}
                       disabled={isLoading}
-                      className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-muted/50 px-2.5 py-1 text-2xs font-medium text-muted-foreground transition-colors hover:border-blue-400/60 hover:bg-blue-50 hover:text-blue-600 disabled:opacity-40 dark:hover:bg-blue-950/30 dark:hover:text-blue-400"
+                      className="inline-flex h-8 items-center gap-1.5 rounded-full border border-border px-2.5 text-xs font-medium text-muted-foreground transition-colors duration-150 hover:border-foreground/20 hover:bg-accent hover:text-foreground disabled:opacity-40"
                     >
-                      <Icon className="h-3 w-3" />
+                      <Icon className="h-3.5 w-3.5" />
                       {chip.label}
                     </button>
                   );
@@ -598,17 +582,19 @@ const ChatbotModal = ({ isOpen, onClose }: ChatbotModalProps) => {
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="Ask me anything…"
+              placeholder="Ask a question"
+              aria-label="Message"
               disabled={isLoading}
-              className="flex-1 rounded-full border-border/70 bg-muted/40 text-sm placeholder:text-muted-foreground/60 focus-visible:ring-blue-500/30"
+              className="flex-1 text-sm"
             />
             <Button
               onClick={sendMessage}
               disabled={!inputValue.trim() || isLoading}
               size="icon"
-              className="h-9 w-9 shrink-0 rounded-full bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40"
+              className="shrink-0"
+              aria-label="Send message"
             >
-              <Send className="h-3.5 w-3.5" />
+              <Send className="h-4 w-4" />
             </Button>
           </div>
         </div>

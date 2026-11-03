@@ -1,6 +1,7 @@
 
 import { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { GraduationCap, Users, BookOpen } from "lucide-react";
@@ -18,28 +19,19 @@ const RoleSelectionModal = ({ isOpen, onRoleSelect }: RoleSelectionModalProps) =
       value: "student",
       title: "Student",
       description: "I'm here to learn and get mentorship",
-      icon: GraduationCap,
-      // Card supplies text-card-foreground, which is near-white in dark mode —
-      // without a dark tint these cards kept their near-white background and
-      // the label disappeared into it.
-      color:
-        "bg-blue-50 border-blue-200 hover:bg-blue-100 dark:bg-blue-950/50 dark:border-blue-900 dark:hover:bg-blue-900/50"
+      icon: GraduationCap
     },
     {
       value: "mentor",
       title: "Mentor",
       description: "I want to share knowledge and guide others",
-      icon: Users,
-      color:
-        "bg-green-50 border-green-200 hover:bg-green-100 dark:bg-green-950/50 dark:border-green-900 dark:hover:bg-green-900/50"
+      icon: Users
     },
     {
       value: "both",
       title: "Both",
       description: "I want to learn and mentor others",
-      icon: BookOpen,
-      color:
-        "bg-purple-50 border-purple-200 hover:bg-purple-100 dark:bg-purple-950/50 dark:border-purple-900 dark:hover:bg-purple-900/50"
+      icon: BookOpen
     }
   ];
 
@@ -47,26 +39,38 @@ const RoleSelectionModal = ({ isOpen, onRoleSelect }: RoleSelectionModalProps) =
     <Dialog open={isOpen}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Choose Your Role</DialogTitle>
+          <DialogTitle>Choose your role</DialogTitle>
           <DialogDescription>
-            Select how you'd like to use Friendly Learning platform
+            Pick how you will use Friendly Learning.
           </DialogDescription>
         </DialogHeader>
         
-        <div className="space-y-3">
+        <div className="space-y-3" role="radiogroup" aria-label="Role">
           {roles.map((role) => {
             const Icon = role.icon;
             return (
               <Card
                 key={role.value}
-                className={`cursor-pointer transition-all ${role.color} ${
-                  selectedRole === role.value ? "ring-2 ring-blue-500" : ""
-                }`}
+                role="radio"
+                aria-checked={selectedRole === role.value}
+                tabIndex={0}
+                className={cn(
+                  "cursor-pointer shadow-none transition-colors duration-150",
+                  selectedRole === role.value
+                    ? "border-primary bg-primary/5"
+                    : "hover:border-foreground/20 hover:bg-accent",
+                )}
                 onClick={() => setSelectedRole(role.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    setSelectedRole(role.value);
+                  }
+                }}
               >
                 <CardHeader className="pb-3">
-                  <div className="flex items-center space-x-3">
-                    <Icon className="h-6 w-6" />
+                  <div className="flex items-center gap-3">
+                    <Icon className={cn("h-5 w-5 shrink-0", selectedRole === role.value ? "text-primary" : "text-muted-foreground")} />
                     <div>
                       <CardTitle className="text-base">{role.title}</CardTitle>
                       <CardDescription className="text-sm">

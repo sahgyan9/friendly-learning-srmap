@@ -7,7 +7,7 @@ import {
   Loader2,
   RefreshCw,
   ShieldAlert,
-  Sparkles,
+  Link2,
 } from "lucide-react";
 import {
   Table,
@@ -85,7 +85,7 @@ export const AttendanceOverviewCard = ({ onOpenPortalImport }: AttendanceOvervie
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        toast.error("Please sign in to sync attendance.");
+        toast.error("Sign in to sync attendance.");
         return;
       }
 
@@ -94,18 +94,18 @@ export const AttendanceOverviewCard = ({ onOpenPortalImport }: AttendanceOvervie
       });
 
       if (res.error || res.data?.error) {
-        const errMsg = res.data?.error || res.error?.message || "Attendance sync failed. Please verify your portal link.";
+        const errMsg = res.data?.error || res.error?.message || "Attendance sync failed. Check your portal link.";
         toast.error(errMsg);
         if (res.data?.error?.includes("Re-link") || res.data?.error?.includes("No linked")) {
           onOpenPortalImport?.();
         }
       } else {
-        toast.success("Attendance synced successfully from SRM Portal!");
+        toast.success("Attendance synced from the SRM portal.");
         await fetchAttendance();
       }
     } catch (err) {
       console.error("Sync error:", err);
-      toast.error("Failed to sync attendance. Please try again.");
+      toast.error("Could not sync attendance. Try again.");
     } finally {
       setIsSyncing(false);
     }
@@ -137,9 +137,9 @@ export const AttendanceOverviewCard = ({ onOpenPortalImport }: AttendanceOvervie
             type="button"
             size="sm"
             onClick={onOpenPortalImport}
-            className="gap-1.5 font-semibold text-xs h-8 self-start sm:self-auto shrink-0"
+            className="self-start sm:self-auto shrink-0"
           >
-            <Sparkles className="h-3.5 w-3.5" />
+            <Link2 />
             Link portal
           </Button>
         </div>
@@ -294,7 +294,7 @@ export const AttendanceOverviewCard = ({ onOpenPortalImport }: AttendanceOvervie
         <div className="px-4 sm:px-5 py-2.5 border-t border-border/60 flex items-center justify-between text-2xs text-muted-foreground">
           <span>Showing 4 of {records.length} subjects</span>
           <Link to="/attendance" className="font-semibold text-primary hover:underline">
-            View all →
+            View all
           </Link>
         </div>
       )}

@@ -13,7 +13,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Mail,
-  Sparkles,
   Megaphone,
   BookOpen,
   SearchX,
@@ -21,7 +20,6 @@ import {
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { motion, AnimatePresence } from "framer-motion";
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -122,189 +120,75 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950">
-      <div className="flex relative">
-        {/* Animated Background Elements */}
-        <div className="fixed inset-0 overflow-hidden pointer-events-none">
-          <motion.div
-            className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-purple-400 to-pink-400 dark:from-purple-600 dark:to-pink-600 rounded-full opacity-20 blur-3xl"
-            animate={{
-              scale: [1, 1.2, 1],
-              rotate: [0, 90, 0],
-            }}
-            transition={{
-              duration: 20,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
-          />
-          <motion.div
-            className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-br from-blue-400 to-cyan-400 dark:from-blue-600 dark:to-cyan-600 rounded-full opacity-20 blur-3xl"
-            animate={{
-              scale: [1, 1.3, 1],
-              rotate: [0, -90, 0],
-            }}
-            transition={{
-              duration: 25,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
-          />
-        </div>
-
-        {/* Sidebar */}
-        <motion.div
-          animate={{
-            width: collapsed ? "80px" : "280px",
-          }}
-          transition={{
-            duration: 0.3,
-            ease: "easeInOut",
-          }}
-          className="relative bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-xl border-r border-slate-200 dark:border-slate-700 min-h-screen pt-6 z-10"
+    <div className="min-h-screen bg-background">
+      <div className="flex">
+        {/* The width transition is CSS so the rail collapses without a JS
+            animation loop; labels are simply hidden when collapsed. */}
+        <aside
+          className={cn(
+            "sticky top-0 flex h-screen shrink-0 flex-col border-r border-border bg-card transition-[width] duration-200 ease-out-quart",
+            collapsed ? "w-16" : "w-64",
+          )}
+          aria-label="Admin navigation"
         >
-          {/* Glassmorphism overlay */}
-          <div className="absolute inset-0 bg-gradient-to-b from-white/50 to-transparent dark:from-slate-900/50 pointer-events-none" />
-
-          <div className="relative">
-            {/* Header with animated sparkles */}
-            <div className="px-6 pb-6 flex items-center justify-between">
-              <AnimatePresence mode="wait">
-                {!collapsed && (
-                  <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    className="flex items-center gap-2"
-                  >
-                    <motion.div
-                      animate={{
-                        rotate: [0, 360],
-                      }}
-                      transition={{
-                        duration: 3,
-                        repeat: Infinity,
-                        ease: "linear",
-                      }}
-                    >
-                      <Sparkles className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                    </motion.div>
-                    <h2 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-400 dark:to-pink-400 bg-clip-text text-transparent">
-                      Admin Panel
-                    </h2>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                onClick={() => setCollapsed(!collapsed)}
-                className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
-              >
-                {collapsed ? (
-                  <ChevronRight className="h-4 w-4 text-slate-700 dark:text-slate-300" />
-                ) : (
-                  <ChevronLeft className="h-4 w-4 text-slate-700 dark:text-slate-300" />
-                )}
-              </motion.button>
-            </div>
-
-            {/* Navigation */}
-            <nav className="px-3">
-              <ul className="space-y-2">
-                {navigationItems.map((item, index) => (
-                  <motion.li
-                    key={item.name}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{
-                      delay: index * 0.05,
-                      duration: 0.3,
-                    }}
-                  >
-                    <Link to={item.href}>
-                      <motion.div
-                        whileHover={{ scale: 1.02, x: 4 }}
-                        whileTap={{ scale: 0.98 }}
-                        className={cn(
-                          "group flex items-center px-3 py-3 text-sm font-medium rounded-xl transition-all relative overflow-hidden",
-                          item.current
-                            ? "bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-500 dark:to-pink-500 text-white shadow-lg shadow-purple-500/30"
-                            : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
-                        )}
-                      >
-                        {/* Animated background for active item */}
-                        {item.current && (
-                          <motion.div
-                            className="absolute inset-0 bg-gradient-to-r from-purple-400 to-pink-400 opacity-0"
-                            animate={{
-                              opacity: [0, 0.3, 0],
-                            }}
-                            transition={{
-                              duration: 2,
-                              repeat: Infinity,
-                              ease: "easeInOut",
-                            }}
-                          />
-                        )}
-
-                        <motion.div
-                          animate={item.current ? {
-                            rotate: [0, 5, -5, 0],
-                          } : {}}
-                          transition={{
-                            duration: 0.5,
-                            repeat: item.current ? Infinity : 0,
-                            repeatDelay: 3,
-                          }}
-                        >
-                          <item.icon
-                            className={cn(
-                              "h-5 w-5 flex-shrink-0 transition-colors",
-                              collapsed ? "" : "mr-3",
-                              item.current
-                                ? "text-white"
-                                : "text-slate-500 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-200"
-                            )}
-                          />
-                        </motion.div>
-
-                        <AnimatePresence>
-                          {!collapsed && (
-                            <motion.span
-                              initial={{ opacity: 0, width: 0 }}
-                              animate={{ opacity: 1, width: "auto" }}
-                              exit={{ opacity: 0, width: 0 }}
-                              transition={{ duration: 0.2 }}
-                              className="relative z-10"
-                            >
-                              {item.name}
-                            </motion.span>
-                          )}
-                        </AnimatePresence>
-                      </motion.div>
-                    </Link>
-                  </motion.li>
-                ))}
-              </ul>
-            </nav>
+          <div
+            className={cn(
+              "flex h-14 items-center border-b border-border",
+              collapsed ? "justify-center px-2" : "justify-between pl-4 pr-2",
+            )}
+          >
+            {!collapsed && (
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-foreground">Admin console</p>
+                <p className="truncate text-2xs text-muted-foreground">Friendly Learning</p>
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={() => setCollapsed(!collapsed)}
+              className="inline-flex h-10 w-10 items-center justify-center rounded-md text-muted-foreground transition-colors duration-150 hover:bg-accent hover:text-foreground"
+              aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+              aria-expanded={!collapsed}
+            >
+              {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+            </button>
           </div>
-        </motion.div>
+
+          <nav className="flex-1 overflow-y-auto px-2 py-3">
+            <ul className="space-y-0.5">
+              {navigationItems.map((item) => (
+                <li key={item.name}>
+                  <Link
+                    to={item.href}
+                    title={collapsed ? item.name : undefined}
+                    aria-current={item.current ? "page" : undefined}
+                    className={cn(
+                      "relative flex h-10 items-center gap-3 rounded-md text-sm transition-colors duration-150",
+                      collapsed ? "justify-center px-0" : "px-3",
+                      item.current
+                        ? "bg-primary/10 font-medium text-primary"
+                        : "text-muted-foreground hover:bg-accent hover:text-foreground",
+                    )}
+                  >
+                    {item.current && !collapsed && (
+                      <span className="absolute inset-y-2 left-0 w-0.5 rounded-full bg-primary" aria-hidden="true" />
+                    )}
+                    <item.icon className="h-5 w-5 shrink-0" strokeWidth={1.75} />
+                    {!collapsed && <span className="truncate">{item.name}</span>}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        </aside>
 
         {/* Main content. min-w-0 lets this flex child shrink below its
             content's intrinsic width — without it, a wide card or table
             inside pushes the whole row wider than the viewport instead of
             wrapping or scrolling internally. */}
-        <div className="min-w-0 flex-1 p-4 relative z-0 sm:p-6 lg:p-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            {children}
-          </motion.div>
-        </div>
+        <main className="min-w-0 flex-1 p-4 sm:p-6 lg:p-8">
+          <div className="mx-auto max-w-7xl animate-fade-in">{children}</div>
+        </main>
       </div>
     </div>
   );

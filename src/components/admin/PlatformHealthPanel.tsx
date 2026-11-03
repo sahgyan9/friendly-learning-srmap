@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { formatRelativeTime } from "@/utils/date-utils";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
 // Shape of the jsonb returned by the admin_health_metrics() RPC
@@ -58,13 +59,13 @@ function jobsStatus(m: HealthMetrics): Status {
 }
 
 const STATUS_DOT: Record<Status, string> = {
-  green: "bg-emerald-500",
+  green: "bg-green-600",
   amber: "bg-amber-500",
   red: "bg-destructive",
 };
 
 const STATUS_TEXT: Record<Status, string> = {
-  green: "text-emerald-600 dark:text-emerald-400",
+  green: "text-green-700 dark:text-green-500",
   amber: "text-amber-600 dark:text-amber-400",
   red: "text-destructive",
 };
@@ -85,12 +86,8 @@ interface HealthTileData {
 }
 
 const HealthTile = ({ icon: Icon, title, status, stats, message }: HealthTileData) => (
-  <Card className="relative overflow-hidden min-w-0">
-    <span
-      aria-hidden="true"
-      className={cn("absolute inset-y-0 left-0 w-1.5", STATUS_DOT[status])}
-    />
-    <CardContent className="p-4 pl-5">
+  <Card className="min-w-0">
+    <CardContent className="p-4">
       {/* flex-wrap rather than truncating the title: the status pill
           ("Needs attention" / "Action needed") is wide enough at 360px that
           forcing both onto one row clipped tile names like "Background
@@ -112,7 +109,7 @@ const HealthTile = ({ icon: Icon, title, status, stats, message }: HealthTileDat
         {stats.map((s) => (
           <div key={s.label} className="flex items-center justify-between gap-2 text-sm">
             <dt className="text-muted-foreground">{s.label}</dt>
-            <dd className="tabular-nums font-medium">{s.value}</dd>
+            <dd className="tabular text-right font-medium">{s.value}</dd>
           </div>
         ))}
       </dl>
@@ -223,7 +220,7 @@ const PlatformHealthPanel = () => {
   return (
     <section className="mb-6">
       <div className="mb-3 flex items-center justify-between gap-3">
-        <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Platform health</h2>
+        <h2 className="text-base font-semibold text-foreground">Platform health</h2>
         <Button
           type="button"
           variant="outline"
@@ -240,11 +237,18 @@ const PlatformHealthPanel = () => {
       {loading ? (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           {[0, 1, 2].map((i) => (
-            <Card key={i} className="h-28 animate-pulse" />
+            <Skeleton key={i} className="h-28 rounded-xl" />
           ))}
         </div>
       ) : error || !metrics ? (
-        <p className="text-sm text-muted-foreground">Health data unavailable</p>
+        <div className="flex flex-col items-start gap-3 rounded-xl border border-border bg-card p-4 text-sm sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-muted-foreground">
+            Could not load platform health. The metrics query failed or timed out.
+          </p>
+          <Button type="button" variant="outline" size="sm" onClick={() => fetchMetrics(true)} isLoading={refreshing}>
+            Retry
+          </Button>
+        </div>
       ) : (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           {tiles.map(({ key, ...tile }) => (

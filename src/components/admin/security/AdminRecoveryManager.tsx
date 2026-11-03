@@ -1,4 +1,5 @@
 
+import { Skeleton } from "@/components/ui/skeleton";
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -113,7 +114,12 @@ const AdminRecoveryManager = () => {
   };
 
   if (loading) {
-    return <div className="animate-pulse">Loading recovery codes...</div>;
+    return (
+      <div className="space-y-3" role="status" aria-label="Loading recovery codes">
+        <Skeleton className="h-32 rounded-xl" />
+        <Skeleton className="h-48 rounded-xl" />
+      </div>
+    );
   }
 
   return (
@@ -122,16 +128,16 @@ const AdminRecoveryManager = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Key className="h-5 w-5" />
-            Admin Recovery Code Management
+            Recovery codes
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="bg-yellow-50 dark:bg-yellow-950/40 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+          <div className="rounded-lg border border-amber-500/40 bg-amber-500/5 p-4">
             <div className="flex items-start gap-2">
-              <AlertCircle className="h-5 w-5 text-yellow-600 dark:text-yellow-400 mt-0.5" />
-              <div className="text-sm text-yellow-800 dark:text-yellow-200">
-                <p className="font-medium">Security Notice</p>
-                <p>Recovery codes allow you to promote other users to admin status. Keep them secure and only share with trusted individuals.</p>
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+              <div className="text-sm text-foreground">
+                <p className="font-medium">Anyone with a code can become an admin</p>
+                <p className="text-muted-foreground">Share codes only with people you trust, and only over a private channel.</p>
               </div>
             </div>
           </div>

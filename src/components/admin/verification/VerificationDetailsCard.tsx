@@ -96,11 +96,11 @@ const VerificationDetailsCard = ({
     const getStatusIcon = (status: string) => {
         switch (status) {
             case 'approved':
-                return <CheckCircle className="h-4 w-4 text-green-500" />;
+                return <CheckCircle className="h-4 w-4 text-success" />;
             case 'rejected':
-                return <XCircle className="h-4 w-4 text-red-500" />;
+                return <XCircle className="h-4 w-4 text-destructive" />;
             default:
-                return <Clock className="h-4 w-4 text-yellow-500" />;
+                return <Clock className="h-4 w-4 text-amber-600 dark:text-amber-400" />;
         }
     };
 
@@ -116,7 +116,7 @@ const VerificationDetailsCard = ({
     };
 
     return (
-        <Card className="hover:shadow-lg transition-shadow">
+        <Card>
             <CardHeader>
                 {/* Stacks below `sm` — the avatar/name block plus the status
                     badge don't both fit on one row in a 360px admin column. */}
@@ -156,28 +156,28 @@ const VerificationDetailsCard = ({
                 {/* Quick Info */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div className="flex items-center space-x-2 text-sm">
-                        <GraduationCap className="h-4 w-4 text-blue-500" />
+                        <GraduationCap className="h-4 w-4 text-muted-foreground" />
                         <div>
                             <p className="font-medium">CGPA</p>
                             <p className="text-muted-foreground">{verification.cgpa || 'N/A'}</p>
                         </div>
                     </div>
                     <div className="flex items-center space-x-2 text-sm">
-                        <Calendar className="h-4 w-4 text-green-500" />
+                        <Calendar className="h-4 w-4 text-muted-foreground" />
                         <div>
                             <p className="font-medium">Year</p>
                             <p className="text-muted-foreground">{verification.year_of_studies || 'N/A'}</p>
                         </div>
                     </div>
                     <div className="flex items-center space-x-2 text-sm">
-                        <BookOpen className="h-4 w-4 text-purple-500" />
+                        <BookOpen className="h-4 w-4 text-muted-foreground" />
                         <div>
                             <p className="font-medium">University</p>
                             <p className="text-muted-foreground">{verification.university || 'N/A'}</p>
                         </div>
                     </div>
                     <div className="flex items-center space-x-2 text-sm">
-                        <Phone className="h-4 w-4 text-orange-500" />
+                        <Phone className="h-4 w-4 text-muted-foreground" />
                         <div>
                             <p className="font-medium">Mobile</p>
                             <p className="text-muted-foreground">{applicationData.mobile || 'N/A'}</p>
@@ -189,7 +189,7 @@ const VerificationDetailsCard = ({
                     graduation year can be sanity-checked at a glance. */}
                 <div className="grid grid-cols-2 gap-4">
                     <div className="flex items-center space-x-2 text-sm">
-                        <MapPin className="h-4 w-4 text-rose-500" />
+                        <MapPin className="h-4 w-4 text-muted-foreground" />
                         <div>
                             <p className="font-medium">College ID</p>
                             <p className="font-mono text-muted-foreground">
@@ -198,7 +198,7 @@ const VerificationDetailsCard = ({
                         </div>
                     </div>
                     <div className="flex items-center space-x-2 text-sm">
-                        <Award className="h-4 w-4 text-indigo-500" />
+                        <Award className="h-4 w-4 text-muted-foreground" />
                         <div>
                             <p className="font-medium">Graduates</p>
                             <p className="text-muted-foreground">
@@ -218,7 +218,7 @@ const VerificationDetailsCard = ({
                 {/* Bio Preview */}
                 <div className="space-y-2">
                     <div className="flex items-center space-x-2">
-                        <User className="h-4 w-4 text-blue-500" />
+                        <User className="h-4 w-4 text-muted-foreground" />
                         <h4 className="font-semibold">Bio</h4>
                     </div>
                     <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg">
@@ -236,7 +236,7 @@ const VerificationDetailsCard = ({
                 {/* Skills Preview */}
                 <div className="space-y-2">
                     <div className="flex items-center space-x-2">
-                        <Award className="h-4 w-4 text-yellow-500" />
+                        <Award className="h-4 w-4 text-muted-foreground" />
                         <h4 className="font-semibold">Skills</h4>
                     </div>
                     <div className="flex flex-wrap gap-2">

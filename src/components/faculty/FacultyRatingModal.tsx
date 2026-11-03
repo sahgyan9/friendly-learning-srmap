@@ -125,7 +125,7 @@ export function FacultyRatingModal({
       return;
     }
 
-    toast.success(isEditing ? "Rating updated" : "Thanks! Your anonymous rating is live.");
+    toast.success(isEditing ? "Rating updated." : "Anonymous rating posted.");
     onOpenChange(false);
     onSubmitted?.();
   };

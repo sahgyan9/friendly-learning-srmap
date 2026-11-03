@@ -1,14 +1,12 @@
 import { Link } from "react-router-dom";
 import { Star, UserRound } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { CardAccentBorder } from "@/components/ui/CardAccentBorder";
 import { cn } from "@/lib/utils";
 import { getOptimizedImageUrl } from "@/lib/image/imageUrl";
 import type { Faculty } from "@/integrations/supabase/services/faculty";
-import { StarRating } from "./StarRating";
 
 interface FacultyCardProps {
   faculty: Faculty;
@@ -16,115 +14,93 @@ interface FacultyCardProps {
   className?: string;
 }
 
+/** Same chip budget as MentorCard so the two directories read alike. */
+const MAX_INTERESTS = 3;
+
 export function FacultyCard({ faculty, onRate, className }: FacultyCardProps) {
   const hasRatings = faculty.rating_count > 0;
   // Rows synced before the interests column existed come back without the field.
   const interests = faculty.interests ?? [];
+  const extraInterests = interests.length - MAX_INTERESTS;
+  const roleLine = [faculty.designation, faculty.department].filter(Boolean).join(" · ");
 
   return (
-    <Card className={cn(
-      "group relative flex flex-col overflow-hidden transition-all duration-300",
-      "hover:-translate-y-0.5 hover:shadow-lg hover:border-rose-500/30",
-      className,
-    )}>
-      {/* Solid full-width accent border — same pattern as portfolio-insight */}
-      <CardAccentBorder gradient="rose" />
-
-      {/* Subtle hover glow in rose — Faculty brand colour */}
-      <div className="pointer-events-none absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-rose-500/5 to-transparent" />
-
-      <Link to={`/faculty/${faculty.slug}`} className="relative flex flex-1 flex-col">
-        {/* Photo area */}
-        <div className="relative aspect-[4/3] overflow-hidden bg-muted/50">
-          {faculty.image_url ? (
-            <img
-              src={getOptimizedImageUrl(faculty.image_url, { width: 400, quality: 75 })}
-              alt={faculty.name}
-              loading="lazy"
-              decoding="async"
-              className="h-full w-full object-cover object-top transition-transform duration-500 group-hover:scale-105"
-              onError={(event) => {
-                // Hide broken images; the fallback below is already rendered
-                event.currentTarget.style.display = "none";
-              }}
-            />
-          ) : (
-            /* Clean neutral fallback — no jarring colour */
-            <div className="flex h-full w-full items-center justify-center bg-muted/70">
-              <UserRound className="h-12 w-12 text-muted-foreground/30" />
-            </div>
-          )}
-
-          {/* Rating chip — only shown when there are ratings */}
-          {hasRatings && (
-            <div className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-background/90 px-2 py-1 text-xs font-semibold shadow-sm backdrop-blur-sm border border-border/30">
-              <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-              {Number(faculty.avg_overall).toFixed(1)}
-            </div>
-          )}
-        </div>
-
-        {/* Text body */}
-        <div className="flex flex-1 flex-col gap-1.5 px-3 pt-3 pb-2">
-          <h3 className="line-clamp-2 text-sm font-semibold leading-tight transition-colors duration-200 group-hover:text-rose-600 dark:group-hover:text-rose-400">
-            {faculty.name}
-          </h3>
-
-          {faculty.designation && (
-            <p className="line-clamp-1 text-2xs text-muted-foreground">{faculty.designation}</p>
-          )}
-
-          <Badge variant="secondary" className="w-fit text-3xs font-normal">
-            {faculty.department}
-          </Badge>
-
-          {/* What they work on. Two chips is what fits without pushing the
-              rating out of the card; the rest are on the profile. */}
-          {interests.length > 0 && (
-            <div className="flex flex-wrap items-center gap-1">
-              {interests.slice(0, 2).map((interest) => (
-                <span
-                  key={interest}
-                  title={interest}
-                  className="max-w-full truncate rounded border border-rose-500/20 bg-rose-500/5 px-1.5 py-0.5 text-3xs leading-tight text-rose-700 dark:text-rose-300"
-                >
-                  {interest}
-                </span>
-              ))}
-              {interests.length > 2 && (
-                <span className="text-3xs text-muted-foreground">+{interests.length - 2}</span>
-              )}
-            </div>
-          )}
-
-          <div className="mt-auto pt-1.5">
-            {hasRatings ? (
-              <div className="flex items-center gap-1.5">
-                <StarRating value={Number(faculty.avg_overall)} size="sm" />
-                <span className="text-2xs text-muted-foreground">
-                  ({faculty.rating_count})
-                </span>
-              </div>
-            ) : (
-              <span className="text-2xs text-muted-foreground">No ratings yet</span>
+    <Card
+      className={cn(
+        "group relative flex h-full flex-col transition-colors duration-150 hover:border-foreground/20",
+        className,
+      )}
+    >
+      <div className="flex flex-1 flex-col gap-3 p-4">
+        <div className="flex items-start gap-3">
+          <Avatar className="h-12 w-12 shrink-0">
+            {faculty.image_url && (
+              <AvatarImage
+                src={getOptimizedImageUrl(faculty.image_url, { width: 160, quality: 75 })}
+                alt=""
+                loading="lazy"
+                className="object-cover object-top"
+              />
             )}
+            <AvatarFallback className="bg-secondary">
+              <UserRound className="h-5 w-5 text-muted-foreground" />
+            </AvatarFallback>
+          </Avatar>
+
+          <div className="min-w-0 flex-1">
+            <h3 className="text-base font-semibold leading-snug">
+              {/* Stretched link: the whole card opens the profile; the Rate
+                  button sits above it on z-10. */}
+              <Link
+                to={`/faculty/${faculty.slug}`}
+                className="line-clamp-2 transition-colors duration-150 after:absolute after:inset-0 after:rounded-lg after:content-[''] group-hover:text-primary focus-visible:outline-none"
+              >
+                {faculty.name}
+              </Link>
+            </h3>
+            <p className="line-clamp-2 text-sm text-muted-foreground">{roleLine}</p>
           </div>
         </div>
-      </Link>
 
-      {/* Rate button footer */}
-      <div className="border-t border-border/50 p-2">
+        {interests.length > 0 && (
+          <div className="flex flex-wrap items-center gap-1.5">
+            {interests.slice(0, MAX_INTERESTS).map((interest) => (
+              <span
+                key={interest}
+                title={interest}
+                className="max-w-full truncate rounded-md bg-secondary px-2 py-0.5 text-xs text-secondary-foreground"
+              >
+                {interest}
+              </span>
+            ))}
+            {extraInterests > 0 && (
+              <span className="text-xs text-muted-foreground tabular">+{extraInterests}</span>
+            )}
+          </div>
+        )}
+      </div>
+
+      <div className="flex items-center justify-between gap-3 border-t border-border px-4 py-3">
+        {hasRatings ? (
+          <span className="flex items-center gap-1 text-sm">
+            <Star className="h-4 w-4 fill-amber-400 text-amber-400" aria-hidden />
+            <span className="font-medium tabular">{Number(faculty.avg_overall).toFixed(1)}</span>
+            <span className="text-muted-foreground tabular">
+              ({faculty.rating_count} {faculty.rating_count === 1 ? "rating" : "ratings"})
+            </span>
+          </span>
+        ) : (
+          <span className="text-sm text-muted-foreground">No ratings yet</span>
+        )}
+
         <Button
           size="sm"
-          variant={hasRatings ? "outline" : "default"}
-          className={cn(
-            "h-8 w-full gap-1.5 text-xs",
-            !hasRatings && "bg-rose-500 hover:bg-rose-600 text-white border-transparent",
-          )}
+          variant="outline"
+          className="relative z-10 shrink-0"
           onClick={() => onRate?.(faculty)}
         >
-          <Star className={cn("h-3 w-3", !hasRatings && "fill-white")} />
-          {hasRatings ? "Rate" : "Be the first to rate"}
+          <Star />
+          Rate
         </Button>
       </div>
     </Card>

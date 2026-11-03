@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { toast } from "sonner";
-import { ImagePlus, Loader2, Sparkles, Wand2, X } from "lucide-react";
+import { ExternalLink, ImagePlus, Loader2, Wand2, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -218,7 +218,7 @@ export function GroupIconPicker({ value, onChange, name, description }: GroupIco
               type="button"
               onClick={() => onChange(preset.url)}
               className={cn(
-                "aspect-square overflow-hidden rounded-lg transition-transform hover:scale-105",
+                "aspect-square overflow-hidden rounded-lg ring-1 ring-border transition-shadow duration-150 hover:ring-foreground/30",
                 value === preset.url && "ring-2 ring-primary ring-offset-2 ring-offset-background",
               )}
               aria-label={`Use ${preset.name} icon`}
@@ -295,7 +295,7 @@ export function GroupIconPicker({ value, onChange, name, description }: GroupIco
       {mode === "ai" && (
         <div className="space-y-2">
           <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <Sparkles className="h-3.5 w-3.5" />
+            <ExternalLink className="h-3.5 w-3.5 shrink-0" />
             Opens Gemini in a new tab with this prompt copied to your clipboard — paste it there, then paste the
             image it makes back here.
           </p>

@@ -9,7 +9,7 @@ const MessagesHeader = ({ isProcessingMentor }: MessagesHeaderProps) => {
   if (!isProcessingMentor) return null;
 
   return (
-    <div className="mb-3 flex items-center gap-2 rounded-xl border border-primary/20 bg-primary/8 px-4 py-2.5 text-sm text-primary backdrop-blur-sm">
+    <div className="mb-3 flex items-center gap-2 rounded-lg border border-border bg-secondary px-4 py-2.5 text-sm text-muted-foreground">
       <Loader2 className="h-4 w-4 animate-spin" />
       Connecting with mentor…
     </div>

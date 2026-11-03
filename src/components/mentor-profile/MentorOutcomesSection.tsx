@@ -1,5 +1,4 @@
-import { motion } from "framer-motion";
-import { CheckCircle2, MessageSquareCode, Target } from "lucide-react";
+import { Check } from "lucide-react";
 import { toast } from "sonner";
 
 import EditableSection from "./EditableSection";
@@ -42,11 +41,11 @@ export default function MentorOutcomesSection({
     const cleaned = next.map((s) => s.trim()).filter(Boolean);
     const { data, error } = await updateMentorSummary(mentor.id, { outcomes: cleaned });
     if (error || !data) {
-      toast.error("Could not save. Please try again.");
+      toast.error("Could not save. Try again.");
       return false;
     }
     onMentorUpdated(data as unknown as Mentor);
-    toast.success("Saved — this section is yours now and won't be regenerated.");
+    toast.success("Saved. This section will not be regenerated.");
     return true;
   };
 
@@ -61,30 +60,20 @@ export default function MentorOutcomesSection({
       ask_me_anything: cleaned,
     });
     if (error || !data) {
-      toast.error("Could not save. Please try again.");
+      toast.error("Could not save. Try again.");
       return false;
     }
     onMentorUpdated(data as unknown as Mentor);
-    toast.success("Saved — this section is yours now and won't be regenerated.");
+    toast.success("Saved. This section will not be regenerated.");
     return true;
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 15 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      className="space-y-6"
-    >
+    <div className="space-y-6">
       {showOutcomes && (
         <EditableSection<string[]>
           editable={isOwnProfile}
           title="What I can help you achieve"
-          icon={
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-500">
-              <Target className="h-4 w-4" />
-            </div>
-          }
           value={outcomes}
           onSave={saveOutcomes}
           renderEditor={(draft, setDraft) => (
@@ -100,31 +89,18 @@ export default function MentorOutcomesSection({
           )}
         >
           {outcomes.length === 0 ? (
-            <p className="text-sm italic text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               Nothing here yet. Add what a student actually gets out of talking to you.
             </p>
           ) : (
-            <>
-              <p className="mb-3 text-xs text-muted-foreground">
-                Concrete outcomes you can reach through mentoring sessions
-              </p>
-              <div className="grid grid-cols-1 gap-3 pt-1 sm:grid-cols-2">
-                {outcomes.map((outcome, idx) => (
-                  <motion.div
-                    key={idx}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.2, delay: idx * 0.05 }}
-                    className="flex items-start gap-3 rounded-xl border border-border/50 bg-background/50 p-3.5 transition-all duration-200 hover:border-emerald-500/30 hover:bg-emerald-500/5"
-                  >
-                    <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-emerald-500" />
-                    <span className="text-sm font-medium leading-snug text-foreground">
-                      {outcome}
-                    </span>
-                  </motion.div>
-                ))}
-              </div>
-            </>
+            <ul className="grid grid-cols-1 gap-x-6 gap-y-2.5 sm:grid-cols-2">
+              {outcomes.map((outcome, idx) => (
+                <li key={idx} className="flex items-start gap-2.5 text-sm leading-snug text-foreground">
+                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden />
+                  {outcome}
+                </li>
+              ))}
+            </ul>
           )}
         </EditableSection>
       )}
@@ -133,11 +109,6 @@ export default function MentorOutcomesSection({
         <EditableSection<string[]>
           editable={isOwnProfile}
           title="Ask me anything about"
-          icon={
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
-              <MessageSquareCode className="h-4 w-4" />
-            </div>
-          }
           value={topics.map((t) => t.topic)}
           onSave={saveTopics}
           renderEditor={(draft, setDraft) => (
@@ -153,30 +124,24 @@ export default function MentorOutcomesSection({
           )}
         >
           {topics.length === 0 ? (
-            <p className="text-sm italic text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               Add the handful of topics you are happy to be asked about.
             </p>
           ) : (
-            <>
-              <p className="mb-3 text-xs text-muted-foreground">
-                Topics and areas we can discuss in chat
-              </p>
-              <div className="flex flex-wrap gap-2.5 pt-1">
-                {topics.map((item, idx) => (
-                  <motion.div
-                    key={idx}
-                    whileHover={{ scale: 1.03, y: -2 }}
-                    className="flex cursor-default items-center gap-2 rounded-xl border border-border/60 bg-background/80 px-4 py-2 text-sm font-semibold text-foreground shadow-xs transition-all hover:border-primary/40 hover:bg-primary/5"
-                  >
-                    <item.icon className="h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
-                    <span>{item.topic}</span>
-                  </motion.div>
-                ))}
-              </div>
-            </>
+            <ul className="flex flex-wrap gap-2">
+              {topics.map((item, idx) => (
+                <li
+                  key={idx}
+                  className="flex items-center gap-2 rounded-md border border-border px-3 py-1.5 text-sm text-foreground"
+                >
+                  <item.icon className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                  {item.topic}
+                </li>
+              ))}
+            </ul>
           )}
         </EditableSection>
       )}
-    </motion.div>
+    </div>
   );
 }

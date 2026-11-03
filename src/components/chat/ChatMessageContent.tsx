@@ -112,7 +112,7 @@ function parseInlineFormatting(text: string, keyPrefix: string): React.ReactNode
       return (
         <code
           key={`${keyPrefix}-c-${idx}`}
-          className="rounded bg-black/15 dark:bg-white/15 px-1 py-0.5 text-[11px] font-mono"
+          className="rounded bg-foreground/10 px-1 py-0.5 text-[11px] font-mono"
         >
           {token.slice(1, -1)}
         </code>

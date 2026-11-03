@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
-import { CalendarCheck, Star, Check, ArrowRight, Bell } from "lucide-react";
+import { CalendarCheck, Star, Check, Bell } from "lucide-react";
+import { EventStatus } from "@/components/marketplace/EventStatus";
 
 import { cn } from "@/lib/utils";
 import type { SRMAPEvent } from "@/hooks/useSRMAPEvents";
@@ -64,37 +64,23 @@ export function YourEventsStrip({ events, rsvps }: YourEventsStripProps) {
   const interestedCount = events.filter((e) => rsvps[e.id] === "interested").length;
 
   return (
-    <motion.section
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35 }}
-      aria-label="Your events"
-      className="mb-6 rounded-xl border border-violet-500/20 bg-gradient-to-br from-violet-500/8 via-background to-background p-4"
-    >
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5">
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
-          <h2 className="flex items-center gap-2 text-sm font-bold tracking-tight">
-            <CalendarCheck className="h-4 w-4 text-violet-500" aria-hidden />
-            Your Events
+    <section aria-label="Your events" className="animate-fade-up rounded-lg border bg-card p-4 shadow-card">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5">
+        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h2 className="flex items-center gap-2 text-sm font-semibold">
+            <CalendarCheck className="h-4 w-4 text-primary" aria-hidden />
+            Your events
           </h2>
-
-          {goingCount > 0 && (
-            <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-2xs font-semibold text-emerald-700 dark:text-emerald-400">
-              <Check className="h-3 w-3" aria-hidden />
-              {goingCount} Going
-            </span>
-          )}
-          {interestedCount > 0 && (
-            <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-2xs font-semibold text-amber-700 dark:text-amber-400">
-              <Star className="h-3 w-3" aria-hidden />
-              {interestedCount} Interested
-            </span>
-          )}
+          <span className="tabular text-xs text-muted-foreground">
+            {[goingCount > 0 && `${goingCount} going`, interestedCount > 0 && `${interestedCount} interested`]
+              .filter(Boolean)
+              .join(" · ")}
+          </span>
         </div>
 
-        <span className="inline-flex items-center gap-1 text-2xs text-muted-foreground">
-          <Bell className="h-3 w-3 text-violet-500" />
-          Reminders active
+        <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+          <Bell className="h-3.5 w-3.5" aria-hidden />
+          Reminders on
         </span>
       </div>
 
@@ -102,42 +88,37 @@ export function YourEventsStrip({ events, rsvps }: YourEventsStripProps) {
         {events.slice(0, 6).map((event) => {
           const status = rsvps[event.id];
           const countdown = formatCountdown(event);
+          const live = countdown === "Live now";
 
           return (
             <li key={event.id} className="w-[15rem] shrink-0 snap-start sm:w-auto">
               <Link
                 to={`/events/${event.id}`}
-                className={cn(
-                  "group flex h-full flex-col justify-between gap-2 rounded-lg border bg-background/70 p-3 transition-colors",
-                  "hover:border-violet-500/40 hover:bg-background",
-                  status === "going" ? "border-emerald-500/30" : "border-amber-500/30",
-                )}
+                className="group flex h-full flex-col justify-between gap-2 rounded-md border bg-background p-3 transition-colors duration-150 hover:border-foreground/20 hover:bg-accent"
               >
-                <span className="line-clamp-2 text-sm font-semibold leading-snug group-hover:text-violet-600 dark:group-hover:text-violet-400">
-                  {event.title}
-                </span>
+                <span className="line-clamp-2 text-sm font-medium leading-snug">{event.title}</span>
 
                 <span className="flex items-center justify-between gap-2">
+                  {live ? (
+                    <EventStatus tone="live">Live now</EventStatus>
+                  ) : (
+                    <span className="tabular text-xs text-muted-foreground">{countdown}</span>
+                  )}
                   <span
                     className={cn(
-                      "text-xs font-medium",
-                      countdown === "Live now"
-                        ? "text-violet-600 dark:text-violet-400"
-                        : "text-muted-foreground",
+                      "inline-flex items-center gap-1 text-xs font-medium",
+                      status === "going" ? "text-emerald-700 dark:text-emerald-400" : "text-primary",
                     )}
                   >
-                    {countdown}
+                    {status === "going" ? <Check className="h-3.5 w-3.5" aria-hidden /> : <Star className="h-3.5 w-3.5 fill-current" aria-hidden />}
+                    {status === "going" ? "Going" : "Interested"}
                   </span>
-                  <ArrowRight
-                    className="h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform duration-200 group-hover:translate-x-0.5"
-                    aria-hidden
-                  />
                 </span>
               </Link>
             </li>
           );
         })}
       </ul>
-    </motion.section>
+    </section>
   );
 }

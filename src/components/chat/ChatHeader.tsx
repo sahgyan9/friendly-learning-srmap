@@ -32,9 +32,7 @@ const ChatHeader = ({ conversation, getOtherUser, onBack }: ChatHeaderProps) => 
 
   return (
     <>
-      <header className="relative flex items-center gap-3 border-b border-border/70 bg-card/95 dark:border-white/8 dark:bg-card/85 px-3 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] md:pt-3 backdrop-blur-md sm:px-4">
-        {/* Gradient accent line at the bottom */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
+      <header className="relative flex items-center gap-3 border-b border-border bg-card px-3 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] md:pt-3 sm:px-4">
 
         {onBack && (
           <Button
@@ -42,7 +40,7 @@ const ChatHeader = ({ conversation, getOtherUser, onBack }: ChatHeaderProps) => 
             size="icon"
             onClick={onBack}
             aria-label="Back to conversations"
-            className="shrink-0 rounded-xl hover:bg-white/8"
+            className="shrink-0"
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
@@ -50,15 +48,8 @@ const ChatHeader = ({ conversation, getOtherUser, onBack }: ChatHeaderProps) => 
 
         {/* Avatar with online ring */}
         <div className="relative shrink-0">
-          <div
-            className={cn(
-              "rounded-full p-0.5 transition-all duration-300",
-              isOnline
-                ? "bg-gradient-to-br from-emerald-400/60 via-primary/40 to-transparent"
-                : "bg-white/8",
-            )}
-          >
-            <Avatar className="h-10 w-10 ring-1 ring-background">
+          <div>
+            <Avatar className="h-10 w-10">
               {isMentor && otherUser?.id ? (
                 <Link to={`/mentor/${otherUser.id}`} tabIndex={-1} aria-hidden>
                   <AvatarImage src={otherUser?.profile_image} alt="" className="object-cover" />
@@ -101,10 +92,10 @@ const ChatHeader = ({ conversation, getOtherUser, onBack }: ChatHeaderProps) => 
             <p
               className={cn(
                 "truncate text-xs font-medium",
-                isOnline ? "text-emerald-400" : "text-muted-foreground/70",
+                isOnline ? "text-success" : "text-muted-foreground",
               )}
             >
-              {isOnline ? "Online now" : isMentor ? "Mentor · Offline" : "Student · Offline"}
+              {isOnline ? "Online" : isMentor ? "Mentor · Offline" : "Student · Offline"}
             </p>
           </div>
         </div>
@@ -114,7 +105,7 @@ const ChatHeader = ({ conversation, getOtherUser, onBack }: ChatHeaderProps) => 
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 rounded-xl text-muted-foreground transition-colors duration-150 hover:bg-white/8 hover:text-foreground"
+            className="h-10 w-10 text-muted-foreground hover:text-foreground"
             aria-label="Voice call"
             onClick={() => setActiveCall("voice")}
           >
@@ -123,7 +114,7 @@ const ChatHeader = ({ conversation, getOtherUser, onBack }: ChatHeaderProps) => 
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 rounded-xl text-muted-foreground transition-colors duration-150 hover:bg-white/8 hover:text-foreground"
+            className="h-10 w-10 text-muted-foreground hover:text-foreground"
             aria-label="Video call"
             onClick={() => setActiveCall("video")}
           >

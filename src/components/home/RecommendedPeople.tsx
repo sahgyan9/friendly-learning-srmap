@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { Sparkles, UserRound, Users } from "lucide-react";
+import { Target, UserRound, Users } from "lucide-react";
 import { FacultyIcon } from "@/components/icons/FacultyIcon";
 import { MentorIcon } from "@/components/icons/MentorIcon";
 
@@ -78,7 +78,7 @@ function PersonCard({ result }: { result: AskResult }) {
   const linkable = result.entity_type !== "student" && Boolean(result.source_path);
 
   return (
-    <Card className="flex gap-3 p-3 transition-colors hover:border-primary/30">
+    <Card className="flex min-w-0 gap-3 p-3">
       <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-muted">
         {image ? (
           <img
@@ -99,12 +99,12 @@ function PersonCard({ result }: { result: AskResult }) {
       </div>
 
       <div className="min-w-0 flex-1">
-        <div className="mb-0.5 flex items-center gap-1 text-3xs font-medium uppercase tracking-wide text-muted-foreground/80">
+        <div className="mb-0.5 flex items-center gap-1 text-xs text-muted-foreground">
           <TypeIcon type={result.entity_type} />
           {typeLabel(result.entity_type)}
         </div>
         {linkable ? (
-          <Link to={result.source_path} className="line-clamp-1 font-semibold leading-tight hover:underline">
+          <Link to={result.source_path} className="line-clamp-1 font-semibold leading-tight underline-offset-2 hover:text-primary hover:underline">
             {result.title}
           </Link>
         ) : (
@@ -120,7 +120,7 @@ function PersonCard({ result }: { result: AskResult }) {
               <span
                 key={tag}
                 title={tag}
-                className="max-w-[10rem] truncate rounded border border-border bg-muted/60 px-1.5 py-0.5 text-3xs leading-tight"
+                className="max-w-[10rem] truncate rounded bg-secondary px-1.5 py-0.5 text-2xs leading-tight text-secondary-foreground"
               >
                 {tag}
               </span>
@@ -137,8 +137,8 @@ function PromptCard() {
     <section className="container mx-auto px-4 py-6">
       <Card className="flex flex-col items-start justify-between gap-3 border-dashed p-4 sm:flex-row sm:items-center sm:p-5">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
-            <Sparkles className="h-5 w-5 text-primary" />
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-border bg-secondary text-muted-foreground">
+            <Target className="h-5 w-5" aria-hidden />
           </div>
           <div>
             <p className="text-sm font-semibold">Tell us what you're into</p>
@@ -165,7 +165,7 @@ function ResultsGrid({ results }: { results: Grouped }) {
         People who match your interests
       </h2>
       <p className="mb-4 text-xs text-muted-foreground">
-        Matched by topic from your profile — not ranked by rating.
+        Matched by topic from your profile, not ranked by rating.
       </p>
       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
         {cards.map((result) => (

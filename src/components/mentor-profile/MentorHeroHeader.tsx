@@ -1,23 +1,16 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
 import {
   Star,
-  Users,
-  Zap,
-  Clock,
   MessageCircle,
   Linkedin,
   GraduationCap,
-  Sparkles,
   Camera,
   ShieldCheck,
-  Loader2,
   Pencil,
   Check,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import MentorAvatar from "@/components/mentors/MentorAvatar";
 import { EnhancedMentor } from "@/utils/mentor-enhancements";
@@ -85,12 +78,12 @@ export default function MentorHeroHeader({
     setSavingTagline(false);
 
     if (error || !data) {
-      toast.error("Could not save your tagline. Please try again.");
+      toast.error("Could not save your tagline. Try again.");
       return;
     }
     onMentorUpdated?.(data as unknown as Mentor);
     setEditingTagline(false);
-    toast.success("Saved — your tagline is yours now and won't be regenerated.");
+    toast.success("Tagline saved. It will not be regenerated.");
   };
 
   const recency = activityRecency(activity?.last_message_at ?? null);
@@ -99,17 +92,15 @@ export default function MentorHeroHeader({
   const rate = activity ? replyRate(activity) : null;
   const speed = activity ? replySpeed(activity) : null;
   const helped = activity?.students_helped ?? 0;
-  // Rating and students-helped always render; the other two earn their place.
-  const metricCount = 2 + (rate !== null ? 1 : 0) + (speed !== null ? 1 : 0);
 
   const handleConnect = async () => {
     if (!user) {
-      toast.error("Please sign in to connect with mentors");
+      toast.error("Sign in to message mentors.");
       return;
     }
 
     if (mentor.id === user.id) {
-      toast.error("You cannot message yourself");
+      toast.error("You cannot message yourself.");
       return;
     }
 
@@ -119,7 +110,7 @@ export default function MentorHeroHeader({
       const { data: mentorData, error: mentorError } = await getMentorById(mentor.id);
 
       if (mentorError || !mentorData) {
-        toast.error("Failed to load mentor information");
+        toast.error("Could not load this mentor. Try again.");
         return;
       }
 
@@ -129,112 +120,93 @@ export default function MentorHeroHeader({
       );
 
       if (conversationError || !conversation) {
-        toast.error("Failed to start conversation with mentor");
+        toast.error("Could not start the conversation. Try again.");
         return;
       }
 
-      toast.success(`Connected with ${mentor.name}. Redirecting to messages...`);
+      toast.success(`Conversation with ${mentor.name} opened.`);
       navigate(`/messages/${conversation.id}`);
     } catch (err) {
-      toast.error("An unexpected error occurred while connecting to the mentor");
+      toast.error("Could not start the conversation. Try again.");
     } finally {
       setIsConnecting(false);
     }
   };
 
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 15 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4 }}
-      className="relative overflow-hidden rounded-2xl border border-border/80 bg-card p-6 md:p-8 shadow-md"
-    >
-      {/* Background Accent Gradient Overlay */}
-      <div className="pointer-events-none absolute -top-24 -right-24 h-64 w-64 rounded-full bg-gradient-to-br from-primary/15 via-primary/5 to-transparent blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-24 -left-24 h-64 w-64 rounded-full bg-gradient-to-tr from-accent/15 via-accent/5 to-transparent blur-3xl" />
+  const listed = isMentorListed(mentor);
+  const metaParts = [
+    mentor.job_title || formatDepartment(mentor.department),
+    mentor.job_title && mentor.department ? formatDepartment(mentor.department) : null,
+    mentor.year_of_studies || null,
+    mentor.university || "SRM AP",
+  ].filter(Boolean);
 
-      <div className="relative flex flex-col md:flex-row gap-6 md:gap-8 items-start justify-between">
-        {/* Left Column: Avatar + Profile Summary */}
-        <div className="flex flex-col sm:flex-row gap-5 items-start">
-          {/* Avatar with Status Dot */}
-          <div className="relative group flex-shrink-0">
-            <MentorAvatar
-              name={mentor.name}
-              src={mentor.profile_image}
-              seed={mentor.id}
-              className="h-28 w-28 md:h-32 md:w-32 rounded-2xl shadow-lg ring-4 ring-background/80 object-cover"
-              fallbackClassName="rounded-2xl text-4xl"
-            />
-            {/* Status dot. Reflects when the mentor was last active across the
-                platform (messages, community posts, group chats, or sign-in presence),
-                and shows nothing at all when that was over a month ago — the absence
-                is the honest signal, avoiding negative labels while rewarding real
-                presence. */}
-            {recencyText && (
-              <div className="absolute -bottom-1 -right-1 flex items-center gap-1.5 rounded-full border-2 border-background bg-card px-2 py-0.5 shadow-sm">
-                <span className="relative flex h-2.5 w-2.5">
-                  {recency === "week" && (
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  )}
-                  <span
-                    className={`relative inline-flex rounded-full h-2.5 w-2.5 ${
-                      recency === "week" ? "bg-emerald-500" : "bg-amber-500"
-                    }`}
-                  ></span>
+  const metrics: { label: string; value: string }[] = [
+    {
+      label: mentor.review_count === 1 ? "1 review" : `${mentor.review_count} reviews`,
+      value: mentor.rating > 0 ? mentor.rating.toFixed(1) : "New",
+    },
+    {
+      // The certificate's definition: both sides spoke.
+      label: helped === 1 ? "Student helped" : "Students helped",
+      value: activityLoading ? "\u2014" : helped === 0 ? "None yet" : String(helped),
+    },
+  ];
+  // Reply rate and speed are omitted below their confidence floor (see
+  // @/lib/mentor-activity) rather than shown from one or two data points.
+  if (rate !== null) metrics.push({ label: "Replies to messages", value: `${rate}%` });
+  // Median, so one late reply cannot define it.
+  if (speed !== null) metrics.push({ label: "Typical reply time", value: speed });
+
+  return (
+    <section className="rounded-xl border border-border bg-card p-5 shadow-card md:p-6 animate-fade-up">
+      <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
+        <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start">
+          <MentorAvatar
+            name={mentor.name}
+            src={mentor.profile_image}
+            seed={mentor.id}
+            className="h-24 w-24 shrink-0 md:h-28 md:w-28"
+            fallbackClassName="text-3xl"
+          />
+
+          <div className="min-w-0 space-y-2">
+            <h1 className="text-3xl font-semibold tracking-tight text-foreground md:text-4xl">
+              {mentor.name}
+            </h1>
+            <p className="text-sm text-muted-foreground md:text-base">{metaParts.join(" · ")}</p>
+
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-sm">
+              {mentor.is_alumni && (
+                <span className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                  <GraduationCap className="h-3.5 w-3.5" />
+                  Alumni{mentor.graduation_year ? ` '${String(mentor.graduation_year).slice(-2)}` : ""}
                 </span>
-                <span
-                  className={`text-2xs font-semibold ${
-                    recency === "week"
-                      ? "text-emerald-600 dark:text-emerald-400"
-                      : "text-amber-600 dark:text-amber-400"
-                  }`}
-                >
+              )}
+              {/* When the mentor was last active across the platform. Nothing
+                  at all after a month: the absence is the honest signal. */}
+              {recencyText && (
+                <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+                  <span
+                    className={`h-2 w-2 rounded-full ${recency === "week" ? "bg-emerald-500" : "bg-amber-500"}`}
+                    aria-hidden
+                  />
                   {recencyText}
                 </span>
-              </div>
-            )}
-          </div>
-
-          {/* Details & Tagline */}
-          <div className="space-y-2">
-            <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-foreground">
-                {mentor.name}
-              </h1>
-
-              {mentor.is_alumni && (
-                <Badge
-                  variant="secondary"
-                  className="gap-1 bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-200"
+              )}
+              {mentor.linkedin_url && (
+                <a
+                  href={mentor.linkedin_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-muted-foreground underline-offset-4 hover:text-primary hover:underline"
                 >
-                  <GraduationCap className="h-3.5 w-3.5" />
-                  Alumni {mentor.graduation_year ? `'${String(mentor.graduation_year).slice(-2)}` : ""}
-                </Badge>
+                  <Linkedin className="h-4 w-4" />
+                  LinkedIn
+                </a>
               )}
             </div>
 
-            {/* Subtitle / Role & Dept */}
-            <p className="text-sm md:text-base font-medium text-muted-foreground flex flex-wrap items-center gap-2">
-              <span className="text-foreground/90 font-semibold">
-                {mentor.job_title || formatDepartment(mentor.department)}
-              </span>
-              {mentor.job_title && mentor.department ? (
-                <>
-                  <span>•</span>
-                  <span>{formatDepartment(mentor.department)}</span>
-                </>
-              ) : null}
-              {mentor.year_of_studies ? (
-                <>
-                  <span>•</span>
-                  <span>{mentor.year_of_studies}</span>
-                </>
-              ) : null}
-              <span>•</span>
-              <span className="text-primary font-medium">{mentor.university || "SRM AP"}</span>
-            </p>
-
-            {/* Headline / Value Statement Tagline */}
             {editingTagline ? (
               <div className="max-w-2xl space-y-2 pt-1">
                 <Textarea
@@ -246,12 +218,8 @@ export default function MentorHeroHeader({
                   onChange={(e) => setTaglineDraft(e.target.value)}
                 />
                 <div className="flex items-center gap-2">
-                  <Button size="sm" onClick={saveTagline} disabled={savingTagline}>
-                    {savingTagline ? (
-                      <Loader2 className="mr-1 h-4 w-4 animate-spin" />
-                    ) : (
-                      <Check className="mr-1 h-4 w-4" />
-                    )}
+                  <Button size="sm" onClick={saveTagline} isLoading={savingTagline}>
+                    {!savingTagline && <Check />}
                     Save
                   </Button>
                   <Button
@@ -262,22 +230,22 @@ export default function MentorHeroHeader({
                   >
                     Cancel
                   </Button>
-                  <span className="text-2xs text-muted-foreground">
+                  <span className="ml-auto text-xs text-muted-foreground tabular">
                     {taglineDraft.length}/200
                   </span>
                 </div>
               </div>
             ) : mentor.tagline ? (
-              <p className="group flex max-w-2xl items-start gap-2 pt-1 text-base font-medium italic leading-snug text-foreground/90 md:text-lg">
-                <span>&ldquo;{mentor.tagline}&rdquo;</span>
+              <p className="flex max-w-2xl items-start gap-2 pt-1 text-base leading-snug text-foreground md:text-lg">
+                <span>{mentor.tagline}</span>
                 {canEditTagline && (
                   <button
                     type="button"
                     onClick={startEditingTagline}
                     aria-label="Edit tagline"
-                    className="mt-1 flex-shrink-0 text-muted-foreground opacity-0 transition-opacity hover:text-foreground focus:opacity-100 group-hover:opacity-100"
+                    className="-m-1 mt-0 flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                   >
-                    <Pencil className="h-3.5 w-3.5" />
+                    <Pencil className="h-4 w-4" />
                   </button>
                 )}
               </p>
@@ -285,30 +253,29 @@ export default function MentorHeroHeader({
               <button
                 type="button"
                 onClick={startEditingTagline}
-                className="flex items-center gap-1.5 pt-1 text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
+                className="flex items-center gap-1.5 pt-1 text-sm text-primary underline-offset-4 hover:underline"
               >
-                <Pencil className="h-3.5 w-3.5" />
+                <Pencil className="h-4 w-4" />
                 Add a one-line tagline
               </button>
             ) : null}
           </div>
         </div>
 
-        {/* Action Buttons Column */}
-        <div className="flex flex-col sm:flex-row md:flex-col gap-2.5 w-full md:w-auto flex-shrink-0 pt-2 md:pt-0">
+        <div className="flex w-full shrink-0 flex-col gap-2 sm:flex-row md:w-auto md:flex-col">
           {isOwnProfile ? (
             <>
-              <Button asChild variant="default" className="w-full gap-2 shadow-sm font-semibold">
+              <Button asChild>
                 <Link to="/profile">
-                  <Camera className="h-4 w-4" />
-                  Edit Profile & Photo
+                  <Camera />
+                  Edit profile and photo
                 </Link>
               </Button>
               {isAdmin && (
-                <Button asChild variant="outline" className="w-full gap-2">
+                <Button asChild variant="outline">
                   <Link to="/admin">
-                    <ShieldCheck className="h-4 w-4" />
-                    Admin Dashboard
+                    <ShieldCheck />
+                    Admin dashboard
                   </Link>
                 </Button>
               )}
@@ -317,125 +284,55 @@ export default function MentorHeroHeader({
             <>
               <Button
                 onClick={handleConnect}
-                size="lg"
-                className="w-full sm:w-auto gap-2 text-base font-semibold shadow-md bg-primary hover:bg-primary/90 text-primary-foreground"
-                disabled={isConnecting || !isMentorListed(mentor)}
+                isLoading={isConnecting}
+                disabled={isConnecting || !listed}
               >
-                {isConnecting ? (
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                ) : (
-                  <MessageCircle className="h-5 w-5 fill-primary-foreground/20" />
-                )}
-                {!isMentorListed(mentor)
-                  ? "Not Accepting Requests"
-                  : isConnecting
-                  ? "Connecting..."
-                  : "Connect with Mentor"}
+                {!isConnecting && <MessageCircle />}
+                {listed ? "Message" : "Not accepting messages"}
               </Button>
 
               {!ratingLoading && (
-                <Button
-                  variant="outline"
-                  size="lg"
-                  onClick={onShowRatingModal}
-                  className="w-full gap-2"
-                >
-                  <Star className="h-4 w-4 text-amber-400 fill-amber-400" />
-                  {hasRated ? "Edit Your Rating" : "Rate Mentor"}
+                <Button variant="outline" onClick={onShowRatingModal}>
+                  <Star />
+                  {hasRated ? "Edit your rating" : "Rate"}
                 </Button>
               )}
             </>
           )}
-
-          {mentor.linkedin_url && (
-            <Button variant="ghost" size="sm" asChild className="w-full gap-2 text-muted-foreground hover:text-foreground">
-              <a href={mentor.linkedin_url} target="_blank" rel="noopener noreferrer">
-                <Linkedin className="h-4 w-4 text-sky-600" />
-                LinkedIn Profile
-              </a>
-            </Button>
-          )}
         </div>
       </div>
 
-      {/* Trust metrics. Every tile below is measured — rating and review count
-          from mentor_reviews, the rest from public.mentor_activity() over real
-          conversations. Reply rate and speed are omitted entirely below their
-          confidence floor (see @/lib/mentor-activity) rather than shown from
-          one or two data points, which is why this grid sizes itself. */}
-      <div
-        className={`mt-6 pt-6 border-t border-border/60 grid grid-cols-2 gap-3 md:gap-4 ${
-          metricCount >= 4 ? "sm:grid-cols-4" : metricCount === 3 ? "sm:grid-cols-3" : "sm:grid-cols-2"
+      {/* Every figure below is measured: rating and review count from
+          mentor_reviews, the rest from public.mentor_activity() over real
+          conversations. The grid sizes itself to however many earned a place. */}
+      <dl
+        className={`mt-6 grid grid-cols-2 gap-x-6 gap-y-4 border-t border-border pt-5 ${
+          metrics.length >= 4 ? "sm:grid-cols-4" : metrics.length === 3 ? "sm:grid-cols-3" : "sm:grid-cols-2"
         }`}
       >
-        {/* Rating */}
-        <div className="flex items-center gap-3 rounded-xl border border-border/50 bg-background/60 p-3 shadow-xs">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-500/10 text-amber-500 dark:bg-amber-500/20">
-            <Star className="h-5 w-5 fill-amber-400" />
+        {metrics.map((metric, index) => (
+          <div key={metric.label} className="min-w-0">
+            <dd className="flex items-center gap-1.5 text-xl font-semibold tracking-tight text-foreground tabular">
+              {index === 0 && mentor.rating > 0 && (
+                <Star className="h-4 w-4 fill-amber-400 text-amber-400" aria-hidden />
+              )}
+              {metric.value}
+            </dd>
+            <dt className="mt-0.5 text-xs text-muted-foreground">{metric.label}</dt>
           </div>
-          <div>
-            <div className="text-sm font-bold text-foreground flex items-center gap-1">
-              {mentor.rating > 0 ? mentor.rating.toFixed(1) : "New"}
-              <span className="text-xs text-muted-foreground font-normal">
-                ({mentor.review_count})
-              </span>
-            </div>
-            <div className="text-xs text-muted-foreground">Rating Score</div>
-          </div>
-        </div>
-
-        {/* Students helped — the certificate's definition: both sides spoke. */}
-        <div className="flex items-center gap-3 rounded-xl border border-border/50 bg-background/60 p-3 shadow-xs">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/10 text-blue-500 dark:bg-blue-500/20">
-            <Users className="h-5 w-5" />
-          </div>
-          <div>
-            <div className="text-sm font-bold text-foreground">
-              {activityLoading ? "—" : helped === 0 ? "None yet" : helped}
-            </div>
-            <div className="text-xs text-muted-foreground">
-              {helped === 1 ? "Student helped" : "Students helped"}
-            </div>
-          </div>
-        </div>
-
-        {/* Reply rate — only once there are enough requests to be a rate. */}
-        {rate !== null && (
-          <div className="flex items-center gap-3 rounded-xl border border-border/50 bg-background/60 p-3 shadow-xs">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-500 dark:bg-emerald-500/20">
-              <Zap className="h-5 w-5" />
-            </div>
-            <div>
-              <div className="text-sm font-bold text-foreground">{rate}%</div>
-              <div className="text-xs text-muted-foreground">Replies to messages</div>
-            </div>
-          </div>
-        )}
-
-        {/* Typical turnaround — median, so one late reply cannot define it. */}
-        {speed !== null && (
-          <div className="flex items-center gap-3 rounded-xl border border-border/50 bg-background/60 p-3 shadow-xs">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-500/10 text-purple-500 dark:bg-purple-500/20">
-              <Clock className="h-5 w-5" />
-            </div>
-            <div>
-              <div className="text-sm font-bold text-foreground">{speed}</div>
-              <div className="text-xs text-muted-foreground">Typical reply time</div>
-            </div>
-          </div>
-        )}
-      </div>
+        ))}
+      </dl>
 
       {/* Said plainly rather than papered over with a flattering default. A
           student deciding who to message is better served by "no track record
           yet" than by a 91% that was never earned. */}
       {!activityLoading && isNewMentor(activity) && (
-        <p className="mt-3 text-xs text-muted-foreground">
+        <p className="mt-4 text-sm text-muted-foreground">
           {isOwnProfile
             ? "Your reply rate and typical response time will appear here once students start messaging you."
-            : `${mentor.name?.split(" ")[0] || "This mentor"} hasn't been messaged on the platform yet — you'd be the first.`}
+            : `${mentor.name?.split(" ")[0] || "This mentor"} has not been messaged on the platform yet.`}
         </p>
       )}
-    </motion.div>
+    </section>
   );
 }

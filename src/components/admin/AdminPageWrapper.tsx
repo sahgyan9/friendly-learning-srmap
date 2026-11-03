@@ -1,8 +1,7 @@
 import { ReactNode } from "react";
 import { useAuth } from "@/context/AuthContext";
 import AdminLayout from "./AdminLayout";
-import { Loader2, Sparkles } from "lucide-react";
-import { motion } from "framer-motion";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface AdminPageWrapperProps {
   children: ReactNode;
@@ -12,7 +11,7 @@ interface AdminPageWrapperProps {
 /**
  * A wrapper component for admin pages that handles loading states
  * and provides consistent layout.
- * 
+ *
  * This component should be used with ProtectedRoute in App.tsx
  * to ensure proper authentication and authorization.
  */
@@ -22,81 +21,32 @@ const AdminPageWrapper = ({ children, loading = false }: AdminPageWrapperProps) 
   const isLoading = loading || authLoading;
 
   if (isLoading) {
+    // Skeleton mirrors the common admin page anatomy (heading, stat row,
+    // table) so the layout does not jump when data arrives.
     return (
       <AdminLayout>
-        <div className="flex items-center justify-center h-[calc(100vh-200px)]">
-          <div className="flex flex-col items-center gap-6">
-            <motion.div
-              animate={{
-                rotate: 360,
-              }}
-              transition={{
-                duration: 2,
-                repeat: Infinity,
-                ease: "linear",
-              }}
-              className="relative"
-            >
-              <Loader2 className="h-12 w-12 text-purple-600 dark:text-purple-400" />
-              <motion.div
-                animate={{
-                  scale: [1, 1.2, 1],
-                  opacity: [0.5, 1, 0.5],
-                }}
-                transition={{
-                  duration: 1.5,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                }}
-                className="absolute inset-0"
-              >
-                <Sparkles className="h-12 w-12 text-pink-600 dark:text-pink-400" />
-              </motion.div>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.2 }}
-            >
-              <p className="text-xl font-semibold bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-400 dark:to-pink-400 bg-clip-text text-transparent">
-                Loading...
-              </p>
-            </motion.div>
-
-            <motion.div
-              className="flex gap-2"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.4 }}
-            >
-              {[0, 1, 2].map((i) => (
-                <motion.div
-                  key={i}
-                  className="w-3 h-3 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-400 dark:to-pink-400"
-                  animate={{
-                    scale: [1, 1.5, 1],
-                    opacity: [0.5, 1, 0.5],
-                  }}
-                  transition={{
-                    duration: 1,
-                    repeat: Infinity,
-                    delay: i * 0.2,
-                  }}
-                />
-              ))}
-            </motion.div>
+        <div className="space-y-8" role="status" aria-label="Loading">
+          <div className="space-y-2">
+            <Skeleton className="h-9 w-64" />
+            <Skeleton className="h-4 w-96 max-w-full" />
           </div>
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+            {[0, 1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-24 rounded-xl" />
+            ))}
+          </div>
+          <div className="space-y-2 rounded-xl border border-border bg-card p-4">
+            {[0, 1, 2, 3, 4].map((i) => (
+              <Skeleton key={i} className="h-10" />
+            ))}
+          </div>
+          <span className="sr-only">Loading</span>
         </div>
       </AdminLayout>
     );
   }
 
-  return (
-    <AdminLayout>
-      {children}
-    </AdminLayout>
-  );
+  return <AdminLayout>{children}</AdminLayout>;
 };
 
 export default AdminPageWrapper;

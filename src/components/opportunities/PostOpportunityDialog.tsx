@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Loader2, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -272,9 +272,8 @@ const PostOpportunityDialog = ({ onPosted }: { onPosted: () => void }) => {
           <Button variant="outline" onClick={() => setOpen(false)} disabled={saving}>
             Cancel
           </Button>
-          <Button onClick={submit} disabled={saving || form.title.trim().length < 4}>
-            {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Post it
+          <Button onClick={submit} isLoading={saving} disabled={form.title.trim().length < 4}>
+            Publish
           </Button>
         </DialogFooter>
       </DialogContent>

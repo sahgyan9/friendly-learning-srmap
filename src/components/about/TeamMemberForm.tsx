@@ -17,7 +17,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Loader2, Upload, X } from "lucide-react";
+import { Upload, X } from "lucide-react";
 import { 
   createTeamMember, 
   updateTeamMember,
@@ -109,7 +109,7 @@ const TeamMemberForm = ({ member, onComplete }: TeamMemberFormProps) => {
         if (error) throw error;
 
         toast.success("Success", {
-          description: "Team member updated successfully!",
+          description: "Team member updated.",
         });
       } else {
         // Create new team member - Fix for type error here
@@ -126,7 +126,7 @@ const TeamMemberForm = ({ member, onComplete }: TeamMemberFormProps) => {
         if (error) throw error;
 
         toast.success("Success", {
-          description: "Team member created successfully!",
+          description: "Team member added.",
         });
       }
 
@@ -134,7 +134,7 @@ const TeamMemberForm = ({ member, onComplete }: TeamMemberFormProps) => {
     } catch (error) {
       console.error("Error saving team member:", error);
       toast.error("Error", {
-        description: "Failed to save team member. Please try again.",
+        description: "Could not save the team member. Try again.",
       });
     } finally {
       setIsSubmitting(false);
@@ -185,17 +185,14 @@ const TeamMemberForm = ({ member, onComplete }: TeamMemberFormProps) => {
               type="button"
               variant="outline"
               onClick={() => document.getElementById("image")?.click()}
-              disabled={isUploading}
+              isLoading={isUploading}
             >
               {isUploading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Uploading...
-                </>
+                "Uploading"
               ) : (
                 <>
-                  <Upload className="mr-2 h-4 w-4" />
-                  {imagePreview ? "Change Photo" : "Upload Photo"}
+                  <Upload className="h-4 w-4" aria-hidden />
+                  {imagePreview ? "Change photo" : "Upload photo"}
                 </>
               )}
             </Button>
@@ -258,16 +255,12 @@ const TeamMemberForm = ({ member, onComplete }: TeamMemberFormProps) => {
           </Button>
           <Button 
             type="submit" 
-            disabled={isSubmitting || isUploading}
+            isLoading={isSubmitting}
+            disabled={isUploading}
           >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {member ? "Updating..." : "Creating..."}
-              </>
-            ) : (
-              member ? "Update Team Member" : "Create Team Member"
-            )}
+            {isSubmitting
+              ? member ? "Saving" : "Adding"
+              : member ? "Save changes" : "Add team member"}
           </Button>
         </div>
       </form>

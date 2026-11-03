@@ -66,7 +66,7 @@ const AlumniConfirmModal = ({
     setSaving(false);
 
     if (error) {
-      toast.error(error.message || "Could not save that — please try again");
+      toast.error(error.message || "Could not save that. Try again.");
       return;
     }
 

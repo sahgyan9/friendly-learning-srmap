@@ -1,28 +1,8 @@
-import { motion, useInView } from "framer-motion";
-import { useRef } from "react";
-import {
-  Search,
-  Handshake,
-  Rocket,
-  Trophy,
-  Brain,
-  ArrowRight,
-  CheckCircle2,
-  Cpu,
-  GraduationCap,
-  Calendar,
-  BookOpen,
-  Users,
-  PenLine,
-} from "lucide-react";
+import { Check } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface Phase {
   id: string;
-  step: string;
-  icon: React.ReactNode;
-  color: string;
-  colorBg: string;
-  colorBorder: string;
   title: string;
   subtitle: string;
   items: string[];
@@ -32,49 +12,34 @@ interface Phase {
 const phases: Phase[] = [
   {
     id: "discover",
-    step: "Phase 1",
-    icon: <Search className="w-5 h-5" />,
-    color: "text-brand",
-    colorBg: "bg-brand/10",
-    colorBorder: "border-brand/30",
     title: "Discover",
     subtitle: "Find your path",
     items: [
-      "Browse & rate faculty before enrolling",
-      "Explore peer mentors by subject & year",
-      "Discover campus events & hackathons",
-      "Read community posts & knowledge feeds",
+      "Browse and rate faculty before enrolling",
+      "Explore peer mentors by subject and year",
+      "Find campus events and hackathons",
+      "Read community posts and guides",
     ],
     status: "live",
   },
   {
     id: "connect",
-    step: "Phase 2",
-    icon: <Handshake className="w-5 h-5" />,
-    color: "text-violet-600 dark:text-violet-400",
-    colorBg: "bg-violet-500/10",
-    colorBorder: "border-violet-500/30",
     title: "Connect",
     subtitle: "Find your people",
     items: [
       "Find study partners for exams",
       "Build hackathon teams",
-      "Join subject-specific communities",
-      "Message mentors & collaborators directly",
+      "Join subject communities",
+      "Message mentors and collaborators directly",
     ],
     status: "live",
   },
   {
     id: "build",
-    step: "Phase 3",
-    icon: <Rocket className="w-5 h-5" />,
-    color: "text-amber-600 dark:text-amber-400",
-    colorBg: "bg-amber-500/10",
-    colorBorder: "border-amber-500/30",
     title: "Build",
     subtitle: "Do real work",
     items: [
-      "Post & collaborate on projects",
+      "Post and collaborate on projects",
       "Find research opportunities with faculty",
       "Form groups that ship real deliverables",
       "Track progress and earn verified certificates",
@@ -83,306 +48,116 @@ const phases: Phase[] = [
   },
   {
     id: "succeed",
-    step: "Phase 4",
-    icon: <Trophy className="w-5 h-5" />,
-    color: "text-emerald-600 dark:text-emerald-400",
-    colorBg: "bg-emerald-500/10",
-    colorBorder: "border-emerald-500/30",
     title: "Succeed",
-    subtitle: "Leave a legacy",
+    subtitle: "Pass it on",
     items: [
       "Graduate with a portfolio of real work",
       "Become a mentor for the next batch",
-      "Alumni network: jobs, referrals, guidance",
-      "Your profile stays — your impact compounds",
+      "Alumni network for jobs, referrals and guidance",
+      "Your profile and reviews stay for the next students",
     ],
     status: "planned",
   },
 ];
 
-const statusLabel: Record<Phase["status"], { text: string; cls: string }> = {
-  live: {
-    text: "Live now",
-    cls: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
-  },
-  building: {
-    text: "Building",
-    cls: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
-  },
-  planned: {
-    text: "Planned",
-    cls: "bg-primary/10 text-primary border-primary/20",
-  },
+// Status colour carries meaning: green is shipped, amber is in progress, neutral is not started.
+const statusLabel: Record<Phase["status"], { text: string; cls: string; dot: string }> = {
+  live: { text: "Live", cls: "text-green-700 dark:text-green-400", dot: "bg-green-500" },
+  building: { text: "In progress", cls: "text-amber-700 dark:text-amber-400", dot: "bg-amber-500" },
+  planned: { text: "Planned", cls: "text-muted-foreground", dot: "bg-muted-foreground/50" },
 };
 
-const cardAnim = {
-  hidden: { opacity: 0, y: 28 },
-  show: (i: number) => ({
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.6, delay: i * 0.12, ease: [0.22, 1, 0.36, 1] },
-  }),
-};
+const CAMPUS_AI_ITEMS = [
+  "Mentor matching on fit, not keyword search",
+  "Course recommendations based on your goals",
+  "Exam prep grounded in SRM AP syllabi",
+  "Question routing to the right professor",
+  "Answers about timetables, clubs and deadlines",
+];
 
 function PhaseCard({ phase, index }: { phase: Phase; index: number }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref, { once: true, margin: "-80px" });
   const sl = statusLabel[phase.status];
 
   return (
-    <motion.div
-      ref={ref}
-      custom={index}
-      variants={cardAnim}
-      initial="hidden"
-      animate={inView ? "show" : "hidden"}
-      className="relative flex flex-col"
+    <li
+      className="flex min-w-0 flex-col rounded-xl border border-border bg-card p-6 shadow-card animate-fade-up"
+      style={{ animationDelay: `${index * 40}ms` }}
     >
-      {/* Connector arrow between cards (hidden on last) */}
-      {index < phases.length - 1 && (
-        <div
-          className="hidden lg:flex absolute top-10 -right-[1.125rem] w-3 z-20 items-center justify-center pointer-events-none text-muted-foreground/60"
-          aria-hidden="true"
-        >
-          <ArrowRight className="w-4 h-4" />
-        </div>
-      )}
-
-      <div
-        className={`relative z-10 flex flex-col h-full p-7 rounded-2xl border bg-card shadow-sm transition-shadow duration-300 hover:shadow-lg ${phase.colorBorder}`}
-      >
-        {/* Step + status */}
-        <div className="flex items-center justify-between mb-5">
-          <span className="text-xs font-bold tracking-widest uppercase text-muted-foreground">
-            {phase.step}
-          </span>
-          <span
-            className={`text-3xs font-bold tracking-widest uppercase px-2 py-0.5 rounded-full border ${sl.cls}`}
-          >
-            {sl.text}
-          </span>
-        </div>
-
-        {/* Icon */}
-        <div
-          className={`w-12 h-12 flex items-center justify-center rounded-xl mb-5 ${phase.colorBg} ${phase.color}`}
-        >
-          {phase.icon}
-        </div>
-
-        {/* Title */}
-        <h3 className={`text-2xl font-extrabold mb-1 ${phase.color}`}>
-          {phase.title}
-        </h3>
-        <p className="text-sm text-muted-foreground font-medium mb-5">
-          {phase.subtitle}
-        </p>
-
-        {/* Items */}
-        <ul className="space-y-2.5 flex-1">
-          {phase.items.map((item) => (
-            <li key={item} className="flex items-start gap-2.5">
-              <CheckCircle2
-                className={`w-4 h-4 mt-0.5 shrink-0 ${phase.color}`}
-              />
-              <span className="text-sm text-muted-foreground leading-snug">
-                {item}
-              </span>
-            </li>
-          ))}
-        </ul>
+      <div className="mb-4 flex items-center justify-between">
+        <span className="tabular text-sm font-medium text-muted-foreground">
+          {String(index + 1).padStart(2, "0")}
+        </span>
+        <span className={cn("inline-flex items-center gap-1.5 text-xs font-medium", sl.cls)}>
+          <span className={cn("h-1.5 w-1.5 rounded-full", sl.dot)} aria-hidden />
+          {sl.text}
+        </span>
       </div>
-    </motion.div>
+
+      <h3 className="text-xl font-semibold tracking-tight text-foreground">{phase.title}</h3>
+      <p className="mb-5 mt-1 text-sm text-muted-foreground">{phase.subtitle}</p>
+
+      <ul className="flex-1 space-y-2.5 border-t border-border pt-4">
+        {phase.items.map((item) => (
+          <li key={item} className="flex items-start gap-2.5">
+            <Check className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+            <span className="text-sm leading-snug text-foreground">{item}</span>
+          </li>
+        ))}
+      </ul>
+    </li>
   );
 }
 
 export function FutureVision() {
-  const aiRef = useRef<HTMLDivElement>(null);
-  const aiInView = useInView(aiRef, { once: true, margin: "-80px" });
-
   return (
-    <section
-      id="future-vision"
-      className="py-20 md:py-28 bg-secondary/40 dark:bg-gray-900/60 overflow-hidden"
-    >
+    <section id="future-vision" className="border-t border-border bg-secondary/40 py-20 md:py-24">
       <div className="container px-4 md:px-6">
-        {/* Header */}
-        <div className="max-w-2xl mx-auto text-center mb-16">
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-            className="inline-flex items-center gap-2 px-3 py-1.5 mb-5 rounded-full border border-primary/20 bg-primary/5 text-primary text-xs font-semibold tracking-wide uppercase"
-          >
-            <Brain className="w-3.5 h-3.5" />
-            The big picture
-          </motion.div>
-
-          <motion.h2
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.55, delay: 0.05 }}
-            className="text-3xl md:text-4xl font-bold tracking-tight mb-4"
-          >
-            A complete ecosystem for{" "}
-            <span className="text-primary">every student journey</span>
-          </motion.h2>
-
-          <motion.p
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.55, delay: 0.1 }}
-            className="text-muted-foreground text-lg"
-          >
-            From your first semester to graduation — and beyond. We're building
-            the platform we wished existed when we started at SRM AP.
-          </motion.p>
+        <div className="mb-12 max-w-2xl">
+          <h2 className="text-3xl font-semibold tracking-tight text-foreground md:text-4xl">
+            Where Friendly Learning is going
+          </h2>
+          <p className="mt-3 text-lg text-muted-foreground">
+            From first semester to graduation and after. We are building the platform we wanted when we started at SRM AP.
+          </p>
         </div>
 
-        {/* Phases Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-20">
+        <ol className="mb-16 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {phases.map((phase, i) => (
             <PhaseCard key={phase.id} phase={phase} index={i} />
           ))}
-        </div>
+        </ol>
 
-        {/* Indigenous AI Card */}
-        <motion.div
-          ref={aiRef}
-          initial={{ opacity: 0, y: 40 }}
-          animate={aiInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-          className="relative rounded-3xl overflow-hidden border border-primary/20 bg-card shadow-xl"
-        >
-          {/* Background gradient */}
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-violet-500/5 to-transparent pointer-events-none" />
-
-          {/* Decorative blobs */}
-          <div className="absolute -top-20 -right-20 w-64 h-64 rounded-full bg-primary/8 blur-3xl pointer-events-none" />
-          <div className="absolute -bottom-20 -left-20 w-64 h-64 rounded-full bg-violet-500/8 blur-3xl pointer-events-none" />
-
-          <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-10 p-10 md:p-14 items-center">
-            {/* Left: Text */}
-            <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 mb-6 rounded-full border border-violet-500/30 bg-violet-500/10 text-violet-600 dark:text-violet-400 text-xs font-bold tracking-widest uppercase">
-                <Cpu className="w-3.5 h-3.5" />
-                Next frontier
-              </div>
-
-              <h3 className="text-3xl md:text-4xl font-extrabold mb-4 leading-tight">
-                Indigenous AI for{" "}
-                <span className="bg-gradient-to-r from-primary to-violet-600 bg-clip-text text-transparent">
-                  SRM University AP
-                </span>
+        <div className="overflow-hidden rounded-xl border border-border bg-card shadow-card">
+          <div className="grid grid-cols-1 gap-10 p-6 sm:p-10 lg:grid-cols-2 lg:p-12">
+            <div className="min-w-0">
+              <p className="mb-3 text-sm font-medium text-muted-foreground">Later</p>
+              <h3 className="text-2xl font-semibold leading-tight tracking-tight text-foreground md:text-3xl">
+                A campus model built for SRM University AP
               </h3>
-
-              <p className="text-muted-foreground text-base leading-relaxed mb-6">
-                The final frontier: an AI built <em>from</em> and <em>for</em>{" "}
-                this university. Trained on anonymised student interactions,
-                faculty patterns, and campus knowledge — it will answer
-                questions that Google can't, because they're specific to SRM AP.
+              <p className="mt-4 text-base leading-relaxed text-muted-foreground">
+                A model built from and for this university, trained on anonymised student interactions, faculty records and
+                campus documents. It will answer questions a general search engine cannot, because the answers are specific to
+                SRM AP.
               </p>
-
-              <ul className="space-y-3">
-                {[
-                  "AI mentor matching — not keyword search, real fit",
-                  "Smart course recommendations based on your goals",
-                  "Exam prep assistant trained on SRM AP syllabi",
-                  "Faculty Q&A routing — ask the right professor, not any professor",
-                  "Campus-aware chatbot: timetables, clubs, deadlines",
-                ].map((item) => (
-                  <li key={item} className="flex items-start gap-3">
-                    <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0 text-violet-600 dark:text-violet-400" />
-                    <span className="text-sm text-muted-foreground leading-snug">
-                      {item}
-                    </span>
-                  </li>
-                ))}
-              </ul>
             </div>
 
-            {/* Right: Visual metaphor */}
-            <div className="flex items-center justify-center">
-              <div className="relative w-64 h-64 md:w-80 md:h-80">
-                {/* Pulsing rings */}
-                {[0, 1, 2].map((ring) => (
-                  <motion.div
-                    key={ring}
-                    className="absolute inset-0 rounded-full border border-primary/20"
-                    style={{
-                      scale: 1 + ring * 0.18,
-                      opacity: 1 - ring * 0.3,
-                    }}
-                    animate={{ scale: [1 + ring * 0.18, 1 + ring * 0.18 + 0.04, 1 + ring * 0.18] }}
-                    transition={{
-                      duration: 3 + ring * 0.5,
-                      repeat: Infinity,
-                      ease: "easeInOut",
-                      delay: ring * 0.4,
-                    }}
-                  />
-                ))}
-
-                {/* Center icon */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-28 h-28 rounded-2xl bg-gradient-to-br from-primary to-violet-600 flex items-center justify-center shadow-2xl shadow-primary/30">
-                    <Brain className="w-14 h-14 text-white" />
-                  </div>
-                </div>
-
-                {/* Orbiting nodes */}
-                {[
-                  { angle: 0, label: "Mentor", icon: GraduationCap },
-                  { angle: 72, label: "Events", icon: Calendar },
-                  { angle: 144, label: "Faculty", icon: BookOpen },
-                  { angle: 216, label: "Groups", icon: Users },
-                  { angle: 288, label: "Posts", icon: PenLine },
-                ].map((node) => {
-                  const NodeIcon = node.icon;
-                  const rad = (node.angle * Math.PI) / 180;
-                  const r = 105; // orbit radius in px
-                  const x = Math.cos(rad) * r;
-                  const y = Math.sin(rad) * r;
-                  return (
-                    <motion.div
-                      key={node.label}
-                      className="absolute w-12 h-12 rounded-full bg-card border border-border shadow-md flex items-center justify-center text-primary"
-                      style={{
-                        left: `calc(50% + ${x}px - 24px)`,
-                        top: `calc(50% + ${y}px - 24px)`,
-                      }}
-                      animate={{ y: [0, -4, 0] }}
-                      transition={{
-                        duration: 2.5,
-                        repeat: Infinity,
-                        ease: "easeInOut",
-                        delay: node.angle / 360,
-                      }}
-                      title={node.label}
-                    >
-                      <NodeIcon className="w-5 h-5 text-primary" />
-                    </motion.div>
-                  );
-                })}
-              </div>
-            </div>
+            <ul className="min-w-0 divide-y divide-border self-center border-y border-border">
+              {CAMPUS_AI_ITEMS.map((item, i) => (
+                <li key={item} className="flex items-start gap-4 py-3">
+                  <span className="tabular w-6 shrink-0 text-sm text-muted-foreground">{i + 1}</span>
+                  <span className="text-sm leading-snug text-foreground">{item}</span>
+                </li>
+              ))}
+            </ul>
           </div>
 
-          {/* Bottom strip */}
-          <div className="relative z-10 border-t border-border/60 bg-secondary/30 px-10 md:px-14 py-5 flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-8">
-            <p className="text-xs text-muted-foreground">
-              <strong className="text-foreground">Timeline:</strong> Ecosystem
-              phases 3 &amp; 4 in active development. AI layer begins once
-              student data reaches critical mass.
+          <div className="border-t border-border bg-secondary/50 px-6 py-4 sm:px-10 lg:px-12">
+            <p className="text-sm text-muted-foreground">
+              <span className="font-medium text-foreground">Timeline:</span> phases 3 and 4 are in active development. Work on
+              the campus model starts once there is enough student data to train it responsibly.
             </p>
-            <span className="shrink-0 text-3xs font-bold tracking-widest uppercase px-3 py-1 rounded-full border border-primary/20 bg-primary/5 text-primary">
-              Long-term vision
-            </span>
           </div>
-        </motion.div>
+        </div>
       </div>
     </section>
   );

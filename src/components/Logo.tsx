@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { motion } from 'framer-motion';
 
 import { cn } from '@/lib/utils';
 
@@ -23,17 +22,11 @@ const Logo = ({
   textClassName = "",
 }: LogoProps) => {
   return (
-    <motion.div
-      className={`flex items-center ${className}`}
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.5 }}
-    >
-      <motion.div
-        className="relative h-8 w-10 md:h-9 md:w-12"
-        whileHover={{ rotate: 5, scale: 1.05 }}
-        transition={{ type: "spring", stiffness: 300 }}
-      >
+    // Static on purpose. It used to fade and scale in on every route change
+    // and wobble on hover; the header logo is a landmark, and landmarks that
+    // move feel unreliable. The one-time intro is where the mark animates.
+    <div className={`flex items-center ${className}`}>
+      <div className="relative h-8 w-10 md:h-9 md:w-12">
         {/*
           Two SVGs instead of one raster image + a brightness filter. The mark's
           navy ink used to nearly vanish on the dark theme because a CSS filter
@@ -57,21 +50,16 @@ const Logo = ({
           width="38"
           height="40"
         />
-      </motion.div>
+      </div>
 
       {showText && (
-        <motion.div
-          className={cn("ml-1 flex items-center", textClassName)}
-          initial={{ opacity: 0, x: -10 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.2, duration: 0.4 }}
-        >
+        <div className={cn("ml-1 flex items-center", textClassName)}>
           <span className="text-xl font-bold text-primary tracking-tight">Friendly</span>
           <span className={`text-xl font-bold ${textColor} tracking-tight`}>Learning</span>
           <span className="text-sm font-medium text-primary ml-1 tracking-tight">SRMAP</span>
-        </motion.div>
+        </div>
       )}
-    </motion.div>
+    </div>
   );
 };
 

@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Search, Loader2, Check, UserPlus, Sparkles } from "lucide-react";
+import { Search, Check, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -14,7 +14,6 @@ import {
 } from "@/components/ui/table";
 import { toast } from "sonner";
 import { setUserAsAdmin } from "@/integrations/supabase/services/admin";
-import { motion, AnimatePresence } from "framer-motion";
 
 interface User {
   id: string;
@@ -45,8 +44,8 @@ const UserSearchForm = ({ onUserAdded }: UserSearchFormProps) => {
       setSearchResults(users);
     } catch (error) {
       console.error("Error searching for users:", error);
-      toast.error("Error", {
-        description: "Failed to search for users",
+      toast.error("Search failed", {
+        description: "Could not look up users. Try again.",
       });
     } finally {
       setIsSearching(false);
@@ -57,16 +56,14 @@ const UserSearchForm = ({ onUserAdded }: UserSearchFormProps) => {
     try {
       setProcessingUser(userId);
       await setUserAsAdmin(userId);
-      toast.success("Success", {
-        description: "User has been granted admin privileges",
-      });
+      toast.success("Admin access granted");
       onUserAdded();
       setSearchResults([]);
       setSearchEmail("");
     } catch (error) {
       console.error("Error setting user as admin:", error);
-      toast.error("Error", {
-        description: "Failed to grant admin privileges",
+      toast.error("Could not grant admin access", {
+        description: "The change was not saved. Try again.",
       });
     } finally {
       setProcessingUser(null);
@@ -75,144 +72,84 @@ const UserSearchForm = ({ onUserAdded }: UserSearchFormProps) => {
 
   return (
     <div>
-      <div className="flex gap-2 mb-6">
-        <div className="relative flex-1 group">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+      <div className="mb-6 flex gap-2">
+        <div className="relative min-w-0 flex-1">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Search by email..."
+            type="email"
+            placeholder="name@srmap.edu.in"
+            aria-label="User email"
             value={searchEmail}
             onChange={(e) => setSearchEmail(e.target.value)}
-            className="pl-10 bg-background border-input focus-visible:ring-2 focus-visible:ring-primary transition-all"
+            className="pl-9"
             onKeyDown={(e) => e.key === "Enter" && handleSearch()}
           />
         </div>
-        <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-          <Button
-            onClick={handleSearch}
-            disabled={isSearching}
-            className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm transition-all"
-          >
-            {isSearching ? (
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-              >
-                <Loader2 className="h-4 w-4" />
-              </motion.div>
-            ) : (
-              <>
-                <Search className="h-4 w-4 mr-2" />
-                Search
-              </>
-            )}
-          </Button>
-        </motion.div>
+        <Button onClick={handleSearch} isLoading={isSearching} disabled={!searchEmail.trim()}>
+          Search
+        </Button>
       </div>
 
-      <AnimatePresence mode="wait">
-        {searchResults.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="border rounded-xl overflow-hidden border-border bg-card/50"
-          >
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-muted/50 hover:bg-muted/50">
-                  <TableHead className="font-semibold text-foreground">User</TableHead>
-                  <TableHead className="font-semibold text-foreground">Email</TableHead>
-                  <TableHead className="text-right font-semibold text-foreground">Actions</TableHead>
+      {searchResults.length > 0 && (
+        <div className="animate-fade-up overflow-hidden rounded-lg border border-border">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/50 hover:bg-muted/50">
+                <TableHead>User</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead className="text-right">
+                  <span className="sr-only">Actions</span>
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {searchResults.map((user) => (
+                <TableRow key={user.id}>
+                  <TableCell>
+                    <div className="flex min-w-0 items-center gap-3">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={user.profile_image || ""} alt={user.name} />
+                        <AvatarFallback className="bg-secondary text-xs text-secondary-foreground">
+                          {user.name
+                            .split(" ")
+                            .map((n) => n[0])
+                            .join("")}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="truncate font-medium text-foreground">{user.name}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">{user.email}</TableCell>
+                  <TableCell className="text-right">
+                    {user.is_admin ? (
+                      <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
+                        <Check className="h-4 w-4 text-success" />
+                        Already admin
+                      </span>
+                    ) : (
+                      <Button
+                        size="sm"
+                        onClick={() => handleSetAdmin(user.id)}
+                        isLoading={processingUser === user.id}
+                      >
+                        {processingUser !== user.id && <UserPlus className="h-4 w-4" />}
+                        Make admin
+                      </Button>
+                    )}
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {searchResults.map((user, index) => (
-                  <motion.tr
-                    key={user.id}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                    className="border-b border-border hover:bg-muted/50 transition-colors"
-                  >
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <motion.div
-                          whileHover={{ scale: 1.05 }}
-                          transition={{ duration: 0.2 }}
-                        >
-                          <Avatar className="h-10 w-10 ring-2 ring-primary/20">
-                            <AvatarImage
-                              src={user.profile_image || ""}
-                              alt={user.name}
-                            />
-                            <AvatarFallback className="bg-primary/10 text-primary font-medium">
-                              {user.name
-                                .split(" ")
-                                .map((n) => n[0])
-                                .join("")}
-                            </AvatarFallback>
-                          </Avatar>
-                        </motion.div>
-                        <span className="font-medium text-foreground">{user.name}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">{user.email}</TableCell>
-                    <TableCell className="text-right">
-                      {user.is_admin ? (
-                        <motion.div
-                          initial={{ scale: 0 }}
-                          animate={{ scale: 1 }}
-                          className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-600 dark:bg-emerald-500 text-white shadow-sm"
-                        >
-                          <Check className="h-4 w-4" />
-                          <span className="text-sm font-medium">Admin</span>
-                          <Sparkles className="h-3 w-3" />
-                        </motion.div>
-                      ) : (
-                        <motion.div
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                        >
-                          <Button
-                            variant="default"
-                            size="sm"
-                            onClick={() => handleSetAdmin(user.id)}
-                            disabled={processingUser === user.id}
-                            className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm transition-all"
-                          >
-                            {processingUser === user.id ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <>
-                                <UserPlus className="h-4 w-4 mr-1" />
-                                Make Admin
-                              </>
-                            )}
-                          </Button>
-                        </motion.div>
-                      )}
-                    </TableCell>
-                  </motion.tr>
-                ))}
-              </TableBody>
-            </Table>
-          </motion.div>
-        )}
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
 
-        {searchEmail && !isSearching && searchResults.length === 0 && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            className="text-center py-12 bg-card/50 rounded-xl border border-border"
-          >
-            <Search className="h-16 w-16 mx-auto mb-4 text-muted-foreground/40" />
-            <p className="text-muted-foreground">
-              No users found matching "<span className="font-semibold text-primary">{searchEmail}</span>"
-            </p>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {searchEmail && !isSearching && searchResults.length === 0 && (
+        <p className="rounded-lg border border-dashed border-border px-4 py-6 text-center text-sm text-muted-foreground">
+          No user found for <span className="font-medium text-foreground">{searchEmail}</span>. Check
+          the spelling, or ask them to sign up first.
+        </p>
+      )}
     </div>
   );
 };

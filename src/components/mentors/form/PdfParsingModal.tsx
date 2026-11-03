@@ -11,17 +11,14 @@ import { Button } from "@/components/ui/button";
 import {
   FileText,
   GraduationCap,
-  Zap,
-  Sparkles,
-  CheckCircle2,
+  Wrench,
+  PenLine,
+  ListChecks,
   AlertCircle,
   Loader2,
   Check,
   RefreshCw,
   X,
-  Lightbulb,
-  Cpu,
-  ArrowRight,
 } from "lucide-react";
 
 export type ParsingStage =
@@ -43,51 +40,34 @@ export interface ParsingStep {
 const PARSING_STEPS: ParsingStep[] = [
   {
     id: "reading",
-    title: "Reading Document",
-    description: "Extracting raw text streams & document structure",
+    title: "Reading the file",
+    description: "Extracting text and layout",
     icon: FileText,
   },
   {
     id: "identity",
-    title: "Academic & Identity Detection",
-    description: "Identifying name, department, university & study year",
+    title: "Finding your details",
+    description: "Name, department, university and year",
     icon: GraduationCap,
   },
   {
     id: "skills",
-    title: "Skills & Technical Proficiencies",
-    description: "Extracting core domain skills, frameworks & tools",
-    icon: Zap,
+    title: "Listing skills",
+    description: "Languages, frameworks and tools",
+    icon: Wrench,
   },
   {
     id: "synthesis",
-    title: "Bio & Mentoring Synthesis",
-    description: "Synthesizing bio, outcomes & AMA mentoring topics",
-    icon: Sparkles,
+    title: "Drafting your profile text",
+    description: "Bio, outcomes and topics to ask you about",
+    icon: PenLine,
   },
   {
     id: "finalizing",
-    title: "Structuring Profile Data",
-    description: "Validating fields & preparing your profile draft",
-    icon: CheckCircle2,
+    title: "Checking fields",
+    description: "Validating the draft before you review it",
+    icon: ListChecks,
   },
-];
-
-const SYNTHESIS_SUB_MESSAGES = [
-  "Analyzing technical proficiencies, frameworks & databases...",
-  "Distilling project highlights, architecture & key outcomes...",
-  "Synthesizing high-impact peer mentoring goals & milestones...",
-  "Drafting tailored 'Ask Me Anything' peer discussion topics...",
-  "Polishing first-person professional bio summary...",
-  "Aligning course terms with SRM AP academic curriculum...",
-];
-
-const DID_YOU_KNOW_TIPS = [
-  "Mentors with 3+ specific AMA topics receive 4× more student mentorship requests.",
-  "Gemini AI automatically structures your projects and course timeline to SRM AP's academic calendar.",
-  "You have 100% control to preview, adjust, or discard any drafted field before saving.",
-  "Your resume is processed strictly in-memory and is never shared publicly.",
-  "Clear skills and outcomes help first-year students find the exact guidance they need.",
 ];
 
 interface PdfParsingModalProps {
@@ -121,8 +101,6 @@ export default function PdfParsingModal({
   // Step index from 0 to 4, or 5 for all completed
   const [activeStepIndex, setActiveStepIndex] = useState(0);
   const [progressPercent, setProgressPercent] = useState(15);
-  const [subMessageIndex, setSubMessageIndex] = useState(0);
-  const [tipIndex, setTipIndex] = useState(0);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
   // Interval timers
@@ -140,28 +118,6 @@ export default function PdfParsingModal({
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [open, stage]);
-
-  // Rotate dynamic synthesis sub-messages
-  useEffect(() => {
-    if (!open || stage === "error" || stage === "success") return;
-
-    const interval = setInterval(() => {
-      setSubMessageIndex((prev) => (prev + 1) % SYNTHESIS_SUB_MESSAGES.length);
-    }, 2000);
-
-    return () => clearInterval(interval);
-  }, [open, stage]);
-
-  // Rotate informative Pro-Tips
-  useEffect(() => {
-    if (!open || stage === "error" || stage === "success") return;
-
-    const interval = setInterval(() => {
-      setTipIndex((prev) => (prev + 1) % DID_YOU_KNOW_TIPS.length);
-    }, 4500);
-
-    return () => clearInterval(interval);
   }, [open, stage]);
 
   // Smooth realistic pacing & continuous heartbeat while waiting for backend
@@ -240,6 +196,8 @@ export default function PdfParsingModal({
 
   const readableFileSize = useMemo(() => formatFileSize(fileSizeBytes), [fileSizeBytes]);
 
+  const working = stage !== "error" && stage !== "success";
+
   return (
     <Dialog
       open={open}
@@ -250,254 +208,167 @@ export default function PdfParsingModal({
       }}
     >
       <DialogContent
-        className="sm:max-w-md w-[92vw] max-w-lg p-0 overflow-hidden border-primary/20 shadow-2xl rounded-2xl bg-card transition-all"
+        className="w-[92vw] max-w-lg gap-0 p-0 sm:max-w-md"
         onPointerDownOutside={(e) => {
           // Prevent accidental dismissal while processing
-          if (stage !== "error" && stage !== "success") {
+          if (working) {
             e.preventDefault();
           }
         }}
         onEscapeKeyDown={(e) => {
-          if (stage !== "error" && stage !== "success") {
+          if (working) {
             e.preventDefault();
           }
         }}
       >
-        {/* Animated Gradient Accent Bar with subtle shimmer */}
-        <div className="relative h-1.5 w-full overflow-hidden bg-gradient-to-r from-primary via-indigo-500 to-purple-500">
-          {stage !== "error" && stage !== "success" && (
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent animate-[shimmer_2s_infinite]" />
-          )}
-        </div>
-
-        <div className="p-5 sm:p-6 space-y-4">
-          {/* Header */}
-          <DialogHeader className="text-left space-y-2">
+        <div className="space-y-5 p-5 sm:p-6">
+          <DialogHeader className="space-y-1 text-left">
             <div className="flex items-start justify-between gap-3">
-              <div className="flex items-center gap-2.5">
-                <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary ring-4 ring-primary/5">
-                  <Sparkles className="h-5 w-5 animate-pulse text-primary" />
-                  {stage !== "error" && stage !== "success" && (
-                    <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
-                      <span className="relative inline-flex rounded-full h-3 w-3 bg-primary" />
-                    </span>
-                  )}
-                </div>
-                <div>
-                  <DialogTitle className="text-lg sm:text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
-                    {stage === "error"
-                      ? "Parsing Interrupted"
-                      : stage === "success"
-                      ? "Profile Extracted!"
-                      : "AI Resume Intelligence"}
-                  </DialogTitle>
-                  <DialogDescription className="text-xs text-muted-foreground mt-0.5">
-                    {stage === "error"
-                      ? "We couldn't extract all details from this file."
-                      : stage === "success"
-                      ? "Your skills, headline, projects & bio are ready!"
-                      : "Extracting structured profile data with Gemini AI..."}
-                  </DialogDescription>
-                </div>
+              <div>
+                <DialogTitle className="text-lg font-semibold tracking-tight text-foreground">
+                  {stage === "error"
+                    ? "Could not read this file"
+                    : stage === "success"
+                    ? "Profile draft ready"
+                    : "Reading your resume"}
+                </DialogTitle>
+                <DialogDescription className="mt-1 text-sm text-muted-foreground">
+                  {stage === "error"
+                    ? "Some details could not be extracted."
+                    : stage === "success"
+                    ? "Review the drafted skills, headline, projects and bio before saving."
+                    : "This usually takes 10 to 30 seconds."}
+                </DialogDescription>
               </div>
 
-              {(stage === "error" || stage === "success") && onClose && (
+              {!working && onClose && (
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 text-muted-foreground hover:text-foreground rounded-full"
+                  className="-mr-2 -mt-2 text-muted-foreground hover:text-foreground"
                   onClick={onClose}
+                  aria-label="Close"
                 >
-                  <X className="h-4 w-4" />
+                  <X />
                 </Button>
-              )}
-            </div>
-
-            {/* File Info Pill & Live Telemetry Badge */}
-            <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-muted/60 px-3 py-2 border border-border/60 text-xs">
-              <div className="flex items-center gap-2 min-w-0">
-                <FileText className="h-4 w-4 text-primary shrink-0" />
-                <span className="font-medium text-foreground truncate max-w-[180px] sm:max-w-[230px]">
-                  {fileName}
-                </span>
-                {readableFileSize && (
-                  <>
-                    <span className="text-muted-foreground/60">•</span>
-                    <span className="text-muted-foreground text-3xs shrink-0">{readableFileSize}</span>
-                  </>
-                )}
-              </div>
-
-              {stage !== "error" && stage !== "success" && (
-                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 text-3xs font-semibold shrink-0">
-                  <Cpu className="h-3 w-3 animate-spin text-primary" />
-                  <span>Gemini AI {elapsedSeconds > 0 ? `(${elapsedSeconds}s)` : "Active"}</span>
-                </div>
               )}
             </div>
           </DialogHeader>
 
-          {/* Progress Bar & Status percentage */}
+          <div className="flex items-center justify-between gap-2 rounded-lg border border-border px-3 py-2 text-sm">
+            <div className="flex min-w-0 items-center gap-2">
+              <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
+              <span className="truncate font-medium text-foreground">{fileName}</span>
+              {readableFileSize && (
+                <span className="shrink-0 text-xs text-muted-foreground tabular">{readableFileSize}</span>
+              )}
+            </div>
+            {working && elapsedSeconds > 0 && (
+              <span className="shrink-0 text-xs text-muted-foreground tabular">{elapsedSeconds}s</span>
+            )}
+          </div>
+
           <div className="space-y-1.5">
-            <div className="flex items-center justify-between text-xs font-semibold">
-              <span className="text-muted-foreground flex items-center gap-1.5">
-                {stage === "error"
-                  ? "Process Stopped"
-                  : stage === "success"
-                  ? "Extraction Complete"
-                  : "Processing Pipeline"}
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">
+                {stage === "error" ? "Stopped" : stage === "success" ? "Done" : "Progress"}
               </span>
               <span
-                className={
+                className={`font-medium tabular ${
                   stage === "error"
                     ? "text-destructive"
                     : stage === "success"
-                    ? "text-emerald-600 dark:text-emerald-400 font-bold"
-                    : "text-primary font-bold transition-all duration-300"
-                }
+                    ? "text-emerald-600 dark:text-emerald-400"
+                    : "text-foreground"
+                }`}
               >
                 {stage === "error" ? "Failed" : `${progressPercent}%`}
               </span>
             </div>
-            <div className="relative">
-              <Progress
-                value={progressPercent}
-                className={`h-2 transition-all duration-500 rounded-full ${
-                  stage === "error"
-                    ? "[&>div]:bg-destructive"
-                    : stage === "success"
-                    ? "[&>div]:bg-emerald-500"
-                    : "[&>div]:bg-gradient-to-r [&>div]:from-primary [&>div]:to-indigo-500"
-                }`}
-              />
-            </div>
+            <Progress
+              value={progressPercent}
+              aria-label="Resume parsing progress"
+              className={`h-1.5 ${
+                stage === "error"
+                  ? "[&>div]:bg-destructive"
+                  : stage === "success"
+                  ? "[&>div]:bg-emerald-500"
+                  : ""
+              }`}
+            />
           </div>
 
-          {/* Error State Callout */}
           {stage === "error" ? (
-            <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-left space-y-3 animate-in fade-in zoom-in-95">
+            <div className="space-y-3 rounded-lg border border-destructive/30 bg-destructive/5 p-4" role="alert">
               <div className="flex items-start gap-3">
-                <AlertCircle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
-                <div className="text-xs space-y-1">
-                  <p className="font-semibold text-destructive">Extraction Incomplete</p>
-                  <p className="text-muted-foreground leading-relaxed">
-                    {errorMessage ||
-                      "Unable to extract text from this document. If it is a scanned image or protected PDF, please upload a digital PDF, export from LinkedIn, or try a Word (.docx) document."}
-                  </p>
-                </div>
+                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+                <p className="text-sm leading-relaxed text-foreground">
+                  {errorMessage ||
+                    "No text could be extracted. If this is a scanned image or a protected PDF, upload a digital PDF, a LinkedIn export, or a Word (.docx) file."}
+                </p>
               </div>
-              <div className="flex items-center justify-end gap-2 pt-1">
+              <div className="flex items-center justify-end gap-2">
                 {onClose && (
-                  <Button variant="outline" size="sm" onClick={onClose} className="h-8 text-xs">
+                  <Button variant="outline" size="sm" onClick={onClose}>
                     Dismiss
                   </Button>
                 )}
                 {onRetry && (
-                  <Button size="sm" onClick={onRetry} className="h-8 gap-1.5 text-xs font-medium">
-                    <RefreshCw className="h-3.5 w-3.5" />
-                    Try Another File
+                  <Button size="sm" onClick={onRetry}>
+                    <RefreshCw />
+                    Try another file
                   </Button>
                 )}
               </div>
             </div>
           ) : (
-            /* Step-by-Step Sequential Progress */
-            <div className="space-y-2 rounded-xl border border-border/50 bg-muted/20 p-3 sm:p-3.5">
+            <ol className="space-y-1">
               {PARSING_STEPS.map((step, index) => {
                 const Icon = step.icon;
                 const isDone = stage === "success" || index < activeStepIndex;
                 const isCurrent = stage !== "success" && index === activeStepIndex;
-                const isPending = stage !== "success" && index > activeStepIndex;
 
                 return (
-                  <div
+                  <li
                     key={step.id}
-                    className={`flex items-center gap-3 rounded-lg p-2 transition-all duration-300 ${
-                      isCurrent
-                        ? "bg-primary/10 border border-primary/30 shadow-xs ring-1 ring-primary/20 scale-[1.01]"
-                        : isDone
-                        ? "opacity-90"
-                        : "opacity-40"
+                    aria-current={isCurrent ? "step" : undefined}
+                    className={`flex items-center gap-3 rounded-md px-2 py-1.5 transition-colors duration-150 ${
+                      isCurrent ? "bg-secondary" : ""
                     }`}
                   >
-                    {/* Step State Icon */}
-                    <div className="shrink-0">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center">
                       {isDone ? (
-                        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 text-white shadow-xs animate-in zoom-in-75">
-                          <Check className="h-3.5 w-3.5 stroke-[2.5]" />
-                        </div>
+                        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-white dark:bg-emerald-500">
+                          <Check className="h-3 w-3" strokeWidth={3} />
+                        </span>
                       ) : isCurrent ? (
-                        <div className="relative flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm">
-                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        </div>
+                        <Loader2 className="h-4 w-4 animate-spin text-primary" />
                       ) : (
-                        <div className="flex h-6 w-6 items-center justify-center rounded-full border border-muted-foreground/30 bg-background text-muted-foreground/60">
-                          <Icon className="h-3 w-3" />
-                        </div>
+                        <Icon className="h-4 w-4 text-muted-foreground/60" />
+                      )}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p
+                        className={`truncate text-sm ${
+                          isCurrent ? "font-medium text-foreground" : isDone ? "text-foreground" : "text-muted-foreground"
+                        }`}
+                      >
+                        {step.title}
+                      </p>
+                      {isCurrent && (
+                        <p className="truncate text-xs text-muted-foreground">{step.description}</p>
                       )}
                     </div>
-
-                    {/* Step Labels */}
-                    <div className="min-w-0 flex-1 text-left">
-                      <div className="flex items-center justify-between gap-2">
-                        <p
-                          className={`text-xs font-semibold truncate ${
-                            isCurrent
-                              ? "text-primary"
-                              : isDone
-                              ? "text-foreground"
-                              : "text-muted-foreground"
-                          }`}
-                        >
-                          {step.title}
-                        </p>
-                        {isDone && (
-                          <span className="text-3xs text-emerald-600 dark:text-emerald-400 font-bold shrink-0">
-                            Done
-                          </span>
-                        )}
-                        {isCurrent && (
-                          <span className="text-3xs text-primary font-bold animate-pulse shrink-0">
-                            In progress...
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Live Dynamic Micro-Status Message on Active Step */}
-                      <p className="text-3xs text-muted-foreground truncate">
-                        {isCurrent && index === 3
-                          ? SYNTHESIS_SUB_MESSAGES[subMessageIndex]
-                          : step.description}
-                      </p>
-                    </div>
-                  </div>
+                  </li>
                 );
               })}
-            </div>
+            </ol>
           )}
 
-          {/* Did You Know? / Pro-Tips Carousel to keep users engaged */}
-          {stage !== "error" && stage !== "success" && (
-            <div className="rounded-xl border border-primary/15 bg-gradient-to-br from-primary/5 via-primary/[0.02] to-transparent p-3 text-left space-y-1.5 transition-all">
-              <div className="flex items-center gap-1.5 text-3xs font-bold text-primary uppercase tracking-wider">
-                <Lightbulb className="h-3.5 w-3.5 text-amber-500 shrink-0" />
-                <span>Did you know?</span>
-              </div>
-              <p className="text-xs text-foreground/80 leading-snug animate-in fade-in duration-300 key={tipIndex}">
-                {DID_YOU_KNOW_TIPS[tipIndex]}
-              </p>
-            </div>
-          )}
-
-          {/* Footer note & background persistence reassurance */}
-          {stage !== "error" && (
-            <div className="text-center space-y-1 pt-0.5">
-              <p className="text-3xs text-muted-foreground/80 flex items-center justify-center gap-1.5">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-ping inline-block shrink-0" />
-                <span>Parses in background • Safe to browse other pages without losing data</span>
-              </p>
-            </div>
+          {working && (
+            <p className="text-xs text-muted-foreground">
+              You can leave this page while it runs. The file is processed in memory and is not shown publicly.
+            </p>
           )}
         </div>
       </DialogContent>

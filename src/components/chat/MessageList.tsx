@@ -251,7 +251,7 @@ const MessageList = ({
   if (loading) {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-3 text-sm text-muted-foreground">
-        <Loader2 className="h-5 w-5 animate-spin text-primary/60" />
+        <Loader2 className="h-5 w-5 animate-spin" />
         <span>Loading messages…</span>
       </div>
     );
@@ -260,12 +260,12 @@ const MessageList = ({
   if (messages.length === 0) {
     return (
       <div className="flex h-full flex-col items-center justify-center px-6 text-center">
-        <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-white/5 ring-1 ring-white/10">
-          <MessageCircleMore className="h-7 w-7 text-muted-foreground/60" aria-hidden />
+        <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-lg bg-secondary">
+          <MessageCircleMore className="h-6 w-6 text-muted-foreground" aria-hidden />
         </div>
         <p className="font-semibold">No messages yet</p>
-        <p className="mt-1.5 max-w-xs text-sm text-muted-foreground/70">
-          Say hello — share what you're working on and what you'd love help with.
+        <p className="mt-1.5 max-w-xs text-sm text-muted-foreground">
+          Send the first message below. Mention what you are working on so they can help.
         </p>
       </div>
     );
@@ -309,11 +309,11 @@ const MessageList = ({
               {/* Day separator */}
               {startsDay && (
                 <div className="my-5 flex items-center gap-3">
-                  <span className="h-px flex-1 bg-white/8" />
-                  <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-2xs font-medium text-muted-foreground/70 backdrop-blur-sm">
+                  <span className="h-px flex-1 bg-border" />
+                  <span className="rounded-md bg-secondary px-2.5 py-0.5 text-2xs font-medium text-muted-foreground">
                     {formatDayLabel(message.sent_at)}
                   </span>
-                  <span className="h-px flex-1 bg-white/8" />
+                  <span className="h-px flex-1 bg-border" />
                 </div>
               )}
 
@@ -339,13 +339,13 @@ const MessageList = ({
                   {/* Received: avatar placeholder column */}
                   {!isMine &&
                     (isLastInGroup ? (
-                      <Avatar className="h-7 w-7 shrink-0 ring-1 ring-white/10">
+                      <Avatar className="h-7 w-7 shrink-0">
                         <AvatarImage
                           src={message.sender?.profile_image || getSenderAvatar?.(message.sender_id) || undefined}
                           alt=""
                           className="object-cover"
                         />
-                        <AvatarFallback className="bg-white/8 text-3xs font-semibold text-muted-foreground">
+                        <AvatarFallback className="bg-secondary text-3xs font-semibold text-secondary-foreground">
                           {getInitials(message.sender?.name || senderName)}
                         </AvatarFallback>
                       </Avatar>
@@ -358,7 +358,7 @@ const MessageList = ({
                     <div
                       data-message-actions={message.id}
                       className={cn(
-                        "mb-1 flex items-center gap-0.5 rounded-full border border-border/80 bg-background/95 px-1 py-0.5 opacity-0 shadow-sm backdrop-blur-md transition-opacity duration-200 group-hover:opacity-100 focus-within:opacity-100 dark:border-white/15 dark:bg-card/90",
+                        "mb-1 flex items-center gap-0.5 rounded-full border border-border bg-card px-1 py-0.5 opacity-0 shadow-card transition-opacity duration-150 group-hover:opacity-100 focus-within:opacity-100",
                         activeActionsMsgId === message.id && "opacity-100",
                       )}
                     >
@@ -384,7 +384,7 @@ const MessageList = ({
 
                         {activeReactionMsgId === message.id && (
                           <div
-                            className="absolute bottom-full right-0 z-30 mb-1.5 flex items-center gap-1 rounded-full border border-border/90 bg-background/95 p-1 shadow-lg backdrop-blur-md animate-in fade-in zoom-in-95 duration-150 dark:border-white/15 dark:bg-card/95"
+                            className="absolute bottom-full right-0 z-30 mb-1.5 flex items-center gap-1 rounded-full border border-border bg-card p-1 shadow-float animate-scale-in"
                           >
                             {QUICK_REACTION_EMOJIS.map((emoji) => {
                               const hasReacted = message.viewer_reactions?.includes(emoji);
@@ -399,7 +399,7 @@ const MessageList = ({
                                     setActiveActionsMsgId(null);
                                   }}
                                   className={cn(
-                                    "flex h-7 w-7 items-center justify-center rounded-full text-base transition-all hover:scale-125 active:scale-95",
+                                    "flex h-7 w-7 items-center justify-center rounded-full text-base transition-colors duration-150 hover:bg-accent active:scale-95",
                                     hasReacted ? "bg-primary/20 ring-1 ring-primary/40" : "hover:bg-muted"
                                   )}
                                   title={emoji}
@@ -427,10 +427,10 @@ const MessageList = ({
                         className={cn(
                           "rounded-full p-1 transition-colors",
                           isCopied
-                            ? "text-emerald-500 hover:text-emerald-600"
+                            ? "text-success"
                             : "text-muted-foreground hover:bg-primary/10 hover:text-primary",
                         )}
-                        title={isCopied ? "Copied!" : "Copy message"}
+                        title={isCopied ? "Copied" : "Copy message"}
                         aria-label="Copy message text"
                       >
                         {isCopied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
@@ -463,15 +463,15 @@ const MessageList = ({
                   <div className={cn("flex max-w-[75%] flex-col sm:max-w-[65%]", isMine && "items-end", hasReactions && "mb-4")}>
                     <div
                       className={cn(
-                        "relative whitespace-pre-wrap break-words transition-all duration-300",
-                        isHighlighted && "ring-2 ring-primary ring-offset-2 ring-offset-background animate-pulse",
+                        "relative whitespace-pre-wrap break-words transition-shadow duration-150",
+                        isHighlighted && "ring-2 ring-primary ring-offset-2 ring-offset-background",
                         emojiOnly
                           ? cn("px-1.5 py-1 bg-transparent border-none shadow-none", getEmojiFontSizeClass(emojiCount))
                           : cn(
-                              "px-4 py-2.5 text-sm leading-relaxed shadow-sm",
+                              "px-3.5 py-2 text-sm leading-relaxed",
                               isMine
-                                ? "bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-primary/20"
-                                : "border border-white/10 bg-white/6 text-foreground backdrop-blur-sm",
+                                ? "bg-primary text-primary-foreground"
+                                : "bg-secondary text-secondary-foreground",
                               isMine
                                 ? cn(
                                     "rounded-2xl",
@@ -494,7 +494,7 @@ const MessageList = ({
                           className={cn(
                             "mb-2 block w-full rounded-lg p-2 text-left transition-all hover:opacity-85 select-none",
                             isMine
-                              ? "border-l-3 border-primary-foreground/90 bg-black/20 text-primary-foreground"
+                              ? "border-l-3 border-primary-foreground/90 bg-primary-foreground/15 text-primary-foreground"
                               : "border-l-3 border-primary bg-primary/10 text-foreground",
                           )}
                           title="Click to jump to quoted message"
@@ -527,7 +527,7 @@ const MessageList = ({
                       {hasReactions && (
                         <div
                           className={cn(
-                            "absolute -bottom-3 z-10 flex items-center gap-1.5 rounded-full bg-card px-2 py-1 shadow-md ring-1 ring-black/5 dark:bg-card dark:ring-white/10",
+                            "absolute -bottom-3 z-10 flex items-center gap-1.5 rounded-full border border-border bg-card px-2 py-1 shadow-card",
                             isMine ? "right-2" : "left-2",
                           )}
                         >
@@ -539,7 +539,7 @@ const MessageList = ({
                                 type="button"
                                 onClick={() => onReaction?.(message.id, emoji)}
                                 className={cn(
-                                  "inline-flex items-center gap-0.5 text-xs transition-transform duration-150 select-none hover:scale-110 active:scale-90",
+                                  "inline-flex items-center gap-0.5 text-xs select-none active:scale-95",
                                   hasReacted ? "text-primary font-semibold" : "text-foreground/70"
                                 )}
                                 title={hasReacted ? `You reacted ${emoji}` : `React with ${emoji}`}
@@ -564,7 +564,7 @@ const MessageList = ({
                     {(isLastInGroup || isPending) && (
                       <div
                         className={cn(
-                          "mt-1.5 flex items-center gap-1.5 px-1 text-3xs text-muted-foreground/60",
+                          "mt-1 flex items-center gap-1.5 px-1 text-3xs text-muted-foreground tabular",
                           isMine ? "justify-end" : "justify-start",
                         )}
                       >
@@ -598,7 +598,7 @@ const MessageList = ({
                     <div
                       data-message-actions={message.id}
                       className={cn(
-                        "mb-1 flex items-center gap-0.5 rounded-full border border-border/80 bg-background/95 px-1 py-0.5 opacity-0 shadow-sm backdrop-blur-md transition-opacity duration-200 group-hover:opacity-100 focus-within:opacity-100 dark:border-white/15 dark:bg-card/90",
+                        "mb-1 flex items-center gap-0.5 rounded-full border border-border bg-card px-1 py-0.5 opacity-0 shadow-card transition-opacity duration-150 group-hover:opacity-100 focus-within:opacity-100",
                         activeActionsMsgId === message.id && "opacity-100",
                       )}
                     >
@@ -624,7 +624,7 @@ const MessageList = ({
 
                         {activeReactionMsgId === message.id && (
                           <div
-                            className="absolute bottom-full left-0 z-30 mb-1.5 flex items-center gap-1 rounded-full border border-border/90 bg-background/95 p-1 shadow-lg backdrop-blur-md animate-in fade-in zoom-in-95 duration-150 dark:border-white/15 dark:bg-card/95"
+                            className="absolute bottom-full left-0 z-30 mb-1.5 flex items-center gap-1 rounded-full border border-border bg-card p-1 shadow-float animate-scale-in"
                           >
                             {QUICK_REACTION_EMOJIS.map((emoji) => {
                               const hasReacted = message.viewer_reactions?.includes(emoji);
@@ -639,7 +639,7 @@ const MessageList = ({
                                     setActiveActionsMsgId(null);
                                   }}
                                   className={cn(
-                                    "flex h-7 w-7 items-center justify-center rounded-full text-base transition-all hover:scale-125 active:scale-95",
+                                    "flex h-7 w-7 items-center justify-center rounded-full text-base transition-colors duration-150 hover:bg-accent active:scale-95",
                                     hasReacted ? "bg-primary/20 ring-1 ring-primary/40" : "hover:bg-muted"
                                   )}
                                   title={emoji}
@@ -667,10 +667,10 @@ const MessageList = ({
                         className={cn(
                           "rounded-full p-1 transition-colors",
                           isCopied
-                            ? "text-emerald-500 hover:text-emerald-600"
+                            ? "text-success"
                             : "text-muted-foreground hover:bg-primary/10 hover:text-primary",
                         )}
-                        title={isCopied ? "Copied!" : "Copy message"}
+                        title={isCopied ? "Copied" : "Copy message"}
                         aria-label="Copy message text"
                       >
                         {isCopied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
@@ -715,9 +715,11 @@ const MessageList = ({
                 }
               }}
               disabled={isDeleting}
+              aria-busy={isDeleting || undefined}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Delete"}
+              {isDeleting && <Loader2 className="h-4 w-4 animate-spin" />}
+              Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -729,7 +731,7 @@ const MessageList = ({
           <Button
             size="sm"
             onClick={() => scrollToBottom("smooth")}
-            className="pointer-events-auto gap-1.5 rounded-full bg-primary/90 px-4 text-primary-foreground shadow-lg shadow-primary/25 hover:bg-primary"
+            className="pointer-events-auto gap-1.5 rounded-full px-4 shadow-float"
           >
             <ArrowDown className="h-3.5 w-3.5" />
             {unseenCount > 0

@@ -19,7 +19,6 @@ import {
   QrCode,
   Users,
   MessageSquare,
-  Sparkles,
   Send,
   Loader2,
   ExternalLink,
@@ -149,7 +148,7 @@ ${canonicalUrl}`;
   const handleCopyLink = () => {
     navigator.clipboard.writeText(canonicalUrl);
     setCopied(true);
-    toast.success("Event link copied to clipboard");
+    toast.success("Link copied");
     setTimeout(() => setCopied(false), 2000);
   };
 
@@ -161,7 +160,7 @@ ${canonicalUrl}`;
           text: `Check out ${event.title} at SRM University-AP on ${formattedDate}`,
           url: canonicalUrl,
         });
-        toast.success("Shared successfully");
+        toast.success("Shared");
       } catch (err) {
         if ((err as Error).name !== "AbortError") {
           handleCopyLink();
@@ -179,7 +178,7 @@ ${canonicalUrl}`;
 
   const handleSendToGroup = async (group: Community) => {
     if (!user?.id) {
-      toast.error("Please sign in to share to workspace groups");
+      toast.error("Sign in to share to groups");
       return;
     }
 
@@ -201,7 +200,7 @@ ${canonicalUrl}`;
 
   const handleSendToDm = async (conv: Conversation) => {
     if (!user?.id) {
-      toast.error("Please sign in to send direct messages");
+      toast.error("Sign in to send direct messages");
       return;
     }
 
@@ -213,7 +212,7 @@ ${canonicalUrl}`;
       if (error) throw error;
 
       setSentDmIds((prev) => new Set([...prev, conv.id]));
-      toast.success("Sent message");
+      toast.success("Message sent");
     } catch (err) {
       console.error("Failed to send DM:", err);
       toast.error("Could not send message");
@@ -241,61 +240,45 @@ ${canonicalUrl}`;
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-lg p-0 overflow-hidden border-border/80 bg-card/95 backdrop-blur-xl">
-        <DialogHeader className="p-5 pb-3 border-b border-border/60">
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-500/10 text-violet-600 dark:text-violet-400">
-              <Share2 className="h-4 w-4" />
-            </div>
-            <div>
-              <DialogTitle className="text-base font-semibold">Share Event</DialogTitle>
-              <DialogDescription className="text-xs text-muted-foreground truncate max-w-xs sm:max-w-sm">
-                {event.title}
-              </DialogDescription>
-            </div>
-          </div>
-        </DialogHeader>
-
-        {/* Event Preview Summary Card */}
-        <div className="mx-4 mt-3 rounded-xl border border-violet-500/20 bg-violet-500/5 p-3 flex items-start gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-violet-500/10 text-violet-600 dark:text-violet-400 font-semibold text-xs text-center flex-col leading-none">
-            <Calendar className="h-4 w-4 mb-0.5" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-xs font-semibold text-foreground truncate">{event.title}</p>
-            <div className="flex flex-wrap items-center gap-x-2 text-2xs text-muted-foreground mt-0.5">
-              <span>{formattedDate}</span>
-              <span>•</span>
-              <span className="truncate flex items-center gap-0.5">
-                <MapPin className="h-2.5 w-2.5 shrink-0" />
-                {event.venue || "SRMAP Campus"}
+      <DialogContent className="sm:max-w-lg p-0 overflow-hidden">
+        <DialogHeader className="border-b p-5 pb-4 text-left">
+          <DialogTitle className="text-base font-semibold">Share event</DialogTitle>
+          <DialogDescription asChild>
+            <div className="flex min-w-0 flex-col gap-0.5 pr-6">
+              <span className="truncate font-medium text-foreground">{event.title}</span>
+              <span className="flex min-w-0 items-center gap-1.5 text-xs">
+                <Calendar className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                <span className="tabular shrink-0">{formattedDate}</span>
+                <span aria-hidden>·</span>
+                <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                <span className="truncate">{event.venue || "SRMAP Campus"}</span>
               </span>
             </div>
-          </div>
-        </div>
+          </DialogDescription>
+        </DialogHeader>
 
         {/* Tabs: In-App Campus Share vs Fast Actions */}
-        <Tabs defaultValue="in-app" className="w-full px-4 pt-2 pb-4">
-          <TabsList className="grid w-full grid-cols-2 bg-muted/60 h-9 p-1">
-            <TabsTrigger value="in-app" className="text-xs gap-1.5 data-[state=active]:bg-background">
-              <Users className="h-3.5 w-3.5 text-violet-600 dark:text-violet-400" />
-              Share to Campus
+        <Tabs defaultValue="in-app" className="w-full px-5 pt-4 pb-5">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="in-app" className="gap-1.5">
+              <Users className="h-4 w-4" />
+              In the app
             </TabsTrigger>
-            <TabsTrigger value="external" className="text-xs gap-1.5 data-[state=active]:bg-background">
-              <Share2 className="h-3.5 w-3.5 text-primary" />
-              External & Links
+            <TabsTrigger value="external" className="gap-1.5">
+              <Share2 className="h-4 w-4" />
+              Link and apps
             </TabsTrigger>
           </TabsList>
 
           {/* TAB 1: IN-APP SHARING (Workspace Groups + Direct Messages) */}
           <TabsContent value="in-app" className="space-y-4 pt-3 mt-0 focus-visible:outline-none">
             {!user ? (
-              <div className="rounded-xl border border-border/80 bg-muted/30 p-6 text-center space-y-3">
-                <p className="text-xs text-muted-foreground">
-                  Sign in to share this event directly into your Workspace Groups and Direct Messages.
+              <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed p-6 text-center">
+                <p className="text-sm text-muted-foreground">
+                  Sign in to send this event to your community groups and direct messages.
                 </p>
-                <Button size="sm" asChild className="rounded-full text-xs px-5 bg-primary">
-                  <Link to="/signin">Sign in to share in-app</Link>
+                <Button size="sm" asChild>
+                  <Link to="/signin">Sign in to share</Link>
                 </Button>
               </div>
             ) : (
@@ -303,13 +286,12 @@ ${canonicalUrl}`;
                 {/* 1. Workspace Groups Section */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-2xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                      <Users className="h-3 w-3 text-violet-600 dark:text-violet-400" />
-                      Your Workspace Groups
+                    <span className="text-sm font-medium text-foreground">
+                      Your groups
                     </span>
                     <Link
                       to="/workspace-groups"
-                      className="text-3xs text-primary hover:underline"
+                      className="text-xs text-primary hover:underline"
                       onClick={onClose}
                     >
                       Browse all
@@ -317,9 +299,10 @@ ${canonicalUrl}`;
                   </div>
 
                   {isLoadingGroups ? (
-                    <div className="py-6 text-center text-xs text-muted-foreground flex items-center justify-center gap-2">
-                      <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                      Loading your groups...
+                    <div className="space-y-1.5" aria-busy="true" aria-label="Loading groups">
+                      {[0, 1].map((i) => (
+                        <div key={i} className="h-12 animate-pulse rounded-md bg-muted" />
+                      ))}
                     </div>
                   ) : joinedGroups.length > 0 ? (
                     <div className="space-y-1.5">
@@ -329,18 +312,18 @@ ${canonicalUrl}`;
                         return (
                           <div
                             key={group.id}
-                            className="flex items-center justify-between gap-3 p-2 rounded-xl border border-border/50 bg-background/50 hover:bg-muted/40 transition-colors"
+                            className="flex items-center justify-between gap-3 rounded-md border p-2"
                           >
                             <div className="flex items-center gap-2.5 min-w-0">
-                              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet-500/10 text-violet-600 dark:text-violet-400 text-xs font-bold">
+                              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-secondary text-xs font-semibold text-secondary-foreground">
                                 {group.name.charAt(0).toUpperCase()}
                               </div>
                               <div className="min-w-0">
-                                <p className="text-xs font-semibold truncate text-foreground">
+                                <p className="text-sm font-medium truncate text-foreground">
                                   {group.name}
                                 </p>
                                 <p className="text-3xs text-muted-foreground">
-                                  {group.member_count} member{group.member_count !== 1 ? "s" : ""} • #{group.kind}
+                                  {group.member_count} member{group.member_count !== 1 ? "s" : ""} · {group.kind}
                                 </p>
                               </div>
                             </div>
@@ -349,8 +332,8 @@ ${canonicalUrl}`;
                               size="sm"
                               variant={isSent ? "secondary" : "outline"}
                               className={cn(
-                                "shrink-0 h-7 text-3xs px-2.5 gap-1 rounded-lg",
-                                isSent && "text-green-600 dark:text-green-400 border-green-500/30",
+                                "shrink-0 h-8 px-2.5 text-xs",
+                                isSent && "text-emerald-700 dark:text-emerald-400",
                               )}
                               disabled={isSending || isSent}
                               onClick={() => handleSendToGroup(group)}
@@ -364,7 +347,7 @@ ${canonicalUrl}`;
                                 </>
                               ) : (
                                 <>
-                                  <Send className="h-2.5 w-2.5" />
+                                  <Send className="h-3.5 w-3.5" />
                                   Share
                                 </>
                               )}
@@ -374,11 +357,11 @@ ${canonicalUrl}`;
                       })}
                     </div>
                   ) : (
-                    <div className="rounded-xl border border-border/60 bg-muted/20 p-4 text-center space-y-2">
-                      <p className="text-xs text-muted-foreground">You haven't joined any workspace groups yet.</p>
+                    <div className="rounded-md border border-dashed p-4 text-center space-y-2">
+                      <p className="text-xs text-muted-foreground">You have not joined any groups yet.</p>
                       <Button size="sm" variant="outline" asChild className="text-2xs h-7">
                         <Link to="/workspace-groups" onClick={onClose}>
-                          Join a campus group
+                          Browse communities
                         </Link>
                       </Button>
                     </div>
@@ -388,11 +371,10 @@ ${canonicalUrl}`;
                 {/* 2. Direct Messages Section */}
                 <div className="space-y-2 pt-2 border-t border-border/50">
                   <div className="flex items-center justify-between">
-                    <span className="text-2xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                      <MessageSquare className="h-3 w-3 text-primary" />
-                      Send via Direct Message
+                    <span className="text-sm font-medium text-foreground">
+                      Direct messages
                     </span>
-                    <Link to="/messages" className="text-3xs text-primary hover:underline" onClick={onClose}>
+                    <Link to="/messages" className="text-xs text-primary hover:underline" onClick={onClose}>
                       Open chat
                     </Link>
                   </div>
@@ -402,7 +384,7 @@ ${canonicalUrl}`;
                       <Search className="absolute left-2.5 top-2 h-3.5 w-3.5 text-muted-foreground" />
                       <Input
                         type="text"
-                        placeholder="Search chats..."
+                        placeholder="Search chats"
                         value={dmSearch}
                         onChange={(e) => setDmSearch(e.target.value)}
                         className="h-7.5 pl-8 text-xs bg-background/60"
@@ -411,9 +393,10 @@ ${canonicalUrl}`;
                   )}
 
                   {isLoadingChats ? (
-                    <div className="py-6 text-center text-xs text-muted-foreground flex items-center justify-center gap-2">
-                      <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                      Loading chats...
+                    <div className="space-y-1.5" aria-busy="true" aria-label="Loading chats">
+                      {[0, 1].map((i) => (
+                        <div key={i} className="h-12 animate-pulse rounded-md bg-muted" />
+                      ))}
                     </div>
                   ) : filteredConversations.length > 0 ? (
                     <div className="space-y-1.5">
@@ -426,17 +409,17 @@ ${canonicalUrl}`;
                         return (
                           <div
                             key={conv.id}
-                            className="flex items-center justify-between gap-3 p-2 rounded-xl border border-border/50 bg-background/50 hover:bg-muted/40 transition-colors"
+                            className="flex items-center justify-between gap-3 rounded-md border p-2"
                           >
                             <div className="flex items-center gap-2.5 min-w-0">
                               <Avatar className="h-7 w-7 border border-border/60 shrink-0">
                                 <AvatarImage src={other?.profile_image || undefined} alt={name} />
-                                <AvatarFallback className="text-3xs font-semibold bg-primary/10 text-primary">
+                                <AvatarFallback className="text-3xs font-semibold bg-secondary text-secondary-foreground">
                                   {getInitials(name)}
                                 </AvatarFallback>
                               </Avatar>
                               <div className="min-w-0">
-                                <p className="text-xs font-semibold truncate text-foreground">{name}</p>
+                                <p className="text-sm font-medium truncate text-foreground">{name}</p>
                                 <p className="text-3xs text-muted-foreground">
                                   Direct Message
                                 </p>
@@ -447,8 +430,8 @@ ${canonicalUrl}`;
                               size="sm"
                               variant={isSent ? "secondary" : "outline"}
                               className={cn(
-                                "shrink-0 h-7 text-3xs px-2.5 gap-1 rounded-lg",
-                                isSent && "text-green-600 dark:text-green-400 border-green-500/30",
+                                "shrink-0 h-8 px-2.5 text-xs",
+                                isSent && "text-emerald-700 dark:text-emerald-400",
                               )}
                               disabled={isSending || isSent}
                               onClick={() => handleSendToDm(conv)}
@@ -462,7 +445,7 @@ ${canonicalUrl}`;
                                 </>
                               ) : (
                                 <>
-                                  <Send className="h-2.5 w-2.5" />
+                                  <Send className="h-3.5 w-3.5" />
                                   Send
                                 </>
                               )}
@@ -472,7 +455,7 @@ ${canonicalUrl}`;
                       })}
                     </div>
                   ) : (
-                    <div className="rounded-xl border border-border/60 bg-muted/20 p-4 text-center space-y-2">
+                    <div className="rounded-md border border-dashed p-4 text-center space-y-2">
                       <p className="text-xs text-muted-foreground">No recent direct conversations found.</p>
                       <Button size="sm" variant="outline" asChild className="text-2xs h-7">
                         <Link to="/messages" onClick={onClose}>
@@ -490,21 +473,19 @@ ${canonicalUrl}`;
                     onClick={onClose}
                     className="block"
                   >
-                    <div className="flex items-center justify-between p-3 rounded-xl border border-violet-500/30 bg-gradient-to-r from-violet-500/10 via-background to-transparent hover:border-violet-500/60 transition-all">
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet-500/20 text-violet-600 dark:text-violet-400">
-                          <Flame className="h-4 w-4" />
-                        </div>
-                        <div>
-                          <p className="text-xs font-semibold text-foreground">
-                            Post to Campus Teammate Feed
+                    <div className="flex items-center justify-between gap-3 rounded-md border p-3 transition-colors duration-150 hover:bg-accent">
+                      <div className="flex min-w-0 items-center gap-2.5">
+                        <Flame className="h-4 w-4 shrink-0 text-muted-foreground" />
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-foreground">
+                            Post a teammate request
                           </p>
-                          <p className="text-3xs text-muted-foreground">
+                          <p className="text-xs text-muted-foreground">
                             Find partners attending this event
                           </p>
                         </div>
                       </div>
-                      <ExternalLink className="h-3.5 w-3.5 text-violet-600 dark:text-violet-400 shrink-0" />
+                      <ExternalLink className="h-4 w-4 shrink-0 text-muted-foreground" />
                     </div>
                   </Link>
                 </div>
@@ -519,42 +500,43 @@ ${canonicalUrl}`;
               {/* WhatsApp Button */}
               <Button
                 variant="outline"
-                className="h-14 flex flex-col items-center justify-center gap-1 border-emerald-500/30 bg-emerald-500/5 hover:bg-emerald-500/15 hover:border-emerald-500/60 text-emerald-600 dark:text-emerald-400 rounded-xl"
+                className="h-11"
                 onClick={handleWhatsAppShare}
               >
-                <Share2 className="h-4 w-4" />
-                <span className="text-xs font-semibold">Share on WhatsApp</span>
+                <MessageSquare className="h-4 w-4" />
+                WhatsApp
               </Button>
 
               {/* Native OS Share Button */}
               <Button
                 variant="outline"
-                className="h-14 flex flex-col items-center justify-center gap-1 border-violet-500/30 bg-violet-500/5 hover:bg-violet-500/15 hover:border-violet-500/60 text-violet-600 dark:text-violet-400 rounded-xl"
+                className="h-11"
                 onClick={handleNativeShare}
               >
-                <Sparkles className="h-4 w-4" />
-                <span className="text-xs font-semibold">More Apps (OS)</span>
+                <Share2 className="h-4 w-4" />
+                Other apps
               </Button>
             </div>
 
             {/* Copy Link Input Bar */}
             <div className="space-y-1.5">
-              <label className="text-2xs font-semibold text-muted-foreground uppercase tracking-wider">
-                Event Link
+              <label htmlFor="event-share-link" className="text-sm font-medium text-foreground">
+                Event link
               </label>
               <div className="flex items-center gap-2">
                 <Input
+                  id="event-share-link"
                   readOnly
                   value={canonicalUrl}
-                  className="text-xs h-9 bg-muted/40 border-border/80 font-mono select-all"
+                  onFocus={(e) => e.currentTarget.select()}
+                  className="h-10 bg-muted font-mono text-xs"
                 />
                 <Button
-                  size="sm"
                   variant="secondary"
-                  className="shrink-0 text-xs h-9 px-3 gap-1.5"
+                  className="shrink-0"
                   onClick={handleCopyLink}
                 >
-                  {copied ? <Check className="h-3.5 w-3.5 text-green-600" /> : <Copy className="h-3.5 w-3.5" />}
+                  {copied ? <Check className="h-4 w-4 text-emerald-600" /> : <Copy className="h-4 w-4" />}
                   {copied ? "Copied" : "Copy"}
                 </Button>
               </div>
@@ -565,24 +547,25 @@ ${canonicalUrl}`;
               <Button
                 variant="ghost"
                 size="sm"
-                className="w-full text-xs gap-2 text-muted-foreground hover:text-foreground justify-center h-8"
+                className="w-full text-muted-foreground hover:text-foreground"
+                aria-expanded={showQrCode}
                 onClick={() => setShowQrCode(!showQrCode)}
               >
-                <QrCode className="h-3.5 w-3.5" />
-                {showQrCode ? "Hide QR Code" : "Show QR Code (Scan with phone)"}
+                <QrCode className="h-4 w-4" />
+                {showQrCode ? "Hide QR code" : "Show QR code"}
               </Button>
 
               {showQrCode && (
-                <div className="mt-3 flex flex-col items-center justify-center p-4 rounded-xl border border-border/80 bg-muted/20 space-y-2.5 animate-in fade-in zoom-in-95 duration-200">
-                  <div className="p-2 rounded-xl bg-white shadow-sm">
+                <div className="mt-3 flex flex-col items-center justify-center gap-2.5 rounded-lg border p-4 animate-fade-in">
+                  <div className="rounded-md bg-white p-2">
                     <img
                       src={qrImageUrl}
                       alt={`QR Code for ${event.title}`}
                       className="h-40 w-40 object-contain rounded"
                     />
                   </div>
-                  <p className="text-2xs text-muted-foreground text-center">
-                    Scan with camera or Google Lens to open this event on mobile
+                  <p className="text-xs text-muted-foreground text-center">
+                    Scan with a phone camera to open this event
                   </p>
                 </div>
               )}

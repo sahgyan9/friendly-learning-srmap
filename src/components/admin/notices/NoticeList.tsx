@@ -69,10 +69,10 @@ const NoticeList = ({ notices, loading, onRefetch }: NoticeListProps) => {
         {Array.from({ length: 3 }).map((_, i) => (
           <Card key={i} className="animate-pulse">
             <CardHeader>
-              <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+              <div className="h-4 bg-muted rounded w-1/2"></div>
             </CardHeader>
             <CardContent>
-              <div className="h-3 bg-gray-200 rounded w-3/4"></div>
+              <div className="h-3 bg-muted rounded w-3/4"></div>
             </CardContent>
           </Card>
         ))}

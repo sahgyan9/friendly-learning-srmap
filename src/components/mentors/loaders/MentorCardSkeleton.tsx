@@ -1,27 +1,29 @@
-
 import { Skeleton } from "@/components/ui/skeleton";
 
+/** Mirrors MentorCard: avatar row, bio, skill chips, footer with rating and action. */
 const MentorCardSkeleton = () => (
-  <div className="bg-card rounded-xl p-6 shadow-sm border border-border h-[260px]">
-    <div className="flex items-start gap-4">
-      <Skeleton className="w-16 h-16 rounded-full" />
-      <div className="flex-1">
-        <Skeleton className="h-6 w-32 mb-2" />
-        <Skeleton className="h-4 w-24 mb-2" />
-        <Skeleton className="h-5 w-16" />
+  <div className="flex h-full flex-col rounded-lg border border-border bg-card shadow-card">
+    <div className="flex flex-1 flex-col gap-3 p-4">
+      <div className="flex items-start gap-3">
+        <Skeleton className="h-12 w-12 shrink-0 rounded-full" />
+        <div className="flex-1 space-y-2 pt-0.5">
+          <Skeleton className="h-4 w-3/5" />
+          <Skeleton className="h-3.5 w-2/5" />
+        </div>
+      </div>
+      <div className="space-y-1.5">
+        <Skeleton className="h-3.5 w-full" />
+        <Skeleton className="h-3.5 w-4/5" />
+      </div>
+      <div className="flex gap-1.5">
+        <Skeleton className="h-5 w-16 rounded-md" />
+        <Skeleton className="h-5 w-20 rounded-md" />
+        <Skeleton className="h-5 w-14 rounded-md" />
       </div>
     </div>
-    <div className="mt-4 mb-5">
-      <Skeleton className="h-4 w-16 mb-2" />
-      <div className="flex gap-2">
-        <Skeleton className="h-6 w-16 rounded-full" />
-        <Skeleton className="h-6 w-20 rounded-full" />
-        <Skeleton className="h-6 w-14 rounded-full" />
-      </div>
-    </div>
-    <div className="flex gap-2 mt-4">
-      <Skeleton className="h-10 flex-1 rounded-md" />
-      <Skeleton className="h-10 flex-1 rounded-md" />
+    <div className="flex items-center justify-between border-t border-border px-4 py-3">
+      <Skeleton className="h-4 w-24" />
+      <Skeleton className="h-9 w-24 rounded-md" />
     </div>
   </div>
 );

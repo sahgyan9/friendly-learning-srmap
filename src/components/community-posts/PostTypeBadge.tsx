@@ -2,50 +2,29 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { getPostTypeMeta } from "@/integrations/supabase/services/community-posts";
 
-/** Per-type accent so the feed is scannable at a glance. */
-const TYPE_STYLES: Record<string, string> = {
-  hackathon: "bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200",
-  "study-help": "bg-sky-100 text-sky-900 dark:bg-sky-950 dark:text-sky-200",
-  project: "bg-violet-100 text-violet-900 dark:bg-violet-950 dark:text-violet-200",
-  research: "bg-teal-100 text-teal-900 dark:bg-teal-950 dark:text-teal-200",
-  "problem-solving": "bg-rose-100 text-rose-900 dark:bg-rose-950 dark:text-rose-200",
-  achievement: "bg-amber-500/15 text-amber-800 border border-amber-500/30 dark:bg-amber-950/80 dark:text-amber-300 dark:border-amber-500/50 font-semibold shadow-xs",
-  announcement: "bg-orange-100 text-orange-900 dark:bg-orange-950 dark:text-orange-200",
-  general: "bg-muted text-muted-foreground",
-};
-
 /**
- * Accent rail down the left edge of a card. Carries the same colour as the
- * badge, so the type of an ask is readable from the shape of the feed before
- * any text is read.
+ * Post types are labels, not a legend, so every chip is the same neutral
+ * surface. The type's own icon is what tells them apart at a glance; a
+ * different hue per type only made the feed noisy.
  */
-const TYPE_ACCENTS: Record<string, string> = {
-  hackathon: "bg-amber-400",
-  "study-help": "bg-sky-400",
-  project: "bg-violet-400",
-  research: "bg-teal-400",
-  "problem-solving": "bg-rose-400",
-  achievement: "bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]",
-  announcement: "bg-orange-400",
-  general: "bg-border",
-};
+const NEUTRAL_CHIP = "border-transparent bg-secondary text-secondary-foreground";
 
-export const postTypeAccent = (type: string) => TYPE_ACCENTS[type] ?? TYPE_ACCENTS.general;
+/** Kept for callers that draw a type rail; it is neutral for the same reason. */
+export const postTypeAccent = (_type: string) => "bg-border";
 
+// Status colours carry meaning: fulfilled is a success, closed is inactive.
 const STATUS_STYLES: Record<string, string> = {
-  open: "bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300",
-  fulfilled: "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300",
-  closed: "bg-muted text-muted-foreground",
+  fulfilled: "border-transparent bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
+  closed: "border-transparent bg-muted text-muted-foreground",
 };
 
 export function PostTypeBadge({ type, className }: { type: string; className?: string }) {
   const meta = getPostTypeMeta(type);
+  const Icon = meta.icon;
 
   return (
-    <Badge
-      variant="secondary"
-      className={cn("border-0 font-medium", TYPE_STYLES[type] ?? TYPE_STYLES.general, className)}
-    >
+    <Badge variant="secondary" className={cn("gap-1 font-medium", NEUTRAL_CHIP, className)}>
+      <Icon className="h-3.5 w-3.5" aria-hidden />
       {meta.label}
     </Badge>
   );
@@ -58,7 +37,7 @@ export function PostStatusBadge({ status, className }: { status: string; classNa
   return (
     <Badge
       variant="secondary"
-      className={cn("border-0 font-medium capitalize", STATUS_STYLES[status] ?? STATUS_STYLES.closed, className)}
+      className={cn("font-medium capitalize", STATUS_STYLES[status] ?? STATUS_STYLES.closed, className)}
     >
       {status}
     </Badge>

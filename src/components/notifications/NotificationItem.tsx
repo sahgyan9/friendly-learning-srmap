@@ -25,31 +25,31 @@ const NotificationItem = ({ notification, onMarkAsRead, onNotificationClick }: N
       title.includes("Starting Soon:") ||
       "event_id" in data
     ) {
-      return <Calendar className="h-4 w-4 text-violet-500 shrink-0" />;
+      return <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />;
     }
 
     if (notification.type === 'attendance_alert' || title.includes("Attendance")) {
-      return <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0" />;
+      return <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />;
     }
     if (title.includes("wants to join") || content.includes("asked to join")) {
-      return <UserPlus className="h-4 w-4 text-emerald-500 shrink-0" />;
+      return <UserPlus className="h-4 w-4 text-muted-foreground shrink-0" />;
     }
     if (title.includes("invited to") || title.includes("You are in") || content.includes("joined")) {
-      return <Users className="h-4 w-4 text-emerald-500 shrink-0" />;
+      return <Users className="h-4 w-4 text-muted-foreground shrink-0" />;
     }
     if (title.includes("Mentor") || content.includes("mentor")) {
-      return <Award className="h-4 w-4 text-purple-500 shrink-0" />;
+      return <Award className="h-4 w-4 text-muted-foreground shrink-0" />;
     }
 
     switch (notification.type) {
       case 'attendance_alert':
-        return <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0" />;
+        return <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />;
       case 'badge':
-        return <Star className="h-4 w-4 text-amber-500 shrink-0" />;
+        return <Star className="h-4 w-4 text-muted-foreground shrink-0" />;
       case 'message':
-        return <MessageCircle className="h-4 w-4 text-blue-500 shrink-0" />;
+        return <MessageCircle className="h-4 w-4 text-muted-foreground shrink-0" />;
       case 'system':
-        return <Bell className="h-4 w-4 text-emerald-500 shrink-0" />;
+        return <Bell className="h-4 w-4 text-muted-foreground shrink-0" />;
       default:
         return <Badge className="h-4 w-4 text-muted-foreground shrink-0" />;
     }
@@ -82,11 +82,9 @@ const NotificationItem = ({ notification, onMarkAsRead, onNotificationClick }: N
     <Button
       variant="ghost"
       className={cn(
-        "w-full justify-start p-3.5 h-auto text-left whitespace-normal rounded-none border-b border-border/40 last:border-0",
-        clickable
-          ? "hover:bg-muted/60 cursor-pointer transition-colors"
-          : "hover:bg-muted/20 cursor-default",
-        !notification.read && "bg-blue-50/70 dark:bg-blue-950/30"
+        "w-full justify-start px-4 py-3.5 h-auto text-left whitespace-normal rounded-none active:scale-100",
+        clickable ? "cursor-pointer hover:bg-accent" : "cursor-default hover:bg-transparent",
+        !notification.read && "bg-primary/5"
       )}
       onClick={handleClick}
     >
@@ -94,12 +92,12 @@ const NotificationItem = ({ notification, onMarkAsRead, onNotificationClick }: N
         <div className="mt-0.5 shrink-0">{getIcon()}</div>
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2 mb-1">
-            <p className="font-semibold text-xs leading-snug text-foreground break-words min-w-0 flex-1">
+            <p className={cn("text-sm leading-snug text-foreground break-words min-w-0 flex-1", notification.read ? "font-normal" : "font-medium")}>
               {notification.title}
             </p>
             <div className="flex items-center gap-1.5 shrink-0 mt-0.5">
               {!notification.read && (
-                <div className="w-2 h-2 bg-blue-500 rounded-full" />
+                <span className="h-2 w-2 rounded-full bg-primary" aria-label="Unread" />
               )}
               {clickable && (
                 <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
@@ -107,11 +105,11 @@ const NotificationItem = ({ notification, onMarkAsRead, onNotificationClick }: N
             </div>
           </div>
           {notification.content && (
-            <p className="text-xs text-muted-foreground leading-relaxed break-words line-clamp-3 mb-1">
+            <p className="text-sm text-muted-foreground leading-relaxed break-words line-clamp-3 mb-1">
               {notification.content}
             </p>
           )}
-          <p className="text-2xs text-muted-foreground/80 font-medium">
+          <p className="text-xs text-muted-foreground">
             {formatDistanceToNow(new Date(notification.created_at!), { addSuffix: true })}
           </p>
         </div>

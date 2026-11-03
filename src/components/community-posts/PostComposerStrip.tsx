@@ -62,11 +62,11 @@ export const PostComposerStrip = ({ onPostCreated, className }: PostComposerStri
             Sign in to share something with campus…
           </Link>
           <Link to="/signin" state={{ from: location }} className={actionClass}>
-            <ImagePlus className="h-4 w-4 text-emerald-500" />
+            <ImagePlus className="h-4 w-4 text-muted-foreground" />
             Post
           </Link>
           <Link to="/signin" state={{ from: location }} className={actionClass}>
-            <Users className="h-4 w-4 text-amber-500" />
+            <Users className="h-4 w-4 text-muted-foreground" />
             Group
           </Link>
         </div>
@@ -80,7 +80,7 @@ export const PostComposerStrip = ({ onPostCreated, className }: PostComposerStri
         <div className="flex items-center gap-2">
           <Avatar className="h-8 w-8 shrink-0 ring-1 ring-border">
             <AvatarImage src={profile?.profile_image ?? undefined} alt={profile?.name ?? ""} />
-            <AvatarFallback className="bg-emerald-500/10 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+            <AvatarFallback className="bg-secondary text-xs font-medium text-secondary-foreground">
               {getInitials(profile?.name ?? "")}
             </AvatarFallback>
           </Avatar>
@@ -95,11 +95,11 @@ export const PostComposerStrip = ({ onPostCreated, className }: PostComposerStri
           </button>
 
           <button type="button" onClick={() => setShowPost(true)} className={actionClass}>
-            <ImagePlus className="h-4 w-4 text-emerald-500" />
+            <ImagePlus className="h-4 w-4 text-muted-foreground" />
             Post
           </button>
           <button type="button" onClick={() => setShowGroup(true)} className={actionClass}>
-            <Users className="h-4 w-4 text-amber-500" />
+            <Users className="h-4 w-4 text-muted-foreground" />
             Group
           </button>
         </div>

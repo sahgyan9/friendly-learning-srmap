@@ -1,4 +1,5 @@
 
+import { Skeleton } from "@/components/ui/skeleton";
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -38,9 +39,9 @@ const SecurityMonitor = () => {
       return <Shield className="h-4 w-4 text-red-500" />;
     }
     if (action.includes('verification') || action.includes('badge')) {
-      return <Activity className="h-4 w-4 text-blue-500" />;
+      return <Activity className="h-4 w-4 text-muted-foreground" />;
     }
-    return <AlertTriangle className="h-4 w-4 text-yellow-500" />;
+    return <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400" />;
   };
 
   const getActionBadge = (action: string) => {
@@ -63,7 +64,12 @@ const SecurityMonitor = () => {
   };
 
   if (loading) {
-    return <div className="animate-pulse">Loading security monitor...</div>;
+    return (
+      <div className="space-y-3" role="status" aria-label="Loading security activity">
+        <Skeleton className="h-24 rounded-xl" />
+        <Skeleton className="h-48 rounded-xl" />
+      </div>
+    );
   }
 
   return (
@@ -72,30 +78,30 @@ const SecurityMonitor = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Shield className="h-5 w-5" />
-            Security Activity Monitor
+            Security activity
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div className="text-center p-4 bg-green-50 dark:bg-green-950/40 rounded-lg">
-              <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+          <dl className="mb-6 grid grid-cols-1 divide-y divide-border rounded-lg border border-border md:grid-cols-3 md:divide-x md:divide-y-0">
+            <div className="p-4">
+              <dt className="text-sm text-muted-foreground">Actions, last 24 hours</dt>
+              <dd className="mt-1 text-2xl font-semibold tabular">
                 {auditLogs.filter(log => log.created_at > new Date(Date.now() - 24*60*60*1000).toISOString()).length}
-              </div>
-              <div className="text-sm text-green-700 dark:text-green-300">Actions (24h)</div>
+              </dd>
             </div>
-            <div className="text-center p-4 bg-red-50 dark:bg-red-950/40 rounded-lg">
-              <div className="text-2xl font-bold text-red-600 dark:text-red-400">
+            <div className="p-4">
+              <dt className="text-sm text-muted-foreground">Admin role changes</dt>
+              <dd className="mt-1 text-2xl font-semibold tabular">
                 {auditLogs.filter(log => log.action.includes('admin') || log.action.includes('promote')).length}
-              </div>
-              <div className="text-sm text-red-700 dark:text-red-300">Critical Actions</div>
+              </dd>
             </div>
-            <div className="text-center p-4 bg-blue-50 dark:bg-blue-950/40 rounded-lg">
-              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+            <div className="p-4">
+              <dt className="text-sm text-muted-foreground">Admins with activity</dt>
+              <dd className="mt-1 text-2xl font-semibold tabular">
                 {new Set(auditLogs.map(log => log.admin_user?.email).filter(Boolean)).size}
-              </div>
-              <div className="text-sm text-blue-700 dark:text-blue-300">Active Admins</div>
+              </dd>
             </div>
-          </div>
+          </dl>
 
           <div className="space-y-3">
             <h3 className="font-medium flex items-center gap-2">

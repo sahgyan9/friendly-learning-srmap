@@ -347,7 +347,7 @@ export function MobileNavDock() {
               {showPushPrompt && (
                 <div className="mx-4 mb-3 flex items-center justify-between gap-3 rounded-xl border border-primary/20 bg-primary/10 px-3.5 py-2.5">
                   <div className="flex min-w-0 items-center gap-2.5">
-                    <BellRing className="h-4 w-4 shrink-0 animate-pulse text-primary" aria-hidden />
+                    <BellRing className="h-4 w-4 shrink-0 text-primary" aria-hidden />
                     <div className="min-w-0">
                       <p className="truncate text-xs font-medium text-foreground/90">
                         Get push alerts

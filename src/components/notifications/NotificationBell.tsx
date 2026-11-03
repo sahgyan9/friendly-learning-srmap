@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from "react";
-import { Bell, BellRing } from "lucide-react";
+import { Bell, BellOff, BellRing } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
@@ -62,13 +62,13 @@ const NotificationBell = ({ className }: { className?: string }) => {
   const bellAriaLabel = unreadCount > 0
     ? `Notifications, ${unreadCount} unread`
     : showPushDot
-    ? "Notifications (Push alerts disabled)"
+    ? "Notifications, push alerts off"
     : "Notifications";
 
   const bellTitle = unreadCount > 0
     ? `${unreadCount} unread notification${unreadCount > 1 ? "s" : ""}`
     : showPushDot
-    ? "Notifications • Enable push alerts"
+    ? "Notifications. Push alerts are off"
     : "Notifications";
 
   return (
@@ -93,69 +93,80 @@ const NotificationBell = ({ className }: { className?: string }) => {
           <Bell className="h-5 w-5" aria-hidden />
           {unreadCount > 0 ? (
             <span
-              className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1 text-2xs font-semibold leading-none text-destructive-foreground ring-2 ring-background"
+              className="tabular absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1 text-2xs font-semibold leading-none text-destructive-foreground ring-2 ring-background"
               aria-hidden
             >
               {unreadCount > 99 ? '99+' : unreadCount}
             </span>
           ) : showPushDot ? (
-            <span className="absolute top-1.5 right-1.5 flex h-2.5 w-2.5" aria-hidden>
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary ring-2 ring-background"></span>
-            </span>
+            // A static dot: push being off is a setting, not news, so it
+            // should not compete with a real unread ping for attention.
+            <span className="absolute right-1.5 top-1.5 h-2.5 w-2.5 rounded-full bg-primary ring-2 ring-background" aria-hidden />
           ) : null}
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-[360px] sm:w-[420px] max-w-[calc(100vw-2rem)] p-0 shadow-xl border-border/80" align="end">
-        <div className="p-3.5 px-4 border-b border-border/60 bg-muted/30">
-          <div className="flex items-center justify-between">
-            <h3 className="font-semibold text-sm">Notifications</h3>
+      <PopoverContent className="w-[360px] sm:w-[420px] max-w-[calc(100vw-2rem)] p-0 shadow-float" align="end">
+        <div className="flex items-center justify-between gap-2 border-b px-4 py-2.5">
+          <h3 className="flex items-baseline gap-2 text-sm font-semibold">
+            Notifications
             {unreadCount > 0 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={markAllAsRead}
-                className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
-              >
-                Mark all read
-              </Button>
+              <span className="tabular text-xs font-normal text-muted-foreground">{unreadCount} unread</span>
             )}
-          </div>
+          </h3>
+          {unreadCount > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={markAllAsRead}
+              className="-mr-2 text-xs text-muted-foreground hover:text-foreground"
+            >
+              Mark all as read
+            </Button>
+          )}
         </div>
         {canOfferPush && (
-          <div className="bg-primary/10 border-b border-primary/20 px-3.5 py-2 flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2 min-w-0">
-              <BellRing className="h-4 w-4 text-primary shrink-0 animate-pulse" />
-              <span className="text-xs text-foreground/90 font-medium truncate">
-                Get browser push alerts
+          <div className="flex items-center justify-between gap-2 border-b bg-secondary/60 px-4 py-2">
+            <div className="flex min-w-0 items-center gap-2">
+              <BellRing className="h-4 w-4 shrink-0 text-primary" aria-hidden />
+              <span className="truncate text-xs text-foreground">
+                Get alerts even when this tab is closed
               </span>
             </div>
             <Button
               size="sm"
-              variant="default"
-              className="relative h-6 px-2.5 text-2xs font-semibold shrink-0"
-              disabled={pushLoading}
+              className="h-8 shrink-0 px-3 text-xs"
+              isLoading={pushLoading}
               onClick={enablePush}
             >
-              <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5" aria-hidden>
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary ring-2 ring-background"></span>
-              </span>
-              {pushLoading ? "Enabling..." : "Enable"}
+              Turn on
             </Button>
           </div>
         )}
         <ScrollArea className="h-[400px]">
           {loading ? (
-            <div className="p-6 text-center text-xs text-muted-foreground">
-              Loading notifications...
+            <div className="divide-y" aria-busy="true" aria-label="Loading notifications">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="flex gap-3 p-4">
+                  <div className="h-8 w-8 shrink-0 animate-pulse rounded-full bg-muted" />
+                  <div className="flex flex-1 flex-col gap-2">
+                    <div className="h-3.5 w-3/4 animate-pulse rounded bg-muted" />
+                    <div className="h-3 w-1/3 animate-pulse rounded bg-muted" />
+                  </div>
+                </div>
+              ))}
             </div>
           ) : notifications.length === 0 ? (
-            <div className="p-6 text-center text-xs text-muted-foreground">
-              No notifications yet
+            <div className="flex flex-col items-center gap-3 px-6 py-12 text-center">
+              <div className="flex h-10 w-10 items-center justify-center rounded-md bg-secondary text-muted-foreground">
+                <BellOff className="h-5 w-5" aria-hidden />
+              </div>
+              <div className="flex flex-col gap-1">
+                <p className="text-sm font-medium">No notifications</p>
+                <p className="text-xs text-muted-foreground">Replies, RSVP reminders and group invites will show up here.</p>
+              </div>
             </div>
           ) : (
-            <div className="divide-y divide-border/40">
+            <div className="divide-y">
               {notifications.map((notification) => (
                 <NotificationItem
                   key={notification.id}

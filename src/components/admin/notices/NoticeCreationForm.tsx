@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Image as ImageIcon, Loader2, Sparkles } from "lucide-react";
+import { Image as ImageIcon, ScanText } from "lucide-react";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/errors";
 import {
@@ -74,7 +74,7 @@ const NoticeCreationForm = ({ onCancel, onSuccess }: NoticeCreationFormProps) =>
       summary: parsed.summary || "",
       content: parsed.content || "",
     });
-    toast.success("Parsed — review the fields below before publishing");
+    toast.success("Details filled in. Check them before publishing.");
   };
 
   const handleParseText = async () => {
@@ -151,14 +151,14 @@ const NoticeCreationForm = ({ onCancel, onSuccess }: NoticeCreationFormProps) =>
 
   return (
     <div className="space-y-4">
-      <Card className="border-dashed border-primary/40 bg-primary/5">
+      <Card className="border-dashed">
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-primary" />
-            Parse with AI
+            <ScanText className="h-4 w-4 text-muted-foreground" />
+            Fill from a circular
           </CardTitle>
           <CardDescription>
-            Paste the circular text, or upload a photo of it — the fields below get filled in for you to review.
+            Paste the circular text or upload a photo. The details below are filled in for you to check before publishing.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -169,9 +169,8 @@ const NoticeCreationForm = ({ onCancel, onSuccess }: NoticeCreationFormProps) =>
             rows={5}
           />
           <div className="flex flex-wrap gap-2">
-            <Button type="button" onClick={handleParseText} disabled={parsing}>
-              {parsing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-              Parse Text
+            <Button type="button" variant="secondary" onClick={handleParseText} isLoading={parsing}>
+              Fill from text
             </Button>
             <input
               ref={imageInputRef}
@@ -187,7 +186,7 @@ const NoticeCreationForm = ({ onCancel, onSuccess }: NoticeCreationFormProps) =>
               disabled={parsing}
             >
               <ImageIcon className="mr-2 h-4 w-4" />
-              Upload Photo Instead
+              Upload a photo
             </Button>
           </div>
         </CardContent>
@@ -195,7 +194,7 @@ const NoticeCreationForm = ({ onCancel, onSuccess }: NoticeCreationFormProps) =>
 
       <Card>
         <CardHeader>
-          <CardTitle>Notice Details</CardTitle>
+          <CardTitle>Notice details</CardTitle>
           <CardDescription>Review and edit before publishing — this is what gets saved.</CardDescription>
         </CardHeader>
         <CardContent>

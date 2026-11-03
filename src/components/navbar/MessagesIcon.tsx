@@ -41,7 +41,7 @@ const MessagesIcon = ({ className }: { className?: string }) => {
             "relative flex h-10 w-10 items-center justify-center rounded-full transition-colors",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
             isActive
-              ? "bg-sky-500/15 text-sky-600 dark:text-sky-400"
+              ? "bg-primary/10 text-primary"
               : "bg-muted text-foreground/80 hover:bg-muted/70 hover:text-foreground",
             className,
           )}

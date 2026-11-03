@@ -10,7 +10,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import {
-  Sparkles,
   CheckCircle2,
   FolderGit2,
   Briefcase,
@@ -232,27 +231,23 @@ export default function ResumeUpdateDiffModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl sm:max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <div className="flex items-center gap-2 text-primary font-bold text-xs uppercase tracking-wider">
-            <Sparkles className="h-4 w-4" />
-            Resume Update Comparison
-          </div>
-          <DialogTitle className="text-lg sm:text-xl font-extrabold text-foreground">
-            Review What to Merge from Your Resume
+          <DialogTitle className="text-lg font-semibold tracking-tight text-foreground">
+            Choose what to update from your resume
           </DialogTitle>
           <DialogDescription className="text-xs text-muted-foreground">
-            We extracted new details from your resume. Choose which sections you want to merge or keep unchanged.
+            New details were found in your resume. Pick what to merge; everything else stays as it is.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 pt-2 text-xs">
           {/* 1. SKILLS SECTION */}
-          <div className="rounded-xl border border-border/80 bg-card p-4 space-y-3">
+          <div className="rounded-lg border border-border bg-card p-4 space-y-3">
             <div className="flex items-center justify-between border-b border-border/60 pb-2">
-              <div className="flex items-center gap-2 font-bold text-foreground">
-                <Zap className="h-4 w-4 text-emerald-500" />
-                <span>Skills & Expertise</span>
-                <Badge variant="outline" className="text-2xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
-                  {newDiscoveredSkills.length > 0 ? `+${newDiscoveredSkills.length} New Found` : "Up to date"}
+              <div className="flex items-center gap-2 font-semibold text-foreground">
+                <Zap className="h-4 w-4 text-muted-foreground" />
+                <span>Skills</span>
+                <Badge variant="secondary" className="text-2xs font-medium">
+                  {newDiscoveredSkills.length > 0 ? `${newDiscoveredSkills.length} new` : "Up to date"}
                 </Badge>
               </div>
               {newDiscoveredSkills.length > 0 && (
@@ -262,7 +257,7 @@ export default function ResumeUpdateDiffModal({
                     onClick={() => setSelectedNewSkills(newDiscoveredSkills)}
                     className="text-2xs text-primary underline font-medium"
                   >
-                    Select All
+                    Select all
                   </button>
                   <span>•</span>
                   <button
@@ -293,15 +288,15 @@ export default function ResumeUpdateDiffModal({
                         key={skill}
                         type="button"
                         onClick={() => toggleSkill(skill)}
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all ${
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold border transition-colors ${
                           isSelected
-                            ? "bg-emerald-50 dark:bg-emerald-950/60 border-emerald-300 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200"
-                            : "bg-muted/40 border-border/60 text-muted-foreground line-through opacity-60"
+                            ? "bg-primary/10 border-primary/40 text-foreground"
+                            : "bg-card border-border text-muted-foreground"
                         }`}
                       >
                         <span className={`flex h-3.5 w-3.5 items-center justify-center rounded-xs border text-[10px] ${
                           isSelected
-                            ? "bg-emerald-600 text-white border-emerald-600"
+                            ? "bg-primary text-primary-foreground border-primary"
                             : "border-muted-foreground/40 bg-transparent"
                         }`}>
                           {isSelected && <Check className="h-2.5 w-2.5 stroke-[3]" />}
@@ -316,11 +311,11 @@ export default function ResumeUpdateDiffModal({
           </div>
 
           {/* 2. FEATURED PROJECTS */}
-          <div className="rounded-xl border border-border/80 bg-card p-4 space-y-3">
+          <div className="rounded-lg border border-border bg-card p-4 space-y-3">
             <div className="flex items-center justify-between border-b border-border/60 pb-2">
-              <div className="flex items-center gap-2 font-bold text-foreground">
-                <FolderGit2 className="h-4 w-4 text-blue-500" />
-                <span>Featured Projects</span>
+              <div className="flex items-center gap-2 font-semibold text-foreground">
+                <FolderGit2 className="h-4 w-4 text-muted-foreground" />
+                <span>Projects</span>
                 <Badge variant="outline" className="text-2xs">
                   {extractedProjects.length} Extracted from Resume
                 </Badge>
@@ -331,7 +326,7 @@ export default function ResumeUpdateDiffModal({
                   <button
                     type="button"
                     onClick={() => setProjectMode("append")}
-                    className={`px-2 py-1 rounded-md transition-all ${
+                    className={`px-2 py-1 rounded-md transition-colors ${
                       projectMode === "append"
                         ? "bg-background text-foreground shadow-xs font-bold"
                         : "text-muted-foreground hover:text-foreground"
@@ -342,7 +337,7 @@ export default function ResumeUpdateDiffModal({
                   <button
                     type="button"
                     onClick={() => setProjectMode("replace")}
-                    className={`px-2 py-1 rounded-md transition-all ${
+                    className={`px-2 py-1 rounded-md transition-colors ${
                       projectMode === "replace"
                         ? "bg-background text-foreground shadow-xs font-bold"
                         : "text-muted-foreground hover:text-foreground"
@@ -353,7 +348,7 @@ export default function ResumeUpdateDiffModal({
                   <button
                     type="button"
                     onClick={() => setProjectMode("keep")}
-                    className={`px-2 py-1 rounded-md transition-all ${
+                    className={`px-2 py-1 rounded-md transition-colors ${
                       projectMode === "keep"
                         ? "bg-background text-foreground shadow-xs font-bold"
                         : "text-muted-foreground hover:text-foreground"
@@ -377,7 +372,7 @@ export default function ResumeUpdateDiffModal({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
                   {extractedProjects.map((p, i) => (
                     <div key={i} className="p-2 rounded-lg border border-border/60 bg-muted/20 text-2xs space-y-0.5">
-                      <p className="font-bold text-foreground truncate">{p.title}</p>
+                      <p className="font-semibold text-foreground truncate">{p.title}</p>
                       <p className="text-muted-foreground line-clamp-2">{p.description}</p>
                     </div>
                   ))}
@@ -387,11 +382,11 @@ export default function ResumeUpdateDiffModal({
           </div>
 
           {/* 3. EXPERIENCE & LEADERSHIP */}
-          <div className="rounded-xl border border-border/80 bg-card p-4 space-y-3">
+          <div className="rounded-lg border border-border bg-card p-4 space-y-3">
             <div className="flex items-center justify-between border-b border-border/60 pb-2">
-              <div className="flex items-center gap-2 font-bold text-foreground">
-                <Briefcase className="h-4 w-4 text-amber-500" />
-                <span>Experience & Roles</span>
+              <div className="flex items-center gap-2 font-semibold text-foreground">
+                <Briefcase className="h-4 w-4 text-muted-foreground" />
+                <span>Experience</span>
                 <Badge variant="outline" className="text-2xs">
                   {extractedExperiences.length} Extracted from Resume
                 </Badge>
@@ -402,7 +397,7 @@ export default function ResumeUpdateDiffModal({
                   <button
                     type="button"
                     onClick={() => setExperienceMode("append")}
-                    className={`px-2 py-1 rounded-md transition-all ${
+                    className={`px-2 py-1 rounded-md transition-colors ${
                       experienceMode === "append"
                         ? "bg-background text-foreground shadow-xs font-bold"
                         : "text-muted-foreground hover:text-foreground"
@@ -413,7 +408,7 @@ export default function ResumeUpdateDiffModal({
                   <button
                     type="button"
                     onClick={() => setExperienceMode("replace")}
-                    className={`px-2 py-1 rounded-md transition-all ${
+                    className={`px-2 py-1 rounded-md transition-colors ${
                       experienceMode === "replace"
                         ? "bg-background text-foreground shadow-xs font-bold"
                         : "text-muted-foreground hover:text-foreground"
@@ -424,7 +419,7 @@ export default function ResumeUpdateDiffModal({
                   <button
                     type="button"
                     onClick={() => setExperienceMode("keep")}
-                    className={`px-2 py-1 rounded-md transition-all ${
+                    className={`px-2 py-1 rounded-md transition-colors ${
                       experienceMode === "keep"
                         ? "bg-background text-foreground shadow-xs font-bold"
                         : "text-muted-foreground hover:text-foreground"
@@ -448,7 +443,7 @@ export default function ResumeUpdateDiffModal({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
                   {extractedExperiences.map((e, i) => (
                     <div key={i} className="p-2 rounded-lg border border-border/60 bg-muted/20 text-2xs space-y-0.5">
-                      <p className="font-bold text-foreground truncate">{e.title}</p>
+                      <p className="font-semibold text-foreground truncate">{e.title}</p>
                       {e.organization && <p className="text-muted-foreground">{e.organization}</p>}
                       {e.period && <p className="text-muted-foreground/80">{e.period}</p>}
                     </div>
@@ -461,11 +456,11 @@ export default function ResumeUpdateDiffModal({
           {/* 4. TAGLINE & BIO DIFF */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Tagline Card */}
-            <div className="rounded-xl border border-border/80 bg-card p-4 space-y-2.5">
+            <div className="rounded-lg border border-border bg-card p-4 space-y-2.5">
               <div className="flex items-center justify-between border-b border-border/60 pb-2">
-                <div className="flex items-center gap-1.5 font-bold text-foreground">
-                  <Tag className="h-3.5 w-3.5 text-indigo-500" />
-                  <span>One-Line Tagline</span>
+                <div className="flex items-center gap-1.5 font-semibold text-foreground">
+                  <Tag className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span>Tagline</span>
                 </div>
                 <div className="flex items-center gap-1 bg-muted/60 p-0.5 rounded-lg border border-border/60 text-2xs font-semibold">
                   <button
@@ -487,22 +482,22 @@ export default function ResumeUpdateDiffModal({
 
               <div className="space-y-1.5 text-2xs">
                 <div className={`p-2 rounded-lg border ${taglineChoice === "keep" ? "border-primary/40 bg-primary/5" : "border-border/60 bg-muted/20 opacity-60"}`}>
-                  <p className="font-bold text-foreground">Current:</p>
+                  <p className="font-semibold text-foreground">Current:</p>
                   <p className="italic">{currentState.tagline || "(None set)"}</p>
                 </div>
                 <div className={`p-2 rounded-lg border ${taglineChoice === "replace" ? "border-primary/40 bg-primary/5" : "border-border/60 bg-muted/20 opacity-60"}`}>
-                  <p className="font-bold text-foreground">New Extracted:</p>
+                  <p className="font-semibold text-foreground">From resume:</p>
                   <p className="italic">{newTagline || "(No new tagline)"}</p>
                 </div>
               </div>
             </div>
 
             {/* Bio Card */}
-            <div className="rounded-xl border border-border/80 bg-card p-4 space-y-2.5">
+            <div className="rounded-lg border border-border bg-card p-4 space-y-2.5">
               <div className="flex items-center justify-between border-b border-border/60 pb-2">
-                <div className="flex items-center gap-1.5 font-bold text-foreground">
-                  <FileText className="h-3.5 w-3.5 text-amber-500" />
-                  <span>Short Bio</span>
+                <div className="flex items-center gap-1.5 font-semibold text-foreground">
+                  <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span>Bio</span>
                 </div>
                 <div className="flex items-center gap-1 bg-muted/60 p-0.5 rounded-lg border border-border/60 text-2xs font-semibold">
                   <button
@@ -524,11 +519,11 @@ export default function ResumeUpdateDiffModal({
 
               <div className="space-y-1.5 text-2xs">
                 <div className={`p-2 rounded-lg border ${bioChoice === "keep" ? "border-primary/40 bg-primary/5" : "border-border/60 bg-muted/20 opacity-60"}`}>
-                  <p className="font-bold text-foreground">Current:</p>
+                  <p className="font-semibold text-foreground">Current:</p>
                   <p className="line-clamp-2">{currentState.bio || "(None set)"}</p>
                 </div>
                 <div className={`p-2 rounded-lg border ${bioChoice === "replace" ? "border-primary/40 bg-primary/5" : "border-border/60 bg-muted/20 opacity-60"}`}>
-                  <p className="font-bold text-foreground">New Extracted:</p>
+                  <p className="font-semibold text-foreground">From resume:</p>
                   <p className="line-clamp-2">{newBio || "(No new bio)"}</p>
                 </div>
               </div>
@@ -536,9 +531,9 @@ export default function ResumeUpdateDiffModal({
           </div>
 
           {/* 5. TOPICS & SUMMARIES TOGGLE */}
-          <div className="rounded-xl border border-border/80 bg-muted/20 p-3.5 flex items-center justify-between gap-3">
+          <div className="rounded-xl border border-border bg-muted/20 p-3.5 flex items-center justify-between gap-3">
             <div>
-              <p className="font-bold text-foreground">Update Mentoring Outcomes & AMA Topics</p>
+              <p className="font-semibold text-foreground">Update Mentoring Outcomes & AMA Topics</p>
               <p className="text-2xs text-muted-foreground">
                 Regenerate your &ldquo;What I can help you achieve&rdquo; and &ldquo;Ask me anything&rdquo; topics to align with newly extracted skills.
               </p>

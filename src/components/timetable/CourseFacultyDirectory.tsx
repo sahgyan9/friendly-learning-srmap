@@ -94,10 +94,10 @@ export default function CourseFacultyDirectory({
               key={item.code}
               onClick={() => onSelectCourse?.(item.code)}
               className={cn(
-                "p-3.5 rounded-xl border transition-all text-left bg-card/60 backdrop-blur-sm cursor-pointer",
+                "p-3.5 rounded-xl border transition-colors duration-150 text-left bg-card cursor-pointer",
                 isSelected
-                  ? "border-primary ring-1 ring-primary/40 bg-primary/5"
-                  : "border-border/70 hover:border-border"
+                  ? "border-primary bg-primary/5"
+                  : "border-border hover:border-foreground/20"
               )}
             >
               <div className="flex items-center justify-between gap-2 mb-2">
@@ -111,8 +111,8 @@ export default function CourseFacultyDirectory({
                 </span>
                 <div className="flex items-center gap-1.5 flex-wrap justify-end">
                   {item.isLab && (
-                    <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30">
-                      LAB
+                    <span className="px-1.5 py-0.5 rounded text-3xs font-medium bg-secondary text-secondary-foreground">
+                      Lab
                     </span>
                   )}
                   <span className="inline-block px-2 py-0.5 rounded-md font-mono text-[11px] font-medium bg-muted/80 text-foreground/90 border border-border/60">
@@ -175,7 +175,7 @@ export default function CourseFacultyDirectory({
       </div>
 
       {/* Desktop Table View (Compact, Table-Fixed, Zero Horizontal Scroll) */}
-      <div className="hidden sm:block rounded-xl border border-border/70 bg-card/60 shadow-xs backdrop-blur-sm overflow-hidden">
+      <div className="hidden sm:block rounded-xl border border-border bg-card shadow-card overflow-hidden">
         <table className="w-full text-sm text-left border-collapse table-fixed">
           <thead>
             <tr className="border-b border-border/80 bg-muted/40 text-xs font-semibold text-muted-foreground">
@@ -223,8 +223,8 @@ export default function CourseFacultyDirectory({
                     <div className="flex items-center gap-1.5 flex-wrap">
                       <span className="truncate">{item.name}</span>
                       {item.isLab && (
-                        <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30">
-                          LAB
+                        <span className="px-1.5 py-0.2 rounded text-3xs font-medium bg-secondary text-secondary-foreground">
+                          Lab
                         </span>
                       )}
                     </div>

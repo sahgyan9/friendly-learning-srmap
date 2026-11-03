@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, Clock, Loader2, MessageCircleMore, SearchX, Sparkles, GraduationCap, MessageSquare, ShieldCheck } from "lucide-react";
+import { AlertCircle, Clock, Loader2, MessageCircleMore, SearchX, Users, GraduationCap, MessageSquare, ShieldCheck } from "lucide-react";
 import { Conversation } from "@/types/chat";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { getInitials, getBadgeVariant } from "@/utils/user-utils";
 import { useUserPresenceRealtime } from "@/hooks/useUserPresenceRealtime";
@@ -89,11 +90,11 @@ const ConversationList = ({
     return (
       <div className="flex flex-col gap-3 p-3">
         {[...Array(4)].map((_, i) => (
-          <div key={i} className="flex items-center gap-3 rounded-xl p-2.5 animate-pulse">
-            <div className="h-11 w-11 shrink-0 rounded-full bg-white/8" />
+          <div key={i} className="flex items-center gap-3 rounded-lg p-2.5">
+            <Skeleton className="h-11 w-11 shrink-0 rounded-full" />
             <div className="flex-1 space-y-2">
-              <div className="h-3.5 w-28 rounded-full bg-white/8" />
-              <div className="h-3 w-40 rounded-full bg-white/5" />
+              <Skeleton className="h-3.5 w-28" />
+              <Skeleton className="h-3 w-40" />
             </div>
           </div>
         ))}
@@ -108,7 +109,7 @@ const ConversationList = ({
   if (!hasConversations && !hasDiscoveredUsers && !isSearchingCampus) {
     return (
       <div className="px-6 py-14 text-center">
-        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-white/5 ring-1 ring-white/10">
+        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-lg bg-secondary">
           {hasSearchQuery ? (
             <SearchX className="h-6 w-6 text-muted-foreground" aria-hidden />
           ) : (
@@ -126,8 +127,7 @@ const ConversationList = ({
                 size="sm"
                 variant="outline"
                 onClick={() => onOpenCampusSearch(searchQuery.trim())}
-                className="rounded-full text-xs px-4 border-primary/30 hover:bg-primary/10 text-primary"
-              >
+                >
                 Search campus directory
               </Button>
             )}
@@ -143,12 +143,11 @@ const ConversationList = ({
                 <Button
                   size="sm"
                   onClick={() => onOpenCampusSearch("")}
-                  className="rounded-full px-4 text-xs bg-primary"
                 >
                   Start new chat
                 </Button>
               )}
-              <Button size="sm" variant="outline" asChild className="rounded-full px-4 text-xs">
+              <Button size="sm" variant="outline" asChild>
                 <Link to="/mentors">Browse mentors</Link>
               </Button>
             </div>
@@ -164,7 +163,7 @@ const ConversationList = ({
       {hasConversations && (
         <div className="space-y-0.5">
           {hasSearchQuery && (
-            <div className="px-2 py-1 text-3xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <div className="px-2 py-1 text-xs font-medium text-muted-foreground">
               Conversations
             </div>
           )}
@@ -187,26 +186,25 @@ const ConversationList = ({
                     onClick={() => setActiveChat(conversation.id)}
                     aria-current={isActive ? "true" : undefined}
                     className={cn(
-                      "group relative flex w-full items-center gap-3 rounded-xl p-2.5 text-left transition-all duration-200",
-                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
+                      "group relative flex w-full items-center gap-3 rounded-lg p-2.5 text-left transition-colors duration-150",
                       isActive
-                        ? "bg-gradient-to-r from-primary/20 via-primary/10 to-transparent shadow-sm ring-1 ring-primary/20"
+                        ? "bg-primary/10"
                         : hasUnread
-                          ? "bg-sky-400/[0.06] hover:bg-sky-400/10"
-                          : "hover:bg-white/5",
+                          ? "hover:bg-accent"
+                          : "hover:bg-accent",
                     )}
                   >
                     {/* Active indicator bar */}
                     {isActive && (
-                      <span className="absolute left-0 top-1/2 h-8 w-0.5 -translate-y-1/2 rounded-full bg-primary shadow-[0_0_8px_0px_hsl(var(--primary))]" />
+                      <span className="absolute left-0 top-1/2 h-8 w-0.5 -translate-y-1/2 rounded-full bg-primary" />
                     )}
 
                     <div className="relative shrink-0">
-                      <Avatar className={cn("h-11 w-11 transition-all duration-200", isActive && "ring-2 ring-primary/40 ring-offset-1 ring-offset-transparent")}>
+                      <Avatar className="h-11 w-11">
                         <AvatarImage src={otherUser?.profile_image} alt="" className="object-cover" />
                         <AvatarFallback className={cn(
                           "font-semibold text-sm transition-colors duration-200",
-                          isActive ? "bg-primary/20 text-primary" : "bg-white/8 text-muted-foreground"
+                          isActive ? "bg-primary/15 text-primary" : "bg-secondary text-secondary-foreground"
                         )}>
                           {getInitials(displayName)}
                         </AvatarFallback>
@@ -236,7 +234,7 @@ const ConversationList = ({
                         </span>
                         <span className={cn(
                           "shrink-0 text-3xs tabular-nums transition-colors duration-200",
-                          isActive ? "text-primary/80" : "text-muted-foreground/60"
+                          isActive ? "text-primary" : "text-muted-foreground"
                         )}>
                           {formatTime(conversation.last_updated)}
                         </span>
@@ -258,14 +256,14 @@ const ConversationList = ({
                         <p
                           className={cn(
                             "truncate text-xs leading-relaxed transition-colors duration-200",
-                            hasUnread ? "font-semibold text-foreground" : "text-muted-foreground/60",
+                            hasUnread ? "font-medium text-foreground" : "text-muted-foreground",
                           )}
                         >
                           {preview}
                         </p>
                         {hasUnread && (
                           <span
-                            className="ml-auto flex h-[18px] min-w-[18px] shrink-0 items-center justify-center rounded-full bg-destructive px-1 text-3xs font-bold leading-none text-destructive-foreground"
+                            className="ml-auto flex h-[18px] min-w-[18px] shrink-0 items-center justify-center rounded-full bg-primary px-1 text-3xs font-semibold leading-none text-primary-foreground tabular"
                             aria-label={`${unreadCount} unread message${unreadCount === 1 ? "" : "s"}`}
                           >
                             {unreadCount > 99 ? "99+" : unreadCount}
@@ -284,13 +282,13 @@ const ConversationList = ({
       {/* Discovered campus users (people matching search) */}
       {hasSearchQuery && (
         <div className="space-y-1 pt-1">
-          <div className="px-2 py-1 text-3xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center justify-between">
+          <div className="px-2 py-1 text-xs font-medium text-muted-foreground flex items-center justify-between">
             <span className="flex items-center gap-1.5">
-              <Sparkles className="h-3 w-3 text-primary" />
-              <span>Campus Directory</span>
+              <Users className="h-3 w-3" />
+              <span>Campus directory</span>
             </span>
             {isSearchingCampus && (
-              <Loader2 className="h-3 w-3 animate-spin text-primary" />
+              <Loader2 className="h-3 w-3 animate-spin" />
             )}
           </div>
 
@@ -302,19 +300,19 @@ const ConversationList = ({
                   <li key={user.id}>
                     <div
                       onClick={() => handleStartChatWithDiscoveredUser(user)}
-                      className="group flex items-center justify-between gap-2.5 rounded-xl p-2.5 text-left transition-all duration-200 hover:bg-white/5 cursor-pointer border border-transparent hover:border-border/40"
+                      className="group flex items-center justify-between gap-2.5 rounded-lg p-2.5 text-left transition-colors duration-150 hover:bg-accent cursor-pointer"
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
-                        <Avatar className="h-10 w-10 shrink-0 border border-border/60 group-hover:ring-1 group-hover:ring-primary/40 transition-all">
+                        <Avatar className="h-10 w-10 shrink-0">
                           <AvatarImage src={user.profile_image || undefined} alt={user.name} />
-                          <AvatarFallback className="text-xs font-semibold bg-primary/15 text-primary">
+                          <AvatarFallback className="text-xs font-semibold bg-secondary text-secondary-foreground">
                             {getInitials(user.name)}
                           </AvatarFallback>
                         </Avatar>
 
                         <div className="min-w-0">
                           <div className="flex items-center gap-1.5">
-                            <span className="truncate text-sm font-medium text-foreground group-hover:text-primary transition-colors">
+                            <span className="truncate text-sm font-medium text-foreground">
                               {user.name}
                             </span>
                             {user.badge && (
@@ -328,7 +326,7 @@ const ConversationList = ({
                           </div>
 
                           {user.department && (
-                            <p className="truncate text-xs text-muted-foreground/70 flex items-center gap-1">
+                            <p className="truncate text-xs text-muted-foreground flex items-center gap-1">
                               <GraduationCap className="h-3 w-3 shrink-0" />
                               {user.department}
                             </p>
@@ -338,19 +336,15 @@ const ConversationList = ({
 
                       <Button
                         size="sm"
-                        variant="secondary"
-                        disabled={isStarting}
+                        variant="outline"
+                        isLoading={isStarting}
                         onClick={(e) => {
                           e.stopPropagation();
                           handleStartChatWithDiscoveredUser(user);
                         }}
-                        className="shrink-0 h-7 text-xs px-2.5 gap-1 rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground transition-all"
+                        className="h-8 shrink-0 gap-1 px-2.5 text-xs"
                       >
-                        {isStarting ? (
-                          <Loader2 className="h-3 w-3 animate-spin" />
-                        ) : (
-                          <MessageSquare className="h-3 w-3" />
-                        )}
+                        {!isStarting && <MessageSquare className="h-3 w-3" />}
                         <span>Chat</span>
                       </Button>
                     </div>
@@ -361,7 +355,7 @@ const ConversationList = ({
           ) : (
             !hasConversations && isSearchingCampus && (
               <div className="py-6 text-center text-xs text-muted-foreground flex flex-col items-center gap-2">
-                <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                <Loader2 className="h-4 w-4 animate-spin" />
                 <span>Searching SRM AP directory…</span>
               </div>
             )

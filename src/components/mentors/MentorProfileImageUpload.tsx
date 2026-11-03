@@ -39,7 +39,7 @@ const MentorProfileImageUpload = ({
     if (!file || !userId) return;
 
     if (!file.type.startsWith("image/")) {
-      toast.error("Please choose an image file");
+      toast.error("Choose an image file.");
       return;
     }
 

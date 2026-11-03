@@ -169,7 +169,7 @@ const MessageInput = ({
     <form
       onSubmit={handleSubmit}
       className={cn(
-        "border-t border-border/80 bg-background/95 dark:bg-card/90 p-2.5 sm:p-3 backdrop-blur-md transition-[padding] duration-150",
+        "border-t border-border bg-card p-2.5 sm:p-3",
         isKeyboardOpen
           ? "pb-2 sm:pb-3"
           : "pb-[max(0.75rem,env(safe-area-inset-bottom))]",
@@ -177,14 +177,14 @@ const MessageInput = ({
     >
       {/* Editing Message Banner */}
       {isEditing && editingMessage && (
-        <div className="mb-2 flex items-center justify-between gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3.5 py-2 text-xs text-foreground backdrop-blur-xs animate-in fade-in slide-in-from-bottom-2 duration-200">
-          <div className="flex min-w-0 items-center gap-2.5 border-l-3 border-amber-500 pl-2.5">
-            <Pencil className="h-4 w-4 shrink-0 text-amber-500" />
+        <div className="mb-2 flex items-center justify-between gap-3 rounded-lg bg-secondary px-3 py-2 text-xs text-foreground animate-fade-up">
+          <div className="flex min-w-0 items-center gap-2.5 border-l-2 border-primary pl-2.5">
+            <Pencil className="h-4 w-4 shrink-0 text-primary" />
             <div className="min-w-0 flex-1">
-              <p className="text-2xs font-semibold text-amber-500 truncate">
+              <p className="text-2xs font-semibold text-primary truncate">
                 Editing message
               </p>
-              <p className="truncate text-xs text-muted-foreground/90">
+              <p className="truncate text-xs text-muted-foreground">
                 {editingMessage.content}
               </p>
             </div>
@@ -206,14 +206,14 @@ const MessageInput = ({
 
       {/* WhatsApp-Style Reply Preview Banner */}
       {!isEditing && replyingTo && (
-        <div className="mb-2 flex items-center justify-between gap-3 rounded-xl border border-primary/25 bg-primary/8 px-3.5 py-2 text-xs text-foreground backdrop-blur-xs animate-in fade-in slide-in-from-bottom-2 duration-200">
-          <div className="flex min-w-0 items-center gap-2.5 border-l-3 border-primary pl-2.5">
+        <div className="mb-2 flex items-center justify-between gap-3 rounded-lg bg-secondary px-3 py-2 text-xs text-foreground animate-fade-up">
+          <div className="flex min-w-0 items-center gap-2.5 border-l-2 border-primary pl-2.5">
             <CornerDownRight className="h-4 w-4 shrink-0 text-primary" />
             <div className="min-w-0 flex-1">
               <p className="text-2xs font-semibold text-primary truncate">
                 Replying to {replySenderName}
               </p>
-              <p className="truncate text-xs text-muted-foreground/90">
+              <p className="truncate text-xs text-muted-foreground">
                 {replyingTo.content}
               </p>
             </div>
@@ -232,12 +232,10 @@ const MessageInput = ({
 
       <div
         className={cn(
-          "flex items-end gap-2 rounded-2xl border-2 px-2.5 py-1.5 transition-all duration-200 shadow-xs",
+          "flex items-end gap-2 rounded-xl border bg-background px-2 py-1.5 transition-colors duration-150",
           isFocused
-            ? isEditing
-              ? "border-amber-500 bg-background shadow-md shadow-amber-500/10 ring-4 ring-amber-500/15"
-              : "border-primary bg-background shadow-md shadow-primary/10 ring-4 ring-primary/15"
-            : "border-border/90 bg-background hover:border-primary/50 dark:border-white/20 dark:bg-muted/30",
+            ? "border-primary ring-2 ring-primary/20"
+            : "border-input hover:border-foreground/20",
         )}
       >
         {/* Emoji picker */}
@@ -280,7 +278,7 @@ const MessageInput = ({
           rows={1}
           className={cn(
             "min-h-0 flex-1 resize-none bg-transparent py-2 pr-1 text-base md:text-sm leading-relaxed text-foreground",
-            "placeholder:text-muted-foreground/80 dark:placeholder:text-muted-foreground/50",
+            "placeholder:text-muted-foreground",
             "outline-none",
           )}
           style={{ maxHeight: `${MAX_ROWS_PX}px` }}
@@ -292,12 +290,8 @@ const MessageInput = ({
           onPointerDown={(e) => e.preventDefault()}
           onMouseDown={(e) => e.preventDefault()}
           className={cn(
-            "mb-0.5 h-9 w-9 shrink-0 rounded-xl transition-all duration-200",
-            canSend
-              ? isEditing
-                ? "bg-amber-500 text-white shadow-md shadow-amber-500/30 hover:bg-amber-600 hover:scale-105"
-                : "bg-primary text-primary-foreground shadow-md shadow-primary/30 hover:bg-primary/90 hover:scale-105"
-              : "bg-muted text-muted-foreground/50 dark:bg-white/10 dark:text-muted-foreground/40",
+            "mb-0.5 h-9 w-9 shrink-0 rounded-lg",
+            !canSend && "bg-muted text-muted-foreground",
           )}
           disabled={!canSend}
           aria-label={isEditing ? "Save edited message" : "Send message"}
@@ -313,12 +307,12 @@ const MessageInput = ({
         </Button>
       </div>
 
-      <p className="mt-2 px-2 text-3xs text-muted-foreground/75 hidden sm:block">
-        <kbd className="rounded border border-border/70 bg-muted/70 px-1.5 py-0.5 font-sans font-medium text-foreground/80 shadow-2xs">Enter</kbd> {isEditing ? "to save" : "to send"} ·{" "}
-        <kbd className="rounded border border-border/70 bg-muted/70 px-1.5 py-0.5 font-sans font-medium text-foreground/80 shadow-2xs">Shift + Enter</kbd> for new line
+      <p className="mt-2 px-2 text-3xs text-muted-foreground hidden sm:block">
+        <kbd className="rounded border border-border bg-muted px-1.5 py-0.5 font-sans font-medium text-foreground">Enter</kbd> {isEditing ? "to save" : "to send"} ·{" "}
+        <kbd className="rounded border border-border bg-muted px-1.5 py-0.5 font-sans font-medium text-foreground">Shift + Enter</kbd> for new line
         {(isEditing || replyingTo) && (
           <>
-            {" "}· <kbd className="rounded border border-border/70 bg-muted/70 px-1.5 py-0.5 font-sans font-medium text-foreground/80 shadow-2xs">Esc</kbd> to cancel {isEditing ? "editing" : "reply"}
+            {" "}· <kbd className="rounded border border-border bg-muted px-1.5 py-0.5 font-sans font-medium text-foreground">Esc</kbd> to cancel {isEditing ? "editing" : "reply"}
           </>
         )}
       </p>

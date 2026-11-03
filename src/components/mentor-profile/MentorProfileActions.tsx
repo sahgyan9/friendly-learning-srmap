@@ -31,7 +31,7 @@ const MentorProfileActions = ({
 
   const handleConnect = async () => {
     if (!user) {
-      toast.error("Please sign in to connect with mentors");
+      toast.error("Sign in to message mentors.");
       return;
     }
     

@@ -72,12 +72,12 @@ const EmojiPicker = ({ onEmojiSelect, disabled }: EmojiPickerProps) => {
         align="start"
         sideOffset={8}
         className={cn(
-          "w-80 p-0 overflow-hidden rounded-2xl",
-          "border border-border bg-popover/95 dark:border-white/15 dark:bg-card/95 shadow-2xl shadow-black/20 backdrop-blur-xl",
+          "w-80 p-0 overflow-hidden rounded-xl",
+          "border border-border bg-popover shadow-float",
         )}
       >
         {/* Group tabs */}
-        <div className="flex gap-0.5 border-b border-border/70 dark:border-white/8 p-2">
+        <div className="flex gap-0.5 border-b border-border p-2">
           {EMOJI_GROUPS.map((group, i) => (
             <button
               key={group.label}
@@ -87,8 +87,8 @@ const EmojiPicker = ({ onEmojiSelect, disabled }: EmojiPickerProps) => {
               className={cn(
                 "flex-1 rounded-lg py-1.5 text-sm transition-colors duration-150",
                 activeGroup === i
-                  ? "bg-primary/20 text-primary"
-                  : "text-muted-foreground/50 hover:bg-white/5 hover:text-muted-foreground",
+                  ? "bg-primary/10 text-primary"
+                  : "text-muted-foreground hover:bg-accent",
               )}
             >
               {group.emojis[0]}
@@ -98,7 +98,7 @@ const EmojiPicker = ({ onEmojiSelect, disabled }: EmojiPickerProps) => {
 
         {/* Label */}
         <div className="px-3 pb-1 pt-2">
-          <p className="text-3xs font-semibold uppercase tracking-widest text-muted-foreground/50">
+          <p className="text-xs font-medium text-muted-foreground">
             {EMOJI_GROUPS[activeGroup].label}
           </p>
         </div>
@@ -111,7 +111,7 @@ const EmojiPicker = ({ onEmojiSelect, disabled }: EmojiPickerProps) => {
                 key={emoji}
                 type="button"
                 onClick={() => handleSelect(emoji)}
-                className="flex h-9 w-9 items-center justify-center rounded-lg text-xl transition-colors duration-100 hover:bg-white/8 active:scale-90"
+                className="flex h-9 w-9 items-center justify-center rounded-lg text-xl transition-colors duration-150 hover:bg-accent active:scale-95"
                 title={emoji}
               >
                 {emoji}

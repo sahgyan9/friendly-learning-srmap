@@ -33,14 +33,10 @@ const BadgeTypeList = ({ badgeTypes, loading, onRefetch }: BadgeTypeListProps) =
       setDeleting(badgeId);
       await deleteBadgeType(badgeId);
       onRefetch();
-      toast.success("Success", {
-        description: "Badge type deleted successfully",
-      });
+      toast.success("Badge type deleted");
     } catch (error) {
       console.error('Error deleting badge:', error);
-      toast.error("Error", {
-        description: "Failed to delete badge type",
-      });
+      toast.error("Failed to delete badge type");
     } finally {
       setDeleting(null);
     }
@@ -50,14 +46,10 @@ const BadgeTypeList = ({ badgeTypes, loading, onRefetch }: BadgeTypeListProps) =
     try {
       setAutoAwarding(true);
       await autoAwardPerformanceBadges();
-      toast.success("Success", {
-        description: "Performance badges have been automatically awarded",
-      });
+      toast.success("Performance badges awarded");
     } catch (error) {
       console.error('Error auto-awarding badges:', error);
-      toast.error("Error", {
-        description: "Failed to auto-award badges",
-      });
+      toast.error("Failed to auto-award badges");
     } finally {
       setAutoAwarding(false);
     }
@@ -69,12 +61,12 @@ const BadgeTypeList = ({ badgeTypes, loading, onRefetch }: BadgeTypeListProps) =
         {Array.from({ length: 6 }).map((_, i) => (
           <Card key={i} className="animate-pulse">
             <CardHeader>
-              <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+              <div className="h-4 bg-muted rounded w-3/4"></div>
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
-                <div className="h-3 bg-gray-200 rounded"></div>
-                <div className="h-3 bg-gray-200 rounded w-2/3"></div>
+                <div className="h-3 bg-muted rounded"></div>
+                <div className="h-3 bg-muted rounded w-2/3"></div>
               </div>
             </CardContent>
           </Card>
@@ -89,7 +81,7 @@ const BadgeTypeList = ({ badgeTypes, loading, onRefetch }: BadgeTypeListProps) =
           not fit beside the heading at 360px (same idiom as the contact
           messages and mentor verification admin screens). */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h2 className="text-xl font-semibold">Badge Types ({badgeTypes.length})</h2>
+        <h2 className="text-base font-semibold">Badge types <span className="tabular text-muted-foreground">({badgeTypes.length})</span></h2>
         <Button
           onClick={handleAutoAward}
           disabled={autoAwarding}
@@ -97,32 +89,32 @@ const BadgeTypeList = ({ badgeTypes, loading, onRefetch }: BadgeTypeListProps) =
           className="w-full sm:w-auto"
         >
           <Award className="h-4 w-4 mr-2" />
-          {autoAwarding ? "Auto-Awarding..." : "Auto-Award Performance Badges"}
+          {autoAwarding ? "Awarding badges" : "Award performance badges"}
         </Button>
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         {badgeTypes.map((badge) => (
-          <Card key={badge.id} className="hover:shadow-md transition-shadow">
+          <Card key={badge.id}>
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-lg flex items-center gap-2">
+                <CardTitle className="text-base flex items-center gap-2">
                   <span className="text-xl">{badge.icon}</span>
                   {badge.name}
                 </CardTitle>
                 <div className="flex gap-1">
-                  <Button variant="ghost" size="sm">
+                  <Button variant="ghost" size="sm" aria-label={`Edit ${badge.name}`}>
                     <Edit className="h-4 w-4" />
                   </Button>
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button variant="ghost" size="sm" className="text-destructive">
+                      <Button variant="ghost" size="sm" className="text-destructive" aria-label={`Delete ${badge.name}`}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                       <AlertDialogHeader>
-                        <AlertDialogTitle>Delete Badge Type</AlertDialogTitle>
+                        <AlertDialogTitle>Delete badge type</AlertDialogTitle>
                         <AlertDialogDescription>
                           Are you sure you want to delete this badge type? This action cannot be undone.
                         </AlertDialogDescription>

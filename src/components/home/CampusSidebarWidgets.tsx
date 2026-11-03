@@ -6,17 +6,12 @@ import {
   GraduationCap,
   Users,
   Building2,
-  ArrowRight,
-  Sparkles,
   MapPin,
   Clock,
   BadgeCheck,
   ChevronRight,
-  CheckCircle2,
   MessageCircle,
   Star,
-  Zap,
-  Loader2,
   UserRound,
   ShieldCheck,
 } from "lucide-react";
@@ -28,6 +23,7 @@ import { MentorIcon } from "@/components/icons/MentorIcon";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { parseEventDate } from "@/lib/calendar-utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import MentorAvatar from "@/components/mentors/MentorAvatar";
@@ -123,14 +119,14 @@ const EventSpeakerPhoto = ({
 
   return (
     <div className={cn("relative shrink-0 mt-0.5", className)}>
-      <div className={cn(dimensionClass, "overflow-hidden border border-border/80 bg-muted/60 shadow-xs flex items-center justify-center")}>
+      <div className={cn(dimensionClass, "flex items-center justify-center overflow-hidden border border-border bg-secondary")}>
         {imageSrc ? (
           <>
             <img
               src={imageSrc}
               alt={title || "Event Speaker / Featured"}
               className={cn(
-                "h-full w-full object-cover object-top transition-transform duration-300 group-hover:scale-105",
+                "h-full w-full object-cover object-top transition-opacity duration-150",
                 loaded ? "opacity-100" : "opacity-0"
               )}
               loading="lazy"
@@ -138,30 +134,22 @@ const EventSpeakerPhoto = ({
               onError={() => setFailed(true)}
             />
             {!loaded && (
-              <div className="absolute inset-0 flex items-center justify-center bg-violet-500/10 animate-pulse">
-                <GraduationCap className={cn(iconClass, "text-violet-500/50")} />
-              </div>
+              <Skeleton className="absolute inset-0 rounded-none" />
             )}
           </>
         ) : (
-          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-violet-500/15 via-violet-500/8 to-muted/40 text-violet-600 dark:text-violet-400">
-            <GraduationCap className={cn(iconClass, "text-violet-600/70 dark:text-violet-400/80")} />
+          <div className="flex h-full w-full items-center justify-center text-muted-foreground">
+            <GraduationCap className={iconClass} />
           </div>
         )}
       </div>
 
-      {/* Speaker cap or Live corner badge */}
-      {isLive ? (
-        <div
-          className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full border-2 border-background bg-violet-600 shadow-2xs"
-          title="Live Now"
-        >
-          <span className="h-1.5 w-1.5 rounded-full bg-white animate-ping" />
-        </div>
-      ) : (
-        <div className="absolute -bottom-1 -right-1 rounded-full border-2 border-background bg-card p-0.5 shadow-2xs">
-          <GraduationCap className="h-2.5 w-2.5 text-violet-600 dark:text-violet-400" />
-        </div>
+      {/* The one place a ping is earned: the event is happening right now */}
+      {isLive && (
+        <span className="absolute -bottom-0.5 -right-0.5 flex h-3 w-3" title="Happening now">
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-500 opacity-60" />
+          <span className="relative inline-flex h-3 w-3 rounded-full border-2 border-background bg-green-500" />
+        </span>
       )}
     </div>
   );
@@ -208,10 +196,10 @@ function formatEventTiming(startVal: string | undefined, endVal?: string | undef
 }
 
 const TOP_DEPARTMENTS = [
-  { name: "Computer Science and Engineering", short: "CSE", color: "hover:border-blue-500/50 hover:bg-blue-500/5 text-blue-600 dark:text-blue-400" },
-  { name: "Electronics and Communication Engineering", short: "ECE", color: "hover:border-emerald-500/50 hover:bg-emerald-500/5 text-emerald-600 dark:text-emerald-400" },
-  { name: "Mechanical Engineering", short: "ME", color: "hover:border-amber-500/50 hover:bg-amber-500/5 text-amber-600 dark:text-amber-400" },
-  { name: "Management", short: "Paari", color: "hover:border-purple-500/50 hover:bg-purple-500/5 text-purple-600 dark:text-purple-400" },
+  { name: "Computer Science and Engineering", short: "CSE" },
+  { name: "Electronics and Communication Engineering", short: "ECE" },
+  { name: "Mechanical Engineering", short: "ME" },
+  { name: "Management", short: "Paari" },
 ];
 
 export const CampusSidebarWidgets = () => {
@@ -230,7 +218,7 @@ export const CampusSidebarWidgets = () => {
     e.stopPropagation();
 
     if (!user) {
-      toast.error("Please sign in to message mentors");
+      toast.error("Sign in to message mentors");
       navigate("/signin");
       return;
     }
@@ -244,11 +232,11 @@ export const CampusSidebarWidgets = () => {
     try {
       const { data: conversation, error } = await getOrCreateConversation(user.id, mentor.id);
       if (error || !conversation) {
-        toast.error("Failed to start conversation with mentor");
+        toast.error("Could not start a conversation. Opening the mentor profile instead.");
         navigate(`/mentor/${mentor.slug || mentor.id}`);
         return;
       }
-      toast.success(`Connected with ${mentor.name}!`);
+      toast.success(`Conversation with ${mentor.name} opened`);
       navigate(`/messages/${conversation.id}`);
     } catch {
       navigate(`/mentor/${mentor.slug || mentor.id}`);
@@ -295,31 +283,31 @@ export const CampusSidebarWidgets = () => {
   return (
     <div className="space-y-4">
       {/* ── Widget 1: Upcoming Events ── */}
-      <Card className="p-4 border-border/80 bg-card shadow-xs">
+      <Card className="p-4 shadow-card">
         <div className="flex items-center justify-between mb-3.5">
           <div className="flex items-center gap-2">
-            <div className="p-1.5 rounded-md bg-violet-500/10 text-violet-600">
+            <div className="rounded-md border border-border bg-secondary p-1.5 text-muted-foreground">
               <EventsIcon className="h-4 w-4" />
             </div>
-            <h3 className="font-semibold text-sm text-foreground">Upcoming Events</h3>
+            <h3 className="text-sm font-semibold text-foreground">Upcoming events</h3>
           </div>
           <Link
             to="/events"
-            className="text-xs text-primary hover:underline font-medium inline-flex items-center gap-0.5 group"
+            className="inline-flex min-h-[32px] items-center gap-0.5 text-xs font-medium text-primary underline-offset-2 hover:underline"
           >
             View all
-            <ChevronRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
+            <ChevronRight className="h-3.5 w-3.5" aria-hidden />
           </Link>
         </div>
 
         {eventsLoading ? (
           <div className="space-y-2.5">
             {[0, 1, 2].map((i) => (
-              <div key={i} className="flex items-center gap-3 p-2.5 rounded-xl border border-border/60 bg-muted/20">
-                <div className="h-12 w-12 rounded-xl animate-pulse bg-muted/60 shrink-0" />
+              <div key={i} className="flex items-center gap-3 rounded-lg border border-border p-2.5">
+                <Skeleton className="h-12 w-12 shrink-0 rounded-xl" />
                 <div className="flex-1 space-y-2">
-                  <div className="h-3.5 w-3/4 rounded animate-pulse bg-muted/60" />
-                  <div className="h-2.5 w-1/2 rounded animate-pulse bg-muted/60" />
+                  <Skeleton className="h-3.5 w-3/4" />
+                  <Skeleton className="h-2.5 w-1/2" />
                 </div>
               </div>
             ))}
@@ -333,7 +321,7 @@ export const CampusSidebarWidgets = () => {
                   <TooltipTrigger asChild>
                     <Link
                       to={`/events/${event.id}`}
-                      className="group flex items-start gap-3 p-2.5 rounded-xl border border-border/60 bg-muted/20 hover:bg-muted/60 hover:border-primary/30 transition-all duration-200"
+                      className="group flex items-start gap-3 rounded-lg border border-border p-2.5 transition-colors duration-150 hover:border-foreground/20 hover:bg-accent"
                     >
                       {/* Speaker Photo / Featured Event Thumbnail */}
                       <EventSpeakerPhoto
@@ -344,25 +332,25 @@ export const CampusSidebarWidgets = () => {
 
                       {/* Event Details */}
                       <div className="min-w-0 flex-1">
-                        <h4 className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-2 leading-snug">
+                        <h4 className="line-clamp-2 text-sm font-medium leading-snug text-foreground">
                           {event.title}
                         </h4>
 
                         {/* Date, Time & Venue below heading */}
                         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-2xs text-muted-foreground mt-1">
-                          <span className="inline-flex items-center gap-1 font-medium text-foreground/80 shrink-0">
-                            <Calendar className="h-3 w-3 text-violet-600 dark:text-violet-400 shrink-0" />
+                          <span className="tabular inline-flex shrink-0 items-center gap-1 font-medium text-foreground">
+                            <Calendar className="h-3 w-3 shrink-0 text-muted-foreground" />
                             {formattedDate}
                           </span>
                           {time && time !== "12:00 AM" && (
-                            <span className="inline-flex items-center gap-1 shrink-0 text-muted-foreground/80">
-                              <Clock className="h-3 w-3 text-muted-foreground/70 shrink-0" />
+                            <span className="tabular inline-flex shrink-0 items-center gap-1">
+                              <Clock className="h-3 w-3 shrink-0" />
                               {time}
                             </span>
                           )}
                           {event.venue && (
-                            <span className="truncate inline-flex items-center gap-1 text-muted-foreground/70 w-full sm:w-auto">
-                              <MapPin className="h-3 w-3 text-muted-foreground/70 shrink-0" />
+                            <span className="inline-flex w-full min-w-0 items-center gap-1 truncate sm:w-auto">
+                              <MapPin className="h-3 w-3 shrink-0" />
                               <span className="truncate">{event.venue}</span>
                             </span>
                           )}
@@ -373,25 +361,20 @@ export const CampusSidebarWidgets = () => {
                   <TooltipContent
                     side="left"
                     sideOffset={12}
-                    className="max-w-sm rounded-2xl p-4 bg-white dark:bg-card text-foreground border border-border shadow-2xl ring-1 ring-black/10 dark:ring-white/10 z-50 animate-in fade-in-0 zoom-in-95 duration-150"
+                    className="z-50 max-w-sm rounded-xl border border-border bg-popover p-4 text-popover-foreground shadow-float"
                   >
                     <div className="space-y-3">
                       {/* Badges */}
                       <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="bg-primary/10 text-primary border-primary/25 text-3xs font-semibold px-2.5 py-0.5 rounded-full">
-                          Campus Event
-                        </Badge>
+                        <span className="text-xs text-muted-foreground">Campus event</span>
                         {isLive && (
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-600 px-2.5 py-0.5 text-3xs font-semibold text-white shadow-xs">
-                            <span className="relative flex h-1.5 w-1.5">
-                              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75" />
-                              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-white" />
-                            </span>
-                            Live Now
+                          <span className="inline-flex items-center gap-1.5 rounded bg-green-500/10 px-1.5 py-0.5 text-3xs font-semibold text-green-700 dark:text-green-400">
+                            <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
+                            Happening now
                           </span>
                         )}
                         {event.department && (
-                          <Badge variant="secondary" className="text-3xs font-medium px-2 py-0.5 rounded-full">
+                          <Badge variant="secondary" className="rounded px-1.5 py-0.5 text-3xs font-medium">
                             {event.department.split(" ")[0]}
                           </Badge>
                         )}
@@ -406,18 +389,18 @@ export const CampusSidebarWidgets = () => {
                           size="md"
                         />
                         <div className="min-w-0 flex-1 space-y-1">
-                          <h3 className="font-bold text-sm text-foreground leading-snug tracking-tight">
+                          <h3 className="text-sm font-semibold leading-snug tracking-tight text-foreground">
                             {event.title}
                           </h3>
                           {/* Date directly below heading */}
                           <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
-                            <span className="inline-flex items-center gap-1 font-medium text-foreground">
-                              <Calendar className="h-3.5 w-3.5 text-violet-600 dark:text-violet-400 shrink-0" />
+                            <span className="tabular inline-flex items-center gap-1 font-medium text-foreground">
+                              <Calendar className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                               {formattedDate}
                             </span>
                             {time && time !== "12:00 AM" && (
-                              <span className="inline-flex items-center gap-1 shrink-0">
-                                <Clock className="h-3 w-3 text-muted-foreground/70 shrink-0" />
+                              <span className="tabular inline-flex shrink-0 items-center gap-1">
+                                <Clock className="h-3 w-3 shrink-0" />
                                 {time}
                               </span>
                             )}
@@ -427,21 +410,17 @@ export const CampusSidebarWidgets = () => {
 
                       {/* Location & Organizer strip */}
                       {(event.venue || event.organizer) && (
-                        <div className="pt-2 border-t border-border/60 space-y-1.5 text-xs text-muted-foreground">
+                        <div className="space-y-1.5 border-t border-border pt-2 text-xs text-muted-foreground">
                           {event.venue && (
                             <div className="flex items-center gap-2">
-                              <span className="inline-flex items-center justify-center h-5 w-5 rounded-md bg-blue-500/10 text-blue-600 text-2xs shrink-0 font-semibold">
-                                <MapPin className="h-3 w-3" />
-                              </span>
-                              <span className="text-muted-foreground font-normal line-clamp-1">{event.venue}</span>
+                              <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                              <span className="line-clamp-1">{event.venue}</span>
                             </div>
                           )}
                           {event.organizer && (
                             <div className="flex items-center gap-2">
-                              <span className="inline-flex items-center justify-center h-5 w-5 rounded-md bg-violet-500/10 text-violet-600 text-2xs shrink-0 font-semibold">
-                                <Building2 className="h-3 w-3" />
-                              </span>
-                              <span className="text-muted-foreground font-normal line-clamp-1">{event.organizer}</span>
+                              <Building2 className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                              <span className="line-clamp-1">{event.organizer}</span>
                             </div>
                           )}
                         </div>
@@ -453,32 +432,32 @@ export const CampusSidebarWidgets = () => {
             })}
           </div>
         ) : (
-          <p className="text-xs text-muted-foreground py-4 text-center">No upcoming events listed right now.</p>
+          <p className="py-4 text-center text-sm text-muted-foreground">No upcoming events are listed.</p>
         )}
       </Card>
 
       {/* ── Widget 2: Featured Senior Mentors ── */}
-      <Card className="p-4 border-border/80 bg-card shadow-xs">
+      <Card className="p-4 shadow-card">
         <div className="flex items-center justify-between mb-3.5">
           <div className="flex items-center gap-2">
-            <div className="p-1.5 rounded-md bg-blue-500/10 text-blue-600">
+            <div className="rounded-md border border-border bg-secondary p-1.5 text-muted-foreground">
               <MentorIcon className="h-4 w-4" />
             </div>
-            <h3 className="font-semibold text-sm text-foreground">Featured Mentors</h3>
+            <h3 className="text-sm font-semibold text-foreground">Featured mentors</h3>
           </div>
           <Link
             to="/mentors"
-            className="text-xs text-primary hover:underline font-medium inline-flex items-center gap-0.5 group"
+            className="inline-flex min-h-[32px] items-center gap-0.5 text-xs font-medium text-primary underline-offset-2 hover:underline"
           >
             All mentors
-            <ChevronRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
+            <ChevronRight className="h-3.5 w-3.5" aria-hidden />
           </Link>
         </div>
 
         {mentorsLoading ? (
           <div className="space-y-2.5">
             {[0, 1, 2].map((i) => (
-              <div key={i} className="h-14 animate-pulse rounded-xl bg-muted/60" />
+              <Skeleton key={i} className="h-14 rounded-lg" />
             ))}
           </div>
         ) : (
@@ -490,7 +469,7 @@ export const CampusSidebarWidgets = () => {
               return (
                 <Tooltip key={mentor.id}>
                   <TooltipTrigger asChild>
-                    <div className="group flex items-center justify-between gap-3 p-2.5 rounded-xl border border-border/60 bg-muted/20 hover:bg-muted/50 hover:border-primary/30 transition-all cursor-pointer">
+                    <div className="flex min-w-0 items-center justify-between gap-3 rounded-lg border border-border p-2.5">
                       <div className="flex items-center gap-2.5 min-w-0">
                         <MentorAvatar
                           name={mentor.name}
@@ -501,35 +480,31 @@ export const CampusSidebarWidgets = () => {
                         <div className="min-w-0">
                           <Link
                             to={`/mentor/${mentor.slug || mentor.id}`}
-                            className="text-xs font-semibold text-foreground hover:text-primary transition-colors truncate flex items-center gap-1"
+                            className="flex items-center gap-1 truncate text-sm font-medium text-foreground underline-offset-2 hover:text-primary hover:underline"
                           >
                             <span className="truncate">{mentor.name}</span>
-                            <BadgeCheck className="h-3.5 w-3.5 text-blue-500 shrink-0" />
+                            <BadgeCheck className="h-3.5 w-3.5 shrink-0 text-primary" aria-label="Verified mentor" />
                           </Link>
-                          <p className="text-2xs text-muted-foreground truncate">
-                            {mentor.department || "Senior Mentor"}
+                          <p className="truncate text-xs text-muted-foreground">
+                            {mentor.department || "Senior mentor"}
                           </p>
                         </div>
                       </div>
                       <Button
                         size="sm"
                         variant="outline"
-                        disabled={isConnecting}
+                        isLoading={isConnecting}
                         onClick={(e) => handleConnect(mentor, e)}
-                        className="h-7 text-xs px-2.5 shrink-0 bg-background hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all"
+                        className="h-8 shrink-0 px-3 text-xs"
                       >
-                        {isConnecting ? (
-                          <Loader2 className="h-3 w-3 animate-spin" />
-                        ) : (
-                          "Connect"
-                        )}
+                        Message
                       </Button>
                     </div>
                   </TooltipTrigger>
                   <TooltipContent
                     side="left"
                     sideOffset={14}
-                    className="w-[480px] max-w-[90vw] rounded-2xl p-5 bg-white dark:bg-card text-foreground border border-border shadow-2xl ring-1 ring-black/10 dark:ring-white/10 z-50 animate-in fade-in-0 zoom-in-95 duration-150"
+                    className="z-50 w-[480px] max-w-[90vw] rounded-xl border border-border bg-popover p-5 text-popover-foreground shadow-float"
                   >
                     <div className="space-y-4">
                       {/* Top Row: Avatar + Details + Connect Button */}
@@ -540,55 +515,45 @@ export const CampusSidebarWidgets = () => {
                             name={mentor.name}
                             src={mentor.profile_image}
                             seed={mentor.id}
-                            className="h-16 w-16 rounded-2xl shadow-xs ring-2 ring-primary/20 object-cover"
-                            fallbackClassName="rounded-2xl text-xl font-bold"
+                            className="h-16 w-16 rounded-xl border border-border object-cover"
+                            fallbackClassName="rounded-xl text-xl font-semibold"
                           />
-                          <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1 rounded-full border border-border bg-card px-2 py-0.5 shadow-2xs whitespace-nowrap">
-                            <BadgeCheck className="h-3 w-3 text-blue-500" />
-                            <span className="text-3xs font-semibold text-blue-600 dark:text-blue-400">
-                              Verified
-                            </span>
-                          </div>
                         </div>
 
                         {/* Middle: Details */}
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center justify-between gap-3">
-                            <div className="flex items-center gap-1.5 min-w-0">
-                              <h4 className="font-extrabold text-base text-foreground tracking-tight truncate">
+                            <div className="flex min-w-0 items-center gap-1.5">
+                              <h4 className="truncate text-base font-semibold tracking-tight text-foreground">
                                 {mentor.name}
                               </h4>
-                              <CheckCircle2 className="h-4 w-4 text-blue-600 fill-blue-600/10 shrink-0" />
+                              <BadgeCheck className="h-4 w-4 shrink-0 text-primary" aria-label="Verified mentor" />
                             </div>
                             <Button
                               size="sm"
-                              disabled={isConnecting}
+                              isLoading={isConnecting}
                               onClick={(e) => handleConnect(mentor, e)}
-                              className="shrink-0 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs px-4 h-9 gap-1.5 rounded-xl shadow-xs transition-all hover:shadow-md active:scale-95"
+                              className="shrink-0"
                             >
-                              {isConnecting ? (
-                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                              ) : (
-                                <MessageCircle className="h-3.5 w-3.5" />
-                              )}
-                              Connect
+                              {!isConnecting && <MessageCircle aria-hidden />}
+                              Message
                             </Button>
                           </div>
 
-                          <p className="text-xs font-medium text-muted-foreground mt-1">
-                            <span className="text-foreground/90 font-semibold">
-                              {(mentor.department || "Senior Mentor")
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            <span className="font-medium text-foreground">
+                              {(mentor.department || "Senior")
                                 .replace(/\[.*?\]/g, "")
                                 .replace(/\(.*?\)/g, "")
                                 .trim()}{" "}
                               Mentor
                             </span>
-                            {" • "}
-                            <span className="text-primary font-medium">{mentor.university || "SRM University AP"}</span>
+                            {" \u00b7 "}
+                            <span>{mentor.university || "SRM University AP"}</span>
                           </p>
 
                           {(mentor.tagline || mentor.bio) && (
-                            <p className="text-xs text-foreground/80 font-medium leading-relaxed italic pt-1.5 line-clamp-2">
+                            <p className="line-clamp-2 pt-1.5 text-xs leading-relaxed text-foreground">
                               &ldquo;{mentor.tagline || mentor.bio}&rdquo;
                             </p>
                           )}
@@ -596,14 +561,12 @@ export const CampusSidebarWidgets = () => {
                       </div>
 
                       {/* Bottom: Trust Metrics Grid Bar */}
-                      <div className="pt-3 border-t border-border/60 grid grid-cols-3 gap-2.5">
+                      <div className="grid grid-cols-3 gap-2 border-t border-border pt-3">
                         {/* Metric 1: Rating */}
-                        <div className="flex items-center gap-2.5 rounded-xl border border-border/50 bg-muted/20 p-2.5 shadow-2xs">
-                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-500/10 text-amber-500">
-                            <Star className="h-4 w-4 fill-amber-400" />
-                          </div>
+                        <div className="flex min-w-0 items-center gap-2 rounded-lg bg-secondary p-2.5">
+                          <Star className="h-4 w-4 shrink-0 fill-amber-400 text-amber-400" aria-hidden />
                           <div className="min-w-0">
-                            <div className="text-xs font-bold text-foreground">
+                            <div className="tabular text-xs font-semibold text-foreground">
                               {hasRating ? (
                                 <>
                                   {mentor.rating.toFixed(1)}
@@ -615,35 +578,31 @@ export const CampusSidebarWidgets = () => {
                                 "New"
                               )}
                             </div>
-                            <div className="text-3xs text-muted-foreground font-medium">
-                              {hasRating ? "Rating Score" : "No reviews yet"}
+                            <div className="text-3xs text-muted-foreground">
+                              {hasRating ? "Rating" : "No reviews yet"}
                             </div>
                           </div>
                         </div>
 
                         {/* Metric 2: Reviews */}
-                        <div className="flex items-center gap-2.5 rounded-xl border border-border/50 bg-muted/20 p-2.5 shadow-2xs">
-                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 text-blue-500">
-                            <Users className="h-4 w-4" />
-                          </div>
+                        <div className="flex min-w-0 items-center gap-2 rounded-lg bg-secondary p-2.5">
+                          <Users className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
                           <div className="min-w-0">
-                            <div className="text-xs font-bold text-foreground">
+                            <div className="tabular text-xs font-semibold text-foreground">
                               {mentor.review_count && mentor.review_count > 0 ? mentor.review_count : "New"}
                             </div>
-                            <div className="text-3xs text-muted-foreground font-medium">
-                              {mentor.review_count && mentor.review_count > 0 ? "Peer Reviews" : "No reviews yet"}
+                            <div className="text-3xs text-muted-foreground">
+                              {mentor.review_count && mentor.review_count > 0 ? "Peer reviews" : "No reviews yet"}
                             </div>
                           </div>
                         </div>
 
                         {/* Metric 3: Response Rate */}
-                        <div className="flex items-center gap-2.5 rounded-xl border border-border/50 bg-muted/20 p-2.5 shadow-2xs">
-                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-500">
-                            <Zap className="h-4 w-4" />
-                          </div>
+                        <div className="flex min-w-0 items-center gap-2 rounded-lg bg-secondary p-2.5">
+                          <MessageCircle className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
                           <div className="min-w-0">
-                            <div className="text-xs font-bold text-foreground">Active</div>
-                            <div className="text-3xs text-muted-foreground font-medium">Direct Messaging</div>
+                            <div className="text-xs font-semibold text-foreground">Open</div>
+                            <div className="text-3xs text-muted-foreground">Direct messages</div>
                           </div>
                         </div>
                       </div>
@@ -657,27 +616,27 @@ export const CampusSidebarWidgets = () => {
       </Card>
 
       {/* ── Widget 3: Faculty Explorer Spotlight ── */}
-      <Card className="p-4 border-border/80 bg-card shadow-xs">
+      <Card className="p-4 shadow-card">
         <div className="flex items-center justify-between mb-3.5">
           <div className="flex items-center gap-2">
-            <div className="p-1.5 rounded-md bg-rose-500/10 text-rose-600">
+            <div className="rounded-md border border-border bg-secondary p-1.5 text-muted-foreground">
               <FacultyIcon className="h-4 w-4" />
             </div>
-            <h3 className="font-semibold text-sm text-foreground">Faculty Explorer</h3>
+            <h3 className="text-sm font-semibold text-foreground">Faculty</h3>
           </div>
           <Link
             to="/faculty"
-            className="text-xs text-primary hover:underline font-medium inline-flex items-center gap-0.5 group"
+            className="inline-flex min-h-[32px] items-center gap-0.5 text-xs font-medium text-primary underline-offset-2 hover:underline"
           >
             All faculty
-            <ChevronRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
+            <ChevronRight className="h-3.5 w-3.5" aria-hidden />
           </Link>
         </div>
 
         {facultyLoading ? (
           <div className="space-y-2.5">
             {[0, 1, 2].map((i) => (
-              <div key={i} className="h-14 animate-pulse rounded-xl bg-muted/60" />
+              <Skeleton key={i} className="h-14 rounded-lg" />
             ))}
           </div>
         ) : (
@@ -689,9 +648,9 @@ export const CampusSidebarWidgets = () => {
               return (
                 <Tooltip key={member.id}>
                   <TooltipTrigger asChild>
-                    <div className="group flex items-center justify-between gap-3 p-2.5 rounded-xl border border-border/60 bg-muted/20 hover:bg-muted/50 hover:border-rose-500/30 transition-all cursor-pointer">
+                    <div className="flex min-w-0 items-center justify-between gap-3 rounded-lg border border-border p-2.5">
                       <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="relative h-9 w-9 shrink-0 rounded-full overflow-hidden bg-muted/70 ring-1 ring-border/80 flex items-center justify-center">
+                        <div className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-border bg-secondary">
                           {member.image_url ? (
                             <img
                               src={getOptimizedImageUrl(member.image_url, { width: 100, quality: 75 })}
@@ -704,26 +663,26 @@ export const CampusSidebarWidgets = () => {
                               }}
                             />
                           ) : (
-                            <UserRound className="h-4 w-4 text-muted-foreground/50" />
+                            <UserRound className="h-4 w-4 text-muted-foreground" />
                           )}
                         </div>
                         <div className="min-w-0">
                           <Link
                             to={`/faculty/${member.slug}`}
-                            className="text-xs font-semibold text-foreground hover:text-rose-600 transition-colors truncate flex items-center gap-1"
+                            className="flex items-center gap-1 truncate text-sm font-medium text-foreground underline-offset-2 hover:text-primary hover:underline"
                           >
                             <span className="truncate">{member.name}</span>
                           </Link>
-                          <p className="text-2xs text-muted-foreground truncate">
-                            {member.designation ? `${member.designation} • ` : ""}{member.department}
+                          <p className="truncate text-xs text-muted-foreground">
+                            {member.designation ? `${member.designation} \u00b7 ` : ""}{member.department}
                           </p>
                         </div>
                       </div>
 
                       <div className="flex items-center gap-2 shrink-0">
                         {hasRating && (
-                          <div className="hidden xs:flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 text-3xs font-bold">
-                            <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                          <div className="tabular hidden items-center gap-1 text-xs font-medium text-foreground xs:flex">
+                            <Star className="h-3 w-3 fill-amber-400 text-amber-400" aria-hidden />
                             {Number(member.avg_overall).toFixed(1)}
                           </div>
                         )}
@@ -731,10 +690,10 @@ export const CampusSidebarWidgets = () => {
                           asChild
                           size="sm"
                           variant="outline"
-                          className="h-7 text-xs px-2.5 bg-background hover:bg-rose-600 hover:text-white hover:border-rose-600 transition-all"
+                          className="h-8 px-3 text-xs"
                         >
                           <Link to={`/faculty/${member.slug}`}>
-                            {hasRating ? "Ratings" : "Rate"}
+                            {hasRating ? "Reviews" : "Rate"}
                           </Link>
                         </Button>
                       </div>
@@ -743,14 +702,14 @@ export const CampusSidebarWidgets = () => {
                   <TooltipContent
                     side="left"
                     sideOffset={14}
-                    className="w-[480px] max-w-[90vw] rounded-2xl p-5 bg-white dark:bg-card text-foreground border border-border shadow-2xl ring-1 ring-black/10 dark:ring-white/10 z-50 animate-in fade-in-0 zoom-in-95 duration-150"
+                    className="z-50 w-[480px] max-w-[90vw] rounded-xl border border-border bg-popover p-5 text-popover-foreground shadow-float"
                   >
                     <div className="space-y-4">
                       {/* Top Row: Photo + Details + View Profile Button */}
                       <div className="flex items-start gap-4">
                         {/* Left: Faculty Photo with Rose Badge */}
                         <div className="relative shrink-0">
-                          <div className="h-16 w-16 rounded-2xl overflow-hidden shadow-xs ring-2 ring-rose-500/20 bg-muted/60 flex items-center justify-center">
+                          <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-xl border border-border bg-secondary">
                             {member.image_url ? (
                               <img
                                 src={getOptimizedImageUrl(member.image_url, { width: 200, quality: 80 })}
@@ -761,43 +720,30 @@ export const CampusSidebarWidgets = () => {
                                 }}
                               />
                             ) : (
-                              <UserRound className="h-8 w-8 text-muted-foreground/40" />
+                              <UserRound className="h-8 w-8 text-muted-foreground" />
                             )}
-                          </div>
-                          <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1 rounded-full border border-border bg-card px-2 py-0.5 shadow-2xs whitespace-nowrap">
-                            <GraduationCap className="h-3 w-3 text-rose-500" />
-                            <span className="text-3xs font-semibold text-rose-600 dark:text-rose-400">
-                              Faculty
-                            </span>
                           </div>
                         </div>
 
                         {/* Middle: Details */}
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center justify-between gap-3">
-                            <h4 className="font-extrabold text-base text-foreground tracking-tight truncate">
+                            <h4 className="truncate text-base font-semibold tracking-tight text-foreground">
                               {member.name}
                             </h4>
-                            <Button
-                              asChild
-                              size="sm"
-                              className="shrink-0 bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs px-4 h-9 gap-1.5 rounded-xl shadow-xs transition-all hover:shadow-md active:scale-95"
-                            >
+                            <Button asChild size="sm" className="shrink-0">
                               <Link to={`/faculty/${member.slug}`}>
-                                <Star className="h-3.5 w-3.5 fill-white" />
-                                {hasRating ? "Reviews" : "Rate"}
+                                {hasRating ? "Read reviews" : "Rate"}
                               </Link>
                             </Button>
                           </div>
 
-                          <p className="text-xs font-medium text-muted-foreground mt-1">
-                            <span className="text-foreground/90 font-semibold">
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            <span className="font-medium text-foreground">
                               {member.designation || "Professor"}
                             </span>
-                            {" • "}
-                            <span className="text-rose-600 dark:text-rose-400 font-medium">
-                              {member.department}
-                            </span>
+                            {" \u00b7 "}
+                            <span>{member.department}</span>
                           </p>
 
                           {interests.length > 0 && (
@@ -805,13 +751,13 @@ export const CampusSidebarWidgets = () => {
                               {interests.slice(0, 3).map((interest) => (
                                 <span
                                   key={interest}
-                                  className="truncate max-w-[140px] rounded-md border border-rose-500/20 bg-rose-500/5 px-2 py-0.5 text-3xs font-medium text-rose-700 dark:text-rose-300"
+                                  className="max-w-[140px] truncate rounded bg-secondary px-1.5 py-0.5 text-3xs text-secondary-foreground"
                                 >
                                   {interest}
                                 </span>
                               ))}
                               {interests.length > 3 && (
-                                <span className="text-3xs text-muted-foreground">+{interests.length - 3}</span>
+                                <span className="tabular text-3xs text-muted-foreground">+{interests.length - 3}</span>
                               )}
                             </div>
                           )}
@@ -819,14 +765,12 @@ export const CampusSidebarWidgets = () => {
                       </div>
 
                       {/* Bottom: Trust & Feedback Metrics Grid */}
-                      <div className="pt-3 border-t border-border/60 grid grid-cols-3 gap-2.5">
+                      <div className="grid grid-cols-3 gap-2 border-t border-border pt-3">
                         {/* Metric 1: Overall Rating */}
-                        <div className="flex items-center gap-2.5 rounded-xl border border-border/50 bg-muted/20 p-2.5 shadow-2xs">
-                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-500/10 text-amber-500">
-                            <Star className="h-4 w-4 fill-amber-400" />
-                          </div>
+                        <div className="flex min-w-0 items-center gap-2 rounded-lg bg-secondary p-2.5">
+                          <Star className="h-4 w-4 shrink-0 fill-amber-400 text-amber-400" aria-hidden />
                           <div className="min-w-0">
-                            <div className="text-xs font-bold text-foreground">
+                            <div className="tabular text-xs font-semibold text-foreground">
                               {hasRating ? (
                                 <>
                                   {Number(member.avg_overall).toFixed(1)}
@@ -838,35 +782,31 @@ export const CampusSidebarWidgets = () => {
                                 "New"
                               )}
                             </div>
-                            <div className="text-3xs text-muted-foreground font-medium">
-                              {hasRating ? "Overall Rating" : "No reviews yet"}
+                            <div className="text-3xs text-muted-foreground">
+                              {hasRating ? "Overall rating" : "No reviews yet"}
                             </div>
                           </div>
                         </div>
 
                         {/* Metric 2: Reviews */}
-                        <div className="flex items-center gap-2.5 rounded-xl border border-border/50 bg-muted/20 p-2.5 shadow-2xs">
-                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-rose-500/10 text-rose-500">
-                            <Users className="h-4 w-4" />
-                          </div>
+                        <div className="flex min-w-0 items-center gap-2 rounded-lg bg-secondary p-2.5">
+                          <Users className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
                           <div className="min-w-0">
-                            <div className="text-xs font-bold text-foreground">
+                            <div className="tabular text-xs font-semibold text-foreground">
                               {member.rating_count && member.rating_count > 0 ? member.rating_count : "New"}
                             </div>
-                            <div className="text-3xs text-muted-foreground font-medium">
-                              {member.rating_count && member.rating_count > 0 ? "Student Ratings" : "No reviews yet"}
+                            <div className="text-3xs text-muted-foreground">
+                              {member.rating_count && member.rating_count > 0 ? "Student ratings" : "No reviews yet"}
                             </div>
                           </div>
                         </div>
 
                         {/* Metric 3: Anonymity Guarantee */}
-                        <div className="flex items-center gap-2.5 rounded-xl border border-border/50 bg-muted/20 p-2.5 shadow-2xs">
-                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-500">
-                            <ShieldCheck className="h-4 w-4" />
-                          </div>
+                        <div className="flex min-w-0 items-center gap-2 rounded-lg bg-secondary p-2.5">
+                          <ShieldCheck className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
                           <div className="min-w-0">
-                            <div className="text-xs font-bold text-foreground">100% Anonymous</div>
-                            <div className="text-3xs text-muted-foreground font-medium">Verified Privacy</div>
+                            <div className="tabular text-xs font-semibold text-foreground">Anonymous</div>
+                            <div className="text-3xs text-muted-foreground">Reviewer names hidden</div>
                           </div>
                         </div>
                       </div>
@@ -879,18 +819,14 @@ export const CampusSidebarWidgets = () => {
         )}
 
         {/* Quick Department Shortcuts Bar */}
-        <div className="pt-3 mt-3 border-t border-border/50">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-3xs font-semibold uppercase tracking-wider text-muted-foreground">
-              By Department
-            </span>
-          </div>
+        <div className="mt-3 border-t border-border pt-3">
+          <p className="mb-2 text-xs text-muted-foreground">Browse by department</p>
           <div className="grid grid-cols-4 gap-1.5">
             {TOP_DEPARTMENTS.map((dept) => (
               <Link
                 key={dept.short}
                 to={`/faculty?dept=${encodeURIComponent(dept.name)}`}
-                className={`flex items-center justify-center py-1.5 px-2 rounded-lg border border-border/60 bg-muted/20 text-3xs font-medium transition-all text-center truncate ${dept.color}`}
+                className="flex h-8 items-center justify-center truncate rounded-md border border-border px-2 text-center text-xs font-medium text-foreground transition-colors duration-150 hover:border-foreground/20 hover:bg-accent"
               >
                 <span className="truncate">{dept.short}</span>
               </Link>
@@ -901,20 +837,20 @@ export const CampusSidebarWidgets = () => {
 
       {/* ── Widget 4: Active Campus Groups ── */}
       {groups.length > 0 && (
-        <Card className="p-4 border-border/80 bg-card shadow-xs">
+        <Card className="p-4 shadow-card">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <div className="p-1.5 rounded-md bg-amber-500/10 text-amber-600">
+              <div className="rounded-md border border-border bg-secondary p-1.5 text-muted-foreground">
                 <GroupsIcon className="h-4 w-4" />
               </div>
-              <h3 className="font-semibold text-sm text-foreground">Campus Groups</h3>
+              <h3 className="text-sm font-semibold text-foreground">Campus groups</h3>
             </div>
             <Link
               to="/workspace-groups"
-              className="text-xs text-primary hover:underline font-medium inline-flex items-center gap-0.5 group"
+              className="inline-flex min-h-[32px] items-center gap-0.5 text-xs font-medium text-primary underline-offset-2 hover:underline"
             >
               All groups
-              <ChevronRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
+              <ChevronRight className="h-3.5 w-3.5" aria-hidden />
             </Link>
           </div>
           <div className="space-y-2">
@@ -922,17 +858,17 @@ export const CampusSidebarWidgets = () => {
               <Link
                 key={group.id}
                 to={`/workspace-groups/${group.id}`}
-                className="flex items-center justify-between p-2.5 rounded-lg border border-border/50 bg-muted/20 hover:bg-muted/50 hover:border-border transition-all group"
+                className="group flex min-w-0 items-center justify-between rounded-lg border border-border p-2.5 transition-colors duration-150 hover:border-foreground/20 hover:bg-accent"
               >
                 <div className="min-w-0 pr-2">
-                  <h4 className="text-xs font-medium text-foreground group-hover:text-primary transition-colors truncate">
+                  <h4 className="truncate text-sm font-medium text-foreground">
                     {group.name}
                   </h4>
-                  <p className="text-2xs text-muted-foreground mt-0.5">
+                  <p className="tabular mt-0.5 text-xs text-muted-foreground">
                     {group.member_count} {group.member_count === 1 ? "member" : "members"}
                   </p>
                 </div>
-                <Badge variant="outline" className="text-3xs shrink-0 font-normal border-border/80">
+                <Badge variant="outline" className="shrink-0 text-3xs font-normal">
                   {group.visibility === "private" ? "Private" : "Public"}
                 </Badge>
               </Link>

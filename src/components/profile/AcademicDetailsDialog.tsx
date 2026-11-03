@@ -97,17 +97,14 @@ export const AcademicDetailsDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-3xl w-[95vw] sm:w-full h-[90vh] sm:h-[85vh] max-h-[90vh] sm:max-h-[85vh] flex flex-col p-0 gap-0 overflow-hidden shadow-2xl">
+      <DialogContent className="sm:max-w-3xl w-[95vw] sm:w-full h-[90vh] sm:h-[85vh] max-h-[90vh] sm:max-h-[85vh] flex flex-col p-0 gap-0 overflow-hidden">
         {/* Header with safety padding on right for Radix close X */}
-        <div className="p-4 sm:p-5 pr-12 sm:pr-14 bg-gradient-to-br from-primary/10 via-primary/5 to-background border-b border-border shrink-0">
+        <div className="p-4 sm:p-5 pr-12 sm:pr-14 border-b border-border shrink-0">
           <DialogHeader>
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg bg-primary/15 border border-primary/20 flex items-center justify-center shrink-0">
-                <GraduationCap className="h-5 w-5 text-primary" />
-              </div>
               <div className="min-w-0 flex-1">
                 <DialogTitle className="text-base sm:text-lg flex items-center gap-2 flex-wrap">
-                  <span>SRM Academic Import Details</span>
+                  <span>Imported academic record</span>
                   {record.sync_status === "success" && (
                     <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 text-3xs font-normal gap-1">
                       <CheckCircle2 className="h-3 w-3" /> Synced
@@ -115,7 +112,7 @@ export const AcademicDetailsDialog = ({
                   )}
                 </DialogTitle>
                 <DialogDescription className="text-2xs sm:text-xs text-muted-foreground mt-0.5 truncate">
-                  Verified coursework & transcript data imported from student.srmap.edu.in
+                  Coursework and transcript data imported from student.srmap.edu.in
                 </DialogDescription>
               </div>
             </div>
@@ -123,9 +120,9 @@ export const AcademicDetailsDialog = ({
 
           {/* Quick Metrics Grid */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mt-3.5 sm:mt-4">
-            <Card className="bg-background/80 backdrop-blur border-border/60 shadow-sm">
+            <Card className="shadow-none">
               <CardContent className="p-2.5 sm:p-3 flex items-center gap-2.5 sm:gap-3">
-                <div className="p-2 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 shrink-0">
+                <div className="p-2 rounded-md bg-secondary text-muted-foreground shrink-0">
                   <GraduationCap className="h-4 w-4" />
                 </div>
                 <div className="min-w-0 flex-1">
@@ -137,9 +134,9 @@ export const AcademicDetailsDialog = ({
               </CardContent>
             </Card>
 
-            <Card className="bg-background/80 backdrop-blur border-border/60 shadow-sm">
+            <Card className="shadow-none">
               <CardContent className="p-2.5 sm:p-3 flex items-center gap-2.5 sm:gap-3">
-                <div className="p-2 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400 shrink-0">
+                <div className="p-2 rounded-md bg-secondary text-muted-foreground shrink-0">
                   <Calendar className="h-4 w-4" />
                 </div>
                 <div className="min-w-0 flex-1">
@@ -151,30 +148,30 @@ export const AcademicDetailsDialog = ({
               </CardContent>
             </Card>
 
-            <Card className="bg-background/80 backdrop-blur border-border/60 shadow-sm">
+            <Card className="shadow-none">
               <CardContent className="p-2.5 sm:p-3 flex items-center gap-2.5 sm:gap-3">
-                <div className="p-2 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 shrink-0">
+                <div className="p-2 rounded-md bg-secondary text-muted-foreground shrink-0">
                   <Award className="h-4 w-4" />
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-2xs text-muted-foreground font-medium truncate">CGPA</p>
                   <p className="text-xs font-semibold text-foreground flex items-center gap-1">
-                    <ShieldCheck className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+                    <ShieldCheck className="h-3.5 w-3.5 text-muted-foreground shrink-0" aria-label="Private" />
                     {record.cgpa != null ? record.cgpa.toFixed(2) : "N/A"}
                   </p>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="bg-background/80 backdrop-blur border-border/60 shadow-sm">
+            <Card className="shadow-none">
               <CardContent className="p-2.5 sm:p-3 flex items-center gap-2.5 sm:gap-3">
-                <div className="p-2 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shrink-0">
+                <div className="p-2 rounded-md bg-secondary text-muted-foreground shrink-0">
                   <BookOpen className="h-4 w-4" />
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-2xs text-muted-foreground font-medium truncate">Courses</p>
                   <p className="text-xs font-semibold text-foreground truncate">
-                    {subjects.length} Subjects
+                    {subjects.length} subjects
                   </p>
                 </div>
               </CardContent>

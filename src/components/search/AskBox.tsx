@@ -1,103 +1,77 @@
 import { useEffect, useState } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import { Search } from "lucide-react";
 
-import {
-  EXAMPLE_QUESTIONS,
-  EXAMPLE_ROTATION_MS,
-  SEARCH_BRAND,
-  SEARCH_TAGLINE,
-} from "@/lib/search/brand";
+import { SEARCH_SUGGESTIONS } from "@/lib/search/brand";
 import { OPEN_SEARCH_EVENT } from "@/lib/search/events";
+import { buildSearchUrl } from "@/lib/search/search-params";
 import { cn } from "@/lib/utils";
+
+// Short forms of the shared suggestions: chips have to fit two to a row at 360px.
+const EXAMPLE_CHIPS: { label: string; query: string }[] = [
+  { label: "Machine learning faculty", query: SEARCH_SUGGESTIONS[0]?.query ?? "Machine learning faculty" },
+  { label: "Web dev mentors", query: SEARCH_SUGGESTIONS[1]?.query ?? "Web development mentors" },
+  { label: "Hackathons", query: SEARCH_SUGGESTIONS[2]?.query ?? "Hackathons" },
+  { label: "Project groups", query: SEARCH_SUGGESTIONS[3]?.query ?? "Project groups" },
+];
 
 /**
  * The hero's front door to search.
  *
- * The header trigger was the only way in, and on a landing page it loses: it is
- * a small grey control sitting in a row of chrome, below a gradient headline
- * and beside a filled Sign up button. Nothing about it says the box can answer
- * a question, so nobody asked it one.
+ * It is a button styled as a field on purpose: a real input here would need its
+ * own results surface, and duplicating the result list in two places is how the
+ * two drift apart. Clicking hands off to the header's search dialog, which
+ * already does the work. It has to look like a field, though — that is the
+ * signifier that says "type here", and a decorated pill did not.
  *
- * This is the same dialog, opened from where the eye already is. It is a
- * button, not an input, on purpose — a real field here would need its own
- * results surface, and duplicating the result list in two places is how the two
- * drift apart. Clicking hands off to the one dialog that already does the work.
- *
- * The rotating question is the point of the component. "Ask anything" tells you
- * what the box accepts; a question you recognise as your own tells you it is
- * worth opening.
+ * The example chips skip the dialog and go straight to results, because a
+ * visitor who picks one has already told us the query.
  */
 const AskBox = ({ className }: { className?: string }) => {
-  const reduceMotion = useReducedMotion();
-  const [index, setIndex] = useState(0);
+  const navigate = useNavigate();
   const [isMac, setIsMac] = useState(false);
 
-  // The homepage is pre-rendered, so this reads the user agent on the client
-  // only. Index starts at 0 on both sides for the same reason — a random first
-  // question would mismatch the served HTML on hydration.
+  // The homepage is pre-rendered, so the user agent is read on the client only.
   useEffect(() => {
     setIsMac(/mac|iphone|ipad/i.test(navigator.userAgent));
   }, []);
-
-  useEffect(() => {
-    if (reduceMotion) return;
-    const id = setInterval(
-      () => setIndex((i) => (i + 1) % EXAMPLE_QUESTIONS.length),
-      EXAMPLE_ROTATION_MS,
-    );
-    return () => clearInterval(id);
-  }, [reduceMotion]);
 
   const open = () => window.dispatchEvent(new CustomEvent(OPEN_SEARCH_EVENT));
 
   return (
     <div className={cn("mx-auto w-full max-w-2xl", className)}>
-      <div className="group relative">
-        {/* The subtle glow. Sits behind the card and brightens on hover */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -inset-1 rounded-[1.25rem] bg-primary/20 opacity-40 blur-lg transition-opacity duration-500 group-hover:opacity-75 motion-reduce:transition-none"
-        />
+      <button
+        type="button"
+        onClick={open}
+        aria-label="Search mentors, faculty, groups and posts"
+        aria-haspopup="dialog"
+        className="group flex h-14 w-full items-center gap-3 rounded-xl border border-border bg-card pl-4 pr-2 text-left shadow-card transition-colors duration-150 hover:border-foreground/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background sm:pl-5"
+      >
+        <Search className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden />
+        <span className="min-w-0 flex-1 truncate text-base text-muted-foreground">
+          <span className="sm:hidden">Search or ask a question</span>
+          <span className="hidden sm:inline">Search mentors, faculty, groups, or ask a question</span>
+        </span>
+        <kbd className="hidden shrink-0 items-center rounded border border-border bg-muted px-1.5 py-0.5 font-sans text-2xs font-medium text-muted-foreground md:inline-flex">
+          {isMac ? "⌘" : "Ctrl"} D
+        </kbd>
+        <span className="inline-flex h-10 shrink-0 items-center rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors duration-150 group-hover:bg-primary/90">
+          Search
+        </span>
+      </button>
 
-        {/* A 1px subtle gradient ring */}
-        <div className="relative rounded-2xl bg-gradient-to-r from-primary/30 via-primary/20 to-primary/30 p-px">
+      <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+        <span className="text-sm text-muted-foreground">Try</span>
+        {EXAMPLE_CHIPS.map((chip) => (
           <button
+            key={chip.label}
             type="button"
-            onClick={open}
-            aria-label={`Open ${SEARCH_BRAND} search`}
-            className="flex w-full items-center gap-3 rounded-[calc(1rem-1px)] bg-background px-4 py-3.5 text-left transition-colors duration-300 hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background sm:gap-4 sm:px-5 sm:py-4 shadow-sm"
+            onClick={() => navigate(buildSearchUrl(chip.query, "all"))}
+            className="inline-flex h-8 items-center rounded-full border border-border bg-background px-3 text-sm text-foreground transition-colors duration-150 hover:border-foreground/20 hover:bg-accent"
           >
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-md shadow-primary/25">
-              <Search className="h-4 w-4" aria-hidden />
-            </span>
-
-            {/* Fixed height and clipped: the questions differ in length */}
-            <span className="relative h-6 min-w-0 flex-1 overflow-hidden">
-              <AnimatePresence mode="wait" initial={false}>
-                <motion.span
-                  key={EXAMPLE_QUESTIONS[index]}
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -8 }}
-                  transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-                  className="absolute inset-0 flex items-center truncate text-sm text-muted-foreground sm:text-base"
-                >
-                  {EXAMPLE_QUESTIONS[index]}
-                </motion.span>
-              </AnimatePresence>
-            </span>
-
-            {/* AI Mode badge on landing page */}
-            <span className="shrink-0 flex items-center rounded-lg border border-primary/25 bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary shadow-2xs">
-              <span>AI Mode</span>
-            </span>
-
-            <kbd className="ml-1 hidden shrink-0 items-center gap-0.5 rounded border border-border/60 bg-muted/80 px-1.5 py-0.5 font-mono text-3xs font-medium text-muted-foreground sm:inline-flex">
-              {isMac ? "⌘" : "Ctrl"} D
-            </kbd>
+            {chip.label}
           </button>
-        </div>
+        ))}
       </div>
     </div>
   );

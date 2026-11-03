@@ -2,25 +2,16 @@ import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Users,
-  UserCheck,
   Star,
   MessageSquare,
-  Sparkles,
   CalendarPlus,
   Edit3,
   Trash2,
   Lock,
   ChevronDown,
-  Loader2,
   Check,
-  Send,
-  ExternalLink,
-  ShieldCheck,
-  HelpCircle,
-  Clock,
   Bell,
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -67,7 +58,7 @@ const QUICK_NOTE_PRESETS = [
   "Looking for hackathon teammates",
   "Heading together from UB / Hostels",
   "First time attending, would love company",
-  "Excited for this workshop!",
+  "Excited for this workshop",
 ];
 
 export const EventAttendeeRoster: React.FC<EventAttendeeRosterProps> = ({ event }) => {
@@ -136,26 +127,25 @@ export const EventAttendeeRoster: React.FC<EventAttendeeRosterProps> = ({ event 
     }
 
     setActionLoading(true);
-    const eventAny = event as Record<string, any>;
     const { error } = await setEventAttendance({
       eventId: eventNumericId,
       status,
       note: myAttendance?.note || null,
       eventTitle: event.title,
-      eventStartDate: eventAny.startDate || eventAny.date,
-      eventVenue: eventAny.venue,
+      eventStartDate: event.startDate || event.date,
+      eventVenue: event.venue,
     });
     setActionLoading(false);
 
     if (error) {
-      toast.error("RSVP Failed", { description: error.message });
+      toast.error("RSVP failed", { description: error.message });
     } else {
       toast.success(
         status === "going"
-          ? "Marked as Going."
-          : "Marked as Interested.",
+          ? "Marked as going"
+          : "Marked as interested",
         {
-          description: "Peers can now see you're attending. We'll remind you before it starts.",
+          description: "Classmates can see your RSVP. You'll get reminders 24 h and 2 h before.",
         }
       );
       await fetchRoster();
@@ -165,21 +155,20 @@ export const EventAttendeeRoster: React.FC<EventAttendeeRosterProps> = ({ event 
   const handleSaveNote = async () => {
     if (!user) return;
     setActionLoading(true);
-    const eventAny = event as Record<string, any>;
     const { error } = await setEventAttendance({
       eventId: eventNumericId,
       status: selectedStatusForNote,
       note: customNote,
       eventTitle: event.title,
-      eventStartDate: eventAny.startDate || eventAny.date,
-      eventVenue: eventAny.venue,
+      eventStartDate: event.startDate || event.date,
+      eventVenue: event.venue,
     });
     setActionLoading(false);
 
     if (error) {
       toast.error("Could not update note", { description: error.message });
     } else {
-      toast.success("Attendance note updated!");
+      toast.success("Note saved");
       setIsNoteDialogOpen(false);
       await fetchRoster();
     }
@@ -192,9 +181,9 @@ export const EventAttendeeRoster: React.FC<EventAttendeeRosterProps> = ({ event 
     setActionLoading(false);
 
     if (error) {
-      toast.error("Failed to cancel RSVP", { description: error.message });
+      toast.error("Could not cancel RSVP", { description: error.message });
     } else {
-      toast.success("RSVP cancelled.");
+      toast.success("RSVP cancelled");
       setIsNoteDialogOpen(false);
       await fetchRoster();
     }
@@ -238,85 +227,87 @@ export const EventAttendeeRoster: React.FC<EventAttendeeRosterProps> = ({ event 
     };
   }, [event]);
 
+  const signInHref = `/signin?returnTo=${encodeURIComponent(window.location.pathname)}`;
+
+  const rsvpToggle = (status: EventAttendanceStatus, label: string, count: number) => {
+    const selected = myAttendance?.status === status;
+    const Icon = status === "going" ? Check : Star;
+    return (
+      <button
+        type="button"
+        aria-pressed={selected}
+        disabled={actionLoading}
+        onClick={() => handleRsvpClick(status)}
+        title={selected ? "Edit your note or cancel" : undefined}
+        className={cn(
+          "inline-flex h-10 flex-1 items-center justify-center gap-1.5 px-4 text-sm font-medium transition-colors duration-150 sm:flex-none",
+          "focus-visible:relative focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+          "disabled:cursor-wait disabled:opacity-70",
+          selected
+            ? status === "going"
+              ? "bg-emerald-600 text-white hover:bg-emerald-600/90"
+              : "bg-primary text-primary-foreground hover:bg-primary/90"
+            : "bg-card text-foreground hover:bg-accent",
+        )}
+      >
+        <Icon className={cn("h-4 w-4", selected && status === "interested" && "fill-current")} aria-hidden />
+        {label}
+        {count > 0 && <span className="tabular opacity-75">{count}</span>}
+      </button>
+    );
+  };
+
+  const tabButton = (id: "all" | "going" | "interested", label: string, count: number) => (
+    <button
+      type="button"
+      role="tab"
+      aria-selected={activeTab === id}
+      onClick={() => setActiveTab(id)}
+      className={cn(
+        "-mb-px inline-flex h-10 items-center gap-1.5 border-b-2 text-sm font-medium transition-colors duration-150",
+        activeTab === id
+          ? "border-primary text-foreground"
+          : "border-transparent text-muted-foreground hover:text-foreground",
+      )}
+    >
+      {label}
+      <span className="tabular text-xs text-muted-foreground">{count}</span>
+    </button>
+  );
+
   return (
     <>
-      <Card className="border-border/70 shadow-sm overflow-hidden bg-card">
-        {/* Header Bar */}
-        <CardHeader className="p-5 pb-4 border-b border-border/50 bg-gradient-to-r from-violet-500/5 via-background to-transparent">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="flex items-center gap-2.5">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-500/10 text-violet-600 dark:text-violet-400">
-                <Users className="h-5 w-5" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <CardTitle className="text-base font-bold tracking-tight">
-                    Who's Going
-                  </CardTitle>
-                  <Badge variant="secondary" className="text-xs px-2 py-0.5 font-semibold">
-                    {attendees.length} {attendees.length === 1 ? "student" : "students"}
-                  </Badge>
-                </div>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  See peers attending this event and coordinate to go together
-                </p>
-              </div>
+      <Card className="overflow-hidden">
+        <CardHeader className="gap-4 border-b p-5">
+          <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
+            <div className="min-w-0">
+              <CardTitle className="flex items-baseline gap-2 text-base font-semibold">
+                Who's going
+                <span className="tabular text-sm font-normal text-muted-foreground">
+                  {attendees.length} {attendees.length === 1 ? "student" : "students"}
+                </span>
+              </CardTitle>
+              <p className="mt-1 text-sm text-muted-foreground">
+                See who else is attending and arrange to go together.
+              </p>
             </div>
 
-            {/* RSVP Controls for Signed-in User */}
             {user ? (
-              <div className="flex flex-col items-start sm:items-end gap-1.5 shrink-0">
+              <div className="flex shrink-0 flex-col items-stretch gap-1.5 sm:items-end">
                 <div className="flex items-center gap-2">
-                  <Button
-                    size="sm"
-                    variant={myAttendance?.status === "going" ? "default" : "outline"}
-                    className={cn(
-                      "text-xs gap-1.5 h-8 font-medium transition-all",
-                      myAttendance?.status === "going"
-                        ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
-                        : "border-border/80 hover:border-emerald-500/50 hover:bg-emerald-500/5"
-                    )}
-                    disabled={actionLoading}
-                    onClick={() => handleRsvpClick("going")}
-                  >
-                    {myAttendance?.status === "going" ? (
-                      <Check className="h-3.5 w-3.5" />
-                    ) : (
-                      <UserCheck className="h-3.5 w-3.5" />
-                    )}
-                    <span>Going</span>
-                    {goingAttendees.length > 0 && (
-                      <span className="opacity-75 tabular-nums">({goingAttendees.length})</span>
-                    )}
-                  </Button>
-
-                  <Button
-                    size="sm"
-                    variant={myAttendance?.status === "interested" ? "default" : "outline"}
-                    className={cn(
-                      "text-xs gap-1.5 h-8 font-medium transition-all",
-                      myAttendance?.status === "interested"
-                        ? "bg-violet-600 hover:bg-violet-700 text-white shadow-sm"
-                        : "border-border/80 hover:border-violet-500/50 hover:bg-violet-500/5"
-                    )}
-                    disabled={actionLoading}
-                    onClick={() => handleRsvpClick("interested")}
-                  >
-                    <Star className="h-3.5 w-3.5" />
-                    <span>Interested</span>
-                    {interestedAttendees.length > 0 && (
-                      <span className="opacity-75 tabular-nums">({interestedAttendees.length})</span>
-                    )}
-                  </Button>
+                  <div role="group" aria-label="Your RSVP" className="flex flex-1 divide-x overflow-hidden rounded-md border sm:flex-none">
+                    {rsvpToggle("going", "Going", goingAttendees.length)}
+                    {rsvpToggle("interested", "Interested", interestedAttendees.length)}
+                  </div>
 
                   {myAttendance && (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
+                        <Button size="icon" variant="ghost" aria-label="RSVP options">
                           <ChevronDown className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="text-xs">
+                      <DropdownMenuContent align="end">
                         <DropdownMenuItem
                           onClick={() => {
                             setSelectedStatusForNote(myAttendance.status);
@@ -324,14 +315,14 @@ export const EventAttendeeRoster: React.FC<EventAttendeeRosterProps> = ({ event 
                             setIsNoteDialogOpen(true);
                           }}
                         >
-                          <Edit3 className="mr-2 h-3.5 w-3.5" />
+                          <Edit3 className="mr-2 h-4 w-4" />
                           {myAttendance.note ? "Edit note" : "Add note"}
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           className="text-destructive focus:text-destructive"
                           onClick={handleCancelRsvp}
                         >
-                          <Trash2 className="mr-2 h-3.5 w-3.5" />
+                          <Trash2 className="mr-2 h-4 w-4" />
                           Cancel RSVP
                         </DropdownMenuItem>
                       </DropdownMenuContent>
@@ -340,86 +331,61 @@ export const EventAttendeeRoster: React.FC<EventAttendeeRosterProps> = ({ event 
                 </div>
 
                 {myAttendance && (
-                  <span className="inline-flex items-center gap-1 text-2xs text-muted-foreground font-medium">
-                    <Bell className="h-3 w-3 text-violet-500 shrink-0" />
-                    <span>Reminders active (24h &amp; 2h before)</span>
+                  <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <Bell className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                    Reminders 24 h and 2 h before
                   </span>
                 )}
               </div>
             ) : (
-              <Link to={`/signin?returnTo=${encodeURIComponent(window.location.pathname)}`}>
-                <Button size="sm" className="text-xs bg-violet-600 hover:bg-violet-700 text-white gap-1.5 h-8">
-                  <Lock className="h-3.5 w-3.5" />
+              <Button asChild>
+                <Link to={signInHref}>
+                  <Lock className="h-4 w-4" />
                   Sign in to RSVP
-                </Button>
-              </Link>
+                </Link>
+              </Button>
             )}
           </div>
 
-          {/* Active User Attendance Status Strip & Calendar Quick Action */}
           {myAttendance && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              className="mt-3 pt-3 border-t border-border/40 flex flex-wrap items-center justify-between gap-2 text-xs"
-            >
-              <div className="flex items-center gap-2">
-                <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="text-muted-foreground">
-                  You are marked as{" "}
-                  <strong className="text-foreground capitalize">{myAttendance.status}</strong>
-                  {myAttendance.note && (
-                    <span className="italic ml-1 text-foreground/80">
-                      — “{myAttendance.note}”
-                    </span>
-                  )}
-                </span>
-              </div>
+            <div className="flex flex-wrap items-center justify-between gap-2 border-t pt-3 text-sm">
+              <p className="min-w-0 text-muted-foreground">
+                You're marked{" "}
+                <strong className="font-medium text-foreground">
+                  {myAttendance.status === "going" ? "going" : "interested"}
+                </strong>
+                {myAttendance.note && <span className="text-foreground/80"> · “{myAttendance.note}”</span>}
+              </p>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
                 <Button
                   size="sm"
                   variant="ghost"
-                  className="h-7 text-xs text-muted-foreground hover:text-foreground gap-1 px-2"
                   onClick={() => {
                     setSelectedStatusForNote(myAttendance.status);
                     setCustomNote(myAttendance.note || "");
                     setIsNoteDialogOpen(true);
                   }}
                 >
-                  <Edit3 className="h-3 w-3" />
+                  <Edit3 className="h-4 w-4" />
                   {myAttendance.note ? "Edit note" : "Add note"}
                 </Button>
 
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-7 text-xs gap-1 border-violet-500/30 text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 px-2"
-                    >
-                      <CalendarPlus className="h-3 w-3" />
-                      Add to Calendar
+                    <Button size="sm" variant="outline">
+                      <CalendarPlus className="h-4 w-4" />
+                      Add to calendar
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="text-xs">
+                  <DropdownMenuContent align="end">
                     <DropdownMenuItem asChild>
-                      <a
-                        href={getGoogleCalendarUrl(calendarData)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="cursor-pointer"
-                      >
+                      <a href={getGoogleCalendarUrl(calendarData)} target="_blank" rel="noopener noreferrer" className="cursor-pointer">
                         Google Calendar
                       </a>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <a
-                        href={getOutlookCalendarUrl(calendarData)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="cursor-pointer"
-                      >
+                      <a href={getOutlookCalendarUrl(calendarData)} target="_blank" rel="noopener noreferrer" className="cursor-pointer">
                         Outlook Calendar
                       </a>
                     </DropdownMenuItem>
@@ -432,328 +398,237 @@ export const EventAttendeeRoster: React.FC<EventAttendeeRosterProps> = ({ event 
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
-            </motion.div>
+            </div>
           )}
         </CardHeader>
 
-        {/* Content Body */}
         <CardContent className="p-5">
           {loading ? (
-            <div className="py-10 flex flex-col items-center justify-center gap-2">
-              <Loader2 className="h-6 w-6 animate-spin text-violet-600 dark:text-violet-400" />
-              <p className="text-xs text-muted-foreground">Loading attendee list...</p>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2" aria-busy="true" aria-label="Loading attendees">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-3 rounded-lg border p-3.5">
+                  <div className="h-10 w-10 animate-pulse rounded-full bg-muted" />
+                  <div className="flex flex-1 flex-col gap-2">
+                    <div className="h-3.5 w-2/3 animate-pulse rounded bg-muted" />
+                    <div className="h-3 w-1/3 animate-pulse rounded bg-muted" />
+                  </div>
+                </div>
+              ))}
             </div>
           ) : !user ? (
-            /* Logged-out teaser state */
-            <div className="rounded-xl border border-dashed border-border/80 p-6 text-center bg-muted/20">
-              <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-violet-500/10 text-violet-600 dark:text-violet-400 mb-3">
+            <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed p-6 text-center">
+              <div className="flex h-10 w-10 items-center justify-center rounded-md bg-secondary text-muted-foreground">
                 <Lock className="h-5 w-5" />
               </div>
-              <h4 className="text-sm font-semibold mb-1">
-                {attendees.length > 0
-                  ? `${attendees.length} ${attendees.length === 1 ? "student is" : "students are"} attending this event`
-                  : "Connect with students going to this event"}
-              </h4>
-              <p className="text-xs text-muted-foreground max-w-md mx-auto mb-4">
-                Sign in with your university account to see who from your branch or batch is attending,
-                share notes, and message classmates to go together.
-              </p>
-              <Link to={`/signin?returnTo=${encodeURIComponent(window.location.pathname)}`}>
-                <Button size="sm" className="bg-violet-600 hover:bg-violet-700 text-white text-xs gap-1.5">
-                  Sign in to view attendees
-                </Button>
-              </Link>
+              <div className="flex max-w-md flex-col gap-1">
+                <h3 className="text-sm font-medium">
+                  {attendees.length > 0
+                    ? `${attendees.length} ${attendees.length === 1 ? "student is" : "students are"} attending`
+                    : "See who is attending"}
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  Sign in with your university account to see attendees from your branch or batch and message them.
+                </p>
+              </div>
+              <Button variant="outline" asChild>
+                <Link to={signInHref}>Sign in to view attendees</Link>
+              </Button>
             </div>
           ) : attendees.length === 0 ? (
-            /* Empty state for logged in user */
-            <div className="rounded-xl border border-dashed border-border/80 p-8 text-center bg-muted/20">
-              <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-violet-500/10 text-violet-600 dark:text-violet-400 mb-3">
-                <Sparkles className="h-5 w-5" />
+            <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed p-8 text-center">
+              <div className="flex h-10 w-10 items-center justify-center rounded-md bg-secondary text-muted-foreground">
+                <Users className="h-5 w-5" />
               </div>
-              <h4 className="text-sm font-semibold mb-1">Be the first to RSVP!</h4>
-              <p className="text-xs text-muted-foreground max-w-sm mx-auto mb-4">
-                Let your peers know you're heading to this event so classmates can join you.
-              </p>
-              <div className="flex justify-center gap-2">
-                <Button
-                  size="sm"
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs gap-1.5"
-                  onClick={() => handleRsvpClick("going")}
-                >
-                  <UserCheck className="h-3.5 w-3.5" />
-                  I'm Going
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="text-xs gap-1.5"
-                  onClick={() => handleRsvpClick("interested")}
-                >
-                  <Star className="h-3.5 w-3.5" />
-                  Interested
-                </Button>
+              <div className="flex max-w-sm flex-col gap-1">
+                <h3 className="text-sm font-medium">No one has RSVP'd yet</h3>
+                <p className="text-sm text-muted-foreground">
+                  Mark yourself going so classmates can find you and join.
+                </p>
               </div>
+              <Button onClick={() => handleRsvpClick("going")} isLoading={actionLoading}>
+                <Check className="h-4 w-4" />
+                I'm going
+              </Button>
             </div>
           ) : (
-            /* Active attendee roster */
-            <div className="space-y-4">
-              {/* Filter Tabs */}
-              <div className="flex items-center gap-2 border-b border-border/50 pb-2">
-                <button
-                  type="button"
-                  onClick={() => setActiveTab("all")}
-                  className={cn(
-                    "text-xs px-2.5 py-1 rounded-md font-medium transition-colors",
-                    activeTab === "all"
-                      ? "bg-violet-500/10 text-violet-600 dark:text-violet-400 font-semibold"
-                      : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  All ({attendees.length})
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab("going")}
-                  className={cn(
-                    "text-xs px-2.5 py-1 rounded-md font-medium transition-colors",
-                    activeTab === "going"
-                      ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold"
-                      : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  Going ({goingAttendees.length})
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab("interested")}
-                  className={cn(
-                    "text-xs px-2.5 py-1 rounded-md font-medium transition-colors",
-                    activeTab === "interested"
-                      ? "bg-violet-500/10 text-violet-600 dark:text-violet-400 font-semibold"
-                      : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  Interested ({interestedAttendees.length})
-                </button>
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center gap-5 border-b" role="tablist" aria-label="Filter attendees">
+                {tabButton("all", "All", attendees.length)}
+                {tabButton("going", "Going", goingAttendees.length)}
+                {tabButton("interested", "Interested", interestedAttendees.length)}
               </div>
 
-              {/* Attendee Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 {filteredAttendees.map((attendee) => {
                   const isCurrentUser = user?.id === attendee.user_id;
                   const isChatting = startingChatUserId === attendee.user_id;
 
                   return (
-                    <div
+                    <li
                       key={attendee.user_id}
                       className={cn(
-                        "group relative flex flex-col justify-between p-3.5 rounded-xl border transition-all duration-200",
-                        isCurrentUser
-                          ? "border-violet-500/30 bg-violet-500/5"
-                          : "border-border/60 bg-card hover:border-border hover:shadow-sm"
+                        "flex min-w-0 flex-col gap-3 rounded-lg border p-3.5",
+                        isCurrentUser ? "border-primary/30 bg-primary/5" : "bg-card",
                       )}
                     >
                       <div className="flex items-start gap-3">
-                        <Avatar className="h-10 w-10 shrink-0 border border-border/50">
+                        <Avatar className="h-10 w-10 shrink-0 border">
                           {attendee.profile_image && (
                             <AvatarImage src={attendee.profile_image} alt={attendee.name} />
                           )}
-                          <AvatarFallback className="text-xs font-semibold bg-violet-500/10 text-violet-700 dark:text-violet-300">
+                          <AvatarFallback className="bg-secondary text-xs font-medium text-secondary-foreground">
                             {getInitials(attendee.name)}
                           </AvatarFallback>
                         </Avatar>
 
                         <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-xs font-bold truncate text-foreground">
-                              {attendee.name}
-                            </span>
+                          <div className="flex min-w-0 items-center gap-1.5">
+                            <span className="truncate text-sm font-medium text-foreground">{attendee.name}</span>
                             {attendee.is_mentor && (
-                              <Badge
-                                variant="outline"
-                                className="h-4 px-1 text-[10px] border-violet-500/40 bg-violet-500/10 text-violet-600 dark:text-violet-400 font-medium"
-                              >
+                              <Badge variant="secondary" className="h-5 px-1.5 text-2xs font-medium">
                                 Mentor
                               </Badge>
                             )}
-                            {isCurrentUser && (
-                              <span className="text-[10px] text-muted-foreground font-medium">
-                                (You)
-                              </span>
-                            )}
+                            {isCurrentUser && <span className="text-xs text-muted-foreground">(you)</span>}
                           </div>
 
-                          <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-muted-foreground">
-                            {attendee.department && (
-                              <span>{attendee.department}</span>
-                            )}
-                            {attendee.department && <span>•</span>}
+                          <div className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
+                            {attendee.department && <span className="truncate">{attendee.department}</span>}
+                            {attendee.department && <span aria-hidden>·</span>}
                             <span
                               className={cn(
-                                "font-medium capitalize",
-                                attendee.status === "going"
-                                  ? "text-emerald-600 dark:text-emerald-400"
-                                  : "text-violet-600 dark:text-violet-400"
+                                "shrink-0 font-medium",
+                                attendee.status === "going" ? "text-emerald-700 dark:text-emerald-400" : "text-foreground",
                               )}
                             >
-                              {attendee.status}
+                              {attendee.status === "going" ? "Going" : "Interested"}
                             </span>
                           </div>
                         </div>
-                      </div>
 
-                      {/* Attendee Note Bubble if provided */}
-                      {attendee.note && (
-                        <div className="mt-2.5 rounded-lg bg-muted/60 px-2.5 py-1.5 text-xs text-foreground/90 border border-border/40">
-                          <p className="flex items-center gap-1.5 line-clamp-2 leading-relaxed text-[11px]">
-                            <MessageSquare className="h-3 w-3 inline text-muted-foreground shrink-0" />
-                            <span>“{attendee.note}”</span>
-                          </p>
-                        </div>
-                      )}
-
-                      {/* Action Row */}
-                      {!isCurrentUser && (
-                        <div className="mt-3 pt-2.5 border-t border-border/40 flex items-center justify-end">
+                        {!isCurrentUser && (
                           <Button
-                            size="sm"
+                            size="icon"
                             variant="ghost"
-                            className="h-7 text-xs gap-1.5 text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 hover:text-violet-700 px-2.5"
-                            disabled={isChatting}
+                            className="-mr-1.5 -mt-1.5 shrink-0"
+                            isLoading={isChatting}
+                            aria-label={`Message ${attendee.name}`}
+                            title={`Message ${attendee.name}`}
                             onClick={() => handleStartMessage(attendee.user_id, attendee.name)}
                           >
-                            {isChatting ? (
-                              <Loader2 className="h-3 w-3 animate-spin" />
-                            ) : (
-                              <MessageSquare className="h-3 w-3" />
-                            )}
-                            <span>Message</span>
+                            {!isChatting && <MessageSquare className="h-4 w-4" />}
                           </Button>
-                        </div>
+                        )}
+                      </div>
+
+                      {attendee.note && (
+                        <p className="line-clamp-2 border-l-2 pl-2.5 text-sm leading-relaxed text-foreground/90">
+                          {attendee.note}
+                        </p>
                       )}
-                    </div>
+                    </li>
                   );
                 })}
-              </div>
+              </ul>
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Note Customization Dialog */}
       <Dialog open={isNoteDialogOpen} onOpenChange={setIsNoteDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-base font-bold">
-              Customize Your Attendance
-            </DialogTitle>
-            <DialogDescription className="text-xs text-muted-foreground">
-              Add a quick status note to let classmates know why you're going or if you're looking for partners.
+            <DialogTitle>Your RSVP</DialogTitle>
+            <DialogDescription>
+              Add a short note so classmates know why you're going or that you're looking for a team.
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-2">
-            {/* Status Selector */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-foreground">Status</label>
-              <div className="grid grid-cols-2 gap-2">
-                <Button
-                  type="button"
-                  size="sm"
-                  variant={selectedStatusForNote === "going" ? "default" : "outline"}
-                  className={cn(
-                    "text-xs gap-1.5 h-8",
-                    selectedStatusForNote === "going" && "bg-emerald-600 hover:bg-emerald-700 text-white"
-                  )}
-                  onClick={() => setSelectedStatusForNote("going")}
-                >
-                  <UserCheck className="h-3.5 w-3.5" />
-                  Going
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant={selectedStatusForNote === "interested" ? "default" : "outline"}
-                  className={cn(
-                    "text-xs gap-1.5 h-8",
-                    selectedStatusForNote === "interested" && "bg-violet-600 hover:bg-violet-700 text-white"
-                  )}
-                  onClick={() => setSelectedStatusForNote("interested")}
-                >
-                  <Star className="h-3.5 w-3.5" />
-                  Interested
-                </Button>
+          <div className="flex flex-col gap-4 py-2">
+            <div className="flex flex-col gap-1.5">
+              <span className="text-sm font-medium text-foreground" id="rsvp-status-label">Status</span>
+              <div role="group" aria-labelledby="rsvp-status-label" className="grid grid-cols-2 divide-x overflow-hidden rounded-md border">
+                {(["going", "interested"] as const).map((status) => {
+                  const selected = selectedStatusForNote === status;
+                  const Icon = status === "going" ? Check : Star;
+                  return (
+                    <button
+                      key={status}
+                      type="button"
+                      aria-pressed={selected}
+                      onClick={() => setSelectedStatusForNote(status)}
+                      className={cn(
+                        "inline-flex h-10 items-center justify-center gap-1.5 text-sm font-medium transition-colors duration-150",
+                        selected
+                          ? status === "going"
+                            ? "bg-emerald-600 text-white"
+                            : "bg-primary text-primary-foreground"
+                          : "bg-card hover:bg-accent",
+                      )}
+                    >
+                      <Icon className={cn("h-4 w-4", selected && status === "interested" && "fill-current")} />
+                      {status === "going" ? "Going" : "Interested"}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
-            {/* Quick Presets */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-foreground">Quick Presets</label>
+            <div className="flex flex-col gap-1.5">
+              <span className="text-sm font-medium text-foreground">Suggestions</span>
               <div className="flex flex-wrap gap-1.5">
                 {QUICK_NOTE_PRESETS.map((preset) => (
                   <button
                     key={preset}
                     type="button"
                     onClick={() => setCustomNote(preset)}
-                    className="text-[11px] rounded-full border border-border/80 bg-muted/40 hover:bg-muted px-2.5 py-1 text-muted-foreground hover:text-foreground transition-colors"
+                    className="rounded-md border bg-card px-2.5 py-1 text-xs text-muted-foreground transition-colors duration-150 hover:bg-accent hover:text-foreground"
                   >
-                    + {preset}
+                    {preset}
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Custom Textarea */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-foreground">
-                Your Note <span className="text-muted-foreground font-normal">(optional, max 150 chars)</span>
-              </label>
+            <div className="flex flex-col gap-1.5">
+              <div className="flex items-baseline justify-between">
+                <label htmlFor="rsvp-note" className="text-sm font-medium text-foreground">
+                  Note <span className="font-normal text-muted-foreground">(optional)</span>
+                </label>
+                <span className={cn("tabular text-xs", customNote.length >= 130 ? "text-foreground" : "text-muted-foreground")}>
+                  {customNote.length}/150
+                </span>
+              </div>
               <Textarea
-                placeholder="e.g., Looking for a team for the competition..."
+                id="rsvp-note"
+                placeholder="e.g. Looking for a team for the competition"
                 value={customNote}
                 maxLength={150}
                 onChange={(e) => setCustomNote(e.target.value)}
-                className="text-xs min-h-[70px] resize-none"
+                className="min-h-[72px] resize-none"
               />
             </div>
           </div>
 
-          <DialogFooter className="flex flex-row justify-between sm:justify-between gap-2">
+          <DialogFooter className="flex flex-row justify-between gap-2 sm:justify-between">
             {myAttendance && (
               <Button
                 type="button"
                 variant="ghost"
-                size="sm"
-                className="text-xs text-destructive hover:bg-destructive/10"
+                className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                 disabled={actionLoading}
                 onClick={handleCancelRsvp}
               >
-                <Trash2 className="mr-1 h-3.5 w-3.5" />
+                <Trash2 className="h-4 w-4" />
                 Cancel RSVP
               </Button>
             )}
-            <div className="flex items-center gap-2 ml-auto">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="text-xs"
-                onClick={() => setIsNoteDialogOpen(false)}
-              >
+            <div className="ml-auto flex items-center gap-2">
+              <Button type="button" variant="outline" onClick={() => setIsNoteDialogOpen(false)}>
                 Close
               </Button>
-              <Button
-                type="button"
-                size="sm"
-                className="text-xs bg-violet-600 hover:bg-violet-700 text-white"
-                disabled={actionLoading}
-                onClick={handleSaveNote}
-              >
-                {actionLoading ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  "Save"
-                )}
+              <Button type="button" isLoading={actionLoading} onClick={handleSaveNote}>
+                Save
               </Button>
             </div>
           </DialogFooter>
