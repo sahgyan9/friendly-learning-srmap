@@ -16,6 +16,31 @@ find the right faculty member, senior mentor, group, or hackathon teammate by
 describing what you need in plain language. React + Vite + TypeScript +
 Tailwind, Supabase (Postgres + edge functions), deployed on Vercel.
 
+## Why this exists — the mission
+
+In the owner's words, the aim is to **connect the students of a university** —
+with each other, and with the people and activity around them. Every feature is
+a means to that. A student should be able to:
+
+- **Know who is here.** See what kind of faculty and students the university
+  has, so they can reach the right person rather than the nearest one.
+- **Go to events together.** An event shows who is going, so a student can join
+  people, or gather a group of students who do not know each other yet, and go
+  together. Events are a way to meet peers and learn from them.
+- **See what is going on.** Posts are the live picture of campus.
+- **Ask anything without being ashamed** — including basic questions, and
+  including saying they are not doing well mentally. Build these surfaces so a
+  struggling student is met by peers, never exposed or shamed, and can always
+  see a route to professional help.
+- **Find the right clubs.** Every club and its activity in one place, so a
+  student joins the ones that fit and can see what other clubs are doing.
+- **Start something and lead it.** Any student can create a community and
+  become its leader.
+
+The test for a trade-off: prefer the option that leads to a real connection
+between people (a conversation, a shared event, a joined club, a new community)
+over one that only displays information.
+
 ## Start here
 
 **[FABLE_BUILD_PLAN.md](FABLE_BUILD_PLAN.md) is the plan of record.** If the

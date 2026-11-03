@@ -3,7 +3,9 @@
 **Start with [AGENTS.md](../../AGENTS.md) in the project root** — it is the
 portable brief for this repo: stack, commands, the rules that will cost you a
 day if you skip them, and the settled product red lines. It stands alone; you
-do not need any other tool's config directory.
+do not need any other tool's config directory. Its "Why this exists — the
+mission" section says what the product is for; read it before proposing
+features.
 
 **[FABLE_BUILD_PLAN.md](../../FABLE_BUILD_PLAN.md) is the agreed build plan.**
 Written and executed 2026-08-08/09 with the owner's approval. If Gyan refers to
