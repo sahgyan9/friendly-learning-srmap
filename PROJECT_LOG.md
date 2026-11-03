@@ -554,12 +554,17 @@
   - `node supabase/tests/verify-migrations.mjs`: All checks passed against real Postgres.
   - Privacy verification: `git grep "6301781885"` and `git grep "srmap.edu.in"` confirmed zero private contact info in code or migrations.
 - **Status at end**:
-  - Code and migrations are fully implemented, verified, and ready.
-  - Migration `20261103100000_wellbeing_safety_layer.sql` is ready to be applied to production (`ruapdkrgcbqrhvsayvpf`) upon Gyan's approval.
+  - Migration `20261103100000_wellbeing_safety_layer.sql` rehearsed in `BEGIN ... ROLLBACK` on production, verified with assertions, and successfully applied to production (`ruapdkrgcbqrhvsayvpf`).
+  - Production database verified:
+    - `community_posts` and `post_comments` carry `is_anonymous` and `distress_flagged` columns.
+    - `public.distress_keywords` populated with 55 multilingual crisis phrases.
+    - `public.moderation_queue` table and RPCs (`get_moderation_queue`, `report_peer_concern`, `reveal_moderation_author`, `update_moderation_status`) active in production.
+    - Both tables confirmed dropped from `supabase_realtime` publication.
+    - `public.platform_settings` populated directly in production: `wellbeing_counsellors` (4 counsellors), `wellbeing_admin_phone` (admin line), `wellbeing_admin_label` without exposing PII in repository.
+  - TypeScript types regenerated from production database schema via `supabase gen types typescript --remote`.
 - **Next agent should**:
-  - Apply `supabase/migrations/20261103100000_wellbeing_safety_layer.sql` to production once approved by Gyan.
-  - Populate production `platform_settings` keys via SQL with the real counsellor details and admin phone provided by Gyan.
-  - Re-generate Supabase types (`npm run types:generate` or equivalent) after applying the migration.
+  - Push committed changes to `origin main` so Vercel builds and deploys frontend release.
+  - Verify `/admin/moderation` in production with an admin account.
 
 ## Session Template (copy for each new session)
 
