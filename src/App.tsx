@@ -8,6 +8,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import { SidebarProvider } from "@/context/SidebarContext";
 import { WelcomeTourProvider } from "@/components/onboarding/WelcomeTourContext";
 import WelcomeTour from "@/components/onboarding/WelcomeTour";
+import FirstVisitIntro from "@/components/onboarding/FirstVisitIntro";
 import { SrmDobNagProvider } from "@/components/onboarding/SrmDobNagContext";
 import SrmDobNag from "@/components/onboarding/SrmDobNag";
 import SignInNudge from "@/components/onboarding/SignInNudge";
@@ -162,6 +163,7 @@ const AdminErrorReports = lazyWithRetry("AdminErrorReports", () => import("./pag
 const AdminSearchInsights = lazyWithRetry("AdminSearchInsights", () => import("./pages/AdminSearchInsights"));
 const AdminNotices = lazyWithRetry("AdminNotices", () => import("./pages/AdminNotices"));
 const AdminArticles = lazyWithRetry("AdminArticles", () => import("./pages/AdminArticles"));
+const AdminModerationQueue = lazyWithRetry("AdminModerationQueue", () => import("./pages/AdminModerationQueue"));
 
 function RouteFallback() {
   return (
@@ -201,6 +203,7 @@ function App() {
               <Toaster />
               <RouteRobots />
               <ScrollToTop />
+              <FirstVisitIntro />
               <WelcomeTour />
               <SrmDobNag />
               <SignInNudge />
@@ -494,6 +497,14 @@ function App() {
                       element={
                         <ProtectedRoute requiredRole="admin">
                           <AdminArticles />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/admin/moderation"
+                      element={
+                        <ProtectedRoute requiredRole="admin">
+                          <AdminModerationQueue />
                         </ProtectedRoute>
                       }
                     />
