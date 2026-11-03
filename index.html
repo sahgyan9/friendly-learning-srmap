@@ -59,6 +59,26 @@
       }
     })();
   </script>
+
+  <script>
+    // Covers the page before first paint when the first-visit intro is about
+    // to play, so the homepage does not flash up and then get hidden by it.
+    // Conditions mirror shouldPlay() in src/components/onboarding/FirstVisitIntro.tsx.
+    // The timeout is a failsafe: if the bundle never mounts, the cover goes.
+    (function () {
+      try {
+        if (window.location.pathname !== '/') return;
+        if (navigator.webdriver) return;
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        if (localStorage.getItem('fl_intro_seen_v1') === '1') return;
+        var root = document.documentElement;
+        root.classList.add('intro-pending');
+        setTimeout(function () { root.classList.remove('intro-pending'); }, 4000);
+      } catch (e) {
+        // Never let this stop the page rendering.
+      }
+    })();
+  </script>
   <title>Friendly Learning SRMAP - CampusBrain AI Search for SRM AP | Peer Mentors, Faculty & Groups</title>
   <meta name="description"
     content="Ask CampusBrain anything about SRM AP — find peer mentors, faculty by research area, hackathon teammates, and groups in one search. Friendly Learning SRMAP is the free, all-in-one campus platform for SRM AP students." />
