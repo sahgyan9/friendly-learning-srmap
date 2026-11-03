@@ -1,5 +1,5 @@
 import { memo } from "react";
-import { ArrowDown, Check, Loader2, Sparkles, WifiOff } from "lucide-react";
+import { ArrowDown, Check, Loader2, WifiOff } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { usePullToRefresh, type PullToRefreshStatus } from "@/hooks/usePullToRefresh";
@@ -53,14 +53,14 @@ export const PullToRefreshIndicator = memo(function PullToRefreshIndicator({
           damping: 26,
         }}
         className={cn(
-          "inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full shadow-lg border text-xs font-semibold select-none",
-          "backdrop-blur-md transition-colors duration-200",
+          "inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full shadow-float border text-xs font-semibold select-none",
+          "transition-colors duration-200",
           isSuccess
             ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-600 dark:text-emerald-400"
             : isOffline
               ? "bg-amber-500/15 border-amber-500/40 text-amber-600 dark:text-amber-400"
               : isThreshold
-                ? "bg-primary/15 border-primary/40 text-primary shadow-primary/10"
+                ? "bg-primary/15 border-primary/40 text-primary"
                 : "bg-background/90 dark:bg-card/90 border-border/80 text-foreground/85",
         )}
       >
